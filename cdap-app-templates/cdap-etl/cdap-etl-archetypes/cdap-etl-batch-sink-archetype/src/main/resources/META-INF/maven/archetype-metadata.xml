@@ -15,7 +15,6 @@
   the License.
   -->
 <archetype-descriptor xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype/1.0.0"
-                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                       name="cdap-etl-batch-sink-archetype">
   <fileSets>
     <fileSet encoding="UTF-8" filtered="true" packaged="true">

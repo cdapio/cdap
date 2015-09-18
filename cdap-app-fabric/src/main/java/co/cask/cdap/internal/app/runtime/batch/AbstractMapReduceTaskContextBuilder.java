@@ -24,7 +24,7 @@ import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -32,7 +32,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.RunIds;
 
 import java.util.Set;
@@ -68,7 +67,6 @@ public abstract class AbstractMapReduceTaskContextBuilder {
                                          Arguments runtimeArguments,
                                          Transaction tx,
                                          Program mrProgram,
-                                         LocationFactory locationFactory,
                                          @Nullable String inputDataSetName,
                                          @Nullable String outputDataSetName,
                                          @Nullable PluginInstantiator pluginInstantiator) {
@@ -109,10 +107,9 @@ public abstract class AbstractMapReduceTaskContextBuilder {
     // Creating mapreduce job context
     MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
     BasicMapReduceTaskContext context =
-      new BasicMapReduceTaskContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments, datasets, spec,
-                                    logicalStartTime, workflowToken, discoveryServiceClient,
-                                    metricsCollectionService, datasetFramework, locationFactory,
-                                    pluginInstantiator);
+      new BasicMapReduceTaskContext(program, type, RunIds.fromString(runId), taskId, runtimeArguments,
+                                    datasets, spec, logicalStartTime, workflowToken, discoveryServiceClient,
+                                    metricsCollectionService, datasetFramework, pluginInstantiator);
 
     // propagating tx to all txAware guys
     // NOTE: tx will be committed by client code

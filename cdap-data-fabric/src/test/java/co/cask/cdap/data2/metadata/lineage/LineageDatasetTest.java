@@ -23,6 +23,7 @@ import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
@@ -64,9 +65,10 @@ public class LineageDatasetTest {
                              flowlet);
 
     Relation expected = new Relation(datasetInstance, program, AccessType.READ,
-                                     ImmutableSet.of(runId), ImmutableSet.of(flowlet));
+                                     runId, ImmutableSet.of(flowlet));
 
-    Set<Relation> relations = lineageDataset.getRelations(datasetInstance, 0, 100000);
+    Set<Relation> relations = lineageDataset.getRelations(datasetInstance, 0, 100000,
+                                                          Predicates.<Relation>alwaysTrue());
     Assert.assertEquals(1, relations.size());
     Assert.assertEquals(expected, relations.iterator().next());
 
@@ -136,45 +138,45 @@ public class LineageDatasetTest {
     lineageDataset.addAccess(run34, stream2, AccessType.UNKNOWN, EMPTY_METADATA);
 
     Assert.assertEquals(
-      ImmutableSet.of(new Relation(datasetInstance1, program1, AccessType.READ, ImmutableSet.of(runId1),
+      ImmutableSet.of(new Relation(datasetInstance1, program1, AccessType.READ, runId1,
                                    ImmutableSet.of(flowlet1))),
-      lineageDataset.getRelations(datasetInstance1, 0, 100000)
+      lineageDataset.getRelations(datasetInstance1, 0, 100000, Predicates.<Relation>alwaysTrue())
     );
 
     Assert.assertEquals(
-      ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, ImmutableSet.of(runId2)),
-                      new Relation(datasetInstance2, program2, AccessType.WRITE, ImmutableSet.of(runId3)),
-                      new Relation(datasetInstance2, program3, AccessType.READ_WRITE, ImmutableSet.of(runId4))
+      ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, runId2),
+                      new Relation(datasetInstance2, program2, AccessType.WRITE, runId3),
+                      new Relation(datasetInstance2, program3, AccessType.READ_WRITE, runId4)
       ),
-      lineageDataset.getRelations(datasetInstance2, 0, 100000)
+      lineageDataset.getRelations(datasetInstance2, 0, 100000, Predicates.<Relation>alwaysTrue())
     );
 
     Assert.assertEquals(
-      ImmutableSet.of(new Relation(stream1, program2, AccessType.READ, ImmutableSet.of(runId2))),
-      lineageDataset.getRelations(stream1, 0, 100000)
+      ImmutableSet.of(new Relation(stream1, program2, AccessType.READ, runId2)),
+      lineageDataset.getRelations(stream1, 0, 100000, Predicates.<Relation>alwaysTrue())
     );
 
     Assert.assertEquals(
-      ImmutableSet.of(new Relation(stream2, program2, AccessType.READ, ImmutableSet.of(runId3)),
-                      new Relation(stream2, program3, AccessType.UNKNOWN, ImmutableSet.of(runId4))),
-      lineageDataset.getRelations(stream2, 0, 100000)
+      ImmutableSet.of(new Relation(stream2, program2, AccessType.READ, runId3),
+                      new Relation(stream2, program3, AccessType.UNKNOWN, runId4)),
+      lineageDataset.getRelations(stream2, 0, 100000, Predicates.<Relation>alwaysTrue())
     );
 
     Assert.assertEquals(
-      ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, ImmutableSet.of(runId2)),
-                      new Relation(stream1, program2, AccessType.READ, ImmutableSet.of(runId2)),
-                      new Relation(datasetInstance2, program2, AccessType.WRITE, ImmutableSet.of(runId3)),
-                      new Relation(stream2, program2, AccessType.READ, ImmutableSet.of(runId3))
+      ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, runId2),
+                      new Relation(stream1, program2, AccessType.READ, runId2),
+                      new Relation(datasetInstance2, program2, AccessType.WRITE, runId3),
+                      new Relation(stream2, program2, AccessType.READ, runId3)
       ),
-      lineageDataset.getRelations(program2, 0, 100000)
+      lineageDataset.getRelations(program2, 0, 100000, Predicates.<Relation>alwaysTrue())
     );
 
     // Reduced time range
     Assert.assertEquals(
-      ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, ImmutableSet.of(runId2)),
-                      new Relation(datasetInstance2, program2, AccessType.WRITE, ImmutableSet.of(runId3))
+      ImmutableSet.of(new Relation(datasetInstance2, program2, AccessType.WRITE, runId2),
+                      new Relation(datasetInstance2, program2, AccessType.WRITE, runId3)
       ),
-      lineageDataset.getRelations(datasetInstance2, 0, 35000)
+      lineageDataset.getRelations(datasetInstance2, 0, 35000, Predicates.<Relation>alwaysTrue())
     );
 
     // Verify metadata

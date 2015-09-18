@@ -21,15 +21,14 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.Delegators;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextBuilder;
 import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceTaskContextBuilder;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -51,7 +50,6 @@ public final class MapReduceTaskContextProvider {
   private final MapReduceMetrics.TaskType type;
   private final MapReduceContextConfig contextConfig;
   private final LocationFactory locationFactory;
-  private final LocationFactory artifactLocationFactory;
   private BasicMapReduceTaskContext context;
   private AbstractMapReduceTaskContextBuilder contextBuilder;
 
@@ -60,9 +58,6 @@ public final class MapReduceTaskContextProvider {
     this.type = type;
     this.contextConfig = new MapReduceContextConfig(context.getConfiguration());
     this.locationFactory = new LocalLocationFactory();
-    boolean isLocal = MapReduceTaskContextProvider.isLocal(contextConfig.getConfiguration());
-    this.artifactLocationFactory = isLocal ? locationFactory : new HDFSLocationFactory(
-      contextConfig.getConfiguration());
     this.contextBuilder = null;
   }
 
@@ -84,11 +79,9 @@ public final class MapReduceTaskContextProvider {
                contextConfig.getArguments(),
                contextConfig.getTx(),
                createProgram(contextConfig),
-               artifactLocationFactory,
                contextConfig.getInputDataSet(),
                contextConfig.getOutputDataSet(),
-               getArtifactPluginInstantiator(contextConfig.getConfiguration())
-        );
+               getPluginInstantiator(contextConfig.getConfiguration()));
     }
     return context;
   }
@@ -146,13 +139,12 @@ public final class MapReduceTaskContextProvider {
     }
   }
 
-  @Nullable
-  private PluginInstantiator getArtifactPluginInstantiator(Configuration hConf) {
+  private PluginInstantiator getPluginInstantiator(Configuration hConf) {
     ClassLoader classLoader = Delegators.getDelegate(hConf.getClassLoader(), MapReduceClassLoader.class);
     if (!(classLoader instanceof MapReduceClassLoader)) {
       throw new IllegalArgumentException("ClassLoader is not an MapReduceClassLoader");
     }
-    return ((MapReduceClassLoader) classLoader).getArtifactPluginInstantiator();
+    return ((MapReduceClassLoader) classLoader).getPluginInstantiator();
   }
 
   /**

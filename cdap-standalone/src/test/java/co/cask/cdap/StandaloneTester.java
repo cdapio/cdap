@@ -56,7 +56,6 @@ public class StandaloneTester extends ExternalResource {
     CConfiguration cConf = CConfiguration.create();
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
-    cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Router.ADDRESS, getLocalHostname());
     cConf.setInt(Constants.Router.ROUTER_PORT, Networks.getRandomPort());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);

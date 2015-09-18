@@ -39,7 +39,6 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.archive.ArchiveBundler;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
-import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -73,6 +72,7 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -87,6 +87,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -132,7 +133,7 @@ public class DefaultStore implements Store {
           Table mdsTable = DatasetsUtil.getOrCreateDataset(dsFramework, APP_META_INSTANCE_ID, "table",
                                                            DatasetProperties.EMPTY,
                                                            DatasetDefinition.NO_ARGUMENTS, null);
-          return new AppMds(mdsTable);
+          return new AppMds(mdsTable, configuration);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -158,8 +159,7 @@ public class DefaultStore implements Store {
    *
    * @param framework framework to add types and datasets to
    */
-  public static void setupDatasets(DatasetFramework framework)
-    throws IOException, DatasetManagementException, ServiceUnavailableException {
+  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
     framework.addInstance(Table.class.getName(), APP_META_INSTANCE_ID, DatasetProperties.EMPTY);
     framework.addInstance(Table.class.getName(), WORKFLOW_STATS_INSTANCE_ID, DatasetProperties.EMPTY);
   }
@@ -1211,8 +1211,8 @@ public class DefaultStore implements Store {
   private static final class AppMds implements Iterable<AppMetadataStore> {
     private final AppMetadataStore apps;
 
-    private AppMds(Table mdsTable) {
-      this.apps = new AppMetadataStore(mdsTable);
+    private AppMds(Table mdsTable, CConfiguration configuration) {
+      this.apps = new AppMetadataStore(mdsTable, configuration);
     }
 
     @Override
@@ -1232,5 +1232,14 @@ public class DefaultStore implements Store {
     public Iterator<WorkflowDataset> iterator() {
       return Iterators.singletonIterator(workflowDataset);
     }
+  }
+
+  public Set<RunId> getRunningInRange(final long startTimeInSecs, final long endTimeInSecs) {
+    return txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Set<RunId>>() {
+      @Override
+      public Set<RunId> apply(AppMds input) throws Exception {
+        return input.apps.getRunningInRange(startTimeInSecs, endTimeInSecs);
+      }
+    });
   }
 }

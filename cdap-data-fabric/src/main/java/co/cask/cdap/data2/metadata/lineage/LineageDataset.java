@@ -27,6 +27,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -70,8 +71,6 @@ public class LineageDataset extends AbstractDataset {
     .create();
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
 
-  // Column used to store program stop time
-  private static final byte[] STOP_COL_BYTE = {'s'};
   // Column used to store meta data
   private static final byte[] METADATA_COLS_BYTE = {'m'};
 
@@ -186,12 +185,14 @@ public class LineageDataset extends AbstractDataset {
    * @param datasetInstance dataset for which to fetch access information
    * @param start start time period
    * @param end end time period
+   * @param filter filter to be applied on result set
    * @return program-dataset access information
    */
-  public Set<Relation> getRelations(Id.DatasetInstance datasetInstance, long start, long end) {
+  public Set<Relation> getRelations(Id.DatasetInstance datasetInstance, long start, long end,
+                                    Predicate<Relation> filter) {
     return scanRelations(getDatasetScanStartKey(datasetInstance, end),
-                         getDatasetScanEndKey(datasetInstance),
-                         start);
+                         getDatasetScanEndKey(datasetInstance, start),
+                         filter);
   }
 
   /**
@@ -200,12 +201,13 @@ public class LineageDataset extends AbstractDataset {
    * @param stream stream for which to fetch access information
    * @param start start time period
    * @param end end time period
+   * @param filter filter to be applied on result set
    * @return program-dataset access information
    */
-  public Set<Relation> getRelations(Id.Stream stream, long start, long end) {
+  public Set<Relation> getRelations(Id.Stream stream, long start, long end, Predicate<Relation> filter) {
     return scanRelations(getStreamScanStartKey(stream, end),
-                         getStreamScanEndKey(stream),
-                         start);
+                         getStreamScanEndKey(stream, start),
+                         filter);
   }
 
   /**
@@ -214,15 +216,16 @@ public class LineageDataset extends AbstractDataset {
    * @param program program for which to fetch access information
    * @param start start time period
    * @param end end time period
+   * @param filter filter to be applied on result set
    * @return program-dataset access information
    */
-  public Set<Relation> getRelations(Id.Program program, long start, long end) {
+  public Set<Relation> getRelations(Id.Program program, long start, long end, Predicate<Relation> filter) {
     return scanRelations(getProgramScanStartKey(program, end),
-                         getProgramScanEndKey(program),
-                         start);
+                         getProgramScanEndKey(program, start),
+                         filter);
   }
 
-  private Set<Relation> scanRelations(byte[] startKey, byte[] endKey, long startTime) {
+  private Set<Relation> scanRelations(byte[] startKey, byte[] endKey, Predicate<Relation> filter) {
     ImmutableSet.Builder<Relation> relationsBuilder = ImmutableSet.builder();
     Scanner scanner = accessRegistryTable.scan(startKey, endKey);
     try {
@@ -231,10 +234,8 @@ public class LineageDataset extends AbstractDataset {
         if (LOG.isTraceEnabled()) {
           LOG.trace("Got row key = {}", Bytes.toString(row.getRow()));
         }
-        Long stopTime = row.getLong(STOP_COL_BYTE);
-        // TODO: convert this check into a scan filter for performance reasons
-        if (stopTime == null || stopTime > startTime) {
-          Relation relation = toRelation(row);
+        Relation relation = toRelation(row);
+        if (filter.apply(relation)) {
           relationsBuilder.add(relation);
         }
       }
@@ -323,8 +324,8 @@ public class LineageDataset extends AbstractDataset {
     }
   }
 
-  private byte[] getDatasetScanStartKey(Id.DatasetInstance datasetInstance, long end) {
-    long invertedStartTime = invertTime(end);
+  private byte[] getDatasetScanKey(Id.DatasetInstance datasetInstance, long time) {
+    long invertedStartTime = invertTime(time);
     MDSKey.Builder builder = new MDSKey.Builder();
     addDataset(builder, datasetInstance);
     builder.add(invertedStartTime);
@@ -332,52 +333,58 @@ public class LineageDataset extends AbstractDataset {
     return builder.build().getKey();
   }
 
-  private byte[] getDatasetScanEndKey(Id.DatasetInstance datasetInstance) {
-    // TODO: the scan space can be further reduced by using min(all running program's start time) instead of 0L.
-    long invertedTime = invertTime(0L);
+  private byte[] getDatasetScanStartKey(Id.DatasetInstance datasetInstance, long end) {
+    // time is inverted, hence we need to have end time in start key.
+    // Since end time is exclusive, add 1 to make it inclusive.
+    return getDatasetScanKey(datasetInstance, end + 1);
+  }
+
+  private byte[] getDatasetScanEndKey(Id.DatasetInstance datasetInstance, long start) {
+    // time is inverted, hence we need to have start time in end key.
+    // Since start time is inclusive, subtract 1 to make it exclusive.
+    return getDatasetScanKey(datasetInstance, start - 1);
+  }
+
+  private byte[] getStreamScanKey(Id.Stream stream, long time) {
+    long invertedStartTime = invertTime(time);
     MDSKey.Builder builder = new MDSKey.Builder();
-    addDataset(builder, datasetInstance);
-    builder.add(invertedTime);
+    addStream(builder, stream);
+    builder.add(invertedStartTime);
 
     return builder.build().getKey();
   }
 
   private byte[] getStreamScanStartKey(Id.Stream stream, long end) {
-    long invertedStartTime = invertTime(end);
-    MDSKey.Builder builder = new MDSKey.Builder();
-    addStream(builder, stream);
-    builder.add(invertedStartTime);
-
-    return builder.build().getKey();
+    // time is inverted, hence we need to have end time in start key.
+    // Since end time is exclusive, add 1 to make it inclusive.
+    return getStreamScanKey(stream, end + 1);
   }
 
-  private byte[] getStreamScanEndKey(Id.Stream stream) {
-    // TODO: the scan space can be further reduced by using min(all running program's start time) instead of 0L.
-    long invertedTime = invertTime(0L);
+  private byte[] getStreamScanEndKey(Id.Stream stream, long start) {
+    // time is inverted, hence we need to have start time in end key.
+    // Since start time is inclusive, subtract 1 to make it exclusive.
+    return getStreamScanKey(stream, start - 1);
+  }
+
+  private byte[] getProgramScanKey(Id.Program program, long time) {
+    long invertedStartTime = invertTime(time);
     MDSKey.Builder builder = new MDSKey.Builder();
-    addStream(builder, stream);
-    builder.add(invertedTime);
+    addProgram(builder, program);
+    builder.add(invertedStartTime);
 
     return builder.build().getKey();
   }
 
   private byte[] getProgramScanStartKey(Id.Program program, long end) {
-    long invertedStartTime = invertTime(end);
-    MDSKey.Builder builder = new MDSKey.Builder();
-    addProgram(builder, program);
-    builder.add(invertedStartTime);
-
-    return builder.build().getKey();
+    // time is inverted, hence we need to have end time in start key.
+    // Since end time is exclusive, add 1 to make it inclusive.
+    return getProgramScanKey(program, end + 1);
   }
 
-  private byte[] getProgramScanEndKey(Id.Program program) {
-    // TODO: the scan space can be further reduced by using min(all running program's start time) instead of 0L.
-    long invertedTime = invertTime(0L);
-    MDSKey.Builder builder = new MDSKey.Builder();
-    addProgram(builder, program);
-    builder.add(invertedTime);
-
-    return builder.build().getKey();
+  private byte[] getProgramScanEndKey(Id.Program program, long start) {
+    // time is inverted, hence we need to have start time in end key.
+    // Since start time is inclusive, subtract 1 to make it exclusive.
+    return getProgramScanKey(program, start - 1);
   }
 
   private byte[] getRunScanStartKey(Id.Run run) {
@@ -492,14 +499,14 @@ public class LineageDataset extends AbstractDataset {
       return new Relation(datasetInstance,
                           program,
                           accessType,
-                          ImmutableSet.of(runId),
+                          runId,
                           component == null ? ImmutableSet.<Id.NamespacedId>of() : ImmutableSet.of(component));
     }
 
     return new Relation(stream,
                         program,
                         accessType,
-                        ImmutableSet.of(runId),
+                        runId,
                         component == null ? ImmutableSet.<Id.NamespacedId>of() : ImmutableSet.of(component));
   }
 }

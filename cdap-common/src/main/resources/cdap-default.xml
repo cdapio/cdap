@@ -189,7 +189,7 @@
     <name>app.artifact.dir</name>
     <value>/opt/cdap/master/artifacts</value>
     <description>
-      Directory where all archives for application templates are stored
+      Directory where all system artifacts and their corresponding config files are stored
     </description>
   </property>
 
@@ -232,23 +232,6 @@
     <description>
       Temp directory
     </description>
-  </property>
-
-  <property>
-    <name>app.template.dir</name>
-    <value>/opt/cdap/master/templates</value>
-    <description>
-      Directory where all archives for application templates are stored
-    </description>
-  </property>
-
-  <property>
-    <name>app.template.plugin.dir</name>
-    <value>${app.template.dir}/plugins</value>
-    <description>
-      Directory where application template plugins are stored
-    </description>
-    <final>true</final>
   </property>
 
   <property>
@@ -830,6 +813,68 @@
   </property>
 
 
+  <!-- Metadata Configuration -->
+
+  <property>
+    <name>metadata.max.allowed.chars</name>
+    <value>50</value>
+    <description>
+      Maximum number of characters for metadata keys, values, and tags
+    </description>
+  </property>
+  
+  <property>
+    <name>metadata.service.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      Default inet address for binding metadata HTTP service
+    </description>
+  </property>
+
+  <property>
+    <name>metadata.service.exec.threads</name>
+    <value>${http.service.exec.threads}</value>
+    <description>
+      Number of Netty server executor threads for metadata HTTP service
+    </description>
+  </property>
+
+  <property>
+    <name>metadata.service.worker.threads</name>
+    <value>${http.service.worker.threads}</value>
+    <description>
+      Number of Netty server IO worker threads for metadata HTTP service
+    </description>
+  </property>
+
+  <property>
+    <name>metadata.updates.kafka.broker.list</name>
+    <value>127.0.0.1:${kafka.bind.port}</value>
+    <description>
+      Kafka broker list to which metadata update notifications are published
+    </description>
+  </property>
+  
+  <property>
+    <name>metadata.updates.kafka.topic</name>
+    <value>cdap-metadata-updates</value>
+    <description>
+      Kafka topic to which metadata update notifications are published
+    </description>
+  </property>
+
+  <property>
+    <name>metadata.updates.publish.enabled</name>
+    <value>true</value>
+    <description>
+      Determines if metadata updates will be published to Apache Kafka.
+      External systems can subscribe to the Kafka topic determined by
+      ${metadata.updates.kafka.topic} to receive notifications of metadata
+      updates.
+    </description>
+  </property>
+
+
   <!-- Metrics Configuration -->
 
   <property>
@@ -1156,10 +1201,10 @@
     <name>cdap.master.kerberos.principal</name>
     <value></value>
     <description>
-      Example: "CDAP_PRINCIPAL/_HOST@EXAMPLE.COM". The Kerberos principal
-      name that should be used to login to the CDAP Master process.
-      Substitute the Kerberos principal for CDAP_PRINCIPAL, and your domain
-      for EXAMPLE.COM. The string "_HOST" will be substituted with the local
+      Example: "CDAP_PRINCIPAL/_HOST@EXAMPLE.COM". The Kerberos primary user
+      that should be used to login to the CDAP Master process. Substitute
+      the Kerberos primary (user) for CDAP_PRINCIPAL, and your domain for
+      EXAMPLE.COM. The string "_HOST" will be substituted with the local
       hostname.
     </description>
   </property>
@@ -1531,39 +1576,6 @@
     <value>127.0.0.1</value>
     <description>
       Router address to which CDAP UI connects
-    </description>
-  </property>
-
-  <property>
-    <name>metadata.service.bind.address</name>
-    <value>0.0.0.0</value>
-    <description>Default inet address for binding Metadata HTTP service</description>
-  </property>
-
-  <property>
-    <name>metadata.service.worker.threads</name>
-    <value>${http.service.worker.threads}</value>
-    <description>Number of Netty server IO worker threads for metadata HTTP service</description>
-  </property>
-
-  <property>
-    <name>metadata.service.exec.threads</name>
-    <value>${http.service.exec.threads}</value>
-    <description>Number of Netty server executor threads for metadata HTTP service</description>
-  </property>
-
-  <property>
-    <name>metadata.updates.kafka.topic</name>
-    <value>metadata-updates</value>
-    <description>Kafka topic to which metadata update notifications are published</description>
-  </property>
-
-  <property>
-    <name>metadata.updates.publish.enabled</name>
-    <value>true</value>
-    <description>
-      Determines if metadata updates will be published to Apache Kafka. External systems can subscribe to the
-      Kafka topic determined by ${metadata.updates.kafka.topic} to receive notifications of metadata updates.
     </description>
   </property>
 

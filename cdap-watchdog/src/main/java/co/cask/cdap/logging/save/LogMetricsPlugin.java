@@ -81,7 +81,7 @@ public class LogMetricsPlugin extends AbstractKafkaLogProcessor {
     }
 
     checkPointWriter = new CheckPointWriter(checkpointManager, partitionCheckpoints);
-    scheduledExecutor.scheduleWithFixedDelay(checkPointWriter, 100, 200, TimeUnit.MILLISECONDS);
+    scheduledExecutor.scheduleWithFixedDelay(checkPointWriter, 100, 10000, TimeUnit.MILLISECONDS);
   }
 
   @Override

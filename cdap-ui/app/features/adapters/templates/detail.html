@@ -86,7 +86,9 @@
     </div>
 
     <div class="btn"
-      ng-click="do('Delete')">
+      ng-click="caskConfirm()"
+      cask-confirmable="do('Delete')"
+      data-confirmable-content="Are you sure you want to delete this pipeline?">
       Delete
     </div>
 

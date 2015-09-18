@@ -293,6 +293,7 @@ angular.module(PKG.name + '.services')
       var config = {
         id: conf.id,
         name: conf.name,
+        label: conf.label || conf.pluginTemplate || conf.name,
         icon: conf.icon,
         style: conf.style || '',
         description: conf.description,
@@ -335,7 +336,7 @@ angular.module(PKG.name + '.services')
       }
 
       var left = initial + offsetLeft;
-      var top = 250 + offsetTop;
+      var top = 150 + offsetTop;
 
       if (inCreationMode) {
         config.style = {
@@ -478,7 +479,8 @@ angular.module(PKG.name + '.services')
           // Should be removed while saving it to backend.
           id: plugin.id,
           name: plugin.name,
-          properties: plugin.properties || {},
+          label: plugin.label,
+          properties: plugin.properties,
           _backendProperties: plugin._backendProperties
         };
 

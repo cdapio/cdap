@@ -23,6 +23,7 @@ angular.module(PKG.name + '.feature.adapters')
       nodes.push({
         id: config.source.name + '-source-' + (++i),
         name: config.source.name,
+        label: config.source.label || config.source.name,
         type: GLOBALS.pluginTypes[type].source,
         properties: config.source.properties
       });
@@ -30,6 +31,7 @@ angular.module(PKG.name + '.feature.adapters')
         nodes.push({
           id: transform.name + '-transform-' + (++i),
           name: transform.name,
+          label: transform.label || transform.name,
           type: 'transform',
           properties: transform.properties,
           errorDatasetName: transform.errorDatasetName,
@@ -40,6 +42,7 @@ angular.module(PKG.name + '.feature.adapters')
         nodes.push({
           id: sink.name + '-sink-' + (++i),
           name: sink.name,
+          label: sink.label || sink.name,
           type: GLOBALS.pluginTypes[type].sink,
           properties: sink.properties
         });

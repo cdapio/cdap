@@ -15,14 +15,14 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state, $stateParams, GLOBALS) {
+  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $alert, $bootstrapModal, $state, $stateParams, GLOBALS) {
 
     this.metadata = MyAppDAGService['metadata'];
     function resetMetadata() {
       this.metadata = MyAppDAGService['metadata'];
     }
     this.GLOBALS = GLOBALS;
-
+    this.metadataExpanded = false;
     MyAppDAGService.registerResetCallBack(resetMetadata.bind(this));
 
     if ($stateParams.name) {
@@ -38,59 +38,29 @@ angular.module(PKG.name + '.feature.adapters')
         });
       }
     }
+    this.saveMetadata = function() {
+      this.metadata['name'] = this.pipelineName;
+      this.metadata['description'] = this.pipelineDescription;
+      this.metadataExpanded = false;
+    };
 
-    this.showMetadataModal = function() {
+    this.openMetadata = function () {
+      if (this.metadataExpanded) { return; }
       EventPipe.emit('popovers.close');
+      var name = this.metadata.name;
+      var description = this.metadata.description;
+      this.metadataExpanded = true;
+      this.pipelineName = name;
+      this.pipelineDescription = description;
+    };
 
-      if (this.metadata.error) {
-        delete this.metadata.error;
-      }
-      MyAppDAGService.isConfigTouched = true;
-      $bootstrapModal
-        .open({
-          templateUrl: '/assets/features/adapters/templates/create/popovers/metadata-detail.html',
-          size: 'lg',
-          windowClass: 'adapter-modal',
-          keyboard: true,
-          controller: ['$scope', 'metadata', function($scope, metadata) {
-            $scope.modelCopy = angular.copy(this.metadata);
-            $scope.metadata = metadata;
-            $scope.reset = function () {
-              metadata['name'] = $scope.modelCopy.name;
-              metadata['description'] = $scope.modelCopy.description;
-            }.bind(this);
-
-            function closeFn() {
-              $scope.reset();
-              $scope.$close('cancel');
-            }
-
-            ModalConfirm.confirmModalAdapter(
-              $scope,
-              $scope.metadata,
-              $scope.modelCopy,
-              closeFn
-            );
-
-
-          }.bind(this)],
-          resolve: {
-            metadata: function() {
-              return this['metadata'];
-            }.bind(this)
-          }
-        })
-        .result
-        .finally(function() {
-          MyAppDAGService.metadata.name = this.metadata.name;
-          MyAppDAGService.metadata.description = this.metadata.description;
-        }.bind(this));
+    this.resetMetadata = function() {
+      this.pipelineName = this.metadata.name;
+      this.pipelineDescription = this.metadata.description;
+      this.metadataExpanded = false;
     };
 
     this.canvasOperations = [
-      {
-        name: 'Import'
-      },
       {
         name: 'Export'
       },
@@ -102,9 +72,6 @@ angular.module(PKG.name + '.feature.adapters')
       },
       {
         name: 'Publish'
-      },
-      {
-        name: 'Config'
       }
     ];
 
@@ -113,44 +80,39 @@ angular.module(PKG.name + '.feature.adapters')
       var config;
       switch(group.name) {
         case 'Export':
-          CanvasFactory
-            .exportAdapter(
-              MyAppDAGService.getConfigForBackend(),
-              MyAppDAGService.metadata.name,
-              MyAppDAGService.nodes,
-              MyAppDAGService.connections)
-            .then(
-              function success(result) {
-                this.exportFileName = result.name;
-                this.url = result.url;
-                $scope.$on('$destroy', function () {
-                  URL.revokeObjectURL(this.url);
-                }.bind(this));
-                // Clicking on the hidden download button. #hack.
-                $timeout(function() {
-                  document.getElementById('adapter-export-config-link').click();
-                });
-              }.bind(this),
-              function error() {
-                console.log('ERROR: ' + 'exporting adapter failed');
-              }
-            );
-          break;
-        case 'Import':
-          // Clicking on the hidden upload button. #hack.
-          $timeout(function() {
-            document.getElementById('adapter-import-config-link').click();
-          });
-          break;
-        case 'Config':
           config = angular.copy(MyAppDAGService.getConfigForBackend());
           $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/popovers/viewconfig.html',
             size: 'lg',
-            windowClass: 'adapter-modal',
+            windowClass: 'cdap-modal',
             keyboard: true,
-            controller: ['$scope', 'config', function($scope, config) {
+            controller: ['$scope', 'config', 'CanvasFactory', 'MyAppDAGService', function($scope, config, CanvasFactory, MyAppDAGService) {
               $scope.config = JSON.stringify(config);
+
+              $scope.export = function () {
+                CanvasFactory
+                  .exportAdapter(
+                    MyAppDAGService.getConfigForBackend(),
+                    MyAppDAGService.metadata.name,
+                    MyAppDAGService.nodes,
+                    MyAppDAGService.connections)
+                  .then(
+                    function success(result) {
+                      $scope.exportFileName = result.name;
+                      $scope.url = result.url;
+                      $scope.$on('$destroy', function () {
+                        URL.revokeObjectURL($scope.url);
+                      });
+                      // Clicking on the hidden download button. #hack.
+                      $timeout(function() {
+                        document.getElementById('adapter-export-config-link').click();
+                      });
+                    }.bind(this),
+                    function error() {
+                      console.log('ERROR: ' + 'exporting adapter failed');
+                    }
+                  );
+              };
             }],
             resolve: {
               config: function() {
