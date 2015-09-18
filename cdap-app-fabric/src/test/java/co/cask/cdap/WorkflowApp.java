@@ -24,6 +24,7 @@ import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
@@ -69,6 +70,7 @@ public class WorkflowApp extends AbstractApplication {
       setDescription("FunWorkflow description");
       addMapReduce("ClassicWordCount");
       addAction(new CustomAction("verify"));
+      addAction(new LegacyAction("verify-too"));
       addSpark("SparkWorkflowTest");
     }
   }
@@ -142,6 +144,50 @@ public class WorkflowApp extends AbstractApplication {
   /**
    *
    */
+  public static final class LegacyAction implements WorkflowAction {
+
+    private static final Logger LOG = LoggerFactory.getLogger(CustomAction.class);
+
+    private final String name;
+    private WorkflowContext context;
+
+    @Property
+    private final boolean condition = true;
+
+    public LegacyAction(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public WorkflowActionSpecification configure() {
+      return WorkflowActionSpecification.Builder.with()
+        .setName(name)
+        .setDescription(name)
+        .build();
+    }
+
+    @Override
+    public void initialize(WorkflowContext context) throws Exception {
+      this.context = context;
+      LOG.info("Legacy action initialized: " + context.getSpecification().getName());
+    }
+
+    @Override
+    public void destroy() {
+      LOG.info("Legacy action destroyed: " + context.getSpecification().getName());
+    }
+
+    @Override
+    public void run() {
+      LOG.info("Legacy action run");
+      Preconditions.checkArgument(condition && "value".equals(context.getToken().get("tokenKey")));
+      LOG.info("Legacy run completed.");
+    }
+  }
+
+  /**
+   *
+   */
   public static final class CustomAction extends AbstractWorkflowAction {
 
     private static final Logger LOG = LoggerFactory.getLogger(CustomAction.class);
@@ -182,9 +228,7 @@ public class WorkflowApp extends AbstractApplication {
     public void run() {
       LOG.info("Custom action run");
       File outputDir = new File(getContext().getRuntimeArguments().get("outputPath"));
-
       Preconditions.checkState(condition && new File(outputDir, "_SUCCESS").exists());
-
       LOG.info("Custom run completed.");
     }
   }
