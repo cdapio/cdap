@@ -20,7 +20,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     var vm = this;
 
-    vm.preconfigured = true;
+    vm.preconfigured = false;
     vm.templates = [];
 
     myAdapterTemplatesApi.list({
