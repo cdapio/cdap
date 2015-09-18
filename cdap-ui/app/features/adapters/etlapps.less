@@ -71,9 +71,23 @@ body.theme-cdap.state-adapters {
 body.theme-cdap.state-adapters-detail,
 body.theme-cdap.state-adapters-create {
 
+  .btn {
 
+    &.btn-orange, &.btn-grey {
+      color: white;
+      padding: 9px 20px;
+    }
 
+    &.btn-orange {
+      background-color: @cdap-orange;
+      color: white;
+    }
 
+    &.btn-grey {
+      background-color: #ccc;
+      color: white;
+    }
+  }
 
   .ui-select-container.ui-select-bootstrap {
     .ui-select-toggle {

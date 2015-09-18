@@ -89,9 +89,6 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.canvasOperations = [
       {
-        name: 'Import'
-      },
-      {
         name: 'Export'
       },
       {
@@ -102,9 +99,6 @@ angular.module(PKG.name + '.feature.adapters')
       },
       {
         name: 'Publish'
-      },
-      {
-        name: 'Config'
       }
     ];
 
@@ -113,44 +107,39 @@ angular.module(PKG.name + '.feature.adapters')
       var config;
       switch(group.name) {
         case 'Export':
-          CanvasFactory
-            .exportAdapter(
-              MyAppDAGService.getConfigForBackend(),
-              MyAppDAGService.metadata.name,
-              MyAppDAGService.nodes,
-              MyAppDAGService.connections)
-            .then(
-              function success(result) {
-                this.exportFileName = result.name;
-                this.url = result.url;
-                $scope.$on('$destroy', function () {
-                  URL.revokeObjectURL(this.url);
-                }.bind(this));
-                // Clicking on the hidden download button. #hack.
-                $timeout(function() {
-                  document.getElementById('adapter-export-config-link').click();
-                });
-              }.bind(this),
-              function error() {
-                console.log('ERROR: ' + 'exporting adapter failed');
-              }
-            );
-          break;
-        case 'Import':
-          // Clicking on the hidden upload button. #hack.
-          $timeout(function() {
-            document.getElementById('adapter-import-config-link').click();
-          });
-          break;
-        case 'Config':
           config = angular.copy(MyAppDAGService.getConfigForBackend());
           $bootstrapModal.open({
             templateUrl: '/assets/features/adapters/templates/create/popovers/viewconfig.html',
             size: 'lg',
-            windowClass: 'adapter-modal',
+            windowClass: 'cdap-modal',
             keyboard: true,
-            controller: ['$scope', 'config', function($scope, config) {
+            controller: ['$scope', 'config', 'CanvasFactory', 'MyAppDAGService', function($scope, config, CanvasFactory, MyAppDAGService) {
               $scope.config = JSON.stringify(config);
+
+              $scope.export = function () {
+                CanvasFactory
+                  .exportAdapter(
+                    MyAppDAGService.getConfigForBackend(),
+                    MyAppDAGService.metadata.name,
+                    MyAppDAGService.nodes,
+                    MyAppDAGService.connections)
+                  .then(
+                    function success(result) {
+                      $scope.exportFileName = result.name;
+                      $scope.url = result.url;
+                      $scope.$on('$destroy', function () {
+                        URL.revokeObjectURL($scope.url);
+                      });
+                      // Clicking on the hidden download button. #hack.
+                      $timeout(function() {
+                        document.getElementById('adapter-export-config-link').click();
+                      });
+                    }.bind(this),
+                    function error() {
+                      console.log('ERROR: ' + 'exporting adapter failed');
+                    }
+                  );
+              };
             }],
             resolve: {
               config: function() {
