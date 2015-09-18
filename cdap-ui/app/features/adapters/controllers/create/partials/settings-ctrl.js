@@ -61,7 +61,6 @@ angular.module(PKG.name + '.feature.adapters')
     this.reset = function() {
       $timeout(function () {
         this.initialCron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '* * * * *';
-        console.log('cron', this.cron, this.initialCron);
       }.bind(this));
 
 
