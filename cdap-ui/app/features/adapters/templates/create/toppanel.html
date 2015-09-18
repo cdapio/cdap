@@ -69,12 +69,3 @@
   </div>
 
 </div>
-
-<!-- Hidden links for downloading/uploading configs -->
-<a class="sr-only" id="adapter-export-config-link" href="{{TopPanelController.url}}" download="{{TopPanelController.exportFileName}}.json">Export</a>
-<my-file-select class="sr-only"
-                id="adapter-import-config-link"
-                data-button-icon="fa-upload"
-                on-file-select="TopPanelController.importFile($files)"
-                data-button-label="Import">
-</my-file-select>

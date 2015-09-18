@@ -27,10 +27,10 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
+import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
 import co.cask.cdap.internal.app.services.ServiceHttpServer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -40,37 +40,31 @@ import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocationFactory;
-
-import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramRunner} that runs a component inside a Service (either a HTTP Server or a Worker).
  */
-public class ServiceProgramRunner implements ProgramRunner {
+public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
 
-  private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final ServiceAnnouncer serviceAnnouncer;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
-  private final LocationFactory locationFactory;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                               DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                               TransactionSystemClient txClient, ServiceAnnouncer serviceAnnouncer,
-                              DataFabricFacadeFactory dataFabricFacadeFactory, LocationFactory locationFactory) {
-    this.cConf = cConf;
+                              DataFabricFacadeFactory dataFabricFacadeFactory) {
+    super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.serviceAnnouncer = serviceAnnouncer;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
-    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -106,18 +100,13 @@ public class ServiceProgramRunner implements ProgramRunner {
     ServiceHttpServer component = new ServiceHttpServer(host, program, spec, runId, options.getUserArguments(),
                                       instanceId, instanceCount, serviceAnnouncer,
                                       metricsCollectionService, datasetFramework, dataFabricFacadeFactory,
-                                      txClient, discoveryServiceClient, locationFactory,
-                                      createArtifactPluginInstantiator(program.getClassLoader()));
+                                      txClient, discoveryServiceClient,
+                                      createPluginInstantiator(options, program.getClassLoader()));
 
     ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId(), runId,
                                                                        spec.getName() + "-" + instanceId);
     component.start();
     return controller;
-  }
-
-  @Nullable
-  private PluginInstantiator createArtifactPluginInstantiator(ClassLoader classLoader) {
-    return new PluginInstantiator(cConf, classLoader);
   }
 
   private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {

@@ -15,23 +15,16 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('LeftPanelController', function($q, myAdapterApi, MyAppDAGService, MyDAGFactory, myAdapterTemplatesApi, CanvasFactory, $alert, mySettings, $state, MySidebarService, $scope, rVersion, $stateParams, GLOBALS) {
+  .controller('LeftPanelController', function(myAdapterApi, MyAppDAGService, MyDAGFactory, mySettings, $state, MySidebarService, $scope, rVersion, $stateParams, GLOBALS) {
     this.pluginTypes = [
       {
-        name: 'source',
-        icon: 'icon-ETLsources'
+        name: 'source'
       },
       {
-        name: 'transform',
-        icon: 'icon-ETLtransforms'
+        name: 'transform'
       },
       {
-        name: 'sink',
-        icon: 'icon-ETLsinks'
-      },
-      {
-        name: 'templates',
-        icon: 'icon-ETLtemplates'
+        name: 'sink'
       }
     ];
 
@@ -50,7 +43,6 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.onLeftSideGroupItemClicked = function(group) {
       var prom;
-      var templatedefer = $q.defer();
       var templateType = MyAppDAGService.metadata.template.type;
       var params = {
         namespace: $stateParams.namespace,
@@ -70,22 +62,7 @@ angular.module(PKG.name + '.feature.adapters')
           params.extensionType = GLOBALS.pluginTypes[templateType].sink;
           prom = myAdapterApi.fetchSinks(params).$promise;
           break;
-        case 'templates':
-          prom = myAdapterTemplatesApi.list({
-              apptype: MyAppDAGService.metadata.template.type
-            })
-              .$promise
-              .then(function(res) {
-                var plugins = res.map(function(plugin) {
-                  return {
-                    name: plugin.name,
-                    description: plugin.description,
-                    icon: 'icon-ETLtemplates'
-                  };
-                });
-                templatedefer.resolve(plugins);
-                return templatedefer.promise;
-              });
+
       }
       prom
         .then(function(res) {
@@ -112,11 +89,13 @@ angular.module(PKG.name + '.feature.adapters')
             }
 
             var templates = res[$state.params.namespace][MyAppDAGService.metadata.template.type];
-            if (!templates || group.name === 'templates') {
+            if (!templates) {
               return;
             }
 
-            this.plugins.items = this.plugins.items.concat(objectToArray(templates[group.name]));
+            this.plugins.items = this.plugins.items.concat(
+              objectToArray(templates[GLOBALS.pluginTypes[templateType][group.name]])
+            );
           }.bind(this),
           function error() {
             console.log('ERROR: fetching plugin templates');
@@ -130,27 +109,6 @@ angular.module(PKG.name + '.feature.adapters')
         delete this.pluginTypes[0].error;
       } else if (item.type === 'sink' && this.pluginTypes[2].error) {
         delete this.pluginTypes[2].error;
-      } else if (item.type === 'templates') {
-        myAdapterTemplatesApi.get({
-          apptype: MyAppDAGService.metadata.template.type,
-          appname: item.name
-        })
-          .$promise
-          .then(function(res) {
-            var result = CanvasFactory.parseImportedJson(
-              JSON.stringify(res),
-              MyAppDAGService.metadata.template.type
-            );
-            if (result.error) {
-              $alert({
-                type: 'danger',
-                content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app'
-              });
-            } else {
-              MyAppDAGService.onImportSuccess.call(MyAppDAGService, result);
-            }
-          }.bind(this));
-        return;
       }
 
       // TODO: Better UUID?

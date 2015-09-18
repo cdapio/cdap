@@ -36,6 +36,7 @@ import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.AbstractResourceReporter;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.proto.Containers;
@@ -118,8 +119,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                    Store store, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                    MetricsCollectionService metricsCollectionService,
                                    Configuration hConf, CConfiguration cConf,
-                                   TransactionExecutorFactory txExecutorFactory) {
-    super(programRunnerFactory);
+                                   TransactionExecutorFactory txExecutorFactory,
+                                   ArtifactRepository artifactRepository) {
+    super(cConf, programRunnerFactory, artifactRepository);
     this.twillRunner = twillRunner;
     this.store = store;
     this.queueAdmin = queueAdmin;

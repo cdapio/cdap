@@ -16,8 +16,6 @@
 
 package co.cask.cdap.app.metrics;
 
-import org.apache.hadoop.mapreduce.TaskType;
-
 import javax.annotation.Nullable;
 
 /**

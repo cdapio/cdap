@@ -30,11 +30,11 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.PluginClassDeserializer;
 import co.cask.cdap.common.http.AbstractBodyConsumer;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
-import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import co.cask.cdap.internal.app.runtime.artifact.PluginNotExistsException;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
+import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
@@ -413,9 +413,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         }
 
         private String getBundleVersion(File file) throws BadRequestException, IOException {
-          try {
-            JarFile jarFile = new JarFile(file);
-
+          try (JarFile jarFile = new JarFile(file)) {
             Manifest manifest = jarFile.getManifest();
             if (manifest == null) {
               throw new BadRequestException(

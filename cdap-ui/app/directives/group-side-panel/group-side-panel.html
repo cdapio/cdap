@@ -39,10 +39,7 @@
         <div tooltip="{{ group.name | caskCapitalizeFilter }}"
              tooltip-placement="{{ MySidePanel.placement === 'left' ? 'top' : 'left' }}"
              tooltip-enable="isExpanded === false && !group.error">
-          <span ng-if="isExpanded === true" class="{{group.icon}}"></span>
           <span class="name">{{group.name | caskCapitalizeFilter}}</span>
-          <span class="fa pull-right"
-                ng-class="{'fa-chevron-right': MySidePanel.openedGroup !== group.name, 'fa-chevron-down': MySidePanel.openedGroup === group.name}"></span>
         </div>
       </div>
 

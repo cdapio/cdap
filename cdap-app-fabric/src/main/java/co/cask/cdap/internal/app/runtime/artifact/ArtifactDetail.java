@@ -16,8 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
-import co.cask.cdap.internal.app.runtime.adapter.ArtifactDescriptor;
-
 /**
  * Details about an artifact, including info about the artifact itself and metadata about the contents of the artifact.
  */

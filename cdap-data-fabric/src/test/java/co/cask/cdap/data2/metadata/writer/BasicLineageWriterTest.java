@@ -29,6 +29,7 @@ import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
 import co.cask.cdap.data2.metadata.publisher.NoOpMetadataChangePublisher;
 import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.DefaultBusinessMetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -109,6 +110,7 @@ public class BasicLineageWriterTest {
             .annotatedWith(Names.named(DataSetsModules.BASIC_DATASET_FRAMEWORK))
             .to(InMemoryDatasetFramework.class);
           bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
+          bind(BusinessMetadataStore.class).to(DefaultBusinessMetadataStore.class);
         }
       }
     );

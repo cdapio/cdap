@@ -35,7 +35,11 @@ angular.module(PKG.name + '.feature.admin')
         vm.list = [];
 
         [ GLOBALS.etlBatch, GLOBALS.etlRealtime].forEach(function (templateType) {
-          ['source', 'transform', 'sink'].forEach(function (pluginType) {
+          [
+            GLOBALS.pluginTypes[templateType].source,
+            GLOBALS.pluginTypes[templateType].transform,
+            GLOBALS.pluginTypes[templateType].sink
+          ].forEach(function (pluginType) {
             var obj = myHelpers.objectQuery(response, $stateParams.nsadmin, templateType, pluginType);
             var pluginArray = objectToArray(obj);
             vm.list = vm.list.concat(pluginArray);

@@ -31,32 +31,32 @@ public class Relation {
   private final Id.NamespacedId data;
   private final Id.Program program;
   private final AccessType access;
-  private final Set<RunId> runs;
+  private final RunId run;
   private final Set<Id.NamespacedId> components;
 
-  public Relation(Id.DatasetInstance data, Id.Program program, AccessType access, Set<RunId> runs) {
-    this(data, program, access, runs, Collections.<Id.NamespacedId>emptySet());
+  public Relation(Id.DatasetInstance data, Id.Program program, AccessType access, RunId run) {
+    this(data, program, access, run, Collections.<Id.NamespacedId>emptySet());
   }
 
-  public Relation(Id.DatasetInstance data, Id.Program program, AccessType access, Set<RunId> runs,
+  public Relation(Id.DatasetInstance data, Id.Program program, AccessType access, RunId run,
                   Set<? extends Id.NamespacedId> components) {
     this.data = data;
     this.program = program;
     this.access = access;
-    this.runs = ImmutableSet.copyOf(runs);
+    this.run = run;
     this.components = ImmutableSet.copyOf(components);
   }
 
-  public Relation(Id.Stream stream, Id.Program program, AccessType access, Set<RunId> runs) {
-    this(stream, program, access, runs, Collections.<Id.NamespacedId>emptySet());
+  public Relation(Id.Stream stream, Id.Program program, AccessType access, RunId run) {
+    this(stream, program, access, run, Collections.<Id.NamespacedId>emptySet());
   }
 
-  public Relation(Id.Stream stream, Id.Program program, AccessType access, Set<RunId> runs,
+  public Relation(Id.Stream stream, Id.Program program, AccessType access, RunId run,
                   Set<? extends Id.NamespacedId> components) {
     this.data = stream;
     this.program = program;
     this.access = access;
-    this.runs = ImmutableSet.copyOf(runs);
+    this.run = run;
     this.components = ImmutableSet.copyOf(components);
   }
 
@@ -72,8 +72,8 @@ public class Relation {
     return access;
   }
 
-  public Set<RunId> getRuns() {
-    return runs;
+  public RunId getRun() {
+    return run;
   }
 
   public Set<Id.NamespacedId> getComponents() {
@@ -92,13 +92,13 @@ public class Relation {
     return Objects.equals(data, relation.data) &&
       Objects.equals(program, relation.program) &&
       Objects.equals(access, relation.access) &&
-      Objects.equals(runs, relation.runs) &&
+      Objects.equals(run, relation.run) &&
       Objects.equals(components, relation.components);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(data, program, access, runs, components);
+    return Objects.hash(data, program, access, run, components);
   }
 
   @Override
@@ -107,7 +107,7 @@ public class Relation {
       "data=" + data +
       ", program=" + program +
       ", access=" + access +
-      ", runs=" + runs +
+      ", runs=" + run +
       ", components=" + components +
       '}';
   }

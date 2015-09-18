@@ -178,10 +178,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // stop individual runs of the map-reduce program
     String runId = historyRuns.get(0).getPid();
-    stopProgram(dummyMR2, 200, runId);
+    stopProgram(dummyMR2, runId, 200);
 
     runId = historyRuns.get(1).getPid();
-    stopProgram(dummyMR2, 200, runId);
+    stopProgram(dummyMR2, runId, 200);
 
     waitState(dummyMR2, STOPPED);
 
@@ -252,7 +252,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     stopProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME), 400);
     // stop run of a program with ill-formed run id
     stopProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
-                400, "norunid");
+                "norunid", 400);
 
     // start program twice
     startProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME));
@@ -278,7 +278,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     // stop run of the program that is not running
     stopProgram(Id.Program.from(TEST_NAMESPACE1, WORDCOUNT_APP_NAME, ProgramType.FLOW, WORDCOUNT_FLOW_NAME),
-                404, runId); // active run not found
+                runId, 404); // active run not found
 
     // cleanup
     response = doDelete(getVersionedAPIPath("apps/", Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1));

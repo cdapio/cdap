@@ -16,6 +16,7 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -37,16 +38,19 @@ public interface MetadataAdmin {
    * Existing keys are updated with new values, newer keys are appended to the metadata.
    *
    * @throws NotFoundException if the specified entity was not found
+   * @throws InvalidMetadataException if some of the properties violate metadata validation rules
    */
-  void addProperties(Id.NamespacedId entityId, Map<String, String> properties) throws NotFoundException;
+  void addProperties(Id.NamespacedId entityId, Map<String, String> properties)
+    throws NotFoundException, InvalidMetadataException;
 
   /**
    * Adds the specified tags to specified {@link Id.Application}, {@link Id.Program}, {@link Id.DatasetInstance} or
    * {@link Id.Stream}.
    *
    * @throws NotFoundException if the specified entity was not found
+   * @throws InvalidMetadataException if some of the properties violate metadata validation rules
    */
-  void addTags(Id.NamespacedId entityId, String... tags) throws NotFoundException;
+  void addTags(Id.NamespacedId entityId, String... tags) throws NotFoundException, InvalidMetadataException;
 
   /**
    * Returns a set of {@link MetadataRecord} representing all metadata (including properties and tags) for the specified

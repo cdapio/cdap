@@ -17,6 +17,7 @@
 package co.cask.cdap.api;
 
 import java.net.URL;
+import javax.annotation.Nullable;
 
 /**
  * An interface for Discovery Service.
@@ -30,6 +31,7 @@ public interface ServiceDiscoverer {
    * @param serviceId     Service name
    * @return URL for the discovered service or null if the service is not found
    */
+  @Nullable
   URL getServiceURL(String applicationId, String serviceId);
 
   /**
@@ -38,5 +40,6 @@ public interface ServiceDiscoverer {
    * @param serviceId Service Name
    * @return URL for the discovered service or null if the service is not found
    */
+  @Nullable
   URL getServiceURL(String serviceId);
 }

@@ -30,17 +30,21 @@ create_pid_dir() {
   mkdir -p "${PID_DIR}"
 }
 
+die() {
+  echo "ERROR: ${*}"
+  exit 1
+}
+
 # usage: get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml false
 get_conf() {
   local __pn=${1} __fn=${2} __default=${3} __result=
   # Check for xmllint
   [[ $(which xmllint 2>/dev/null) ]] || {
     case ${PLATFORM} in
-      RHEL) echo "Cannot locate xmllint, is libxml2 installed?" ;;
-      UBUNTU) echo "Cannot locate xmllint, is libxml2-utils installed?" ;;
-      *) echo "Cannot locate xmllint, are XML tools installed?" ;;
+      RHEL) die "Cannot locate xmllint, is libxml2 installed?" ;;
+      UBUNTU) die "Cannot locate xmllint, is libxml2-utils installed?" ;;
+      *) die "Cannot locate xmllint, are XML tools installed?" ;;
     esac
-    return 1
   }
   # Get property from file, return last result, if multiple are returned
   __property="cat //configuration/property[name='${__pn}']/value[text()]"

@@ -21,6 +21,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.apache.twill.api.RunId;
@@ -74,7 +75,7 @@ public class LineageRecord {
       String programKey = makeProgramKey(relation.getProgram());
       RelationRecord relationRecord = new RelationRecord(dataKey, programKey,
                                                       relation.getAccess().toString().toLowerCase(),
-                                                      convertRuns(relation.getRuns()),
+                                                      convertRuns(relation.getRun()),
                                                       convertComponents(relation.getComponents()));
       relations.add(relationRecord);
       programs.put(programKey, ImmutableMap.of("id", toProgramRecord(relation.getProgram())));
@@ -114,8 +115,8 @@ public class LineageRecord {
       '}';
   }
 
-  private Set<String> convertRuns(Set<RunId> runIds) {
-    return Sets.newHashSet(Iterables.transform(runIds, RUN_ID_STRING_FUNCTION));
+  private Set<String> convertRuns(RunId runId) {
+    return ImmutableSet.of(runId.getId());
   }
 
   private Set<String> convertComponents(Set<Id.NamespacedId> components) {

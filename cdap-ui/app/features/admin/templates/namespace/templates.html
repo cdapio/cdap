@@ -25,17 +25,16 @@
 </div>
 <div ng-if="!TemplatesController.isEdit">
   <label class="label-control">Choose Templates</label>
-  <select ng-model="TemplatesController.templateType" class="form-control">
-    <option value="TemplatesController.GLOBALS.etlBatch">ETL Batch</option>
-    <option value="TemplatesController.GLOBALS.etlRealtime">ETL Realtime</option>
+  <select ng-model="TemplatesController.templateType"
+          data-ng-options="o for o in TemplatesController.templationoptions"
+          class="form-control">
   </select>
 
   <div ng-if="TemplatesController.templateType">
     <label class="label-control">Choose Plugin Type</label>
-    <select ng-model="TemplatesController.pluginType" class="form-control">
-      <option value="source">Source</option>
-      <option value="transform">Transform</option>
-      <option value="sink">Sink</option>
+    <select ng-model="TemplatesController.pluginType"
+            data-ng-options="o for o in TemplatesController.pluginoptions"
+            class="form-control">
     </select>
   </div>
 

@@ -44,28 +44,31 @@ angular.module(PKG.name + '.feature.adapters')
     this.infoPluginCategory = $scope.plugin.type + 's';
 
     this.infoPluginName = $scope.plugin.name.toLowerCase();
+    var docsUrl = 'http://docs.cask.co/cdap/';
+    var etlPath = '/en/included-applications/etl/plugins/';
+    var hideNav = '.html?hidenav';
     if (this.infoPluginCategory === 'transforms') {
       this.infoPluginCategory = 'transformations';
       this.infoUrl = [
-        'http://docs.cask.co/cdap/',
+        docsUrl,
         $rootScope.cdapVersion,
-        '/en/application-templates/etl/templates/',
+        etlPath,
         this.infoPluginCategory,
         '/',
         this.infoPluginName,
-        '.html?hidenav'
+        hideNav
       ].join('');
     } else {
       this.infoUrl = [
-        'http://docs.cask.co/cdap/',
+        docsUrl,
         $rootScope.cdapVersion ,
-        '/en/application-templates/etl/templates/',
+        etlPath,
         this.infoPluginCategory,
         '/',
         this.infoPluginType,
         '/',
         this.infoPluginName,
-        '.html?hidenav'
+        hideNav
       ].join('');
     }
 
@@ -134,7 +137,12 @@ angular.module(PKG.name + '.feature.adapters')
               var strProp2 = JSON.stringify($scope.plugin.properties);
               var copyOutputSchema = JSON.stringify($scope.pluginCopy.outputSchema);
               var originalOutputSchema = JSON.stringify($scope.plugin.outputSchema);
-              if ( (strProp1 !== strProp2) || (copyOutputSchema !== originalOutputSchema) ) {
+              var copyLabel = $scope.pluginCopy.label;
+              var originLabel = $scope.plugin.label;
+              if ( (strProp1 !== strProp2) ||
+                   (copyOutputSchema !== originalOutputSchema) ||
+                   (copyLabel !== originLabel)
+                 ) {
                 $scope.data['isModelTouched'] = true;
               } else {
                 $scope.data['isModelTouched'] = false;
@@ -221,6 +229,7 @@ angular.module(PKG.name + '.feature.adapters')
       if (validateSchema()) {
         $scope.plugin.properties = angular.copy($scope.pluginCopy.properties);
         $scope.plugin.outputSchema = angular.copy($scope.pluginCopy.outputSchema);
+        $scope.plugin.label = $scope.pluginCopy.label;
         $scope.data['isModelTouched'] = false;
       }
     };

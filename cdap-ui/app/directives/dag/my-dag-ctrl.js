@@ -15,8 +15,9 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService) {
     this.plugins = $scope.config || [];
+    this.MyAppDAGService = MyAppDAGService;
     this.isDisabled = $scope.isDisabled;
     MyAppDAGService.setIsDisabled(this.isDisabled);
 
@@ -25,9 +26,17 @@ angular.module(PKG.name + '.commons')
 
     this.instance = null;
 
+    this.resetPluginSelection = function(plugin) {
+      angular.forEach(this.plugins, function(plug) {
+        plug.selected = false;
+        if (plug.id === plugin.id) {
+          plug.selected = true;
+        }
+      });
+    };
+
     this.addPlugin = function addPlugin(config, type) {
       closeAllPopovers();
-
       this.plugins.push(angular.extend({
         icon: MyDAGFactory.getIcon(config.name)
       }, config));
@@ -43,6 +52,7 @@ angular.module(PKG.name + '.commons')
       this.plugins.splice(index, 1);
       MyAppDAGService.removeNode(nodeId);
       MyAppDAGService.setConnections(this.instance.getConnections());
+      MyNodeConfigService.removePlugin(nodeId);
     };
 
     // Need to move this to the controller that is using this directive.
@@ -89,7 +99,7 @@ angular.module(PKG.name + '.commons')
       var margins, marginLeft;
       margins = $scope.getGraphMargins(this.plugins);
       marginLeft = margins.left;
-
+      this.instance.endpointAnchorClassPrefix = '';
       this.plugins.forEach(function(plugin) {
         plugin.icon = MyDAGFactory.getIcon(plugin.name);
         if (this.isDisabled) {
@@ -242,8 +252,6 @@ angular.module(PKG.name + '.commons')
       });
     }
 
-    MyAppDAGService.registerCallBack(this.addPlugin.bind(this));
-
     $scope.$on('$destroy', function() {
       closeAllPopovers();
       angular.forEach(popoverScopes, function (s) {
@@ -308,8 +316,11 @@ angular.module(PKG.name + '.commons')
         $timeout(this.drawGraph.bind(this));
     }
 
-    MyAppDAGService.registerResetCallBack(resetComponent.bind(this));
     if (this.plugins.length) {
       resetComponent.call(this);
     }
+
+    MyNodeConfigService.registerPluginResetCallback(this.resetPluginSelection.bind(this));
+    MyAppDAGService.registerCallBack(this.addPlugin.bind(this));
+    MyAppDAGService.registerResetCallBack(resetComponent.bind(this));
   });
