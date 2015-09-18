@@ -147,7 +147,6 @@ angular.module(PKG.name + '.feature.adapters')
                   type: 'success',
                   content: MyAppDAGService.metadata.name + ' successfully saved as draft.'
                 });
-                $state.go('adapters.drafts');
               },
               function error() {
                 console.info('Failed saving as draft');
