@@ -543,7 +543,8 @@ public class AppMetadataStore extends MetadataStoreDataset {
                                          String workflowRunId, String workflowNodeId, long startTimeInSeconds,
                                          String twillRunId) {
     // Get the run record of the Workflow which started this program
-    MDSKey key = getWorkflowRunRecordKey(Id.Workflow.from(program.getApplication(), workflow), workflowRunId);
+    MDSKey key = getWorkflowRunRecordKey(
+      Id.Program.from(program.getApplication(), ProgramType.WORKFLOW, workflow), workflowRunId);
 
     RunRecordMeta record = get(key, RunRecordMeta.class);
     if (record == null) {
@@ -576,7 +577,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
                                  ImmutableMap.of("workflowrunid", workflowRunId), twillRunId));
   }
 
-  public void updateWorkflowToken(Id.Workflow workflowId, String workflowRunId,
+  public void updateWorkflowToken(Id.Program workflowId, String workflowRunId,
                                   WorkflowToken workflowToken) throws NotFoundException {
     RunRecordMeta runRecordMeta = getUnfinishedRun(workflowId, TYPE_RUN_RECORD_STARTED, workflowRunId);
     if (runRecordMeta == null) {
@@ -595,7 +596,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
           new RunRecordMeta(runRecordMeta, propertiesToUpdate));
   }
 
-  public WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId) throws NotFoundException {
+  public WorkflowToken getWorkflowToken(Id.Program workflowId, String workflowRunId) throws NotFoundException {
     RunRecordMeta runRecordMeta = getRun(workflowId, workflowRunId);
     if (runRecordMeta == null) {
       throw new NotFoundException(new Id.Run(workflowId, workflowRunId));
@@ -610,7 +611,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return GSON.fromJson(workflowToken, BasicWorkflowToken.class);
   }
 
-  private MDSKey getWorkflowRunRecordKey(Id.Workflow workflowId, String workflowRunId) {
+  private MDSKey getWorkflowRunRecordKey(Id.Program workflowId, String workflowRunId) {
     return new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(workflowId.getNamespaceId())

@@ -32,6 +32,7 @@ import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
@@ -39,11 +40,12 @@ import co.cask.common.http.HttpResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -52,12 +54,13 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -66,7 +69,9 @@ import javax.annotation.Nullable;
  * Just a java wrapper for accessing service's REST API.
  */
 class DatasetServiceClient {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
+    .create();
   private static final Type SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() { }.getType();
   private static final Type MODULE_META_LIST_TYPE = new TypeToken<List<DatasetModuleMeta>>() { }.getType();
 
@@ -84,16 +89,18 @@ class DatasetServiceClient {
   }
 
   @Nullable
-  public DatasetMeta getInstance(String instanceName, @Nullable Iterable<? extends Id> owners)
-    throws DatasetManagementException {
+  public DatasetMeta getInstance(String instanceName,
+                                 @Nullable Iterable<? extends Id.NamespacedId> owners)
+    throws DatasetManagementException, ServiceUnavailableException {
 
     String query = "";
     if (owners != null) {
-      Set<String> ownerParams = Sets.newHashSet();
-      for (Id owner : owners) {
-        ownerParams.add("owner=" + owner.getIdType() + "::" + owner.getIdRep());
+      try {
+        String ownersJson = GSON.toJson(owners, new TypeToken<List<Id.NamespacedId>>() { }.getType());
+        query = "?owners=" + URLEncoder.encode(ownersJson, "UTF-8");
+      } catch (UnsupportedEncodingException e) {
+        throw Throwables.propagate(e);
       }
-      query = ownerParams.isEmpty() ? "" : "?" + Joiner.on("&").join(ownerParams);
     }
 
     HttpResponse response = doGet("datasets/" + instanceName + query);

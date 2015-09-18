@@ -66,6 +66,7 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -177,14 +178,14 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
                                 String.format("Expected appSpec name '%s' to be equal to appId name '%s'",
                                               appSpec.getName(), appId.getId()));
     for (FlowSpecification flow : appSpec.getFlows().values()) {
-      run(Id.Flow.from(appId, flow.getName()));
+      run(Id.Program.from(appId, ProgramType.FLOW, flow.getName()));
     }
   }
 
   /**
    * Corrects queue.pending metric for a flow.
    */
-  public void run(final Id.Flow flowId) throws Exception {
+  public void run(final Id.Program flowId) throws Exception {
     ApplicationSpecification app = store.getApplication(flowId.getApplication());
     Preconditions.checkArgument(app != null);
     Preconditions.checkArgument(app.getFlows().containsKey(flowId.getId()));
@@ -193,7 +194,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
     run(flowId, flow);
   }
 
-  public void run(final Id.Flow flowId, FlowSpecification flow) throws Exception {
+  public void run(final Id.Program flowId, FlowSpecification flow) throws Exception {
     System.out.println("Running queue.pending correction on flow " + flowId);
 
     SimpleQueueSpecificationGenerator queueSpecGenerator =
@@ -214,7 +215,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   /**
    * Corrects queue.pending metric for a flowlet.
    */
-  public void run(Id.Flow flowId, String producerFlowlet, String consumerFlowlet,
+  public void run(Id.Program flowId, String producerFlowlet, String consumerFlowlet,
                   String flowletQueue) throws Exception {
 
     ApplicationSpecification app = store.getApplication(flowId.getApplication());
@@ -227,7 +228,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   /**
    * Corrects queue.pending metric for a flowlet.
    */
-  public void run(Id.Flow flowId, String producerFlowlet, String consumerFlowlet,
+  public void run(Id.Program flowId, String producerFlowlet, String consumerFlowlet,
                   String flowletQueue, FlowSpecification flow) throws Exception {
 
     System.out.println("Running queue.pending correction on flow '" + flowId + "' producerFlowlet '" + producerFlowlet
@@ -392,15 +393,18 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
         Preconditions.checkArgument(cmd.hasOption("namespace"));
         corrector.run(Id.Application.from(cmd.getOptionValue("namespace"), cmd.getOptionValue("app")));
       } else if (!cmd.hasOption("producer-flowlet") && !cmd.hasOption("consumer-flowlet")) {
-        corrector.run(Id.Flow.from(cmd.getOptionValue("namespace"), cmd.getOptionValue("app"),
-                                   cmd.getOptionValue("flow")));
+        corrector.run(Id.Program.from(cmd.getOptionValue("namespace"),
+                                      cmd.getOptionValue("app"),
+                                      ProgramType.FLOW,
+                                      cmd.getOptionValue("flow")));
       } else {
         Preconditions.checkArgument(cmd.hasOption("producer-flowlet"), "Missing producer-flowlet option");
         Preconditions.checkArgument(cmd.hasOption("consumer-flowlet"), "Missing consumer-flowlet option");
         String producerFlowlet = cmd.getOptionValue("producer-flowlet");
         String consumerFlowlet = cmd.getOptionValue("consumer-flowlet");
         String queue = cmd.getOptionValue("queue", "queue");
-        corrector.run(Id.Flow.from(namespace, app, flow), producerFlowlet, consumerFlowlet, queue);
+        corrector.run(Id.Program.from(namespace, app, ProgramType.FLOW, flow),
+                      producerFlowlet, consumerFlowlet, queue);
       }
     } finally {
       corrector.stopAndWait();

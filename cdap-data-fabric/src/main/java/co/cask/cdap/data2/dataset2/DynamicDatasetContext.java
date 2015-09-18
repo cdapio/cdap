@@ -55,7 +55,7 @@ public class DynamicDatasetContext implements DatasetContext {
   private final Map<String, String> runtimeArguments;
   private final Set<DatasetCacheKey> txnInProgressDatasets = Sets.newHashSet();
   private final Id.Namespace namespace;
-  private final List<Id> owners;
+  private final List<Id.NamespacedId> owners;
 
   /**
    * Provides a {@link LoadingCache} for caching the dataset instance per thread.
@@ -123,9 +123,9 @@ public class DynamicDatasetContext implements DatasetContext {
                                ClassLoader classLoader,
                                Map<String, String> runtimeArguments,
                                @Nullable Set<String> datasets,
-                               @Nullable List<? extends Id> owners) {
+                               @Nullable List<? extends Id.NamespacedId> owners) {
     this.namespace = namespace;
-    this.owners = owners == null ? ImmutableList.<Id>of() : ImmutableList.copyOf(owners);
+    this.owners = owners == null ? ImmutableList.<Id.NamespacedId>of() : ImmutableList.copyOf(owners);
     this.context = context;
     this.metricsContext = metricsContext;
     this.allowedDatasets = datasets == null ? null : ImmutableSet.copyOf(datasets);

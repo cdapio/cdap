@@ -25,6 +25,7 @@ import co.cask.cdap.data2.transaction.queue.QueueConfigurer;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
@@ -107,7 +108,7 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void clearAllForFlow(Id.Flow flowId) throws Exception {
+  public void clearAllForFlow(Id.Program flowId) throws Exception {
     String tableName = getTableNameForFlow(flowId);
     service.dropTable(tableName);
     service.ensureTableExists(tableName);
@@ -119,7 +120,7 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   @Override
-  public void dropAllForFlow(Id.Flow flowId) throws Exception {
+  public void dropAllForFlow(Id.Program flowId) throws Exception {
     String tableName = getTableNameForFlow(flowId);
     service.dropTable(tableName);
   }
@@ -143,12 +144,13 @@ public class LevelDBQueueAdmin extends AbstractQueueAdmin {
   }
 
   public String getActualTableName(QueueName queueName) {
-    return getTableNameForFlow(Id.Flow.from(queueName.getFirstComponent(),
-                                            queueName.getSecondComponent(),
-                                            queueName.getThirdComponent()));
+    return getTableNameForFlow(Id.Program.from(queueName.getFirstComponent(),
+                                               queueName.getSecondComponent(),
+                                               ProgramType.FLOW,
+                                               queueName.getThirdComponent()));
   }
 
-  protected String getTableNameForFlow(Id.Flow flowId) {
+  protected String getTableNameForFlow(Id.Program flowId) {
     TableId tableId = getDataTableId(flowId);
     return String.format("%s.%s", tableId.getNamespace().getId(), tableId.getTableName());
   }

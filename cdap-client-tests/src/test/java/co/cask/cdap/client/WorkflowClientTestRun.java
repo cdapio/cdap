@@ -23,6 +23,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
@@ -76,7 +77,7 @@ public class WorkflowClientTestRun extends ClientTestBase {
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     Map<String, String> runtimeArgs = ImmutableMap.of("inputPath", createInput("input"),
                                                       "outputPath", outputPath);
-    Id.Workflow workflowId = Id.Workflow.from(appId, AppWithWorkflow.SampleWorkflow.NAME);
+    Id.Program workflowId = Id.Program.from(appId, ProgramType.WORKFLOW, AppWithWorkflow.SampleWorkflow.NAME);
     programClient.start(workflowId, false, runtimeArgs);
     programClient.waitForStatus(workflowId, "STOPPED", 60, TimeUnit.SECONDS);
 
@@ -87,7 +88,8 @@ public class WorkflowClientTestRun extends ClientTestBase {
 
     // Invalid test scenarios
     try {
-      workflowClient.getWorkflowToken(new Id.Run(Id.Workflow.from(appId, "random"), workflowRunId.getId()));
+      workflowClient.getWorkflowToken(
+        new Id.Run(Id.Program.from(appId, ProgramType.WORKFLOW, "random"), workflowRunId.getId()));
       Assert.fail("Should not find a workflow token for a non-existing workflow");
     } catch (NotFoundException expected) {
       // expected

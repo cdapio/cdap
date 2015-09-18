@@ -29,19 +29,19 @@ public class CannotBeDeletedException extends ConflictException {
   private final String reason;
 
   public CannotBeDeletedException(Id id) {
-    super(String.format("'%s' could not be deleted", id.getIdRep()));
+    super(String.format("'%s' could not be deleted", id));
     this.objectId = id;
     this.reason = null;
   }
 
   public CannotBeDeletedException(Id id, String reason) {
-    super(String.format("'%s' could not be deleted. Reason: %s", id.getIdRep(), reason));
+    super(String.format("'%s' could not be deleted. Reason: %s", id, reason));
     this.objectId = id;
     this.reason = reason;
   }
 
   public CannotBeDeletedException(Id id, Throwable cause) {
-    super(String.format("'%s' could not be deleted. Reason: %s", id.getIdRep(), cause.getMessage()), cause);
+    super(String.format("'%s' could not be deleted. Reason: %s", id, cause.getMessage()), cause);
     this.objectId = id;
     this.reason = cause.getMessage();
   }

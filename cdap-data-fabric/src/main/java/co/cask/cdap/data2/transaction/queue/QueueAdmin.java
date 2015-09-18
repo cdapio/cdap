@@ -37,13 +37,13 @@ public interface QueueAdmin {
    * Deletes all queues for a flow, for example if the flow is deleted.
    * todo: make this independent of the concept of a flow
    */
-  void dropAllForFlow(Id.Flow flowId) throws Exception;
+  void dropAllForFlow(Id.Program flowId) throws Exception;
 
   /**
    * Clears all queues for a flow, for example if the flow is upgraded and old.
    * todo: make this independent of the concept of a flow
    */
-  void clearAllForFlow(Id.Flow flowId) throws Exception;
+  void clearAllForFlow(Id.Program flowId) throws Exception;
 
   /**
    * Returns a {@link QueueConfigurer} for configuring the queue.

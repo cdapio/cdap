@@ -82,7 +82,7 @@ public class PreferencesClientTestRun extends ClientTestBase {
     File jarFile = createAppJarFile(AppReturnsArgs.class);
     appClient.deploy(Id.Namespace.DEFAULT, jarFile);
     Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, AppReturnsArgs.NAME);
-    Id.Service service = Id.Service.from(app, AppReturnsArgs.SERVICE);
+    Id.Program service = Id.Program.from(app, ProgramType.SERVICE, AppReturnsArgs.SERVICE);
 
     try {
       client.setInstancePreferences(propMap);

@@ -31,9 +31,9 @@ import com.google.common.base.Throwables;
 public class RemoteWorkerManager extends AbstractProgramManager<WorkerManager> implements WorkerManager {
 
   private final ProgramClient programClient;
-  private final Id.Worker workerId;
+  private final Id.Program workerId;
 
-  public RemoteWorkerManager(Id.Worker programId, ClientConfig clientConfig, RESTClient restClient,
+  public RemoteWorkerManager(Id.Program programId, ClientConfig clientConfig, RESTClient restClient,
                              RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
     this.workerId = programId;

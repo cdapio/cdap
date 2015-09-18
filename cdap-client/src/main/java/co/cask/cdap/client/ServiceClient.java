@@ -66,7 +66,7 @@ public class ServiceClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
    */
-  public ServiceSpecification get(Id.Service service)
+  public ServiceSpecification get(Id.Program service)
     throws IOException, UnauthorizedException, NotFoundException {
 
     URL url = config.resolveNamespacedURLV3(service.getNamespace(),
@@ -90,7 +90,7 @@ public class ServiceClient {
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the app or service could not be found
    */
-  public List<ServiceHttpEndpoint> getEndpoints(Id.Service service)
+  public List<ServiceHttpEndpoint> getEndpoints(Id.Program service)
     throws IOException, UnauthorizedException, NotFoundException {
 
     ServiceSpecification specification = get(service);
@@ -101,7 +101,7 @@ public class ServiceClient {
     return builder.build();
   }
 
-  public URL getServiceURL(Id.Service service)
+  public URL getServiceURL(Id.Program service)
     throws NotFoundException, IOException, UnauthorizedException {
     // Make sure the service actually exists
     get(service);

@@ -114,7 +114,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
       }
     }
 
-    Id.Workflow workflow = Id.Workflow.from(Id.Namespace.from(namespaceId), appId, workflowId);
+    Id.Program workflow = Id.Program.from(Id.Namespace.from(namespaceId), appId, ProgramType.WORKFLOW, workflowId);
     WorkflowStatistics workflowStatistics = store.getWorkflowStatistics(workflow, startTime, endTime, percentiles);
 
     if (workflowStatistics == null) {
@@ -152,7 +152,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
     }
 
     long timeInterval = TimeMathParser.resolutionInSeconds(interval);
-    Id.Workflow workflow = Id.Workflow.from(Id.Namespace.from(namespaceId), appId, workflowId);
+    Id.Program workflow = Id.Program.from(Id.Namespace.from(namespaceId), appId, ProgramType.WORKFLOW, workflowId);
     Collection<WorkflowDataset.WorkflowRunRecord> workflowRunRecords =
       store.retrieveSpacedRecords(workflow, runId, limit, timeInterval);
 
@@ -187,7 +187,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
                       @PathParam("workflow-id") String workflowId,
                       @PathParam("run-id") String runId,
                       @QueryParam("other-run-id") String otherRunId) throws Exception {
-    Id.Workflow workflow = Id.Workflow.from(Id.Namespace.from(namespaceId), appId, workflowId);
+    Id.Program workflow = Id.Program.from(Id.Namespace.from(namespaceId), appId, ProgramType.WORKFLOW, workflowId);
     WorkflowRunMetrics detailedStatistics = getDetailedRecord(workflow, runId);
     WorkflowRunMetrics otherDetailedStatistics = getDetailedRecord(workflow, otherRunId);
     if (detailedStatistics == null) {
@@ -230,7 +230,7 @@ public class WorkflowStatsSLAHttpHandler extends AbstractHttpHandler {
    * @return Return the Workflow Run Metrics
    */
   @Nullable
-  private WorkflowRunMetrics getDetailedRecord(Id.Workflow workflowId, String runId) throws Exception {
+  private WorkflowRunMetrics getDetailedRecord(Id.Program workflowId, String runId) throws Exception {
     WorkflowDataset.WorkflowRunRecord workflowRunRecord = store.getWorkflowRun(workflowId, runId);
     if (workflowRunRecord == null) {
       return null;

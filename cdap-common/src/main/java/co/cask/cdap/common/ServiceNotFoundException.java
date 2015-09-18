@@ -19,19 +19,11 @@ package co.cask.cdap.common;
 import co.cask.cdap.proto.Id;
 
 /**
- * Thrown when a stream is not found
+ * Thrown when a service is not found
  */
-public class ServiceNotFoundException extends NotFoundException {
+public class ServiceNotFoundException extends ProgramNotFoundException {
 
-  private final Id.Service id;
-
-
-  public ServiceNotFoundException(Id.Service id) {
+  public ServiceNotFoundException(Id.Program id) {
     super(id);
-    this.id = id;
-  }
-
-  public Id.Service getId() {
-    return id;
   }
 }

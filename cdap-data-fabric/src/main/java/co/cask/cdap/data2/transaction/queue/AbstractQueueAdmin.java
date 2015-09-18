@@ -19,6 +19,7 @@ package co.cask.cdap.data2.transaction.queue;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 
 /**
  * Common implementation of table-based QueueAdmin
@@ -61,15 +62,16 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
    */
   public TableId getDataTableId(QueueName queueName) {
     if (queueName.isQueue()) {
-      return getDataTableId(Id.Flow.from(queueName.getFirstComponent(),
-                                         queueName.getSecondComponent(),
-                                         queueName.getThirdComponent()));
+      return getDataTableId(Id.Program.from(queueName.getFirstComponent(),
+                                            queueName.getSecondComponent(),
+                                            ProgramType.FLOW,
+                                            queueName.getThirdComponent()));
     } else {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
   }
 
-  public TableId getDataTableId(Id.Flow flowId) {
+  public TableId getDataTableId(Id.Program flowId) {
     // tableName = system.queue.<app>.<flow>
     String tableName = unqualifiedTableNamePrefix + "." + flowId.getApplicationId() + "." + flowId.getId();
     return TableId.from(flowId.getNamespaceId(), tableName);

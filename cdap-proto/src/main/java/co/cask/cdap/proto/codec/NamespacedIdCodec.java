@@ -18,6 +18,7 @@ package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import com.google.common.base.Joiner;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -53,37 +54,25 @@ public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedI
         return deserializeApplicationId(id);
       case "program":
         return deserializeProgramId(id);
-      case "flow":
-        return deserializeFlowId(id);
       case "flowlet":
         return deserializeFlowletId(id);
-      case "service":
-        return deserializeServiceId(id);
       case "schedule":
         return deserializeSchedule(id);
-      case "worker":
-        return deserializeWorkerId(id);
-      case "workflow":
-        return deserializeWorkflowId(id);
       case "datasetinstance":
         return deserializeDatasetInstanceId(id);
       case "stream":
         return deserializeStreamId(id);
       default:
         throw new UnsupportedOperationException(
-          String.format("Unsupported object of type %s found. Deserialization of only %s, %s, %s, %s, %s, %s, %s, " +
-                          "%s, %s, %s is supported.",
+          String.format("Unsupported object of type %s found. Deserialization of only %s is supported.",
                         type,
-                        Id.Application.class.getSimpleName(),
-                        Id.Program.class.getSimpleName(),
-                        Id.Flow.class.getSimpleName(),
-                        Id.Flow.Flowlet.class.getSimpleName(),
-                        Id.Service.class.getSimpleName(),
-                        Id.Schedule.class.getSimpleName(),
-                        Id.Worker.class.getSimpleName(),
-                        Id.Workflow.class.getSimpleName(),
-                        Id.DatasetInstance.class.getSimpleName(),
-                        Id.Stream.class.getSimpleName()
+                        Joiner.on(", ").join(
+                          Id.Application.class.getSimpleName(),
+                          Id.Program.class.getSimpleName(),
+                          Id.Flowlet.class.getSimpleName(),
+                          Id.Schedule.class.getSimpleName(),
+                          Id.DatasetInstance.class.getSimpleName(),
+                          Id.Stream.class.getSimpleName())
           )
         );
     }
@@ -107,36 +96,16 @@ public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedI
     return Id.Program.from(app, programType, programId);
   }
 
-  private Id.Flow deserializeFlowId(JsonObject id) {
-    Id.Program program = deserializeProgramId(id);
-    return Id.Flow.from(program.getApplication(), program.getId());
-  }
-
-  private Id.Flow.Flowlet deserializeFlowletId(JsonObject id) {
-    Id.Flow flow = deserializeFlowId(id.getAsJsonObject("flow"));
+  private Id.Flowlet deserializeFlowletId(JsonObject id) {
+    Id.Program flow = deserializeProgramId(id.getAsJsonObject("flow"));
     String flowletId = id.get("id").getAsString();
-    return Id.Flow.Flowlet.from(flow, flowletId);
-  }
-
-  private Id.Service deserializeServiceId(JsonObject id) {
-    Id.Program program = deserializeProgramId(id);
-    return Id.Service.from(program.getApplication(), program.getId());
+    return Id.Flowlet.from(flow, flowletId);
   }
 
   private Id.Schedule deserializeSchedule(JsonObject id) {
     Id.Application app = deserializeApplicationId(id.getAsJsonObject("application"));
     String scheduleId = id.get("id").getAsString();
     return Id.Schedule.from(app, scheduleId);
-  }
-
-  private Id.Worker deserializeWorkerId(JsonObject id) {
-    Id.Program program = deserializeProgramId(id);
-    return Id.Worker.from(program.getApplication(), program.getId());
-  }
-
-  private Id.Workflow deserializeWorkflowId(JsonObject id) {
-    Id.Program program = deserializeProgramId(id);
-    return Id.Workflow.from(program.getApplication(), program.getId());
   }
 
   private Id.DatasetInstance deserializeDatasetInstanceId(JsonObject id) {

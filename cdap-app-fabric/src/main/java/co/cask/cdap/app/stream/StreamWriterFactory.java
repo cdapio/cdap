@@ -31,6 +31,6 @@ public interface StreamWriterFactory {
    * @param run run information
    * @return a {@link StreamWriter} for the specified namespaceId
    */
-  StreamWriter create(@Assisted("run") Id.Run run, @Assisted("owners") List<Id> owners);
+  StreamWriter create(@Assisted("run") Id.Run run, @Assisted("owners") List<? extends Id.NamespacedId> owners);
 }
 

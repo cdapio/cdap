@@ -61,6 +61,7 @@ import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
@@ -126,7 +127,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final TransactionSystemClient txClient;
   private final Store store;
-  private final Id.Workflow workflowId;
+  private final Id.Program workflowId;
   private final CConfiguration cConf;
 
   WorkflowDriver(Program program, ProgramOptions options, InetAddress hostname,
@@ -155,7 +156,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     this.discoveryServiceClient = discoveryServiceClient;
     this.txClient = txClient;
     this.store = store;
-    this.workflowId = Id.Workflow.from(program.getId().getApplication(), workflowSpec.getName());
+    this.workflowId = Id.Program.from(program.getId().getApplication(), ProgramType.WORKFLOW, workflowSpec.getName());
     this.cConf = cConf;
   }
 

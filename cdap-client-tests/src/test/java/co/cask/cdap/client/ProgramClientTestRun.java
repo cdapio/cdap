@@ -60,8 +60,8 @@ public class ProgramClientTestRun extends ClientTestBase {
   public void testAll() throws Exception {
     Id.Namespace namespace = Id.Namespace.DEFAULT;
     Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
-    Id.Flow flow = Id.Flow.from(app, FakeFlow.NAME);
-    Id.Flow.Flowlet flowlet = Id.Flow.Flowlet.from(flow, FakeFlow.FLOWLET_NAME);
+    Id.Program flow = Id.Program.from(app, ProgramType.FLOW, FakeFlow.NAME);
+    Id.Flowlet flowlet = Id.Flowlet.from(flow, FakeFlow.FLOWLET_NAME);
 
     appClient.deploy(namespace, createAppJarFile(FakeApp.class));
 

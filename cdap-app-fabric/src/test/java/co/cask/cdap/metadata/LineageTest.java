@@ -64,7 +64,7 @@ public class LineageTest extends MetadataTestBase {
   public void testFlowLineage() throws Exception {
     String namespace = "testFlowLineage";
     Id.Application app = Id.Application.from(namespace, AllProgramsApp.NAME);
-    Id.Flow flow = Id.Flow.from(app, AllProgramsApp.NoOpFlow.NAME);
+    Id.Program flow = Id.Program.from(app, ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME);
     Id.DatasetInstance dataset = Id.DatasetInstance.from(namespace, AllProgramsApp.DATASET_NAME);
     Id.Stream stream = Id.Stream.from(namespace, AllProgramsApp.STREAM_NAME);
 
@@ -122,10 +122,10 @@ public class LineageTest extends MetadataTestBase {
                          ImmutableSet.of(
                            new Relation(dataset, flow, AccessType.UNKNOWN,
                                         flowRunId,
-                                        ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
+                                        ImmutableSet.of(Id.Flowlet.from(flow, AllProgramsApp.A.NAME))),
                            new Relation(stream, flow, AccessType.READ,
                                         flowRunId,
-                                        ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME)))
+                                        ImmutableSet.of(Id.Flowlet.from(flow, AllProgramsApp.A.NAME)))
                          ));
       Assert.assertEquals(expected, lineage);
 
@@ -138,10 +138,8 @@ public class LineageTest extends MetadataTestBase {
       Assert.assertEquals(expected, lineage);
 
       // Assert metadata
-      // Id.Flow needs conversion to Id.Program JIRA - CDAP-3658
-      Id.Program programForFlow = Id.Program.from(flow.getApplication(), flow.getType(), flow.getId());
       Assert.assertEquals(toSet(new MetadataRecord(app, appProperties, appTags),
-                                new MetadataRecord(programForFlow, flowProperties, flowTags),
+                                new MetadataRecord(flow, flowProperties, flowTags),
                                 new MetadataRecord(dataset, dataProperties, dataTags),
                                 new MetadataRecord(stream, streamProperties, streamTags)),
                           fetchRunMetadata(new Id.Run(flow, flowRunId.getId())));
@@ -180,7 +178,7 @@ public class LineageTest extends MetadataTestBase {
   public void testAllProgramsLineage() throws Exception {
     String namespace = "testAllProgramsLineage";
     Id.Application app = Id.Application.from(namespace, AllProgramsApp.NAME);
-    Id.Flow flow = Id.Flow.from(app, AllProgramsApp.NoOpFlow.NAME);
+    Id.Program flow = Id.Program.from(app, ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME);
     Id.Program mapreduce = Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME);
     Id.Program spark = Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME);
     Id.Program service = Id.Program.from(app, ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
@@ -240,7 +238,7 @@ public class LineageTest extends MetadataTestBase {
                           ImmutableSet.of(
                             // Dataset access
                             new Relation(dataset, flow, AccessType.UNKNOWN, flowRunId,
-                                         ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
+                                         ImmutableSet.of(Id.Flowlet.from(flow, AllProgramsApp.A.NAME))),
                             new Relation(dataset, mapreduce, AccessType.UNKNOWN, mrRunId),
                             new Relation(dataset, spark, AccessType.UNKNOWN, sparkRunId),
                             new Relation(dataset, mapreduce, AccessType.UNKNOWN, workflowMrRunId),
@@ -249,7 +247,7 @@ public class LineageTest extends MetadataTestBase {
 
                             // Stream access
                             new Relation(stream, flow, AccessType.READ, flowRunId,
-                                         ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME))),
+                                         ImmutableSet.of(Id.Flowlet.from(flow, AllProgramsApp.A.NAME))),
                             new Relation(stream, mapreduce, AccessType.READ, mrRunId),
                             new Relation(stream, spark, AccessType.READ, sparkRunId),
                             new Relation(stream, mapreduce, AccessType.READ, workflowMrRunId),

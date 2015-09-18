@@ -62,7 +62,7 @@ public class ScheduleClient {
     this.restClient = new RESTClient(config);
   }
 
-  public List<ScheduleSpecification> list(Id.Workflow workflow)
+  public List<ScheduleSpecification> list(Id.Program workflow)
     throws IOException, UnauthorizedException, NotFoundException {
 
     String path = String.format("apps/%s/workflows/%s/schedules", workflow.getApplicationId(), workflow.getId());

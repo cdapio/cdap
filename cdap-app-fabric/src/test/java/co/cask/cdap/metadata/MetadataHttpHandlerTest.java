@@ -48,7 +48,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
   private final Id.DatasetInstance myds = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myds");
   private final Id.Stream mystream = Id.Stream.from(Id.Namespace.DEFAULT, "mystream");
   private final Id.Application nonExistingApp = Id.Application.from("blah", AppWithDataset.class.getSimpleName());
-  private final Id.Service nonExistingService = Id.Service.from(nonExistingApp, "PingService");
+  private final Id.Program nonExistingService = Id.Program.from(nonExistingApp, ProgramType.SERVICE, "PingService");
   private final Id.DatasetInstance nonExistingDataset = Id.DatasetInstance.from("blah", "myds");
   private final Id.Stream nonExistingStream = Id.Stream.from("blah", "mystream");
 

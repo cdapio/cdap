@@ -71,7 +71,7 @@ public final class QueueName {
     return new QueueName(URI.create(new String(bytes, Charsets.US_ASCII)));
   }
 
-  public static QueueName fromFlowlet(Id.Flow flow, String flowlet, String output) {
+  public static QueueName fromFlowlet(Id.Program flow, String flowlet, String output) {
     return fromFlowlet(flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), flowlet, output);
   }
 
@@ -84,7 +84,7 @@ public final class QueueName {
     return new QueueName(uri);
   }
 
-  public static String prefixForFlow(Id.Flow flowId) {
+  public static String prefixForFlow(Id.Program flowId) {
     // queue:///namespace/app/flow/
     // Note that the trailing / is crucial, otherwise this could match queues of flow1, flowx, etc.
     return String.format("queue:///%s/%s/%s/", flowId.getNamespaceId(), flowId.getApplicationId(), flowId.getId());

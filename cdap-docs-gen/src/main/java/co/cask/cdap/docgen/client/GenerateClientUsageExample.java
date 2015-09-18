@@ -120,7 +120,8 @@ public class GenerateClientUsageExample {
       0, Long.MAX_VALUE);
 
     // Scale a service in the HelloWorld example
-    programClient.setServiceInstances(Id.Service.from(Id.Namespace.DEFAULT, "HelloWorld", "greet"), 3);
+    programClient.setServiceInstances(
+      Id.Program.from(Id.Namespace.DEFAULT, "HelloWorld", ProgramType.SERVICE, "greet"), 3);
 
     // Stop a service in the HelloWorld example
     programClient.stop(Id.Program.from(Id.Namespace.DEFAULT, "HelloWorld", ProgramType.SERVICE, "greet"));
@@ -135,7 +136,7 @@ public class GenerateClientUsageExample {
 
     // Scale a flowlet in the WordCount example
     programClient.setFlowletInstances(
-      Id.Flow.Flowlet.from(Id.Application.from(Id.Namespace.DEFAULT, "WordCount"), "WordCountFlow", "Tokenizer"),
+      Id.Flowlet.from(Id.Application.from(Id.Namespace.DEFAULT, "WordCount"), "WordCountFlow", "Tokenizer"),
       3);
 
     // Stop a flow in the WordCount example
@@ -272,7 +273,7 @@ public class GenerateClientUsageExample {
 
     // Fetch service information using the service in the PurchaseApp example
     ServiceSpecification serviceSpec = serviceClient.get(
-      Id.Service.from(Id.Namespace.DEFAULT, "PurchaseApp", "CatalogLookup"));
+      Id.Program.from(Id.Namespace.DEFAULT, "PurchaseApp", ProgramType.SERVICE, "CatalogLookup"));
   }
 
   public void metricsClient() throws Exception {
@@ -281,7 +282,7 @@ public class GenerateClientUsageExample {
 
     // Fetch the total number of events that have been processed by a flowlet
     RuntimeMetrics metric = metricsClient.getFlowletMetrics(
-      Id.Flow.from("user", "HelloWorld", "someFlow"), "process.events.processed");
+      Id.Program.from("user", "HelloWorld", ProgramType.FLOW, "someFlow"), "process.events.processed");
   }
 
   public void monitorClient() throws Exception {

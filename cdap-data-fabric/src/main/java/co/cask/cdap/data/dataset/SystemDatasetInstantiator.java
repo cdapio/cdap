@@ -43,13 +43,13 @@ public class SystemDatasetInstantiator implements Closeable {
   private final DatasetFramework datasetFramework;
   // provides classloaders to use for different dataset modules
   private final DatasetClassLoaderProvider classLoaderProvider;
-  private final Iterable<? extends Id> owners;
+  private final Iterable<? extends Id.NamespacedId> owners;
   private final ClassLoader parentClassLoader;
 
   SystemDatasetInstantiator(DatasetFramework datasetFramework,
                             @Nullable ClassLoader parentClassLoader,
                             DatasetClassLoaderProvider classLoaderProvider,
-                            @Nullable Iterable<? extends Id> owners) {
+                            @Nullable Iterable<? extends Id.NamespacedId> owners) {
     this.owners = owners;
     this.classLoaderProvider = classLoaderProvider;
     this.datasetFramework = datasetFramework;

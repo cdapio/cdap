@@ -45,9 +45,9 @@ public class RemoteWorkflowManager extends AbstractProgramManager<WorkflowManage
   private final ScheduleClient scheduleClient;
   private final ProgramClient programClient;
   private final WorkflowClient workflowClient;
-  private final Id.Workflow workflowId;
+  private final Id.Program workflowId;
 
-  public RemoteWorkflowManager(Id.Workflow programId, ClientConfig clientConfig, RESTClient restClient,
+  public RemoteWorkflowManager(Id.Program programId, ClientConfig clientConfig, RESTClient restClient,
                                RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
     this.workflowId = programId;

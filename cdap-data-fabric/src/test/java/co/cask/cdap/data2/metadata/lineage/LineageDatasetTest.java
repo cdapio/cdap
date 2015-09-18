@@ -51,7 +51,7 @@ public class LineageDatasetTest {
     RunId runId = RunIds.generate(10000);
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from("default", "dataset1");
     Id.Program program = Id.Program.from("default", "app1", ProgramType.FLOW, "flow1");
-    Id.Flow.Flowlet flowlet = Id.Flow.Flowlet.from(program.getApplication(), program.getId(), "flowlet1");
+    Id.Flowlet flowlet = Id.Flowlet.from(program.getApplication(), program.getId(), "flowlet1");
     Id.Run run = new Id.Run(program, runId.getId());
 
     MetadataRecord programMeta = new MetadataRecord(program, toMap("pkey1", "pval1", "pkey2", "pval2"),
@@ -93,7 +93,7 @@ public class LineageDatasetTest {
     Id.Stream stream2 = Id.Stream.from("default", "stream2");
 
     Id.Program program1 = Id.Program.from("default", "app1", ProgramType.FLOW, "flow1");
-    Id.Flow.Flowlet flowlet1 = Id.Flow.Flowlet.from(program1.getApplication(), program1.getId(), "flowlet1");
+    Id.Flowlet flowlet1 = Id.Flowlet.from(program1.getApplication(), program1.getId(), "flowlet1");
     Id.Program program2 = Id.Program.from("default", "app2", ProgramType.WORKER, "worker2");
     Id.Program program3 = Id.Program.from("default", "app3", ProgramType.SERVICE, "service3");
 

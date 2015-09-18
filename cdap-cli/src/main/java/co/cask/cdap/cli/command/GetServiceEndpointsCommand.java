@@ -31,6 +31,7 @@ import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ServiceClient;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -60,7 +61,7 @@ public class GetServiceEndpointsCommand extends AbstractAuthCommand implements C
 
     String appId = appAndServiceId[0];
     String serviceName = appAndServiceId[1];
-    Id.Service serviceId = Id.Service.from(cliConfig.getCurrentNamespace(), appId, serviceName);
+    Id.Program serviceId = Id.Program.from(cliConfig.getCurrentNamespace(), appId, ProgramType.SERVICE, serviceName);
     List<ServiceHttpEndpoint> endpoints = serviceClient.getEndpoints(serviceId);
 
     Table table = Table.builder()

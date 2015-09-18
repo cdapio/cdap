@@ -436,20 +436,20 @@ public interface Store {
   /**
    * Updates the {@link WorkflowToken} for a specified run of a workflow.
    *
-   * @param workflowId {@link Id.Workflow} of the workflow whose {@link WorkflowToken} is to be updated
+   * @param workflowId {@link Id.Program} of the workflow whose {@link WorkflowToken} is to be updated
    * @param workflowRunId Run Id of the workflow for which the {@link WorkflowToken} is to be updated
    * @param token the {@link WorkflowToken} to update
    */
-  void updateWorkflowToken(Id.Workflow workflowId, String workflowRunId, WorkflowToken token);
+  void updateWorkflowToken(Id.Program workflowId, String workflowRunId, WorkflowToken token);
 
   /**
    * Retrieves the {@link WorkflowToken} for a specified run of a workflow.
    *
-   * @param workflowId {@link Id.Workflow} of the workflow whose {@link WorkflowToken} is to be retrieved
+   * @param workflowId {@link Id.Program} of the workflow whose {@link WorkflowToken} is to be retrieved
    * @param workflowRunId Run Id of the workflow for which the {@link WorkflowToken} is to be retrieved
    * @return the {@link WorkflowToken} for the specified workflow run
    */
-  WorkflowToken getWorkflowToken(Id.Workflow workflowId, String workflowRunId);
+  WorkflowToken getWorkflowToken(Id.Program workflowId, String workflowRunId);
 
   /**
    * Used by {@link co.cask.cdap.gateway.handlers.WorkflowStatsSLAHttpHandler} to get the statistics of all completed
@@ -461,7 +461,7 @@ public interface Store {
    * @param percentiles List of percentiles that the user wants to see
    * @return the statistics for a given workflow
    */
-  WorkflowStatistics getWorkflowStatistics(Id.Workflow workflowId, long startTime,
+  WorkflowStatistics getWorkflowStatistics(Id.Program workflowId, long startTime,
                                            long endTime, List<Double> percentiles);
 
   /**
@@ -471,7 +471,7 @@ public interface Store {
    * @param runId RunId of the workflow run
    * @return A workflow run record corresponding to the runId
    */
-  WorkflowDataset.WorkflowRunRecord getWorkflowRun(Id.Workflow workflowId, String runId);
+  WorkflowDataset.WorkflowRunRecord getWorkflowRun(Id.Program workflowId, String runId);
 
   /**
    * Get a list of workflow runs that are spaced apart by time interval in both directions from the run id provided.
@@ -482,8 +482,8 @@ public interface Store {
    * @param timeInterval The timeInterval with which the user wants to space out the runs
    * @return Map of runId of Workflow to DetailedStatistics of the run
    */
-  Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(Id.Workflow workflow, String runId,
-                                                                      int limit, long timeInterval);
+  Collection<WorkflowDataset.WorkflowRunRecord> retrieveSpacedRecords(Id.Program workflow, String runId,
+                                                                       int limit, long timeInterval);
 
   /**
    * @return programs that were running between given start and end time.

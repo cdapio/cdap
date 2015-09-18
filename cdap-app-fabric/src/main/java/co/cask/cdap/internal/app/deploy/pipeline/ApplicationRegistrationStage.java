@@ -66,7 +66,7 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     Id.Namespace namespace = appId.getNamespace();
 
     for (FlowSpecification flow : app.getFlows().values()) {
-      Id.Flow programId = Id.Flow.from(appId, flow.getName());
+      Id.Program programId = Id.Program.from(appId, ProgramType.FLOW, flow.getName());
       for (FlowletConnection connection : flow.getConnections()) {
         if (connection.getSourceType().equals(FlowletConnection.Type.STREAM)) {
           usageRegistry.register(programId, Id.Stream.from(namespace, connection.getSourceName()));
@@ -94,7 +94,7 @@ public class ApplicationRegistrationStage extends AbstractStage<ApplicationWithP
     }
 
     for (ServiceSpecification serviceSpecification : app.getServices().values()) {
-      Id.Service serviceId = Id.Service.from(appId, serviceSpecification.getName());
+      Id.Program serviceId = Id.Program.from(appId, ProgramType.SERVICE, serviceSpecification.getName());
       for (HttpServiceHandlerSpecification handlerSpecification : serviceSpecification.getHandlers().values()) {
         for (String dataset : handlerSpecification.getDatasets()) {
           usageRegistry.register(serviceId, Id.DatasetInstance.from(namespace, dataset));

@@ -163,7 +163,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
         Id.Application appId = Id.Application.from(namespaceId, app.getName());
 
         for (FlowSpecification flow : app.getFlows().values()) {
-          Id.Flow flowId = Id.Flow.from(appId, flow.getName());
+          Id.Program flowId = Id.Program.from(appId, ProgramType.FLOW, flow.getName());
 
           SimpleQueueSpecificationGenerator queueSpecGenerator =
             new SimpleQueueSpecificationGenerator(flowId.getApplication());

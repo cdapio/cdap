@@ -72,7 +72,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     String sparkName = "SparkWorkflowTest";
 
     Id.Program workflowProgram =
-      Id.Workflow.from(Id.Namespace.DEFAULT, "WorkflowApp", ProgramType.WORKFLOW, workflowName);
+      Id.Program.from(Id.Namespace.DEFAULT, "WorkflowApp", ProgramType.WORKFLOW, workflowName);
     Id.Program mapreduceProgram =
       Id.Program.from(Id.Namespace.DEFAULT, "WorkflowApp", ProgramType.MAPREDUCE, mapreduceName);
     Id.Program sparkProgram =
@@ -126,7 +126,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
     String request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s" +
                                      "&percentile=%s",
-                                   Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT,
+                                   Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
                                    WorkflowApp.class.getSimpleName(), workflowProgram.getId(),
                                    TimeUnit.MILLISECONDS.toSeconds(startTime),
                                    TimeUnit.MILLISECONDS.toSeconds(currentTimeMillis) + TimeUnit.MINUTES.toSeconds(2),
@@ -142,7 +142,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
     request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s" +
                               "&percentile=%s&percentile=%s",
-                            Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT,
+                            Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
                             WorkflowApp.class.getSimpleName(), workflowProgram.getId(), "now", "0", "90", "95");
 
     response = doGet(request);
@@ -151,7 +151,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
 
     request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/statistics?start=%s&end=%s" +
                               "&percentile=%s&percentile=%s",
-                            Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT,
+                            Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
                             WorkflowApp.class.getSimpleName(), workflowProgram.getId(), "now", "0", "90.0", "950");
 
     response = doGet(request);
@@ -167,7 +167,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     String sparkName = "SparkWorkflowTest";
 
     Id.Program workflowProgram =
-      Id.Workflow.from(Id.Namespace.DEFAULT, "WorkflowApp", ProgramType.WORKFLOW, workflowName);
+      Id.Program.from(Id.Namespace.DEFAULT, "WorkflowApp", ProgramType.WORKFLOW, workflowName);
     Id.Program mapreduceProgram =
       Id.Program.from(Id.Namespace.DEFAULT, "WorkflowApp", ProgramType.MAPREDUCE, mapreduceName);
     Id.Program sparkProgram =
@@ -176,7 +176,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     List<RunId> runIdList = setupRuns(workflowProgram, mapreduceProgram, sparkProgram, store, 13);
 
     String request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/statistics?limit=%s&interval=%s",
-                                   Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT,
+                                   Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
                                    WorkflowApp.class.getSimpleName(), workflowProgram.getId(), runIdList.get(6).getId(),
                                    "3", "10m");
 
@@ -196,7 +196,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     String sparkName = "SparkWorkflowTest";
 
     Id.Program workflowProgram =
-      Id.Workflow.from(Id.Namespace.DEFAULT, "WorkflowApp", ProgramType.WORKFLOW, workflowName);
+      Id.Program.from(Id.Namespace.DEFAULT, "WorkflowApp", ProgramType.WORKFLOW, workflowName);
     Id.Program mapreduceProgram =
       Id.Program.from(Id.Namespace.DEFAULT, "WorkflowApp", ProgramType.MAPREDUCE, mapreduceName);
     Id.Program sparkProgram =
@@ -207,7 +207,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
     RunId workflowRun2 = workflowRunIdList.get(1);
 
     String request = String.format("%s/namespaces/%s/apps/%s/workflows/%s/runs/%s/compare?other-run-id=%s",
-                                   Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT,
+                                   Constants.Gateway.API_VERSION_3, Id.Namespace.DEFAULT.getId(),
                                    WorkflowApp.class.getSimpleName(), workflowProgram.getId(), workflowRun1.toString(),
                                    workflowRun2.toString());
 

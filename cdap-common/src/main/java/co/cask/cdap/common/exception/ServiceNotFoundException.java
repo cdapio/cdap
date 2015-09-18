@@ -23,17 +23,9 @@ import co.cask.cdap.proto.Id;
  * @deprecated Use {@link co.cask.cdap.common.ServiceNotFoundException} instead
  */
 @Deprecated
-public class ServiceNotFoundException extends NotFoundException {
+public class ServiceNotFoundException extends ProgramNotFoundException {
 
-  private final Id.Service id;
-
-
-  public ServiceNotFoundException(Id.Service id) {
+  public ServiceNotFoundException(Id.Program id) {
     super(id);
-    this.id = id;
-  }
-
-  public Id.Service getId() {
-    return id;
   }
 }

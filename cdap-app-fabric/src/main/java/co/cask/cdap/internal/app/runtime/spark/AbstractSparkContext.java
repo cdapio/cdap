@@ -236,7 +236,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   /**
    * Returns the {@link List} of {@link Id} objects representing dataset owner of this context.
    */
-  protected List<? extends Id> getOwners() {
+  protected List<Id.Program> getOwners() {
     return ImmutableList.of(getProgramId());
   }
 

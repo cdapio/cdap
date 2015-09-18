@@ -34,9 +34,9 @@ public class RemoteFlowManager extends AbstractProgramManager<FlowManager> imple
 
   private final ProgramClient programClient;
   private final MetricsClient metricsClient;
-  private final Id.Flow flowId;
+  private final Id.Program flowId;
 
-  public RemoteFlowManager(Id.Flow programId, ClientConfig clientConfig, RESTClient restClient,
+  public RemoteFlowManager(Id.Program programId, ClientConfig clientConfig, RESTClient restClient,
                            RemoteApplicationManager applicationManager) {
     super(programId, applicationManager);
     this.flowId = programId;
@@ -48,7 +48,7 @@ public class RemoteFlowManager extends AbstractProgramManager<FlowManager> imple
   public void setFlowletInstances(String flowletName, int instances) {
     Preconditions.checkArgument(instances > 0, "Instance counter should be > 0.");
     try {
-      programClient.setFlowletInstances(Id.Flow.Flowlet.from(flowId, flowletName), instances);
+      programClient.setFlowletInstances(Id.Flowlet.from(flowId, flowletName), instances);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -57,7 +57,7 @@ public class RemoteFlowManager extends AbstractProgramManager<FlowManager> imple
   @Override
   public int getFlowletInstances(String flowletName) {
     try {
-      return programClient.getFlowletInstances(Id.Flow.Flowlet.from(flowId, flowletName));
+      return programClient.getFlowletInstances(Id.Flowlet.from(flowId, flowletName));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

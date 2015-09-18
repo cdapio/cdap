@@ -49,7 +49,7 @@ public class LineageRecord {
       @Nullable
       @Override
       public String apply(Id.NamespacedId input) {
-        return input.getId();
+        return input.toString();
       }
     };
 
@@ -147,11 +147,13 @@ public class LineageRecord {
 
   private DataRecord toDataRecord(Id.NamespacedId data) {
     if (data instanceof Id.DatasetInstance) {
-      return new DataRecord(((Id.DatasetInstance) data).getNamespaceId(), "dataset", data.getId());
+      Id.DatasetInstance dataset = (Id.DatasetInstance) data;
+      return new DataRecord(dataset.getNamespaceId(), "dataset", dataset.getId());
     }
 
     if (data instanceof Id.Stream) {
-      return new DataRecord(((Id.Stream) data).getNamespaceId(), "stream", data.getId());
+      Id.Stream stream = (Id.Stream) data;
+      return new DataRecord(stream.getNamespaceId(), "stream", stream.getId());
     }
 
     throw new IllegalArgumentException("Unknown data object " + data);

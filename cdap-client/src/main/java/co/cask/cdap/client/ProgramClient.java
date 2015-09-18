@@ -282,7 +282,7 @@ public class ProgramClient {
    * @throws NotFoundException if the application, flow, or flowlet could not be found
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public int getFlowletInstances(Id.Flow.Flowlet flowlet)
+  public int getFlowletInstances(Id.Flowlet flowlet)
     throws IOException, NotFoundException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(flowlet.getNamespace(),
@@ -308,7 +308,7 @@ public class ProgramClient {
    * @throws NotFoundException if the application, flow, or flowlet could not be found
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void setFlowletInstances(Id.Flow.Flowlet flowlet, int instances)
+  public void setFlowletInstances(Id.Flowlet flowlet, int instances)
     throws IOException, NotFoundException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(flowlet.getNamespace(),
@@ -333,7 +333,7 @@ public class ProgramClient {
    * @throws NotFoundException if the application or worker could not be found
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public int getWorkerInstances(Id.Worker worker) throws IOException, NotFoundException,
+  public int getWorkerInstances(Id.Program worker) throws IOException, NotFoundException,
     UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(worker.getNamespace(),
                                             String.format("apps/%s/workers/%s/instances",
@@ -354,7 +354,7 @@ public class ProgramClient {
    * @throws NotFoundException if the application or worker could not be found
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void setWorkerInstances(Id.Worker worker, int instances) throws IOException, NotFoundException,
+  public void setWorkerInstances(Id.Program worker, int instances) throws IOException, NotFoundException,
     UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(worker.getNamespace(),
@@ -377,7 +377,7 @@ public class ProgramClient {
    * @throws NotFoundException if the application or service could not found
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public int getServiceInstances(Id.Service service) throws IOException, NotFoundException, UnauthorizedException {
+  public int getServiceInstances(Id.Program service) throws IOException, NotFoundException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(service.getNamespace(),
                                             String.format("apps/%s/services/%s/instances",
                                                           service.getApplicationId(),
@@ -399,7 +399,7 @@ public class ProgramClient {
    * @throws NotFoundException if the application or service could not be found
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void setServiceInstances(Id.Service service, int instances)
+  public void setServiceInstances(Id.Program service, int instances)
     throws IOException, NotFoundException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(service.getNamespace(),

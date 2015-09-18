@@ -26,8 +26,8 @@ public class IdTest {
 
   @Test
   public void testFlow() {
-    Id.Flow flow = Id.Flow.from("ns1", "app1", "flow1");
-    Id.Flow sameFlow = Id.Flow.from("ns1", "app1", "flow1");
+    Id.Program flow = Id.Program.from("ns1", "app1", ProgramType.FLOW, "flow1");
+    Id.Program sameFlow = Id.Program.from("ns1", "app1", ProgramType.FLOW, "flow1");
     Assert.assertEquals(sameFlow, flow);
     Assert.assertEquals(sameFlow.toString(), flow.toString());
 

@@ -22,6 +22,7 @@ import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
@@ -46,7 +47,7 @@ public class ServiceClientTestRun extends ClientTestBase {
 
   private final Id.Namespace namespace = Id.Namespace.DEFAULT;
   private final Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
-  private final Id.Service service = Id.Service.from(app, PingService.NAME);
+  private final Id.Program service = Id.Program.from(app, ProgramType.SERVICE, PingService.NAME);
 
   private ServiceClient serviceClient;
   private ProgramClient programClient;

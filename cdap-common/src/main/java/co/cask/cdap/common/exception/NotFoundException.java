@@ -37,7 +37,7 @@ public class NotFoundException extends Exception {
   }
 
   public NotFoundException(Id id) {
-    this(id, id.getIdRep());
+    this(id, id.toString());
   }
 
   public Object getObject() {

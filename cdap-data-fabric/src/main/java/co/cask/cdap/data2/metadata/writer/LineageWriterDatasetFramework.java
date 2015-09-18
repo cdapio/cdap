@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -158,8 +159,8 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   @Nullable
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
                                           @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader,
-                                          @Nullable Iterable<? extends Id> owners)
-    throws DatasetManagementException, IOException {
+                                          @Nullable Iterable<? extends Id.NamespacedId> owners)
+    throws DatasetManagementException, IOException, ServiceUnavailableException {
     T dataset = delegate.getDataset(datasetInstanceId, arguments, classLoader, owners);
     writeLineage(datasetInstanceId, dataset);
     return dataset;
@@ -180,8 +181,8 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   public <T extends Dataset> T getDataset(Id.DatasetInstance datasetInstanceId,
                                           @Nullable Map<String, String> arguments, @Nullable ClassLoader classLoader,
                                           DatasetClassLoaderProvider classLoaderProvider,
-                                          @Nullable Iterable<? extends Id> owners)
-    throws DatasetManagementException, IOException {
+                                          @Nullable Iterable<? extends Id.NamespacedId> owners)
+    throws DatasetManagementException, IOException, ServiceUnavailableException {
     T dataset = delegate.getDataset(datasetInstanceId, arguments, classLoader, classLoaderProvider, owners);
     writeLineage(datasetInstanceId, dataset);
     return dataset;
