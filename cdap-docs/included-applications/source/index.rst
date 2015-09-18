@@ -40,8 +40,8 @@ CDAP comes packaged with several system artifacts to create two types of applica
 configuring the system artifacts and not writing any code at all.
 
 An application created from a configured system artifact following the ETL pattern is
-referred to (interchangeably) as an *ETL pipeline* or *ETL application*. Similarly, an
-application built following the Data Quality pattern are referred to as a *Data Quality
+referred to as an *ETL pipeline* or (interchangeably) as an *ETL application*. Similarly, an
+application built following the Data Quality pattern is referred to as a *Data Quality
 application*.
 
 In the future, a variety of system artifacts will be delivered. The framework is
@@ -76,9 +76,9 @@ These sections describe:
 
 
 .. |etl-operations| replace:: **Application Lifecycle Management:**
-.. .. _etl-operations: etl/operations.html http-restful-api-lifecycle
+.. _etl-operations: ../reference-manual/http-restful-api/lifecycle.html
 
-- :ref:`|etl-operations| <http-restful-api-lifecycle>` Manage ETL Applications using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
+- |etl-operations|_ Manage ETL Applications using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
 
 
 .. |etl-custom| replace:: **Creating Custom ETL Plugins:**
@@ -87,7 +87,7 @@ These sections describe:
 - |etl-custom|_ Intended for developers writing custom ETL plugins.
 
 
-.. |etl-third-party| replace:: **Using Third-party Jars:**
+.. |etl-third-party| replace:: **Using Third-Party Jars:**
 .. _etl-third-party: etl/third-party.html
 
 - |etl-third-party|_ Explains how to use a third-party JAR (such as a JDBC driver) as a plugin.
