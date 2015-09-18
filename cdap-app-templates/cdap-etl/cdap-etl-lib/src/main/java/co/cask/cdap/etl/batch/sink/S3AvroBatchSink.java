@@ -28,14 +28,11 @@ import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.etl.common.StructuredToAvroTransformer;
 import com.google.common.collect.Maps;
-import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
-import org.apache.avro.mapreduce.AvroJob;
-import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapred.JobContext;
 
 import java.util.Map;
 
@@ -58,7 +55,6 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
     this.config = config;
   }
 
-
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
@@ -68,9 +64,6 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
   @Override
   public void prepareRun(BatchSinkContext context) {
     super.prepareRun(context);
-    Schema avroSchema = new Schema.Parser().parse(config.schema);
-    Job job = context.getHadoopJob();
-    AvroJob.setOutputKeySchema(job, avroSchema);
     context.addOutput(config.basePath, new S3AvroOutputFormatProvider(config));
   }
 
@@ -105,8 +98,8 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
 
     public S3AvroOutputFormatProvider(S3AvroSinkConfig config) {
       conf = Maps.newHashMap();
-      conf.put("input.format", AvroKeyInputFormat.class.getName());
-      conf.put("output.format", AvroKeyOutputFormat.class.getName());
+      conf.put(JobContext.OUTPUT_KEY_CLASS, AvroKey.class.getName());
+      conf.put("avro.schema.output.key", config.schema);
     }
 
     @Override

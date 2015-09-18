@@ -29,8 +29,6 @@ import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.etl.common.StructuredToAvroTransformer;
 import com.google.common.collect.Maps;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.hadoop.mapreduce.Job;
-import parquet.avro.AvroParquetInputFormat;
 import parquet.avro.AvroParquetOutputFormat;
 
 import java.util.Map;
@@ -65,8 +63,6 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
   public void prepareRun(BatchSinkContext context) {
     super.prepareRun(context);
     org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
-    Job job = context.getHadoopJob();
-    AvroParquetOutputFormat.setSchema(job, avroSchema);
     context.addOutput(config.basePath, new S3ParquetOutputFormatProvider(config));
   }
 
@@ -101,8 +97,8 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
 
     public S3ParquetOutputFormatProvider(S3ParquetSinkConfig config) {
       conf = Maps.newHashMap();
-      conf.put("input.format", AvroParquetInputFormat.class.getName());
-      conf.put("output.format", AvroParquetOutputFormat.class.getName());
+      conf.put("parquet.avro.schema", config.schema);
+
     }
 
     @Override
