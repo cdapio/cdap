@@ -16,8 +16,8 @@ information about plugins available to artifacts.
 
 .. _http-restful-api-artifact-add:
 
-Adding an Artifact
-==================
+Add an Artifact
+===============
 An artifact can be added with an HTTP POST method to the URL::
 
   PUT <base-url>/namespaces/<namespace>/artifacts/<artifact-name>
@@ -296,8 +296,8 @@ of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
 
 .. _http-restful-api-artifact-plugin-detail:
 
-Retrieving Plugin Details
-=========================
+Retrieve Plugin Details
+=======================
 To retrieve details about a specific plugin available to an artifact, submit
 an HTTP GET request::
 
@@ -357,8 +357,8 @@ of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
 
 .. _http-restful-api-artifact-delete:
 
-Deleting an Artifact
-====================
+Delete an Artifact
+==================
 To delete an artifact, submit an HTTP DELETE request::
 
   DELETE <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>
