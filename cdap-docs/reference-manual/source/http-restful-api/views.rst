@@ -9,8 +9,6 @@
 Views HTTP RESTful API 
 ======================
 
-Use the CDAP Views HTTP API to ???.
-
 .. highlight:: console
 
 Views
@@ -27,6 +25,10 @@ formats consist of a :ref:`schema <stream-exploration-stream-schema>` and a :ref
 
 Currently, views are only supported for streams. Support for datasets will be added in a
 later version of CDAP.
+
+
+
+
 
 If :ref:`CDAP Explore <data-exploration>` is :ref:`enabled
 <install-configuring-explore-service>`, then a Hive table will be created for each view
@@ -59,15 +61,13 @@ Lists all views associated with a stream.
 
 
 
-.. _http-restful-api-views-stream:
+.. _http-restful-api-view-add-view-stream:
 
-Adding an Artifact
-------------------
-An artifact can be added with an HTTP POST method to the URL::
+Adding a View to a Stream
+-------------------------
+A view can be added to an existing stream with an HTTP POST method to the URL::
 
-  PUT <base-url>/namespaces/<namespace>/artifacts/<artifact-name>
-
-The request body must contain the binary contents of the artifact.
+  PUT <base-url>/namespaces/<namespace>/streams/<stream-id>/views/<view-id>
 
 .. list-table::
    :widths: 20 80
@@ -77,31 +77,33 @@ The request body must contain the binary contents of the artifact.
      - Description
    * - ``<namespace>``
      - Namespace ID
-   * - ``<artifact-name>``
-     - Name of the artifact to be created
+   * - ``<stream-id>``
+     - Name of the stream (must be already existing)
+   * - ``<view-id>``
+     - Name of the view to be created, or, if already existing, updated
 
-Several optional headers may also be specified:
+The request body is a JSON object specifying the read format to be used. For example:
+ 
+.. container:: highlight
 
-.. list-table::
-   :widths: 20 40 40
-   :header-rows: 1
+  .. parsed-literal::
+    |$| PUT <base-url>/namespaces/default/streams/purchaseStream/views/purchaseStreamView -H "Content-Type: application/json" -d
+    {
+      "artifact": {
+        "name": "WordCount",
+        "version": "|release|",
+        "scope": "user"
+      },
+      "config": {
+        "stream": "purchaseStream"
+      }
+    } 
 
-   * - Header
-     - Description
-     - Example
-   * - **Artifact-Version**
-     - The version of the artifact to add. If not specified, the ``Bundle-Version`` attribute
-       in the JAR file's Manfiest will be used.
-     - ``1.0.0``
-   * - **Artifact-Extends**
-     - If the artifact contains plugins, describes which parent artifacts should have access to those plugins.
-       Multiple parents can be given by separating them with a ``/`` 
-     - ``cdap-etl-batch[3.2.0,4.0.0)/cdap-etl-realtime[3.2.0,4.0.0)``
-   * - **Artifact-Plugins**
-     - JSON Array of plugins contained in the artifact that are not annotated as a plugin.
-       This should be used for third-party JARs that need to be plugins, such as JDBC drivers. Each element
-       in the array is a JSON object containing name, type, and className of the plugin.
-     - ``[ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]``
+
+
+
+
+
 
 .. _http-restful-api-artifact-available:
 
