@@ -323,6 +323,20 @@ public class StandaloneMain {
 
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
 
+    // configure all services except for router to bind to 127.0.0.1
+    configuration.set(Constants.AppFabric.SERVER_ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Transaction.Container.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Dataset.Manager.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Dataset.Executor.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Stream.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Metrics.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Metrics.SERVER_ADDRESS, "127.0.0.1");
+    configuration.set(Constants.MetricsProcessor.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.LogSaver.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Security.AUTH_SERVER_ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Explore.SERVER_ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Metadata.SERVICE_BIND_ADDRESS, "127.0.0.1");
+
     return ImmutableList.of(
       new ConfigModule(configuration, hConf),
       new IOModule(),
