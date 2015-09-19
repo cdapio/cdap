@@ -93,14 +93,21 @@ angular.module(PKG.name + '.feature.adapters')
     }
 
     function setPluginInfo() {
-      $scope.isValidPlugin = Object.keys($scope.plugin).length;
       $scope.isSource = false;
       $scope.isTransform = false;
       $scope.isSink = false;
-      configurePluginInfo();
+      configurePluginInfo().then(
+        function success() {
+          $scope.isValidPlugin = Object.keys($scope.plugin).length;
+        },
+        function error() {
+          console.error('Fetching backend properties for :',$scope.plugin.name, ' failed.');
+        });
     }
 
     function configurePluginInfo() {
+      var defer = $q.defer();
+
       var pluginId = $scope.plugin.id;
       var input;
       $scope.isConfigTouched = true;
@@ -133,7 +140,8 @@ angular.module(PKG.name + '.feature.adapters')
 
       fetchBackendProperties
         .call(this, $scope.plugin, $scope)
-        .then(function() {
+        .then(
+        function success() {
           var artifactTypeExtension = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type];
           try {
             input = JSON.parse(sourceSchema);
@@ -175,7 +183,7 @@ angular.module(PKG.name + '.feature.adapters')
           });
 
           if (!$scope.plugin.outputSchema && input) {
-            $scope.plugin.outputSchema = angular.copy(JSON.stringify(input)) || null;
+            $scope.plugin.outputSchema = JSON.stringify(input) || null;
           }
 
           if ($scope.plugin.type === artifactTypeExtension.source) {
@@ -188,8 +196,14 @@ angular.module(PKG.name + '.feature.adapters')
           if ($scope.plugin.type === 'transform') {
             $scope.isTransform = true;
           }
-        });
+          defer.resolve(true);
+        },
+        function error() {
+          defer.reject(false);
+        }
+      );
 
+      return defer.promise;
     }
 
     function fetchBackendProperties(plugin, scope) {
