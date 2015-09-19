@@ -120,8 +120,8 @@ public class LineageTest extends MetadataTestBase {
 
       LineageRecord expected =
         new LineageRecord(
-          TimeUnit.SECONDS.toMillis(startTime),
-          TimeUnit.SECONDS.toMillis(stopTime),
+          startTime,
+          stopTime,
           ImmutableSet.of(
             new Relation(dataset, flow, AccessType.UNKNOWN,
                          flowRunId,
@@ -130,10 +130,6 @@ public class LineageTest extends MetadataTestBase {
                          flowRunId,
                          ImmutableSet.of(Id.Flow.Flowlet.from(flow, AllProgramsApp.A.NAME)))
           ));
-      Assert.assertEquals(expected, lineage);
-
-      // Fetch stream lineage
-      httpResponse = fetchLineage(stream, startTime, stopTime, 10);
       Assert.assertEquals(expected, lineage);
 
       // Fetch dataset lineage with time strings
@@ -174,10 +170,7 @@ public class LineageTest extends MetadataTestBase {
       lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
 
       Assert.assertEquals(
-        new LineageRecord(
-          TimeUnit.SECONDS.toMillis(laterStartTime),
-          TimeUnit.SECONDS.toMillis(laterEndTime),
-          ImmutableSet.<Relation>of()),
+        new LineageRecord(laterStartTime, laterEndTime, ImmutableSet.<Relation>of()),
         lineage);
 
       // Assert with a time range before the flow run should return no results
@@ -189,10 +182,7 @@ public class LineageTest extends MetadataTestBase {
       lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
 
       Assert.assertEquals(
-        new LineageRecord(
-          TimeUnit.SECONDS.toMillis(earlierStartTime),
-          TimeUnit.SECONDS.toMillis(earlierEndTime),
-          ImmutableSet.<Relation>of()),
+        new LineageRecord(earlierStartTime, earlierEndTime, ImmutableSet.<Relation>of()),
         lineage);
 
       // Test bad time ranges
@@ -270,8 +260,8 @@ public class LineageTest extends MetadataTestBase {
       // dataset is accessed by all programs
       LineageRecord expected =
         new LineageRecord(
-          TimeUnit.SECONDS.toMillis(now - oneHour),
-          TimeUnit.SECONDS.toMillis(now + oneHour),
+          now - oneHour,
+          now + oneHour,
           ImmutableSet.of(
             // Dataset access
             new Relation(dataset, flow, AccessType.UNKNOWN, flowRunId,

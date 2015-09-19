@@ -92,12 +92,18 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
     // Set properties to null to test if ETLTemplate can handle it.
     ETLStage source = new ETLStage("DataGenerator", null);
     ETLStage sink = new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "testS"));
-    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
+    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(2, source, sink, Lists.<ETLStage>newArrayList());
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testAdap");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationManager appManager = deployApplication(appId, appRequest);
     Assert.assertNotNull(appManager);
+    WorkerManager workerManager = appManager.getWorkerManager(ETLWorker.NAME);
+    workerManager.start();
+    workerManager.waitForStatus(true, 10, 1);
+    Assert.assertEquals(2, workerManager.getInstances());
+    workerManager.stop();
+    workerManager.waitForStatus(false, 10, 1);
   }
 
   @Test

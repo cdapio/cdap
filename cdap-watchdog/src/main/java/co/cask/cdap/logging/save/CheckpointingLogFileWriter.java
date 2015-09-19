@@ -102,10 +102,7 @@ public class CheckpointingLogFileWriter implements LogFileWriter<KafkaLogEvent> 
     avroFileWriter.flush();
 
     // Save the max checkpoint seen for each partition
-    for (Map.Entry<Integer, Checkpoint> entry : partitionCheckpointMap.entrySet()) {
-      LOG.trace("Saving checkpoint {} for partition {}", entry.getValue(), entry.getKey());
-      checkpointManager.saveCheckpoint(entry.getKey(), entry.getValue());
-    }
+    checkpointManager.saveCheckpoint(partitionCheckpointMap);
     lastCheckpointTime = currentTs;
   }
 }

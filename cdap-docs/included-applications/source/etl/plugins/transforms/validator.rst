@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _apptemplates-etl-transformations-validator:
+.. _included-apps-etl-transformations-validator:
 
 ==========================
 Transformations: Validator
@@ -11,8 +11,8 @@ Transformations: Validator
 .. rubric:: Description
 
 A transform that validates records using a custom Javascript function based on a set of 
-:ref:`available validator functions <apptemplates-etl-validators-corevalidator>` in the 
-:ref:`CoreValidator <apptemplates-etl-validators-corevalidator>`.
+:ref:`available validator functions <included-apps-etl-plugins-shared-core-validator>` in the 
+:ref:`CoreValidator <included-apps-etl-plugins-shared-core-validator>`.
 
 .. rubric:: Use Case
 
@@ -56,6 +56,6 @@ The returned JSON will include these fields; errorCode and errorMsg can be ignor
       
 This example sends an error code "10" for any records whose 'body' field contains a value
 whose length is greater than 10. It has been "pretty-printed" for readability. It uses the
-:ref:`CoreValidator <apptemplates-etl-validators-corevalidator>` (included using
+:ref:`CoreValidator <included-apps-etl-plugins-shared-core-validator>` (included using
 ``"validators": "core"``) and references a function using its Javascript name
 (``coreValidator.maxLength``).

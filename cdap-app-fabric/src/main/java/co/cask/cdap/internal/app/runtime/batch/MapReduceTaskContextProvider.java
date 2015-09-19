@@ -52,7 +52,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Provides access to MapReduceTaskContext for mapreduce job tasks.
  */
-public abstract class MapReduceTaskContextProvider extends AbstractIdleService {
+public class MapReduceTaskContextProvider extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceTaskContextProvider.class);
   private final Injector injector;
@@ -83,12 +83,12 @@ public abstract class MapReduceTaskContextProvider extends AbstractIdleService {
   }
 
   @Override
-  protected final void startUp() throws Exception {
-    doStart();
+  protected void startUp() throws Exception {
+    // no-op
   }
 
   @Override
-  protected final void shutDown() throws Exception {
+  protected void shutDown() throws Exception {
     // Close all the contexts to release resources
     for (BasicMapReduceTaskContext context : taskContexts.asMap().values()) {
       try {
@@ -97,12 +97,7 @@ public abstract class MapReduceTaskContextProvider extends AbstractIdleService {
         LOG.warn("Exception when closing context {}", context, e);
       }
     }
-    doStop();
   }
-
-  protected abstract void doStart() throws Exception;
-
-  protected abstract void doStop() throws Exception;
 
   /**
    * Returns the {@link BasicMapReduceTaskContext} for the given task.

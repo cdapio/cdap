@@ -20,7 +20,6 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
-import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.metadata.serialize.LineageRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -54,13 +53,11 @@ public class LineageHandler extends AbstractHttpHandler {
     .create();
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
 
-  private final LineageGenerator lineageGenerator;
-  private final LineageStore lineageStore;
+  private final LineageAdmin lineageAdmin;
 
   @Inject
-  LineageHandler(LineageGenerator lineageGenerator, LineageStore lineageStore) {
-    this.lineageGenerator = lineageGenerator;
-    this.lineageStore = lineageStore;
+  LineageHandler(LineageAdmin lineageAdmin) {
+    this.lineageAdmin = lineageAdmin;
   }
 
   @GET
@@ -76,28 +73,32 @@ public class LineageHandler extends AbstractHttpHandler {
     TimeRange range = parseRange(startStr, endStr);
 
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, datasetId);
-    Lineage lineage = lineageGenerator.computeLineage(datasetInstance, range.getStart(), range.getEnd(), levels);
+    Lineage lineage = lineageAdmin.computeLineage(datasetInstance, range.getStart(), range.getEnd(), levels);
     responder.sendJson(HttpResponseStatus.OK,
-                       new LineageRecord(range.getStart(), range.getEnd(), lineage.getRelations()),
+                       new LineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
+                                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
+                                         lineage.getRelations()),
                        LineageRecord.class, GSON);
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/lineage")
   public void streamLineage(HttpRequest request, HttpResponder responder,
-                             @PathParam("namespace-id") String namespaceId,
-                             @PathParam("stream-id") String stream,
-                             @QueryParam("start") String startStr,
-                             @QueryParam("end") String endStr,
-                             @QueryParam("levels") @DefaultValue("10") int levels) throws Exception {
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("stream-id") String stream,
+                            @QueryParam("start") String startStr,
+                            @QueryParam("end") String endStr,
+                            @QueryParam("levels") @DefaultValue("10") int levels) throws Exception {
 
     checkLevels(levels);
     TimeRange range = parseRange(startStr, endStr);
 
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
-    Lineage lineage = lineageGenerator.computeLineage(streamId, range.getStart(), range.getEnd(), levels);
+    Lineage lineage = lineageAdmin.computeLineage(streamId, range.getStart(), range.getEnd(), levels);
     responder.sendJson(HttpResponseStatus.OK,
-                       new LineageRecord(range.getStart(), range.getEnd(), lineage.getRelations()),
+                       new LineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
+                                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
+                                         lineage.getRelations()),
                        LineageRecord.class, GSON);
   }
 
@@ -112,7 +113,7 @@ public class LineageHandler extends AbstractHttpHandler {
     Id.Run run = new Id.Run(
       Id.Program.from(namespaceId, appId, ProgramType.valueOfCategoryName(programType), programId),
       runId);
-    responder.sendJson(HttpResponseStatus.OK, lineageStore.getRunMetadata(run), SET_METADATA_RECORD_TYPE, GSON);
+    responder.sendJson(HttpResponseStatus.OK, lineageAdmin.getMetadataForRun(run), SET_METADATA_RECORD_TYPE, GSON);
   }
 
   private void checkLevels(int levels) throws BadRequestException {

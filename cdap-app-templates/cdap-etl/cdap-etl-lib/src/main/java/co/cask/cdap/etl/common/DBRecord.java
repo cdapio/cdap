@@ -216,7 +216,9 @@ public class DBRecord implements Writable, DBWritable {
       type = field.getSchema().getType();
     }
     Preconditions.checkArgument(type.isSimpleType(),
-                                "only simple types are supported (boolean, int, long, float, double, bytes).");
+                                "Only simple types are supported (boolean, int, long, float, double, string, bytes) " +
+                                  "for writing to a Database Sink. Found %s. Please remove this column or " +
+                                  "transform it to a simple type.", type);
     return type;
   }
 
