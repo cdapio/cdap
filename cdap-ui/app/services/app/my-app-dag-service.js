@@ -542,17 +542,19 @@ angular.module(PKG.name + '.services')
       function propertiesIterator(properties, backendProperties) {
         angular.forEach(properties, function(value, key) {
           // If its a required field don't remove it.
-          if (backendProperties[key] && backendProperties[key].required) {
-            return;
-          }
-          if ((!backendProperties[key] && key !== 'errorDatasetName') || properties[key] === '' || properties[key] === null
-          ) {
+          var isRequiredField = backendProperties[key] && backendProperties[key].required;
+          var isErrorDatasetName = !backendProperties[key] && key !== 'errorDatasetName';
+          var isPropertyEmptyOrNull = properties[key] === '' || properties[key] === null;
+          var isPropertyNotAString = properties[key] && typeof properties[key] !== 'string';
+
+          if (!isRequiredField && (isErrorDatasetName || isPropertyEmptyOrNull)) {
             delete properties[key];
           }
           // FIXME: Remove this once https://issues.cask.co/browse/CDAP-3614 is fixed.
-          if (properties[key] && typeof properties[key] !== 'string') {
+          if (isPropertyNotAString) {
             properties[key] = properties[key].toString();
           }
+
         });
         return properties;
       }
