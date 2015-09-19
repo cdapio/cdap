@@ -1357,8 +1357,8 @@ New Features
 - CDAP Tables are :ref:`now explorable <table-exploration>` (`CDAP-946
   <https://issues.cask.co/browse/CDAP-946>`__).
 
-- The :ref:`CDAP CLI <cli>` supports the new :ref:`application template and adapters APIs 
-  <apptemplates-index>`. (`CDAP-1773 <https://issues.cask.co/browse/CDAP-1773>`__).
+- The :ref:`CDAP CLI <cli>` supports the new `application template and adapters APIs 
+  <http://docs.cask.co/cdap/3.0.0/en/application-templates/index.html>`__. (`CDAP-1773 <https://issues.cask.co/browse/CDAP-1773>`__).
   
 - The :ref:`CDAP CLI <cli>` startup options have been changed to accommodate a new option
   of executing a file containing a series of CLI commands, line-by-line.

@@ -133,14 +133,13 @@ public class DefaultBusinessMetadataStore implements BusinessMetadataStore {
       return;
     }
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
-    execute(new TransactionExecutor.Function<BusinessMetadataDataset, Void>() {
+    execute(new TransactionExecutor.Procedure<BusinessMetadataDataset>() {
       @Override
-      public Void apply(BusinessMetadataDataset input) throws Exception {
+      public void apply(BusinessMetadataDataset input) throws Exception {
         Map<String, String> existingProperties = input.getProperties(entityId);
         Set<String> existingTags = input.getTags(entityId);
         previousRef.set(new MetadataRecord(entityId, existingProperties, existingTags));
         input.addTags(entityId, tagsToAdd);
-        return null;
       }
     });
     publish(previousRef.get(), new MetadataRecord(entityId, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
@@ -148,11 +147,10 @@ public class DefaultBusinessMetadataStore implements BusinessMetadataStore {
   }
 
   private void addTagsNoPublish(final Id.NamespacedId entityId, final String... tagsToAdd) {
-    execute(new TransactionExecutor.Function<BusinessMetadataDataset, Void>() {
+    execute(new TransactionExecutor.Procedure<BusinessMetadataDataset>() {
       @Override
-      public Void apply(BusinessMetadataDataset input) throws Exception {
+      public void apply(BusinessMetadataDataset input) throws Exception {
         input.addTags(entityId, tagsToAdd);
-        return null;
       }
     });
   }
@@ -405,6 +403,16 @@ public class DefaultBusinessMetadataStore implements BusinessMetadataStore {
         }
         // value search
         return input.findBusinessMetadataOnValue(namespaceId, searchQuery, type);
+      }
+    });
+  }
+
+  @Override
+  public Set<MetadataRecord> getSnapshotBeforeTime(final Set<Id.NamespacedId> entityIds, final long timeMillis) {
+    return execute(new TransactionExecutor.Function<BusinessMetadataDataset, Set<MetadataRecord>>() {
+      @Override
+      public Set<MetadataRecord> apply(BusinessMetadataDataset input) throws Exception {
+        return input.getSnapshotBeforeTime(entityIds, timeMillis);
       }
     });
   }

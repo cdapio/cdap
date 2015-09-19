@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('navbarCtrl', function (myAlert, MYAUTH_EVENT, myNamespace, $scope, EventPipe) {
+  .controller('navbarCtrl', function (myAlert, MYAUTH_EVENT, myNamespace, $scope, EventPipe, $state) {
 
     $scope.namespaces = [];
 
@@ -38,6 +38,7 @@ angular.module(PKG.name + '.commons')
       $scope.namespaces = [];
     });
 
+    $scope.highlightTab = $state.current.data && $state.current.data.highlightTab;
     $scope.$on('$stateChangeSuccess', function(event, toState) {
       $scope.highlightTab = toState.data && toState.data.highlightTab;
     });

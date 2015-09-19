@@ -19,7 +19,9 @@ import co.cask.cdap.data2.metadata.dataset.BusinessMetadataRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import com.google.common.collect.ImmutableSet;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,22 +42,22 @@ public class NoOpBusinessMetadataStore implements BusinessMetadataStore {
 
   @Override
   public MetadataRecord getMetadata(Id.NamespacedId entityId) {
-    return null;
+    return new MetadataRecord(entityId);
   }
 
   @Override
   public Set<MetadataRecord> getMetadata(Set<Id.NamespacedId> entityIds) {
-    return null;
+    return Collections.emptySet();
   }
 
   @Override
   public Map<String, String> getProperties(Id.NamespacedId entityId) {
-    return null;
+    return Collections.emptyMap();
   }
 
   @Override
   public Set<String> getTags(Id.NamespacedId entityId) {
-    return null;
+    return Collections.emptySet();
   }
 
   @Override
@@ -85,12 +87,21 @@ public class NoOpBusinessMetadataStore implements BusinessMetadataStore {
 
   @Override
   public Iterable<BusinessMetadataRecord> searchMetadata(String namespaceId, String searchQuery) {
-    return null;
+    return Collections.emptySet();
   }
 
   @Override
   public Iterable<BusinessMetadataRecord> searchMetadataOnType(String namespaceId, String searchQuery,
                                                                MetadataSearchTargetType type) {
-    return null;
+    return Collections.emptySet();
+  }
+
+  @Override
+  public Set<MetadataRecord> getSnapshotBeforeTime(Set<Id.NamespacedId> entityIds, long timeMillis) {
+    ImmutableSet.Builder<MetadataRecord> builder = ImmutableSet.builder();
+    for (Id.NamespacedId entityId : entityIds) {
+      builder.add(new MetadataRecord(entityId));
+    }
+    return builder.build();
   }
 }

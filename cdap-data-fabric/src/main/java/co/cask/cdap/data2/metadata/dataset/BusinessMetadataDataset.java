@@ -31,6 +31,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -368,12 +369,20 @@ public class BusinessMetadataDataset extends AbstractDataset {
   }
 
   /**
-   * Returns the snapshot of the metadata for targetId on or before the given time.
-   * @param targetId target id
+   * Returns the snapshot of the metadata for entities on or before the given time.
+   * @param targetIds entity ids
    * @param timeMillis time in milliseconds
-   * @return the snapshot of the metadata for targetId on or before the given time
+   * @return the snapshot of the metadata for entities on or before the given time
    */
-  public MetadataRecord getSnapshotBeforeTime(Id.NamespacedId targetId, long timeMillis) {
+  public Set<MetadataRecord> getSnapshotBeforeTime(Set<Id.NamespacedId> targetIds, long timeMillis) {
+    ImmutableSet.Builder<MetadataRecord> builder = ImmutableSet.builder();
+    for (Id.NamespacedId entityId : targetIds) {
+      builder.add(getSnapshotBeforeTime(entityId, timeMillis));
+    }
+    return builder.build();
+  }
+
+  private MetadataRecord getSnapshotBeforeTime(Id.NamespacedId targetId, long timeMillis) {
     byte[] scanStartKey = MdsHistoryKey.getMdsScanStartKey(targetId, timeMillis).getKey();
     byte[] scanEndKey = MdsHistoryKey.getMdsScanEndKey(targetId).getKey();
     // TODO: add limit to scan, we need only one row

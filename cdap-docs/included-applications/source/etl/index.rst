@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _apptemplates-etl-index:
+.. _included-apps-etl-index:
 
 ============
 ETL Overview 
@@ -19,7 +19,7 @@ purpose of the system is to:
 - Transform the data to fit the operational needs; and
 - Load the data into a desired destination.
 
-ETL usually comprises a source, zero or more transformations and a sink, in what is called
+ETL usually comprises a source, zero or more transformations and one or more sinks, in what is called
 an *ETL pipeline:*
 
 .. image:: ../_images/etl-pipeline.png
@@ -27,21 +27,22 @@ an *ETL pipeline:*
    :align: center
 
 
-.. rubric:: ETL Templates, Adapters and Plugins 
+.. rubric:: System Artifacts, ETL Applications, and ETL Plugins 
 
 An *Application Template* is a blueprint that is used to create an *Adapter*, an instantiation of
 a template in CDAP.
 
-CDAP provides two application templates |---| the ETL templates **ETLBatch** and
-**ETLRealtime** |---| which are used to create adapters that perform ETL in either batch
-or real time. The  *ETLBatch* and *ETLRealtime* templates consist of a variety of sources,
-transformations and sinks that are packaged together.
+CDAP provides system artifacts |---| ``cdap-etl-batch`` and ``cdap-etl-realtime`` |---|
+which are used to create applications that perform ETL in either batch or real time, and
+consist of a variety of sources, transformations, and sinks that are packaged together.
+
+A third system artifact, ``cdap-etl-lib``, provides common resources for the other two system artifacts.
 
 The batch sources can write to any batch sinks that are available and real-time sources can
 write to any real-time sinks. Transformations work with either sinks or sources. Transformations
 can use *validators* to test data and check that it follows user-specified rules.
 
-This lists the available sources, sinks and transformations (transforms):
+This lists the available sources, sinks, and transformations (transforms):
 
 .. list-table::
    :widths: 30 40 30
@@ -102,7 +103,7 @@ This lists the available sources, sinks and transformations (transforms):
 
 
 
-.. rubric:: ETL Adapters
+.. rubric:: ETL Applications
 
 An *ETL Adapter* is an instantiation of an ETL template that has been given a specific
 configuration on creation.
@@ -121,30 +122,33 @@ specified in-memory.
 
 .. rubric:: ETL Plugins
 
-The sources, transformations and sinks are generically called plugins. Plugins provide a
-way to extend the functionality of existing templates. An adapter can be created with
+The sources, transformations, and sinks are generically called plugins. Plugins provide a
+way to extend the functionality of existing artifacts. An application can be created with
 existing plugins or, if the user wishes, they can write their own source, transform, and
 sink plugins to add their own. You can write your own validator using functions supplied in
-either the :ref:`CoreValidator <apptemplates-etl-validators-corevalidator>` or implement your own.
+either the :ref:`CoreValidator <included-apps-etl-plugins-shared-core-validator>` or implement your own.
 
 
-Template and Plugin Details
-===========================
+Application and Plugin Details
+==============================
 
-.. |templates| replace:: **ETL Template and Plugin Details:**
-.. _templates: templates/index.html
+.. |etl-plugins| replace:: **ETL Plugins:**
+.. _etl-plugins: plugins/index.html
 
-- |templates|_ Detailed description of available ETL application templates and plugins.
+- |etl-plugins|_ Details on ETL plugins and exploring available plugins using RESTful APIs.
 
-.. |creating| replace:: **Creating An ETL Adapter:**
-.. _creating: creating.html
 
-- |creating|_ Steps for creating an ETL adapter from an ETL application template.
+.. |etl-creating| replace:: **Creating an ETL Application:**
+.. _etl-creating: creating.html
 
-.. |operations| replace:: **Adapter Lifecycle Management:**
-.. _operations: operations.html
+- |etl-creating|_ Covers using the system artifacts and ETL plugins included with CDAP to create an ETL application.
 
-- |operations|_ Lifecycle controls for operating an ETL adapter.
+
+.. |etl-operations| replace:: **Application Lifecycle Management:**
+.. .. _etl-operations: etl/operations.html http-restful-api-lifecycle
+
+- :ref:`|etl-operations| <http-restful-api-lifecycle>` Manage ETL Applications using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
+
 
 .. |etl-custom| replace:: **Creating Custom ETL Plugins:**
 .. _etl-custom: custom.html
