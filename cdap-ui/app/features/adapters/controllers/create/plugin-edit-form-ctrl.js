@@ -34,6 +34,128 @@ angular.module(PKG.name + '.feature.adapters')
     this.configfetched = false;
     this.properties = [];
     this.noconfig = null;
+    /////////////////////////////////////
+    /*
+     This is snippet is here because the widget-schema-editor edits the outputschema that we pass in
+     which makes the plugin.outputschema to be always edited when the user opens the plugin for the first time.
+     So even though the user didn't actually do anything this behavior was forcing the user to save the node when opened for the first time.
+
+     So we are temporarily doing the coversion here before passing it to the widget-schema-editor so that it doesn't trigger that initial change.
+     This should eventually be removed and moved to a service (or a factory). For lack of time my sin stays here. - Ajai
+    */
+    $scope.data['isModelTouched'] = false;
+    var typeMap = 'map<string, string>';
+    var mapObj = {
+      type: 'map',
+      keys: 'string',
+      values: 'string'
+    };
+
+    function constructOutputSchema(jsonBlob, config, pluginProperties) {
+      var options, defaultType;
+      var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string', 'map<string, string>' ];
+      if (config){
+        options = config['schema-types'];
+        defaultType = config['schema-default-type'] || options[0];
+      } else {
+        options = defaultOptions;
+        defaultType = 'string';
+      }
+
+      var schema = jsonBlob;
+      schema = myHelpers.objectQuery(schema, 'fields');
+      var properties = [];
+      angular.forEach(schema, function(p) {
+        if (angular.isArray(p.type)) {
+          properties.push({
+            name: p.name,
+            type: p.type[0],
+            nullable: true
+          });
+        } else if (angular.isObject(p.type)) {
+          if (p.type.type === 'map') {
+            properties.push({
+              name: p.name,
+              type: typeMap,
+              nullable: p.nullable
+            });
+          } else {
+            properties.push({
+              name: p.name,
+              type: p.type.items,
+              nullable: p.nullable
+            });
+          }
+        } else {
+          properties.push({
+            name: p.name,
+            type: p.type,
+            nullable: p.nullable
+          });
+        }
+      });
+
+      // Note: 15 for now
+      if (properties.length < 15) {
+        if (properties.length === 0) {
+          properties.push({
+            name: '',
+            type: defaultType,
+            nullable: false
+          });
+        }
+
+        for (var i = properties.length; i < 15; i++) {
+          properties.push({
+            empty: true
+          });
+        }
+      } else { // to add one empty line when there are more than 15 fields
+        properties.push({
+          empty: true
+        });
+      }
+
+      return formatSchema(properties, config, pluginProperties);
+    }
+
+    function formatSchema(properties, config, pluginProperties) {
+
+      if (config && config['property-watch'] && pluginProperties && ['clf', 'syslog'].indexOf(pluginProperties[config['property-watch']]) !== -1) {
+        return null;
+      }
+
+      // Format Schema
+      var prop = [];
+      angular.forEach(properties, function(p) {
+        if (p.name) {
+          var property;
+          if (p.type === typeMap) {
+            property = angular.copy(mapObj);
+          } else {
+            property = p.type;
+          }
+
+          prop.push({
+            name: p.name,
+            type: p.nullable ? [property, 'null'] : property
+          });
+        }
+      });
+
+      // do not include properties on the request when schema field is empty
+      if (prop.length !== 0) {
+        var schema = {
+          type: 'record',
+          name: 'etlSchemaBody',
+          fields: prop
+        };
+        // turn schema into JSON string
+        return JSON.stringify(schema);
+      } else {
+        return null;
+      }
+    }
 
     this.noproperty = Object.keys(
       $scope.plugin._backendProperties || {}
@@ -47,6 +169,7 @@ angular.module(PKG.name + '.feature.adapters')
       )
         .then(
           function success(res) {
+            var jsonBlob;
             if (res.schema) {
               this.schemaProperties = res.schema;
             }
@@ -82,10 +205,23 @@ angular.module(PKG.name + '.feature.adapters')
               });
 
               var obj = { fields: formattedSchema };
-              $scope.plugin.outputSchema = JSON.stringify(obj);
+              $scope.plugin.outputSchema = constructOutputSchema(obj, this.schemaProperties, $scope.plugin.properties);
               $scope.plugin.implicitSchema = true;
+            } else {
+              try {
+                jsonBlob = JSON.parse($scope.plugin.outputSchema);
+              } catch(e) {
+                console.log('ERROR: ', e);
+              }
+              $scope.plugin.outputSchema = constructOutputSchema(jsonBlob, this.schemaProperties, $scope.plugin.properties);
+            }
+            if ($scope.plugin._backendProperties.schema) {
+              if ($scope.plugin.properties.schema !== $scope.plugin.outputSchema) {
+                $scope.plugin.properties.schema = $scope.plugin.outputSchema;
+              }
             }
             $scope.pluginCopy = angular.copy($scope.plugin);
+
             // Mark the configfetched to show that configurations have been received.
             this.configfetched = true;
             this.config = res;
@@ -105,6 +241,14 @@ angular.module(PKG.name + '.feature.adapters')
                 }
                 if ($scope.pluginCopy.properties.schema !== $scope.pluginCopy.outputSchema) {
                   $scope.pluginCopy.properties.schema = $scope.pluginCopy.outputSchema;
+                }
+              });
+            } else {
+              $scope.$watch('pluginCopy.outputSchema', function () {
+                var originalOutputSchema = $scope.plugin.outputSchema;
+                var copyOutputSchema = $scope.pluginCopy.outputSchema;
+                if (originalOutputSchema !== copyOutputSchema) {
+                  $scope.data['isModelTouched'] = true;
                 }
               });
             }
@@ -216,8 +360,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.reset = function () {
       $scope.pluginCopy.properties = angular.copy($scope.plugin.properties);
-      $scope.pluginCopy.outputSchema = angular.copy($scope.plugin.outputSchema);
-      $scope.pluginCopy.inputSchema = angular.copy($scope.plugin.inputSchema);
+      $scope.pluginCopy.outputSchema = $scope.plugin.outputSchema;
       $scope.pluginCopy.errorDatasetName = angular.copy($scope.plugin.errorDatasetName);
       EventPipe.emit('resetValidatorValidationFields', $scope.plugin.validationFields);
       $scope.data['isModelTouched'] = false;
@@ -231,8 +374,8 @@ angular.module(PKG.name + '.feature.adapters')
     this.save = function () {
       if (validateSchema() || $scope.plugin.name === 'Validator') {
         $scope.plugin.properties = angular.copy($scope.pluginCopy.properties);
-        $scope.plugin.outputSchema = angular.copy($scope.pluginCopy.outputSchema);
-        $scope.plugin.errorDatasetName = angular.copy($scope.pluginCopy.errorDatasetName);
+        $scope.plugin.outputSchema = $scope.pluginCopy.outputSchema;
+        $scope.plugin.errorDatasetName = $scope.pluginCopy.errorDatasetName;
         $scope.plugin.validationFields = angular.copy($scope.pluginCopy.validationFields);
         $scope.plugin.label = $scope.pluginCopy.label;
         $scope.data['isModelTouched'] = false;

@@ -175,7 +175,7 @@ angular.module(PKG.name + '.feature.adapters')
           });
 
           if (!$scope.plugin.outputSchema && input) {
-            $scope.plugin.outputSchema = angular.copy(JSON.stringify(input)) || null;
+            $scope.plugin.outputSchema = JSON.stringify(input) || null;
           }
 
           if ($scope.plugin.type === artifactTypeExtension.source) {
