@@ -119,6 +119,35 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  public void testInvalidAppWithDuplicateStreams() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalid-app", "1.0.0-SNAPSHOT");
+    addAppArtifact(artifactId, AppWithDuplicateStreams.class);
+
+    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugin", "1.0.0-SNAPSHOT");
+    addPluginArtifact(pluginArtifactId, artifactId, ToStringPlugin.class);
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "InvalidApp");
+
+    for (int choice = 8; choice > 0; choice /= 2) {
+      try {
+        AppRequest<AppWithDuplicateStreams.ConfigClass> createRequest = new AppRequest<>(
+          new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+          new AppWithDuplicateStreams.ConfigClass((choice == 8), (choice == 4), (choice == 2), (choice == 1)));
+        deployApplication(appId, createRequest);
+        // fail if we succeed with application deployment
+        Assert.fail();
+      } catch (IllegalStateException e) {
+        // expected
+      }
+    }
+
+    AppRequest<AppWithDuplicateStreams.ConfigClass> createRequest = new AppRequest<>(
+      new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
+      new AppWithDuplicateStreams.ConfigClass(false, false, false, false));
+    deployApplication(appId, createRequest);
+  }
+
+  @Test
   public void testFlowRuntimeArguments() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterApp.class);
     Map<String, String> args = Maps.newHashMap();
