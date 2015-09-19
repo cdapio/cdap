@@ -149,6 +149,10 @@ public class MasterServiceMain extends DaemonMain {
   public MasterServiceMain() {
     this.cConf = CConfiguration.create();
     this.cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
+
+    // Note: login has to happen before any objects that need Kerberos credentials are instantiated.
+    login();
+
     this.hConf = HBaseConfiguration.create();
 
     Injector injector = createBaseInjector(cConf, hConf);
@@ -167,7 +171,6 @@ public class MasterServiceMain extends DaemonMain {
     cleanupTempDir();
 
     checkExploreRequirements();
-    login();
   }
 
   @Override
