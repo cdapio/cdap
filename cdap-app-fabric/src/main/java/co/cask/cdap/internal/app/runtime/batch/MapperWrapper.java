@@ -113,6 +113,9 @@ public class MapperWrapper extends Mapper {
       throw Throwables.propagate(e);
     }
 
+    // Close all writers created by MultipleOutputs
+    basicMapReduceContext.closeMultiOutputs();
+
     if (delegate instanceof ProgramLifecycle) {
       oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
       try {
