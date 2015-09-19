@@ -14,13 +14,10 @@ information about plugins available to artifacts.
 
 .. highlight:: console
 
-Artifacts
-=========
-
 .. _http-restful-api-artifact-add:
 
 Adding an Artifact
-------------------
+==================
 An artifact can be added with an HTTP POST method to the URL::
 
   PUT <base-url>/namespaces/<namespace>/artifacts/<artifact-name>
@@ -64,7 +61,7 @@ Several optional headers may also be specified:
 .. _http-restful-api-artifact-available:
 
 List Available Artifacts 
-------------------------
+========================
 To retrieve a list of available artifacts, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/artifacts[?scope=<scope>]
@@ -109,7 +106,7 @@ Example output (pretty-printed):
 .. _http-restful-api-artifact-versions:
 
 List Artifact Versions
-----------------------
+======================
 To list all versions of a specific artifact, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/artifact/<artifact-name>[?scope=<scope>]
@@ -145,7 +142,7 @@ its name, version, and scope. Example output for the ``cdap-etl-batch`` artifact
 .. _http-restful-api-artifact-detail:
 
 Retrieve Artifact Detail
-------------------------
+========================
 To retrieve detail about a specific version of an artifact, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>[?scope=<scope>]
@@ -203,7 +200,7 @@ artifact (pretty-printed and reformatted to fit):
 .. _http-restful-api-artifact-extensions:
 
 List Extensions (Plugin Types) Available to an Artifact
--------------------------------------------------------
+=======================================================
 To list the extensions (plugin types) available to an artifact, submit
 an HTTP GET request::
 
@@ -237,7 +234,7 @@ artifact (pretty-printed and reformatted to fit):
 .. _http-restful-api-artifact-available-plugins:
 
 Listing Plugins Available to an Artifact
-----------------------------------------
+========================================
 To list plugins of a specific type available to an artifact, submit
 an HTTP GET request::
 
@@ -300,7 +297,7 @@ of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
 .. _http-restful-api-artifact-plugin-detail:
 
 Retrieving Plugin Details
--------------------------
+=========================
 To retrieve details about a specific plugin available to an artifact, submit
 an HTTP GET request::
 
@@ -361,7 +358,7 @@ of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
 .. _http-restful-api-artifact-delete:
 
 Deleting an Artifact
---------------------
+====================
 To delete an artifact, submit an HTTP DELETE request::
 
   DELETE <base-url>/namespaces/<namespace>/artifacts/<artifact-name>/versions/<artifact-version>
@@ -386,7 +383,7 @@ is updated to use a different artifact.
 .. _http-restful-api-artifact-system-load:
 
 Load System Artifacts
----------------------
+=====================
 To load all system artifacts on the CDAP Master node(s), submit an HTTP POST request::
 
   POST <base-url>/namespaces/system/artifacts
@@ -397,7 +394,7 @@ that it finds. Any snapshot artifacts will be re-loaded.
 .. _http-restful-api-artifact-system-delete:
 
 Delete System Artifact
-----------------------
+======================
 To delete a system artifact, submit an HTTP DELETE request::
 
   DELETE <base-url>/namespaces/system/artifacts/<artifact-name>/versions/<artifact-version>
@@ -409,7 +406,7 @@ is updated to use a different artifact.
 .. _http-restful-api-artifact-app-classes:
 
 Listing Application Classes
----------------------------
+===========================
 To list application classes, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/classes/apps[scope=<scope>]
@@ -469,7 +466,7 @@ as well as the class name. Example output for the ``ScriptFilter`` (pretty-print
 .. _http-restful-api-artifact-appclass-detail:
 
 Retrivies Application Class Detail
-----------------------------------
+==================================
 To retrieve detail about a specific application class, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/classes/apps/<class-name>[?scope=<scope>]
