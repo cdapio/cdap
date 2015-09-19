@@ -498,7 +498,6 @@ def compare_xml(source, other_source, target):
     other_items, other_tree = load_xml(other_source, include_exclusions=True, include_comments=False)
     print "other_items: %s" % len(other_items)
     other_items.sort(key = lambda p: p.name)
-
     other_items_keys = []
     for other_item in other_items:
         other_items_keys.append(other_item.name)
@@ -532,13 +531,6 @@ def compare_xml(source, other_source, target):
     print "\nIn Both:              %d" % len(in_both)
     for name in in_both:
         print "  %s" % name
-     
-      
-        
-        
-#     print "Writing difference to target: %s" % target
-
-   
 
 
 def main():
