@@ -280,9 +280,9 @@ public class DefaultStore implements Store {
       return;
     }
 
+    boolean workFlowNodeFailed = false;
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(id.getId());
     Map<String, WorkflowNode> nodeIdMap = workflowSpec.getNodeIdMap();
-
     final List<WorkflowDataset.ProgramRun> programRunsList = new ArrayList<>();
     for (Map.Entry<String, String> entry : run.getProperties().entrySet()) {
       if (!("workflowToken".equals(entry.getKey()) || "runtimeArgs".equals(entry.getKey()))) {
@@ -290,9 +290,18 @@ public class DefaultStore implements Store {
         ProgramType programType = ProgramType.valueOfSchedulableType(workflowNode.getProgram().getProgramType());
         Id.Program innerProgram = Id.Program.from(app.getNamespaceId(), app.getId(), programType, entry.getKey());
         RunRecordMeta innerProgramRun = getRun(innerProgram, entry.getValue());
-        programRunsList.add(new WorkflowDataset.ProgramRun(
-          entry.getKey(), entry.getValue(), programType, innerProgramRun.getStopTs() - innerProgramRun.getStartTs()));
+        if (innerProgramRun.getStatus().equals(ProgramRunStatus.COMPLETED)) {
+          programRunsList.add(new WorkflowDataset.ProgramRun(
+            entry.getKey(), entry.getValue(), programType, innerProgramRun.getStopTs() - innerProgramRun.getStartTs()));
+        } else {
+          workFlowNodeFailed = true;
+          break;
+        }
       }
+    }
+
+    if (workFlowNodeFailed) {
+      return;
     }
 
     txnlWorkflow.executeUnchecked(new TransactionExecutor.Function<WorkflowStatsDataset, Void>() {
