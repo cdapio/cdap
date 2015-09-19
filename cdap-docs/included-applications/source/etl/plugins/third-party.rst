@@ -13,28 +13,26 @@ Using Third-Party JARs
 **Prebuilt JARs:** In a case where you'd like to use prebuilt third-party JARs (such as a
 JDBC driver) as a plugin, you will need to create a JSON file to describe the JAR.
 
-For information on the format of the JSON, please refer to the section on the
-:ref:`Plugin Packaging <included-apps-custom-etl-plugins-plugin-packaging>` in
-:ref:`Creating a Custom ETL Plugin <included-apps-custom-etl-plugins>`.
-
-Copy the JAR and the JSON file to the :ref:`Plugin directory
-<included-apps-custom-etl-plugins-installation-directory>` and then reload system artifacts by
-using the :ref:`HTTP RESTful API Load System Artifacts
-<http-restful-api-artifact-system-load>` endpoint.
+For information on the format of the JSON, please refer to the sections on
+:ref:`Third Party Plugins <plugins-third-party>` and :ref:`Plugin Deployment <plugins-deployment>`.
 
 A sample JDBC Driver Plugin configuration::
 
-  [
-    {
-      "type" : "JDBC",
-      "name" : "MySQL JDBC",
-      "description" : "Plugin for MySQL JDBC driver",
-      "className" : "com.mysql.jdbc.Driver",
-    },
-    {
-      "type" : "JDBC",
-      "name" : "PostgreSQL JDBC",
-      "description" : "Plugin for PostgreSQL JDBC driver",
-      "className" : "org.postgresql.Driver",
-    }
-  ]
+  {
+    "parents": [ "cdap-etl-batch[|version|,|version|]" ],
+    "config": [
+      {
+        "type" : "JDBC",
+        "name" : "MySQL JDBC",
+        "description" : "Plugin for MySQL JDBC driver",
+        "className" : "com.mysql.jdbc.Driver"
+      },
+      {
+        "type" : "JDBC",
+        "name" : "PostgreSQL JDBC",
+        "description" : "Plugin for PostgreSQL JDBC driver",
+        "className" : "org.postgresql.Driver"
+      }
+    ]
+  }
+

@@ -32,30 +32,38 @@ specifying the frequency of the Batch job run, such as every day or every hour.
 
 For example, this JSON (when in a file such as ``config.json``) provides a
 configuration for a Batch Application that runs every minute, reading data from a stream
-*myStream* and writing to a dataset (Table) called *myTable*,  without any transformations::
+*myStream* and writing to a dataset (Table) called *myTable*, without any transformations:
 
-  {
-    "template":"ETLBatch",
-    "description":"Batch ETL",
-    "config":{
-        "schedule":"* * * * *",
-        "source":{
-            "name":"Stream",
-            "properties":{  
-                "name":"myStream",
-                "duration":"1m"
-            }
+.. container:: highlight
+
+  .. parsed-literal::
+    {
+      "artifact": {
+        "name": "cdap-etl-batch",
+        "version": "|version|",
+        "scope": "system"
+      },
+      "config": {
+        "schedule": "\* \* \* \* \*",
+        "source": {
+          "name": "Stream",
+          "properties": {  
+            "name": "myStream",
+            "duration": "1m"
+          }
         },
-        "transforms":[],
-        "sink":{
-            "name":"Table",
-            "properties":{
-                "name":"myTable",
-                "schema.row.field":"ts"
+        "transforms": [ ],
+        "sinks": [
+          {
+            "name": "Table",
+            "properties": {
+              "name": "myTable",
+              "schema.row.field": "ts"
             }
-        }
-     }
-  }
+          }
+        ]
+      }
+    }
 
 The application launches a MapReduce program that runs every minute, reads data from the
 stream *myStream* and writes to a Table *myTable*. A Table Sink needs a row key field to
@@ -65,7 +73,7 @@ To create this application, called *streamETLApp*:
 
 - Using the :ref:`Lifecycle RESTful API <http-restful-api-lifecycle-create-app>`::
 
-    PUT /v3/namespaces/default/apps/streamETLApp -d @config.json 
+    curl -X PUT localhost:10000/v3/namespaces/default/apps/streamETLApp -H 'Content-Type: application/json' -d @config.json 
 
 - Using :ref:`CDAP CLI <cli>`:
 
@@ -83,39 +91,47 @@ Creating an ETL Real-Time Application
 -------------------------------------
 
 This next configuration creates a real-time application that reads from Twitter and writes to a
-stream after performing a projection transformation::
+stream after performing a projection transformation:
 
-  {
-    "template":"ETLRealtime",
-    "description":"Twitter to Stream: renames the 'message' field name to 'tweet',
-    "config":{
-        "instances":"1",
-        "source":{
-            "name":"Twitter",
-            "properties":{  
-                "AccessToken":"xxx",
-                "AccessTokenSecret":"xxx",
-                "ConsumerKey":"xxx",
-                "ConsumerSecret":"xxx"                                         
-            }
+.. container:: highlight
+
+  .. parsed-literal::
+    {
+      "artifact": {
+        "name": "cdap-etl-realtime",
+        "version": "|version|",
+        "scope": "system"
+      },
+      "config": {
+        "instances": 1,
+        "source": {
+          "name": "Twitter",
+          "properties": {  
+            "AccessToken": "xxx",
+            "AccessTokenSecret": "xxx",
+            "ConsumerKey": "xxx",
+            "ConsumerSecret": "xxx"                                         
+          }
         },
-        "transforms":[
-            {
-                "name":"Projection"
-                "properties":{
-                    "drop":"lang,time,favCount,source,geoLat,geoLong,isRetweet"
-                }
+        "transforms": [
+          {
+            "name": "Projection",
+            "properties": {
+              "drop": "lang,time,favCount,source,geoLat,geoLong,isRetweet"
             }
-       ],
-       "sink":{
-           "name":"Stream",
-           "properties":{
-               "name":"twitterStream",
-               "body.field":"tweet"
-           }
-        }
-     }
-  }
+          }
+        ],
+        "sinks": [
+          {
+            "name": "Stream",
+            "properties": {
+              "name": "twitterStream",
+              "body.field": "tweet"
+            }
+          }
+        ]
+      }
+    }
 
 
 An ETL Real-Time Application expects an instance property that will create *N* instances
@@ -135,97 +151,84 @@ that it will use as the content for the data to be written.
 Sample Application Configurations
 ---------------------------------
 
-**Database:** Sample config for using a Database Source and a Database Sink::
+**Database:** Sample config for using a Database Source and a Database Sink:
 
-  {
-    "config": {
-      "schedule": "* * * * *",
-      "source": {
-        "name": "Database",
-        "properties": {
-          "importQuery": "select id,name,age from my_table",
-          "countQuery": "select count(id) from my_table",
-          "connectionString": "jdbc:mysql://localhost:3306/test",
-          "tableName": "src_table",
-          "user": "my_user",
-          "password": "my_password",
-          "jdbcPluginName": "jdbc_plugin_name_defined_in_jdbc_plugin_json_config",
-          "jdbcPluginType": "jdbc_plugin_type_defined_in_jdbc_plugin_json_config"
-          }
-        },
-      "sink": {
-        "name": "Database",
-        "properties": {
-          "columns": "id,name,age",
-          "connectionString": "jdbc:mysql://localhost:3306/test",
-          "tableName": "dest_table",
-          "user": "my_user",
-          "password": "my_password",
-          "jdbcPluginName": "jdbc_plugin_name_defined_in_jdbc_plugin_json_config",
-          "jdbcPluginType": "jdbc_plugin_type_defined_in_jdbc_plugin_json_config"
-          }
-        },
-      "transforms": [
-        ]
+.. container:: highlight
+
+  .. parsed-literal::
+    {
+      "artifact": {
+        "name": "cdap-etl-batch",
+        "version": "|version|",
+        "scope": "system"
       },
-    "description": "ETL using a Table as source and RDBMS table as sink",
-    "template": "ETLBatch"
-  }
+      "config": {
+        "schedule": "\* \* \* \* \*",
+        "source": {
+          "name": "Database",
+          "properties": {
+            "importQuery": "select id,name,age from my_table",
+            "countQuery": "select count(id) from my_table",
+            "connectionString": "jdbc:mysql://localhost:3306/test",
+            "tableName": "src_table",
+            "user": "my_user",
+            "password": "my_password",
+            "jdbcPluginName": "jdbc_plugin_name_defined_in_jdbc_plugin_json_config",
+            "jdbcPluginType": "jdbc_plugin_type_defined_in_jdbc_plugin_json_config"
+          }
+        },
+        "sinks": [
+          {
+            "name": "Database",
+            "properties": {
+              "columns": "id,name,age",
+              "connectionString": "jdbc:mysql://localhost:3306/test",
+              "tableName": "dest_table",
+              "user": "my_user",
+              "password": "my_password",
+              "jdbcPluginName": "jdbc_plugin_name_defined_in_jdbc_plugin_json_config",
+              "jdbcPluginType": "jdbc_plugin_type_defined_in_jdbc_plugin_json_config"
+            }
+          }
+        ],
+        "transforms": [ ]
+      }
+    }
   
-**JMS:** A JMS server needs to be setup similar to using `ActiveMQ <http://activemq.apache.org>`__::
-
-  {
-    "template": "ETLRealtime",
-    "config": {
-      "instances": "1",
-      "source": {
-        "name": "JMS",
-        "properties": {
-          "jms.messages.receive": 50,
-          "jms.destination.name": "dynamicQueues/CDAP.QUEUE",
-          "jms.factory.initial": "org.apache.activemq.jndi.ActiveMQInitialContextFactory",
-          "jms.provider.url": "vm://localhost?broker.persistent=false"
-        }
-      },
-      "sink": {
-        "name": "Stream",
-        "properties": {
-          "name": "jmsStream",
-          "body.field": "message"
-        }
-      },
-      "transforms": [
-      ]
-    }
-  }
-
-
 **Kafka:** A Kafka cluster needs to be setup, and certain minimum properties specified when
-creating the source::
+creating the source:
 
-  {
-    "template": "ETLRealtime",
-    "config": {
-      "instances": "1",
-      "source": {
-        "name": "Kafka",
-        "properties": {
-          "kafka.partitions": 1,
-          "kafka.topic": "test",
-          "kafka.brokers": "localhost:9092"
-        }
+.. container:: highlight
+
+  .. parsed-literal::
+    {
+      "artifact": {
+        "name": "cdap-etl-realtime",
+        "version": "|version|",
+        "scope": "system"
       },
-      "sink": {
-        "name": "Stream",
-        "properties": {
-          "name": "myStream",
-          "body.field": "message"
-        }
-      },
-      "transforms": [
-      ]
+      "config": {
+        "instances": 1,
+        "source": {
+          "name": "Kafka",
+          "properties": {
+            "kafka.partitions": "1",
+            "kafka.topic": "test",
+            "kafka.brokers": "localhost:9092"
+          }
+        },
+        "sinks": [
+          {
+            "name": "Stream",
+            "properties": {
+              "name": "myStream",
+              "body.field": "message"
+            }
+          }
+        ],
+        "transforms": [ ]
+      }
     }
-  }
 
 
 **Prebuilt JARs:** In a case where you'd like to use prebuilt third-party JARs (such as a

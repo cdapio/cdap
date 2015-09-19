@@ -92,7 +92,7 @@ or using ``curl`` to directly make an HTTP request:
 .. container:: highlight
 
   .. parsed-literal::
-    |$| curl -w'\n' localhost:10000/v3/namespaces/default/artifacts/cdap-wise \
+    |$| curl -w'\\n' localhost:10000/v3/namespaces/default/artifacts/cdap-wise \
     --data-binary @cdap-wise-|cdap-apps-version|/target/cdap-wise-|cdap-apps-version|.jar
     Artifact added successfully
 
@@ -113,7 +113,7 @@ or by using ``curl``:
 .. container:: highlight
 
   .. parsed-literal::
-    |$| curl -w'\n' -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/Wise \
+    |$| curl -w'\\n' -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/Wise \
     -d '{ "artifact":{ "name": "cdap-wise", "version": "0.4.0", "scope": "user" } }'
     Deploy Complete
     
