@@ -53,6 +53,7 @@ import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
@@ -339,7 +340,9 @@ public class ConfigurableTestBase {
   }
 
   private static Module createDataFabricModule() {
-    return Modules.override(new DataFabricModules().getInMemoryModules(), new StreamAdminModules().getInMemoryModules())
+    return Modules.override(new DataFabricModules().getInMemoryModules(),
+                            new ViewAdminModules().getInMemoryModules(),
+                            new StreamAdminModules().getInMemoryModules())
       .with(new AbstractModule() {
 
         @Override

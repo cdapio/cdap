@@ -14,19 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.data.stream.view;
+package co.cask.cdap.gateway.handlers;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.HttpExceptionHandler;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.stream.StreamViewHttpHandler;
-import co.cask.cdap.data.view.InMemoryViewStore;
-import co.cask.cdap.data.view.ViewAdmin;
-import co.cask.cdap.explore.client.ExploreFacade;
-import co.cask.cdap.explore.client.MockExploreClient;
-import co.cask.cdap.explore.utils.ExploreTableNaming;
+import co.cask.cdap.gateway.GatewayTestBase;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.proto.ViewDetail;
 import co.cask.cdap.proto.ViewSpecification;
@@ -34,23 +27,19 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
-import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
@@ -58,37 +47,22 @@ import java.util.List;
 /**
  *
  */
-public class StreamViewHttpHandlerTest {
+public class StreamViewHttpHandlerTest extends GatewayTestBase {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
-  private NettyHttpService service;
-  private URI baseURI;
-
-  @Before
-  public void setUp() {
-    InMemoryViewStore store = new InMemoryViewStore();
-    ExploreFacade explore = new ExploreFacade(new MockExploreClient(), CConfiguration.create());
-    StreamViewHttpHandler handler = new StreamViewHttpHandler(
-      new ViewAdmin(store, explore, new ExploreTableNaming()));
-
-    service = NettyHttpService.builder()
-      .addHttpHandlers(ImmutableList.of(handler))
-      .setExceptionHandler(new HttpExceptionHandler())
-      .build();
-    service.startAndWait();
-    InetSocketAddress bindAddress = service.getBindAddress();
-    baseURI = URI.create("http://" + bindAddress.getHostName() + ":" + bindAddress.getPort());
-  }
-
-  @After
-  public void tearDown() {
-    service.stopAndWait();
-  }
 
   @Test
   public void testAll() throws Exception {
+    execute(404, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views")).build());
+    execute(404, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views/view1")).build());
+    execute(404, HttpRequest.put(resolve("/v3/namespaces/default/streams/foo/views/view1")).build());
+    execute(404, HttpRequest.delete(resolve("/v3/namespaces/default/streams/foo/views/view1")).build());
+
+    execute(200, HttpRequest.put(resolve("/v3/namespaces/default/streams/foo")).build());
+    execute(404, HttpRequest.delete(resolve("/v3/namespaces/default/streams/foo/views/nonexistent")).build());
+
     List<String> views = execute(
       200, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views")).build(),
       new TypeToken<List<String>>() {
@@ -147,15 +121,24 @@ public class StreamViewHttpHandlerTest {
       200, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views")).build(),
       new TypeToken<List<String>>() { }.getType());
     Assert.assertEquals(ImmutableList.of(), views);
+
+    // Deleting a stream should also delete the associated views
+    execute(200, HttpRequest.delete(resolve("/v3/namespaces/default/streams/foo")).build());
+    execute(200, HttpRequest.put(resolve("/v3/namespaces/default/streams/foo")).build());
+    execute(404, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views/view1")).build());
   }
 
-  private URL resolve(String format, Object... args) throws MalformedURLException {
-    return baseURI.resolve(String.format(format, args)).toURL();
+  private URL resolve(String format, Object... args) throws MalformedURLException, URISyntaxException {
+    return getEndPoint(String.format(format, args)).toURL();
   }
 
   private <T> T execute(int expectedCode, HttpRequest request, Type type) throws IOException {
     HttpResponse response = HttpRequests.execute(request);
-    Assert.assertEquals(response.getResponseMessage(), expectedCode, response.getResponseCode());
+    Assert.assertEquals(
+      String.format("Got '%s' for path '%s'",
+                    response.getResponseMessage(),
+                    request.getURL().toString()),
+      expectedCode, response.getResponseCode());
 
     if (type != null) {
       try {
