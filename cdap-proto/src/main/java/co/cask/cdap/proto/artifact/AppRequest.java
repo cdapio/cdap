@@ -16,6 +16,8 @@
 
 package co.cask.cdap.proto.artifact;
 
+import co.cask.cdap.api.Config;
+
 import javax.annotation.Nullable;
 
 /**
@@ -23,7 +25,7 @@ import javax.annotation.Nullable;
  *
  * @param <T> the type of application config
  */
-public class AppRequest<T> {
+public class AppRequest<T extends Config> {
   private final ArtifactSummary artifact;
   private final T config;
 
