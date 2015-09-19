@@ -145,6 +145,9 @@ body.theme-cdap.state-adapters {
           text-overflow: initial;
           overflow: initial;
           .border-radius(6px);
+          &:hover, &:focus {
+            cursor: auto;
+          }
         }
 
         div.input-group {
@@ -217,7 +220,7 @@ body.theme-cdap.state-adapters {
         font-size: 20px;
         margin: 0;
         max-width: 350px;
-        .placeholder-color(@color: #202028);
+        .placeholder-color(@color: gray);
       }
       .input-group-addon {
         background-color: transparent;
@@ -231,7 +234,7 @@ body.theme-cdap.state-adapters {
         resize: none;
         width: 100%;
         margin-bottom: 0;
-        .placeholder-color(@color: #666);
+        .placeholder-color(@color: gray);
       }
       a {
         font-weight: 500;
