@@ -24,6 +24,7 @@ import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -270,10 +271,10 @@ public class BusinessMetadataDatasetTest {
     MetadataRecord completeRecord = new MetadataRecord(targetId);
     expected.put(System.currentTimeMillis(), completeRecord);
     // Get history for targetId, should be empty
-    Assert.assertEquals(completeRecord,
-                        dataset.getSnapshotBeforeTime(targetId, System.currentTimeMillis()));
+    Assert.assertEquals(ImmutableSet.of(completeRecord),
+                        dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis()));
     // Also, the metadata itself should be equal to the last recorded snapshot
-    Assert.assertEquals(dataset.getSnapshotBeforeTime(targetId, System.currentTimeMillis()),
+    Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
                         new MetadataRecord(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     // Since the key to expected map is time in millis, sleep for a millisecond to make sure the key is distinct
     TimeUnit.MILLISECONDS.sleep(1);
@@ -284,9 +285,10 @@ public class BusinessMetadataDatasetTest {
     long time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Since this is the first record, history should be the same as what was added.
-    Assert.assertEquals(completeRecord, dataset.getSnapshotBeforeTime(targetId, time));
+    Assert.assertEquals(ImmutableSet.of(completeRecord),
+                        dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
-    Assert.assertEquals(dataset.getSnapshotBeforeTime(targetId, System.currentTimeMillis()),
+    Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
                         new MetadataRecord(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
@@ -299,9 +301,10 @@ public class BusinessMetadataDatasetTest {
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Assert the history record with the change
-    Assert.assertEquals(completeRecord, dataset.getSnapshotBeforeTime(targetId, time));
+    Assert.assertEquals(ImmutableSet.of(completeRecord),
+                        dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
-    Assert.assertEquals(dataset.getSnapshotBeforeTime(targetId, System.currentTimeMillis()),
+    Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
                         new MetadataRecord(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
@@ -314,9 +317,10 @@ public class BusinessMetadataDatasetTest {
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Assert the history record with the change
-    Assert.assertEquals(completeRecord, dataset.getSnapshotBeforeTime(targetId, time));
+    Assert.assertEquals(ImmutableSet.of(completeRecord),
+                        dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
-    Assert.assertEquals(dataset.getSnapshotBeforeTime(targetId, System.currentTimeMillis()),
+    Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
                         new MetadataRecord(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
@@ -329,9 +333,10 @@ public class BusinessMetadataDatasetTest {
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Assert the history record with the change
-    Assert.assertEquals(completeRecord, dataset.getSnapshotBeforeTime(targetId, time));
+    Assert.assertEquals(ImmutableSet.of(completeRecord),
+                        dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
-    Assert.assertEquals(dataset.getSnapshotBeforeTime(targetId, System.currentTimeMillis()),
+    Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
                         new MetadataRecord(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
@@ -345,9 +350,10 @@ public class BusinessMetadataDatasetTest {
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Assert the history record with the change
-    Assert.assertEquals(completeRecord, dataset.getSnapshotBeforeTime(targetId, time));
+    Assert.assertEquals(ImmutableSet.of(completeRecord),
+                        dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
-    Assert.assertEquals(dataset.getSnapshotBeforeTime(targetId, System.currentTimeMillis()),
+    Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
                         new MetadataRecord(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
@@ -359,9 +365,10 @@ public class BusinessMetadataDatasetTest {
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Assert the history record with the change
-    Assert.assertEquals(completeRecord, dataset.getSnapshotBeforeTime(targetId, time));
+    Assert.assertEquals(ImmutableSet.of(completeRecord),
+                        dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
-    Assert.assertEquals(dataset.getSnapshotBeforeTime(targetId, System.currentTimeMillis()),
+    Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
                         new MetadataRecord(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
@@ -374,21 +381,24 @@ public class BusinessMetadataDatasetTest {
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Assert the history record with the change
-    Assert.assertEquals(completeRecord, dataset.getSnapshotBeforeTime(targetId, time));
+    Assert.assertEquals(ImmutableSet.of(completeRecord),
+                        dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
-    Assert.assertEquals(dataset.getSnapshotBeforeTime(targetId, System.currentTimeMillis()),
+    Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
                         new MetadataRecord(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Now assert all history
     for (Map.Entry<Long, MetadataRecord> entry : expected.entrySet()) {
-      Assert.assertEquals(entry.getValue(), dataset.getSnapshotBeforeTime(targetId, entry.getKey()));
+      Assert.assertEquals(entry.getValue(),
+                          getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), entry.getKey())));
     }
 
     // Asserting for current time should give the latest record
-    Assert.assertEquals(completeRecord, dataset.getSnapshotBeforeTime(targetId, System.currentTimeMillis()));
+    Assert.assertEquals(ImmutableSet.of(completeRecord),
+                        dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis()));
     // Also, the metadata itself should be equal to the last recorded snapshot
-    Assert.assertEquals(dataset.getSnapshotBeforeTime(targetId, System.currentTimeMillis()),
+    Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
                         new MetadataRecord(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
   }
 
@@ -418,6 +428,11 @@ public class BusinessMetadataDatasetTest {
       builder.add(prefix + tag);
     }
     return builder.build();
+  }
+
+  private <T> T getFirst(Iterable<T> iterable) {
+    Assert.assertEquals(1, Iterables.size(iterable));
+    return iterable.iterator().next();
   }
 
   private static BusinessMetadataDataset getDataset(Id.DatasetInstance instance) throws Exception {

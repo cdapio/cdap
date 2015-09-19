@@ -97,4 +97,12 @@ public interface BusinessMetadataStore {
    */
   Iterable<BusinessMetadataRecord> searchMetadataOnType(String namespaceId, String searchQuery,
                                                         MetadataSearchTargetType type);
+
+  /**
+   * Returns the snapshot of the metadata for entities on or before the given time.
+   * @param entityIds entity ids
+   * @param timeMillis time in milliseconds
+   * @return the snapshot of the metadata for entities on or before the given time
+   */
+  Set<MetadataRecord> getSnapshotBeforeTime(Set<Id.NamespacedId> entityIds, long timeMillis);
 }
