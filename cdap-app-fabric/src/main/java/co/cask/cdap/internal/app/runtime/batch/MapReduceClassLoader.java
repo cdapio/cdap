@@ -27,7 +27,6 @@ import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextProvider;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
-import co.cask.cdap.internal.app.runtime.batch.inmemory.InMemoryMapReduceTaskContextProvider;
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.ProgramType;
@@ -121,8 +120,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
                         programClassLoader, plugins, pluginInstantiator), new TaskContextProviderFactory() {
       @Override
       public MapReduceTaskContextProvider create(CConfiguration cConf, Configuration hConf) {
-        Preconditions.checkState(MapReduceTaskContextProvider.isLocal(hConf), "Expected to be in local mode.");
-        return new InMemoryMapReduceTaskContextProvider(injector);
+        return new MapReduceTaskContextProvider(injector);
       }
     });
   }
