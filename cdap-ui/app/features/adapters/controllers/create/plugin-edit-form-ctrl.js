@@ -360,7 +360,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.reset = function () {
       $scope.pluginCopy.properties = angular.copy($scope.plugin.properties);
-      $scope.pluginCopy.outputSchema = $scope.plugin.outputSchema;
+      $scope.pluginCopy.outputSchema = angular.copy($scope.plugin.outputSchema);
       $scope.pluginCopy.errorDatasetName = angular.copy($scope.plugin.errorDatasetName);
       EventPipe.emit('resetValidatorValidationFields', $scope.plugin.validationFields);
       $scope.data['isModelTouched'] = false;
@@ -374,7 +374,7 @@ angular.module(PKG.name + '.feature.adapters')
     this.save = function () {
       if (validateSchema() || $scope.plugin.name === 'Validator') {
         $scope.plugin.properties = angular.copy($scope.pluginCopy.properties);
-        $scope.plugin.outputSchema = $scope.pluginCopy.outputSchema;
+        $scope.plugin.outputSchema = angular.copy($scope.pluginCopy.outputSchema);
         $scope.plugin.errorDatasetName = $scope.pluginCopy.errorDatasetName;
         $scope.plugin.validationFields = angular.copy($scope.pluginCopy.validationFields);
         $scope.plugin.label = $scope.pluginCopy.label;
