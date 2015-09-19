@@ -14,7 +14,7 @@
   the License.
 -->
 
-<div class="modal-content-scroll output-schema">
+<div class="output-schema">
 
   <div class="schema-error">
     <ul>
@@ -32,7 +32,7 @@
     </my-schema-editor>
   </fieldset>
 
-  <div ng-if="!pluginCopy.outputSchema && isDisabled && pluginCopy.properties.format !== 'clf' && plugin.properties.format !== 'syslog'">
+  <div ng-if="!pluginCopy.outputSchema && isDisabled && pluginCopy.properties.format !== 'clf' && pluginCopy.properties.format !== 'syslog'">
     <div class="well well-lg">
       <h4>There is no output schema</h4>
     </div>

@@ -47,7 +47,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS) {
+  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS, MyNodeConfigService) {
 
     var countSink = 0,
         countSource = 0,
@@ -287,9 +287,9 @@ angular.module(PKG.name + '.services')
     };
 
     this.addNodes = function(conf, type, inCreationMode) {
+      var defer = $q.defer();
       this.isConfigTouched = true;
-      // FIXME: Utterly irrelavant place to set style. This needs to be moved ASAP.
-      var artifactType = GLOBALS.pluginTypes[this.metadata.template.type];
+
       var config = {
         id: conf.id,
         name: conf.name,
@@ -297,7 +297,7 @@ angular.module(PKG.name + '.services')
         icon: conf.icon,
         style: conf.style || '',
         description: conf.description,
-        outputSchema: conf.outputSchema || '',
+        outputSchema: conf.outputSchema || null,
         pluginTemplate: conf.pluginTemplate || null,
         errorDatasetName: conf.errorDatasetName || '',
         validationFields: conf.validationFields || null,
@@ -306,44 +306,8 @@ angular.module(PKG.name + '.services')
         _backendProperties: conf._backendProperties,
         type: conf.type
       };
-      var offsetLeft = 0;
-      var offsetTop = 0;
-      var initial = 0;
 
-      if (type === artifactType.source) {
-        initial = 10;
-
-        offsetLeft = countSource * 2;
-        offsetTop = countSource * 70;
-
-        countSource++;
-
-      } else if (type === 'transform') {
-        initial = 30;
-
-        offsetLeft = countTransform * 2;
-        offsetTop = countTransform * 70;
-
-        countTransform++;
-
-      } else if (type === artifactType.sink) {
-        initial = 50;
-
-        offsetLeft = countSink * 2;
-        offsetTop = countSink * 70;
-
-        countSink++;
-      }
-
-      var left = initial + offsetLeft;
-      var top = 250 + offsetTop;
-
-      if (inCreationMode) {
-        config.style = {
-          left: left + 'vw',
-          top: top + 'px'
-        };
-      }
+      angular.extend(config, styleNode.call(this, type, inCreationMode));
 
       this.nodes[config.id] = config;
 
@@ -377,16 +341,31 @@ angular.module(PKG.name + '.services')
             angular.forEach(this.nodes[config.id]._backendProperties, function(value, key) {
               this.nodes[config.id].properties[key] = this.nodes[config.id].properties[key] || '';
             }.bind(this));
+            defer.resolve(this.nodes[config.id]);
+            MyNodeConfigService.notifyPluginSaveListeners(config.id);
           }.bind(this));
 
       } else if(Object.keys(conf._backendProperties).length !== Object.keys(conf.properties).length) {
         angular.forEach(conf._backendProperties, function(value, key) {
           config.properties[key] = config.properties[key] || '';
         });
+        defer.resolve(this.nodes[config.id]);
+        MyNodeConfigService.notifyPluginSaveListeners(config.id);
       }
+
       if (inCreationMode) {
-        this.notifyListeners(config, type);
+        /*
+          The reason to use a promise here is to fetch the backend properties for each plugin
+          before notifying listeners about the change. This helps in showing the #of required
+          fields as a warning in the nodes in DAG as soon as they are added to Canvas.
+        */
+        defer
+          .promise
+          .then(function() {
+            this.notifyListeners(config, type);
+          }.bind(this));
       }
+      return defer.promise;
     };
 
     this.removeNode = function (nodeId) {
@@ -411,6 +390,51 @@ angular.module(PKG.name + '.services')
     this.setIsDisabled = function(isDisabled) {
       this.isDisabled = isDisabled;
     };
+
+    function styleNode(type, inCreationMode) {
+      var config = {};
+      // FIXME: Utterly irrelavant place to set style. This needs to be moved ASAP.
+      var artifactType = GLOBALS.pluginTypes[this.metadata.template.type];
+      var offsetLeft = 0;
+      var offsetTop = 0;
+      var initial = 0;
+
+      if (type === artifactType.source) {
+        initial = 10;
+
+        offsetLeft = countSource * 2;
+        offsetTop = countSource * 70;
+
+        countSource++;
+
+      } else if (type === 'transform') {
+        initial = 30;
+
+        offsetLeft = countTransform * 2;
+        offsetTop = countTransform * 70;
+
+        countTransform++;
+
+      } else if (type === artifactType.sink) {
+        initial = 50;
+
+        offsetLeft = countSink * 2;
+        offsetTop = countSink * 70;
+
+        countSink++;
+      }
+
+      var left = initial + offsetLeft;
+      var top = 150 + offsetTop;
+
+      if (inCreationMode) {
+        config.style = {
+          left: left + 'vw',
+          top: top + 'px'
+        };
+      }
+      return config;
+    }
 
     function fetchBackendProperties(plugin, scope) {
       var defer = $q.defer();
@@ -517,7 +541,12 @@ angular.module(PKG.name + '.services')
     function pruneNonBackEndProperties(config) {
       function propertiesIterator(properties, backendProperties) {
         angular.forEach(properties, function(value, key) {
-          if ((!backendProperties[key] && key !== 'errorDatasetName') || properties[key] === '' || properties[key] === null) {
+          // If its a required field don't remove it.
+          if (backendProperties[key] && backendProperties[key].required) {
+            return;
+          }
+          if ((!backendProperties[key] && key !== 'errorDatasetName') || properties[key] === '' || properties[key] === null
+          ) {
             delete properties[key];
           }
           // FIXME: Remove this once https://issues.cask.co/browse/CDAP-3614 is fixed.
@@ -599,7 +628,7 @@ angular.module(PKG.name + '.services')
       var errors = AdapterErrorFactory.isModelValid(this.nodes, this.connections, this.metadata, config);
 
       if (!angular.isObject(errors)) {
-        EventPipe.emit('showLoadingIcon');
+        EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
         var data = this.getConfigForBackend();
         myAdapterApi.save(
           {
@@ -627,8 +656,11 @@ angular.module(PKG.name + '.services')
               defer.reject({
                 messages: err
               });
+              this.notifyError({
+                canvas: [err.data]
+              });
               EventPipe.emit('hideLoadingIcon.immediate');
-            }
+            }.bind(this)
           );
       } else {
         this.notifyError(errors);

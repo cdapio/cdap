@@ -23,6 +23,7 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.Relation;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -41,9 +42,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests lineage computation.
  */
-public class LineageGeneratorTest extends MetadataTestBase {
-  private static final Set<MetadataRecord> EMPTY_METADATA = ImmutableSet.of();
-
+public class LineageAdminTest extends MetadataTestBase {
   // Define data
   private final Id.Stream stream1 = Id.Stream.from("default", "stream1");
   private final Id.DatasetInstance dataset1 = Id.DatasetInstance.from("default", "dataset1");
@@ -81,22 +80,41 @@ public class LineageGeneratorTest extends MetadataTestBase {
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
                                                  Id.DatasetInstance.from("default", "testSimpleLineage"));
     Store store = getInjector().getInstance(Store.class);
-    LineageGenerator lineageGenerator = new LineageGenerator(lineageStore, store);
+    BusinessMetadataStore businessMetadataStore = getInjector().getInstance(BusinessMetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, businessMetadataStore);
 
     // Define metadata
-    MetadataRecord run1Meta = new MetadataRecord(program1, toMap("pk1", "pk1"), toSet("pt1"));
-    Set<MetadataRecord> run1data1 = toSet(run1Meta,
-                                          new MetadataRecord(dataset1, toMap("dk1", "dk1"), toSet("dt1")));
-    Set<MetadataRecord> run1data2 = toSet(run1Meta,
-                                          new MetadataRecord(dataset2, toMap("dk2", "dk2"), toSet("dt2")));
+    MetadataRecord run1AppMeta = new MetadataRecord(program1.getApplication(), toMap("pk1", "pk1"), toSet("pt1"));
+    MetadataRecord run1ProgramMeta = new MetadataRecord(program1, toMap("pk1", "pk1"), toSet("pt1"));
+    MetadataRecord run1Data1Meta = new MetadataRecord(dataset1, toMap("dk1", "dk1"), toSet("dt1"));
+    MetadataRecord run1Data2Meta = new MetadataRecord(dataset2, toMap("dk2", "dk2"), toSet("dt2"));
+
+    // Add metadata
+    businessMetadataStore.setProperties(program1.getApplication(), run1AppMeta.getProperties());
+    //noinspection ToArrayCallWithZeroLengthArrayArgument
+    businessMetadataStore.addTags(program1.getApplication(), run1AppMeta.getTags().toArray(new String[0]));
+    businessMetadataStore.setProperties(program1, run1ProgramMeta.getProperties());
+    //noinspection ToArrayCallWithZeroLengthArrayArgument
+    businessMetadataStore.addTags(program1, run1ProgramMeta.getTags().toArray(new String[0]));
+    businessMetadataStore.setProperties(dataset1, run1Data1Meta.getProperties());
+    //noinspection ToArrayCallWithZeroLengthArrayArgument
+    businessMetadataStore.addTags(dataset1, run1Data1Meta.getTags().toArray(new String[0]));
+    businessMetadataStore.setProperties(dataset2, run1Data2Meta.getProperties());
+    //noinspection ToArrayCallWithZeroLengthArrayArgument
+    businessMetadataStore.addTags(dataset2, run1Data2Meta.getTags().toArray(new String[0]));
+    TimeUnit.MILLISECONDS.sleep(1);
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1
-    addRuns(store, run1, run2, run3, run4, run5);
-    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, run1data1, flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.READ, run1data2, flowlet1);
+    // We need to use current time here as business metadata store stores access time using current time
+    Id.Run run1 = new Id.Run(program1, RunIds.generate(System.currentTimeMillis()).getId());
+    Id.Run run2 = new Id.Run(program2, RunIds.generate(System.currentTimeMillis()).getId());
+    addRuns(store, run1, run2);
+    // It is okay to use current time here since access time is ignore during assertions
+    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
+    lineageStore.addAccess(run1, dataset2, AccessType.READ, System.currentTimeMillis(), flowlet1);
 
-    lineageStore.addAccess(run2, dataset2, AccessType.WRITE, EMPTY_METADATA, flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.READ, EMPTY_METADATA, flowlet2);
+    lineageStore.addAccess(run2, dataset2, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
+    lineageStore.addAccess(run2, dataset3, AccessType.READ, System.currentTimeMillis(), flowlet2);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -108,13 +126,15 @@ public class LineageGeneratorTest extends MetadataTestBase {
     );
 
     // Lineage for D1
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(dataset1, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage,
+                        lineageAdmin.computeLineage(dataset1, 500, System.currentTimeMillis() + 10000, 100));
 
     // Lineage for D2
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(dataset2, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage,
+                        lineageAdmin.computeLineage(dataset2, 500, System.currentTimeMillis() + 10000, 100));
 
     // Lineage for D1 for one level should be D2 -> P1 -> D1
-    Lineage oneLevelLineage = lineageGenerator.computeLineage(dataset1, 500, 20000, 1);
+    Lineage oneLevelLineage = lineageAdmin.computeLineage(dataset1, 500, System.currentTimeMillis() + 10000, 1);
 
     Assert.assertEquals(
       ImmutableSet.of(
@@ -124,7 +144,8 @@ public class LineageGeneratorTest extends MetadataTestBase {
       oneLevelLineage.getRelations());
 
     // Assert metadata
-    Assert.assertEquals(toSet(run1data1, run1data2), lineageStore.getRunMetadata(run1));
+    Assert.assertEquals(toSet(run1AppMeta, run1ProgramMeta, run1Data1Meta, run1Data2Meta),
+                        lineageAdmin.getMetadataForRun(run1));
   }
 
   @Test
@@ -138,20 +159,22 @@ public class LineageGeneratorTest extends MetadataTestBase {
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
                                                  Id.DatasetInstance.from("default", "testSimpleLoopLineage"));
     Store store = getInjector().getInstance(Store.class);
-    LineageGenerator lineageGenerator = new LineageGenerator(lineageStore, store);
+    BusinessMetadataStore businessMetadataStore = getInjector().getInstance(BusinessMetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, businessMetadataStore);
 
 
     // Add access
     addRuns(store, run1, run2, run3, run4, run5);
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, EMPTY_METADATA, flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, EMPTY_METADATA, flowlet1);
+    // It is okay to use current time here since access time is ignore during assertions
+    lineageStore.addAccess(run1, dataset1, AccessType.READ, System.currentTimeMillis(), flowlet1);
+    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
 
-    lineageStore.addAccess(run2, dataset2, AccessType.READ, EMPTY_METADATA, flowlet2);
-    lineageStore.addAccess(run2, dataset1, AccessType.WRITE, EMPTY_METADATA, flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, EMPTY_METADATA, flowlet2);
+    lineageStore.addAccess(run2, dataset2, AccessType.READ, System.currentTimeMillis(), flowlet2);
+    lineageStore.addAccess(run2, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
+    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
 
-    lineageStore.addAccess(run3, dataset3, AccessType.READ, EMPTY_METADATA);
-    lineageStore.addAccess(run3, dataset4, AccessType.WRITE, EMPTY_METADATA);
+    lineageStore.addAccess(run3, dataset3, AccessType.READ, System.currentTimeMillis());
+    lineageStore.addAccess(run3, dataset4, AccessType.WRITE, System.currentTimeMillis());
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -166,17 +189,17 @@ public class LineageGeneratorTest extends MetadataTestBase {
     );
 
     // Lineage for D1
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(dataset1, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset1, 500, 20000, 100));
 
     // Lineage for D2
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(dataset2, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset2, 500, 20000, 100));
 
     // Lineage for D1 for one level D1 -> P1 -> D2 -> P2 -> D3
     //                              |                 |
     //                              |                 V
     //                              |<-----------------
     //
-    Lineage oneLevelLineage = lineageGenerator.computeLineage(dataset1, 500, 20000, 1);
+    Lineage oneLevelLineage = lineageAdmin.computeLineage(dataset1, 500, 20000, 1);
 
     Assert.assertEquals(
       ImmutableSet.of(
@@ -198,12 +221,14 @@ public class LineageGeneratorTest extends MetadataTestBase {
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
                                                  Id.DatasetInstance.from("default", "testDirectCycle"));
     Store store = getInjector().getInstance(Store.class);
-    LineageGenerator lineageGenerator = new LineageGenerator(lineageStore, store);
+    BusinessMetadataStore businessMetadataStore = getInjector().getInstance(BusinessMetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, businessMetadataStore);
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, EMPTY_METADATA, flowlet1);
-    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, EMPTY_METADATA, flowlet1);
+    // It is okay to use current time here since access time is ignore during assertions
+    lineageStore.addAccess(run1, dataset1, AccessType.READ, System.currentTimeMillis(), flowlet1);
+    lineageStore.addAccess(run1, dataset1, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -212,7 +237,7 @@ public class LineageGeneratorTest extends MetadataTestBase {
       )
     );
 
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(dataset1, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset1, 500, 20000, 100));
   }
 
   @Test
@@ -226,14 +251,16 @@ public class LineageGeneratorTest extends MetadataTestBase {
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
                                                  Id.DatasetInstance.from("default", "testDirectCycleTwoRuns"));
     Store store = getInjector().getInstance(Store.class);
-    LineageGenerator lineageGenerator = new LineageGenerator(lineageStore, store);
+    BusinessMetadataStore businessMetadataStore = getInjector().getInstance(BusinessMetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, businessMetadataStore);
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, EMPTY_METADATA, flowlet1);
+    // It is okay to use current time here since access time is ignore during assertions
+    lineageStore.addAccess(run1, dataset1, AccessType.READ, System.currentTimeMillis(), flowlet1);
     // Write is in a different run
     lineageStore.addAccess(new Id.Run(run1.getProgram(), run2.getId()), dataset1, AccessType.WRITE,
-                           EMPTY_METADATA, flowlet1);
+                           System.currentTimeMillis(), flowlet1);
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -242,7 +269,7 @@ public class LineageGeneratorTest extends MetadataTestBase {
       )
     );
 
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(dataset1, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset1, 500, 20000, 100));
   }
 
   @Test
@@ -260,25 +287,27 @@ public class LineageGeneratorTest extends MetadataTestBase {
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
                                                  Id.DatasetInstance.from("default", "testBranchLineage"));
     Store store = getInjector().getInstance(Store.class);
-    LineageGenerator lineageGenerator = new LineageGenerator(lineageStore, store);
+    BusinessMetadataStore businessMetadataStore = getInjector().getInstance(BusinessMetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, businessMetadataStore);
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
-    lineageStore.addAccess(run1, stream1, AccessType.READ, EMPTY_METADATA, flowlet1);
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, EMPTY_METADATA, flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, EMPTY_METADATA, flowlet1);
-    lineageStore.addAccess(run1, dataset4, AccessType.WRITE, EMPTY_METADATA, flowlet1);
+    // It is okay to use current time here since access time is ignore during assertions
+    lineageStore.addAccess(run1, stream1, AccessType.READ, System.currentTimeMillis(), flowlet1);
+    lineageStore.addAccess(run1, dataset1, AccessType.READ, System.currentTimeMillis(), flowlet1);
+    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
+    lineageStore.addAccess(run1, dataset4, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
 
-    lineageStore.addAccess(run2, dataset2, AccessType.READ, EMPTY_METADATA, flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, EMPTY_METADATA, flowlet2);
-    lineageStore.addAccess(run2, dataset5, AccessType.WRITE, EMPTY_METADATA, flowlet2);
+    lineageStore.addAccess(run2, dataset2, AccessType.READ, System.currentTimeMillis(), flowlet2);
+    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
+    lineageStore.addAccess(run2, dataset5, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
 
-    lineageStore.addAccess(run3, dataset5, AccessType.READ, EMPTY_METADATA);
-    lineageStore.addAccess(run3, dataset6, AccessType.WRITE, EMPTY_METADATA);
+    lineageStore.addAccess(run3, dataset5, AccessType.READ, System.currentTimeMillis());
+    lineageStore.addAccess(run3, dataset6, AccessType.WRITE, System.currentTimeMillis());
 
-    lineageStore.addAccess(run4, dataset2, AccessType.READ, EMPTY_METADATA);
-    lineageStore.addAccess(run4, dataset3, AccessType.READ, EMPTY_METADATA);
-    lineageStore.addAccess(run4, dataset7, AccessType.WRITE, EMPTY_METADATA);
+    lineageStore.addAccess(run4, dataset2, AccessType.READ, System.currentTimeMillis());
+    lineageStore.addAccess(run4, dataset3, AccessType.READ, System.currentTimeMillis());
+    lineageStore.addAccess(run4, dataset7, AccessType.WRITE, System.currentTimeMillis());
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -301,11 +330,11 @@ public class LineageGeneratorTest extends MetadataTestBase {
     );
 
     // Lineage for D7
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(dataset7, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset7, 500, 20000, 100));
     // Lineage for D6
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(dataset6, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset6, 500, 20000, 100));
     // Lineage for D3
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(dataset3, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset3, 500, 20000, 100));
   }
 
   @Test
@@ -326,29 +355,31 @@ public class LineageGeneratorTest extends MetadataTestBase {
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
                                                  Id.DatasetInstance.from("default", "testBranchLoopLineage"));
     Store store = getInjector().getInstance(Store.class);
-    LineageGenerator lineageGenerator = new LineageGenerator(lineageStore, store);
+    BusinessMetadataStore businessMetadataStore = getInjector().getInstance(BusinessMetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, businessMetadataStore);
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
-    lineageStore.addAccess(run1, stream1, AccessType.READ, EMPTY_METADATA, flowlet1);
-    lineageStore.addAccess(run1, dataset1, AccessType.READ, EMPTY_METADATA, flowlet1);
-    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, EMPTY_METADATA, flowlet1);
-    lineageStore.addAccess(run1, dataset4, AccessType.WRITE, EMPTY_METADATA, flowlet1);
+    // It is okay to use current time here since access time is ignore during assertions
+    lineageStore.addAccess(run1, stream1, AccessType.READ, System.currentTimeMillis(), flowlet1);
+    lineageStore.addAccess(run1, dataset1, AccessType.READ, System.currentTimeMillis(), flowlet1);
+    lineageStore.addAccess(run1, dataset2, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
+    lineageStore.addAccess(run1, dataset4, AccessType.WRITE, System.currentTimeMillis(), flowlet1);
 
-    lineageStore.addAccess(run2, dataset2, AccessType.READ, EMPTY_METADATA, flowlet2);
-    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, EMPTY_METADATA, flowlet2);
-    lineageStore.addAccess(run2, dataset5, AccessType.WRITE, EMPTY_METADATA, flowlet2);
+    lineageStore.addAccess(run2, dataset2, AccessType.READ, System.currentTimeMillis(), flowlet2);
+    lineageStore.addAccess(run2, dataset3, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
+    lineageStore.addAccess(run2, dataset5, AccessType.WRITE, System.currentTimeMillis(), flowlet2);
 
-    lineageStore.addAccess(run3, dataset5, AccessType.READ, EMPTY_METADATA);
-    lineageStore.addAccess(run3, dataset6, AccessType.WRITE, EMPTY_METADATA);
+    lineageStore.addAccess(run3, dataset5, AccessType.READ, System.currentTimeMillis());
+    lineageStore.addAccess(run3, dataset6, AccessType.WRITE, System.currentTimeMillis());
 
-    lineageStore.addAccess(run4, dataset2, AccessType.READ, EMPTY_METADATA);
-    lineageStore.addAccess(run4, dataset3, AccessType.READ, EMPTY_METADATA);
-    lineageStore.addAccess(run4, dataset7, AccessType.WRITE, EMPTY_METADATA);
+    lineageStore.addAccess(run4, dataset2, AccessType.READ, System.currentTimeMillis());
+    lineageStore.addAccess(run4, dataset3, AccessType.READ, System.currentTimeMillis());
+    lineageStore.addAccess(run4, dataset7, AccessType.WRITE, System.currentTimeMillis());
 
-    lineageStore.addAccess(run5, dataset3, AccessType.READ, EMPTY_METADATA);
-    lineageStore.addAccess(run5, dataset6, AccessType.READ, EMPTY_METADATA);
-    lineageStore.addAccess(run5, dataset1, AccessType.WRITE, EMPTY_METADATA);
+    lineageStore.addAccess(run5, dataset3, AccessType.READ, System.currentTimeMillis());
+    lineageStore.addAccess(run5, dataset6, AccessType.READ, System.currentTimeMillis());
+    lineageStore.addAccess(run5, dataset1, AccessType.WRITE, System.currentTimeMillis());
 
     Lineage expectedLineage = new Lineage(
       ImmutableSet.of(
@@ -375,20 +406,20 @@ public class LineageGeneratorTest extends MetadataTestBase {
     );
 
     // Lineage for D1
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(dataset1, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset1, 500, 20000, 100));
     // Lineage for D5
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(dataset5, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset5, 500, 20000, 100));
     // Lineage for D7
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(dataset7, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(dataset7, 500, 20000, 100));
     // Lineage for S1
-    Assert.assertEquals(expectedLineage, lineageGenerator.computeLineage(stream1, 500, 20000, 100));
+    Assert.assertEquals(expectedLineage, lineageAdmin.computeLineage(stream1, 500, 20000, 100));
 
     // Lineage for D5 for one level
     //                   -> D5 -> P3 -> D6
     //                   |
     //                   |
     //             D2 -> P2 -> D3
-    Lineage oneLevelLineage = lineageGenerator.computeLineage(dataset5, 500, 20000, 1);
+    Lineage oneLevelLineage = lineageAdmin.computeLineage(dataset5, 500, 20000, 1);
 
     Assert.assertEquals(
       ImmutableSet.of(
@@ -412,7 +443,7 @@ public class LineageGeneratorTest extends MetadataTestBase {
     //       |
     // S1 -->|
 
-    oneLevelLineage = lineageGenerator.computeLineage(stream1, 500, 20000, 1);
+    oneLevelLineage = lineageAdmin.computeLineage(stream1, 500, 20000, 1);
     Assert.assertEquals(
       ImmutableSet.of(
         new Relation(stream1, program1, AccessType.READ, twillRunId(run1), toSet(flowlet1)),
@@ -435,15 +466,15 @@ public class LineageGeneratorTest extends MetadataTestBase {
       RunIds.generate(100)
     );
 
-    LineageGenerator.ScanRangeWithFilter scanRange = LineageGenerator.getScanRange(runIds);
+    LineageAdmin.ScanRangeWithFilter scanRange = LineageAdmin.getScanRange(runIds);
     Assert.assertEquals(100, scanRange.getStart());
     Assert.assertEquals(701, scanRange.getEnd());
 
-    scanRange = LineageGenerator.getScanRange(ImmutableSet.<RunId>of());
+    scanRange = LineageAdmin.getScanRange(ImmutableSet.<RunId>of());
     Assert.assertEquals(0, scanRange.getStart());
     Assert.assertEquals(0, scanRange.getEnd());
 
-    scanRange = LineageGenerator.getScanRange(ImmutableSet.of(RunIds.generate(100)));
+    scanRange = LineageAdmin.getScanRange(ImmutableSet.of(RunIds.generate(100)));
     Assert.assertEquals(100, scanRange.getStart());
     Assert.assertEquals(101, scanRange.getEnd());
   }

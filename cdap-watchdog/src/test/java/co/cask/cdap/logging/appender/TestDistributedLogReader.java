@@ -48,6 +48,7 @@ import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -315,7 +316,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     CheckpointManager checkpointManager =
       checkpointManagerFactory.create(KafkaTopic.getTopic(), KafkaLogWriterPlugin.CHECKPOINT_ROW_KEY_PREFIX);
     long checkpointTime = logCallback.getEvents().get(numExpectedEvents - 1).getLoggingEvent().getTimeStamp();
-    checkpointManager.saveCheckpoint(stringPartitioner.partition(loggingContext.getLogPartition(), -1),
-                                     new Checkpoint(numExpectedEvents, checkpointTime));
+    checkpointManager.saveCheckpoint(ImmutableMap.of(stringPartitioner.partition(loggingContext.getLogPartition(), -1),
+                                                     new Checkpoint(numExpectedEvents, checkpointTime)));
   }
 }

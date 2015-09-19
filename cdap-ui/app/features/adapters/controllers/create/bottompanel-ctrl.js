@@ -15,12 +15,29 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('BottomPanelController', function ($scope, MySidebarService, MyAppDAGService, MyNodeConfigService, $timeout) {
+  .controller('BottomPanelController', function ($scope, MySidebarService, MyAppDAGService, MyNodeConfigService, $timeout, MyConsoleTabService) {
 
     MyAppDAGService.registerEditPropertiesCallback(editProperties.bind(this));
+    MyConsoleTabService.registerOnMessageUpdates(showConsoleTab.bind(this));
+    MyAppDAGService.errorCallback(showConsoleTab.bind(this));
+    // FIXME: We should be able to remove this now.
+    // Expand and collapse of the sidebar resizes the main container natively.
+    MySidebarService.registerIsExpandedCallback(isExpanded.bind(this));
+
+    function showConsoleTab(errors) {
+      if (errors.canvas && errors.canvas.length) {
+        errors.canvas.forEach(function(err) {
+          MyConsoleTabService.addMessage({
+            type: 'error',
+            content: err
+          });
+        });
+      }
+      $scope.selectTab($scope.tabs[0]);
+    }
 
     function editProperties(plugin) {
-      $scope.selectTab($scope.tabs[2]);
+      $scope.selectTab($scope.tabs[2], false);
       // Giving 100ms to load the template and then set the plugin
       // For this service to work the controller has to register a callback
       // with the service. The callback will not be called if plugin assignment happens
@@ -35,8 +52,6 @@ angular.module(PKG.name + '.feature.adapters')
     function isExpanded(value) {
       $scope.isExpanded = !value;
     }
-
-    MySidebarService.registerIsExpandedCallback(isExpanded.bind(this));
 
     $scope.tabs = [
       {
@@ -53,7 +68,7 @@ angular.module(PKG.name + '.feature.adapters')
       },
       {
         title: 'Reference',
-        template: '/assets/features/adapters/templates/partial/reference.html'
+        template: '/assets/features/adapters/templates/partial/reference-tab.html'
       }
     ];
 

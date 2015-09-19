@@ -23,6 +23,9 @@ body {
     padding-right: 0;
     margin: 0;
     width: 100%;
+    @media (max-width: @screen-xs-max) {
+      padding-left: 0;
+    }
     div.navbar-header {
       float: left;
       position: relative;
@@ -30,6 +33,9 @@ body {
     a.navbar-brand {
       height: 60px;
       padding: 0 15px;
+      @media (max-width: @screen-xs-max) {
+        padding: 0;
+      }
       &:focus {
         outline: none;
       }
@@ -39,20 +45,25 @@ body {
     }
     a.cdap-link {
       position: absolute;
-      width: 60px;
-      height: 20px;
-      top: -1px;
+      top: 14px;
+      right: 0;
+      width: 65px;
+      height: 30px;
       span {
-        display: block;
-        height: inherit;
+        display: inline-block;
+        height: 28px;
+        width: 65px;
       }
     }
 
     nav {
-      float: left;
+      display: block;
+      padding-right: 15px;
+      text-align: center;
       ul.navbar-nav {
         float: none;
-        margin: 0;
+        margin: 0 auto;
+        width: 285px;
         li {
           float: left;
           a {
@@ -60,30 +71,21 @@ body {
             line-height: 60px;
             padding: 0 10px;
             margin: 0 15px;
+            @media (max-width: @screen-xs-max) {
+              padding: 0 6px;
+              margin: 0 auto;
+            }
             span {
               font-size: 14px;
               font-weight: 500;
+              @media (max-width: @screen-xs-max) {
+                font-size: 12px;
+              }
             }
             &:hover, &:focus {
               cursor: pointer;
             }
           }
-        }
-      }
-    }
-
-    div.hydrator-search {
-      float: left;
-      @media (max-width: @screen-xs-max) {
-        display: none;
-      }
-      div.input-group {
-        width: 275px;
-      }
-      input.form-control {
-        height: 58px;
-        &:focus {
-          outline: none;
         }
       }
     }
@@ -98,12 +100,8 @@ body {
     [my-navbar-hydrator] {
       a.navbar-brand {
         background: url('@{img-path}/hydrator.png') center center / 160px 34px no-repeat;
-      }
-      a.cdap-link {
-        background-color: @cdap-orange;
-        .border-radius(0 0 10px 10px);
-        span {
-          background: url('@{img-path}/cdap_typeonly.png') center center / 40px 11px no-repeat;
+        @media (max-width: @screen-xs-max) {
+          background-size: 111px 25px;
         }
       }
 
@@ -120,24 +118,11 @@ body {
         }
       }
 
-      div.hydrator-search {
-
-        input.form-control {
-          background-color: #1c1c1c;
-          border: 0;
-          color: white;
-          .box-shadow(none);
-          .placeholder-color();
-          &:focus {
-            border: 0;
-            .box-shadow(none);
-          }
-        }
-        span.input-group-addon {
-          background-color: #1c1c1c;
-          border: 0;
-          color: white;
-          .border-radius(0);
+      a.cdap-link {
+        background-color: @cdap-orange;
+        .border-radius(10px 0 0 10px);
+        span {
+          background: url('@{img-path}/cdap_typeonly.png') center center / 42px 13px no-repeat;
         }
       }
     }

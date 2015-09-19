@@ -144,14 +144,14 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   }
 
   @Override
-  public Set<MetadataSearchResultRecord> searchMetadata(String searchQuery,
+  public Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery,
                                                         @Nullable final MetadataSearchTargetType type)
     throws NotFoundException {
     Iterable<BusinessMetadataRecord> results;
     if (type == null) {
-      results = businessMds.searchMetadata(searchQuery);
+      results = businessMds.searchMetadata(namespaceId, searchQuery);
     } else {
-      results = businessMds.searchMetadataOnType(searchQuery, type);
+      results = businessMds.searchMetadataOnType(namespaceId, searchQuery, type);
     }
 
     Set<MetadataSearchResultRecord> searchResultRecords = new LinkedHashSet<>();

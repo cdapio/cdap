@@ -49,6 +49,11 @@ angular.module(PKG.name + '.commons')
           if ($scope.config['property-watch']) {
             watchProperty = $scope.config['property-watch'];
 
+            // changing the format when it is stream
+            EventPipe.on('dataset.selected', function (schema, format) {
+              $scope.pluginProperties[watchProperty] = format;
+            });
+
             $scope.$watch(function () {
               return $scope.pluginProperties[watchProperty];
             }, changeFormat);
@@ -119,7 +124,6 @@ angular.module(PKG.name + '.commons')
           else {
             $scope.disableEdit = false;
             $scope.fields = 'SHOW';
-            watcher = $scope.$watch('properties', formatSchema, true);
           }
         }
 
@@ -204,6 +208,10 @@ angular.module(PKG.name + '.commons')
 
         } // End of initialize
 
+        if ($scope.config && $scope.config['property-watch']) {
+          changeFormat();
+        }
+
         initialize($scope.model);
 
         EventPipe.on('plugin.reset', function () {
@@ -219,9 +227,6 @@ angular.module(PKG.name + '.commons')
           initialize(schema);
         });
 
-        $scope.$watch('disabled', function () {
-          initialize($scope.model);
-        });
 
         function formatAvro() {
           if ($scope.pluginProperties[watchProperty] !== 'avro') {
@@ -233,12 +238,16 @@ angular.module(PKG.name + '.commons')
         }
 
 
-        function formatSchema() {
+        function formatSchema(newValue, oldValue) {
+
           if (watchProperty && $scope.pluginProperties && ['clf', 'syslog'].indexOf($scope.pluginProperties[watchProperty]) !== -1) {
             $scope.model = null;
             return;
           }
 
+          if (newValue === oldValue) {
+            return;
+          }
           // Format Schema
           var properties = [];
           angular.forEach($scope.properties, function(p) {
@@ -334,6 +343,11 @@ angular.module(PKG.name + '.commons')
           }
         };
 
+        $scope.$on('$destroy', function() {
+          EventPipe.cancelEvent('schema.clear');
+          EventPipe.cancelEvent('plugin.reset');
+          EventPipe.cancelEvent('dataset.selected');
+        });
       }
     };
   });

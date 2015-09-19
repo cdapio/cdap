@@ -19,36 +19,25 @@
      ui-sref="adapters.list">
      <strong>Cask Hydrator V1.0</strong>
   </a>
-  <a ui-sref="overview"
-     class="cdap-link">
-     <span></span>
-  </a>
 </div>
 
-<div class="pull-right clearfix">
-  <nav>
-    <ul class="nav navbar-nav">
-      <li>
-        <a ui-sref="adapters.list" ui-sref-active="active">
-          <span> My Pipelines </span>
-        </a>
-      </li>
-      <li>
-        <a ui-sref="adapters.create" ui-sref-active="active">
-          <span> Create Pipeline </span>
-        </a>
-      </li>
-    </ul>
-  </nav>
+<nav>
+  <ul class="nav navbar-nav">
+    <li>
+      <a ui-sref="adapters.list" ui-sref-active="active">
+        <span> My Pipelines </span>
+      </a>
+    </li>
+    <li>
+      <a ui-sref="adapters.create" ui-sref-active="active">
+        <span> Create Pipeline </span>
+      </a>
+    </li>
+  </ul>
+</nav>
 
-  <div class="hydrator-search">
-    <div class="input-group">
-      <input type="text" class="form-control" placeholder="Search" />
-      <span class="input-group-addon">
-        <span class="fa fa-search"></span>
-      </span>
-    </div>
-  </div>
+<my-error></my-error>
 
-  <my-error></my-error>
-</div>
+<a ui-sref="overview" class="cdap-link">
+  <span></span>
+</a>

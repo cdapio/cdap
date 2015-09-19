@@ -35,6 +35,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -213,18 +214,25 @@ public abstract class AbstractProgramController implements ProgramController {
     };
 
     try {
-      return executor.submit(new Callable<Cancellable>() {
+      // Use a synchronous queue to communicate the Cancellable to return
+      final SynchronousQueue<Cancellable> result = new SynchronousQueue<>();
+
+      // Use the single thread executor to add the listener and call init
+      executor.submit(new Callable<Void>() {
         @Override
-        public Cancellable call() throws Exception {
+        public Void call() throws Exception {
           Cancellable existing = listeners.get(caller);
-          if (existing != null) {
-            return existing;
+          if (existing == null) {
+            listeners.put(caller, cancellable);
+            result.put(cancellable);
+            caller.init(getState(), getFailureCause());
+          } else {
+            result.put(existing);
           }
-          listeners.put(caller, cancellable);
-          caller.init(getState(), getFailureCause());
-          return cancellable;
+          return null;
         }
-      }).get();
+      });
+      return result.take();
     } catch (Exception e) {
       // Not expecting exception since the Callable only do action on Map and calling caller.init, which
       // already have exceptions handled inside the method. Also, we never shutdown the executor explicitly,

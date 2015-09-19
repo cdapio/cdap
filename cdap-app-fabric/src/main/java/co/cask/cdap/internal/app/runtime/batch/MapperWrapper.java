@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -61,78 +60,71 @@ public class MapperWrapper extends Mapper {
   @SuppressWarnings("unchecked")
   @Override
   public void run(Context context) throws IOException, InterruptedException {
-    MapReduceTaskContextProvider mrContextProvider =
-      new MapReduceTaskContextProvider(context, MapReduceMetrics.TaskType.Mapper);
-    final BasicMapReduceTaskContext basicMapReduceContext = mrContextProvider.get();
+    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(context.getConfiguration());
+    BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider().get(context);
+
     LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
-    basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
     // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
     WrappedMapper.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
     basicMapReduceContext.setHadoopContext(flushingContext);
 
+    String userMapper = context.getConfiguration().get(ATTR_MAPPER_CLASS);
+    ClassLoader programClassLoader = classLoader.getProgramClassLoader();
+    Mapper delegate = createMapperInstance(programClassLoader, userMapper);
+
+    // injecting runtime components, like datasets, etc.
     try {
-      String userMapper = context.getConfiguration().get(ATTR_MAPPER_CLASS);
-      ClassLoader programClassLoader = MapReduceTaskContextProvider.getProgramClassLoader(context.getConfiguration());
-      Mapper delegate = createMapperInstance(programClassLoader, userMapper);
+      Reflections.visit(delegate, delegate.getClass(),
+                        new PropertyFieldSetter(basicMapReduceContext.getSpecification().getProperties()),
+                        new MetricsFieldSetter(basicMapReduceContext.getMetrics()),
+                        new DataSetFieldSetter(basicMapReduceContext));
+    } catch (Throwable t) {
+      LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
+      throw Throwables.propagate(t);
+    }
 
-      // injecting runtime components, like datasets, etc.
-      try {
-        Reflections.visit(delegate, delegate.getClass(),
-                          new PropertyFieldSetter(basicMapReduceContext.getSpecification().getProperties()),
-                          new MetricsFieldSetter(basicMapReduceContext.getMetrics()),
-                          new DataSetFieldSetter(basicMapReduceContext));
-      } catch (Throwable t) {
-        LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
-        throw Throwables.propagate(t);
-      }
-
-      ClassLoader oldClassLoader;
-      if (delegate instanceof ProgramLifecycle) {
-        oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
-        try {
-          ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
-        } catch (Exception e) {
-          LOG.error("Failed to initialize mapper with {}", basicMapReduceContext, e);
-          throw Throwables.propagate(e);
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
-        }
-      }
-
+    ClassLoader oldClassLoader;
+    if (delegate instanceof ProgramLifecycle) {
       oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
       try {
-        delegate.run(flushingContext);
+        ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
+      } catch (Exception e) {
+        LOG.error("Failed to initialize mapper with {}", basicMapReduceContext, e);
+        throw Throwables.propagate(e);
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
+    }
 
-      // transaction is not finished, but we want all operations to be dispatched (some could be buffered in
-      // memory by tx agent)
-      try {
-        basicMapReduceContext.flushOperations();
-      } catch (Exception e) {
-        LOG.error("Failed to flush operations at the end of mapper of {}", basicMapReduceContext, e);
-        throw Throwables.propagate(e);
-      }
-
-      if (delegate instanceof ProgramLifecycle) {
-        oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
-        try {
-          ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
-        } catch (Exception e) {
-          LOG.error("Error during destroy of mapper {}", basicMapReduceContext, e);
-          // Do nothing, try to finish
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
-        }
-      }
-
+    oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
+    try {
+      delegate.run(flushingContext);
     } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
+
+    // transaction is not finished, but we want all operations to be dispatched (some could be buffered in
+    // memory by tx agent)
+    try {
+      basicMapReduceContext.flushOperations();
+    } catch (Exception e) {
+      LOG.error("Failed to flush operations at the end of mapper of {}", basicMapReduceContext, e);
+      throw Throwables.propagate(e);
+    }
+
+    // Close all writers created by MultipleOutputs
+    basicMapReduceContext.closeMultiOutputs();
+
+    if (delegate instanceof ProgramLifecycle) {
+      oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
       try {
-        basicMapReduceContext.close(); // closes all datasets
+        ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
+      } catch (Exception e) {
+        LOG.error("Error during destroy of mapper {}", basicMapReduceContext, e);
+        // Do nothing, try to finish
       } finally {
-        mrContextProvider.stop();
+        ClassLoaders.setContextClassLoader(oldClassLoader);
       }
     }
   }

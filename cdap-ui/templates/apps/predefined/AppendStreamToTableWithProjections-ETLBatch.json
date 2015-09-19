@@ -19,7 +19,6 @@
             "name": "Table",
             "properties": {
                 "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
-                "case.sensitive.row.field": "true",
                 "name": "contacts_hbase",
                 "schema.row.field": "fname"
             }
@@ -85,7 +84,6 @@
                 "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
                 "properties": {
                     "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
-                    "case.sensitive.row.field": "true",
                     "name": "contacts_hbase",
                     "schema.row.field": "fname"
                 },
@@ -94,12 +92,6 @@
                         "name": "schema",
                         "description": "Optional schema of the table as a JSON Object. If the table does not already exist, one will be created with this schema, which will allow the table to be explored through Hive.",
                         "type": "string",
-                        "required": false
-                    },
-                    "case.sensitive.row.field": {
-                        "name": "case.sensitive.row.field",
-                        "description": "Whether the schema.row.field is case sensitive, defaults to true.",
-                        "type": "boolean",
                         "required": false
                     },
                     "name": {

@@ -24,6 +24,8 @@ Building Blocks
     Spark Programs <spark-programs>
     Workers <workers>
     Workflows <workflows>
+    Plugins <plugins>
+    Artifacts <artifacts>
     Metadata <metadata>
     Namespaces <namespaces>
     Transaction System <transaction-system>
@@ -48,6 +50,10 @@ write data through the data abstraction layer in CDAP.
 - :doc:`Spark Programs <spark-programs>`
 - :doc:`Workers <workers>`
 - :doc:`Workflows <workflows>`
+- :doc:`Plugins <plugins>`
+
+An :doc:`Artifact <artifacts>` is a jar file that packages the Java Application class, as well
+as any other classes and libraries needed to create and run an Application. 
 
 :doc:`Metadata <metadata>` |---| consisting of **properties** (a list of key-value pairs)
 or **tags** (a list of keys) |---| can be set for datasets, streams, and applications.

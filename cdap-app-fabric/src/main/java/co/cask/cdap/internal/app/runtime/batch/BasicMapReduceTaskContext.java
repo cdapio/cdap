@@ -41,7 +41,6 @@ import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
@@ -56,14 +55,13 @@ import javax.annotation.Nullable;
  * @param <VALUEOUT> output value type
  */
 public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
-  implements MapReduceTaskContext<KEYOUT, VALUEOUT>, Closeable {
+  implements MapReduceTaskContext<KEYOUT, VALUEOUT> {
 
   private final MapReduceSpecification spec;
   private final LoggingContext loggingContext;
   private final long logicalStartTime;
   private final WorkflowToken workflowToken;
   private final Metrics userMetrics;
-  private final MetricsCollectionService metricsCollectionService;
   private final Map<String, Plugin> plugins;
 
   private MultipleOutputs multipleOutputs;
@@ -86,7 +84,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
           dsFramework, discoveryServiceClient, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.workflowToken = workflowToken;
-    this.metricsCollectionService = metricsCollectionService;
 
     if (metricsCollectionService != null) {
       this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
@@ -140,12 +137,13 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.context = context;
   }
 
-  @Override
-  public void close() {
+  /**
+   * Closes the {@link MultipleOutputs} contained inside this context.
+   */
+  public void closeMultiOutputs() {
     if (multipleOutputs != null) {
       multipleOutputs.close();
     }
-    super.close();
   }
 
   @Override
@@ -188,10 +186,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   public Metrics getMetrics() {
     return userMetrics;
-  }
-
-  public MetricsCollectionService getMetricsCollectionService() {
-    return metricsCollectionService;
   }
 
   public LoggingContext getLoggingContext() {

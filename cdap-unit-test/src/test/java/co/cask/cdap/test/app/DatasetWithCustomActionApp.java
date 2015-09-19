@@ -25,6 +25,7 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 
 import java.io.BufferedReader;
@@ -65,12 +66,9 @@ public class DatasetWithCustomActionApp extends AbstractApplication {
       private KeyValueTable table;
 
       @Override
-      public WorkflowActionSpecification configure() {
-        return WorkflowActionSpecification.Builder.with()
-          .setName(getName())
-          .setDescription(getDescription())
-          .useDataset(CUSTOM_TABLE1)
-          .build();
+      public void configure(WorkflowActionConfigurer configurer) {
+        super.configure(configurer);
+        useDatasets(CUSTOM_TABLE1);
       }
 
       @Override

@@ -32,8 +32,6 @@ import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.data2.metadata.service.DefaultBusinessMetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.metadata.MetadataRecord;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
@@ -42,6 +40,8 @@ import com.google.inject.name.Names;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests BasicLineageWriter
@@ -55,7 +55,7 @@ public class BasicLineageWriterTest {
     Injector injector = getInjector();
     BusinessMetadataStore businessMetadataStore = injector.getInstance(BusinessMetadataStore.class);
     LineageStore lineageStore = injector.getInstance(LineageStore.class);
-    LineageWriter lineageWriter = new BasicLineageWriter(businessMetadataStore, lineageStore);
+    LineageWriter lineageWriter = new BasicLineageWriter(lineageStore);
 
     // Define entities
     Id.Program program = Id.Program.from("default", "app", ProgramType.FLOW, "flow");
@@ -67,35 +67,24 @@ public class BasicLineageWriterTest {
     businessMetadataStore.addTags(stream, "stag1", "stag2");
     // Write access for run1
     lineageWriter.addAccess(run1, stream, AccessType.READ);
-    // Assert tags on stream
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new MetadataRecord(stream, ImmutableMap.<String, String>of(), ImmutableSet.of("stag1", "stag2")),
-        new MetadataRecord(program.getApplication(), ImmutableMap.<String, String>of(), ImmutableSet.<String>of()),
-        new MetadataRecord(program, ImmutableMap.<String, String>of(), ImmutableSet.<String>of())),
-      lineageStore.getRunMetadata(run1));
+    Assert.assertEquals(ImmutableSet.of(program, stream), lineageStore.getEntitiesForRun(run1));
+
+    // Record time to verify duplicate writes.
+    long beforeSecondTag = System.currentTimeMillis();
+    // Wait for next millisecond, since access time is stored in milliseconds.
+    TimeUnit.MILLISECONDS.sleep(1);
 
     // Add another tag to stream
     businessMetadataStore.addTags(stream, "stag3");
     // Write access for run1 again
     lineageWriter.addAccess(run1, stream, AccessType.READ);
-    // The write should be no-op, and metadata for run1 should not be updated
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new MetadataRecord(stream, ImmutableMap.<String, String>of(), ImmutableSet.of("stag1", "stag2")),
-        new MetadataRecord(program.getApplication(), ImmutableMap.<String, String>of(), ImmutableSet.<String>of()),
-        new MetadataRecord(program, ImmutableMap.<String, String>of(), ImmutableSet.<String>of())),
-      lineageStore.getRunMetadata(run1));
+    // The write should be no-op, and access time for run1 should not be updated
+    Assert.assertTrue(lineageStore.getAccessTimesForRun(run1).get(0) < beforeSecondTag);
 
     // However, you can write access for another run
     lineageWriter.addAccess(run2, stream, AccessType.READ);
-    // Assert new tags get picked up
-    Assert.assertEquals(
-      ImmutableSet.of(
-        new MetadataRecord(stream, ImmutableMap.<String, String>of(), ImmutableSet.of("stag1", "stag2", "stag3")),
-        new MetadataRecord(program.getApplication(), ImmutableMap.<String, String>of(), ImmutableSet.<String>of()),
-        new MetadataRecord(program, ImmutableMap.<String, String>of(), ImmutableSet.<String>of())),
-      lineageStore.getRunMetadata(run2));
+    // Assert new access time is written
+    Assert.assertTrue(lineageStore.getAccessTimesForRun(run2).get(0) >= beforeSecondTag);
   }
 
   private static Injector getInjector() {

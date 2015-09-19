@@ -19,26 +19,20 @@ package co.cask.cdap.internal.app.runtime.batch.dataset;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
+import com.google.common.base.Throwables;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
-  private static final Logger LOG = LoggerFactory.getLogger(DataSetRecordReader.class);
   private final SplitReader<KEY, VALUE> splitReader;
-  private final MapReduceTaskContextProvider mrContextProvider;
   private final BasicMapReduceTaskContext context;
 
-  public DataSetRecordReader(final SplitReader<KEY, VALUE> splitReader,
-                             final MapReduceTaskContextProvider mrContextProvider) {
+  public DataSetRecordReader(SplitReader<KEY, VALUE> splitReader, BasicMapReduceTaskContext context) {
     this.splitReader = splitReader;
-    this.mrContextProvider = mrContextProvider;
-    this.context = mrContextProvider.get();
+    this.context = context;
   }
 
   @Override
@@ -72,14 +66,12 @@ final class DataSetRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
 
   @Override
   public void close() throws IOException {
+    splitReader.close();
     try {
-      splitReader.close();
-    } finally {
-      try {
-        context.close();
-      } finally {
-        mrContextProvider.stop();
-      }
+      context.flushOperations();
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw new IOException(e);
     }
   }
 }

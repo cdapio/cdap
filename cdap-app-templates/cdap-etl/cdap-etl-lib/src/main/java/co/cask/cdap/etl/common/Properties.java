@@ -34,6 +34,7 @@ public final class Properties {
     public static final String JDBC_PLUGIN_TYPE = "jdbcPluginType";
     public static final String IMPORT_QUERY = "importQuery";
     public static final String COUNT_QUERY = "countQuery";
+    public static final String COLUMN_NAME_CASE = "columnNameCase";
   }
 
   /**
@@ -124,7 +125,6 @@ public final class Properties {
     public static final String PROPERTY_SCHEMA = co.cask.cdap.api.dataset.table.Table.PROPERTY_SCHEMA;
     public static final String PROPERTY_SCHEMA_ROW_FIELD =
       co.cask.cdap.api.dataset.table.Table.PROPERTY_SCHEMA_ROW_FIELD;
-    public static final String CASE_SENSITIVE_ROW_FIELD = RecordPutTransformer.CASE_SENSITIVE_ROW_FIELD;
   }
 
   /**

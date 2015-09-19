@@ -2,37 +2,37 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _apptemplates-etl-creating:
+.. _included-apps-etl-creating:
 
-=======================
-Creating an ETL Adapter
-=======================
+===========================
+Creating an ETL Application
+===========================
 
 .. highlight:: console
 
 Introduction
 ============
-Adapters can be created using the :ref:`RESTful API <http-restful-api-apptemplates-adapters-creating>`,
-the :ref:`CDAP CLI <cli>`, or the :ref:`CDAP UI <cdap-ui>`. In order to create an adapter,
-an adapter configuration is required that specifies the source, transformations and sink
+Applications can be created using the :ref:`Lifecycle RESTful API <http-restful-api-lifecycle-create-app>`,
+the :ref:`CDAP CLI <cli>`, or the :ref:`CDAP UI <cdap-ui>`. In order to create an application,
+an application configuration is required that specifies the source, transformations and sinks
 along with their properties.  (In the CDAP UI, the interface prompts you for the required
 information.)
 
 
-.. _apptemplates-etl-configuration-file-format:
+.. _included-apps-etl-configuration-file-format:
 
 Configuration File Format
 =========================
 
-Using the ETL Batch Template
-----------------------------
+Creating an ETL Batch Application
+---------------------------------
 
-With the ETL Batch Template, it requires a ``schedule`` property with a cron entry
+With an ETL Batch Application, it requires a ``schedule`` property with a cron entry
 specifying the frequency of the Batch job run, such as every day or every hour.
 
 For example, this JSON (when in a file such as ``config.json``) provides a
-configuration for a Batch Adapter that runs every minute, reading data from a Stream
-*myStream* and writing to a Dataset (Table) called *myTable*,  without any transformations::
+configuration for a Batch Application that runs every minute, reading data from a stream
+*myStream* and writing to a dataset (Table) called *myTable*,  without any transformations::
 
   {
     "template":"ETLBatch",
@@ -57,30 +57,33 @@ configuration for a Batch Adapter that runs every minute, reading data from a St
      }
   }
 
-The adapter launches a MapReduce program that runs every minute, reads data from the
-Stream *myStream* and writes to a Table *myTable*. A Table Sink needs a row key field to
+The application launches a MapReduce program that runs every minute, reads data from the
+stream *myStream* and writes to a Table *myTable*. A Table Sink needs a row key field to
 be specified and can use the timestamp of a Stream event for that.
 
-To create an instance of this adapter, called *streamAdapter*:
+To create this application, called *streamETLApp*:
 
-- Using the :ref:`RESTful API <http-restful-api-apptemplates-adapters-creating>`::
+- Using the :ref:`Lifecycle RESTful API <http-restful-api-lifecycle-create-app>`::
 
-    PUT /v3/namespaces/default/adapters/streamAdapter -d @config.json 
+    PUT /v3/namespaces/default/apps/streamETLApp -d @config.json 
 
-- Using :ref:`CDAP CLI <cli>`::
+- Using :ref:`CDAP CLI <cli>`:
 
-    $ create adapter streamAdapter <path-to-config.json>
+  .. container:: highlight
 
-where ``config.json`` is the file that contains the adapter configuration.
+    .. parsed-literal::
+      |$| create app streamETLApp cdap-etl-batch |version| system <path-to-config.json>
+
+where ``config.json`` is the file that contains the application configuration.
 
 
 .. highlight:: console
 
-Using the ETL Real-Time Template
---------------------------------
+Creating an ETL Real-Time Application
+-------------------------------------
 
-This next configuration creates a real-time adapter that reads from Twitter and writes to a
-Stream after performing a projection transformation::
+This next configuration creates a real-time application that reads from Twitter and writes to a
+stream after performing a projection transformation::
 
   {
     "template":"ETLRealtime",
@@ -115,20 +118,22 @@ Stream after performing a projection transformation::
   }
 
 
-The ETL Real-Time Template expects an instance property that will create *N* instances of the
-adapter that run concurrently. In Standalone CDAP mode, this is implemented as multiple threads;
-while in Distributed CDAP mode, it will create different YARN containers. The
-number of instances of a real-time adapter cannot be changed during runtime.
+An ETL Real-Time Application expects an instance property that will create *N* instances
+of the worker that run concurrently. In Standalone CDAP mode, this is implemented as
+multiple threads; in Distributed CDAP mode, it will create different YARN containers. The
+number of worker instances of a real-time application should not (in general) be changed
+during runtime. If the number of instances needs to be changed, the worker must be
+stopped, then the application configuration must be updated to the new number of instances.
 
 The ``instances`` property value needs to be greater than 0. Note that the ``instance``
-property replaces the ``schedule`` property of the ETL Batch Template.
+property replaces the ``schedule`` property of an ETL Batch Application.
 
-In this case, we will use a *ProjectionTransform* (a type of Transform) to drop certain
+In the example code above, we will use a *ProjectionTransform* (a type of Transform) to drop certain
 columns in the incoming data. A *StreamSink* in the final step needs a data field property
 that it will use as the content for the data to be written. 
 
-Sample Adapter Configurations
------------------------------
+Sample Application Configurations
+---------------------------------
 
 **Database:** Sample config for using a Database Source and a Database Sink::
 
@@ -224,5 +229,5 @@ creating the source::
 
 
 **Prebuilt JARs:** In a case where you'd like to use prebuilt third-party JARs (such as a
-JDBC Driver) as a plugin, please refer to the section on :ref:`Using Third-party Jars
-<apptemplates-third-party>`. 
+JDBC driver) as a plugin, please refer to the section on :ref:`Using Third-Party Jars
+<included-apps-third-party-jars>`. 

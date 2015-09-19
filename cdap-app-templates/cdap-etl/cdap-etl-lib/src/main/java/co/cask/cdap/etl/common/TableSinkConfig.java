@@ -38,23 +38,9 @@ public class TableSinkConfig extends PluginConfig {
   @Nullable
   private String schemaStr;
 
-  @Name(Properties.Table.CASE_SENSITIVE_ROW_FIELD)
-  @Description("Whether the schema.row.field is case sensitive, defaults to true.")
-  @Nullable
-  private Boolean rowFieldCaseSensitive;
-
   @Name(Properties.Table.PROPERTY_SCHEMA_ROW_FIELD)
   @Description("The name of the record field that should be used as the row key when writing to the table.")
   private String rowField;
-
-  public TableSinkConfig() {
-    this.rowFieldCaseSensitive = true;
-  }
-
-  @Nullable
-  public Boolean isRowFieldCaseInsensitive() {
-    return rowFieldCaseSensitive;
-  }
 
   public String getName() {
     return name;

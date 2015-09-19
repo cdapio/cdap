@@ -21,16 +21,15 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.data2.dataset2.tx.DatasetContext;
-import co.cask.cdap.data2.dataset2.tx.Transactional;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.context.LoggingContextHelper;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
+import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
@@ -55,23 +54,15 @@ public final class FileMetaDataManager {
   private static final NavigableMap<?, ?> EMPTY_MAP = Maps.unmodifiableNavigableMap(new TreeMap());
 
   private final LocationFactory locationFactory;
-  private final Transactional<DatasetContext<Table>, Table> mds;
   private final String logBaseDir;
+  private final LogSaverTableUtil tableUtil;
+  private final TransactionExecutorFactory transactionExecutorFactory;
 
   @Inject
   public FileMetaDataManager(final LogSaverTableUtil tableUtil, TransactionExecutorFactory txExecutorFactory,
                              LocationFactory locationFactory, CConfiguration cConf) {
-    this.mds = Transactional.of(txExecutorFactory, new Supplier<DatasetContext<Table>>() {
-      @Override
-      public DatasetContext<Table> get() {
-        try {
-          return DatasetContext.of(tableUtil.getMetaTable());
-        } catch (Exception e) {
-          // there's nothing much we can do here
-          throw Throwables.propagate(e);
-        }
-      }
-    });
+    this.tableUtil = tableUtil;
+    this.transactionExecutorFactory = txExecutorFactory;
     this.locationFactory = locationFactory;
     this.logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
   }
@@ -102,13 +93,12 @@ public final class FileMetaDataManager {
     LOG.debug("Writing meta data for logging context {} as startTimeMs {} and location {}",
               logPartition, startTimeMs, location.toURI());
 
-    mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, Void>() {
+    execute(new TransactionExecutor.Procedure<Table>() {
       @Override
-      public Void apply(DatasetContext<Table> ctx) throws Exception {
-        ctx.get().put(getRowKey(logPartition),
-                      Bytes.toBytes(startTimeMs),
-                      Bytes.toBytes(location.toURI().toString()));
-        return null;
+      public void apply(Table table) throws Exception {
+        table.put(getRowKey(logPartition),
+                  Bytes.toBytes(startTimeMs),
+                  Bytes.toBytes(location.toURI().toString()));
       }
     });
   }
@@ -119,10 +109,10 @@ public final class FileMetaDataManager {
    * @return Sorted map containing key as start time, and value as log file.
    */
   public NavigableMap<Long, Location> listFiles(final LoggingContext loggingContext) throws Exception {
-    return mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, NavigableMap<Long, Location>>() {
+    return execute(new TransactionExecutor.Function<Table, NavigableMap<Long, Location>>() {
       @Override
-      public NavigableMap<Long, Location> apply(DatasetContext<Table> ctx) throws Exception {
-        Row cols = ctx.get().get(getRowKey(loggingContext));
+      public NavigableMap<Long, Location> apply(Table table) throws Exception {
+        Row cols = table.get(getRowKey(loggingContext));
 
         if (cols.isEmpty()) {
           //noinspection unchecked
@@ -145,13 +135,13 @@ public final class FileMetaDataManager {
    * @return total number of columns deleted.
    */
   public int cleanMetaData(final long tillTime, final DeleteCallback callback) throws Exception {
-    return mds.execute(new TransactionExecutor.Function<DatasetContext<Table>, Integer>() {
+    return execute(new TransactionExecutor.Function<Table, Integer>() {
       @Override
-      public Integer apply(DatasetContext<Table> ctx) throws Exception {
+      public Integer apply(Table table) throws Exception {
         byte[] tillTimeBytes = Bytes.toBytes(tillTime);
 
         int deletedColumns = 0;
-        Scanner scanner = ctx.get().scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
+        Scanner scanner = table.scan(ROW_KEY_PREFIX, ROW_KEY_PREFIX_END);
         try {
           Row row;
           while ((row = scanner.next()) != null) {
@@ -168,7 +158,7 @@ public final class FileMetaDataManager {
               // Delete if colName is less than tillTime, but don't delete the last one
               if (Bytes.compareTo(colName, tillTimeBytes) < 0 && Bytes.compareTo(colName, maxCol) != 0) {
                 callback.handle(locationFactory.create(new URI(Bytes.toString(entry.getValue()))), namespacedLogDir);
-                ctx.get().delete(rowKey, colName);
+                table.delete(rowKey, colName);
                 deletedColumns++;
               }
             }
@@ -180,6 +170,40 @@ public final class FileMetaDataManager {
         return deletedColumns;
       }
     });
+  }
+
+  private void execute(TransactionExecutor.Procedure<Table> func) {
+    try {
+      Table table = tableUtil.getMetaTable();
+      if (table instanceof TransactionAware) {
+        TransactionExecutor txExecutor = Transactions.createTransactionExecutor(transactionExecutorFactory,
+                                                                                (TransactionAware) table);
+        txExecutor.execute(func, table);
+      } else {
+        throw new RuntimeException(String.format("Table %s is not TransactionAware, " +
+                                                   "Exception while trying to cast it to TransactionAware. " +
+                                                   "Please check why the table is not TransactionAware", table));
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(String.format("Error accessing %s table", Constants.Stream.View.STORE_TABLE), e);
+    }
+  }
+
+  private <T> T execute(TransactionExecutor.Function<Table, T> func) {
+    try {
+      Table table = tableUtil.getMetaTable();
+      if (table instanceof TransactionAware) {
+        TransactionExecutor txExecutor = Transactions.createTransactionExecutor(transactionExecutorFactory,
+                                                                                (TransactionAware) table);
+        return txExecutor.execute(func, table);
+      } else {
+        throw new RuntimeException(String.format("Table %s is not TransactionAware, " +
+                                                   "Exception while trying to cast it to TransactionAware. " +
+                                                   "Please check why the table is not TransactionAware", table));
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(String.format("Error accessing %s table", Constants.Stream.View.STORE_TABLE), e);
+    }
   }
 
   private String getLogPartition(byte[] rowKey) {

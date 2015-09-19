@@ -21,7 +21,9 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.Relation;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.metadata.MetadataRecord;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -39,8 +41,8 @@ import java.util.concurrent.TimeUnit;
 /**
  * Service to compute Lineage based on Dataset accesses of a Program stored in {@link LineageStore}.
  */
-public class LineageGenerator {
-  private static final Logger LOG = LoggerFactory.getLogger(LineageGenerator.class);
+public class LineageAdmin {
+  private static final Logger LOG = LoggerFactory.getLogger(LineageAdmin.class);
 
   private static final Function<Relation, Id.Program> RELATION_TO_PROGRAM_FUNCTION =
     new Function<Relation, Id.Program>() {
@@ -60,11 +62,13 @@ public class LineageGenerator {
 
   private final LineageStore lineageStore;
   private final Store store;
+  private final BusinessMetadataStore businessMetadataStore;
 
   @Inject
-  LineageGenerator(LineageStore lineageStore, Store store) {
+  LineageAdmin(LineageStore lineageStore, Store store, BusinessMetadataStore businessMetadataStore) {
     this.lineageStore = lineageStore;
     this.store = store;
+    this.businessMetadataStore = businessMetadataStore;
   }
 
   /**
@@ -91,6 +95,20 @@ public class LineageGenerator {
    */
   public Lineage computeLineage(final Id.Stream sourceStream, long startMillis, long endMillis, int levels) {
     return doComputeLineage(sourceStream, startMillis, endMillis, levels);
+  }
+
+  /**
+   * @return metadata associated with a run
+   */
+  public Set<MetadataRecord> getMetadataForRun(Id.Run run) {
+    Set<Id.NamespacedId> runEntities = new HashSet<>(lineageStore.getEntitiesForRun(run));
+    RunId runId = RunIds.fromString(run.getId());
+
+    // The entities returned by lineageStore does not contain application
+    Id.Application application = run.getProgram().getApplication();
+    runEntities.add(application);
+    return businessMetadataStore.getSnapshotBeforeTime(runEntities,
+                                                       RunIds.getTime(runId, TimeUnit.MILLISECONDS));
   }
 
   private Lineage doComputeLineage(final Id.NamespacedId sourceData, long startMillis, long endMillis, int levels) {
