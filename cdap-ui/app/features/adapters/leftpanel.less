@@ -117,27 +117,33 @@ body.theme-cdap.state-adapters-create {
         }
       }
 
-      &.group-bottom {
+      &.item-open {
         .item-heading {
+          border-bottom-color: transparent;
+          color: white;
+        }
+        + .item {
+          .transform {
+            position: absolute;
+            bottom: 40px;
+          }
+          + .item .sink {
+            position: absolute;
+            bottom: 0;
+          }
+        }
+        .transform {
+          position: static;
+        }
+        + .item .sink {
           position: absolute;
+          bottom: 0;
         }
-        // Position transform or sink at bottom: 0 when either is the only group with position: absolute
-        &.transform-bottom, &.sink-bottom {
-          .item-heading {
-            bottom: 0;
-          }
+        .sink {
+          position: static;
         }
       }
-      &.source-top {
-        + .item .item-heading {
-          // Position Transform at bottom: 40px when Source is open
-          bottom: 40px;
-          + .item .item-heading {
-            // Position Sink at bottom: 0 when Transform is open
-            bottom: 0;
-          }
-        }
-      }
+
       .item-heading {
         color: white;
         background-color: fade(@gray-dark, 45);
@@ -146,11 +152,6 @@ body.theme-cdap.state-adapters-create {
         height: 40px;
         line-height: 40px;
         width: 100%;
-        &.item-open {
-          border-bottom-color: transparent;
-          color: white;
-          position: static;
-        }
         span.name {
           font-size: 13px;
           line-height: inherit;
@@ -192,11 +193,12 @@ body.theme-cdap.state-adapters-create {
           font-size: 12px;
           height: 18px;
           width: 18px;
-          vertical-align: middle;
+          line-height: 40px;
+          vertical-align: top;
         }
         .name {
           display: none;
-          font-size: 11px;
+          font-size: 12px;
           padding-left: 5px;
         }
       }
