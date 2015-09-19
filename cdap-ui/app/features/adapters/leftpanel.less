@@ -20,7 +20,11 @@
 
 body.theme-cdap.state-adapters-create {
   .left-panel-wrapper {
-    display: table-cell;
+    position: fixed;
+    top: 120px;
+    bottom: 53px;
+    left: 0;
+    z-index: 1024;
     width: 130px;
     vertical-align: top;
     background: #c7c7c6;
@@ -32,6 +36,10 @@ body.theme-cdap.state-adapters-create {
     background-image: url('@{img-path}/hydrator_bg_pattern.png'), linear-gradient(135deg, #c7c7c6 0%,#a0a0a0 100%);
     filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#c7c7c6', endColorstr='#a0a0a0'), progid:DXImageTransform.Microsoft.AlphaImageLoader(src='@{img-path}/hydrator_bg_pattern.png', sizingMethod='crop');
     .transition(all 0.2s ease);
+    + .right-wrapper {
+      margin-left: 130px;
+      .transition(all 0.2s ease);
+    }
     &.expanded {
       width: 290px;
       .item .plugin-item {
@@ -40,6 +48,9 @@ body.theme-cdap.state-adapters-create {
         .name {
           display: inline-block;
         }
+      }
+      + .right-wrapper {
+        margin-left: 290px;
       }
     }
     > div.btn {
@@ -53,7 +64,6 @@ body.theme-cdap.state-adapters-create {
       position: relative;
       top: 18px;
       left: 6px;
-      z-index: 1024;
       .border-radius(90px 0 0 90px);
       .box-shadow(0 1px 5px 0 fade(black, 33%));
       &:active, &.active {
@@ -106,6 +116,28 @@ body.theme-cdap.state-adapters-create {
           white-space: nowrap;
         }
       }
+
+      &.group-bottom {
+        .item-heading {
+          position: absolute;
+        }
+        // Position transform or sink at bottom: 0 when either is the only group with position: absolute
+        &.transform-bottom, &.sink-bottom {
+          .item-heading {
+            bottom: 0;
+          }
+        }
+      }
+      &.source-top {
+        + .item .item-heading {
+          // Position Transform at bottom: 40px when Source is open
+          bottom: 40px;
+          + .item .item-heading {
+            // Position Sink at bottom: 0 when Transform is open
+            bottom: 0;
+          }
+        }
+      }
       .item-heading {
         color: white;
         background-color: fade(@gray-dark, 45);
@@ -113,9 +145,11 @@ body.theme-cdap.state-adapters-create {
         padding: 0 15px 0 10px;
         height: 40px;
         line-height: 40px;
+        width: 100%;
         &.item-open {
           border-bottom-color: transparent;
           color: white;
+          position: static;
         }
         span.name {
           font-size: 13px;
@@ -123,7 +157,7 @@ body.theme-cdap.state-adapters-create {
         }
       }
       .item-body-wrapper {
-        height: 149px;
+        height: 42vh;
         overflow-y: auto;
       }
       .item-body {
