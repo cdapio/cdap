@@ -233,8 +233,8 @@ artifact (pretty-printed and reformatted to fit):
 
 .. _http-restful-api-artifact-available-plugins:
 
-Listing Plugins Available to an Artifact
-========================================
+List Plugins Available to an Artifact
+=====================================
 To list plugins of a specific type available to an artifact, submit
 an HTTP GET request::
 
@@ -405,8 +405,8 @@ is updated to use a different artifact.
 
 .. _http-restful-api-artifact-app-classes:
 
-Listing Application Classes
-===========================
+List Application Classes
+========================
 To list application classes, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/classes/apps[scope=<scope>]
@@ -465,8 +465,8 @@ as well as the class name. Example output for the ``ScriptFilter`` (pretty-print
 
 .. _http-restful-api-artifact-appclass-detail:
 
-Retrivies Application Class Detail
-==================================
+Retrieve Application Class Detail
+=================================
 To retrieve detail about a specific application class, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/classes/apps/<class-name>[?scope=<scope>]
