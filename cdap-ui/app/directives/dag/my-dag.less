@@ -19,9 +19,6 @@
 @import "../../styles/themes/cdap/mixins.less";
 
 my-dag {
-  display: block;
-  overflow: auto;
-
   .my-js-dag {
     position: relative;
     width: inherit;
@@ -168,20 +165,26 @@ my-dag {
       width: inherit;
     }
 
-    ._jsPlumb_endpoint circle {
-      fill: white;
-      r: 2px;
-      stroke-width: 8px;
+    ._jsPlumb_endpoint {
+      svg {
+        overflow: visible;
+      }
+      circle {
+        fill: white;
+        r: 2px;
+        stroke-width: 8px;
+      }
+      &._sourceAnchor circle {
+        stroke: #48c038;
+      }
+      &._transformAnchor circle {
+        stroke: #4586f3;
+      }
+      &._sinkAnchor circle {
+        stroke: #8367df;
+      }
     }
-    ._sourceAnchor circle {
-      stroke: #48c038;
-    }
-    ._transformAnchor circle {
-      stroke: #4586f3;
-    }
-    ._sinkAnchor circle {
-      stroke: #8367df;
-    }
+
     ._jsPlumb_connector path:last-child {
       stroke-width: 0;
     }

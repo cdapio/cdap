@@ -425,7 +425,7 @@ angular.module(PKG.name + '.services')
       }
 
       var left = initial + offsetLeft;
-      var top = 150 + offsetTop;
+      var top = 100 + offsetTop;
 
       if (inCreationMode) {
         config.style = {

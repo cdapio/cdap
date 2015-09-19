@@ -44,8 +44,4 @@ angular.module(PKG.name + '.commons')
       this.openGroup(this.groups[0]);
     }
 
-    this.toggleSidebar = function() {
-      $scope.isExpanded = !$scope.isExpanded;
-    };
-
   });
