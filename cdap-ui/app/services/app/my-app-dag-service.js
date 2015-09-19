@@ -297,7 +297,7 @@ angular.module(PKG.name + '.services')
         icon: conf.icon,
         style: conf.style || '',
         description: conf.description,
-        outputSchema: conf.outputSchema || '',
+        outputSchema: conf.outputSchema || null,
         pluginTemplate: conf.pluginTemplate || null,
         errorDatasetName: conf.errorDatasetName || '',
         validationFields: conf.validationFields || null,
@@ -425,7 +425,7 @@ angular.module(PKG.name + '.services')
       }
 
       var left = initial + offsetLeft;
-      var top = 150 + offsetTop;
+      var top = 100 + offsetTop;
 
       if (inCreationMode) {
         config.style = {

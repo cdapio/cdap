@@ -88,6 +88,6 @@ These sections describe:
 
 
 .. |etl-third-party| replace:: **Using Third-Party Jars:**
-.. _etl-third-party: etl/third-party.html
+.. _etl-third-party: etl/plugins/third-party.html
 
 - |etl-third-party|_ Explains how to use a third-party JAR (such as a JDBC driver) as a plugin.

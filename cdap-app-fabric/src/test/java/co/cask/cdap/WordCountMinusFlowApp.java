@@ -13,31 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package co.cask.cdap;
 
-package co.cask.cdap.test.artifacts.plugins;
-
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.plugin.PluginConfig;
-
-import javax.annotation.Nullable;
+import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 
 /**
- * Simple plugin for testing plugin usage in programs.
+ * This is a copy of sample word count app that is used in testing without the flow.
+ *
+ * Primarily used to test delete program handler stage.
  */
-@Plugin(type = "t1")
-@Name("n1")
-public class ToStringPlugin {
+public class WordCountMinusFlowApp extends WordCountApp {
 
   @Override
-  public String toString() {
-    return config.toString;
+  public void configure() {
+    setName("WordCountApp");
+    setDescription("Application for counting words");
+    addStream(new Stream("text"));
+    createDataset("mydataset", KeyValueTable.class);
+    addService(new WordFrequencyService());
+    addMapReduce(new VoidMapReduceJob());
   }
-
-  public static class Config extends PluginConfig {
-    @Nullable
-    public String toString;
-  }
-
-  private Config config;
 }

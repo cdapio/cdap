@@ -33,8 +33,10 @@ import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdminTest;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.test.SlowTests;
@@ -94,6 +96,8 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
       new TransactionMetricsModule(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new ExploreClientModule(),
+      new ViewAdminModules().getInMemoryModules(),
       Modules.override(new DataFabricDistributedModule(), new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
           @Override

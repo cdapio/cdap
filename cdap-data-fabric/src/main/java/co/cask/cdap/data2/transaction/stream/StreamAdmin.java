@@ -19,8 +19,10 @@ package co.cask.cdap.data2.transaction.stream;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.ViewSpecification;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
@@ -107,6 +109,38 @@ public interface StreamAdmin {
    * @throws Exception if deletion fails
    */
   void drop(Id.Stream streamId) throws Exception;
+
+  /**
+   * Creates or updates a stream view.
+   *
+   * @param viewId the view
+   * @param spec specification for the view
+   * @return true if a stream view was created
+   */
+  boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception;
+
+  /**
+   * Deletes a stream view.
+   *
+   * @param viewId the view
+   */
+  void deleteView(Id.Stream.View viewId) throws Exception;
+
+  /**
+   * Lists views associated with a stream.
+   *
+   * @param streamId the stream
+   * @return the associated views
+   */
+  List<Id.Stream.View> listViews(Id.Stream streamId) throws Exception;
+
+  /**
+   * Gets the details of a stream view.
+   *
+   * @param viewId the view
+   * @return the details of the view
+   */
+  ViewSpecification getView(Id.Stream.View viewId) throws Exception;
 
   /**
    * Register stream used by program.

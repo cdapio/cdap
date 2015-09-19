@@ -26,7 +26,9 @@ import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -58,6 +60,8 @@ public class InMemoryStreamCoordinatorClientTest extends StreamCoordinatorTestBa
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionMetricsModule(),
       new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
+      new ExploreClientModule(),
+      new ViewAdminModules().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getInMemoryModules())
         .with(new AbstractModule() {
                 @Override

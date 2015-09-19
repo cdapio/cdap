@@ -34,6 +34,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -106,6 +107,7 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new ExploreClientModule(),
       new NamespaceClientRuntimeModule().getDistributedModules(),
       new MetadataServiceModule(),
+      new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new AbstractModule() {

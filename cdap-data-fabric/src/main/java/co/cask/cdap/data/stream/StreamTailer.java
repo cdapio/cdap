@@ -21,8 +21,10 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
@@ -57,6 +59,8 @@ public class StreamTailer {
                                              new DataFabricModules().getDistributedModules(),
                                              new DataSetsModules().getDistributedModules(),
                                              new LocationRuntimeModule().getDistributedModules(),
+                                             new ExploreClientModule(),
+                                             new ViewAdminModules().getDistributedModules(),
                                              new StreamAdminModules().getDistributedModules(),
                                              new NotificationFeedClientModule());
 

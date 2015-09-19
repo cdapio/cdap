@@ -15,48 +15,39 @@
 -->
 
 <div class="side-panel text-center"
-      ng-class="{'expanded': isExpanded === true, 'left': MySidePanel.placement === 'left'}">
+      ng-class="{'left': MySidePanel.placement === 'left'}">
   <div ng-if="MySidePanel.placement === 'left'" class="hydrator-filter clearfix">
     <input class="form-control pull-left" placeholder="Filter" type="text" ng-model="MySidePanel.searchText" />
-    <div class="btn pull-right" ng-click="MySidePanel.toggleSidebar()">
-      <span class="fa" ng-class="{'fa-angle-left': isExpanded === true, 'fa-angle-right': isExpanded === false}"></span>
-      <span class="fa" ng-class="{'fa-angle-left': isExpanded === true, 'fa-angle-right': isExpanded === false}"></span>
-    </div>
   </div>
 
   <div ng-if="MySidePanel.placement === 'left'">
     <div class="item"
           ng-repeat="group in MySidePanel.groups"
-          ng-class="{'text-left': isExpanded === true}"
-          ng-click="MySidePanel.openGroup(group)">
+          ng-click="MySidePanel.openGroup(group)"
+          ng-class="{'item-open': MySidePanel.openedGroup === group.name}">
       <div class="text-left item-heading {{group.name}}"
-            tooltip="{{group.error}}"
-            tooltip-placement="right"
-            tooltip-append-to-body="true"
-            tooltip-toggle="group.error"
-            tooltip-class="tooltip-error"
-            ng-class="{'item-open': MySidePanel.openedGroup === group.name}">
-        <div tooltip="{{ group.name | caskCapitalizeFilter }}"
-             tooltip-placement="{{ MySidePanel.placement === 'left' ? 'top' : 'left' }}"
-             tooltip-enable="isExpanded === false && !group.error">
-          <span class="name">{{group.name | caskCapitalizeFilter}}</span>
-        </div>
+           tooltip="{{group.error}}"
+           tooltip-placement="right"
+           tooltip-append-to-body="true"
+           tooltip-toggle="group.error"
+           tooltip-class="tooltip-error"
+           ng-click="MySidePanel.toggleGroup(group)">
+        <span class="name">{{group.name | caskCapitalizeFilter}}</span>
       </div>
 
       <div class="item-body-wrapper"
-           ng-class="{'text-left': isExpanded === true}"
            ng-if="MySidePanel.isSubMenu === true && MySidePanel.openedGroup === group.name">
         <div class="item-body">
           <div ng-repeat="plugin in MySidePanel.panel.items | filter: {name: MySidePanel.searchText} track by $index"
-                class="plugin-item"
-                popover="{{plugin.description}}"
-                popover-title="{{plugin.name}}"
-                popover-placement="right"
-                popover-append-to-body="true"
-                popover-trigger="mouseenter"
-                ng-click="MySidePanel.onItemClicked($event, plugin)">
+               class="plugin-item"
+               popover="{{plugin.description}}"
+               popover-title="{{plugin.name}}"
+               popover-placement="right"
+               popover-append-to-body="true"
+               popover-trigger="mouseenter"
+               ng-click="MySidePanel.onItemClicked($event, plugin)">
             <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
-            <span ng-if="isExpanded === true" class="name">{{plugin.name | myEllipsis: 10}}</span>
+            <span class="name">{{plugin.name | myEllipsis: 10}}</span>
           </div>
         </div>
       </div>

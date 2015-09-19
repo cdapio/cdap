@@ -34,6 +34,7 @@ import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
@@ -164,6 +165,7 @@ public class UpgradeTool {
       new LocationRuntimeModule().getDistributedModules(),
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
+      new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new TwillModule(),
       new ExploreClientModule(),

@@ -31,11 +31,13 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
@@ -104,6 +106,8 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
       new TransactionMetricsModule(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new ExploreClientModule(),
+      new ViewAdminModules().getInMemoryModules(),
       Modules.override(new DataFabricDistributedModule(), new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
           @Override
