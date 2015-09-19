@@ -19,8 +19,8 @@ When writing an application class, it is often useful to create interfaces or ab
 a logical contract in your code, but do not provide an implementation of that contract. This lets you plug in
 different implementations to fit your needs.
 
-For example, consider the classic word count example for mapreduce. The program reads files, tokenizes lines
-in those files into words, then counts how many times each word appears. The code consists of several classes::
+For example, consider the classic word count example for MapReduce. The program reads files, tokenizes lines
+in those files into words, and then counts how many times each word appears. The code consists of several classes::
 
   public class WordCountApp extends AbstractApplication {
 
@@ -83,9 +83,10 @@ We then create an application from that artifact::
 This program runs just fine. It counts all words in the input. However, what if we want to count phrases
 instead of words? Or what if we want to filter out common words such as 'the' and 'a'? We would not want
 to copy and paste our application class and then make just small tweaks.
+
 Instead, we would like to be able to create applications that
 are configured to tokenize the line in different ways. That is, if we want an application that filters
-stopwords, we want to be able to create it through configuration::
+stopwords, we want to be able to create it through a configuration::
 
   curl -X PUT localhost:10000/v3/namespaces/default/apps/stopwordcount -H 'Content-Type: application/json' -d '
   {
@@ -93,7 +94,7 @@ stopwords, we want to be able to create it through configuration::
     "config": { "tokenizer": "stopword" }
   }'
 
-Similarly, we want to be able to create an application that counts phrases through configuration::
+Similarly, we want to be able to create an application that counts phrases through a configuration::
 
   curl -X PUT localhost:10000/v3/namespaces/default/apps/phrasecount -H 'Content-Type: application/json' -d '
   {
@@ -138,7 +139,7 @@ Now we change our ``WordCountMapper`` to use the plugin framework to instantiate
 
 The key method we added was the ``initialize`` method. In it, we are using CDAP's plugin framework
 to instantiate a plugin of type ``Tokenizer``, identified by ``tokenizerId``. This code runs when
-the MapReduce program runs. In order for CDAP to know what plugin ``tokenizerId`` refers to, will need
+the MapReduce program runs. In order for CDAP to know which plugin ``tokenizerId`` refers to, we will need
 to register the plugin in our application's ``configure`` method. We change our application code to
 use a configuration object that will specify the name of the ``Tokenizer`` to use, and register that plugin::
 
@@ -166,12 +167,13 @@ If it receives this request::
     "config": { "tokenizer": "phrase" }
   }
 
-The ``TokenizerConfig`` will have its ``tokenizer`` field set to ``phrase``.
+the ``TokenizerConfig`` will have its ``tokenizer`` field set to ``phrase``.
+
 This allows us to configure which tokenizer should be used when creating an application.
 Since we want other artifacts to implement the ``Tokenizer`` interface, we need to make
 sure the class is exposed to other artifacts. We do this by including the ``Tokenizer``'s package
 in the ``Export-Package`` manifest attribute of our JAR file. For example, if our ``Tokenizer`` full
-class name is ``com.company.example.api.Tokenizer``, we need to expose the ``com.company.example.api``
+class name is ``com.example.api.Tokenizer``, we need to expose the ``com.example.api``
 package in our pom::
 
         <plugin>
@@ -189,7 +191,7 @@ package in our pom::
               <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
-              <Export-Package>com.company.example.api</Export-Package>
+              <Export-Package>com.example.api</Export-Package>
             </instructions>
           </configuration>
           ...
@@ -295,8 +297,8 @@ creating a ``PluginConfig`` that contains a property for the delimiter::
     }
   }
 
-The ``@Nullable`` annotation tells CDAP that the field is not required. Without it,
-CDAP will complain if no plugin property for delimiter is given.
+The ``@Nullable`` annotation tells CDAP that the field is not required. Without that annotation,
+CDAP will complain if no plugin property for ``delimiter`` is given.
 When we register the plugin, we need to pass in the properties that will be used to populate the
 ``PluginConfig`` passed to the ``DefaultTokenizer``. In this example, that means the ``delimiter``
 property must be given when registering the plugin::
@@ -328,9 +330,9 @@ Now we can create an application that uses a comma instead of a space to split t
     }
   }'
 
-.. rubric:: 3rd party plugins
+.. rubric:: Third-Party Plugins
 
-Sometimes there is a need to use a 3rd party JAR as a plugin. For example, you may want to be able to use
+Sometimes there is a need to use a third-party JAR as a plugin. For example, you may want to be able to use
 a JDBC driver as a plugin. In these situations, you have no control over the code, which means you cannot
 annotate the relevant class with the ``@Plugin`` annotation. If this is the case, you can explicitly specify
 the plugins using the ``Artifact-Plugins`` header when deploying the artifact::
