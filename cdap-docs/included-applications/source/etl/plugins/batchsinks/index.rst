@@ -17,3 +17,9 @@ Sinks: Batch
     Table <table>
     TPFSAvro <tpfsavro>
     TPFSParquet <tpfsparquet>
+    
+    Elasticsearch <elasticsearch>
+    Writable <writable>
+    File <file>
+    SnapshotFile <snapshotfile>
+    TPFS <tpfs>

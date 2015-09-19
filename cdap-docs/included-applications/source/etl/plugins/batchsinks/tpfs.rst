@@ -23,8 +23,6 @@ of the FileSet to a database table where it can be served to your users.
 
 **columns:** Comma-separated list of columns in the specified table to export to.
 
-.. connection information from DBConfig.java
-
 **connectionString:** JDBC connection string including database name.
 
 **user:** User identity for connecting to the specified database. Required for databases that need
@@ -61,3 +59,4 @@ it will connect to the 'prod' database of a PostgreSQL instance running on 'loca
 Each input record will be written to a row of the 'users' table, with the value for each
 column taken from the value of the field in the record. For example, the 'id' field in
 the record will be written to the 'id' column of that row.
+
