@@ -16,7 +16,7 @@
 
 angular.module(PKG.name + '.feature.adapters')
   .controller('AdapterCreateStudioController', function(MyAppDAGService, $scope, rConfig, $modalStack, EventPipe, $window, $timeout, MyConsoleTabService) {
-
+    this.isExpanded = true;
     var confirmOnPageExit = function (e) {
 
       if (!MyAppDAGService.isConfigTouched) { return; }
@@ -54,4 +54,8 @@ angular.module(PKG.name + '.feature.adapters')
       EventPipe.cancelEvent('plugin.reset');
       EventPipe.cancelEvent('schema.clear');
     });
+
+    this.toggleSidebar = function() {
+      this.isExpanded = !this.isExpanded;
+    };
   });
