@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ======================
-Sources: Batch: Stream 
+Batch Sources: Stream 
 ======================
 
 .. rubric:: Description
@@ -39,15 +39,15 @@ minutes before its logical start time. The default value is 0.
 
 **format:** Optional format of the stream. Any format supported by CDAP is also supported.
 For example, a value of 'csv' will attempt to parse stream events as comma separated
-values. If no format is given, event bodies will be treated as bytes, resulting in a three
-field schema: 'ts' of type long, 'headers' of type map of string to string, and 'body' of
+values. If no format is given, event bodies will be treated as bytes, resulting in a 
+three-field schema: 'ts' of type long, 'headers' of type map of string to string, and 'body' of
 type bytes.
 
 **schema:** Optional schema for the body of stream events. Schema is used in conjunction
 with format to parse stream events. Some formats like the avro format require schema,
 while others do not. The schema given is for the body of the stream, so the final schema
 of records output by the source will contain an additional field named 'ts' for the
-timestamp and a field named 'headers' for the headers as as the first and second fields of
+timestamp and a field named 'headers' for the headers as the first and second fields of
 the schema.
 
 .. rubric:: Example
@@ -65,7 +65,7 @@ the schema.
   }
 
 This example reads from a stream named 'accesslogs'. With the 'duration' property set to
-'10m', the source will read ten minutes worth of data. As the 'delay' property is set to
+'10m', the source will read ten minutes-worth of data. As the 'delay' property is set to
 '5m', the source will read data up to five minutes before the logical start time of the
 run. The 'end time' of the data will then be five minutes before that logical start time. 
 Combining the duration and the delay, the 'start time' of the data will be 15 minutes

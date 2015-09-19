@@ -27,34 +27,48 @@ function download_includes() {
 
   # Batchsinks
   test_an_include 033951c7c752d4e5432038eb964af4d6 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/BatchCubeSink.java
-  test_an_include 99954f84668085177323a2207ac458b2 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/BatchElasticsearchSink.java
-  test_an_include 80424ab3bd082196130475c006b7cca0 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/BatchWritableSink.java
+  test_an_include f8191552bd02e0b90e668f1079377291 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/BatchElasticsearchSink.java
   test_an_include c99bce3da0d3fc9bcd5320dee4d18bf9 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/DBSink.java
-  test_an_include 9bfd3e359b55b336ba1758ab61bf449f ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/FileBatchSink.java
   test_an_include 2746d991cfad8271977c3f648464acd2 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/KVTableSink.java
   test_an_include 713b171856a5963278e6de6e639f6176 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/SnapshotFileBatchAvroSink.java
   test_an_include d803b3fa4d4711859e3b8737941b9b26 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/SnapshotFileBatchParquetSink.java
-  test_an_include 28d604889dadd50870faadc3bac95ffb ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/SnapshotFileBatchSink.java
   test_an_include 8e51b83878c90f000e59ada65630457d ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/TableSink.java
   test_an_include 2417871dcd685d2ed75c10df712c9f8c ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/TimePartitionedFileSetDatasetAvroSink.java
   test_an_include 95ae9c116aa257efd5e3bb6cacaa4033 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/TimePartitionedFileSetDatasetParquetSink.java
-  test_an_include 3069701c1070f0546d6a73800f558e72 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/TimePartitionedFileSetSink.java
 
   # Batchsources
+  test_an_include 67ee7fbac8e3971bd37e99186890097d ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/DBSource.java
+  test_an_include fd0399dc86a461466d119dc1e1cbe2f4 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/ElasticsearchSource.java
+  test_an_include f85320e0da353c790434a770aba6d040 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/FileBatchSource.java
+  test_an_include a3e5de66820f096813a6d58fdba86b52 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/KVTableSource.java
+  test_an_include 9d5e7d1bc55730b5cb00180dda09adfe ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/S3BatchSource.java
+  test_an_include 1ad8f9d4d9a27f10cdc0304bddf84c2b ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/StreamBatchSource.java
+  test_an_include f8c07741ac3b09da7554b91351e7973b ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/TableSource.java
+  test_an_include 4bf9f88fac9ff72fc25642db21a89620 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/TimePartitionedFileSetDatasetAvroSource.java
 
   # Realtimesinks
+  test_an_include 4e797c7cf48d67b4aa9d0d0dec35876c ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/sink/RealtimeCubeSink.java
+  test_an_include 61ef713300b65f55e77f9cd6e69db896 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/sink/RealtimeElasticsearchSink.java
+  test_an_include 836f8fe9e272795213dc23bc489c44bd ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/sink/RealtimeTableSink.java
+  test_an_include 359986e3c5666ad7375c60fd54efb91c ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/sink/StreamSink.java
 
   # Realtimesources
-  
-  # Shared-Plugins
-  test_an_include 4fc697d071e894cfce67dbf62c9709d0 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/validator/CoreValidator.java
+  test_an_include 2d17a298a48077cc8981f80b38ad465a ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/DataGeneratorSource.java
+  test_an_include a18bf5113fcc0d595bda518cec39d227 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/JmsSource.java
+  test_an_include 0547f4f76a558bff270320f8277a5a5f ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/KafkaSource.java
+  test_an_include 4afa5a36fbe7a750f7cafe67c39306f9 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/SqsSource.java
+  test_an_include e8b987b6f648211ed183e18c68b41873 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/TwitterSource.java
 
   # Transforms
-  
-  # Commmon
-  test_an_include 4fc697d071e894cfce67dbf62c9709d0 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/common/DBConfig.java
-  
-  
+  test_an_include 80cb1ed50ae999565147585e243ae13e ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/LogParserTransform.java
+  test_an_include d556fb139185ceaaff6e98375fa0ebdc ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/ProjectionTransform.java
+  test_an_include 100c530448d9719463f5bf9445321cca ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/ScriptFilterTransform.java
+  test_an_include bcbf3340f2cd9345f155dd76d30b6e78 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/ScriptTransform.java
+  test_an_include c3eb291d7b7d4ca0934d151bed882dd3 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/StructuredRecordToGenericRecordTransform.java
+  test_an_include b7772fc3659b7b0baafd6641a9abe249 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/ValidatorTransform.java
+
+  # Shared-Plugins
+  test_an_include 4fc697d071e894cfce67dbf62c9709d0 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/validator/CoreValidator.java
 }
 
 run_command ${1}

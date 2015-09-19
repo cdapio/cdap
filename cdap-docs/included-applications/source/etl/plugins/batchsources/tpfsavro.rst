@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ========================
-Sources: Batch: TPFSAvro 
+Batch Sources: TPFSAvro 
 ========================
 
 .. rubric:: Description
@@ -14,8 +14,8 @@ Reads from a TimePartitionedFileSet whose data is in Avro format.
 
 The source is used when you need to read partitions of a TimePartitionedFileSet.
 For example, suppose there is an application that ingests data by writing to a TimePartitionedFileSet,
-where arrival time of the data is used as the partition key. You may want to create a pipeline that then
-reads newly arrived files, performs some data validation and cleansing, then writes to a Table.
+where arrival time of the data is used as the partition key. You may want to create a pipeline that
+reads the newly-arrived files, performs data validation and cleansing, and then writes to a Table.
 
 .. rubric:: Properties 
 

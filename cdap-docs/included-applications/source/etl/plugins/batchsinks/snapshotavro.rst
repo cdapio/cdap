@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ==========================
-Sinks: Batch: SnapshotAvro
+Batch Sinks: SnapshotAvro
 ==========================
 
 .. rubric:: Description
@@ -30,7 +30,7 @@ If it doesn't exist, it will be created.
 
 **basePath:** Base path for the FileSet. Defaults to the name of the dataset.
 
-**pathExtension:** The extension where the dataset will be stored. The dataset will be stored at
+**pathExtension:** The extension where the snapshot will be stored. The snapshot will be stored at
 <basePath>/<pathExtension.
 
 .. rubric:: Example

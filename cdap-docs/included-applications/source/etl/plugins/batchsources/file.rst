@@ -3,12 +3,12 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ====================
-Sources: Batch: File 
+Batch Sources: File 
 ====================
 
 .. rubric:: Description
 
-Batch source to use any Distributed File System as a Source
+Batch source to use any Distributed File System as a Source.
 
 .. rubric:: Use Case
 
@@ -38,18 +38,21 @@ terminate the path name with a \'/\'.
 
 **fileRegex:** Regex to filter out filenames in the path.
 
-To use the *TimeFilter*, input "timefilter". The TimeFilter assumes that it is
-reading in files with the File log naming convention of 'YYYY-MM-DD-HH-mm-SS-Tag'.
-The TimeFilter reads in files from the previous hour if the field 'timeTable' is
-left blank. So if it's currently 2015-06-16-15 (June 16th 2015, 3pm), it will read
-in files that contain '2015-06-16-14' in the filename. If the field 'timeTable' is
-present, then it will read files in that have not been read yet.
+.. include:: ../time-filter.txt 
+
+
+.. To use the *TimeFilter*, input ``timefilter``. The TimeFilter assumes that it is
+.. reading in files with the File log naming convention of 'YYYY-MM-DD-HH-mm-SS-Tag'.
+.. The TimeFilter reads in files from the previous hour if the field ``timeTable`` is
+.. left blank. If it's currently 2015-06-16-15 (June 16th 2015, 3pm), it will read
+.. in files that contain '2015-06-16-14' in the filename. If the field ``timeTable`` is
+.. present, then it will read in files that have not yet been read.
 
 **timeTable:** Name of the Table that keeps track of the last time files
-were read.
+were read in.
 
 **inputFormatClass:** Name of the input format class, which must be a
-subclass of FileInputFormat. Defaults to TextInputFormat.
+subclass of FileInputFormat. Defaults to CombineTextInputFormat.
 
 **maxSplitSize:** Maximum split-size for each mapper in the MapReduce Job. Defaults to 128MB.
 

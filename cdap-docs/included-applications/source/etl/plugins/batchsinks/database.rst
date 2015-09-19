@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ===============================
-Sinks: Batch: Database
+Batch Sinks: Database
 ===============================
 
 .. rubric:: Description

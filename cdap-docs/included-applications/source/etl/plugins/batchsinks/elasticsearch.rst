@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ===============================
-Sinks: Batch: Elasticsearch
+Batch Sinks: Elasticsearch
 ===============================
 
 .. rubric:: Description
@@ -11,7 +11,7 @@ Sinks: Batch: Elasticsearch
 CDAP Elasticsearch Batch Sink takes the structured record from the input source and
 converts it to a JSON string, then indexes it in Elasticsearch using the index, type, and
 id specified by the user. The Elasticsearch server should be running prior to creating the
-adapter.
+application.
 
 .. rubric:: Use Case
 
@@ -32,21 +32,4 @@ in the structured record of the input.
 
 .. rubric:: Example
 
-::
-
-  {
-    "name": "Database",
-    "properties": {
-      "index": "users",
-      "type": "id,name,email,phone",
-      "idField": "jdbc:postgresql://localhost:5432/prod",
-      "hostname": "localhost:9200"
-    }
-  }
-
-This example connects to a database using the specified 'connectionString', which means
-it will connect to the 'prod' database of a PostgreSQL instance running on 'localhost'.
-Each input record will be written to a row of the 'users' table, with the value for each
-column taken from the value of the field in the record. For example, the 'id' field in
-the record will be written to the 'id' column of that row.
 

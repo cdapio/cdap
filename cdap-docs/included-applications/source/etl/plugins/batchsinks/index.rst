@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ===============================
-Sinks: Batch 
+Batch Sinks
 ===============================
 
 .. toctree::
@@ -11,15 +11,10 @@ Sinks: Batch
 
     Cube <cube>
     Database <database>
+    Elasticsearch <elasticsearch>
     KVTable <kvtable>
     SnapshotAvro <snapshotavro>
     SnapshotParquet <snapshotparquet>
     Table <table>
     TPFSAvro <tpfsavro>
     TPFSParquet <tpfsparquet>
-    
-    Elasticsearch <elasticsearch>
-    Writable <writable>
-    File <file>
-    SnapshotFile <snapshotfile>
-    TPFS <tpfs>

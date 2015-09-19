@@ -65,9 +65,9 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
     "SELECT COUNT(my_column) from my_table. NOTE: Please include the same WHERE clauses in this query as the ones " +
     "used in the import query to reflect an accurate number of records to import.";
   private static final String COLUMN_CASE_DESCRIPTION = "Sets the case of the column names returned from the query. " +
-    "Possible options are upper, lower. By default or for any other input, the column names are not modified" +
-    "and the names returned from the Database are used as is. Note, setting this property provides predictability" +
-    "of column name cases across different Databases but might result in column name conflicts if two or column " +
+    "Possible options are upper or lower. By default or for any other input, the column names are not modified and " +
+    "the names returned from the database are used as-is. Note that setting this property provides predictability " +
+    "of column name cases across different databases but might result in column name conflicts if multiple column " +
     "names are the same when the case is ignored.";
 
   private final DBSourceConfig dbSourceConfig;

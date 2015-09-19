@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 =======================
-Sources: Batch: KVTable 
+Batch Sources: KVTable 
 =======================
 
 .. rubric:: Description 
@@ -31,7 +31,7 @@ you may want to periodically dump the contents of a KeyValueTable to a Table.
     }
   }
 
-This example reads from a KeyValueTable named 'items'. It outputs records with the following schema::
+This example reads from a KeyValueTable named 'items'. It outputs records with this schema::
 
   +====================+
   | field name | type  |

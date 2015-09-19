@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ========================
-Sources: Batch: Database 
+Batch Sources: Database 
 ========================
 
 .. rubric:: Description
@@ -19,10 +19,10 @@ a TimePartitionedFileSet.
 
 .. rubric:: Properties
 
-**importQuery:** The SELECT query to use to import data from the specified table. You can
-specify an arbitrary number of columns to import, or import all columns using \*. You can
-also specify a number of WHERE clauses or ORDER BY clauses. However, LIMIT and OFFSET
-clauses should not be used in this query.
+**importQuery:** The SELECT query to use to import data from the specified 
+table. You can specify an arbitrary number of columns to import, or import all columns using \*. 
+You can also specify a number of WHERE clauses or ORDER BY clauses. However, LIMIT and OFFSET clauses 
+should not be used in this query.
 
 .. highlight:: sql
 
@@ -34,6 +34,12 @@ specified table. Examples::
 
 *Note:* Please include the same WHERE clauses in this query as the ones used in the import
 query to reflect an accurate number of records to import.
+
+**columnCase:** Sets the case of the column names returned from the query.
+Possible options are ``upper`` or ``lower``. By default or for any other input, the column names are not modified and
+the names returned from the database are used as-is. Note that setting this property provides predictability
+of column name cases across different databases but might result in column name conflicts if multiple column
+names are the same when the case is ignored. (Optional)
 
 **connectionString:** JDBC connection string including database name.
 

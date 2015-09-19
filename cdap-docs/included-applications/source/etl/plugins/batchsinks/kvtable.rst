@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ===============================
-Sinks: Batch: KVTable
+Batch Sinks: KVTable
 ===============================
 
 .. rubric:: Description

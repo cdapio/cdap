@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ===============================
-Sources: Batch: Table
+Batch Sources: Table
 ===============================
 
 .. rubric:: Description
@@ -60,6 +60,6 @@ This example reads from a Table named 'users'. It outputs records with this sche
   | birthyear      | int                 |
   +======================================+
 
-The 'id' field will be read from the rowkey of the table. The 'name' field will be read from the
+The 'id' field will be read from the row key of the table. The 'name' field will be read from the
 'name' column in the table. The 'birthyear' field will be read from the 'birthyear' column in the
 table. Any other columns in the Table will be ignored by the source.
