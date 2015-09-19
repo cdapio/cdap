@@ -111,7 +111,7 @@ Otherwise, the default schema that is matched against the records:
 
 .. literalinclude:: /../../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
     :language: java
-    :lines: 138-142
+    :lines: 139-143
 
 Querying the Results
 --------------------
