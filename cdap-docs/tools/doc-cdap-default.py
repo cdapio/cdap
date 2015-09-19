@@ -224,6 +224,13 @@ def parse_options():
     # Generation, source and target
     
     parser.add_option(
+        '-c', '--compare',
+        dest='compare',
+        action='store_true',
+        help='Compares two XML files',
+        default=False)
+
+    parser.add_option(
         '-g', '--generate',
         dest='generate',
         action='store_true',
@@ -234,6 +241,13 @@ def parse_options():
         '-s', '--source',
         dest='source',
         help="The XML to be loaded, if not the default '%s'" % CDAP_DEFAULT_XML,
+        metavar='FILE',
+        default='')
+
+    parser.add_option(
+        '-o', '--other',
+        dest='other_source',
+        help="The second XML to be loaded",
         metavar='FILE',
         default='')
 
@@ -303,8 +317,8 @@ def load_exclusions():
         raise Exception(func, "'%s' not a valid path" % exclusions_path)
     return [line.rstrip('\n') for line in open(exclusions_path)]
 
-def load_defaults(filesource, include_exclusions=False):
-    func = 'load_defaults'
+def load_xml(filesource, include_exclusions=False, include_comments=True):
+    func = 'load_xml'
 
     if filesource:
         xml_path = filesource    
@@ -328,8 +342,8 @@ def load_defaults(filesource, include_exclusions=False):
                 for attribute in inner_element:
                     item.set_attribute(attribute.tag, attribute.text)                
                 if item.name not in exclusions:
-                    items.append(item)                
-            else:
+                    items.append(item) 
+            elif include_comments:
                 items.append(Section(inner_element.text))
 
     return items, tree
@@ -351,18 +365,22 @@ def rebuild(filepath=''):
     - Descriptions wrapped to a 70 character line-length"""
     
     print 'Rebuilding cdap-default.xml'
-    items, tree = load_defaults('', include_exclusions=True)
+    items, tree = load_xml('', include_exclusions=True)
     exclusions = load_exclusions()
     in_section = True
     defaults = {}
     section = []
     section_counter = 0
     properties_counter = 0
+    section_name = ''
     for item in items:
         if str(item.__class__) == '__main__.Section':
             if section: # End old section
+                if not section_name:
+                    section_name = "Section %s" % section_counter
                 defaults[section_name] = section
                 section = []
+                
             # Start new section
             section_counter += 1
             section_name = item.name
@@ -392,9 +410,16 @@ def rebuild(filepath=''):
     xml = XML_CONFIG_OPEN
     keys = defaults.keys()
     for key in FIRST_TWO_SECTIONS:
-        keys.remove(key)
-    keys.sort()        
-    keys = FIRST_TWO_SECTIONS + keys
+        if key in keys:
+            keys.remove(key)
+            
+    keys.sort()
+    FIRST_TWO_SECTIONS.reverse()
+    
+    for key in FIRST_TWO_SECTIONS:
+        if key in defaults.keys():
+            keys = [key] + keys
+
     for key in keys:
         xml += XML_SECTION_SUB % key
         props = defaults[key]
@@ -434,7 +459,7 @@ def rebuild(filepath=''):
             print line
 
 def load_create_rst(filesource='', filepath=''):
-    defaults, tree = load_defaults(filesource)
+    defaults, tree = load_xml(filesource)
     table = create_rst(defaults)
     if filepath:
         f = open(filepath, 'w')
@@ -445,7 +470,7 @@ def load_create_rst(filesource='', filepath=''):
         
 def load_summary(props_only=False):
     print 'Loading cdap-default.xml'
-    items, tree = load_defaults('')
+    items, tree = load_xml('')
     section_counter = 0
     properties_counter = 0
     for item in items:
@@ -458,6 +483,64 @@ def load_summary(props_only=False):
             item.display()
     print "Sections: %d\nProperties: %d" % (section_counter, properties_counter)
 
+
+# python doc-cdap-default.py --compare -s ~/Source/cdap_3.1/cdap-common/src/main/resources/cdap-default.xml -o ~/Source/cdap_3.2/cdap-common/src/main/resources/cdap-default.xml -t diff.txt
+def compare_xml(source, other_source, target):
+    print "\nLoading source: %s" % source
+    items, tree = load_xml(source, include_exclusions=True, include_comments=False)
+    print "items: %s" % len(items)
+    items.sort(key = lambda p: p.name)
+    items_keys = []
+    for item in items:
+        items_keys.append(item.name)
+    
+    print "\nLoading other source: %s" % other_source
+    other_items, other_tree = load_xml(other_source, include_exclusions=True, include_comments=False)
+    print "other_items: %s" % len(other_items)
+    other_items.sort(key = lambda p: p.name)
+
+    other_items_keys = []
+    for other_item in other_items:
+        other_items_keys.append(other_item.name)
+
+    in_both = []
+    
+    print "\nLooking in other_source for each item in source"
+    only_in_source = []
+    for item in items:
+        if item.name in other_items_keys:
+            if not item.name in in_both:
+                in_both.append(item.name)
+        else:
+            only_in_source.append(item.name)
+    print "\nonly_in_source:       %d" % len(only_in_source)
+    for name in only_in_source:
+        print "  %s" % name
+            
+    print "\nLooking in source for each item in other_source"
+    only_in_other_source = []
+    for other_item in other_items:
+        if other_item.name in items_keys:
+            if not other_item.name in in_both:
+                in_both.append(other_item.name)
+        else:
+            only_in_other_source.append(other_item.name)
+    print "\nonly_in_other_source: %d" % len(only_in_other_source)
+    for name in only_in_other_source:
+        print "  %s" % name
+
+    print "\nIn Both:              %d" % len(in_both)
+    for name in in_both:
+        print "  %s" % name
+     
+      
+        
+        
+#     print "Writing difference to target: %s" % target
+
+   
+
+
 def main():
     """ Main program entry point."""
 
@@ -465,6 +548,9 @@ def main():
 
     try:
         options.logger = log
+        if options.compare:
+            print "\nComparing XML Files..."
+            compare_xml(options.source, options.other_source, options.target)
         if options.generate:
             print "Generating RST..."
             load_create_rst(options.source, options.target)
