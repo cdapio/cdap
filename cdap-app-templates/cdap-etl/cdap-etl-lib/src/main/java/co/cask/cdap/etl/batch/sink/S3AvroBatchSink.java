@@ -33,7 +33,10 @@ import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.JobContext;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -73,6 +76,15 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
     emitter.emit(new KeyValue<>(new AvroKey<>(recordTransformer.transform(input)), NullWritable.get()));
   }
 
+  @Override
+  protected Map<String, String> getAdditionalS3BatchSinkConfigs(BatchSinkContext context) {
+    SimpleDateFormat format = new SimpleDateFormat(config.pathFormat);
+    Map<String, String> args = new HashMap<>();
+    args.put(FileOutputFormat.OUTDIR,
+             String.format("%s/%s", config.basePath, format.format(context.getLogicalStartTime())));
+    return args;
+  }
+
   /**
    * Configuration for the S3AvroSink.
    */
@@ -82,9 +94,9 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
     @Description(SCHEMA_DESC)
     private String schema;
 
-    public S3AvroSinkConfig(String basePath, String schema,
+    public S3AvroSinkConfig(String basePath, String pathFormat, String schema,
                             String accessID, String accessKey) {
-      super(basePath, accessID, accessKey);
+      super(basePath, pathFormat, accessID, accessKey);
       this.schema = schema;
     }
   }

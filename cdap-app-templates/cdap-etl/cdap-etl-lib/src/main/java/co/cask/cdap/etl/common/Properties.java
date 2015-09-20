@@ -165,6 +165,7 @@ public final class Properties {
    */
   public static class S3BatchSink {
     public static final String SCHEMA = "schema";
+    public static final String PATH_FORMAT = "pathFormat";
   }
 
   /**

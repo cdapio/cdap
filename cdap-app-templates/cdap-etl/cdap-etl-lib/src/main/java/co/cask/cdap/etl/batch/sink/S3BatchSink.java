@@ -24,12 +24,10 @@ import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.common.Properties;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-import java.text.SimpleDateFormat;
-import javax.annotation.Nullable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * {@link S3BatchSink} that stores the data of the latest run of an adapter in S3.
@@ -42,7 +40,11 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
     "Defaults to the name of the dataset";
   private static final String ACCESS_ID_DESCRIPTION = "Access ID of the Amazon S3 instance to connect to.";
   private static final String ACCESS_KEY_DESCRIPTION = "Access Key of the Amazon S3 instance to connect to.";
-
+  private static final String PATH_FORMAT_DESCRIPTION = "The format for the path; for example" +
+    "yyyy-MM-dd-HH-mm will create a file path ending in the format of 2015-01-01-20-42" +
+    "The string provided will be provided to SimpleDataFormat." +
+    "If left blank, then the partitions will have a default format of yyyy-MM-dd-HH-mm.";
+  private static final String DEFAULT_PATH_FORMAT = "yyyy-MM-dd-HH-mm";
 
   private final S3BatchSinkConfig config;
   protected S3BatchSink(S3BatchSinkConfig config) {
@@ -52,30 +54,27 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    //TODO: Have this as a config.
-    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
-
     Job job = context.getHadoopJob();
     Configuration conf = job.getConfiguration();
     conf.set("fs.s3n.awsAccessKeyId", this.config.accessID);
     conf.set("fs.s3n.awsSecretAccessKey", this.config.accessKey);
-    FileOutputFormat.setOutputPath(job, new Path(getOutputPath(config.basePath,
-                                                               format.format(context.getLogicalStartTime()))));
+    for (Map.Entry<String, String> entry : getAdditionalS3BatchSinkConfigs(context).entrySet()) {
+      conf.set(entry.getKey(), entry.getValue());
+    }
   }
 
-  private String getOutputPath(String basePath, String timeSuffix) {
-    return String.format("%s/%s/", basePath, timeSuffix);
+  protected Map<String, String> getAdditionalS3BatchSinkConfigs(BatchSinkContext context) {
+    return new HashMap<>();
   }
-
 
   /**
    * S3 Sink configuration.
    */
   public static class S3BatchSinkConfig extends PluginConfig {
 
+
     @Name(Properties.S3.PATH)
     @Description(PATH_DESC)
-    @Nullable
     protected String basePath;
 
     @Name(Properties.S3.ACCESS_ID)
@@ -86,9 +85,15 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
     @Description(ACCESS_KEY_DESCRIPTION)
     protected String accessKey;
 
-    public S3BatchSinkConfig(String basePath,
+    @Name(Properties.S3BatchSink.PATH_FORMAT)
+    @Description(PATH_FORMAT_DESCRIPTION)
+    protected String pathFormat;
+
+
+    public S3BatchSinkConfig(String basePath, String pathFormat,
                               String accessID, String accessKey) {
       this.basePath = basePath;
+      this.pathFormat = pathFormat == null || pathFormat.isEmpty() ? DEFAULT_PATH_FORMAT : pathFormat;
       this.accessID = accessID;
       this.accessKey = accessKey;
     }

@@ -29,8 +29,11 @@ import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.etl.common.StructuredToAvroTransformer;
 import com.google.common.collect.Maps;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import parquet.avro.AvroParquetOutputFormat;
 
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -62,8 +65,16 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
   @Override
   public void prepareRun(BatchSinkContext context) {
     super.prepareRun(context);
-    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
     context.addOutput(config.basePath, new S3ParquetOutputFormatProvider(config));
+  }
+
+  @Override
+  protected Map<String, String> getAdditionalS3BatchSinkConfigs(BatchSinkContext context) {
+    SimpleDateFormat format = new SimpleDateFormat(config.pathFormat);
+    Map<String, String> args = new HashMap<>();
+    args.put(FileOutputFormat.OUTDIR,
+             String.format("%s/%s", config.basePath, format.format(context.getLogicalStartTime())));
+    return args;
   }
 
   @Override
@@ -81,9 +92,9 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
     @Description(SCHEMA_DESC)
     private String schema;
 
-    public S3ParquetSinkConfig(String basePath, String schema,
+    public S3ParquetSinkConfig(String basePath, String pathFormat, String schema,
                                String accessID, String accessKey) {
-      super(basePath, accessID, accessKey);
+      super(basePath, pathFormat, accessID, accessKey);
       this.schema = schema;
     }
   }
@@ -97,8 +108,8 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
 
     public S3ParquetOutputFormatProvider(S3ParquetSinkConfig config) {
       conf = Maps.newHashMap();
+      SimpleDateFormat format = new SimpleDateFormat(config.pathFormat);
       conf.put("parquet.avro.schema", config.schema);
-
     }
 
     @Override
