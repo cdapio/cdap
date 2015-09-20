@@ -15,13 +15,38 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdapterSettingsController', function(MyAppDAGService, GLOBALS, EventPipe, $timeout, myHelpers) {
+  .controller('AdapterSettingsController', function(MyAppDAGService, GLOBALS, EventPipe, $timeout, myHelpers, $scope) {
     this.GLOBALS = GLOBALS;
     this.metadata = MyAppDAGService.metadata;
     this.initialCron = MyAppDAGService.metadata.template.schedule.cron || '* * * * *';
 
     this.cron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '';
     this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
+    this.saveDisabled = true;
+
+    $scope.$watch(function () {
+      return this.cron;
+    }.bind(this), function () {
+      var initialCron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '';
+      console.log('test', this.cron, initialCron);
+      if (this.cron !== initialCron) {
+        console.log('test');
+        this.saveDisabled = false;
+      } else {
+        this.saveDisabled = true;
+      }
+    }.bind(this), true);
+
+    $scope.$watch(function () {
+      return this.instance;
+    }.bind(this), function () {
+      var intialInstance = this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
+      if (this.instance !== intialInstance) {
+        this.saveDisabled = false;
+      } else {
+        this.saveDisabled = true;
+      }
+    }.bind(this));
 
 
     function checkCron(cron) {
@@ -53,6 +78,7 @@ angular.module(PKG.name + '.feature.adapters')
     };
 
     this.save = function () {
+      this.saveDisabled = true;
       MyAppDAGService.metadata.template.schedule.cron = this.cron;
       MyAppDAGService.metadata.template.instance = this.instance;
     };
@@ -63,9 +89,7 @@ angular.module(PKG.name + '.feature.adapters')
         this.initialCron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '* * * * *';
       }.bind(this));
 
-
-
-      // this.cron = this.initialCron;
+      this.saveDisabled = true;
       this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
 
       EventPipe.emit('plugin.reset');

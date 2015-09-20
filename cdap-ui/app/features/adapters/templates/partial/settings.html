@@ -26,9 +26,11 @@
             <span>Pipeline Schedule</span>
             <span class="pull-right">
               <button class="btn btn-success"
-                ng-click="AdapterSettingsController.save()">Save</button>
+                ng-click="AdapterSettingsController.save()"
+                ng-disabled="AdapterSettingsController.saveDisabled">Save</button>
               <button class="btn btn-default"
-                ng-click="AdapterSettingsController.reset()">Reset</button>
+                ng-click="AdapterSettingsController.reset()"
+                ng-disabled="AdapterSettingsController.saveDisabled">Reset</button>
             </span>
           </h3>
 
