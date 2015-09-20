@@ -623,6 +623,7 @@ public final class Constants {
     /** Parent znode used for secret key distribution in ZooKeeper. */
     public static final String DIST_KEY_PARENT_ZNODE = "security.token.distributed.parent.znode";
     /** Deprecated. Use AUTH_SERVER_BIND_ADDRESS instead. **/
+    @Deprecated
     public static final String AUTH_SERVER_ADDRESS = "security.auth.server.address";
     /**
      * Address that clients should use to communicate with the Authentication Server.

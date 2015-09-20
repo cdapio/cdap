@@ -334,7 +334,7 @@ public class StandaloneMain {
     configuration.set(Constants.Metrics.SERVER_ADDRESS, "127.0.0.1");
     configuration.set(Constants.MetricsProcessor.ADDRESS, "127.0.0.1");
     configuration.set(Constants.LogSaver.ADDRESS, "127.0.0.1");
-    configuration.set(Constants.Security.AUTH_SERVER_ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
     configuration.set(Constants.Explore.SERVER_ADDRESS, "127.0.0.1");
     configuration.set(Constants.Metadata.SERVICE_BIND_ADDRESS, "127.0.0.1");
 
