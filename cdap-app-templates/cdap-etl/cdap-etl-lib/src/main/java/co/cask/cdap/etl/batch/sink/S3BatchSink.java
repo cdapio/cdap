@@ -40,10 +40,9 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
     "Defaults to the name of the dataset";
   private static final String ACCESS_ID_DESCRIPTION = "Access ID of the Amazon S3 instance to connect to.";
   private static final String ACCESS_KEY_DESCRIPTION = "Access Key of the Amazon S3 instance to connect to.";
-  private static final String PATH_FORMAT_DESCRIPTION = "The format for the path; for example" +
-    "yyyy-MM-dd-HH-mm will create a file path ending in the format of 2015-01-01-20-42" +
-    "The string provided will be provided to SimpleDataFormat." +
-    "If left blank, then the partitions will have a default format of yyyy-MM-dd-HH-mm.";
+  private static final String PATH_FORMAT_DESCRIPTION = "The format for the path that will be suffixed with the " +
+    "basePath; for example yyyy-MM-dd-HH-mm will create a file path ending in the format of 2015-01-01-20-42. " +
+    "Default format used is yyyy-MM-dd-HH-mm.";
   private static final String DEFAULT_PATH_FORMAT = "yyyy-MM-dd-HH-mm";
 
   private final S3BatchSinkConfig config;
@@ -73,7 +72,7 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
   public static class S3BatchSinkConfig extends PluginConfig {
 
 
-    @Name(Properties.S3.PATH)
+    @Name(Properties.S3BatchSink.BASE_PATH)
     @Description(PATH_DESC)
     protected String basePath;
 

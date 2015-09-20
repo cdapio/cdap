@@ -27,8 +27,9 @@ path provided.
 
 **schema:** The Avro schema of the record being written to the sink as a JSON Object.
 
-**path:** Base path for S3 directory. Note: the path should start with ``s3n://``.
+**basePath:** Base path for S3 directory. Note: the path should start with ``s3n://``.
 
+**pathFormat:** The format for the path that will be suffixed with the basePath; for example yyyy-MM-dd-HH-mm will create a file path ending in the format of 2015-01-01-20-42. Default format used is yyyy-MM-dd-HH-mm.
 
 .. rubric:: Example
 
@@ -39,7 +40,8 @@ path provided.
     "properties": {
       "accessKey": "key",
       "accessID": "ID",
-      "path": "s3n://path/to/logs/",
+      "basePath": "s3n://path/to/logs/",
+      "pathFormat": "yyyy-MM-dd-HH",
       "name": "mys3",
       "schema": "{
         \"type\":\"record\",
