@@ -41,7 +41,7 @@ import java.util.Map;
  */
 @Plugin(type = "realtimesink")
 @Name("Table")
-@Description("Real Time Sink for CDAP Table dataset")
+@Description("Real-time Sink for CDAP Table dataset")
 public class RealtimeTableSink extends RealtimeSink<StructuredRecord> {
 
   private RecordPutTransformer recordPutTransformer;

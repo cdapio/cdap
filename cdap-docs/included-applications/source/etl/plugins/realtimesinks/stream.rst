@@ -2,8 +2,10 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+.. _included-apps-etl-plugins-real-time-sinks-stream:
+
 ===============================
-Sinks: Real-time: Stream
+Real-time Sinks: Stream
 ===============================
 
 .. rubric:: Description

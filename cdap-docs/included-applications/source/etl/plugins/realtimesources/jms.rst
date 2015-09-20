@@ -2,13 +2,15 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+.. _included-apps-etl-plugins-real-time-sources-jms:
+
 ===============================
-Sources: Real-time: JMS
+Real-time Sources: JMS
 ===============================
 
 .. rubric:: Description
 
-Java Message Service (JMS) Real-time Source. Emits a record with a field 'message' of type string.
+Java Message Service (JMS) real-time source. Emits a record with a field 'message' of type string.
 
 .. rubric:: Use Case
 
@@ -23,19 +25,19 @@ from an Apache ActiveMQ queue and write to a stream.
 The default value is 50.
 
 **jms.factory.initial:** The fully-qualified class name of the factory class that will be used to create
-an initial context. This will be passed to the JNDI initial context as 'java.naming.factory.initial'.
+an initial context. This will be passed to the JNDI initial context as ``java.naming.factory.initial``.
 
 **jms.provider.url:** Information for the service provider URL to use. This will be passed
-to the JNDI initial context as 'java.naming.provider.url'.
+to the JNDI initial context as ``java.naming.provider.url``.
 
 **jms.jndi.connectionfactory.name:** The name of the connection factory from the JNDI. The default
-will be ConnectionFactory.
+will be ``ConnectionFactory``.
 
 **jms.plugin.name:** Name of the JMS plugin to use. This is the value of the 'name' key defined in the
-JSON file for the JMS plugin. Defaults to 'java.naming.factory.initial'.
+JSON file for the JMS plugin. Defaults to ``java.naming.factory.initial``.
 
 **jms.plugin.type:** Type of the JMS plugin to use. This is the value of the 'type' key defined in the
-JSON file for the JMS plugin. Defaults to 'JMSProvider'.
+JSON file for the JMS plugin. Defaults to ``JMSProvider``.
 
 **jms.plugin.custom.properties:** Provide any required custom properties as a JSON Map.
 

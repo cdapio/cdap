@@ -2,10 +2,10 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _included-apps-etl-plugins-batch-sinks-elasticsearch:
+.. _included-apps-etl-plugins-real-time-sinks-elasticsearch:
 
 ===============================
-Batch Sinks: Elasticsearch
+Real-time Sinks: Elasticsearch
 ===============================
 
 .. rubric:: Description

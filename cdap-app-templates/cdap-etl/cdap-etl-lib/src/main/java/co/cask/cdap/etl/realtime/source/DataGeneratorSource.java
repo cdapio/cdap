@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "realtimesource")
 @Name("DataGenerator")
-@Description("Source that can generate test data for Real-time Stream and Table Sinks.")
+@Description("Source that can generate test data for real-time Stream and Table sinks.")
 public class DataGeneratorSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(DataGeneratorSource.class);
   private static final String COUNT = "count";

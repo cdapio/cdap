@@ -3,12 +3,13 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ===============================
-Sinks: Real-time  
+Real-time Sinks
 ===============================
 
 .. toctree::
    :maxdepth: 1
 
     Cube <cube>
+    Elasticsearch <elasticsearch>
     Stream <stream>
     Table <table>

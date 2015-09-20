@@ -2,6 +2,8 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+.. _included-apps-etl-plugins-batch-sinks-cube:
+
 ==================
 Batch Sinks: Cube 
 ==================
@@ -49,13 +51,13 @@ Name of the StructuredRecord's field that contains timestamp to be used in CubeF
 If not provided, the current time of the record processing will be used as CubeFact timestamp.
 
 **cubeFact.timestamp.format:** Format of the value of timestamp field; example: "HH:mm:ss" (used if
-cubeFact.timestamp.field is provided).
+``cubeFact.timestamp.field`` is provided).
 
 **cubeFact.measurements:** Measurements to be extracted from StructuredRecord to be used
 in CubeFact. Provide properties as a JSON Map. For example, to use the 'price' field as a
 measurement of type gauge, and the 'quantity' field as a measurement of type counter, the
-property should have the value: {"cubeFact.measurement.price":"GAUGE",
-"cubeFact.measurement.quantity":"COUNTER"}.
+property should have the value: ``{"cubeFact.measurement.price":"GAUGE",
+"cubeFact.measurement.quantity":"COUNTER"}``.
 
 .. rubric:: Example
 

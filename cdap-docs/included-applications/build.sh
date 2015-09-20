@@ -47,16 +47,16 @@ function download_includes() {
   test_an_include 4bf9f88fac9ff72fc25642db21a89620 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/TimePartitionedFileSetDatasetAvroSource.java
 
   # Realtimesinks
-  test_an_include 4e797c7cf48d67b4aa9d0d0dec35876c ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/sink/RealtimeCubeSink.java
-  test_an_include 61ef713300b65f55e77f9cd6e69db896 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/sink/RealtimeElasticsearchSink.java
-  test_an_include 836f8fe9e272795213dc23bc489c44bd ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/sink/RealtimeTableSink.java
-  test_an_include 359986e3c5666ad7375c60fd54efb91c ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/sink/StreamSink.java
+  test_an_include 974ed9256c135872915a3f9061c5fc5c ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/sink/RealtimeCubeSink.java
+  test_an_include a966a7f1edfce6465f04e6d82e1b9d16 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/sink/RealtimeElasticsearchSink.java
+  test_an_include 72438554aeb5f590ff356c5fdd5569b4 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/sink/RealtimeTableSink.java
+  test_an_include ff03b40c1dfdc25d75dc6d3547d7293b ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/sink/StreamSink.java
 
   # Realtimesources
-  test_an_include 2d17a298a48077cc8981f80b38ad465a ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/DataGeneratorSource.java
-  test_an_include a18bf5113fcc0d595bda518cec39d227 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/JmsSource.java
-  test_an_include 0547f4f76a558bff270320f8277a5a5f ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/KafkaSource.java
-  test_an_include 4afa5a36fbe7a750f7cafe67c39306f9 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/SqsSource.java
+  test_an_include 4c156d69fcc4d7b9145caab2dbed26ff ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/DataGeneratorSource.java
+  test_an_include f02c834c73c738659cf92587f5c7c1b7 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/JmsSource.java
+  test_an_include 263ea7824545d65562b1f8e805e1272a ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/KafkaSource.java
+  test_an_include 496fb353aa835ef2a60f2a76b56fdc01 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/SqsSource.java
   test_an_include e8b987b6f648211ed183e18c68b41873 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/TwitterSource.java
 
   # Transforms

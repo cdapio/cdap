@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _included-apps-etl-transformations-validator:
+.. _included-apps-etl-plugins-transformations-validator:
 
 ==========================
 Transformations: Validator

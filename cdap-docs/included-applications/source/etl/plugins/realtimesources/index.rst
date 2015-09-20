@@ -3,13 +3,13 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 ===============================
-Sources: Real-time 
+Real-time Sources
 ===============================
 
 .. toctree::
    :maxdepth: 1
 
-    AmazonSQS <sqs>
+    AmazonSQS <amazonsqs>
     DataGenerator <datagenerator>
     JMS <jms>
     Kafka <kafka>

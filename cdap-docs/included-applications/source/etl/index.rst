@@ -53,53 +53,59 @@ This lists the available sources, sinks, and transformations (transforms):
      - Sinks
    * - - **Batch Sources**
 
-         - Database
-         - File
-         - KVTable
-         - Stream
-         - Table
-         - TPFSAvro
+         - :ref:`Database <included-apps-etl-plugins-batch-sources-database>`
+         - :ref:`Elasticsearch <included-apps-etl-plugins-batch-sources-elasticsearch>`
+         - :ref:`File <included-apps-etl-plugins-batch-sources-file>`
+         - :ref:`KVTable <included-apps-etl-plugins-batch-sources-kvtable>`
+         - :ref:`Amazon S3 <included-apps-etl-plugins-batch-sources-s3>`
+         - :ref:`Stream <included-apps-etl-plugins-batch-sources-stream>`
+         - :ref:`Table <included-apps-etl-plugins-batch-sources-table>`
+         - :ref:`TPFSAvro <included-apps-etl-plugins-batch-sources-tpfsavro>`
 
-     - - Transformations
+     - - **Transforms**
 
-         - LogParser
-         - Projection
-         - Script
-         - ScriptFilter
-         - StructuredRecordToGenericRecord
-         - Validator
+         - :ref:`LogParser <included-apps-etl-plugins-transformations-logparser>`
+         - :ref:`Projection <included-apps-etl-plugins-transformations-projection>`
+         - :ref:`Script <included-apps-etl-plugins-transformations-script>`
+         - :ref:`ScriptFilter <included-apps-etl-plugins-transformations-scriptfilter>`
+         - :ref:`StructuredRecordToGenericRecord <included-apps-etl-plugins-transformations-structuredrecordtogenericrecord>`
+         - :ref:`Validator <included-apps-etl-plugins-transformations-validator>`
 
      - - **Batch Sinks**
 
-         - Cube
-         - Database
-         - KVTable
-         - Table
-         - TPFSAvro
-         - TPFSParquet
+         - :ref:`Cube <included-apps-etl-plugins-batch-sinks-cube>`
+         - :ref:`Database <included-apps-etl-plugins-batch-sinks-database>`
+         - :ref:`Elasticsearch <included-apps-etl-plugins-batch-sinks-elasticsearch>`   
+         - :ref:`KVTable <included-apps-etl-plugins-batch-sinks-kvtable>`
+         - :ref:`SnapshotAvro <included-apps-etl-plugins-batch-sinks-snapshotavro>`
+         - :ref:`SnapshotParquet <included-apps-etl-plugins-batch-sinks-snapshotparquet>`
+         - :ref:`Table <included-apps-etl-plugins-batch-sinks-table>`
+         - :ref:`TPFSAvro <included-apps-etl-plugins-batch-sinks-tpfsavro>`
+         - :ref:`TPFSParquet <included-apps-etl-plugins-batch-sinks-tpfsparquet>`
 
    * - - **Real-time Sources**
 
-         - JMS
-         - Kafka
-         - SQS
-         - Test
-         - Twitter
+         - :ref:`AmazonSQS <included-apps-etl-plugins-real-time-sources-amazonsqs>`
+         - :ref:`DataGenerator <included-apps-etl-plugins-real-time-sources-datagenerator>`
+         - :ref:`JMS <included-apps-etl-plugins-real-time-sources-jms>`
+         - :ref:`Kafka <included-apps-etl-plugins-real-time-sources-kafka>`
+         - :ref:`Twitter <included-apps-etl-plugins-real-time-sources-twitter>`
 
-     - - Transformations
+     - - **Transforms**
 
-         - LogParser
-         - Projection
-         - Script
-         - ScriptFilter
-         - StructuredRecordToGenericRecord
-         - Validator
+         - :ref:`LogParser <included-apps-etl-plugins-transformations-logparser>`
+         - :ref:`Projection <included-apps-etl-plugins-transformations-projection>`
+         - :ref:`Script <included-apps-etl-plugins-transformations-script>`
+         - :ref:`ScriptFilter <included-apps-etl-plugins-transformations-scriptfilter>`
+         - :ref:`StructuredRecordToGenericRecord <included-apps-etl-plugins-transformations-structuredrecordtogenericrecord>`
+         - :ref:`Validator <included-apps-etl-plugins-transformations-validator>`
 
      - - **Real-time Sinks**
 
-         - Cube
-         - Stream
-         - Table
+         - :ref:`Cube <included-apps-etl-plugins-real-time-sinks-cube>`
+         - :ref:`Elasticsearch <included-apps-etl-plugins-real-time-sinks-elasticsearch>`
+         - :ref:`Stream <included-apps-etl-plugins-real-time-sinks-stream>`
+         - :ref:`Table <included-apps-etl-plugins-real-time-sinks-table>`
 
 
 
@@ -132,12 +138,6 @@ either the :ref:`CoreValidator <included-apps-etl-plugins-shared-core-validator>
 Application and Plugin Details
 ==============================
 
-.. |etl-plugins| replace:: **ETL Plugins:**
-.. _etl-plugins: plugins/index.html
-
-- |etl-plugins|_ Details on ETL plugins and exploring available plugins using RESTful APIs.
-
-
 .. |etl-creating| replace:: **Creating an ETL Application:**
 .. _etl-creating: creating.html
 
@@ -145,13 +145,19 @@ Application and Plugin Details
 
 
 .. |etl-operations| replace:: **Application Lifecycle Management:**
-.. .. _etl-operations: etl/operations.html http-restful-api-lifecycle
+.. _etl-operations: ../../reference-manual/http-restful-api/lifecycle.html
 
-- :ref:`|etl-operations| <http-restful-api-lifecycle>` Manage ETL Applications using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
+- |etl-operations|_ Manage ETL Applications using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
 
 
 .. |etl-custom| replace:: **Creating Custom ETL Plugins:**
 .. _etl-custom: custom.html
 
 - |etl-custom|_ Intended for developers writing custom ETL plugins.
+
+.. |etl-plugins| replace:: **ETL Plugins:**
+.. _etl-plugins: plugins/index.html
+
+- |etl-plugins|_ Details on ETL plugins and exploring available plugins using RESTful APIs.
+
 
