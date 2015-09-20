@@ -43,7 +43,7 @@ import java.util.Map;
  */
 @Plugin(type = "batchsink")
 @Name("S3Avro")
-@Description("Sink for a S3 that writes data in Avro format.")
+@Description("Sink to write to S3 in Avro format.")
 public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWritable> {
 
   private StructuredToAvroTransformer recordTransformer;
