@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "transform")
 @Name("LogParser")
-@Description("Parses logs from any input source for relevant information such as URI, IP, Browser, Device, " +
+@Description("Parses logs from any input source for relevant information such as URI, IP, browser, device, " +
   "HTTP status code, and timestamp.")
 public class LogParserTransform extends Transform<StructuredRecord, StructuredRecord> {
   private static final Schema LOG_SCHEMA = Schema.recordOf(

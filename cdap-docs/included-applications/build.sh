@@ -60,12 +60,12 @@ function download_includes() {
   test_an_include e8b987b6f648211ed183e18c68b41873 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/realtime/source/TwitterSource.java
 
   # Transforms
-  test_an_include 80cb1ed50ae999565147585e243ae13e ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/LogParserTransform.java
-  test_an_include d556fb139185ceaaff6e98375fa0ebdc ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/ProjectionTransform.java
+  test_an_include 06ddd340ba65bbc068ab3e3cf2f346c1 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/LogParserTransform.java
+  test_an_include 7b5386499cc1a646e5be38ab5269d076 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/ProjectionTransform.java
   test_an_include 100c530448d9719463f5bf9445321cca ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/ScriptFilterTransform.java
   test_an_include bcbf3340f2cd9345f155dd76d30b6e78 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/ScriptTransform.java
   test_an_include c3eb291d7b7d4ca0934d151bed882dd3 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/StructuredRecordToGenericRecordTransform.java
-  test_an_include b7772fc3659b7b0baafd6641a9abe249 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/ValidatorTransform.java
+  test_an_include 89654c4e1e8a30c28797e54c469cdebd ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/transform/ValidatorTransform.java
 
   # Shared-Plugins
   test_an_include 4fc697d071e894cfce67dbf62c9709d0 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/validator/CoreValidator.java

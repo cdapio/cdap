@@ -18,14 +18,19 @@ convert back to a record in Java to pass to downstream transforms and sinks.
 .. rubric:: Use Case
 
 The Script transform is used when other transforms cannot meet your needs.
-For example, you may want to multiply a field by 1024 and rename it from 'gigabytes'
-to 'megabytes'. Or you might want to convert a timestamp into a human-readable date string.
+For example, you may want to multiply a field by 1024 and rename it from ``'gigabytes'``
+to ``'megabytes'``. Or you might want to convert a timestamp into a human-readable date string.
 
 .. rubric:: Properties
 
 **script:** Javascript defining how to transform one record into another. The script must
-implement a function called 'transform', which takes as input a JSON object that represents
-the input record, and returns a JSON object that represents the transformed record.
+implement a function called ``'transform'``, which takes as input a JSON object that represents
+the input record, and returns a JSON object that represents the transformed input.
+For example::
+
+   'function transform(input) { input.count = input.count * 1024; return input; }'
+   
+will scale the ``'count'`` field by 1024.
 
 **schema:** The schema of output objects. If no schema is given, it is assumed that the output
 schema is the same as the input schema.
@@ -57,9 +62,9 @@ schema is the same as the input schema.
     }
   }
 
-The transform takes records that have a 'subtotal' field, calculates 'tax' and 'total' fields based on the
-subtotal, and then returns a record containing those three fields.
-For example, if it receives as an input record::
+The transform takes records that have a ``'subtotal'`` field, calculates ``'tax'`` and
+``'total'`` fields based on the subtotal, and then returns a record containing those three
+fields. For example, if it receives as an input record::
 
   +=========================================================+
   | field name | type                | value                |
@@ -68,7 +73,7 @@ For example, if it receives as an input record::
   | user       | string              | "samuel"             |
   +=========================================================+
 
-It will transform it to an output record::
+it will transform it to this output record::
 
   +=========================================================+
   | field name | type                | value                |
