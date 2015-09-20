@@ -118,7 +118,7 @@ Depending on your installation, you may want to set these properties:
   This feature cannot be used unless the cluster has a correct version of Hive installed.
   See the section on :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`.
   To use this feature on secure Hadoop clusters, please see these instructions on
-  :ref:`configuring secure Hadoop <configuration-secure-hadoop>`.
+  :ref:`configuring secure Hadoop <configuration-for-secure-hadoop>`.
 
   **Note:** Some versions of Hive contain a bug that may prevent the CDAP Explore Service from starting
   up. See `CDAP-1865 <https://issues.cask.co/browse/CDAP-1865>`__ for more information about the issue.
@@ -132,7 +132,7 @@ Depending on your installation, you may want to set these properties:
 
 .. highlight:: console
 
-.. _configuration-secure-hadoop:
+.. _configuration-for-secure-hadoop:
 
 Secure Hadoop
 .............

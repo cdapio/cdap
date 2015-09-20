@@ -46,7 +46,7 @@ If your cluster is not setup with these defaults, you'll need to
 the packages, and prior to starting services.
 
 - For a *Secure Hadoop* installation, see the discussion in :ref:`the configuration guide
-  <configuration-secure-hadoop>`.
+  <configuration-for-secure-hadoop>`.
   
 - The ``ulimit`` for the cluster should already be configured correctly for HBase; if not, 
   details are covered in :ref:`the configuration guide <configuration-ulimit>`.
