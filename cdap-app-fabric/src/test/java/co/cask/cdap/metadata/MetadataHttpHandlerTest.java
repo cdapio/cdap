@@ -290,16 +290,6 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
   }
 
   @Test
-  public void testLineage() throws Exception {
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from("default", "dummy");
-    Assert.assertEquals(200, fetchLineage(datasetInstance, 100, 200, 10).getResponseCode());
-    Assert.assertEquals(400, fetchLineage(datasetInstance, -100, 200, 10).getResponseCode());
-    Assert.assertEquals(400, fetchLineage(datasetInstance, 100, -200, 10).getResponseCode());
-    Assert.assertEquals(400, fetchLineage(datasetInstance, 200, 100, 10).getResponseCode());
-    Assert.assertEquals(400, fetchLineage(datasetInstance, 100, 200, -10).getResponseCode());
-  }
-
-  @Test
   public void testDeleteApplication() throws Exception {
     deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Id.Program program = Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
