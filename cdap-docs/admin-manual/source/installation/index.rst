@@ -41,7 +41,7 @@ Installation
 .. _configuration: configuration.html
 
 - |configuration|_ Covers **configuring CDAP:** once CDAP :ref:`is installed <install>`,
-  covers the instructions for configuring and verification of the CDAP components.
+  covers the configuration and verification of the CDAP components.
 
 
 .. |security| replace:: **Security:**

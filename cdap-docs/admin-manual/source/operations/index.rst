@@ -41,7 +41,7 @@ Operations
 
 - |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
   This section provides links to the relevant APIs for accessing these logs and metrics,
-  and to support for external monitoring tools.
+  and an overview of available monitoring utilities.
 
 
 .. |preferences| replace:: **Preferences and Runtime Arguments:**

@@ -36,7 +36,7 @@ Appendices cover the XML files used to configure the CDAP installation and secur
 .. _configuration: installation/configuration.html
 
 - |configuration|_ Covers **configuring CDAP:** once CDAP :ref:`is installed <install>`,
-  covers the instructions for configuring and verification of the CDAP components.
+  covers the configuration and verification of the CDAP components.
 
 .. |security| replace:: **Security:**
 .. _security: installation/security.html
@@ -74,7 +74,7 @@ transaction service maintenance, troubleshooting, and introduces the CDAP UI.**
 
 - |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
   This section provides links to the relevant APIs for accessing these logs and metrics,  
-  and to support for external monitoring tools.
+  and an overview of available monitoring utilities.
 
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: operations/preferences.html
