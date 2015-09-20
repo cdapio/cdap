@@ -384,8 +384,14 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     @Override
     public void destroy() {
-      // Both BatchSource and BatchSink implements Transform, hence are inside the transformExecutor as well
+      // BatchSource implements Transform, hence is inside the transformExecutor as well
       Destroyables.destroyQuietly(transformExecutor);
+      // Cleanup BatchSinks separately, since they are not part of the transformExecutor
+      LOG.debug("Number of sinks to destroy: {}", sinks.size());
+      for (WrappedSink<Object, Object, Object> sink : sinks) {
+        LOG.trace("Destroying sink: {}", sink.sink);
+        Destroyables.destroyQuietly(sink.sink);
+      }
     }
   }
 
