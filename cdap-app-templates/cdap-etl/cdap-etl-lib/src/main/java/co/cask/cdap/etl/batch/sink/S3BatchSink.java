@@ -26,9 +26,6 @@ import co.cask.cdap.etl.common.Properties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * {@link S3BatchSink} that stores the data of the latest run of an adapter in S3.
  * @param <KEY_OUT> the type of key the sink outputs
@@ -57,13 +54,6 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
     Configuration conf = job.getConfiguration();
     conf.set("fs.s3n.awsAccessKeyId", this.config.accessID);
     conf.set("fs.s3n.awsSecretAccessKey", this.config.accessKey);
-    for (Map.Entry<String, String> entry : getAdditionalS3BatchSinkConfigs(context).entrySet()) {
-      conf.set(entry.getKey(), entry.getValue());
-    }
-  }
-
-  protected Map<String, String> getAdditionalS3BatchSinkConfigs(BatchSinkContext context) {
-    return new HashMap<>();
   }
 
   /**

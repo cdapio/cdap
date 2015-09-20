@@ -33,7 +33,6 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import parquet.avro.AvroParquetOutputFormat;
 
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -65,16 +64,7 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
   @Override
   public void prepareRun(BatchSinkContext context) {
     super.prepareRun(context);
-    context.addOutput(config.basePath, new S3ParquetOutputFormatProvider(config));
-  }
-
-  @Override
-  protected Map<String, String> getAdditionalS3BatchSinkConfigs(BatchSinkContext context) {
-    SimpleDateFormat format = new SimpleDateFormat(config.pathFormat);
-    Map<String, String> args = new HashMap<>();
-    args.put(FileOutputFormat.OUTDIR,
-             String.format("%s/%s", config.basePath, format.format(context.getLogicalStartTime())));
-    return args;
+    context.addOutput(config.basePath, new S3ParquetOutputFormatProvider(config, context));
   }
 
   @Override
@@ -106,10 +96,14 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
 
     private final Map<String, String> conf;
 
-    public S3ParquetOutputFormatProvider(S3ParquetSinkConfig config) {
-      conf = Maps.newHashMap();
+    public S3ParquetOutputFormatProvider(S3ParquetSinkConfig config, BatchSinkContext context) {
       SimpleDateFormat format = new SimpleDateFormat(config.pathFormat);
+
+      conf = Maps.newHashMap();
       conf.put("parquet.avro.schema", config.schema);
+      conf.put(FileOutputFormat.OUTDIR,
+               String.format("%s/%s", config.basePath, format.format(context.getLogicalStartTime())));
+
     }
 
     @Override

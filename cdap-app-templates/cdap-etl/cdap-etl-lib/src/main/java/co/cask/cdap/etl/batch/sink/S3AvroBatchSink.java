@@ -36,7 +36,6 @@ import org.apache.hadoop.mapred.JobContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -67,22 +66,13 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
   @Override
   public void prepareRun(BatchSinkContext context) {
     super.prepareRun(context);
-    context.addOutput(config.basePath, new S3AvroOutputFormatProvider(config));
+    context.addOutput(config.basePath, new S3AvroOutputFormatProvider(config, context));
   }
 
   @Override
   public void transform(StructuredRecord input,
                         Emitter<KeyValue<AvroKey<GenericRecord>, NullWritable>> emitter) throws Exception {
     emitter.emit(new KeyValue<>(new AvroKey<>(recordTransformer.transform(input)), NullWritable.get()));
-  }
-
-  @Override
-  protected Map<String, String> getAdditionalS3BatchSinkConfigs(BatchSinkContext context) {
-    SimpleDateFormat format = new SimpleDateFormat(config.pathFormat);
-    Map<String, String> args = new HashMap<>();
-    args.put(FileOutputFormat.OUTDIR,
-             String.format("%s/%s", config.basePath, format.format(context.getLogicalStartTime())));
-    return args;
   }
 
   /**
@@ -108,10 +98,14 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
 
     private final Map<String, String> conf;
 
-    public S3AvroOutputFormatProvider(S3AvroSinkConfig config) {
+    public S3AvroOutputFormatProvider(S3AvroSinkConfig config, BatchSinkContext context) {
+      SimpleDateFormat format = new SimpleDateFormat(config.pathFormat);
+
       conf = Maps.newHashMap();
       conf.put(JobContext.OUTPUT_KEY_CLASS, AvroKey.class.getName());
       conf.put("avro.schema.output.key", config.schema);
+      conf.put(FileOutputFormat.OUTDIR,
+               String.format("%s/%s", config.basePath, format.format(context.getLogicalStartTime())));
     }
 
     @Override
