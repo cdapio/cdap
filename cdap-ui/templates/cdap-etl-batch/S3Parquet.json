@@ -23,7 +23,7 @@
 
         "pathFormat" : {
           "widget": "textbox",
-          "label": "File Regex"
+          "label": "Path Format"
         }
       }
     }
