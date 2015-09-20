@@ -26,6 +26,8 @@ import co.cask.cdap.etl.common.Properties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 
+import javax.annotation.Nullable;
+
 /**
  * {@link S3BatchSink} that stores the data of the latest run of an adapter in S3.
  * @param <KEY_OUT> the type of key the sink outputs
@@ -76,6 +78,7 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
 
     @Name(Properties.S3BatchSink.PATH_FORMAT)
     @Description(PATH_FORMAT_DESCRIPTION)
+    @Nullable
     protected String pathFormat;
 
 

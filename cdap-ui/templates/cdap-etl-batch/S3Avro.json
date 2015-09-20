@@ -1,0 +1,37 @@
+{
+  "id": "S3Avro",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+      "display" : "S3 Sink - Avro",
+      "position" : [ "accessID", "accessKey", "basePath", "pathFormat"],
+      "fields" : {
+        "accessID" : {
+          "widget": "textbox",
+          "label": "Access ID"
+        },
+
+        "accessKey" : {
+          "widget": "textbox",
+          "label": "Access Key"
+        },
+
+        "basePath" : {
+          "widget": "textbox",
+          "label": "Path"
+        },
+
+        "pathFormat" : {
+          "widget": "textbox",
+          "label": "File Regex"
+        }
+      }
+    }
+  },
+  "schema" : {
+     "widget": "schema",
+     "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string", "map<string, string>" ],
+     "schema-default-type" : "string"
+  }
+
+}
