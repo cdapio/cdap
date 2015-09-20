@@ -17,6 +17,7 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
@@ -28,6 +29,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
@@ -63,12 +65,15 @@ public class LineageAdmin {
   private final LineageStore lineageStore;
   private final Store store;
   private final BusinessMetadataStore businessMetadataStore;
+  private final EntityValidator entityValidator;
 
   @Inject
-  LineageAdmin(LineageStore lineageStore, Store store, BusinessMetadataStore businessMetadataStore) {
+  LineageAdmin(LineageStore lineageStore, Store store, BusinessMetadataStore businessMetadataStore,
+               EntityValidator entityValidator) {
     this.lineageStore = lineageStore;
     this.store = store;
     this.businessMetadataStore = businessMetadataStore;
+    this.entityValidator = entityValidator;
   }
 
   /**
@@ -80,7 +85,8 @@ public class LineageAdmin {
    * @param levels number of levels to compute lineage for
    * @return lineage for sourceDataset
    */
-  public Lineage computeLineage(final Id.DatasetInstance sourceDataset, long startMillis, long endMillis, int levels) {
+  public Lineage computeLineage(final Id.DatasetInstance sourceDataset, long startMillis, long endMillis, int levels)
+    throws NotFoundException {
     return doComputeLineage(sourceDataset, startMillis, endMillis, levels);
   }
 
@@ -93,15 +99,23 @@ public class LineageAdmin {
    * @param levels number of levels to compute lineage for
    * @return lineage for sourceStream
    */
-  public Lineage computeLineage(final Id.Stream sourceStream, long startMillis, long endMillis, int levels) {
+  public Lineage computeLineage(final Id.Stream sourceStream, long startMillis, long endMillis, int levels)
+    throws NotFoundException {
     return doComputeLineage(sourceStream, startMillis, endMillis, levels);
   }
 
   /**
    * @return metadata associated with a run
    */
-  public Set<MetadataRecord> getMetadataForRun(Id.Run run) {
+  public Set<MetadataRecord> getMetadataForRun(Id.Run run) throws NotFoundException {
+    entityValidator.ensureRunExists(run);
+
     Set<Id.NamespacedId> runEntities = new HashSet<>(lineageStore.getEntitiesForRun(run));
+    // No entities associated with the run, but run exists.
+    if (runEntities.isEmpty()) {
+      return ImmutableSet.of();
+    }
+
     RunId runId = RunIds.fromString(run.getId());
 
     // The entities returned by lineageStore does not contain application
@@ -111,9 +125,12 @@ public class LineageAdmin {
                                                        RunIds.getTime(runId, TimeUnit.MILLISECONDS));
   }
 
-  private Lineage doComputeLineage(final Id.NamespacedId sourceData, long startMillis, long endMillis, int levels) {
+  Lineage doComputeLineage(final Id.NamespacedId sourceData, long startMillis, long endMillis, int levels)
+    throws NotFoundException {
     LOG.trace("Computing lineage for data {}, startMillis {}, endMillis {}, levels {}",
               sourceData, startMillis, endMillis, levels);
+
+    entityValidator.ensureEntityExists(sourceData);
 
     // Convert start time and end time period into scan keys in terms of program start times.
     Set<RunId> runningInRange = store.getRunningInRange(TimeUnit.MILLISECONDS.toSeconds(startMillis),
