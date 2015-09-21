@@ -115,7 +115,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       switch (action) {
         case 'Start':
-          $scope.appStatus = 'Starting';
+          $scope.appStatus = 'STARTING';
 
           if (AdapterDetail.programType === 'WORKFLOWS') {
             myWorkFlowApi.scheduleResume(scheduleParams, {})
@@ -136,7 +136,7 @@ angular.module(PKG.name + '.feature.adapters')
           break;
 
         case 'Stop':
-          $scope.appStatus = 'Stopping';
+          $scope.appStatus = 'STOPPING';
           if (AdapterDetail.programType === 'WORKFLOWS') {
             myWorkFlowApi.scheduleSuspend(scheduleParams, {})
               .$promise

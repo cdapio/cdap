@@ -25,7 +25,16 @@
 
     <tbody>
       <tr ng-repeat="data in datasets">
-        <td>{{ data.name }}</td>
+        <td>
+          <a ui-sref="datasets.detail.overview.status({ datasetId: data.name })"
+            ng-if="data.type === 'Dataset'">
+            {{ data.name }}
+          </a>
+          <a ui-sref="streams.detail.overview.status({ streamId: data.name})"
+            ng-if="data.type === 'Stream'">
+            {{ data.name }}
+          </a>
+        </td>
         <td>{{ data.type }}</td>
       </tr>
     </tbody>
