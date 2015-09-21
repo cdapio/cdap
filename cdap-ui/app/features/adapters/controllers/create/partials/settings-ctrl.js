@@ -24,29 +24,29 @@ angular.module(PKG.name + '.feature.adapters')
     this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
     this.saveDisabled = true;
 
-    $scope.$watch(function () {
-      return this.cron;
-    }.bind(this), function () {
-      var initialCron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '';
-      console.log('test', this.cron, initialCron);
-      if (this.cron !== initialCron) {
-        console.log('test');
-        this.saveDisabled = false;
-      } else {
-        this.saveDisabled = true;
-      }
-    }.bind(this), true);
-
-    $scope.$watch(function () {
-      return this.instance;
-    }.bind(this), function () {
-      var intialInstance = this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
-      if (this.instance !== intialInstance) {
-        this.saveDisabled = false;
-      } else {
-        this.saveDisabled = true;
-      }
-    }.bind(this));
+    if (MyAppDAGService.metadata.template.type === GLOBALS.etlBatch) {
+      $scope.$watch(function () {
+        return this.cron;
+      }.bind(this), function () {
+        var initialCron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '';
+        if (this.cron !== initialCron) {
+          this.saveDisabled = false;
+        } else {
+          this.saveDisabled = true;
+        }
+      }.bind(this));
+    } else {
+      $scope.$watch(function () {
+        return this.instance;
+      }.bind(this), function () {
+        var intialInstance = this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
+        if (this.instance !== intialInstance) {
+          this.saveDisabled = false;
+        } else {
+          this.saveDisabled = true;
+        }
+      }.bind(this));
+    }
 
 
     function checkCron(cron) {
