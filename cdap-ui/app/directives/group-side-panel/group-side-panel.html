@@ -40,7 +40,7 @@
         <div class="item-body">
           <div ng-repeat="plugin in MySidePanel.panel.items | filter: {name: MySidePanel.searchText} track by $index"
                class="plugin-item"
-               popover="{{plugin.description}}"
+               popover="{{plugin.description || 'No description'}}"
                popover-title="{{plugin.name}}"
                popover-placement="right"
                popover-append-to-body="true"
