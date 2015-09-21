@@ -13,9 +13,6 @@ Overview
 This section is intended for developers writing custom ETL plugins. Users of these should
 refer to the :ref:`Included Applications <included-apps-index>`.
 
-
-Creating Custom ETL Plugins
-===========================
 CDAP provides for the creation of custom ETL plugins for batch/real-time sources/sinks and
 transformations to extend the existing ``cdap-etl-batch`` and ``cdap-etl-realtime`` system artifacts.
 
@@ -49,8 +46,8 @@ These annotations may be used with the plugin classes:
   optional. Such a plugin class can be used without that property being specified.
 
 
-Creating a Batch Source Plugin
-==============================
+Creating a Batch Source
+=======================
 A batch source plugin can be created from a Maven archetype. This command will create a
 project for the plugin from the archetype:
 
@@ -98,8 +95,8 @@ Example::
   }
 
 
-Creating a Batch Sink Plugin
-============================
+Creating a Batch Sink
+=====================
 A batch sink plugin can be created from this Maven archetype:
 
 .. container:: highlight
@@ -148,8 +145,8 @@ Example::
   }
 
 
-Creating a Real-Time Source Plugin
-==================================
+Creating a Real-Time Source
+===========================
 A real-time source plugin can be created from this Maven archetype:
 
 .. container:: highlight
@@ -237,8 +234,8 @@ Example::
   }
 
 
-Creating a Real-Time Sink Plugin
-================================
+Creating a Real-Time Sink
+=========================
 A real-time sink plugin can be created from this Maven archetype:
 
 .. container:: highlight
@@ -285,8 +282,8 @@ Example::
   }
 
 
-Creating a Transformation Plugin
-================================
+Creating a Transformation
+=========================
 In ETL applications, a transformation operation is applied on one object at a time,
 converting it into zero or more transformed outputs. A Transformation plugin can be created
 using this Maven archetype:
@@ -357,8 +354,8 @@ Test Framework for Plugins
 To unit test a plugin, see the section on plugin testing in :ref:`Testing a CDAP Application <test-framework>`.
 
 
-Source State in Real-Time Source
-================================
+Source State in a Real-Time Source
+==================================
 Real-time plugins are executed in workers. During failure, there is the possibility that
 the data that is emitted from the Source will not be processed by subsequent stages. In
 order to avoid such data loss, SourceState can be used to persist the information about
