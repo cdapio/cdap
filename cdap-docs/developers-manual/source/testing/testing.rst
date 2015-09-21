@@ -251,6 +251,51 @@ using the Ranks service to check the results::
 The assertion will verify that the correct result was received.
 
 
+Strategies in Testing Artifacts
+===============================
+
+The Test Framework provides methods to create and deploy JAR files as artifacts. This lets you
+test the creation of multiple applications from the same artifact, as well as the use of plugin artifacts.
+To add an artifact containing an application class::
+
+  // add the artifact for etl batch app
+  addAppArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "etlbatch", "3.2.0"), ETLBatchApplication.class,
+    BatchSource.class.getPackage().getName(),
+    PipelineConfigurable.class.getPackage().getName(),
+    "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic");
+
+The first argument is the id of the artifact, the second is the application class, and the rest are packages
+that should be included in the ``Export-Packages`` manifest attribute bundled in the JAR. The framework will
+trace the dependencies of the specified application class to create a JAR with those dependencies. This will
+mimic what happens when you actually build your application JAR.
+
+An application can then be deployed using that artifact::
+
+  // create application create request
+  ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList);
+  AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(new ArtifactSummary("etlbatch", "3.2.0"), etlConfig);
+  Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "KVToKV");
+
+  // deploy the application
+  ApplicationManager appManager = deployApplication(appId, appRequest);
+
+Plugins extending the artifact can also be added::
+
+  // add artifact for transforms
+  addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "transforms", "1.0.0"), APP_ARTIFACT_ID,
+    ProjectionTransform.class, ScriptFilterTransform.class, ValidatorTransform.class, CoreValidator.class,
+    StructuredRecordToGenericRecordTransform.class);
+
+The first argument is the id of the plugin artifact, the second is the parent artifact it is extending, and the
+rest are classes that should be bundled in the JAR. The packages of all these classes are included in the
+``Export-Packages`` manifest attribute bundled in the JAR. When adding a plugin artifact this way, it is
+important to include all classes in your plugin packages, even if they are not used in your test case. This is
+to ensure that the JAR can trace all required dependencies to correctly build the JAR.
+
+The examples are taken straight from the ``BaseETLBatchTest`` contained in the ``cdap-etl-batch`` artifact
+included with CDAP. 
+
+
 Validating Test Data with SQL
 =============================
 Often the easiest way to verify that a test produced the right data is to run a SQL query—if the data sets involved
