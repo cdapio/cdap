@@ -28,10 +28,15 @@ angular.module(PKG.name + '.feature.admin')
       vm.GLOBALS.etlBatch,
       vm.GLOBALS.etlRealtime
     ];
-    vm.pluginoptions = [
+    vm.pluginoptionsBatch = [
       GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].source,
       GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].sink,
       GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].transform
+    ];
+    vm.pluginoptionsRealtime = [
+      GLOBALS.pluginTypes[vm.GLOBALS.etlRealtime].source,
+      GLOBALS.pluginTypes[vm.GLOBALS.etlRealtime].sink,
+      GLOBALS.pluginTypes[vm.GLOBALS.etlRealtime].transform
     ];
 
     var plugin;
@@ -41,13 +46,13 @@ angular.module(PKG.name + '.feature.admin')
 
       var fetchApi;
       switch (vm.pluginType) {
-        case GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].source:
+        case GLOBALS.pluginTypes[vm.templateType].source:
           fetchApi = myAdapterApi.fetchSourceProperties;
           break;
-        case GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].transform:
+        case GLOBALS.pluginTypes[vm.templateType].transform:
           fetchApi = myAdapterApi.fetchTransformProperties;
           break;
-        case GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].sink:
+        case GLOBALS.pluginTypes[vm.templateType].sink:
           fetchApi = myAdapterApi.fetchSinkProperties;
           break;
       }
@@ -91,15 +96,15 @@ angular.module(PKG.name + '.feature.admin')
           version: $rootScope.cdapVersion
         };
         switch (vm.pluginType) {
-          case GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].source:
+          case GLOBALS.pluginTypes[vm.templateType].source:
             params.extensionType = GLOBALS.pluginTypes[vm.templateType].source;
             prom = myAdapterApi.fetchSources(params).$promise;
             break;
-          case GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].transform:
+          case GLOBALS.pluginTypes[vm.templateType].transform:
             params.extensionType = GLOBALS.pluginTypes[vm.templateType].transform;
             prom = myAdapterApi.fetchTransforms(params).$promise;
             break;
-          case GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].sink:
+          case GLOBALS.pluginTypes[vm.templateType].sink:
             params.extensionType = GLOBALS.pluginTypes[vm.templateType].sink;
             prom = myAdapterApi.fetchSinks(params).$promise;
             break;

@@ -33,8 +33,15 @@
   <div ng-if="TemplatesController.templateType">
     <label class="label-control">Choose Plugin Type</label>
     <select ng-model="TemplatesController.pluginType"
-            data-ng-options="o for o in TemplatesController.pluginoptions"
-            class="form-control">
+            data-ng-options="o for o in TemplatesController.pluginoptionsBatch"
+            class="form-control"
+            ng-if="TemplatesController.templateType === TemplatesController.GLOBALS.etlBatch">
+    </select>
+
+    <select ng-model="TemplatesController.pluginType"
+            data-ng-options="o for o in TemplatesController.pluginoptionsRealtime"
+            class="form-control"
+            ng-if="TemplatesController.templateType === TemplatesController.GLOBALS.etlRealtime">
     </select>
   </div>
 
