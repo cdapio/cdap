@@ -73,7 +73,7 @@ if node.key?('hadoop') && node['hadoop'].key?('distribution') && node['hadoop'].
    node['cdap']['version'].to_f >= 3.1
   default['cdap']['cdap_env']['opts'] = "${OPTS} -Dhdp.version=#{hdp_version}"
   default['cdap']['cdap_env']['spark_home'] = "/usr/hdp/#{hdp_version}/spark"
-  default['cdap']['cdap_site']['app.program.jvm.opts'] = "-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=#{hdp_version}"
+  default['cdap']['cdap_site']['app.program.jvm.opts'] = "-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=#{hdp_version} -Dspark.yarn.am.extraJavaOptions=-Dhdp.version=#{hdp_version}"
 else
   default['cdap']['cdap_env']['spark_home'] = '/usr/lib/spark'
 end
