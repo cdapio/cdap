@@ -369,13 +369,30 @@ body.theme-cdap.state-adapters-create {
         cursor: pointer;
       }
     }
+  }
 
+  .templates-filters {
+    .has-feedback > .form-control-feedback {
+      line-height: 32px;
+    }
+
+    .btn-group-vertical {
+      width: 100%;
+      margin: 15px 0;
+
+      button:focus {
+        background-color: #e2e3e5;
+      }
+    }
   }
 
   div.template-link {
     cursor: pointer;
 
-    p { color: lighten(@btn-default-color, 15%); }
+    p {
+      color: lighten(@btn-default-color, 15%);
+      margin-bottom: 2px;
+    }
 
     &:hover {
       background-color: lighten(@btn-default-color, 15%);
@@ -386,6 +403,16 @@ body.theme-cdap.state-adapters-create {
 
       h4, p { color: white; }
     }
+
+    hr {
+      border: 0;
+      height: 0;
+      width: 100%;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      margin: 10px auto;
+    }
+
   }
 
   .start-well {
