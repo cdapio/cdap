@@ -51,7 +51,7 @@ To read a range of keys and give a hint that you want 16 splits, write::
   ...
   public void beforeSubmit(MapReduceContext context) throws Exception {
     ...
-    context.setInput(kvTable, kvTable.getSplits(16, startKey, stopKey);
+    context.setInput("myTable", kvTable.getSplits(16, startKey, stopKey);
   }
 
 
@@ -69,6 +69,47 @@ The ``write()`` method is used to redirect all writes performed by a Reducer to 
 Again, the ``KEY`` and ``VALUE`` type parameters must match the output key and value type
 parameters of the Reducer.
 
+
+.. rubric:: Multiple Output Destinations of a MapReduce Program
+
+To write to multiple output datasets from a MapReduce program, add the datasets as output::
+
+  public void beforeSubmit(MapReduceContext context) throws Exception {
+    ...
+    context.addOutput("productCounts");
+    context.addOutput("catalog");
+  }
+
+Then, have the ``mapper`` or ``reducer`` implement ``ProgramLifeCycle<MapReduceTaskContext>``, in order
+to get access to the MapReduceTaskContext in the initialize method and write using the write method
+of the ``MapReduceTaskContext``::
+
+  public static class CustomMapper extends Mapper<LongWritable, Text, NullWritable, Text>
+    implements ProgramLifecycle<MapReduceTaskContext<NullWritable, Text>> {
+
+    private MapReduceTaskContext<NullWritable, Text> mapReduceTaskContext;
+
+    @Override
+    public void initialize(MapReduceTaskContext<NullWritable, Text> context) throws Exception {
+      this.mapReduceTaskContext = context;
+    }
+
+    protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+      // compute some condition
+      ...
+      if (someCondition) {
+        mapReduceTaskContext.write("productCounts", key, value);
+      } else {
+        mapReduceTaskContext.write("catalog", key, value);
+      }
+    }
+
+  }
+
+Note that the multiple output write method - ``MapReduceTaskContext#write(String, KEY key, VALUE value)`` - can
+only be used if there are multiple outputs. Similarly, the single output write
+method - ``MapReduceTaskContext#write(KEY key, VALUE value)`` - can only be used if there
+is a single output to the MapReduce program.
 
 .. rubric:: Directly Reading and Writing Datasets
 
