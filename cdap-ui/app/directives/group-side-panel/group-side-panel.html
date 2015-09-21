@@ -15,7 +15,8 @@
 -->
 
 <div class="side-panel text-center"
-      ng-class="{'left': MySidePanel.placement === 'left'}">
+      ng-class="{'left': MySidePanel.placement === 'left'}" parent-height>
+      <!-- parent-height is part of the my-calculate-height directive used down for sidepanel list container -->
   <div ng-if="MySidePanel.placement === 'left'" class="hydrator-filter clearfix">
     <input class="form-control pull-left" placeholder="Filter" type="text" ng-model="MySidePanel.searchText" />
   </div>

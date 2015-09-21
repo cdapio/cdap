@@ -14,6 +14,18 @@
  * the License.
  */
 
+ /*
+  For this directive to work we need to know the height of parent to calculate height of the current
+    container which using this directive. For instance something like this,
+
+    <div class="parent" parent-height>
+      <div class="child" my-calculate-height>
+
+      </div>
+    </div>
+  FIXME: This is not super intutive for now but this will fixed in release 3.3 of cdap.
+ */
+
 angular.module(PKG.name + '.commons')
   .directive('myCalculateHeight', function () {
     return {
