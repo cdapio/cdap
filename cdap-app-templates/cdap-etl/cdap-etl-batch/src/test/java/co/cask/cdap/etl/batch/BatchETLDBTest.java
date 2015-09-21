@@ -61,7 +61,10 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.sql.rowset.serial.SerialBlob;
 
@@ -327,6 +330,84 @@ public class BatchETLDBTest extends BaseETLBatchTest {
     Assert.assertEquals(2, Bytes.toInt(row2.getRow()));
   }
 
+  @Test
+  @Category(SlowTests.class)
+  public void testUserNamePasswordCombinations() throws Exception {
+    String importQuery = "SELECT * FROM my_table";
+    String countQuery = "SELECT COUNT(*) from my_table";
+
+    ETLStage table = new ETLStage("Table", ImmutableMap.of(
+      "name", "outputTable",
+      Properties.Table.PROPERTY_SCHEMA, schema.toString(),
+      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
+
+    List<ETLStage> transforms = new ArrayList<>();
+
+    Map<String, String> baseSourceProps = ImmutableMap.of(
+      Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
+      Properties.DB.JDBC_PLUGIN_NAME, "hypersql",
+      Properties.DB.IMPORT_QUERY, importQuery,
+      Properties.DB.COUNT_QUERY, countQuery);
+
+    Map<String, String> baseSinkProps = ImmutableMap.of(
+      Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
+      Properties.DB.JDBC_PLUGIN_NAME, "hypersql",
+      Properties.DB.TABLE_NAME, "table",
+      Properties.DB.COLUMNS, "*");
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "dbSourceTest");
+
+    // non null user name, null password. Should fail.
+    // as source
+    Map<String, String> noPassword = new HashMap<>(baseSourceProps);
+    noPassword.put(Properties.DB.USER, "user");
+    ETLStage database = new ETLStage("Database", noPassword);
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", database, table, transforms);
+    assertDeploymentFailure(
+      appId, etlConfig, "Deploying DB Source with non-null username but null password should have failed.");
+    // as sink
+    noPassword = new HashMap<>(baseSinkProps);
+    noPassword.put(Properties.DB.USER, "user");
+    database = new ETLStage("Database", noPassword);
+    etlConfig = new ETLBatchConfig("* * * * *", table, database, transforms);
+    assertDeploymentFailure(
+      appId, etlConfig, "Deploying DB Sink with non-null username but null password should have failed.");
+
+    // null user name, non-null password. Should fail.
+    // as source
+    Map<String, String> noUser = new HashMap<>(baseSourceProps);
+    noUser.put(Properties.DB.PASSWORD, "password");
+    database = new ETLStage("Database", noUser);
+    etlConfig = new ETLBatchConfig("* * * * *", database, table, transforms);
+    assertDeploymentFailure(
+      appId, etlConfig, "Deploying DB Source with null username but non-null password should have failed.");
+    // as sink
+    noUser = new HashMap<>(baseSinkProps);
+    noUser.put(Properties.DB.PASSWORD, "password");
+    database = new ETLStage("Database", noUser);
+    etlConfig = new ETLBatchConfig("* * * * *", table, database, transforms);
+    assertDeploymentFailure(
+      appId, etlConfig, "Deploying DB Sink with null username but non-null password should have failed.");
+
+    // non-null username, non-null, but empty password. Should succeed.
+    // as source
+    Map<String, String> emptyPassword = new HashMap<>(baseSourceProps);
+    emptyPassword.put(Properties.DB.USER, "user");
+    emptyPassword.put(Properties.DB.PASSWORD, "");
+    database = new ETLStage("Database", emptyPassword);
+    etlConfig = new ETLBatchConfig("* * * * *", database, table, transforms);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    deployApplication(appId, appRequest);
+    // as sink
+    emptyPassword = new HashMap<>(baseSinkProps);
+    emptyPassword.put(Properties.DB.USER, "user");
+    emptyPassword.put(Properties.DB.PASSWORD, "");
+    database = new ETLStage("Database", emptyPassword);
+    etlConfig = new ETLBatchConfig("* * * * *", table, database, transforms);
+    appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    deployApplication(appId, appRequest);
+  }
+
   // Test is ignored - Currently DBOutputFormat does a statement.executeBatch which seems to fail in HSQLDB.
   // Need to investigate alternatives to HSQLDB.
   @Ignore
@@ -404,6 +485,17 @@ public class BatchETLDBTest extends BaseETLBatchTest {
     hsqlDBServer.stop();
   }
 
+  private void assertDeploymentFailure(Id.Application appId, ETLBatchConfig etlConfig,
+                                       String failureMessage) throws Exception {
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    try {
+      deployApplication(appId, appRequest);
+      Assert.fail(failureMessage);
+    } catch (IllegalStateException e) {
+      // expected
+    }
+  }
+
   private static class HSQLDBServer {
 
     private final String locationUrl;
@@ -440,10 +532,6 @@ public class BatchETLDBTest extends BaseETLBatchTest {
 
     public String getConnectionUrl() {
       return this.connectionUrl;
-    }
-
-    public String getHsqlDBDriver() {
-      return this.hsqlDBDriver;
     }
   }
 }
