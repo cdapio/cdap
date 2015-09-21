@@ -176,13 +176,13 @@ must be placed in the appropriate directory.
 
 - **Standalone mode:** ``$CDAP_INSTALL_DIR/artifacts``
 
-- **Distributed mode:** The plugin jars should be placed in the local file system and the path
+- **Distributed mode:** The plugin JARs should be placed in the local file system and the path
   can be provided to CDAP by setting the property ``app.artifact.dir`` in
   ``cdap-site.xml``. The default path is: ``/opt/cdap/master/artifacts``
 
-For each plugin jar, there must also be a corresponding configuration file to specify which artifacts
-can use the plugins. The file name must match the name of the jar, except it must have the ``.json``
-extension instead of the ``.jar`` extension. For example, if your jar file is named
+For each plugin JAR, there must also be a corresponding configuration file to specify which artifacts
+can use the plugins. The file name must match the name of the JAR, except it must have the ``.json``
+extension instead of the ``.jar`` extension. For example, if your JAR file is named
 ``custom-transforms-1.0.0.jar``, there must be a corresponding ``custom-transforms-1.0.0.json`` file.
 If your ``custom-transforms-1.0.0.jar`` contains transforms that can be used by both the ``cdap-etl-batch``
 and ``cdap-etl-realtime`` artifacts, ``custom-transforms-1.0.0.json`` would contain:
@@ -209,8 +209,8 @@ an exclusive version. For example:
 specifies that the plugins can be used by versions 3.2.0 (inclusive) to 4.0.0 (exclusive) of the
 ``cdap-etl-batch`` and ``cdap-etl-realtime`` artifacts.
 
-If the artifact contains third party plugins, you can explicitly list them in the config file.
-For example, you may want to deploy a jdbc driver contained in a third party jar. In these cases,
+If the artifact contains third-party plugins, you can explicitly list them in the config file.
+For example, you may want to deploy a JDBC driver contained in a third-party JAR. In these cases,
 you have no control over the code to annotate the classes that should be plugins, so you need to
 list them in the configuration:
 
@@ -228,7 +228,7 @@ list them in the configuration:
       ]
     }
 
-Once your jars and matching configuration files are in place,
+Once your JARs and matching configuration files are in place,
 a RESTful API call to :ref:`load system artifacts <http-restful-api-artifact-system-load>`
 can be made to re-load the artifacts.
 
@@ -276,7 +276,7 @@ you must prefix the parent artifact name with '``system:``'.
 This is in case there is a user artifact with the same name as the system artifact.
 If you are extending a user artifact, no prefix is required.
 
-You can deploy third party jars in the same way except the plugin information needs to be explicitly listed.
+You can deploy third-party JARs in the same way except the plugin information needs to be explicitly listed.
 Using the RESTful API:
 
 .. container:: highlight
