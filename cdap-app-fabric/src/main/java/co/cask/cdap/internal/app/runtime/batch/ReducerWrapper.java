@@ -112,6 +112,9 @@ public class ReducerWrapper extends Reducer {
       throw Throwables.propagate(e);
     }
 
+    // Close all writers created by MultipleOutputs
+    basicMapReduceContext.closeMultiOutputs();
+
     if (delegate instanceof ProgramLifecycle) {
       oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
       try {

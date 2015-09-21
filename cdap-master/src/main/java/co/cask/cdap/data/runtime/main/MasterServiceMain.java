@@ -42,6 +42,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.util.hbase.ConfigurationTable;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -149,6 +150,10 @@ public class MasterServiceMain extends DaemonMain {
   public MasterServiceMain() {
     this.cConf = CConfiguration.create();
     this.cConf.set(Constants.Dataset.Manager.ADDRESS, getLocalHost().getCanonicalHostName());
+
+    // Note: login has to happen before any objects that need Kerberos credentials are instantiated.
+    login();
+
     this.hConf = HBaseConfiguration.create();
 
     Injector injector = createBaseInjector(cConf, hConf);
@@ -167,7 +172,6 @@ public class MasterServiceMain extends DaemonMain {
     cleanupTempDir();
 
     checkExploreRequirements();
-    login();
   }
 
   @Override
@@ -326,6 +330,7 @@ public class MasterServiceMain extends DaemonMain {
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getDistributedModules(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
+      new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules()
     );

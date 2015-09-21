@@ -29,7 +29,7 @@ angular.module(PKG.name + '.commons')
     };
 
 
-    function myExploreCtrl ($scope, myExploreApi, $http, $state, $bootstrapModal, myCdapUrl, $timeout, myAlert) {
+    function myExploreCtrl ($scope, myExploreApi, $http, $state, $bootstrapModal, myCdapUrl, $timeout, myAlert, MY_CONFIG) {
         var vm = this;
 
         vm.queries = [];
@@ -134,7 +134,7 @@ angular.module(PKG.name + '.commons')
           })
             .success(function(res) {
 
-              var url = 'http://' + window.location.host + res;
+              var url = (MY_CONFIG.sslEnabled? 'https://': 'http://') + window.location.host + res;
 
               var element = angular.element('<a/>');
               element.attr({

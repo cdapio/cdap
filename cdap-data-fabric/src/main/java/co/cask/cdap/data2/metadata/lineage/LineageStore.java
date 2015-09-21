@@ -23,7 +23,6 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.annotations.VisibleForTesting;
@@ -32,6 +31,7 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -65,11 +65,11 @@ public class LineageStore {
    * @param run program run information
    * @param datasetInstance dataset accessed by the program
    * @param accessType access type
-   * @param metadata metadata to store for the access
+   * @param accessTimeMillis time of access
    */
   public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance, AccessType accessType,
-                        Set<MetadataRecord> metadata) {
-    addAccess(run, datasetInstance, accessType, metadata, null);
+                        long accessTimeMillis) {
+    addAccess(run, datasetInstance, accessType, accessTimeMillis, null);
   }
 
   /**
@@ -78,16 +78,16 @@ public class LineageStore {
    * @param run program run information
    * @param datasetInstance dataset accessed by the program
    * @param accessType access type
-   * @param metadata metadata to store for the access
+   * @param accessTimeMillis time of access
    * @param component program component such as flowlet id, etc.
    */
   public void addAccess(final Id.Run run, final Id.DatasetInstance datasetInstance,
-                        final AccessType accessType, final Set<MetadataRecord> metadata,
+                        final AccessType accessType, final long accessTimeMillis,
                         @Nullable final Id.NamespacedId component) {
     execute(new TransactionExecutor.Procedure<LineageDataset>() {
       @Override
       public void apply(LineageDataset input) throws Exception {
-        input.addAccess(run, datasetInstance, accessType, metadata, component);
+        input.addAccess(run, datasetInstance, accessType, accessTimeMillis, component);
       }
     });
   }
@@ -98,10 +98,10 @@ public class LineageStore {
    * @param run program run information
    * @param stream stream accessed by the program
    * @param accessType access type
-   * @param metadata metadata to store for the access
+   * @param accessTimeMillis time of access
    */
-  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType, Set<MetadataRecord> metadata) {
-    addAccess(run, stream, accessType, metadata, null);
+  public void addAccess(Id.Run run, Id.Stream stream, AccessType accessType, long accessTimeMillis) {
+    addAccess(run, stream, accessType, accessTimeMillis, null);
   }
 
   /**
@@ -110,29 +110,28 @@ public class LineageStore {
    * @param run program run information
    * @param stream stream accessed by the program
    * @param accessType access type
-   * @param metadata metadata to store for the access
+   * @param accessTimeMillis time of access
    * @param component program component such as flowlet id, etc.
    */
   public void addAccess(final Id.Run run, final Id.Stream stream,
-                        final AccessType accessType, final Set<MetadataRecord> metadata,
+                        final AccessType accessType, final long accessTimeMillis,
                         @Nullable final Id.NamespacedId component) {
     execute(new TransactionExecutor.Procedure<LineageDataset>() {
       @Override
       public void apply(LineageDataset input) throws Exception {
-        input.addAccess(run, stream, accessType, metadata, component);
+        input.addAccess(run, stream, accessType, accessTimeMillis, component);
       }
     });
   }
 
   /**
-   * @return a set of {@link MetadataRecord}s (associated with both program and data it accesses)
-   * for a given program run.
+   * @return a set of entities (program and data it accesses) associated with a program run.
    */
-  public Set<MetadataRecord> getRunMetadata(final Id.Run run) {
-    return execute(new TransactionExecutor.Function<LineageDataset, Set<MetadataRecord>>() {
+  public Set<Id.NamespacedId> getEntitiesForRun(final Id.Run run) {
+    return execute(new TransactionExecutor.Function<LineageDataset, Set<Id.NamespacedId>>() {
       @Override
-      public Set<MetadataRecord> apply(LineageDataset input) throws Exception {
-        return input.getRunMetadata(run);
+      public Set<Id.NamespacedId> apply(LineageDataset input) throws Exception {
+        return input.getEntitiesForRun(run);
       }
     });
   }
@@ -190,6 +189,19 @@ public class LineageStore {
       @Override
       public Set<Relation> apply(LineageDataset input) throws Exception {
         return input.getRelations(program, start, end, filter);
+      }
+    });
+  }
+
+  /**
+   * @return a set of access times (for program and data it accesses) associated with a program run.
+   */
+  @VisibleForTesting
+  public List<Long> getAccessTimesForRun(final Id.Run run) {
+    return execute(new TransactionExecutor.Function<LineageDataset, List<Long>>() {
+      @Override
+      public List<Long> apply(LineageDataset input) throws Exception {
+        return input.getAccessTimesForRun(run);
       }
     });
   }

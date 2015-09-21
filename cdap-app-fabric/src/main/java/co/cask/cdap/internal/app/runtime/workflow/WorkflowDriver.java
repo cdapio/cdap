@@ -16,17 +16,12 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
-import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowConditionNode;
@@ -57,7 +52,6 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.Id;
@@ -90,11 +84,14 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -236,30 +233,24 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     final BasicWorkflowContext workflowContext = createWorkflowContext(actionSpec, token, node.getNodeId());
     final WorkflowAction action = initialize(actionSpec, classLoader, instantiator, workflowContext);
 
-    ExecutorService executor = Executors.newSingleThreadExecutor(
-      new ThreadFactoryBuilder().setNameFormat("workflow-executor-%d").build());
+    CountDownLatch executorTerminateLatch = new CountDownLatch(1);
+    ExecutorService executorService = createExecutor(1, executorTerminateLatch, "action-" + node.getNodeId() + "-%d");
+
     try {
       // Run the action in new thread
-      Future<?> future = executor.submit(new Runnable() {
+      Future<?> future = executorService.submit(new Callable<Void>() {
         @Override
-        public void run() {
+        public Void call() throws Exception {
           setContextCombinedClassLoader(action);
           try {
             if (programType == SchedulableProgramType.CUSTOM_ACTION) {
-              try {
-                runInTransaction(action, workflowContext);
-              } catch (TransactionFailureException e) {
-                throw Throwables.propagate(e);
-              }
+              runInTransaction(action, workflowContext);
             } else {
               action.run();
             }
+            return null;
           } finally {
-            try {
-              destroyInTransaction(action, actionSpec, workflowContext);
-            } catch (TransactionFailureException e) {
-              throw Throwables.propagate(e);
-            }
+            destroyInTransaction(action, actionSpec, workflowContext);
           }
         }
       });
@@ -269,8 +260,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
     } finally {
-      executor.shutdownNow();
-      executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.NANOSECONDS);
+      executorService.shutdownNow();
+      executorTerminateLatch.await();
       status.remove(node.getNodeId());
     }
     store.updateWorkflowToken(workflowId, runId.getId(), token);
@@ -347,9 +338,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private void executeFork(final ApplicationSpecification appSpec, WorkflowForkNode fork,
                            final InstantiatorFactory instantiator, final ClassLoader classLoader,
                            final WorkflowToken token) throws Exception {
-    ExecutorService executorService =
-      Executors.newFixedThreadPool(fork.getBranches().size(),
-                                   new ThreadFactoryBuilder().setNameFormat("workflow-fork-executor-%d").build());
+
+    CountDownLatch executorTerminateLatch = new CountDownLatch(1);
+    ExecutorService executorService = createExecutor(fork.getBranches().size(), executorTerminateLatch,
+                                                     "fork-" + fork.getNodeId() + "-%d");
     CompletionService<Map.Entry<String, WorkflowToken>> completionService =
       new ExecutorCompletionService<>(executorService);
 
@@ -391,7 +383,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       // Update the WorkflowToken after the execution of the FORK node completes.
       store.updateWorkflowToken(workflowId, runId.getId(), token);
       executorService.shutdownNow();
-      executorService.awaitTermination(Integer.MAX_VALUE, TimeUnit.NANOSECONDS);
+      // Wait for the executor termination
+      executorTerminateLatch.await();
     }
   }
 
@@ -559,5 +552,24 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private ClassLoader setContextCombinedClassLoader(WorkflowAction action) {
     return ClassLoaders.setContextClassLoader(
       new CombineClassLoader(null, ImmutableList.of(action.getClass().getClassLoader(), getClass().getClassLoader())));
+  }
+
+  /**
+   * Creates an {@link ExecutorService} that has the given number of threads.
+   *
+   * @param threads number of core threads in the executor
+   * @param terminationLatch a {@link CountDownLatch} that will be counted down when the executor terminated
+   * @param threadNameFormat name format for the {@link ThreadFactory} provided to the executor
+   * @return a new {@link ExecutorService}.
+   */
+  private ExecutorService createExecutor(int threads, final CountDownLatch terminationLatch, String threadNameFormat) {
+    return new ThreadPoolExecutor(
+      threads, threads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
+      new ThreadFactoryBuilder().setNameFormat(threadNameFormat).build()) {
+      @Override
+      protected void terminated() {
+        terminationLatch.countDown();
+      }
+    };
   }
 }

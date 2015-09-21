@@ -19,6 +19,7 @@ package co.cask.cdap.data2.transaction.queue.inmemory;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data.view.ViewAdmin;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
@@ -27,10 +28,13 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.ViewSpecification;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
@@ -44,18 +48,21 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   private final UsageRegistry usageRegistry;
   private final LineageWriter lineageWriter;
   private final BusinessMetadataStore businessMds;
+  private final ViewAdmin viewAdmin;
 
   @Inject
   public InMemoryStreamAdmin(InMemoryQueueService queueService,
                              UsageRegistry usageRegistry,
                              LineageWriter lineageWriter,
                              StreamMetaStore streamMetaStore,
-                             BusinessMetadataStore businessMds) {
+                             BusinessMetadataStore businessMds,
+                             ViewAdmin viewAdmin) {
     super(queueService);
     this.usageRegistry = usageRegistry;
     this.streamMetaStore = streamMetaStore;
     this.lineageWriter = lineageWriter;
     this.businessMds = businessMds;
+    this.viewAdmin = viewAdmin;
   }
 
   @Override
@@ -108,16 +115,41 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
 
   @Override
   public void truncate(Id.Stream streamId) throws Exception {
+    Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     truncate(QueueName.fromStream(streamId));
   }
 
   @Override
   public void drop(Id.Stream streamId) throws Exception {
+    Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     // Remove metadata for the stream
     businessMds.removeMetadata(streamId);
     drop(QueueName.fromStream(streamId));
     streamMetaStore.removeStream(streamId);
+  }
 
+  @Override
+  public boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
+    Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+    return viewAdmin.createOrUpdate(viewId, spec);
+  }
+
+  @Override
+  public void deleteView(Id.Stream.View viewId) throws Exception {
+    Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+    viewAdmin.delete(viewId);
+  }
+
+  @Override
+  public List<Id.Stream.View> listViews(Id.Stream streamId) throws Exception {
+    Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
+    return viewAdmin.list(streamId);
+  }
+
+  @Override
+  public ViewSpecification getView(Id.Stream.View viewId) throws Exception {
+    Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+    return viewAdmin.get(viewId);
   }
 
   @Override

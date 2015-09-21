@@ -25,20 +25,18 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.codec.NamespacedIdCodec;
-import co.cask.cdap.proto.metadata.MetadataRecord;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Type;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -66,13 +64,8 @@ public class LineageDataset extends AbstractDataset {
   // -------------------------------------------------------------------------------
 
   private static final Logger LOG = LoggerFactory.getLogger(LineageDataset.class);
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
-    .create();
-  private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
-
-  // Column used to store meta data
-  private static final byte[] METADATA_COLS_BYTE = {'m'};
+  // Column used to store access time
+  private static final byte[] ACCESS_TIME_COLS_BYTE = {'t'};
 
   private static final char DATASET_MARKER = 'd';
   private static final char PROGRAM_MARKER = 'p';
@@ -93,11 +86,11 @@ public class LineageDataset extends AbstractDataset {
    * @param run program run information
    * @param datasetInstance dataset accessed by the program
    * @param accessType access type
-   * @param metadata metadata to store for the access
+   * @param accessTimeMillis time of access
    */
   public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance,
-                        AccessType accessType, Set<MetadataRecord> metadata) {
-    addAccess(run, datasetInstance, accessType, metadata, null);
+                        AccessType accessType, long accessTimeMillis) {
+    addAccess(run, datasetInstance, accessType, accessTimeMillis, null);
   }
   /**
    * Add a program-dataset access.
@@ -105,18 +98,17 @@ public class LineageDataset extends AbstractDataset {
    * @param run program run information
    * @param datasetInstance dataset accessed by the program
    * @param accessType access type
-   * @param metadata metadata to store for the access
+   * @param accessTimeMillis time of access
    * @param component program component such as flowlet id, etc.
    */
   public void addAccess(Id.Run run, Id.DatasetInstance datasetInstance,
-                        AccessType accessType, Set<MetadataRecord> metadata, @Nullable Id.NamespacedId component) {
-    LOG.trace("Recording access run={}, dataset={}, accessType={}, metadata={}, component={}",
-              run, datasetInstance, accessType, metadata, component);
-    String metadataJson = GSON.toJson(metadata);
+                        AccessType accessType, long accessTimeMillis, @Nullable Id.NamespacedId component) {
+    LOG.trace("Recording access run={}, dataset={}, accessType={}, accessTime={}, component={}",
+              run, datasetInstance, accessType, accessTimeMillis, component);
     accessRegistryTable.put(getDatasetKey(datasetInstance, run, accessType, component),
-                            METADATA_COLS_BYTE, Bytes.toBytes(metadataJson));
+                            ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
     accessRegistryTable.put(getProgramKey(run, datasetInstance, accessType, component),
-                            METADATA_COLS_BYTE, Bytes.toBytes(metadataJson));
+                            ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
   }
 
   /**
@@ -125,11 +117,11 @@ public class LineageDataset extends AbstractDataset {
    * @param run program run information
    * @param stream stream accessed by the program
    * @param accessType access type
-   * @param metadata metadata to store for the access
+   * @param accessTimeMillis time of access
    */
   public void addAccess(Id.Run run, Id.Stream stream,
-                        AccessType accessType, Set<MetadataRecord> metadata) {
-    addAccess(run, stream, accessType, metadata, null);
+                        AccessType accessType, long accessTimeMillis) {
+    addAccess(run, stream, accessType, accessTimeMillis, null);
   }
 
   /**
@@ -138,39 +130,36 @@ public class LineageDataset extends AbstractDataset {
    * @param run program run information
    * @param stream stream accessed by the program
    * @param accessType access type
-   * @param metadata metadata to store for the access
+   * @param accessTimeMillis time of access
    * @param component program component such as flowlet id, etc.
    */
   public void addAccess(Id.Run run, Id.Stream stream,
-                        AccessType accessType, Set<MetadataRecord> metadata, @Nullable Id.NamespacedId component) {
-    LOG.trace("Recording access run={}, stream={}, accessType={}, metadata={}, component={}",
-              run, stream, accessType, metadata, component);
-    String metadataJson = GSON.toJson(metadata);
+                        AccessType accessType, long accessTimeMillis, @Nullable Id.NamespacedId component) {
+    LOG.trace("Recording access run={}, stream={}, accessType={}, accessTime={}, component={}",
+              run, stream, accessType, accessTimeMillis, component);
     accessRegistryTable.put(getStreamKey(stream, run, accessType, component),
-                            METADATA_COLS_BYTE, Bytes.toBytes(metadataJson));
+                            ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
     accessRegistryTable.put(getProgramKey(run, stream, accessType, component),
-                            METADATA_COLS_BYTE, Bytes.toBytes(metadataJson));
+                            ACCESS_TIME_COLS_BYTE, Bytes.toBytes(accessTimeMillis));
   }
 
   /**
-   * @return a set of {@link MetadataRecord}s (associated with both program and data it accesses)
-   * for a given program run.
+   * @return a set of entities (program and data it accesses) associated with a program run.
    */
-  public Set<MetadataRecord> getRunMetadata(Id.Run run) {
-    ImmutableSet.Builder<MetadataRecord> recordBuilder = ImmutableSet.builder();
+  public Set<Id.NamespacedId> getEntitiesForRun(Id.Run run) {
+    ImmutableSet.Builder<Id.NamespacedId> recordBuilder = ImmutableSet.builder();
     byte[] startKey = getRunScanStartKey(run);
     Scanner scanner = accessRegistryTable.scan(startKey, Bytes.stopKeyForPrefix(startKey));
     try {
       Row row;
       while ((row = scanner.next()) != null) {
-        String metadata = Bytes.toString(row.get(METADATA_COLS_BYTE));
         if (LOG.isTraceEnabled()) {
-          LOG.trace("Got row key = {}, metadata = {}", Bytes.toString(row.getRow()),
-                    metadata);
+          LOG.trace("Got row key = {}", Bytes.toString(row.getRow()));
         }
-        String runId = getRunId(row);
-        if (run.getId().equals(runId)) {
-          recordBuilder.addAll(GSON.<Set<MetadataRecord>>fromJson(metadata, SET_METADATA_RECORD_TYPE));
+        RowKey rowKey = parseRow(row);
+        if (run.getId().equals(rowKey.getRunId().getId())) {
+          recordBuilder.add(rowKey.getProgram());
+          recordBuilder.add(rowKey.getData());
         }
       }
     } finally {
@@ -223,6 +212,31 @@ public class LineageDataset extends AbstractDataset {
     return scanRelations(getProgramScanStartKey(program, end),
                          getProgramScanEndKey(program, start),
                          filter);
+  }
+
+  /**
+   * @return a set of access times (for program and data it accesses) associated with a program run.
+   */
+  @VisibleForTesting
+  public List<Long> getAccessTimesForRun(Id.Run run) {
+    ImmutableList.Builder<Long> recordBuilder = ImmutableList.builder();
+    byte[] startKey = getRunScanStartKey(run);
+    Scanner scanner = accessRegistryTable.scan(startKey, Bytes.stopKeyForPrefix(startKey));
+    try {
+      Row row;
+      while ((row = scanner.next()) != null) {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Got row key = {}", Bytes.toString(row.getRow()));
+        }
+        RowKey rowKey = parseRow(row);
+        if (run.getId().equals(rowKey.getRunId().getId())) {
+          recordBuilder.add(Bytes.toLong(row.get(ACCESS_TIME_COLS_BYTE)));
+        }
+      }
+    } finally {
+      scanner.close();
+    }
+    return recordBuilder.build();
   }
 
   private Set<Relation> scanRelations(byte[] startKey, byte[] endKey, Predicate<Relation> filter) {
@@ -299,25 +313,30 @@ public class LineageDataset extends AbstractDataset {
     return builder.build().getKey();
   }
 
-  private String getRunId(Row row) {
+  private RowKey parseRow(Row row) {
+    Id.Program program;
+    Id.NamespacedId data;
+    RunId runId;
     MDSKey.Splitter splitter = new MDSKey(row.getRow()).split();
     char marker = (char) splitter.getInt();
     LOG.trace("Got marker {}", marker);
     switch (marker) {
       case PROGRAM_MARKER:
-        toId(splitter, marker);
+        program = (Id.Program) toId(splitter, marker);
         splitter.skipLong(); // inverted start time
         marker = (char) splitter.getInt();
-        toId(splitter, marker);  // data
-        return splitter.getString();
+        data = toId(splitter, marker);  // data
+        runId = RunIds.fromString(splitter.getString());
+        return new RowKey(program, data, runId);
 
       case DATASET_MARKER:
       case STREAM_MARKER:
-        toId(splitter, marker);
+        data = toId(splitter, marker);
         splitter.skipLong(); // inverted start time
         marker = (char) splitter.getInt();
-        toId(splitter, marker);  // program
-        return splitter.getString();
+        program = (Id.Program) toId(splitter, marker);  // program
+        runId = RunIds.fromString(splitter.getString());
+        return new RowKey(program, data, runId);
 
       default:
         throw new IllegalStateException("Invalid row with marker " +  marker);
@@ -423,7 +442,7 @@ public class LineageDataset extends AbstractDataset {
     }
   }
 
-  private Id toId(MDSKey.Splitter splitter, char marker) {
+  private Id.NamespacedId toId(MDSKey.Splitter splitter, char marker) {
     switch (marker) {
       case DATASET_MARKER:
         return Id.DatasetInstance.from(splitter.getString(), splitter.getString());
@@ -508,5 +527,57 @@ public class LineageDataset extends AbstractDataset {
                         accessType,
                         runId,
                         component == null ? ImmutableSet.<Id.NamespacedId>of() : ImmutableSet.of(component));
+  }
+
+  private static final class RowKey {
+    private final Id.Program program;
+    private final Id.NamespacedId data;
+    private final RunId runId;
+
+    public RowKey(Id.Program program, Id.NamespacedId data, RunId runId) {
+      this.program = program;
+      this.data = data;
+      this.runId = runId;
+    }
+
+    public Id.Program getProgram() {
+      return program;
+    }
+
+    public Id.NamespacedId getData() {
+      return data;
+    }
+
+    public RunId getRunId() {
+      return runId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof RowKey)) {
+        return false;
+      }
+      RowKey rowKey = (RowKey) o;
+      return Objects.equals(program, rowKey.program) &&
+        Objects.equals(data, rowKey.data) &&
+        Objects.equals(runId, rowKey.runId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(program, data, runId);
+    }
+
+    @Override
+    public String toString() {
+      return "RowKey{" +
+        "program=" + program +
+        ", data=" + data +
+        ", runId=" + runId +
+        '}';
+    }
   }
 }

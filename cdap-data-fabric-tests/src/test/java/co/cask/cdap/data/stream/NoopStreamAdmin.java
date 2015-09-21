@@ -21,8 +21,10 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.ViewSpecification;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
@@ -78,6 +80,26 @@ public class NoopStreamAdmin implements StreamAdmin {
 
   @Override
   public void drop(Id.Stream streamId) throws Exception {
+  }
+
+  @Override
+  public boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
+    return false;
+  }
+
+  @Override
+  public void deleteView(Id.Stream.View viewId) throws Exception {
+
+  }
+
+  @Override
+  public List<Id.Stream.View> listViews(Id.Stream streamId) {
+    return null;
+  }
+
+  @Override
+  public ViewSpecification getView(Id.Stream.View viewId) {
+    return null;
   }
 
   @Override

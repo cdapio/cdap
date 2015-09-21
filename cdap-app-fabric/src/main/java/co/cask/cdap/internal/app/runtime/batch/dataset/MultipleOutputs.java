@@ -229,7 +229,7 @@ public class MultipleOutputs implements Closeable {
   private static Job getNamedJob(JobContext context, String namedOutput) throws IOException {
     // The following trick leverages the instantiation of a record writer via
     // the job thus supporting arbitrary output formats.
-    Job job = new Job(context.getConfiguration());
+    Job job = Job.getInstance(context.getConfiguration());
     job.setOutputFormatClass(getNamedOutputFormatClass(context, namedOutput));
     job.setOutputKeyClass(getNamedOutputKeyClass(context, namedOutput));
     job.setOutputValueClass(getNamedOutputValueClass(context, namedOutput));
@@ -280,7 +280,6 @@ public class MultipleOutputs implements Closeable {
    * Closes all the opened outputs.
    * This should be called from cleanup method of map/reduce task.
    */
-  @SuppressWarnings("unchecked")
   public void close() {
     closeRecordWriters(recordWriters.values(), context);
   }

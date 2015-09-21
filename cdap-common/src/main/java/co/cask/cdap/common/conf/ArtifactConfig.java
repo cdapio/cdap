@@ -130,8 +130,8 @@ public class ArtifactConfig implements Comparable<ArtifactConfig> {
    *                                  format or unexpected value.
    */
   public static ArtifactConfig read(Id.Artifact artifactId,
-                                          File configFile,
-                                          File artifactFile) throws IOException, InvalidArtifactException {
+                                    File configFile,
+                                    File artifactFile) throws IOException, InvalidArtifactException {
     String fileName = configFile.getName();
     try (Reader reader = Files.newReader(configFile, Charsets.UTF_8)) {
       try {

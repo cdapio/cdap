@@ -22,16 +22,14 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.metadata.MetadataRecord;
 import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,8 +38,6 @@ import java.util.Set;
 public class LineageDatasetTest {
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
-
-  private static final Set<MetadataRecord> EMPTY_METADATA = ImmutableSet.of();
 
   @Test
   public void testOneRelation() throws Exception {
@@ -54,14 +50,9 @@ public class LineageDatasetTest {
     Id.Flow.Flowlet flowlet = Id.Flow.Flowlet.from(program.getApplication(), program.getId(), "flowlet1");
     Id.Run run = new Id.Run(program, runId.getId());
 
-    MetadataRecord programMeta = new MetadataRecord(program, toMap("pkey1", "pval1", "pkey2", "pval2"),
-                                                    toSet("ptag1", "ptag2"));
-    MetadataRecord dataMeta = new MetadataRecord(datasetInstance, toMap("dkey1", "dval1", "dkey2", "dval2"),
-                                                 toSet("dtag1", "dtag2"));
-    Set<MetadataRecord> metadataRecords = toSet(programMeta, dataMeta);
-
+    long accessTimeMillis = System.currentTimeMillis();
     lineageDataset.addAccess(run,
-                             datasetInstance, AccessType.READ, metadataRecords,
+                             datasetInstance, AccessType.READ, accessTimeMillis,
                              flowlet);
 
     Relation expected = new Relation(datasetInstance, program, AccessType.READ,
@@ -72,8 +63,8 @@ public class LineageDatasetTest {
     Assert.assertEquals(1, relations.size());
     Assert.assertEquals(expected, relations.iterator().next());
 
-    // Assert metadata
-    Assert.assertEquals(metadataRecords, lineageDataset.getRunMetadata(run));
+    Assert.assertEquals(toSet(datasetInstance, program), lineageDataset.getEntitiesForRun(run));
+    Assert.assertEquals(ImmutableList.of(accessTimeMillis), lineageDataset.getAccessTimesForRun(run));
   }
 
   @Test
@@ -102,40 +93,20 @@ public class LineageDatasetTest {
     Id.Run run23 = new Id.Run(program2, runId3.getId());
     Id.Run run34 = new Id.Run(program3, runId4.getId());
 
-    // Define metadata
-    Set<MetadataRecord> metaProgram1Data1Run1 =
-      toSet(new MetadataRecord(program1, toMap("pkey111", "pval111"), toSet("ptag111-1")),
-            new MetadataRecord(datasetInstance1, toMap("dkey111", "dval111"), toSet("dtag111-1")));
-
-    MetadataRecord metadataRecordProgram2Run2 =
-      new MetadataRecord(program2, toMap("pkey22", "pval22"), toSet("ptag22-1"));
-    Set<MetadataRecord> metaProgram2Data2Run2 =
-      toSet(metadataRecordProgram2Run2,
-            new MetadataRecord(datasetInstance2, toMap("dkey222", "dval222"), toSet("dtag222-1")));
-    Set<MetadataRecord> metaProgram2Stream1Run2 =
-      toSet(metadataRecordProgram2Run2,
-            new MetadataRecord(stream1, toMap("dkey212", "dval212"), toSet("dtag212-1")));
-
-    MetadataRecord metadataRecordProgram2Run3 =
-      new MetadataRecord(program2, toMap("pkey223", "pval223"), toSet("ptag223-1"));
-    Set<MetadataRecord> metaProgram2Stream2Run3 =
-      toSet(metadataRecordProgram2Run3,
-            new MetadataRecord(stream2, toMap("dkey223", "dval223"), toSet("dtag223-1")));
-    Set<MetadataRecord> metaProgram2Data2Run3 =
-      toSet(metadataRecordProgram2Run3,
-            new MetadataRecord(datasetInstance2, toMap("dkey223.1", "dval223"), toSet("dtag223-1.1")));
-
-    Set<MetadataRecord> metaProgram3Data2Run4 =
-      toSet(new MetadataRecord(program3, toMap("pkey324", "pval324"), toSet("ptag324-1")),
-            new MetadataRecord(datasetInstance2, toMap("dkey324", "dval324"), toSet("dtag324-1")));
-
-    lineageDataset.addAccess(run11, datasetInstance1, AccessType.READ, metaProgram1Data1Run1, flowlet1);
-    lineageDataset.addAccess(run22, datasetInstance2, AccessType.WRITE, metaProgram2Data2Run2);
-    lineageDataset.addAccess(run22, stream1, AccessType.READ, metaProgram2Stream1Run2);
-    lineageDataset.addAccess(run23, stream2, AccessType.READ, metaProgram2Stream2Run3);
-    lineageDataset.addAccess(run23, datasetInstance2, AccessType.WRITE, metaProgram2Data2Run3);
-    lineageDataset.addAccess(run34, datasetInstance2, AccessType.READ_WRITE, metaProgram3Data2Run4);
-    lineageDataset.addAccess(run34, stream2, AccessType.UNKNOWN, EMPTY_METADATA);
+    long now = System.currentTimeMillis();
+    //noinspection UnnecessaryLocalVariable
+    long run11Data1AccessTime = now;
+    lineageDataset.addAccess(run11, datasetInstance1, AccessType.READ, run11Data1AccessTime, flowlet1);
+    long run22Data2AccessTime = now + 1;
+    lineageDataset.addAccess(run22, datasetInstance2, AccessType.WRITE, run22Data2AccessTime);
+    long run22Stream1AccessTime = now + 2;
+    lineageDataset.addAccess(run22, stream1, AccessType.READ, run22Stream1AccessTime);
+    long run23Stream2AccessTime = now + 1;
+    lineageDataset.addAccess(run23, stream2, AccessType.READ, run23Stream2AccessTime);
+    long run23Data2AccessTime = now + 3;
+    lineageDataset.addAccess(run23, datasetInstance2, AccessType.WRITE, run23Data2AccessTime);
+    lineageDataset.addAccess(run34, datasetInstance2, AccessType.READ_WRITE, System.currentTimeMillis());
+    lineageDataset.addAccess(run34, stream2, AccessType.UNKNOWN, System.currentTimeMillis());
 
     Assert.assertEquals(
       ImmutableSet.of(new Relation(datasetInstance1, program1, AccessType.READ, runId1,
@@ -179,17 +150,18 @@ public class LineageDatasetTest {
       lineageDataset.getRelations(datasetInstance2, 0, 35000, Predicates.<Relation>alwaysTrue())
     );
 
-    // Verify metadata
-    Assert.assertEquals(metaProgram1Data1Run1, lineageDataset.getRunMetadata(run11));
-    Assert.assertEquals(2, lineageDataset.getRunMetadata(run11).size());
-    Assert.assertEquals(toSet(metaProgram2Data2Run2, metaProgram2Stream1Run2),
-                        lineageDataset.getRunMetadata(run22));
-    Assert.assertEquals(3, lineageDataset.getRunMetadata(run22).size());
-    Assert.assertEquals(toSet(metaProgram2Stream2Run3, metaProgram2Data2Run3),
-                        lineageDataset.getRunMetadata(run23));
-    Assert.assertEquals(3, lineageDataset.getRunMetadata(run23).size());
-    Assert.assertEquals(metaProgram3Data2Run4, lineageDataset.getRunMetadata(run34));
-    Assert.assertEquals(2, lineageDataset.getRunMetadata(run34).size());
+    Assert.assertEquals(toSet(program1, datasetInstance1), lineageDataset.getEntitiesForRun(run11));
+    Assert.assertEquals(ImmutableList.of(run11Data1AccessTime), lineageDataset.getAccessTimesForRun(run11));
+
+    Assert.assertEquals(toSet(program2, datasetInstance2, stream1), lineageDataset.getEntitiesForRun(run22));
+    Assert.assertEquals(ImmutableList.of(run22Data2AccessTime, run22Stream1AccessTime),
+                        lineageDataset.getAccessTimesForRun(run22));
+
+    Assert.assertEquals(toSet(program2, datasetInstance2, stream2), lineageDataset.getEntitiesForRun(run23));
+    Assert.assertEquals(ImmutableList.of(run23Data2AccessTime, run23Stream2AccessTime),
+                        lineageDataset.getAccessTimesForRun(run23));
+
+    Assert.assertEquals(toSet(program3, datasetInstance2, stream2), lineageDataset.getEntitiesForRun(run34));
   }
 
   private static LineageDataset getLineageDataset(String instanceId) throws Exception {
@@ -201,22 +173,5 @@ public class LineageDatasetTest {
   @SafeVarargs
   private static <T> Set<T> toSet(T... elements) {
     return ImmutableSet.copyOf(elements);
-  }
-
-  private Map<String, String> toMap(String key, String value) {
-    return ImmutableMap.of(key, value);
-  }
-
-  private Map<String, String> toMap(String key1, String value1, String key2, String value2) {
-    return ImmutableMap.of(key1, value1, key2, value2);
-  }
-
-  @SafeVarargs
-  private static Set<MetadataRecord> toSet(Set<MetadataRecord>... records) {
-    ImmutableSet.Builder<MetadataRecord> recordBuilder = ImmutableSet.builder();
-    for (Set<MetadataRecord> recordSet : records) {
-      recordBuilder.addAll(recordSet);
-    }
-    return recordBuilder.build();
   }
 }

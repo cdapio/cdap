@@ -30,15 +30,9 @@ public class ETLRealtimeApplication extends AbstractApplication<ETLRealtimeConfi
   @Override
   public void configure() {
     ETLRealtimeConfig config = getConfig();
-    int instances = config.getInstances() != null ? config.getInstances() : 1;
-    if (instances < 1) {
-      throw new IllegalArgumentException("instances must be greater than 0.");
-    }
-
     setDescription("Realtime Extract-Transform-Load (ETL) Template");
     addWorker(new ETLWorker(config));
     createDataset(STATE_TABLE, KeyValueTable.class, DatasetProperties.EMPTY);
-
   }
 
 }

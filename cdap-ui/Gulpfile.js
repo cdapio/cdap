@@ -34,7 +34,8 @@ gulp.task('css:lib', ['fonts'], function() {
       './bower_components/font-awesome/css/font-awesome.min.css',
       './bower_components/ng-sortable/dist/ng-sortable.min.css',
       './bower_components/c3/c3.min.css',
-      './bower_components/angular-gridster/dist/angular-gridster.min.css'
+      './bower_components/angular-gridster/dist/angular-gridster.min.css',
+      './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.css',
     ].concat(mainBowerFiles({
       filter: /cask\-angular\-[^\/]+\/.*\.(css|less)$/
     })))
@@ -143,7 +144,8 @@ gulp.task('js:lib', function() {
       './bower_components/ace-builds/src-min-noconflict/ace.js',
       './bower_components/angular-ui-ace/ui-ace.js',
       './bower_components/jsPlumb/dist/js/dom.jsPlumb-1.7.5-min.js',
-      './bower_components/angular-gridster/dist/angular-gridster.min.js'
+      './bower_components/angular-gridster/dist/angular-gridster.min.js',
+      './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.js'
 
 
     ].concat([

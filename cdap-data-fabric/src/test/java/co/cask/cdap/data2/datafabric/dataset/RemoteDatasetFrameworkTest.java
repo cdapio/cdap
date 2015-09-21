@@ -53,6 +53,7 @@ import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.Futures;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Threads;
@@ -196,9 +197,9 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
   @After
   public void after() throws DatasetManagementException {
-    Services.chainStop(service, opExecutorService, txManager);
     framework.deleteNamespace(NAMESPACE_ID);
     framework.deleteNamespace(Id.Namespace.SYSTEM);
+    Futures.getUnchecked(Services.chainStop(service, opExecutorService, txManager));
   }
 
   @Override

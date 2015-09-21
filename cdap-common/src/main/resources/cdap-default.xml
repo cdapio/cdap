@@ -865,7 +865,7 @@
 
   <property>
     <name>metadata.updates.publish.enabled</name>
-    <value>true</value>
+    <value>false</value>
     <description>
       Determines if metadata updates will be published to Apache Kafka.
       External systems can subscribe to the Kafka topic determined by

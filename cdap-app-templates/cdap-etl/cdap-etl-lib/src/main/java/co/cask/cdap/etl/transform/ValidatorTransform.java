@@ -74,7 +74,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     "      }" +
     "      return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
     "   };" +
-    "The isValid function in this javascript example uses core validation functions";
+    "The isValid function in this Javascript example uses CoreValidator functions.";
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())

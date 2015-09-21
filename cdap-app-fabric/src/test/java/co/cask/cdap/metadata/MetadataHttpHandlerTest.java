@@ -18,6 +18,7 @@ package co.cask.cdap.metadata;
 
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.WordCountApp;
+import co.cask.cdap.WordCountMinusFlowApp;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -117,6 +118,10 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     // search non-existent property should return empty set
     searchProperties = searchMetadata(Id.Namespace.DEFAULT.getId(), "NullKey:s*", null);
     Assert.assertEquals(ImmutableSet.<MetadataSearchResultRecord>of(), searchProperties);
+
+    // search invalid ns should return empty set
+    searchProperties = searchMetadata("invalidnamespace", "sKey:s*", null);
+    Assert.assertEquals(ImmutableSet.of(), searchProperties);
 
     // test removal
     removeProperties(application);
@@ -285,16 +290,6 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
   }
 
   @Test
-  public void testLineage() throws Exception {
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from("default", "dummy");
-    Assert.assertEquals(200, fetchLineage(datasetInstance, 100, 200, 10).getResponseCode());
-    Assert.assertEquals(400, fetchLineage(datasetInstance, -100, 200, 10).getResponseCode());
-    Assert.assertEquals(400, fetchLineage(datasetInstance, 100, -200, 10).getResponseCode());
-    Assert.assertEquals(400, fetchLineage(datasetInstance, 200, 100, 10).getResponseCode());
-    Assert.assertEquals(400, fetchLineage(datasetInstance, 100, 200, -10).getResponseCode());
-  }
-
-  @Test
   public void testDeleteApplication() throws Exception {
     deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
     Id.Program program = Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
@@ -371,6 +366,30 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     }
     tags = ImmutableSet.of(builder.toString());
     Assert.assertEquals(400, addTags(application, tags).getResponseCode());
+  }
+
+  @Test
+  public void testDeletedProgramHandlerStage() throws Exception {
+    deploy(WordCountApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+    Id.Program program = Id.Program.from(TEST_NAMESPACE1, "WordCountApp", ProgramType.FLOW, "WordCountFlow");
+
+    // Set some properties metadata
+    Map<String, String> flowProperties = ImmutableMap.of("sKey", "sValue", "sK", "sV");
+    addProperties(program, flowProperties);
+
+    // Get properties
+    Map<String, String> properties = getProperties(program);
+    Assert.assertEquals(2, properties.size());
+
+    // Deploy WordCount App without Flow program. No need to start/stop the flow.
+    deploy(WordCountMinusFlowApp.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE1);
+
+    // Get properties from deleted (flow) program - should return 404
+    getPropertiesFromInvalidEntity(program);
+
+    // Delete the App after stopping the flow
+    final Id.Application wordCountApp = Id.Application.from(TEST_NAMESPACE1, "WordCountApp");
+    deleteApp(wordCountApp, 200);
   }
 
   private void removeAllMetadata() throws IOException {

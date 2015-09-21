@@ -51,7 +51,7 @@
              "description": "Specifies the start offset for processing from the queue",
              "properties": {
                "width": "extra-small",
-               "default": 0
+               "default": 1
              },
              "min": 1
           }
@@ -66,15 +66,15 @@
              "widget" : "select",
              "label"  : "Format",
              "properties" : {
-               "values" : [ "", "avro", "clf", "csv", "grok", "syslog", "text", "tsv" ],
-               "default" : ""
+               "values" : [ "avro", "clf", "csv", "grok", "syslog", "text", "tsv" ],
+               "default" : "text"
              }
           }
        }
     }
   },
   "schema" : {
-     "widget": "stream-properties",
+     "widget": "schema",
      "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string", "map<string, string>" ],
      "schema-default-type" : "string",
      "property-watch": "format"

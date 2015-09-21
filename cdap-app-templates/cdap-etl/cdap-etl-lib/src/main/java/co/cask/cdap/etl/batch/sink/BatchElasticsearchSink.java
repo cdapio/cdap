@@ -52,7 +52,7 @@ import java.util.Map;
 @Name("Elasticsearch")
 @Description("CDAP Elasticsearch Batch Sink takes the structured record from the input source and converts it " +
   "to a JSON string, then indexes it in Elasticsearch using the index, type, and id specified by the user. " +
-  "The Elasticsearch server should be running prior to creating the adapter.")
+  "The Elasticsearch server should be running prior to creating the application.")
 public class BatchElasticsearchSink extends BatchSink<StructuredRecord, Writable, Writable> {
   private static final String INDEX_DESCRIPTION = "The name of the index where the data will be stored. " +
     "If the index does not already exist, it will be created using Elasticsearch's default properties.";
@@ -61,7 +61,7 @@ public class BatchElasticsearchSink extends BatchSink<StructuredRecord, Writable
   private static final String ID_DESCRIPTION = "The field that will determine the id for the document. " +
     "It should match a fieldname in the structured record of the input.";
   private static final String HOST_DESCRIPTION = "The hostname and port for the Elasticsearch server; " +
-    "such as localhost:9200.";
+    "for example, localhost:9200.";
 
   private final ESConfig config;
 

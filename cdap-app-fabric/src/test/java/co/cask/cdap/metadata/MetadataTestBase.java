@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -429,6 +430,17 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return makeGetRequest(path);
   }
 
+  protected HttpResponse fetchLineage(Id.DatasetInstance datasetInstance, String start, String end, int levels)
+    throws IOException {
+    String path = getVersionedAPIPath(
+      String.format("datasets/%s/lineage?start=%s&end=%s&levels=%d",
+                    datasetInstance.getId(),
+                    URLEncoder.encode(start, "UTF-8"),
+                    URLEncoder.encode(end, "UTF-8"), levels),
+      datasetInstance.getNamespaceId());
+    return makeGetRequest(path);
+  }
+
   protected HttpResponse fetchLineage(Id.Stream stream, long start, long end, int levels)
     throws IOException {
     String path = getVersionedAPIPath(
@@ -437,16 +449,31 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return makeGetRequest(path);
   }
 
+  protected HttpResponse fetchLineage(Id.Stream stream, String start, String end, int levels)
+    throws IOException {
+    String path = getVersionedAPIPath(
+      String.format("streams/%s/lineage?start=%s&end=%s&levels=%d",
+                    stream.getId(),
+                    URLEncoder.encode(start, "UTF-8"),
+                    URLEncoder.encode(end, "UTF-8"), levels),
+      stream.getNamespaceId());
+    return makeGetRequest(path);
+  }
+
   protected Set<MetadataRecord> fetchRunMetadata(Id.Run run) throws IOException {
+    HttpResponse response = fetchRunMetadataResponse(run);
+    Assert.assertEquals(200, response.getResponseCode());
+    String responseBody = response.getResponseBodyAsString();
+    return GSON.fromJson(responseBody, SET_METADATA_RECORD_TYPE);
+  }
+
+  protected HttpResponse fetchRunMetadataResponse(Id.Run run) throws IOException {
     Id.Program program = run.getProgram();
     String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/runs/%s/metadata",
                                                     program.getApplicationId(), program.getType().getCategoryName(),
                                                     program.getId(), run.getId()),
                                       program.getNamespaceId());
-    HttpResponse response = makeGetRequest(path);
-    Assert.assertEquals(200, response.getResponseCode());
-    String responseBody = response.getResponseBodyAsString();
-    return GSON.fromJson(responseBody, SET_METADATA_RECORD_TYPE);
+    return makeGetRequest(path);
   }
 
   // The following methods are needed because AppFabricTestBase's doGet, doPost, doPut, doDelete are hardwired to

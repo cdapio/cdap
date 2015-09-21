@@ -22,6 +22,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     vm.preconfigured = false;
     vm.templates = [];
+    vm.GLOBALS = GLOBALS;
 
     myAdapterTemplatesApi.list({
       apptype: GLOBALS.etlBatch

@@ -116,9 +116,13 @@ function makeApp (authAddress, cdapConfig) {
 
       var file = fs.createWriteStream(filePath);
 
-      var r = request.post({
+      var r = request({
         method: 'POST',
-        url: url
+        url: url,
+        rejectUnauthorized: false,
+        requestCert: true,
+        agent: false,
+        headers: req.headers
       });
 
       r.on('response', function(response) {

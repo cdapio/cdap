@@ -128,6 +128,17 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   }
 
   @Override
+  public <T> T exclusiveAction(Id.Stream streamId, Callable<T> action) throws Exception {
+    Lock lock = getLock(streamId);
+    lock.lock();
+    try {
+      return action.call();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
   public Cancellable addListener(Id.Stream streamId, StreamPropertyListener listener) {
     return propertyStore.addChangeListener(streamId.toId(), new StreamPropertyChangeListener(listener));
   }

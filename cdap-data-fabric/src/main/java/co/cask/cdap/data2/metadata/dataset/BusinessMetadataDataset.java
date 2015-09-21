@@ -31,6 +31,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -344,32 +345,44 @@ public class BusinessMetadataDataset extends AbstractDataset {
   /**
    * Find the instance of {@link BusinessMetadataRecord} based on key.
    *
+   * @param namespaceId The namespace id to filter
    * @param value The metadata value to be found
    * @param type The target type of objects to search from
    * @return The {@link Iterable} of {@link BusinessMetadataRecord} that fit the value
    */
-  public List<BusinessMetadataRecord> findBusinessMetadataOnValue(String value, MetadataSearchTargetType type) {
-    return executeSearchOnColumns(BusinessMetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN, value, type);
+  public List<BusinessMetadataRecord> findBusinessMetadataOnValue(String namespaceId, String value,
+                                                                  MetadataSearchTargetType type) {
+    return executeSearchOnColumns(namespaceId, BusinessMetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN, value, type);
   }
 
   /**
    * Find the instance of {@link BusinessMetadataRecord} for key:value pair
    *
+   * @param namespaceId The namespace id to filter
    * @param keyValue The metadata value to be found.
    * @param type The target type of objects to search from.
    * @return The {@link Iterable} of {@link BusinessMetadataRecord} that fit the key value pair.
    */
-  public List<BusinessMetadataRecord> findBusinessMetadataOnKeyValue(String keyValue, MetadataSearchTargetType type) {
-    return executeSearchOnColumns(BusinessMetadataDataset.KEYVALUE_COLUMN, keyValue, type);
+  public List<BusinessMetadataRecord> findBusinessMetadataOnKeyValue(String namespaceId, String keyValue,
+                                                                     MetadataSearchTargetType type) {
+    return executeSearchOnColumns(namespaceId, BusinessMetadataDataset.KEYVALUE_COLUMN, keyValue, type);
   }
 
   /**
-   * Returns the snapshot of the metadata for targetId on or before the given time.
-   * @param targetId target id
+   * Returns the snapshot of the metadata for entities on or before the given time.
+   * @param targetIds entity ids
    * @param timeMillis time in milliseconds
-   * @return the snapshot of the metadata for targetId on or before the given time
+   * @return the snapshot of the metadata for entities on or before the given time
    */
-  public MetadataRecord getSnapshotBeforeTime(Id.NamespacedId targetId, long timeMillis) {
+  public Set<MetadataRecord> getSnapshotBeforeTime(Set<Id.NamespacedId> targetIds, long timeMillis) {
+    ImmutableSet.Builder<MetadataRecord> builder = ImmutableSet.builder();
+    for (Id.NamespacedId entityId : targetIds) {
+      builder.add(getSnapshotBeforeTime(entityId, timeMillis));
+    }
+    return builder.build();
+  }
+
+  private MetadataRecord getSnapshotBeforeTime(Id.NamespacedId targetId, long timeMillis) {
     byte[] scanStartKey = MdsHistoryKey.getMdsScanStartKey(targetId, timeMillis).getKey();
     byte[] scanEndKey = MdsHistoryKey.getMdsScanEndKey(targetId).getKey();
     // TODO: add limit to scan, we need only one row
@@ -387,18 +400,18 @@ public class BusinessMetadataDataset extends AbstractDataset {
   }
 
   // Helper method to execute IndexedTable search on target index column.
-  List<BusinessMetadataRecord> executeSearchOnColumns(String column, String searchValue,
+  List<BusinessMetadataRecord> executeSearchOnColumns(String namespaceId, String column, String searchValue,
                                                       MetadataSearchTargetType type) {
     List<BusinessMetadataRecord> results = new LinkedList<>();
 
     Scanner scanner;
-    String lowerCaseSearchValue = searchValue.toLowerCase();
-    if (lowerCaseSearchValue.endsWith("*")) {
-      byte[] startKey = Bytes.toBytes(lowerCaseSearchValue.substring(0, lowerCaseSearchValue.lastIndexOf("*")));
+    String namespacedSearchValue = namespaceId + KEYVALUE_SEPARATOR + searchValue.toLowerCase();
+    if (namespacedSearchValue.endsWith("*")) {
+      byte[] startKey = Bytes.toBytes(namespacedSearchValue.substring(0, namespacedSearchValue.lastIndexOf("*")));
       byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
       scanner = indexedTable.scanByIndex(Bytes.toBytes(column), startKey, stopKey);
     } else {
-      byte[] value = Bytes.toBytes(lowerCaseSearchValue);
+      byte[] value = Bytes.toBytes(namespacedSearchValue);
       scanner = indexedTable.readByIndex(Bytes.toBytes(column), value);
     }
     try {
@@ -435,10 +448,16 @@ public class BusinessMetadataDataset extends AbstractDataset {
     MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, metadataType, key);
     Put put = new Put(mdsKey.getKey());
 
-     // Now add the index columns. To support case insensitive we will store it as lower case for index columns.
-    put.add(Bytes.toBytes(KEYVALUE_COLUMN),
-            Bytes.toBytes(record.getKey().toLowerCase() + KEYVALUE_SEPARATOR + record.getValue().toLowerCase()));
-    put.add(Bytes.toBytes(CASE_INSENSITIVE_VALUE_COLUMN), Bytes.toBytes(record.getValue().toLowerCase()));
+    // Now add the index columns. To support case insensitive we will store it as lower case for index columns.
+    String lowerCaseKey = record.getKey().toLowerCase();
+    String lowerCaseValue = record.getValue().toLowerCase();
+
+    String nameSpacedKVIndexValue =
+      MdsValueKey.getNamespaceId(mdsKey) + KEYVALUE_SEPARATOR + lowerCaseKey + KEYVALUE_SEPARATOR + lowerCaseValue;
+    put.add(Bytes.toBytes(KEYVALUE_COLUMN), Bytes.toBytes(nameSpacedKVIndexValue));
+
+    String nameSpacedVIndexValue = MdsValueKey.getNamespaceId(mdsKey) + KEYVALUE_SEPARATOR + lowerCaseValue;
+    put.add(Bytes.toBytes(CASE_INSENSITIVE_VALUE_COLUMN), Bytes.toBytes(nameSpacedVIndexValue));
 
     // Add to value column
     put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(record.getValue()));

@@ -15,11 +15,12 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, AdapterDetail) {
+  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, AdapterDetail, $timeout ) {
     $scope.GLOBALS = GLOBALS;
     $scope.template = rAdapterDetail.template;
     $scope.description = rAdapterDetail.description;
     $scope.app = rAdapterDetail;
+    $scope.runOnceLoading = false;
 
     AdapterDetail.initialize(rAdapterDetail, $state);
 
@@ -99,7 +100,7 @@ angular.module(PKG.name + '.feature.adapters')
       myWorkersApi.pollStatus(params)
         .$promise
         .then(function (res) {
-          $scope.appStatus = res.status;
+          $scope.appStatus = res.status === 'RUNNING' ? 'RUNNING' : 'SUSPENDED';
         });
     }
 
@@ -114,7 +115,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       switch (action) {
         case 'Start':
-          $scope.appStatus = 'Starting';
+          $scope.appStatus = 'STARTING';
 
           if (AdapterDetail.programType === 'WORKFLOWS') {
             myWorkFlowApi.scheduleResume(scheduleParams, {})
@@ -135,7 +136,7 @@ angular.module(PKG.name + '.feature.adapters')
           break;
 
         case 'Stop':
-          $scope.appStatus = 'Stopping';
+          $scope.appStatus = 'STOPPING';
           if (AdapterDetail.programType === 'WORKFLOWS') {
             myWorkFlowApi.scheduleSuspend(scheduleParams, {})
               .$promise
@@ -146,13 +147,25 @@ angular.module(PKG.name + '.feature.adapters')
             myWorkersApi.doAction(angular.extend(params, { action: 'stop' }), {})
               .$promise
               .then(function () {
-                $scope.appStatus = 'STOPPED';
+                $scope.appStatus = 'SUSPENDED';
               });
           }
 
           break;
         case 'Run Once':
-          myWorkFlowApi.doAction(angular.extend(params, { action: 'start' }), {});
+          myWorkFlowApi.doAction(angular.extend(params, { action: 'start' }), {})
+            .$promise
+            .then(function () {
+              $scope.runOnceLoading = true;
+              $scope.appStatus = 'RUNNING';
+
+              $timeout(function () {
+                $scope.runOnceLoading = false;
+              }, 1500);
+
+            }, function error () {
+              $scope.runOnceLoading = false;
+            });
 
           break;
         case 'Delete':

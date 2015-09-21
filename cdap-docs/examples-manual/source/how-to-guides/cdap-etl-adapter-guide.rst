@@ -4,7 +4,7 @@
 
 .. highlight:: console
 
-.. _cdap-etl-adapter-guide:
+.. _cdap-etl-application-guide:
 
 .. include:: ../../target/_includes/cdap-etl-adapter-guide/README.rst
    :end-line: 4

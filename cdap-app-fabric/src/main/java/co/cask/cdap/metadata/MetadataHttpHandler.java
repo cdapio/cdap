@@ -555,7 +555,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     } else {
       metadataSearchTargetType = null;
     }
-    Set<MetadataSearchResultRecord> results = metadataAdmin.searchMetadata(searchQuery, metadataSearchTargetType);
+    Set<MetadataSearchResultRecord> results = metadataAdmin.searchMetadata(namespaceId, searchQuery,
+                                                                           metadataSearchTargetType);
 
     responder.sendJson(HttpResponseStatus.OK, results, SET_METADATA_SEARCH_RESULT_TYPE, GSON);
   }

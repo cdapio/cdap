@@ -34,7 +34,6 @@ body.theme-cdap.state-adapters {
   div.console {
     background-color: white;
     min-height: 40vh;
-    overflow-x: hidden;
     .transition(all 0.2s ease);
     &.collapsed {
       left: 130px;
@@ -71,9 +70,7 @@ body.theme-cdap.state-adapters {
     }
   }
   div.console-type {
-    background-color: white;
     border-top: 1px solid @table-border-color;
-    width: 100%;
     h4 {
       color: #999;
       font-size: 14px;
@@ -132,6 +129,9 @@ body.theme-cdap.state-adapters {
         height: 30px;
         padding: 0 5px;
         vertical-align: middle;
+        select.form-control {
+          padding-right: 20px;
+        }
         &.name {
           width: 35%;
         }
@@ -238,6 +238,107 @@ body.theme-cdap.state-adapters {
       }
     }
 
+    .pipeline-schedule {
+      padding: 0 15px;
+
+      h3 {
+        margin-top: 0;
+        font-weight: 500;
+      }
+
+      .schedule-type {
+        margin-bottom: 20px;
+      }
+
+      .nav.nav-tabs.slanted-tabs {
+        margin-bottom: 15px;
+        margin-top: 15px;
+
+        @tabs-grey: #c7c7c6;
+        @tabs-light-grey: lighten(@tabs-grey, 15%);
+
+        > li {
+          height: 25px;
+          background-color: @tabs-light-grey;
+          padding: 5px 10px;
+          border-top: 1px solid @tabs-grey;
+          border-bottom: 1px solid @tabs-grey;
+          border-collapse: collapse;
+          margin-right: 15px;
+          cursor: pointer;
+
+          &::before {
+            content: '';
+            height: 25px;
+            width: 10px;
+            border-left: 1px solid @tabs-grey;
+            border-top: 1px solid @tabs-grey;
+            border-bottom: 1px solid @tabs-grey;
+            border-collapse: collapse;
+            .skew(-15deg,0);
+            position: absolute;
+            top: -1px;
+            left: -3px;
+            background-color: @tabs-light-grey;
+          }
+
+          &::after {
+            content: '';
+            height: 25px;
+            width: 10px;
+            border-right: 1px solid @tabs-grey;
+            border-top: 1px solid @tabs-grey;
+            border-bottom: 1px solid @tabs-grey;
+            border-collapse: collapse;
+            .skew(15deg, 0);
+            position: absolute;
+            top: -1px;
+            right: -3px;
+            background-color: @tabs-light-grey;
+          }
+
+
+          &.active {
+            background-color: white;
+            border-bottom: 0;
+
+            &::before {
+              content: '';
+              height: 25px;
+              border-left: 1px solid @tabs-grey;
+              border-top: 1px solid @tabs-grey;
+              border-bottom: 1px solid white;
+              border-collapse: collapse;
+              .skew(-15deg,0);
+              position: absolute;
+              top: -1px;
+              left: -3px;
+              background-color: transparent;
+            }
+
+            &::after {
+              content: '';
+              height: 25px;
+              width: 10px;
+              border-right: 1px solid @tabs-grey;
+              border-top: 1px solid @tabs-grey;
+              border-bottom: 1px solid white;
+              border-collapse: collapse;
+              .skew(15deg, 0);
+              position: absolute;
+              top: -1px;
+              right: -3px;
+              background-color: transparent;
+            }
+          }
+
+
+        }
+
+
+      }
+    }
+
     .status-view {
       margin-top: 15px;
 
@@ -304,5 +405,7 @@ body.theme-cdap.state-adapters {
   footer {
     // Creates a bottom border for the bottom panel, needed here in order to accommodate the single scroll
     border-top: 1px solid @table-border-color;
+    position: fixed;
+    z-index: 1025;
   }
 }

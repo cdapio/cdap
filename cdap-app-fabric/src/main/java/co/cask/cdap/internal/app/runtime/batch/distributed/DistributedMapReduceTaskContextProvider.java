@@ -76,7 +76,8 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   }
 
   @Override
-  protected void doStart() throws Exception {
+  protected void startUp() throws Exception {
+    super.startUp();
     try {
       List<ListenableFuture<State>> startFutures = Services.chainStart(zkClientService,
                                                                        kafkaClientService,
@@ -100,7 +101,8 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   }
 
   @Override
-  protected void doStop() throws Exception {
+  protected void shutDown() throws Exception {
+    super.shutDown();
     Exception failure = null;
     try {
       logAppenderInitializer.close();

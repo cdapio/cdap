@@ -327,8 +327,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
    * Trigger and state.
    */
   private static class TriggerStatus implements Serializable {
-    private final OperableTrigger trigger;
-    private final Trigger.TriggerState state;
+    private OperableTrigger trigger;
+    private Trigger.TriggerState state;
 
     private TriggerStatus(OperableTrigger trigger, Trigger.TriggerState state) {
       this.trigger = trigger;
