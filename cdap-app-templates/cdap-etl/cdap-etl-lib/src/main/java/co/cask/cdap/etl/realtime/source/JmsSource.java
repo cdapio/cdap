@@ -198,7 +198,10 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
     String pluginId = getPluginId();
     Class<Object> driver  = pipelineConfigurer.usePluginClass(config.jmsPluginType, config.jmsPluginName, pluginId,
                                                               PluginProperties.builder().build());
-    Preconditions.checkArgument(driver != null, "JMS Initial Connection Factory Context class must be found.");
+    Preconditions.checkArgument(driver != null,
+                                "Unable to find JMS Initial Connection Factory Context class. Please make sure that " +
+                                  "the plugin '%s' of type '%s' containing the class has been installed correctly.",
+                                config.jmsPluginName, config.jmsPluginType);
   }
 
   private String getPluginId() {
