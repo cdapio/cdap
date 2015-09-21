@@ -12,7 +12,6 @@ Configuration
 
 Introduction
 ------------
-
 This manual is to help you configure Cask Data Application Platform (CDAP). It provides the
 instructions for
 `configuration <#configuration>`__ and
@@ -267,7 +266,7 @@ In addition, the property ``app.program.jvm.opts`` must be set in the ``cdap-sit
 
   <property>
     <name>app.program.jvm.opts</name>
-    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=<version></value>
+    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=<version> -Dspark.yarn.am.extraJavaOptions=-Dhdp.version=<version></value>
     <description>Java options for all program containers</description>
   </property>
   
@@ -275,7 +274,7 @@ Using the same example as above, substituting ``2.2.6.0-2800`` for ``<version>``
 
   <property>
     <name>app.program.jvm.opts</name>
-    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=2.2.6.0-2800</value>
+    <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts} -Dhdp.version=2.2.6.0-2800 -Dspark.yarn.am.extraJavaOptions=-Dhdp.version=2.2.6.0-2800</value>
     <description>Java options for all program containers</description>
   </property>
 

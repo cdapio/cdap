@@ -49,7 +49,7 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "transform")
 @Name("Projection")
-@Description("Projection transform that lets you drop, rename, and cast fields to a different type.")
+@Description("The Projection transform lets you drop, rename, and cast fields to a different type.")
 public class ProjectionTransform extends Transform<StructuredRecord, StructuredRecord> {
   private static final String DROP_DESC = "Comma-separated list of fields to drop. For example: " +
     "'field1,field2,field3'.";

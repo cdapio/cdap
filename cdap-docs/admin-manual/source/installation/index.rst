@@ -6,9 +6,9 @@
 
 .. _installation-index:
 
-============================================
+============
 Installation
-============================================
+============
 
 .. toctree::
    :maxdepth: 1
@@ -57,7 +57,6 @@ Installation
 - |appendices| Two appendices cover the XML files used to configure the 
   :ref:`CDAP installation <appendix-cdap-site.xml>` and the :ref:`security configuration.
   <appendix-cdap-security.xml>`
-
 
 
 .. rubric:: Putting CDAP into Production

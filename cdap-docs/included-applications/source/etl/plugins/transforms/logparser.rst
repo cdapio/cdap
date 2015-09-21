@@ -2,6 +2,8 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+.. _included-apps-etl-plugins-transformations-logparser:
+
 ==========================
 Transformations: LogParser
 ==========================
@@ -9,7 +11,7 @@ Transformations: LogParser
 .. rubric:: Description
 
 Parses logs from any input source for relevant information such as URI, IP,
-Browser, Device, and Timestamp.
+browser, device, HTTP status code, and timestamp.
 
 .. rubric:: Use Case
 
@@ -39,7 +41,7 @@ log information. The given field must be of type String or Bytes.
 
 This example searches for an input Schema field named 'body', and then attempts to parse
 the Combined Log Format entries found in the field for the URI, IP, browser, device,
-and HTTP status code. The Transform will emit records with the following schema::
+HTTP status code, and timestamp. The Transform will emit records with this schema::
 
   +============================+
   | field name    | type       |

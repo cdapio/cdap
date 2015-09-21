@@ -9,31 +9,9 @@
 CDAP Included Applications 
 ==========================
 
-
 .. _included-apps-intro:
 
 .. rubric:: Introduction to Included Applications
-
-.. CDAP allows developers to create distributed applications using the foundational
-.. application building blocks (datasets, streams, flows, MapReduce, services, workflows and
-.. workers). However, there are use cases that require that a similar type of action be
-.. performed in different circumstances, differing only slightly in each case. 
-.. 
-.. For example, perhaps you need to copy data from five different relational tables to CDAP
-.. Datasets periodically; you wouldn't want to deploy five different applications to
-.. perform these tasks. Instead, you would want to reuse code or a common program that can be
-.. configured to perform similar actions on differently configured data sources. In situations
-.. like these, you can create or use an *Application Template*.
-.. 
-.. An **Application Template** is an application that is reusable through configuration and
-.. extensible through plugins. Plugins extend the application template by implementing an
-.. interface expected by the template. One or more plugins are packaged in a specifically
-.. constructed JAR file.
-.. 
-.. To create an instantiation of an application template |---| called an **Adapter** |---| you
-.. can make a RESTful call, use a CLI command, or use the CDAP UI, providing the
-.. configuration at the time. Users of CDAP manage the lifecycle of an adapter in a very
-.. similar manner to managing the life cycle of a CDAP program.
 
 CDAP comes packaged with several system artifacts to create two types of applications: **ETL
 (Extract, Transform, and Load) pipelines** and **Data Quality applications**, simply by
@@ -63,12 +41,6 @@ These sections describe:
 - |overview|_ An introduction to ETL, ETL applications, and ETL plugins.
 
 
-.. |etl-plugins| replace:: **ETL Plugins:**
-.. _etl-plugins: etl/plugins/index.html
-
-- |etl-plugins|_ Details on ETL plugins and exploring available plugins using RESTful APIs.
-
-
 .. |etl-creating| replace:: **Creating an ETL Application:**
 .. _etl-creating: etl/creating.html
 
@@ -85,6 +57,12 @@ These sections describe:
 .. _etl-custom: etl/custom.html
 
 - |etl-custom|_ Intended for developers writing custom ETL plugins.
+
+
+.. |etl-plugins| replace:: **ETL Plugins:**
+.. _etl-plugins: etl/plugins/index.html
+
+- |etl-plugins|_ Details on ETL plugins and exploring available plugins using RESTful APIs.
 
 
 .. |etl-third-party| replace:: **Using Third-Party Jars:**

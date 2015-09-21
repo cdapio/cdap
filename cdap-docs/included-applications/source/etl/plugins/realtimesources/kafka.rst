@@ -2,13 +2,17 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+.. _included-apps-etl-plugins-real-time-sources-kafka:
+
 ===============================
-Sources: Real-time: Kafka 
+Real-time Sources: Kafka 
 ===============================
 
 .. rubric:: Description
 
-Kafka Real-time Source. Emits a record with two fields: 'key' (nullable string) and 'message' (bytes).
+Kafka real-time source. Emits a record with the schema specified by the user. If no schema
+is specified, it will emit a record with two fields: 'key' (nullable string) and 'message'
+(bytes).
 
 .. rubric:: Use Case
 
@@ -24,9 +28,11 @@ from Kafka and write them to a stream.
 **kafka.zookeeper:** The connect string location of ZooKeeper.
 Either this or the list of brokers is required.
 
-**kafka.brokers:** Comma-separated list of Kafka brokers. Either this or the ZooKeeper connect info is required.
+**kafka.brokers:** Comma-separated list of Kafka brokers. Either this or the ZooKeeper
+connect string location is required.
 
-**kafka.default.offset:** The default offset for the partition. Default value is kafka.api.OffsetRequest.EarliestTime.
+**kafka.default.offset:** The default offset for the partition. Default value is
+``kafka.api.OffsetRequest.EarliestTime``.
 
 **schema:** Optional schema for the body of Kafka events.
 The schema is used in conjunction with the format to parse Kafka payloads.

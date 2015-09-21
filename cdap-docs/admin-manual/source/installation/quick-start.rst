@@ -65,6 +65,7 @@ Configuring Package Managers
 .. include:: installation.rst 
    :start-after: .. _install-rpm-using-yum:
 
+
 .. _quick-start-configuration:
 
 .. "Configuration title"

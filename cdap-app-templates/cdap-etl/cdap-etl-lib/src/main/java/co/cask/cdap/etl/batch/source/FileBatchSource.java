@@ -83,9 +83,9 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
   protected static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
     "To use the TimeFilter, input \"timefilter\". The TimeFilter assumes that it " +
     "is reading in files with the File log naming convention of 'YYYY-MM-DD-HH-mm-SS-Tag'. The TimeFilter " +
-    "reads in files from the previous hour if the field 'timeTable' is left blank. So if it's currently " +
-    "2015-06-16-15 (June 16th 2015, 3pm), it will read in files that contain 2015-06-16-14 in the filename. " +
-    "If the field 'timeTable' is present, then it will read files in that haven't been read yet.";
+    "reads in files from the previous hour if the field 'timeTable' is left blank. If it's currently " +
+    "2015-06-16-15 (June 16th 2015, 3pm), it will read in files that contain '2015-06-16-14' in the filename. " +
+    "If the field 'timeTable' is present, then it will read in files that have not yet been read.";
   private static final String FILESYSTEM_PROPERTIES_DESCRIPTION = "JSON of the properties needed for the " +
     "distributed file system. The formatting needs to be as follows:\n{\n\t\"<property name>\" : " +
     "\"<property value>\", ...\n}. For example, the property names needed for S3 are \"fs.s3n.awsSecretAccessKey\" " +

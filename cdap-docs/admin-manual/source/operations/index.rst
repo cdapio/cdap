@@ -43,7 +43,6 @@ Operations
   This section provides links to the relevant APIs for accessing these logs and metrics,
   and an overview of available monitoring utilities.
 
-
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: preferences.html
 

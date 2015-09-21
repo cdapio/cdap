@@ -73,6 +73,6 @@ public class StreamCommands extends CommandSet<Command> implements Categorized {
 
   @Override
   public String getCategory() {
-    return CommandCategory.APPLICATION_LIFECYCLE.getName();
+    return CommandCategory.INGEST.getName();
   }
 }

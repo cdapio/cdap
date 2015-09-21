@@ -23,7 +23,10 @@
       </div>
       <div class="row">
         <div class="col-sm-12 info text-center">
-          <h4>Hydrator makes it easy to prepare data so you<br/>can get down to business faster. Let's get started!</h4>
+          <h4>
+            {{AdapterCreateController.GLOBALS.en.hydrator.wizard.welcomeMessage1}} <br/>
+            {{AdapterCreateController.GLOBALS.en.hydrator.wizard.welcomeMessage2}}
+          </h4>
         </div>
       </div>
 
@@ -53,7 +56,6 @@
               <h4>Create a<br />Realtime Pipeline</h4>
             </div>
           </a>
-
         </div>
       </div>
     </div>
@@ -68,18 +70,72 @@
           <span>Select a pre-configured pipeline</span>
         </h3>
       </div>
-      <div class="col-sm-3"
-          ng-repeat="template in AdapterCreateController.templates"
-          ng-click="AdapterCreateController.selectTemplate(template)"
-        >
-          <div class="well well-md start-well template-link">
-            <h4 class="template-name">{{ template.name }}</h4>
-            <p>{{ template.description }}</p>
+
+      <div class="row">
+        <div class="col-xs-3 templates-filters">
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="form-group has-feedback">
+                <input type="text"
+                  class="form-control"
+                  ng-model="AdapterCreateController.searchText"
+                  placeholder="Search" />
+                <span class="fa fa-search form-control-feedback"></span>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="btn-group-vertical">
+                <button class="btn btn-default text-left"
+                  ng-class="{'active': AdapterCreateController.typeFilter === ''}"
+                  ng-click="AdapterCreateController.typeFilter = ''">
+                  All
+                </button>
+                <button class="btn btn-default text-left"
+                  ng-class="{'active': AdapterCreateController.typeFilter === AdapterCreateController.GLOBALS.etlBatch}"
+                  ng-click="AdapterCreateController.typeFilter = AdapterCreateController.GLOBALS.etlBatch">
+                  Batch
+                </button>
+                <button class="btn btn-default text-left"
+                  ng-class="{'active': AdapterCreateController.typeFilter === AdapterCreateController.GLOBALS.etlRealtime}"
+                  ng-click="AdapterCreateController.typeFilter = AdapterCreateController.GLOBALS.etlRealtime">
+                  Realtime
+                </button>
+              </div>
+            </div>
           </div>
         </div>
-    </div>
 
+        <div class="col-xs-9 template-main">
+          <div class="row">
+            <div class="col-xs-4"
+              ng-repeat="template in AdapterCreateController.filtered = (AdapterCreateController.templates | filter: { type: AdapterCreateController.typeFilter, $: AdapterCreateController.searchText }) | myPaginate:AdapterCreateController.currentPage:9"
+              ng-click="AdapterCreateController.selectTemplate(template)">
+              <div class="well well-md start-well template-link">
+                <h4 class="template-name">{{ template.name }}</h4>
+                <p>{{ template.description }}</p>
+                <hr/>
+                <div class="template-properties">
+                  <p>Source: {{ template._properties.config.source.name }}</p>
+                  <p>Sinks: {{ template._properties.config.sinks[0].name }}<span ng-if="template._properties.config.sinks.length > 1">, ...</span> </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xs-12" ng-if="AdapterCreateController.filtered.length > 9">
+              <pagination total-items="AdapterCreateController.filtered.length"
+                ng-model="AdapterCreateController.currentPage"
+                items-per-page="9"></pagination>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
+
   <my-file-select class="sr-only"
                   id="adapter-import-config-link"
                   data-button-icon="fa-upload"

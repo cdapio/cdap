@@ -2,8 +2,10 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+.. _included-apps-etl-plugins-batch-sinks-database:
+
 ===============================
-Sinks: Batch: Database
+Batch Sinks: Database
 ===============================
 
 .. rubric:: Description
@@ -22,6 +24,8 @@ of the FileSet to a database table where it can be served to your users.
 **tableName:** Name of the table to export to.
 
 **columns:** Comma-separated list of columns in the specified table to export to.
+
+.. connection information from DBConfig.java
 
 **connectionString:** JDBC connection string including database name.
 
@@ -59,4 +63,3 @@ it will connect to the 'prod' database of a PostgreSQL instance running on 'loca
 Each input record will be written to a row of the 'users' table, with the value for each
 column taken from the value of the field in the record. For example, the 'id' field in
 the record will be written to the 'id' column of that row.
-

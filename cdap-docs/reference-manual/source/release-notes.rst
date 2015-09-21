@@ -1622,7 +1622,9 @@ New Features
     
 - **Upgrade and Data Migration Tool**
 
-  - Added an `automated upgrade tool <http://docs.cask.co/cdap/2.8.0/en/admin-manual/installation/installation.html#upgrading-an-existing-version>`__ which supports upgrading from
+  - Added an `automated upgrade tool 
+    <http://docs.cask.co/cdap/2.8.0/en/admin-manual/installation/installation.html#upgrading-an-existing-version>`__ 
+    which supports upgrading from
     2.6.x to 2.8.0. (**Note:** Apps need to be both recompiled and re-deployed.)
     Upgrade from 2.7.x to 2.8.0 is not currently supported. If you have a use case for it, 
     please reach out to us at `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__.
@@ -1653,8 +1655,8 @@ Known Issues
 - See also the *Known Issues* of `version 2.7.1 <#known-issues-271>`_\ .
 - If the Hive Metastore is restarted while the CDAP Explore Service is running, the 
   Explore Service remains alive, but becomes unusable. To correct, `restart the CDAP Master
-  <http://docs.cask.co/cdap/2.8.0/en/admin-manual/installation/installation.html#starting-services>`__, which will restart all services 
-  (`CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__).
+  <http://docs.cask.co/cdap/2.8.0/en/admin-manual/installation/installation.html#starting-services>`__, 
+  which will restart all services (`CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__).
 - User datasets with names starting with ``"system"`` can potentially cause conflicts
   (`CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__).
 - Scaling the number of metrics processor instances doesn't automatically distribute the
@@ -1856,9 +1858,10 @@ CDAP Bug Fixes
 - Fixed a problem with applications, whose Spark or Scala user classes were not extended
   from either ``JavaSparkProgram`` or ``ScalaSparkProgram``, failing with a class loading error
   (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__).
-- Fixed a problem with the `CDAP upgrade tool <http://docs.cask.co/cdap/2.6.0/en/admin-manual/installation/installation.html#upgrading-an-existing-version>`__ not preserving |---| for 
-  tables with readless increments enabled |---| the coprocessor configuration during an upgrade
-  (`CDAP-1044 <https://issues.cask.co/browse/CDAP-1044>`__).
+- Fixed a problem with the `CDAP upgrade tool 
+  <http://docs.cask.co/cdap/2.6.0/en/admin-manual/installation/installation.html#upgrading-an-existing-version>`__ 
+  not preserving |---| for tables with readless increments enabled |---| the coprocessor
+  configuration during an upgrade (`CDAP-1044 <https://issues.cask.co/browse/CDAP-1044>`__).
 - Fixed a problem with the readless increment implementation dropping increment cells when 
   a region flush or compaction occurred (`CDAP-1062 <https://issues.cask.co/browse/CDAP-1062>`__).
 
