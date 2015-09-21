@@ -56,7 +56,7 @@ angular.module(PKG.name + '.feature.adapters')
         }
       });
       if (sink.length === 0) {
-        addCanvasError('Application should have atleast 1 sink', errors);
+        addCanvasError(GLOBALS.en.hydrator.studio.oneSinkError, errors);
       }
     }
 
@@ -71,25 +71,27 @@ angular.module(PKG.name + '.feature.adapters')
       });
 
       if (source.length === 0) {
-        addCanvasError('Application can have at most 1 source', errors);
+        addCanvasError(GLOBALS.en.hydrator.studio.noSourceError, errors);
+      } else if (source.length > 1) {
+        addCanvasError(GLOBALS.en.hydrator.studio.oneSourceError, errors);
       }
     }
 
     function hasNameAndTemplateType(nodes, connections, metadata, config, errors) {
       var name = metadata.name;
       if (typeof name !== 'string' || !name.length) {
-        errors.name = 'Application needs to have a name';
-        metadata.error = 'Enter application name';
-        addCanvasError('Application needs to have a name', errors);
+        errors.name = GLOBALS.en.hydrator.studio.nameError;
+        metadata.error = GLOBALS.en.hydrator.studio.nameError;
+        addCanvasError(GLOBALS.en.hydrator.studio.nameError, errors);
         return;
       }
 
       var pattern = /^[\w]+$/;
 
       if (!pattern.test(name)) {
-        errors.name = 'Application name can only have alphabets, numbers, and \'_\'';
-        metadata.error = 'Application name can only have alphabets, numbers, and \'_\'';
-        addCanvasError('Application name can only have alphabets, numbers, and \'_\'', errors);
+        errors.name = GLOBALS.en.hydrator.studio.nameValidationError;
+        metadata.error = GLOBALS.en.hydrator.studio.nameValidationError;
+        addCanvasError(GLOBALS.en.hydrator.studio.nameValidationError, errors);
       }
 
       // Should probably add template type check here. Waiting for design.
@@ -99,23 +101,26 @@ angular.module(PKG.name + '.feature.adapters')
 
       if(config.source.name && !isValidPlugin(config.source)) {
         errors[config.source.id] = {};
-        errors[config.source.id].message = 'Source is missing required fields';
+        errors[config.source.id].message = GLOBALS.en.hydrator.studio.sourceRequiredFieldsError;
         errors[config.source.id].requiredFieldCount = config.source.requiredFieldCount;
+        addCanvasError(GLOBALS.en.hydrator.studio.sourceRequiredFieldsError, errors);
       }
 
       config.sinks.forEach(function(sink) {
         if (sink.name && !isValidPlugin(sink)) {
           errors[sink.id] = {};
-          errors[sink.id].message = 'Sink is missing required fields';
+          errors[sink.id].message = GLOBALS.en.hydrator.studio.sinkRequiredFieldsError;
           errors[sink.id].requiredFieldCount = sink.requiredFieldCount;
+          addCanvasError(GLOBALS.en.hydrator.studio.sinkRequiredFieldsError, errors);
         }
       });
 
       config.transforms.forEach(function(transform) {
         if (transform.name && !isValidPlugin(transform)) {
           errors[transform.id] ={};
-          errors[transform.id].message = 'Transform is missing required fields';
+          errors[transform.id].message = GLOBALS.en.hydrator.studio.transformRequiredFieldsError;
           errors[transform.id].requiredFieldCount = transform.requiredFieldCount;
+          addCanvasError(GLOBALS.en.hydrator.studio.transformRequiredFieldsError, errors);
         }
       });
 
@@ -212,12 +217,12 @@ angular.module(PKG.name + '.feature.adapters')
       });
 
       if (!sinkHasSameSource) {
-        addCanvasError('Multiple sinks have to branch from the same node', errors);
+        addCanvasError(GLOBALS.en.hydrator.studio.sinkBranchNodeError, errors);
         return;
       }
 
       if (branch) {
-        addCanvasError('Branching in this application is not supported', errors);
+        addCanvasError(GLOBALS.en.hydrator.studio.BranchError, errors);
         return;
       }
 
@@ -231,7 +236,7 @@ angular.module(PKG.name + '.feature.adapters')
       });
 
       if (unattached.length > 0) {
-        addCanvasError('There are unconnected nodes in this application', errors);
+        addCanvasError(GLOBALS.en.hydrator.studio.unconnectedNodesError, errors);
         return;
       }
 
@@ -239,14 +244,14 @@ angular.module(PKG.name + '.feature.adapters')
       while (currNode !== sinkSourceNode) {
         if (connectionHash[currNode]) {
           if (connectionHash[currNode].visited) {
-            addCanvasError('There is circular connection in this application', errors);
+            addCanvasError(GLOBALS.en.hydrator.studio.circularConnectionError, errors);
             return;
           }
 
           connectionHash[currNode].visited = true;
           currNode = connectionHash[currNode].target;
         } else {
-          addCanvasError('This application connections do not end in a sink', errors);
+          addCanvasError(GLOBALS.en.hydrator.studio.endSinkError, errors);
           return;
         }
       }
@@ -254,7 +259,7 @@ angular.module(PKG.name + '.feature.adapters')
       var connKeys = Object.keys(connectionHash);
       for (var i = 0; i < connKeys.length; i++) {
         if (!connectionHash[connKeys[i]].visited) {
-          addCanvasError('There are parallel connections inside this application', errors);
+          addCanvasError(GLOBALS.en.hydrator.studio.parallelConnectionError, errors);
           break;
         }
       }
