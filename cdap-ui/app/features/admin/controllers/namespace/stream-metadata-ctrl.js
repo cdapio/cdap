@@ -76,6 +76,7 @@ angular.module(PKG.name + '.feature.admin')
     $scope.reload();
 
     $scope.save = function() {
+      $scope.error = null;
 
       // Cleanup Properties from empty fields
       var properties = [];
