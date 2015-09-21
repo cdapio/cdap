@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 
@@ -53,7 +54,7 @@ public class Source extends BatchSource<byte[], byte[], StructuredRecord> {
   }
 
   @Override
-  public void initialize(BatchSourceContext context) throws Exception {
+  public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
     // Get Config param and use to initialize
     // String param = config.param
