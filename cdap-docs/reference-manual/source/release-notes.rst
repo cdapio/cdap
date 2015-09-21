@@ -23,6 +23,19 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.2.0 <http://docs.cask.co/cdap/3.2.0/index.html>`__
+=============================================================
+
+.. _known-issues-320:
+
+Known Issues
+------------
+
+- `CDAP-3732 <https://issues.cask.co/browse/CDAP-3732>`__ -
+  The first time a flow is started in a namespace, there will be an error message in the logs
+  about a failure to enable explore on the system.queue table. A call to enable exploration
+  on the table should not be made, as it is not meant to be explorable.
+
 `Release 3.1.0 <http://docs.cask.co/cdap/3.1.0/index.html>`__
 =============================================================
 
