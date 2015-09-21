@@ -36,7 +36,7 @@ angular.module(PKG.name + '.services')
       hydrator: {
         appLabel: 'Hydrator Pipeline',
         studio: {
-          oneSinkError: 'Please add at least one Sink to your pipeline.',
+          oneSinkError: 'Please add at least one sink to your pipeline.',
           sourceRequiredFieldsError: 'Please provide required fields for the source.',
           sinkRequiredFieldsError: 'Please provide required fields for the sink.',
           transformRequiredFieldsError: 'Please provide required fields for the transform.',
