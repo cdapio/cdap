@@ -186,7 +186,7 @@ public class ArtifactRange {
       throw new InvalidArtifactRangeException(String.format("Invalid artifact range %s. " +
         "Could not find ',' separating lower and upper verions.", artifactRangeStr));
     }
-    String lowerStr = artifactRangeStr.substring(versionStartIndex + 1, commaIndex);
+    String lowerStr = artifactRangeStr.substring(versionStartIndex + 1, commaIndex).trim();
     ArtifactVersion lower = new ArtifactVersion(lowerStr);
     if (lower.getVersion() == null) {
       throw new InvalidArtifactRangeException(String.format(
@@ -199,7 +199,7 @@ public class ArtifactRange {
       throw new InvalidArtifactRangeException(String.format(
         "Invalid artifact range %s. Could not find enclosing ']' or ')'.", artifactRangeStr));
     }
-    String upperStr = artifactRangeStr.substring(commaIndex + 1, versionEndIndex);
+    String upperStr = artifactRangeStr.substring(commaIndex + 1, versionEndIndex).trim();
     ArtifactVersion upper = new ArtifactVersion(upperStr);
     if (upper.getVersion() == null) {
       throw new InvalidArtifactRangeException(String.format(
@@ -213,7 +213,6 @@ public class ArtifactRange {
         artifactRangeStr, lowerStr, upperStr));
     }
 
-    // for example: 'Artifact-Extends: etl-batch-1.0.0:2.0.0,etl-realtime-1.0.0:3.0.0
     return new ArtifactRange(namespace, name, lower, isLowerInclusive, upper, isUpperInclusive);
   }
 

@@ -31,6 +31,15 @@ import java.util.List;
 public class ArtifactRangeTest {
 
   @Test
+  public void testWhitespace() throws InvalidArtifactRangeException {
+    ArtifactRange range = ArtifactRange.parse(Id.Namespace.DEFAULT, "name[ 1.0.0 , 2.0.0 )");
+    Assert.assertEquals(new ArtifactRange(Id.Namespace.DEFAULT, "name",
+                                          new ArtifactVersion("1.0.0"), true,
+                                          new ArtifactVersion("2.0.0"), false),
+                        range);
+  }
+
+  @Test
   public void testIsInRange() {
     ArtifactRange range = new ArtifactRange(Id.Namespace.DEFAULT, "test",
       new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"));

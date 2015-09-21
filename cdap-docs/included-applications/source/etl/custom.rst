@@ -13,34 +13,15 @@ Overview
 This section is intended for developers writing custom ETL plugins. Users of these should
 refer to the :ref:`Included Applications <included-apps-index>`.
 
+
+Creating Custom ETL Plugins
+===========================
 CDAP provides for the creation of custom ETL plugins for batch/real-time sources/sinks and
 transformations to extend the existing ``cdap-etl-batch`` and ``cdap-etl-realtime`` system artifacts.
-
-.. _included-apps-custom-etl-plugins-installation-directory:
-
-Installation Directory
-======================
-
-To make a custom plugin available to one of the system artifacts (and thus available
-to any application created from one of the artifacts), the plugin should be packaged as a bundle jar
-and then placed in the appropriate directory. 
-
-- **Standalone mode:** ``$CDAP_INSTALL_DIR/artifacts``
-
-- **Distributed mode:** The plugin jars should be placed in the local file system and the path
-  can be provided to CDAP by setting the property ``app.template.dir`` in
-  ``cdap-site.xml``. The default path is: ``/opt/cdap/master/artifacts``
-
-A RESTful API call to :ref:`load system artifacts <http-restful-api-artifact-system-load>`
-can be made to re-load the artifacts.
-
-Alternatively, the CDAP Standalone should be restarted for this change to take effect in Standalone
-mode, and ``cdap-master`` services should be restarted in the Distributed mode.
 
 
 Plugin Types and Maven Archetypes
 =================================
-
 In ETL templates, there are five plugin types:
 
 - Batch Source (*batchsource*)
@@ -68,8 +49,8 @@ These annotations may be used with the plugin classes:
   optional. Such a plugin class can be used without that property being specified.
 
 
-Creating a Batch Source
-=======================
+Creating a Batch Source Plugin
+==============================
 A batch source plugin can be created from a Maven archetype. This command will create a
 project for the plugin from the archetype:
 
@@ -103,7 +84,7 @@ Methods
 
 Example::
 
-  @Plugin(type = "source")
+  @Plugin(type = "batchsource")
   @Name("MyBatchSource")
   @Description("Demo Source")
   public class MyBatchSource extends BatchSource<LongWritable, String, String> {
@@ -117,8 +98,8 @@ Example::
   }
 
 
-Creating a Batch Sink
-=====================
+Creating a Batch Sink Plugin
+============================
 A batch sink plugin can be created from this Maven archetype:
 
 .. container:: highlight
@@ -153,7 +134,7 @@ Methods
 
 Example::
 
-  @Plugin(type = "sink")
+  @Plugin(type = "batchsink")
   @Name("MyBatchSink")
   @Description("Demo Sink")
   public class MyBatchSink extends BatchSink<String, String, NullWritable> {
@@ -167,8 +148,8 @@ Example::
   }
 
 
-Creating a Real-Time Source
-===========================
+Creating a Real-Time Source Plugin
+==================================
 A real-time source plugin can be created from this Maven archetype:
 
 .. container:: highlight
@@ -201,7 +182,7 @@ Example::
   /**
    * Real-Time Source to poll data from external sources.
    */
-  @Plugin(type = "source")
+  @Plugin(type = "realtimesource")
   @Name("Source")
   @Description("Real-Time Source")
   public class Source extends RealtimeSource<StructuredRecord> {
@@ -256,8 +237,8 @@ Example::
   }
 
 
-Creating a Real-Time Sink
-=========================
+Creating a Real-Time Sink Plugin
+================================
 A real-time sink plugin can be created from this Maven archetype:
 
 .. container:: highlight
@@ -287,7 +268,7 @@ Methods
 
 Example::
 
-  @Plugin(type = "sink")
+  @Plugin(type = "realtimesink")
   @Name("Demo")
   @Description("Demo Real-Time Sink")
   public class DemoSink extends RealtimeSink<String> {
@@ -303,9 +284,9 @@ Example::
     }
   }
 
-
-Creating a Transformation
-=========================
+
+Creating a Transformation Plugin
+================================
 In ETL applications, a transformation operation is applied on one object at a time,
 converting it into zero or more transformed outputs. A Transformation plugin can be created
 using this Maven archetype:
@@ -370,7 +351,7 @@ copies in each transform is emitted. The user metrics can be queried by using th
     }
   }
 
-
+
 Test Framework for Plugins
 ==========================
 To unit test a plugin, see the section on plugin testing in :ref:`Testing a CDAP Application <test-framework>`.
@@ -424,17 +405,14 @@ of failures.
       return currentState;
     }
   }
-
+  
+  
 .. _included-apps-custom-etl-plugins-plugin-packaging:
-
-Plugin Packaging
-================
-A plugin is packaged as a JAR file, which contains the plugin class and its dependencies
-inside. CDAP uses the "Export-Package" attribute in the JAR file manifest to determine
-which classes are *visible*. A *visible* class is one that can be used by another class
-that is not from the plugin JAR itself. This means the Java package which the plugin class
-is in must be listed in "Export-Package", otherwise the plugin class will not be visible,
-and hence no one will be able to use it.
+
+Plugin Packaging and Deployment
+===============================
+To package and deploy your plugin, follow the instructions in the
+:ref:`Plugin Packaging and Deployment Guide <plugins-deployment>`.
 
 By using one of the ``etl-plugin`` Maven archetypes, your project will be set up to generate
 the required JAR manifest. If you move the plugin class to a different Java package after

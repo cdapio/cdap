@@ -78,7 +78,8 @@ angular
       'ncy-angular-breadcrumb',
       'angularMoment',
       'ui.ace',
-      'gridster'
+      'gridster',
+      'angular-cron-jobs'
 
     ]).name,
 
