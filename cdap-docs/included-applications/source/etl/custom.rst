@@ -424,7 +424,7 @@ of failures.
 Plugin Packaging and Deployment
 ===============================
 
-To package and deploy your plugin, follow the instructions describe in the
+To package and deploy your plugin, follow the instructions in the
 :ref:`Plugin Packaging and Deployment Guide <plugins-deployment>`.
 
 By using one of the ``etl-plugin`` Maven archetypes, your project will be set up to generate
