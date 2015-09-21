@@ -26,7 +26,7 @@
         </div>
       </div>
       <div ng-repeat="message in ConsoleTabController.messages track by $index">
-        <pre ng-class="{'text-danger': message.type === 'error', 'text-info': message.type === 'info', 'text-success': message.type === 'success'}">{{message.content}}</pre>
+        <pre ng-class="{'text-danger': message.type === 'error', 'text-info': message.type === 'info', 'text-success': message.type === 'success'}">{{message.date | amDateFormat: 'MM/DD/YY h:mm:ss a'}}: {{message.content}}</pre>
       </div>
 
       <div ng-if="ConsoleTabController.messages.length === 0">
