@@ -51,7 +51,7 @@ Sometimes an application class exposes an interface that it expects other artifa
 For example, CDAP ships with a ``cdap-etl-batch`` artifact that can be used to create ETL applications.
 The artifact exposes a ``batchsource`` interface that it expects others to implement.
 The cdap-etl-lib artifact contains several plugins that implement that interface. There is one source
-for databases, another for hdfs files, etc. To make plugins in one artifact available to
+for databases, another for HDFS files, etc. To make plugins in one artifact available to
 another artifact, the plugin artifact must specify its parent artifacts. All of those parent artifacts
 will then be able to use those plugins. 
 
@@ -80,7 +80,7 @@ started. If a system artifact contains plugins that extend another system artifa
 JSON config file must be provided to specify which artifacts it extends. In addition, if a system
 artifact is a third-party JAR, the plugins in the artifact can be explicitly listed in that same config
 file. For example, suppose you want to add ``mysql-connector-java-5.1.3.jar`` as a system artifact. The
-artifact is the mysql jdbc driver, and is a third-party JAR that we want to use as a jdbc plugin for
+artifact is the MySQL JDBC driver, and is a third-party JAR that we want to use as a JDBC plugin for
 the ``cdap-etl-batch`` artifact. You would place the JAR file in the artifacts directory along with a
 matching config file named ``mysql-connector-java-5.1.3.json``. The config file would contain::
 
@@ -105,8 +105,8 @@ applications in all namespaces.
 
 We will now walk through an example use case in order to illustrate how artifacts are used.
 In this example, we decide to implement an application class that reads from a stream and writes
-to a table using a flow. The stream it reads from and the table it writes to will be configurable.
-Our development team writes code that looks like::
+to a table using a flow. The stream that it reads from |---| and the table that it writes to |---| will be configurable.
+Our development team writes code such as::
 
   public class MyApp extends AbstractApplication<MyApp.MyConfig> {
   
@@ -174,12 +174,12 @@ Our development team writes code that looks like::
     }
   }
 
-Our build system creates a JAR named ``myapp-1.0.0.jar`` that contains the MyApp class.
+Our build system creates a JAR named ``myapp-1.0.0.jar`` that contains the ``MyApp`` class.
 The JAR is deployed via the RESTful API::
 
   curl localhost:10000/v3/namespaces/default/artifacts/myapp --data-binary @myapp-1.0.0.jar
 
-CDAP determines the version is 1.0.0 by examining the Manifest file contained in the JAR.
+CDAP determines the version is 1.0.0 by examining the manifest file contained in the JAR.
 Information about the artifact and the application class in the artifact are now visible
 through JAR API calls::
 
@@ -230,7 +230,8 @@ from the ``purchases`` stream and writes to the ``events`` table::
     }
   }' 
 
-We can then manage the lifecycle of the flow using the Application Lifecycle RESTful APIs.
+We can then manage the lifecycle of the flow using the 
+:ref:`Application Lifecycle RESTful APIs <http-restful-api-lifecycle>`.
 After it has been running for a while, a bug is found in the code. The development team provides
 a fix, and ``myapp-1.0.1.jar`` is released. The artifact is deployed::
 
@@ -282,3 +283,4 @@ bug and decide to roll back to the previous version. The flow is stopped and ano
     }
   }'
 
+Once the development team has resolved that serious bug, we can try re-deploying again...
