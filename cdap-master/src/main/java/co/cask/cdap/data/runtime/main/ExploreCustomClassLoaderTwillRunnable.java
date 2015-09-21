@@ -139,7 +139,10 @@ public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable
     @Override
     public Class<?> loadClass(String s) throws ClassNotFoundException {
       // Load all Twill API classes from parent classloader, since they are already loaded by parent classloader.
-      if (s.startsWith("org.apache.twill.api.")) {
+      // Also, com.mapr.fs.ShimLoader is used by MapR to load native libraries, since Twill would have already loaded
+      // the native libraries, we should not load this class and the classes it needs again through a different
+      // classloader.
+      if (s.startsWith("org.apache.twill.api.") || s.equals("com.mapr.fs.ShimLoader")) {
         return twillClassLoader.loadClass(s);
       }
 
