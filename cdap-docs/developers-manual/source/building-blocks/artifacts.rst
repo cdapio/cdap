@@ -34,7 +34,7 @@ An *Artifact* is a snapshot artifact if the version suffix begins with SNAPSHOT.
 begins with SNAPSHOT. '1.2.3' is not a snapshot version because there is no suffix. '1.2.3-hadoop2'
 is also not a snapshot version because the suffix does not begin with SNAPSHOT.
 
-Artifacts are managed using the :ref:`RESTful Artifact APIs <http-restful-api-artifact>`.
+Artifacts are managed using the :ref:`Artifact HTTP RESTful APIs <http-restful-api-artifact>`.
 
 .. rubric:: Deploying an Artifact
 
@@ -78,9 +78,9 @@ Any artifact in the directory will be added to CDAP when it starts up. In additi
 call can be made to scan the directory for any new artifacts that may have been added since CDAP
 started. If a system artifact contains plugins that extend another system artifact, a matching
 JSON config file must be provided to specify which artifacts it extends. In addition, if a system
-artifact is a 3rd party jar, the plugins in the artifact can be explicitly listed in that same config
+artifact is a third-party JAR, the plugins in the artifact can be explicitly listed in that same config
 file. For example, suppose you want to add ``mysql-connector-java-5.1.3.jar`` as a system artifact. The
-artifact is the mysql jdbc driver, and is a 3rd party jar that we want to use as a jdbc plugin for
+artifact is the mysql jdbc driver, and is a third-party JAR that we want to use as a jdbc plugin for
 the ``cdap-etl-batch`` artifact. You would place the JAR file in the artifacts directory along with a
 matching config file named ``mysql-connector-java-5.1.3.json``. The config file would contain::
 
@@ -174,14 +174,14 @@ Our development team writes code that looks like::
     }
   }
 
-Our build system creates a jar named ``myapp-1.0.0.jar`` that contains the MyApp class.
-The jar is deployed via the RESTful API::
+Our build system creates a JAR named ``myapp-1.0.0.jar`` that contains the MyApp class.
+The JAR is deployed via the RESTful API::
 
   curl localhost:10000/v3/namespaces/default/artifacts/myapp --data-binary @myapp-1.0.0.jar
 
-CDAP determines the version is 1.0.0 by examining the Manifest file contained in the jar.
+CDAP determines the version is 1.0.0 by examining the Manifest file contained in the JAR.
 Information about the artifact and the application class in the artifact are now visible
-through RESTful API calls::
+through JAR API calls::
 
   curl localhost:10000/v3/namespaces/default/artifacts?scope=user
   [ 
@@ -230,7 +230,7 @@ from the ``purchases`` stream and writes to the ``events`` table::
     }
   }' 
 
-We can then manage the lifecycle of the flow using the application lifecycle RESTful APIs.
+We can then manage the lifecycle of the flow using the Application Lifecycle RESTful APIs.
 After it has been running for a while, a bug is found in the code. The development team provides
 a fix, and ``myapp-1.0.1.jar`` is released. The artifact is deployed::
 
