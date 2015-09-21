@@ -21,7 +21,7 @@ There are specific instructions for :ref:`upgrading existing CDAP installations<
 
 It's assumed that you have already followed the :ref:`installation steps <install>`.
 
-.. _install-configuration:
+.. _configuration-central:
 
 Configuration
 -------------
@@ -34,7 +34,7 @@ where you can define your specific configuration for all CDAP components.
 The ``cdap-site.xml.example`` file shows the properties that usually require customization
 for all installations.
 
-.. _install-alternatives:
+.. _configuration-alternatives:
 
 Similar to Hadoop, CDAP utilizes the ``alternatives`` framework to allow you to
 easily switch between multiple configurations. The ``alternatives`` system is used for ease of
@@ -48,7 +48,7 @@ to your custom directory.
 
 Configure the ``cdap-site.xml`` after you have installed the CDAP packages.
 
-.. _install-configuration-options:
+.. _configuration-options:
 
 To configure your particular installation, follow one of these two approaches:
 
@@ -103,7 +103,7 @@ Depending on your installation, you may want to set these properties:
         <value>{router-host-name}</value>
       </property>
 
-.. _install-configuring-explore-service:
+.. _configuration-explore-service:
 
 - To use the **ad-hoc querying capabilities of CDAP,** enable the CDAP Explore Service in
   ``conf/cdap-site.xml`` (by default, it is disabled)::
@@ -117,7 +117,7 @@ Depending on your installation, you may want to set these properties:
   This feature cannot be used unless the cluster has a correct version of Hive installed.
   See the section on :ref:`Hadoop/HBase Environment <install-hadoop-hbase>`.
   To use this feature on secure Hadoop clusters, please see these instructions on
-  :ref:`installing secure Hadoop. <install-secure-hadoop>`
+  :ref:`configuring secure Hadoop <configuration-for-secure-hadoop>`.
 
   **Note:** Some versions of Hive contain a bug that may prevent the CDAP Explore Service from starting
   up. See `CDAP-1865 <https://issues.cask.co/browse/CDAP-1865>`__ for more information about the issue.
@@ -131,7 +131,7 @@ Depending on your installation, you may want to set these properties:
 
 .. highlight:: console
 
-.. _install-secure-hadoop:
+.. _configuration-for-secure-hadoop:
 
 Secure Hadoop
 .............
@@ -213,7 +213,7 @@ In order to configure **CDAP Explore Service for secure Hadoop:**
 
 With all these properties set, the CDAP Explore Service will run on secure Hadoop clusters.
 
-.. _install-ulimit:
+.. _configuration-ulimit:
 
 ULIMIT Configuration
 ....................
@@ -226,7 +226,7 @@ Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
 .. highlight:: console
 
-.. _install-tmp-files:
+.. _configuration-tmp-files:
 
 Writing to Temp Files
 .....................
@@ -258,7 +258,7 @@ included, so if the cluster version of HDP is ``2.2.6.0-2800``, use::
   export OPTS="${OPTS} -Dhdp.version=2.2.6.0-2800" 
 
 The file ``cdap-env.sh`` is located in the configuration directory, as described above
-under :ref:`Configuration <install-alternatives>`.
+under :ref:`Configuration <configuration-alternatives>`.
 
 .. highlight:: xml
 
@@ -279,7 +279,7 @@ Using the same example as above, substituting ``2.2.6.0-2800`` for ``<version>``
   </property>
 
 
-.. _install-starting-services:
+.. _configuration-starting-services:
 
 .. highlight:: console
 
@@ -297,7 +297,7 @@ accessible through a browser at port ``9999``.
 The URL will be ``http://<host>:9999`` where ``<host>`` is the IP address of
 one of the machines where you installed the packages and started the services.
 
-.. _install-highly-available:
+.. _configuration-highly-available:
 
 Making CDAP Highly-available
 ---------------------------------
@@ -315,7 +315,7 @@ Repeat these steps on additional boxes.  The configurations needed to support hi
   - Set this to the number of Kafka servers.
 
 
-.. _install-health-check:
+.. _configuration-health-check:
 
 Getting a Health Check
 ----------------------
@@ -324,7 +324,7 @@ Getting a Health Check
    :start-after: .. _operations-health-check:
 
 
-.. _install-verification:
+.. _configuration-verification:
 
 Verification
 ------------
@@ -350,10 +350,10 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
    :ref:`cdap-building-running`.
 
 
-.. _install-upgrade:
+.. _configuration-upgrade:
 
 Upgrading an Existing Version
----------------------------------
+-----------------------------
 When upgrading an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.
 
@@ -442,10 +442,10 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
-.. _install-troubleshooting:
+.. _configuration-troubleshooting:
 
 Troubleshooting
----------------------------------
+---------------
 
 - If you have YARN configured to use LinuxContainerExecutor (see the setting for
   ``yarn.nodemanager.container-executor.class``), the ``cdap`` user needs to be present on

@@ -22,7 +22,7 @@ instructions for
 `installation <#installation>`__ of
 the CDAP components so they work with your existing Hadoop cluster.
 
-There are specific instructions for :ref:`upgrading existing CDAP installations<install-upgrade>`.
+There are specific instructions for :ref:`upgrading existing CDAP installations <configuration-upgrade>`.
 
 Once installed, another page :ref:`covers configuration <configuration>` of the CDAP installation.
 

@@ -37,7 +37,7 @@ function download_includes() {
   test_an_include 95ae9c116aa257efd5e3bb6cacaa4033 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/sink/TimePartitionedFileSetDatasetParquetSink.java
 
   # Batchsources
-  test_an_include 67ee7fbac8e3971bd37e99186890097d ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/DBSource.java
+  test_an_include 794758bc0afbc404fa33143177afbb81 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/DBSource.java
   test_an_include fd0399dc86a461466d119dc1e1cbe2f4 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/ElasticsearchSource.java
   test_an_include f85320e0da353c790434a770aba6d040 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/FileBatchSource.java
   test_an_include a3e5de66820f096813a6d58fdba86b52 ../../cdap-app-templates/cdap-etl/cdap-etl-lib/src/main/java/co/cask/cdap/etl/batch/source/KVTableSource.java
