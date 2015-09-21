@@ -18,7 +18,7 @@ information about plugins available to artifacts.
 
 Add an Artifact
 ===============
-An artifact can be added with an HTTP POST method to the URL::
+An artifact can be added (loaded) with an HTTP POST method to the URL::
 
   POST <base-url>/namespaces/<namespace>/artifacts/<artifact-name>
 
