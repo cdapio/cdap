@@ -33,7 +33,11 @@
            tooltip-toggle="group.error"
            tooltip-class="tooltip-error"
            ng-click="MySidePanel.toggleGroup(group)">
-        <span class="name">{{group.name | caskCapitalizeFilter}}</span>
+        <span class="name">{{group.name | caskCapitalizeFilter}} </span>
+        <div ng-if="MySidePanel.openedGroup === group.name"
+             class="pull-right">
+          <span class="badge" >{{MySidePanel.panel.items.length}}</span>
+        </div>
       </div>
 
       <div class="item-body-wrapper"
