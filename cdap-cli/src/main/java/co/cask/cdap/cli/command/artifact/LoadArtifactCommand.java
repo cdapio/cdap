@@ -91,8 +91,8 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
       "File names are expected to be of the form <name>-<version>.jar. " +
       "If the artifact contains plugins that extend another artifact, or if it contains " +
       "third-party plugins, a config file must be given. " +
-      "The config file must contain a JSON object that specifies the parent artifacts and any third-" +
-      "party plugins in the jar. " +
+      "The config file must contain a JSON object that specifies the parent artifacts " +
+      "and any third-party plugins in the jar. " +
       "For example, if there is a config file with these contents:\n" +
       "    {\n" +
       "      \"parents\":[ \"app1[1.0.0,2.0.0)\", \"app2[1.2.0,1.3.0] ],\n" +
