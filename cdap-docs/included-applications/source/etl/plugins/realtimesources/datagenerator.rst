@@ -2,13 +2,15 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+.. _included-apps-etl-plugins-real-time-sources-datagenerator:
+
 =================================
-Sources: Real-time: DataGenerator 
+Real-time Sources: DataGenerator 
 =================================
 
 .. rubric:: Description
 
-Source that can generate test data for Stream and Table Sinks.
+Source that can generate test data for real-time Stream and Table sinks.
 
 .. rubric:: Use Case
 

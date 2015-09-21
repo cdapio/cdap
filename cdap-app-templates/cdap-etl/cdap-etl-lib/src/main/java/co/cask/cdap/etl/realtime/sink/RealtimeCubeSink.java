@@ -55,7 +55,7 @@ import java.util.Map;
  */
 @Plugin(type = "realtimesink")
 @Name("Cube")
-@Description("CDAP Cube Dataset Realtime Sink")
+@Description("Real-time sink that writes data to a CDAP Cube dataset.")
 public class RealtimeCubeSink extends RealtimeSink<StructuredRecord> {
   private static final Gson GSON = new Gson();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();

@@ -53,7 +53,7 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "realtimesource")
 @Name("Kafka")
-@Description("Kafka Real-time Source: Emits a record with the schema specified by the user. " +
+@Description("Kafka real-time source: emits a record with the schema specified by the user. " +
   "If no schema is specified, it will emit a record with two fields: 'key' (nullable string) and 'message' (bytes).")
 public class KafkaSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaSource.class);

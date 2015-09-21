@@ -13,16 +13,12 @@ Overview
 This section is intended for developers writing custom ETL plugins. Users of these should
 refer to the :ref:`Included Applications <included-apps-index>`.
 
-
-Creating Custom ETL Plugins
-===========================
-
 CDAP provides for the creation of custom ETL plugins for batch/real-time sources/sinks and
 transformations to extend the existing ``cdap-etl-batch`` and ``cdap-etl-realtime`` system artifacts.
 
+
 Plugin Types and Maven Archetypes
 =================================
-
 In ETL templates, there are five plugin types:
 
 - Batch Source (*batchsource*)
@@ -31,13 +27,7 @@ In ETL templates, there are five plugin types:
 - Real-time Sink (*realtimesink*)
 - Transformation (*transform*)
 
-There are five corresponding Maven archetypes available for starting a plugin project:
-
-- Batch Source
-- Batch Sink
-- Real-time Source
-- Real-time Sink
-- Transformation
+There are five corresponding Maven archetypes available for starting a plugin project.
 
 Available Annotations
 ---------------------
@@ -56,8 +46,8 @@ These annotations may be used with the plugin classes:
   optional. Such a plugin class can be used without that property being specified.
 
 
-Creating a Batch Source Plugin
-------------------------------
+Creating a Batch Source
+=======================
 A batch source plugin can be created from a Maven archetype. This command will create a
 project for the plugin from the archetype:
 
@@ -79,8 +69,7 @@ the types, only one method is required to be implemented:
   ``prepareRun()``
 
 Methods
-.......
-
+-------
 - ``prepareRun()``: Used to configure the Hadoop Job configuration (for example, set the
   ``InputFormatClass``).
 - ``configurePipeline()``: Used to create any streams or datasets or perform any validation 
@@ -106,8 +95,8 @@ Example::
   }
 
 
-Creating a Batch Sink Plugin
-----------------------------
+Creating a Batch Sink
+=====================
 A batch sink plugin can be created from this Maven archetype:
 
 .. container:: highlight
@@ -129,8 +118,7 @@ After defining the types, only one method is required to be implemented:
   ``prepareRun()``
 
 Methods
-.......
-
+-------
 - ``prepareRun()``: Used to configure the Hadoop Job configuration (for ex, set ``OutputFormatClass``).
 - ``configurePipeline()``: Used to create any datasets or perform any validation 
   on the application configuration that are required by this plugin.
@@ -157,8 +145,8 @@ Example::
   }
 
 
-Creating a Real-Time Source Plugin
-----------------------------------
+Creating a Real-Time Source
+===========================
 A real-time source plugin can be created from this Maven archetype:
 
 .. container:: highlight
@@ -174,9 +162,8 @@ The only method that needs to be implemented is:
 
 	``poll()``
 
-Methods 
-.......
-
+Methods
+-------
 - ``initialize()``: Initialize the real-time source runtime. Guaranteed to be executed
   before any call to the poll method. Usually used to setup the connection to external
   sources.
@@ -247,8 +234,8 @@ Example::
   }
 
 
-Creating a Real-Time Sink Plugin
---------------------------------
+Creating a Real-Time Sink
+=========================
 A real-time sink plugin can be created from this Maven archetype:
 
 .. container:: highlight
@@ -265,7 +252,7 @@ The only method that needs to be implemented is:
  ``write()``
 
 Methods
-
+-------
 - ``initialize()``: Initialize the real-time sink runtime. Guaranteed to be executed before
   any call to the ``write`` method. 
 - ``configurePipeline()``: Used to create any datasets or perform any validation 
@@ -295,8 +282,8 @@ Example::
   }
 
 
-Creating a Transformation Plugin
---------------------------------
+Creating a Transformation
+=========================
 In ETL applications, a transformation operation is applied on one object at a time,
 converting it into zero or more transformed outputs. A Transformation plugin can be created
 using this Maven archetype:
@@ -316,8 +303,7 @@ The only method that needs to be implemented is:
 	``transform()``
 
 Methods
-.......
-
+-------
 - ``initialize()``: Used to perform any initialization step that might be required during
   the runtime of the ``Transform``. It is guaranteed that this method will be invoked
   before the ``transform`` method.
@@ -365,13 +351,11 @@ copies in each transform is emitted. The user metrics can be queried by using th
 
 Test Framework for Plugins
 ==========================
-
 To unit test a plugin, see the section on plugin testing in :ref:`Testing a CDAP Application <test-framework>`.
 
 
-Source State in Real-Time Source
-================================
-
+Source State in a Real-Time Source
+==================================
 Real-time plugins are executed in workers. During failure, there is the possibility that
 the data that is emitted from the Source will not be processed by subsequent stages. In
 order to avoid such data loss, SourceState can be used to persist the information about
@@ -418,12 +402,12 @@ of failures.
       return currentState;
     }
   }
-
+  
+  
 .. _included-apps-custom-etl-plugins-plugin-packaging:
 
 Plugin Packaging and Deployment
 ===============================
-
 To package and deploy your plugin, follow the instructions in the
 :ref:`Plugin Packaging and Deployment Guide <plugins-deployment>`.
 
@@ -438,4 +422,3 @@ classes inside the plugin JAR that you have added to the Hadoop Job configuratio
 of those classes to the "Export-Package" as well. This is to ensure those classes are
 visible to the Hadoop MapReduce framework during the adapter execution. Otherwise, the
 execution will typically fail with a ``ClassNotFoundException``.
-

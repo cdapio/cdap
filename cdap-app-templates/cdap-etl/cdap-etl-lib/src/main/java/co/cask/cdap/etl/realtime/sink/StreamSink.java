@@ -43,7 +43,7 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "realtimesink")
 @Name("Stream")
-@Description("Real-time sink that outputs to the specified CDAP Stream")
+@Description("Real-time sink that outputs to a specified CDAP stream.")
 public class StreamSink extends RealtimeSink<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(StreamSink.class);
 
