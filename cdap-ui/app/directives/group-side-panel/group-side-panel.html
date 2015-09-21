@@ -15,7 +15,8 @@
 -->
 
 <div class="side-panel text-center"
-      ng-class="{'left': MySidePanel.placement === 'left'}">
+      ng-class="{'left': MySidePanel.placement === 'left'}" parent-height>
+      <!-- parent-height is part of the my-calculate-height directive used down for sidepanel list container -->
   <div ng-if="MySidePanel.placement === 'left'" class="hydrator-filter clearfix">
     <input class="form-control pull-left" placeholder="Filter" type="text" ng-model="MySidePanel.searchText" />
   </div>
@@ -36,7 +37,9 @@
       </div>
 
       <div class="item-body-wrapper"
-           ng-if="MySidePanel.isSubMenu === true && MySidePanel.openedGroup === group.name">
+           ng-if="MySidePanel.isSubMenu === true && MySidePanel.openedGroup === group.name"
+           my-calculate-height
+           substract-height="195">
         <div class="item-body">
           <div ng-repeat="plugin in MySidePanel.panel.items | filter: {name: MySidePanel.searchText} track by $index"
                class="plugin-item"
