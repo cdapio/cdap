@@ -36,7 +36,9 @@
       </div>
 
       <div class="item-body-wrapper"
-           ng-if="MySidePanel.isSubMenu === true && MySidePanel.openedGroup === group.name">
+           ng-if="MySidePanel.isSubMenu === true && MySidePanel.openedGroup === group.name"
+           my-calculate-height
+           substract-height="195">
         <div class="item-body">
           <div ng-repeat="plugin in MySidePanel.panel.items | filter: {name: MySidePanel.searchText} track by $index"
                class="plugin-item"
