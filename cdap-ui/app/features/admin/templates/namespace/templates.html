@@ -60,6 +60,9 @@
   <label class="label-control">Template Name</label>
   <input type="text" class="form-control" ng-model="TemplatesController.pluginConfig.pluginTemplate">
 
+  <label class="label-control">Template Description</label>
+  <textarea class="form-control" ng-model="TemplatesController.pluginDescription"></textarea>
+
   <div ng-repeat="group in TemplatesController.groups.position">
     <div class="widget-group-container">
       <h4>{{TemplatesController.groups[group].display}}</h4>

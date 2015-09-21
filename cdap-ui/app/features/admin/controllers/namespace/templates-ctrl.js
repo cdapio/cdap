@@ -39,6 +39,8 @@ angular.module(PKG.name + '.feature.admin')
       GLOBALS.pluginTypes[vm.GLOBALS.etlRealtime].transform
     ];
 
+    vm.pluginDescription = '';
+
     var plugin;
 
     function initialize() {
@@ -139,6 +141,8 @@ angular.module(PKG.name + '.feature.admin')
             lock: template.lock
           };
 
+          vm.pluginDescription = template.description;
+
           initialize();
 
         });
@@ -175,6 +179,7 @@ angular.module(PKG.name + '.feature.admin')
 
       var properties = {
         pluginTemplate: vm.pluginConfig.pluginTemplate,
+        description: vm.pluginDescription,
         properties: vm.pluginConfig.properties,
         pluginType: vm.pluginType,
         templateType: vm.templateType,
