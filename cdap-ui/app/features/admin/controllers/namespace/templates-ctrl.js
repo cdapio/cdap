@@ -18,6 +18,7 @@ angular.module(PKG.name + '.feature.admin')
   .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS, $rootScope) {
 
     var vm = this;
+    var oldTemplateName;
 
     vm.GLOBALS = GLOBALS;
     vm.pluginList = [];
@@ -141,6 +142,7 @@ angular.module(PKG.name + '.feature.admin')
             lock: template.lock
           };
 
+          oldTemplateName = template.pluginTemplate;
           vm.pluginDescription = template.description;
 
           initialize();
@@ -207,6 +209,20 @@ angular.module(PKG.name + '.feature.admin')
             vm.loading = false;
 
             return;
+          }
+
+          if (vm.isEdit && oldTemplateName !== vm.pluginConfig.pluginTemplate) {
+            if (config) {
+              $alert({
+                type: 'danger',
+                content: 'Template name already exist! Please choose another name'
+              });
+              vm.loading = false;
+
+              return;
+            } else {
+              delete res[namespace][properties.templateType][properties.pluginType][oldTemplateName];
+            }
           }
 
           var json = [
