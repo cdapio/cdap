@@ -20,7 +20,7 @@ Add an Artifact
 ===============
 An artifact can be added with an HTTP POST method to the URL::
 
-  PUT <base-url>/namespaces/<namespace>/artifacts/<artifact-name>
+  POST <base-url>/namespaces/<namespace>/artifacts/<artifact-name>
 
 The request body must contain the binary contents of the artifact.
 
