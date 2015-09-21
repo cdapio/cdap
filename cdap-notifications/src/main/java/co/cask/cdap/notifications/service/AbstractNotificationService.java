@@ -47,9 +47,6 @@ import java.util.concurrent.Executor;
  */
 public abstract class AbstractNotificationService extends AbstractIdleService implements NotificationService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryNotificationService.class);
-  private static final Gson GSON = new GsonBuilder()
-    .enableComplexMapKeySerialization()
-    .create();
 
   private final Multimap<Id.NotificationFeed, NotificationCaller<?>> subscribers;
 
@@ -66,6 +63,12 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
       HashMultimap.<Id.NotificationFeed, NotificationCaller<?>>create());
   }
 
+  protected Gson createGson() {
+    return new GsonBuilder()
+      .enableComplexMapKeySerialization()
+      .create();
+  }
+
   /**
    * Called when a notification is received on a feed, to push it to all the handlers that subscribed to the feed.
    *
@@ -79,7 +82,7 @@ public abstract class AbstractNotificationService extends AbstractIdleService im
       callers = ImmutableList.copyOf(callers);
     }
     for (NotificationCaller caller : callers) {
-      Object notification = GSON.fromJson(notificationJson, caller.getNotificationType());
+      Object notification = createGson().fromJson(notificationJson, caller.getNotificationType());
       Id.Namespace namespaceId = Id.Namespace.from(feed.getNamespaceId());
       caller.received(notification, new BasicNotificationContext(namespaceId, dsFramework, transactionSystemClient));
     }
