@@ -16,8 +16,11 @@
 
 package co.cask.cdap.examples.wordcount;
 
+import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
+import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
@@ -56,6 +59,11 @@ public class WordCountTest extends TestBase {
     // Deploy the Application
     ApplicationManager appManager = deployApplication(WordCount.class, config);
 
+    // validate that the wordCount table is empty, and that it has no entry for "world"
+    DataSetManager<KeyValueTable> datasetManager = getDataset(config.getWordCountTable());
+    KeyValueTable wordCounts = datasetManager.get();
+    Assert.assertNull(wordCounts.read("world"));
+
     // Start the Flow
     FlowManager flowManager = appManager.getFlowManager("WordCounter").start();
 
@@ -68,6 +76,10 @@ public class WordCountTest extends TestBase {
     // Wait for the events to be processed, or at most 5 seconds
     RuntimeMetrics metrics = flowManager.getFlowletMetrics("associator");
     metrics.waitForProcessed(3, 5, TimeUnit.SECONDS);
+
+    // start a new transaction so that the "wordCounts" dataset sees changes made by the flow
+    datasetManager.flush();
+    Assert.assertEquals(3L, Bytes.toLong(wordCounts.read("world")));
 
     // Start RetrieveCounts service
     ServiceManager serviceManager = appManager.getServiceManager(RetrieveCounts.SERVICE_NAME).start();
