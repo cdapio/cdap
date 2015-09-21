@@ -17,7 +17,6 @@ application class. *Plugins* can be packaged in a separate artifact from the app
 
 Plugin Usage
 ============
-
 You tell CDAP that a class is a *Plugin* by annotating the class with the type and name of the plugin.
 For example::
 
@@ -66,7 +65,6 @@ Once registered, the plugin can be instantiated and used at runtime using the pl
 
 Plugin Config
 =============
-
 A *Plugin* can also make use of the *PluginConfig* class to configure itself. Suppose we want
 to modify our no-op runnable to print a configurable message. We can do this by adding a
 *PluginConfig*, passing it into the constructor, and setting it as a field::
@@ -96,7 +94,7 @@ to modify our no-op runnable to print a configurable message. We can do this by 
 
 Your extension to *PluginConfig* must contain only primitive or boxed primitive types.
 The *PluginConfig* passed in to the *Plugin* has its fields populated using the *PluginProperties*
-specified when the *Plugin* is registered. In this example, if we want the message to be "Hello CDAP!"::
+specified when the *Plugin* was registered. In this example, if we want the message to be "Hello CDAP!"::
 
   public class ExampleWorker extends AbstractWorker {
 
@@ -117,7 +115,6 @@ can be annotated with a ``@Description`` that will be returned by the
 
 Third-Party Plugins
 ===================
-
 Sometimes there is a need to use classes in a third-party JAR as plugins. For example, you may want to be able to use
 a JDBC driver as a plugin. In these situations, you have no control over the code, which means you cannot
 annotate the relevant class with the ``@Plugin`` annotation. If this is the case, you can explicitly specify
@@ -130,25 +127,24 @@ the plugins when deploying the artifact. For example, if you are using the RESTf
 
 Plugin Deployment
 =================
-To make plugins available to another artifact (and thus available
-to any application created from one of the artifacts), the plugins must first be packaged
-in a JAR file. After that, the JAR file must be deployed as
-either a system artifact or a user artifact. A system artifact is available to users across
-any namespace. A user artifact is available only to users in the namespace to which it is deployed.
+To make plugins available to another artifact (and thus available to any application
+created from one of the artifacts), the plugins must first be packaged in a JAR file.
+After that, the JAR file must be deployed either as a system artifact or a user artifact.
+A system artifact is available to users across any namespace. A user artifact is available
+only to users in the namespace to which it is deployed.
 
 .. _plugins-deployment-packaging:
 
 Plugin Packaging
 ----------------
-
-*Plugins* are packaged as a JAR file, which contains the plugin classes and their dependencies
-inside. CDAP uses the "Export-Package" attribute in the JAR file manifest to determine
+A *Plugin* is packaged as a JAR file, which contains inside the plugin classes and their dependencies.
+CDAP uses the "Export-Package" attribute in the JAR file manifest to determine
 which classes are *visible*. A *visible* class is one that can be used by another class
 that is not from the plugin JAR itself. This means the Java package which the plugin class
 is in must be listed in "Export-Package", otherwise the plugin class will not be visible,
-and hence no one will be able to use it. This can be done in maven by editing your pom.
+and hence no one will be able to use it. This can be done in Maven by editing your pom.xml.
 For example, if your plugins are in the ``com.example.runnable`` and ``com.example.callable``
-packages, you would edit the bunlder plugin in your pom::
+packages, you would edit the bunlder plugin in your pom.xml::
 
         <plugin>
           <groupId>org.apache.felix</groupId>
@@ -191,22 +187,22 @@ and ``cdap-etl-realtime`` artifacts, ``custom-transforms-1.0.0.json`` would cont
 
   .. parsed-literal:: 
     {
-      "parents": [ "cdap-etl-batch\[|version|, |version|]", "cdap-etl-realtime[|version|, |version|]" ]
+      "parents": [ "cdap-etl-batch\[|version|,\ |version|]", "cdap-etl-realtime[|version|,\ |version|]" ]
     }
 
 This file specifies that the plugins in ``custom-transforms-1.0.0.jar`` can be used by version |version| of
 the ``cdap-etl-batch`` and ``cdap-etl-realtime`` artifacts. You can also specify a wider range of versions
-that can use the plugins, with square brackets indicating an inclusive version and parantheses indicating
+that can use the plugins, with square brackets ``[ ]`` indicating an inclusive version and parentheses ``( )`` indicating
 an exclusive version. For example:
 
-.. container:: 
+.. container:: highlight
 
   .. parsed-literal:: 
     {
       "parents": [ "cdap-etl-batch[3.2.0,4.0.0)", "cdap-etl-realtime[3.2.0,4.0.0)" ]
     }
 
-specifies that the plugins can be used by versions 3.2.0 (inclusive) to 4.0.0 (exclusive) of the
+specifies that these plugins can be used by versions 3.2.0 (inclusive) to 4.0.0 (exclusive) of the
 ``cdap-etl-batch`` and ``cdap-etl-realtime`` artifacts.
 
 If the artifact contains third-party plugins, you can explicitly list them in the config file.
@@ -214,7 +210,7 @@ For example, you may want to deploy a JDBC driver contained in a third-party JAR
 you have no control over the code to annotate the classes that should be plugins, so you need to
 list them in the configuration:
 
-.. container:: 
+.. container:: highlight
 
   .. parsed-literal:: 
     {
@@ -266,13 +262,11 @@ where ``config.json`` contains:
 
   .. parsed-literal:: 
     {
-      "parents": [ "system:cdap-etl-batch\[|version|, |version|]", "system:cdap-etl-realtime\[|version|, |version|]" ]
+      "parents": [ "system:cdap-etl-batch\[|version|,\ |version|]", "system:cdap-etl-realtime\[|version|,\ |version|]" ]
     }
 
-.. need to have a space between versions [|version, |version|] otherwise the 2nd |version| doesn't replace 
-
 Note that when deploying a user artifact that extends a system artifact,
-you must prefix the parent artifact name with '``system:``'.
+you must prefix the parent artifact name with ``'system:'``.
 This is in case there is a user artifact with the same name as the system artifact.
 If you are extending a user artifact, no prefix is required.
 
@@ -283,7 +277,7 @@ Using the RESTful API:
 
   .. parsed-literal:: 
     curl localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java \\
-      -H 'Artifact-Extends: system:cdap-etl-batch\[|version|, |version|]/system:cdap-etl-realtime\[|version|, |version|]' \\
+      -H 'Artifact-Extends: system:cdap-etl-batch\[|version|,\ |version|]/system:cdap-etl-realtime\[|version|,\ |version|]' \\
       -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \\
       --data-binary @/path/to/mysql-connector-java-5.1.35.jar
 
@@ -300,7 +294,7 @@ where ``config.json`` contains:
 
   .. parsed-literal:: 
     {
-      "parents": [ "system:cdap-etl-batch\[|version|, |version|]", "system:cdap-etl-realtime\[|version|, |version|]" ],
+      "parents": [ "system:cdap-etl-batch\[|version|,\ |version|]", "system:cdap-etl-realtime\[|version|,\ |version|]" ],
       "plugins": [
         {
           "name": "mysql",
@@ -314,10 +308,9 @@ where ``config.json`` contains:
 
 Deployment Verification
 -----------------------
-
 You can verify that a plugin artifact was added successfully by using the
 :ref:`RESTful Artifact API <http-restful-api-artifact-detail>` to retrieve artifact details.
-For example, to get detail about our ``custom-transforms`` artifact:
+For example, to retrieve detail about our ``custom-transforms`` artifact:
 
 .. container:: highlight
 
@@ -327,7 +320,7 @@ For example, to get detail about our ``custom-transforms`` artifact:
 If you deployed the ``custom-transforms`` artifact as a system artifact, the scope is ``system``.
 If you deployed the ``custom-transforms`` artifact as a user artifact, the scope is ``user``.
 
-You can verify that the plugins in your newly added artifact are available to its parent by using the
+You can verify that the plugins in your newly-added artifact are available to its parent by using the
 :ref:`RESTful Artifact API <http-restful-api-artifact-available-plugins>` to list plugins of a
 specific type. For example, to check if ``cdap-etl-batch`` can access the plugins in the
 ``custom-transforms`` artifact:
@@ -346,7 +339,6 @@ scope because ``cdap-etl-batch`` is a system artifact. This is true even if you 
 
 Example Use Case
 ================
-
 When writing an application class, it is often useful to create interfaces or abstract classes that define
 a logical contract in your code, but do not provide an implementation of that contract. This lets you plug in
 different implementations to fit your needs.
@@ -506,7 +498,7 @@ Since we want other artifacts to implement the ``Tokenizer`` interface, we need 
 sure the class is exposed to other artifacts. We do this by including the ``Tokenizer``'s package
 in the ``Export-Package`` manifest attribute of our JAR file. For example, if our ``Tokenizer`` full
 class name is ``com.example.api.Tokenizer``, we need to expose the ``com.example.api``
-package in our pom::
+package in our pom.xml::
 
         <plugin>
           <groupId>org.apache.felix</groupId>
@@ -587,7 +579,7 @@ been annotated with a plugin type and name::
 We package these tokenizers in a separate artifact named ``tokenizers-1.0.0.jar``. In order to make these
 plugins visibile to programs using them, we need to include their packages in the ``Export-Packages``
 manifest attribute. For example, if our classes are all in the ``com.example.tokenizer`` package,
-we need to expose the ``com.example.tokenizer`` package in our pom::
+we need to expose the ``com.example.tokenizer`` package in our pom.xml::
 
         <plugin>
           <groupId>org.apache.felix</groupId>
@@ -624,7 +616,7 @@ applications that use the tokenizer we want::
     "config": { "tokenizer": "phrase" }
   }'
 
-After a while we find that we need to support reading files where words are delimited by a character
+After a while, we find that we need to support reading files where words are delimited by a character
 other than a space. We decide to modify our ``DefaultTokenizer`` to use a ``PluginConfig`` that contains
 a property for the delimiter::
 
