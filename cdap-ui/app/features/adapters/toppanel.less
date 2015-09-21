@@ -132,6 +132,7 @@ body.theme-cdap.state-adapters {
       &.expanded {
         background-color: white;
         height: 170px;
+        cursor: auto;
         @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
         .box-shadow(@box-shadow);
         @media (max-width: @screen-sm-max) {
@@ -145,6 +146,9 @@ body.theme-cdap.state-adapters {
           text-overflow: initial;
           overflow: initial;
           .border-radius(6px);
+          &:hover, &:focus {
+            cursor: auto;
+          }
         }
 
         div.input-group {
@@ -159,12 +163,14 @@ body.theme-cdap.state-adapters {
         input {
           height: 40px;
           width: 82%;
+          cursor: default;
         }
         textarea {
           margin-top: 10px;
           min-height: 65px;
           resize: none;
           width: 100%;
+          cursor: default;
         }
         div.btn-group {
           margin: 10px 0;
@@ -187,6 +193,7 @@ body.theme-cdap.state-adapters {
         }
         span.fa-pencil {
           .opacity(0);
+          cursor: auto;
         }
       }
       div.input-group {
@@ -217,7 +224,7 @@ body.theme-cdap.state-adapters {
         font-size: 20px;
         margin: 0;
         max-width: 350px;
-        .placeholder-color(@color: #202028);
+        .placeholder-color(@color: gray);
       }
       .input-group-addon {
         background-color: transparent;
@@ -231,7 +238,7 @@ body.theme-cdap.state-adapters {
         resize: none;
         width: 100%;
         margin-bottom: 0;
-        .placeholder-color(@color: #666);
+        .placeholder-color(@color: gray);
       }
       a {
         font-weight: 500;

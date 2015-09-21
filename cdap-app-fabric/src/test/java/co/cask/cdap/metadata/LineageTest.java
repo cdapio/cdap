@@ -190,6 +190,10 @@ public class LineageTest extends MetadataTestBase {
       Assert.assertEquals(400, httpResponse.getResponseCode());
       httpResponse = fetchLineage(dataset, "now+1h", "now-1h", 10);
       Assert.assertEquals(400, httpResponse.getResponseCode());
+
+      // Test non-existent run
+      httpResponse = fetchRunMetadataResponse(new Id.Run(flow, RunIds.generate(1000).getId()));
+      Assert.assertEquals(404, httpResponse.getResponseCode());
     } finally {
       try {
         deleteNamespace(namespace);
@@ -321,6 +325,34 @@ public class LineageTest extends MetadataTestBase {
         LOG.error("Got exception while deleting namespace {}", namespace, e);
       }
     }
+  }
+
+  @Test
+  public void testLineageInNonExistingNamespace() throws Exception {
+    String namespace = "nonExistent";
+    Id.Application app = Id.Application.from(namespace, AllProgramsApp.NAME);
+    Id.Flow flow = Id.Flow.from(app, AllProgramsApp.NoOpFlow.NAME);
+    Id.DatasetInstance dataset = Id.DatasetInstance.from(namespace, AllProgramsApp.DATASET_NAME);
+    Id.Stream stream = Id.Stream.from(namespace, AllProgramsApp.STREAM_NAME);
+
+    HttpResponse httpResponse = fetchLineage(dataset, 0, 10000, 10);
+    Assert.assertEquals(404, httpResponse.getResponseCode());
+
+    httpResponse = fetchLineage(stream, 0, 10000, 10);
+    Assert.assertEquals(404, httpResponse.getResponseCode());
+
+    httpResponse = fetchRunMetadataResponse(new Id.Run(flow, RunIds.generate(1000).getId()));
+    Assert.assertEquals(404, httpResponse.getResponseCode());
+  }
+
+  @Test
+  public void testLineageForNonExistingEntity() throws Exception {
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from("default", "dummy");
+    Assert.assertEquals(404, fetchLineage(datasetInstance, 100, 200, 10).getResponseCode());
+    Assert.assertEquals(400, fetchLineage(datasetInstance, -100, 200, 10).getResponseCode());
+    Assert.assertEquals(400, fetchLineage(datasetInstance, 100, -200, 10).getResponseCode());
+    Assert.assertEquals(400, fetchLineage(datasetInstance, 200, 100, 10).getResponseCode());
+    Assert.assertEquals(400, fetchLineage(datasetInstance, 100, 200, -10).getResponseCode());
   }
 
   private RunId runAndWait(Id.Program program) throws Exception {

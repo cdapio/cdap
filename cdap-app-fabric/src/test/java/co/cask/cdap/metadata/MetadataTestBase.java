@@ -461,15 +461,19 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
   }
 
   protected Set<MetadataRecord> fetchRunMetadata(Id.Run run) throws IOException {
+    HttpResponse response = fetchRunMetadataResponse(run);
+    Assert.assertEquals(200, response.getResponseCode());
+    String responseBody = response.getResponseBodyAsString();
+    return GSON.fromJson(responseBody, SET_METADATA_RECORD_TYPE);
+  }
+
+  protected HttpResponse fetchRunMetadataResponse(Id.Run run) throws IOException {
     Id.Program program = run.getProgram();
     String path = getVersionedAPIPath(String.format("apps/%s/%s/%s/runs/%s/metadata",
                                                     program.getApplicationId(), program.getType().getCategoryName(),
                                                     program.getId(), run.getId()),
                                       program.getNamespaceId());
-    HttpResponse response = makeGetRequest(path);
-    Assert.assertEquals(200, response.getResponseCode());
-    String responseBody = response.getResponseBodyAsString();
-    return GSON.fromJson(responseBody, SET_METADATA_RECORD_TYPE);
+    return makeGetRequest(path);
   }
 
   // The following methods are needed because AppFabricTestBase's doGet, doPost, doPut, doDelete are hardwired to

@@ -409,33 +409,67 @@ public class ArtifactRepository {
     // Sorting will accomplish this because ArtifactConfig is comparable based on parents
     Collections.sort(systemArtifacts);
 
-    for (ArtifactConfig artifactConfig : systemArtifacts) {
-      String fileName = artifactConfig.getFile().getName();
-      try {
-        Id.Artifact artifactId = artifactConfig.getArtifactId();
+    // taking advantage of the fact that we only have 1 level of dependencies
+    // so we can add all the parents first, then we know its safe to add everything else
+    // add all parents
+    Set<Id.Artifact> parents = new HashSet<>();
+    for (ArtifactConfig child : systemArtifacts) {
+      Id.Artifact childId = child.getArtifactId();
 
-        // if it's not a snapshot and it already exists, don't bother trying to add it since artifacts are immutable
-        if (!artifactId.getVersion().isSnapshot()) {
-          try {
-            artifactStore.getArtifact(artifactId);
-            continue;
-          } catch (ArtifactNotFoundException e) {
-            // this is fine, means it doesn't exist yet and we should add it
-          }
+      for (ArtifactConfig potentialParent : systemArtifacts) {
+        Id.Artifact potentialParentId = potentialParent.getArtifactId();
+        // skip if we're looking at ourselves
+        if (childId.equals(potentialParentId)) {
+          continue;
         }
 
-        addArtifact(artifactId,
-                    artifactConfig.getFile(),
-                    artifactConfig.getParents(),
-                    artifactConfig.getPlugins());
-      } catch (ArtifactAlreadyExistsException e) {
-        // shouldn't happen... but if it does for some reason it's fine, it means it was added some other way already.
-      } catch (ArtifactRangeNotFoundException e) {
-        LOG.warn(String.format("Could not add system artifact '%s' because it extends artifacts that do not exist.",
-          fileName), e);
-      } catch (InvalidArtifactException e) {
-        LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", fileName), e);
+        if (child.hasParent(potentialParentId)) {
+          parents.add(potentialParentId);
+        }
       }
+    }
+
+    // add all parents first
+    for (ArtifactConfig config : systemArtifacts) {
+      if (parents.contains(config.getArtifactId())) {
+        addSystemArtifact(config);
+      }
+    }
+
+    // add children next
+    for (ArtifactConfig config : systemArtifacts) {
+      if (!parents.contains(config.getArtifactId())) {
+        addSystemArtifact(config);
+      }
+    }
+  }
+
+  private void addSystemArtifact(ArtifactConfig artifactConfig) throws IOException, WriteConflictException {
+    String fileName = artifactConfig.getFile().getName();
+    try {
+      Id.Artifact artifactId = artifactConfig.getArtifactId();
+
+      // if it's not a snapshot and it already exists, don't bother trying to add it since artifacts are immutable
+      if (!artifactId.getVersion().isSnapshot()) {
+        try {
+          artifactStore.getArtifact(artifactId);
+          return;
+        } catch (ArtifactNotFoundException e) {
+          // this is fine, means it doesn't exist yet and we should add it
+        }
+      }
+
+      addArtifact(artifactId,
+        artifactConfig.getFile(),
+        artifactConfig.getParents(),
+        artifactConfig.getPlugins());
+    } catch (ArtifactAlreadyExistsException e) {
+      // shouldn't happen... but if it does for some reason it's fine, it means it was added some other way already.
+    } catch (ArtifactRangeNotFoundException e) {
+      LOG.warn(String.format("Could not add system artifact '%s' because it extends artifacts that do not exist.",
+        fileName), e);
+    } catch (InvalidArtifactException e) {
+      LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", fileName), e);
     }
   }
 
