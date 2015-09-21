@@ -35,7 +35,9 @@ import co.cask.cdap.etl.common.DBUtils;
 import co.cask.cdap.etl.common.ETLDBOutputFormat;
 import co.cask.cdap.etl.common.JDBCDriverShim;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
 import org.slf4j.Logger;
@@ -49,6 +51,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -140,8 +143,9 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
            ResultSet rs = statement.executeQuery(String.format("SELECT %s FROM %s WHERE 1 = 0",
                                                                dbSinkConfig.columns, dbSinkConfig.tableName))
       ) {
+        List<String> columns = ImmutableList.copyOf(Splitter.on(",").split(dbSinkConfig.columns));
         ResultSetMetaData resultSetMetadata = rs.getMetaData();
-        int columnCount = resultSetMetadata.getColumnCount();
+        int columnCount = columns.size();
         columnTypes = new int[columnCount];
         // JDBC driver column indices start with 1
         for (int i = 0; i < columnCount; i++) {
