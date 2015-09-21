@@ -253,9 +253,9 @@ The assertion will verify that the correct result was received.
 
 Strategies in Testing Artifacts
 ===============================
-
 The Test Framework provides methods to create and deploy JAR files as artifacts. This lets you
 test the creation of multiple applications from the same artifact, as well as the use of plugin artifacts.
+
 To add an artifact containing an application class::
 
   // add the artifact for etl batch app
@@ -264,7 +264,8 @@ To add an artifact containing an application class::
     PipelineConfigurable.class.getPackage().getName(),
     "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic");
 
-The first argument is the id of the artifact, the second is the application class, and the rest are packages
+The first argument is the id of the artifact; the second is the application class; and the remainder
+of the arguments are packages
 that should be included in the ``Export-Packages`` manifest attribute bundled in the JAR. The framework will
 trace the dependencies of the specified application class to create a JAR with those dependencies. This will
 mimic what happens when you actually build your application JAR.
@@ -286,13 +287,14 @@ Plugins extending the artifact can also be added::
     ProjectionTransform.class, ScriptFilterTransform.class, ValidatorTransform.class, CoreValidator.class,
     StructuredRecordToGenericRecordTransform.class);
 
-The first argument is the id of the plugin artifact, the second is the parent artifact it is extending, and the
-rest are classes that should be bundled in the JAR. The packages of all these classes are included in the
+The first argument is the id of the plugin artifact; the second is the parent artifact it is extending; and the
+remainder of the arguments are classes that should be bundled in the JAR. 
+The packages of all these classes are included in the
 ``Export-Packages`` manifest attribute bundled in the JAR. When adding a plugin artifact this way, it is
 important to include all classes in your plugin packages, even if they are not used in your test case. This is
 to ensure that the JAR can trace all required dependencies to correctly build the JAR.
 
-The examples are taken straight from the ``BaseETLBatchTest`` contained in the ``cdap-etl-batch`` artifact
+The examples are taken directly from the ``BaseETLBatchTest`` in the ``cdap-etl-batch`` artifact
 included with CDAP. 
 
 
