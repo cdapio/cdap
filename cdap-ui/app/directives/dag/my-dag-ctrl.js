@@ -143,7 +143,7 @@ angular.module(PKG.name + '.commons')
         if (this.isDisabled) {
           plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, marginLeft, 0);
         } else {
-          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, marginLeft, 200);
+          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, marginLeft, 50);
         }
         drawNode.call(this, plugin.id, plugin.type);
       }.bind(this));
