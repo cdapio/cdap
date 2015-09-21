@@ -26,14 +26,10 @@
           {{ app.name }}
         </h1>
         <span class="pipeline-type">
-          <span ng-if="app.artifact.name === GLOBALS.etlBatch">
-            <span class="icon-ETLBatch"></span>
-            <span>Batch</span>
-          </span>
-          <span ng-if="app.artifact.name === GLOBALS.etlRealtime">
-            <span class="icon-ETLRealtime"></span>
-            <span>Realtime</span>
-          </span>
+          <span ng-if="app.artifact.name === GLOBALS.etlBatch"
+                class="icon-ETLBatch"> Type: Batch </span>
+          <span ng-if="app.artifact.name === GLOBALS.etlRealtime"
+                class="icon-ETLRealtime"> Type: Realtime </span>
         </span>
       </div>
     </div>
