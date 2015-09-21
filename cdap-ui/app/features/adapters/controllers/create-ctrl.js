@@ -19,10 +19,15 @@ angular.module(PKG.name + '.feature.adapters')
   .controller('AdapterCreateController', function($timeout, $state, $alert, myAdapterTemplatesApi, GLOBALS, CanvasFactory) {
 
     var vm = this;
+    vm.GLOBALS = GLOBALS;
+    vm.currentPage = 1;
 
     vm.preconfigured = false;
     vm.templates = [];
     vm.GLOBALS = GLOBALS;
+
+    vm.typeFilter = '';
+
 
     myAdapterTemplatesApi.list({
       apptype: GLOBALS.etlBatch
@@ -35,6 +40,17 @@ angular.module(PKG.name + '.feature.adapters')
             description: plugin.description,
             type: GLOBALS.etlBatch
           };
+        });
+
+        angular.forEach(plugins, function (plugin) {
+          myAdapterTemplatesApi.get({
+            apptype: GLOBALS.etlBatch,
+            appname: plugin.name
+          })
+            .$promise
+            .then(function (res) {
+              plugin._properties = res;
+            });
         });
 
         vm.templates = vm.templates.concat(plugins);
@@ -52,34 +68,39 @@ angular.module(PKG.name + '.feature.adapters')
             type: GLOBALS.etlRealtime
           };
         });
+
+        angular.forEach(plugins, function (plugin) {
+          myAdapterTemplatesApi.get({
+            apptype: GLOBALS.etlRealtime,
+            appname: plugin.name
+          })
+            .$promise
+            .then(function (res) {
+              plugin._properties = res;
+            });
+        });
+
         vm.templates = vm.templates.concat(plugins);
       });
 
     vm.selectTemplate = function (template) {
-      myAdapterTemplatesApi.get({
-        apptype: template.type,
-        appname: template.name
-      })
-        .$promise
-        .then(function(res) {
-          var result = CanvasFactory.parseImportedJson(
-            JSON.stringify(res),
-            template.type
-          );
-          if (result.error) {
-            $alert({
-              type: 'danger',
-              content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app'
-            });
-          } else {
-            $state.go('adapters.create.studio', {
-              data: result,
-              type: result.artifact.name
-            }).then(function () {
-              vm.preconfigured = false;
-            });
-          }
+      var result = CanvasFactory.parseImportedJson(
+        JSON.stringify(template._properties),
+        template.type
+      );
+      if (result.error) {
+        $alert({
+          type: 'danger',
+          content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app'
         });
+      } else {
+        $state.go('adapters.create.studio', {
+          data: result,
+          type: result.artifact.name
+        }).then(function () {
+          vm.preconfigured = false;
+        });
+      }
     };
 
     this.importFile = function(files) {
