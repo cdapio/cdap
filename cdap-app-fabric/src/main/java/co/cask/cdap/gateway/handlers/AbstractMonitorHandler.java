@@ -49,7 +49,6 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
   private static final String STATUSOK = Constants.Monitor.STATUS_OK;
   private static final String STATUSNOTOK = Constants.Monitor.STATUS_NOTOK;
   private static final String NOTAPPLICABLE = "NA";
-  private static final Gson GSON = new Gson();
   private final ServiceStore serviceStore;
 
   @Inject

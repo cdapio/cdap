@@ -62,7 +62,6 @@ import javax.annotation.Nullable;
  */
 public final class InMemoryConfigurator implements Configurator {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryConfigurator.class);
-  private static final Gson GSON = new Gson();
 
   /**
    * JAR file path.
@@ -173,7 +172,7 @@ public final class InMemoryConfigurator implements Configurator {
         appConfig = ((Class<? extends Config>) configType).newInstance();
       } else {
         try {
-          appConfig = GSON.fromJson(configString, configType);
+          appConfig = new Gson().fromJson(configString, configType);
         } catch (JsonSyntaxException e) {
           throw new IllegalArgumentException("Invalid JSON configuration was provided. Please check the syntax.", e);
         }
