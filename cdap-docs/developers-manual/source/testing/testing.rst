@@ -13,9 +13,9 @@ Testing a CDAP Application
 Strategies in Testing Applications: Test Framework
 ==================================================
 
-CDAP comes with a convenient way to unit test your applications with CDAP’s *Test Framework.*
-This framework lets you deploy an application, start, stop and monitor programs, access
-datasets to validate processing results, and retrieve metrics from the application.
+CDAP comes with a convenient way to unit-test your applications with CDAP’s *Test Framework.*
+This framework lets you deploy an application; start, stop and monitor programs; access
+datasets to validate processing results; and retrieve metrics from the application.
 
 The base class for such tests is ``TestBase``, which is packaged
 separately from the API in its own artifact because it depends on the
@@ -78,7 +78,7 @@ then we’ll start the flow and the service::
       serviceManager.waitForStatus(true);
       
 This flow counts the words in the events that it receives on the "wordStream". Before
-sending data to the stream, let us validate that we start with a clean state::
+sending data to the stream, let's validate that we are starting with a clean state::
 
       // validate that the wordCount table is empty, and that it has no entry for "world"
       DataSetManager<KeyValueTable> datasetManager = getDataset(config.getWordCountTable());
@@ -88,10 +88,11 @@ sending data to the stream, let us validate that we start with a clean state::
 Note that the dataset manager implicitly starts a transaction for the dataset when it is
 initialized. Under this transaction, read operations can only see changes that were
 committed before the transaction was started; and any writes performed within this
-transaction only become visible after the transaction is committed. This can be done
-by calling the dataset manager's ``flush()`` method, which commits the current transaction
-and starts a new one. flush() also needs to be called to make changes visible to the
-dataset, if those changes were committed after the current transaction was started. We
+transaction only become visible to other transactions after this transaction is committed. 
+
+This can be done by calling the dataset manager's ``flush()`` method, which commits the current
+transaction and starts a new one. ``flush()`` also needs to be called to make changes visible 
+to the dataset, if those changes were committed after the current transaction was started. We
 will see an example for this below.
 
 Now that the flow and service are running, we can send some events to the stream::
@@ -113,7 +114,7 @@ its processed count to either reach 3 or time out after 5 seconds::
 
 Now we can start verifying that the processing was correct by reading the datasets
 used by the flow. For example, we can validate the correct count for the word "world".
-Note that first, we have to start a new transaction by calling ``flush()``::
+Note that first we have to start a new transaction by calling ``flush()``::
 
       // start a new transaction so that the "wordCounts" dataset sees changes made by the flow
       datasetManager.flush();
