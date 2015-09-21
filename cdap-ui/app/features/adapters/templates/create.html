@@ -104,10 +104,10 @@
           </div>
         </div>
 
-        <div class="col-xs-9">
+        <div class="col-xs-9 template-main">
           <div class="row">
             <div class="col-xs-4"
-              ng-repeat="template in AdapterCreateController.filtered = AdapterCreateController.templates | filter: { type: AdapterCreateController.typeFilter, $: AdapterCreateController.searchText } | myPaginate:AdapterCreateController.currentPage"
+              ng-repeat="template in AdapterCreateController.filtered = (AdapterCreateController.templates | filter: { type: AdapterCreateController.typeFilter, $: AdapterCreateController.searchText }) | myPaginate:AdapterCreateController.currentPage:9"
               ng-click="AdapterCreateController.selectTemplate(template)">
               <div class="well well-md start-well template-link">
                 <h4 class="template-name">{{ template.name }}</h4>
@@ -120,7 +120,7 @@
               </div>
             </div>
 
-            <div ng-if="AdapterCreateController.filtered.length > 9">
+            <div class="col-xs-12" ng-if="AdapterCreateController.filtered.length > 9">
               <pagination total-items="AdapterCreateController.filtered.length"
                 ng-model="AdapterCreateController.currentPage"
                 items-per-page="9"></pagination>
