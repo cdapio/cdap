@@ -51,7 +51,7 @@ public class SparkServiceIntegrationTestRun extends TestFrameworkTestBase {
       TestSparkServiceIntegrationApp.SparkServiceProgram.class.getSimpleName()).start();
     sparkManager.waitForFinish(120, TimeUnit.SECONDS);
 
-    DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("result");
+    DataSetManager<KeyValueTable> datasetManager = getDataset("result");
     KeyValueTable results = datasetManager.get();
     for (int i = 1; i <= 5; i++) {
       byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);
