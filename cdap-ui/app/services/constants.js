@@ -36,14 +36,14 @@ angular.module(PKG.name + '.services')
       hydrator: {
         appLabel: 'Hydrator Pipeline',
         studio: {
-          oneSinkError: 'Please add at least one sink to your pipeline.',
-          sourceRequiredFieldsError: 'Please provide required fields for Source.',
-          sinkRequiredFieldsError: 'Please provide required fields for Sink.',
-          transformRequiredFieldsError: 'Please provide required fields for Transform.',
+          oneSinkError: 'Please add at least one Sink to your pipeline.',
+          sourceRequiredFieldsError: 'Please provide required fields for the source.',
+          sinkRequiredFieldsError: 'Please provide required fields for the sink.',
+          transformRequiredFieldsError: 'Please provide required fields for the transform.',
           oneSourceError: 'Pipelines can only have one source. Please remove any additional sources.',
           noSourceError: 'Please add a source to your pipeline',
           nameError: 'Please name your pipeline.',
-          nameValidationError: 'Pipeline names can only contain letters of the alphabet, numbers, and \'_\' Please remove other character types.',
+          nameValidationError: 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\') characters and underscores ( \'_\'). Please remove other characters.',
           sinkBranchNodeError: 'Please connect multiple sinks to the same node.',
           branchError: 'Please remove branched connections.',
           unconnectedNodesError: 'Please connect all nodes.',
@@ -52,7 +52,7 @@ angular.module(PKG.name + '.services')
           parallelConnectionError: 'Please remove parallel connections in this pipeline.'
         },
         wizard: {
-          welcomeMessage1: 'Hydrator makes it easy to prepare data so you',
+          welcomeMessage1: 'Hydrator makes it easy to prepare data so you ',
           welcomeMessage2: 'can get down to business faster. Let’s get started!',
           createMessage: 'ETL made simple. Hydrator offers four ways to get started.',
           createConsoleMessage: 'Click a node from the menu to place it on the canvas above.'
