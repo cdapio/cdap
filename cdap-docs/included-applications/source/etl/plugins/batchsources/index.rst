@@ -10,7 +10,6 @@ Batch Sources
    :maxdepth: 1
 
     Database <database>
-    Elasticsearch <elasticsearch>
     File <file>
     KVTable <kvtable>
     S3 <s3>
