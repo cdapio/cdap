@@ -134,7 +134,7 @@ MapReduce and Datasets
 Both a CDAP ``mapper`` and ``reducer`` can directly read
 or write to a dataset, similar to the way a flowlet or service can.
 
-To access a dataset directly in mapper or reducer,
+To access a dataset directly in a mapper or reducer,
 inject the dataset into the mapper or reducer that uses it::
 
      public static class CatalogJoinMapper extends Mapper<byte[], Purchase, ...> {
