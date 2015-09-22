@@ -4,24 +4,26 @@
 
 .. _included-apps-data-quality-index:
 
-============================
+========================
 Data Quality Application
-============================
+========================
 
-The goal of the Data Quality Application is to provide users with an extensible CDAP application to help them
-determine the quality of their data.  Users could assess the quality of their data using its out-of-the-box
+Overview
+========
+The goal of the **Data Quality Application** is to provide users with an extensible CDAP application to help them
+determine the quality of their data.  Users can assess the quality of their data using its out-of-the-box
 functionality and libraries. The application can be extended with custom aggregation functions and queried with a
 RESTful API to obtain the results of the quality metric computations.
 
-In this guide, you'll learn to use the Data Quality Application, including:
+In this guide, you'll learn to use the *Data Quality Application*, including:
 
 - deploying the application with the default functionality;
 - configuring the application to your specifications;
 - building custom aggregation functions; and
 - querying the aggregated data.
 
-Creating an Application
------------------------
+Creating the Application
+------------------------
 The application can be created from the ``cdap-data-quality`` system artifact by supplying an application configuration:
 
 .. container:: highlight
@@ -61,9 +63,9 @@ The application can be created from the ``cdap-data-quality`` system artifact by
 
 
 * ``source`` : Data Quality Source
-  - ``name``: Name of the Batch Source Plugin
-  - ``id``: Unique Id that can be used to query for Data Quality metrics using DataQualityService
-  - ``properties``: Properties required by the Batch Source Plugin
+  - ``name``: Name of the :ref:`Batch Source Plugin <included-apps-etl-plugins-batchsources>`.
+  - ``id``: Unique ID that can be used to query for Data Quality metrics using DataQualityService.
+  - ``properties``: Properties required by the :ref:`Batch Source Plugin <included-apps-etl-plugins-batchsources>`.
 * ``workflowScheduleMinutes`` : Frequency (in minutes) with which the workflow runs the aggregation MapReduce.
 * ``datasetName`` : Name of the destination dataset.
 * ``fieldAggregations`` : Map that relates each field value to a set of aggregation functions.
@@ -73,19 +75,18 @@ In this example, the ``appconfig.json`` file contains the application configurat
 
   $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/StreamDQ -d @appconfig.json -X PUT -H 'Content-Type: application/json'
 
-Note that ``cdap-data-quality`` artifact uses the same batch source plugins as the ``cdap-etl-batch`` artifact.
-See :ref:`Batch Sources <etl-plugins-batchsources>` for more information about available plugins. 
+Note that the ``cdap-data-quality`` artifact uses the same batch source plugins as the ``cdap-etl-batch`` artifact.
+See :ref:`Batch Sources <included-apps-etl-plugins-batchsources>` for more information about available plugins. 
 
 End-to-End Example
 ==================
 
-Let's take the example of a user who wants wants to use the Data Quality Application to::
+Let's take the example of a user who wants wants to use the Data Quality Application to:
 
 - Ingest a stream of CLF log data.
-- Generate several histograms partitioned by time of distributions of status codes.
-- Generate the aforementioned aggregations every 10 minutes.
+- Generate several histograms partitioned by the time distribution of status codes.
+- Generate the aforementioned-aggregations every 10 minutes.
 - Query ranges of timestamps for aggregated histogram data.
-
 
 We would create a Data Quality Application by creating a JSON file ``appconfig.json`` that contains:
 
@@ -142,15 +143,14 @@ In order to make queries, we need to start the service in the application::
 
   $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/StreamDQ/services/DataQualityService/start
 
-There are four RESTful endpoints which we can use:
+There are four RESTful endpoints of the service which we can use:
 
 * Retrieve all the fields for a given source and time range: ``/v1/sources/{sourceID}/fields``
 * Retrieve all the aggregations available for a given source, time range, and field : ``/v1/sources/{sourceID}/fields/{fieldName}/aggregations``
 * Retrieve the combined aggregation over a specified time interval for a given source, field, and aggregation type: ``/v1/sources/{sourceID}/fields/{fieldName}/aggregations/{aggregationType}/totals``
 * Retrieve the aggregation corresponding to each time stamp in a specified time range for a given source, field, and aggregation type: ``/v1/sources/{sourceID}/fields/{fieldName}/aggregations/{aggregationType}/timeseries``
 
-Suppose we want to be able to query the aggregated data for the source ``logStream`` and the field ``status``. 
-
+Suppose we want to query the aggregated data for the source ``logStream`` and the field ``status``. 
 We would make this request::
 
   $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/StreamDQ/services/DataQualityService/methods/v1/sources/logStream/fields/status/aggregations/DiscreteValuesHistogram/totals
@@ -179,12 +179,9 @@ In addition to the built-in aggregation functions with the Data Quality Applicat
 it's possible to write and use custom aggregation functions. Take a look at the ``BasicAggregationFunction.java``
 and ``CombinableAggregationFunction.java`` interfaces under the ``functions`` directory (``DQApp/src/main/java/data/quality/app/functions``).
 
-All aggregation functions will need to implement the ``BasicAggregationFunction`` interface. If the function produces aggregations that can be combined (for example, frequencies can be combined but standard
-deviations cannot), it should also implement the ``CombinableAggregationFunction`` interface if you want to be able to combine existing aggregations over custom time ranges at query time.
+All aggregation functions need to implement the ``BasicAggregationFunction`` interface. 
+If a function produces aggregations that can be combined (for example, frequencies can be combined but standard
+deviations cannot), it should also implement the ``CombinableAggregationFunction`` interface. 
+This will let you combine existing aggregations over custom time ranges at query time.
 
-In addition to the aforementioned interfaces, take a look at the aggregation functions that come with the application for reference.
-
-Share and Discuss!
-==================
-
-Have a question? Discuss at the `CDAP User Mailing List <https://groups.google.com/forum/#!forum/cdap-user>`__.
+In addition to the these interfaces, take a look at the aggregation functions that come with the application for reference.
