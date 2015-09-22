@@ -882,8 +882,8 @@ where:
 
 .. _http-restful-api-lifecycle-workflow-runs-suspend-resume:
 
-Workflows Runs: Suspend and Resume
-..................................
+Workflow Runs: Suspend and Resume
+.................................
 
 For workflows, in addition to :ref:`starting and stopping
 <http-restful-api-lifecycle-start-stop-status>`, you can suspend and resume individual
@@ -904,8 +904,6 @@ second of the three MapReduce programs, which is where it would have left off wh
 
 With workflows, *suspend* and *resume* require a *run-id* as the action takes place on
 either a currently running or suspended workflow.
-
-As a workflow is initially deployed in a *suspended* state, a call to this API is needed to *resume* it.
 
 To suspend or resume a workflow, use::
   
