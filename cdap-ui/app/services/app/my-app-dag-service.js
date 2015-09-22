@@ -636,7 +636,7 @@ angular.module(PKG.name + '.services')
       if (MyNodeConfigService.getIsPluginBeingEdited()) {
         // This should have been a popup that we show for un-saved changes while switching the node.
         // Couldn't do it here because we cannot set it to another plugin. Hence the console message.
-        // If we are able to fuse an 4 hydrogen atoms and things turn out good, we will have auto-correct
+        // If we are able to fuse 4 hydrogen atoms and things turn out good, we will have auto-correct
         // in the next realease and we should be able to remove a majority of
         // communication happening with save and reset in node configuration.
         this.notifyError({

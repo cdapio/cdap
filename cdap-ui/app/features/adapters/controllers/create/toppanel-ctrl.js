@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state, $stateParams, GLOBALS, AdapterErrorFactory, MyConsoleTabService) {
+  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state, $stateParams, GLOBALS, AdapterErrorFactory, MyConsoleTabService, MyNodeConfigService) {
 
     this.metadata = MyAppDAGService['metadata'];
     function resetMetadata() {
@@ -172,6 +172,19 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.validatePipeline = function() {
       var errors = AdapterErrorFactory.isModelValid(MyAppDAGService.nodes, MyAppDAGService.connections, MyAppDAGService.metadata, MyAppDAGService.getConfig());
+
+      if (MyNodeConfigService.getIsPluginBeingEdited()) {
+        if (errors === true) {
+          errors = {};
+        }
+        errors.canvas = errors.canvas || [];
+        errors.canvas.push(
+          'There are un-saved changes for node: ' +
+          MyNodeConfigService.plugin.name +
+          '. Please save them before publishing the pipeline'
+        );
+      }
+
       if (angular.isObject(errors)) {
         MyAppDAGService.notifyError(errors);
       } else {
