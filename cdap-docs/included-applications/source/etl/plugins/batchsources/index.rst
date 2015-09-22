@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _included-apps-etl-plugins-batch-sources:
+.. _included-apps-etl-plugins-batchsources:
 
 ===============================
 Batch Sources
