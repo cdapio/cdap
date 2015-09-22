@@ -227,4 +227,78 @@ body.theme-cdap {
       }
     }
   }
+  &.state-admin-namespace-detail-templateedit {
+    .table {
+      margin-top: 0;
+      th, td {
+        max-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      > thead > tr > th {
+        border: 1px solid @table-border-color;
+        &:hover, &:focus {
+          cursor: default;
+        }
+        label {
+          margin-bottom: 0;
+        }
+      }
+      td {
+        font-size: 13px;
+        height: 36px;
+        padding: 0 10px;
+        vertical-align: middle;
+        border: 1px solid #ddd;
+        border-collapse: collapse;
+        &.name {
+          width: 35%;
+        }
+        &.type {
+          width: 30%;
+        }
+        &.nullable {
+          width: 20%;
+        }
+        &.trash {
+          width: 15%;
+          a {
+            padding-left: 0;
+            padding-right: 0;
+          }
+          .btn:active {
+            .box-shadow(none);
+          }
+        }
+      }
+      .fa-trash {
+        color: @brand-danger;
+        font-size: 15px;
+      }
+      div.select-wrapper {
+        background-color: transparent;
+      }
+      input[type="text"], select.form-control {
+        border: 0;
+      }
+      input[type="text"] {
+        background-color: transparent;
+      }
+      .control-label {
+        font-weight: 400;
+      }
+      .form-control {
+        color: #666;
+        height: 30px;
+        padding: 0;
+        .box-shadow(none);
+        .placeholder-color(@color: #666, @font-weight: 400);
+        &:focus {
+          border-color: @table-border-color;
+          .box-shadow(none);
+        }
+      }
+    }
+  }
 }
