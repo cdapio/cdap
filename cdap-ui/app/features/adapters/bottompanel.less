@@ -22,18 +22,21 @@ body.theme-cdap.state-adapters {
 
   &.state-adapters-detail {
     div.console {
-      min-height: 60vh;
-
+      @media (max-height: 500px) {
+        min-height: 60vh;
+        width: 100%;
+      }
+      @media (min-height: 501px) {
+        min-height: 40vh;
+      }
       div.console-type {
         height: inherit;
         min-height: inherit;
       }
-
     }
   }
   div.console {
     background-color: white;
-    min-height: 40vh;
     .transition(all 0.2s ease);
     &.collapsed {
       left: 130px;
