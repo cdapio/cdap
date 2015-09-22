@@ -1,0 +1,90 @@
+{
+    "artifact": {
+        "name": "cdap-etl-batch",
+        "scope": "SYSTEM",
+        "version": "3.2.0-SNAPSHOT"
+    },
+    "config": {
+        "source": {
+            "name": "Database",
+            "properties": {
+                "jdbcPluginType": "jdbc",
+                "jdbcPluginName": "mysql",
+                "importQuery": "select * FROM purchases",
+                "connectionString": "jdbc:mysql://localhost:3306/test",
+                "password": "cdap",
+                "user": "cask",
+                "countQuery": "SELECT COUNT(*) FROM purchases"
+            }
+        },
+        "sink": {
+            "name": "S3BatchSink",
+            "properties": {
+                "basePath": "s3n://cdap/",
+                "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"id\",\"type\":\"string\",\"nullable\":false},{\"name\":\"customer\",\"type\":\"string\",\"nullable\":false},{\"name\":\"product\",\"type\":\"string\",\"nullable\":false},{\"name\":\"quantity\",\"type\":\"int\",\"nullable\":false},{\"name\":\"price\",\"type\":\"double\",\"nullable\":false}]}",
+                "accessKey": "AKIAJ6RGM6Q3GCL24XNA",
+                "accessID": "q39K773ARvYcYMxWsolCW5Bxp10xNoeZtcNolaHc",
+                "name": "test",
+                "pathExtension": "test"
+            }
+        },
+        "transforms": [],
+        "schedule": "* * * * *"
+    },
+    "name": "noname",
+    "ui": {
+        "nodes": {
+            "Database-source-1442099421279": {
+                "id": "Database-source-1442099421279",
+                "name": "Database",
+                "icon": "fa-database",
+                "style": {
+                    "left": "30vw",
+                    "top": "250px"
+                },
+                "description": "Reads from a database using a configurable SQL query. Outputs one record for each row returned by the query.",
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"id\",\"type\":\"string\"},{\"name\":\"customer\",\"type\":\"string\"},{\"name\":\"product\",\"type\":\"string\"},{\"name\":\"quantity\",\"type\":\"int\"},{\"name\":\"price\",\"type\":\"double\"}]}",
+                "pluginTemplate": null,
+                "lock": null,
+                "properties": {
+                    "jdbcPluginType": "jdbc",
+                    "jdbcPluginName": "mysql",
+                    "importQuery": "select * FROM purchases",
+                    "connectionString": "jdbc:mysql://localhost:3306/test",
+                    "password": "cdap",
+                    "user": "cask",
+                    "countQuery": "SELECT COUNT(*) FROM purchases"
+                },
+                "type": "source"
+            },
+            "S3BatchSink-sink-1442099554952": {
+                "id": "S3BatchSink-sink-1442099554952",
+                "name": "S3BatchSink",
+                "icon": "fa-plug",
+                "style": {
+                    "left": "70vw",
+                    "top": "250px"
+                },
+                "description": "Sink for a S3 that writes data in Avro format.",
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"id\",\"type\":\"string\",\"nullable\":false},{\"name\":\"customer\",\"type\":\"string\",\"nullable\":false},{\"name\":\"product\",\"type\":\"string\",\"nullable\":false},{\"name\":\"quantity\",\"type\":\"int\",\"nullable\":false},{\"name\":\"price\",\"type\":\"double\",\"nullable\":false}]}",
+                "pluginTemplate": null,
+                "lock": null,
+                "properties": {
+                    "basePath": "s3n://cdap/",
+                    "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"id\",\"type\":\"string\",\"nullable\":false},{\"name\":\"customer\",\"type\":\"string\",\"nullable\":false},{\"name\":\"product\",\"type\":\"string\",\"nullable\":false},{\"name\":\"quantity\",\"type\":\"int\",\"nullable\":false},{\"name\":\"price\",\"type\":\"double\",\"nullable\":false}]}",
+                    "accessKey": "AKIAJ6RGM6Q3GCL24XNA",
+                    "accessID": "q39K773ARvYcYMxWsolCW5Bxp10xNoeZtcNolaHc",
+                    "name": "test",
+                    "pathExtension": "test"
+                },
+                "type": "sink"
+            }
+        },
+        "connections": [
+            {
+                "source": "Database-source-1442099421279",
+                "target": "S3BatchSink-sink-1442099554952"
+            }
+        ]
+    }
+}
