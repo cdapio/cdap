@@ -16,12 +16,12 @@ Views
 
 Views are a source where data can be read from, similar to a :ref:`stream <streams>` or
 :ref:`dataset <datasets-index>`. They are readable and usable anywhere that a stream or
-dataset are used, such as a flow, MapReduce and Spark programs, or :ref:`ETL
+dataset is used, such as a flow, in MapReduce and Spark programs, or :ref:`ETL
 <included-apps-etl-index>`.
 
 A view is a read-only view of a stream or dataset, with a specific read format. Read
 formats consist of a :ref:`schema <stream-exploration-stream-schema>` and a :ref:`format
-<stream-exploration-stream-format>` (such as CSV, TSV, or Avro).
+<stream-exploration-stream-format>` (such as CSV, TSV, or Avro, amongst others).
 
 Currently, views are only supported for streams. Support for datasets will be added in a
 later version of CDAP.
