@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rFlowsDetail) {
+  .controller('FlowsRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rFlowsDetail, myMetadataFactory) {
   var fFilter = $filter('filter');
   this.runs = rRuns;
   this.$bootstrapModal = $bootstrapModal;
@@ -93,6 +93,37 @@ angular.module(PKG.name + '.feature.flows')
          }.bind(this)
        }
      });
+   };
+
+
+   var metadataParams = {
+     namespace: $state.params.namespace,
+     appId: $state.params.appId,
+     programType: 'flows',
+     programId: $state.params.programId,
+     scope: $scope
+   };
+   this.metadataAddOpen = false;
+   this.metadataTags = [];
+
+   myMetadataFactory.getProgramMetadata(metadataParams)
+     .then(function (res) {
+       this.metadataTags = res;
+     }.bind(this));
+
+   this.addMetadata = function () {
+     myMetadataFactory.addProgramMetadata(this.tag, metadataParams)
+       .then(function (res) {
+         this.metadataTags = res;
+         this.tag = '';
+       }.bind(this));
+   };
+
+   this.deleteMetadata = function (tag) {
+     myMetadataFactory.deleteProgramMetadata(tag, metadataParams)
+       .then(function (res) {
+         this.metadataTags = res;
+       }.bind(this));
    };
 
  });
