@@ -75,7 +75,7 @@
 
         <fieldset ng-disabled="isDisabled">
           <my-schema-editor
-            ng-if="pluginCopy.properties.schema"
+            ng-if="pluginCopy.properties.schema || pluginCopy.implicitSchema"
             ng-model="pluginCopy.outputSchema"
             data-disabled="pluginCopy.implicitSchema || isDisabled"
             plugin-properties="pluginCopy.properties"
