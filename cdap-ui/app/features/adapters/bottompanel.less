@@ -33,11 +33,10 @@ body.theme-cdap.state-adapters {
     background-color: white;
     width: 100%;
     .transition(all 0.2s ease);
-    @media (max-height: 500px) {
+   // Console height is 40% on larger screen
+    min-height: 40vh;
+    @media (min-height: 800px) {
       min-height: 60vh;
-    }
-    @media (min-height: 501px) {
-      min-height: 40vh;
     }
     &.collapsed {
       left: 130px;
