@@ -15,4 +15,4 @@ CDAP Included Applications Table of Contents
     Creating Custom ETL Plugins <etl/custom>
     ETL Plugins <etl/plugins/index>
     Using Third-Party JARs <etl/plugins/third-party>
-    Data Quality Applications <data-quality/index>
+    Data Quality Application <data-quality/index>
