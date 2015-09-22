@@ -1,3 +1,9 @@
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2015 Cask Data, Inc.
+
+.. _included-apps-data-quality-index:
+
 ============================
 Data Quality Application
 ============================
@@ -14,74 +20,45 @@ In this guide, you'll learn to use the Data Quality Application, including:
 - building custom aggregation functions; and
 - querying the aggregated data.
 
+Creating an Application
+-----------------------
+The application can be created from the ``cdap-data-quality`` system artifact by supplying an application configuration:
 
-What You Will Need
-==================
+.. container:: highlight
 
-- `JDK 7 or 8 <http://www.oracle.com/technetwork/java/javase/downloads/index.html>`__
-- `Apache Maven 3.1+ <http://maven.apache.org/>`__
-- `CDAP SDK <http://docs.cdap.io/cdap/current/en/developers-manual/getting-started/standalone/index.html>`__
-
-
-Building and Starting
-=====================
-
-The Data Quality application can be built and packaged using the Apache Maven command from the project root::
-
-  $ mvn clean package
-
-If you haven't already started a standalone CDAP installation, start it with the command::
-
-  $ cdap.sh start
-
-Deploying Application
----------------------
-The application can be created from the Data Quality Artifact by supplying an application configuration:
-
-.. code:: json
-
-  {
-    "source": {
-      "name": "Stream",
-      "id": "logStream",
-      "properties": {
-        "duration": "5m",
-        "format": "clf",
-        "name": "logStream"
+  .. parsed-literal::
+    {
+      "artifact": {
+        "name": "cdap-data-quality",
+        "version": "|version|",
+        "scope": "system"
+      },
+      "config": {
+        "source": {
+          "name": "Stream",
+          "id": "logStream",
+          "properties": {
+            "duration": "5m",
+            "format": "clf",
+            "name": "logStream"
+          }
+        },
+        "datasetName": "dataQuality",
+        "workflowScheduleMinutes": 5,
+        "fieldAggregations": {
+          "referrer": [ "DiscreteValuesHistogram" ],
+          "status": [ "DiscreteValuesHistogram" ],
+          "remote_login": [ "DiscreteValuesHistogram" ],
+          "request": [ "DiscreteValuesHistogram" ],
+          "user_agent": [ "DiscreteValuesHistogram" ],
+          "auth_user": [ "DiscreteValuesHistogram" ],
+          "content_length": [ "DiscreteValuesHistogram" ],
+          "date": [ "DiscreteValuesHistogram" ],
+          "remote_host": [ "DiscreteValuesHistogram" ]
+        }
       }
-    },
-    "datasetName": "dataQuality",
-    "workflowScheduleMinutes": 5,
-    "fieldAggregations": {
-        "referrer": [
-            "DiscreteValuesHistogram"
-        ],
-        "status": [
-            "DiscreteValuesHistogram"
-        ],
-        "remote_login": [
-            "DiscreteValuesHistogram"
-        ],
-        "request": [
-            "DiscreteValuesHistogram"
-        ],
-        "user_agent": [
-            "DiscreteValuesHistogram"
-        ],
-        "auth_user": [
-            "DiscreteValuesHistogram"
-        ],
-        "content_length": [
-            "DiscreteValuesHistogram"
-        ],
-        "date": [
-            "DiscreteValuesHistogram"
-        ],
-        "remote_host": [
-            "DiscreteValuesHistogram"
-        ]
     }
-  }
+
 
 * ``source`` : Data Quality Source
   - ``name``: Name of the Batch Source Plugin
@@ -91,11 +68,13 @@ The application can be created from the Data Quality Artifact by supplying an ap
 * ``datasetName`` : Name of the destination dataset.
 * ``fieldAggregations`` : Map that relates each field value to a set of aggregation functions.
 
-
 To deploy the application with the application configuration, issue a PUT curl call.
 In this example, the ``appconfig.json`` file contains the application configuration::
 
-  $ curl -v localhost:10000/v3/namespaces/default/apps/StreamDQ -d @appconfig.json -X PUT -H 'Content-Type: application/json'
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/StreamDQ -d @appconfig.json -X PUT -H 'Content-Type: application/json'
+
+Note that ``cdap-data-quality`` artifact uses the same batch source plugins as the ``cdap-etl-batch`` artifact.
+See :ref:`Batch Sources <etl-plugins-batchsources>` for more information about available plugins. 
 
 End-to-End Example
 ==================
@@ -110,44 +89,58 @@ Let's take the example of a user who wants wants to use the Data Quality Applica
 
 We would create a Data Quality Application by creating a JSON file ``appconfig.json`` that contains:
 
-.. code:: json
+.. container:: highlight
 
-  {
-      "workflowScheduleMinutes": 10,
-      "source": {
-        "name": "Stream",
-        "id": "logStream",
-        "properties": {
-          "duration": "5m",
-          "format": "clf",
-          "name": "logStream"
-        }
+  .. parsed-literal::
+    {
+      "artifact": {
+        "name": "cdap-data-quality",
+        "version": "|version|",
+        "scope": "system"
       },
-      "datasetName": "dataQuality",
-      "inputFormat": "clf",
-      "fieldAggregations": {
-          "status": [
-              "DiscreteValuesHistogram"
-          ]
+      "config": {
+        "workflowScheduleMinutes": 5,
+        "source": {
+          "name": "Stream",
+          "id": "logStream",
+          "properties": {
+            "duration": "5m",
+            "format": "clf",
+            "name": "logStream"
+          }
+        },
+        "datasetName": "dataQuality",
+        "inputFormat": "clf",
+        "fieldAggregations": {
+          "status": [ "DiscreteValuesHistogram" ]
+        }
       }
-  }
+    }
 
 To deploy the application, issue this curl command::
 
-  $ curl -v localhost:10000/v3/namespaces/default/apps/StreamDQ -d @appconfig.json -X PUT -H 'Content-Type: application/json'
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/StreamDQ -d @appconfig.json -X PUT -H 'Content-Type: application/json'
 
-Now, let's send some data to the stream. We can do this by going to the UI (http://localhost:9999), clicking on
-"logStream" -> "Actions" -> "Send Event". Enter each of the following Apache Access Log strings in the dialog box, and hit "Send Event" (one-by-one)::
+Next, resume the workflow schedule::
+ 
+  $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/StreamDQ/schedules/aggregatorSchedule/resume 
 
-  93.184.216.34 - - [08/Feb/2015:04:54:14 +0000] "GET /examples/example1 HTTP/1.0" 200 1343488 "http:/example.com/" "Mozilla/5.0 (Windows NT 6.1; rv:33.0) Gecko/20100101 Firefox/33.0"
+This will resume the schedule so that it kicks off a workflow run every five minutes.
+Now, let's send some data to the stream. We can do this by using the RESTful API::
+
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/streams/logStream \
+  -d '93.184.216.34 - - [08/Feb/2015:04:54:14 +0000] "GET /examples/example1 HTTP/1.0" 200 1343488 "http:/example.com/" "Mozilla/5.0 (Windows NT 6.1; rv:33.0) Gecko/20100101 Firefox/33.0"'
   
-  93.184.216.34 - - [08/Feb/2015:04:54:14 +0000] "GET /examples/example2 HTTP/1.0" 404 34234 "http:/example.com/" "Mozilla/5.0 (Windows NT 6.1; rv:33.0) Gecko/20100101 Firefox/33.0"
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/streams/logStream \
+  -d '93.184.216.34 - - [08/Feb/2015:04:54:14 +0000] "GET /examples/example2 HTTP/1.0" 404 34234 "http:/example.com/" "Mozilla/5.0 (Windows NT 6.1; rv:33.0) Gecko/20100101 Firefox/33.0"'
   
-  93.184.216.34 - - [08/Feb/2015:04:54:14 +0000] "GET /examples/example3 HTTP/1.0" 400 88234 "http:/example.com/" "Mozilla/5.0 (Windows NT 6.1; rv:33.0) Gecko/20100101 Firefox/33.0"
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/streams/logStream \
+  -d '93.184.216.34 - - [08/Feb/2015:04:54:14 +0000] "GET /examples/example3 HTTP/1.0" 400 88234 "http:/example.com/" "Mozilla/5.0 (Windows NT 6.1; rv:33.0) Gecko/20100101 Firefox/33.0"'
 
+Once the MapReduce has completed, we can then query the aggregated data.
+In order to make queries, we need to start the service in the application::
 
-Once we've done that, we can go back to the home page and wait for the workflow to start the MapReduce. Once the
-MapReduce has completed, we can then query the aggregated data.
+  $ curl -w'\n' -X POST localhost:10000/v3/namespaces/default/apps/StreamDQ/services/DataQualityService/start
 
 There are four RESTful endpoints which we can use:
 
@@ -160,7 +153,7 @@ Suppose we want to be able to query the aggregated data for the source ``logStre
 
 We would make this request::
 
-  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/DataQualityApp/services/AggregationsService/methods/v1/sources/logStream/fields/status/aggregations/DiscreteValuesHistogram/totals
+  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/StreamDQ/services/DataQualityService/methods/v1/sources/logStream/fields/status/aggregations/DiscreteValuesHistogram/totals
 
 If you use the aforementioned sample Apache Access logs, your response should look like this: 
 
@@ -195,20 +188,3 @@ Share and Discuss!
 ==================
 
 Have a question? Discuss at the `CDAP User Mailing List <https://groups.google.com/forum/#!forum/cdap-user>`__.
-
-License
-=======
-
-Copyright © 2015 Cask Data, Inc.
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may
-not use this file except in compliance with the License. You may obtain
-a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.

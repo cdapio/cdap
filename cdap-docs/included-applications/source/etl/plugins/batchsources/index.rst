@@ -6,6 +6,8 @@
 Batch Sources
 ===============================
 
+.. _etl-plugins-batchsources:
+
 .. toctree::
    :maxdepth: 1
 

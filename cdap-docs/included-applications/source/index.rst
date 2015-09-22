@@ -67,3 +67,15 @@ These sections describe:
 
 The **lifecycle of ETL Applications** is managed using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
 
+.. rubric:: Data Quality
+
+The goal of the Data Quality Application is to provide users with an extensible CDAP application to help them
+determine the quality of their data.  Users could assess the quality of their data using its out-of-the-box
+functionality and libraries. The application can be extended with custom aggregation functions and queried with a
+RESTful API to obtain the results of the quality metric computations.
+
+.. |data-quality-guide| replace:: **Data Quality Guide:**
+.. _data-quality-guide: data-quality/index.html
+
+- |data-quality-guide|_ Guide to creating Data Quality Applications.
+
