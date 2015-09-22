@@ -15,8 +15,9 @@
  */
 
 var params = {};
+var metadataParams = {};
 class WorkflowsRunsController {
-  constructor($scope, $state, $filter, rRuns, myWorkFlowApi, $bootstrapModal, rWorkflowDetail) {
+  constructor($scope, $state, $filter, rRuns, myWorkFlowApi, $bootstrapModal, rWorkflowDetail, myMetadataFactory) {
     let fFilter = $filter('filter');
     this.runs = rRuns;
     this.$scope = $scope;
@@ -24,6 +25,7 @@ class WorkflowsRunsController {
     this.myWorkFlowApi = myWorkFlowApi;
     this.runStatus = null;
     this.$bootstrapModal = $bootstrapModal;
+    this.myMetadataFactory = myMetadataFactory;
     this.description = rWorkflowDetail.description;
 
 
@@ -78,6 +80,22 @@ class WorkflowsRunsController {
       this.myWorkFlowApi.stopPollRunDetail(params);
     });
     this.activeTab = this.tabs[0];
+
+    metadataParams = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      programType: 'workflows',
+      programId: $state.params.programId,
+      scope: $scope
+    };
+    this.metadataAddOpen = false;
+    this.metadataTags = [];
+
+    this.myMetadataFactory.getProgramMetadata(metadataParams)
+      .then( res => {
+        this.metadataTags = res;
+      });
+
   }
 
   startPollingCurrentRun() {
@@ -141,9 +159,24 @@ class WorkflowsRunsController {
       controllerAs: 'SchedulesController'
     });
   }
+
+  addMetadata() {
+    this.myMetadataFactory.addProgramMetadata(this.tag, metadataParams)
+      .then( res => {
+        this.metadataTags = res;
+        this.tag = '';
+      });
+  }
+
+  deleteMetadata(tag) {
+    this.myMetadataFactory.deleteProgramMetadata(tag, metadataParams)
+      .then( res => {
+        this.metadataTags = res;
+      });
+  }
 }
 
-WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns', 'myWorkFlowApi', '$bootstrapModal', 'rWorkflowDetail'];
+WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns', 'myWorkFlowApi', '$bootstrapModal', 'rWorkflowDetail', 'myMetadataFactory'];
 
 angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkflowsRunsController', WorkflowsRunsController);

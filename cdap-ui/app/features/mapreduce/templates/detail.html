@@ -28,42 +28,38 @@
           </div>
           <p ng-bind="RunsController.description | myEllipsis: 144"></p>
           <div class="program-tags">
-
-
-            <div ng-if="!RunsController.metadataAddOpen">>
-              <a class="btn"
-                ng-click="RunsController.metadataAddOpen = true"
+            <div class="tag" ng-if="!RunsController.metadataAddOpen">
+              <a class="btn" ng-click="RunsController.metadataAddOpen = true">
                 <span class="fa fa-plus"></span>
               </a>
             </div>
-
-            <div class="input-group" ng-if="RunsController.metadataAddOpen">
-              <input type="text" class="form-control" ng-model="RunsController.tag">
-              <span class="input-group-btn">
-                <button class="btn btn-success"
-                  ng-click="RunsController.addMetadata()">
-                  <i class="fa fa-plus"></i>
-                </button>
-              </span>
-              <span class="input-group-btn">
-                <button class="btn btn-default"
-                  ng-click="RunsController.metadataAddOpen = false">
-                  <i class="fa fa-times"></i>
-                </button>
-              </span>
+            <div class="tag-input" ng-if="RunsController.metadataAddOpen">
+              <div class="input-group">
+                <input type="text" class="form-control" ng-model="RunsController.tag">
+                <span class="input-group-btn">
+                  <button class="btn btn-success"
+                    ng-click="RunsController.addMetadata()">
+                    <i class="fa fa-plus"></i>
+                  </button>
+                </span>
+                <span class="input-group-btn">
+                  <button class="btn btn-default"
+                    ng-click="RunsController.metadataAddOpen = false">
+                    <i class="fa fa-times"></i>
+                  </button>
+                </span>
+              </div>
             </div>
-
-
-            <a class="btn"
-              ng-repeat="tag in RunsController.metadataTags"
-              ng-mouseover="tag.isHover = true"
-              ng-mouseleave="tag.isHover = false">
-              {{tag.tagName}}
-              <span class="fa fa-times"
-                ng-click="RunsController.deleteMetadata(tag.tagName)"
-                ng-if="tag.isHover"></span>
-            </a>
-
+            <div class="tag" ng-repeat="tag in RunsController.metadataTags">
+              <a class="btn"
+                ng-mouseover="tag.isHover = true"
+                ng-mouseleave="tag.isHover = false">
+                {{tag.tagName}}
+                <span class="fa fa-times"
+                  ng-click="RunsController.deleteMetadata(tag.tagName)"
+                  ng-if="tag.isHover"></span>
+              </a>
+            </div>
           </div>
         </div>
         <div class="col-sm-8 col-md-6">

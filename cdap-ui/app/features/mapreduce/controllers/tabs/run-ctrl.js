@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $bootstrapModal, rMapreduceDetail, myMetadataApi) {
+  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $bootstrapModal, rMapreduceDetail, myMetadataFactory) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
@@ -97,42 +97,26 @@ angular.module(PKG.name + '.feature.mapreduce')
       programId: $state.params.programId,
       scope: $scope
     };
-
+    this.metadataAddOpen = false;
     this.metadataTags = [];
 
-    function getMetadata() {
-      myMetadataApi.getProgramMetadata(metadataParams)
-        .$promise
-        .then(function (res) {
-          this.metadataTags = res.map(function (tag) {
-            return {
-              tagName: tag,
-              isHover: false
-            };
-          });
-        }.bind(this));
-    }
-    getMetadata.bind(this)();
-
-    this.metadataAddOpen = false;
+    myMetadataFactory.getProgramMetadata(metadataParams)
+      .then(function (res) {
+        this.metadataTags = res;
+      }.bind(this));
 
     this.addMetadata = function () {
-      var tag = [this.tag];
-
-      myMetadataApi.setProgramMetadata(metadataParams, tag)
-        .$promise
-        .then(function () {
+      myMetadataFactory.addProgramMetadata(this.tag, metadataParams)
+        .then(function (res) {
+          this.metadataTags = res;
           this.tag = '';
-          getMetadata.bind(this)();
         }.bind(this));
     };
-    this.deleteMetadata = function (tag) {
-      var deleteParams = angular.extend({tag: tag}, metadataParams);
 
-      myMetadataApi.deleteProgramMetadata(deleteParams)
-        .$promise
-        .then(function () {
-          getMetadata.bind(this)();
+    this.deleteMetadata = function (tag) {
+      myMetadataFactory.deleteProgramMetadata(tag, metadataParams)
+        .then(function (res) {
+          this.metadataTags = res;
         }.bind(this));
     };
 
