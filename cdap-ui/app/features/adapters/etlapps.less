@@ -471,7 +471,11 @@ body.theme-cdap.state-adapters-create {
   }
   my-dag {
     width: 100%;
-    height: 50vh;
+    // Dag-Height 60% on smaller screen
+    height: 60vh;
+    @media (min-height: 800px) {
+      height: 40vh;
+    }
   }
 
   .tab-pane .panel-default {

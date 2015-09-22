@@ -14,30 +14,6 @@
   the License.
 -->
 
-<div class="navbar-header clearfix">
-  <a class="navbar-brand"
-     ui-sref="adapters.list">
-     <strong>Cask Hydrator V1.0</strong>
-  </a>
+<div ng-init="isDisabled=true">
+  <div ng-include="'/assets/features/adapters/templates/partial/node-config.html'"></div>
 </div>
-
-<nav>
-  <ul class="nav navbar-nav">
-    <li>
-      <a ui-sref="adapters.list" ng-class="{'active': $state.is('adaters.list') || $state.is('adapters.detail')}">
-        <span> My Pipelines </span>
-      </a>
-    </li>
-    <li>
-      <a ui-sref="adapters.create" ui-sref-active="active">
-        <span> Create Pipeline </span>
-      </a>
-    </li>
-  </ul>
-</nav>
-
-<my-error></my-error>
-
-<a ui-sref="overview" class="cdap-link">
-  <span></span>
-</a>

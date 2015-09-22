@@ -123,7 +123,7 @@ These are the available commands:
 .. csv-table::
    :header: Command,Description
    :widths: 50, 50
-
+   
    **General**
    ``cli render as <table-renderer>``,"Modifies how table data is rendered. Valid options are ""alt"" (default) and ""csv""."
    ``cli version``,"Prints the CLI version."
@@ -321,3 +321,4 @@ These are the available commands:
    ``truncate stream <stream-id>``,"Truncates a stream."
    **Egress**
    ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>] [body:file <local-file-path>]``,"Calls a service endpoint. The <headers> are formatted as ""{'key':'value', ...}"". The request body may be provided either as a string or a file. To provide the body as a string, use ""body <body>"". To provide the body as a file, use ""body:file <local-file-path>""."
+
