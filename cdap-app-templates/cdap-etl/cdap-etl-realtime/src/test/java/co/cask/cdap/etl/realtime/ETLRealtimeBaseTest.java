@@ -19,7 +19,6 @@ package co.cask.cdap.etl.realtime;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.realtime.sink.RealtimeCubeSink;
-import co.cask.cdap.etl.realtime.sink.RealtimeElasticsearchSink;
 import co.cask.cdap.etl.realtime.sink.RealtimeTableSink;
 import co.cask.cdap.etl.realtime.sink.StreamSink;
 import co.cask.cdap.etl.realtime.source.DataGeneratorSource;
@@ -53,7 +52,7 @@ public class ETLRealtimeBaseTest extends TestBase {
       TwitterSource.class, SqsSource.class);
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "realtime-sinks", "1.0.0"), APP_ARTIFACT_ID,
       RealtimeCubeSink.class, RealtimeTableSink.class,
-      StreamSink.class, RealtimeElasticsearchSink.class);
+      StreamSink.class);
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "transforms", "1.0.0"), APP_ARTIFACT_ID,
       ProjectionTransform.class, ScriptFilterTransform.class,
       StructuredRecordToGenericRecordTransform.class);

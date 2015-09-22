@@ -147,6 +147,16 @@ public class LineageAdminTest extends MetadataTestBase {
     // Assert metadata
     Assert.assertEquals(toSet(run1AppMeta, run1ProgramMeta, run1Data1Meta, run1Data2Meta),
                         lineageAdmin.getMetadataForRun(run1));
+
+    // Assert that in a different namespace both lineage and metadata should be empty
+    Id.Namespace customNamespace = Id.Namespace.from("custom_namespace");
+    Id.DatasetInstance customDataset1 = Id.DatasetInstance.from(customNamespace, dataset1.getId());
+    Id.Run customRun1 =
+      new Id.Run(Id.Program.from(customNamespace, program1.getApplicationId(), program1.getType(), program1.getId()),
+                 run1.getId());
+    Assert.assertEquals(new Lineage(ImmutableSet.<Relation>of()),
+                        lineageAdmin.computeLineage(customDataset1, 500, System.currentTimeMillis() + 10000, 100));
+    Assert.assertEquals(ImmutableSet.<MetadataRecord>of(), lineageAdmin.getMetadataForRun(customRun1));
   }
 
   @Test

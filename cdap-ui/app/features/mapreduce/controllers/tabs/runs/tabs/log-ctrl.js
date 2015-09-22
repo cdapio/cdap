@@ -70,7 +70,9 @@ angular.module(PKG.name + '.feature.mapreduce')
           this.loadingPrev = false;
 
           $timeout(function() {
-            document.getElementById(params.fromOffset).scrollIntoView();
+            var container = angular.element(document.querySelector('[infinite-scroll]'))[0];
+            var logItem = angular.element(document.getElementById(params.fromOffset))[0];
+            container.scrollTop = logItem.offsetTop;
           });
         }.bind(this));
     };
