@@ -821,7 +821,7 @@ For workflows, you can retrieve:
      * - Returns
        - | ``[{"id":"DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule","time":1415102400000}]``
        
-.. _http-restful-api-lifecycle-schedules-suspend-resume
+.. _http-restful-api-lifecycle-schedules-suspend-resume:
 
 Schedules: Suspend and Resume
 .............................
@@ -878,7 +878,7 @@ where:
      * - Returns
        - | ``OK`` if successfully set as suspended
 
-.. _http-restful-api-lifecycle-workflows-suspend-resume
+.. _http-restful-api-lifecycle-workflows-suspend-resume:
 
 Workflows: Suspend and Resume
 ...........................................
