@@ -371,7 +371,6 @@ angular.module(PKG.name + '.commons')
       resetComponent.call(this);
     }
 
-    MyNodeConfigService.registerPluginResetCallback($scope.$id, this.resetPluginSelection.bind(this));
     MyNodeConfigService.registerPluginSaveCallback($scope.$id, this.highlightRequiredFields.bind(this));
     MyAppDAGService.registerCallBack(this.addPlugin.bind(this));
     MyAppDAGService.registerResetCallBack(resetComponent.bind(this));

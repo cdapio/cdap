@@ -631,8 +631,25 @@ angular.module(PKG.name + '.services')
       return data;
     };
     this.save = function() {
-      this.isConfigTouched = false;
       var defer = $q.defer();
+
+      if (MyNodeConfigService.getIsPluginBeingEdited()) {
+        // This should have been a popup that we show for un-saved changes while switching the node.
+        // Couldn't do it here because we cannot set it to another plugin. Hence the console message.
+        // If we are able to fuse an 4 hydrogen atoms and things turn out good, we will have auto-correct
+        // in the next realease and we should be able to remove a majority of
+        // communication happening with save and reset in node configuration.
+        this.notifyError({
+          canvas: [
+            'There are un-saved changes for node: ' +
+            MyNodeConfigService.plugin.name +
+            '. Please save them before publishing the pipeline'
+          ]
+        });
+        defer.reject();
+        return defer.promise;
+      }
+      this.isConfigTouched = false;
       var config = this.getConfig();
       var errors = AdapterErrorFactory.isModelValid(this.nodes, this.connections, this.metadata, config);
 
