@@ -34,6 +34,7 @@ angular.module(PKG.name + '.feature.adapters')
     this.configfetched = false;
     this.properties = [];
     this.noconfig = null;
+    this.MyNodeConfigService = MyNodeConfigService;
     /////////////////////////////////////
     /*
      This is snippet is here because the widget-schema-editor edits the outputschema that we pass in
@@ -44,7 +45,7 @@ angular.module(PKG.name + '.feature.adapters')
      This should eventually be removed and moved to a service (or a factory). For lack of time my sin stays here. - Ajai
     */
     if (!$scope.isDisabled) {
-      $scope.data['isModelTouched'] = false;
+      MyNodeConfigService.setIsPluginBeingEdited(false);
     }
 
     var typeMap = 'map<string, string>';
@@ -244,7 +245,7 @@ angular.module(PKG.name + '.feature.adapters')
                     var strProp1 = JSON.stringify($scope.pluginCopy.properties);
                     var strProp2 = JSON.stringify($scope.plugin.properties);
                     if (strProp1 !== strProp2) {
-                      $scope.data['isModelTouched'] = true;
+                      MyNodeConfigService.setIsPluginBeingEdited(true);
                     }
                 }, true);
               }
@@ -331,7 +332,7 @@ angular.module(PKG.name + '.feature.adapters')
           var originalOutputSchema = $scope.plugin.outputSchema;
           var copyOutputSchema = $scope.pluginCopy.outputSchema;
           if (originalOutputSchema !== copyOutputSchema) {
-            $scope.data['isModelTouched'] = true;
+            MyNodeConfigService.setIsPluginBeingEdited(true);
           }
         });
       }
@@ -340,7 +341,7 @@ angular.module(PKG.name + '.feature.adapters')
         var copyLabel = $scope.pluginCopy.label;
         var originalLabel = $scope.plugin.label;
         if (copyLabel !== originalLabel) {
-          $scope.data['isModelTouched'] = true;
+          MyNodeConfigService.setIsPluginBeingEdited(true);
         }
       });
 
@@ -348,7 +349,7 @@ angular.module(PKG.name + '.feature.adapters')
         var copyErrorDataset = $scope.pluginCopy.errorDatasetName;
         var originalErrorDataset = $scope.plugin.errorDatasetName;
         if (copyErrorDataset !== originalErrorDataset) {
-          $scope.data['isModelTouched'] = true;
+          MyNodeConfigService.setIsPluginBeingEdited(true);
         }
       });
 
@@ -356,7 +357,7 @@ angular.module(PKG.name + '.feature.adapters')
         var copyValidationFields = JSON.stringify($scope.pluginCopy.validationFields);
         var originalValidationFields = JSON.stringify($scope.plugin.validationFields);
         if (copyValidationFields !== originalValidationFields) {
-          $scope.data['isModelTouched'] = true;
+          MyNodeConfigService.setIsPluginBeingEdited(true);
         }
       });
 
@@ -364,7 +365,7 @@ angular.module(PKG.name + '.feature.adapters')
           var strProp1 = JSON.stringify($scope.pluginCopy.properties);
           var strProp2 = JSON.stringify($scope.plugin.properties);
           if (strProp1 !== strProp2) {
-            $scope.data['isModelTouched'] = true;
+            MyNodeConfigService.setIsPluginBeingEdited(true);
           }
       }, true);
     }
@@ -374,7 +375,7 @@ angular.module(PKG.name + '.feature.adapters')
       $scope.pluginCopy.outputSchema = angular.copy($scope.plugin.outputSchema);
       $scope.pluginCopy.errorDatasetName = angular.copy($scope.plugin.errorDatasetName);
       EventPipe.emit('resetValidatorValidationFields', $scope.plugin.validationFields);
-      $scope.data['isModelTouched'] = false;
+      MyNodeConfigService.setIsPluginBeingEdited(false);
       EventPipe.emit('plugin.reset');
     };
 
@@ -389,7 +390,7 @@ angular.module(PKG.name + '.feature.adapters')
         $scope.plugin.errorDatasetName = $scope.pluginCopy.errorDatasetName;
         $scope.plugin.validationFields = angular.copy($scope.pluginCopy.validationFields);
         $scope.plugin.label = $scope.pluginCopy.label;
-        $scope.data['isModelTouched'] = false;
+        MyNodeConfigService.setIsPluginBeingEdited(false);
         MyNodeConfigService.notifyPluginSaveListeners($scope.plugin.id);
       }
     };
