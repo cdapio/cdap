@@ -38,6 +38,11 @@ RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a workflow
 individual runs of a workflow :ref:`suspended or resumed 
 <http-restful-api-lifecycle-workflows-suspend-resume>`. 
 
+A workflow can have one or more than one :ref:`schedules` that call upon it.
+These schedules are in a *suspended* state when the application is first deployed.
+Each schedule needs to be *resumed*, changing its status to *scheduled*, in order for the
+workflow to become executed following the schedule.
+
 Executing MapReduce or Spark Programs
 -------------------------------------
 To execute MapReduce or Spark programs in a workflow, you will need to add them in your
