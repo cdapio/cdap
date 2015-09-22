@@ -49,7 +49,8 @@ angular.module(PKG.name + '.services')
           unconnectedNodesError: 'Please connect all nodes.',
           circularConnectionError: 'Please remove the circular connection in this pipeline.',
           endSinkError: 'Please end the pipeline connections in a sink.',
-          parallelConnectionError: 'Please remove parallel connections in this pipeline.'
+          parallelConnectionError: 'Please remove parallel connections in this pipeline.',
+          pluginDoesNotExist: 'Plugin does not exist: '
         },
         wizard: {
           welcomeMessage1: 'Hydrator makes it easy to prepare data so you ',

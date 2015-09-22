@@ -61,6 +61,14 @@ angular.module(PKG.name + '.commons')
       AdapterErrorFactory.isValidPlugin(plugin);
 
       this.plugins.forEach(function(p) {
+        if (!p._backendProperties) {
+          p.requiredFieldCount = '!';
+          p.error = {};
+          p.error.message = GLOBALS.en.hydrator.studio.pluginDoesNotExist + p.name;
+          p.warning = false;
+          return;
+        }
+
         if (p.id === plugin.id) {
           if (plugin.valid) {
             p.requiredFieldCount = 0;
