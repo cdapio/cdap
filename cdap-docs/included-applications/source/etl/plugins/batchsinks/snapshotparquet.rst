@@ -33,7 +33,7 @@ If it doesn't exist, it will be created.
 **basePath:** Base path for the FileSet. Defaults to the name of the dataset.
 
 **pathExtension:** The extension where the snapshot will be stored. The snapshot will be stored at
-<basePath>/<pathExtension.
+<basePath>/<pathExtension>.
 
 .. rubric:: Example
 
