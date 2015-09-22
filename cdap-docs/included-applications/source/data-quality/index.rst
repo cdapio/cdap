@@ -63,9 +63,11 @@ The application can be created from the ``cdap-data-quality`` system artifact by
 
 
 * ``source`` : Data Quality Source
+
   - ``name``: Name of the :ref:`Batch Source Plugin <included-apps-etl-plugins-batchsources>`.
   - ``id``: Unique ID that can be used to query for Data Quality metrics using DataQualityService.
   - ``properties``: Properties required by the :ref:`Batch Source Plugin <included-apps-etl-plugins-batchsources>`.
+  
 * ``workflowScheduleMinutes`` : Frequency (in minutes) with which the workflow runs the aggregation MapReduce.
 * ``datasetName`` : Name of the destination dataset.
 * ``fieldAggregations`` : Map that relates each field value to a set of aggregation functions.
