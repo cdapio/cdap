@@ -51,7 +51,7 @@ To read a range of keys and give a hint that you want 16 splits, write::
   ...
   public void beforeSubmit(MapReduceContext context) throws Exception {
     ...
-    context.setInput("myTable", kvTable.getSplits(16, startKey, stopKey);
+    context.setInput("myTable", kvTable.getSplits(16, startKey, stopKey));
   }
 
 
