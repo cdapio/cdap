@@ -20,11 +20,12 @@ import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.TimeMathParser;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
-import co.cask.cdap.metadata.serialize.LineageRecord;
+import co.cask.cdap.data2.metadata.lineage.LineageSerializer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.reflect.TypeToken;
@@ -75,9 +76,9 @@ public class LineageHandler extends AbstractHttpHandler {
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, datasetId);
     Lineage lineage = lineageAdmin.computeLineage(datasetInstance, range.getStart(), range.getEnd(), levels);
     responder.sendJson(HttpResponseStatus.OK,
-                       new LineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
-                                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
-                                         lineage.getRelations()),
+                       LineageSerializer.toLineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
+                                                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
+                                                         lineage),
                        LineageRecord.class, GSON);
   }
 
@@ -96,9 +97,9 @@ public class LineageHandler extends AbstractHttpHandler {
     Id.Stream streamId = Id.Stream.from(namespaceId, stream);
     Lineage lineage = lineageAdmin.computeLineage(streamId, range.getStart(), range.getEnd(), levels);
     responder.sendJson(HttpResponseStatus.OK,
-                       new LineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
-                                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
-                                         lineage.getRelations()),
+                       LineageSerializer.toLineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
+                                                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
+                                                         lineage),
                        LineageRecord.class, GSON);
   }
 
