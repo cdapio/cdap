@@ -37,12 +37,6 @@
               <div class="input-group" ng-keypress="$event.keyCode === 13 && RunsController.addMetadata()">
                 <input type="text" class="form-control" ng-model="RunsController.tag">
                 <span class="input-group-btn">
-                  <button class="btn btn-success"
-                    ng-click="RunsController.addMetadata()">
-                    <i class="fa fa-plus"></i>
-                  </button>
-                </span>
-                <span class="input-group-btn">
                   <button class="btn btn-default"
                     ng-click="RunsController.metadataAddOpen = false">
                     <i class="fa fa-times"></i>
