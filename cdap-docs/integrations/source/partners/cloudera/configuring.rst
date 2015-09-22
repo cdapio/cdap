@@ -274,8 +274,8 @@ of Cloudera's ``${PARCELS_ROOT}`` directory, for example::
   /opt/cloudera/parcels/CDAP/master/artifacts
 
 Ensure that the ``App Artifact Dir`` configuration option points to this path on disk. Since this
-directory can change when CDAP parcels are upgraded, advanced users are encouraged to place
-these artiracts in a static directory outside the parcel root, and configure accordingly.
+directory can change when CDAP parcels are upgraded, users are encouraged to place
+these artifacts in a static directory outside the parcel root, and configure accordingly.
 
 .. _cloudera-direct-parcel-access:
 
