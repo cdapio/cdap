@@ -129,7 +129,11 @@
       </li>
     </ul>
   </div>
+  
   <div class="console-type">
-    <div ng-include="activeTab.template" ng-if="tabs.length > 0"></div>
+    <div ng-repeat="tab in tabs"
+         ng-include="tab.template"
+         ng-show="activeTab.title === tab.title">
+      </div>
   </div>
 </div>
