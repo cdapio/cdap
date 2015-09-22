@@ -54,10 +54,15 @@ angular.module(PKG.name + '.services')
         },
         wizard: {
           welcomeMessage1: 'Hydrator makes it easy to prepare data so you ',
-          welcomeMessage2: 'can get down to business faster. Let’s get started!',
+          welcomeMessage2: 'can get down to business faster. Let\'s get started!',
           createMessage: 'ETL made simple. Hydrator offers four ways to get started.',
           createConsoleMessage: 'Click a node from the menu to place it on the canvas above.'
-        }
+        },
+      },
+      admin: {
+        templateNameExistsError: 'Template name already exists! Please choose another name.',
+        pluginSameNameError: 'There is already a plugin with the same name.',
+        templateNameMissingError: 'Please enter template name.'
       }
     }
   });
