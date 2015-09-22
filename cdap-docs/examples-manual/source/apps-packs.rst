@@ -64,14 +64,6 @@ your data applications. They are libraries of common data patterns and other pro
 useful when building big data applications:
 
 
-.. |etl-pack| replace:: **ETL-pack** *for ETL (extract, transform, and load):*
-.. _etl-pack: https://github.com/caskdata/cdap-packs/blob/develop/cdap-etl-pack
-
-- |etl-pack|_ The ETL-pack library is designed to ease the development of common ETL
-  solutions and provide powerful extension capabilities. Download or clone the library at
-  `GitHub. <https://github.com/caskdata/cdap-packs/>`__
-
-
 .. |twitter-pack| replace:: **Twitter-pack** *for Twitter Integration:*
 .. _twitter-pack: https://github.com/caskdata/cdap-packs/blob/develop/cdap-twitter-pack
 
