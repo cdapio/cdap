@@ -62,7 +62,7 @@
           </ul>
         </div>
 
-        <h4 class="sink-schema">
+        <h4 class="sink-schema" ng-if="pluginCopy.properties.schema">
           <span>Schema</span>
           <button
             class="btn btn-sm btn-default pull-right"
@@ -75,6 +75,7 @@
 
         <fieldset ng-disabled="isDisabled">
           <my-schema-editor
+            ng-if="pluginCopy.properties.schema || pluginCopy.implicitSchema"
             ng-model="pluginCopy.outputSchema"
             data-disabled="pluginCopy.implicitSchema || isDisabled"
             plugin-properties="pluginCopy.properties"
@@ -82,7 +83,7 @@
           </my-schema-editor>
         </fieldset>
 
-        <div ng-if="!pluginCopy.outputSchema && isDisabled">
+        <div ng-if="pluginCopy.properties.schema && !pluginCopy.outputSchema && isDisabled">
           <div class="well well-lg">
             <h4>There is no output schema</h4>
           </div>

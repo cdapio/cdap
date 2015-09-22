@@ -49,7 +49,7 @@
     },
     "group3": {
       "display" : "Table Properties",
-      "position" : [ "importQuery", "countQuery", "columnNameCase" ],
+      "position" : [ "importQuery", "countQuery", "columnNameCase" , "columns"],
       "fields" : {
         "importQuery" : {
           "widget": "textbox",
@@ -66,6 +66,13 @@
           "properties" : {
             "values" : [ "UPPER", "lower", "No change" ],
             "default" : "No change"
+          }
+        },
+        "columns": {
+          "widget": "csv",
+          "label": "Columns",
+          "properties": {
+            "delimiter": ","
           }
         }
       }
