@@ -50,7 +50,7 @@ angular.module(PKG.name + '.feature.adapters')
     function pluginsExist (nodes, connections, metadata, config, errors) {
       angular.forEach(nodes, function (node) {
         if (!node._backendProperties) {
-          addCanvasError(node.name + GLOBALS.en.hydrator.studio.pluginDoesNotExist, errors);
+          addCanvasError(GLOBALS.en.hydrator.studio.pluginDoesNotExist + node.name, errors);
           errors[node.id] = {};
           errors[node.id].requiredFieldCount = '!';
           node.requiredFieldCount = '!';

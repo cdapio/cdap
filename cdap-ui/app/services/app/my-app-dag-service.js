@@ -474,7 +474,7 @@ angular.module(PKG.name + '.services')
         }, function error () {
           MyConsoleTabService.addMessage({
             type: 'error',
-            content: 'Cannot find plugin ' + params.pluginName
+            content: GLOBALS.en.hydrator.studio.pluginDoesNotExist + params.pluginName
           });
           plugin._backendProperties = false;
           plugin.requiredFieldCount = '!';

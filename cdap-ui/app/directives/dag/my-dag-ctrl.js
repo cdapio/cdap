@@ -64,7 +64,7 @@ angular.module(PKG.name + '.commons')
         if (!p._backendProperties) {
           p.requiredFieldCount = '!';
           p.error = {};
-          p.error.message = 'Plugin does not exist';
+          p.error.message = GLOBALS.en.hydrator.studio.pluginDoesNotExist + p.name;
           p.warning = false;
           return;
         }
