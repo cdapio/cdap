@@ -13,68 +13,62 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div ng-controller="AdapterSettingsController as AdapterSettingsController">
-  <br/>
+<div ng-controller="AdapterSettingsController as AdapterSettingsController" class="pipeline-schedule">
 
-  <div class="row">
-    <div class="col-xs-12">
-      <form class="form-horizontal">
+  <div class="bottompanel-header"
+       ng-if="AdapterSettingsController.metadata.template.type === AdapterSettingsController.GLOBALS.etlBatch">
+    <h3>
+      <span>Pipeline Schedule</span>
+      <span class="pull-right">
+        <button class="btn btn-success"
+          ng-click="AdapterSettingsController.save()"
+          ng-disabled="AdapterSettingsController.saveDisabled">Save</button>
+        <button class="btn btn-default"
+          ng-click="AdapterSettingsController.reset()"
+          ng-disabled="AdapterSettingsController.saveDisabled">Reset</button>
+      </span>
+    </h3>
 
-        <div class="pipeline-schedule"
-          ng-if="AdapterSettingsController.metadata.template.type === AdapterSettingsController.GLOBALS.etlBatch">
-          <h3>
-            <span>Pipeline Schedule</span>
-            <span class="pull-right">
-              <button class="btn btn-default"
-                ng-click="AdapterSettingsController.reset()"
-                ng-disabled="AdapterSettingsController.saveDisabled">Reset</button>
-              <button class="btn btn-success"
-                ng-click="AdapterSettingsController.save()"
-                ng-disabled="AdapterSettingsController.saveDisabled">Save</button>
-            </span>
-          </h3>
+    <ul class="nav nav-tabs slanted-tabs" role="tablist">
+      <li role="presentation"
+        class="text-center"
+        ng-class="{ 'active': AdapterSettingsController.isBasic}"
+        ng-click="AdapterSettingsController.changeScheduler('BASIC')">
+        Simple
+      </li>
+      <li role="presentation"
+        class="text-center"
+        ng-class="{ 'active': !AdapterSettingsController.isBasic}"
+        ng-click="AdapterSettingsController.changeScheduler('ADVANCE')">
+        Cron Expression
+      </li>
+    </ul>
+  </div>
 
-          <ul class="nav nav-tabs slanted-tabs" role="tablist">
-            <li role="presentation"
-              class="text-center"
-              ng-class="{ 'active': AdapterSettingsController.isBasic}"
-              ng-click="AdapterSettingsController.changeScheduler('BASIC')">
-              Simple
-            </li>
-            <li role="presentation"
-              class="text-center"
-              ng-class="{ 'active': !AdapterSettingsController.isBasic}"
-              ng-click="AdapterSettingsController.changeScheduler('ADVANCE')">
-              Cron Expression
-            </li>
-          </ul>
+  <div class="bottompanel-body">
+    <div class="basic-cron" ng-if="AdapterSettingsController.isBasic">
+      <cron-selection output="AdapterSettingsController.cron"
+        init="AdapterSettingsController.initialCron"></cron-selection>
+    </div>
 
-          <div class="basic-cron" ng-if="AdapterSettingsController.isBasic">
-            <cron-selection output="AdapterSettingsController.cron"
-              init="AdapterSettingsController.initialCron"></cron-selection>
-          </div>
-
-          <div class="form-group" ng-if="!AdapterSettingsController.isBasic">
-            <div class="col-sm-10">
-              <div data-name="field"
-                   class="my-widget-container"
-                   data-model="AdapterSettingsController.cron"
-                   data-myconfig="{properties: {}, widget: 'schedule'}"
-                   widget-container>
-              </div>
-            </div>
-          </div>
+    <div class="form-group" ng-if="!AdapterSettingsController.isBasic">
+      <div class="col-sm-10">
+        <div data-name="field"
+             class="my-widget-container"
+             data-model="AdapterSettingsController.cron"
+             data-myconfig="{properties: {}, widget: 'schedule'}"
+             widget-container>
         </div>
+      </div>
+    </div>
 
-        <div class="form-group" ng-if="AdapterSettingsController.metadata.template.type === AdapterSettingsController.GLOBALS.etlRealtime">
-          <label class="col-sm-2 control-label">Instances</label>
-          <div class="col-sm-10">
-            <input type="number"
-                   ng-model="AdapterSettingsController.instance" class="form-control" min="1">
-          </div>
-        </div>
-
-      </form>
+    <div class="form-group" ng-if="AdapterSettingsController.metadata.template.type === AdapterSettingsController.GLOBALS.etlRealtime">
+      <label class="col-sm-2 control-label">Instances</label>
+      <div class="col-sm-10">
+        <input type="number"
+               ng-model="AdapterSettingsController.instance" class="form-control" min="1">
+      </div>
     </div>
   </div>
+
 </div>
