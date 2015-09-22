@@ -12,6 +12,8 @@ Batch Sinks
     Cube <cube>
     Database <database>
     KVTable <kvtable>
+    S3Avro <s3avro>
+    S3Parquet <s3parquet>
     SnapshotAvro <snapshotavro>
     SnapshotParquet <snapshotparquet>
     Table <table>
