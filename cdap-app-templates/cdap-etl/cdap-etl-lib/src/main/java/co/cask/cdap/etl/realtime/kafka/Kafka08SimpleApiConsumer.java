@@ -193,8 +193,8 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
         Futures.get(zkClient.start(), 3, TimeUnit.SECONDS, TimeoutException.class);
         Futures.get(brokerService.start(), 3, TimeUnit.SECONDS, TimeoutException.class);
       } catch (TimeoutException e) {
-        Futures.getUnchecked(brokerService.stop());
-        Futures.getUnchecked(zkClient.stop());
+        Futures.get(brokerService.stop(), 3, TimeUnit.SECONDS, TimeoutException.class);
+        Futures.get(zkClient.stop(), 3, TimeUnit.SECONDS, TimeoutException.class);
         throw new IllegalArgumentException(
           String.format("Timeout while trying to start ZookeeperClient/Broker Service. " +
                           "Check if the zookeeper connection string %s is correct.", kafkaZKConnect), e);
