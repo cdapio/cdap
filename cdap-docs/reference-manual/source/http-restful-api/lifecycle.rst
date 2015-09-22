@@ -840,8 +840,8 @@ As a schedule is initially deployed in a *suspended* state, a call to this API i
 
 To suspend or resume a schedule use::
 
-  POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/suspend
-  POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/resume
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-id>/suspend
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-id>/resume
 
 where:
 
@@ -855,7 +855,7 @@ where:
      - Namespace ID
    * - ``<app-id>``
      - Name of the application
-   * - ``<schedule-name>``
+   * - ``<schedule-id>``
      - Name of the schedule
 
 .. container:: table-block-example
@@ -907,8 +907,8 @@ As a workflow is initially deployed in a *suspended* state, a call to this API i
 
 To suspend or resume a workflow, use::
   
-  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/suspend
-  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/resume
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/suspend
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/resume
 
 where:
 
@@ -922,7 +922,7 @@ where:
      - Namespace ID
    * - ``<app-id>``
      - Name of the application
-   * - ``<workflow-name>``
+   * - ``<workflow-id>``
      - Name of the workflow
    * - ``<run-id>``
      - UUID of the workflow run
