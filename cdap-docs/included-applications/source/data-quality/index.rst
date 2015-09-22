@@ -72,6 +72,8 @@ The application can be created from the ``cdap-data-quality`` system artifact by
 * ``datasetName`` : Name of the destination dataset.
 * ``fieldAggregations`` : Map that relates each field value to a set of aggregation functions.
 
+Deploying the Application
+-------------------------
 To deploy the application with the application configuration, issue a PUT curl call.
 In this example, the ``appconfig.json`` file contains the application configuration::
 
