@@ -45,11 +45,13 @@
                "width": "medium"
              }
           },
-          "kafka.default.offset" : {
+          "kafka.initial.offset" : {
              "widget": "number",
              "label": "Start Offset",
+            "description" : "Specifies the start offset for processing from the queue",
              "properties": {
-               "width": "extra-small"
+               "width": "extra-small",
+               "default" : 0
              },
              "min": -2
           }

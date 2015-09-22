@@ -80,6 +80,8 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   private KafkaSimpleApiConsumer kafkaConsumer;
   private KafkaPluginConfig config;
 
+  private boolean logException;
+
   /**
    * Default constructor. This will primarily will be used to test.
    * @param config
@@ -107,6 +109,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
       RecordFormat<ByteBuffer, StructuredRecord> format = RecordFormats.createInitializedFormat(spec);
       format.initialize(spec);
     }
+    logException = true;
   }
 
   @Nullable
@@ -117,8 +120,12 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
       // Lets set the internal offset store
       kafkaConsumer.saveState(currentState);
       kafkaConsumer.pollMessages(writer);
+      logException = true;
     } catch (Throwable t) {
-      LOG.error("Error encountered during poll to get message for Kafka source.", t);
+      if (logException) {
+        LOG.error("Error encountered during poll to get message for Kafka source.", t);
+        logException = false;
+      }
       TimeUnit.SECONDS.sleep(EXCEPTION_SLEEP_IN_SEC);
       return currentState;
     }
