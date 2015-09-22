@@ -223,7 +223,9 @@ programs, schedules, workflows, workers, and custom services, and query for thei
      - Name of the *flow*, *MapReduce*, *schedule*, *Spark*, *workflow*, or *custom service*
        being called
    * - ``<operation>``
-     - One of ``start`` or ``stop`` (``resume`` or ``suspend`` for ``schedules``)
+     - One of ``start`` or ``stop`` (``resume`` or ``suspend`` in the case of 
+       :ref:`schedules <http-restful-api-lifecycle-schedules-suspend-resume>` or
+       :ref:`workflows <http-restful-api-lifecycle-workflows-suspend-resume>`)
      
 You can retrieve the status of multiple programs from different applications and program types
 using an HTTP POST method::
