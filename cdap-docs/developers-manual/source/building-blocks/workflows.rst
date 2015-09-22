@@ -31,6 +31,15 @@ single start node and a single finish node. As described below, execution can be
 sequential (the default) or :ref:`concurrent <workflow-concurrent>`, and the graph can be 
 either a simple series of nodes or a more complicated :ref:`parallel workflow <workflow_parallel>`.
 
+Workflows can be controlled by the :ref:`CDAP CLI <cli>` and the :ref:`Lifecycle HTTP
+RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a workflow
+<http-restful-api-lifecycle-start-stop-status>` can be retrieved, and individual workflows
+:ref:`resumed or suspended <http-restful-api-lifecycle-workflows-suspend-resume>`. 
+
+When a workflow is initially deployed, it is in a *suspended* state; a command needs to be
+issued to change it to *resumed* before it will begin.
+
+
 Executing MapReduce or Spark Programs
 -------------------------------------
 To execute MapReduce or Spark programs in a workflow, you will need to add them in your

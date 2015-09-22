@@ -197,10 +197,12 @@ because they belong to the namespace, not the application.
 Also, this does not delete the artifact used to create the application.
 
 
+.. _http-restful-api-lifecycle-start-stop-status:
+
 Start, Stop, Status, and Runtime Arguments
 ------------------------------------------
 After an application is deployed, you can start and stop its flows, MapReduce 
-programs, workflows, workers, and custom services, and query for their status using HTTP POST and GET methods::
+programs, schedules, workflows, workers, and custom services, and query for their status using HTTP POST and GET methods::
 
   POST <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/<operation>
   GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/status
@@ -216,13 +218,13 @@ programs, workflows, workers, and custom services, and query for their status us
    * - ``<app-id>``
      - Name of the application being called
    * - ``<program-type>``
-     - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``workers``, or ``services``
+     - One of ``flows``, ``mapreduce``, ``schedules``, ``spark``, ``workflows``, ``workers``, or ``services``
    * - ``<program-id>``
-     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, or *custom service*
+     - Name of the *flow*, *MapReduce*, *schedule*, *Spark*, *workflow*, or *custom service*
        being called
    * - ``<operation>``
-     - One of ``start`` or ``stop``
-
+     - One of ``start`` or ``stop`` (``resume`` or ``suspend`` for ``schedules``)
+     
 You can retrieve the status of multiple programs from different applications and program types
 using an HTTP POST method::
 
@@ -241,9 +243,9 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the application being called
    * - ``"programType"``
-     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow`` or ``service``
+     - One of ``flow``, ``mapreduce``, ``schedule``, ``spark``, ``workflow`` or ``service``
    * - ``"programId"``
-     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, or *custom service*
+     - Name of the *flow*, *MapReduce*, *schedule*, *Spark*, *workflow*, or *custom service*
        being called
 
 The response will be the same JSON array with additional parameters for each of the underlying JSON objects:
@@ -819,6 +821,7 @@ For workflows, you can retrieve:
      * - Returns
        - | ``[{"id":"DEFAULT.WORKFLOW:developer:PurchaseHistory:PurchaseHistoryWorkflow:0:DailySchedule","time":1415102400000}]``
        
+.. _http-restful-api-lifecycle-schedules-suspend-resume
 
 Schedules: Suspend and Resume
 .............................
@@ -830,6 +833,8 @@ trigger again until the schedule is resumed.
 
 To *resume* a schedule means that the trigger is reset, and the program associated will
 run again at the next scheduled time.
+
+As a schedule is initially deployed in a *suspended* state, a call to this API is needed to *resume* it.
 
 To suspend or resume a schedule use::
 
@@ -873,6 +878,7 @@ where:
      * - Returns
        - | ``OK`` if successfully set as suspended
 
+.. _http-restful-api-lifecycle-workflows-suspend-resume
 
 Workflows: Suspend and Resume
 ...........................................
@@ -894,6 +900,8 @@ second of the three MapReduce programs, which is where it would have left off wh
 
 With workflows, *suspend* and *resume* require a *run-id* as the action takes place on
 either a currently running or suspended workflow.
+
+As a workflow is initially deployed in a *suspended* state, a call to this API is needed to *resume* it.
 
 To suspend or resume a workflow, use::
   
