@@ -192,7 +192,7 @@ public class KafkaSourceTest {
 
   @Test(timeout = 5000, expected = IllegalArgumentException.class)
   public void testInvalidZKStr() throws Exception {
-    String zk = "localhost:1234";
+    String zk = "localhost:" + Networks.getRandomPort();
     String brokerList = null;
     KafkaSource.KafkaPluginConfig config = new KafkaSource.KafkaPluginConfig(zk, brokerList, PARTITIONS,
                                                                              "some", null, Formats.TEXT, null);

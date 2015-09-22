@@ -67,7 +67,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   public static final String KAFKA_TOPIC = "kafka.topic";
   public static final String KAFKA_ZOOKEEPER = "kafka.zookeeper";
   public static final String KAFKA_BROKERS = "kafka.brokers";
-  public static final String KAFKA_DEFAULT_OFFSET = "kafka.default.offset";
+  public static final String KAFKA_INITIAL_OFFSET = "kafka.initial.offset";
   public static final String SCHEMA = "schema";
   public static final String FORMAT = "format";
 
@@ -190,7 +190,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     @Nullable
     private final String kafkaBrokers;
 
-    @Name(KAFKA_DEFAULT_OFFSET)
+    @Name(KAFKA_INITIAL_OFFSET)
     @Description("The default offset for the partition. Offset values -2L and -1L have special meanings in Kafka. " +
       "Default value is kafka.api.OffsetRequest.EarliestTime (-2L); Value of -1 corresponds to " +
       "kafka.api.OffsetRequest.LatestTime")
