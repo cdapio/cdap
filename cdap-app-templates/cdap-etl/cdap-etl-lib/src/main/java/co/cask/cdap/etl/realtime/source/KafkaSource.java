@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -57,6 +58,7 @@ import javax.annotation.Nullable;
   "If no schema is specified, it will emit a record with two fields: 'key' (nullable string) and 'message' (bytes).")
 public class KafkaSource extends RealtimeSource<StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(KafkaSource.class);
+  private static final int EXCEPTION_SLEEP_IN_SEC = 1;
 
   public static final String MESSAGE = "message";
   public static final String KEY = "key";
@@ -110,14 +112,14 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   @Nullable
   @Override
   @SuppressWarnings("unchecked")
-  public SourceState poll(Emitter<StructuredRecord> writer, SourceState currentState) {
+  public SourceState poll(Emitter<StructuredRecord> writer, SourceState currentState) throws InterruptedException {
     try {
       // Lets set the internal offset store
       kafkaConsumer.saveState(currentState);
-
       kafkaConsumer.pollMessages(writer);
     } catch (Throwable t) {
       LOG.error("Error encountered during poll to get message for Kafka source.", t);
+      TimeUnit.SECONDS.sleep(EXCEPTION_SLEEP_IN_SEC);
       return currentState;
     }
 
@@ -189,7 +191,9 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     private final String kafkaBrokers;
 
     @Name(KAFKA_DEFAULT_OFFSET)
-    @Description("The default offset for the partition. Default value is kafka.api.OffsetRequest.EarliestTime.")
+    @Description("The default offset for the partition. Offset values -2L and -1L have special meanings in Kafka. " +
+      "Default value is kafka.api.OffsetRequest.EarliestTime (-2L); Value of -1 corresponds to " +
+      "kafka.api.OffsetRequest.LatestTime")
     @Nullable
     private final Long defaultOffset;
 

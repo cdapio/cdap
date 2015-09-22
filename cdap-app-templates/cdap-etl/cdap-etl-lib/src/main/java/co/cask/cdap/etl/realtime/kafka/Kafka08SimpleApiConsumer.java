@@ -24,6 +24,7 @@ import co.cask.cdap.etl.realtime.source.KafkaSource;
 import co.cask.cdap.etl.realtime.source.KafkaSource.KafkaPluginConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
@@ -32,6 +33,7 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
+import com.google.common.util.concurrent.Futures;
 import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
 import kafka.api.PartitionOffsetRequestInfo;
@@ -64,6 +66,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
@@ -184,10 +187,18 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
           ZKClients.retryOnFailure(ZKClientService.Builder.of(kafkaZKConnect).build(),
                                    RetryStrategies.fixDelay(2, TimeUnit.SECONDS))
         ));
-      zkClient.startAndWait();
-
       brokerService = new ZKBrokerService(zkClient);
-      brokerService.startAndWait();
+
+      try {
+        Futures.get(zkClient.start(), 3, TimeUnit.SECONDS, TimeoutException.class);
+        Futures.get(brokerService.start(), 3, TimeUnit.SECONDS, TimeoutException.class);
+      } catch (TimeoutException e) {
+        Futures.getUnchecked(brokerService.stop());
+        Futures.getUnchecked(zkClient.stop());
+        throw new IllegalArgumentException(
+          String.format("Timeout while trying to start ZookeeperClient/Broker Service. " +
+                          "Check if the zookeeper connection string %s is correct.", kafkaZKConnect), e);
+      }
     }
 
     kafkaConsumers = CacheBuilder.newBuilder()
@@ -402,6 +413,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
       } catch (Exception e) {
         LOG.error("Failed to communicate with broker {}:{} for leader lookup for topic-partition {}-{}",
                   broker.getKey(), broker.getValue(), topic, partition, e);
+        Throwables.propagate(e);
       }
     }
     return null;
