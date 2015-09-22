@@ -22,13 +22,7 @@ body.theme-cdap.state-adapters {
 
   &.state-adapters-detail {
     div.console {
-      @media (max-height: 500px) {
-        min-height: 60vh;
-        width: 100%;
-      }
-      @media (min-height: 501px) {
-        min-height: 40vh;
-      }
+      min-height: 60vh;
       div.console-type {
         height: inherit;
         min-height: inherit;
@@ -37,7 +31,14 @@ body.theme-cdap.state-adapters {
   }
   div.console {
     background-color: white;
+    width: 100%;
     .transition(all 0.2s ease);
+    @media (max-height: 500px) {
+      min-height: 60vh;
+    }
+    @media (min-height: 501px) {
+      min-height: 40vh;
+    }
     &.collapsed {
       left: 130px;
     }
