@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $bootstrapModal, rMapreduceDetail) {
+  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $bootstrapModal, rMapreduceDetail, myMetadataApi) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
@@ -88,6 +88,52 @@ angular.module(PKG.name + '.feature.mapreduce')
           }.bind(this)
         }
       });
+    };
+
+    var metadataParams = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      programType: 'mapreduce',
+      programId: $state.params.programId,
+      scope: $scope
+    };
+
+    this.metadataTags = [];
+
+    function getMetadata() {
+      myMetadataApi.getProgramMetadata(metadataParams)
+        .$promise
+        .then(function (res) {
+          this.metadataTags = res.map(function (tag) {
+            return {
+              tagName: tag,
+              isHover: false
+            };
+          });
+        }.bind(this));
+    }
+    getMetadata.bind(this)();
+
+    this.metadataAddOpen = false;
+
+    this.addMetadata = function () {
+      var tag = [this.tag];
+
+      myMetadataApi.setProgramMetadata(metadataParams, tag)
+        .$promise
+        .then(function () {
+          this.tag = '';
+          getMetadata.bind(this)();
+        }.bind(this));
+    };
+    this.deleteMetadata = function (tag) {
+      var deleteParams = angular.extend({tag: tag}, metadataParams);
+
+      myMetadataApi.deleteProgramMetadata(deleteParams)
+        .$promise
+        .then(function () {
+          getMetadata.bind(this)();
+        }.bind(this));
     };
 
   });
