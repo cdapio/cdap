@@ -46,7 +46,7 @@ public class DatasetUpgradeEnabledTest extends TestBase {
   public void testDatasetUncheckedUpgrade() throws Exception {
     ApplicationManager applicationManager = deployApplication(DatasetUncheckedUpgradeApp.class);
     DataSetManager<DatasetUncheckedUpgradeApp.RecordDataset> datasetManager =
-      getDataset(DatasetUncheckedUpgradeApp.DATASET_NAME);
+      applicationManager.getDataSet(DatasetUncheckedUpgradeApp.DATASET_NAME);
     DatasetUncheckedUpgradeApp.Record expectedRecord = new DatasetUncheckedUpgradeApp.Record("0AXB", "john", "doe");
     datasetManager.get().writeRecord("key", expectedRecord);
     datasetManager.flush();
@@ -57,14 +57,14 @@ public class DatasetUpgradeEnabledTest extends TestBase {
 
     // Test compatible upgrade
     applicationManager = deployApplication(CompatibleDatasetUncheckedUpgradeApp.class);
-    datasetManager = getDataset(DatasetUncheckedUpgradeApp.DATASET_NAME);
+    datasetManager = applicationManager.getDataSet(DatasetUncheckedUpgradeApp.DATASET_NAME);
     CompatibleDatasetUncheckedUpgradeApp.Record compatibleRecord =
       (CompatibleDatasetUncheckedUpgradeApp.Record) datasetManager.get().getRecord("key");
     Assert.assertEquals(new CompatibleDatasetUncheckedUpgradeApp.Record("0AXB", "john", false), compatibleRecord);
 
     // Test in-compatible upgrade
     applicationManager = deployApplication(IncompatibleDatasetUncheckedUpgradeApp.class);
-    datasetManager = getDataset(DatasetUncheckedUpgradeApp.DATASET_NAME);
+    datasetManager = applicationManager.getDataSet(DatasetUncheckedUpgradeApp.DATASET_NAME);
     try {
       datasetManager.get().getRecord("key");
       Assert.fail("Expected to throw exception here due to an incompatible Dataset upgrade.");
@@ -74,7 +74,7 @@ public class DatasetUpgradeEnabledTest extends TestBase {
 
     // Revert the upgrade
     applicationManager = deployApplication(CompatibleDatasetUncheckedUpgradeApp.class);
-    datasetManager = getDataset(DatasetUncheckedUpgradeApp.DATASET_NAME);
+    datasetManager = applicationManager.getDataSet(DatasetUncheckedUpgradeApp.DATASET_NAME);
     CompatibleDatasetUncheckedUpgradeApp.Record revertRecord =
       (CompatibleDatasetUncheckedUpgradeApp.Record) datasetManager.get().getRecord("key");
     Assert.assertEquals(new CompatibleDatasetUncheckedUpgradeApp.Record("0AXB", "john", false), revertRecord);
