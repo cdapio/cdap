@@ -72,7 +72,7 @@ parameters of the Reducer.
 
 .. rubric:: Multiple Output Destinations of a MapReduce Program
 
-To write to multiple output datasets from a MapReduce program, add the datasets as output::
+To write to multiple output datasets from a MapReduce program, begin by adding the datasets as outputs::
 
   public void beforeSubmit(MapReduceContext context) throws Exception {
     ...
@@ -80,9 +80,9 @@ To write to multiple output datasets from a MapReduce program, add the datasets 
     context.addOutput("catalog");
   }
 
-Then, have the ``mapper`` or ``reducer`` implement ``ProgramLifeCycle<MapReduceTaskContext>``, in order
-to get access to the MapReduceTaskContext in the initialize method and write using the write method
-of the ``MapReduceTaskContext``::
+Then, have the ``mapper`` and/or ``reducer`` implement ``ProgramLifeCycle<MapReduceTaskContext>``. 
+This is to obtain access to the ``MapReduceTaskContext`` in their initialization methods and 
+to be able to write using the write method of the ``MapReduceTaskContext``::
 
   public static class CustomMapper extends Mapper<LongWritable, Text, NullWritable, Text>
     implements ProgramLifecycle<MapReduceTaskContext<NullWritable, Text>> {
@@ -106,9 +106,9 @@ of the ``MapReduceTaskContext``::
 
   }
 
-Note that the multiple output write method - ``MapReduceTaskContext#write(String, KEY key, VALUE value)`` - can
+Note that the multiple output write method |---| ``MapReduceTaskContext.write(String, KEY key, VALUE value)`` |---| can
 only be used if there are multiple outputs. Similarly, the single output write
-method - ``MapReduceTaskContext#write(KEY key, VALUE value)`` - can only be used if there
+method |---| ``MapReduceTaskContext.write(KEY key, VALUE value)`` |---| can only be used if there
 is a single output to the MapReduce program.
 
 .. rubric:: Directly Reading and Writing Datasets
