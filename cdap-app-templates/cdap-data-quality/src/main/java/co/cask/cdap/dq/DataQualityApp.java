@@ -128,7 +128,7 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
     addWorkflow(new DataQualityWorkflow());
     String schedule = "*/" + scheduleMinutes + " * * * *";
     scheduleWorkflow(Schedules.createTimeSchedule("aggregatorSchedule",
-                                                  "Schedule execution every" + scheduleMinutes
+                                                  "Schedule execution every " + scheduleMinutes
                                                     + " min", schedule), "DataQualityWorkflow");
   }
 
