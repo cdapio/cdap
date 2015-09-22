@@ -23,7 +23,6 @@ import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.batch.sink.BatchCubeSink;
-import co.cask.cdap.etl.batch.sink.BatchElasticsearchSink;
 import co.cask.cdap.etl.batch.sink.DBSink;
 import co.cask.cdap.etl.batch.sink.KVTableSink;
 import co.cask.cdap.etl.batch.sink.S3AvroBatchSink;
@@ -97,7 +96,6 @@ public class BaseETLBatchTest extends TestBase {
                       BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
                       TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
                       TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class,
-                      BatchElasticsearchSink.class,
                       SnapshotFileBatchAvroSink.class, SnapshotFileBatchParquetSink.class,
                       S3AvroBatchSink.class, S3ParquetBatchSink.class);
     // add artifact for transforms

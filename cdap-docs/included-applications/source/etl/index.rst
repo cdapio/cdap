@@ -54,7 +54,6 @@ This lists the available sources, sinks, and transformations (transforms):
    * - - **Batch Sources**
 
          - :ref:`Database <included-apps-etl-plugins-batch-sources-database>`
-         - :ref:`Elasticsearch <included-apps-etl-plugins-batch-sources-elasticsearch>`
          - :ref:`File <included-apps-etl-plugins-batch-sources-file>`
          - :ref:`KVTable <included-apps-etl-plugins-batch-sources-kvtable>`
          - :ref:`Amazon S3 <included-apps-etl-plugins-batch-sources-s3>`
@@ -75,7 +74,6 @@ This lists the available sources, sinks, and transformations (transforms):
 
          - :ref:`Cube <included-apps-etl-plugins-batch-sinks-cube>`
          - :ref:`Database <included-apps-etl-plugins-batch-sinks-database>`
-         - :ref:`Elasticsearch <included-apps-etl-plugins-batch-sinks-elasticsearch>`   
          - :ref:`KVTable <included-apps-etl-plugins-batch-sinks-kvtable>`
          - :ref:`SnapshotAvro <included-apps-etl-plugins-batch-sinks-snapshotavro>`
          - :ref:`SnapshotParquet <included-apps-etl-plugins-batch-sinks-snapshotparquet>`
@@ -103,7 +101,6 @@ This lists the available sources, sinks, and transformations (transforms):
      - - **Real-time Sinks**
 
          - :ref:`Cube <included-apps-etl-plugins-real-time-sinks-cube>`
-         - :ref:`Elasticsearch <included-apps-etl-plugins-real-time-sinks-elasticsearch>`
          - :ref:`Stream <included-apps-etl-plugins-real-time-sinks-stream>`
          - :ref:`Table <included-apps-etl-plugins-real-time-sinks-table>`
 
