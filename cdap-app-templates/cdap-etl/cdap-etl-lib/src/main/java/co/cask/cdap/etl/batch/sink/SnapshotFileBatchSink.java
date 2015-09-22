@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
  */
 public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends FileBatchSink<KEY_OUT, VAL_OUT> {
   private static final String PATH_EXTENSION_DESCRIPTION = "The extension where the snapshot will be stored. " +
-    "The snapshot will be stored at <basePath>/<extension>";
+    "The snapshot will be stored at <basePath>/<extension>.";
 
   private final SnapshotFileConfig config;
   protected Map<String, String> sinkArgs;
