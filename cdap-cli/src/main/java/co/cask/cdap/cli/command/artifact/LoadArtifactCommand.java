@@ -22,10 +22,10 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.common.conf.ArtifactConfig;
+import co.cask.cdap.common.conf.ArtifactConfigReader;
 import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.common.io.Files;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import java.io.File;
@@ -37,12 +37,14 @@ import java.io.PrintStream;
 public class LoadArtifactCommand extends AbstractAuthCommand {
   private final ArtifactClient artifactClient;
   private final FilePathResolver resolver;
+  private final ArtifactConfigReader configReader;
 
   @Inject
   public LoadArtifactCommand(ArtifactClient artifactClient, CLIConfig cliConfig, FilePathResolver resolver) {
     super(cliConfig);
     this.artifactClient = artifactClient;
     this.resolver = resolver;
+    this.configReader = new ArtifactConfigReader();
   }
 
   @Override
@@ -69,7 +71,7 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
                          artifactId.getVersion().getVersion());
     } else {
       File configFile = resolver.resolvePathToFile(configPath);
-      ArtifactConfig artifactConfig = ArtifactConfig.read(artifactId, configFile, artifactFile);
+      ArtifactConfig artifactConfig = configReader.read(artifactId.getNamespace(), configFile);
       artifactClient.add(artifactId.getNamespace(), artifactId.getName(), Files.newInputStreamSupplier(artifactFile),
         artifactId.getVersion().getVersion(), artifactConfig.getParents(), artifactConfig.getPlugins());
     }

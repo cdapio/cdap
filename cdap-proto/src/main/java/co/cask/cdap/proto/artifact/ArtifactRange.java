@@ -155,7 +155,7 @@ public class ArtifactRange {
 
   /**
    * Parses an unnamespaced string representation of an artifact range. It is expected to be of the form:
-   * {name}[{lower-version},{upper-version}]. Square brackets are inclusive, and parantheses are exclusive.
+   * {name}[{lower-version},{upper-version}]. Square brackets are inclusive, and parentheses are exclusive.
    * For example, my-functions[1.0.0,2.0.0) will correspond to an artifact name of my-functions with a
    * lower version of 1.0.0 and an upper version of 2.0.0.
    *
