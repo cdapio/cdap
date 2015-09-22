@@ -35,20 +35,18 @@ import javax.annotation.Nullable;
  */
 public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
 
-  public static final String PATH_DESC = "The path where the data will be recorded. " +
-    "Defaults to the name of the dataset";
+  public static final String PATH_DESC = "The S3 path where the data is stored. Example: 's3n://logs'.";
   private static final String ACCESS_ID_DESCRIPTION = "Access ID of the Amazon S3 instance to connect to.";
   private static final String ACCESS_KEY_DESCRIPTION = "Access Key of the Amazon S3 instance to connect to.";
-  private static final String PATH_FORMAT_DESCRIPTION = "The format for the path that will be suffixed with the " +
-    "basePath; for example yyyy-MM-dd-HH-mm will create a file path ending in the format of 2015-01-01-20-42. " +
-    "Default format used is yyyy-MM-dd-HH-mm.";
+  private static final String PATH_FORMAT_DESCRIPTION = "The format for the path that will be suffixed to the " +
+    "basePath; for example: the format 'yyyy-MM-dd-HH-mm' will create a file path ending in '2015-01-01-20-42'. " +
+    "Default format used is 'yyyy-MM-dd-HH-mm'.";
   private static final String DEFAULT_PATH_FORMAT = "yyyy-MM-dd-HH-mm";
 
   private final S3BatchSinkConfig config;
   protected S3BatchSink(S3BatchSinkConfig config) {
     this.config = config;
   }
-
 
   @Override
   public void prepareRun(BatchSinkContext context) {
@@ -62,7 +60,6 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
    * S3 Sink configuration.
    */
   public static class S3BatchSinkConfig extends PluginConfig {
-
 
     @Name(Properties.S3BatchSink.BASE_PATH)
     @Description(PATH_DESC)

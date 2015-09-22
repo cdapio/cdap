@@ -43,14 +43,14 @@ import java.util.Map;
  */
 @Plugin(type = "batchsink")
 @Name("S3Avro")
-@Description("Sink to write to S3 in Avro format.")
+@Description("Batch sink to write to Amazon S3 in Avro format.")
 public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWritable> {
 
   private StructuredToAvroTransformer recordTransformer;
   private final S3AvroSinkConfig config;
 
-  private static final String SCHEMA_DESC = "The Avro schema of the record being written to the Sink as a JSON " +
-    "Object.";
+  private static final String SCHEMA_DESC = "The Avro schema of the record being written to the sink as a JSON " +
+    "object.";
 
   public S3AvroBatchSink(S3AvroSinkConfig config) {
     super(config);

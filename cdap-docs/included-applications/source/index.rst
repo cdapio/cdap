@@ -47,12 +47,6 @@ These sections describe:
 - |etl-creating|_ Covers using the system artifacts and ETL plugins included with CDAP to create an ETL application.
 
 
-.. |etl-operations| replace:: **Application Lifecycle Management:**
-.. _etl-operations: ../reference-manual/http-restful-api/lifecycle.html
-
-- |etl-operations|_ Manage ETL Applications using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
-
-
 .. |etl-custom| replace:: **Creating Custom ETL Plugins:**
 .. _etl-custom: etl/custom.html
 
@@ -69,3 +63,7 @@ These sections describe:
 .. _etl-third-party: etl/plugins/third-party.html
 
 - |etl-third-party|_ Explains how to use a third-party JAR (such as a JDBC driver) as a plugin.
+
+
+The **lifecycle of ETL Applications** is managed using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
+
