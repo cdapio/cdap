@@ -33,7 +33,7 @@
               </a>
             </div>
             <div class="tag-input" ng-if="RunsController.metadataAddOpen">
-              <div class="input-group">
+              <div class="input-group" ng-keypress="$event.keyCode === 13 && RunsController.addMetadata()">
                 <input type="text" class="form-control" ng-model="RunsController.tag">
                 <span class="input-group-btn">
                   <button class="btn btn-success"
