@@ -24,11 +24,11 @@ The HTTP RESTful API is divided into these sections:
 - :ref:`metadata tags <http-restful-api-metadata-tags>`
 - :ref:`searching properties <http-restful-api-metadata-searching>`
 - :ref:`viewing lineage <http-restful-api-metadata-lineage>`
-- :ref:`update notifications <http-restful-api-metadata-notifications>`
+- :ref:`metadata for a run of a program <http-restful-api-metadata-run>`
+- :ref:`update notifications <http-restful-api-metadata-update-notifications>`
 
-Metadata keys, values, and tags must conform to the CDAP :ref:`supported characters
-<supported-characters>`, and are limited to 50 characters in length. Note that tags cannot
-include hyphens or underscores (``- _``) while property keys and values can. The entire
+Metadata keys, values, and tags must conform to the CDAP :ref:`alphanumeric extra extended
+character set <supported-characters>`, and are limited to 50 characters in length. The entire
 metadata object associated with a single entity is limited to 10K bytes in size.
 
 There is one reserved word for property keys and values: *tags*, either as ``tags`` or
@@ -302,7 +302,7 @@ with the metadata tags returned as a JSON string in the return body::
    * - ``200 OK``
      - The properties requested were returned as a JSON string in the body of the response
    * - ``404 NOT FOUND``
-     - The entity or program for which properties are being retreived was not found
+     - The entity or program for which properties are being retrieved was not found
      
      
 Removing Tags
@@ -319,11 +319,11 @@ or, for all user metadata tags of a particular program of a specific application
 To delete a specific user metadata tag for an application, dataset, or stream, submit
 an HTTP DELETE request with the tag::
 
-  DELETE <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/properties/<tag>
+  DELETE <base-url>/namespaces/<namespace>/<entity-type>/<entity-id>/metadata/tags/<tag>
   
 or, for a particular user metadata tag of a program of a specific application::
 
-  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/properties/<tag>
+  DELETE <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/metadata/tags/<tag>
 
 .. list-table::
    :widths: 20 80
@@ -372,7 +372,34 @@ user metadata tag, submit an HTTP GET request::
 
 Entities with the specified terms are returned as list of entity IDs::
 
-  ["entity1", "entity2"]
+  [
+      {
+          "entityId": {
+              "id": {
+                  "applicationId": "PurchaseHistory",
+                  "namespace": {
+                      "id": "default"
+                  }
+              },
+              "type": "application"
+          }
+      },
+      {
+          "entityId": {
+              "id": {
+                  "application": {
+                      "applicationId": "PurchaseHistory",
+                      "namespace": {
+                          "id": "default"
+                      }
+                  },
+                  "id": "PurchaseFlow",
+                  "type": "Flow"
+              },
+              "type": "program"
+          }
+      }
+  ]
 
 .. list-table::
    :widths: 20 80
@@ -398,61 +425,23 @@ Entities with the specified terms are returned as list of entity IDs::
    * - ``200 OK``
      - Entity IDs of entities with the metadata properties specified were returned as a
        list of strings in the body of the response
-   * - ``404 NOT FOUND``
-     - No entities matching the specified query were found
 
 .. rubric:: Query Terms
 
 CDAP supports prefix-based search of metadata properties and tags. Search for specific tags by using
-either a complete or partial name (with the remainder specified by an implicit asterisk ``*``). 
+either a complete or partial name with an asterisk ``*``.
 
 Search for properties and tags by specifying one of:
 
 - a complete property key-value pair, separated by a colon, such as ``type:production``
 
-- a complete property key with a partial value, such as ``type:prod`` or ``type:``; an asterisk ``*`` is implicitly added
+- a complete property key with a partial value, such as ``type:prod*``
 
-- a complete or partial value, such as ``prod``; this will return both properties and tags
+- a complete ``tags`` key with a complete or partial value, such as ``tags:prod*`` to search for tags only
 
-Searches are case-sensitive; searching for ``type:`` will return different results than `TYPE:``.
+- a complete or partial value, such as ``prod*``; this will return both properties and tags
 
-.. rubric:: Example
-
-A query such as::
-
-  GET <base-url>/namespaces/default/metadata/search?query=value1
-
-could return results (pretty-printed) such as::
-
-  [
-    {
-      "id": {
-        "namespace": {
-          "id": "default"
-        },
-        "streamName": "purchaseStream"
-      },
-      "type": "STREAM"
-    },
-    {
-      "id": {
-        "namespace": {
-          "id": "default"
-        },
-        "applicationId": "PurchaseHistory"
-      },
-      "type": "APP"
-    },
-    {
-      "id": {
-        "namespace": {
-          "id": "default"
-        },
-        "instanceId": "purchases"
-      },
-      "type": "DATASET"
-    }
-  ]
+Searches are case-insensitive.
 
 .. _http-restful-api-metadata-lineage:
 
@@ -477,12 +466,15 @@ where:
    * - ``<entity-id>``
      - Name of the ``dataset`` or ``stream``
    * - ``<start-ts>``
-     - Starting time-stamp of lineage, in milliseconds
+     - Starting time-stamp of lineage (inclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
    * - ``<end-ts>``
-     - Ending time-stamp of lineage, in milliseconds
+     - Ending time-stamp of lineage (exclusive), in seconds. Supports ``now``, ``now-1h``, etc. syntax.
    * - ``<max-levels>``
      - Maximum number of levels
-     
+
+See in the Metrics HTTP RESTful API :ref:`Querying by a Time Range <http-restful-api-metrics-time-range>`
+for examples of the "now" time syntax.
+
 The lineage will be returned as a JSON string in the body of the response. The number of
 levels of the request (``<max-levels>``) determines how far back the provenance of the
 data in the lineage chain is calculated, as described in the :ref:`Developers' Manual <metadata-lineage>`.
@@ -490,73 +482,73 @@ data in the lineage chain is calculated, as described in the :ref:`Developers' M
 Here is an example, pretty-printed::
 
   {
-    "start": "1441310434000",
-    "end": "1441320599000",
-   
-    "relations":
-    [
-      {
-        "data": "stream.default.purchaseStream",
-        "program": "flow.default.PurchaseHistory.PurchaseFlow",
-        "access": "read",
-        "runs": ["283-afsd032-adsf90", "283-0rwedfk-09wrff"],
-        "component": ["reader"]
+      "start": 1442863938,
+      "end": 1442881938,
+      "relations": [
+          {
+              "access": "read",
+              "components": [
+                  "reader"
+              ],
+              "data": "stream.default.purchaseStream",
+              "program": "flows.default.PurchaseHistory.PurchaseFlow",
+              "runs": [
+                  "4b5d7891-60a7-11e5-a9b0-42010af01c4d"
+              ]
+          },
+          {
+              "access": "unknown",
+              "components": [
+                  "collector"
+              ],
+              "data": "dataset.default.purchases",
+              "program": "flows.default.PurchaseHistory.PurchaseFlow",
+              "runs": [
+                  "4b5d7891-60a7-11e5-a9b0-42010af01c4d"
+              ]
+          }
+      ],
+      "data": {
+          "dataset.default.purchases": {
+              "entityId": {
+                  "id": {
+                      "instanceId": "purchases",
+                      "namespace": {
+                          "id": "default"
+                      }
+                  },
+                  "type": "datasetinstance"
+              }
+          },
+          "stream.default.purchaseStream": {
+              "entityId": {
+                  "id": {
+                      "namespace": {
+                          "id": "default"
+                      },
+                      "streamName": "purchaseStream"
+                  },
+                  "type": "stream"
+              }
+          }
       },
-      ...,
-      {
-        "data": "dataset.default.history",
-        "program": "service.default.PurchaseHistory.PurchaseHistoryService",
-        "runs": ["283-zsed032-adsf90"]
+      "programs": {
+          "flows.default.PurchaseHistory.PurchaseFlow": {
+              "entityId": {
+                  "id": {
+                      "application": {
+                          "applicationId": "PurchaseHistory",
+                          "namespace": {
+                              "id": "default"
+                          }
+                      },
+                      "id": "PurchaseFlow",
+                      "type": "Flow"
+                  },
+                  "type": "program"
+              }
+          }
       }
-    ],
-     
-    "programs":
-    {
-      "flow.default.PurchaseHistory.PurchaseFlow":
-      {
-        "id":
-        {
-          "namespace": "default",
-          "application": "PurchaseHistory",
-          "type": "flow",
-          "id": "PurchaseFlow"
-        }
-      },
-      ...,
-      "service.default.PurchaseHistory.PurchaseHistoryService":
-      {
-        "id":
-        {
-          "namespace": "default",
-          "application": "PurchaseHistory",
-          "type": "flow",
-          "id": "PurchaseHistoryService"
-        }
-      }
-    },
-   
-    "data":
-    {
-      "dataset.default.frequentCustomers":
-      {
-        "id":
-        {
-          "namespace": "default",
-          "type": "dataset",
-          "id": "frequentCustomers"
-        }
-      },
-      ...,
-      "stream.default.purchaseStream":
-      {
-        "id":
-        {
-          "namespace": "default",
-          "type": "stream",
-          "id": "purchaseStream"
-        }
-      }
-    }
   }
 
 .. rubric:: HTTP Responses
@@ -573,11 +565,119 @@ Here is an example, pretty-printed::
    * - ``404 NOT FOUND``
      - No entities matching the specified query were found
 
+.. _http-restful-api-metadata-run:
 
-.. _http-restful-api-metadata-notifications:
+Retrieving Metadata for a Program Run
+=====================================
+At every run of a program, the metadata associated with the program, the application it is part of, and any datasets
+and streams used by the program run are recorded. To retrieve the metadata for a program run, submit an HTTP GET request::
 
-Update Notifications
-====================
+  GET <base-url>/namespaces/<namespace>/apps/<app-id>/<program-type>/<program-id>/runs/<run-id>/metadata/tags
+
+with the metadata returned as a JSON string in the return body::
+
+  [
+      {
+          "entityId": {
+              "id": {
+                  "namespace": {
+                      "id": "default"
+                  },
+                  "streamName": "purchaseStream"
+              },
+              "type": "stream"
+          },
+          "properties": {},
+          "scope": "USER",
+          "tags": []
+      },
+      {
+          "entityId": {
+              "id": {
+                  "application": {
+                      "applicationId": "PurchaseHistory",
+                      "namespace": {
+                          "id": "default"
+                      }
+                  },
+                  "id": "PurchaseFlow",
+                  "type": "Flow"
+              },
+              "type": "program"
+          },
+          "properties": {},
+          "scope": "USER",
+          "tags": [
+              "flow-tag1"
+          ]
+      },
+      {
+          "entityId": {
+              "id": {
+                  "instanceId": "purchases",
+                  "namespace": {
+                      "id": "default"
+                  }
+              },
+              "type": "datasetinstance"
+          },
+          "properties": {},
+          "scope": "USER",
+          "tags": []
+      },
+      {
+          "entityId": {
+              "id": {
+                  "applicationId": "PurchaseHistory",
+                  "namespace": {
+                      "id": "default"
+                  }
+              },
+              "type": "application"
+          },
+          "properties": {},
+          "scope": "USER",
+          "tags": [
+              "app-tag1"
+          ]
+      }
+  ]
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+   * - ``<app-id>``
+     - Name of the application
+   * - ``<program-type>``
+     - One of ``flows``, ``mapreduce``, ``spark``, ``workflows``, ``services``, or ``workers``
+   * - ``<program-id>``
+     - Name of the program
+   * - ``<run-id>``
+     - Program run id
+
+.. rubric:: HTTP Responses
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Status Codes
+     - Description
+   * - ``200 OK``
+     - The properties requested were returned as a JSON string in the body of the response
+   * - ``404 NOT FOUND``
+     - The entity, program, or run for which properties are being requested was not found
+
+
+.. _http-restful-api-metadata-update-notifications:
+
+Metadata Update Notifications
+=============================
 CDAP has the capability of publishing notifications to an external Apache Kafka instance
 upon metadata updates.
 
@@ -585,10 +685,10 @@ This capability is controlled by these properties set in the ``cdap-site.xml``, 
 :ref:`Administration Manual <appendix-cdap-site.xml>`:
 
 - ``metadata.updates.publish.enabled``: Determines if publishing of updates is enabled; defaults to ``false``;
-- ``metadata.kafka.broker.list``: The Kafka broker list to publish to; and
+- ``metadata.updates.kafka.broker.list``: The Kafka broker list to publish to; and
 - ``metadata.updates.kafka.topic``: The Kafka topic to publish to; defaults to ``cdap-metadata-updates``.
 
-If ``metadata.updates.publish.enabled`` is *true*, then the other two properties **must** be defined.
+If ``metadata.updates.publish.enabled`` is *true*, then ``metadata.updates.kafka.broker.list`` **must** be defined.
 
 When enabled, upon every property or tag update, CDAP will publish a notification message
 to the configured Kafka instance. The contents of the message are a JSON representation of
@@ -599,53 +699,64 @@ class.
 Here is an example JSON message, pretty-printed::
 
   {
-      "previous": {
-          "targetId": {
-              "type": "application",
-              "id": {
-                  "namespace": {
-                      "id": "default"
-                  },
-                  "applicationId": "PurchaseHistory"
+     "previous":{
+        "entityId":{
+           "type":"application",
+           "id":{
+              "namespace":{
+                 "id":"default"
+              },
+              "applicationId":"PurchaseHistory"
+           }
+        },
+        "scope":"USER",
+        "properties":{
+           "key2":"value2",
+           "key1":"value1"
+        },
+        "tags":[
+           "tag1",
+           "tag2"
+        ]
+     },
+     "changes":{
+        "additions":{
+           "entityId":{
+              "type":"application",
+              "id":{
+                 "namespace":{
+                    "id":"default"
+                 },
+                 "applicationId":"PurchaseHistory"
               }
-          },
-          "scope": "USER",
-          "properties": {
-              "key": "val"
-          },
-          "tags": []
-      },
-      "changes": {
-          "additions": {
-              "targetId": {
-                  "type": "application",
-                  "id": {
-                      "namespace": {
-                          "id": "default"
-                      },
-                      "applicationId": "PurchaseHistory"
-                  }
-              },
-              "scope": "USER",
-              "properties": {},
-              "tags": [
-                  "tag"
-              ]
-          },
-          "deletions": {
-              "targetId": {
-                  "type": "application",
-                  "id": {
-                      "namespace": {
-                          "id": "default"
-                      },
-                      "applicationId": "PurchaseHistory"
-                  }
-              },
-              "scope": "USER",
-              "properties": {},
-              "tags": []
-          }
-      },
-      "updateTime": 1442383148031
+           },
+           "scope":"USER",
+           "properties":{
+
+           },
+           "tags":[
+              "tag3"
+           ]
+        },
+        "deletions":{
+           "entityId":{
+              "type":"application",
+              "id":{
+                 "namespace":{
+                    "id":"default"
+                 },
+                 "applicationId":"PurchaseHistory"
+              }
+           },
+           "scope":"USER",
+           "properties":{
+
+           },
+           "tags":[
+
+           ]
+        }
+     },
+     "updateTime":1442883836781
   }
+
