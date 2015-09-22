@@ -19,6 +19,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     function isModelValid (nodes, connections, metadata, config) {
       var validationRules = [
+        pluginsExist,
         hasExactlyOneSource,
         hasAtleastOneSink,
         hasNameAndTemplateType,
@@ -44,6 +45,17 @@ angular.module(PKG.name + '.feature.adapters')
       } else {
         errors.canvas.push(error);
       }
+    }
+
+    function pluginsExist (nodes, connections, metadata, config, errors) {
+      angular.forEach(nodes, function (node) {
+        if (!node._backendProperties) {
+          addCanvasError(GLOBALS.en.hydrator.studio.pluginDoesNotExist + node.name, errors);
+          errors[node.id] = {};
+          errors[node.id].requiredFieldCount = '!';
+          node.requiredFieldCount = '!';
+        }
+      });
     }
 
     function hasAtleastOneSink(nodes, connections, metadata, config, errors) {

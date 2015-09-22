@@ -84,6 +84,10 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
     @Description(SCHEMA_DESC)
     private String schema;
 
+    public S3AvroSinkConfig() {
+      super();
+    }
+
     public S3AvroSinkConfig(String basePath, String pathFormat, String schema,
                             String accessID, String accessKey) {
       super(basePath, pathFormat, accessID, accessKey);

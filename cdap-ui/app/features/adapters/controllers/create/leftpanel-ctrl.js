@@ -148,7 +148,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       angular.forEach(obj, function (val) {
         if (val.templateType === MyAppDAGService.metadata.template.type) {
-          val.icon = 'fa-plug';
+          val.icon = MyDAGFactory.getIcon(val.pluginName);
           val.name = val.pluginTemplate;
 
           arr.push(val);

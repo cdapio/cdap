@@ -23,18 +23,21 @@ body.theme-cdap.state-adapters {
   &.state-adapters-detail {
     div.console {
       min-height: 60vh;
-
       div.console-type {
         height: inherit;
         min-height: inherit;
       }
-
     }
   }
   div.console {
     background-color: white;
-    min-height: 40vh;
+    width: 100%;
     .transition(all 0.2s ease);
+   // Console height is 40% on larger screen
+    min-height: 40vh;
+    @media (min-height: 800px) {
+      min-height: 60vh;
+    }
     &.collapsed {
       left: 130px;
     }
@@ -102,6 +105,10 @@ body.theme-cdap.state-adapters {
     }
     .schema-error ul:only-child {
       margin-bottom: 0;
+    }
+    .schema-inner > textarea {
+      height: auto;
+      resize: vertical;
     }
     .table {
       background-color: transparent;

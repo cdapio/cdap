@@ -404,10 +404,10 @@ public class BusinessMetadataDatasetTest {
 
   private void addMetadataRecord(BusinessMetadataDataset dataset, MetadataRecord record) {
     for (Map.Entry<String, String> entry : record.getProperties().entrySet()) {
-      dataset.setProperty(record.getTargetId(), entry.getKey(), entry.getValue());
+      dataset.setProperty(record.getEntityId(), entry.getKey(), entry.getValue());
     }
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    dataset.addTags(record.getTargetId(), record.getTags().toArray(new String[0]));
+    dataset.addTags(record.getEntityId(), record.getTags().toArray(new String[0]));
   }
 
   private Map<String, String> toProps(String prefix, String k1, String v1) {

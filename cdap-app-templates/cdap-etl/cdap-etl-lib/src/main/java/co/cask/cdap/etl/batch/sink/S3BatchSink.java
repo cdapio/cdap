@@ -81,6 +81,10 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
     @Nullable
     protected String pathFormat;
 
+    public S3BatchSinkConfig() {
+      // Set default value for the Nullable argument.
+      pathFormat = DEFAULT_PATH_FORMAT;
+    }
 
     public S3BatchSinkConfig(String basePath, String pathFormat,
                               String accessID, String accessKey) {

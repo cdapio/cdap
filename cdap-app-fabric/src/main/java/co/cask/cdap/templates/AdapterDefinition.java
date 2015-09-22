@@ -39,7 +39,6 @@ import javax.annotation.Nullable;
 @Deprecated
 public final class AdapterDefinition {
 
-  private static final Gson GSON = new Gson();
   private static final EnumSet<ProgramType> ADAPTER_PROGRAM_TYPES = EnumSet.of(ProgramType.WORKFLOW,
                                                                                ProgramType.WORKER);
   private final String name;
@@ -132,7 +131,7 @@ public final class AdapterDefinition {
   }
 
   public <T> T getConfig(Type configType) {
-    return config == null ? null : GSON.<T>fromJson(config, configType);
+    return config == null ? null : new Gson().<T>fromJson(config, configType);
   }
 
   public static Builder builder(String name, Id.Program program) {
