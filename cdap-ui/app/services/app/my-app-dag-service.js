@@ -47,7 +47,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS, MyNodeConfigService) {
+  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS, MyNodeConfigService, MyConsoleTabService) {
 
     var countSink = 0,
         countSource = 0,
@@ -471,6 +471,13 @@ angular.module(PKG.name + '.services')
           plugin._backendProperties = pluginProperties;
           defer.resolve(plugin);
           return defer.promise;
+        }, function error () {
+          MyConsoleTabService.addMessage({
+            type: 'error',
+            content: 'Cannot find plugin ' + params.pluginName
+          });
+          plugin._backendProperties = false;
+          plugin.requiredFieldCount = '!';
         });
     }
 
