@@ -10,6 +10,5 @@ Real-time Sinks
    :maxdepth: 1
 
     Cube <cube>
-    Elasticsearch <elasticsearch>
     Stream <stream>
     Table <table>

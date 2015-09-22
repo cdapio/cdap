@@ -47,7 +47,7 @@ import javax.annotation.Nullable;
  */
 public final class DelayedHttpServiceResponder implements HttpServiceResponder {
   private static final Logger LOG = LoggerFactory.getLogger(DelayedHttpServiceResponder.class);
-  private static final Gson GSON = new Gson();
+
   private final HttpResponder responder;
   private final MetricsContext metricsContext;
   private BufferedResponse bufferedResponse;
@@ -69,7 +69,7 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
 
   @Override
   public void sendJson(int status, Object object) {
-    sendJson(status, object, object.getClass(), GSON);
+    sendJson(status, object, object.getClass(), new Gson());
   }
 
   @Override

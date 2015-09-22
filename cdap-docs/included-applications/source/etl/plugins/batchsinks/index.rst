@@ -11,7 +11,6 @@ Batch Sinks
 
     Cube <cube>
     Database <database>
-    Elasticsearch <elasticsearch>
     KVTable <kvtable>
     SnapshotAvro <snapshotavro>
     SnapshotParquet <snapshotparquet>

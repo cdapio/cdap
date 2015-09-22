@@ -23,20 +23,14 @@ import java.util.Objects;
  * Represent the Metadata search result record.
  */
 public class MetadataSearchResultRecord {
-  private final Id.NamespacedId id;
-  private final MetadataSearchTargetType type;
+  private final Id.NamespacedId entityId;
 
-  public MetadataSearchResultRecord(Id.NamespacedId id, MetadataSearchTargetType type) {
-    this.id = id;
-    this.type = type;
+  public MetadataSearchResultRecord(Id.NamespacedId entityId) {
+    this.entityId = entityId;
   }
 
-  public Id.NamespacedId getId() {
-    return id;
-  }
-
-  public MetadataSearchTargetType getType() {
-    return type;
+  public Id.NamespacedId getEntityId() {
+    return entityId;
   }
 
   @Override
@@ -44,26 +38,22 @@ public class MetadataSearchResultRecord {
     if (this == o) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (!(o instanceof MetadataSearchResultRecord)) {
       return false;
     }
-
     MetadataSearchResultRecord that = (MetadataSearchResultRecord) o;
-
-    return Objects.equals(this.id, that.id) &&
-      Objects.equals(this.type, that.type);
+    return Objects.equals(entityId, that.entityId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, type);
+    return Objects.hash(entityId);
   }
 
   @Override
   public String toString() {
-    return "{" +
-      "id='" + id + '\'' +
-      "type='" + type + '\'' +
+    return "MetadataSearchResultRecord{" +
+      "entityId=" + entityId +
       '}';
   }
 }

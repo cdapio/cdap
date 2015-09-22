@@ -75,7 +75,7 @@ public class BatchStreamIntegrationTestRun extends TestFrameworkTestBase {
     mapReduceManager.waitForFinish(timeout, TimeUnit.SECONDS);
 
     // The MR job simply turns every stream event body into key/value pairs, with key==value.
-    DataSetManager<KeyValueTable> datasetManager = applicationManager.getDataSet("results");
+    DataSetManager<KeyValueTable> datasetManager = getDataset("results");
     KeyValueTable results = datasetManager.get();
     for (int i = 0; i < 50; i++) {
       byte[] key = String.valueOf(i).getBytes(Charsets.UTF_8);

@@ -153,12 +153,12 @@ public class ArtifactRepositoryTest {
       new PluginClass("typeB", "manual2", "desc", "co.cask.otherclassname", null, emptyMap)
     );
     File pluginConfigFile = new File(systemArtifactsDir, "APlugin-1.0.0.json");
-    ArtifactConfig pluginConfig1 = ArtifactConfig.builder(pluginArtifactId1, pluginConfigFile)
-      .addParents(new ArtifactRange(
-        Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0")))
+    ArtifactConfig pluginConfig1 = new ArtifactConfig(
+      ImmutableSet.of(new ArtifactRange(
+        Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0"))),
       // add a dummy plugin to test explicit addition of plugins through the config file
-      .addPlugins(manuallyAddedPlugins1)
-      .build();
+      manuallyAddedPlugins1
+    );
     try (BufferedWriter writer = Files.newWriter(pluginConfigFile, Charsets.UTF_8)) {
       writer.write(pluginConfig1.toString());
     }
@@ -175,12 +175,11 @@ public class ArtifactRepositoryTest {
       new PluginClass("typeB", "manual2", "desc", "co.notcask.otherclassname", null, emptyMap)
     );
     pluginConfigFile = new File(systemArtifactsDir, "BPlugin-1.0.0.json");
-    ArtifactConfig pluginConfig2 = ArtifactConfig.builder(pluginArtifactId2, pluginConfigFile)
-      .addParents(new ArtifactRange(
-        Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0")))
-        // add a dummy plugin to test explicit addition of plugins through the config file
-      .addPlugins(manuallyAddedPlugins2)
-      .build();
+    ArtifactConfig pluginConfig2 = new ArtifactConfig(
+      ImmutableSet.of(new ArtifactRange(
+        Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0"))),
+      manuallyAddedPlugins2
+    );
     try (BufferedWriter writer = Files.newWriter(pluginConfigFile, Charsets.UTF_8)) {
       writer.write(pluginConfig2.toString());
     }

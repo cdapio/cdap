@@ -68,7 +68,7 @@ public class WebAnalyticsTest extends TestBase {
     flowletMetrics.waitForProcessed(lines, 10, TimeUnit.SECONDS);
 
     // Verify the unique count
-    UniqueVisitCount uniqueVisitCount = appManager.<UniqueVisitCount>getDataSet("UniqueVisitCount").get();
+    UniqueVisitCount uniqueVisitCount = this.<UniqueVisitCount>getDataset("UniqueVisitCount").get();
     Assert.assertEquals(3L, uniqueVisitCount.getCount("192.168.12.72"));
   }
 }

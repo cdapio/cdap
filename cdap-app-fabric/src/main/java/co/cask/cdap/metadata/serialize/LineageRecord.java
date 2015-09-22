@@ -49,8 +49,8 @@ public class LineageRecord {
   private final long start;
   private final long end;
   private final Set<RelationRecord> relations;
-  private final Map<String, Map<String, ProgramRecord>> programs;
-  private final Map<String, Map<String, DataRecord>> data;
+  private final Map<String, Map<String, ? extends Id.NamespacedId>> programs;
+  private final Map<String, Map<String, Id.NamespacedId>> data;
 
   public LineageRecord(long start, long end, Set<Relation> lineageRelations) {
     this.start = start;
@@ -83,8 +83,8 @@ public class LineageRecord {
                                                       convertRuns(relation.getRun()),
                                                       convertComponents(relation.getComponents()));
       relations.add(relationRecord);
-      programs.put(programKey, ImmutableMap.of("id", toProgramRecord(relation.getProgram())));
-      data.put(dataKey, ImmutableMap.of("id", toDataRecord(relation.getData())));
+      programs.put(programKey, ImmutableMap.of("entityId", relation.getProgram()));
+      data.put(dataKey, ImmutableMap.of("entityId", relation.getData()));
     }
   }
 
@@ -133,11 +133,6 @@ public class LineageRecord {
                                program.getApplicationId(), program.getId());
   }
 
-  private ProgramRecord toProgramRecord(Id.Program program) {
-    return new ProgramRecord(program.getNamespaceId(), program.getApplicationId(),
-                            program.getType().getCategoryName().toLowerCase(), program.getId());
-  }
-
   private String makeDataKey(Id.NamespacedId data) {
     if (data instanceof Id.DatasetInstance) {
       return makeDatasetKey((Id.DatasetInstance) data);
@@ -145,18 +140,6 @@ public class LineageRecord {
 
     if (data instanceof  Id.Stream) {
       return makeStreamKey((Id.Stream) data);
-    }
-
-    throw new IllegalArgumentException("Unknown data object " + data);
-  }
-
-  private DataRecord toDataRecord(Id.NamespacedId data) {
-    if (data instanceof Id.DatasetInstance) {
-      return new DataRecord(((Id.DatasetInstance) data).getNamespaceId(), "dataset", data.getId());
-    }
-
-    if (data instanceof Id.Stream) {
-      return new DataRecord(((Id.Stream) data).getNamespaceId(), "stream", data.getId());
     }
 
     throw new IllegalArgumentException("Unknown data object " + data);

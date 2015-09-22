@@ -22,10 +22,10 @@ import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.FilePathResolver;
 import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.common.conf.ArtifactConfig;
+import co.cask.cdap.common.conf.ArtifactConfigReader;
 import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.common.io.Files;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import java.io.File;
@@ -37,12 +37,14 @@ import java.io.PrintStream;
 public class LoadArtifactCommand extends AbstractAuthCommand {
   private final ArtifactClient artifactClient;
   private final FilePathResolver resolver;
+  private final ArtifactConfigReader configReader;
 
   @Inject
   public LoadArtifactCommand(ArtifactClient artifactClient, CLIConfig cliConfig, FilePathResolver resolver) {
     super(cliConfig);
     this.artifactClient = artifactClient;
     this.resolver = resolver;
+    this.configReader = new ArtifactConfigReader();
   }
 
   @Override
@@ -69,7 +71,7 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
                          artifactId.getVersion().getVersion());
     } else {
       File configFile = resolver.resolvePathToFile(configPath);
-      ArtifactConfig artifactConfig = ArtifactConfig.read(artifactId, configFile, artifactFile);
+      ArtifactConfig artifactConfig = configReader.read(artifactId.getNamespace(), configFile);
       artifactClient.add(artifactId.getNamespace(), artifactId.getName(), Files.newInputStreamSupplier(artifactFile),
         artifactId.getVersion().getVersion(), artifactConfig.getParents(), artifactConfig.getPlugins());
     }
@@ -89,11 +91,11 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
     return "Loads an artifact into CDAP. If the artifact name and version are not both given, " +
       "they will be derived from the filename of the artifact. " +
       "File names are expected to be of the form <name>-<version>.jar. " +
-      "If the artifact contains plugins that extend another artifact, or if it contains 3rd party plugins, " +
-      "a config file must be given. " +
-      "The config file must contain a JSON object that specifies the parent artifacts and any 3rd " +
-      "party plugins in the jar. " +
-      "For example, if there is a config file with contents: \n" +
+      "If the artifact contains plugins that extend another artifact, or if it contains " +
+      "third-party plugins, a config file must be given. " +
+      "The config file must contain a JSON object that specifies the parent artifacts " +
+      "and any third-party plugins in the jar. " +
+      "For example, if there is a config file with these contents:\n" +
       "    {\n" +
       "      \"parents\":[ \"app1[1.0.0,2.0.0)\", \"app2[1.2.0,1.3.0] ],\n" +
       "      \"plugins\":[\n" +
@@ -103,7 +105,7 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
       "        }\n" +
       "      ]\n" +
       "    }\n" +
-      "    This config specifies that the artifact contains one jdbc 3rd party plugin that should be " +
+      "This config specifies that the artifact contains one JDBC third-party plugin that should be " +
       "available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact " +
       "(versions 1.2.0 inclusive to 1.3.0 inclusive).";
   }

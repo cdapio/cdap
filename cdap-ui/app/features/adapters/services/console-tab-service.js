@@ -23,6 +23,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     this.onMessageUpdateListeners = [];
     this.addMessage = function(message) {
+      message.date = new Date();
       this.messages.push(message);
       this.notifyMessageUpdateListeners(message);
     };

@@ -36,13 +36,13 @@ import javax.annotation.Nullable;
  * Provides handy methods to manage objects in {@link Table}.
  */
 public abstract class AbstractObjectsStore extends AbstractDataset {
-  private static final Gson GSON = new Gson();
 
   /**
    * All rows we store use single column of this name.
    */
   private static final byte[] COLUMN = Bytes.toBytes("c");
 
+  private final Gson gson = new Gson();
   private final Table table;
 
   public AbstractObjectsStore(DatasetSpecification spec, Table table) {
@@ -62,7 +62,7 @@ public abstract class AbstractObjectsStore extends AbstractDataset {
         return null;
       }
 
-      return GSON.fromJson(new String(value, Charsets.UTF_8), classOfT);
+      return gson.fromJson(new String(value, Charsets.UTF_8), classOfT);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -78,7 +78,7 @@ public abstract class AbstractObjectsStore extends AbstractDataset {
       Row next;
       while ((next = scan.next()) != null) {
         byte[] columnValue = next.get(COLUMN);
-        T value = GSON.fromJson(new String(columnValue, Charsets.UTF_8), classOfT);
+        T value = gson.fromJson(new String(columnValue, Charsets.UTF_8), classOfT);
         String key = new String(next.getRow(), prefix.length, next.getRow().length - prefix.length, Charsets.UTF_8);
         map.put(key, value);
       }
@@ -106,7 +106,7 @@ public abstract class AbstractObjectsStore extends AbstractDataset {
 
   protected final <T> void put(byte[] key, T value) {
     try {
-      table.put(key, COLUMN, GSON.toJson(value).getBytes(Charsets.UTF_8));
+      table.put(key, COLUMN, gson.toJson(value).getBytes(Charsets.UTF_8));
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

@@ -26,6 +26,7 @@ import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.ArtifactRangeNotFoundException;
 import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.conf.ArtifactConfig;
+import co.cask.cdap.common.conf.ArtifactConfigReader;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -69,6 +70,7 @@ public class ArtifactRepository {
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ArtifactInspector artifactInspector;
   private final File systemArtifactDir;
+  private final ArtifactConfigReader configReader;
 
   @Inject
   ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore) {
@@ -78,6 +80,7 @@ public class ArtifactRepository {
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(baseUnpackDir);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory, baseUnpackDir);
     this.systemArtifactDir = new File(cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR));
+    this.configReader = new ArtifactConfigReader();
   }
 
   /**
@@ -375,7 +378,7 @@ public class ArtifactRepository {
   public void addSystemArtifacts() throws IOException, WriteConflictException {
 
     // scan the directory for artifact .jar files and config files for those artifacts
-    List<ArtifactConfig> systemArtifacts = new ArrayList<>();
+    List<SystemArtifactInfo> systemArtifacts = new ArrayList<>();
     for (File jarFile : DirUtils.listFiles(systemArtifactDir, "jar")) {
       // parse id from filename
       Id.Artifact artifactId;
@@ -394,60 +397,55 @@ public class ArtifactRepository {
       try {
         // read and parse the config file if it exists. Otherwise use an empty config with the artifact filename
         ArtifactConfig artifactConfig = configFile.isFile() ?
-          ArtifactConfig.read(artifactId, configFile, jarFile) :
-          ArtifactConfig.builder(artifactId, jarFile).build();
+          configReader.read(artifactId.getNamespace(), configFile) : new ArtifactConfig();
 
         validateParentSet(artifactId, artifactConfig.getParents());
         validatePluginSet(artifactConfig.getPlugins());
-        systemArtifacts.add(artifactConfig);
+        systemArtifacts.add(new SystemArtifactInfo(artifactId, jarFile, artifactConfig));
       } catch (InvalidArtifactException e) {
         LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", artifactFileName), e);
       }
     }
 
-    // Need to be sure to add parent artifacts before artifacts that extend them.
-    // Sorting will accomplish this because ArtifactConfig is comparable based on parents
-    Collections.sort(systemArtifacts);
-
     // taking advantage of the fact that we only have 1 level of dependencies
     // so we can add all the parents first, then we know its safe to add everything else
     // add all parents
     Set<Id.Artifact> parents = new HashSet<>();
-    for (ArtifactConfig child : systemArtifacts) {
+    for (SystemArtifactInfo child : systemArtifacts) {
       Id.Artifact childId = child.getArtifactId();
 
-      for (ArtifactConfig potentialParent : systemArtifacts) {
+      for (SystemArtifactInfo potentialParent : systemArtifacts) {
         Id.Artifact potentialParentId = potentialParent.getArtifactId();
         // skip if we're looking at ourselves
         if (childId.equals(potentialParentId)) {
           continue;
         }
 
-        if (child.hasParent(potentialParentId)) {
+        if (child.getConfig().hasParent(potentialParentId)) {
           parents.add(potentialParentId);
         }
       }
     }
 
     // add all parents first
-    for (ArtifactConfig config : systemArtifacts) {
-      if (parents.contains(config.getArtifactId())) {
-        addSystemArtifact(config);
+    for (SystemArtifactInfo systemArtifact : systemArtifacts) {
+      if (parents.contains(systemArtifact.getArtifactId())) {
+        addSystemArtifact(systemArtifact);
       }
     }
 
     // add children next
-    for (ArtifactConfig config : systemArtifacts) {
-      if (!parents.contains(config.getArtifactId())) {
-        addSystemArtifact(config);
+    for (SystemArtifactInfo systemArtifact : systemArtifacts) {
+      if (!parents.contains(systemArtifact.getArtifactId())) {
+        addSystemArtifact(systemArtifact);
       }
     }
   }
 
-  private void addSystemArtifact(ArtifactConfig artifactConfig) throws IOException, WriteConflictException {
-    String fileName = artifactConfig.getFile().getName();
+  private void addSystemArtifact(SystemArtifactInfo systemArtifactInfo) throws IOException, WriteConflictException {
+    String fileName = systemArtifactInfo.getArtifactFile().getName();
     try {
-      Id.Artifact artifactId = artifactConfig.getArtifactId();
+      Id.Artifact artifactId = systemArtifactInfo.getArtifactId();
 
       // if it's not a snapshot and it already exists, don't bother trying to add it since artifacts are immutable
       if (!artifactId.getVersion().isSnapshot()) {
@@ -460,9 +458,9 @@ public class ArtifactRepository {
       }
 
       addArtifact(artifactId,
-        artifactConfig.getFile(),
-        artifactConfig.getParents(),
-        artifactConfig.getPlugins());
+        systemArtifactInfo.getArtifactFile(),
+        systemArtifactInfo.getConfig().getParents(),
+        systemArtifactInfo.getConfig().getPlugins());
     } catch (ArtifactAlreadyExistsException e) {
       // shouldn't happen... but if it does for some reason it's fine, it means it was added some other way already.
     } catch (ArtifactRangeNotFoundException e) {

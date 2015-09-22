@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap-etl</artifactId>
-    <version>3.2.0-SNAPSHOT</version>
+    <version>3.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-etl-lib</artifactId>
@@ -155,19 +155,6 @@
       <artifactId>uadetector-resources</artifactId>
       <version>2014.04</version>
     </dependency>
-    <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch-hadoop-mr</artifactId>
-    </dependency>
-    <!-- elasticsearch-hadoop-mr includes a class, StringUtils, which requires commons-httpclient-->
-    <dependency>
-      <groupId>commons-httpclient</groupId>
-      <artifactId>commons-httpclient</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.elasticsearch</groupId>
-      <artifactId>elasticsearch</artifactId>
-    </dependency>
     <!-- Need to add ASM explicitly to override the ASM4 dependency from elasticsearch -->
     <dependency>
       <groupId>org.ow2.asm</groupId>
@@ -196,7 +183,7 @@
               <instructions>
                 <!-- build bundle jar for batch sources for data quality artifact -->
                 <Export-Package>co.cask.cdap.etl.batch.source.*;co.cask.cdap.etl.common;
-                  org.apache.avro.mapreduce;parquet.avro;org.elasticsearch.hadoop.mr.*</Export-Package>
+                  org.apache.avro.mapreduce;parquet.avro</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>
@@ -215,8 +202,7 @@
                 <!-- build bundle jar for batch. excluding realtime-->
                 <Export-Package>co.cask.cdap.etl.batch.*;co.cask.cdap.etl.transform.*;
                   co.cask.cdap.etl.validator.*;
-                  co.cask.cdap.etl.common;org.apache.avro.mapreduce;parquet.avro;
-                  org.elasticsearch.hadoop.mr.*</Export-Package>
+                  co.cask.cdap.etl.common;org.apache.avro.mapreduce;parquet.avro</Export-Package>
                 <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
                 <Embed-Transitive>true</Embed-Transitive>
                 <Embed-Directory>lib</Embed-Directory>

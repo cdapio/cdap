@@ -73,7 +73,9 @@ class WorkFlowsRunDetailLogController {
         this.loadingPrev = false;
 
         this.$timeout(function() {
-          document.getElementById(params.fromOffset).scrollIntoView();
+          var container = angular.element(document.querySelector('[infinite-scroll]'))[0];
+          var logItem = angular.element(document.getElementById(params.fromOffset))[0];
+          container.scrollTop = logItem.offsetTop;
         });
       });
   }

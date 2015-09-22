@@ -82,6 +82,10 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
     @Description(SCHEMA_DESC)
     private String schema;
 
+    public S3ParquetSinkConfig() {
+      super();
+    }
+
     public S3ParquetSinkConfig(String basePath, String pathFormat, String schema,
                                String accessID, String accessKey) {
       super(basePath, pathFormat, accessID, accessKey);

@@ -69,7 +69,9 @@ angular.module(PKG.name + '.feature.adapters')
           $scope.loadingPrev = false;
 
           $timeout(function() {
-            document.getElementById(logsParams.fromOffset).scrollIntoView();
+            var container = angular.element(document.querySelector('[infinite-scroll]'))[0];
+            var logItem = angular.element(document.getElementById(logsParams.fromOffset))[0];
+            container.scrollTop = logItem.offsetTop;
           });
         });
     };
