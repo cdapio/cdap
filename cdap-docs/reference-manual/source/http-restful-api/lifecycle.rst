@@ -223,9 +223,9 @@ programs, schedules, workflows, workers, and custom services, and query for thei
      - Name of the *flow*, *MapReduce*, *schedule*, *Spark*, *workflow*, or *custom service*
        being called
    * - ``<operation>``
-     - One of ``start`` or ``stop`` (``resume`` or ``suspend`` in the case of 
-       :ref:`schedules <http-restful-api-lifecycle-schedules-suspend-resume>` or
-       :ref:`workflows <http-restful-api-lifecycle-workflows-suspend-resume>`)
+     - One of ``start`` or ``stop`` (``resume`` or ``suspend`` in the case of a
+       :ref:`schedule <http-restful-api-lifecycle-schedules-suspend-resume>` or the individual runs of a
+       :ref:`workflow <http-restful-api-lifecycle-workflow-runs-suspend-resume>`)
      
 You can retrieve the status of multiple programs from different applications and program types
 using an HTTP POST method::
@@ -840,8 +840,8 @@ As a schedule is initially deployed in a *suspended* state, a call to this API i
 
 To suspend or resume a schedule use::
 
-  POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-id>/suspend
-  POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-id>/resume
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/suspend
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/schedules/<schedule-name>/resume
 
 where:
 
@@ -855,7 +855,7 @@ where:
      - Namespace ID
    * - ``<app-id>``
      - Name of the application
-   * - ``<schedule-id>``
+   * - ``<schedule-name>``
      - Name of the schedule
 
 .. container:: table-block-example
@@ -880,12 +880,14 @@ where:
      * - Returns
        - | ``OK`` if successfully set as suspended
 
-.. _http-restful-api-lifecycle-workflows-suspend-resume:
+.. _http-restful-api-lifecycle-workflow-runs-suspend-resume:
 
-Workflows: Suspend and Resume
-...........................................
+Workflows Runs: Suspend and Resume
+..................................
 
-For workflows, you can suspend and resume them using the RESTful API.
+For workflows, in addition to :ref:`starting and stopping
+<http-restful-api-lifecycle-start-stop-status>`, you can suspend and resume individual
+runs of a workflow using the RESTful API.
 
 To *suspend* means that the current activity will be taken to completion, but no further 
 programs will be initiated. Programs will not be left partially uncompleted, barring any errors.
@@ -907,8 +909,8 @@ As a workflow is initially deployed in a *suspended* state, a call to this API i
 
 To suspend or resume a workflow, use::
   
-  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/suspend
-  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-id>/runs/<run-id>/resume
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/suspend
+  POST <base-url>/namespaces/<namespace>/apps/<app-id>/workflows/<workflow-name>/runs/<run-id>/resume
 
 where:
 
@@ -922,7 +924,7 @@ where:
      - Namespace ID
    * - ``<app-id>``
      - Name of the application
-   * - ``<workflow-id>``
+   * - ``<workflow-name>``
      - Name of the workflow
    * - ``<run-id>``
      - UUID of the workflow run
@@ -933,7 +935,7 @@ where:
      :widths: 99 1
      :stub-columns: 1
 
-     * - Example: Suspending A workflow
+     * - Example: Suspending a Workflow
        - 
        
   .. list-table::
