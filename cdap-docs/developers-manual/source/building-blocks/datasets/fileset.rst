@@ -353,8 +353,8 @@ Then set the class of the custom partitioner as runtime arguments of the output 
 With this, each record processed by the MapReduce job will be written to a path corresponding
 to the ``Partition`` that it was mapped to by the ``DynamicPartitioner``, and the set of new ``Partition``\ s
 will be registered with the output ``PartitionedFileSet`` at the end of the job.
-Note that any partitions written to must not previously exist. Otherwise, the MapReduce job will fail
-and none of the partitions will be added to the ``PartitionedFileSet``.
+Note that any partitions written to must not previously exist. Otherwise, the MapReduce job will fail at the
+end of the job and none of the partitions will be added to the ``PartitionedFileSet``.
 
 Incrementally Processing PartitionedFileSets
 ============================================
