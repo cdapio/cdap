@@ -24,7 +24,7 @@
 <nav>
   <ul class="nav navbar-nav">
     <li>
-      <a ui-sref="adapters.list" ui-sref-active="active">
+      <a ui-sref="adapters.list" ng-class="{'active': $state.is('adaters.list') || $state.is('adapters.detail')}">
         <span> My Pipelines </span>
       </a>
     </li>

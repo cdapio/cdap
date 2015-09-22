@@ -43,7 +43,10 @@ angular.module(PKG.name + '.feature.adapters')
      So we are temporarily doing the coversion here before passing it to the widget-schema-editor so that it doesn't trigger that initial change.
      This should eventually be removed and moved to a service (or a factory). For lack of time my sin stays here. - Ajai
     */
-    $scope.data['isModelTouched'] = false;
+    if (!$scope.isDisabled) {
+      $scope.data['isModelTouched'] = false;
+    }
+
     var typeMap = 'map<string, string>';
     var mapObj = {
       type: 'map',
@@ -156,6 +159,7 @@ angular.module(PKG.name + '.feature.adapters')
         return null;
       }
     }
+    /////////////////////////////////////
 
     this.noproperty = Object.keys(
       $scope.plugin._backendProperties || {}
@@ -227,76 +231,23 @@ angular.module(PKG.name + '.feature.adapters')
             this.config = res;
             this.noconfig = false;
 
-            if ($scope.plugin._backendProperties.schema) {
-              $scope.$watch('pluginCopy.outputSchema', function () {
-                if (!$scope.pluginCopy.outputSchema) {
-                  if ($scope.pluginCopy.properties && $scope.plugin.properties.schema) {
-                    $scope.pluginCopy.properties.schema = null;
-                  }
-                  return;
-                }
-
-                if (!$scope.pluginCopy.properties) {
-                  $scope.pluginCopy.properties = {};
-                }
-                if ($scope.pluginCopy.properties.schema !== $scope.pluginCopy.outputSchema) {
-                  $scope.pluginCopy.properties.schema = $scope.pluginCopy.outputSchema;
-                }
-              });
-            } else {
-              $scope.$watch('pluginCopy.outputSchema', function () {
-                var originalOutputSchema = $scope.plugin.outputSchema;
-                var copyOutputSchema = $scope.pluginCopy.outputSchema;
-                if (originalOutputSchema !== copyOutputSchema) {
-                  $scope.data['isModelTouched'] = true;
-                }
-              });
+            if (!$scope.isDisabled) {
+              setWatchersForPropertiesAndSchema();
             }
-
-            $scope.$watch('pluginCopy.label', function() {
-              var copyLabel = $scope.pluginCopy.label;
-              var originalLabel = $scope.plugin.label;
-              if (copyLabel !== originalLabel) {
-                $scope.data['isModelTouched'] = true;
-              }
-            });
-
-            $scope.$watch('pluginCopy.errorDatasetName', function() {
-              var copyErrorDataset = $scope.pluginCopy.errorDatasetName;
-              var originalErrorDataset = $scope.plugin.errorDatasetName;
-              if (copyErrorDataset !== originalErrorDataset) {
-                $scope.data['isModelTouched'] = true;
-              }
-            });
-
-            $scope.$watch('pluginCopy.validationFields', function() {
-              var copyValidationFields = JSON.stringify($scope.pluginCopy.validationFields);
-              var originalValidationFields = JSON.stringify($scope.plugin.validationFields);
-              if (copyValidationFields !== originalValidationFields) {
-                $scope.data['isModelTouched'] = true;
-              }
-            });
-
-            $scope.$watch('pluginCopy.properties', function() {
-                var strProp1 = JSON.stringify($scope.pluginCopy.properties);
-                var strProp2 = JSON.stringify($scope.plugin.properties);
-                if (strProp1 !== strProp2) {
-                  $scope.data['isModelTouched'] = true;
-                }
-            }, true);
-
           }.bind(this),
           function error() {
             // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
             $timeout(function() {
               $scope.pluginCopy = angular.copy($scope.plugin);
-              $scope.$watch('pluginCopy.properties', function() {
-                  var strProp1 = JSON.stringify($scope.pluginCopy.properties);
-                  var strProp2 = JSON.stringify($scope.plugin.properties);
-                  if (strProp1 !== strProp2) {
-                    $scope.data['isModelTouched'] = true;
-                  }
-              }, true);
+              if (!$scope.isDisabled) {
+                $scope.$watch('pluginCopy.properties', function() {
+                    var strProp1 = JSON.stringify($scope.pluginCopy.properties);
+                    var strProp2 = JSON.stringify($scope.plugin.properties);
+                    if (strProp1 !== strProp2) {
+                      $scope.data['isModelTouched'] = true;
+                    }
+                }, true);
+              }
               // Didn't receive a configuration from the backend. Fallback to all textboxes.
               this.noconfig = true;
               this.configfetched = true;
@@ -356,6 +307,66 @@ angular.module(PKG.name + '.feature.adapters')
         info: 'Info',
         description: myHelpers.objectQuery($scope, 'plugin', '_backendProperties', property, 'description') || 'No Description Available'
       };
+    }
+
+    function setWatchersForPropertiesAndSchema() {
+      if ($scope.plugin._backendProperties.schema) {
+        $scope.$watch('pluginCopy.outputSchema', function () {
+          if (!$scope.pluginCopy.outputSchema) {
+            if ($scope.pluginCopy.properties && $scope.plugin.properties.schema) {
+              $scope.pluginCopy.properties.schema = null;
+            }
+            return;
+          }
+
+          if (!$scope.pluginCopy.properties) {
+            $scope.pluginCopy.properties = {};
+          }
+          if ($scope.pluginCopy.properties.schema !== $scope.pluginCopy.outputSchema) {
+            $scope.pluginCopy.properties.schema = $scope.pluginCopy.outputSchema;
+          }
+        });
+      } else {
+        $scope.$watch('pluginCopy.outputSchema', function () {
+          var originalOutputSchema = $scope.plugin.outputSchema;
+          var copyOutputSchema = $scope.pluginCopy.outputSchema;
+          if (originalOutputSchema !== copyOutputSchema) {
+            $scope.data['isModelTouched'] = true;
+          }
+        });
+      }
+
+      $scope.$watch('pluginCopy.label', function() {
+        var copyLabel = $scope.pluginCopy.label;
+        var originalLabel = $scope.plugin.label;
+        if (copyLabel !== originalLabel) {
+          $scope.data['isModelTouched'] = true;
+        }
+      });
+
+      $scope.$watch('pluginCopy.errorDatasetName', function() {
+        var copyErrorDataset = $scope.pluginCopy.errorDatasetName;
+        var originalErrorDataset = $scope.plugin.errorDatasetName;
+        if (copyErrorDataset !== originalErrorDataset) {
+          $scope.data['isModelTouched'] = true;
+        }
+      });
+
+      $scope.$watch('pluginCopy.validationFields', function() {
+        var copyValidationFields = JSON.stringify($scope.pluginCopy.validationFields);
+        var originalValidationFields = JSON.stringify($scope.plugin.validationFields);
+        if (copyValidationFields !== originalValidationFields) {
+          $scope.data['isModelTouched'] = true;
+        }
+      });
+
+      $scope.$watch('pluginCopy.properties', function() {
+          var strProp1 = JSON.stringify($scope.pluginCopy.properties);
+          var strProp2 = JSON.stringify($scope.plugin.properties);
+          if (strProp1 !== strProp2) {
+            $scope.data['isModelTouched'] = true;
+          }
+      }, true);
     }
 
     this.reset = function () {
