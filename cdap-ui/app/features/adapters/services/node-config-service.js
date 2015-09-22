@@ -21,6 +21,16 @@ angular.module(PKG.name + '.feature.adapters')
     this.pluginRemoveListeners = {};
     this.pluginSaveListeners = {};
 
+    this.isModelTouched = false;
+
+    this.setIsPluginBeingEdited = function(isPluginSaved) {
+      this.isModelTouched = isPluginSaved;
+    };
+
+    this.getIsPluginBeingEdited = function() {
+      return this.isModelTouched;
+    };
+
     this.resetPlugin = function(plugin) {
       this.plugin = plugin;
       this.notifyPluginResetListeners();

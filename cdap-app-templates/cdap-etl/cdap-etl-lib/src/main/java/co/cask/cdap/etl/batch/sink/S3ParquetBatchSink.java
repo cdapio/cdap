@@ -40,20 +40,19 @@ import java.util.Map;
  */
 @Plugin(type = "batchsink")
 @Name("S3Parquet")
-@Description("Sink to write to S3 in Parquet format.")
+@Description("Batch sink to write to Amazon S3 in Parquet format.")
 public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
 
   private StructuredToAvroTransformer recordTransformer;
   private final S3ParquetSinkConfig config;
 
-  private static final String SCHEMA_DESC = "The Avro schema of the record being written to the Sink as a JSON " +
-    "Object.";
+  private static final String SCHEMA_DESC = "The Parquet schema of the record being written to the sink as a JSON " +
+    "object.";
 
   public S3ParquetBatchSink(S3ParquetSinkConfig config) {
     super(config);
     this.config = config;
   }
-
 
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
@@ -107,7 +106,6 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
       conf.put("parquet.avro.schema", config.schema);
       conf.put(FileOutputFormat.OUTDIR,
                String.format("%s/%s", config.basePath, format.format(context.getLogicalStartTime())));
-
     }
 
     @Override

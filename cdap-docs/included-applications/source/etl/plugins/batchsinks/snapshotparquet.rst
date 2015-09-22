@@ -28,12 +28,12 @@ a table, writing to this sink, and then other programs can analyze the contents 
 **name:** Name of the FileSet to which records are written.
 If it doesn't exist, it will be created.
 
-**schema:** The Avro schema of the record being written to the sink as a JSON Object.
+**schema:** The Avro schema of the record being written to the sink as a JSON object.
 
 **basePath:** Base path for the FileSet. Defaults to the name of the dataset.
 
 **pathExtension:** The extension where the snapshot will be stored. The snapshot will be stored at
-<basePath>/<pathExtension.
+<basePath>/<pathExtension>.
 
 .. rubric:: Example
 
