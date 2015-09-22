@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name+'.feature.home')
-  .config(function ($stateProvider, $urlRouterProvider, $urlMatcherFactoryProvider) {
+  .config(function ($stateProvider, $urlRouterProvider, $urlMatcherFactoryProvider, MYAUTH_ROLE) {
 
     /**
      * Ignores trailing slash
@@ -61,6 +61,10 @@ angular.module(PKG.name+'.feature.home')
         url: '/ns/:namespace',
         abstract: true,
         template: '<ui-view/>',
+        data: {
+          authorizedRoles: MYAUTH_ROLE.all,
+          highlightTab: 'development'
+        },
         resolve: {
           rNsList: function (myNamespace) {
             return myNamespace.getList();
