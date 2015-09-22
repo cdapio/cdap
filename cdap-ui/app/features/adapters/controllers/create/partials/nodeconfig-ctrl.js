@@ -21,7 +21,6 @@ angular.module(PKG.name + '.feature.adapters')
     $scope.type = MyAppDAGService.metadata.template.type;
 
     $scope.data = {};
-    $scope.data.isModelTouched = false;
 
     MyNodeConfigService.registerPluginSetCallback($scope.$id, onPluginChange);
     MyNodeConfigService.registerRemovePluginCallback($scope.$id, onPluginRemoved);
@@ -29,7 +28,7 @@ angular.module(PKG.name + '.feature.adapters')
     function onPluginRemoved(nodeId) {
       if ($scope.plugin && $scope.plugin.id === nodeId){
         $scope.isValidPlugin = false;
-        $scope.data.isModelTouched = false;
+        MyNodeConfigService.setIsPluginBeingEdited(false);
       }
     }
 
@@ -39,7 +38,7 @@ angular.module(PKG.name + '.feature.adapters')
       if (plugin && $scope.plugin && plugin.id === $scope.plugin.id) {
         return;
       }
-      if (!$scope.data.isModelTouched) {
+      if (!MyNodeConfigService.getIsPluginBeingEdited()) {
         switchPlugin(plugin);
         defer.resolve(true);
       } else {
