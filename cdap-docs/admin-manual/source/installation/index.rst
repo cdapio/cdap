@@ -6,17 +6,17 @@
 
 .. _installation-index:
 
-============================================
+============
 Installation
-============================================
+============
 
 .. toctree::
    :maxdepth: 1
    
     Quick Start <quick-start>
-    Installation and Configuration <installation>
+    Installation <installation>
+    Configuration <configuration>
     Security <security>
-    Monitoring <monitoring>
     Appendix: cdap-site.xml <cdap-site>
     Appendix: cdap-security.xml <cdap-security>
 
@@ -26,15 +26,22 @@ Installation
 
 - |quickstart|_ A quick start guide that covers the **most-common case of installing and 
   configuring CDAP.** Many people may find this sufficient; if your case isn't covered, the
-  :ref:`install` guide has additional details.
+  :ref:`install` and :ref:`configuration` guides have additional details.
 
 
-.. |installation| replace:: **Installation and Configuration:**
+.. |installation| replace:: **Installation:**
 .. _installation: installation.html
 
-- |installation|_ Covers **installing and configuring CDAP:** the system, network, and software
-  requirements; packaging options; and the instructions for installation and verification of the
-  CDAP components so they work with your existing Hadoop cluster.
+- |installation|_ Covers **installing CDAP:** the system, network, and software
+  requirements; packaging options; and the instructions for installation of the
+  CDAP components so they will work with your existing Hadoop cluster.
+
+
+.. |configuration| replace:: **Configuration:**
+.. _configuration: configuration.html
+
+- |configuration|_ Covers **configuring CDAP:** once CDAP :ref:`is installed <install>`,
+  covers the configuration and verification of the CDAP components.
 
 
 .. |security| replace:: **Security:**
@@ -45,19 +52,11 @@ Installation
   an example configuration file.
 
 
-.. |monitoring| replace:: **Monitoring:**
-.. _monitoring: monitoring.html
-
-- |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
-  This section provides links to the relevant APIs for accessing these logs and metrics.
-
-
 .. |appendices| replace:: **Appendices:**
 
 - |appendices| Two appendices cover the XML files used to configure the 
   :ref:`CDAP installation <appendix-cdap-site.xml>` and the :ref:`security configuration.
   <appendix-cdap-security.xml>`
-
 
 
 .. rubric:: Putting CDAP into Production
