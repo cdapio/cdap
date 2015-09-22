@@ -30,7 +30,6 @@ import java.lang.reflect.Type;
  * Utility for describing {@link ObjectStore} and similar datasets within application configuration.
  */
 public final class ObjectStores {
-  private static final Gson GSON = new Gson();
 
   private ObjectStores() {}
 
@@ -98,7 +97,7 @@ public final class ObjectStores {
     TypeRepresentation typeRep = new TypeRepresentation(type);
     return DatasetProperties.builder()
       .add("schema", schema.toString())
-      .add("type", GSON.toJson(typeRep))
+      .add("type", new Gson().toJson(typeRep))
       .addAll(props.getProperties())
       .build();
   }

@@ -80,7 +80,7 @@ public class KafkaMetadataChangePublisher implements MetadataChangePublisher {
   @Override
   public void publish(MetadataChangeRecord changeRecord) {
     byte[] changesToPublish = Bytes.toBytes(GSON.toJson(changeRecord));
-    Object partitionKey = changeRecord.getPrevious().getTargetId();
+    Object partitionKey = changeRecord.getPrevious().getEntityId();
     @SuppressWarnings("ConstantConditions")
     ByteBuffer message = ByteBuffer.wrap(changesToPublish);
 

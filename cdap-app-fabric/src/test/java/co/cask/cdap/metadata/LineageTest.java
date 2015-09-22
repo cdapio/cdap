@@ -28,6 +28,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.test.SlowTests;
 import co.cask.common.http.HttpResponse;
@@ -36,6 +37,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.Test;
@@ -58,7 +60,9 @@ import javax.annotation.Nullable;
 public class LineageTest extends MetadataTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LineageTest.class);
 
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
+    .create();
   private static final String STOPPED = "STOPPED";
 
   @Test

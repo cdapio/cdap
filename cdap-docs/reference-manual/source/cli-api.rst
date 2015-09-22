@@ -123,7 +123,7 @@ These are the available commands:
 .. csv-table::
    :header: Command,Description
    :widths: 50, 50
-
+   
    **General**
    ``cli render as <table-renderer>``,"Modifies how table data is rendered. Valid options are ""alt"" (default) and ""csv""."
    ``cli version``,"Prints the CLI version."
@@ -144,19 +144,26 @@ These are the available commands:
    ``list artifact plugins <artifact-name> <artifact-version> <plugin-type> [<scope>]``,"Lists all plugins of a specific type available to a specific artifact. Includes the type, name, classname, and description of the plugin, as well as the artifact the plugin came from. If no scope is given, the user scope will be used."
    ``list artifact versions <artifact-name> [<scope>]``,"Lists all versions of a specific artifact. If no scope is given, the user scope will be used."
    ``list artifacts [<scope>]``,"Lists all artifacts. If no scope is given, artifacts in all scopes are returned. Otherwise, only artifacts in the specified scope are returned."
-   ``load artifact <local-file-path> [config-file <artifact-config>] [name <artifact-name>] [version <artifact-version>]``,"Loads an artifact into CDAP. If the artifact name and version are not both given, they will be derived from the filename of the artifact. File names are expected to be of the form <name>-<version>.jar. If the artifact contains plugins that extend another artifact, or if it contains 3rd party plugins, a config file must be given. The config file must contain a JSON object that specifies the parent artifacts and any 3rd party plugins in the jar. For example, if there is a config file with contents:
-    {
-      ""parents"":[ ""app1[1.0.0,2.0.0)"", ""app2[1.2.0,1.3.0] ],
-      ""plugins"":[
-        { ""type"": ""jdbc"",
-          ""name"": ""mysql"",
-          ""className"": ""com.mysql.jdbc.Driver""
-        }
-      ]
-    }
-    This config specifies that the artifact contains one jdbc 3rd party plugin that should be available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact (versions 1.2.0 inclusive to 1.3.0 inclusive)."
+   ``load artifact <local-file-path> [config-file <artifact-config>] [name <artifact-name>] [version <artifact-version>]``,"Loads an artifact into CDAP. If the artifact name and version are not both given, they will be derived from the filename of the artifact. File names are expected to be of the form <name>-<version>.jar. If the artifact contains plugins that extend another artifact, or if it contains third-party plugins, a config file must be given. The config file must contain a JSON object that specifies the parent artifacts and any third-party plugins in the jar. For example, if there is a config file with these contents:
+    | ``{``
+    |   ``""parents"":[ ""app1[1.0.0,2.0.0)"", ""app2[1.2.0,1.3.0] ],``
+    |   ``""plugins"":[``
+    |     ``{ ""type"": ""jdbc"",``
+    |       ``""name"": ""mysql"",``
+    |       ``""className"": ""com.mysql.jdbc.Driver""``
+    |     ``}``
+    |   ``]``
+    | ``}``
+    
+   This config specifies that the artifact contains one JDBC third-party plugin that should be available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact (versions 1.2.0 inclusive to 1.3.0 inclusive)."
    **Application Lifecycle**
-   ``create app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Creates an application from an artifact with optional configuration. If configuration is needed, it must be given as a file whose contents are a JSON Object containing the application config. For example, the file contents could contain: '{ ""config"": { ""stream"": ""purchases"" } }'. In this case, the application would recieve '{ ""stream"": ""purchases"" }' as its config object."
+   ``create app <app-id> <artifact-name> <artifact-version> <scope> [<app-config-file>]``,"Creates an application from an artifact with optional configuration. If configuration is needed, it must be given as a file whose contents are a JSON Object containing the application config. For example, the file contents could contain: 
+    | ``{``
+    |   ``""config"":``
+    |     ``{ ""stream"": ""purchases""}``
+    | ``}``
+    
+   In this case, the application would receive ``'{ ""stream"": ""purchases"" }'`` as its config object."
    ``delete app <app-id>``,"Deletes an application."
    ``delete preferences app [<app-id>]``,"Deletes the preferences of an application."
    ``delete preferences flow [<app-id.flow-id>]``,"Deletes the preferences of a flow."
@@ -314,3 +321,4 @@ These are the available commands:
    ``truncate stream <stream-id>``,"Truncates a stream."
    **Egress**
    ``call service <app-id.service-id> <http-method> <endpoint> [headers <headers>] [body <body>] [body:file <local-file-path>]``,"Calls a service endpoint. The <headers> are formatted as ""{'key':'value', ...}"". The request body may be provided either as a string or a file. To provide the body as a string, use ""body <body>"". To provide the body as a file, use ""body:file <local-file-path>""."
+

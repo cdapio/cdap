@@ -25,7 +25,6 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
-import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -93,14 +92,14 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Set<MetadataSearchResultRecord> searchProperties = searchMetadata(Id.Namespace.DEFAULT.getId(),
                                                                       "stKey:stValue", "STREAM");
     Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
-      new MetadataSearchResultRecord(mystream, MetadataSearchTargetType.STREAM)
+      new MetadataSearchResultRecord(mystream)
     );
     Assert.assertEquals(expected, searchProperties);
 
     // test prefix search for service
     searchProperties = searchMetadata(Id.Namespace.DEFAULT.getId(), "sKey:s*", "ALL");
     expected = ImmutableSet.of(
-      new MetadataSearchResultRecord(pingService, MetadataSearchTargetType.PROGRAM)
+      new MetadataSearchResultRecord(pingService)
     );
     Assert.assertEquals(expected, searchProperties);
 
@@ -182,14 +181,14 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     // test search for stream
     Set<MetadataSearchResultRecord> searchTags = searchMetadata(Id.Namespace.DEFAULT.getId(), "stT*", "STREAM");
     Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
-      new MetadataSearchResultRecord(mystream, MetadataSearchTargetType.STREAM)
+      new MetadataSearchResultRecord(mystream)
     );
     Assert.assertEquals(expected, searchTags);
     // test prefix search, should match stream and service programs
     searchTags = searchMetadata(Id.Namespace.DEFAULT.getId(), "s*", "ALL");
     expected = ImmutableSet.of(
-      new MetadataSearchResultRecord(mystream, MetadataSearchTargetType.STREAM),
-      new MetadataSearchResultRecord(pingService, MetadataSearchTargetType.PROGRAM)
+      new MetadataSearchResultRecord(mystream),
+      new MetadataSearchResultRecord(pingService)
     );
     Assert.assertEquals(expected, searchTags);
 
@@ -257,7 +256,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(1, metadataRecords.size());
     MetadataRecord metadata = metadataRecords.iterator().next();
     Assert.assertEquals(MetadataScope.USER, metadata.getScope());
-    Assert.assertEquals(application, metadata.getTargetId());
+    Assert.assertEquals(application, metadata.getEntityId());
     Assert.assertEquals(appProperties, metadata.getProperties());
     Assert.assertEquals(appTags, metadata.getTags());
     // verify service
@@ -265,7 +264,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(1, metadataRecords.size());
     metadata = metadataRecords.iterator().next();
     Assert.assertEquals(MetadataScope.USER, metadata.getScope());
-    Assert.assertEquals(pingService, metadata.getTargetId());
+    Assert.assertEquals(pingService, metadata.getEntityId());
     Assert.assertEquals(serviceProperties, metadata.getProperties());
     Assert.assertEquals(serviceTags, metadata.getTags());
     // verify dataset
@@ -273,7 +272,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(1, metadataRecords.size());
     metadata = metadataRecords.iterator().next();
     Assert.assertEquals(MetadataScope.USER, metadata.getScope());
-    Assert.assertEquals(myds, metadata.getTargetId());
+    Assert.assertEquals(myds, metadata.getEntityId());
     Assert.assertEquals(datasetProperties, metadata.getProperties());
     Assert.assertEquals(datasetTags, metadata.getTags());
     // verify service
@@ -281,7 +280,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(1, metadataRecords.size());
     metadata = metadataRecords.iterator().next();
     Assert.assertEquals(MetadataScope.USER, metadata.getScope());
-    Assert.assertEquals(mystream, metadata.getTargetId());
+    Assert.assertEquals(mystream, metadata.getEntityId());
     Assert.assertEquals(streamProperties, metadata.getProperties());
     Assert.assertEquals(streamTags, metadata.getTags());
     // cleanup

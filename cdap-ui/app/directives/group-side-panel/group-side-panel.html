@@ -33,7 +33,11 @@
            tooltip-toggle="group.error"
            tooltip-class="tooltip-error"
            ng-click="MySidePanel.toggleGroup(group)">
-        <span class="name">{{group.name | caskCapitalizeFilter}}</span>
+        <span class="name">{{group.name | caskCapitalizeFilter}} </span>
+        <div ng-if="MySidePanel.openedGroup === group.name"
+             class="pull-right">
+          <span class="badge" >{{MySidePanel.filtered.length}}</span>
+        </div>
       </div>
 
       <div class="item-body-wrapper"
@@ -41,9 +45,9 @@
            my-calculate-height
            substract-height="195">
         <div class="item-body">
-          <div ng-repeat="plugin in MySidePanel.panel.items | filter: {name: MySidePanel.searchText} track by $index"
+          <div ng-repeat="plugin in MySidePanel.filtered = (MySidePanel.panel.items | filter: {name: MySidePanel.searchText}) track by $index"
                class="plugin-item"
-               popover="{{plugin.description}}"
+               popover="{{plugin.description || 'No description'}}"
                popover-title="{{plugin.name}}"
                popover-placement="right"
                popover-append-to-body="true"

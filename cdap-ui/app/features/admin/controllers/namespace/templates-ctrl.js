@@ -18,6 +18,7 @@ angular.module(PKG.name + '.feature.admin')
   .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS, $rootScope) {
 
     var vm = this;
+    var oldTemplateName;
 
     vm.GLOBALS = GLOBALS;
     vm.pluginList = [];
@@ -28,11 +29,18 @@ angular.module(PKG.name + '.feature.admin')
       vm.GLOBALS.etlBatch,
       vm.GLOBALS.etlRealtime
     ];
-    vm.pluginoptions = [
+    vm.pluginoptionsBatch = [
       GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].source,
       GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].sink,
       GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].transform
     ];
+    vm.pluginoptionsRealtime = [
+      GLOBALS.pluginTypes[vm.GLOBALS.etlRealtime].source,
+      GLOBALS.pluginTypes[vm.GLOBALS.etlRealtime].sink,
+      GLOBALS.pluginTypes[vm.GLOBALS.etlRealtime].transform
+    ];
+
+    vm.pluginDescription = '';
 
     var plugin;
 
@@ -41,13 +49,13 @@ angular.module(PKG.name + '.feature.admin')
 
       var fetchApi;
       switch (vm.pluginType) {
-        case GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].source:
+        case GLOBALS.pluginTypes[vm.templateType].source:
           fetchApi = myAdapterApi.fetchSourceProperties;
           break;
-        case GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].transform:
+        case GLOBALS.pluginTypes[vm.templateType].transform:
           fetchApi = myAdapterApi.fetchTransformProperties;
           break;
-        case GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].sink:
+        case GLOBALS.pluginTypes[vm.templateType].sink:
           fetchApi = myAdapterApi.fetchSinkProperties;
           break;
       }
@@ -91,15 +99,15 @@ angular.module(PKG.name + '.feature.admin')
           version: $rootScope.cdapVersion
         };
         switch (vm.pluginType) {
-          case GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].source:
+          case GLOBALS.pluginTypes[vm.templateType].source:
             params.extensionType = GLOBALS.pluginTypes[vm.templateType].source;
             prom = myAdapterApi.fetchSources(params).$promise;
             break;
-          case GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].transform:
+          case GLOBALS.pluginTypes[vm.templateType].transform:
             params.extensionType = GLOBALS.pluginTypes[vm.templateType].transform;
             prom = myAdapterApi.fetchTransforms(params).$promise;
             break;
-          case GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].sink:
+          case GLOBALS.pluginTypes[vm.templateType].sink:
             params.extensionType = GLOBALS.pluginTypes[vm.templateType].sink;
             prom = myAdapterApi.fetchSinks(params).$promise;
             break;
@@ -134,6 +142,9 @@ angular.module(PKG.name + '.feature.admin')
             lock: template.lock
           };
 
+          oldTemplateName = template.pluginTemplate;
+          vm.pluginDescription = template.description;
+
           initialize();
 
         });
@@ -145,7 +156,7 @@ angular.module(PKG.name + '.feature.admin')
         $alert({
           type: 'danger',
           title: 'Error!',
-          content: 'Please enter template name'
+          content: GLOBALS.en.admin.templateNameMissingError
         });
 
         return;
@@ -156,7 +167,7 @@ angular.module(PKG.name + '.feature.admin')
         $alert({
           type: 'danger',
           title: 'Error!',
-          content: 'There is already a plugin with the same name.'
+          content: GLOBALS.en.admin.pluginSameNameError
         });
 
         return;
@@ -170,6 +181,7 @@ angular.module(PKG.name + '.feature.admin')
 
       var properties = {
         pluginTemplate: vm.pluginConfig.pluginTemplate,
+        description: vm.pluginDescription,
         properties: vm.pluginConfig.properties,
         pluginType: vm.pluginType,
         templateType: vm.templateType,
@@ -192,11 +204,25 @@ angular.module(PKG.name + '.feature.admin')
           if (config && !vm.isEdit) {
             $alert({
               type: 'danger',
-              content: 'Template name already exist! Please choose another name'
+              content: GLOBALS.en.admin.templateNameExistsError
             });
             vm.loading = false;
 
             return;
+          }
+
+          if (vm.isEdit && oldTemplateName !== vm.pluginConfig.pluginTemplate) {
+            if (config) {
+              $alert({
+                type: 'danger',
+                content: GLOBALS.en.admin.templateNameExistsError
+              });
+              vm.loading = false;
+
+              return;
+            } else {
+              delete res[namespace][properties.templateType][properties.pluginType][oldTemplateName];
+            }
           }
 
           var json = [

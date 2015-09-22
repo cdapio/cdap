@@ -49,14 +49,22 @@ angular.module(PKG.name + '.services')
           unconnectedNodesError: 'Please connect all nodes.',
           circularConnectionError: 'Please remove the circular connection in this pipeline.',
           endSinkError: 'Please end the pipeline connections in a sink.',
-          parallelConnectionError: 'Please remove parallel connections in this pipeline.'
+          parallelConnectionError: 'Please remove parallel connections in this pipeline.',
+          pluginDoesNotExist: 'Plugin does not exist: ',
+          unsavedPluginMessage1: 'There are un-saved changes for node: ',
+          unsavedPluginMessage2: '. Please save them before publishing the pipeline'
         },
         wizard: {
           welcomeMessage1: 'Hydrator makes it easy to prepare data so you ',
-          welcomeMessage2: 'can get down to business faster. Let’s get started!',
+          welcomeMessage2: 'can get down to business faster. Let\'s get started!',
           createMessage: 'ETL made simple. Hydrator offers four ways to get started.',
           createConsoleMessage: 'Click a node from the menu to place it on the canvas above.'
-        }
+        },
+      },
+      admin: {
+        templateNameExistsError: 'Template name already exists! Please choose another name.',
+        pluginSameNameError: 'There is already a plugin with the same name.',
+        templateNameMissingError: 'Please enter template name.'
       }
     }
   });

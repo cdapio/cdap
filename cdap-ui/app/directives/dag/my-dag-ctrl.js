@@ -61,6 +61,14 @@ angular.module(PKG.name + '.commons')
       AdapterErrorFactory.isValidPlugin(plugin);
 
       this.plugins.forEach(function(p) {
+        if (!p._backendProperties) {
+          p.requiredFieldCount = '!';
+          p.error = {};
+          p.error.message = GLOBALS.en.hydrator.studio.pluginDoesNotExist + p.name;
+          p.warning = false;
+          return;
+        }
+
         if (p.id === plugin.id) {
           if (plugin.valid) {
             p.requiredFieldCount = 0;
@@ -143,7 +151,7 @@ angular.module(PKG.name + '.commons')
         if (this.isDisabled) {
           plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, marginLeft, 0);
         } else {
-          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, marginLeft, 200);
+          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, marginLeft, 50);
         }
         drawNode.call(this, plugin.id, plugin.type);
       }.bind(this));
@@ -156,8 +164,8 @@ angular.module(PKG.name + '.commons')
     };
 
     function drawNode(id, type) {
-      var sourceSettings = angular.copy(MyDAGFactory.getSettings().source),
-          sinkSettings = angular.copy(MyDAGFactory.getSettings().sink);
+      var sourceSettings = angular.copy(MyDAGFactory.getSettings(this.isDisabled).source),
+          sinkSettings = angular.copy(MyDAGFactory.getSettings(this.isDisabled).sink);
       var artifactType = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type];
       switch(type) {
         case artifactType.source:
@@ -313,7 +321,7 @@ angular.module(PKG.name + '.commons')
         this.instance.repaintEverything();
       }.bind(this));
 
-      this.instance.importDefaults(MyDAGFactory.getSettings().default);
+      this.instance.importDefaults(MyDAGFactory.getSettings(this.isDisabled).default);
 
       // Need to move this to the controller that is using this directive.
       this.instance.bind('connection', function (con) {
@@ -337,7 +345,7 @@ angular.module(PKG.name + '.commons')
 
         this.instance.reset();
         this.instance = jsPlumb.getInstance();
-        this.instance.importDefaults(MyDAGFactory.getSettings().default);
+        this.instance.importDefaults(MyDAGFactory.getSettings(this.isDisabled).default);
         this.instance.bind('connection', function (con) {
           if (!this.isDisabled) {
             createPopover(con.connection);
@@ -363,7 +371,6 @@ angular.module(PKG.name + '.commons')
       resetComponent.call(this);
     }
 
-    MyNodeConfigService.registerPluginResetCallback($scope.$id, this.resetPluginSelection.bind(this));
     MyNodeConfigService.registerPluginSaveCallback($scope.$id, this.highlightRequiredFields.bind(this));
     MyAppDAGService.registerCallBack(this.addPlugin.bind(this));
     MyAppDAGService.registerResetCallBack(resetComponent.bind(this));

@@ -14,10 +14,6 @@
   the License.
 -->
 
-<br />
-<a ui-sref="adapters.detail({ adapterId: $state.params.appId })"
-  class="dag-link">
-  <my-dag data-is-disabled="true"
-            ng-if="StatusController.nodes.length > 0"
-            data-config="StatusController.nodes"></my-dag>
-</a>
+<div ng-init="isDisabled=true">
+  <div ng-include="'/assets/features/adapters/templates/partial/node-config.html'"></div>
+</div>

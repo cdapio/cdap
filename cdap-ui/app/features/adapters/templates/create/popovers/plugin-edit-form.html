@@ -39,12 +39,12 @@
     <div class="btn-group pull-right">
       <div ng-if="!isDisabled" class="non-info">
         <a class="btn btn-default"
-            ng-disabled="data.isModelTouched == false"
+            ng-disabled="PluginEditController.MyNodeConfigService.isModelTouched == false"
             ng-click="PluginEditController.reset()">Reset</a>
       </div>
       <div ng-if="!isDisabled"  class="non-info">
         <a class="btn btn-success"
-            ng-disabled="data.isModelTouched == false"
+            ng-disabled="PluginEditController.MyNodeConfigService.isModelTouched == false"
             ng-click="PluginEditController.save()">Save</a>
       </div>
     </div>

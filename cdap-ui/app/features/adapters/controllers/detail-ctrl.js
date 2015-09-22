@@ -15,12 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, AdapterDetail, $timeout ) {
+  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, AdapterDetail, $timeout, MyNodeConfigService) {
     $scope.GLOBALS = GLOBALS;
     $scope.template = rAdapterDetail.template;
     $scope.description = rAdapterDetail.description;
     $scope.app = rAdapterDetail;
     $scope.runOnceLoading = false;
+    MyAppDAGService.registerEditPropertiesCallback(viewProperties.bind(this));
 
     AdapterDetail.initialize(rAdapterDetail, $state);
 
@@ -48,6 +49,10 @@ angular.module(PKG.name + '.feature.adapters')
       {
         title: 'Datasets',
         template: '/assets/features/adapters/templates/tabs/datasets.html'
+      },
+      {
+        title: 'Node Configuration',
+        template: '/assets/features/adapters/templates/tabs/node-configuration.html'
       }
     ];
 
@@ -56,7 +61,16 @@ angular.module(PKG.name + '.feature.adapters')
       $scope.activeTab = tab;
     };
 
-
+    function viewProperties(plugin) {
+      $scope.selectTab($scope.tabs[6]);
+      // Giving 100ms to load the template and then set the plugin
+      // For this service to work the controller has to register a callback
+      // with the service. The callback will not be called if plugin assignment happens
+      // before controller initialization. Hence the 100ms delay.
+      $timeout(function() {
+        MyNodeConfigService.setPlugin(plugin);
+      }, 100);
+    }
     var params = {
       namespace: $state.params.namespace,
       appId: rAdapterDetail.name,

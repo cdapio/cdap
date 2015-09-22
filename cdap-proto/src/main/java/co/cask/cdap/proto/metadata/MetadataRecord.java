@@ -28,7 +28,7 @@ import java.util.Set;
  * Represents the complete metadata of a {@link Id.NamespacedId} including its properties and tags.
  */
 public class MetadataRecord {
-  private final Id.NamespacedId targetId;
+  private final Id.NamespacedId entityId;
   private final MetadataScope scope;
   private final Map<String, String> properties;
   private final Set<String> tags;
@@ -36,28 +36,28 @@ public class MetadataRecord {
   /**
    * Returns an empty {@link MetadataRecord}
    */
-  public MetadataRecord(Id.NamespacedId targetId) {
-    this(targetId, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
+  public MetadataRecord(Id.NamespacedId entityId) {
+    this(entityId, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
   }
 
   public MetadataRecord(MetadataRecord other) {
-    this(other.getTargetId(), other.getProperties(), other.getTags());
+    this(other.getEntityId(), other.getProperties(), other.getTags());
   }
 
-  public MetadataRecord(Id.NamespacedId targetId, Map<String, String> properties, Set<String> tags) {
-    this(targetId, MetadataScope.USER, properties, tags);
+  public MetadataRecord(Id.NamespacedId entityId, Map<String, String> properties, Set<String> tags) {
+    this(entityId, MetadataScope.USER, properties, tags);
   }
 
-  public MetadataRecord(Id.NamespacedId targetId, MetadataScope scope, Map<String, String> properties,
+  public MetadataRecord(Id.NamespacedId entityId, MetadataScope scope, Map<String, String> properties,
                         Set<String> tags) {
-    this.targetId = targetId;
+    this.entityId = entityId;
     this.scope = scope;
     this.properties = properties;
     this.tags = tags;
   }
 
-  public Id.NamespacedId getTargetId() {
-    return targetId;
+  public Id.NamespacedId getEntityId() {
+    return entityId;
   }
 
   public MetadataScope getScope() {
@@ -83,7 +83,7 @@ public class MetadataRecord {
 
     MetadataRecord that = (MetadataRecord) o;
 
-    return Objects.equals(targetId, that.targetId) &&
+    return Objects.equals(entityId, that.entityId) &&
       scope == that.scope &&
       Objects.equals(properties, that.properties) &&
       Objects.equals(tags, that.tags);
@@ -91,13 +91,13 @@ public class MetadataRecord {
 
   @Override
   public int hashCode() {
-    return Objects.hash(targetId, scope, properties, tags);
+    return Objects.hash(entityId, scope, properties, tags);
   }
 
   @Override
   public String toString() {
     return "MetadataRecord{" +
-      "targetId=" + targetId +
+      "entityId=" + entityId +
       ", scope=" + scope +
       ", properties=" + properties +
       ", tags=" + tags +
