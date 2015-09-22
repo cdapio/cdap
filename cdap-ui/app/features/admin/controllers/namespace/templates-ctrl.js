@@ -156,7 +156,7 @@ angular.module(PKG.name + '.feature.admin')
         $alert({
           type: 'danger',
           title: 'Error!',
-          content: 'Please enter template name'
+          content: GLOBALS.en.admin.templateNameMissingError
         });
 
         return;
@@ -167,7 +167,7 @@ angular.module(PKG.name + '.feature.admin')
         $alert({
           type: 'danger',
           title: 'Error!',
-          content: 'There is already a plugin with the same name.'
+          content: GLOBALS.en.admin.pluginSameNameError
         });
 
         return;
@@ -204,7 +204,7 @@ angular.module(PKG.name + '.feature.admin')
           if (config && !vm.isEdit) {
             $alert({
               type: 'danger',
-              content: 'Template name already exist! Please choose another name'
+              content: GLOBALS.en.admin.templateNameExistsError
             });
             vm.loading = false;
 
@@ -215,7 +215,7 @@ angular.module(PKG.name + '.feature.admin')
             if (config) {
               $alert({
                 type: 'danger',
-                content: 'Template name already exist! Please choose another name'
+                content: GLOBALS.en.admin.templateNameExistsError
               });
               vm.loading = false;
 

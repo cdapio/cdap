@@ -32,17 +32,20 @@
 
   <div ng-if="TemplatesController.templateType">
     <label class="label-control">Choose Plugin Type</label>
-    <select ng-model="TemplatesController.pluginType"
-            data-ng-options="o for o in TemplatesController.pluginoptionsBatch"
-            class="form-control"
-            ng-if="TemplatesController.templateType === TemplatesController.GLOBALS.etlBatch">
-    </select>
+    <div ng-if="TemplatesController.templateType === TemplatesController.GLOBALS.etlBatch">
+      <select ng-model="TemplatesController.pluginType"
+              data-ng-options="o for o in TemplatesController.pluginoptionsBatch"
+              class="form-control">
+      </select>
+    </div>
 
-    <select ng-model="TemplatesController.pluginType"
-            data-ng-options="o for o in TemplatesController.pluginoptionsRealtime"
-            class="form-control"
-            ng-if="TemplatesController.templateType === TemplatesController.GLOBALS.etlRealtime">
-    </select>
+    <div ng-if="TemplatesController.templateType === TemplatesController.GLOBALS.etlRealtime">
+      <select ng-model="TemplatesController.pluginType"
+              data-ng-options="o for o in TemplatesController.pluginoptionsRealtime"
+              class="form-control">
+      </select>
+    </div>
+
   </div>
 
   <div ng-if="TemplatesController.pluginList.length > 0">
