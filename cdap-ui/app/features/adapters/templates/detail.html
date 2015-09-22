@@ -71,21 +71,22 @@
 
     <!-- IF ETL BATCH -->
     <div class="pull-left"
-      ng-if="app.artifact.name === GLOBALS.etlBatch && appStatus === 'SUSPENDED'">
+      ng-if="app.artifact.name === GLOBALS.etlBatch && scheduleStatus === 'SUSPENDED'">
       <div class="btn"
         ng-click="do('Start')">
         Start
       </div>
     </div>
     <div class="pull-left"
-      ng-if="app.artifact.name === GLOBALS.etlBatch && appStatus === 'SCHEDULED'">
+      ng-if="app.artifact.name === GLOBALS.etlBatch && scheduleStatus === 'SCHEDULED'">
       <div class="btn"
         ng-click="do('Stop')">
         Stop
       </div>
     </div>
+
     <div class="pull-left"
-      ng-if="app.artifact.name === GLOBALS.etlBatch && ['SUSPENDED', 'SCHEDULED'].indexOf(appStatus) === -1">
+      ng-if="app.artifact.name === GLOBALS.etlBatch && ['SUSPENDING', 'SCHEDULING'].indexOf(scheduleStatus) !== -1">
       <div class="btn">
         <span class="fa fa-refresh fa-spin"></span>
       </div>
@@ -125,7 +126,7 @@
       </li>
     </ul>
   </div>
-  
+
   <div class="console-type">
     <div ng-repeat="tab in tabs"
          ng-include="tab.template"

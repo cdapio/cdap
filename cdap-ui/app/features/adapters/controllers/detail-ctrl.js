@@ -99,6 +99,7 @@ angular.module(PKG.name + '.feature.adapters')
               .$promise
               .then(function (schedule) {
                 $scope.appStatus = schedule.status;
+                $scope.scheduleStatus = schedule.status;
               });
           }
         });
@@ -136,6 +137,7 @@ angular.module(PKG.name + '.feature.adapters')
               .$promise
               .then(function () {
                 $scope.appStatus = 'SCHEDULED';
+                $scope.scheduleStatus = 'SCHEDULING';
               });
           } else {
             myWorkersApi.doAction(angular.extend(params, { action: 'start' }), {})
@@ -156,12 +158,14 @@ angular.module(PKG.name + '.feature.adapters')
               .$promise
               .then(function () {
                 $scope.appStatus = 'SUSPENDED';
+                $scope.scheduleStatus = 'SUSPENDING';
               });
           } else {
             myWorkersApi.doAction(angular.extend(params, { action: 'stop' }), {})
               .$promise
               .then(function () {
                 $scope.appStatus = 'SUSPENDED';
+                $scope.scheduleStatus = 'SUSPENDING';
               });
           }
 
