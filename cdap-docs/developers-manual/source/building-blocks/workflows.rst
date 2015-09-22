@@ -36,7 +36,7 @@ RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a workflow
 <http-restful-api-lifecycle-start-stop-status>` can be retrieved, workflows
 :ref:`started or stopped <http-restful-api-lifecycle-start-stop-status>`, and
 individual runs of a workflow :ref:`suspended or resumed 
-<http-restful-api-lifecycle-workflows-suspend-resume>`. 
+<http-restful-api-lifecycle-workflow-runs-suspend-resume>`. 
 
 A workflow can have one or more than one :ref:`schedules` that call upon it.
 These schedules are in a *suspended* state when the application is first deployed.
