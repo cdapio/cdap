@@ -641,9 +641,9 @@ angular.module(PKG.name + '.services')
         // communication happening with save and reset in node configuration.
         this.notifyError({
           canvas: [
-            'There are un-saved changes for node: ' +
-            MyNodeConfigService.plugin.name +
-            '. Please save them before publishing the pipeline'
+            GLOBALS.en.hydrator.studio.unsavedPluginMessage1 +
+            MyNodeConfigService.plugin.label +
+            GLOBALS.en.hydrator.studio.unsavedPluginMessage2
           ]
         });
         defer.reject();

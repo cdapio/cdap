@@ -179,9 +179,9 @@ angular.module(PKG.name + '.feature.adapters')
         }
         errors.canvas = errors.canvas || [];
         errors.canvas.push(
-          'There are un-saved changes for node: ' +
-          MyNodeConfigService.plugin.name +
-          '. Please save them before publishing the pipeline'
+          GLOBALS.en.hydrator.studio.unsavedPluginMessage1 +
+          MyNodeConfigService.plugin.label +
+          GLOBALS.en.hydrator.studio.unsavedPluginMessage2
         );
       }
 
