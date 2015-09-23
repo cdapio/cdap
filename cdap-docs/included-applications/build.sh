@@ -57,7 +57,7 @@ function download_includes() {
   # Realtimesources
   test_an_include 4c156d69fcc4d7b9145caab2dbed26ff "${cdap_etl}/realtime/source/DataGeneratorSource.java"
   test_an_include c1d134466622468c36eaaf6a55677bb1 "${cdap_etl}/realtime/source/JmsSource.java"
-  test_an_include 263ea7824545d65562b1f8e805e1272a "${cdap_etl}/realtime/source/KafkaSource.java"
+  test_an_include 2bb09cd5ba40e4fce5864f6696ded3ca "${cdap_etl}/realtime/source/KafkaSource.java"
   test_an_include 496fb353aa835ef2a60f2a76b56fdc01 "${cdap_etl}/realtime/source/SqsSource.java"
   test_an_include e8b987b6f648211ed183e18c68b41873 "${cdap_etl}/realtime/source/TwitterSource.java"
 
