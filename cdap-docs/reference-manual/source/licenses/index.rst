@@ -160,15 +160,15 @@ with `this license: <http://icl.cs.utk.edu/f2j/software/index.html>`__
   permitted provided that the following conditions are met:
 
   * Redistributions of source code must retain the above copyright notice, this list of
-  conditions and the following disclaimer.
+    conditions and the following disclaimer.
 
   * Redistributions in binary form must reproduce the above copyright notice, this list of
-  conditions and the following disclaimer listed in this license in the documentation
-  and/or other materials provided with the distribution.
+    conditions and the following disclaimer listed in this license in the documentation
+    and/or other materials provided with the distribution.
 
   * Neither the name of the copyright holders nor the names of its contributors may be
-  used to endorse or promote products derived from this software without specific prior
-  written permission.
+    used to endorse or promote products derived from this software without specific prior
+    written permission.
 
   This software is provided by the copyright holders and contributors "as is" and any
   express or implied warranties, including, but not limited to, the implied warranties of
