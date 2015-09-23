@@ -155,9 +155,10 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
    * method is called to allow setting the failure response without an additional warning.
    */
   public void setTransactionFailureResponse(Throwable t) {
-    Throwable rootCause = Throwables.getRootCause(t);
+    LOG.error("Exception occurred while handling request:", t);
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     ByteBuffer buffer = Charsets.UTF_8.encode("Exception occurred while handling request: "
-                                                + Throwables.getStackTraceAsString(rootCause));
+                                                + Throwables.getRootCause(t).getMessage());
 
     bufferedResponse = new BufferedResponse(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode(),
                                             ChannelBuffers.wrappedBuffer(buffer),
