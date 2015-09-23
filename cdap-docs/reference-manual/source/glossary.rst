@@ -188,3 +188,9 @@ Glossary
    Plugin
       A plugin extends an :term:`application` by implementing an interface
       expected by the :term:`application`. Plugins are packaged in an :term:`artifact`.
+      
+   View
+      A read-only view of a stream, with a specific read format. Read
+      formats consist of a :ref:`schema <stream-exploration-stream-schema>` and a :ref:`format
+      <stream-exploration-stream-format>` (such as CSV, TSV, or Avro, amongst others).
+      

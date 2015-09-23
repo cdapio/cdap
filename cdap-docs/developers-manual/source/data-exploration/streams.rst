@@ -21,6 +21,8 @@ on a stream, enabling more powerful queries.
 
 Let's take a closer look at attaching format and schema on streams.
 
+.. _stream-exploration-stream-format:
+
 Stream Format
 -------------
 
@@ -45,8 +47,15 @@ all events added to the stream are readable by the format you have set on a stre
 If any stream event cannot be read by the format you have set, your entire query will fail and you
 will not get any results.
 
-Accepted formats are ``avro``, ``csv`` (comma-separated), ``tsv`` (tab-separated), ``text``, ``clf``,
-``grok``, and ``syslog``.
+Accepted formats are 
+``avro``, 
+``clf`` (`format <http://www.w3.org/Daemon/User/Config/Logging.html#common-logfile-format>`__),
+``csv`` (comma-separated), 
+``grok`` (`format <https://www.elastic.co/guide/en/logstash/current/plugins-filters-grok.html>`__), 
+``syslog`` (`format <https://tools.ietf.org/html/rfc5424#section-6>`__).
+``text``, 
+and
+``tsv`` (tab-separated). 
 
 Schema
 ------
@@ -73,6 +82,8 @@ Data exploration using Impala has additional limitations:
 On top of these general limitations, each format has its own restrictions on the types
 of schemas they support. For example, the CSV format does not support maps or records as
 data types.
+
+.. _stream-exploration-stream-schema:
 
 Schema Syntax
 -------------
@@ -161,7 +172,7 @@ For example::
 
   set stream format mystream avro "col1 string, col2 map<string,int> not null, col3 record<x:double, y:float>"
 
-End-to-end Example
+End-to-End Example
 ------------------
 
 In the following example, we will create a stream, send data to it, attach a format

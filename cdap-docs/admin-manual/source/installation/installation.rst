@@ -234,8 +234,7 @@ Also, create a ``tx.snapshot`` subdirectory::
 
   $ sudo -u hdfs hadoop fs -mkdir /cdap/tx.snapshot && sudo -u hdfs hadoop fs -chown yarn /cdap/tx.snapshot
 
-**Note:** If your configuration contains a non-default ``data.tx.snapshot.dir``, use that value
-instead of ``tx.snapshot``.
+**Note:** If you have customized ``data.tx.snapshot.dir`` in your CDAP configuration, use that value instead.
 
 If you set up your cluster as above, no further changes are required.
 

@@ -45,7 +45,7 @@ public class DeleteStreamViewCommand extends AbstractAuthCommand {
     Id.Stream streamId = Id.Stream.from(cliConfig.getCurrentNamespace(), arguments.get(ArgumentName.STREAM.toString()));
     Id.Stream.View view = Id.Stream.View.from(streamId, arguments.get(ArgumentName.VIEW.toString()));
     client.delete(view);
-    output.printf("Successfully deleted view '%s'\n", view.getId());
+    output.printf("Successfully deleted stream-view '%s'\n", view.getId());
   }
 
   @Override
@@ -55,6 +55,6 @@ public class DeleteStreamViewCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Deletes a %s.", ElementType.VIEW.getName());
+    return String.format("Deletes a stream-%s.", ElementType.VIEW.getName());
   }
 }
