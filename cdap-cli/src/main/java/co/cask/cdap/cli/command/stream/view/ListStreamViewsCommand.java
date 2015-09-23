@@ -67,6 +67,6 @@ public class ListStreamViewsCommand extends AbstractAuthCommand {
 
   @Override
   public String getDescription() {
-    return String.format("Lists all %s.", ElementType.VIEW.getNamePlural());
+    return String.format("Lists all stream-%s.", ElementType.VIEW.getNamePlural());
   }
 }
