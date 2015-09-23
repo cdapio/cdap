@@ -28,7 +28,7 @@ function download_includes() {
 
   # Batchsinks
   test_an_include 033951c7c752d4e5432038eb964af4d6 "${cdap_etl}/batch/sink/BatchCubeSink.java"
-  test_an_include eed91c4ce372dc99794cd5533aba8d78 "${cdap_etl}/batch/sink/DBSink.java"
+  test_an_include c99bce3da0d3fc9bcd5320dee4d18bf9 "${cdap_etl}/batch/sink/DBSink.java"
   test_an_include 2746d991cfad8271977c3f648464acd2 "${cdap_etl}/batch/sink/KVTableSink.java"
   test_an_include 68c51d9aa208014e07c7fdbccc0a9edd "${cdap_etl}/batch/sink/S3AvroBatchSink.java"
   test_an_include 91cd228bfa26459e5f0d8bee7e8876d3 "${cdap_etl}/batch/sink/S3BatchSink.java"
@@ -57,7 +57,7 @@ function download_includes() {
   # Realtimesources
   test_an_include 4c156d69fcc4d7b9145caab2dbed26ff "${cdap_etl}/realtime/source/DataGeneratorSource.java"
   test_an_include c1d134466622468c36eaaf6a55677bb1 "${cdap_etl}/realtime/source/JmsSource.java"
-  test_an_include ad3f3b37c966afb0b24a6d6901a13b45 "${cdap_etl}/realtime/source/KafkaSource.java"
+  test_an_include 263ea7824545d65562b1f8e805e1272a "${cdap_etl}/realtime/source/KafkaSource.java"
   test_an_include 496fb353aa835ef2a60f2a76b56fdc01 "${cdap_etl}/realtime/source/SqsSource.java"
   test_an_include e8b987b6f648211ed183e18c68b41873 "${cdap_etl}/realtime/source/TwitterSource.java"
 
