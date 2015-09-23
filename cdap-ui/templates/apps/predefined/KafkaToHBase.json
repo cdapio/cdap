@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-etl-realtime",
         "scope": "SYSTEM",
-        "version": "3.2.0-SNAPSHOT"
+        "version": "3.2.0"
     },
     "description": "Realtime ETL from Kafka with in-flight transformation into HBase Table.",
     "config": {

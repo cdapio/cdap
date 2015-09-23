@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-etl-batch",
         "scope": "SYSTEM",
-        "version": "3.2.0-SNAPSHOT"
+        "version": "3.2.0"
     },
     "description": "Periodically appends data from stream to Table.",
     "config": {
