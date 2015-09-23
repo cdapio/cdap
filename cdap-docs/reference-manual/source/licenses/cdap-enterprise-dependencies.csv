@@ -1,12 +1,6 @@
 antlr.antlr-2.7.7.jar
 aopalliance.aopalliance-1.0.jar
 c3p0.c3p0-0.9.1.1.jar
-cdap-data-quality-3.2.0.jar
-cdap-etl-batch-3.2.0.jar
-cdap-etl-lib-3.2.0-batch.jar
-cdap-etl-lib-3.2.0-batch-source.jar
-cdap-etl-lib-3.2.0-realtime.jar
-cdap-etl-realtime-3.2.0.jar
 ch.qos.logback.logback-classic-1.0.9.jar
 ch.qos.logback.logback-core-1.0.9.jar
 com.101tec.zkclient-0.3.jar
@@ -29,6 +23,7 @@ commons-cli.commons-cli-1.2.jar
 commons-codec.commons-codec-1.6.jar
 commons-collections.commons-collections-3.2.1.jar
 commons-configuration.commons-configuration-1.6.jar
+commons-daemon.commons-daemon-1.0.13.jar
 commons-dbcp.commons-dbcp-1.4.jar
 commons-digester.commons-digester-1.8.jar
 commons-el.commons-el-1.0.jar
@@ -61,6 +56,7 @@ javax.inject.javax.inject-1.jar
 javax.jdo.jdo-api-3.0.1.jar
 javax.mail.mail-1.4.1.jar
 javax.servlet.javax.servlet-api-3.0.1.jar
+javax.servlet.jsp.jsp-api-2.1.jar
 javax.transaction.jta-1.1.jar
 javax.ws.rs.javax.ws.rs-api-2.0.jar
 javax.xml.bind.jaxb-api-2.2.2.jar
@@ -161,4 +157,5 @@ org.tukaani.xz-1.0.jar
 org.xerial.snappy.snappy-java-1.1.1.7.jar
 oro.oro-2.0.8.jar
 stax.stax-api-1.0.1.jar
+tomcat.jasper-runtime-5.5.23.jar
 xmlenc.xmlenc-0.52.jar
