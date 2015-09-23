@@ -41,11 +41,6 @@
       "description" : "Realtime updates from Amazon Simple Queue Service to HBase."
     },
     { 
-      "name": "Amazon Simple Queue Service to HBase",
-      "file": "AmazonSQSToHBase.json",
-      "description" : "Realtime updates from Amazon Simple Queue Service to HBase."
-    },
-    { 
       "name": "Index Kafka events into Elasticsearch",
       "file": "KafkaToElasticsearch.json",
       "description" : "Realtime index Kafka events into Elasticsearch"
