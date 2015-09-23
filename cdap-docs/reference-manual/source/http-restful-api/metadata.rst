@@ -479,6 +479,17 @@ The lineage will be returned as a JSON string in the body of the response. The n
 levels of the request (``<max-levels>``) determines how far back the provenance of the
 data in the lineage chain is calculated, as described in the :ref:`Developers' Manual <metadata-lineage>`.
 
+Lineage JSON consists of three main sections:
+
+- **Relations:** contains information on data accessed by programs.
+  Access type can be *read*, *write*, *both*, or *unknown*.
+  It also contains the *runid* of the program that accessed the data, 
+  and the specifics of any *component* of a program
+  that also accessed the data. For example, a flowlet is a *component* of a flow.
+- **Data:** contains Datasets or Streams that were accessed by programs.
+- **Programs:** contains information on programs (flows, MapReduce, Spark, workers, etc.) 
+  that accessed the data.
+
 Here is an example, pretty-printed::
 
   {
@@ -486,25 +497,25 @@ Here is an example, pretty-printed::
       "end": 1442881938,
       "relations": [
           {
-              "access": "read",
-              "components": [
-                  "reader"
-              ],
               "data": "stream.default.purchaseStream",
               "program": "flows.default.PurchaseHistory.PurchaseFlow",
+              "access": "read",
               "runs": [
                   "4b5d7891-60a7-11e5-a9b0-42010af01c4d"
+              ],
+              "components": [
+                  "reader"
               ]
           },
           {
-              "access": "unknown",
-              "components": [
-                  "collector"
-              ],
               "data": "dataset.default.purchases",
               "program": "flows.default.PurchaseHistory.PurchaseFlow",
+              "access": "unknown",
               "runs": [
                   "4b5d7891-60a7-11e5-a9b0-42010af01c4d"
+              ],
+              "components": [
+                  "collector"
               ]
           }
       ],
