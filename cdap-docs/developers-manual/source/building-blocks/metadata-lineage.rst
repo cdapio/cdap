@@ -2,13 +2,34 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _metadata:
+.. _metadata-lineage:
 
-========
-Metadata
-========
+====================
+Metadata and Lineage
+====================
 
 Overview
+========
+Metadata and Lineage are a new and important feature of CDAP. CDAP Metadata helps show how
+datasets and programs are related to each other and helps in understanding the impact of a
+change before the change is made. 
+
+This feature provides full visibility into the impact of changes while providing an audit
+trail of access to datasets by programs and applications. It gives a clear view when
+identifying trusted data sources and enables the ability to track the trail of sensitive
+data.
+
+CDAP captures metadata from many different sources |---| as well as those specified by a
+user |---| on different entities and objects. The container model of CDAP provides for the
+seamless aggregation of a wide variety of machine-generated metadata that is automatically
+associated with datasets. This capability allows flexibility for the developers and data
+scientist to innovate and build solutions on Hadoop without any responsibility for
+compliance and governance.
+
+
+.. _metadata-lineage-metadata:
+
+Metadata
 ========
 Metadata |---| consisting of **properties** (a list of key-value pairs) or **tags** (a
 list of keys) |---| can be used to annotate datasets, streams, programs, and applications.
@@ -31,7 +52,14 @@ Metadata can be **searched**, either to find entities:
 - that have a particular **tag**.
 
 
-.. _metadata-lineage:
+Update Notifications
+====================
+CDAP has the capability of publishing notifications to an external Apache Kafka instance
+upon metadata updates. Details and an example output are shown in the :ref:`Operations
+section <monitoring-metadata-update-notifications>` of the Administration Manual.
+
+
+.. _metadata-lineage-lineage:
 
 Lineage
 =======

@@ -41,7 +41,8 @@ Operations
 
 - |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
   This section provides links to the relevant APIs for accessing these logs and metrics,
-  and an overview of available monitoring utilities.
+  an overview of available monitoring utilities, and information on publishing metadata
+  update notifications to Apache Kafka.
 
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: preferences.html
