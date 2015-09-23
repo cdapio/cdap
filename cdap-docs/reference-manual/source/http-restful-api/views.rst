@@ -14,14 +14,12 @@ Views HTTP RESTful API
 Views
 =====
 
-Views are a source where data can be read from, similar to a :ref:`stream <streams>` or
-:ref:`dataset <datasets-index>`. They are readable and usable anywhere that a stream or
-dataset is used, such as a flow, in MapReduce and Spark programs, or :ref:`ETL
-<included-apps-etl-index>`.
+Views are a read-only source where data can be read from. They are similar to a
+:ref:`stream <streams>` or :ref:`dataset <datasets-index>`.
 
-A view is a read-only view of a stream, with a specific read format. Read
-formats consist of a :ref:`schema <stream-exploration-stream-schema>` and a :ref:`format
-<stream-exploration-stream-format>` (such as CSV, TSV, or Avro, amongst others).
+A view has a specific read format. Read formats consist of a :ref:`schema
+<stream-exploration-stream-schema>` and a :ref:`format <stream-exploration-stream-format>`
+(such as CSV, TSV, or Avro, amongst others).
 
 If :ref:`CDAP Explore <data-exploration>` is :ref:`enabled
 <configuration-explore-service>`, a Hive table will be created for each view that is
