@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 3.1.0
+    :version: 3.2.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -33,6 +33,8 @@ Cask Data Application Platform Standalone Dependencies
    "com.fasterxml.jackson.core.jackson-core-2.4.4.jar","2.4.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.fasterxml.jackson.core.jackson-databind-2.4.4.jar","2.4.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.fasterxml.jackson.module.jackson-module-scala_2.10-2.4.4.jar","2.4.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "com.github.fommil.netlib.core-1.1.2.jar","1.1.2","\-","BSD License","https://github.com/fommil/netlib-java/blob/master/LICENSE.txt"
+   "com.github.rwl.jtransforms-2.4.0.jar","2.4.0","\-","Mozilla Public License","https://www.mozilla.org/MPL/2.0/index.txt"
    "com.github.stephenc.findbugs.findbugs-annotations-1.3.9-1.jar","1.3.9","1","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.github.tony19.named-regexp-0.2.3.jar","0.2.3","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.code.findbugs.jsr305-2.0.1.jar","2.0.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -44,6 +46,7 @@ Cask Data Application Platform Standalone Dependencies
    "com.google.inject.guice-3.0.jar","3.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.protobuf.protobuf-java-2.5.0.jar","2.5.0","\-","BSD 2","http://opensource.org/licenses/bsd-license.php"
    "com.googlecode.concurrent-trees.concurrent-trees-2.4.0.jar","2.4.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "com.jamesmurty.utils.java-xmlbuilder-0.4.jar","0.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.jcraft.jsch-0.1.42.jar","0.1.42","\-","BSD style","http://www.jcraft.com/jsch/LICENSE.txt"
    "com.jolbox.bonecp-0.8.0.RELEASE.jar","0.8.0","RELEASE","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.ning.async-http-client-1.7.18.jar","1.7.18","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -107,13 +110,14 @@ Cask Data Application Platform Standalone Dependencies
    "joda-time.joda-time-2.1.jar","2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "log4j.apache-log4j-extras-1.2.17.jar","1.2.17","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "log4j.log4j-1.2.16.jar","1.2.16","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "net.java.dev.jets3t.jets3t-0.7.1.jar","0.7.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "net.java.dev.jets3t.jets3t-0.9.0.jar","0.9.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "net.jcip.jcip-annotations-1.0.jar","1.0","\-","Creative Commons Attribution License","http://creativecommons.org/licenses/by/2.5"
    "net.jpountz.lz4.lz4-1.2.0.jar","1.2.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "net.sf.jopt-simple.jopt-simple-3.2.jar","3.2","\-","The MIT License","http://www.opensource.org/licenses/mit-license.php"
    "net.sf.jpam.jpam-1.1.jar","1.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "net.sf.opencsv.opencsv-2.3.jar","2.3","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "net.sf.py4j.py4j-0.8.2.1.jar","0.8.2.1","\-","The New BSD License","http://www.opensource.org/licenses/bsd-license.html"
+   "net.sourceforge.f2j.arpack_combined_all-0.1.jar","0.1","\-","The BSD License","http://www.opensource.org/licenses/bsd-license.html"
    "org.antlr.ST4-4.0.4.jar","4.0.4","\-","BSD License","http://antlr.org/license.html"
    "org.antlr.antlr-runtime-3.4.jar","3.4","\-","ANTLR 3 License (BSD License)","http://www.antlr3.org/license.html"
    "org.antlr.stringtemplate-3.2.1.jar","3.2.1","\-","BSD License","http://antlr.org/license.html"
@@ -171,9 +175,12 @@ Cask Data Application Platform Standalone Dependencies
    "org.apache.mesos.mesos-0.21.0-shaded-protobuf.jar","0.21.0","shaded-protobuf","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark.spark-catalyst_2.10-1.3.1.jar","1.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark.spark-core_2.10-1.3.1.jar","1.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.spark.spark-graphx_2.10-1.3.1.jar","1.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.spark.spark-mllib_2.10-1.3.1.jar","1.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark.spark-network-common_2.10-1.3.1.jar","1.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark.spark-network-shuffle_2.10-1.3.1.jar","1.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.spark.spark-sql_2.10-1.3.1.jar","1.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.spark.spark-streaming_2.10-1.3.1.jar","1.3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift.libfb303-0.9.2.jar","0.9.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.thrift.libthrift-0.9.0.jar","0.9.0","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.twill.twill-api-0.6.0-incubating.jar","0.6.0","incubating","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -215,6 +222,7 @@ Cask Data Application Platform Standalone Dependencies
    "org.eclipse.jetty.orbit.javax.transaction-1.1.1.v201105210645.jar","1.1.1","v201105210645","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.iq80.leveldb.leveldb-0.6.jar","0.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.iq80.leveldb.leveldb-api-0.6.jar","0.6","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.jblas.jblas-1.2.3.jar","1.2.3","\-","BSD 3","https://github.com/mikiobraun/jblas/blob/master/COPYING"
    "org.jboss.resteasy.async-http-servlet-3.0-3.0.8.Final.jar","3.0","3.0.8.Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.jboss.resteasy.jaxrs-api-3.0.8.Final.jar","3.0.8","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.jboss.resteasy.resteasy-guice-3.0.8.Final.jar","3.0.8","Final","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -237,6 +245,8 @@ Cask Data Application Platform Standalone Dependencies
    "org.scala-lang.scala-reflect-2.10.4.jar","2.10.4","\-","BSD-like","http://www.scala-lang.org/license.html"
    "org.scala-lang.scalap-2.10.0.jar","2.10.0","\-","BSD-like","http://www.scala-lang.org/license.html"
    "org.scalamacros.quasiquotes_2.10-2.0.1.jar","2.0.1","\-","BSD-like","http://www.scala-lang.org/license.html"
+   "org.scalanlp.breeze-macros_2.10-0.11.2.jar","0.11.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.scalanlp.breeze_2.10-0.11.2.jar","0.11.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.slf4j.jcl-over-slf4j-1.7.10.jar","1.7.10","\-","MIT License","http://www.opensource.org/licenses/mit-license.php"
    "org.slf4j.jul-to-slf4j-1.7.10.jar","1.7.10","\-","MIT License","http://www.opensource.org/licenses/mit-license.php"
    "org.slf4j.slf4j-api-1.7.5.jar","1.7.5","\-","MIT license","http://www.slf4j.org/license.html"
@@ -246,6 +256,8 @@ Cask Data Application Platform Standalone Dependencies
    "org.spark-project.protobuf.protobuf-java-2.5.0-spark.jar","2.5.0","spark","New BSD license","http://www.opensource.org/licenses/bsd-license.php"
    "org.spark-project.pyrolite-2.0.1.jar","2.0.1","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.spark-project.spark.unused-1.0.0.jar","1.0.0","\-","The Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
+   "org.spire-math.spire-macros_2.10-0.7.4.jar","0.7.4","\-","MIT License","http://www.opensource.org/licenses/mit-license.php"
+   "org.spire-math.spire_2.10-0.7.4.jar","0.7.4","\-","MIT License","http://www.opensource.org/licenses/mit-license.php"
    "org.tukaani.xz-1.0.jar","1.0","\-","Public Domain",""
    "org.uncommons.maths.uncommons-maths-1.2.2a.jar","1.2.2","a","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.xerial.snappy.snappy-java-1.1.1.7.jar","1.1.1.7","\-","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
