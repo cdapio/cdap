@@ -193,14 +193,15 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     private final String zkConnect;
 
     @Name(KAFKA_BROKERS)
-    @Description("Comma-separated list of Kafka brokers. Either this or the ZooKeeper connect info is required.")
+    @Description("Comma-separated list of Kafka brokers. Either this or the ZooKeeper connect string location is " +
+      "required.")
     @Nullable
     private final String kafkaBrokers;
 
     @Name(KAFKA_INITIAL_OFFSET)
     @Description("The default offset for the partition. Offset values -2L and -1L have special meanings in Kafka. " +
-      "Default value is kafka.api.OffsetRequest.EarliestTime (-2L); Value of -1 corresponds to " +
-      "kafka.api.OffsetRequest.LatestTime")
+      "Default value is 'kafka.api.OffsetRequest.EarliestTime' (-2L); value of -1L corresponds to " +
+      "'kafka.api.OffsetRequest.LatestTime'.")
     @Nullable
     private final Long defaultOffset;
 
