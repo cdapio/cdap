@@ -1,0 +1,137 @@
+{
+    "artifact": {
+        "name": "cdap-etl-realtime",
+        "scope": "SYSTEM",
+        "version": "3.2.0-SNAPSHOT"
+    },
+    "config": {
+        "source": {
+            "name": "Kafka",
+            "label": "Kafka",
+            "properties": {
+                "kafka.topic": "",
+                "kafka.partitions": 1
+            }
+        },
+        "sinks": [
+            {
+                "name": "Cassandra",
+                "label": "Cassandra",
+                "properties": {
+                    "keyspace": "",
+                    "consistencyLevel": "",
+                    "columns": "",
+                    "columnFamily": "",
+                    "compression": "",
+                    "addresses": ""
+                }
+            },
+            {
+                "name": "Stream",
+                "label": "Stream",
+                "properties": {
+                    "name": ""
+                }
+            }
+        ],
+        "transforms": [],
+        "instances": 1
+    },
+    "description": "Ingest realtime events from Kafka into Cassandra and CDAP Stream.",
+    "name": "KafkaToCassandraAndCDAPStream",
+    "ui": {
+        "nodes": {
+            "Cassandra-realtimesink-1442764340811": {
+                "id": "Cassandra-realtimesink-1442764340811",
+                "name": "Cassandra",
+                "label": "Cassandra",
+                "icon": "fa-plug",
+                "style": {
+                    "top": "112px",
+                    "left": "776px"
+                },
+                "description": "CDAP Cassandra Realtime Sink takes the structured record from the input source and converts it to a CQL query, then inserts it in Cassandra using the keyspace and column family specified by the user. The Cassandra server should be running prior to creating the adapter.",
+                "outputSchema": null,
+                "pluginTemplate": null,
+                "errorDatasetName": "",
+                "validationFields": null,
+                "lock": null,
+                "properties": {
+                    "username": "",
+                    "keyspace": "",
+                    "consistencyLevel": "",
+                    "columns": "",
+                    "columnFamily": "",
+                    "compression": "",
+                    "addresses": "",
+                    "password": ""
+                },
+                "type": "realtimesink",
+                "valid": false,
+                "requiredFieldCount": 6
+            },
+            "Kafka-realtimesource-1442764512341": {
+                "id": "Kafka-realtimesource-1442764512341",
+                "name": "Kafka",
+                "label": "Kafka",
+                "icon": "icon-kafka",
+                "style": {
+                    "top": "208px",
+                    "left": "447px"
+                },
+                "description": "Kafka Real-time Source: Emits a record with the schema specified by the user. If no schema is specified, it will emit a record with two fields: 'key' (nullable string) and 'message' (bytes).",
+                "outputSchema": null,
+                "pluginTemplate": null,
+                "errorDatasetName": "",
+                "validationFields": null,
+                "lock": null,
+                "properties": {
+                    "schema": null,
+                    "kafka.default.offset": "",
+                    "kafka.topic": "",
+                    "kafka.brokers": "",
+                    "kafka.zookeeper": "",
+                    "format": "",
+                    "kafka.partitions": 1
+                },
+                "type": "realtimesource",
+                "valid": false,
+                "requiredFieldCount": 2
+            },
+            "Stream-realtimesink-1442764524404": {
+                "id": "Stream-realtimesink-1442764524404",
+                "name": "Stream",
+                "label": "Stream",
+                "icon": "icon-plugin-stream",
+                "style": {
+                    "top": "300px",
+                    "left": "776px"
+                },
+                "description": "Real-time sink that outputs to the specified CDAP Stream",
+                "outputSchema": null,
+                "pluginTemplate": null,
+                "errorDatasetName": "",
+                "validationFields": null,
+                "lock": null,
+                "properties": {
+                    "name": "",
+                    "headers.field": "",
+                    "body.field": ""
+                },
+                "type": "realtimesink",
+                "valid": false,
+                "requiredFieldCount": 1
+            }
+        },
+        "connections": [
+            {
+                "source": "Kafka-realtimesource-1442764512341",
+                "target": "Cassandra-realtimesink-1442764340811"
+            },
+            {
+                "source": "Kafka-realtimesource-1442764512341",
+                "target": "Stream-realtimesink-1442764524404"
+            }
+        ]
+    }
+}

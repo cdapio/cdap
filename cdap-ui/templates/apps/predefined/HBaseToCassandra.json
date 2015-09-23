@@ -1,0 +1,35 @@
+{
+  "artifact": {
+    "name": "cdap-etl-batch",
+    "scope": "SYSTEM",
+    "version": "3.2.0-SNAPSHOT"
+  },
+  "config": {
+    "source": {
+      "name": "Table",
+      "label": "Table",
+      "properties": {
+        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+        "name": "contacts"
+      }
+    },
+    "sinks": [
+      {
+        "name": "Cassandra",
+        "label": "Cassandra",
+        "properties": {
+          "port": "9160",
+          "keyspace": "demo",
+          "primaryKey": "fname,lname,zipcode",
+          "columns": "fname,lname,address,city,state,country,zipcode",
+          "initialAddress": "localhost",
+          "columnFamily": "contacts",
+          "partitioner": "org.apache.cassandra.dht.Murmur3Partitioner"
+        }
+      }
+    ],
+    "transforms": [],
+    "schedule": "* * * * *"
+  },
+  "description": "Batch Extract-Transform-Load (ETL) Template"
+}
