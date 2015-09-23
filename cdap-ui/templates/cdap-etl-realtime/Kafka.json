@@ -4,7 +4,7 @@
     "position": [ "group1", "group2"  ],
     "group1": {
        "display" : "Kafka Configuration",
-       "position" : [ "kafka.zookeeper", "kafka.brokers", "kafka.partitions", "kafka.topic", "kafka.default.offset" ],
+       "position" : [ "kafka.zookeeper", "kafka.brokers", "kafka.partitions", "kafka.topic", "kafka.initial.offset" ],
        "fields" : {
           "kafka.zookeeper" : {
              "widget": "textbox",
@@ -45,15 +45,15 @@
                "width": "medium"
              }
           },
-          "kafka.default.offset" : {
+          "kafka.initial.offset" : {
              "widget": "number",
              "label": "Start Offset",
-             "description": "Specifies the start offset for processing from the queue",
+             "description" : "Specifies the start offset for processing from the queue",
              "properties": {
                "width": "extra-small",
-               "default": 1
+               "default" : 0
              },
-             "min": 1
+             "min": -2
           }
        }
     },

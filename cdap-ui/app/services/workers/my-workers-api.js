@@ -31,6 +31,10 @@ angular.module(PKG.name + '.services')
     {
       get: myHelpers.getConfig('GET', 'REQUEST', basepath),
       runs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs', true),
+
+      pollLatestRun: myHelpers.getConfig('GET', 'POLL', basepath + '/runs?limit=1', true),
+      stopPollLatestRun: myHelpers.getConfig('GET', 'POLL-STOP', basepath + '/runs?limit=1', true),
+
       nextLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next', true),
       prevLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/prev', true),
       runDetail: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId'),

@@ -225,10 +225,19 @@ Preparing the Cluster
 To prepare your cluster so that CDAP can write to its default namespace,
 create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
-  $ sudo -u hdfs hadoop fs -mkdir /cdap && hadoop fs -chown yarn /cdap
+  $ sudo -u hdfs hadoop fs -mkdir /cdap && sudo -u hdfs hadoop fs -chown yarn /cdap
 
 In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HDFS user is
-``yarn``. If you set up your cluster as above, no further changes are required.
+``yarn``.
+
+Also, create a ``tx.snapshot`` subdirectory::
+
+  $ sudo -u hdfs hadoop fs -mkdir /cdap/tx.snapshot && sudo -u hdfs hadoop fs -chown yarn /cdap/tx.snapshot
+
+**Note:** If your configuration contains a non-default ``data.tx.snapshot.dir``, use that value
+instead of ``tx.snapshot``.
+
+If you set up your cluster as above, no further changes are required.
 
 .. _install-preparing-the-cluster-defaults:
 

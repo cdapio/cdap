@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $bootstrapModal, rMapreduceDetail) {
+  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $bootstrapModal, rMapreduceDetail, myMetadataFactory) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
@@ -88,6 +88,36 @@ angular.module(PKG.name + '.feature.mapreduce')
           }.bind(this)
         }
       });
+    };
+
+    var metadataParams = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      programType: 'mapreduce',
+      programId: $state.params.programId,
+      scope: $scope
+    };
+    this.metadataAddOpen = false;
+    this.metadataTags = [];
+
+    myMetadataFactory.getProgramMetadata(metadataParams)
+      .then(function (res) {
+        this.metadataTags = res;
+      }.bind(this));
+
+    this.addMetadata = function () {
+      myMetadataFactory.addProgramMetadata(this.tag, metadataParams)
+        .then(function (res) {
+          this.metadataTags = res;
+          this.tag = '';
+        }.bind(this));
+    };
+
+    this.deleteMetadata = function (tag) {
+      myMetadataFactory.deleteProgramMetadata(tag, metadataParams)
+        .then(function (res) {
+          this.metadataTags = res;
+        }.bind(this));
     };
 
   });

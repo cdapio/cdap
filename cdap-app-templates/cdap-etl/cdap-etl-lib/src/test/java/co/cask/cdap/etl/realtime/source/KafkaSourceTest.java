@@ -190,6 +190,16 @@ public class KafkaSourceTest {
     Assert.assertTrue(((String) emitter.entryList.get(0).get("body")).contains("Message"));
   }
 
+  @Test(timeout = 5000, expected = IllegalArgumentException.class)
+  public void testInvalidZKStr() throws Exception {
+    String zk = "localhost:" + Networks.getRandomPort();
+    String brokerList = null;
+    KafkaSource.KafkaPluginConfig config = new KafkaSource.KafkaPluginConfig(zk, brokerList, PARTITIONS,
+                                                                             "some", null, Formats.TEXT, null);
+    kafkaSource = new KafkaSource(config);
+    kafkaSource.initialize(new MockRealtimeContext());
+  }
+
   private void initializeKafkaSource(String topic, int partitions, boolean preferZK) throws Exception {
     initializeKafkaSource(topic, partitions, preferZK, null);
   }
@@ -211,7 +221,8 @@ public class KafkaSourceTest {
   }
 
   // Helper method to verify
-  private void verifyEmittedMessages(KafkaSource source, int msgCount, SourceState sourceState)  {
+  private void verifyEmittedMessages(KafkaSource source, int msgCount, SourceState sourceState)
+    throws InterruptedException {
     MockEmitter emitter = new MockEmitter();
     SourceState updatedSourceState = source.poll(emitter, sourceState);
 

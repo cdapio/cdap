@@ -153,7 +153,7 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    *
    * @param emitter instance of {@link Emitter} to emit the messages.
    */
-  public void pollMessages(Emitter<StructuredRecord> emitter) {
+  public void pollMessages(Emitter<StructuredRecord> emitter) throws Exception {
     // Configure consumers late to read from SourceState
     if (consumerInfos == null) {
         consumerInfos = createConsumerInfos(kafkaConfigurer.getTopicPartitions());
@@ -195,7 +195,8 @@ public abstract class KafkaSimpleApiConsumer<KEY, PAYLOAD, OFFSET> {
    * @return An {@link Iterator} containing sequence of messages read from Kafka. The first message must
    *         has offset no earlier than the {@link KafkaConsumerInfo#getReadOffset()} as given in the parameter.
    */
-  protected abstract Iterator<KafkaMessage<OFFSET>> readMessages(KafkaConsumerInfo<OFFSET> consumerInfo);
+  protected abstract Iterator<KafkaMessage<OFFSET>> readMessages(KafkaConsumerInfo<OFFSET> consumerInfo)
+    throws Exception;
 
   /**
    * Returns the read offsets to start with for the given {@link TopicPartition}.
