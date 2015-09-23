@@ -69,16 +69,18 @@ import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
- * <p>
- *  The {@link KafkaSimpleApiConsumer} compatible mode for {@code Kafka} 0.8.x releases.
+ * The {@link KafkaSimpleApiConsumer} compatible mode for {@code Kafka} 0.8.x releases.
  *
- *  The class expect several runtime arguments:
- *  -) kafka.zookeeper - the location of Kafka Zookeeper
- *  -) kafka.brokers - comma separate list of Kafka brokers
- *  -) kafka.partitions - the number of partitions of the topic
- *  -) kafka.topic - the Kafka topic to get messages for
- *  -) kafka.default.offset - the default offset for the partition
+ * <p>
+ * The class expects these runtime arguments:
  * </p>
+ * <ul>
+ * <li>kafka.zookeeper: the location of Kafka Zookeeper</li>
+ * <li>kafka.brokers: comma-separated list of Kafka brokers</li>
+ * <li>kafka.partitions: the number of partitions of the topic</li>
+ * <li>kafka.topic: the Kafka topic to retrieve messages for</li>
+ * <li>kafka.initial.offset: the initial offset for the partition</li>
+ * </ul>
  */
 public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, ByteBuffer, Long>  {
   private static final Logger LOG = LoggerFactory.getLogger(Kafka08SimpleApiConsumer.class);

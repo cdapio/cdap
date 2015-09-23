@@ -1,0 +1,109 @@
+{
+    "artifact": {
+        "name": "cdap-etl-batch",
+        "scope": "SYSTEM",
+        "version": "3.2.0-SNAPSHOT"
+    },
+    "config": {
+        "source": {
+            "name": "Database",
+            "label": "MySQL Database",
+            "properties": {
+                "jdbcPluginType": "jdbc",
+                "jdbcPluginName": "mysql",
+                "importQuery": "",
+                "connectionString": "jdbc:mysql://<host>:<port>/<database>",
+                "user": "root",
+                "countQuery": "",
+                "columnNameCase": "No change"
+            }
+        },
+        "sinks": [
+            {
+                "name": "Cassandra",
+                "label": "Cassandra",
+                "properties": {
+                    "port": "9160",
+                    "keyspace": "demo",
+                    "primaryKey": "",
+                    "columns": "",
+                    "initialAddress": "localhost",
+                    "columnFamily": "",
+                    "partitioner": "org.apache.cassandra.dht.Murmur3Partitioner"
+                }
+            }
+        ],
+        "transforms": [],
+        "schedule": "* * * * *"
+    },
+    "description": "Migrating data from a Database into Cassandra.",
+    "name": "DatabaseToCassandra",
+    "ui": {
+        "nodes": {
+            "Database-batchsource-1442850877586": {
+                "id": "Database-batchsource-1442850877586",
+                "name": "Database",
+                "label": "MySQL Database",
+                "icon": "fa-database",
+                "style": {
+                    "top": "159px",
+                    "left": "275px"
+                },
+                "description": "Reads from a database using a configurable SQL query. Outputs one record for each row returned by the query.",
+                "outputSchema": null,
+                "pluginTemplate": null,
+                "errorDatasetName": "",
+                "validationFields": null,
+                "lock": null,
+                "properties": {
+                    "jdbcPluginType": "jdbc",
+                    "jdbcPluginName": "mysql",
+                    "importQuery": "",
+                    "connectionString": "jdbc:mysql://<host>:<port>/<database>",
+                    "password": "",
+                    "user": "root",
+                    "countQuery": "",
+                    "columnNameCase": "No change"
+                },
+                "type": "batchsource",
+                "valid": false,
+                "requiredFieldCount": 2
+            },
+            "Cassandra-batchsink-1442851032454": {
+                "id": "Cassandra-batchsink-1442851032454",
+                "name": "Cassandra",
+                "label": "Cassandra",
+                "icon": "fa-plug",
+                "style": {
+                    "top": "158px",
+                    "left": "523px"
+                },
+                "description": "CDAP Cassandra Batch Sink takes the structured record from the input source and converts each field to a byte buffer, then puts it in the keyspace and column family specified by the user. The Cassandra server should be running prior to creating the adapter, and the keyspace and column family should be created.",
+                "outputSchema": null,
+                "pluginTemplate": null,
+                "errorDatasetName": "",
+                "validationFields": null,
+                "lock": null,
+                "properties": {
+                    "port": "9160",
+                    "keyspace": "demo",
+                    "primaryKey": "",
+                    "columns": "",
+                    "initialAddress": "localhost",
+                    "columnFamily": "",
+                    "partitioner": "org.apache.cassandra.dht.Murmur3Partitioner"
+                },
+                "type": "batchsink",
+                "valid": false,
+                "requiredFieldCount": 3
+            }
+        },
+        "connections": [
+            {
+                "source": "Database-batchsource-1442850877586",
+                "target": "Cassandra-batchsink-1442851032454"
+            }
+        ]
+    }
+}
+

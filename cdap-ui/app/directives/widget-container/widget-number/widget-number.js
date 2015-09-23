@@ -22,9 +22,29 @@ angular.module(PKG.name + '.commons')
         model: '=ngModel',
         config: '='
       },
-      template: '<input type="number" class="form-control" min="{{min}}" max="{{max}}" ng-model="model" />',
+      template: '<input type="number" class="form-control" min="{{min}}" max="{{max}}" ng-model="internalModel" />',
       controller: function($scope) {
         $scope.model = $scope.model || $scope.config.properties.default;
+        $scope.internalModel = $scope.model;
+        // The number textbox requires the input to be number.
+        // This will be correct for a fresh create studio view. But when the user is trying to import or clone
+        // it would be a problem as the imported/cloned plugin property would be a string and number textbox
+        // expects a number. Hence this internal state. 'internalModel' is for maintaining the model as number
+        // for number textbox and the model is actual model being saved as property value.
+        if (typeof $scope.model !== 'number') {
+          $scope.internalModel = parseInt($scope.model, 10);
+        }
+        $scope.$watch('internalModel', function(newValue, oldValue) {
+          if (oldValue === newValue) {
+            return;
+          }
+          $scope.model = $scope.internalModel && $scope.internalModel.toString();
+        });
+
+        // This is needed when we hit reset in node configuration.
+        $scope.$watch('model', function() {
+          $scope.internalModel = parseInt($scope.model, 10);
+        });
         $scope.min = $scope.config.min || '';
         $scope.max = $scope.config.max || '';
       }

@@ -141,7 +141,8 @@ public class DataQualityService extends AbstractService {
         scanner.close();
       }
       if (fieldDetailMap.isEmpty()) {
-        responder.sendString(HttpURLConnection.HTTP_NOT_FOUND, "No fields for the given parameters", Charsets.UTF_8);
+        responder.sendString(HttpURLConnection.HTTP_NOT_FOUND,
+          String.format("No fields for source '%s' found within time range.", sourceID), Charsets.UTF_8);
       } else {
         responder.sendJson(HttpURLConnection.HTTP_OK, fieldDetailMap.values());
       }
@@ -180,7 +181,8 @@ public class DataQualityService extends AbstractService {
       }
       if (commonAggregationTypeValues.isEmpty()) {
         responder.sendString(HttpURLConnection.HTTP_NOT_FOUND,
-                             "No aggregation functions for the given parameters", Charsets.UTF_8);
+          String.format("No aggregations for source '%s' and field '%s' found within time range.",
+                        sourceID, fieldName), Charsets.UTF_8);
       } else {
         responder.sendJson(HttpURLConnection.HTTP_OK, commonAggregationTypeValues);
       }
@@ -229,7 +231,8 @@ public class DataQualityService extends AbstractService {
         }
       } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
         responder.sendString(HttpURLConnection.HTTP_NOT_FOUND,
-                             String.format("Aggregation %s could not be found." , aggregationType), Charsets.UTF_8);
+          String.format("No aggregations for source '%s' and field '%s' found within time range.",
+            sourceID, fieldName), Charsets.UTF_8);
       } catch (ClassCastException e) {
         responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
                              "Aggregation function is not a Combinable Aggregation Function", Charsets.UTF_8);
@@ -282,8 +285,10 @@ public class DataQualityService extends AbstractService {
           responder.sendJson(HttpURLConnection.HTTP_OK, timestampValueList);
         }
       } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+
         responder.sendString(HttpURLConnection.HTTP_NOT_FOUND,
-                             String.format("Aggregation %s could not be found.", aggregationType), Charsets.UTF_8);
+          String.format("Aggregations '%s' for source '%s' and field '%s' could not be found within time range.",
+                        aggregationType, sourceID, fieldName), Charsets.UTF_8);
       } catch (ClassCastException e) {
         responder.sendString(HttpURLConnection.HTTP_BAD_REQUEST,
                              "Aggregation function is not a Basic Aggregation Function", Charsets.UTF_8);

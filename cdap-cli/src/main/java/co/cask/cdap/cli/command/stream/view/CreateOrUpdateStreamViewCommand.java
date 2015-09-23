@@ -68,9 +68,9 @@ public class CreateOrUpdateStreamViewCommand extends AbstractAuthCommand {
 
     boolean created = client.createOrUpdate(viewId, viewSpecification);
     if (created) {
-      output.printf("Successfully created view '%s'\n", viewId.getId());
+      output.printf("Successfully created stream-view '%s'\n", viewId.getId());
     } else {
-      output.printf("Successfully updated view '%s'\n", viewId.getId());
+      output.printf("Successfully updated stream-view '%s'\n", viewId.getId());
     }
   }
 
@@ -84,8 +84,7 @@ public class CreateOrUpdateStreamViewCommand extends AbstractAuthCommand {
   @Override
   public String getDescription() {
     return new StringBuilder()
-      .append("Creates or updates ")
-      .append(Fragment.of(Article.A, ElementType.VIEW.getName()))
+      .append("Creates or updates a stream-view")
       .append(". Valid <").append(ArgumentName.FORMAT).append(">s are ")
       .append(Joiner.on(", ").join(Formats.ALL))
       .append(". <")
