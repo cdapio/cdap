@@ -230,11 +230,11 @@ create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 In the CDAP packages, the default HDFS namespace is ``/cdap`` and the default HDFS user is
 ``yarn``.
 
-Also create a subdirectory as follows::
+Also, create a ``tx.snapshot`` subdirectory::
 
   $ sudo -u hdfs hadoop fs -mkdir /cdap/tx.snapshot && sudo -u hdfs hadoop fs -chown yarn /cdap/tx.snapshot
 
-Note, if your configuration contains a non-default ``data.tx.snapshot.dir``, then use that value
+**Note:** If your configuration contains a non-default ``data.tx.snapshot.dir``, use that value
 instead of ``tx.snapshot``.
 
 If you set up your cluster as above, no further changes are required.
