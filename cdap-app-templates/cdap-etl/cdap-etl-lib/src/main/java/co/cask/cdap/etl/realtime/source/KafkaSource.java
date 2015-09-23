@@ -188,13 +188,12 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
     private final String topic;
 
     @Name(KAFKA_ZOOKEEPER)
-    @Description("The connect string location of ZooKeeper. Either this or the list of brokers is required.")
+    @Description("The connect string location of ZooKeeper. Either that or the list of brokers is required.")
     @Nullable
     private final String zkConnect;
 
     @Name(KAFKA_BROKERS)
-    @Description("Comma-separated list of Kafka brokers. Either this or the ZooKeeper connect string location is " +
-      "required.")
+    @Description("Comma-separated list of Kafka brokers. Either that or the ZooKeeper quorum is required.")
     @Nullable
     private final String kafkaBrokers;
 

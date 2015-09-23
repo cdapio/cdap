@@ -26,10 +26,10 @@ from Kafka and write them to a stream.
 **kafka.topic:** Topic of the messages.
 
 **kafka.zookeeper:** The connect string location of ZooKeeper.
-Either this or the list of brokers is required.
+Either that or the list of brokers is required.
 
-**kafka.brokers:** Comma-separated list of Kafka brokers. Either this or the ZooKeeper
-connect string location is required.
+**kafka.brokers:** Comma-separated list of Kafka brokers. Either that or the ZooKeeper
+quorum is required.
 
 **kafka.initial.offset:** The initial offset for the partition. Offset values -2L and -1L
 have special meanings in Kafka. Default value is ``'kafka.api.OffsetRequest.EarliestTime'`` 

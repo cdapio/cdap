@@ -72,7 +72,7 @@ import javax.annotation.Nullable;
  * The {@link KafkaSimpleApiConsumer} compatible mode for {@code Kafka} 0.8.x releases.
  *
  * <p>
- * The class expect several runtime arguments:
+ * The class expects these runtime arguments:
  * </p>
  * <ul>
  * <li>kafka.zookeeper: the location of Kafka Zookeeper</li>
