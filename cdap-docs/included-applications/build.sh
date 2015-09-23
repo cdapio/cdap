@@ -28,7 +28,7 @@ function download_includes() {
 
   # Batchsinks
   test_an_include 033951c7c752d4e5432038eb964af4d6 "${cdap_etl}/batch/sink/BatchCubeSink.java"
-  test_an_include c99bce3da0d3fc9bcd5320dee4d18bf9 "${cdap_etl}/batch/sink/DBSink.java"
+  test_an_include eed91c4ce372dc99794cd5533aba8d78 "${cdap_etl}/batch/sink/DBSink.java"
   test_an_include 2746d991cfad8271977c3f648464acd2 "${cdap_etl}/batch/sink/KVTableSink.java"
   test_an_include 68c51d9aa208014e07c7fdbccc0a9edd "${cdap_etl}/batch/sink/S3AvroBatchSink.java"
   test_an_include 91cd228bfa26459e5f0d8bee7e8876d3 "${cdap_etl}/batch/sink/S3BatchSink.java"
