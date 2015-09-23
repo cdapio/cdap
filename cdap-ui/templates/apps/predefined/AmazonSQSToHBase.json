@@ -30,3 +30,4 @@
   },
   "description": "Realtime updates from Amazon Simple Queue Service to HBase."
 }
+
