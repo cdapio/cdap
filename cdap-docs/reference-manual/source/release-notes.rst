@@ -36,6 +36,10 @@ Known Issues
   about a failure to enable explore on the system.queue table. A call to enable exploration
   on the table should not be made, as it is not meant to be explorable.
 
+- `CDAP-3817 <https://issues.cask.co/browse/CDAP-3817>`__ -
+  On initial startup after fresh CDAP installation, it is possible for the ``data.tx.snapshot.dir``
+  HDFS directory to be created with improper permissions.
+
 `Release 3.1.0 <http://docs.cask.co/cdap/3.1.0/index.html>`__
 =============================================================
 
