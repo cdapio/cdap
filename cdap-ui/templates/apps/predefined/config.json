@@ -1,22 +1,82 @@
 {
   "cdap-etl-realtime": [
     {
-      "name": "Kafka To HBase Table",
-      "file": "KafkaToHBaseTableETL-ETLRealtime.json",
-      "description" : "Ingests data from Kafka into HBase"
+      "name": "Kafka To HBase",
+      "file": "KafkaToHBase.json",
+      "description" : "Ingests in realtime from Kafka into HBase"
+    },
+    {
+      "name": "Kafka To Stream",
+      "file": "KafkaToStream.json",
+      "description" : "Ingests in realtime from Kafka into Stream"
+    },
+    {
+      "name": "Kafka To OLAP Cube",
+      "file": "KafkaToOLAPCube.json",
+      "description" : "Generate OLAP Cube in realtime for events coming from Kafka"
+    },
+    {
+      "name": "Kafka To Cassandra",
+      "file": "KafkaToCassandra.json",
+      "description" : "Ingests in realtime from Kafka into Cassandra"
+    },
+    {
+      "name": "Kafka To Cassandra and CDAP Stream",
+      "file": "KafkaToCassandraAndCDAPStream.json",
+      "description" : "Ingests in realtime from Kafka into Cassandra and CDAP Stream(HDFS)"
+    },
+    {
+      "name": "Twitter to HBase",
+      "file": "TwitterToHBase.json",
+      "description": "Ingest Realtime Twitter Stream into HBase"
+    },
+    {
+      "name": "Twitter to Stream",
+      "file": "TwitterToStream.json",
+      "description": "Realtime stream Twitter data into a HBase Table."
+    },
+    { 
+      "name": "Amazon Simple Queue Service to HBase",
+      "file": "AmazonSQSToHBase.json",
+      "description" : "Realtime updates from Amazon Simple Queue Service to HBase."
+    },
+    { 
+      "name": "Amazon Simple Queue Service to HBase",
+      "file": "AmazonSQSToHBase.json",
+      "description" : "Realtime updates from Amazon Simple Queue Service to HBase."
+    },
+    { 
+      "name": "Index Kafka events into Elasticsearch",
+      "file": "KafkaToElasticsearch.json",
+      "description" : "Realtime index Kafka events into Elasticsearch"
     }
   ],
   "cdap-etl-batch" : [
      {
-       "name" : "Stream2Table",
+       "name" : "StreamToTable",
        "description" : "Ingests data from stream into a hbase table",
-       "file" : "AppendStreamToTableWithProjections-ETLBatch.json"
+       "file" : "StreamToHBase.json"
      },
-
      {
-       "name" : "Contact ETL",
+       "name" : "ETL into Elasticsearch",
        "description" : "ETL Contacts from stream into Time partitioned AVRO",
-       "file" : "ETLContactsInToElasticSearch-ETLBatch.json"
+       "file" : "ETLInToElasticSearch.json"
+     },
+     {
+       "name" : "Load Cassandra from Database",
+       "description" : "Periodically migrate data from Database into Cassandra Table",
+       "file" : "DatabaseToCassandra.json"
+     },
+     {
+       "name" : "Copy from HBase to Cassandra",
+       "description" : "Periodically copy data from HBase to Cassandra",
+       "file" : "HBaseToCassandra.json"
+     },
+     {
+       "name" : "Load Cassandra into HDFS and HBase",
+       "description" : "Periodically load data from Cassandra into HDFS and HBase",
+       "file" : "CassandraToHBaseAndHDFS.json"
      }
   ]
 }
+
