@@ -59,6 +59,6 @@ data isolation. This is an inital step towards introducing `multi-tenancy
 - :doc:`Logging: <logging>` retrieving application logs
 - :doc:`Metrics: <metrics>` retrieving metrics for system and user applications (user-defined metrics)
 - :doc:`Monitor: <monitor>` checking the status of various system and custom CDAP services
-- :dec:`Views: <views>` a read-only view of a stream, with a specific read format
+- :doc:`Views: <views>` a read-only view of a stream, with a specific read format
 - :doc:`Transactions: <transactions>` interacting with the transaction service
 - :doc:`Workflow: <workflow>` retrieving values from workflow tokens and statistics on workflow runs

@@ -24,7 +24,7 @@ formats consist of a :ref:`schema <stream-exploration-stream-schema>` and a :ref
 <stream-exploration-stream-format>` (such as CSV, TSV, or Avro, amongst others).
 
 If :ref:`CDAP Explore <data-exploration>` is :ref:`enabled
-<install-configuring-explore-service>`, a Hive table will be created for each view that is
+<configuration-explore-service>`, a Hive table will be created for each view that is
 created.
 
 Currently, views are only supported for streams. Support for datasets will be added in a
