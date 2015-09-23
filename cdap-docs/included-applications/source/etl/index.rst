@@ -75,6 +75,8 @@ This lists the available sources, sinks, and transformations (transforms):
          - :ref:`Cube <included-apps-etl-plugins-batch-sinks-cube>`
          - :ref:`Database <included-apps-etl-plugins-batch-sinks-database>`
          - :ref:`KVTable <included-apps-etl-plugins-batch-sinks-kvtable>`
+         - :ref:`S3Avro <included-apps-etl-plugins-batch-sinks-s3avro>`
+         - :ref:`S3Parquet <included-apps-etl-plugins-batch-sinks-s3parquet>`
          - :ref:`SnapshotAvro <included-apps-etl-plugins-batch-sinks-snapshotavro>`
          - :ref:`SnapshotParquet <included-apps-etl-plugins-batch-sinks-snapshotparquet>`
          - :ref:`Table <included-apps-etl-plugins-batch-sinks-table>`

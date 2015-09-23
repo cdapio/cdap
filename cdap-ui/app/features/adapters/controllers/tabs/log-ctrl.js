@@ -19,17 +19,19 @@ angular.module(PKG.name + '.feature.adapters')
 
     $scope.loadingNext = true;
     var logsParams = {};
+    var runsParams = {};
+    angular.copy(AdapterDetail.params, runsParams);
     angular.copy(AdapterDetail.logsParams, logsParams);
     logsParams.scope = $scope;
 
-    AdapterDetail.logsApi.runs(logsParams)
+    AdapterDetail.logsApi.pollLatestRun(logsParams)
       .$promise
       .then(function (runs) {
         if (runs.length === 0) { return; }
 
         logsParams.runId = runs[0].runid;
 
-        AdapterDetail.logsApi.prevLogs(logsParams)
+        AdapterDetail.logsApi.prevLogs(angular.extend({max: 50}, logsParams))
           .$promise
           .then(function (logs) {
             $scope.logs = logs;
@@ -44,9 +46,9 @@ angular.module(PKG.name + '.feature.adapters')
       }
 
       $scope.loadingNext = true;
-      logsParams.fromOffset = $scope.logs[$scope.logs.length-1].offset;
+      logsParams.fromOffset = ($scope.logs[$scope.logs.length-1] && $scope.logs[$scope.logs.length-1].offset);
 
-      AdapterDetail.logsApi.nextLogs(logsParams)
+      AdapterDetail.logsApi.nextLogs(angular.extend({max: 50}, logsParams))
         .$promise
         .then(function (res) {
           $scope.logs = _.uniq($scope.logs.concat(res));
@@ -60,7 +62,7 @@ angular.module(PKG.name + '.feature.adapters')
       }
 
       $scope.loadingPrev = true;
-      logsParams.fromOffset = $scope.logs[0].offset;
+      logsParams.fromOffset = ($scope.logs[0] && $scope.logs[0].offset);
 
       AdapterDetail.logsApi.prevLogs(logsParams)
         .$promise

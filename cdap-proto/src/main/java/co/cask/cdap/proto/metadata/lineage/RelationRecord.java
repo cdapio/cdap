@@ -14,13 +14,15 @@
  * the License.
  */
 
-package co.cask.cdap.metadata.serialize;
+package co.cask.cdap.proto.metadata.lineage;
+
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Objects;
 import java.util.Set;
 
 /**
- * Class to serialize {@link co.cask.cdap.data2.metadata.lineage.Relation}.
+ * Class to serialize Relation.
  */
 public class RelationRecord {
   private final String data;
@@ -33,8 +35,28 @@ public class RelationRecord {
     this.data = data;
     this.program = program;
     this.access = access;
-    this.runs = runs;
-    this.components = components;
+    this.runs = ImmutableSet.copyOf(runs);
+    this.components = ImmutableSet.copyOf(components);
+  }
+
+  public String getData() {
+    return data;
+  }
+
+  public String getProgram() {
+    return program;
+  }
+
+  public String getAccess() {
+    return access;
+  }
+
+  public Set<String> getRuns() {
+    return runs;
+  }
+
+  public Set<String> getComponents() {
+    return components;
   }
 
   @Override

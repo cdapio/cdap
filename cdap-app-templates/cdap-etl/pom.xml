@@ -46,6 +46,7 @@
     <es.version>1.6.0</es.version>
     <es-hadoop.version>2.1.0</es-hadoop.version>
     <commons-httpclient.version>3.1</commons-httpclient.version>
+    <etl.geronimo-jms.version>1.1.1</etl.geronimo-jms.version>
   </properties>
 
   <dependencyManagement>
@@ -200,6 +201,13 @@
             <artifactId>jetty</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+
+      <!-- TODO Remove this when CDAP-3810 is fixed -->
+      <dependency>
+        <groupId>org.apache.geronimo.specs</groupId>
+        <artifactId>geronimo-jms_1.1_spec</artifactId>
+        <version>${etl.geronimo-jms.version}</version>
       </dependency>
 
       <dependency>

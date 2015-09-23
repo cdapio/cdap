@@ -32,6 +32,7 @@ import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
+import com.google.common.util.concurrent.Futures;
 import kafka.api.FetchRequest;
 import kafka.api.FetchRequestBuilder;
 import kafka.api.PartitionOffsetRequestInfo;
@@ -64,6 +65,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
@@ -103,7 +105,6 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
     } else {
       configurer.setBrokers(brokers);
     }
-
     setupTopicPartitions(configurer, pluginConfig);
   }
 
@@ -120,7 +121,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
   }
 
   @Override
-  protected Iterator<KafkaMessage<Long>> readMessages(KafkaConsumerInfo<Long> consumerInfo) {
+  protected Iterator<KafkaMessage<Long>> readMessages(KafkaConsumerInfo<Long> consumerInfo) throws Exception {
     final TopicPartition topicPartition = consumerInfo.getTopicPartition();
     String topic = topicPartition.getTopic();
     int partition = topicPartition.getPartition();
@@ -184,10 +185,18 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
           ZKClients.retryOnFailure(ZKClientService.Builder.of(kafkaZKConnect).build(),
                                    RetryStrategies.fixDelay(2, TimeUnit.SECONDS))
         ));
-      zkClient.startAndWait();
-
       brokerService = new ZKBrokerService(zkClient);
-      brokerService.startAndWait();
+
+      try {
+        Futures.get(zkClient.start(), 3, TimeUnit.SECONDS, TimeoutException.class);
+        Futures.get(brokerService.start(), 3, TimeUnit.SECONDS, TimeoutException.class);
+      } catch (TimeoutException e) {
+        Futures.get(brokerService.stop(), 3, TimeUnit.SECONDS, TimeoutException.class);
+        Futures.get(zkClient.stop(), 3, TimeUnit.SECONDS, TimeoutException.class);
+        throw new IllegalArgumentException(
+          String.format("Timeout while trying to start ZookeeperClient/Broker Service. " +
+                          "Check if the zookeeper connection string %s is correct.", kafkaZKConnect), e);
+      }
     }
 
     kafkaConsumers = CacheBuilder.newBuilder()
@@ -289,7 +298,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
 
     OffsetResponse response = consumer.getOffsetsBefore(offsetRequest);
     if (response.hasError()) {
-      LOG.error("Failed to fetch offset from broker {}:{} for topic-partition {}-{} with error code {}",
+      LOG.warn("Failed to fetch offset from broker {}:{} for topic-partition {}-{} with error code {}",
                 consumer.host(), consumer.port(), topic, partition, response.errorCode(topic, partition));
       return 0L;
     }
@@ -301,7 +310,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
    * available.
    */
   @Nullable
-  private SimpleConsumer getConsumer(KafkaConsumerInfo<Long> consumerInfo) {
+  private SimpleConsumer getConsumer(KafkaConsumerInfo<Long> consumerInfo) throws Exception {
     TopicPartition topicPartition = consumerInfo.getTopicPartition();
     SimpleConsumer consumer = kafkaConsumers.getIfPresent(topicPartition);
     if (consumer != null) {
@@ -334,7 +343,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
     String topic = topicPartition.getTopic();
     int partition = topicPartition.getPartition();
 
-    LOG.error("Failed to fetch from broker {}:{} for topic-partition {}-{} with error code {}",
+    LOG.warn("Failed to fetch from broker {}:{} for topic-partition {}-{} with error code {}",
               consumer.host(), consumer.port(), topic, partition, errorCode);
     if (errorCode == ErrorMapping.OffsetOutOfRangeCode()) {
       // Get the earliest offset
@@ -358,7 +367,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
    * @return the address for the leader broker or {@code null} if no leader is currently available.
    */
   @Nullable
-  private InetSocketAddress getLeader(String topic, int partition) {
+  private InetSocketAddress getLeader(String topic, int partition) throws Exception {
     // If BrokerService is available, it will use information from ZooKeeper
     if (brokerService != null) {
       BrokerInfo brokerInfo = brokerService.getLeader(topic, partition);
@@ -375,7 +384,7 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
    * @return the address for the leader broker or {@code null} if no leader is currently available.
    */
   @Nullable
-  private InetSocketAddress findLeader(String brokers, String topic, int partition) {
+  private InetSocketAddress findLeader(String brokers, String topic, int partition) throws Exception {
     // Splits the broker list of format "host:port,host:port" into a map<host, port>
     Map<String, String> brokerMap = Splitter.on(',').withKeyValueSeparator(":").split(brokers);
 
@@ -400,8 +409,9 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
           consumer.close();
         }
       } catch (Exception e) {
-        LOG.error("Failed to communicate with broker {}:{} for leader lookup for topic-partition {}-{}",
-                  broker.getKey(), broker.getValue(), topic, partition, e);
+        throw new Exception(
+          String.format("Failed to communicate with broker %s:%s for leader lookup for topic-partition %s-%s",
+                        broker.getKey(), broker.getValue(), topic, partition), e);
       }
     }
     return null;

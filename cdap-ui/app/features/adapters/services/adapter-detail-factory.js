@@ -30,8 +30,7 @@ angular.module(PKG.name + '.feature.adapters')
 
       publicObj.logsParams = {
         namespace: $state.params.namespace,
-        appId: app.name,
-        max: 50
+        appId: app.name
       };
 
       var config;
@@ -53,7 +52,7 @@ angular.module(PKG.name + '.feature.adapters')
 
         angular.forEach(app.programs, function (program) {
           if (program.type === 'Workflow') {
-            publicObj.params.workflowId = program.id;
+          publicObj.params.workflowId = program.id;
           } else if (program.type === 'Mapreduce') {
             publicObj.logsParams.mapreduceId = program.id;
           }

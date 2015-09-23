@@ -50,7 +50,9 @@ angular.module(PKG.name + '.services')
           circularConnectionError: 'Please remove the circular connection in this pipeline.',
           endSinkError: 'Please end the pipeline connections in a sink.',
           parallelConnectionError: 'Please remove parallel connections in this pipeline.',
-          pluginDoesNotExist: 'Plugin does not exist: '
+          pluginDoesNotExist: 'Plugin does not exist: ',
+          unsavedPluginMessage1: 'There are un-saved changes for node: ',
+          unsavedPluginMessage2: '. Please save them before publishing the pipeline'
         },
         wizard: {
           welcomeMessage1: 'Hydrator makes it easy to prepare data so you ',

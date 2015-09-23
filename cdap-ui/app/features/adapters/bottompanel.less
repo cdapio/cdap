@@ -31,6 +31,7 @@ body.theme-cdap.state-adapters {
   }
   div.console {
     background-color: white;
+    position: relative;
     width: 100%;
     .transition(all 0.2s ease);
    // Console height is 40% on larger screen
@@ -131,7 +132,7 @@ body.theme-cdap.state-adapters {
         }
       }
       td {
-        border: 1px solid @modal-table-border-color;
+        border: 1px solid @table-border-color;
         border-collapse: collapse;
         height: 30px;
         padding: 0 5px;
@@ -157,6 +158,22 @@ body.theme-cdap.state-adapters {
           .btn:active {
             .box-shadow(none);
           }
+        }
+      }
+      &.table-curved {
+        tr:first-child {
+          td {
+            border-top: 0;
+            &:first-child {
+              .border-radius(8px 0 0 0);
+            }
+            &:last-child {
+              .border-radius(0 8px 0 0);
+            }
+          }
+        }
+        td {
+          border-width: 1px 0 0 1px;
         }
       }
       .control-label {
@@ -213,8 +230,6 @@ body.theme-cdap.state-adapters {
     .bottompanel-body {
       padding: 20px 10px;
       overflow: hidden;
-      position: relative;
-
     }
     @media (min-width: @screen-lg-min) {
       [class*="divider"]:before, [class*="divider"]:after {
@@ -222,9 +237,8 @@ body.theme-cdap.state-adapters {
         content: '';
         display: block;
         position: absolute;
-        top: -20px;
+        top: 111px;
         bottom: 0;
-        height: 200%;
         width: 1px;
       }
       .one-divider {
@@ -246,7 +260,10 @@ body.theme-cdap.state-adapters {
     }
 
     .pipeline-schedule {
-      padding: 0 15px;
+      .bottompanel-header {
+        border-bottom-color: #c7c7c6;
+        padding-bottom: 0;
+      }
 
       h3 {
         margin-top: 0;
@@ -258,91 +275,64 @@ body.theme-cdap.state-adapters {
       }
 
       .nav.nav-tabs.slanted-tabs {
-        margin-bottom: 15px;
+        border-bottom: 0;
+        margin-bottom: 0;
         margin-top: 15px;
 
         @tabs-grey: #c7c7c6;
         @tabs-light-grey: lighten(@tabs-grey, 15%);
 
         > li {
-          height: 25px;
+          height: 22px;
           background-color: @tabs-light-grey;
+          line-height: 11px;
           padding: 5px 10px;
           border-top: 1px solid @tabs-grey;
-          border-bottom: 1px solid @tabs-grey;
+          border-bottom: 0;
           border-collapse: collapse;
           margin-right: 15px;
           cursor: pointer;
-
-          &::before {
-            content: '';
-            height: 25px;
-            width: 10px;
-            border-left: 1px solid @tabs-grey;
-            border-top: 1px solid @tabs-grey;
+          &::before, &::after {
+            background-color: @tabs-light-grey;
+            border-top: 1px solid transparent;
             border-bottom: 1px solid @tabs-grey;
             border-collapse: collapse;
-            .skew(-15deg,0);
+            content: '';
+            height: 22px;
+            width: 10px;
             position: absolute;
-            top: -1px;
+            top: 0;
+          }
+          &::before {
+            border-left: 1px solid @tabs-grey;
             left: -3px;
-            background-color: @tabs-light-grey;
+            .skew(-15deg,0);
           }
 
           &::after {
-            content: '';
-            height: 25px;
-            width: 10px;
             border-right: 1px solid @tabs-grey;
-            border-top: 1px solid @tabs-grey;
-            border-bottom: 1px solid @tabs-grey;
-            border-collapse: collapse;
-            .skew(15deg, 0);
-            position: absolute;
-            top: -1px;
             right: -3px;
-            background-color: @tabs-light-grey;
+            .skew(15deg, 0);
           }
-
 
           &.active {
             background-color: white;
             border-bottom: 0;
-
-            &::before {
-              content: '';
-              height: 25px;
-              border-left: 1px solid @tabs-grey;
-              border-top: 1px solid @tabs-grey;
-              border-bottom: 1px solid white;
-              border-collapse: collapse;
-              .skew(-15deg,0);
-              position: absolute;
-              top: -1px;
-              left: -3px;
+            height: 23px;
+            &::before, &::after {
               background-color: transparent;
+              border-bottom: 1px solid white;
             }
-
+            &::before {
+              border-left: 1px solid @tabs-grey;
+              left: -3px;
+            }
             &::after {
-              content: '';
-              height: 25px;
-              width: 10px;
               border-right: 1px solid @tabs-grey;
-              border-top: 1px solid @tabs-grey;
-              border-bottom: 1px solid white;
-              border-collapse: collapse;
-              .skew(15deg, 0);
-              position: absolute;
-              top: -1px;
               right: -3px;
-              background-color: transparent;
             }
           }
-
-
         }
-
-
       }
     }
 
