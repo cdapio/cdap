@@ -433,78 +433,32 @@ Deprecated and Removed Features
 Known Issues
 ------------
 
-- `CDAP-3396 <https://issues.cask.co/browse/CDAP-3396>`__ -
-  CDAP-UI scroll bar for logs has jitters and is unbounded at the top.
-  
 - `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
   In CDAP-CLI, executing 'select \*' from a dataset with many fields generates an error.
   
-- `CDAP-3534 <https://issues.cask.co/browse/CDAP-3534>`__ -
-  CDAP-UI metric shown in output graph in flowlets is not the correct one.
-  
-- `CDAP-3573 <https://issues.cask.co/browse/CDAP-3573>`__ -
-  Worker RuntimeException behavior in Standalone and Distributed are not the same.
-  
-- `CDAP-3578 <https://issues.cask.co/browse/CDAP-3578>`__ -
-  CDAP-UI Service explore dialog "view" icon is broken after download is clicked.
-  
-- `CDAP-3633 <https://issues.cask.co/browse/CDAP-3633>`__ -
-  CDAP-SDK complains about node version 4.0.0 which is greater that 0.10.
-  
-- `CDAP-3640 <https://issues.cask.co/browse/CDAP-3640>`__ -
-  Standalone cdap.sh doesn't allocate enough memory.
-  
 - `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
   WorkflowStatsSLAHttpHandler hangs if units not provided.
-  
-- `CDAP-3642 <https://issues.cask.co/browse/CDAP-3642>`__ -
-  After stopping a flow, the CDAP-UI shows status as 'Killed'.
   
 - `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
   There is a problem under Microsoft Windows and using the CDAP Standalone scripts when  
   JAVA_HOME is defined as a path with spaces in it. A workaround is to use a definition of 
   JAVA_HOME that does not include spaces.
 
-- `CDAP-3665 <https://issues.cask.co/browse/CDAP-3665>`__ -
-  When a MapReduce job fails, CDAP-UI says all mappers/reducers were successful.
-  
 - `CDAP-3697 <https://issues.cask.co/browse/CDAP-3697>`__ -
   CDAP Explore is broken on secure CDH 5.1.
   
 - `CDAP-3698 <https://issues.cask.co/browse/CDAP-3698>`__ -
   CDAP Explore is unable to get a delegation token while fetching next results on HDP2.0.
   
-- `CDAP-3732 <https://issues.cask.co/browse/CDAP-3732>`__ -
-  The first time a flow is started in a namespace, there will be an error message in the logs
-  about a failure to enable explore on the system.queue table. A call to enable exploration
-  on the table should not be made, as it is not meant to be explorable.
-
 - `CDAP-3749 <https://issues.cask.co/browse/CDAP-3749>`__ -
   The DBSource plugin does not allow a username with an empty password.
   
 - `CDAP-3750 <https://issues.cask.co/browse/CDAP-3750>`__ -
   If a table schema contains a field name that is a reserved word in Hive DDL, 'enable explore' fails.
   
-- `CDAP-3756 <https://issues.cask.co/browse/CDAP-3756>`__ -
-  Refreshing the CDAP UI from any page after it has been idle for a while takes you back to the home page
-  
-- `CDAP-3810 <https://issues.cask.co/browse/CDAP-3810>`__ -
-  org.apache.activemq.ActiveMQConnectionFactory cannot be cast to javax.jms.ConnectionFactory; a java.lang.ClassCastException is thrown.
-  
-- `CDAP-3815 <https://issues.cask.co/browse/CDAP-3815>`__ -
-  The S3BatchSource plugin's file regex doesn't filter the files to be read by the source.
-  
-- `CDAP-3817 <https://issues.cask.co/browse/CDAP-3817>`__ -
-  Race condition in the creation of data.tx.snapshot.dir can occur. On initial startup,
-  after a fresh CDAP installation, it is possible for the ``data.tx.snapshot.dir`` HDFS
-  directory to be created with improper permissions.
-  
 - `CDAP-3819 <https://issues.cask.co/browse/CDAP-3819>`__ -
   The Cassandra source does not handles spaces properly in column fields which require a comma-separated list.
   
-- `CDAP-3830 <https://issues.cask.co/browse/CDAP-3830>`__ -
-  Search for tags metadata does not work correctly when doing a prefix scan with '\*'.
-
 - See also the *Known Issues* of `version 3.1.0 <#known-issues-310>`_\ .
 
 
