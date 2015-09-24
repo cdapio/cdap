@@ -153,33 +153,33 @@ For a distributed enterprise, you must install these Hadoop components:
 +===============+===================+=====================================================+
 | **HDFS**      | Apache Hadoop     | 2.0.2-alpha through 2.6.0                           |
 +               +-------------------+-----------------------------------------------------+
-|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.x or (HDP) 2.0 through 2.3  |
 +               +-------------------+-----------------------------------------------------+
-|               | MapR              | 4.1 (with MapR-FS)                                  |
+|               | MapR              | 4.1 and 5.0 (with MapR-FS)                          |
 +---------------+-------------------+-----------------------------------------------------+
 | **YARN**      | Apache Hadoop     | 2.0.2-alpha through 2.6.0                           |
 +               +-------------------+-----------------------------------------------------+
-|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.x or (HDP) 2.0 through 2.3  |
 +               +-------------------+-----------------------------------------------------+
-|               | MapR              | 4.1                                                 |
+|               | MapR              | 4.1 and 5.0                                         |
 +---------------+-------------------+-----------------------------------------------------+
 | **HBase**     | Apache            | 0.96.x, 0.98.x, and 1.0.x                           |
 +               +-------------------+-----------------------------------------------------+
-|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.x or (HDP) 2.0 through 2.3  |
 +               +-------------------+-----------------------------------------------------+
-|               | MapR              | 4.1 (with Apache HBase)                             |
+|               | MapR              | 4.1 and 5.0 (with Apache HBase)                     |
 +---------------+-------------------+-----------------------------------------------------+
 | **ZooKeeper** | Apache            | Version 3.4.3 through 3.4.5                         |
 +               +-------------------+-----------------------------------------------------+
-|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.x or (HDP) 2.0 through 2.3  |
 +               +-------------------+-----------------------------------------------------+
-|               | MapR              | 4.1                                                 |
+|               | MapR              | 4.1 and 5.0                                         |
 +---------------+-------------------+-----------------------------------------------------+
 | **Hive**      | Apache            | Version 0.12.0 through 0.13.1                       |
 +               +-------------------+-----------------------------------------------------+
-|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.4 or (HDP) 2.0, 2.1, or 2.2 |
+|               | CDH or HDP        | (CDH) 5.0.0 through 5.4.x or (HDP) 2.0 through 2.3  |
 +               +-------------------+-----------------------------------------------------+
-|               | MapR              | 4.1                                                 |
+|               | MapR              | 4.1 and 5.0                                         |
 +---------------+-------------------+-----------------------------------------------------+
 
 **Note:** Components versions shown in this table are those that we have tested and are
@@ -192,6 +192,9 @@ possibly *Hive*) cluster configurations by adding your configuration to their cl
 **Note:** ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
 (unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
 the number of connections required is a function of usage.
+
+**Note:** *Hive 0.12* is not supported for :ref:`secure cluster configurations <configuration-security>`.
+
 
 .. _deployment-architectures:
 
