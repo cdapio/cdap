@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A {@link KafkaConsumer.MessageCallback} that persists offset information into a VCTable while
@@ -38,23 +37,17 @@ public final class PersistedMessageCallback implements KafkaConsumer.MessageCall
 
   private final KafkaConsumer.MessageCallback delegate;
   private final KafkaConsumerMetaTable metaTable;
-  private final int persistThreshold;
   private final Map<TopicPartition, Long> offsets;
-  private final AtomicInteger messageCount;
 
   /**
    * Constructs a {@link PersistedMessageCallback} which delegates to the given callback for actual action while
-   * persisting offsets information in to the given meta table when number of messages has been processed based
-   * on the persistThreshold.
+   * persisting offsets information in to the given meta table when number of messages is greater than zero.
    */
   public PersistedMessageCallback(KafkaConsumer.MessageCallback delegate,
-                                  KafkaConsumerMetaTable metaTable,
-                                  int persistThreshold) {
+                                  KafkaConsumerMetaTable metaTable) {
     this.delegate = delegate;
     this.metaTable = metaTable;
-    this.persistThreshold = persistThreshold;
     this.offsets = Maps.newConcurrentMap();
-    this.messageCount = new AtomicInteger();
   }
 
   @Override
@@ -102,12 +95,11 @@ public final class PersistedMessageCallback implements KafkaConsumer.MessageCall
 
     @Override
     public FetchedMessage next() {
-      recordLastOffset();
       FetchedMessage message = delegate.next();
       lastTopicPartition = message.getTopicPartition();
       lastOffset = message.getNextOffset();
 
-      messageCount.incrementAndGet();
+      recordLastOffset();
       return message;
     }
 
@@ -120,10 +112,7 @@ public final class PersistedMessageCallback implements KafkaConsumer.MessageCall
       if (lastOffset >= 0) {
         offsets.put(lastTopicPartition, lastOffset);
       }
-      if (messageCount.get() >= persistThreshold) {
-        messageCount.set(0);
-        persist();
-      }
+      persist();
     }
   }
 }
