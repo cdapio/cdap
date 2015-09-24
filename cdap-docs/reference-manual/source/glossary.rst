@@ -194,3 +194,9 @@ Glossary
       formats consist of a :ref:`schema <stream-exploration-stream-schema>` and a :ref:`format
       <stream-exploration-stream-format>` (such as CSV, TSV, or Avro, amongst others).
       
+   Cask Hydrator
+      Cask Hydrator, part of the :term:`CDAP-UI`, provides an easy method of configuring
+      pipelines using a visual editor. You drag and drop sources, transformations, and
+      sinks, configuring an :term:`ETL` pipeline within minutes. It provides an
+      operational view of the resulting ETL pipeline that allows for monitoring of
+      metrics, logs, and other run-time information.
