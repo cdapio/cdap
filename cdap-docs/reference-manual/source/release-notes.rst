@@ -58,10 +58,6 @@ New Features
   available validators and configured to write invalid records to an error
   dataset.
   
-- `CDAP-3514 <https://issues.cask.co/browse/CDAP-3514>`__ -
-  Added a Query HTTP RESTful API endpoint that retrieves a count of active queries:
-  ``<base-url>/namespaces/<namespace-id>/data/explore/queries/count``.
-  
 - `CDAP-3516 <https://issues.cask.co/browse/CDAP-3516>`__ -
   Added a service to manage the metadata of CDAP entities.
   
