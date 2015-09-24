@@ -65,9 +65,6 @@ New Features
 - `CDAP-3516 <https://issues.cask.co/browse/CDAP-3516>`__ -
   Added a service to manage the metadata of CDAP entities.
   
-- `CDAP-3517 <https://issues.cask.co/browse/CDAP-3517>`__ -
-  Added data stores to manage business and lineage metadata for CDAP entities.
-  
 - `CDAP-3518 <https://issues.cask.co/browse/CDAP-3518>`__ -
   Added the publishing of metadata change notifications to Apache Kafka.
   
@@ -86,8 +83,14 @@ New Features
 - `CDAP-3523 <https://issues.cask.co/browse/CDAP-3523>`__ -
   Added RESTful APIs for searching CDAP entities based on business metadata.
   
+- `CDAP-3527 <https://issues.cask.co/browse/CDAP-3527>`__ -
+  Added a data store to manage business metadata of CDAP entities.
+
 - `CDAP-3549 <https://issues.cask.co/browse/CDAP-3549>`__ -
   Added SSH port forwarding to the CDAP virtual machine.
+  
+- `CDAP-3556 <https://issues.cask.co/browse/CDAP-3556>`__ -
+  Added a data store for recording data accesses by CDAP programs and computing lineage.
   
 - `CDAP-3563 <https://issues.cask.co/browse/CDAP-3563>`__ -
   Removed faulty and unused metrics around CDAP file resource usage.
@@ -101,9 +104,7 @@ New Features
   
 - `CDAP-3693 <https://issues.cask.co/browse/CDAP-3693>`__ -
   Added support for CDAP to work with HDP 2.3.
-  
-- `CDAP-3787 <https://issues.cask.co/browse/CDAP-3787>`__ -
-  Provide support for writing to Elasticsearch from batch ETL applications.
+
 
 Improvements
 ------------
@@ -114,12 +115,6 @@ Improvements
 - `CDAP-2514 <https://issues.cask.co/browse/CDAP-2514>`__ -
   Added an interface to load a file into a stream from the CDAP-UI.
   
-- `CDAP-2592 <https://issues.cask.co/browse/CDAP-2592>`__ -
-  Updated the version of Angular used in the CDAP-UI to 1.4.
-
-- `CDAP-2723 <https://issues.cask.co/browse/CDAP-2723>`__ -
-  In the CDAP-UI, simplified the Projection properties shown.
-  
 - `CDAP-2809 <https://issues.cask.co/browse/CDAP-2809>`__ -
   The CDAP-UI "Errors" pop-up in the main screen now displays the time and date for each
   error.
@@ -127,16 +122,9 @@ Improvements
 - `CDAP-2872 <https://issues.cask.co/browse/CDAP-2872>`__ -
   Updated the Cloudera Manager CSD to use support for logback.
   
-- `CDAP-2930 <https://issues.cask.co/browse/CDAP-2930>`__ -
-  Added to the CDAP documentation a section on CDAP class loading in the Advanced Features
-  section of the Developers' Manual.
-  
 - `CDAP-2950 <https://issues.cask.co/browse/CDAP-2950>`__ -
   Cleaned up the messages shown in the errors dropdown in the CDAP-UI.
 
-- `CDAP-3018 <https://issues.cask.co/browse/CDAP-3018>`__ -
-  Documented workflow tokens in the workflow guides.
-  
 - `CDAP-3147 <https://issues.cask.co/browse/CDAP-3147>`__ -
   Added a  CDAP-CLI command to stop a workflow.
   
@@ -149,9 +137,6 @@ Improvements
   in use, and corrected discrepancies between the documentation and the shipped XML
   file.
 
-- `CDAP-3268 <https://issues.cask.co/browse/CDAP-3268>`__ -
-  Documented the system.queue.pending metric.
-    
 - `CDAP-3270 <https://issues.cask.co/browse/CDAP-3270>`__ -
   Improved the help provided in the CDAP-CLI for the setting of stream formats.
   
@@ -159,14 +144,7 @@ Improvements
   Upgraded netty-http version to 0.12.0.
   
 - `CDAP-3282 <https://issues.cask.co/browse/CDAP-3282>`__ -
-  Adds a HTTP RESTful API to update the application configuration and artifact version.
-  
-- `CDAP-3308 <https://issues.cask.co/browse/CDAP-3308>`__ -
-  Improved the integration of the documentation build scripts to work with Bamboo servers.
-  
-- `CDAP-3330 <https://issues.cask.co/browse/CDAP-3330>`__ -
-  In the CDAP-UI, a Published Adapter now shows the metrics associated with
-  Transforms.
+  Added a HTTP RESTful API to update the application configuration and artifact version.
   
 - `CDAP-3332 <https://issues.cask.co/browse/CDAP-3332>`__ -
   Added a "clear" button in the CDAP-UI for cases where a user decides to not used a
@@ -199,16 +177,10 @@ Improvements
 - `CDAP-3495 <https://issues.cask.co/browse/CDAP-3495>`__ -
   Added the ability to persist the runtime arguments with which a program was run.
 
-- `CDAP-3527 <https://issues.cask.co/browse/CDAP-3527>`__ -
-  Added a data store to manage business metadata of CDAP entities.
-
 - `CDAP-3550 <https://issues.cask.co/browse/CDAP-3550>`__ -
   Added support for writing to Amazon S3 in Avro and Parquet formats from batch ETL
   applications.
 
-- `CDAP-3556 <https://issues.cask.co/browse/CDAP-3556>`__ -
-  Added a data store for recording data accesses by CDAP programs and computing lineage.
-  
 - `CDAP-3591 <https://issues.cask.co/browse/CDAP-3591>`__ -
   Added the ability for real-time ETL pipelines to write to multiple sinks.
   
@@ -317,13 +289,6 @@ Bug Fixes
 - `CDAP-3376 <https://issues.cask.co/browse/CDAP-3376>`__ -
   Fixed a problem with being unable to deploy the SparkPageRank example application on a cluster.
   
-- `CDAP-3378 <https://issues.cask.co/browse/CDAP-3378>`__ -
-  Fixed a problem in the CDAP-UI with namespace adapters not being found.
-  
-- `CDAP-3379 <https://issues.cask.co/browse/CDAP-3379>`__ -
-  Fixed a problem with unnecessary popup and confirmation dialogs on the adapter runs page
-  in the CDAP-UI.
-  
 - `CDAP-3386 <https://issues.cask.co/browse/CDAP-3386>`__ -
   Fixed a problem with the Spark classes not being found when running a Spark program
   through a Workflow in CDAP Distributed mode on HDP 2.2.
@@ -410,9 +375,6 @@ API Changes
 - `CDAP-2763 <https://issues.cask.co/browse/CDAP-2763>`__ -
   Added RESTful APIs for managing artifacts.
   
-- `CDAP-2764 <https://issues.cask.co/browse/CDAP-2764>`__ -
-  Refactored the application deployment pipeline to use the Artifact Repository.
-  
 - `CDAP-2956 <https://issues.cask.co/browse/CDAP-2956>`__ -
   Deprecated the existing API for configuring a workflow action, replacing it with a
   simpler API.
@@ -426,9 +388,6 @@ API Changes
 - `CDAP-3283 <https://issues.cask.co/browse/CDAP-3283>`__ -
   Added artifact information to Application RESTful APIs and the means to filter
   applications by artifact name and version.
-  
-- `CDAP-3319 <https://issues.cask.co/browse/CDAP-3319>`__ -
-  Set the Artifact extension to be limited to one-level deep.
   
 - `CDAP-3324 <https://issues.cask.co/browse/CDAP-3324>`__ -
   Added a RESTful API for creating an application from an artifact.
@@ -468,8 +427,8 @@ Deprecated and Removed Features
 
 - `CDAP-2667 <https://issues.cask.co/browse/CDAP-2667>`__ -
   Removed application templates and adapters RESTful APIs, as these templates and adapters
-  have been replaced with applications that can be controlled with the Lifecycle HTTP
-  RESTful API.
+  have been replaced with applications that can be controlled with the 
+  :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
 
 - `CDAP-2951 <https://issues.cask.co/browse/CDAP-2951>`__ -
   Removed deprecated methods in cdap-client.
