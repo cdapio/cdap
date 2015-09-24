@@ -193,6 +193,9 @@ possibly *Hive*) cluster configurations by adding your configuration to their cl
 (unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
 the number of connections required is a function of usage.
 
+**Note:** *Hive 0.12* is not supported for :ref:`secure cluster configurations <configuration-security>`.
+
+
 .. _deployment-architectures:
 
 Deployment Architectures

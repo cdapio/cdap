@@ -16,7 +16,8 @@ Use the CDAP Metadata HTTP RESTful API to set, retrieve, and delete the metadata
 of applications, datasets, streams, and other entities in CDAP.
 
 Metadata consists of **properties** (a list of key-value pairs) or **tags** (a list of keys).
-Metadata and their use are described in the :ref:`Developers' Manual: Metadata <metadata>`.
+Metadata and their use are described in the :ref:`Developers' Manual: Metadata and Lineage
+<metadata-lineage>`.
 
 The HTTP RESTful API is divided into these sections:
 
@@ -25,7 +26,6 @@ The HTTP RESTful API is divided into these sections:
 - :ref:`searching properties <http-restful-api-metadata-searching>`
 - :ref:`viewing lineage <http-restful-api-metadata-lineage>`
 - :ref:`metadata for a run of a program <http-restful-api-metadata-run>`
-- :ref:`update notifications <http-restful-api-metadata-update-notifications>`
 
 Metadata keys, values, and tags must conform to the CDAP :ref:`alphanumeric extra extended
 character set <supported-characters>`, and are limited to 50 characters in length. The entire
@@ -477,7 +477,7 @@ for examples of the "now" time syntax.
 
 The lineage will be returned as a JSON string in the body of the response. The number of
 levels of the request (``<max-levels>``) determines how far back the provenance of the
-data in the lineage chain is calculated, as described in the :ref:`Developers' Manual <metadata-lineage>`.
+data in the lineage chain is calculated, as described in the :ref:`Metadata and Lineage <metadata-lineage-lineage>`.
 
 Lineage JSON consists of three main sections:
 
@@ -683,91 +683,3 @@ with the metadata returned as a JSON string in the return body::
      - The properties requested were returned as a JSON string in the body of the response
    * - ``404 NOT FOUND``
      - The entity, program, or run for which properties are being requested was not found
-
-
-.. _http-restful-api-metadata-update-notifications:
-
-Metadata Update Notifications
-=============================
-CDAP has the capability of publishing notifications to an external Apache Kafka instance
-upon metadata updates.
-
-This capability is controlled by these properties set in the ``cdap-site.xml``, as described in the
-:ref:`Administration Manual <appendix-cdap-site.xml>`:
-
-- ``metadata.updates.publish.enabled``: Determines if publishing of updates is enabled; defaults to ``false``;
-- ``metadata.updates.kafka.broker.list``: The Kafka broker list to publish to; and
-- ``metadata.updates.kafka.topic``: The Kafka topic to publish to; defaults to ``cdap-metadata-updates``.
-
-If ``metadata.updates.publish.enabled`` is *true*, then ``metadata.updates.kafka.broker.list`` **must** be defined.
-
-When enabled, upon every property or tag update, CDAP will publish a notification message
-to the configured Kafka instance. The contents of the message are a JSON representation of
-the `MetadataChangeRecord 
-<https://github.com/caskdata/cdap/blob/develop/cdap-proto/src/main/java/co/cask/cdap/proto/metadata/MetadataChangeRecord.java>`__ 
-class.
-
-Here is an example JSON message, pretty-printed::
-
-  {
-     "previous":{
-        "entityId":{
-           "type":"application",
-           "id":{
-              "namespace":{
-                 "id":"default"
-              },
-              "applicationId":"PurchaseHistory"
-           }
-        },
-        "scope":"USER",
-        "properties":{
-           "key2":"value2",
-           "key1":"value1"
-        },
-        "tags":[
-           "tag1",
-           "tag2"
-        ]
-     },
-     "changes":{
-        "additions":{
-           "entityId":{
-              "type":"application",
-              "id":{
-                 "namespace":{
-                    "id":"default"
-                 },
-                 "applicationId":"PurchaseHistory"
-              }
-           },
-           "scope":"USER",
-           "properties":{
-
-           },
-           "tags":[
-              "tag3"
-           ]
-        },
-        "deletions":{
-           "entityId":{
-              "type":"application",
-              "id":{
-                 "namespace":{
-                    "id":"default"
-                 },
-                 "applicationId":"PurchaseHistory"
-              }
-           },
-           "scope":"USER",
-           "properties":{
-
-           },
-           "tags":[
-
-           ]
-        }
-     },
-     "updateTime":1442883836781
-  }
-
