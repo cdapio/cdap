@@ -59,7 +59,7 @@ as any other classes and libraries needed to create and run an Application.
 or **tags** (a list of keys) |---| can be set for datasets, streams, and applications.
 These can be retrieved and searched, and the metadata used to discover CDAP entities.
 Access of these entities is tracked, and you can view the :doc:`lineage <metadata-lineage>` of datasets and streams.
-With a lineage, you can then drill down into the metadata of its nodes. 
+With a lineage diagram, you can then drill down into the metadata of its nodes. 
 
 A :doc:`Namespace <namespaces>` is a logical grouping of application and data in CDAP.
 Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
