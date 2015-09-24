@@ -287,7 +287,8 @@ def process_cdap_ui(options):
     # Make a list of the references for which links are missing and need to be added to the master
     # Currently does not create a new master list
     # Return a list:
-    #   'Dependency','Version','homepage','License','License URL','type'    
+    #   'Dependency','Version','homepage','License','License URL','type'
+    # Versioning syntax: see https://nodesource.com/blog/semver-tilde-and-caret
     master_libs_dict = process_master()
     cdap_ui_dict = {}
     missing_libs_dict = {}
@@ -311,11 +312,15 @@ def process_cdap_ui(options):
                         # Look up reference in dictionary
                         cdap_ui_dict[dependency] = master_libs_dict[dependency]
                         # Compare versions
+                        # TO-DO: if versions differ by a prefix (~ or ^) this comparison fails
+                        # need to strip off the prefix for the comparison but retain it
+                        # perhaps add a function that does the comparison
                         if master_libs_dict[dependency].version != version:
                             if new_versions_dict.has_key(dependency):
                                 print "Dependency already in new versions: %s current: %s new: %s newer: %s" % (dependency, 
                                     master_libs_dict[dependency].version, new_versions_dict[dependency], version)
                             else:
+                                print "New version: %s for %s (old %s)" % (version, dependency, master_libs_dict[dependency].version)
                                 new_versions_dict[dependency]=version
                     else:
                         missing_libs_dict[dependency] = (type, version)

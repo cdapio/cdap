@@ -466,7 +466,8 @@ function rewrite() {
 function run_command() {
   case ${1} in
     build|build-github|build-web|build-docs)      "${1/-/_}";;
-    check-includes|display-version|license-pdfs)  "${1/-/_}";;
+    check-includes|display-version)               "${1/-/_}";;
+    license-pdfs)                                 "build_license_pdfs";;
     *)                                           usage;;
   esac
 }
