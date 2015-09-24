@@ -96,7 +96,7 @@ New Features
   Removed faulty and unused metrics around CDAP file resource usage.
   
 - `CDAP-3590 <https://issues.cask.co/browse/CDAP-3590>`__ -
-  Added the ability to write to multiple sinks in ETL realtime and batch applications.
+  Added the ability to write to multiple sinks in ETL real-time and batch applications.
   
 - `CDAP-3626 <https://issues.cask.co/browse/CDAP-3626>`__ -
   For the CSV and TSV stream formats, a "mapping" setting can now be specified, mapping
@@ -743,7 +743,7 @@ New Features
   Provided installation method for EMR.
 
 - `CDAP-2915 <https://issues.cask.co/browse/CDAP-2915>`__ -
-  Added an SQS realtime plugin for ETL.
+  Added an SQS real-time plugin for ETL.
 
 - `CDAP-3022 <https://issues.cask.co/browse/CDAP-3022>`__ -
   Added Cloudfront format option to LogParserTransform.
