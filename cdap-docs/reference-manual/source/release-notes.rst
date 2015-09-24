@@ -49,10 +49,6 @@ New Features
   Added stream views, enabling reading from a single stream using various formats and
   schemas.
   
-- `CDAP-3419 <https://issues.cask.co/browse/CDAP-3419>`__ -
-  HBaseQueueDebugger now shows the minimum queue event transaction write pointer both for
-  each queue and for all queues.
-  
 - `CDAP-3476 <https://issues.cask.co/browse/CDAP-3476>`__ -
   Added a Validator Transform that can be used to validate records based on a set of
   available validators and configured to write invalid records to an error
@@ -88,12 +84,15 @@ New Features
 - `CDAP-3556 <https://issues.cask.co/browse/CDAP-3556>`__ -
   Added a data store for recording data accesses by CDAP programs and computing lineage.
   
-- `CDAP-3563 <https://issues.cask.co/browse/CDAP-3563>`__ -
-  Removed faulty and unused metrics around CDAP file resource usage.
-  
 - `CDAP-3590 <https://issues.cask.co/browse/CDAP-3590>`__ -
   Added the ability to write to multiple sinks in ETL real-time and batch applications.
   
+- `CDAP-3591 <https://issues.cask.co/browse/CDAP-3591>`__ -
+  Added the ability for real-time ETL pipelines to write to multiple sinks.
+  
+- `CDAP-3592 <https://issues.cask.co/browse/CDAP-3592>`__ -
+  Added the ability for batch ETL pipelines to write to multiple sinks.
+
 - `CDAP-3626 <https://issues.cask.co/browse/CDAP-3626>`__ -
   For the CSV and TSV stream formats, a "mapping" setting can now be specified, mapping
   stream event columns to schema columns.
@@ -155,6 +154,10 @@ Improvements
 - `CDAP-3393 <https://issues.cask.co/browse/CDAP-3393>`__ -
   In the CDAP-UI, added visualization for Workflow tokens in Workflows.
   
+- `CDAP-3419 <https://issues.cask.co/browse/CDAP-3419>`__ -
+  HBaseQueueDebugger now shows the minimum queue event transaction write pointer both for
+  each queue and for all queues.
+  
 - `CDAP-3443 <https://issues.cask.co/browse/CDAP-3443>`__ -
   Added an example cdap-env.sh to the shipped packages.
   
@@ -166,10 +169,6 @@ Improvements
   Modified the CDAP upgrade tool to delete all adapters and the ETLBatch and ETLRealtime
   ApplicationTemplates.
   
-- `CDAP-3493 <https://issues.cask.co/browse/CDAP-3493>`__, 
-  `CDAP-3564 <https://issues.cask.co/browse/CDAP-3564>`__ -
-  Updated CDAP to use Tephra 0.6.2.
-
 - `CDAP-3495 <https://issues.cask.co/browse/CDAP-3495>`__ -
   Added the ability to persist the runtime arguments with which a program was run.
 
@@ -177,11 +176,8 @@ Improvements
   Added support for writing to Amazon S3 in Avro and Parquet formats from batch ETL
   applications.
 
-- `CDAP-3591 <https://issues.cask.co/browse/CDAP-3591>`__ -
-  Added the ability for real-time ETL pipelines to write to multiple sinks.
-  
-- `CDAP-3592 <https://issues.cask.co/browse/CDAP-3592>`__ -
-  Added the ability for batch ETL pipelines to write to multiple sinks.
+- `CDAP-3564 <https://issues.cask.co/browse/CDAP-3564>`__ -
+  Updated CDAP to use Tephra 0.6.2.
 
 - `CDAP-3610 <https://issues.cask.co/browse/CDAP-3610>`__ -
   Updated the transaction debugger client to print checkpoint information.
@@ -279,9 +275,6 @@ Bug Fixes
   Fixed a problem with warning messages in the logs indicating that programs were running
   that actually were not running.
   
-- `CDAP-3375 <https://issues.cask.co/browse/CDAP-3375>`__ -
-  Corrected the spelling of ZooKeeper in documentation and messages.
-  
 - `CDAP-3376 <https://issues.cask.co/browse/CDAP-3376>`__ -
   Fixed a problem with being unable to deploy the SparkPageRank example application on a cluster.
   
@@ -335,6 +328,9 @@ Bug Fixes
     
 - `CDAP-3530 <https://issues.cask.co/browse/CDAP-3530>`__ -
   Fixed a problem with the CDAP-UI performance when rendering flow diagrams with a large number of nodes.
+  
+- `CDAP-3563 <https://issues.cask.co/browse/CDAP-3563>`__ -
+  Removed faulty and unused metrics around CDAP file resource usage.
   
 - `CDAP-3574 <https://issues.cask.co/browse/CDAP-3574>`__ -
   Fix an issue with Explore not working on HDP Hive 0.12.
