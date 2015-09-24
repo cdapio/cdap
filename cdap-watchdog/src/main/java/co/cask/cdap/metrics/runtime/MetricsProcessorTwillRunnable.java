@@ -148,13 +148,6 @@ public final class MetricsProcessorTwillRunnable extends AbstractMasterTwillRunn
       expose(KafkaMetricsProcessorServiceFactory.class);
     }
 
-    @SuppressWarnings("unused")
-    @Provides
-    @Named(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD)
-    public int providesConsumerPersistThreshold(CConfiguration cConf) {
-      return cConf.getInt(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD,
-                          Constants.Metrics.DEFAULT_KAFKA_CONSUMER_PERSIST_THRESHOLD);
-    }
 
     @SuppressWarnings("unused")
     @Provides

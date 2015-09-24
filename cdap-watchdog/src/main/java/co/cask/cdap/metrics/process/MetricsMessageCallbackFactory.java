@@ -39,18 +39,14 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
   private final DatumReader<MetricValues> datumReader;
   private final Schema recordSchema;
   private final MetricStore metricStore;
-  private final int persistThreshold;
 
   @Inject
   public MetricsMessageCallbackFactory(SchemaGenerator schemaGenerator, DatumReaderFactory readerFactory,
-                                       MetricStore metricStore,
-                                       @Named(Constants.Metrics.KAFKA_CONSUMER_PERSIST_THRESHOLD)
-                                       int persistThreshold) {
+                                       MetricStore metricStore) {
     try {
       this.recordSchema = schemaGenerator.generate(MetricValues.class);
       this.datumReader = readerFactory.create(TypeToken.of(MetricValues.class), recordSchema);
       this.metricStore = metricStore;
-      this.persistThreshold = persistThreshold;
 
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
@@ -61,6 +57,6 @@ public final class MetricsMessageCallbackFactory implements MessageCallbackFacto
   public KafkaConsumer.MessageCallback create(KafkaConsumerMetaTable metaTable, MetricsContext metricsContext) {
     metricStore.setMetricsContext(metricsContext);
     return new PersistedMessageCallback(
-      new MetricsMessageCallback(datumReader, recordSchema, metricStore, metricsContext), metaTable, persistThreshold);
+      new MetricsMessageCallback(datumReader, recordSchema, metricStore, metricsContext), metaTable);
   }
 }
