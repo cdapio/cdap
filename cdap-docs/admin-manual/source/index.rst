@@ -73,8 +73,7 @@ transaction service maintenance, troubleshooting, and introduces the CDAP UI.**
 .. _monitoring: operations/monitoring.html
 
 - |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
-  This section provides links to the relevant APIs for accessing these logs and metrics, and
-  publishing metadata update notifications to Apache Kafka.
+  This section provides links to the relevant APIs for accessing these logs and metrics.
 
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: operations/preferences.html

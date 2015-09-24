@@ -52,11 +52,91 @@ Metadata can be **searched**, either to find entities:
 - that have a particular **tag**.
 
 
-Update Notifications
-====================
+.. _metadata-update-notifications:
+
+Metadata Update Notifications
+=============================
 CDAP has the capability of publishing notifications to an external Apache Kafka instance
-upon metadata updates. Details and an example output are shown in the :ref:`Operations
-section <monitoring-metadata-update-notifications>` of the Administration Manual.
+upon metadata updates.
+
+This capability is controlled by these properties set in the ``cdap-site.xml``, as described in the
+:ref:`Administration Manual <appendix-cdap-site.xml>`:
+
+- ``metadata.updates.publish.enabled``: Determines if publishing of updates is enabled; defaults to ``false``;
+- ``metadata.updates.kafka.broker.list``: The Kafka broker list to publish to; and
+- ``metadata.updates.kafka.topic``: The Kafka topic to publish to; defaults to ``cdap-metadata-updates``.
+
+If ``metadata.updates.publish.enabled`` is *true*, then ``metadata.updates.kafka.broker.list`` **must** be defined.
+
+When enabled, upon every property or tag update, CDAP will publish a notification message
+to the configured Kafka instance. The contents of the message are a JSON representation of
+the `MetadataChangeRecord 
+<https://github.com/caskdata/cdap/blob/develop/cdap-proto/src/main/java/co/cask/cdap/proto/metadata/MetadataChangeRecord.java>`__ 
+class.
+
+Here is an example JSON message, pretty-printed::
+
+  {
+     "previous":{
+        "entityId":{
+           "type":"application",
+           "id":{
+              "namespace":{
+                 "id":"default"
+              },
+              "applicationId":"PurchaseHistory"
+           }
+        },
+        "scope":"USER",
+        "properties":{
+           "key2":"value2",
+           "key1":"value1"
+        },
+        "tags":[
+           "tag1",
+           "tag2"
+        ]
+     },
+     "changes":{
+        "additions":{
+           "entityId":{
+              "type":"application",
+              "id":{
+                 "namespace":{
+                    "id":"default"
+                 },
+                 "applicationId":"PurchaseHistory"
+              }
+           },
+           "scope":"USER",
+           "properties":{
+
+           },
+           "tags":[
+              "tag3"
+           ]
+        },
+        "deletions":{
+           "entityId":{
+              "type":"application",
+              "id":{
+                 "namespace":{
+                    "id":"default"
+                 },
+                 "applicationId":"PurchaseHistory"
+              }
+           },
+           "scope":"USER",
+           "properties":{
+
+           },
+           "tags":[
+
+           ]
+        }
+     },
+     "updateTime":1442883836781
+  }
 
 
 .. _metadata-lineage-lineage:
