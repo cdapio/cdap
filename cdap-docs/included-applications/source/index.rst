@@ -38,7 +38,7 @@ ingestion combined with ETL for the building of Hadoop Data Lakes. Called **Cask
 provides CDAP users a seamless and easy way to configure and operate ingestion pipelines
 from different types of sources and data. 
 
-*Cask Hydrator*, part of the :ref:`CDAP-UI <cdap-ui>`, provides an easy method of configuring
+*Cask Hydrator* provides an easy method of configuring
 *pipelines* using a visual editor. You drag and drop sources, transformations, and sinks,
 configuring an ETL pipeline within minutes. It provides an operational view of the
 resulting ETL pipeline that allows for monitoring of metrics, logs, and other run-time
