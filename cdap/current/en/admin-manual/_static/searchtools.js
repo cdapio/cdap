@@ -10,11 +10,11 @@
  */
  
 var manuals = {
-  "introduction":"Introduction to CDAP","developers-manual":"Developers’ Manual","application-templates":"Application Templates","admin-manual":"Administration Manual","integrations":"Integrations","examples-manual":"Examples, Guides, and Tutorials","reference-manual":"Reference Manual" 
+  "introduction":"Introduction to CDAP","developers-manual":"Developers’ Manual","included-applications":"Included Applications","admin-manual":"Administration Manual","integrations":"Integrations","examples-manual":"Examples, Guides, and Tutorials","reference-manual":"Reference Manual" 
 };
 
 var manualsArray = new Array(
-  "introduction","developers-manual","application-templates","admin-manual","integrations","examples-manual","reference-manual" 
+  "introduction","developers-manual","included-applications","admin-manual","integrations","examples-manual","reference-manual" 
 );
 
 
@@ -500,7 +500,7 @@ var Search = {
         Search.stopPulse();
         Search.title.text(_('Search Results'));
         if (!resultCount)
-          Search.status.text(_('Your search did not match any documents. Please make sure that all words are spelled correctly and that you\'ve selected enough categories.'));
+          Search.status.text(_('Your search did not match any documents. Please make sure that all words are spelled correctly and that you\'ve not used any special characters (such as hyphens or periods) in your words.'));
         else
           if (resultCount == 1)
             Search.status.text(_('Search finished; found one page matching the search query:'));
