@@ -27,11 +27,38 @@ extensible: users can write their own artifacts if they so chose, and can
 manage the lifecycle of their custom applications using CDAP.
 
 
-.. rubric:: ETL 
+.. rubric:: Cask Hydrator 
 
 ETL is **Extract**, **Transform** and **Load** of data, a common first-step in any data
 application. CDAP endeavors to make performing ETL possible out-of-box without writing
 code; instead, you just configure CDAP appropriately and operate it.
+
+In this CDAP release, we have added support for self-service batch and real-time data
+ingestion combined with ETL for the building of Hadoop Data Lakes. Called **Cask Hydrator**, it
+provides CDAP users a seamless and easy way to configure and operate ingestion pipelines
+from different types of sources and data. 
+
+*Hydrator* provides an easy method of configuring *pipelines* using a visual editor. You
+drag and drop sources, transformations, and sinks, configuring an ETL pipeline within
+minutes. It provides an operational view of the resulting ETL pipeline that allows for
+monitoring of metrics, logs, and other run-time information.
+
+.. figure:: /_images/hydrator-pipelines.png
+   :figwidth: 100%
+   :width: 6in
+   :align: center
+   :class: bordered-image
+
+   **CDAP Hydrator Pipelines:** Administration of created pipelines with current status
+
+.. figure:: /_images/hydrator-studio.png
+   :figwidth: 100%
+   :width: 6in
+   :align: center
+   :class: bordered-image
+
+   **CDAP Hydrator Studio:** Visual editor showing the creation of an ETL pipeline
+
 
 These sections describe:
 
