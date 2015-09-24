@@ -28,6 +28,23 @@ execute 'initaction-create-hdfs-cdap-dir' do
   retry_delay 10
 end
 
+# Workaround for CDAP-3817, by pre-creating the transaction service snapshot directory
+tx_snapshot_dir =
+  if node['cdap']['cdap_site'].key?('data.tx.snapshot.dir')
+    node['cdap']['cdap_site']['data.tx.snapshot.dir']
+  else
+    "#{node['cdap']['cdap_site']['hdfs.namespace']}/tx.snapshot"
+  end
+
+execute 'initaction-create-hdfs-tx-snapshot-dir' do
+  not_if  "hadoop fs -test -d #{tx_snapshot_dir}", :user => node['cdap']['cdap_site']['hdfs.user']
+  command "hadoop fs -mkdir -p #{tx_snapshot_dir} && hadoop fs -chown #{node['cdap']['cdap_site']['hdfs.user']} #{tx_snapshot_dir}"
+  timeout 300
+  user node['cdap']['fs_superuser']
+  retries 3
+  retry_delay 10
+end
+
 execute 'initaction-create-hdfs-cdap-user-dir' do
   not_if  "hadoop fs -test -d /user/#{node['cdap']['cdap_site']['hdfs.user']}", :user => node['cdap']['cdap_site']['hdfs.user']
   command "hadoop fs -mkdir -p /user/#{node['cdap']['cdap_site']['hdfs.user']} && hadoop fs -chown #{node['cdap']['cdap_site']['hdfs.user']} /user/#{node['cdap']['cdap_site']['hdfs.user']}"
