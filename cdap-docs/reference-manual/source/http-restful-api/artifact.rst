@@ -499,7 +499,7 @@ Example output for the ``WordCount`` application (pretty-printed and reformatted
         "artifact": {
           "name": "WordCount",
           "scope": "USER",
-          "version": "3.2.0-SNAPSHOT"
+          "version": "|version|"
         },
         "className": "co.cask.cdap.examples.wordcount.WordCount",
         "configSchema": {
