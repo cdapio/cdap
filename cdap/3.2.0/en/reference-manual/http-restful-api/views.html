@@ -1,0 +1,523 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="HTTP RESTful Interface to the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <meta name="git_release" content="3.2.0">
+    <meta name="git_hash" content="6ae5122b225688bb9eb900701746946452f262d3">
+    <meta name="git_timestamp" content="2015-09-23 21:21:37 -0700">
+    <title>Views HTTP RESTful API &mdash; Cask Data Application Platform 3.2.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    <!-- Amazon SQS Page Usage Logging start-->
+    <script type="text/javascript" src="https://sdk.amazonaws.com/js/aws-sdk-2.1.35.min.js"></script>
+    <script type="text/javascript" src="http://docs.cask.co/resources/scripts/aws-sqs-1.0.0.js"></script>
+    <!-- Amazon SQS Page Usage Logging end-->
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.2.0 Documentation" href="../index.html" />
+    <link rel="up" title="CDAP HTTP RESTful API v3" href="index.html" />
+    <link rel="next" title="Workflow HTTP RESTful API" href="workflow.html" />
+    <link rel="prev" title="Transaction Service HTTP RESTful API" href="transactions.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="workflow.html" title="Workflow HTTP RESTful API"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="transactions.html" title="Transaction Service HTTP RESTful API"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.2.0');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP Reference Manual</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">CDAP HTTP RESTful API v3</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="views-http-restful-api">
+<span id="http-restful-api-views"></span><h1>Views HTTP RESTful API<a class="headerlink" href="#views-http-restful-api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="views">
+<h2>Views<a class="headerlink" href="#views" title="Permalink to this headline">¶</a></h2>
+<p>Views are a read-only source where data can be read from. They are similar to a
+<a class="reference external" href="../source/../../developers-manual/building-blocks/streams.html#streams" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">stream</span></a> or <a class="reference external" href="../source/../../developers-manual/building-blocks/datasets/index.html#datasets-index" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">dataset</span></a>.</p>
+<p>A view has a specific read format. Read formats consist of a <a class="reference external" href="../source/../../developers-manual/data-exploration/streams.html#stream-exploration-stream-schema" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">schema</span></a> and a <a class="reference external" href="../source/../../developers-manual/data-exploration/streams.html#stream-exploration-stream-format" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">format</span></a>
+(such as CSV, TSV, or Avro, amongst others).</p>
+<p>If <a class="reference external" href="../source/../../developers-manual/data-exploration/index.html#data-exploration" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">CDAP Explore</span></a> is <a class="reference external" href="../source/../../admin-manual/installation/configuration.html#configuration-explore-service" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">enabled</span></a>, a Hive table will be created for each view that is
+created.</p>
+<p>Currently, views are only supported for streams. Support for datasets will be added in a
+later version of CDAP.</p>
+</div>
+<div class="section" id="creating-a-stream-view">
+<span id="http-restful-api-view-creating-stream-view"></span><h2>Creating a Stream View<a class="headerlink" href="#creating-a-stream-view" title="Permalink to this headline">¶</a></h2>
+<p>A view can be added to an existing stream with an HTTP POST request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">PUT &lt;base-url&gt;/namespaces/&lt;namespace&gt;/streams/&lt;stream-id&gt;/views/&lt;view-id&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></code></td>
+<td>Name of the stream (must be already existing)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;view-id&gt;</span></code></td>
+<td>Name of the view to be created, or, if already existing, updated</td>
+</tr>
+</tbody>
+</table>
+<p>The request body is a JSON object specifying the <a class="reference external" href="../source/../../developers-manual/data-exploration/streams.html#stream-exploration-stream-format" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">read format</span></a> to be used.</p>
+<p>An existing stream view can be modified with the same command; only the response code will differ.</p>
+<p class="rubric">Example</p>
+<p>For example, to create a stream view <em>logStreamView</em> on an existing stream
+<em>logStream</em>, using the format <em>clf</em> and a schema, you could use (pretty-printed for display):</p>
+<div class="highlight-console"><div class="highlight"><pre>$ curl -w&#39;\n&#39; -X PUT &#39;http://localhost:10000/v3/namespaces/default/streams/logStream/views/logStreamView -H &quot;Content-Type: application/json&quot; -d
+  {
+    &quot;format&quot;: {
+      &quot;name&quot;: &quot;clf&quot;,
+      &quot;schema&quot;:
+        &quot;{
+          \&quot;type\&quot;:\&quot;record\&quot;,
+          \&quot;name\&quot;:\&quot;event\&quot;,
+          \&quot;fields\&quot;:[
+            {\&quot;name\&quot;:\&quot;remotehost\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},
+            {\&quot;name\&quot;:\&quot;rfc931\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},
+            {\&quot;name\&quot;:\&quot;authuser\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},
+            {\&quot;name\&quot;:\&quot;date\&quot;,\&quot;type\&quot;:\&quot;date\&quot;},
+            {\&quot;name\&quot;:\&quot;request\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},
+            {\&quot;name\&quot;:\&quot;status\&quot;,\&quot;type\&quot;:\&quot;string\&quot;},
+            {\&quot;name\&quot;:\&quot;bytes\&quot;,\&quot;type\&quot;:\&quot;int\&quot;}
+        ]}&quot;,
+      &quot;settings&quot;: {
+        &quot;key1&quot;:&quot;val1&quot;,
+        &quot;key2&quot;:&quot;val2&quot;
+      }
+    }
+  }
+</pre></div>
+</div>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>An existing stream view was successfully modified</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">201</span> <span class="pre">CREATED</span></code></td>
+<td>A new stream view was created</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="listing-existing-stream-views">
+<span id="http-restful-api-view-listing-stream-view"></span><h2>Listing Existing Stream Views<a class="headerlink" href="#listing-existing-stream-views" title="Permalink to this headline">¶</a></h2>
+<p>To list all of the existing stream views of an existing stream, issue an HTTP GET request
+to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/streams/&lt;stream-id&gt;/views</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></code></td>
+<td>Name of the stream (must be already existing)</td>
+</tr>
+</tbody>
+</table>
+<p>The response body is a JSON object with a list of all the views currently existing for the
+specified stream.</p>
+<p class="rubric">Example</p>
+<p>For example, to see all the stream views on an existing stream
+<em>logStream</em>, you could use (pretty-printed for display):</p>
+<div class="highlight-console"><div class="highlight"><pre>$ curl -w&#39;\n&#39; -X GET &#39;http://localhost:10000/v3/namespaces/default/streams/logStream/views
+
+  [
+    {&quot;id&quot;:&quot;logStreamView&quot;, &quot;stream&quot;: &quot;logStream&quot;, &quot;format&quot;: ..},
+    ...
+    {&quot;id&quot;:&quot;last_view&quot;, &quot;stream&quot;: &quot;logStream&quot;, &quot;format&quot;: ..}
+  ]
+</pre></div>
+</div>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>A list of stream views for the specified stream was successfully retrieved</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="details-of-a-stream-view">
+<span id="http-restful-api-view-details-stream-view"></span><h2>Details of a Stream View<a class="headerlink" href="#details-of-a-stream-view" title="Permalink to this headline">¶</a></h2>
+<p>For detailed information on an existing stream view, issue an HTTP GET request
+to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/streams/&lt;stream-id&gt;/views/&lt;view-id&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></code></td>
+<td>Name of the stream</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;view-id&gt;</span></code></td>
+<td>Name of the existing view</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<p>For example, to see the details of the stream view <em>logStreamView</em> on the stream
+<em>logStream</em>, you could use (pretty-printed for display):</p>
+<blockquote>
+<div><p>$ curl -w&#8217;n&#8217; -X GET &#8216;<a class="reference external" href="http://localhost:10000/v3/namespaces/default/streams/logStream/view/logStreamView">http://localhost:10000/v3/namespaces/default/streams/logStream/view/logStreamView</a></p>
+<blockquote>
+<div>{&#8220;id&#8221;:&#8221;logStreamView&#8221;, &#8220;stream&#8221;: &#8220;logStream&#8221;, &#8220;format&#8221;: ..}</div></blockquote>
+</div></blockquote>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>A JSON object describing the specified stream view was successfully retrieved</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">OK</span></code></td>
+<td>Either the specified stream view or the specified stream was not found</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="deleting-a-stream-view">
+<span id="http-restful-api-view-deleting-stream-view"></span><h2>Deleting a Stream View<a class="headerlink" href="#deleting-a-stream-view" title="Permalink to this headline">¶</a></h2>
+<p>To delete an existing stream view, issue an HTTP DELETE request to the URL:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="go">DELETE &lt;base-url&gt;/namespaces/&lt;namespace&gt;/streams/&lt;stream-id&gt;/views/&lt;view-id&gt;</span>
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
+<td>Namespace ID</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;stream-id&gt;</span></code></td>
+<td>Name of the stream</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;view-id&gt;</span></code></td>
+<td>Name of the existing view</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<p>For example, to delete the stream view <em>logStreamView</em> on the stream
+<em>logStream</em>, you could use:</p>
+<blockquote>
+<div>$ curl -w&#8217;n&#8217; -X DELETE &#8216;<a class="reference external" href="http://localhost:10000/v3/namespaces/default/streams/logStream/view/logStreamView">http://localhost:10000/v3/namespaces/default/streams/logStream/view/logStreamView</a></div></blockquote>
+<p class="rubric">HTTP Responses</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="20%" />
+<col width="80%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Status Codes</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
+<td>The specified stream view was successfully deleted</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">404</span> <span class="pre">OK</span></code></td>
+<td>Either the specified stream view or the specified stream was not found</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.2.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../included-applications/index.html"
+            rel="nofollow">Included Applications</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><b><a href="../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
+            rel="nofollow">FAQ</a></li>
+            
+      <li><div class=""></div><a href="../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../table-of-contents.html">Reference Manual: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../characters.html"> Supported Characters</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli-api.html"> Command Line Interface API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> HTTP RESTful API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespace.html">Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lifecycle.html">Lifecycle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metadata.html">Metadata</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preferences.html">Preferences</a></li>
+<li class="toctree-l2"><a class="reference internal" href="artifact.html">Artifact</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream.html">Stream</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l2"><a class="reference internal" href="query.html">Query</a></li>
+<li class="toctree-l2"><a class="reference internal" href="service.html">Service</a></li>
+<li class="toctree-l2"><a class="reference internal" href="logging.html">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="metrics.html">Metrics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="monitor.html">Monitor</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactions.html">Transactions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">Views</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#views">Views</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-a-stream-view">Creating a Stream View</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#listing-existing-stream-views">Listing Existing Stream Views</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#details-of-a-stream-view">Details of a Stream View</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#deleting-a-stream-view">Deleting a Stream View</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="workflow.html">Workflow</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../java-client-api.html"> Java Client API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../javadocs/index.html"> Javadocs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../licenses/index.html"> Trademarks, Licenses, and Dependencies</a></li>
+</ul>
+
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="transactions.html"
+                        title="Previous Chapter">Transaction Service HTTP RESTful API</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="workflow.html"
+                        title="Next Chapter">Workflow HTTP RESTful API</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.2.0/cdap-docs-3.2.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Transaction Service HTTP RESTful API" href="transactions.html" />Transaction Service HTTP RESTful API</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Workflow HTTP RESTful API" href="workflow.html" />Workflow HTTP RESTful API</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
