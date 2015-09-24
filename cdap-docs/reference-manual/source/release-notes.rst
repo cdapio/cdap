@@ -28,9 +28,6 @@ Cask Data Application Platform Release Notes
 
 New Features
 ------------
-
-- `CDAP-1914 <https://issues.cask.co/browse/CDAP-1914>`__ -
-  Added documentation of the RESTful endpoint to retrieve the properties of a stream.
   
 - `CDAP-2556 <https://issues.cask.co/browse/CDAP-2556>`__ -
   Added support for HBase1.1.
@@ -44,9 +41,6 @@ New Features
 - `CDAP-2757 <https://issues.cask.co/browse/CDAP-2757>`__ -
   Added the ability to dynamically write to multiple partitions of a PartitionedFileSet
   dataset as the output of a MapReduce job.
-  
-- `CDAP-2951 <https://issues.cask.co/browse/CDAP-2951>`__ -
-  Removed deprecated methods in cdap-client.
   
 - `CDAP-3253 <https://issues.cask.co/browse/CDAP-3253>`__ -
   Added a Stream and Dataset Widget to the CDAP-UI.
@@ -114,6 +108,9 @@ New Features
 Improvements
 ------------
 
+- `CDAP-1914 <https://issues.cask.co/browse/CDAP-1914>`__ -
+  Added documentation of the RESTful endpoint to retrieve the properties of a stream.
+
 - `CDAP-2514 <https://issues.cask.co/browse/CDAP-2514>`__ -
   Added an interface to load a file into a stream from the CDAP-UI.
   
@@ -129,9 +126,6 @@ Improvements
     
 - `CDAP-2872 <https://issues.cask.co/browse/CDAP-2872>`__ -
   Updated the Cloudera Manager CSD to use support for logback.
-  
-- `CDAP-2917 <https://issues.cask.co/browse/CDAP-2917>`__ -
-  Resolved duplicated constants, ``Id.Namespace.DEFAULT`` and ``Constants.DEFAULT_NAMESPACE_ID``.
   
 - `CDAP-2930 <https://issues.cask.co/browse/CDAP-2930>`__ -
   Added to the CDAP documentation a section on CDAP class loading in the Advanced Features
@@ -370,13 +364,13 @@ Bug Fixes
   Fixed a problem where streams events that had already been processed were re-processed in flows.
   
 - `CDAP-3470 <https://issues.cask.co/browse/CDAP-3470>`__ -
-  Fixed an issue with error messages being created during a master process restart.
+  Fixed an issue with error messages being logged during a master process restart.
   
 - `CDAP-3472 <https://issues.cask.co/browse/CDAP-3472>`__ -
-  Fixed a problem with the error message created when trying to stop a program started by a workflow.
+  Fixed the error message returned when trying to stop a program started by a workflow.
   
 - `CDAP-3473 <https://issues.cask.co/browse/CDAP-3473>`__ -
-  Fixed a problem with a workflow failure not recording a stop record for the inner program.
+  Fixed a problem with a workflow failure not updating a run record for the inner program.
     
 - `CDAP-3530 <https://issues.cask.co/browse/CDAP-3530>`__ -
   Fixed a problem with the CDAP-UI performance when rendering flow diagrams with a large number of nodes.
@@ -477,6 +471,9 @@ Deprecated and Removed Features
   have been replaced with applications that can be controlled with the Lifecycle HTTP
   RESTful API.
 
+- `CDAP-2951 <https://issues.cask.co/browse/CDAP-2951>`__ -
+  Removed deprecated methods in cdap-client.
+  
 - `CDAP-3596 <https://issues.cask.co/browse/CDAP-3596>`__ -
   Replaced the ETL ApplicationTemplates with the new ETL Applications.
 
@@ -485,23 +482,11 @@ Deprecated and Removed Features
 Known Issues
 ------------
 
-- `CDAP-3361 <https://issues.cask.co/browse/CDAP-3361>`__ -
-  CDAP-UI should use 'name' instead of 'id' fields when listing app programs.
-  
 - `CDAP-3396 <https://issues.cask.co/browse/CDAP-3396>`__ -
   CDAP-UI scroll bar for logs has jitters and is unbounded at the top.
   
-- `CDAP-3409 <https://issues.cask.co/browse/CDAP-3409>`__ -
-  java.lang.NoClassDefFoundError: co/cask/cdap/data/dataset/DatasetCreationSpec
-  
 - `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
-  Executing 'select \*' from a dataset with many fields generates an error.
-  
-- `CDAP-3499 <https://issues.cask.co/browse/CDAP-3499>`__ -
-  TestFrameworkTestRun testGetServiceURL fails sporadically.
-  
-- `CDAP-3500 <https://issues.cask.co/browse/CDAP-3500>`__ -
-  TestFrameworkTestRun testWorkerStop fails sporadically on Bamboo builds.
+  In CDAP-CLI, executing 'select \*' from a dataset with many fields generates an error.
   
 - `CDAP-3534 <https://issues.cask.co/browse/CDAP-3534>`__ -
   CDAP-UI metric shown in output graph in flowlets is not the correct one.
@@ -512,17 +497,8 @@ Known Issues
 - `CDAP-3578 <https://issues.cask.co/browse/CDAP-3578>`__ -
   CDAP-UI Service explore dialog "view" icon is broken after download is clicked.
   
-- `CDAP-3601 <https://issues.cask.co/browse/CDAP-3601>`__ -
-  Large number of Javadoc errors in modules
-  
-- `CDAP-3602 <https://issues.cask.co/browse/CDAP-3602>`__ -
-  The Documentation Search Engine does not find all pages with the search term.
-  
 - `CDAP-3633 <https://issues.cask.co/browse/CDAP-3633>`__ -
   CDAP-SDK complains about node version 4.0.0 which is greater that 0.10.
-  
-- `CDAP-3638 <https://issues.cask.co/browse/CDAP-3638>`__ -
-  HttpExceptionHandler does not handle FORBIDDEN exceptions.
   
 - `CDAP-3640 <https://issues.cask.co/browse/CDAP-3640>`__ -
   Standalone cdap.sh doesn't allocate enough memory.
@@ -533,19 +509,13 @@ Known Issues
 - `CDAP-3642 <https://issues.cask.co/browse/CDAP-3642>`__ -
   After stopping a flow, the CDAP-UI shows status as 'Killed'.
   
-- `CDAP-3656 <https://issues.cask.co/browse/CDAP-3656>`__ -
-  The ProgramManager does not get notified when a worker stops on its own.
-  
 - `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
   There is a problem under Microsoft Windows and using the CDAP Standalone scripts when  
   JAVA_HOME is defined as a path with spaces in it. A workaround is to use a definition of 
   JAVA_HOME that does not include spaces.
 
 - `CDAP-3665 <https://issues.cask.co/browse/CDAP-3665>`__ -
-  When a MapReduce job fails, CDAP says all mappers/reducers were successful.
-  
-- `CDAP-3689 <https://issues.cask.co/browse/CDAP-3689>`__ -
-  Metadata entity types should be lower-case, not upper-case.
+  When a MapReduce job fails, CDAP-UI says all mappers/reducers were successful.
   
 - `CDAP-3697 <https://issues.cask.co/browse/CDAP-3697>`__ -
   CDAP Explore is broken on secure CDH 5.1.
@@ -553,31 +523,19 @@ Known Issues
 - `CDAP-3698 <https://issues.cask.co/browse/CDAP-3698>`__ -
   CDAP Explore is unable to get a delegation token while fetching next results on HDP2.0.
   
-- `CDAP-3720 <https://issues.cask.co/browse/CDAP-3720>`__ -
-  The WorklowAction configure method is invoked multiple times.
-  
 - `CDAP-3732 <https://issues.cask.co/browse/CDAP-3732>`__ -
   The first time a flow is started in a namespace, there will be an error message in the logs
   about a failure to enable explore on the system.queue table. A call to enable exploration
   on the table should not be made, as it is not meant to be explorable.
 
-- `CDAP-3744 <https://issues.cask.co/browse/CDAP-3744>`__ -
-  The HTTP RESTful endpoints to enable explore are not documented.
-  
 - `CDAP-3749 <https://issues.cask.co/browse/CDAP-3749>`__ -
   The DBSource plugin does not allow a username with an empty password.
   
 - `CDAP-3750 <https://issues.cask.co/browse/CDAP-3750>`__ -
   If a table schema contains a field name that is a reserved word in Hive DDL, 'enable explore' fails.
   
-- `CDAP-3752 <https://issues.cask.co/browse/CDAP-3752>`__ -
-  The confirmation dialogs across the CDAP-UI are not standardized.
-  
 - `CDAP-3756 <https://issues.cask.co/browse/CDAP-3756>`__ -
   Refreshing the CDAP UI from any page after it has been idle for a while takes you back to the home page
-  
-- `CDAP-3757 <https://issues.cask.co/browse/CDAP-3757>`__ -
-  Order-by using an aliased column fails in Explore on Standalone.
   
 - `CDAP-3810 <https://issues.cask.co/browse/CDAP-3810>`__ -
   org.apache.activemq.ActiveMQConnectionFactory cannot be cast to javax.jms.ConnectionFactory; a java.lang.ClassCastException is thrown.
@@ -590,17 +548,11 @@ Known Issues
   after a fresh CDAP installation, it is possible for the ``data.tx.snapshot.dir`` HDFS
   directory to be created with improper permissions.
   
-- `CDAP-3818 <https://issues.cask.co/browse/CDAP-3818>`__ -
-  The TimeFilter documentation is inconsistent.
-  
 - `CDAP-3819 <https://issues.cask.co/browse/CDAP-3819>`__ -
   The Cassandra source does not handles spaces properly in column fields which require a comma-separated list.
   
-- `CDAP-3822 <https://issues.cask.co/browse/CDAP-3822>`__ -
-  Kafka pack 0.7 fails because ArtifactClassLoaderFactory loads Scala classes from a later Scala version.
-  
 - `CDAP-3830 <https://issues.cask.co/browse/CDAP-3830>`__ -
-  Search for tags metadata does not work correctly.
+  Search for tags metadata does not work correctly when doing a prefix scan with '\*'.
 
 - See also the *Known Issues* of `version 3.1.0 <#known-issues-310>`_\ .
 
