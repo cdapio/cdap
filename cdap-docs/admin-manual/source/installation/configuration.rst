@@ -129,6 +129,11 @@ Depending on your installation, you may want to set these properties:
       <value>DBCP</value>
     </property>
 
+- CDAP has the capability of publishing notifications to an external Apache Kafka instance
+  upon metadata updates. Details on the configuration settings and an example output are
+  shown in the :ref:`Metadata and Lineage section <metadata-update-notifications>` of the
+  Developers' Manual.
+
 .. highlight:: console
 
 .. _configuration-for-secure-hadoop:

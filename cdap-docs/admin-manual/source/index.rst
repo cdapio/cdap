@@ -70,7 +70,7 @@ transaction service maintenance, troubleshooting, and introduces the CDAP UI.**
 - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
   
 .. |monitoring| replace:: **Monitoring:**
-.. _monitoring: installation/monitoring.html
+.. _monitoring: operations/monitoring.html
 
 - |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
   This section provides links to the relevant APIs for accessing these logs and metrics.
