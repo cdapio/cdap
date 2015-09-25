@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
-import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
@@ -204,6 +203,8 @@ public class ArtifactStore {
         while ((row = scanner.next()) != null) {
           addArtifactsToList(artifacts, row);
         }
+        scanner.close();
+        
         return Collections.unmodifiableList(artifacts);
       }
     });
@@ -333,6 +334,7 @@ public class ArtifactStore {
               existingAppClasses.add(appData.appClass);
             }
           }
+          scanner.close();
           return Collections.unmodifiableSortedMap(result);
         }
       });
@@ -403,6 +405,7 @@ public class ArtifactStore {
           while ((row = scanner.next()) != null) {
             addPluginsToMap(parentArtifactId, result, row);
           }
+          scanner.close();
 
           return Collections.unmodifiableSortedMap(result);
         }
@@ -444,6 +447,8 @@ public class ArtifactStore {
           while ((row = scanner.next()) != null) {
             addPluginsToMap(parentArtifactId, result, row);
           }
+          scanner.close();
+
           return Collections.unmodifiableSortedMap(result);
         }
       });
@@ -663,6 +668,7 @@ public class ArtifactStore {
         while ((row = scanner.next()) != null) {
           table.delete(row.getRow());
         }
+        scanner.close();
 
         // delete all rows about artifacts in the namespace and the plugins they have access to
         Scan pluginsScan = new Scan(
@@ -673,12 +679,14 @@ public class ArtifactStore {
         while ((row = scanner.next()) != null) {
           table.delete(row.getRow());
         }
+        scanner.close();
 
         // delete app classes in this namespace
         scanner = table.scan(scanAppClasses(namespace));
         while ((row = scanner.next()) != null) {
           table.delete(row.getRow());
         }
+        scanner.close();
 
         // delete plugins in this namespace from system artifacts
         // for example, if there was an artifact in this namespace that extends a system artifact
@@ -697,6 +705,7 @@ public class ArtifactStore {
             }
           }
         }
+        scanner.close();
 
         return null;
       }
