@@ -90,7 +90,7 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
     } catch (ArtifactNotFoundException e) {
       // this shouldn't happen, it means the artifact for this app does not exist.
       throw new IllegalStateException(
-        String.format("application artifact '%s' no longer exists. Please check if it was deleted.", artifactId));
+        String.format("Application artifact '%s' no longer exists. Please check if it was deleted.", artifactId));
     }
 
     try {
@@ -126,7 +126,7 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
     } catch (ArtifactNotFoundException e) {
       // this shouldn't happen, it means the artifact for this app does not exist.
       throw new IllegalStateException(
-        String.format("application artifact '%s' no longer exists. Please check if it was deleted.", artifactId));
+        String.format("Application artifact '%s' no longer exists. Please check if it was deleted.", artifactId));
     }
 
     try {
