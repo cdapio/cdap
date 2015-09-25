@@ -276,10 +276,12 @@ public class ArtifactClient {
    *
    * @param artifactId the id of the artifact to get
    * @return list of plugin types available to the given artifact.
+   * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<String> getPluginTypes(Id.Artifact artifactId) throws IOException, UnauthorizedException {
+  public List<String> getPluginTypes(Id.Artifact artifactId)
+    throws IOException, UnauthorizedException, ArtifactNotFoundException {
     return getPluginTypes(artifactId, ArtifactScope.USER);
   }
 
@@ -289,17 +291,22 @@ public class ArtifactClient {
    * @param artifactId the id of the artifact to get
    * @param scope the scope of the artifact
    * @return list of plugin types available to the given artifact.
+   * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<String> getPluginTypes(Id.Artifact artifactId,
-                                     ArtifactScope scope) throws IOException, UnauthorizedException {
+  public List<String> getPluginTypes(Id.Artifact artifactId, ArtifactScope scope)
+    throws IOException, UnauthorizedException, ArtifactNotFoundException {
 
     String path = String.format("artifacts/%s/versions/%s/extensions?scope=%s",
       artifactId.getName(), artifactId.getVersion().getVersion(), scope.name());
     URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
 
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ArtifactNotFoundException(artifactId);
+    }
     return ObjectResponse.<List<String>>fromJsonBody(response, EXTENSIONS_TYPE).getResponseObject();
   }
 
@@ -309,11 +316,12 @@ public class ArtifactClient {
    * @param artifactId the id of the artifact to get
    * @param pluginType the type of plugins to get
    * @return list of {@link PluginSummary}
+   * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<PluginSummary> getPluginSummaries(Id.Artifact artifactId,
-                                                String pluginType) throws IOException, UnauthorizedException {
+  public List<PluginSummary> getPluginSummaries(Id.Artifact artifactId, String pluginType)
+    throws IOException, UnauthorizedException, ArtifactNotFoundException {
     return getPluginSummaries(artifactId, pluginType, ArtifactScope.USER);
   }
 
@@ -324,17 +332,22 @@ public class ArtifactClient {
    * @param pluginType the type of plugins to get
    * @param scope the scope of the artifact
    * @return list of {@link PluginSummary}
+   * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<PluginSummary> getPluginSummaries(Id.Artifact artifactId, String pluginType,
-                                                ArtifactScope scope) throws IOException, UnauthorizedException {
+  public List<PluginSummary> getPluginSummaries(Id.Artifact artifactId, String pluginType, ArtifactScope scope)
+    throws IOException, UnauthorizedException, ArtifactNotFoundException {
 
     String path = String.format("artifacts/%s/versions/%s/extensions/%s?scope=%s",
       artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, scope.name());
     URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
 
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ArtifactNotFoundException(artifactId);
+    }
     return ObjectResponse.<List<PluginSummary>>fromJsonBody(response, PLUGIN_SUMMARIES_TYPE).getResponseObject();
   }
 
@@ -345,11 +358,12 @@ public class ArtifactClient {
    * @param pluginType the type of plugins to get
    * @param pluginName the name of the plugins to get
    * @return list of {@link PluginInfo}
+   * @throws NotFoundException if the given artifact does not exist or plugins for that artifact do not exist
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public List<PluginInfo> getPluginInfo(Id.Artifact artifactId, String pluginType,
-                                        String pluginName) throws IOException, UnauthorizedException {
+  public List<PluginInfo> getPluginInfo(Id.Artifact artifactId, String pluginType, String pluginName)
+    throws IOException, UnauthorizedException, NotFoundException {
     return getPluginInfo(artifactId, pluginType, pluginName, ArtifactScope.USER);
   }
 
@@ -361,17 +375,23 @@ public class ArtifactClient {
    * @param pluginName the name of the plugins to get
    * @param scope the scope of the artifact
    * @return list of {@link PluginInfo}
+   * @throws NotFoundException if the given artifact does not exist or plugins for that artifact do not exist
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
   public List<PluginInfo> getPluginInfo(Id.Artifact artifactId, String pluginType, String pluginName,
-                                        ArtifactScope scope) throws IOException, UnauthorizedException {
+                                        ArtifactScope scope)
+    throws IOException, UnauthorizedException, NotFoundException {
 
     String path = String.format("artifacts/%s/versions/%s/extensions/%s/plugins/%s?scope=%s",
       artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, pluginName, scope.name());
     URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
 
-    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken());
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException(response.getResponseBodyAsString());
+    }
     return ObjectResponse.<List<PluginInfo>>fromJsonBody(response, PLUGIN_INFOS_TYPE).getResponseObject();
   }
 
