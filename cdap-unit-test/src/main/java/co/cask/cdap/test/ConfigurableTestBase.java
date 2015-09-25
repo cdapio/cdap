@@ -80,10 +80,8 @@ import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultStreamManager;
-import co.cask.cdap.test.internal.DefaultStreamWriter;
 import co.cask.cdap.test.internal.LocalStreamWriter;
 import co.cask.cdap.test.internal.StreamManagerFactory;
-import co.cask.cdap.test.internal.StreamWriterFactory;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -251,8 +249,6 @@ public class ConfigurableTestBase {
         protected void configure() {
           install(new FactoryModuleBuilder().implement(ApplicationManager.class, DefaultApplicationManager.class)
                     .build(ApplicationManagerFactory.class));
-          install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
-                    .build(StreamWriterFactory.class));
           install(new FactoryModuleBuilder().implement(StreamManager.class, DefaultStreamManager.class)
                     .build(StreamManagerFactory.class));
           bind(TemporaryFolder.class).toInstance(tmpFolder);
@@ -292,6 +288,7 @@ public class ConfigurableTestBase {
     private final MetricStore metricStore;
 
     @Inject
+    @SuppressWarnings("unused")
     private MetricsManagerProvider(MetricStore metricStore) {
       this.metricStore = metricStore;
     }

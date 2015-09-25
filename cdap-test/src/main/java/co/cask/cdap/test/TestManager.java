@@ -285,6 +285,8 @@ public interface TestManager {
    */
   void deleteNamespace(Id.Namespace namespace) throws Exception;
 
-
+  /**
+   * Returns a {@link StreamManager} for the specified {@link Id.Stream}.
+   */
   StreamManager getStreamManager(Id.Stream streamId);
 }

@@ -26,14 +26,12 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.AbstractApplicationManager;
-import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.DefaultMapReduceManager;
 import co.cask.cdap.test.DefaultSparkManager;
 import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SparkManager;
-import co.cask.cdap.test.StreamWriter;
 import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
 import com.google.common.base.Preconditions;
@@ -94,18 +92,6 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   public WorkerManager getWorkerManager(String workerName) {
     Id.Worker programId = Id.Worker.from(application, workerName);
     return new RemoteWorkerManager(programId, clientConfig, restClient, this);
-  }
-
-  @Override
-  @Deprecated
-  public StreamWriter getStreamWriter(String streamName) {
-    return new RemoteStreamWriter(new RemoteStreamManager(clientConfig, restClient,
-                                                          Id.Stream.from(application.getNamespaceId(), streamName)));
-  }
-
-  @Override
-  public <T> DataSetManager<T> getDataSet(String dataSetName) throws Exception {
-    throw new UnsupportedOperationException();
   }
 
   @Override
