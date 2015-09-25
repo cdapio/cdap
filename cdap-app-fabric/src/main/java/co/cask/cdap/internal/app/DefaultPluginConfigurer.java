@@ -23,6 +23,7 @@ import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.api.plugin.PluginSelector;
+import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -80,12 +81,16 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                          PluginSelector selector) {
-    Plugin plugin = null;
+    Plugin plugin;
     try {
       plugin = findPlugin(pluginType, pluginName, pluginId, properties, selector);
     } catch (PluginNotExistsException e) {
       // Plugin not found, hence return null
       return null;
+    } catch (ArtifactNotFoundException e) {
+      // this shouldn't happen, it means the artifact for this app does not exist.
+      throw new IllegalStateException(
+        String.format("Application artifact '%s' no longer exists. Please check if it was deleted.", artifactId));
     }
 
     try {
@@ -118,6 +123,10 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
     } catch (PluginNotExistsException e) {
       // Plugin not found, hence return null
       return null;
+    } catch (ArtifactNotFoundException e) {
+      // this shouldn't happen, it means the artifact for this app does not exist.
+      throw new IllegalStateException(
+        String.format("Application artifact '%s' no longer exists. Please check if it was deleted.", artifactId));
     }
 
     try {
@@ -135,7 +144,7 @@ public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements
 
   private Plugin findPlugin(String pluginType, String pluginName, String pluginId,
                             PluginProperties properties, PluginSelector selector)
-    throws PluginNotExistsException {
+    throws PluginNotExistsException, ArtifactNotFoundException {
     Preconditions.checkArgument(!plugins.containsKey(pluginId),
                                 "Plugin of type %s, name %s was already added.", pluginType, pluginName);
     Preconditions.checkArgument(properties != null, "Plugin properties cannot be null");
