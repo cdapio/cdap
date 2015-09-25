@@ -34,7 +34,9 @@ import co.cask.cdap.etl.common.DBConfig;
 import co.cask.cdap.etl.common.DBRecord;
 import co.cask.cdap.etl.common.DBUtils;
 import co.cask.cdap.etl.common.ETLDBOutputFormat;
+import co.cask.cdap.etl.common.FieldCase;
 import co.cask.cdap.etl.common.JDBCDriverShim;
+import co.cask.cdap.etl.common.Properties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -56,6 +58,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Sink that can be configured to export data to a database table.
@@ -65,6 +68,13 @@ import java.util.Map;
 @Description("Writes records to a database table. Each record will be written to a row in the table.")
 public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(DBSink.class);
+
+  private static final String COLUMN_CASE_DESCRIPTION = "Sets the case of the column names returned " +
+    "by the column check query. " +
+    "Possible options are upper or lower. By default or for any other input, the column names are not modified and " +
+    "the names returned from the database are used as-is. Note that setting this property provides predictability " +
+    "of column name cases across different databases but might result in column name conflicts if multiple column " +
+    "names are the same when the case is ignored.";
 
   private final DBSinkConfig dbSinkConfig;
   private Class<? extends Driver> driverClass;
@@ -168,10 +178,16 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
                                                                dbSinkConfig.columns, dbSinkConfig.tableName))
       ) {
         ResultSetMetaData resultSetMetadata = rs.getMetaData();
+        FieldCase fieldCase = FieldCase.toFieldCase(dbSinkConfig.columnNameCase);
         // JDBC driver column indices start with 1
         for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
           String name = resultSetMetadata.getColumnName(i + 1);
           int type = resultSetMetadata.getColumnType(i + 1);
+          if (fieldCase == FieldCase.LOWER) {
+            name = name.toLowerCase();
+          } else if (fieldCase == FieldCase.UPPER) {
+            name = name.toUpperCase();
+          }
           columnToType.put(name, type);
         }
       }
@@ -216,6 +232,11 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
     @Description("Name of the table to export to.")
     public String tableName;
+
+    @Nullable
+    @Name(Properties.DB.COLUMN_NAME_CASE)
+    @Description(COLUMN_CASE_DESCRIPTION)
+    String columnNameCase;
   }
 
   private static class DBOutputFormatProvider implements OutputFormatProvider {
