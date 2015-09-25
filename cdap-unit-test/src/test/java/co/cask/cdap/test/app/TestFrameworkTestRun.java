@@ -928,7 +928,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
 
     // also test the deprecated version of getDataset(). This can be removed when we remove the method
-    mydatasetManager = applicationManager.getDataSet("mydataset");
+    mydatasetManager = getDataset("mydataset");
     Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
   }
 
