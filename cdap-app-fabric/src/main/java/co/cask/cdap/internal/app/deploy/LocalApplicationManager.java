@@ -39,7 +39,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.services.AdapterService;
-import co.cask.cdap.metadata.MetadataAdmin;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.proto.Id;
@@ -65,7 +64,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final QueueAdmin queueAdmin;
   private final StreamAdmin streamAdmin;
   private final Scheduler scheduler;
-  private final AdapterService adapterService;
   private final ProgramTerminator programTerminator;
   private final DatasetFramework datasetFramework;
   private final DatasetFramework inMemoryDatasetFramework;
@@ -80,7 +78,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                                  Store store, StreamConsumerFactory streamConsumerFactory,
                                  QueueAdmin queueAdmin, DatasetFramework datasetFramework,
                                  @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
-                                 StreamAdmin streamAdmin, Scheduler scheduler, AdapterService adapterService,
+                                 StreamAdmin streamAdmin, Scheduler scheduler,
                                  @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
                                  UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
                                  BusinessMetadataStore businessMetadataStore) {
@@ -96,7 +94,6 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.streamAdmin = streamAdmin;
     this.scheduler = scheduler;
     this.metricStore = metricStore;
-    this.adapterService = adapterService;
     this.usageRegistry = usageRegistry;
     this.artifactRepository = artifactRepository;
     this.businessMetadataStore = businessMetadataStore;
@@ -106,7 +103,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   public ListenableFuture<O> deploy(Id.Namespace namespace, @Nullable String appId, I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, namespace, appId, artifactRepository));
-    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, adapterService));
+    pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, namespace, datasetFramework,
                                                    inMemoryDatasetFramework));
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, namespace));

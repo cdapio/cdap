@@ -36,7 +36,6 @@ import co.cask.cdap.app.verification.Verifier;
 import co.cask.cdap.app.verification.VerifyResult;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.internal.app.verification.ApplicationVerification;
 import co.cask.cdap.internal.app.verification.DatasetCreationSpecVerifier;
 import co.cask.cdap.internal.app.verification.FlowVerification;
@@ -66,14 +65,12 @@ public class ApplicationVerificationStage extends AbstractStage<ApplicationDeplo
 
   private final Map<Class<?>, Verifier<?>> verifiers = Maps.newIdentityHashMap();
   private final DatasetFramework dsFramework;
-  private final AdapterService adapterService;
   private final Store store;
 
-  public ApplicationVerificationStage(Store store, DatasetFramework dsFramework, AdapterService adapterService) {
+  public ApplicationVerificationStage(Store store, DatasetFramework dsFramework) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.dsFramework = dsFramework;
-    this.adapterService = adapterService;
   }
 
 
