@@ -38,7 +38,10 @@ import java.io.IOException;
  *
  * @param <T> type of the transactional context
  * @param <V> type of objects contained inside the transaction context
+ *
+ * @deprecated Don't use this class anymore. Use {@link TransactionExecutor} instead.
  */
+@Deprecated
 public class Transactional<T extends Iterable<V>, V> {
   private final TransactionExecutorFactory txFactory;
   private final Supplier<T> supplier;

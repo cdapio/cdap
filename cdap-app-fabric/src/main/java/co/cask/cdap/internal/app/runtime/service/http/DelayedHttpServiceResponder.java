@@ -22,13 +22,16 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.google.gson.Gson;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +48,7 @@ import javax.annotation.Nullable;
  * A response is buffered until execute() is called. This allows you to send the correct response upon
  * a transaction failure, and to not always delegating to the user response.
  */
-public final class DelayedHttpServiceResponder implements HttpServiceResponder {
+public class DelayedHttpServiceResponder implements HttpServiceResponder {
   private static final Logger LOG = LoggerFactory.getLogger(DelayedHttpServiceResponder.class);
 
   private final HttpResponder responder;
@@ -60,6 +63,12 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
   public DelayedHttpServiceResponder(HttpResponder responder, MetricsContext metricsContext) {
     this.responder = responder;
     this.metricsContext = metricsContext;
+  }
+
+  DelayedHttpServiceResponder(DelayedHttpServiceResponder other) {
+    this.responder = other.responder;
+    this.metricsContext = other.metricsContext;
+    this.bufferedResponse = other.bufferedResponse;
   }
 
   @Override
@@ -128,8 +137,8 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
     doSend(status, content, contentType, createMultimap(headers), true);
   }
 
-  private void doSend(int status, ByteBuffer content, String contentType,
-                      @Nullable Multimap<String, String> headers, boolean copy) {
+  protected void doSend(int status, ByteBuffer content, String contentType,
+                        @Nullable Multimap<String, String> headers, boolean copy) {
     if (bufferedResponse != null) {
       LOG.warn("Multiple calls to one of the 'send*' methods has been made. Only the last response will be sent.");
     }
@@ -166,14 +175,27 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
   }
 
   /**
-   * Calls to other responder methods in this class only cache the response to be sent. The response is actually
-   * sent only when this method is called.
+   * Same as calling {@link #execute(boolean) execute(true)}.
    */
   public void execute() {
+    execute(true);
+  }
+
+  /**
+   * Calls to other responder methods in this class only cache the response to be sent. The response is actually
+   * sent only when this method is called.
+   *
+   * @param keepAlive {@code true} to keep the connection open; {@code false} otherwise
+   */
+  public void execute(boolean keepAlive) {
     Preconditions.checkState(bufferedResponse != null,
                              "Can not call execute before one of the other responder methods are called.");
+
+    Multimap<String, String> headers = LinkedListMultimap.create(bufferedResponse.getHeaders());
+    headers.put(HttpHeaders.Names.CONNECTION, keepAlive ? HttpHeaders.Values.KEEP_ALIVE : HttpHeaders.Values.CLOSE);
+
     responder.sendContent(HttpResponseStatus.valueOf(bufferedResponse.getStatus()), bufferedResponse.getChannelBuffer(),
-                          bufferedResponse.getContentType(), bufferedResponse.getHeaders());
+                          bufferedResponse.getContentType(), headers);
     emitMetrics(bufferedResponse.getStatus());
   }
 
@@ -213,7 +235,7 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
       this.status = status;
       this.channelBuffer = channelBuffer;
       this.contentType = contentType;
-      this.headers = headers == null ? null : Multimaps.unmodifiableMultimap(headers);
+      this.headers = headers == null ? ImmutableMultimap.<String, String>of() : ImmutableMultimap.copyOf(headers);
     }
 
     public int getStatus() {
@@ -228,7 +250,6 @@ public final class DelayedHttpServiceResponder implements HttpServiceResponder {
       return contentType;
     }
 
-    @Nullable
     public Multimap<String, String> getHeaders() {
       return headers;
     }
