@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginProperties;
@@ -33,9 +34,14 @@ import co.cask.cdap.etl.common.DBConfig;
 import co.cask.cdap.etl.common.DBRecord;
 import co.cask.cdap.etl.common.DBUtils;
 import co.cask.cdap.etl.common.ETLDBOutputFormat;
+import co.cask.cdap.etl.common.FieldCase;
 import co.cask.cdap.etl.common.JDBCDriverShim;
+import co.cask.cdap.etl.common.Properties;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
 import org.slf4j.Logger;
@@ -48,8 +54,11 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Sink that can be configured to export data to a database table.
@@ -60,10 +69,18 @@ import java.util.Map;
 public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(DBSink.class);
 
+  private static final String COLUMN_CASE_DESCRIPTION = "Sets the case of the column names returned " +
+    "by the column check query. " +
+    "Possible options are upper or lower. By default or for any other input, the column names are not modified and " +
+    "the names returned from the database are used as-is. Note that setting this property provides predictability " +
+    "of column name cases across different databases but might result in column name conflicts if multiple column " +
+    "names are the same when the case is ignored.";
+
   private final DBSinkConfig dbSinkConfig;
   private Class<? extends Driver> driverClass;
   private JDBCDriverShim driverShim;
   private int [] columnTypes;
+  private List<String> columns;
 
   public DBSink(DBSinkConfig dbSinkConfig) {
     this.dbSinkConfig = dbSinkConfig;
@@ -111,7 +128,20 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<DBRecord, NullWritable>> emitter) throws Exception {
-    emitter.emit(new KeyValue<DBRecord, NullWritable>(new DBRecord(input, columnTypes), null));
+    // Create StructuredRecord that only has the columns in this.columns
+    List<Schema.Field> outputFields = new ArrayList<>();
+    for (String column : getColumns()) {
+      Schema.Field field = input.getSchema().getField(column);
+      Preconditions.checkNotNull(field, "Missing schema field for column '%s'", column);
+      outputFields.add(field);
+    }
+    StructuredRecord.Builder output = StructuredRecord.builder(
+      Schema.recordOf(input.getSchema().getRecordName(), outputFields));
+    for (String column : getColumns()) {
+      output.set(column, input.get(column));
+    }
+
+    emitter.emit(new KeyValue<DBRecord, NullWritable>(new DBRecord(output.build(), columnTypes), null));
   }
 
   @Override
@@ -125,6 +155,11 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     DBUtils.cleanup(driverClass);
   }
 
+  @VisibleForTesting
+  List<String> getColumns() {
+    return columns;
+  }
+
   private void setResultSetMetadata() throws Exception {
     ensureJDBCDriverIsAvailable();
     Connection connection;
@@ -133,6 +168,8 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
     } else {
       connection = DriverManager.getConnection(dbSinkConfig.connectionString, dbSinkConfig.user, dbSinkConfig.password);
     }
+
+    Map<String, Integer> columnToType = new HashMap<>();
     try {
       try (Statement statement = connection.createStatement();
            // Run a query against the DB table that returns 0 records, but returns valid ResultSetMetadata
@@ -141,15 +178,29 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
                                                                dbSinkConfig.columns, dbSinkConfig.tableName))
       ) {
         ResultSetMetaData resultSetMetadata = rs.getMetaData();
-        int columnCount = resultSetMetadata.getColumnCount();
-        columnTypes = new int[columnCount];
+        FieldCase fieldCase = FieldCase.toFieldCase(dbSinkConfig.columnNameCase);
         // JDBC driver column indices start with 1
-        for (int i = 0; i < columnCount; i++) {
-          columnTypes[i] = resultSetMetadata.getColumnType(i + 1);
+        for (int i = 0; i < rs.getMetaData().getColumnCount(); i++) {
+          String name = resultSetMetadata.getColumnName(i + 1);
+          int type = resultSetMetadata.getColumnType(i + 1);
+          if (fieldCase == FieldCase.LOWER) {
+            name = name.toLowerCase();
+          } else if (fieldCase == FieldCase.UPPER) {
+            name = name.toUpperCase();
+          }
+          columnToType.put(name, type);
         }
       }
     } finally {
       connection.close();
+    }
+
+    columns = ImmutableList.copyOf(Splitter.on(",").split(dbSinkConfig.columns));
+    columnTypes = new int[columns.size()];
+    for (int i = 0; i < columnTypes.length; i++) {
+      String name = columns.get(i);
+      Preconditions.checkArgument(columnToType.containsKey(name), "Missing column '%s' in SQL table", name);
+      columnTypes[i] = columnToType.get(name);
     }
   }
 
@@ -181,6 +232,11 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
     @Description("Name of the table to export to.")
     public String tableName;
+
+    @Nullable
+    @Name(Properties.DB.COLUMN_NAME_CASE)
+    @Description(COLUMN_CASE_DESCRIPTION)
+    String columnNameCase;
   }
 
   private static class DBOutputFormatProvider implements OutputFormatProvider {
