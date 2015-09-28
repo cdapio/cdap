@@ -25,6 +25,7 @@ import co.cask.cdap.PauseResumeWorklowApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithFork;
 import co.cask.cdap.WorkflowAppWithScopedParameters;
+import co.cask.cdap.WorkflowFailureInForkApp;
 import co.cask.cdap.WorkflowTokenTestPutApp;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
@@ -58,6 +59,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -1324,5 +1326,32 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     workflowProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.COMPLETED.name());
     Assert.assertEquals(1, workflowProgramRuns.size());
+  }
+
+  @Test
+  public void testWorkflowForkFailure() throws Exception {
+    Assert.assertEquals(200, deploy(WorkflowFailureInForkApp.class).getStatusLine().getStatusCode());
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, WorkflowFailureInForkApp.NAME);
+    Id.Workflow workflowId = Id.Workflow.from(appId, WorkflowFailureInForkApp.WorkflowWithFailureInFork.NAME);
+    Id.Program firstMRId = Id.Program.from(appId, ProgramType.MAPREDUCE,
+                                           WorkflowFailureInForkApp.FIRST_MAPREDUCE_NAME);
+    Id.Program secondMRId = Id.Program.from(appId, ProgramType.MAPREDUCE,
+                                            WorkflowFailureInForkApp.SECOND_MAPREDUCE_NAME);
+
+    String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInput("testWorkflowForkFailureInput"),
+                                             "outputPath", outputPath,
+                                             "mapreduce." + WorkflowFailureInForkApp.SECOND_MAPREDUCE_NAME
+                                               + ".throw.exception", "true"));
+    waitState(workflowId, ProgramRunStatus.RUNNING.name());
+    waitState(workflowId, "STOPPED");
+
+    verifyProgramRuns(workflowId, "failed");
+
+    List<RunRecord> mapReduceProgramRuns = getProgramRuns(firstMRId, ProgramRunStatus.KILLED.name());
+    Assert.assertEquals(1, mapReduceProgramRuns.size());
+
+    mapReduceProgramRuns = getProgramRuns(secondMRId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(1, mapReduceProgramRuns.size());
   }
 }
