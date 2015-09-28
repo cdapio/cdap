@@ -22,7 +22,7 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
-import org.apache.hadoop.mapreduce.lib.db.DBInputFormat;
+import org.apache.hadoop.mapreduce.lib.db.DataDrivenDBInputFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,9 +33,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
- * Class that extends {@link DBInputFormat} to load the database driver class correctly.
+ * Class that extends {@link DataDrivenDBInputFormat} to load the database driver class correctly.
  */
-public class ETLDBInputFormat extends DBInputFormat {
+public class ETLDBInputFormat extends DataDrivenDBInputFormat {
   private static final Logger LOG = LoggerFactory.getLogger(ETLDBInputFormat.class);
   private Driver driver;
   private JDBCDriverShim driverShim;
