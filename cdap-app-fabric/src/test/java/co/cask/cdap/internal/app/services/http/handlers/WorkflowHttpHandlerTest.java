@@ -1330,6 +1330,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
   @Test
   public void testWorkflowForkFailure() throws Exception {
+    // Deploy an application containing workflow with fork. Fork executes MapReduce programs
+    // 'FirstMapReduce' and 'SecondMapReduce' in parallel. Workflow is started with runtime argument
+    // "mapreduce.SecondMapReduce.throw.exception", so that the MapReduce program 'SecondMapReduce'
+    // fails. This causes the 'FirstMapReduce' program to get killed and Workflow is marked as failed.
     Assert.assertEquals(200, deploy(WorkflowFailureInForkApp.class).getStatusLine().getStatusCode());
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, WorkflowFailureInForkApp.NAME);
     Id.Workflow workflowId = Id.Workflow.from(appId, WorkflowFailureInForkApp.WorkflowWithFailureInFork.NAME);
