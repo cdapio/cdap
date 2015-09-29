@@ -84,9 +84,11 @@
                   </div>
 
                   <div class="main-rule">
-                    <select class="form-control"
-                      ng-options="validator.validationKey as validator.displayName for validator in ValidatorsCtrl.validators"
-                      ng-model="rule.validation"></select>
+                    <div class="select-wrapper">
+                      <select class="form-control"
+                        ng-options="validator.validationKey as validator.displayName for validator in ValidatorsCtrl.validators"
+                        ng-model="rule.validation"></select>
+                    </div>
                   </div>
 
                   <div class="rule-arguments"
@@ -96,12 +98,14 @@
                       <input type="text" class="form-control" ng-model="rule.arguments[argument]" placeholder="{{argument}}">
                     </div>
                     <div ng-if="!argument.startsWith('<field:1>') && argument.startsWith('<field:')">
-                      <select class="form-control" ng-model="rule.arguments[argument]">
-                        <option value="" disabled selected>{{ argument }}</option>
-                        <option ng-repeat="schema in inputSchema" value="input.{{schema.name}}">
-                          {{schema.name}}
-                        </option>
-                      </select>
+                      <div class="select-wrapper">
+                        <select class="form-control" ng-model="rule.arguments[argument]">
+                          <option value="" disabled selected>{{ argument }}</option>
+                          <option ng-repeat="schema in inputSchema" value="input.{{schema.name}}">
+                            {{schema.name}}
+                          </option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
