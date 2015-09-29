@@ -16,13 +16,13 @@
 
 var alertpromise;
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('AdaptersListController', function($scope, myAdapterApi, $stateParams, GLOBALS, mySettings, $state, $alert, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyDataSource, myAppsApi) {
+  .controller('HydratorListController', function($scope, myAdapterApi, $stateParams, GLOBALS, mySettings, $state, $alert, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyDataSource, myAppsApi) {
 
     var dataSrc = new MyDataSource($scope);
 
     var vm = this;
 
-    vm.adaptersList = [];
+    vm.pipelineList = [];
     vm.currentPage = 1;
     vm.statusCount = {
       running: 0,
@@ -44,11 +44,11 @@ angular.module(PKG.name + '.feature.hydrator')
     })
       .$promise
       .then(function success(res) {
-        vm.adaptersList = res;
+        vm.pipelineList = res;
 
         fetchDrafts();
 
-        angular.forEach(vm.adaptersList, function (app) {
+        angular.forEach(vm.pipelineList, function (app) {
           app._stats = {};
 
           fetchRunsInfo(app);
@@ -165,7 +165,7 @@ angular.module(PKG.name + '.feature.hydrator')
     }
 
     function updateStatusAppObject() {
-      angular.forEach(vm.adaptersList, function (app) {
+      angular.forEach(vm.pipelineList, function (app) {
         app._status = app._status || statusMap[app.id];
       });
     }
@@ -178,7 +178,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
               vm.statusCount.draft++;
 
-              vm.adaptersList.push({
+              vm.pipelineList.push({
                 isDraft: true,
                 name: key,
                 id: key,
@@ -208,7 +208,7 @@ angular.module(PKG.name + '.feature.hydrator')
           function success() {
             var alertObj = {
               type: 'success',
-              content: 'Adapter draft ' + draftName + ' deleted successfully'
+              content: 'Pipeline draft ' + draftName + ' deleted successfully'
             }, e;
             if (!alertpromise) {
               alertpromise = $alert(alertObj);
@@ -222,7 +222,7 @@ angular.module(PKG.name + '.feature.hydrator')
           function error() {
             var alertObj = {
               type: 'danger',
-              content: 'Adapter draft ' + draftName + ' delete failed'
+              content: 'Pipeline draft ' + draftName + ' delete failed'
             }, e;
             if (!alertpromise) {
               alertpromise = $alert(alertObj);

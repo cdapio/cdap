@@ -15,8 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('AdaptersDetailLogController', function($scope, AdapterDetail) {
- hydrator:cdap-ui/app/features/hydrator/controllers/tabs/log-ctrl.js
+  .controller('HydratorDetailLogController', function($scope, AdapterDetail) {
 
     $scope.loadingNext = true;
     var logsParams = {};

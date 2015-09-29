@@ -83,7 +83,7 @@ angular.module(PKG.name + '.feature.hydrator')
         case 'Export':
           config = angular.copy(MyAppDAGService.getConfigForBackend());
           $bootstrapModal.open({
-            templateUrl: '/assets/features/adapters/templates/create/popovers/viewconfig.html',
+            templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
             size: 'lg',
             windowClass: 'cdap-modal',
             keyboard: true,
@@ -110,7 +110,7 @@ angular.module(PKG.name + '.feature.hydrator')
                       });
                     }.bind(this),
                     function error() {
-                      console.log('ERROR: ' + 'exporting adapter failed');
+                      console.log('ERROR: ' + 'exporting pipeline failed');
                     }
                   );
               };
@@ -126,10 +126,10 @@ angular.module(PKG.name + '.feature.hydrator')
           MyAppDAGService
             .save()
             .then(
-              function sucess(adapter) {
+              function sucess(pipeline) {
                 $alert({
                   type: 'success',
-                  content: adapter + ' successfully published.'
+                  content: pipeline + ' successfully published.'
                 });
                 $state.go('hydrator.list');
               },

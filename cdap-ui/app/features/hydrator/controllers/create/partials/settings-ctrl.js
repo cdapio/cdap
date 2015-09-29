@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('AdapterSettingsController', function(MyAppDAGService, GLOBALS, EventPipe, $timeout, myHelpers, $scope) {
+  .controller('HydratorSettingsController', function(MyAppDAGService, GLOBALS, EventPipe, $timeout, myHelpers, $scope) {
     this.GLOBALS = GLOBALS;
     this.metadata = MyAppDAGService.metadata;
     this.initialCron = MyAppDAGService.metadata.template.schedule.cron || '* * * * *';

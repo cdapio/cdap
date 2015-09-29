@@ -16,7 +16,7 @@
 
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('AdapterCreateController', function($timeout, $state, $alert, myAdapterTemplatesApi, GLOBALS, CanvasFactory) {
+  .controller('HydratorCreateController', function($timeout, $state, $alert, myAdapterTemplatesApi, GLOBALS, CanvasFactory) {
 
     var vm = this;
     vm.GLOBALS = GLOBALS;

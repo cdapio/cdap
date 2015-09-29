@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('AdaptersDetailMetricsController', function($scope, AdapterDetail, MyDataSource, $filter, $state, MyMetricsQueryHelper) {
+  .controller('HydratorDetailMetricsController', function($scope, AdapterDetail, MyDataSource, $filter, $state, MyMetricsQueryHelper) {
 
     $scope.metrics = [];
 

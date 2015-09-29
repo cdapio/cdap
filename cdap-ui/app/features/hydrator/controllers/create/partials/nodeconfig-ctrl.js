@@ -62,7 +62,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
       $bootstrapModal.open({
         keyboard: false,
-        templateUrl: '/assets/features/adapters/templates/partial/confirm.html',
+        templateUrl: '/assets/features/hydrator/templates/partial/confirm.html',
         windowClass: 'modal-confirm',
         controller: ['$scope', function ($scope) {
           $scope.continue = function () {

@@ -16,9 +16,9 @@
 
 <div class="side-panel top clearfix">
   <h1 class="pull-left">My Pipelines</h1>
-  <ul ng-if="ListController.adaptersList.length > 0" class="list-unstyled list-inline pull-left">
+  <ul ng-if="LipipelineList.pipelineList.length > 0" class="list-unstyled list-inline pull-left">
     <li>
-      <span>{{ ListController.adaptersList.length }}</span>
+      <span>{{ ListController.pipelineList.length }}</span>
       <span>Total</span>
     </li>
     <li>
@@ -56,12 +56,12 @@
 </div>
 
 <div class="my-pipelines">
-  <div ng-if="ListController.adaptersList.length > 0">
+  <div ng-if="ListController.pipelineList.length > 0">
 
     <div class="table-responsive">
       <table class="table" cask-sortable>
         <thead>
-          <tr ng-class="{'sort-enabled': ListController.adaptersList.length>0}">
+          <tr ng-class="{'sort-enabled': ListController.pipelineList.length>0}">
             <th data-predicate="name">Pipeline Name</th>
             <th data-predicate="artifact.name">Type</th>
             <th data-predicate="_status">Status</th>
@@ -73,61 +73,61 @@
           </tr>
         </thead>
         <tbody>
-          <tr ng-repeat="adapter in ListController.filtered = (ListController.adaptersList | filter: ListController.searchText ) | orderBy:sortable.predicate:sortable.reverse | myPaginate:ListController.currentPage">
+          <tr ng-repeat="pipeline in ListController.filtered = (ListController.pipelineList | filter: ListController.searchText ) | orderBy:sortable.predicate:sortable.reverse | myPaginate:ListController.currentPage">
             <td>
-              <a ui-sref="hydrator.detail({ adapterId: adapter.name })" ng-if="!adapter.isDraft">
-                {{adapter.name}}
+              <a ui-sref="hydrator.detail({ adapterId: pipeline.name })" ng-if="!pipeline.isDraft">
+                {{pipeline.name}}
               </a>
-              <a ui-sref="hydrator.create.studio({ name: adapter.name })" ng-if="adapter.isDraft">
-                {{adapter.name}}
+              <a ui-sref="hydrator.create.studio({ name: pipeline.name })" ng-if="pipeline.isDraft">
+                {{pipeline.name}}
               </a>
             </td>
             <td>
-              <span ng-if="adapter.artifact.name === ListController.GLOBALS.etlBatch">
+              <span ng-if="pipeline.artifact.name === ListController.GLOBALS.etlBatch">
                 <span class="icon-ETLBatch"></span>
                 <span>ETL Batch</span>
               </span>
-              <span ng-if="adapter.artifact.name === ListController.GLOBALS.etlRealtime">
+              <span ng-if="pipeline.artifact.name === ListController.GLOBALS.etlRealtime">
                 <span class="icon-ETLRealtime"></span>
                 <span>ETL Realtime</span>
               </span>
             </td>
             <td>
               <span class="status-bubble"
-                ng-class="{'status-green': adapter._status === 'Running' ||
-                adapter._status === 'Scheduled',
-                'status-red': adapter._status !== 'Running' && adapter._status !== 'Scheduled',
-                'status-grey': adapter._status === 'Draft' }"></span>
-              <span>{{ adapter._status }}</span>
+                ng-class="{'status-green': pipeline._status === 'Running' ||
+                pipeline._status === 'Scheduled',
+                'status-red': pipeline._status !== 'Running' && pipeline._status !== 'Scheduled',
+                'status-grey': pipeline._status === 'Draft' }"></span>
+              <span>{{ pipeline._status }}</span>
             </td>
             <td>
-              <span ng-if="adapter._stats.numRuns !== 'N/A'">{{ adapter._stats.numRuns }}</span>
-              <span ng-if="adapter._stats.numRuns === 'N/A'"> &mdash; </span>
+              <span ng-if="pipeline._stats.numRuns !== 'N/A'">{{ pipeline._stats.numRuns }}</span>
+              <span ng-if="pipeline._stats.numRuns === 'N/A'"> &mdash; </span>
             </td>
             <td>
-              <span ng-if="adapter._stats.lastStartTime === 'N/A'"> &mdash; </span>
-              <span ng-if="adapter._stats.lastStartTime !== 'N/A'">{{ adapter._stats.lastStartTime * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
+              <span ng-if="pipeline._stats.lastStartTime === 'N/A'"> &mdash; </span>
+              <span ng-if="pipeline._stats.lastStartTime !== 'N/A'">{{ pipeline._stats.lastStartTime * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A' }}</span>
             </td>
             <td>
-              <span ng-if="adapter._latest">
-                {{ adapter._latest.status | lowercase }} at {{ adapter._latest.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}
+              <span ng-if="pipeline._latest">
+                {{ pipeline._latest.status | lowercase }} at {{ pipeline._latest.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}
               </span>
-              <span ng-if="!adapter._latest">
+              <span ng-if="!pipeline._latest">
                 &mdash;
               </span>
             </td>
 
             <td>
               <span class="fa fa-trash text-danger delete-draft"
-                ng-if="adapter.isDraft"
+                ng-if="pipeline.isDraft"
                 ng-click="caskConfirm()"
-                cask-confirmable="ListController.deleteDraft(adapter.name)"
+                cask-confirmable="ListController.deleteDraft(pipeline.name)"
                 data-confirmable-content="Are you sure you want to delete this draft?"
               ></span>
               <span class="fa fa-trash text-danger delete-draft"
-                ng-if="!adapter.isDraft"
+                ng-if="!pipeline.isDraft"
                 ng-click="caskConfirm()"
-                cask-confirmable="ListController.deleteApp(adapter.name)"
+                cask-confirmable="ListController.deleteApp(pipeline.name)"
                 data-confirmable-content="Are you sure you want to delete this pipeline?"
               ></span>
             </td>
@@ -142,7 +142,7 @@
 
   </div>
 
-  <div ng-if="ListController.adaptersList.length === 0">
+  <div ng-if="ListController.pipelineList.length === 0">
     <div class="well well-lg text-center">
       <h4>You haven't published any pipelines yet - start by adding one.</h4>
     </div>

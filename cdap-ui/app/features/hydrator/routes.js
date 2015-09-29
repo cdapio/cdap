@@ -35,7 +35,7 @@ angular.module(PKG.name + '.feature.hydrator')
             highlightTab: 'hydratorList'
           },
           templateUrl: '/assets/features/hydrator/templates/list.html',
-          controller: 'AdaptersListController',
+          controller: 'HydratorListController',
           controllerAs: 'ListController'
         })
 
@@ -46,8 +46,8 @@ angular.module(PKG.name + '.feature.hydrator')
             highlightTab: 'hydratorStudio'
           },
           templateUrl: '/assets/features/hydrator/templates/create.html',
-          controller: 'AdapterCreateController',
-          controllerAs: 'AdapterCreateController',
+          controller: 'HydratorCreateController',
+          controllerAs: 'HydratorCreateController',
           ncyBreadcrumb: {
             skip: true
           }
@@ -88,7 +88,7 @@ angular.module(PKG.name + '.feature.hydrator')
             views: {
               '': {
                 templateUrl: '/assets/features/hydrator/templates/create/studio.html',
-                controller: 'AdapterCreateStudioController as AdapterCreateStudioController'
+                controller: 'HydratorCreateStudioController as HydratorCreateStudioController'
               },
               'canvas@hydrator.create.studio': {
                 templateUrl: '/assets/features/hydrator/templates/create/canvas.html'
@@ -129,7 +129,7 @@ angular.module(PKG.name + '.feature.hydrator')
             label: '{{$state.params.adapterId}}'
           },
           templateUrl: '/assets/features/hydrator/templates/detail.html',
-          controller: 'AdpaterDetailController'
+          controller: 'HydratorDetailController'
         });
 
   });

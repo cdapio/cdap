@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('AdaptersDetailHistoryController', function($scope, AdapterDetail) {
+  .controller('HydratorDetailHistoryController', function($scope, AdapterDetail) {
     var params = {};
     angular.copy(AdapterDetail.params, params);
     params.scope = $scope;

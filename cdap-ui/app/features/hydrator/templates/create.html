@@ -13,8 +13,8 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<div ng-if="$state.current.name === 'hydrator.create'" ng-class="{ 'hydrator-start': !AdapterCreateController.preconfigured, 'hydrator-preconfigured': AdapterCreateController.preconfigured }">
-  <div class="row" ng-if="!AdapterCreateController.preconfigured">
+<div ng-if="$state.current.name === 'hydrator.create'" ng-class="{ 'hydrator-start': !HydratorCreateController.preconfigured, 'hydrator-preconfigured': HydratorCreateController.preconfigured }">
+  <div class="row" ng-if="!HydratorCreateController.preconfigured">
     <div class="col-lg-8 col-lg-offset-2 tiles-container">
       <div class="row">
         <div class="col-sm-12 heading text-center">
@@ -24,8 +24,8 @@
       <div class="row">
         <div class="col-sm-12 info text-center">
           <h4>
-            {{AdapterCreateController.GLOBALS.en.hydrator.wizard.welcomeMessage1}} <br/>
-            {{AdapterCreateController.GLOBALS.en.hydrator.wizard.welcomeMessage2}}
+            {{HydratorCreateController.GLOBALS.en.hydrator.wizard.welcomeMessage1}} <br/>
+            {{HydratorCreateController.GLOBALS.en.hydrator.wizard.welcomeMessage2}}
           </h4>
         </div>
       </div>
@@ -33,13 +33,13 @@
       <div class="row">
         <div class="col-sm-3">
           <div class="well well-md start-well text-center"
-            ng-click="AdapterCreateController.preconfigured = true">
+            ng-click="HydratorCreateController.preconfigured = true">
             <h4 class="select-preconfigure">Select a<br/>pre-configured<br/>pipeline</h4>
           </div>
         </div>
         <div class="col-sm-3">
           <div class="well well-md start-well text-center"
-            ng-click="AdapterCreateController.openFileBrowser()">
+            ng-click="HydratorCreateController.openFileBrowser()">
             <h4>Import a<br />Pipeline</h4>
           </div>
         </div>
@@ -61,12 +61,12 @@
     </div>
   </div>
 
-  <div class="row" ng-if="AdapterCreateController.preconfigured">
+  <div class="row" ng-if="HydratorCreateController.preconfigured">
     <div class="col-lg-8 col-lg-offset-2 tiles-container">
       <div class="col-sm-12 heading preconfigured text-center">
         <h3>
           <button class="btn btn-default pull-left"
-            ng-click="AdapterCreateController.preconfigured = false">Back</button>
+            ng-click="HydratorCreateController.preconfigured = false">Back</button>
           <span>Select a pre-configured pipeline</span>
         </h3>
       </div>
@@ -78,7 +78,7 @@
               <div class="form-group has-feedback">
                 <input type="text"
                   class="form-control"
-                  ng-model="AdapterCreateController.searchText"
+                  ng-model="HydratorCreateController.searchText"
                   placeholder="Search" />
                 <span class="fa fa-search form-control-feedback"></span>
               </div>
@@ -88,18 +88,18 @@
             <div class="col-xs-12">
               <div class="btn-group-vertical">
                 <button class="btn btn-default text-left"
-                  ng-class="{'active': AdapterCreateController.typeFilter === ''}"
-                  ng-click="AdapterCreateController.typeFilter = ''">
+                  ng-class="{'active': HydratorCreateController.typeFilter === ''}"
+                  ng-click="HydratorCreateController.typeFilter = ''">
                   All
                 </button>
                 <button class="btn btn-default text-left"
-                  ng-class="{'active': AdapterCreateController.typeFilter === AdapterCreateController.GLOBALS.etlBatch}"
-                  ng-click="AdapterCreateController.typeFilter = AdapterCreateController.GLOBALS.etlBatch">
+                  ng-class="{'active': HydratorCreateController.typeFilter === HydratorCreateController.GLOBALS.etlBatch}"
+                  ng-click="HydratorCreateController.typeFilter = HydratorCreateController.GLOBALS.etlBatch">
                   Batch
                 </button>
                 <button class="btn btn-default text-left"
-                  ng-class="{'active': AdapterCreateController.typeFilter === AdapterCreateController.GLOBALS.etlRealtime}"
-                  ng-click="AdapterCreateController.typeFilter = AdapterCreateController.GLOBALS.etlRealtime">
+                  ng-class="{'active': HydratorCreateController.typeFilter === HydratorCreateController.GLOBALS.etlRealtime}"
+                  ng-click="HydratorCreateController.typeFilter = HydratorCreateController.GLOBALS.etlRealtime">
                   Realtime
                 </button>
               </div>
@@ -110,8 +110,8 @@
         <div class="col-xs-9 template-main">
           <div class="row">
             <div class="col-xs-4"
-              ng-repeat="template in AdapterCreateController.filtered = (AdapterCreateController.templates | filter: { type: AdapterCreateController.typeFilter, $: AdapterCreateController.searchText }) | myPaginate:AdapterCreateController.currentPage:9"
-              ng-click="AdapterCreateController.selectTemplate(template)">
+              ng-repeat="template in HydratorCreateController.filtered = (HydratorCreateController.templates | filter: { type: HydratorCreateController.typeFilter, $: HydratorCreateController.searchText }) | myPaginate:HydratorCreateController.currentPage:9"
+              ng-click="HydratorCreateController.selectTemplate(template)">
               <div class="well well-md start-well template-link">
                 <h4 class="template-name">{{ template.name }}</h4>
                 <p>{{ template.description }}</p>
@@ -123,9 +123,9 @@
               </div>
             </div>
 
-            <div class="col-xs-12" ng-if="AdapterCreateController.filtered.length > 9">
-              <pagination total-items="AdapterCreateController.filtered.length"
-                ng-model="AdapterCreateController.currentPage"
+            <div class="col-xs-12" ng-if="HydratorCreateController.filtered.length > 9">
+              <pagination total-items="HydratorCreateController.filtered.length"
+                ng-model="HydratorCreateController.currentPage"
                 items-per-page="9"></pagination>
             </div>
 
@@ -139,7 +139,7 @@
   <my-file-select class="sr-only"
                   id="adapter-import-config-link"
                   data-button-icon="fa-upload"
-                  on-file-select="AdapterCreateController.importFile($files)"
+                  on-file-select="HydratorCreateController.importFile($files)"
                   data-button-label="Import">
   </my-file-select>
 </div>

@@ -56,19 +56,19 @@ angular.module(PKG.name + '.feature.hydrator')
     $scope.tabs = [
       {
         title: 'Console',
-        template: '/assets/features/adapters/templates/partial/console.html'
+        template: '/assets/features/hydrator/templates/partial/console.html'
       },
       {
         title: 'Pipeline Configuration',
-        template: '/assets/features/adapters/templates/partial/settings.html'
+        template: '/assets/features/hydrator/templates/partial/settings.html'
       },
       {
         title: 'Node Configuration',
-        template: '/assets/features/adapters/templates/partial/node-config.html'
+        template: '/assets/features/hydrator/templates/partial/node-config.html'
       },
       {
         title: 'Reference',
-        template: '/assets/features/adapters/templates/partial/reference-tab.html'
+        template: '/assets/features/hydrator/templates/partial/reference-tab.html'
       }
     ];
 

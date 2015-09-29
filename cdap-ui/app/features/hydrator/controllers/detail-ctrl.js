@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, AdapterDetail, $timeout, MyNodeConfigService) {
+  .controller('HydratorDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, AdapterDetail, $timeout, MyNodeConfigService) {
     $scope.GLOBALS = GLOBALS;
     $scope.template = rAdapterDetail.template;
     $scope.description = rAdapterDetail.description;
@@ -28,31 +28,31 @@ angular.module(PKG.name + '.feature.hydrator')
     $scope.tabs = [
       {
         title: 'Status',
-        template: '/assets/features/adapters/templates/tabs/status.html'
+        template: '/assets/features/hydrator/templates/tabs/status.html'
       },
       {
         title: 'History',
-        template: '/assets/features/adapters/templates/tabs/history.html'
+        template: '/assets/features/hydrator/templates/tabs/history.html'
       },
       {
         title: 'Log',
-        template: '/assets/features/adapters/templates/tabs/log.html'
+        template: '/assets/features/hydrator/templates/tabs/log.html'
       },
       {
         title: 'Metrics',
-        template: '/assets/features/adapters/templates/tabs/metrics.html'
+        template: '/assets/features/hydrator/templates/tabs/metrics.html'
       },
       {
         title: 'Configuration',
-        template: '/assets/features/adapters/templates/tabs/configuration.html'
+        template: '/assets/features/hydrator/templates/tabs/configuration.html'
       },
       {
         title: 'Datasets',
-        template: '/assets/features/adapters/templates/tabs/datasets.html'
+        template: '/assets/features/hydrator/templates/tabs/datasets.html'
       },
       {
         title: 'Node Configuration',
-        template: '/assets/features/adapters/templates/tabs/node-configuration.html'
+        template: '/assets/features/hydrator/templates/tabs/node-configuration.html'
       }
     ];
 
