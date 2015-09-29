@@ -23,13 +23,17 @@ angular.module(PKG.name + '.feature.hydrator')
         parent: 'ns',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
-          highlightTab: 'development'
+          highlightTab: 'hydratorList'
         },
         template: '<ui-view/>'
       })
 
         .state('hydrator.list', {
           url: '',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'hydratorList'
+          },
           templateUrl: '/assets/features/hydrator/templates/list.html',
           controller: 'AdaptersListController',
           controllerAs: 'ListController'
@@ -37,6 +41,10 @@ angular.module(PKG.name + '.feature.hydrator')
 
         .state('hydrator.create', {
           url: '/create',
+          data: {
+            authorizedRoles: MYAUTH_ROLE.all,
+            highlightTab: 'hydratorStudio'
+          },
           templateUrl: '/assets/features/hydrator/templates/create.html',
           controller: 'AdapterCreateController',
           controllerAs: 'AdapterCreateController',
@@ -104,7 +112,7 @@ angular.module(PKG.name + '.feature.hydrator')
           url: '/view/:adapterId',
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
-            highlightTab: 'development'
+            highlightTab: 'hydratorList'
           },
           resolve : {
             rAdapterDetail: function($stateParams, $q, myAdapterApi) {
