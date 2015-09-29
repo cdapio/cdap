@@ -18,6 +18,7 @@ package co.cask.cdap.notifications.inmemory;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.notifications.NotificationTest;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -33,7 +34,8 @@ public class InMemoryNotificationTest extends NotificationTest {
     CConfiguration cConf = CConfiguration.create();
     Injector injector = createInjector(
       cConf,
-      new NotificationServiceRuntimeModule().getInMemoryModules()
+      new NotificationServiceRuntimeModule().getInMemoryModules(),
+      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
     );
     startServices(injector);
   }
