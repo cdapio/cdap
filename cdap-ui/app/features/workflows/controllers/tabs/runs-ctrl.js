@@ -15,9 +15,8 @@
  */
 
 var params = {};
-var metadataParams = {};
 class WorkflowsRunsController {
-  constructor($scope, $state, $filter, rRuns, myWorkFlowApi, $bootstrapModal, rWorkflowDetail, myMetadataFactory) {
+  constructor($scope, $state, $filter, rRuns, myWorkFlowApi, $bootstrapModal, rWorkflowDetail) {
     let fFilter = $filter('filter');
     this.runs = rRuns;
     this.$scope = $scope;
@@ -25,7 +24,6 @@ class WorkflowsRunsController {
     this.myWorkFlowApi = myWorkFlowApi;
     this.runStatus = null;
     this.$bootstrapModal = $bootstrapModal;
-    this.myMetadataFactory = myMetadataFactory;
     this.description = rWorkflowDetail.description;
 
 
@@ -81,20 +79,13 @@ class WorkflowsRunsController {
     });
     this.activeTab = this.tabs[0];
 
-    metadataParams = {
+    this.metadataParams = {
       namespace: $state.params.namespace,
       appId: $state.params.appId,
       programType: 'workflows',
       programId: $state.params.programId,
       scope: $scope
     };
-    this.metadataAddOpen = false;
-    this.metadataTags = [];
-
-    this.myMetadataFactory.getProgramMetadata(metadataParams)
-      .then( res => {
-        this.metadataTags = res;
-      });
 
   }
 
@@ -160,23 +151,9 @@ class WorkflowsRunsController {
     });
   }
 
-  addMetadata() {
-    this.myMetadataFactory.addProgramMetadata(this.tag, metadataParams)
-      .then( res => {
-        this.metadataTags = res;
-        this.tag = '';
-      });
-  }
-
-  deleteMetadata(tag) {
-    this.myMetadataFactory.deleteProgramMetadata(tag, metadataParams)
-      .then( res => {
-        this.metadataTags = res;
-      });
-  }
 }
 
-WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns', 'myWorkFlowApi', '$bootstrapModal', 'rWorkflowDetail', 'myMetadataFactory'];
+WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns', 'myWorkFlowApi', '$bootstrapModal', 'rWorkflowDetail'];
 
 angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkflowsRunsController', WorkflowsRunsController);
