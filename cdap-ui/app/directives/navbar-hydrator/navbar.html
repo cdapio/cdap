@@ -16,7 +16,7 @@
 
 <div class="navbar-header clearfix">
   <a class="navbar-brand"
-     ui-sref="adapters.list">
+     ui-sref="hydrator.list">
      <strong>Cask Hydrator V1.0</strong>
   </a>
 </div>
@@ -24,12 +24,12 @@
 <nav>
   <ul class="nav navbar-nav">
     <li>
-      <a ui-sref="adapters.list" ng-class="{'active': $state.is('adaters.list') || $state.is('adapters.detail')}">
+      <a ui-sref="hydrator.list" ng-class="{'active': $state.is('adaters.list') || $state.is('hydrator.detail')}">
         <span> My Pipelines </span>
       </a>
     </li>
     <li>
-      <a ui-sref="adapters.create" ui-sref-active="active">
+      <a ui-sref="hydrator.create" ui-sref-active="active">
         <span> Create Pipeline </span>
       </a>
     </li>

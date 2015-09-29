@@ -25,7 +25,7 @@ angular.module(PKG.name + '.feature.apps')
 
     this.cloneAdapter = function() {
       if (this.config) {
-        $state.go('adapters.create', {
+        $state.go('hydrator.create', {
           data: this.config,
           type: this.config.artifact.name
         });
