@@ -24,12 +24,12 @@
 <nav>
   <ul class="nav navbar-nav">
     <li>
-      <a ui-sref="hydrator.list" ng-class="{'active': $state.is('adaters.list') || $state.is('hydrator.detail')}">
+      <a ui-sref="hydrator.list" ng-class="{active: highlightTab == 'hydratorList'}">
         <span> My Pipelines </span>
       </a>
     </li>
     <li>
-      <a ui-sref="hydrator.create" ui-sref-active="active">
+      <a ui-sref="hydrator.create" ng-class="{active: highlightTab == 'hydratorStudio'}" ui-sref-active="active">
         <span> Create Pipeline </span>
       </a>
     </li>
