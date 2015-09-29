@@ -25,6 +25,12 @@ of the FileSet to a database table where it can be served to your users.
 
 **columns:** Comma-separated list of columns in the specified table to export to.
 
+**columnCase:** Sets the case of the column names returned by the column check query.
+Possible options are ``upper`` or ``lower``. By default or for any other input, the column names are not modified and
+the names returned from the database are used as-is. Note that setting this property provides predictability
+of column name cases across different databases but might result in column name conflicts if multiple column
+names are the same when the case is ignored. (Optional)
+
 .. connection information from DBConfig.java
 
 **connectionString:** JDBC connection string including database name.
