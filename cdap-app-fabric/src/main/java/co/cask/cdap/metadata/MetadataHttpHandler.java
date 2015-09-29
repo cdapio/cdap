@@ -526,7 +526,11 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
       throw new BadRequestException("Unable to read business metadata from request.");
     }
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
-      return GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
+      Map<String, String> metadata = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
+      if (metadata == null) {
+        throw new BadRequestException("Null metadata was read from request.");
+      }
+      return metadata;
     }
   }
 
@@ -537,6 +541,9 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
       List<String> toReturn = GSON.fromJson(reader, LIST_STRING_TYPE);
+      if (toReturn == null) {
+        throw new BadRequestException("Null value was read from request.");
+      }
       return toReturn.toArray(new String[toReturn.size()]);
     }
   }
