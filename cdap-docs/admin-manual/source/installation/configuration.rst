@@ -395,15 +395,15 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
    - Using Yum (on one line)::
 
        $ sudo yum install cdap cdap-gateway \
-             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
-             cdap-hbase-compat-1.0 cdap-hbase-compat-1.0-cdh \
+             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 cdap-hbase-compat-1.0 \
+             cdap-hbase-compat-1.0-cdh cdap-hbase-compat-1.1 \
              cdap-kafka cdap-master cdap-security cdap-ui
 
    - Using APT (on one line)::
 
        $ sudo apt-get install cdap cdap-gateway \
-             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 \
-             cdap-hbase-compat-1.0 cdap-hbase-compat-1.0-cdh \
+             cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 cdap-hbase-compat-1.0 \
+             cdap-hbase-compat-1.0-cdh cdap-hbase-compat-1.1 \
              cdap-kafka cdap-master cdap-security cdap-ui
 
 #. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
