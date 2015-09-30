@@ -15,67 +15,22 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdaptersDetailLogController', function($scope, AdapterDetail, $timeout) {
+  .controller('AdaptersDetailLogController', function($scope, AdapterDetail) {
 
     $scope.loadingNext = true;
     var logsParams = {};
     var runsParams = {};
+    $scope.logsGenericParams = {};
     angular.copy(AdapterDetail.params, runsParams);
     angular.copy(AdapterDetail.logsParams, logsParams);
+    angular.copy(AdapterDetail.logsGenericParams, $scope.logsGenericParams);
     logsParams.scope = $scope;
 
     AdapterDetail.logsApi.pollLatestRun(logsParams)
       .$promise
       .then(function (runs) {
         if (runs.length === 0) { return; }
-
-        logsParams.runId = runs[0].runid;
-
-        AdapterDetail.logsApi.prevLogs(angular.extend({max: 50}, logsParams))
-          .$promise
-          .then(function (logs) {
-            $scope.logs = logs;
-            $scope.loadingNext = false;
-          });
+        $scope.logsGenericParams.runId = runs[0].runid;
       });
-
-
-    $scope.loadNextLogs = function () {
-      if ($scope.loadingNext) {
-        return;
-      }
-
-      $scope.loadingNext = true;
-      logsParams.fromOffset = ($scope.logs[$scope.logs.length-1] && $scope.logs[$scope.logs.length-1].offset);
-
-      AdapterDetail.logsApi.nextLogs(angular.extend({max: 50}, logsParams))
-        .$promise
-        .then(function (res) {
-          $scope.logs = _.uniq($scope.logs.concat(res));
-          $scope.loadingNext = false;
-        });
-    };
-
-    $scope.loadPrevLogs = function () {
-      if ($scope.loadingPrev) {
-        return;
-      }
-
-      $scope.loadingPrev = true;
-      logsParams.fromOffset = ($scope.logs[0] && $scope.logs[0].offset);
-
-      AdapterDetail.logsApi.prevLogs(logsParams)
-        .$promise
-        .then(function (res) {
-          $scope.logs = _.uniq(res.concat($scope.logs));
-          $scope.loadingPrev = false;
-
-          $timeout(function() {
-            var container = angular.element(document.querySelector('[infinite-scroll]'))[0];
-            var logItem = angular.element(document.getElementById(logsParams.fromOffset))[0];
-            container.scrollTop = logItem.offsetTop;
-          });
-        });
-    };
 
   });
