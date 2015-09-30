@@ -122,6 +122,17 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
     DashboardHelper.startPollDashboard($scope.currentBoard);
   };
 
+  $scope.$watch('timeOptions.durationMs', function() {
+    if ($scope.liveDashboard) {
+      $scope.updateWithFrequency();
+    }
+  });
+  $scope.updateRefreshInterval =  function() {
+    if ($scope.liveDashboard) {
+      $scope.updateWithFrequency();
+    }
+  };
+
   $scope.stopPolling = function() {
     $scope.liveDashboard = false;
     applyOnWidgets(rDashboardsModel, function (widget) {
