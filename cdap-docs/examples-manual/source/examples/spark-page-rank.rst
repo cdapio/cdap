@@ -126,8 +126,8 @@ You can also use the Command Line Interface::
 
   $ cdap-cli.sh call service SparkPageRank.SparkPageRankService POST 'rank' body '{"url":"http://example.com/page1"}'
 
-Similarly, to query the *rankscount* ObjectStore using the ``SparkPageRankService``. For example, to get the total number of
-pages with a page rank of 10 you can do the following:
+Similarly, to query the *rankscount* ObjectStore using the ``SparkPageRankService`` and get the total number of
+pages with a page rank of 10, you can do the following:
 
 curl::
 
