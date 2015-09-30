@@ -33,6 +33,8 @@ angular.module(PKG.name + '.feature.adapters')
         appId: app.name
       };
 
+      publicObj.logsGenericParams = angular.copy(publicObj.logsParams);
+
       var config;
       try {
         config = JSON.parse(app.configuration);
@@ -52,9 +54,11 @@ angular.module(PKG.name + '.feature.adapters')
 
         angular.forEach(app.programs, function (program) {
           if (program.type === 'Workflow') {
-          publicObj.params.workflowId = program.id;
+            publicObj.params.workflowId = program.id;
           } else if (program.type === 'Mapreduce') {
             publicObj.logsParams.mapreduceId = program.id;
+            publicObj.logsGenericParams.programId = program.id;
+            publicObj.logsGenericParams.programType = 'mapreduce';
           }
         });
 
@@ -66,6 +70,8 @@ angular.module(PKG.name + '.feature.adapters')
           if (program.type === 'Worker') {
             publicObj.params.workerId = program.id;
             publicObj.logsParams.workerId = program.id;
+            publicObj.logsGenericParams.programType = 'workers';
+            publicObj.logsGenericParams.programId = program.id;
           }
         });
       }
