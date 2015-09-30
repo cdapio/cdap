@@ -25,11 +25,12 @@ import co.cask.cdap.etl.batch.config.ETLBatchConfig;
  */
 public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
   public static final String SCHEDULE_NAME = "etlWorkflow";
+  public static final String DEFAULT_DESCRIPTION = "Batch Extract-Transform-Load (ETL) Application";
 
   @Override
   public void configure() {
     ETLBatchConfig config = getConfig();
-    setDescription("Batch Extract-Transform-Load (ETL) Template");
+    setDescription(DEFAULT_DESCRIPTION);
     addMapReduce(new ETLMapReduce(config));
     addWorkflow(new ETLWorkflow(config));
     scheduleWorkflow(Schedules.createTimeSchedule(SCHEDULE_NAME, "batch etl schedule", config.getSchedule()),
