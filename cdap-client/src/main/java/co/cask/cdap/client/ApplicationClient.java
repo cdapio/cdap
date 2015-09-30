@@ -79,8 +79,7 @@ public class ApplicationClient {
   }
 
   public ApplicationClient(ClientConfig config) {
-    this.config = config;
-    this.restClient = new RESTClient(config);
+    this(config, new RESTClient(config));
   }
 
   /**

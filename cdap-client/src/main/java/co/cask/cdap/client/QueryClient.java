@@ -33,12 +33,10 @@ import javax.inject.Inject;
 @Beta
 public class QueryClient {
 
-  private final ClientConfig config;
   private final ExploreClient exploreClient;
 
   @Inject
   public QueryClient(final ClientConfig config) {
-    this.config = config;
 
     Supplier<String> hostname = new Supplier<String>() {
       @Override

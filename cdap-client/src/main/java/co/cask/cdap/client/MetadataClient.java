@@ -26,6 +26,7 @@ import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import com.google.common.reflect.TypeToken;
@@ -62,8 +63,7 @@ public class MetadataClient {
   }
 
   public MetadataClient(ClientConfig config) {
-    this.config = config;
-    this.restClient = new RESTClient(config);
+    this(config, new RESTClient(config));
   }
 
   /**
@@ -145,15 +145,7 @@ public class MetadataClient {
 
   private Set<MetadataRecord> getMetadata(Id.NamespacedId namespacedId, String path)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    URL url = config.resolveNamespacedURLV3(namespacedId.getNamespace(), path);
-    HttpResponse response = restClient.execute(HttpRequest.get(url).build(), config.getAccessToken(),
-                                               HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new BadRequestException(response.getResponseBodyAsString());
-    }
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespacedId);
-    }
+    HttpResponse response = makeRequest(namespacedId, path, HttpMethod.GET);
     return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_TYPE);
   }
 
@@ -208,16 +200,7 @@ public class MetadataClient {
 
   private void addTags(Id.NamespacedId namespacedId, String path, Set<String> tags)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    URL url = config.resolveNamespacedURLV3(namespacedId.getNamespace(), path);
-    HttpResponse response =
-      restClient.execute(HttpRequest.post(url).withBody(GSON.toJson(tags)).build(), config.getAccessToken(),
-                         HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new BadRequestException(response.getResponseBodyAsString());
-    }
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespacedId);
-    }
+    makeRequest(namespacedId, path, HttpMethod.POST, GSON.toJson(tags));
   }
 
   /**
@@ -271,16 +254,7 @@ public class MetadataClient {
 
   private void addProperties(Id.NamespacedId namespacedId, String path, Map<String, String> properties)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    URL url = config.resolveNamespacedURLV3(namespacedId.getNamespace(), path);
-    HttpResponse response =
-      restClient.execute(HttpRequest.post(url).withBody(GSON.toJson(properties)).build(), config.getAccessToken(),
-                         HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new BadRequestException(response.getResponseBodyAsString());
-    }
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespacedId);
-    }
+    makeRequest(namespacedId, path, HttpMethod.POST, GSON.toJson(properties));
   }
 
   /**
@@ -337,15 +311,7 @@ public class MetadataClient {
     if (propertyToRemove != null) {
       path = path + "/" + propertyToRemove;
     }
-    URL tagURL = config.resolveNamespacedURLV3(namespacedId.getNamespace(), path);
-    HttpResponse response = restClient.execute(HttpRequest.delete(tagURL).build(), config.getAccessToken(),
-                                               HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new BadRequestException(response.getResponseBodyAsString());
-    }
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespacedId);
-    }
+    makeRequest(namespacedId, path, HttpMethod.DELETE);
   }
 
   /**
@@ -402,15 +368,7 @@ public class MetadataClient {
     if (tagToRemove != null) {
       path = path + "/" + tagToRemove;
     }
-    URL tagURL = config.resolveNamespacedURLV3(namespacedId.getNamespace(), path);
-    HttpResponse response = restClient.execute(HttpRequest.delete(tagURL).build(), config.getAccessToken(),
-                                               HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
-    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
-      throw new BadRequestException(response.getResponseBodyAsString());
-    }
-    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException(namespacedId);
-    }
+    makeRequest(namespacedId, path, HttpMethod.DELETE);
   }
 
  /**
@@ -421,7 +379,7 @@ public class MetadataClient {
   public void removeMetadata(Id.Application appId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     String path = String.format("apps/%s/metadata", appId.getId());
-    removeMetadata(appId, path);
+    makeRequest(appId, path, HttpMethod.DELETE);
   }
 
   /**
@@ -432,7 +390,7 @@ public class MetadataClient {
   public void removeMetadata(Id.DatasetInstance datasetInstance)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     String path = String.format("datasets/%s/metadata", datasetInstance.getId());
-    removeMetadata(datasetInstance, path);
+    makeRequest(datasetInstance, path, HttpMethod.DELETE);
   }
 
   /**
@@ -443,7 +401,7 @@ public class MetadataClient {
   public void removeMetadata(Id.Stream streamId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     String path = String.format("streams/%s/metadata", streamId.getId());
-    removeMetadata(streamId, path);
+    makeRequest(streamId, path, HttpMethod.DELETE);
   }
 
   /**
@@ -455,13 +413,24 @@ public class MetadataClient {
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     String path = String.format("apps/%s/%s/%s/metadata",
                                 programId.getApplicationId(), programId.getType().getCategoryName(), programId.getId());
-    removeMetadata(programId, path);
+    makeRequest(programId, path, HttpMethod.DELETE);
   }
 
-  private void removeMetadata(Id.NamespacedId namespacedId, String path)
+  private HttpResponse makeRequest(Id.NamespacedId namespacedId, String path, HttpMethod httpMethod)
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+    return makeRequest(namespacedId, path, httpMethod, null);
+  }
+
+  // makes a request and throws BadRequestException or NotFoundException, as appropriate
+  private HttpResponse makeRequest(Id.NamespacedId namespacedId, String path,
+                                   HttpMethod httpMethod, @Nullable String body)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    URL tagURL = config.resolveNamespacedURLV3(namespacedId.getNamespace(), path);
-    HttpResponse response = restClient.execute(HttpRequest.delete(tagURL).build(), config.getAccessToken(),
+    URL url = config.resolveNamespacedURLV3(namespacedId.getNamespace(), path);
+    HttpRequest.Builder builder = HttpRequest.builder(httpMethod, url);
+    if (body != null) {
+      builder.withBody(body);
+    }
+    HttpResponse response = restClient.execute(builder.build(), config.getAccessToken(),
                                                HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
@@ -469,5 +438,6 @@ public class MetadataClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(namespacedId);
     }
+    return response;
   }
 }

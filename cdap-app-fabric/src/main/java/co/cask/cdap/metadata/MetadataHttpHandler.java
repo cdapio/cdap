@@ -27,6 +27,7 @@ import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -521,30 +522,30 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   private Map<String, String> readMetadata(HttpRequest request) throws BadRequestException, IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
-      throw new BadRequestException("Unable to read business metadata from request.");
-    }
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
-      Map<String, String> metadata = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
-      if (metadata == null) {
-        throw new BadRequestException("Null metadata was read from request.");
+    try {
+      ChannelBuffer content = request.getContent();
+      Preconditions.checkArgument(content.readable());
+      try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
+        Map<String, String> metadata = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
+        Preconditions.checkNotNull(metadata);
+        return metadata;
       }
-      return metadata;
+    } catch (Throwable t) {
+      throw new BadRequestException("Unable to read business metadata from the request.", t);
     }
   }
 
   private String[] readArray(HttpRequest request) throws BadRequestException, IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
-      throw new BadRequestException("Unable to read a list of keys from the request.");
-    }
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
-      List<String> toReturn = GSON.fromJson(reader, LIST_STRING_TYPE);
-      if (toReturn == null) {
-        throw new BadRequestException("Null value was read from request.");
+    try {
+      ChannelBuffer content = request.getContent();
+      Preconditions.checkArgument(content.readable());
+      try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
+        List<String> toReturn = GSON.fromJson(reader, LIST_STRING_TYPE);
+        Preconditions.checkNotNull(toReturn);
+        return toReturn.toArray(new String[toReturn.size()]);
       }
-      return toReturn.toArray(new String[toReturn.size()]);
+    } catch (Throwable t) {
+      throw new BadRequestException("Unable to read a list of keys from the request.", t);
     }
   }
 
