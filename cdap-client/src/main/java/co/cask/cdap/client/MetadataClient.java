@@ -95,8 +95,7 @@ public class MetadataClient {
    */
   public Set<MetadataRecord> getMetadata(Id.Application appId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("apps/%s/metadata", appId.getId());
-    return getMetadata(appId, path);
+    return getMetadata(appId, constructPath(appId));
   }
 
   /**
@@ -105,8 +104,7 @@ public class MetadataClient {
    */
   public Set<MetadataRecord> getMetadata(Id.DatasetInstance datasetInstance)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("datasets/%s/metadata", datasetInstance.getId());
-    return getMetadata(datasetInstance, path);
+    return getMetadata(datasetInstance, constructPath(datasetInstance));
   }
 
   /**
@@ -115,8 +113,7 @@ public class MetadataClient {
    */
   public Set<MetadataRecord> getMetadata(Id.Stream streamId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("streams/%s/metadata", streamId.getId());
-    return getMetadata(streamId, path);
+    return getMetadata(streamId, constructPath(streamId));
   }
 
   /**
@@ -125,9 +122,7 @@ public class MetadataClient {
    */
   public Set<MetadataRecord> getMetadata(Id.Program programId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("apps/%s/%s/%s/metadata",
-                                programId.getApplicationId(), programId.getType().getCategoryName(), programId.getId());
-    return getMetadata(programId, path);
+    return getMetadata(programId, constructPath(programId));
   }
 
   /**
@@ -136,15 +131,12 @@ public class MetadataClient {
    */
   public Set<MetadataRecord> getMetadata(Id.Run runId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    Id.Program programId = runId.getProgram();
-    String path = String.format("apps/%s/%s/%s/runs/%s/metadata",
-                                programId.getApplicationId(), programId.getType().getCategoryName(), programId.getId(),
-                                runId.getId());
-    return getMetadata(runId, path);
+    return getMetadata(runId, constructPath(runId));
   }
 
-  private Set<MetadataRecord> getMetadata(Id.NamespacedId namespacedId, String path)
+  private Set<MetadataRecord> getMetadata(Id.NamespacedId namespacedId, String entityPath)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    String path = String.format("%s/metadata", entityPath);
     HttpResponse response = makeRequest(namespacedId, path, HttpMethod.GET);
     return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_TYPE);
   }
@@ -157,8 +149,7 @@ public class MetadataClient {
    */
   public void addTags(Id.Application appId, Set<String> tags)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("apps/%s/metadata/tags", appId.getId());
-    addTags(appId, path, tags);
+    addTags(appId, constructPath(appId), tags);
   }
 
   /**
@@ -169,8 +160,7 @@ public class MetadataClient {
    */
   public void addTags(Id.DatasetInstance datasetInstance, Set<String> tags)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("datasets/%s/metadata/tags", datasetInstance.getId());
-    addTags(datasetInstance, path, tags);
+    addTags(datasetInstance, constructPath(datasetInstance), tags);
   }
 
   /**
@@ -181,8 +171,7 @@ public class MetadataClient {
    */
   public void addTags(Id.Stream streamId, Set<String> tags)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("streams/%s/metadata/tags", streamId.getId());
-    addTags(streamId, path, tags);
+    addTags(streamId, constructPath(streamId), tags);
   }
 
   /**
@@ -193,13 +182,12 @@ public class MetadataClient {
    */
   public void addTags(Id.Program programId, Set<String> tags)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("apps/%s/%s/%s/metadata/tags",
-                                programId.getApplicationId(), programId.getType().getCategoryName(), programId.getId());
-    addTags(programId, path, tags);
+    addTags(programId, constructPath(programId), tags);
   }
 
-  private void addTags(Id.NamespacedId namespacedId, String path, Set<String> tags)
+  private void addTags(Id.NamespacedId namespacedId, String entityPath, Set<String> tags)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    String path = String.format("%s/metadata/tags", entityPath);
     makeRequest(namespacedId, path, HttpMethod.POST, GSON.toJson(tags));
   }
 
@@ -211,8 +199,7 @@ public class MetadataClient {
    */
   public void addProperties(Id.Application appId, Map<String, String> properties)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("apps/%s/metadata/properties", appId.getId());
-    addProperties(appId, path, properties);
+    addProperties(appId, constructPath(appId), properties);
   }
 
   /**
@@ -223,8 +210,7 @@ public class MetadataClient {
    */
   public void addProperties(Id.DatasetInstance datasetInstance, Map<String, String> properties)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("datasets/%s/metadata/properties", datasetInstance.getId());
-    addProperties(datasetInstance, path, properties);
+    addProperties(datasetInstance, constructPath(datasetInstance), properties);
   }
 
   /**
@@ -235,8 +221,7 @@ public class MetadataClient {
    */
   public void addProperties(Id.Stream streamId, Map<String, String> properties)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("streams/%s/metadata/properties", streamId.getId());
-    addProperties(streamId, path, properties);
+    addProperties(streamId, constructPath(streamId), properties);
   }
 
   /**
@@ -247,13 +232,12 @@ public class MetadataClient {
    */
   public void addProperties(Id.Program programId, Map<String, String> properties)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("apps/%s/%s/%s/metadata/properties",
-                                programId.getApplicationId(), programId.getType().getCategoryName(), programId.getId());
-    addProperties(programId, path, properties);
+    addProperties(programId, constructPath(programId), properties);
   }
 
-  private void addProperties(Id.NamespacedId namespacedId, String path, Map<String, String> properties)
+  private void addProperties(Id.NamespacedId namespacedId, String entityPath, Map<String, String> properties)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    String path = String.format("%s/metadata/properties", entityPath);
     makeRequest(namespacedId, path, HttpMethod.POST, GSON.toJson(properties));
   }
 
@@ -265,8 +249,7 @@ public class MetadataClient {
    */
   public void removeProperties(Id.Application appId, @Nullable String propertyToRemove)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("apps/%s/metadata/properties", appId.getId());
-    removeProperties(appId, path, propertyToRemove);
+    removeProperties(appId, constructPath(appId), propertyToRemove);
   }
 
   /**
@@ -277,8 +260,7 @@ public class MetadataClient {
    */
   public void removeProperties(Id.DatasetInstance datasetInstance, @Nullable String propertyToRemove)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("datasets/%s/metadata/properties", datasetInstance.getId());
-    removeProperties(datasetInstance, path, propertyToRemove);
+    removeProperties(datasetInstance, constructPath(datasetInstance), propertyToRemove);
   }
 
   /**
@@ -289,8 +271,7 @@ public class MetadataClient {
    */
   public void removeProperties(Id.Stream streamId, @Nullable String propertyToRemove)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("streams/%s/metadata/properties", streamId.getId());
-    removeProperties(streamId, path, propertyToRemove);
+    removeProperties(streamId, constructPath(streamId), propertyToRemove);
   }
 
   /**
@@ -301,13 +282,12 @@ public class MetadataClient {
    */
   public void removeProperties(Id.Program programId, @Nullable String propertyToRemove)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("apps/%s/%s/%s/metadata/properties",
-                                programId.getApplicationId(), programId.getType().getCategoryName(), programId.getId());
-    removeProperties(programId, path, propertyToRemove);
+    removeProperties(programId, constructPath(programId), propertyToRemove);
   }
 
-  private void removeProperties(Id.NamespacedId namespacedId, String path, @Nullable String propertyToRemove)
+  private void removeProperties(Id.NamespacedId namespacedId, String entityPath, @Nullable String propertyToRemove)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    String path = String.format("%s/metadata/properties", entityPath);
     if (propertyToRemove != null) {
       path = path + "/" + propertyToRemove;
     }
@@ -322,8 +302,7 @@ public class MetadataClient {
    */
   public void removeTags(Id.Application appId, @Nullable String tagToRemove)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("apps/%s/metadata/tags", appId.getId());
-    removeTags(appId, path, tagToRemove);
+    removeTags(appId, constructPath(appId), tagToRemove);
   }
 
   /**
@@ -334,8 +313,7 @@ public class MetadataClient {
    */
   public void removeTags(Id.DatasetInstance datasetInstance, @Nullable String tagToRemove)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("datasets/%s/metadata/tags", datasetInstance.getId());
-    removeTags(datasetInstance, path, tagToRemove);
+    removeTags(datasetInstance, constructPath(datasetInstance), tagToRemove);
   }
 
   /**
@@ -346,8 +324,7 @@ public class MetadataClient {
    */
   public void removeTags(Id.Stream streamId, @Nullable String tagToRemove)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("streams/%s/metadata/tags", streamId.getId());
-    removeTags(streamId, path, tagToRemove);
+    removeTags(streamId, constructPath(streamId), tagToRemove);
   }
 
   /**
@@ -358,13 +335,12 @@ public class MetadataClient {
    */
   public void removeTags(Id.Program programId, @Nullable String tagToRemove)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("apps/%s/%s/%s/metadata/tags",
-                                programId.getApplicationId(), programId.getType().getCategoryName(), programId.getId());
-    removeTags(programId, path, tagToRemove);
+    removeTags(programId, constructPath(programId), tagToRemove);
   }
 
-  private void removeTags(Id.NamespacedId namespacedId, String path, @Nullable String tagToRemove)
+  private void removeTags(Id.NamespacedId namespacedId, String entityPath, @Nullable String tagToRemove)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    String path = String.format("%s/metadata/tags", entityPath);
     if (tagToRemove != null) {
       path = path + "/" + tagToRemove;
     }
@@ -378,8 +354,7 @@ public class MetadataClient {
   */
   public void removeMetadata(Id.Application appId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("apps/%s/metadata", appId.getId());
-    makeRequest(appId, path, HttpMethod.DELETE);
+    removeMetadata(appId, constructPath(appId));
   }
 
   /**
@@ -389,8 +364,7 @@ public class MetadataClient {
    */
   public void removeMetadata(Id.DatasetInstance datasetInstance)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("datasets/%s/metadata", datasetInstance.getId());
-    makeRequest(datasetInstance, path, HttpMethod.DELETE);
+    removeMetadata(datasetInstance, constructPath(datasetInstance));
   }
 
   /**
@@ -400,8 +374,7 @@ public class MetadataClient {
    */
   public void removeMetadata(Id.Stream streamId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("streams/%s/metadata", streamId.getId());
-    makeRequest(streamId, path, HttpMethod.DELETE);
+    removeMetadata(streamId, constructPath(streamId));
   }
 
   /**
@@ -411,9 +384,13 @@ public class MetadataClient {
    */
   public void removeMetadata(Id.Program programId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    String path = String.format("apps/%s/%s/%s/metadata",
-                                programId.getApplicationId(), programId.getType().getCategoryName(), programId.getId());
-    makeRequest(programId, path, HttpMethod.DELETE);
+    removeMetadata(programId, constructPath(programId));
+  }
+
+  private void removeMetadata(Id.NamespacedId namespacedId, String entityPath)
+    throws UnauthorizedException, BadRequestException, NotFoundException, IOException {
+    String path = String.format("%s/metadata", entityPath);
+    makeRequest(namespacedId, path, HttpMethod.DELETE);
   }
 
   private HttpResponse makeRequest(Id.NamespacedId namespacedId, String path, HttpMethod httpMethod)
@@ -439,5 +416,31 @@ public class MetadataClient {
       throw new NotFoundException(namespacedId);
     }
     return response;
+  }
+
+  // construct a component of the path, specific to each entity type
+
+  private String constructPath(Id.Application appId) {
+    return String.format("apps/%s", appId.getId());
+  }
+
+  private String constructPath(Id.Program programId) {
+    return String.format("apps/%s/%s/%s",
+                         programId.getApplicationId(), programId.getType().getCategoryName(), programId.getId());
+  }
+
+  private String constructPath(Id.Run runId) {
+    Id.Program programId = runId.getProgram();
+    return String.format("apps/%s/%s/%s/runs/%s",
+                         programId.getApplicationId(), programId.getType().getCategoryName(), programId.getId(),
+                         runId.getId());
+  }
+
+  private String constructPath(Id.DatasetInstance datasetInstance) {
+    return String.format("datasets/%s", datasetInstance.getId());
+  }
+
+  private String constructPath(Id.Stream streamId) {
+    return String.format("streams/%s", streamId.getId());
   }
 }

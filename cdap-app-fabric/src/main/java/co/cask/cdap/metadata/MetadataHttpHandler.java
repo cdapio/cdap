@@ -37,7 +37,6 @@ import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
@@ -521,7 +520,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                          String.format("Tag %s for stream %s deleted successfully.", tag, stream));
   }
 
-  private Map<String, String> readMetadata(HttpRequest request) throws BadRequestException, IOException {
+  private Map<String, String> readMetadata(HttpRequest request) throws BadRequestException {
     try {
       ChannelBuffer content = request.getContent();
       Preconditions.checkArgument(content.readable());
@@ -535,7 +534,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  private String[] readArray(HttpRequest request) throws BadRequestException, IOException {
+  private String[] readArray(HttpRequest request) throws BadRequestException {
     try {
       ChannelBuffer content = request.getContent();
       Preconditions.checkArgument(content.readable());
