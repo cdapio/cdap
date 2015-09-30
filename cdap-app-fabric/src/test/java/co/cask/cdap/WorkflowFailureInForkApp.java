@@ -24,7 +24,9 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.internal.app.runtime.batch.WordCount;
 import org.apache.hadoop.mapreduce.Job;
 
+import java.io.File;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * App to test failure in the Workflow fork.
@@ -89,7 +91,24 @@ public class WorkflowFailureInForkApp extends AbstractApplication {
         return;
       }
       if (args.containsKey("throw.exception")) {
+        File file = new File(args.get("sync.file"));
+        while (!file.exists()) {
+          TimeUnit.MILLISECONDS.sleep(50);
+        }
+
+        file = new File(args.get("wait.file"));
+        //noinspection ResultOfMethodCallIgnored
+        file.createNewFile();
         throw new RuntimeException("Exception in beforeSubmit()");
+      }
+      File file = new File(args.get("sync.file"));
+      //noinspection ResultOfMethodCallIgnored
+      file.createNewFile();
+
+      // Wait till the SecondMapReduce program is ready to throw an exception
+      file = new File(args.get("wait.file"));
+      while (!file.exists()) {
+        TimeUnit.MILLISECONDS.sleep(50);
       }
     }
   }

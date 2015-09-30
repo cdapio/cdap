@@ -1245,8 +1245,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    List<RunRecord> workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(1, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed");
 
     List<RunRecord> mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
     Assert.assertEquals(1, mapReduceProgramRuns.size());
@@ -1260,8 +1259,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(2, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed", 1);
 
     mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
     Assert.assertEquals(2, mapReduceProgramRuns.size());
@@ -1275,8 +1273,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(3, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed", 2);
 
     mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
     Assert.assertEquals(3, mapReduceProgramRuns.size());
@@ -1290,8 +1287,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(4, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed", 3);
 
     mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
     Assert.assertEquals(4, mapReduceProgramRuns.size());
@@ -1303,8 +1299,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(5, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed", 4);
 
     mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.COMPLETED.name());
     Assert.assertEquals(1, mapReduceProgramRuns.size());
@@ -1321,11 +1316,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
-    Assert.assertEquals(1, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "completed");
 
-    workflowProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.COMPLETED.name());
-    Assert.assertEquals(1, workflowProgramRuns.size());
+    sparkProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.COMPLETED.name());
+    Assert.assertEquals(1, sparkProgramRuns.size());
   }
 
   @Test
@@ -1343,8 +1337,12 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                             WorkflowFailureInForkApp.SECOND_MAPREDUCE_NAME);
 
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    File fileToSync = new File(tmpFolder.newFolder() + "/sync.file");
+    File fileToWait = new File(tmpFolder.newFolder() + "/wait.file");
     startProgram(workflowId, ImmutableMap.of("inputPath", createInput("testWorkflowForkFailureInput"),
                                              "outputPath", outputPath,
+                                             "sync.file", fileToSync.getAbsolutePath(),
+                                             "wait.file", fileToWait.getAbsolutePath(),
                                              "mapreduce." + WorkflowFailureInForkApp.SECOND_MAPREDUCE_NAME
                                                + ".throw.exception", "true"));
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
