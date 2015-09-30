@@ -201,3 +201,27 @@
     font-weight: @font-weight;
   }
 }
+
+.select-wrapper(@background-color: white, @color: @cdap-header, @right: 10px) {
+  background-color: @background-color;
+  display: inline-block;
+  position: relative;
+  width: 100%;
+  &:after {
+    color: @color;
+    content:"\f0d7";
+    font-family:'FontAwesome';
+    position: absolute;
+    top: 25%;
+    right: @right;
+    z-index: 5;
+  }
+  select.form-control {
+    background-color: transparent;
+    padding-right: 20px;
+    position: relative;
+    z-index: 10;
+    .appearance();
+    color: @color;
+  }
+}
