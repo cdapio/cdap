@@ -20,7 +20,7 @@
 
 die() { echo "ERROR: ${*}"; exit 1; };
 
-# Fetch repo file for YUM
+# Fetch repo file for Apt
 curl http://repository.cask.co/ubuntu/precise/amd64/cdap/3.2/cask.list > /etc/apt/sources.list.d/cask.list || die "Cannot fetch repo"
 curl -s http://repository.cask.co/ubuntu/precise/amd64/cdap/3.2/pubkey.gpg | sudo apt-key add - || die "Cannot import GPG key from repo"
 # install node.js
