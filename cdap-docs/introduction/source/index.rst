@@ -811,7 +811,7 @@ Transforming Your Data
          - Keep track of last processed times
          
      * - Using CDAP
-       - Write a configuration file, saving it to ``examples/resources/application-config.json``::
+       - Write a configuration file, saving it to ``examples/resources/app-config.json``::
 
           {
               "description": "Periodically reads stream data and writes it to a TimePartitionedFileSet",
@@ -864,7 +864,7 @@ Transforming Your Data
      * - 
        - Create an application using that configuration through the CLI::
 
-           cdap > create app logEventStreamConverter cdap-etl-batch 3.2.0 system examples/resources/application-config.json 
+           cdap > create app logEventStreamConverter cdap-etl-batch 3.2.0 system examples/resources/app-config.json 
            Successfully created application
            cdap > resume schedule logEventStreamConverter.etlWorkflow
            Successfully resumed schedule 'etlWorkflow' in app 'logEventStreamConverter'
@@ -903,6 +903,19 @@ Transforming Your Data
           |                         | L) Templ |                |                 |               |
           |                         | ate      |                |                 |               |
           +=======================================================================================+
+
+     * - 
+       - ``cdap > describe app logEventStreamConverter``
+
+     * -  
+       - ::
+       
+          +====================================================================+
+          | type      | id           | description                             |
+          +====================================================================+
+          | MapReduce | ETLMapReduce | MapReduce driver for Batch ETL Adapters |
+          | Workflow  | ETLWorkflow  | Workflow for Batch ETL MapReduce Driver |
+          +====================================================================+
 
           +======================================================================================================================+
           | name                | description         | template | config              | properties                              |
