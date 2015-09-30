@@ -32,13 +32,11 @@
     </div>
   </div>
   <div class="tag" ng-repeat="tag in MetadataController.metadataTags">
-    <a class="btn"
-      ng-mouseover="tag.isHover = true"
-      ng-mouseleave="tag.isHover = false">
-      {{tag.tagName}}
+    <a class="btn">
+      {{tag}}
       <span class="fa fa-times"
-        ng-click="MetadataController.deleteMetadata(tag.tagName)"
-        ng-if="tag.isHover"></span>
+        ng-click="MetadataController.deleteMetadata(tag)"
+      ></span>
     </a>
   </div>
 </div>

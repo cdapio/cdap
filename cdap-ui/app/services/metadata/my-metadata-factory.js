@@ -24,14 +24,7 @@ angular.module(PKG.name+'.services')
       myMetadataApi.getProgramMetadata(params)
         .$promise
         .then(function (res) {
-          var metadataTags = res.map(function (tag) {
-            return {
-              tagName: tag,
-              isHover: false
-            };
-          });
-
-          deferred.resolve(metadataTags);
+          deferred.resolve(res);
         }, function (err) {
           deferred.reject(err);
         });
