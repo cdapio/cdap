@@ -75,7 +75,7 @@ Installation
 
           Starting Standalone CDAP ................
           Standalone CDAP started successfully.
-          Connect to the Console at http://localhost:9999
+          Connect to the CDAP UI at http://localhost:9999
 
 
 .. container:: table-block
@@ -102,7 +102,7 @@ Installation
        - ``$ ./bin/cdap-cli.sh``
          ::
 
-          Successfully connected CDAP instance at http://localhost:10000
+          Successfully connected to CDAP instance at http://localhost:10000/default
           cdap (http://localhost:10000/default)> 
 
 Data Ingestion
@@ -134,7 +134,7 @@ Data Ingestion
          - Configure **Kafka** or **Flume** to write to time partitions
          
      * - Using CDAP
-       - ``> create stream logEventStream``
+       - ``cdap > create stream logEventStream``
           
      * -  
        - ::
@@ -162,7 +162,7 @@ Data Ingestion
          - Create external table in **Hive** called ``stream_logeventstream``
          
      * - Using CDAP
-       - ``> load stream logEventStream examples/resources/accesslog.txt``
+       - ``cdap > load stream logEventStream examples/resources/accesslog.txt``
           
      * -  
        - ::
@@ -200,7 +200,7 @@ Data Exploration
          - ``DESCRIBE stream_logeventstream``
          
      * - Using CDAP
-       - ``> execute 'describe stream_logEventStream'``
+       - ``cdap > execute 'describe stream_logEventStream'``
           
      * -  
        - ::
@@ -233,7 +233,7 @@ Data Exploration
          - ``SELECT * FROM stream_logeventstream LIMIT 2``
 
      * - Using CDAP
-       - ``> execute 'select * from stream_logEventStream limit 2'``
+       - ``cdap > execute 'select * from stream_logEventStream limit 2'``
           
      * -  
        - ::
@@ -282,7 +282,7 @@ Data Exploration: Attaching A Schema
          - Recreate the Hive table with new schema
          
      * - Using CDAP
-       - ``> set stream format logEventStream clf``
+       - ``cdap > set stream format logEventStream clf``
           
      * -  
        - ::
@@ -309,7 +309,7 @@ Data Exploration: Attaching A Schema
          - ``DESCRIBE stream_logeventsetream``
          
      * - Using CDAP
-       - ``> execute 'describe stream_logEventStream'``
+       - ``cdap > execute 'describe stream_logEventStream'``
           
      * -  
        - ::
@@ -350,7 +350,7 @@ Data Exploration: Attaching A Schema
          - ``SELECT * FROM stream_logeventsetream LIMIT 2``
          
      * - Using CDAP
-       - ``> execute 'select * from stream_logEventStream limit 2'``
+       - ``cdap > execute 'select * from stream_logEventStream limit 2'``
           
      * -  
        - ::
@@ -394,7 +394,7 @@ Data Exploration: Attaching A Schema
        - Write code to compute the various stats: number of unique elements, histograms, etc.
          
      * - Using CDAP
-       - ``> get stream-stats logEventStream limit 1000``
+       - ``cdap > get stream-stats logEventStream limit 1000``
           
      * -  
        - ::
@@ -515,7 +515,7 @@ Advanced Data Exploration
        - - Create a file in Hadoop file system called ``ip2geo``
          
      * - Using CDAP
-       - ``> create stream ip2geo``
+       - ``cdap > create stream ip2geo``
           
      * -  
        - ::
@@ -543,7 +543,7 @@ Advanced Data Exploration
          - Create external table in Hive called ``stream_ip2geo``
 
      * - Using CDAP
-       - ``> load stream ip2geo examples/resources/ip2geo-maps.csv``
+       - ``cdap > load stream ip2geo examples/resources/ip2geo-maps.csv``
           
      * -  
        - ::
@@ -569,7 +569,7 @@ Advanced Data Exploration
        - Write data to Kafka or append directly to HDFS
          
      * - Using CDAP
-       - ``> send stream ip2geo '69.181.160.120, Los Angeles, CA'``
+       - ``cdap > send stream ip2geo '69.181.160.120, Los Angeles, CA'``
           
      * -  
        - ::
@@ -596,7 +596,7 @@ Advanced Data Exploration
          - ``SELECT * FROM stream_ip2geo``
          
      * - Using CDAP
-       - ``> execute 'select * from stream_ip2geo'``
+       - ``cdap > execute 'select * from stream_ip2geo'``
           
      * -  
        - ::
@@ -649,7 +649,7 @@ Advanced Data Exploration
          - Recreate the Hive table with new schema
          
      * - Using CDAP
-       - ``> set stream format ip2geo csv "ip string, city string, state string"``
+       - ``cdap > set stream format ip2geo csv "ip string, city string, state string"``
           
      * -  
        - ::
@@ -675,7 +675,7 @@ Advanced Data Exploration
          - ``SELECT * FROM stream_ip2geo``
          
      * - Using CDAP
-       - ``> execute 'select * from stream_ip2geo'``
+       - ``cdap > execute 'select * from stream_ip2geo'``
           
      * -  
        - ::
@@ -729,69 +729,65 @@ Advanced Data Exploration
          - ``SELECT remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10``
          
      * - Using CDAP
-       - ``> execute 'select remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10'``
+       - ``cdap > execute 'select remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10'``
           
      * -  
        - ::
 
-          +===============================================================================================================+
-          | remote_host: STRING          | city: STRING                 | state: STRING | request: STRING                 |
-          +===============================================================================================================+
-          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-          |                              |                              |               | hbouringSummaries.action?planKe |
-          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-          |                              |                              |               | 23341312519 HTTP/1.1            |
-          |---------------------------------------------------------------------------------------------------------------|
-          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |
-          |                              |                              |               | 423341312520 HTTP/1.1           |
-          |---------------------------------------------------------------------------------------------------------------|
-          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-          |                              |                              |               | hbouringSummaries.action?planKe |
-          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-          |                              |                              |               | 23341312521 HTTP/1.1            |
-          |---------------------------------------------------------------------------------------------------------------|
-          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-          |                              |                              |               | hbouringSummaries.action?planKe |
-          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-          |                              |                              |               | 23341312522 HTTP/1.1            |
-          |---------------------------------------------------------------------------------------------------------------|
-          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |
-          |                              |                              |               | 423341312523 HTTP/1.1           |
-          |---------------------------------------------------------------------------------------------------------------|
-          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-          |                              |                              |               | hbouringSummaries.action?planKe |
-          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-          |                              |                              |               | 23341312524 HTTP/1.1            |
-          |---------------------------------------------------------------------------------------------------------------|
-          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-          |                              |                              |               | hbouringSummaries.action?planKe |
-          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-          |                              |                              |               | 23341312525 HTTP/1.1            |
-          |---------------------------------------------------------------------------------------------------------------|
-          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |
-          |                              |                              |               | 423341312526 HTTP/1.1           |
-          |---------------------------------------------------------------------------------------------------------------|
-          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-          |                              |                              |               | hbouringSummaries.action?planKe |
-          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-          |                              |                              |               | 23341312527 HTTP/1.1            |
-          |---------------------------------------------------------------------------------------------------------------|
-          | 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |
-          |                              |                              |               | hbouringSummaries.action?planKe |
-          |                              |                              |               | y=COOP-DBT&buildNumber=284&_=14 |
-          |                              |                              |               | 23341312528 HTTP/1.1            |
-          +===============================================================================================================+
+          +======================================================================================================================+
+          | remote_host: STRING | city: STRING | state: STRING | request: STRING                                                 |
+          +======================================================================================================================+
+          | 108.206.32.124      |  Santa Clara |  CA           | GET /browse/CDAP-DUT725-8 HTTP/1.1                              |
+          |----------------------------------------------------------------------------------------------------------------------|
+          | 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |
+          |                     |              |               | download/batch/bamboo.web.resources:base-model/bamboo.web.resou |
+          |                     |              |               | rces:base-model.js HTTP/1.1                                     |
+          |----------------------------------------------------------------------------------------------------------------------|
+          | 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |
+          |                     |              |               | download/batch/bamboo.web.resources:model-deployment-version/ba |
+          |                     |              |               | mboo.web.resources:model-deployment-version.js HTTP/1.1         |
+          |----------------------------------------------------------------------------------------------------------------------|
+          | 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |
+          |                     |              |               | download/batch/bamboo.web.resources:model-deployment-result/bam |
+          |                     |              |               | boo.web.resources:model-deployment-result.js HTTP/1.1           |
+          |----------------------------------------------------------------------------------------------------------------------|
+          | 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-T/en_US/4411/1/3.5.7/_/ |
+          |                     |              |               | download/batch/com.atlassian.support.stp:stp-license-status-res |
+          |                     |              |               | ources/com.atlassian.support.stp:stp-license-status-resources.c |
+          |                     |              |               | ss HTTP/1.1                                                     |
+          |----------------------------------------------------------------------------------------------------------------------|
+          | 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |
+          |                     |              |               | download/batch/bamboo.web.resources:model-deployment-operations |
+          |                     |              |               | /bamboo.web.resources:model-deployment-operations.js HTTP/1.1   |
+          |----------------------------------------------------------------------------------------------------------------------|
+          | 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |
+          |                     |              |               | download/batch/bamboo.web.resources:model-deployment-environmen |
+          |                     |              |               | t/bamboo.web.resources:model-deployment-environment.js HTTP/1.1 |
+          |----------------------------------------------------------------------------------------------------------------------|
+          | 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |
+          |                     |              |               | download/batch/bamboo.web.resources:model-deployment-project/ba |
+          |                     |              |               | mboo.web.resources:model-deployment-project.js HTTP/1.1         |
+          |----------------------------------------------------------------------------------------------------------------------|
+          | 108.206.32.124      |  Santa Clara |  CA           | GET /s/71095c56c641f2c4a4f189b9dfcd7a38-CDN/en_US/4411/1/5.6.2/ |
+          |                     |              |               | _/download/batch/bamboo.deployments:deployment-project-list/bam |
+          |                     |              |               | boo.deployments:deployment-project-list.js?locale=en-US HTTP/1. |
+          |                     |              |               | 1                                                               |
+          |----------------------------------------------------------------------------------------------------------------------|
+          | 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/5dddb6 |
+          |                     |              |               | ea4dc4fd5569d992cf603f31e5/_/download/contextbatch2/css/atl.gen |
+          |                     |              |               | eral,bamboo.result/batch.css HTTP/1.1                           |
+          +======================================================================================================================+
           Fetched 10 rows
-        
 
 Transforming Your Data
 ======================
-- CDAP Application Templates are applications that are reusable through configuration
-- Build your own Application Templates, using simple APIs
-- CDAP includes built-in ETL (Extract, Transform, Load) Application Templates
-- ETL Application Templates provide pre-defined transformations to be applied on streams or other datasets
-- In this example, we will use the ETLBatch Application Template to convert data in a stream to
-  Avro formatted files in a ``TimePartitionedFileSet`` that can be queried using either Hive or Impala
+- CDAP Included Applications are applications that are reusable through the configuration of artifacts
+- Built-in ETL (Extract, Transform, Load) and Data Quality applications
+- ETL includes over 30 Plugins to build applications merely through configuration of parameters
+- Build your own custom plugins, using simple APIs
+- ETL Transformations provide pre-defined transformations to be applied on streams or other datasets
+- In this example, we will use the ETL batch system artifact to convert data in a stream to
+  Avro-formatted files in a ``TimePartitionedFileSet`` that can be queried using either Hive or Impala
 
 .. container:: table-block
 
@@ -799,7 +795,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - Create a stream-conversion adapter using the ETLBatch Application Template
+     * - Create a stream-conversion application using the ETL batch system artifact
        - 
        
   .. list-table::
@@ -815,11 +811,10 @@ Transforming Your Data
          - Keep track of last processed times
          
      * - Using CDAP
-       - Write a configuration file, saving it to ``example/resources/adapter-config.json``::
+       - Write a configuration file, saving it to ``examples/resources/application-config.json``::
 
           {
               "description": "Periodically reads stream data and writes it to a TimePartitionedFileSet",
-              "template": "ETLBatch",
               "config": {
                   "schedule": "*/5 * * * *",
                   "source": {
@@ -838,39 +833,41 @@ Transforming Your Data
                           }
                       }
                   ],
-                  "sink": {
-                      "name": "TPFSAvro",
-                      "properties": {
-                          "name": "logEventStream.converted",
-                          "schema": "{
-                              \"type\":\"record\",
-                              \"name\":\"logEvent\",
-                              \"fields\":[
-                                  {\"name\":\"ts\",\"type\":\"long\"},
-                                  {\"name\":\"remotehost\",\"type\":[\"string\",\"null\"]},
-                                  {\"name\":\"remotelogname\",\"type\":[\"string\",\"null\"]},
-                                  {\"name\":\"authuser\",\"type\":[\"string\",\"null\"]},
-                                  {\"name\":\"date\",\"type\":[\"string\",\"null\"]},
-                                  {\"name\":\"request\",\"type\":[\"string\",\"null\"]},
-                                  {\"name\":\"status\",\"type\":[\"int\",\"null\"]},
-                                  {\"name\":\"contentlength\",\"type\":[\"int\",\"null\"]},
-                                  {\"name\":\"referrer\",\"type\":[\"string\",\"null\"]},
-                                  {\"name\":\"useragent\",\"type\":[\"string\",\"null\"]}
-                              ]
-                          }",
-                          "basePath": "logEventStream.converted"
-                      }
-                  }
+                  "sinks": [
+                    {
+                        "name": "TPFSAvro",
+                        "properties": {
+                            "name": "logEventStream_converted",
+                            "schema": "{
+                                \"type\":\"record\",
+                                \"name\":\"logEvent\",
+                                \"fields\":[
+                                    {\"name\":\"ts\",\"type\":\"long\"},
+                                    {\"name\":\"remotehost\",\"type\":[\"string\",\"null\"]},
+                                    {\"name\":\"remotelogname\",\"type\":[\"string\",\"null\"]},
+                                    {\"name\":\"authuser\",\"type\":[\"string\",\"null\"]},
+                                    {\"name\":\"date\",\"type\":[\"string\",\"null\"]},
+                                    {\"name\":\"request\",\"type\":[\"string\",\"null\"]},
+                                    {\"name\":\"status\",\"type\":[\"int\",\"null\"]},
+                                    {\"name\":\"contentlength\",\"type\":[\"int\",\"null\"]},
+                                    {\"name\":\"referrer\",\"type\":[\"string\",\"null\"]},
+                                    {\"name\":\"useragent\",\"type\":[\"string\",\"null\"]}
+                                ]
+                            }",
+                            "basePath": "logEventStream_converted"
+                        }
+                    }
+                  ]
               }
           }
 
      * - 
-       - Create an adapter using that configuration through the CLI::
+       - Create an application using that configuration through the CLI::
 
-           > create adapter logEventStreamConverter example/resources/adapter-config.json 
-           Successfully created adapter 'logEventStreamConverter'
-           > start adapter logEventStreamConverter
-           Successfully started adapter 'logEventStreamConverter'
+           cdap > create app logEventStreamConverter cdap-etl-batch 3.2.0 system examples/resources/application-config.json 
+           Successfully created application
+           cdap > resume schedule logEventStreamConverter.etlWorkflow
+           Successfully resumed schedule 'etlWorkflow' in app 'logEventStreamConverter'
 
 .. container:: table-block
 
@@ -878,7 +875,7 @@ Transforming Your Data
      :widths: 80 20
      :stub-columns: 1
      
-     * - List the adapters available in the CDAP instance
+     * - List the applications available in the CDAP instance
        - 
        
   .. list-table::
@@ -890,10 +887,22 @@ Transforming Your Data
        - - Not available
          
      * - Using CDAP
-       - ``> list adapters``
+       - ``cdap > list apps``
 
      * -  
        - ::
+
+          +=======================================================================================+
+          | id                      | descript | artifactName   | artifactVersion | artifactScope |
+          |                         | ion      |                |                 |               |
+          +=======================================================================================+
+          | logEventStreamConverter | Batch Ex | cdap-etl-batch | 3.2.0           | SYSTEM        |
+          |                         | tract-Tr |                |                 |               |
+          |                         | ansform- |                |                 |               |
+          |                         | Load (ET |                |                 |               |
+          |                         | L) Templ |                |                 |               |
+          |                         | ate      |                |                 |               |
+          +=======================================================================================+
 
           +======================================================================================================================+
           | name                | description         | template | config              | properties                              |
@@ -987,7 +996,7 @@ Transforming Your Data
          - Create external table in Hive called ``stream_ip2geo``
          
      * - Using CDAP
-       - ``> load stream logEventStream examples/resources/accesslog.txt``
+       - ``cdap > load stream logEventStream examples/resources/accesslog.txt``
           
      * -  
        - ::
@@ -1017,7 +1026,7 @@ Transforming Your Data
        - Dataset that is time partitioned
           
      * -  
-       - ``> list dataset instances``
+       - ``cdap > list dataset instances``
          ::
 
           +=================================================================================+
@@ -1045,7 +1054,7 @@ Transforming Your Data
          - ``'describe user_logEventStream_converted'`` 
          
      * - Using CDAP
-       - ``> execute 'describe dataset_logEventStream_converted'``
+       - ``cdap > execute 'describe dataset_logEventStream_converted'``
           
      * -  
        - ::
@@ -1099,7 +1108,7 @@ Transforming Your Data
          - ``SELECT ts, request, status FROM dataset_logEventStream_converted LIMIT 2``
          
      * - Using CDAP
-       - ``> execute 'SELECT ts, request, status FROM dataset_logEventStream_converted LIMIT 2'``
+       - ``cdap > execute 'SELECT ts, request, status FROM dataset_logEventStream_converted LIMIT 2'``
 
      * -  
        - ::
@@ -1162,7 +1171,7 @@ Building Real World Applications
 
          From within the CDAP CLI:
 
-         | ``> deploy app examples/cdap-wise-``\ |literal-cdap-apps-version|\ ``/target/cdap-wise-``\ |literal-cdap-apps-version|\ ``.jar``
+         | ``cdap > deploy app examples/cdap-wise-``\ |literal-cdap-apps-version|\ ``/target/cdap-wise-``\ |literal-cdap-apps-version|\ ``.jar``
           
      * -  
        - ::
@@ -1189,7 +1198,7 @@ Building Real World Applications
          - Check **YARN** Console
          
      * - Using CDAP
-       - ``> describe app Wise``
+       - ``cdap > describe app Wise``
           
      * -  
        - ::
@@ -1224,7 +1233,7 @@ Building Real World Applications
          - ``yarn jar /path/to/myprogram.jar``
          
      * - Using CDAP
-       - ``> start flow Wise.WiseFlow``
+       - ``cdap > start flow Wise.WiseFlow``
           
      * -  
        - ::
@@ -1252,7 +1261,7 @@ Building Real World Applications
          - ``yarn application -status <APP ID>``
          
      * - Using CDAP
-       - ``> get flow status Wise.WiseFlow``
+       - ``cdap > get flow status Wise.WiseFlow``
           
      * -  
        - ::
@@ -1279,7 +1288,7 @@ Building Real World Applications
          - Create external table in Hive called ``cdap_stream_logeventstream``
          
      * - Using CDAP
-       - ``> load stream logEventStream examples/resources/accesslog.txt``
+       - ``cdap > load stream logEventStream examples/resources/accesslog.txt``
           
      * -  
        - ::
@@ -1311,7 +1320,7 @@ Building Real World Applications
          - Click on container logs
          
      * - Using CDAP
-       - ``> get flow logs Wise.WiseFlow``
+       - ``cdap > get flow logs Wise.WiseFlow``
     
      * -  
        - ::
@@ -1356,7 +1365,7 @@ Building Real World Applications
          - ``oozie job -start <arguments>``
          
      * - Using CDAP
-       - ``> start workflow Wise.Wiseworkflow``
+       - ``cdap > start workflow Wise.Wiseworkflow``
           
      * -  
        - ::
@@ -1383,7 +1392,7 @@ Building Real World Applications
          - ``oozie job -info <jobid>``
          
      * - Using CDAP
-       - ``> get workflow status Wise.Wiseworkflow``
+       - ``cdap > get workflow status Wise.Wiseworkflow``
           
      * -  
        - ::
@@ -1411,7 +1420,7 @@ Building Real World Applications
          - ``yarn jar /path/to/myprogram.jar``
          
      * - Using CDAP
-       - ``> start service Wise.WiseService``
+       - ``cdap > start service Wise.WiseService``
           
      * -  
        - ::
@@ -1439,7 +1448,7 @@ Building Real World Applications
          - ``yarn application -status <APP ID>``
          
      * - Using CDAP
-       - ``> get service status Wise.WiseService``
+       - ``cdap > get service status Wise.WiseService``
           
      * -  
        - ::
@@ -1472,7 +1481,7 @@ Building Real World Applications
          - Click on container logs
          
      * - Using CDAP
-       - ``> get endpoints service Wise.WiseService``
+       - ``cdap > get endpoints service Wise.WiseService``
           
      * -  
        - ::
@@ -1505,7 +1514,7 @@ Building Real World Applications
          - Run ``curl http://hostname:port/ip/69.181.160.120/count``
          
      * - Using CDAP
-       - ``> call service Wise.WiseService GET /ip/69.181.160.120/count``
+       - ``cdap > call service Wise.WiseService GET /ip/69.181.160.120/count``
           
      * -  
        - ::
@@ -1540,7 +1549,7 @@ Building Real World Applications
          
      * - Using CDAP
        - - The listing will depend on if you have run all of the previous examples
-         - ``> list dataset instances``
+         - ``cdap > list dataset instances``
           
      * -  
        - ::
@@ -1574,7 +1583,7 @@ Building Real World Applications
          - ``"SELECT * FROM dataset_bouncecountstore LIMIT 5"``
          
      * - Using CDAP
-       - ``> execute 'SELECT * FROM dataset_bouncecountstore LIMIT 5'``
+       - ``cdap > execute 'SELECT * FROM dataset_bouncecountstore LIMIT 5'``
           
      * -  
        - ::
@@ -1628,7 +1637,7 @@ Building Real World Applications
          - ``yarn application -kill <application ID>``
          
      * - Using CDAP
-       - ``> stop service Wise.WiseService``
+       - ``cdap > stop service Wise.WiseService``
           
      * -  
        - ::
@@ -1656,7 +1665,7 @@ Building Real World Applications
          - ``yarn application -kill <application ID>``
          
      * - Using CDAP
-       - ``> stop flow Wise.WiseFlow``
+       - ``cdap > stop flow Wise.WiseFlow``
           
      * -  
        - ::
@@ -1682,7 +1691,7 @@ Building Real World Applications
          - Remove the service jars and flow jars
          
      * - Using CDAP
-       - ``> delete app Wise``
+       - ``cdap > delete app Wise``
           
      * -  
        - ::
