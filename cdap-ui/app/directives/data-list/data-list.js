@@ -37,7 +37,7 @@ angular.module(PKG.name+'.commons')
       function hydrator() {
         myPipelineApi.get({
           namespace: $state.params.namespace,
-          adapter: $state.params.appId,
+          pipeline: $state.params.appId,
           scope: $scope
         })
           .$promise

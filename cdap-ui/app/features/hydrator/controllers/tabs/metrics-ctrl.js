@@ -24,7 +24,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     var metricParams = {
       namespace: $state.params.namespace,
-      app: $state.params.adapterId
+      app: $state.params.pipelineId
     };
 
     metricParams = MyMetricsQueryHelper.tagsToParams(metricParams);

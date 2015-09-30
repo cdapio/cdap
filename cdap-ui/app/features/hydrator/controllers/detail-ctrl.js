@@ -214,7 +214,7 @@ angular.module(PKG.name + '.feature.hydrator')
         return;
       }
       $scope.config = {
-        name: $state.params.adapterId,
+        name: $state.params.pipelineId,
         artifact: rPipelineDetail.artifact,
         template: rPipelineDetail.artifact.name,
         description: rPipelineDetail.description,

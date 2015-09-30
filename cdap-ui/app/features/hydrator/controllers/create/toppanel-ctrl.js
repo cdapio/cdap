@@ -106,7 +106,7 @@ angular.module(PKG.name + '.feature.hydrator')
                       });
                       // Clicking on the hidden download button. #hack.
                       $timeout(function() {
-                        document.getElementById('adapter-export-config-link').click();
+                        document.getElementById('pipeline-export-config-link').click();
                       });
                     }.bind(this),
                     function error() {

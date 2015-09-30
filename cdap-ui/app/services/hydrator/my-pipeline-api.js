@@ -17,11 +17,11 @@
 angular.module(PKG.name + '.services')
   .factory('myPipelineApi', function($resource, myHelpers, GLOBALS) {
     var templatePath = '/templates',
-        adapterPath = '/namespaces/:namespace/apps/:adapter',
+        pipelinePath = '/namespaces/:namespace/apps/:pipeline',
 
         listPath = '/namespaces/:namespace/apps?artifactName=' + GLOBALS.etlBatch + ',' + GLOBALS.etlRealtime,
 
-        pluginFetchBase = '/namespaces/:namespace/artifacts/:adapterType/versions/:version/extensions/:extensionType',
+        pluginFetchBase = '/namespaces/:namespace/artifacts/:pipelineType/versions/:version/extensions/:extensionType',
         pluginsFetchPath = pluginFetchBase + '?scope=system',
         pluginDetailFetch = pluginFetchBase + '/plugins/:pluginName?scope=system';
 
@@ -31,7 +31,7 @@ angular.module(PKG.name + '.services')
 
       },
       {
-        save: myHelpers.getConfig('PUT', 'REQUEST', adapterPath, false, {contentType: 'application/json'}),
+        save: myHelpers.getConfig('PUT', 'REQUEST', pipelinePath, false, {contentType: 'application/json'}),
         fetchTemplates: myHelpers.getConfig('GET', 'REQUEST', templatePath, true),
         fetchSources: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
         fetchSinks: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
@@ -42,14 +42,14 @@ angular.module(PKG.name + '.services')
 
         // FIXME: This needs to be replaced with fetching etl-batch & etl-realtime separately.
         list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),
-        pollStatus: myHelpers.getConfig('GET', 'POLL', adapterPath + '/status'),
-        stopPollStatus: myHelpers.getConfig('GET', 'POLL-STOP', adapterPath + '/status'),
-        delete: myHelpers.getConfig('DELETE', 'REQUEST', adapterPath),
-        runs: myHelpers.getConfig('GET', 'REQUEST', adapterPath + '/runs', true),
-        get: myHelpers.getConfig('GET', 'REQUEST', adapterPath),
-        datasets: myHelpers.getConfig('GET', 'REQUEST', adapterPath + '/datasets', true),
-        streams: myHelpers.getConfig('GET', 'REQUEST', adapterPath + '/streams', true),
-        action: myHelpers.getConfig('POST', 'REQUEST', adapterPath + '/:action')
+        pollStatus: myHelpers.getConfig('GET', 'POLL', pipelinePath + '/status'),
+        stopPollStatus: myHelpers.getConfig('GET', 'POLL-STOP', pipelinePath + '/status'),
+        delete: myHelpers.getConfig('DELETE', 'REQUEST', pipelinePath),
+        runs: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/runs', true),
+        get: myHelpers.getConfig('GET', 'REQUEST', pipelinePath),
+        datasets: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/datasets', true),
+        streams: myHelpers.getConfig('GET', 'REQUEST', pipelinePath + '/streams', true),
+        action: myHelpers.getConfig('POST', 'REQUEST', pipelinePath + '/:action')
       }
     );
   });

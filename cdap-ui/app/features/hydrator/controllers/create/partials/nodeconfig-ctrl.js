@@ -220,7 +220,7 @@ angular.module(PKG.name + '.feature.hydrator')
       // happening
       var params = {
         namespace: $state.params.namespace,
-        adapterType: MyAppDAGService.metadata.template.type,
+        pipelineType: MyAppDAGService.metadata.template.type,
         version: $rootScope.cdapVersion,
         extensionType: plugin.type,
         pluginName: plugin.name

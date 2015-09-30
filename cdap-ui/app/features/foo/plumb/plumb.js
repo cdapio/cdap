@@ -85,13 +85,13 @@ angular.module(PKG.name + '.feature.foo')
       var prom;
       switch(group.name) {
         case 'source':
-          prom = myPipelineApi.fetchSources({ adapterType: 'ETLRealtime' }).$promise;
+          prom = myPipelineApi.fetchSources({ pipelineType: 'ETLRealtime' }).$promise;
           break;
         case 'transform':
-          prom = myPipelineApi.fetchTransforms({ adapterType: 'ETLRealtime' }).$promise;
+          prom = myPipelineApi.fetchTransforms({ pipelineType: 'ETLRealtime' }).$promise;
           break;
         case 'sink':
-          prom = myPipelineApi.fetchSinks({ adapterType: 'ETLRealtime' }).$promise;
+          prom = myPipelineApi.fetchSinks({ pipelineType: 'ETLRealtime' }).$promise;
           break;
       }
       prom.then(function(res) {

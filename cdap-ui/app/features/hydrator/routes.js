@@ -109,7 +109,7 @@ angular.module(PKG.name + '.feature.hydrator')
           })
 
         .state('hydrator.detail', {
-          url: '/view/:adapterId',
+          url: '/view/:pipelineId',
           data: {
             authorizedRoles: MYAUTH_ROLE.all,
             highlightTab: 'hydratorList'
@@ -118,7 +118,7 @@ angular.module(PKG.name + '.feature.hydrator')
             rPipelineDetail: function($stateParams, $q, myPipelineApi) {
               var params = {
                 namespace: $stateParams.namespace,
-                adapter: $stateParams.adapterId
+                pipeline: $stateParams.pipelineId
               };
 
               return myPipelineApi.get(params).$promise;
@@ -126,7 +126,7 @@ angular.module(PKG.name + '.feature.hydrator')
           },
           ncyBreadcrumb: {
             parent: 'apps.list',
-            label: '{{$state.params.adapterId}}'
+            label: '{{$state.params.pipelineId}}'
           },
           templateUrl: '/assets/features/hydrator/templates/detail.html',
           controller: 'HydratorDetailController'

@@ -451,7 +451,7 @@ angular.module(PKG.name + '.services')
       // happening
       var params = {
         namespace: $state.params.namespace,
-        adapterType: this.metadata.template.type,
+        pipelineType: this.metadata.template.type,
         version: $rootScope.cdapVersion,
         extensionType: plugin.type,
         pluginName: plugin.name
@@ -659,7 +659,7 @@ angular.module(PKG.name + '.services')
         myPipelineApi.save(
           {
             namespace: $state.params.namespace,
-            adapter: this.metadata.name
+            pipeline: this.metadata.name
           },
           data
         )

@@ -129,7 +129,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.openFileBrowser = function() {
       $timeout(function() {
-        document.getElementById('adapter-import-config-link').click();
+        document.getElementById('pipeline-import-config-link').click();
       });
     };
 

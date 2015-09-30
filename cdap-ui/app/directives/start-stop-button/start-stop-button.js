@@ -33,9 +33,6 @@ angular.module(PKG.name + '.commons')
         $scope.runtimeArgs = [];
         var path = '/apps/' + $state.params.appId +
                    '/' + $scope.type + '/' + $state.params.programId;
-        if ($scope.type === 'adapters') {
-          path = '/adapters/' + $state.params.adapterId;
-        }
         var dataSrc = new MyDataSource($scope);
 
         // Poll for status

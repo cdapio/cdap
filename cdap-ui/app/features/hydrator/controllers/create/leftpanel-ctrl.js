@@ -46,7 +46,7 @@ angular.module(PKG.name + '.feature.hydrator')
       var templateType = MyAppDAGService.metadata.template.type;
       var params = {
         namespace: $stateParams.namespace,
-        adapterType: templateType,
+        pipelineType: templateType,
         version: rVersion.version
       };
       switch(group.name) {

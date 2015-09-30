@@ -19,7 +19,7 @@ angular.module(PKG.name + '.feature.apps')
     this.nodes = [];
     var params = {
       namespace: $state.params.namespace,
-      adapter: $state.params.appId,
+      pipeline: $state.params.appId,
       scope: $scope
     };
 

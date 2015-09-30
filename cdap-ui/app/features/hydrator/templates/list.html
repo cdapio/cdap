@@ -16,7 +16,7 @@
 
 <div class="side-panel top clearfix">
   <h1 class="pull-left">My Pipelines</h1>
-  <ul ng-if="LipipelineList.pipelineList.length > 0" class="list-unstyled list-inline pull-left">
+  <ul ng-if="ListController.pipelineList.length > 0" class="list-unstyled list-inline pull-left">
     <li>
       <span>{{ ListController.pipelineList.length }}</span>
       <span>Total</span>
@@ -75,7 +75,7 @@
         <tbody>
           <tr ng-repeat="pipeline in ListController.filtered = (ListController.pipelineList | filter: ListController.searchText ) | orderBy:sortable.predicate:sortable.reverse | myPaginate:ListController.currentPage">
             <td>
-              <a ui-sref="hydrator.detail({ adapterId: pipeline.name })" ng-if="!pipeline.isDraft">
+              <a ui-sref="hydrator.detail({ pipelineId: pipeline.name })" ng-if="!pipeline.isDraft">
                 {{pipeline.name}}
               </a>
               <a ui-sref="hydrator.create.studio({ name: pipeline.name })" ng-if="pipeline.isDraft">

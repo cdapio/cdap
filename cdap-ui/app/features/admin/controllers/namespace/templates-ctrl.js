@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.admin')
 
       var params = {
         namespace: $stateParams.nsadmin,
-        adapterType: vm.templateType,
+        pipelineType: vm.templateType,
         extensionType: vm.pluginType,
         pluginName: vm.pluginName,
         version: $rootScope.cdapVersion
@@ -94,7 +94,7 @@ angular.module(PKG.name + '.feature.admin')
 
         var prom;
         var params = {
-          adapterType: vm.templateType,
+          pipelineType: vm.templateType,
           namespace: $stateParams.nsadmin,
           version: $rootScope.cdapVersion
         };
