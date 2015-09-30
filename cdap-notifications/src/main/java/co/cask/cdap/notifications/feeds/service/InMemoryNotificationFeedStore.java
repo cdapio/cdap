@@ -47,14 +47,14 @@ public class InMemoryNotificationFeedStore implements NotificationFeedStore {
 
   @Nullable
   @Override
-  public synchronized Id.NotificationFeed getNotificationFeed(String feedId) {
-    return feeds.get(feedId);
+  public synchronized Id.NotificationFeed getNotificationFeed(Id.NotificationFeed feed) {
+    return feeds.get(feed.getFeedId());
   }
 
   @Nullable
   @Override
-  public synchronized Id.NotificationFeed deleteNotificationFeed(String feedId) {
-    return feeds.remove(feedId);
+  public synchronized Id.NotificationFeed deleteNotificationFeed(Id.NotificationFeed feed) {
+    return feeds.remove(feed.getFeedId());
   }
 
   @Override
