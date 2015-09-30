@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .factory('AdapterErrorFactory', function (GLOBALS) {
+  .factory('HydratorErrorFactory', function (GLOBALS) {
 
     function isModelValid (nodes, connections, metadata, config) {
       var validationRules = [

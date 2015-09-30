@@ -15,9 +15,9 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailHistoryController', function($scope, AdapterDetail) {
+  .controller('HydratorDetailHistoryController', function($scope, HydratorDetail) {
     var params = {};
-    angular.copy(AdapterDetail.params, params);
+    angular.copy(HydratorDetail.params, params);
     params.scope = $scope;
 
     $scope.historyParams = {
@@ -25,9 +25,9 @@ angular.module(PKG.name + '.feature.hydrator')
       programId: params.workflowId || params.workerId
     };
 
-    $scope.programType = AdapterDetail.programType;
+    $scope.programType = HydratorDetail.programType;
 
-    AdapterDetail.api.runs(params)
+    HydratorDetail.api.runs(params)
       .$promise
       .then(function (res) {
         $scope.runsHistory = res;

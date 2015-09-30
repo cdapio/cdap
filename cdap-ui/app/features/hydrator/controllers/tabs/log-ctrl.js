@@ -14,23 +14,23 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailLogController', function($scope, AdapterDetail) {
+ angular.module(PKG.name + '.feature.hydrator')
+   .controller('HydratorDetailLogController', function($scope, HydratorDetail) {
 
-    $scope.loadingNext = true;
-    var logsParams = {};
-    var runsParams = {};
-    $scope.logsGenericParams = {};
-    angular.copy(AdapterDetail.params, runsParams);
-    angular.copy(AdapterDetail.logsParams, logsParams);
-    angular.copy(AdapterDetail.logsGenericParams, $scope.logsGenericParams);
-    logsParams.scope = $scope;
+     $scope.loadingNext = true;
+     var logsParams = {};
+     var runsParams = {};
+     $scope.logsGenericParams = {};
+     angular.copy(HydratorDetail.params, runsParams);
+     angular.copy(HydratorDetail.logsParams, logsParams);
+     angular.copy(HydratorDetail.logsGenericParams, $scope.logsGenericParams);
+     logsParams.scope = $scope;
 
-    AdapterDetail.logsApi.pollLatestRun(logsParams)
-      .$promise
-      .then(function (runs) {
-        if (runs.length === 0) { return; }
-        $scope.logsGenericParams.runId = runs[0].runid;
-      });
+     HydratorDetail.logsApi.pollLatestRun(logsParams)
+       .$promise
+       .then(function (runs) {
+         if (runs.length === 0) { return; }
+         $scope.logsGenericParams.runId = runs[0].runid;
+       });
 
-  });
+   });

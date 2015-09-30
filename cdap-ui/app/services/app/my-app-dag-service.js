@@ -35,8 +35,8 @@
     4. Now we have an object to bind to the UI (properties modal).
     5. Any edits user make on the modal should automatically get saved.
 
-  Saving/Publishing an adapter from canvas-ctrl:
-    1. When we want to publish an adapter this service will be notified
+  Saving/Publishing an hydrator from canvas-ctrl:
+    1. When we want to publish an hydrator this service will be notified
     2. It will go through the list of connections and forms the config based on the node information
         we have from the list of nodes (along with its properties).
     3. Performs UI validation
@@ -47,7 +47,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyAppDAGService', function(myPipelineApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS, MyNodeConfigService, MyConsoleTabService) {
+  .service('MyAppDAGService', function(myPipelineApi, $q, $bootstrapModal, $state, $filter, mySettings, HydratorErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, EventPipe, CanvasFactory, $rootScope, GLOBALS, MyNodeConfigService, MyConsoleTabService) {
 
     var countSink = 0,
         countSource = 0,
@@ -651,7 +651,7 @@ angular.module(PKG.name + '.services')
       }
       this.isConfigTouched = false;
       var config = this.getConfig();
-      var errors = AdapterErrorFactory.isModelValid(this.nodes, this.connections, this.metadata, config);
+      var errors = HydratorErrorFactory.isModelValid(this.nodes, this.connections, this.metadata, config);
 
       if (!angular.isObject(errors)) {
         EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
@@ -700,7 +700,7 @@ angular.module(PKG.name + '.services')
       var defer = $q.defer();
       var config = this.getConfigForBackend();
       var error = {};
-      AdapterErrorFactory.hasNameAndTemplateType(null, null, this.metadata, null, error);
+      HydratorErrorFactory.hasNameAndTemplateType(null, null, this.metadata, null, error);
 
       if (Object.keys(error).length) {
         this.notifyError(error);

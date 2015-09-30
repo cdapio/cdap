@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, ModalConfirm, $alert, $state, $stateParams, GLOBALS, AdapterErrorFactory, MyConsoleTabService, MyNodeConfigService) {
+  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, $alert, $state, $stateParams, GLOBALS, HydratorErrorFactory, MyConsoleTabService, MyNodeConfigService) {
 
     this.metadata = MyAppDAGService['metadata'];
     function resetMetadata() {
@@ -171,7 +171,7 @@ angular.module(PKG.name + '.feature.hydrator')
     };
 
     this.validatePipeline = function() {
-      var errors = AdapterErrorFactory.isModelValid(MyAppDAGService.nodes, MyAppDAGService.connections, MyAppDAGService.metadata, MyAppDAGService.getConfig());
+      var errors = HydratorErrorFactory.isModelValid(MyAppDAGService.nodes, MyAppDAGService.connections, MyAppDAGService.metadata, MyAppDAGService.getConfig());
 
       if (MyNodeConfigService.getIsPluginBeingEdited()) {
         if (errors === true) {

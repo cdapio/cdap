@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .factory('AdapterDetail', function(myWorkFlowApi, myMapreduceApi, myWorkersApi, GLOBALS) {
+  .factory('HydratorDetail', function(myWorkFlowApi, myMapreduceApi, myWorkersApi, GLOBALS) {
 
     var publicObj = {
       initialize: initialize

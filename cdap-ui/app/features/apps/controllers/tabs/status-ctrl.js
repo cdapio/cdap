@@ -23,15 +23,6 @@ angular.module(PKG.name + '.feature.apps')
       scope: $scope
     };
 
-    this.cloneAdapter = function() {
-      if (this.config) {
-        $state.go('hydrator.create', {
-          data: this.config,
-          type: this.config.artifact.name
-        });
-      }
-    };
-
     myPipelineApi.get(params)
       .$promise
       .then(function(res) {

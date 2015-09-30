@@ -115,7 +115,7 @@ angular.module(PKG.name + '.feature.hydrator')
             highlightTab: 'hydratorList'
           },
           resolve : {
-            rAdapterDetail: function($stateParams, $q, myPipelineApi) {
+            rPipelineDetail: function($stateParams, $q, myPipelineApi) {
               var params = {
                 namespace: $stateParams.namespace,
                 adapter: $stateParams.adapterId

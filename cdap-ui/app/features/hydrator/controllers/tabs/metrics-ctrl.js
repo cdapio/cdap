@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailMetricsController', function($scope, AdapterDetail, MyDataSource, $filter, $state, MyMetricsQueryHelper) {
+  .controller('HydratorDetailMetricsController', function($scope, HydratorDetail, MyDataSource, $filter, $state, MyMetricsQueryHelper) {
 
     $scope.metrics = [];
 
@@ -31,7 +31,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     var metricBasePath = '/metrics/search?target=metric&' + metricParams;
 
-    var stagesArray = [AdapterDetail.source].concat(AdapterDetail.transforms, AdapterDetail.sinks);
+    var stagesArray = [HydratorDetail.source].concat(HydratorDetail.transforms, HydratorDetail.sinks);
     stagesArray = stagesArray.map(function (n, i) { return n + '.' + (i+1); });
 
 

@@ -15,15 +15,15 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, AdapterDetail, $timeout, MyNodeConfigService) {
+  .controller('HydratorDetailController', function($scope, rPipelineDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, HydratorDetail, $timeout, MyNodeConfigService) {
     $scope.GLOBALS = GLOBALS;
-    $scope.template = rAdapterDetail.template;
-    $scope.description = rAdapterDetail.description;
-    $scope.app = rAdapterDetail;
+    $scope.template = rPipelineDetail.template;
+    $scope.description = rPipelineDetail.description;
+    $scope.app = rPipelineDetail;
     $scope.runOnceLoading = false;
     MyAppDAGService.registerEditPropertiesCallback(viewProperties.bind(this));
 
-    AdapterDetail.initialize(rAdapterDetail, $state);
+    HydratorDetail.initialize(rPipelineDetail, $state);
 
     $scope.tabs = [
       {
@@ -73,12 +73,12 @@ angular.module(PKG.name + '.feature.hydrator')
     }
     var params = {
       namespace: $state.params.namespace,
-      appId: rAdapterDetail.name,
+      appId: rPipelineDetail.name,
       scope: $scope
     };
 
-    if (AdapterDetail.programType === 'WORKFLOWS') {
-      angular.forEach(rAdapterDetail.programs, function (program) {
+    if (HydratorDetail.programType === 'WORKFLOWS') {
+      angular.forEach(rPipelineDetail.programs, function (program) {
         if (program.type === 'Workflow') {
           params.workflowId = program.id;
         }
@@ -92,7 +92,7 @@ angular.module(PKG.name + '.feature.hydrator')
           } else {
             myWorkFlowApi.getScheduleStatus({
               namespace: $state.params.namespace,
-              appId: rAdapterDetail.name,
+              appId: rPipelineDetail.name,
               scheduleId: 'etlWorkflow',
               scope: $scope
             })
@@ -106,7 +106,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     } else {
 
-      angular.forEach(rAdapterDetail.programs, function (program) {
+      angular.forEach(rPipelineDetail.programs, function (program) {
         if (program.type === 'Worker') {
           params.workerId = program.id;
         }
@@ -123,7 +123,7 @@ angular.module(PKG.name + '.feature.hydrator')
     $scope.do = function (action) {
       var scheduleParams = {
         namespace: $state.params.namespace,
-        appId: rAdapterDetail.name,
+        appId: rPipelineDetail.name,
         scheduleId: 'etlWorkflow',
         scope: $scope
       };
@@ -132,7 +132,7 @@ angular.module(PKG.name + '.feature.hydrator')
         case 'Start':
           $scope.appStatus = 'STARTING';
 
-          if (AdapterDetail.programType === 'WORKFLOWS') {
+          if (HydratorDetail.programType === 'WORKFLOWS') {
             myWorkFlowApi.scheduleResume(scheduleParams, {})
               .$promise
               .then(function () {
@@ -153,7 +153,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
         case 'Stop':
           $scope.appStatus = 'STOPPING';
-          if (AdapterDetail.programType === 'WORKFLOWS') {
+          if (HydratorDetail.programType === 'WORKFLOWS') {
             myWorkFlowApi.scheduleSuspend(scheduleParams, {})
               .$promise
               .then(function () {
@@ -188,7 +188,7 @@ angular.module(PKG.name + '.feature.hydrator')
         case 'Delete':
           var deleteParams = {
             namespace: $state.params.namespace,
-            appId: rAdapterDetail.name,
+            appId: rPipelineDetail.name,
             scope: $scope
           };
 
@@ -208,51 +208,51 @@ angular.module(PKG.name + '.feature.hydrator')
 
     function initializeDAG() {
       try{
-        rAdapterDetail.config = JSON.parse(rAdapterDetail.configuration);
+        rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
       } catch(e) {
         console.log('ERROR in configuration from backend: ', e);
         return;
       }
       $scope.config = {
         name: $state.params.adapterId,
-        artifact: rAdapterDetail.artifact,
-        template: rAdapterDetail.artifact.name,
-        description: rAdapterDetail.description,
+        artifact: rPipelineDetail.artifact,
+        template: rPipelineDetail.artifact.name,
+        description: rPipelineDetail.description,
         config: {
-          source: rAdapterDetail.config.source,
-          sinks: rAdapterDetail.config.sinks,
-          transforms: rAdapterDetail.config.transforms,
-          instances: rAdapterDetail.instance,
-          schedule: rAdapterDetail.config.schedule
+          source: rPipelineDetail.config.source,
+          sinks: rPipelineDetail.config.sinks,
+          transforms: rPipelineDetail.config.transforms,
+          instances: rPipelineDetail.instance,
+          schedule: rPipelineDetail.config.schedule
         }
       };
 
-      MyAppDAGService.metadata.name = rAdapterDetail.name;
-      MyAppDAGService.metadata.description = rAdapterDetail.description;
-      MyAppDAGService.metadata.template.type = rAdapterDetail.artifact.name;
-      if (rAdapterDetail.artifact.name === GLOBALS.etlBatch) {
-        MyAppDAGService.metadata.template.schedule = rAdapterDetail.config.schedule;
-      } else if (rAdapterDetail.artifact.name === GLOBALS.etlRealtime) {
-        MyAppDAGService.metadata.template.instances = rAdapterDetail.config.instances;
+      MyAppDAGService.metadata.name = rPipelineDetail.name;
+      MyAppDAGService.metadata.description = rPipelineDetail.description;
+      MyAppDAGService.metadata.template.type = rPipelineDetail.artifact.name;
+      if (rPipelineDetail.artifact.name === GLOBALS.etlBatch) {
+        MyAppDAGService.metadata.template.schedule = rPipelineDetail.config.schedule;
+      } else if (rPipelineDetail.artifact.name === GLOBALS.etlRealtime) {
+        MyAppDAGService.metadata.template.instances = rPipelineDetail.config.instances;
       }
 
-      $scope.nodes = CanvasFactory.getNodes(rAdapterDetail.config, rAdapterDetail.artifact.name);
+      $scope.nodes = CanvasFactory.getNodes(rPipelineDetail.config, rPipelineDetail.artifact.name);
       $scope.nodes.forEach(function(node) {
         MyAppDAGService.addNodes(node, node.type);
       });
 
-      MyAppDAGService.connections = CanvasFactory.getConnectionsBasedOnNodes($scope.nodes, rAdapterDetail.artifact.name);
+      MyAppDAGService.connections = CanvasFactory.getConnectionsBasedOnNodes($scope.nodes, rPipelineDetail.artifact.name);
     }
 
     initializeDAG();
 
     $scope.datasets = [];
     $scope.datasets = $scope.datasets.concat(
-      rAdapterDetail.datasets.map(function (dataset) {
+      rPipelineDetail.datasets.map(function (dataset) {
         dataset.type = 'Dataset';
         return dataset;
       }),
-      rAdapterDetail.streams.map(function (stream) {
+      rPipelineDetail.streams.map(function (stream) {
         stream.type = 'Stream';
         return stream;
       }));
