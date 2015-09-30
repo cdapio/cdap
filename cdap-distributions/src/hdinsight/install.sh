@@ -15,7 +15,7 @@
 # the License.
 
 #
-# Install CDAP under hadoop user for EMR
+# Install CDAP for Azure HDInsight cluster
 #
 
 die() { echo "ERROR: ${*}"; exit 1; };
