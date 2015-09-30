@@ -26,7 +26,7 @@ import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
  */
 public class ETLRealtimeApplication extends AbstractApplication<ETLRealtimeConfig> {
   public static final String STATE_TABLE = "etlrealtimesourcestate";
-  public static final String DEFAULT_DESCRIPTION = "Real-time Extract-Transform-Load (ETL) Application";
+  public static final String DEFAULT_DESCRIPTION = "Extract-Transform-Load (ETL) Real-time Application";
 
   @Override
   public void configure() {

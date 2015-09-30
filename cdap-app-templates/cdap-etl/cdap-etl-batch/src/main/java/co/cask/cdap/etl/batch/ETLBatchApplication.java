@@ -21,11 +21,11 @@ import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 
 /**
- * ETL Batch Template.
+ * ETL Batch Application.
  */
 public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
   public static final String SCHEDULE_NAME = "etlWorkflow";
-  public static final String DEFAULT_DESCRIPTION = "Batch Extract-Transform-Load (ETL) Application";
+  public static final String DEFAULT_DESCRIPTION = "Extract-Transform-Load (ETL) Batch Application";
 
   @Override
   public void configure() {
@@ -33,7 +33,7 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
     setDescription(DEFAULT_DESCRIPTION);
     addMapReduce(new ETLMapReduce(config));
     addWorkflow(new ETLWorkflow(config));
-    scheduleWorkflow(Schedules.createTimeSchedule(SCHEDULE_NAME, "Batch ETL schedule", config.getSchedule()),
+    scheduleWorkflow(Schedules.createTimeSchedule(SCHEDULE_NAME, "ETL Batch schedule", config.getSchedule()),
                      ETLWorkflow.NAME);
   }
 }
