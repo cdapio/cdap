@@ -16,7 +16,7 @@
 
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorCreateController', function($timeout, $state, $alert, myAdapterTemplatesApi, GLOBALS, CanvasFactory) {
+  .controller('HydratorCreateController', function($timeout, $state, $alert, myPipelineTemplatesApi, GLOBALS, CanvasFactory) {
 
     var vm = this;
     vm.GLOBALS = GLOBALS;
@@ -29,7 +29,7 @@ angular.module(PKG.name + '.feature.hydrator')
     vm.typeFilter = '';
 
 
-    myAdapterTemplatesApi.list({
+    myPipelineTemplatesApi.list({
       apptype: GLOBALS.etlBatch
     })
       .$promise
@@ -43,7 +43,7 @@ angular.module(PKG.name + '.feature.hydrator')
         });
 
         angular.forEach(plugins, function (plugin) {
-          myAdapterTemplatesApi.get({
+          myPipelineTemplatesApi.get({
             apptype: GLOBALS.etlBatch,
             appname: plugin.name
           })
@@ -56,7 +56,7 @@ angular.module(PKG.name + '.feature.hydrator')
         vm.templates = vm.templates.concat(plugins);
       });
 
-    myAdapterTemplatesApi.list({
+    myPipelineTemplatesApi.list({
       apptype: GLOBALS.etlRealtime
     })
       .$promise
@@ -70,7 +70,7 @@ angular.module(PKG.name + '.feature.hydrator')
         });
 
         angular.forEach(plugins, function (plugin) {
-          myAdapterTemplatesApi.get({
+          myPipelineTemplatesApi.get({
             apptype: GLOBALS.etlRealtime,
             appname: plugin.name
           })

@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.services')
-  .factory('myAdapterApi', function($resource, myHelpers, GLOBALS) {
+  .factory('myPipelineApi', function($resource, myHelpers, GLOBALS) {
     var templatePath = '/templates',
         adapterPath = '/namespaces/:namespace/apps/:adapter',
 

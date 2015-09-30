@@ -16,7 +16,7 @@
 
 var alertpromise;
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorListController', function($scope, myAdapterApi, $stateParams, GLOBALS, mySettings, $state, $alert, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyDataSource, myAppsApi) {
+  .controller('HydratorListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $alert, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyDataSource, myAppsApi) {
 
     var dataSrc = new MyDataSource($scope);
 
@@ -39,7 +39,7 @@ angular.module(PKG.name + '.feature.hydrator')
     var statusMap = {};
 
 
-    myAdapterApi.list({
+    myPipelineApi.list({
       namespace: $stateParams.namespace
     })
       .$promise

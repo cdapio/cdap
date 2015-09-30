@@ -15,7 +15,7 @@
 */
 
 angular.module(PKG.name + '.feature.apps')
-  .controller('AppDetailStatusController', function($state, myAdapterApi, MyAppDAGService, CanvasFactory, GLOBALS, $scope) {
+  .controller('AppDetailStatusController', function($state, myPipelineApi, MyAppDAGService, CanvasFactory, GLOBALS, $scope) {
     this.nodes = [];
     var params = {
       namespace: $state.params.namespace,
@@ -32,7 +32,7 @@ angular.module(PKG.name + '.feature.apps')
       }
     };
 
-    myAdapterApi.get(params)
+    myPipelineApi.get(params)
       .$promise
       .then(function(res) {
         try{

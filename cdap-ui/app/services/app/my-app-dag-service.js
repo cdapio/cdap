@@ -47,7 +47,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS, MyNodeConfigService, MyConsoleTabService) {
+  .service('MyAppDAGService', function(myPipelineApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS, MyNodeConfigService, MyConsoleTabService) {
 
     var countSink = 0,
         countSource = 0,
@@ -442,10 +442,10 @@ angular.module(PKG.name + '.services')
           sinkType = GLOBALS.pluginTypes[this.metadata.template.type].sink;
 
       var propertiesApiMap = {
-        'transform': myAdapterApi.fetchTransformProperties
+        'transform': myPipelineApi.fetchTransformProperties
       };
-      propertiesApiMap[sourceType] = myAdapterApi.fetchSourceProperties;
-      propertiesApiMap[sinkType] = myAdapterApi.fetchSinkProperties;
+      propertiesApiMap[sourceType] = myPipelineApi.fetchSourceProperties;
+      propertiesApiMap[sinkType] = myPipelineApi.fetchSinkProperties;
 
       // This needs to pass on a scope always. Right now there is no cleanup
       // happening
@@ -656,7 +656,7 @@ angular.module(PKG.name + '.services')
       if (!angular.isObject(errors)) {
         EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
         var data = this.getConfigForBackend();
-        myAdapterApi.save(
+        myPipelineApi.save(
           {
             namespace: $state.params.namespace,
             adapter: this.metadata.name

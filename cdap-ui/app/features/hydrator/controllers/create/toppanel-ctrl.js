@@ -92,7 +92,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
               $scope.export = function () {
                 CanvasFactory
-                  .exportAdapter(
+                  .exportPipeline(
                     MyAppDAGService.getConfigForBackend(),
                     MyAppDAGService.metadata.name,
                     MyAppDAGService.nodes,
@@ -161,7 +161,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.importFile = function(files) {
       CanvasFactory
-        .importAdapter(files, MyAppDAGService.metadata.template.type)
+        .importPipeline(files, MyAppDAGService.metadata.template.type)
         .then(
           MyAppDAGService.onImportSuccess.bind(MyAppDAGService),
           function error(errorEvent) {

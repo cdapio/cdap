@@ -24,7 +24,7 @@ angular.module(PKG.name+'.commons')
       isHydrator: '='
     },
     templateUrl: 'data-list/data-list.html',
-    controller: function($scope, MyDataSource, $state, myAdapterApi) {
+    controller: function($scope, MyDataSource, $state, myPipelineApi) {
 
       $scope.dataList = [];
 
@@ -35,7 +35,7 @@ angular.module(PKG.name+'.commons')
       }
 
       function hydrator() {
-        myAdapterApi.get({
+        myPipelineApi.get({
           namespace: $state.params.namespace,
           adapter: $state.params.appId,
           scope: $scope

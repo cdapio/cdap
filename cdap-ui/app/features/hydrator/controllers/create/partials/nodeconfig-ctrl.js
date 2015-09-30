@@ -16,7 +16,7 @@
 
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('NodeConfigController', function($scope, IMPLICIT_SCHEMA, MyAppDAGService, $filter, $q, $rootScope, myAdapterApi, $state, $timeout, GLOBALS, MyNodeConfigService, $bootstrapModal) {
+  .controller('NodeConfigController', function($scope, IMPLICIT_SCHEMA, MyAppDAGService, $filter, $q, $rootScope, myPipelineApi, $state, $timeout, GLOBALS, MyNodeConfigService, $bootstrapModal) {
 
     $scope.type = MyAppDAGService.metadata.template.type;
 
@@ -211,10 +211,10 @@ angular.module(PKG.name + '.feature.hydrator')
           sinkType = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type].sink;
 
       var propertiesApiMap = {
-        'transform': myAdapterApi.fetchTransformProperties
+        'transform': myPipelineApi.fetchTransformProperties
       };
-      propertiesApiMap[sourceType] = myAdapterApi.fetchSourceProperties;
-      propertiesApiMap[sinkType] = myAdapterApi.fetchSinkProperties;
+      propertiesApiMap[sourceType] = myPipelineApi.fetchSourceProperties;
+      propertiesApiMap[sinkType] = myPipelineApi.fetchSinkProperties;
 
       // This needs to pass on a scope always. Right now there is no cleanup
       // happening

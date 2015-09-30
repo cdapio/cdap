@@ -115,13 +115,13 @@ angular.module(PKG.name + '.feature.hydrator')
             highlightTab: 'hydratorList'
           },
           resolve : {
-            rAdapterDetail: function($stateParams, $q, myAdapterApi) {
+            rAdapterDetail: function($stateParams, $q, myPipelineApi) {
               var params = {
                 namespace: $stateParams.namespace,
                 adapter: $stateParams.adapterId
               };
 
-              return myAdapterApi.get(params).$promise;
+              return myPipelineApi.get(params).$promise;
             }
           },
           ncyBreadcrumb: {

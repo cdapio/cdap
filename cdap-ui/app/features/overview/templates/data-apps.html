@@ -119,7 +119,7 @@
       <ul class="list-group">
         <li class="list-group-item" ng-repeat="app in AppsSectionCtrl.apps | orderBy:AppsSectionCtrl.MyOrderings.appOrdering | limitTo:5">
           <a ui-sref="apps.detail.overview.programs({appId: app.id})"
-              ng-if="AppsSectionCtrl.myAdapterFactory.isCustomApp(app.artifact.name)"
+              ng-if="AppsSectionCtrl.myHydratorFactory.isCustomApp(app.artifact.name)"
               ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
@@ -128,7 +128,7 @@
             </div>
           </a>
           <a ui-sref="apps.detail.overview.status({appId: app.id})"
-              ng-if="AppsSectionCtrl.myAdapterFactory.isETLApp(app.artifact.name)"
+              ng-if="AppsSectionCtrl.myHydratorFactory.isETLApp(app.artifact.name)"
               ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">

@@ -96,7 +96,7 @@ angular.module(PKG.name + '.feature.hydrator')
       return connections;
     }
 
-    function exportAdapter(detailedConfig, name, nodes, connections) {
+    function exportPipeline(detailedConfig, name, nodes, connections) {
       var defer = $q.defer();
       if (!name || name === '') {
         detailedConfig.name = 'noname';
@@ -156,7 +156,7 @@ angular.module(PKG.name + '.feature.hydrator')
       return result;
     }
 
-    function importAdapter(files, templateType) {
+    function importPipeline(files, templateType) {
       var defer = $q.defer();
       var reader = new FileReader();
       reader.readAsText(files[0], 'UTF-8');
@@ -184,8 +184,8 @@ angular.module(PKG.name + '.feature.hydrator')
       getNodes: getNodes,
       extractMetadataFromDraft: extractMetadataFromDraft,
       getConnectionsBasedOnNodes: getConnectionsBasedOnNodes,
-      exportAdapter: exportAdapter,
-      importAdapter: importAdapter,
+      exportPipeline: exportPipeline,
+      importPipeline: importPipeline,
       parseImportedJson: parseImportedJson
     };
   });

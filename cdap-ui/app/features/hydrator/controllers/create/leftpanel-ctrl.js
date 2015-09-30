@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('LeftPanelController', function(myAdapterApi, MyAppDAGService, MyDAGFactory, mySettings, $state, MySidebarService, $scope, rVersion, $stateParams, GLOBALS) {
+  .controller('LeftPanelController', function(myPipelineApi, MyAppDAGService, MyDAGFactory, mySettings, $state, MySidebarService, $scope, rVersion, $stateParams, GLOBALS) {
     this.pluginTypes = [
       {
         name: 'source'
@@ -52,15 +52,15 @@ angular.module(PKG.name + '.feature.hydrator')
       switch(group.name) {
         case 'source':
           params.extensionType = GLOBALS.pluginTypes[templateType].source;
-          prom = myAdapterApi.fetchSources(params).$promise;
+          prom = myPipelineApi.fetchSources(params).$promise;
           break;
         case 'transform':
           params.extensionType = GLOBALS.pluginTypes[templateType].transform;
-          prom = myAdapterApi.fetchTransforms(params).$promise;
+          prom = myPipelineApi.fetchTransforms(params).$promise;
           break;
         case 'sink':
           params.extensionType = GLOBALS.pluginTypes[templateType].sink;
-          prom = myAdapterApi.fetchSinks(params).$promise;
+          prom = myPipelineApi.fetchSinks(params).$promise;
           break;
 
       }

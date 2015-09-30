@@ -15,13 +15,21 @@
  */
 
 angular.module(PKG.name + '.services')
-  .factory('myAdapterValidatorsApi', function($resource) {
+  .factory('myPipelineTemplatesApi', function($resource) {
     return $resource(
       '',
-      {},
       {
+        apptype: '@apptype',
+        appname: '@appname'
+      },
+      {
+        list: {
+          url:'/predefinedapps/:apptype',
+          method: 'GET',
+          isArray: true
+        },
         get: {
-          url: '/validators',
+          url: '/predefinedapps/:apptype/:appname',
           method: 'GET'
         }
       }

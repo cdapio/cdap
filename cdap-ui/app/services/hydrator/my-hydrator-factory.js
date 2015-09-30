@@ -15,7 +15,7 @@
 */
 
 angular.module(PKG.name + '.services')
-  .factory('myAdapterFactory', function(GLOBALS) {
+  .factory('myHydratorFactory', function(GLOBALS) {
     function isCustomApp(artifactName) {
       return artifactName !== GLOBALS.etlBatch && artifactName !== GLOBALS.etlRealtime;
     }

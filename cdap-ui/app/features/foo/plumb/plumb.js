@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.foo')
-  .controller('PlumbController', function(myAdapterApi, MyPlumbService) {
+  .controller('PlumbController', function(myPipelineApi, MyPlumbService) {
     function getIcon(plugin) {
       var iconMap = {
         'script': 'fa-code',
@@ -85,13 +85,13 @@ angular.module(PKG.name + '.feature.foo')
       var prom;
       switch(group.name) {
         case 'source':
-          prom = myAdapterApi.fetchSources({ adapterType: 'ETLRealtime' }).$promise;
+          prom = myPipelineApi.fetchSources({ adapterType: 'ETLRealtime' }).$promise;
           break;
         case 'transform':
-          prom = myAdapterApi.fetchTransforms({ adapterType: 'ETLRealtime' }).$promise;
+          prom = myPipelineApi.fetchTransforms({ adapterType: 'ETLRealtime' }).$promise;
           break;
         case 'sink':
-          prom = myAdapterApi.fetchSinks({ adapterType: 'ETLRealtime' }).$promise;
+          prom = myPipelineApi.fetchSinks({ adapterType: 'ETLRealtime' }).$promise;
           break;
       }
       prom.then(function(res) {
