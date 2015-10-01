@@ -210,35 +210,35 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
   }
 
   protected void removeProperties(Id.Application app) throws Exception {
-    removeProperties(app, null);
+    metadataClient.removeProperties(app);
   }
 
-  private void removeProperties(Id.Application app, @Nullable String propertyToRemove) throws Exception {
-    metadataClient.removeProperties(app, propertyToRemove);
+  private void removeProperty(Id.Application app, String propertyToRemove) throws Exception {
+    metadataClient.removeProperty(app, propertyToRemove);
   }
 
   protected void removeProperties(Id.Program program) throws Exception {
-    removeProperties(program, null);
+    metadataClient.removeProperties(program);
   }
 
-  protected void removeProperties(Id.Program program, @Nullable String propertyToRemove) throws Exception {
-    metadataClient.removeProperties(program, propertyToRemove);
+  protected void removeProperty(Id.Program program, String propertyToRemove) throws Exception {
+    metadataClient.removeProperty(program, propertyToRemove);
   }
 
   protected void removeProperties(Id.DatasetInstance dataset) throws Exception {
-    removeProperties(dataset, null);
+    metadataClient.removeProperties(dataset);
   }
 
-  protected void removeProperties(Id.DatasetInstance dataset, @Nullable String propertyToRemove) throws Exception {
-    metadataClient.removeProperties(dataset, propertyToRemove);
+  protected void removeProperty(Id.DatasetInstance dataset, String propertyToRemove) throws Exception {
+    metadataClient.removeProperty(dataset, propertyToRemove);
   }
 
   protected void removeProperties(Id.Stream stream) throws Exception {
-    removeProperties(stream, null);
+    metadataClient.removeProperties(stream);
   }
 
-  protected void removeProperties(Id.Stream stream, @Nullable String propertyToRemove) throws Exception {
-    metadataClient.removeProperties(stream, propertyToRemove);
+  protected void removeProperty(Id.Stream stream, String propertyToRemove) throws Exception {
+    metadataClient.removeProperty(stream, propertyToRemove);
   }
 
   protected void addTags(Id.Application app, @Nullable Set<String> tags) throws Exception {
@@ -325,35 +325,35 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
   }
 
   protected void removeTags(Id.Application app) throws Exception {
-    removeTags(app, null);
+    metadataClient.removeTags(app);
   }
 
-  protected void removeTags(Id.Application app, @Nullable String tagToRemove) throws Exception {
-    metadataClient.removeTags(app, tagToRemove);
+  protected void removeTag(Id.Application app, String tagToRemove) throws Exception {
+    metadataClient.removeTag(app, tagToRemove);
   }
 
   protected void removeTags(Id.Program program) throws Exception {
-    removeTags(program, null);
+    metadataClient.removeTags(program);
   }
 
-  private void removeTags(Id.Program program, @Nullable String tagToRemove) throws Exception {
-    metadataClient.removeTags(program, tagToRemove);
+  private void removeTag(Id.Program program, String tagToRemove) throws Exception {
+    metadataClient.removeTag(program, tagToRemove);
   }
 
   protected void removeTags(Id.DatasetInstance dataset) throws Exception {
-    removeTags(dataset, null);
+    metadataClient.removeTags(dataset);
   }
 
-  protected void removeTags(Id.DatasetInstance dataset, @Nullable String tagToRemove) throws Exception {
-    metadataClient.removeTags(dataset, tagToRemove);
+  protected void removeTag(Id.DatasetInstance dataset, String tagToRemove) throws Exception {
+    metadataClient.removeTag(dataset, tagToRemove);
   }
 
   protected void removeTags(Id.Stream stream) throws Exception {
-    removeTags(stream, null);
+    metadataClient.removeTags(stream);
   }
 
-  protected void removeTags(Id.Stream stream, @Nullable String tagToRemove) throws Exception {
-    metadataClient.removeTags(stream, tagToRemove);
+  protected void removeTag(Id.Stream stream, String tagToRemove) throws Exception {
+    metadataClient.removeTag(stream, tagToRemove);
   }
 
   // expect an exception during fetching of lineage

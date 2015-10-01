@@ -242,108 +242,195 @@ public class MetadataClient {
   }
 
   /**
-   * Removes properties from an application.
+   * Removes a property from an application.
+   *
+   * @param appId app to remove property from
+   * @param propertyToRemove property to be removed
+   */
+  public void removeProperty(Id.Application appId, String propertyToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeProperty(appId, constructPath(appId), propertyToRemove);
+  }
+
+  /**
+   * Removes a property from a dataset.
+   *
+   * @param datasetInstance dataset to remove property from
+   * @param propertyToRemove property to be removed
+   */
+  public void removeProperty(Id.DatasetInstance datasetInstance, String propertyToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeProperty(datasetInstance, constructPath(datasetInstance), propertyToRemove);
+  }
+
+  /**
+   * Removes a property from a stream.
+   *
+   * @param streamId stream to remove property from
+   * @param propertyToRemove property to be removed
+   */
+  public void removeProperty(Id.Stream streamId, String propertyToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeProperty(streamId, constructPath(streamId), propertyToRemove);
+  }
+
+  /**
+   * Removes a property from a program.
+   *
+   * @param programId program to remove property from
+   * @param propertyToRemove property to be removed
+   */
+  public void removeProperty(Id.Program programId, String propertyToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeProperty(programId, constructPath(programId), propertyToRemove);
+  }
+
+  private void removeProperty(Id.NamespacedId namespacedId, String entityPath, String propertyToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    String path = String.format("%s/metadata/properties/%s", entityPath, propertyToRemove);
+    makeRequest(namespacedId, path, HttpMethod.DELETE);
+  }
+
+
+  /**
+   * Removes all properties from an application.
    *
    * @param appId app to remove properties from
-   * @param propertyToRemove property to be removed, or {@code null} to remove all properties for the entity
    */
-  public void removeProperties(Id.Application appId, @Nullable String propertyToRemove)
+  public void removeProperties(Id.Application appId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    removeProperties(appId, constructPath(appId), propertyToRemove);
+    removeProperties(appId, constructPath(appId));
   }
 
   /**
-   * Removes properties from a dataset.
+   * Removes all properties from a dataset.
    *
    * @param datasetInstance dataset to remove properties from
-   * @param propertyToRemove property to be removed, or {@code null} to remove all properties for the entity
    */
-  public void removeProperties(Id.DatasetInstance datasetInstance, @Nullable String propertyToRemove)
+  public void removeProperties(Id.DatasetInstance datasetInstance)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    removeProperties(datasetInstance, constructPath(datasetInstance), propertyToRemove);
+    removeProperties(datasetInstance, constructPath(datasetInstance));
   }
 
   /**
-   * Removes properties from a stream.
+   * Removes all properties from a stream.
    *
    * @param streamId stream to remove properties from
-   * @param propertyToRemove property to be removed, or {@code null} to remove all properties for the entity
    */
-  public void removeProperties(Id.Stream streamId, @Nullable String propertyToRemove)
+  public void removeProperties(Id.Stream streamId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    removeProperties(streamId, constructPath(streamId), propertyToRemove);
+    removeProperties(streamId, constructPath(streamId));
   }
 
   /**
-   * Removes properties from a program.
+   * Removes all properties from a program.
    *
    * @param programId program to remove properties from
-   * @param propertyToRemove property to be removed, or {@code null} to remove all properties for the entity
    */
-  public void removeProperties(Id.Program programId, @Nullable String propertyToRemove)
+  public void removeProperties(Id.Program programId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    removeProperties(programId, constructPath(programId), propertyToRemove);
+    removeProperties(programId, constructPath(programId));
   }
 
-  private void removeProperties(Id.NamespacedId namespacedId, String entityPath, @Nullable String propertyToRemove)
+  private void removeProperties(Id.NamespacedId namespacedId, String entityPath)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     String path = String.format("%s/metadata/properties", entityPath);
-    if (propertyToRemove != null) {
-      path = path + "/" + propertyToRemove;
-    }
     makeRequest(namespacedId, path, HttpMethod.DELETE);
   }
 
   /**
-   * Removes tags from an application.
+   * Removes a tag from an application.
+   *
+   * @param appId app to remove tag from
+   * @param tagToRemove tag to be removed
+   */
+  public void removeTag(Id.Application appId, String tagToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeTag(appId, constructPath(appId), tagToRemove);
+  }
+
+  /**
+   * Removes a tag from a dataset.
+   *
+   * @param datasetInstance dataset to remove tag from
+   * @param tagToRemove tag to be removed
+   */
+  public void removeTag(Id.DatasetInstance datasetInstance, String tagToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeTag(datasetInstance, constructPath(datasetInstance), tagToRemove);
+  }
+
+  /**
+   * Removes a tag from a stream.
+   *
+   * @param streamId stream to remove tag from
+   * @param tagToRemove tag to be removed
+   */
+  public void removeTag(Id.Stream streamId, String tagToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeTag(streamId, constructPath(streamId), tagToRemove);
+  }
+
+  /**
+   * Removes a tag from a program.
+   *
+   * @param programId program to remove tag from
+   * @param tagToRemove tag to be removed
+   */
+  public void removeTag(Id.Program programId, String tagToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeTag(programId, constructPath(programId), tagToRemove);
+  }
+
+  private void removeTag(Id.NamespacedId namespacedId, String entityPath, String tagToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    String path = String.format("%s/metadata/tags/%s", entityPath, tagToRemove);
+    makeRequest(namespacedId, path, HttpMethod.DELETE);
+  }
+
+  /**
+   * Removes all tags from an application.
    *
    * @param appId app to remove tags from
-   * @param tagToRemove tag to be removed, or {@code null} to remove all tags for the entity
    */
-  public void removeTags(Id.Application appId, @Nullable String tagToRemove)
+  public void removeTags(Id.Application appId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    removeTags(appId, constructPath(appId), tagToRemove);
+    removeTags(appId, constructPath(appId));
   }
 
   /**
-   * Removes tags from a dataset.
+   * Removes all tags from a dataset.
    *
    * @param datasetInstance dataset to remove tags from
-   * @param tagToRemove tag to be removed, or {@code null} to remove all tags for the entity
    */
-  public void removeTags(Id.DatasetInstance datasetInstance, @Nullable String tagToRemove)
+  public void removeTags(Id.DatasetInstance datasetInstance)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    removeTags(datasetInstance, constructPath(datasetInstance), tagToRemove);
+    removeTags(datasetInstance, constructPath(datasetInstance));
   }
 
   /**
-   * Removes tags from a stream.
+   * Removes all tags from a stream.
    *
    * @param streamId stream to remove tags from
-   * @param tagToRemove tag to be removed, or {@code null} to remove all tags for the entity
    */
-  public void removeTags(Id.Stream streamId, @Nullable String tagToRemove)
+  public void removeTags(Id.Stream streamId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    removeTags(streamId, constructPath(streamId), tagToRemove);
+    removeTags(streamId, constructPath(streamId));
   }
 
   /**
-   * Removes tags from a program.
+   * Removes all tags from a program.
    *
    * @param programId program to remove tags from
-   * @param tagToRemove tag to be removed, or {@code null} to remove all tags for the entity
    */
-  public void removeTags(Id.Program programId, @Nullable String tagToRemove)
+  public void removeTags(Id.Program programId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    removeTags(programId, constructPath(programId), tagToRemove);
+    removeTags(programId, constructPath(programId));
   }
 
-  private void removeTags(Id.NamespacedId namespacedId, String entityPath, @Nullable String tagToRemove)
+  private void removeTags(Id.NamespacedId namespacedId, String entityPath)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     String path = String.format("%s/metadata/tags", entityPath);
-    if (tagToRemove != null) {
-      path = path + "/" + tagToRemove;
-    }
     makeRequest(namespacedId, path, HttpMethod.DELETE);
   }
 

@@ -21,7 +21,6 @@ import co.cask.cdap.WordCountApp;
 import co.cask.cdap.WordCountMinusFlowApp;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
@@ -29,7 +28,6 @@ import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
-import co.cask.common.http.HttpResponse;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.After;
@@ -131,12 +129,12 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     // test removal
     removeProperties(application);
     Assert.assertTrue(getProperties(application).isEmpty());
-    removeProperties(pingService, "sKey");
-    removeProperties(pingService, "sK");
+    removeProperty(pingService, "sKey");
+    removeProperty(pingService, "sK");
     Assert.assertTrue(getProperties(pingService).isEmpty());
-    removeProperties(myds, "dKey");
+    removeProperty(myds, "dKey");
     Assert.assertEquals(ImmutableMap.of("dK", "dV"), getProperties(myds));
-    removeProperties(mystream, "stK");
+    removeProperty(mystream, "stK");
     Assert.assertEquals(ImmutableMap.of("stKey", "stValue"), getProperties(mystream));
     // cleanup
     removeProperties(application);
@@ -208,16 +206,16 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(ImmutableSet.<MetadataSearchResultRecord>of(), searchTags);
 
     // test removal
-    removeTags(application, "aTag");
+    removeTag(application, "aTag");
     Assert.assertEquals(ImmutableSet.of("aT"), getTags(application));
     removeTags(pingService);
     Assert.assertTrue(getTags(pingService).isEmpty());
     removeTags(pingService);
     Assert.assertTrue(getTags(pingService).isEmpty());
-    removeTags(myds, "dT");
+    removeTag(myds, "dT");
     Assert.assertEquals(ImmutableSet.of("dTag"), getTags(myds));
-    removeTags(mystream, "stT");
-    removeTags(mystream, "stTag");
+    removeTag(mystream, "stT");
+    removeTag(mystream, "stTag");
     Assert.assertTrue(getTags(mystream).isEmpty());
     // cleanup
     removeTags(application);
