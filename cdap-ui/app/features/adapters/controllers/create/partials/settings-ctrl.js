@@ -35,19 +35,7 @@ angular.module(PKG.name + '.feature.adapters')
           this.saveDisabled = true;
         }
       }.bind(this));
-    } else {
-      $scope.$watch(function () {
-        return this.instance;
-      }.bind(this), function () {
-        var intialInstance = this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
-        if (this.instance !== intialInstance) {
-          this.saveDisabled = false;
-        } else {
-          this.saveDisabled = true;
-        }
-      }.bind(this));
     }
-
 
     function checkCron(cron) {
       var pattern = /^[0-9\*\s]*$/g;
