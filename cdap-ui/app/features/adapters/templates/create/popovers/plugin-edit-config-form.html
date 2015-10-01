@@ -62,8 +62,9 @@
           </ul>
         </div>
 
-        <h4 class="sink-schema" ng-if="pluginCopy.properties.schema">
+        <h4 class="sink-schema" ng-if="pluginCopy.properties.schema || pluginCopy.implicitSchema || pluginCopy._backendProperties['schema'].required">
           <span>Schema</span>
+          <span class="fa fa-asterisk ng-scope" ng-if="pluginCopy._backendProperties['schema'].required"></span>
           <button
             class="btn btn-sm btn-default pull-right"
             ng-click="PluginEditController.schemaClear()"
@@ -75,7 +76,7 @@
 
         <fieldset ng-disabled="isDisabled">
           <my-schema-editor
-            ng-if="pluginCopy.properties.schema || pluginCopy.implicitSchema"
+            ng-if="pluginCopy.properties.schema || pluginCopy.implicitSchema || pluginCopy._backendProperties['schema'].required"
             ng-model="pluginCopy.outputSchema"
             data-disabled="pluginCopy.implicitSchema || isDisabled"
             plugin-properties="pluginCopy.properties"

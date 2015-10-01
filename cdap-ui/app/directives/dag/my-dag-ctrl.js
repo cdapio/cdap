@@ -80,6 +80,7 @@ angular.module(PKG.name + '.commons')
             p.error.message = 'Missing required fields';
             p.warning = true;
           }
+          p.properties = plugin.properties;
         }
       });
     };
