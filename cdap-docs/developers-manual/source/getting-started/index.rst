@@ -34,7 +34,7 @@ or a workstation. It has:
 - Tools for :ref:`ingesting data <ingesting-data>` and :ref:`authenticating
   clients <authentication-clients>`, :ref:`datasets, <datasets-index>` and :ref:`example
   applications <examples-index>` to help you become familiar with CDAP, perform common
-  tasks, and serve as templates for developing your own applications.
+  tasks, and serve as the basis for developing your own applications.
 
 Follow these steps:
 

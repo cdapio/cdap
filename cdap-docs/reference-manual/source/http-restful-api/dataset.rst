@@ -332,34 +332,6 @@ You can retrieve a list of datasets used by a program by issuing a HTTP GET requ
    * - ``200 OK``
      - Request was successful
 
-Datasets used by an Adapter
----------------------------
-
-You can retrieve a list of datasets used by an adapter by issuing a HTTP GET request to the URL::
-
-  GET <base-url>/namespaces/<namespace>/adapters/<adapter-id>/datasets
-
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Parameter
-     - Description
-   * - ``<namespace>``
-     - Namespace ID
-   * - ``<adapter-id>``
-     - Adapter ID
-
-.. rubric:: HTTP Responses
-.. list-table::
-   :widths: 20 80
-   :header-rows: 1
-
-   * - Status Codes
-     - Description
-   * - ``200 OK``
-     - Request was successful
-
 Programs using a Dataset
 ------------------------
 

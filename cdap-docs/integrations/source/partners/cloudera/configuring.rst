@@ -113,24 +113,24 @@ Install, Setup, and Startup
 Run the Cloudera Manager Admin Console *Add Service* Wizard and select *CDAP*.
 When completing the Wizard, these notes may help:
 
-   - *Add Service* Wizard, Page 2: **Optional Hive dependency** is for the optional CDAP
-     "Explore" component which can be enabled later.
-     
-   - *Add Service* Wizard, Page 3: **Choosing Role Assignments**. Ensure CDAP roles are assigned to hosts colocated
-     with service or gateway roles for HBase, HDFS, Yarn, and optionally Hive.
+- *Add Service* Wizard, Page 2: **Optional Hive dependency** is for the optional CDAP
+ "Explore" component which can be enabled later.
+ 
+- *Add Service* Wizard, Page 3: **Choosing Role Assignments**. Ensure CDAP roles are assigned to hosts colocated
+ with service or gateway roles for HBase, HDFS, Yarn, and optionally Hive.
 
-   - *Add Service* Wizard, Page 3: CDAP **Security Auth** service is an optional service
-     for CDAP perimeter security; it can be configured and enabled post-wizard.
-     
-   - *Add Service* Wizard, Page 5: **Kerberos Auth Enabled** is needed if running against a
-     secure Hadoop cluster.
+- *Add Service* Wizard, Page 3: CDAP **Security Auth** service is an optional service
+ for CDAP perimeter security; it can be configured and enabled post-wizard.
+ 
+- *Add Service* Wizard, Pages 4 & 5: **Kerberos Auth Enabled** is needed if running against a
+ secure Hadoop cluster.
 
-   - *Add Service* Wizard, Page 5: **Router Server Port:** This should match the "Router Bind
-     Port"; it’s used by the CDAP UI to connect to the Router service.
+- *Add Service* Wizard, Pages 4 & 5: **Router Server Port:** This should match the "Router Bind
+ Port"; it’s used by the CDAP UI to connect to the Router service.
 
-   - *Add Service* Wizard, Page 5: **App Template Dir:** This should initially point to the bundled templates included in
-     the CDAP parcel directory. If you have modified ``${PARCELS_ROOT}``, please update this setting to match.  Advanced
-     users will want to customize this directory to a location outside of the CDAP Parcel.
+- *Add Service* Wizard, Page 4 & 5: **App Artifact Dir:** This should initially point to the bundled system artifacts included in
+ the CDAP parcel directory. If you have modified ``${PARCELS_ROOT}``, please update this setting to match.
+ Users will want to customize this directory to a location outside of the CDAP Parcel.
 
 Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to install CDAP
 :ref:`are available <step-by-step-cloudera-add-service>`.
