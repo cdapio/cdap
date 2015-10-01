@@ -60,6 +60,10 @@ public final class PersistedMessageCallback implements KafkaConsumer.MessageCall
   @Override
   public void onReceived(Iterator<FetchedMessage> messages) {
     delegate.onReceived(new OffsetTrackingIterator(messages));
+    if (messageCount.get() >= persistThreshold) {
+      messageCount.set(0);
+      persistOffsets();
+    }
   }
 
   @Override
@@ -68,11 +72,11 @@ public final class PersistedMessageCallback implements KafkaConsumer.MessageCall
       delegate.finished();
     } finally {
       // Save the offset
-      persist();
+      persistOffsets();
     }
   }
 
-  private void persist() {
+  private void persistOffsets() {
     try {
       metaTable.save(ImmutableMap.copyOf(offsets));
     } catch (Exception e) {
@@ -102,12 +106,11 @@ public final class PersistedMessageCallback implements KafkaConsumer.MessageCall
 
     @Override
     public FetchedMessage next() {
-      recordLastOffset();
       FetchedMessage message = delegate.next();
       lastTopicPartition = message.getTopicPartition();
       lastOffset = message.getNextOffset();
-
       messageCount.incrementAndGet();
+      recordOffset();
       return message;
     }
 
@@ -116,13 +119,9 @@ public final class PersistedMessageCallback implements KafkaConsumer.MessageCall
       delegate.remove();
     }
 
-    private void recordLastOffset() {
+    private void recordOffset() {
       if (lastOffset >= 0) {
         offsets.put(lastTopicPartition, lastOffset);
-      }
-      if (messageCount.get() >= persistThreshold) {
-        messageCount.set(0);
-        persist();
       }
     }
   }
