@@ -36,6 +36,7 @@ angular.module(PKG.name + '.services')
         fetchSources: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
         fetchSinks: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
         fetchTransforms: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
+        fetchPlugins: myHelpers.getConfig('GET', 'REQUEST', pluginsFetchPath, true),
         fetchSourceProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
         fetchSinkProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
         fetchTransformProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),

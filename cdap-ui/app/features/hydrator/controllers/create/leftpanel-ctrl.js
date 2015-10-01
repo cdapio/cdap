@@ -18,15 +18,79 @@ angular.module(PKG.name + '.feature.hydrator')
   .controller('LeftPanelController', function(myPipelineApi, MyAppDAGService, MyDAGFactory, mySettings, $state, MySidebarService, $scope, rVersion, $stateParams, GLOBALS) {
     this.pluginTypes = [
       {
-        name: 'source'
+        name: 'source',
+        expanded: true,
+        plugins: []
       },
       {
-        name: 'transform'
+        name: 'transform',
+        expanded: false,
+        plugins: []
       },
       {
-        name: 'sink'
+        name: 'sink',
+        expanded: false,
+        plugins: []
       }
     ];
+
+    angular.forEach(this.pluginTypes, function (group) {
+      var templateType = MyAppDAGService.metadata.template.type;
+      var params = {
+        namespace: $stateParams.namespace,
+        pipelineType: templateType,
+        version: rVersion.version,
+        extensionType: GLOBALS.pluginTypes[templateType][group.name],
+        scope: $scope
+      };
+
+      myPipelineApi.fetchPlugins(params)
+        .$promise
+        .then(function (res) {
+          var plugins = res.map(function (p) {
+            p.type = group.name;
+            p.icon = MyDAGFactory.getIcon(p.name);
+            return p;
+          });
+          group.plugins = group.plugins.concat(plugins);
+        });
+    });
+
+    mySettings.get('pluginTemplates')
+      .then(function (res) {
+        if (!angular.isObject(res)) {
+          return;
+        }
+        if (!res || !res[$state.params.namespace]) {
+          return;
+        }
+        var templates = res[$state.params.namespace][MyAppDAGService.metadata.template.type];
+        if (!templates) {
+          return;
+        }
+
+        var templateType = MyAppDAGService.metadata.template.type;
+
+        angular.forEach(GLOBALS.pluginTypes[templateType], function (value, key) {
+          var group;
+
+          switch (key) {
+            case 'source':
+              group = this.pluginTypes[0];
+              break;
+            case 'transform':
+              group = this.pluginTypes[1];
+              break;
+            case 'sink':
+              group = this.pluginTypes[2];
+              break;
+          }
+
+          group.plugins = group.plugins.concat(objectToArray(templates[value]));
+
+        }.bind(this));
+      }.bind(this));
+
 
     this.plugins= {
       items: []
