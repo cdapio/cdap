@@ -15,24 +15,15 @@
 */
 
 angular.module(PKG.name + '.feature.apps')
-  .controller('AppDetailStatusController', function($state, myAdapterApi, MyAppDAGService, CanvasFactory, GLOBALS, $scope) {
+  .controller('AppDetailStatusController', function($state, myPipelineApi, MyAppDAGService, CanvasFactory, GLOBALS, $scope) {
     this.nodes = [];
     var params = {
       namespace: $state.params.namespace,
-      adapter: $state.params.appId,
+      pipeline: $state.params.appId,
       scope: $scope
     };
 
-    this.cloneAdapter = function() {
-      if (this.config) {
-        $state.go('adapters.create', {
-          data: this.config,
-          type: this.config.artifact.name
-        });
-      }
-    };
-
-    myAdapterApi.get(params)
+    myPipelineApi.get(params)
       .$promise
       .then(function(res) {
         try{

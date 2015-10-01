@@ -30,12 +30,12 @@
 </head>
 <body ng-controller="BodyCtrl" ng-class="bodyClass">
     <header class="navbar navbar-inverse navbar-fixed-top navbar-cdap"
-            ng-if="!$state.includes('adapters.**') && !$state.includes('login')">
+            ng-if="!$state.includes('hydrator.**') && !$state.includes('login')">
       <div role="navigation" class="container" my-navbar></div>
     </header>
 
     <header class="navbar navbar-fixed-top navbar-hydrator"
-            ng-if="$state.includes('adapters.**')">
+            ng-if="$state.includes('hydrator.**')">
       <div role="navigation" class="container" my-navbar-hydrator></div>
     </header>
 

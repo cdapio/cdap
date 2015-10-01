@@ -29,7 +29,7 @@ angular
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
       PKG.name+'.feature.foo',
-      PKG.name+'.feature.adapters',
+      PKG.name+'.feature.hydrator',
       PKG.name+'.feature.explore'
     ]).name,
 
