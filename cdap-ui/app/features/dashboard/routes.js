@@ -75,6 +75,9 @@ angular.module(PKG.name+'.feature.dashboard')
         onEnter: function ($state, $bootstrapModal, $rootScope, rDashboardsModel, tab) {
           var scope = $rootScope.$new();
           scope.currentBoard = rDashboardsModel.current();
+          scope.metricsLimit = rDashboardsModel.current().WIDGET_LIMIT;
+          scope.pendingMetricsSlots = rDashboardsModel.current().columns.length;
+
           $bootstrapModal.open({
             templateUrl: '/assets/features/dashboard/templates/partials/addwdgt.html',
             size: 'md',

@@ -15,9 +15,11 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log, MyMetricsQueryHelper) {
+  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log, MyMetricsQueryHelper, myHelpers) {
 
     var dSrc = new MyDataSource();
+    var addAllOptionId = 'allMetricsAsWidgets';
+    var addAllOptionLabel = 'Add all metrics as individual widgets';
 
     function MetricPickerCtrl ($scope) {
 
@@ -66,7 +68,10 @@ angular.module(PKG.name + '.commons')
 
       require: 'ngModel',
 
-      scope: {},
+      scope: {
+        metricsLimit: '=',
+        metricsSlotsFilled: '='
+      },
 
       templateUrl: 'metric-picker/metric-picker.html',
 
@@ -83,6 +88,7 @@ angular.module(PKG.name + '.commons')
             if (t.context && t.context.split('.').length % 2 !== 0) {
               return false;
             }
+
             if (!t || !t.names || !t.names.length) {
               return false;
             }
@@ -93,6 +99,16 @@ angular.module(PKG.name + '.commons')
             }
             return true;
           };
+
+          ngModel.$validators.metricsLimitValidation = function() {
+            var availableMetricSlots = scope.metricsLimit - scope.metricsSlotsFilled;
+            var hasMetricsLimitReached = myHelpers.objectQuery(scope, 'metric', 'names', 0, 'name', 'id') === addAllOptionId &&  availableMetricSlots < scope.available.names.length;
+            if (hasMetricsLimitReached) {
+              return false;
+            }
+            return true;
+          };
+
         }
 
         function getBaseContext () {
@@ -155,9 +171,19 @@ angular.module(PKG.name + '.commons')
               _cdapPath: '/metrics/search?target=metric&' + tagQueryParams
             },
             function (res) {
+              var metricsArray = [];
+              metricsArray.push({
+                id: addAllOptionId,
+                label: addAllOptionLabel
+              });
               // 'Add All' option to add all metrics in current context.
-              res.unshift('Add All');
-              scope.available.names = res;
+              res.forEach(function(metric) {
+                metricsArray.push({
+                  id: metric,
+                  label: metric
+                });
+              });
+              scope.available.names = metricsArray;
             }
           );
 
@@ -186,7 +212,7 @@ angular.module(PKG.name + '.commons')
           if(newVal.names) {
             var isAddAll = false;
             for (var i = 0; i < newVal.names.length; i++) {
-              if (newVal.names[i].name === 'Add All') {
+              if (newVal.names[i].name === addAllOptionId) {
                 isAddAll = true;
               }
             }
@@ -194,10 +220,11 @@ angular.module(PKG.name + '.commons')
             if (newVal.context) {
               context += '.' + newVal.context;
             }
+            var allMetrics = scope.available.names.slice(1).map(function(e) {return e.id;}); // Remove 'Add All' option
             if (isAddAll) {
               ngModel.$setViewValue({
                 addAll: true,
-                allMetrics: scope.available.names.slice(1), // Remove 'Add All' option
+                allMetrics: allMetrics,
                 context: context,
                 names: newVal.getNames(),
                 name: newVal.getName()

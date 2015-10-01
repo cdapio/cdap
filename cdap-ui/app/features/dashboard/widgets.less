@@ -84,4 +84,20 @@ body.state-dashboard {
     .border-radius(4px);
     .select-wrapper(@background-color: @cdap-darkness, @color: white);
   }
+
+  my-metric-picker {
+    .tooltip.tooltip-info {
+      z-index: 1020; // lower z-index than modal
+
+      .tooltip-inner {
+        background-color: #ffffff;
+        color: #333333;
+        border: none;
+      }
+
+      .tooltip-arrow {
+        border-right-color: #ffffff;
+      }
+    }
+  }
 }
