@@ -65,7 +65,7 @@ Installation
        - - Install and startup **Hadoop** and related technologies, as required
          
      * - Using CDAP
-       - - Install CDAP by downloading zipfile, unzipping and starting **CDAP Server**
+       - - Install **CDAP** by downloading zipfile, unzipping and starting **CDAP Server**
       
      * -  
        - .. container:: highlight
@@ -162,8 +162,8 @@ Data Ingestion
      :stub-columns: 1
 
      * - Without CDAP
-       - - Write a custom consumer for Kafka that reads from source
-         - Write the data to HDFS
+       - - Write a custom consumer for **Kafka** that reads from source
+         - Write the data to **HDFS**
          - Create external table in **Hive** called ``stream_logeventstream``
          
      * - Using CDAP
@@ -201,7 +201,7 @@ Data Exploration
      :stub-columns: 1
 
      * - Without CDAP
-       - - Run Hive command using Hive CLI       
+       - - Run Hive command using **Hive CLI**
          - ``DESCRIBE stream_logeventstream``
          
      * - Using CDAP
@@ -235,7 +235,7 @@ Data Exploration
      :stub-columns: 1
 
      * - Without CDAP
-       - - Run Hive command using Hive CLI
+       - - Run Hive command using **Hive CLI**
          - ``SELECT * FROM stream_logeventstream LIMIT 2``
 
      * - Using CDAP
@@ -271,7 +271,7 @@ Data Exploration
             Fetched 2 rows
 
 
-Data Exploration: Attaching A Schema
+Data Exploration: Attaching a Schema
 ====================================
 
 .. container:: table-block
@@ -289,8 +289,8 @@ Data Exploration: Attaching A Schema
      :stub-columns: 1
 
      * - Without CDAP
-       - - Drop the external Hive table
-         - Recreate the Hive table with new schema
+       - - Drop the external **Hive** table
+         - Recreate the **Hive** table with new schema
          
      * - Using CDAP
        - .. container:: highlight
@@ -307,7 +307,7 @@ Data Exploration: Attaching A Schema
      :widths: 80 20
      :stub-columns: 1
      
-     * - Describe new format of the ingested Data
+     * - Describe new format of the ingested data
        - 
        
   .. list-table::
@@ -316,7 +316,7 @@ Data Exploration: Attaching A Schema
      :stub-columns: 1
 
      * - Without CDAP
-       - - Run Hive command using Hive CLI
+       - - Run Hive command using **Hive CLI**
          - ``DESCRIBE stream_logeventsetream``
          
      * - Using CDAP
@@ -358,7 +358,7 @@ Data Exploration: Attaching A Schema
      :stub-columns: 1
 
      * - Without CDAP
-       - - Run Hive command using Hive CLI
+       - - Run Hive command using **Hive CLI**
          - ``SELECT * FROM stream_logeventsetream LIMIT 2``
          
      * - Using CDAP
@@ -547,7 +547,7 @@ Advanced Data Exploration
      :stub-columns: 1
 
      * - Without CDAP
-       - - Create a file in Hadoop file system called ``ip2geo``
+       - - Create a file in **Hadoop** file system called ``ip2geo``
          
      * - Using CDAP
        - .. container:: highlight
@@ -573,9 +573,9 @@ Advanced Data Exploration
      :stub-columns: 1
 
      * - Without CDAP
-       - - Write a custom consumer that reads from source (example: Kafka)
-         - Write the data to HDFS
-         - Create external table in Hive called ``stream_ip2geo``
+       - - Write a custom consumer that reads from source (example: **Kafka**)
+         - Write the data to **HDFS**
+         - Create external table in **Hive** called ``stream_ip2geo``
 
      * - Using CDAP
        - .. container:: highlight
@@ -601,7 +601,7 @@ Advanced Data Exploration
      :stub-columns: 1
 
      * - Without CDAP
-       - Write data to Kafka or append directly to HDFS
+       - Write data to **Kafka** or append directly to **HDFS**
          
      * - Using CDAP
        - .. container:: highlight
@@ -627,7 +627,7 @@ Advanced Data Exploration
      :stub-columns: 1
 
      * - Without CDAP
-       - - Run Hive command using Hive CLI
+       - - Run **Hive** command using **Hive CLI**
          - ``SELECT * FROM stream_ip2geo``
          
      * - Using CDAP
@@ -680,8 +680,8 @@ Advanced Data Exploration
      :stub-columns: 1
 
      * - Without CDAP
-       - - Drop the external Hive table
-         - Recreate the Hive table with new schema
+       - - Drop the external **Hive** table
+         - Recreate the **Hive** table with new schema
          
      * - Using CDAP
        - .. container:: highlight
@@ -707,7 +707,7 @@ Advanced Data Exploration
      :stub-columns: 1
 
      * - Without CDAP
-       - - Run Hive command using Hive CLI
+       - - Run **Hive** command using **Hive CLI**
          - ``SELECT * FROM stream_ip2geo``
          
      * - Using CDAP
@@ -761,7 +761,7 @@ Advanced Data Exploration
      :stub-columns: 1
 
      * - Without CDAP
-       - - Run Hive command using Hive CLI
+       - - Run **Hive** command using **Hive CLI**
          - ``SELECT remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10``
          
      * - Using CDAP
@@ -848,9 +848,9 @@ Transforming Your Data
      :stub-columns: 1
 
      * - Without CDAP
-       - - Write a custom consumer that reads from source (example: Kafka)
-         - Write the data to HDFS
-         - Create an external table in Hive called ``stream_ip2geo``
+       - - Write a custom consumer that reads from source (example: **Kafka**)
+         - Write the data to **HDFS**
+         - Create an external table in **Hive** called ``stream_ip2geo``
          - Orchestrate running the custom consumer periodically using **Oozie**
          - Keep track of last processed times
          
@@ -1020,9 +1020,9 @@ Transforming Your Data
      :stub-columns: 1
 
      * - Without CDAP
-       - - Write a custom consumer that reads from source (example: Kafka)
-         - Write the data to HDFS
-         - Create external table in Hive called ``stream_ip2geo``
+       - - Write a custom consumer that reads from source (example: **Kafka**)
+         - Write the data to **HDFS**
+         - Create external table in **Hive** called ``stream_ip2geo``
          
      * - Using CDAP
        - .. container:: highlight
@@ -1081,7 +1081,7 @@ Transforming Your Data
      :stub-columns: 1
 
      * - Without CDAP
-       - - Run Hive query using Hive CLI
+       - - Run **Hive** query using **Hive CLI**
          - ``'describe user_logEventStream_converted'`` 
          
      * - Using CDAP
@@ -1136,7 +1136,7 @@ Transforming Your Data
      :stub-columns: 1
 
      * - Without CDAP
-       - - Run Hive query using Hive CLI
+       - - Run **Hive** query using **Hive CLI**
          - ``SELECT ts, request, status FROM dataset_logEventStream_converted LIMIT 2``
          
      * - Using CDAP
@@ -1222,7 +1222,7 @@ Building Real World Applications
        - - Write and execute **MapReduce** using **Hadoop**
          - Separate environment for processing in real-time setup stack
          - Add ability to periodically copy datasets into **SQL** using **Sqoop**
-         - Orchestrate the Mapreduce job using Oozie
+         - Orchestrate the **MapReduce** job using **Oozie**
          - Write an application to serve the data
          
      * - Using CDAP
@@ -1261,7 +1261,7 @@ Building Real World Applications
      :stub-columns: 1
 
      * - Without CDAP
-       - - Check Oozie
+       - - Check **Oozie**
          - Check **YARN** Console
          
      * - Using CDAP
@@ -1297,7 +1297,7 @@ Building Real World Applications
      * - Without CDAP
        - - Set classpath in environment variable 
          - ``CLASSPATH=/my/classpath``
-         - Run the command to start the yarn application
+         - Run the command to start the **YARN** application
          - ``yarn jar /path/to/myprogram.jar``
          
      * - Using CDAP
@@ -1307,7 +1307,7 @@ Building Real World Applications
 
             |cdap >| start flow Wise.WiseFlow
           
-            Successfully started flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}
+            Successfully started flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
 
 .. container:: table-block
 
@@ -1353,9 +1353,9 @@ Building Real World Applications
      :stub-columns: 1
 
      * - Without CDAP
-       - - Write a custom consumer for Kafka that reads from source
-         - Write the data to HDFS
-         - Create external table in Hive called ``cdap_stream_logeventstream``
+       - - Write a custom consumer for **Kafka** that reads from source
+         - Write the data to **HDFS**
+         - Create external table in **Hive** called ``cdap_stream_logeventstream``
          
      * - Using CDAP
        - .. container:: highlight
@@ -1431,7 +1431,7 @@ Building Real World Applications
      :stub-columns: 1
 
      * - Without CDAP
-       - - Start the job using Oozie
+       - - Start the job using **Oozie**
          - ``oozie job -start <arguments>``
          
      * - Using CDAP
@@ -1458,7 +1458,7 @@ Building Real World Applications
      :stub-columns: 1
 
      * - Without CDAP
-       - - Get the workflow status from Oozie
+       - - Get the workflow status from **Oozie**
          - ``oozie job -info <jobid>``
          
      * - Using CDAP
@@ -1545,11 +1545,11 @@ Building Real World Applications
      :stub-columns: 1
 
      * - Without CDAP
-       - - Navigate to the resouce manager UI
-         - Find the Wise.WiseService on UI
+       - - Navigate to the **Resource Manager UI**
+         - Find the *Wise.WiseService* on UI
          - Click to the see application logs
          - Find all the node managers for the application containers
-         - Navigate to all the containers in sepearate tabs 
+         - Navigate to all the containers in separate tabs 
          - Click on container logs
          
      * - Using CDAP
@@ -1582,8 +1582,8 @@ Building Real World Applications
 
      * - Without CDAP
        - - Discover the host and port where the service is running on by looking at the host 
-           and port in the YARN logs or by writing a discovery client that is co-ordinated using **ZooKeeper**
-         - Run ``curl http://hostname:port/ip/69.181.160.120/count``
+           and port in the **YARN** logs or by writing a discovery client that is co-ordinated using **ZooKeeper**
+         - Run ``curl http://hostname:port/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/69.181.160.120/count``
          
      * - Using CDAP
        - .. container:: highlight
@@ -1623,7 +1623,7 @@ Building Real World Applications
      :stub-columns: 1
 
      * - Without CDAP
-       - - Run a command in HBase shell
+       - - Run a command in **HBase shell** 
          - ``hbase shell> list "cdap.user.*"``
          
      * - Using CDAP
@@ -1661,7 +1661,7 @@ Building Real World Applications
      :stub-columns: 1
 
      * - Without CDAP
-       - - Run a command in the Hive CLI
+       - - Run a command in the **Hive CLI**
          - ``"SELECT * FROM dataset_bouncecountstore LIMIT 5"``
          
      * - Using CDAP
@@ -1716,9 +1716,9 @@ Building Real World Applications
      :stub-columns: 1
 
      * - Without CDAP
-       - - Find the yarn application ID from the following command
+       - - Find the **YARN** application ID from the command
          - ``yarn application -list | grep "Wise.WiseService"``
-         - Stop the application by running the following command
+         - Stop the application by running the command
          - ``yarn application -kill <application ID>``
          
      * - Using CDAP
@@ -1745,9 +1745,9 @@ Building Real World Applications
      :stub-columns: 1
 
      * - Without CDAP
-       - - Find the yarn application ID from the following command
+       - - Find the **YARN** application ID from the command
          - ``yarn application -list | grep "Wise.WiseFlow"``
-         - Stop the application by running the following command
+         - Stop the application by running the command
          - ``yarn application -kill <application ID>``
          
      * - Using CDAP
@@ -1774,7 +1774,7 @@ Building Real World Applications
      :stub-columns: 1
 
      * - Without CDAP
-       - - Delete the workflow from oozie
+       - - Delete the workflow from **Oozie**
          - Remove the service jars and flow jars
          
      * - Using CDAP
@@ -1804,5 +1804,5 @@ Summary
      - - Learn a single framework that works with multiple technologies
        - Abstraction of data in the Hadoop environment through logical representations of underlying data
        - Portability of applications through decoupling underlying infrastructures
-       - Services and tools that enable faster application creation in development
+       - Services and tools that enable faster application development
        - Higher degrees of operational control in production through enterprise best practices
