@@ -34,7 +34,7 @@ angular.module(PKG.name + '.feature.adapters')
       } else {
         $alert({
           type: 'danger',
-          content: 'Invalid template type. Has to be either ETLBatch or ETLRealtime'
+          content: 'Invalid template type. Has to be either ETLBatch or ETLRealtime.'
         });
       }
     }
@@ -110,7 +110,7 @@ angular.module(PKG.name + '.feature.adapters')
                       });
                     }.bind(this),
                     function error() {
-                      console.log('ERROR: ' + 'exporting adapter failed');
+                      console.log('ERROR: Exporting adapter ' + MyAppDAGService.metadata.name + ' failed.');
                     }
                   );
               };
@@ -134,7 +134,7 @@ angular.module(PKG.name + '.feature.adapters')
                 $state.go('adapters.list');
               },
               function error(errorObj) {
-                console.info('ERROR!: ', errorObj);
+                console.info('ERROR: ', errorObj);
               }.bind(this)
             );
           break;
@@ -149,7 +149,7 @@ angular.module(PKG.name + '.feature.adapters')
                 });
               },
               function error() {
-                console.info('Failed saving as draft');
+                console.info('Failed saving as draft.');
               }
             );
           break;
@@ -165,7 +165,7 @@ angular.module(PKG.name + '.feature.adapters')
         .then(
           MyAppDAGService.onImportSuccess.bind(MyAppDAGService),
           function error(errorEvent) {
-            console.error('Upload config failed', errorEvent);
+            console.error('Upload config failed.', errorEvent);
           }
         );
     };
@@ -190,7 +190,7 @@ angular.module(PKG.name + '.feature.adapters')
       } else {
         MyConsoleTabService.addMessage({
           type: 'success',
-          content: MyAppDAGService.metadata.name + ' is valid .'
+          content: MyAppDAGService.metadata.name + ' is valid.'
         });
       }
     };
