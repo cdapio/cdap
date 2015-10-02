@@ -38,8 +38,8 @@
         ],
         "schedule": "* * * * *"
     },
-    "description": "Batch Extract-Transform-Load (ETL) Template",
-    "name": "webadapter",
+    "description": "Extract-Transform-Load (ETL) Batch Application",
+    "name": "weblog-analytics-app",
     "ui": {
         "nodes": {
             "Stream-source-1": {

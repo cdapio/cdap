@@ -34,7 +34,7 @@ angular.module(PKG.name + '.feature.hydrator')
       } else {
         $alert({
           type: 'danger',
-          content: 'Invalid template type. Has to be either ETLBatch or ETLRealtime'
+          content: 'Invalid template type. Has to be either ETLBatch or ETLRealtime.'
         });
       }
     }
@@ -110,7 +110,7 @@ angular.module(PKG.name + '.feature.hydrator')
                       });
                     }.bind(this),
                     function error() {
-                      console.log('ERROR: ' + 'exporting pipeline failed');
+                      console.log('ERROR: Exporting ' + MyAppDAGService.metadata.name + ' failed.');
                     }
                   );
               };
@@ -134,7 +134,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 $state.go('hydrator.list');
               },
               function error(errorObj) {
-                console.info('ERROR!: ', errorObj);
+                console.info('ERROR: ', errorObj);
               }.bind(this)
             );
           break;
@@ -149,7 +149,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 });
               },
               function error() {
-                console.info('Failed saving as draft');
+                console.info('Failed saving as draft.');
               }
             );
           break;
@@ -165,7 +165,7 @@ angular.module(PKG.name + '.feature.hydrator')
         .then(
           MyAppDAGService.onImportSuccess.bind(MyAppDAGService),
           function error(errorEvent) {
-            console.error('Upload config failed', errorEvent);
+            console.error('Upload config failed.', errorEvent);
           }
         );
     };
@@ -190,7 +190,7 @@ angular.module(PKG.name + '.feature.hydrator')
       } else {
         MyConsoleTabService.addMessage({
           type: 'success',
-          content: MyAppDAGService.metadata.name + ' is valid .'
+          content: MyAppDAGService.metadata.name + ' is valid.'
         });
       }
     };

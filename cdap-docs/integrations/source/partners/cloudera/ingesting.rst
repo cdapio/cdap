@@ -15,10 +15,10 @@ Integrating CDAP with Impala
 
 When using CDAP with Impala:
 
-  .. |adapters| replace:: **CDAP Adapters:**
-  .. _adapters: ../../../developers-manual/advanced/adapters.html
+.. |included-applications| replace:: **Included Applications:**
+.. _included-applications: ../../../included-applications/index.html
 
-  .. - |adapters|_ **Stream-conversion** and **custom adapter** types
+- |included-applications|_ Using **ETL** and **custom ETL plugins**
 
 
 .. |stream| replace:: **Stream Exploration:**
@@ -43,29 +43,29 @@ collection and consumption of data.
 They can easily be created by using the CDAP Command Line Interface (CLI).
 First, connect to your CDAP instance using the CLI::
 
-  > connect <hostname>:11015
+  cdap > connect <hostname>:10000
 
 Next, create a stream::
 
-  > create stream trades
+  cdap > create stream trades
 
 You can then add events to a stream, one-by-one::
 
-  > send stream trades 'NFLX,441.07,50'
-  > send stream trades 'AAPL,118.63,100'
-  > send stream trades 'GOOG,528.48,10'
+  cdap > send stream trades 'NFLX,441.07,50'
+  cdap > send stream trades 'AAPL,118.63,100'
+  cdap > send stream trades 'GOOG,528.48,10'
 
 Or, you can add the entire contents of a file::
 
-  > load stream trades /my/path/trades.csv
+  cdap > load stream trades <my_path>/trades.csv
 
-Or you can use the other tools and APIs available to ingest data in real time or batch.
+Or, you can use the other tools and APIs available to ingest data in real time or batch.
 For more information on what are other ways of ingesting data into CDAP, see the links at
 the top of this page.
 
 You can now examine the contents of your stream by executing a SQL query::
 
-  > execute 'select * from stream_trades limit 5'
+  cdap > execute 'select * from stream_trades limit 5'
   +===================================================================================================+
   | stream_trades.ts: BIGINT | stream_trades.headers: map<string,string> | stream_trades.body: STRING |
   +===================================================================================================+
@@ -78,8 +78,8 @@ You can now examine the contents of your stream by executing a SQL query::
 
 You can also attach a schema to your stream to enable more powerful queries::
 
-  > set stream format trades csv 'ticker string, price double, trades int'
-  > execute 'select ticker, sum(price * trades) / 1000000 as millions from stream_trades group by ticker order by millions desc'
+  cdap > set stream format trades csv 'ticker string, price double, trades int'
+  cdap > execute 'select ticker, sum(price * trades) / 1000000 as millions from stream_trades group by ticker order by millions desc'
   +=====================================+
   | ticker: STRING | millions: DOUBLE   |
   +=====================================+
@@ -95,14 +95,13 @@ is why it takes minutes instead of seconds.
 
 To reduce query time, you can use Impala to query the data instead of Hive. Since streams
 are written in a custom format, they cannot be directly queried through Impala. Instead,
-you can use the ETLBatch application template to create an adapter that regularly reads
+you can create an ETL batch application that regularly reads
 stream events and writes those events into files on HDFS that can then be queried by Impala.
 
 To do this, write the following JSON to a config file::
 
   {
       "description": "Periodically reads stream data and writes it to a TimePartitionedFileSet",
-      "template": "ETLBatch",
       "config": {
           "schedule": "*/10 * * * *",
           "source": {
@@ -119,7 +118,8 @@ To do this, write the following JSON to a config file::
                           {\"name\":\"price\",\"type\":\"double\"},
                           {\"name\":\"trades\",\"type\":\"int\"}
                       ]
-                  }"
+                  }",
+                  "format.setting.delimiter":","
               }
           },
           "transforms": [
@@ -130,38 +130,44 @@ To do this, write the following JSON to a config file::
                   }
               }
           ],
-          "sink": {
-              "name": "TPFSAvro",
-              "properties": {
-                  "name": "trades.converted",
-                  "schema": "{
-                      \"type\":\"record\",
-                      \"name\":\"purchase\",
-                      \"fields\":[
-                          {\"name\":\"ts\",\"type\":\"long\"},
-                          {\"name\":\"ticker\",\"type\":\"string\"},
-                          {\"name\":\"price\",\"type\":\"double\"},
-                          {\"name\":\"trades\",\"type\":\"int\"}
-                      ]
-                  }",
-                  "basePath": "trades.converted"
-              }
-          }
+          "sinks": [
+            {
+                "name": "TPFSAvro",
+                "properties": {
+                    "name": "trades_converted",
+                    "schema": "{
+                        \"type\":\"record\",
+                        \"name\":\"purchase\",
+                        \"fields\":[
+                            {\"name\":\"ts\",\"type\":\"long\"},
+                            {\"name\":\"ticker\",\"type\":\"string\"},
+                            {\"name\":\"price\",\"type\":\"double\"},
+                            {\"name\":\"trades\",\"type\":\"int\"}
+                        ]
+                    }",
+                    "basePath": "trades_converted"
+                }
+            }
+          ]    
       }
   }
 
-Then use your config file to create an adapter through the CLI.
+Then use your config file with the ``cdap-etl-batch`` artifact to create an application through the CLI.
 For example, if you wrote the above JSON to a file named ``conversion.json``::
 
-  > create adapter trades_conversion conversion.json
+  .. container:: highlight
 
-This will use the application template to create and configure an adapter.
-The adapter will not run until you start it::
+    .. parsed-literal::
+      cdap > create app trades_conversion cdap-etl-batch |version| system <path-to-conversion.json>
 
-  > start adapter trades_conversion
 
-This will create a schedule that will run the adapter every ten minutes. 
-The next time the adapter runs, it will spawn a MapReduce job that reads all events added
+This will create and configure an application. The application's schedule (named, by default, to ``etlWorkflow``)
+will not run until you resume it::
+
+  cdap > resume schedule trades_conversion.etlWorkflow
+
+This will start a schedule that will run the workflow every ten minutes. 
+The next time the workflow runs, it will spawn a MapReduce job that reads all events added
 in the past ten minutes, writes each event to Avro encoded files, and registers a new
 partition in the Hive Metastore. We can then query the contents using Impala. On a
 cluster, use the Impala shell to connect to Impala::

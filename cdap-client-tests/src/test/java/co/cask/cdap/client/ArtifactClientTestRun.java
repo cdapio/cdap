@@ -94,6 +94,7 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
   @Test
   public void testNotFound() throws Exception {
+    Id.Artifact ghostId = Id.Artifact.from(Id.Namespace.DEFAULT, "ghost", "1.0.0");
     try {
       artifactClient.list(Id.Namespace.from("ghost"));
       Assert.fail();
@@ -102,14 +103,14 @@ public class ArtifactClientTestRun extends ClientTestBase {
     }
 
     try {
-      artifactClient.getArtifactInfo(Id.Artifact.from(Id.Namespace.DEFAULT, "ghost", "1.0.0"));
+      artifactClient.getArtifactInfo(ghostId);
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
     }
 
     try {
-      artifactClient.listVersions(Id.Namespace.DEFAULT, "ghost");
+      artifactClient.listVersions(ghostId.getNamespace(), ghostId.getName());
       Assert.fail();
     } catch (ArtifactNotFoundException e) {
       // expected
@@ -117,9 +118,30 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test adding an artifact that extends a non-existent artifact
     Set<ArtifactRange> parents = Sets.newHashSet(
-      new ArtifactRange(Id.Namespace.DEFAULT, "ghost", new ArtifactVersion("1"), new ArtifactVersion("2")));
+      new ArtifactRange(ghostId.getNamespace(), ghostId.getName(), new ArtifactVersion("1"), new ArtifactVersion("2")));
     try {
       artifactClient.add(Id.Namespace.DEFAULT, "abc", DUMMY_SUPPLIER, "1.0.0", parents);
+      Assert.fail();
+    } catch (NotFoundException e) {
+      // expected
+    }
+
+    try {
+      artifactClient.getPluginTypes(ghostId);
+      Assert.fail();
+    } catch (ArtifactNotFoundException e) {
+      // expected
+    }
+
+    try {
+      artifactClient.getPluginSummaries(ghostId, "type");
+      Assert.fail();
+    } catch (ArtifactNotFoundException e) {
+      // expected
+    }
+
+    try {
+      artifactClient.getPluginInfo(ghostId, "type", "name");
       Assert.fail();
     } catch (NotFoundException e) {
       // expected

@@ -19,7 +19,7 @@ transformations to extend the existing ``cdap-etl-batch`` and ``cdap-etl-realtim
 
 Plugin Types and Maven Archetypes
 =================================
-In ETL templates, there are five plugin types:
+In ETL applications, there are five plugin types:
 
 - Batch Source (*batchsource*)
 - Batch Sink (*batchsink*)
@@ -169,7 +169,7 @@ Methods
   sources.
 - ``configurePipeline()``: Used to create any streams or datasets or perform any validation 
   on the application configuration that are required by this plugin.
-- ``poll()``: Poll method will be invoked during the run of the adapter and in each call,
+- ``poll()``: Poll method will be invoked during the run of the plugin and in each call,
   the source is expected to emit zero or more objects for the next stage to process. 
 - ``destroy()``: Cleanup method executed during the shutdown of the Source. Could be used
   to tear down any external connections made during the initialize method.
@@ -420,5 +420,5 @@ If you are developing plugins for the ``cdap-etl-batch`` artifact, be aware that
 classes inside the plugin JAR that you have added to the Hadoop Job configuration directly
 (for example, your custom ``InputFormat`` class), you will need to add the Java packages
 of those classes to the "Export-Package" as well. This is to ensure those classes are
-visible to the Hadoop MapReduce framework during the adapter execution. Otherwise, the
+visible to the Hadoop MapReduce framework during the plugin execution. Otherwise, the
 execution will typically fail with a ``ClassNotFoundException``.

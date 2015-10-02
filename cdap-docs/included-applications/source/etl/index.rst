@@ -29,8 +29,7 @@ an *ETL pipeline:*
 
 .. rubric:: System Artifacts, ETL Applications, and ETL Plugins 
 
-An *Application Template* is a blueprint that is used to create an *Adapter*, an instantiation of
-a template in CDAP.
+An *Artifact* is a blueprint that |---| with a configuration file |---| is used to create an *Application*.
 
 CDAP provides system artifacts |---| ``cdap-etl-batch`` and ``cdap-etl-realtime`` |---|
 which are used to create applications that perform ETL in either batch or real time, and
@@ -110,20 +109,18 @@ This lists the available sources, sinks, and transformations (transforms):
 
 .. rubric:: ETL Applications
 
-An *ETL Adapter* is an instantiation of an ETL template that has been given a specific
-configuration on creation.
-
-**Batch adapters** can be scheduled to run periodically using a cron expression and can read
-data from batch sources using a MapReduce job. The batch adapter then performs any
-optional transformations before writing to a batch sink.
-
-**Real time adapters** are designed to poll sources periodically to fetch the data, perform any
-optional transformations, and then write to a real-time sink.
-
-ETL adapters are created by preparing a configuration that specifies the ETL template and
-which source, transformations (transforms), and sinks are used to create the adapter. The
+ETL applications are created by preparing a configuration that specifies the ETL artifact and
+which source, transformations (transforms), and sinks are used to create the application. The
 configuration can either be written as a JSON file or, in the case of the CDAP UI,
 specified in-memory.
+
+**Batch applications** can be scheduled to run periodically using a cron expression and can read
+data from batch sources using a MapReduce job. The batch application then performs any
+optional transformations before writing to one or more batch sinks.
+
+**Real time applications** are designed to poll sources periodically to fetch the data, perform any
+optional transformations, and then write to one or more real-time sinks.
+
 
 .. rubric:: ETL Plugins
 

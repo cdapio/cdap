@@ -28,9 +28,9 @@ the results in another ObjectStore dataset, *rankscount*.
 
 The *PageRankWorkflow* ties the Spark and MapReduce to run sequentially in this application.
 
-Once the application completes, you can query the *ranks* dataset by using the ``rank`` endpoint of the *RanksService*.
+Once the application completes, you can query the *ranks* dataset by using the ``rank`` endpoint of the *SparkPageRankService*.
 It will send back a string result with page rank based on the ``url`` query parameter. You can also query the
-*rankscount* dataset by using ``total`` endpoint of the *TotalPagesPRService*. It will send the total number of pages for the queried page rank as a string.
+*rankscount* dataset by using ``total`` endpoint. It will send the total number of pages for the queried page rank as a string.
 
 Let's look at some of these components, and then run the application and see the results.
 
@@ -50,11 +50,11 @@ The ``ranks`` and ``rankscount`` ObjectStore Data Storage
 The calculated page rank data is stored in an ObjectStore dataset, *ranks*,
 with the total number of pages for a page rank stored in an additional ObjectStore dataset, *rankscount*.
 
-The ``RanksService`` and ``TotalPagesPRService`` Service
+The SparkPageRankService Service
 --------------------------------------------------------
 
-This ``RanksService`` service has a ``rank`` endpoint to obtain the page rank of a given URL.
-This ``TotalPagesPRService`` service has a ``total`` endpoint to obtain the total number of pages with a given page rank.
+This ``SparkPageRankService`` service has a ``rank`` endpoint to obtain the page rank of a given URL.
+It also has a ``total`` endpoint to obtain the total number of pages with a given page rank.
 
 Memory Requirements
 -------------------
@@ -80,17 +80,12 @@ Once the application is deployed:
 
 - Go to the *SparkPageRank* `application overview page 
   <http://localhost:9999/ns/default/apps/SparkPageRank/overview/status>`__,
-  click ``RanksService`` to get to the service detail page, then click the *Start* button,
-  and then do the same for the *GoogleTypePRService* and *TotalPagesPRService* services; or
+  click ``SparkPageRankService`` to get to the service detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-    $ cdap-cli.sh start service SparkPageRank.RanksService
-    $ cdap-cli.sh start service SparkPageRank.GoogleTypePRService
-    $ cdap-cli.sh start service SparkPageRank.TotalPagesPRService
+    $ cdap-cli.sh start service SparkPageRank.SparkPageRankService
     
-    Successfully started service 'RanksService' of application 'SparkPageRank' with stored runtime arguments '{}'
-    Successfully started service 'GoogleTypePRService' of application 'SparkPageRank' with stored runtime arguments '{}'
-    Successfully started service 'TotalPagesPRService' of application 'SparkPageRank' with stored runtime arguments '{}'
+    Successfully started service 'SparkPageRankService' of application 'SparkPageRank' with stored runtime arguments '{}'
 
 Injecting URL Pairs
 -------------------
@@ -122,25 +117,25 @@ There are three ways to start the workflow:
 Querying the Results
 --------------------
 
-To query the *ranks* ObjectStore through the ``RanksService``, send a query via an HTTP
+To query the *ranks* ObjectStore through the ``SparkPageRankService``, send a query via an HTTP
 request using the ``curl`` command. For example::
 
-  $ curl -w'\n' -X POST -d'{"url":"http://example.com/page1"}' http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/RanksService/methods/rank
+  $ curl -w'\n' -X POST -d'{"url":"http://example.com/page1"}' http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/rank
 
 You can also use the Command Line Interface::
 
-  $ cdap-cli.sh call service SparkPageRank.RanksService POST 'rank' body '{"url":"http://example.com/page1"}'
+  $ cdap-cli.sh call service SparkPageRank.SparkPageRankService POST 'rank' body '{"url":"http://example.com/page1"}'
 
-Similarly, to query the *rankscount* ObjectStore using the ``TotalPagesPRService``. For example, to get the total number of
-pages with a page rank of 10 you can do the following:
+Similarly, to query the *rankscount* ObjectStore using the ``SparkPageRankService`` and get the total number of
+pages with a page rank of 10, you can do the following:
 
 curl::
 
-  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/TotalPagesPRService/methods/total/10
+  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/total/10
 
 Command Line Interface::
 
-  $ cdap-cli.sh call service SparkPageRank.TotalPagesPRService GET 'total/10'
+  $ cdap-cli.sh call service SparkPageRank.SparkPageRankService GET 'total/10'
 
 
 Stopping and Removing the Application
@@ -161,13 +156,10 @@ Once done, you can stop the application as described in :ref:`Stopping an Applic
 
 - Go to the *SparkPageRank* `application overview page 
   <http://localhost:9999/ns/default/apps/SparkPageRank/overview/status>`__,
-  click ``RanksService`` to get to the service detail page, then click the *Stop* button,
-  doing the same for the ``GoogleTypePRService`` and ``TotalPagesPRService`` services; or
+  click ``SparkPageRankService`` to get to the service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
-    $ cdap-cli.sh stop service SparkPageRank.RanksService
-    $ cdap-cli.sh stop service SparkPageRank.GoogleTypePRService
-    $ cdap-cli.sh stop service SparkPageRank.TotalPagesPRService
+    $ cdap-cli.sh stop service SparkPageRank.SparkPageRankService
 
 **Removing the Application**
 

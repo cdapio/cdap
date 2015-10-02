@@ -52,7 +52,7 @@ import javax.ws.rs.PathParam;
  */
 public class SparkPageRankApp extends AbstractApplication {
 
-  public static final String SERVICE_HANDLERS = "ServiceHandlers";
+  public static final String SERVICE_HANDLERS = "SparkPageRankService";
   public static final String BACKLINK_URL_STREAM = "backlinkURLStream";
 
   @Override

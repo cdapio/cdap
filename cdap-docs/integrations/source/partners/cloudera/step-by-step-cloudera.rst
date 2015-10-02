@@ -73,7 +73,7 @@ The "Add Service" Wizard
    :align: center
    :class: bordered-image
 
-   **Add Service Wizard, Page 4:** Reviewing configurations; as Hive was included, CDAP Explore can be enabled.
+   **Add Service Wizard, Pages 4 & 5:** Reviewing configurations; as Hive was included, CDAP Explore can be enabled.
 
 
 .. figure:: ../../_images/integration-cloudera/cloudera-csd-07.png
@@ -83,7 +83,7 @@ The "Add Service" Wizard
    :align: center
    :class: bordered-image
 
-   **Add Service Wizard, Page 5:** Finishing first run of commands to install CDAP.
+   **Add Service Wizard, Page 6:** Finishing first run of commands to install CDAP.
    
 
 .. figure:: ../../_images/integration-cloudera/cloudera-csd-08.png
@@ -93,7 +93,7 @@ The "Add Service" Wizard
    :align: center
    :class: bordered-image
 
-   **Add Service Wizard, Page 6:** Congratulations screen, though there is still work to be done.
+   **Add Service Wizard, Page 7:** Congratulations screen, though there is still work to be done.
    
 
 Startup

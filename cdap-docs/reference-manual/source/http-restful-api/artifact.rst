@@ -372,9 +372,9 @@ To delete an artifact, submit an HTTP DELETE request::
    * - ``<namespace>``
      - Namespace ID
    * - ``<artifact-name>``
-     - Name of the artifact.
+     - Name of the artifact
    * - ``<artifact-version>``
-     - Version of the artifact.
+     - Version of the artifact
 
 Deleting an artifact is an advanced feature. If there are programs that use the artifact, those
 programs will not be able to start unless the artifact is added again, or the program application
@@ -399,6 +399,17 @@ To delete a system artifact, submit an HTTP DELETE request::
 
   DELETE <base-url>/namespaces/system/artifacts/<artifact-name>/versions/<artifact-version>
 
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<artifact-name>``
+     - Name of the artifact
+   * - ``<artifact-version>``
+     - Version of the artifact
+
 Deleting an artifact is an advanced feature. If there are programs that use the artifact, those
 programs will not be able to start unless the artifact is added again, or the program application
 is updated to use a different artifact. 
@@ -409,7 +420,7 @@ List Application Classes
 ========================
 To list application classes, submit an HTTP GET request::
 
-  GET <base-url>/namespaces/<namespace>/classes/apps[scope=<scope>]
+  GET <base-url>/namespaces/<namespace>/classes/apps[?scope=<scope>]
 
 .. list-table::
    :widths: 20 80
@@ -419,10 +430,6 @@ To list application classes, submit an HTTP GET request::
      - Description
    * - ``<namespace>``
      - Namespace ID
-   * - ``<adapter-id>``
-     - Name of the adapter
-   * - ``<config-path>``
-     - Path to the configuration file
    * - ``<scope>``
      - Optional scope filter. If not specified, classes from artifacts in the ``user`` and
        ``system`` scopes are returned. Otherwise, only classes from artifacts in the specified scope are returned.
