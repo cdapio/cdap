@@ -379,8 +379,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(activeKey, null, RunRecordMeta.class, limit, andPredicate(new Predicate<RunRecordMeta>() {
                   @Override
                   public boolean apply(RunRecordMeta input) {
-                    boolean normalCheck = input.getStartTs() >= startTime && input.getStartTs() < endTime;
-                    return normalCheck;
+                    return input.getStartTs() >= startTime && input.getStartTs() < endTime;
                   }
                 }, filter));
   }
@@ -414,8 +413,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return new Predicate<RunRecordMeta>() {
       @Override
       public boolean apply(RunRecordMeta record) {
-        boolean normalCheck = record.getStatus().equals(state.getRunStatus());
-        return normalCheck;
+        return record.getStatus().equals(state.getRunStatus());
       }
     };
   }
