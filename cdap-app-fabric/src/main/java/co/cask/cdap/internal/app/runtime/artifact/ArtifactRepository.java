@@ -188,9 +188,11 @@ public class ArtifactRepository {
    *
    * @param artifactId the id of the artifact to get plugins for
    * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
+   * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Artifact artifactId) throws IOException {
+  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Artifact artifactId)
+    throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(artifactId);
   }
 
@@ -202,10 +204,11 @@ public class ArtifactRepository {
    * @param artifactId the id of the artifact to get plugins for
    * @param pluginType the type of plugins to get
    * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
+   * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Artifact artifactId,
-                                                                     String pluginType) throws IOException {
+  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Artifact artifactId, String pluginType)
+    throws IOException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(artifactId, pluginType);
   }
 
@@ -218,11 +221,12 @@ public class ArtifactRepository {
    * @param pluginType the type of plugins to get
    * @param pluginName the name of plugins to get
    * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
+   * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
   public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(Id.Artifact artifactId, String pluginType,
                                                                String pluginName)
-    throws IOException, PluginNotExistsException {
+    throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     return artifactStore.getPluginClasses(artifactId, pluginType, pluginName);
   }
 
@@ -235,11 +239,12 @@ public class ArtifactRepository {
    * @param selector for selecting which plugin to use
    * @return the entry found
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
+   * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws PluginNotExistsException if no plugins of the given type and name are available to the given artifact
    */
   public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(Id.Artifact artifactId, String pluginType,
                                                                String pluginName, PluginSelector selector)
-    throws IOException, PluginNotExistsException {
+    throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     SortedMap<ArtifactDescriptor, PluginClass> pluginClasses = artifactStore.getPluginClasses(
       artifactId, pluginType, pluginName);
     SortedMap<ArtifactId, PluginClass> artifactIds = Maps.newTreeMap();

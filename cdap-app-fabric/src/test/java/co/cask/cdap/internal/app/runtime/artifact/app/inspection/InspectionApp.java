@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.artifact.app;
+package co.cask.cdap.internal.app.runtime.artifact.app.inspection;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Description;

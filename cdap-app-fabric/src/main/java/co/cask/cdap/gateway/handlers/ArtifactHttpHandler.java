@@ -207,7 +207,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                      @PathParam("artifact-name") String artifactName,
                                      @PathParam("artifact-version") String artifactVersion,
                                      @QueryParam("scope") @DefaultValue("user") String scope)
-    throws NamespaceNotFoundException, BadRequestException {
+    throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException {
 
     Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
@@ -236,7 +236,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                  @PathParam("artifact-version") String artifactVersion,
                                  @PathParam("plugin-type") String pluginType,
                                  @QueryParam("scope") @DefaultValue("user") String scope)
-    throws NamespaceNotFoundException, BadRequestException {
+    throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException {
 
     Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
@@ -273,7 +273,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                 @PathParam("plugin-type") String pluginType,
                                 @PathParam("plugin-name") String pluginName,
                                 @QueryParam("scope") @DefaultValue("user") String scope)
-    throws NamespaceNotFoundException, BadRequestException {
+    throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException {
 
     Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
