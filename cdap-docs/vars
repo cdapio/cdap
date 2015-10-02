@@ -8,9 +8,9 @@ COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index._rst"
 HTACCESS="htaccess"
 
 DOCS="docs"
-GITHUB="Github"
+GITHUB="github"
 GITHUB_ONLY="Github-only"
-WEB="Web"
+WEB="web"
 WEB_ONLY="Web-only"
 WITH="with"
 WITHOUT="without"
@@ -19,4 +19,4 @@ WITH_JAVADOCS="$WITHOUT"
 MANUALS="introduction developers-manual included-applications admin-manual integrations examples-manual reference-manual"
 
 # This needs to be explicitly set as Git has trouble identifying it.
-GIT_BRANCH_PARENT="release/3.2"
+GIT_BRANCH_PARENT="develop"
