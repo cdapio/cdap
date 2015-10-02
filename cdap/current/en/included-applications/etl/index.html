@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.0">
-    <meta name="git_hash" content="6ae5122b225688bb9eb900701746946452f262d3">
-    <meta name="git_timestamp" content="2015-09-23 21:21:37 -0700">
+    <meta name="git_hash" content="1107c0b599ab647e741c9b5a3defeca2ae42be83">
+    <meta name="git_timestamp" content="2015-10-01 20:54:13 -0700">
     <title>ETL Overview &mdash; Cask Data Application Platform 3.2.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -96,8 +96,7 @@ purpose of the system is to:</p>
 an <em>ETL pipeline:</em></p>
 <a class="reference internal image-reference" href="../_images/etl-pipeline.png"><img alt="../_images/etl-pipeline.png" class="align-center" src="../_images/etl-pipeline.png" style="width: 6in;" /></a>
 <p class="rubric">System Artifacts, ETL Applications, and ETL Plugins</p>
-<p>An <em>Application Template</em> is a blueprint that is used to create an <em>Adapter</em>, an instantiation of
-a template in CDAP.</p>
+<p>An <em>Artifact</em> is a blueprint that—with a configuration file—is used to create an <em>Application</em>.</p>
 <p>CDAP provides system artifacts—<code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> and <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code>—which are used to create applications that perform ETL in either batch or real time, and
 consist of a variety of sources, transformations, and sinks that are packaged together.</p>
 <p>A third system artifact, <code class="docutils literal"><span class="pre">cdap-etl-lib</span></code>, provides common resources for the other two system artifacts.</p>
@@ -196,17 +195,15 @@ can use <em>validators</em> to test data and check that it follows user-specifie
 </tbody>
 </table>
 <p class="rubric">ETL Applications</p>
-<p>An <em>ETL Adapter</em> is an instantiation of an ETL template that has been given a specific
-configuration on creation.</p>
-<p><strong>Batch adapters</strong> can be scheduled to run periodically using a cron expression and can read
-data from batch sources using a MapReduce job. The batch adapter then performs any
-optional transformations before writing to a batch sink.</p>
-<p><strong>Real time adapters</strong> are designed to poll sources periodically to fetch the data, perform any
-optional transformations, and then write to a real-time sink.</p>
-<p>ETL adapters are created by preparing a configuration that specifies the ETL template and
-which source, transformations (transforms), and sinks are used to create the adapter. The
+<p>ETL applications are created by preparing a configuration that specifies the ETL artifact and
+which source, transformations (transforms), and sinks are used to create the application. The
 configuration can either be written as a JSON file or, in the case of the CDAP UI,
 specified in-memory.</p>
+<p><strong>Batch applications</strong> can be scheduled to run periodically using a cron expression and can read
+data from batch sources using a MapReduce job. The batch application then performs any
+optional transformations before writing to one or more batch sinks.</p>
+<p><strong>Real time applications</strong> are designed to poll sources periodically to fetch the data, perform any
+optional transformations, and then write to one or more real-time sinks.</p>
 <p class="rubric">ETL Plugins</p>
 <p>The sources, transformations, and sinks are generically called plugins. Plugins provide a
 way to extend the functionality of existing artifacts. An application can be created with

@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.0">
-    <meta name="git_hash" content="6ae5122b225688bb9eb900701746946452f262d3">
-    <meta name="git_timestamp" content="2015-09-23 21:21:37 -0700">
+    <meta name="git_hash" content="1107c0b599ab647e741c9b5a3defeca2ae42be83">
+    <meta name="git_timestamp" content="2015-10-01 20:54:13 -0700">
     <title>Creating Custom ETL Plugins &mdash; Cask Data Application Platform 3.2.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -92,7 +92,7 @@ transformations to extend the existing <code class="docutils literal"><span clas
 </div>
 <div class="section" id="plugin-types-and-maven-archetypes">
 <h2>Plugin Types and Maven Archetypes<a class="headerlink" href="#plugin-types-and-maven-archetypes" title="Permalink to this headline">¶</a></h2>
-<p>In ETL templates, there are five plugin types:</p>
+<p>In ETL applications, there are five plugin types:</p>
 <ul class="simple">
 <li>Batch Source (<em>batchsource</em>)</li>
 <li>Batch Sink (<em>batchsink</em>)</li>
@@ -234,7 +234,7 @@ before any call to the poll method. Usually used to setup the connection to exte
 sources.</li>
 <li><code class="docutils literal"><span class="pre">configurePipeline()</span></code>: Used to create any streams or datasets or perform any validation
 on the application configuration that are required by this plugin.</li>
-<li><code class="docutils literal"><span class="pre">poll()</span></code>: Poll method will be invoked during the run of the adapter and in each call,
+<li><code class="docutils literal"><span class="pre">poll()</span></code>: Poll method will be invoked during the run of the plugin and in each call,
 the source is expected to emit zero or more objects for the next stage to process.</li>
 <li><code class="docutils literal"><span class="pre">destroy()</span></code>: Cleanup method executed during the shutdown of the Source. Could be used
 to tear down any external connections made during the initialize method.</li>
@@ -474,7 +474,7 @@ the project is created, you will need to modify the configuration of the
 classes inside the plugin JAR that you have added to the Hadoop Job configuration directly
 (for example, your custom <code class="docutils literal"><span class="pre">InputFormat</span></code> class), you will need to add the Java packages
 of those classes to the &#8220;Export-Package&#8221; as well. This is to ensure those classes are
-visible to the Hadoop MapReduce framework during the adapter execution. Otherwise, the
+visible to the Hadoop MapReduce framework during the plugin execution. Otherwise, the
 execution will typically fail with a <code class="docutils literal"><span class="pre">ClassNotFoundException</span></code>.</p>
 </div>
 </div>

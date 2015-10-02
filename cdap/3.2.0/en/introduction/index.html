@@ -22,8 +22,8 @@
     </script>
     
     <meta name="git_release" content="3.2.0">
-    <meta name="git_hash" content="6ae5122b225688bb9eb900701746946452f262d3">
-    <meta name="git_timestamp" content="2015-09-23 21:21:37 -0700">
+    <meta name="git_hash" content="1107c0b599ab647e741c9b5a3defeca2ae42be83">
+    <meta name="git_timestamp" content="2015-10-01 20:54:13 -0700">
     <title>Introduction to CDAP &mdash; Cask Data Application Platform 3.2.0 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
@@ -140,20 +140,21 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
 <td><ul class="first last simple">
-<li>Install CDAP by downloading zipfile, unzipping and starting <strong>CDAP Server</strong></li>
+<li>Install <strong>CDAP</strong> by downloading zipfile, unzipping and starting <strong>CDAP Server</strong></li>
 </ul>
 </td>
 </tr>
 <tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first line-block">
-<div class="line"><code class="docutils literal"><span class="pre">$</span> <span class="pre">unzip</span> <span class="pre">cdap-sdk-</span></code><code class="docutils literal"><span class="pre">3.2.0</span></code><code class="docutils literal"><span class="pre">.zip</span></code></div>
-<div class="line"><code class="docutils literal"><span class="pre">$</span> <span class="pre">cd</span> <span class="pre">cdap-sdk-</span></code><code class="docutils literal"><span class="pre">3.2.0</span></code></div>
-<div class="line"><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap.sh</span> <span class="pre">start</span></code></div>
-</div>
-<div class="last highlight-console"><div class="highlight"><pre><span class="go">Starting Standalone CDAP ................</span>
-<span class="go">Standalone CDAP started successfully.</span>
-<span class="go">Connect to the Console at http://localhost:9999</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">$</span> unzip cdap-sdk-3.2.0.zip
+<span class="gp">$</span> cd cdap-sdk-3.2.0
+<span class="gp">$</span> ./bin/cdap.sh start
+
+Starting Standalone CDAP ................
+Standalone CDAP started successfully.
+Connect to the CDAP UI at <a class="reference external" href="http://localhost:9999">http://localhost:9999</a>
+</pre>
 </div>
 </td>
 </tr>
@@ -191,10 +192,13 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 </td>
 </tr>
 <tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><p class="first"><code class="docutils literal"><span class="pre">$</span> <span class="pre">./bin/cdap-cli.sh</span></code></p>
-<div class="last highlight-console"><div class="highlight"><pre><span class="go">Successfully connected CDAP instance at http://localhost:10000</span>
-<span class="go">cdap (http://localhost:10000/default)&gt;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">$</span> ./bin/cdap-cli.sh
+
+Successfully connected to CDAP instance at http://localhost:10000/default
+<span class="gp">cdap &gt;</span>
+</pre>
 </div>
 </td>
 </tr>
@@ -238,11 +242,12 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">create</span> <span class="pre">stream</span> <span class="pre">logEventStream</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully created stream with ID &#39;logEventStream&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> create stream logEventStream
+
+Successfully created stream with ID 'logEventStream'
+</pre>
 </div>
 </td>
 </tr>
@@ -269,18 +274,19 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Write a custom consumer for Kafka that reads from source</li>
-<li>Write the data to HDFS</li>
+<li>Write a custom consumer for <strong>Kafka</strong> that reads from source</li>
+<li>Write the data to <strong>HDFS</strong></li>
 <li>Create external table in <strong>Hive</strong> called <code class="docutils literal"><span class="pre">stream_logeventstream</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">load</span> <span class="pre">stream</span> <span class="pre">logEventStream</span> <span class="pre">examples/resources/accesslog.txt</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully sent stream event to stream &#39;logEventStream&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> load stream logEventStream examples/resources/accesslog.txt
+
+Successfully sent stream event to stream 'logEventStream'
+</pre>
 </div>
 </td>
 </tr>
@@ -319,24 +325,25 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Run Hive command using Hive CLI</li>
+<li>Run Hive command using <strong>Hive CLI</strong></li>
 <li><code class="docutils literal"><span class="pre">DESCRIBE</span> <span class="pre">stream_logeventstream</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">execute</span> <span class="pre">'describe</span> <span class="pre">stream_logEventStream'</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+=========================================================================================================+</span>
-<span class="go">| col_name: STRING                 | data_type: STRING                | comment: STRING                   |</span>
-<span class="go">+=========================================================================================================+</span>
-<span class="go">| ts                               | bigint                           | from deserializer                 |</span>
-<span class="go">| headers                          | map&lt;string,string&gt;               | from deserializer                 |</span>
-<span class="go">| body                             | string                           | from deserializer                 |</span>
-<span class="go">+=========================================================================================================+</span>
-<span class="go">Fetched 3 rows</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute 'describe stream_logEventStream'
+
++=========================================================================================================+
+| col_name: STRING                 | data_type: STRING                | comment: STRING                   |
++=========================================================================================================+
+| ts                               | bigint                           | from deserializer                 |
+| headers                          | map&lt;string,string&gt;               | from deserializer                 |
+| body                             | string                           | from deserializer                 |
++=========================================================================================================+
+Fetched 3 rows
+</pre>
 </div>
 </td>
 </tr>
@@ -363,16 +370,19 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Run Hive command using Hive CLI</li>
+<li>Run Hive command using <strong>Hive CLI</strong></li>
 <li><code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">stream_logeventstream</span> <span class="pre">LIMIT</span> <span class="pre">2</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">execute</span> <span class="pre">'select</span> <span class="pre">*</span> <span class="pre">from</span> <span class="pre">stream_logEventStream</span> <span class="pre">limit</span> <span class="pre">2'</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+==============================================================================================================+</span>
+<td><div class="highlight first container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute 'select * from stream_logEventStream limit 2'
+</pre>
+</div>
+<div class="highlight last container">
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+==============================================================================================================+</span>
 <span class="go">| stream_logeventstream.ts: | stream_logeventstream.hea | stream_logeventstream.body: STRING                   |</span>
 <span class="go">| BIGINT                    | ders: map&lt;string,string&gt;  |                                                      |</span>
 <span class="go">+==============================================================================================================+</span>
@@ -394,6 +404,7 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <span class="go">Fetched 2 rows</span>
 </pre></div>
 </div>
+</div>
 </td>
 </tr>
 </tbody>
@@ -401,7 +412,7 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 </div>
 </div>
 <div class="section" id="data-exploration-attaching-a-schema">
-<h2>Data Exploration: Attaching A Schema<a class="headerlink" href="#data-exploration-attaching-a-schema" title="Permalink to this headline">¶</a></h2>
+<h2>Data Exploration: Attaching a Schema<a class="headerlink" href="#data-exploration-attaching-a-schema" title="Permalink to this headline">¶</a></h2>
 <div class="table-block container">
 <table border="1" class="docutils">
 <colgroup>
@@ -422,17 +433,18 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Drop the external Hive table</li>
-<li>Recreate the Hive table with new schema</li>
+<li>Drop the external <strong>Hive</strong> table</li>
+<li>Recreate the <strong>Hive</strong> table with new schema</li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">set</span> <span class="pre">stream</span> <span class="pre">format</span> <span class="pre">logEventStream</span> <span class="pre">clf</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully set format of stream &#39;logEventStream&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> set stream format logEventStream clf
+
+Successfully set format of stream 'logEventStream'
+</pre>
 </div>
 </td>
 </tr>
@@ -446,7 +458,7 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <col width="20%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><th class="stub">Describe new format of the ingested Data</th>
+<tr class="row-odd"><th class="stub">Describe new format of the ingested data</th>
 <td>&nbsp;</td>
 </tr>
 </tbody>
@@ -459,32 +471,33 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Run Hive command using Hive CLI</li>
+<li>Run Hive command using <strong>Hive CLI</strong></li>
 <li><code class="docutils literal"><span class="pre">DESCRIBE</span> <span class="pre">stream_logeventsetream</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">execute</span> <span class="pre">'describe</span> <span class="pre">stream_logEventStream'</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+=============================================================================+</span>
-<span class="go">| col_name: STRING          | data_type: STRING       | comment: STRING       |</span>
-<span class="go">+=============================================================================+</span>
-<span class="go">| ts                        | bigint                  | from deserializer     |</span>
-<span class="go">| headers                   | map&lt;string,string&gt;      | from deserializer     |</span>
-<span class="go">| remote_host               | string                  | from deserializer     |</span>
-<span class="go">| remote_login              | string                  | from deserializer     |</span>
-<span class="go">| auth_user                 | string                  | from deserializer     |</span>
-<span class="go">| date                      | string                  | from deserializer     |</span>
-<span class="go">| request                   | string                  | from deserializer     |</span>
-<span class="go">| status                    | int                     | from deserializer     |</span>
-<span class="go">| content_length            | int                     | from deserializer     |</span>
-<span class="go">| referrer                  | string                  | from deserializer     |</span>
-<span class="go">| user_agent                | string                  | from deserializer     |</span>
-<span class="go">+=============================================================================+</span>
-<span class="go">Fetched 11 rows</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute 'describe stream_logEventStream'
+
++=============================================================================+
+| col_name: STRING          | data_type: STRING       | comment: STRING       |
++=============================================================================+
+| ts                        | bigint                  | from deserializer     |
+| headers                   | map&lt;string,string&gt;      | from deserializer     |
+| remote_host               | string                  | from deserializer     |
+| remote_login              | string                  | from deserializer     |
+| auth_user                 | string                  | from deserializer     |
+| date                      | string                  | from deserializer     |
+| request                   | string                  | from deserializer     |
+| status                    | int                     | from deserializer     |
+| content_length            | int                     | from deserializer     |
+| referrer                  | string                  | from deserializer     |
+| user_agent                | string                  | from deserializer     |
++=============================================================================+
+Fetched 11 rows
+</pre>
 </div>
 </td>
 </tr>
@@ -511,36 +524,54 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Run Hive command using Hive CLI</li>
+<li>Run Hive command using <strong>Hive CLI</strong></li>
 <li><code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">stream_logeventsetream</span> <span class="pre">LIMIT</span> <span class="pre">2</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">execute</span> <span class="pre">'select</span> <span class="pre">*</span> <span class="pre">from</span> <span class="pre">stream_logEventStream</span> <span class="pre">limit</span> <span class="pre">2'</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+===================================================================================================================+</span>
-<span class="go">| stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_ | stream_logeve |</span>
-<span class="go">| logeven | logeven | logeven | logeven | logeven | logeven | logeven | logeven | logeven | logeven | ntstream.user |</span>
-<span class="go">| tstream | tstream | tstream | tstream | tstream | tstream | tstream | tstream | tstream | tstream | _agent: STRIN |</span>
-<span class="go">| .ts: BI | .header | .remote | .remote | .auth_u | .date:  | .reques | .status | .conten | .referr | G             |</span>
-<span class="go">| GINT    | s: map&lt; | _host:  | _login: | ser: ST | STRING  | t: STRI | : INT   | t_lengt | er: STR |               |</span>
-<span class="go">|         | string, | STRING  |  STRING | RING    |         | NG      |         | h: INT  | ING     |               |</span>
-<span class="go">|         | string&gt; |         |         |         |         |         |         |         |         |               |</span>
-<span class="go">+===================================================================================================================+</span>
-<span class="go">| 1428100 | {}      | 255.255 |         |         | 23/Sep/ | GET /cd | 401     | 2969    |         | Mozilla/4.0 ( |</span>
-<span class="go">| 343436  |         | .255.18 |         |         | 2014:11 | ap.html |         |         |         | compatible; M |</span>
-<span class="go">|         |         | 5       |         |         | :45:38  |  HTTP/1 |         |         |         | SIE 7.0; Wind |</span>
-<span class="go">|         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |</span>
-<span class="go">|-------------------------------------------------------------------------------------------------------------------|</span>
-<span class="go">| 1428100 | {}      | 255.255 |         |         | 23/Sep/ | GET /cd | 401     | 2969    |         | Mozilla/4.0 ( |</span>
-<span class="go">| 483106  |         | .255.18 |         |         | 2014:11 | ap.html |         |         |         | compatible; M |</span>
-<span class="go">|         |         | 5       |         |         | :45:38  |  HTTP/1 |         |         |         | SIE 7.0; Wind |</span>
-<span class="go">|         |         |         |         |         | -0400   | .0      |         |         |         | ows NT 5.1)   |</span>
-<span class="go">+===================================================================================================================+</span>
+<td><div class="highlight first container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute 'select * from stream_logEventStream limit 2'
+</pre>
+</div>
+<div class="highlight last container">
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+==================================================================================================================================+</span>
+<span class="go">| stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_l | stream_logeventstr |</span>
+<span class="go">| ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | ogevents | eam.user_agent: ST |</span>
+<span class="go">| tream.ts | tream.he | tream.re | tream.re | tream.au | tream.da | tream.re | tream.st | tream.co | tream.re | RING               |</span>
+<span class="go">| : BIGINT | aders: m | mote_hos | mote_log | th_user: | te: STRI | quest: S | atus: IN | ntent_le | ferrer:  |                    |</span>
+<span class="go">|          | ap&lt;strin | t: STRIN | in: STRI |  STRING  | NG       | TRING    | T        | ngth: IN | STRING   |                    |</span>
+<span class="go">|          | g,string | G        | NG       |          |          |          |          | T        |          |                    |</span>
+<span class="go">|          | &gt;        |          |          |          |          |          |          |          |          |                    |</span>
+<span class="go">+==================================================================================================================================+</span>
+<span class="go">| 14437238 | {&quot;conten | 69.181.1 |          |          | 08/Feb/2 | GET /aja | 200      | 508      | http://b | Mozilla/5.0 (Macin |</span>
+<span class="go">| 45737    | t.type&quot;: | 60.120   |          |          | 015:04:3 | x/planSt |          |          | uilds.ca | tosh; Intel Mac OS |</span>
+<span class="go">|          | &quot;text/pl |          |          |          | 6:40 +00 | atusHist |          |          | sk.co/br |  X 10_10_1) AppleW |</span>
+<span class="go">|          | ain&quot;}    |          |          |          | 00       | oryNeigh |          |          | owse/COO | ebKit/537.36 (KHTM |</span>
+<span class="go">|          |          |          |          |          |          | bouringS |          |          | P-DBT-28 | L, like Gecko) Chr |</span>
+<span class="go">|          |          |          |          |          |          | ummaries |          |          | 4/log    | ome/38.0.2125.122  |</span>
+<span class="go">|          |          |          |          |          |          | .action? |          |          |          | Safari/537.36      |</span>
+<span class="go">|          |          |          |          |          |          | planKey= |          |          |          |                    |</span>
+<span class="go">|          |          |          |          |          |          | COOP-DBT |          |          |          |                    |</span>
+<span class="go">|          |          |          |          |          |          | &amp;buildNu |          |          |          |                    |</span>
+<span class="go">|          |          |          |          |          |          | mber=284 |          |          |          |                    |</span>
+<span class="go">|          |          |          |          |          |          | &amp;_=14233 |          |          |          |                    |</span>
+<span class="go">|          |          |          |          |          |          | 41312519 |          |          |          |                    |</span>
+<span class="go">|          |          |          |          |          |          |  HTTP/1. |          |          |          |                    |</span>
+<span class="go">|          |          |          |          |          |          | 1        |          |          |          |                    |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 14437238 | {&quot;conten | 69.181.1 |          |          | 08/Feb/2 | GET /res | 200      | 45       | http://b | Mozilla/5.0 (Macin |</span>
+<span class="go">| 45737    | t.type&quot;: | 60.120   |          |          | 015:04:3 | t/api/la |          |          | uilds.ca | tosh; Intel Mac OS |</span>
+<span class="go">|          | &quot;text/pl |          |          |          | 6:47 +00 | test/ser |          |          | sk.co/br |  X 10_10_1) AppleW |</span>
+<span class="go">|          | ain&quot;}    |          |          |          | 00       | ver?_=14 |          |          | owse/COO | ebKit/537.36 (KHTM |</span>
+<span class="go">|          |          |          |          |          |          | 23341312 |          |          | P-DBT-28 | L, like Gecko) Chr |</span>
+<span class="go">|          |          |          |          |          |          | 520 HTTP |          |          | 4/log    | ome/38.0.2125.122  |</span>
+<span class="go">|          |          |          |          |          |          | /1.1     |          |          |          | Safari/537.36      |</span>
+<span class="go">+==================================================================================================================================+</span>
 <span class="go">Fetched 2 rows</span>
 </pre></div>
+</div>
 </div>
 </td>
 </tr>
@@ -569,10 +600,13 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <td>Write code to compute the various stats: number of unique elements, histograms, etc.</td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">get</span> <span class="pre">stream-stats</span> <span class="pre">logEventStream</span> <span class="pre">limit</span> <span class="pre">1000</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">column: stream_logeventstream.remote_host, type: STRING</span>
+<td><div class="highlight first container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> get stream-stats logEventStream limit 1000
+</pre>
+</div>
+<div class="highlight last container">
+<div class="highlight-console"><div class="highlight"><pre><span class="go">column: stream_logeventstream.remote_host, type: STRING</span>
 <span class="go">Unique elements: 6</span>
 
 <span class="go">column: stream_logeventstream.remote_login, type: STRING</span>
@@ -663,6 +697,7 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <span class="go">Analyzing 1000 stream events in the time range [0, 9223372036854775807]...</span>
 </pre></div>
 </div>
+</div>
 </td>
 </tr>
 </tbody>
@@ -696,16 +731,17 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Create a file in Hadoop file system called <code class="docutils literal"><span class="pre">ip2geo</span></code></li>
+<li>Create a file in <strong>Hadoop</strong> file system called <code class="docutils literal"><span class="pre">ip2geo</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">create</span> <span class="pre">stream</span> <span class="pre">ip2geo</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully created stream with ID &#39;ip2geo&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> create stream ip2geo
+
+Successfully created stream with ID 'ip2geo'
+</pre>
 </div>
 </td>
 </tr>
@@ -732,18 +768,19 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Write a custom consumer that reads from source (example: Kafka)</li>
-<li>Write the data to HDFS</li>
-<li>Create external table in Hive called <code class="docutils literal"><span class="pre">stream_ip2geo</span></code></li>
+<li>Write a custom consumer that reads from source (example: <strong>Kafka</strong>)</li>
+<li>Write the data to <strong>HDFS</strong></li>
+<li>Create external table in <strong>Hive</strong> called <code class="docutils literal"><span class="pre">stream_ip2geo</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">load</span> <span class="pre">stream</span> <span class="pre">ip2geo</span> <span class="pre">examples/resources/ip2geo-maps.csv</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully sent stream event to stream &#39;ip2geo&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> load stream ip2geo examples/resources/ip2geo-maps.csv
+
+Successfully sent stream event to stream 'ip2geo'
+</pre>
 </div>
 </td>
 </tr>
@@ -769,14 +806,15 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
-<td>Write data to Kafka or append directly to HDFS</td>
+<td>Write data to <strong>Kafka</strong> or append directly to <strong>HDFS</strong></td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">send</span> <span class="pre">stream</span> <span class="pre">ip2geo</span> <span class="pre">'69.181.160.120,</span> <span class="pre">Los</span> <span class="pre">Angeles,</span> <span class="pre">CA'</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully sent stream event to stream &#39;ip2geo&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> send stream ip2geo '69.181.160.120, Los Angeles, CA'
+
+Successfully sent stream event to stream 'ip2geo'
+</pre>
 </div>
 </td>
 </tr>
@@ -803,43 +841,44 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Run Hive command using Hive CLI</li>
+<li>Run <strong>Hive</strong> command using <strong>Hive CLI</strong></li>
 <li><code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">stream_ip2geo</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">execute</span> <span class="pre">'select</span> <span class="pre">*</span> <span class="pre">from</span> <span class="pre">stream_ip2geo'</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+===========================================================================================================+</span>
-<span class="go">| stream_ip2geo.ts: BIGINT | stream_ip2geo.headers: map&lt;string,string&gt; | stream_ip2geo.body: STRING         |</span>
-<span class="go">+===========================================================================================================+</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 108.206.32.124, Santa Clara, CA    |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 109.63.206.34, San Jose, CA        |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 113.72.144.115, New York, New York |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 123.125.71.19, Palo Alto, CA       |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 123.125.71.27, Redwood, CA         |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 123.125.71.28, Los Altos, CA       |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 123.125.71.58, Mountain View, CA   |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 142.54.173.19, Houston, TX         |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 144.76.137.226, Dallas, TX         |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 144.76.201.175, Bedminister, NJ    |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 162.210.196.97, Milipitas, CA      |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 188.138.17.205, Santa Barbara, CA  |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 195.110.40.7, Orlando, FL          |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 201.91.5.170, Tampa, FL            |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 220.181.108.158, Miami, FL         |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 220.181.108.161, Chicago, IL       |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 220.181.108.184, Philadelphia, PA  |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 222.205.101.211, Indianpolis, IN   |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 24.4.216.155, Denver, CO           |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 66.249.75.153, San Diego, CA       |</span>
-<span class="go">| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 77.75.77.11, Austin, TX            |</span>
-<span class="go">| 1428892981049            | {}                                        | 69.181.160.120, Los Angeles, CA    |</span>
-<span class="go">+===========================================================================================================+</span>
-<span class="go">Fetched 22 rows</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute 'select * from stream_ip2geo'
+
++===========================================================================================================+
+| stream_ip2geo.ts: BIGINT | stream_ip2geo.headers: map&lt;string,string&gt; | stream_ip2geo.body: STRING         |
++===========================================================================================================+
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 108.206.32.124, Santa Clara, CA    |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 109.63.206.34, San Jose, CA        |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 113.72.144.115, New York, New York |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 123.125.71.19, Palo Alto, CA       |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 123.125.71.27, Redwood, CA         |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 123.125.71.28, Los Altos, CA       |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 123.125.71.58, Mountain View, CA   |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 142.54.173.19, Houston, TX         |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 144.76.137.226, Dallas, TX         |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 144.76.201.175, Bedminister, NJ    |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 162.210.196.97, Milipitas, CA      |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 188.138.17.205, Santa Barbara, CA  |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 195.110.40.7, Orlando, FL          |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 201.91.5.170, Tampa, FL            |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 220.181.108.158, Miami, FL         |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 220.181.108.161, Chicago, IL       |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 220.181.108.184, Philadelphia, PA  |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 222.205.101.211, Indianpolis, IN   |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 24.4.216.155, Denver, CO           |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 66.249.75.153, San Diego, CA       |
+| 1428892912060            | {&quot;content.type&quot;:&quot;text/csv&quot;}               | 77.75.77.11, Austin, TX            |
+| 1428892981049            | {}                                        | 69.181.160.120, Los Angeles, CA    |
++===========================================================================================================+
+Fetched 22 rows
+</pre>
 </div>
 </td>
 </tr>
@@ -866,17 +905,18 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Drop the external Hive table</li>
-<li>Recreate the Hive table with new schema</li>
+<li>Drop the external <strong>Hive</strong> table</li>
+<li>Recreate the <strong>Hive</strong> table with new schema</li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">set</span> <span class="pre">stream</span> <span class="pre">format</span> <span class="pre">ip2geo</span> <span class="pre">csv</span> <span class="pre">&quot;ip</span> <span class="pre">string,</span> <span class="pre">city</span> <span class="pre">string,</span> <span class="pre">state</span> <span class="pre">string&quot;</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully set format of stream &#39;ip2geo&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> set stream format ip2geo csv &quot;ip string, city string, state string&quot;
+
+Successfully set format of stream 'ip2geo'
+</pre>
 </div>
 </td>
 </tr>
@@ -903,44 +943,45 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Run Hive command using Hive CLI</li>
+<li>Run <strong>Hive</strong> command using <strong>Hive CLI</strong></li>
 <li><code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">stream_ip2geo</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">execute</span> <span class="pre">'select</span> <span class="pre">*</span> <span class="pre">from</span> <span class="pre">stream_ip2geo'</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+================================================================================================================+</span>
-<span class="go">| stream_ip2geo.ts:| stream_ip2geo.headers:      | stream_ip2geo.ip:| stream_ip2geo.city: | stream_ip2geo.state: |</span>
-<span class="go">| BIGINT           | map&lt;string,string&gt;          | STRING           | STRING              | STRING               |</span>
-<span class="go">+================================================================================================================+</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 108.206.32.124   |  Santa Clara        |  CA                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 109.63.206.34    |  San Jose           |  CA                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 113.72.144.115   |  New York           |  New York            |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 123.125.71.19    |  Palo Alto          |  CA                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 123.125.71.27    |  Redwood            |  CA                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 123.125.71.28    |  Los Altos          |  CA                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 123.125.71.58    |  Mountain View      |  CA                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 142.54.173.19    |  Houston            |  TX                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 144.76.137.226   |  Dallas             |  TX                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 144.76.201.175   |  Bedminister        |  NJ                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 162.210.196.97   |  Milipitas          |  CA                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 188.138.17.205   |  Santa Barbara      |  CA                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 195.110.40.7     |  Orlando            |  FL                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 201.91.5.170     |  Tampa              |  FL                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 220.181.108.158  |  Miami              |  FL                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 220.181.108.161  |  Chicago            |  IL                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 220.181.108.184  |  Philadelphia       |  PA                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 222.205.101.211  |  Indianpolis        |  IN                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 24.4.216.155     |  Denver             |  CO                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 66.249.75.153    |  San Diego          |  CA                  |</span>
-<span class="go">| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 77.75.77.11      |  Austin             |  TX                  |</span>
-<span class="go">| 1428892981049    | {}                          | 69.181.160.120   |  Los Angeles        |  CA                  |</span>
-<span class="go">+================================================================================================================+</span>
-<span class="go">Fetched 22 rows</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute 'select * from stream_ip2geo'
+
++================================================================================================================+
+| stream_ip2geo.ts:| stream_ip2geo.headers:      | stream_ip2geo.ip:| stream_ip2geo.city: | stream_ip2geo.state: |
+| BIGINT           | map&lt;string,string&gt;          | STRING           | STRING              | STRING               |
++================================================================================================================+
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 108.206.32.124   |  Santa Clara        |  CA                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 109.63.206.34    |  San Jose           |  CA                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 113.72.144.115   |  New York           |  New York            |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 123.125.71.19    |  Palo Alto          |  CA                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 123.125.71.27    |  Redwood            |  CA                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 123.125.71.28    |  Los Altos          |  CA                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 123.125.71.58    |  Mountain View      |  CA                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 142.54.173.19    |  Houston            |  TX                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 144.76.137.226   |  Dallas             |  TX                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 144.76.201.175   |  Bedminister        |  NJ                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 162.210.196.97   |  Milipitas          |  CA                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 188.138.17.205   |  Santa Barbara      |  CA                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 195.110.40.7     |  Orlando            |  FL                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 201.91.5.170     |  Tampa              |  FL                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 220.181.108.158  |  Miami              |  FL                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 220.181.108.161  |  Chicago            |  IL                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 220.181.108.184  |  Philadelphia       |  PA                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 222.205.101.211  |  Indianpolis        |  IN                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 24.4.216.155     |  Denver             |  CO                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 66.249.75.153    |  San Diego          |  CA                  |
+| 1428892912060    | {&quot;content.type&quot;:&quot;text/csv&quot;} | 77.75.77.11      |  Austin             |  TX                  |
+| 1428892981049    | {}                          | 69.181.160.120   |  Los Angeles        |  CA                  |
++================================================================================================================+
+Fetched 22 rows
+</pre>
 </div>
 </td>
 </tr>
@@ -967,64 +1008,64 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Run Hive command using Hive CLI</li>
+<li>Run <strong>Hive</strong> command using <strong>Hive CLI</strong></li>
 <li><code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">remote_host,</span> <span class="pre">city,</span> <span class="pre">state,</span> <span class="pre">request</span> <span class="pre">from</span> <span class="pre">stream_logEventStream</span> <span class="pre">join</span> <span class="pre">stream_ip2geo</span> <span class="pre">on</span> <span class="pre">(stream_logEventStream.remote_host</span> <span class="pre">=</span> <span class="pre">stream_ip2geo.ip)</span> <span class="pre">limit</span> <span class="pre">10</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">execute</span> <span class="pre">'select</span> <span class="pre">remote_host,</span> <span class="pre">city,</span> <span class="pre">state,</span> <span class="pre">request</span> <span class="pre">from</span> <span class="pre">stream_logEventStream</span> <span class="pre">join</span> <span class="pre">stream_ip2geo</span> <span class="pre">on</span> <span class="pre">(stream_logEventStream.remote_host</span> <span class="pre">=</span> <span class="pre">stream_ip2geo.ip)</span> <span class="pre">limit</span> <span class="pre">10'</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+===============================================================================================================+</span>
-<span class="go">| remote_host: STRING          | city: STRING                 | state: STRING | request: STRING                 |</span>
-<span class="go">+===============================================================================================================+</span>
-<span class="go">| 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |</span>
-<span class="go">|                              |                              |               | hbouringSummaries.action?planKe |</span>
-<span class="go">|                              |                              |               | y=COOP-DBT&amp;buildNumber=284&amp;_=14 |</span>
-<span class="go">|                              |                              |               | 23341312519 HTTP/1.1            |</span>
-<span class="go">|---------------------------------------------------------------------------------------------------------------|</span>
-<span class="go">| 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |</span>
-<span class="go">|                              |                              |               | 423341312520 HTTP/1.1           |</span>
-<span class="go">|---------------------------------------------------------------------------------------------------------------|</span>
-<span class="go">| 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |</span>
-<span class="go">|                              |                              |               | hbouringSummaries.action?planKe |</span>
-<span class="go">|                              |                              |               | y=COOP-DBT&amp;buildNumber=284&amp;_=14 |</span>
-<span class="go">|                              |                              |               | 23341312521 HTTP/1.1            |</span>
-<span class="go">|---------------------------------------------------------------------------------------------------------------|</span>
-<span class="go">| 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |</span>
-<span class="go">|                              |                              |               | hbouringSummaries.action?planKe |</span>
-<span class="go">|                              |                              |               | y=COOP-DBT&amp;buildNumber=284&amp;_=14 |</span>
-<span class="go">|                              |                              |               | 23341312522 HTTP/1.1            |</span>
-<span class="go">|---------------------------------------------------------------------------------------------------------------|</span>
-<span class="go">| 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |</span>
-<span class="go">|                              |                              |               | 423341312523 HTTP/1.1           |</span>
-<span class="go">|---------------------------------------------------------------------------------------------------------------|</span>
-<span class="go">| 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |</span>
-<span class="go">|                              |                              |               | hbouringSummaries.action?planKe |</span>
-<span class="go">|                              |                              |               | y=COOP-DBT&amp;buildNumber=284&amp;_=14 |</span>
-<span class="go">|                              |                              |               | 23341312524 HTTP/1.1            |</span>
-<span class="go">|---------------------------------------------------------------------------------------------------------------|</span>
-<span class="go">| 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |</span>
-<span class="go">|                              |                              |               | hbouringSummaries.action?planKe |</span>
-<span class="go">|                              |                              |               | y=COOP-DBT&amp;buildNumber=284&amp;_=14 |</span>
-<span class="go">|                              |                              |               | 23341312525 HTTP/1.1            |</span>
-<span class="go">|---------------------------------------------------------------------------------------------------------------|</span>
-<span class="go">| 69.181.160.120               |  Los Angeles                 |  CA           | GET /rest/api/latest/server?_=1 |</span>
-<span class="go">|                              |                              |               | 423341312526 HTTP/1.1           |</span>
-<span class="go">|---------------------------------------------------------------------------------------------------------------|</span>
-<span class="go">| 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |</span>
-<span class="go">|                              |                              |               | hbouringSummaries.action?planKe |</span>
-<span class="go">|                              |                              |               | y=COOP-DBT&amp;buildNumber=284&amp;_=14 |</span>
-<span class="go">|                              |                              |               | 23341312527 HTTP/1.1            |</span>
-<span class="go">|---------------------------------------------------------------------------------------------------------------|</span>
-<span class="go">| 69.181.160.120               |  Los Angeles                 |  CA           | GET /ajax/planStatusHistoryNeig |</span>
-<span class="go">|                              |                              |               | hbouringSummaries.action?planKe |</span>
-<span class="go">|                              |                              |               | y=COOP-DBT&amp;buildNumber=284&amp;_=14 |</span>
-<span class="go">|                              |                              |               | 23341312528 HTTP/1.1            |</span>
-<span class="go">+===============================================================================================================+</span>
+<td><div class="highlight first container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute 'select remote_host, city, state, request from stream_logEventStream join stream_ip2geo on (stream_logEventStream.remote_host = stream_ip2geo.ip) limit 10'
+</pre>
+</div>
+<div class="highlight last container">
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+======================================================================================================================+</span>
+<span class="go">| remote_host: STRING | city: STRING | state: STRING | request: STRING                                                 |</span>
+<span class="go">+======================================================================================================================+</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /browse/CDAP-DUT725-8 HTTP/1.1                              |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |</span>
+<span class="go">|                     |              |               | download/batch/bamboo.web.resources:base-model/bamboo.web.resou |</span>
+<span class="go">|                     |              |               | rces:base-model.js HTTP/1.1                                     |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |</span>
+<span class="go">|                     |              |               | download/batch/bamboo.web.resources:model-deployment-version/ba |</span>
+<span class="go">|                     |              |               | mboo.web.resources:model-deployment-version.js HTTP/1.1         |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |</span>
+<span class="go">|                     |              |               | download/batch/bamboo.web.resources:model-deployment-result/bam |</span>
+<span class="go">|                     |              |               | boo.web.resources:model-deployment-result.js HTTP/1.1           |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-T/en_US/4411/1/3.5.7/_/ |</span>
+<span class="go">|                     |              |               | download/batch/com.atlassian.support.stp:stp-license-status-res |</span>
+<span class="go">|                     |              |               | ources/com.atlassian.support.stp:stp-license-status-resources.c |</span>
+<span class="go">|                     |              |               | ss HTTP/1.1                                                     |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |</span>
+<span class="go">|                     |              |               | download/batch/bamboo.web.resources:model-deployment-operations |</span>
+<span class="go">|                     |              |               | /bamboo.web.resources:model-deployment-operations.js HTTP/1.1   |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |</span>
+<span class="go">|                     |              |               | download/batch/bamboo.web.resources:model-deployment-environmen |</span>
+<span class="go">|                     |              |               | t/bamboo.web.resources:model-deployment-environment.js HTTP/1.1 |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/1.0/_/ |</span>
+<span class="go">|                     |              |               | download/batch/bamboo.web.resources:model-deployment-project/ba |</span>
+<span class="go">|                     |              |               | mboo.web.resources:model-deployment-project.js HTTP/1.1         |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/71095c56c641f2c4a4f189b9dfcd7a38-CDN/en_US/4411/1/5.6.2/ |</span>
+<span class="go">|                     |              |               | _/download/batch/bamboo.deployments:deployment-project-list/bam |</span>
+<span class="go">|                     |              |               | boo.deployments:deployment-project-list.js?locale=en-US HTTP/1. |</span>
+<span class="go">|                     |              |               | 1                                                               |</span>
+<span class="go">|----------------------------------------------------------------------------------------------------------------------|</span>
+<span class="go">| 108.206.32.124      |  Santa Clara |  CA           | GET /s/d41d8cd98f00b204e9800998ecf8427e-CDN/en_US/4411/1/5dddb6 |</span>
+<span class="go">|                     |              |               | ea4dc4fd5569d992cf603f31e5/_/download/contextbatch2/css/atl.gen |</span>
+<span class="go">|                     |              |               | eral,bamboo.result/batch.css HTTP/1.1                           |</span>
+<span class="go">+======================================================================================================================+</span>
 <span class="go">Fetched 10 rows</span>
 </pre></div>
+</div>
 </div>
 </td>
 </tr>
@@ -1035,12 +1076,15 @@ and then use the resources in its <code class="docutils literal"><span class="pr
 <div class="section" id="transforming-your-data">
 <h2>Transforming Your Data<a class="headerlink" href="#transforming-your-data" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>CDAP Application Templates are applications that are reusable through configuration</li>
-<li>Build your own Application Templates, using simple APIs</li>
-<li>CDAP includes built-in ETL (Extract, Transform, Load) Application Templates</li>
-<li>ETL Application Templates provide pre-defined transformations to be applied on streams or other datasets</li>
-<li>In this example, we will use the ETLBatch Application Template to convert data in a stream to
-Avro formatted files in a <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> that can be queried using either Hive or Impala</li>
+<li>CDAP <a class="reference external" href="source/../../included-applications/index.html#included-apps-index" title="(in Cask Data Application Platform v3.2.0)"><span class="xref std std-ref">Included Applications</span></a> are applications that are
+reusable through the configuration of artifacts and can be used to create an application
+without writing any code at all</li>
+<li>Built-in ETL (Extract, Transform, Load) and Data Quality applications</li>
+<li>ETL includes over 30 Plugins to build applications merely through configuration of parameters</li>
+<li>Build your own custom plugins, using simple APIs</li>
+<li>ETL Transformations provide pre-defined transformations to be applied on streams or other datasets</li>
+<li>In this example, we will use the ETL batch system artifact to convert data in a stream to
+Avro-formatted files in a <code class="docutils literal"><span class="pre">TimePartitionedFileSet</span></code> that can be queried using either Hive or Impala</li>
 </ul>
 <div class="table-block container">
 <table border="1" class="docutils">
@@ -1049,7 +1093,7 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <col width="20%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><th class="stub">Create a stream-conversion adapter using the ETLBatch Application Template</th>
+<tr class="row-odd"><th class="stub">Create a stream-conversion application using the ETL batch system artifact</th>
 <td>&nbsp;</td>
 </tr>
 </tbody>
@@ -1062,19 +1106,23 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Write a custom consumer that reads from source (example: Kafka)</li>
-<li>Write the data to HDFS</li>
-<li>Create an external table in Hive called <code class="docutils literal"><span class="pre">stream_ip2geo</span></code></li>
+<li>Write a custom consumer that reads from source (example: <strong>Kafka</strong>)</li>
+<li>Write the data to <strong>HDFS</strong></li>
+<li>Create an external table in <strong>Hive</strong> called <code class="docutils literal"><span class="pre">stream_ip2geo</span></code></li>
 <li>Orchestrate running the custom consumer periodically using <strong>Oozie</strong></li>
 <li>Keep track of last processed times</li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><p class="first">Write a configuration file, saving it to <code class="docutils literal"><span class="pre">example/resources/adapter-config.json</span></code>:</p>
-<div class="last highlight-console"><div class="highlight"><pre><span class="go">{</span>
+<td><ul class="first last simple">
+<li>Write a configuration file, saving it to <code class="docutils literal"><span class="pre">examples/resources/app-config.json</span></code>:</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">&nbsp;</th>
+<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">{</span>
 <span class="go">    &quot;description&quot;: &quot;Periodically reads stream data and writes it to a TimePartitionedFileSet&quot;,</span>
-<span class="go">    &quot;template&quot;: &quot;ETLBatch&quot;,</span>
 <span class="go">    &quot;config&quot;: {</span>
 <span class="go">        &quot;schedule&quot;: &quot;*/5 * * * *&quot;,</span>
 <span class="go">        &quot;source&quot;: {</span>
@@ -1093,42 +1141,52 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <span class="go">                }</span>
 <span class="go">            }</span>
 <span class="go">        ],</span>
-<span class="go">        &quot;sink&quot;: {</span>
-<span class="go">            &quot;name&quot;: &quot;TPFSAvro&quot;,</span>
-<span class="go">            &quot;properties&quot;: {</span>
-<span class="go">                &quot;name&quot;: &quot;logEventStream.converted&quot;,</span>
-<span class="go">                &quot;schema&quot;: &quot;{</span>
-<span class="go">                    \&quot;type\&quot;:\&quot;record\&quot;,</span>
-<span class="go">                    \&quot;name\&quot;:\&quot;logEvent\&quot;,</span>
-<span class="go">                    \&quot;fields\&quot;:[</span>
-<span class="go">                        {\&quot;name\&quot;:\&quot;ts\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},</span>
-<span class="go">                        {\&quot;name\&quot;:\&quot;remotehost\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},</span>
-<span class="go">                        {\&quot;name\&quot;:\&quot;remotelogname\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},</span>
-<span class="go">                        {\&quot;name\&quot;:\&quot;authuser\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},</span>
-<span class="go">                        {\&quot;name\&quot;:\&quot;date\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},</span>
-<span class="go">                        {\&quot;name\&quot;:\&quot;request\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},</span>
-<span class="go">                        {\&quot;name\&quot;:\&quot;status\&quot;,\&quot;type\&quot;:[\&quot;int\&quot;,\&quot;null\&quot;]},</span>
-<span class="go">                        {\&quot;name\&quot;:\&quot;contentlength\&quot;,\&quot;type\&quot;:[\&quot;int\&quot;,\&quot;null\&quot;]},</span>
-<span class="go">                        {\&quot;name\&quot;:\&quot;referrer\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},</span>
-<span class="go">                        {\&quot;name\&quot;:\&quot;useragent\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]}</span>
-<span class="go">                    ]</span>
-<span class="go">                }&quot;,</span>
-<span class="go">                &quot;basePath&quot;: &quot;logEventStream.converted&quot;</span>
-<span class="go">            }</span>
-<span class="go">        }</span>
+<span class="go">        &quot;sinks&quot;: [</span>
+<span class="go">          {</span>
+<span class="go">              &quot;name&quot;: &quot;TPFSAvro&quot;,</span>
+<span class="go">              &quot;properties&quot;: {</span>
+<span class="go">                  &quot;name&quot;: &quot;logEventStream_converted&quot;,</span>
+<span class="go">                  &quot;schema&quot;: &quot;{</span>
+<span class="go">                      \&quot;type\&quot;:\&quot;record\&quot;,</span>
+<span class="go">                      \&quot;name\&quot;:\&quot;logEvent\&quot;,</span>
+<span class="go">                      \&quot;fields\&quot;:[</span>
+<span class="go">                          {\&quot;name\&quot;:\&quot;ts\&quot;,\&quot;type\&quot;:\&quot;long\&quot;},</span>
+<span class="go">                          {\&quot;name\&quot;:\&quot;remotehost\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},</span>
+<span class="go">                          {\&quot;name\&quot;:\&quot;remotelogname\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},</span>
+<span class="go">                          {\&quot;name\&quot;:\&quot;authuser\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},</span>
+<span class="go">                          {\&quot;name\&quot;:\&quot;date\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},</span>
+<span class="go">                          {\&quot;name\&quot;:\&quot;request\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},</span>
+<span class="go">                          {\&quot;name\&quot;:\&quot;status\&quot;,\&quot;type\&quot;:[\&quot;int\&quot;,\&quot;null\&quot;]},</span>
+<span class="go">                          {\&quot;name\&quot;:\&quot;contentlength\&quot;,\&quot;type\&quot;:[\&quot;int\&quot;,\&quot;null\&quot;]},</span>
+<span class="go">                          {\&quot;name\&quot;:\&quot;referrer\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]},</span>
+<span class="go">                          {\&quot;name\&quot;:\&quot;useragent\&quot;,\&quot;type\&quot;:[\&quot;string\&quot;,\&quot;null\&quot;]}</span>
+<span class="go">                      ]</span>
+<span class="go">                  }&quot;,</span>
+<span class="go">                  &quot;basePath&quot;: &quot;logEventStream_converted&quot;</span>
+<span class="go">              }</span>
+<span class="go">          }</span>
+<span class="go">        ]</span>
 <span class="go">    }</span>
 <span class="go">}</span>
 </pre></div>
 </div>
 </td>
 </tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td><ul class="first last simple">
+<li>Create an application using that configuration through the CLI:</li>
+</ul>
+</td>
+</tr>
 <tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><p class="first">Create an adapter using that configuration through the CLI:</p>
-<div class="last highlight-console"><div class="highlight"><pre><span class="gp">&gt;</span> create adapter logEventStreamConverter example/resources/adapter-config.json
-<span class="go">Successfully created adapter &#39;logEventStreamConverter&#39;</span>
-<span class="gp">&gt;</span> start adapter logEventStreamConverter
-<span class="go">Successfully started adapter &#39;logEventStreamConverter&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> create app logEventStreamConverter cdap-etl-batch 3.2.0 system examples/resources/app-config.json
+Successfully created application
+
+<span class="gp">cdap &gt;</span> resume schedule logEventStreamConverter.etlWorkflow
+Successfully resumed schedule 'etlWorkflow' in app 'logEventStreamConverter'
+</pre>
 </div>
 </td>
 </tr>
@@ -1142,7 +1200,7 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <col width="20%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><th class="stub">List the adapters available in the CDAP instance</th>
+<tr class="row-odd"><th class="stub">List the applications available in the CDAP instance</th>
 <td>&nbsp;</td>
 </tr>
 </tbody>
@@ -1160,81 +1218,69 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">list</span> <span class="pre">adapters</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+======================================================================================================================+</span>
-<span class="go">| name                | description         | template | config              | properties                              |</span>
-<span class="go">+======================================================================================================================+</span>
-<span class="go">| logEventStreamConve | Periodically reads  | ETLBatch | {&quot;schedule&quot;:&quot;*/5 *  | schedule={&quot;schedule&quot;:{&quot;name&quot;:&quot;logEventS |</span>
-<span class="go">| rter                | stream data and wri |          | * * *&quot;,&quot;source&quot;:{&quot;n | treamConverter.etl.batch.adapter.logEve |</span>
-<span class="go">|                     | tes it to a TimePar |          | ame&quot;:&quot;Stream&quot;,&quot;prop | ntStreamConverter.schedule&quot;,&quot;descriptio |</span>
-<span class="go">|                     | titionedFileSet     |          | erties&quot;:{&quot;name&quot;:&quot;lo | n&quot;:&quot;Schedule for logEventStreamConverte |</span>
-<span class="go">|                     |                     |          | gEventStream&quot;,&quot;dura | r Adapter&quot;},&quot;program&quot;:{&quot;programName&quot;:&quot;E |</span>
-<span class="go">|                     |                     |          | tion&quot;:&quot;5m&quot;,&quot;format&quot; | TLworkflow&quot;,&quot;programType&quot;:&quot;WORKFLOW&quot;},&quot; |</span>
-<span class="go">|                     |                     |          | :&quot;clf&quot;}},&quot;transform | properties&quot;:{&quot;transformIds&quot;:&quot;[\&quot;Project |</span>
-<span class="go">|                     |                     |          | s&quot;:[{&quot;name&quot;:&quot;Projec | ion:0\&quot;]&quot;,&quot;name&quot;:&quot;logEventStreamConvert |</span>
-<span class="go">|                     |                     |          | tion&quot;,&quot;properties&quot;: | er&quot;,&quot;sinkId&quot;:&quot;sink:TPFSAvro&quot;,&quot;config&quot;:&quot; |</span>
-<span class="go">|                     |                     |          | {&quot;drop&quot;:&quot;headers&quot;}} | {\&quot;schedule\&quot;:\&quot;*/5 * * * *\&quot;,\&quot;source\ |</span>
-<span class="go">|                     |                     |          | ],&quot;sink&quot;:{&quot;name&quot;:&quot;T | &quot;:{\&quot;name\&quot;:\&quot;Stream\&quot;,\&quot;properties\&quot;:{ |</span>
-<span class="go">|                     |                     |          | PFSAvro&quot;,&quot;propertie | \&quot;duration\&quot;:\&quot;5m\&quot;,\&quot;name\&quot;:\&quot;logEvent |</span>
-<span class="go">|                     |                     |          | s&quot;:{&quot;name&quot;:&quot;logEven | Stream\&quot;,\&quot;format\&quot;:\&quot;clf\&quot;}},\&quot;sink\&quot;: |</span>
-<span class="go">|                     |                     |          | tStream.converted&quot;, | {\&quot;name\&quot;:\&quot;TPFSAvro\&quot;,\&quot;properties\&quot;:{ |</span>
-<span class="go">|                     |                     |          | &quot;schema&quot;:&quot;{\n       | \&quot;basePath\&quot;:\&quot;logEventStream.converted |</span>
-<span class="go">|                     |                     |          |               \&quot;typ | \&quot;,\&quot;schema\&quot;:\&quot;{\\n                    |</span>
-<span class="go">|                     |                     |          | e\&quot;:\&quot;record\&quot;,\n   |  \\\&quot;type\\\&quot;:\\\&quot;record\\\&quot;,\\n        |</span>
-<span class="go">|                     |                     |          |                   \ |              \\\&quot;name\\\&quot;:\\\&quot;logEvent\ |</span>
-<span class="go">|                     |                     |          | &quot;name\&quot;:\&quot;logEvent\ | \\&quot;,\\n                    \\\&quot;fields\\ |</span>
-<span class="go">|                     |                     |          | &quot;,\n                | \&quot;:[\\n                        {\\\&quot;nam |</span>
-<span class="go">|                     |                     |          |      \&quot;fields\&quot;:[\n | e\\\&quot;:\\\&quot;ts\\\&quot;,\\\&quot;type\\\&quot;:\\\&quot;long\ |</span>
-<span class="go">|                     |                     |          |                     | \\&quot;},\\n                        {\\\&quot;na |</span>
-<span class="go">|                     |                     |          |      {\&quot;name\&quot;:\&quot;ts | me\\\&quot;:\\\&quot;remotehost\\\&quot;,\\\&quot;type\\\&quot;: |</span>
-<span class="go">|                     |                     |          | \&quot;,\&quot;type\&quot;:\&quot;long\ | [\\\&quot;string\\\&quot;,\\\&quot;null\\\&quot;]},\\n      |</span>
-<span class="go">|                     |                     |          | &quot;},\n               |                    {\\\&quot;name\\\&quot;:\\\&quot;re |</span>
-<span class="go">|                     |                     |          |           {\&quot;name\&quot; | motelogname\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot;strin |</span>
-<span class="go">|                     |                     |          | :\&quot;remotehost\&quot;,\&quot;t | g\\\&quot;,\\\&quot;null\\\&quot;]},\\n                |</span>
-<span class="go">|                     |                     |          | ype\&quot;:[\&quot;string\&quot;,\ |          {\\\&quot;name\\\&quot;:\\\&quot;authuser\\\&quot; |</span>
-<span class="go">|                     |                     |          | &quot;null\&quot;]},\n        | ,\\\&quot;type\\\&quot;:[\\\&quot;string\\\&quot;,\\\&quot;null\ |</span>
-<span class="go">|                     |                     |          |                  {\ | \\&quot;]},\\n                        {\\\&quot;n |</span>
-<span class="go">|                     |                     |          | &quot;name\&quot;:\&quot;remotelog | ame\\\&quot;:\\\&quot;date\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot; |</span>
-<span class="go">|                     |                     |          | name\&quot;,\&quot;type\&quot;:[\&quot; | string\\\&quot;,\\\&quot;null\\\&quot;]},\\n           |</span>
-<span class="go">|                     |                     |          | string\&quot;,\&quot;null\&quot;]} |               {\\\&quot;name\\\&quot;:\\\&quot;request |</span>
-<span class="go">|                     |                     |          | ,\n                 | \\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot;string\\\&quot;,\\\&quot;n |</span>
-<span class="go">|                     |                     |          |         {\&quot;name\&quot;:\ | ull\\\&quot;]},\\n                        {\ |</span>
-<span class="go">|                     |                     |          | &quot;authuser\&quot;,\&quot;type\ | \\&quot;name\\\&quot;:\\\&quot;status\\\&quot;,\\\&quot;type\\\&quot; |</span>
-<span class="go">|                     |                     |          | &quot;:[\&quot;string\&quot;,\&quot;nul | :[\\\&quot;int\\\&quot;,\\\&quot;null\\\&quot;]},\\n        |</span>
-<span class="go">|                     |                     |          | l\&quot;]},\n            |                  {\\\&quot;name\\\&quot;:\\\&quot;cont |</span>
-<span class="go">|                     |                     |          |              {\&quot;nam | entlength\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot;int\\\&quot; |</span>
-<span class="go">|                     |                     |          | e\&quot;:\&quot;date\&quot;,\&quot;type | ,\\\&quot;null\\\&quot;]},\\n                     |</span>
-<span class="go">|                     |                     |          | \&quot;:[\&quot;string\&quot;,\&quot;nu |     {\\\&quot;name\\\&quot;:\\\&quot;referrer\\\&quot;,\\\&quot; |</span>
-<span class="go">|                     |                     |          | ll\&quot;]},\n           | type\\\&quot;:[\\\&quot;string\\\&quot;,\\\&quot;null\\\&quot;]} |</span>
-<span class="go">|                     |                     |          |               {\&quot;na | ,\\n                        {\\\&quot;name\\ |</span>
-<span class="go">|                     |                     |          | me\&quot;:\&quot;request\&quot;,\&quot; | \&quot;:\\\&quot;useragent\\\&quot;,\\\&quot;type\\\&quot;:[\\\&quot; |</span>
-<span class="go">|                     |                     |          | type\&quot;:[\&quot;string\&quot;, | string\\\&quot;,\\\&quot;null\\\&quot;]}\\n            |</span>
-<span class="go">|                     |                     |          | \&quot;null\&quot;]},\n       |          ]\\n                }\&quot;,\&quot;name |</span>
-<span class="go">|                     |                     |          |                   { | \&quot;:\&quot;logEventStream.converted\&quot;}},\&quot;tra |</span>
-<span class="go">|                     |                     |          | \&quot;name\&quot;:\&quot;status\&quot; | nsforms\&quot;:[{\&quot;name\&quot;:\&quot;Projection\&quot;,\&quot;p |</span>
-<span class="go">|                     |                     |          | ,\&quot;type\&quot;:[\&quot;int\&quot;, | roperties\&quot;:{\&quot;drop\&quot;:\&quot;headers\&quot;}}]}&quot;, |</span>
-<span class="go">|                     |                     |          | \&quot;null\&quot;]},\n       | &quot;sourceId&quot;:&quot;source:Stream&quot;}}            |</span>
-<span class="go">|                     |                     |          |                   { | instances=1                             |</span>
-<span class="go">|                     |                     |          | \&quot;name\&quot;:\&quot;contentl |                                         |</span>
-<span class="go">|                     |                     |          | ength\&quot;,\&quot;type\&quot;:[\ |                                         |</span>
-<span class="go">|                     |                     |          | &quot;int\&quot;,\&quot;null\&quot;]},\ |                                         |</span>
-<span class="go">|                     |                     |          | n                   |                                         |</span>
-<span class="go">|                     |                     |          |       {\&quot;name\&quot;:\&quot;r |                                         |</span>
-<span class="go">|                     |                     |          | eferrer\&quot;,\&quot;type\&quot;: |                                         |</span>
-<span class="go">|                     |                     |          | [\&quot;string\&quot;,\&quot;null\ |                                         |</span>
-<span class="go">|                     |                     |          | &quot;]},\n              |                                         |</span>
-<span class="go">|                     |                     |          |            {\&quot;name\ |                                         |</span>
-<span class="go">|                     |                     |          | &quot;:\&quot;useragent\&quot;,\&quot;t |                                         |</span>
-<span class="go">|                     |                     |          | ype\&quot;:[\&quot;string\&quot;,\ |                                         |</span>
-<span class="go">|                     |                     |          | &quot;null\&quot;]}\n         |                                         |</span>
-<span class="go">|                     |                     |          |             ]\n     |                                         |</span>
-<span class="go">|                     |                     |          |             }&quot;,&quot;bas |                                         |</span>
-<span class="go">|                     |                     |          | ePath&quot;:&quot;logEventStr |                                         |</span>
-<span class="go">|                     |                     |          | eam.converted&quot;}}}   |                                         |</span>
-<span class="go">+======================================================================================================================+</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> list apps
+
++=======================================================================================+
+| id                      | descript | artifactName   | artifactVersion | artifactScope |
+|                         | ion      |                |                 |               |
++=======================================================================================+
+| logEventStreamConverter | Batch Ex | cdap-etl-batch | 3.2.0           | SYSTEM        |
+|                         | tract-Tr |                |                 |               |
+|                         | ansform- |                |                 |               |
+|                         | Load (ET |                |                 |               |
+|                         | L) Templ |                |                 |               |
+|                         | ate      |                |                 |               |
++=======================================================================================+
+
+<span class="gp">cdap &gt;</span> describe app logEventStreamConverter
+
++========================================================================+
+| type      | id           | description                                 |
++========================================================================+
+| MapReduce | ETLMapReduce | MapReduce Driver for ETL Batch Applications |
+| Workflow  | ETLWorkflow  | Workflow for ETL Batch MapReduce Driver     |
++========================================================================+
+
+<span class="gp">cdap &gt;</span> describe stream logEventStream
+
++==================================================================================+
+| ttl              | format | schema                   | notification.threshold.mb |
++==================================================================================+
+| 9223372036854775 | clf    | {&quot;type&quot;:&quot;record&quot;,&quot;name&quot;: | 1024                      |
+|                  |        | &quot;streamEvent&quot;,&quot;fields&quot;:[ |                           |
+|                  |        | {&quot;name&quot;:&quot;remote_host&quot;,&quot;t |                           |
+|                  |        | ype&quot;:[&quot;string&quot;,&quot;null&quot;]}, |                           |
+|                  |        | {&quot;name&quot;:&quot;remote_login&quot;,&quot; |                           |
+|                  |        | type&quot;:[&quot;string&quot;,&quot;null&quot;]} |                           |
+|                  |        | ,{&quot;name&quot;:&quot;auth_user&quot;,&quot;ty |                           |
+|                  |        | pe&quot;:[&quot;string&quot;,&quot;null&quot;]},{ |                           |
+|                  |        | &quot;name&quot;:&quot;date&quot;,&quot;type&quot;:[&quot;s |                           |
+|                  |        | tring&quot;,&quot;null&quot;]},{&quot;name&quot;: |                           |
+|                  |        | &quot;request&quot;,&quot;type&quot;:[&quot;strin |                           |
+|                  |        | g&quot;,&quot;null&quot;]},{&quot;name&quot;:&quot;sta |                           |
+|                  |        | tus&quot;,&quot;type&quot;:[&quot;int&quot;,&quot;null |                           |
+|                  |        | &quot;]},{&quot;name&quot;:&quot;content_len |                           |
+|                  |        | gth&quot;,&quot;type&quot;:[&quot;int&quot;,&quot;null |                           |
+|                  |        | &quot;]},{&quot;name&quot;:&quot;referrer&quot;,&quot; |                           |
+|                  |        | type&quot;:[&quot;string&quot;,&quot;null&quot;]} |                           |
+|                  |        | ,{&quot;name&quot;:&quot;user_agent&quot;,&quot;t |                           |
+|                  |        | ype&quot;:[&quot;string&quot;,&quot;null&quot;]}] |                           |
+|                  |        | }                        |                           |
++==================================================================================+
+
+<span class="gp">cdap &gt;</span> get workflow schedules logEventStreamConverter.ETLWorkflow
+
++=================================================================================================================+
+| application | program     | program type | name        | type        | description | properties  | runtime args |
++=================================================================================================================+
+| logEventStr | ETLWorkflow | WORKFLOW     | etlWorkflow | co.cask.cda | batch etl s | cron entry: | {}           |
+| eamConverte |             |              |             | p.internal. | chedule     |  */5 * * *  |              |
+| r           |             |              |             | schedule.Ti |             | *           |              |
+|             |             |              |             | meSchedule  |             |             |              |
++=================================================================================================================+
+</pre>
 </div>
 </td>
 </tr>
@@ -1261,18 +1307,19 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Write a custom consumer that reads from source (example: Kafka)</li>
-<li>Write the data to HDFS</li>
-<li>Create external table in Hive called <code class="docutils literal"><span class="pre">stream_ip2geo</span></code></li>
+<li>Write a custom consumer that reads from source (example: <strong>Kafka</strong>)</li>
+<li>Write the data to <strong>HDFS</strong></li>
+<li>Create external table in <strong>Hive</strong> called <code class="docutils literal"><span class="pre">stream_ip2geo</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">load</span> <span class="pre">stream</span> <span class="pre">logEventStream</span> <span class="pre">examples/resources/accesslog.txt</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully sent stream event to stream &#39;logEventStream&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> load stream logEventStream examples/resources/accesslog.txt
+
+Successfully sent stream event to stream 'logEventStream'
+</pre>
 </div>
 </td>
 </tr>
@@ -1305,16 +1352,17 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td>Dataset that is time partitioned</td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><p class="first"><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">instances</span></code></p>
-<div class="last highlight-console"><div class="highlight"><pre><span class="go">+=================================================================================+</span>
-<span class="go">| name                      | type                                                |</span>
-<span class="go">+=================================================================================+</span>
-<span class="go">| logEventStream.converted  | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |</span>
-<span class="go">+=================================================================================+</span>
-</pre></div>
+<td><p class="first">Dataset that is time partitioned</p>
+<div class="highlight last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> list dataset instances
+
++=================================================================================+
+| name                      | type                                                |
++=================================================================================+
+| logEventStream_converted  | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |
++=================================================================================+
+</pre>
 </div>
 </td>
 </tr>
@@ -1341,45 +1389,46 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Run Hive query using Hive CLI</li>
+<li>Run <strong>Hive</strong> query using <strong>Hive CLI</strong></li>
 <li><code class="docutils literal"><span class="pre">'describe</span> <span class="pre">user_logEventStream_converted'</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">execute</span> <span class="pre">'describe</span> <span class="pre">dataset_logEventStream_converted'</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+=======================================================================+</span>
-<span class="go">| col_name: STRING        | data_type: STRING    | comment: STRING      |</span>
-<span class="go">+=======================================================================+</span>
-<span class="go">| ts                      | bigint               | from deserializer    |</span>
-<span class="go">| remotehost              | string               | from deserializer    |</span>
-<span class="go">| remotelogname           | string               | from deserializer    |</span>
-<span class="go">| authuser                | string               | from deserializer    |</span>
-<span class="go">| date                    | string               | from deserializer    |</span>
-<span class="go">| request                 | string               | from deserializer    |</span>
-<span class="go">| status                  | int                  | from deserializer    |</span>
-<span class="go">| contentlength           | int                  | from deserializer    |</span>
-<span class="go">| referrer                | string               | from deserializer    |</span>
-<span class="go">| useragent               | string               | from deserializer    |</span>
-<span class="go">| year                    | int                  |                      |</span>
-<span class="go">| month                   | int                  |                      |</span>
-<span class="go">| day                     | int                  |                      |</span>
-<span class="go">| hour                    | int                  |                      |</span>
-<span class="go">| minute                  | int                  |                      |</span>
-<span class="go">|                         |                      |                      |</span>
-<span class="go">| # Partition Information |                      |                      |</span>
-<span class="go">| # col_name              | data_type            | comment              |</span>
-<span class="go">|                         |                      |                      |</span>
-<span class="go">| year                    | int                  |                      |</span>
-<span class="go">| month                   | int                  |                      |</span>
-<span class="go">| day                     | int                  |                      |</span>
-<span class="go">| hour                    | int                  |                      |</span>
-<span class="go">| minute                  | int                  |                      |</span>
-<span class="go">+=======================================================================+</span>
-<span class="go">Fetched 24 rows</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute 'describe dataset_logEventStream_converted'
+
++=======================================================================+
+| col_name: STRING        | data_type: STRING    | comment: STRING      |
++=======================================================================+
+| ts                      | bigint               | from deserializer    |
+| remotehost              | string               | from deserializer    |
+| remotelogname           | string               | from deserializer    |
+| authuser                | string               | from deserializer    |
+| date                    | string               | from deserializer    |
+| request                 | string               | from deserializer    |
+| status                  | int                  | from deserializer    |
+| contentlength           | int                  | from deserializer    |
+| referrer                | string               | from deserializer    |
+| useragent               | string               | from deserializer    |
+| year                    | int                  |                      |
+| month                   | int                  |                      |
+| day                     | int                  |                      |
+| hour                    | int                  |                      |
+| minute                  | int                  |                      |
+|                         |                      |                      |
+| # Partition Information |                      |                      |
+| # col_name              | data_type            | comment              |
+|                         |                      |                      |
+| year                    | int                  |                      |
+| month                   | int                  |                      |
+| day                     | int                  |                      |
+| hour                    | int                  |                      |
+| minute                  | int                  |                      |
++=======================================================================+
+Fetched 24 rows
+</pre>
 </div>
 </td>
 </tr>
@@ -1406,16 +1455,51 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Run Hive query using Hive CLI</li>
+<li>Run <strong>Hive</strong> query using <strong>Hive CLI</strong></li>
 <li><code class="docutils literal"><span class="pre">SELECT</span> <span class="pre">ts,</span> <span class="pre">request,</span> <span class="pre">status</span> <span class="pre">FROM</span> <span class="pre">dataset_logEventStream_converted</span> <span class="pre">LIMIT</span> <span class="pre">2</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">execute</span> <span class="pre">'SELECT</span> <span class="pre">ts,</span> <span class="pre">request,</span> <span class="pre">status</span> <span class="pre">FROM</span> <span class="pre">dataset_logEventStream_converted</span> <span class="pre">LIMIT</span> <span class="pre">2'</span></code></td>
+<td><ul class="first last simple">
+<li>Instead of waiting for the schedule to run, you can directly start the workflow and check its status:</li>
+</ul>
+</td>
 </tr>
 <tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+=====================================================================+</span>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> start workflow logEventStreamConverter.ETLWorkflow
+
+Successfully started workflow 'ETLWorkflow' of application 'logEventStreamConverter' with stored runtime arguments '{}'
+
+<span class="gp">cdap &gt;</span> get workflow status logEventStreamConverter.ETLWorkflow
+
+RUNNING
+
+...
+
+<span class="gp">cdap &gt;</span> get workflow status logEventStreamConverter.ETLWorkflow
+
+STOPPED
+</pre>
+</div>
+</td>
+</tr>
+<tr class="row-even"><th class="stub">&nbsp;</th>
+<td><ul class="first last simple">
+<li>Once the workflow has stopped, retrieve the first two events from the converted data:</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><th class="stub">&nbsp;</th>
+<td><div class="highlight first container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute 'SELECT ts, request, status FROM dataset_logEventStream_converted LIMIT 2'
+</pre>
+</div>
+<div class="highlight last container">
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+=====================================================================+</span>
 <span class="go">| ts: BIGINT    | request: STRING                       | status: INT |</span>
 <span class="go">+=====================================================================+</span>
 <span class="go">| 1430769459594 | GET /ajax/planStatusHistoryNeighbouri | 200         |</span>
@@ -1428,6 +1512,7 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <span class="go">+=====================================================================+</span>
 <span class="go">Fetched 2 rows</span>
 </pre></div>
+</div>
 </div>
 </td>
 </tr>
@@ -1474,27 +1559,27 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <li>Write and execute <strong>MapReduce</strong> using <strong>Hadoop</strong></li>
 <li>Separate environment for processing in real-time setup stack</li>
 <li>Add ability to periodically copy datasets into <strong>SQL</strong> using <strong>Sqoop</strong></li>
-<li>Orchestrate the Mapreduce job using Oozie</li>
+<li>Orchestrate the <strong>MapReduce</strong> job using <strong>Oozie</strong></li>
 <li>Write an application to serve the data</li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
 <td><p class="first">Download the Wise app and unzip into the <code class="docutils literal"><span class="pre">examples</span></code> directory of your CDAP SDK:</p>
-<div class="line-block">
-<div class="line"><code class="docutils literal"><span class="pre">$</span> <span class="pre">cd</span> <span class="pre">$CDAP_SDK_HOME/examples</span></code></div>
-<div class="line"><code class="docutils literal"><span class="pre">$</span> <span class="pre">curl</span> <span class="pre">-O</span> <span class="pre">http://repository.cask.co/downloads/co/cask/cdap/apps/</span></code><code class="docutils literal"><span class="pre">0.4.0</span></code><code class="docutils literal"><span class="pre">/cdap-wise-</span></code><code class="docutils literal"><span class="pre">0.4.0</span></code><code class="docutils literal"><span class="pre">.zip</span></code></div>
-<div class="line"><code class="docutils literal"><span class="pre">$</span> <span class="pre">unzip</span> <span class="pre">cdap-wise-</span></code><code class="docutils literal"><span class="pre">0.4.0</span></code><code class="docutils literal"><span class="pre">.zip</span></code></div>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> cd $CDAP_SDK_HOME/examples
+<span class="gp">$</span> curl -O http://repository.cask.co/downloads/co/cask/cdap/apps/0.4.0/cdap-wise-0.4.0.zip
+<span class="gp">$</span> unzip cdap-wise-0.4.0.zip
+</pre>
 </div>
 <p>From within the CDAP CLI:</p>
-<div class="last line-block">
-<div class="line"><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">deploy</span> <span class="pre">app</span> <span class="pre">examples/cdap-wise-</span></code><code class="docutils literal"><span class="pre">0.4.0</span></code><code class="docutils literal"><span class="pre">/target/cdap-wise-</span></code><code class="docutils literal"><span class="pre">0.4.0</span></code><code class="docutils literal"><span class="pre">.jar</span></code></div>
-</div>
-</td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully deployed application</span>
-</pre></div>
+<div class="highlight last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> deploy app examples/cdap-wise-0.4.0/target/cdap-wise-0.4.0.jar
+
+Successfully deployed application
+</pre>
 </div>
 </td>
 </tr>
@@ -1521,24 +1606,25 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Check Oozie</li>
+<li>Check <strong>Oozie</strong></li>
 <li>Check <strong>YARN</strong> Console</li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">describe</span> <span class="pre">app</span> <span class="pre">Wise</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+=====================================================================+</span>
-<span class="go">| type      | id                    | description                     |</span>
-<span class="go">+=====================================================================+</span>
-<span class="go">| Flow      | WiseFlow              | Wise flow                       |</span>
-<span class="go">| MapReduce | BounceCountsMapReduce | Bounce Counts MapReduce Program |</span>
-<span class="go">| Service   | WiseService           |                                 |</span>
-<span class="go">| workflow  | Wiseworkflow          | Wise workflow                   |</span>
-<span class="go">+=====================================================================+</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> describe app Wise
+
++=====================================================================+
+| type      | id                    | description                     |
++=====================================================================+
+| Flow      | WiseFlow              | Wise flow                       |
+| MapReduce | BounceCountsMapReduce | Bounce Counts MapReduce Program |
+| Service   | WiseService           |                                 |
+| workflow  | WiseWorkflow          | Wise workflow                   |
++=====================================================================+
+</pre>
 </div>
 </td>
 </tr>
@@ -1567,17 +1653,18 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <td><ul class="first last simple">
 <li>Set classpath in environment variable</li>
 <li><code class="docutils literal"><span class="pre">CLASSPATH=/my/classpath</span></code></li>
-<li>Run the command to start the yarn application</li>
+<li>Run the command to start the <strong>YARN</strong> application</li>
 <li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">jar</span> <span class="pre">/path/to/myprogram.jar</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">start</span> <span class="pre">flow</span> <span class="pre">Wise.WiseFlow</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully started flow &#39;WiseFlow&#39; of application &#39;Wise&#39; with stored runtime arguments &#39;{}</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> start flow Wise.WiseFlow
+
+Successfully started flow 'WiseFlow' of application 'Wise' with stored runtime arguments '{}'
+</pre>
 </div>
 </td>
 </tr>
@@ -1612,11 +1699,12 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">get</span> <span class="pre">flow</span> <span class="pre">status</span> <span class="pre">Wise.WiseFlow</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">RUNNING</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> get flow status Wise.WiseFlow
+
+RUNNING
+</pre>
 </div>
 </td>
 </tr>
@@ -1643,18 +1731,19 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Write a custom consumer for Kafka that reads from source</li>
-<li>Write the data to HDFS</li>
-<li>Create external table in Hive called <code class="docutils literal"><span class="pre">cdap_stream_logeventstream</span></code></li>
+<li>Write a custom consumer for <strong>Kafka</strong> that reads from source</li>
+<li>Write the data to <strong>HDFS</strong></li>
+<li>Create external table in <strong>Hive</strong> called <code class="docutils literal"><span class="pre">cdap_stream_logeventstream</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">load</span> <span class="pre">stream</span> <span class="pre">logEventStream</span> <span class="pre">examples/resources/accesslog.txt</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully sent stream event to stream &#39;logEventStream&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> load stream logEventStream examples/resources/accesslog.txt
+
+Successfully sent stream event to stream 'logEventStream'
+</pre>
 </div>
 </td>
 </tr>
@@ -1662,19 +1751,17 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 </table>
 </div>
 <div class="table-block container">
-<blockquote>
-<div><table border="1" class="docutils">
+<table border="1" class="docutils">
 <colgroup>
 <col width="80%" />
 <col width="20%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><th class="stub">Retrieve</th>
+<tr class="row-odd"><th class="stub">Retrieve logs</th>
 <td>&nbsp;</td>
 </tr>
 </tbody>
 </table>
-</div></blockquote>
 <table border="1" class="triple-table docutils">
 <colgroup>
 <col width="15%" />
@@ -1693,26 +1780,27 @@ Avro formatted files in a <code class="docutils literal"><span class="pre">TimeP
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">get</span> <span class="pre">flow</span> <span class="pre">logs</span> <span class="pre">Wise.WiseFlow</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-none"><div class="highlight"><pre>2015-04-15 09:22:53,775 - INFO  [FlowletRuntimeService
-STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@110] - Initializing flowlet:
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> get flow logs Wise.WiseFlow
+
+2015-04-15 09:22:53,775 - INFO  [FlowletRuntimeService
+STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1&#64;110] - Initializing flowlet:
 flowlet=pageViewCount, instance=0, groupsize=1, namespaceId=default, applicationId=Wise,
 program=WiseFlow, runid=aae85671-e38b-11e4-bd5e-3ee74a48f4aa
 2015-04-15 09:22:53,779 - INFO  [FlowletRuntimeService
-STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@117] - Flowlet initialized:
+STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1&#64;117] - Flowlet initialized:
 flowlet=pageViewCount, instance=0, groupsize=1, namespaceId=default, applicationId=Wise,
 program=WiseFlow, runid=aae85671-e38b-11e4-bd5e-3ee74a48f4aa
 ...
 2015-04-15 10:07:54,708 - INFO  [FlowletRuntimeService
-STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1@117] - Flowlet initialized: flowlet=parser,
+STARTING:c.c.c.i.a.r.f.FlowletRuntimeService$1&#64;117] - Flowlet initialized: flowlet=parser,
 instance=0, groupsize=1, namespaceId=default, applicationId=Wise, program=WiseFlow,
 runid=f4e0e52a-e391-11e4-a467-3ee74a48f4aa
 2015-04-15 10:07:54,709 - DEBUG [FlowletRuntimeService
-STARTING:c.c.c.i.a.r.AbstractProgramController@230] - Program started: WiseFlow:parser
+STARTING:c.c.c.i.a.r.AbstractProgramController&#64;230] - Program started: WiseFlow:parser
 f4e0e52a-e391-11e4-a467-3ee74a48f4aa
-</pre></div>
+</pre>
 </div>
 </td>
 </tr>
@@ -1740,17 +1828,18 @@ f4e0e52a-e391-11e4-a467-3ee74a48f4aa
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Start the job using Oozie</li>
+<li>Start the job using <strong>Oozie</strong></li>
 <li><code class="docutils literal"><span class="pre">oozie</span> <span class="pre">job</span> <span class="pre">-start</span> <span class="pre">&lt;arguments&gt;</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">start</span> <span class="pre">workflow</span> <span class="pre">Wise.Wiseworkflow</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully started workflow &#39;Wiseworkflow&#39; of application &#39;Wise&#39; with stored runtime arguments &#39;{}&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> start workflow Wise.WiseWorkflow
+
+Successfully started workflow 'WiseWorkflow' of application 'Wise' with stored runtime arguments '{}'
+</pre>
 </div>
 </td>
 </tr>
@@ -1777,17 +1866,18 @@ f4e0e52a-e391-11e4-a467-3ee74a48f4aa
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Get the workflow status from Oozie</li>
+<li>Get the workflow status from <strong>Oozie</strong></li>
 <li><code class="docutils literal"><span class="pre">oozie</span> <span class="pre">job</span> <span class="pre">-info</span> <span class="pre">&lt;jobid&gt;</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">get</span> <span class="pre">workflow</span> <span class="pre">status</span> <span class="pre">Wise.Wiseworkflow</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">RUNNING</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> get workflow status Wise.Wiseworkflow
+
+RUNNING
+</pre>
 </div>
 </td>
 </tr>
@@ -1822,11 +1912,12 @@ f4e0e52a-e391-11e4-a467-3ee74a48f4aa
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">start</span> <span class="pre">service</span> <span class="pre">Wise.WiseService</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully started service &#39;WiseService&#39; of application &#39;Wise&#39; with stored runtime arguments &#39;{}&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> start service Wise.WiseService
+
+Successfully started service 'WiseService' of application 'Wise' with stored runtime arguments '{}'
+</pre>
 </div>
 </td>
 </tr>
@@ -1861,11 +1952,12 @@ f4e0e52a-e391-11e4-a467-3ee74a48f4aa
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">get</span> <span class="pre">service</span> <span class="pre">status</span> <span class="pre">Wise.WiseService</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">RUNNING</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> get service status Wise.WiseService
+
+RUNNING
+</pre>
 </div>
 </td>
 </tr>
@@ -1893,26 +1985,27 @@ f4e0e52a-e391-11e4-a467-3ee74a48f4aa
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Navigate to the resouce manager UI</li>
-<li>Find the Wise.WiseService on UI</li>
+<li>Navigate to the <strong>Resource Manager UI</strong></li>
+<li>Find the <em>Wise.WiseService</em> on UI</li>
 <li>Click to the see application logs</li>
 <li>Find all the node managers for the application containers</li>
-<li>Navigate to all the containers in sepearate tabs</li>
+<li>Navigate to all the containers in separate tabs</li>
 <li>Click on container logs</li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">get</span> <span class="pre">endpoints</span> <span class="pre">service</span> <span class="pre">Wise.WiseService</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+=========================+</span>
-<span class="go">| method | path           |</span>
-<span class="go">+=========================+</span>
-<span class="go">| GET    | /ip/{ip}/count |</span>
-<span class="go">| POST   | /ip/{ip}/count |</span>
-<span class="go">+=========================+</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> get endpoints service Wise.WiseService
+
++=========================+
+| method | path           |
++=========================+
+| GET    | /ip/{ip}/count |
+| POST   | /ip/{ip}/count |
++=========================+
+</pre>
 </div>
 </td>
 </tr>
@@ -1940,25 +2033,22 @@ f4e0e52a-e391-11e4-a467-3ee74a48f4aa
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
 <li>Discover the host and port where the service is running on by looking at the host
-and port in the YARN logs or by writing a discovery client that is co-ordinated using <strong>ZooKeeper</strong></li>
-<li>Run <code class="docutils literal"><span class="pre">curl</span> <span class="pre">http://hostname:port/ip/69.181.160.120/count</span></code></li>
+and port in the <strong>YARN</strong> logs or by writing a discovery client that is co-ordinated using <strong>ZooKeeper</strong></li>
+<li>Run <code class="docutils literal"><span class="pre">curl</span> <span class="pre">http://hostname:port/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/69.181.160.120/count</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">call</span> <span class="pre">service</span> <span class="pre">Wise.WiseService</span> <span class="pre">GET</span> <span class="pre">/ip/69.181.160.120/count</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+================================================+</span>
-<span class="go">| status | headers            | body size | body |</span>
-<span class="go">+================================================+</span>
-<span class="go">| 200    | Content-Length : 4 | 4         | 6699 |</span>
-<span class="go">|        | Connection : keep- |           |      |</span>
-<span class="go">|        | alive              |           |      |</span>
-<span class="go">|        | Content-Type : app |           |      |</span>
-<span class="go">|        | lication/json      |           |      |</span>
-<span class="go">+================================================+</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> call service Wise.WiseService GET /ip/69.181.160.120/count
+
+&lt; 200 OK
+&lt; Content-Length: 5
+&lt; Connection: keep-alive
+&lt; Content-Type: application/json
+20097
+</pre>
 </div>
 </td>
 </tr>
@@ -1985,27 +2075,30 @@ and port in the YARN logs or by writing a discovery client that is co-ordinated 
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Run a command in HBase shell</li>
+<li>Run a command in <strong>HBase shell</strong></li>
 <li><code class="docutils literal"><span class="pre">hbase</span> <span class="pre">shell&gt;</span> <span class="pre">list</span> <span class="pre">&quot;cdap.user.*&quot;</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
 <td><ul class="first last simple">
-<li>The listing will depend on if you have run all of the previous examples</li>
-<li><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">list</span> <span class="pre">dataset</span> <span class="pre">instances</span></code></li>
+<li>The listing returned will depend on whether you have run all of the previous examples</li>
 </ul>
 </td>
 </tr>
 <tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+================================================================================+</span>
-<span class="go">| name                     | type                                                |</span>
-<span class="go">+================================================================================+</span>
-<span class="go">| pageViewStore            | co.cask.cdap.apps.wise.PageViewStore                |</span>
-<span class="go">| bounceCountStore         | co.cask.cdap.apps.wise.BounceCountStore             |</span>
-<span class="go">| logEventStream.converted | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |</span>
-<span class="go">+================================================================================+</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> list dataset instances
+
++================================================================================+
+| name                     | type                                                |
++================================================================================+
+| pageViewStore            | co.cask.cdap.apps.wise.PageViewStore                |
+| bounceCountStore         | co.cask.cdap.apps.wise.BounceCountStore             |
+| logEventStream.converted | co.cask.cdap.api.dataset.lib.TimePartitionedFileSet |
++================================================================================+
+</pre>
 </div>
 </td>
 </tr>
@@ -2033,16 +2126,19 @@ and port in the YARN logs or by writing a discovery client that is co-ordinated 
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Run a command in the Hive CLI</li>
+<li>Run a command in the <strong>Hive CLI</strong></li>
 <li><code class="docutils literal"><span class="pre">&quot;SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">dataset_bouncecountstore</span> <span class="pre">LIMIT</span> <span class="pre">5&quot;</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">execute</span> <span class="pre">'SELECT</span> <span class="pre">*</span> <span class="pre">FROM</span> <span class="pre">dataset_bouncecountstore</span> <span class="pre">LIMIT</span> <span class="pre">5'</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">+===============================================================================================+</span>
+<td><div class="highlight first container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> execute 'SELECT * FROM dataset_bouncecountstore LIMIT 5'
+</pre>
+</div>
+<div class="highlight last container">
+<div class="highlight-console"><div class="highlight"><pre><span class="go">+===============================================================================================+</span>
 <span class="go">| dataset_bouncecountstore.uri: STRING   | dataset_bouncecountstore  | dataset_bouncecountstore |</span>
 <span class="go">|                                        | .totalvisits: BIGINT      | .bounces: BIGINT         |</span>
 <span class="go">+===============================================================================================+</span>
@@ -2066,6 +2162,7 @@ and port in the YARN logs or by writing a discovery client that is co-ordinated 
 <span class="go">+===============================================================================================+</span>
 <span class="go">Fetched 5 rows</span>
 </pre></div>
+</div>
 </div>
 </td>
 </tr>
@@ -2093,19 +2190,20 @@ and port in the YARN logs or by writing a discovery client that is co-ordinated 
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Find the yarn application ID from the following command</li>
+<li>Find the <strong>YARN</strong> application ID from the command</li>
 <li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">application</span> <span class="pre">-list</span> <span class="pre">|</span> <span class="pre">grep</span> <span class="pre">&quot;Wise.WiseService&quot;</span></code></li>
-<li>Stop the application by running the following command</li>
+<li>Stop the application by running the command</li>
 <li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">application</span> <span class="pre">-kill</span> <span class="pre">&lt;application</span> <span class="pre">ID&gt;</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">stop</span> <span class="pre">service</span> <span class="pre">Wise.WiseService</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully stopped service &#39;WiseService&#39; of application &#39;Wise&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> stop service Wise.WiseService
+
+Successfully stopped service 'WiseService' of application 'Wise'
+</pre>
 </div>
 </td>
 </tr>
@@ -2132,19 +2230,20 @@ and port in the YARN logs or by writing a discovery client that is co-ordinated 
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Find the yarn application ID from the following command</li>
+<li>Find the <strong>YARN</strong> application ID from the command</li>
 <li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">application</span> <span class="pre">-list</span> <span class="pre">|</span> <span class="pre">grep</span> <span class="pre">&quot;Wise.WiseFlow&quot;</span></code></li>
-<li>Stop the application by running the following command</li>
+<li>Stop the application by running the command</li>
 <li><code class="docutils literal"><span class="pre">yarn</span> <span class="pre">application</span> <span class="pre">-kill</span> <span class="pre">&lt;application</span> <span class="pre">ID&gt;</span></code></li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">stop</span> <span class="pre">flow</span> <span class="pre">Wise.WiseFlow</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully stopped flow &#39;WiseFlow&#39; of application &#39;Wise&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> stop flow Wise.WiseFlow
+
+Successfully stopped flow 'WiseFlow' of application 'Wise'
+</pre>
 </div>
 </td>
 </tr>
@@ -2171,17 +2270,18 @@ and port in the YARN logs or by writing a discovery client that is co-ordinated 
 <tbody valign="top">
 <tr class="row-odd"><th class="stub">Without CDAP</th>
 <td><ul class="first last simple">
-<li>Delete the workflow from oozie</li>
+<li>Delete the workflow from <strong>Oozie</strong></li>
 <li>Remove the service jars and flow jars</li>
 </ul>
 </td>
 </tr>
 <tr class="row-even"><th class="stub">Using CDAP</th>
-<td><code class="docutils literal"><span class="pre">&gt;</span> <span class="pre">delete</span> <span class="pre">app</span> <span class="pre">Wise</span></code></td>
-</tr>
-<tr class="row-odd"><th class="stub">&nbsp;</th>
-<td><div class="first last highlight-console"><div class="highlight"><pre><span class="go">Successfully deleted application &#39;Wise&#39;</span>
-</pre></div>
+<td><div class="highlight first last container">
+<pre class="literal-block">
+<span class="gp">cdap &gt;</span> delete app Wise
+
+Successfully deleted application 'Wise'
+</pre>
 </div>
 </td>
 </tr>
@@ -2213,7 +2313,7 @@ and port in the YARN logs or by writing a discovery client that is co-ordinated 
 <li>Learn a single framework that works with multiple technologies</li>
 <li>Abstraction of data in the Hadoop environment through logical representations of underlying data</li>
 <li>Portability of applications through decoupling underlying infrastructures</li>
-<li>Services and tools that enable faster application creation in development</li>
+<li>Services and tools that enable faster application development</li>
 <li>Higher degrees of operational control in production through enterprise best practices</li>
 </ul>
 </td>
@@ -2295,7 +2395,7 @@ and port in the YARN logs or by writing a discovery client that is co-ordinated 
 <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#data-ingestion">Data Ingestion</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#data-exploration">Data Exploration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#data-exploration-attaching-a-schema">Data Exploration: Attaching A Schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-exploration-attaching-a-schema">Data Exploration: Attaching a Schema</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#advanced-data-exploration">Advanced Data Exploration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#transforming-your-data">Transforming Your Data</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#building-real-world-applications">Building Real World Applications</a></li>
