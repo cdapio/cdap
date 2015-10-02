@@ -21,6 +21,7 @@ var request = require('request'),
     log4js = require('log4js');
 
 var log = log4js.getLogger('default');
+var hash = require('object-hash');
 
 /**
  * Default Poll Interval used by the backend.
@@ -72,10 +73,14 @@ Aggregator.prototype.startPolling = function (resource) {
     return;
   }
 
+
   resource.interval = resource.interval || POLL_INTERVAL;
   log.debug('Scheduling (' + resource.id + ',' + resource.url + ',' + resource.interval + ')');
-  this.polledResources[resource.id] = resource;
-  doPoll.bind(this, resource)();
+  this.polledResources[resource.id] = {
+    resource: resource,
+    response: hash({})
+  };
+  doPoll.bind(this, this.polledResources[resource.id].resource)();
 };
 
 /**
@@ -86,10 +91,6 @@ Aggregator.prototype.startPolling = function (resource) {
  * the interval timeout.
  */
 Aggregator.prototype.scheduleAnotherIteration = function (resource) {
-  if (resource.stop) {
-    // Don't reschedule another iteration if the resource has been stopped
-    return;
-  }
   log.debug('Rescheduling (' + resource.id + ',' + resource.url + ',' + resource.interval + ')');
   resource.timerId = setTimeout(doPoll.bind(this, resource), resource.interval);
 };
@@ -106,7 +107,6 @@ Aggregator.prototype.stopPolling = function (resource) {
     return;
   }
   clearTimeout(thisResource.timerId);
-  thisResource.stop = true;
 };
 
 /**
@@ -117,9 +117,8 @@ Aggregator.prototype.stopPollingAll = function() {
   var id, resource;
   for (id in this.polledResources) {
     if (this.polledResources.hasOwnProperty(id)) {
-      resource = this.polledResources[id];
+      resource = this.polledResources[id].resource;
       clearTimeout(resource.timerId);
-      resource.stop = true;
     }
   }
 };
@@ -175,6 +174,9 @@ function removeFromObj(obj, key) {
  * it schedulers the interval for next trigger.
  */
 function doPoll (resource) {
+    if (!this.polledResources[resource.id]) {
+      return;
+    }
     var that = this,
         callBack = this.scheduleAnotherIteration.bind(that, resource);
 
@@ -184,7 +186,6 @@ function doPoll (resource) {
         emitResponse.call(that, resource, error);
         return;
       }
-
       emitResponse.call(that, resource, false, response, body);
 
     }).on('response', callBack)
@@ -215,6 +216,7 @@ function stripResource(key, value) {
  */
 function emitResponse (resource, error, response, body) {
   var timeDiff = Date.now()  - resource.startTs;
+  var responseHash;
 
   if(error) {
     log.debug('[' + timeDiff + 'ms] Error (' + resource.id + ',' + resource.url + ')');
@@ -228,6 +230,16 @@ function emitResponse (resource, error, response, body) {
   } else {
     log.debug('[' + timeDiff + 'ms] Success (' + resource.id + ',' + resource.url + ')');
     log.trace('[' + timeDiff + 'ms] Success (' + resource.id + ',' + resource.url + ') body : (' + JSON.stringify(body) + ')');
+
+    if (this.polledResources[resource.id]) {
+      responseHash = hash(body);
+      if (this.polledResources[resource.id].response === responseHash.toString()){
+        // No need to send this to the client as nothing changed.
+        return;
+      } else {
+        this.polledResources[resource.id].response = responseHash;
+      }
+    }
     this.connection.write(JSON.stringify({
       resource: resource,
       statusCode: response.statusCode,
