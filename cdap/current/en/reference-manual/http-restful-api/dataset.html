@@ -22,8 +22,8 @@
     </script>
     
     <meta name="git_release" content="3.2.0">
-    <meta name="git_hash" content="6ae5122b225688bb9eb900701746946452f262d3">
-    <meta name="git_timestamp" content="2015-09-23 21:21:37 -0700">
+    <meta name="git_hash" content="1107c0b599ab647e741c9b5a3defeca2ae42be83">
+    <meta name="git_timestamp" content="2015-10-01 20:54:13 -0700">
     <title>Dataset HTTP RESTful API &mdash; Cask Data Application Platform 3.2.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -530,49 +530,6 @@ program that is running, this operation will return a Status Code <code class="d
 </tbody>
 </table>
 </div>
-<div class="section" id="datasets-used-by-an-adapter">
-<h2>Datasets used by an Adapter<a class="headerlink" href="#datasets-used-by-an-adapter" title="Permalink to this headline">¶</a></h2>
-<p>You can retrieve a list of datasets used by an adapter by issuing a HTTP GET request to the URL:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="go">GET &lt;base-url&gt;/namespaces/&lt;namespace&gt;/adapters/&lt;adapter-id&gt;/datasets</span>
-</pre></div>
-</div>
-<table border="1" class="docutils">
-<colgroup>
-<col width="20%" />
-<col width="80%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Parameter</th>
-<th class="head">Description</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">&lt;namespace&gt;</span></code></td>
-<td>Namespace ID</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">&lt;adapter-id&gt;</span></code></td>
-<td>Adapter ID</td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">HTTP Responses</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="20%" />
-<col width="80%" />
-</colgroup>
-<thead valign="bottom">
-<tr class="row-odd"><th class="head">Status Codes</th>
-<th class="head">Description</th>
-</tr>
-</thead>
-<tbody valign="top">
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">200</span> <span class="pre">OK</span></code></td>
-<td>Request was successful</td>
-</tr>
-</tbody>
-</table>
-</div>
 <div class="section" id="programs-using-a-dataset">
 <h2>Programs using a Dataset<a class="headerlink" href="#programs-using-a-dataset" title="Permalink to this headline">¶</a></h2>
 <p>You can retrieve a list of programs that are using a dataset by issuing a HTTP GET request to the URL:</p>
@@ -706,7 +663,6 @@ program that is running, this operation will return a Status Code <code class="d
 <li class="toctree-l3"><a class="reference internal" href="#truncating-a-dataset">Truncating a Dataset</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#datasets-used-by-an-application">Datasets used by an Application</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#datasets-used-by-a-program">Datasets used by a Program</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#datasets-used-by-an-adapter">Datasets used by an Adapter</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#programs-using-a-dataset">Programs using a Dataset</a></li>
 </ul>
 </li>

@@ -22,8 +22,8 @@
     </script>
     
     <meta name="git_release" content="3.2.0">
-    <meta name="git_hash" content="6ae5122b225688bb9eb900701746946452f262d3">
-    <meta name="git_timestamp" content="2015-09-23 21:21:37 -0700">
+    <meta name="git_hash" content="1107c0b599ab647e741c9b5a3defeca2ae42be83">
+    <meta name="git_timestamp" content="2015-10-01 20:54:13 -0700">
     <title>Cask Data Application Platform Release Notes &mdash; Cask Data Application Platform 3.2.0 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
@@ -469,56 +469,24 @@ Replaced the ETL ApplicationTemplates with the new ETL Applications.</li>
 <div class="section" id="known-issues">
 <span id="known-issues-320"></span><h3>Known Issues<a class="headerlink" href="#known-issues" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3396">CDAP-3396</a> -
-CDAP-UI scroll bar for logs has jitters and is unbounded at the top.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3492">CDAP-3492</a> -
 In CDAP-CLI, executing &#8216;select *&#8217; from a dataset with many fields generates an error.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3534">CDAP-3534</a> -
-CDAP-UI metric shown in output graph in flowlets is not the correct one.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3573">CDAP-3573</a> -
-Worker RuntimeException behavior in Standalone and Distributed are not the same.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3578">CDAP-3578</a> -
-CDAP-UI Service explore dialog &#8220;view&#8221; icon is broken after download is clicked.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3633">CDAP-3633</a> -
-CDAP-SDK complains about node version 4.0.0 which is greater that 0.10.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3640">CDAP-3640</a> -
-Standalone cdap.sh doesn&#8217;t allocate enough memory.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3641">CDAP-3641</a> -
 WorkflowStatsSLAHttpHandler hangs if units not provided.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3642">CDAP-3642</a> -
-After stopping a flow, the CDAP-UI shows status as &#8216;Killed&#8217;.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3262">CDAP-3262</a> -
 There is a problem under Microsoft Windows and using the CDAP Standalone scripts when
 JAVA_HOME is defined as a path with spaces in it. A workaround is to use a definition of
 JAVA_HOME that does not include spaces.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3665">CDAP-3665</a> -
-When a MapReduce job fails, CDAP-UI says all mappers/reducers were successful.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3697">CDAP-3697</a> -
 CDAP Explore is broken on secure CDH 5.1.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3698">CDAP-3698</a> -
 CDAP Explore is unable to get a delegation token while fetching next results on HDP2.0.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3732">CDAP-3732</a> -
-The first time a flow is started in a namespace, there will be an error message in the logs
-about a failure to enable explore on the system.queue table. A call to enable exploration
-on the table should not be made, as it is not meant to be explorable.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3749">CDAP-3749</a> -
 The DBSource plugin does not allow a username with an empty password.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3750">CDAP-3750</a> -
 If a table schema contains a field name that is a reserved word in Hive DDL, &#8216;enable explore&#8217; fails.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3756">CDAP-3756</a> -
-Refreshing the CDAP UI from any page after it has been idle for a while takes you back to the home page</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3810">CDAP-3810</a> -
-org.apache.activemq.ActiveMQConnectionFactory cannot be cast to javax.jms.ConnectionFactory; a java.lang.ClassCastException is thrown.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3815">CDAP-3815</a> -
-The S3BatchSource plugin&#8217;s file regex doesn&#8217;t filter the files to be read by the source.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3817">CDAP-3817</a> -
-Race condition in the creation of data.tx.snapshot.dir can occur. On initial startup,
-after a fresh CDAP installation, it is possible for the <code class="docutils literal"><span class="pre">data.tx.snapshot.dir</span></code> HDFS
-directory to be created with improper permissions.</li>
 <li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3819">CDAP-3819</a> -
 The Cassandra source does not handles spaces properly in column fields which require a comma-separated list.</li>
-<li><a class="reference external" href="https://issues.cask.co/browse/CDAP-3830">CDAP-3830</a> -
-Search for tags metadata does not work correctly when doing a prefix scan with &#8216;*&#8217;.</li>
 <li>See also the <em>Known Issues</em> of <a class="reference external" href="#known-issues-310">version 3.1.0</a>.</li>
 </ul>
 </div>

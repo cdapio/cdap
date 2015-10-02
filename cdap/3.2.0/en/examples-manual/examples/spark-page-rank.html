@@ -22,8 +22,8 @@
     </script>
     
     <meta name="git_release" content="3.2.0">
-    <meta name="git_hash" content="6ae5122b225688bb9eb900701746946452f262d3">
-    <meta name="git_timestamp" content="2015-09-23 21:21:37 -0700">
+    <meta name="git_hash" content="1107c0b599ab647e741c9b5a3defeca2ae42be83">
+    <meta name="git_timestamp" content="2015-10-01 20:54:13 -0700">
     <title>Spark Page Rank Example &mdash; Cask Data Application Platform 3.2.0 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -98,9 +98,9 @@ goes through the entries, calculates page rank and tabulates results in an Objec
 computes the total number of pages for every unique page rank, and then tabulates
 the results in another ObjectStore dataset, <em>rankscount</em>.</p>
 <p>The <em>PageRankWorkflow</em> ties the Spark and MapReduce to run sequentially in this application.</p>
-<p>Once the application completes, you can query the <em>ranks</em> dataset by using the <code class="docutils literal"><span class="pre">rank</span></code> endpoint of the <em>RanksService</em>.
+<p>Once the application completes, you can query the <em>ranks</em> dataset by using the <code class="docutils literal"><span class="pre">rank</span></code> endpoint of the <em>SparkPageRankService</em>.
 It will send back a string result with page rank based on the <code class="docutils literal"><span class="pre">url</span></code> query parameter. You can also query the
-<em>rankscount</em> dataset by using <code class="docutils literal"><span class="pre">total</span></code> endpoint of the <em>TotalPagesPRService</em>. It will send the total number of pages for the queried page rank as a string.</p>
+<em>rankscount</em> dataset by using <code class="docutils literal"><span class="pre">total</span></code> endpoint. It will send the total number of pages for the queried page rank as a string.</p>
 <p>Let&#8217;s look at some of these components, and then run the application and see the results.</p>
 <div class="section" id="the-sparkpagerank-application">
 <h3>The SparkPageRank Application<a class="headerlink" href="#the-sparkpagerank-application" title="Permalink to this headline">¶</a></h3>
@@ -111,7 +111,7 @@ of the application are tied together by the class <code class="docutils literal"
 <span class="cm"> */</span>
 <span class="kd">public</span> <span class="kd">class</span> <span class="nc">SparkPageRankApp</span> <span class="kd">extends</span> <span class="n">AbstractApplication</span> <span class="o">{</span>
 
-  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SERVICE_HANDLERS</span> <span class="o">=</span> <span class="s">&quot;ServiceHandlers&quot;</span><span class="o">;</span>
+  <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">SERVICE_HANDLERS</span> <span class="o">=</span> <span class="s">&quot;SparkPageRankService&quot;</span><span class="o">;</span>
   <span class="kd">public</span> <span class="kd">static</span> <span class="kd">final</span> <span class="n">String</span> <span class="n">BACKLINK_URL_STREAM</span> <span class="o">=</span> <span class="s">&quot;backlinkURLStream&quot;</span><span class="o">;</span>
 
   <span class="nd">@Override</span>
@@ -154,10 +154,10 @@ of the application are tied together by the class <code class="docutils literal"
 <p>The calculated page rank data is stored in an ObjectStore dataset, <em>ranks</em>,
 with the total number of pages for a page rank stored in an additional ObjectStore dataset, <em>rankscount</em>.</p>
 </div>
-<div class="section" id="the-ranksservice-and-totalpagesprservice-service">
-<h3>The <code class="docutils literal"><span class="pre">RanksService</span></code> and <code class="docutils literal"><span class="pre">TotalPagesPRService</span></code> Service<a class="headerlink" href="#the-ranksservice-and-totalpagesprservice-service" title="Permalink to this headline">¶</a></h3>
-<p>This <code class="docutils literal"><span class="pre">RanksService</span></code> service has a <code class="docutils literal"><span class="pre">rank</span></code> endpoint to obtain the page rank of a given URL.
-This <code class="docutils literal"><span class="pre">TotalPagesPRService</span></code> service has a <code class="docutils literal"><span class="pre">total</span></code> endpoint to obtain the total number of pages with a given page rank.</p>
+<div class="section" id="the-sparkpagerankservice-service">
+<h3>The SparkPageRankService Service<a class="headerlink" href="#the-sparkpagerankservice-service" title="Permalink to this headline">¶</a></h3>
+<p>This <code class="docutils literal"><span class="pre">SparkPageRankService</span></code> service has a <code class="docutils literal"><span class="pre">rank</span></code> endpoint to obtain the page rank of a given URL.
+It also has a <code class="docutils literal"><span class="pre">total</span></code> endpoint to obtain the total number of pages with a given page rank.</p>
 </div>
 <div class="section" id="memory-requirements">
 <h3>Memory Requirements<a class="headerlink" href="#memory-requirements" title="Permalink to this headline">¶</a></h3>
@@ -199,17 +199,12 @@ and <a class="reference external" href="../source/../../developers-manual/gettin
 <p>Once the application is deployed:</p>
 <ul>
 <li><p class="first">Go to the <em>SparkPageRank</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/SparkPageRank/overview/status">application overview page</a>,
-click <code class="docutils literal"><span class="pre">RanksService</span></code> to get to the service detail page, then click the <em>Start</em> button,
-and then do the same for the <em>GoogleTypePRService</em> and <em>TotalPagesPRService</em> services; or</p>
+click <code class="docutils literal"><span class="pre">SparkPageRankService</span></code> to get to the service detail page, then click the <em>Start</em> button; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start service SparkPageRank.RanksService
-<span class="gp">$</span> cdap-cli.sh start service SparkPageRank.GoogleTypePRService
-<span class="gp">$</span> cdap-cli.sh start service SparkPageRank.TotalPagesPRService
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh start service SparkPageRank.SparkPageRankService
 
-<span class="go">Successfully started service &#39;RanksService&#39; of application &#39;SparkPageRank&#39; with stored runtime arguments &#39;{}&#39;</span>
-<span class="go">Successfully started service &#39;GoogleTypePRService&#39; of application &#39;SparkPageRank&#39; with stored runtime arguments &#39;{}&#39;</span>
-<span class="go">Successfully started service &#39;TotalPagesPRService&#39; of application &#39;SparkPageRank&#39; with stored runtime arguments &#39;{}&#39;</span>
+<span class="go">Successfully started service &#39;SparkPageRankService&#39; of application &#39;SparkPageRank&#39; with stored runtime arguments &#39;{}&#39;</span>
 </pre></div>
 </div>
 </li>
@@ -247,23 +242,23 @@ click <code class="docutils literal"><span class="pre">PageRankWorkflow</span></
 </div>
 <div class="section" id="querying-the-results">
 <h3>Querying the Results<a class="headerlink" href="#querying-the-results" title="Permalink to this headline">¶</a></h3>
-<p>To query the <em>ranks</em> ObjectStore through the <code class="docutils literal"><span class="pre">RanksService</span></code>, send a query via an HTTP
+<p>To query the <em>ranks</em> ObjectStore through the <code class="docutils literal"><span class="pre">SparkPageRankService</span></code>, send a query via an HTTP
 request using the <code class="docutils literal"><span class="pre">curl</span></code> command. For example:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> -X POST -d<span class="s1">&#39;{&quot;url&quot;:&quot;http://example.com/page1&quot;}&#39;</span> http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/RanksService/methods/rank
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> -X POST -d<span class="s1">&#39;{&quot;url&quot;:&quot;http://example.com/page1&quot;}&#39;</span> http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/rank
 </pre></div>
 </div>
 <p>You can also use the Command Line Interface:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh call service SparkPageRank.RanksService POST <span class="s1">&#39;rank&#39;</span> body <span class="s1">&#39;{&quot;url&quot;:&quot;http://example.com/page1&quot;}&#39;</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh call service SparkPageRank.SparkPageRankService POST <span class="s1">&#39;rank&#39;</span> body <span class="s1">&#39;{&quot;url&quot;:&quot;http://example.com/page1&quot;}&#39;</span>
 </pre></div>
 </div>
-<p>Similarly, to query the <em>rankscount</em> ObjectStore using the <code class="docutils literal"><span class="pre">TotalPagesPRService</span></code>. For example, to get the total number of
-pages with a page rank of 10 you can do the following:</p>
+<p>Similarly, to query the <em>rankscount</em> ObjectStore using the <code class="docutils literal"><span class="pre">SparkPageRankService</span></code> and get the total number of
+pages with a page rank of 10, you can do the following:</p>
 <p>curl:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/TotalPagesPRService/methods/total/10
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> curl -w<span class="s1">&#39;\n&#39;</span> http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/services/SparkPageRankService/methods/total/10
 </pre></div>
 </div>
 <p>Command Line Interface:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh call service SparkPageRank.TotalPagesPRService GET <span class="s1">&#39;total/10&#39;</span>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh call service SparkPageRank.SparkPageRankService GET <span class="s1">&#39;total/10&#39;</span>
 </pre></div>
 </div>
 </div>
@@ -285,13 +280,10 @@ click <code class="docutils literal"><span class="pre">PageRankWorkflow</span></
 <p><strong>Stopping the Service</strong></p>
 <ul>
 <li><p class="first">Go to the <em>SparkPageRank</em> <a class="reference external" href="http://localhost:9999/ns/default/apps/SparkPageRank/overview/status">application overview page</a>,
-click <code class="docutils literal"><span class="pre">RanksService</span></code> to get to the service detail page, then click the <em>Stop</em> button,
-doing the same for the <code class="docutils literal"><span class="pre">GoogleTypePRService</span></code> and <code class="docutils literal"><span class="pre">TotalPagesPRService</span></code> services; or</p>
+click <code class="docutils literal"><span class="pre">SparkPageRankService</span></code> to get to the service detail page, then click the <em>Stop</em> button; or</p>
 </li>
 <li><p class="first">From the Standalone CDAP SDK directory, use the Command Line Interface:</p>
-<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh stop service SparkPageRank.RanksService
-<span class="gp">$</span> cdap-cli.sh stop service SparkPageRank.GoogleTypePRService
-<span class="gp">$</span> cdap-cli.sh stop service SparkPageRank.TotalPagesPRService
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> cdap-cli.sh stop service SparkPageRank.SparkPageRankService
 </pre></div>
 </div>
 </li>

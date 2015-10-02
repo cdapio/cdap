@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.0">
-    <meta name="git_hash" content="6ae5122b225688bb9eb900701746946452f262d3">
-    <meta name="git_timestamp" content="2015-09-23 21:21:37 -0700">
+    <meta name="git_hash" content="1107c0b599ab647e741c9b5a3defeca2ae42be83">
+    <meta name="git_timestamp" content="2015-10-01 20:54:13 -0700">
     <title>Java Client API &mdash; Cask Data Application Platform 3.2.0 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
@@ -134,7 +134,9 @@ with CDAP from Java applications.</p>
 instance that you wish to interact with.</p>
 <p>In a non-secure (default) CDAP instance, instantiate as follows:</p>
 <div class="highlight-java"><div class="highlight"><pre><span class="c1">// Interact with the CDAP instance located at example.com, port 10000</span>
-<span class="n">ClientConfig</span> <span class="n">clientConfig</span> <span class="o">=</span> <span class="k">new</span> <span class="n">ClientConfig</span><span class="o">(</span><span class="s">&quot;example.com&quot;</span><span class="o">,</span> <span class="mi">10000</span><span class="o">);</span>
+<span class="n">ClientConfig</span> <span class="n">clientConfig</span> <span class="o">=</span> <span class="n">ClientConfig</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">setConnectionConfig</span><span class="o">(</span><span class="k">new</span> <span class="n">ConnectionConfig</span><span class="o">(</span><span class="s">&quot;example.com&quot;</span><span class="o">,</span> <span class="mi">10000</span><span class="o">,</span> <span class="kc">false</span><span class="o">))</span>
+  <span class="o">.</span><span class="na">build</span><span class="o">();</span>
 </pre></div>
 </div>
 <p>In a secure CDAP instance, first pull in the <code class="docutils literal"><span class="pre">cdap-authentication-client</span></code> Maven dependency:</p>
@@ -155,7 +157,8 @@ instance that you wish to interact with.</p>
 
 <span class="c1">// Interact with the secure CDAP instance located at example.com, port 10000, with the provided accessToken</span>
 <span class="n">ClientConfig</span> <span class="n">clientConfig</span> <span class="o">=</span> <span class="n">ClientConfig</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
-  <span class="o">.</span><span class="na">setConnectionConfig</span><span class="o">(</span><span class="k">new</span> <span class="n">ConnectionConfig</span><span class="o">(</span><span class="s">&quot;example.com&quot;</span><span class="o">,</span> <span class="mi">10000</span><span class="o">,</span> <span class="n">accessToken</span><span class="o">))</span>
+  <span class="o">.</span><span class="na">setConnectionConfig</span><span class="o">(</span><span class="k">new</span> <span class="n">ConnectionConfig</span><span class="o">(</span><span class="s">&quot;example.com&quot;</span><span class="o">,</span> <span class="mi">10000</span><span class="o">,</span> <span class="n">sslEnabled</span><span class="o">))</span>
+  <span class="o">.</span><span class="na">setAccessToken</span><span class="o">(</span><span class="n">accessToken</span><span class="o">)</span>
   <span class="o">.</span><span class="na">build</span><span class="o">();</span>
 </pre></div>
 </div>
