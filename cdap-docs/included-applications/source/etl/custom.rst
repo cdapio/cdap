@@ -19,7 +19,7 @@ transformations to extend the existing ``cdap-etl-batch`` and ``cdap-etl-realtim
 
 Plugin Types and Maven Archetypes
 =================================
-In ETL templates, there are five plugin types:
+In ETL applications, there are five plugin types:
 
 - Batch Source (*batchsource*)
 - Batch Sink (*batchsink*)
