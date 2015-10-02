@@ -99,8 +99,6 @@ public class DatasetInstanceService {
    * @throws IOException if there is a problem in making an HTTP request to check if the namespace exists.
    */
   public DatasetMeta get(Id.DatasetInstance instance, List<? extends Id> owners) throws Exception {
-    // Throws NamespaceNotFoundException if the namespace does not exist
-    ensureNamespaceExists(instance.getNamespace());
     DatasetSpecification spec = instanceManager.get(instance);
     if (spec == null) {
       throw new NotFoundException(instance);
