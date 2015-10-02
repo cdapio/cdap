@@ -19,4 +19,4 @@ WITH_JAVADOCS="$WITHOUT"
 MANUALS="introduction developers-manual included-applications admin-manual integrations examples-manual reference-manual"
 
 # This needs to be explicitly set as Git has trouble identifying it.
-GIT_BRANCH_PARENT="release/3.2"
+GIT_BRANCH_PARENT="develop"
