@@ -110,7 +110,7 @@ angular.module(PKG.name + '.feature.adapters')
                       });
                     }.bind(this),
                     function error() {
-                      console.log('ERROR: Exporting adapter ' + MyAppDAGService.metadata.name + ' failed.');
+                      console.log('ERROR: Exporting ' + MyAppDAGService.metadata.name + ' failed.');
                     }
                   );
               };
