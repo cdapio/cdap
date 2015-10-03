@@ -14,7 +14,7 @@ The simplest Cask Data Application Platform (CDAP) example.
 Overview
 ========
 
-This application uses one stream, one dataset, one flow and one service to implement the classic "Hello World":
+This application uses one stream, one dataset, one flow, and one service to implement the classic "Hello World":
 
 - A stream to send names to;
 - A flow with a single flowlet that reads the stream and stores in a dataset each name in a KeyValueTable; and
@@ -78,10 +78,10 @@ Running the Example
 Starting the Flow
 -----------------
 
-Once the application is deployed:
+Once the application is deployed, either:
 
-- Go to the *HelloWorld* `application overview page 
-  <http://localhost:9999/ns/default/apps/HelloWorld/overview/status>`__,
+- Using the CDAP-UI, go to the *HelloWorld* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/HelloWorld/overview/programs>`__,
   click ``WhoFlow`` to get to the flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
@@ -92,10 +92,10 @@ Once the application is deployed:
 Starting the Service
 --------------------
 
-Once the application is deployed:
+Once the application is deployed, either:
 
-- Go to the *HelloWorld* `application overview page 
-  <http://localhost:9999/ns/default/apps/HelloWorld/overview/status>`__,
+- Using the CDAP-UI, go to the *HelloWorld* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/HelloWorld/overview/programs>`__,
   click ``Greeting`` to get to the service detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 

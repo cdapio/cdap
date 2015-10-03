@@ -76,10 +76,10 @@ Running the Example
 Starting the Flow
 -----------------
 
-Once the application is deployed:
+Once the application is deployed, either:
 
-- Go to the *WordCount* `application overview page 
-  <http://localhost:9999/ns/default/apps/WordCount/overview/status>`__,
+- Using the CDAP-UI, go to the *WordCount* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/WordCount/overview/programs>`__,
   click ``WordCounter`` to get to the flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
@@ -90,10 +90,10 @@ Once the application is deployed:
 Starting the Service
 --------------------
 
-Once the application is deployed:
+Once the application is deployed, either:
 
-- Go to the *WordCount* `application overview page 
-  <http://localhost:9999/ns/default/apps/WordCount/overview/status>`__,
+- Using the CDAP-UI, go to the *WordCount* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/WordCount/overview/programs>`__,
   click ``RetrieveCounts`` to get to the service detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
@@ -105,7 +105,7 @@ Injecting Sentences
 -------------------
 
 In the application's `detail page
-<http://localhost:9999/ns/default/apps/WordCount/overview/status>`__, click on the
+<http://localhost:9999/ns/default/apps/WordCount/overview/programs>`__, click on the
 *WordCounter* flow. This takes you to the flow details page. 
 
 Now double-click on the *wordStream* stream on the left side of the flow visualization,
@@ -156,8 +156,8 @@ Once done, you can stop the application as described in :ref:`Stopping an Applic
 
 **Stopping the Flow**
 
-- Go to the *WordCount* `application overview page 
-  <http://localhost:9999/ns/default/apps/WordCount/overview/status>`__,
+- Using the CDAP-UI, go to the *WordCount* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/WordCount/overview/programs>`__,
   click ``WordCounter`` to get to the flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
@@ -165,8 +165,8 @@ Once done, you can stop the application as described in :ref:`Stopping an Applic
 
 **Stopping the Service**
 
-- Go to the *WordCount* `application overview page 
-  <http://localhost:9999/ns/default/apps/WordCount/overview/status>`__,
+- Using the CDAP-UI, go to the *WordCount* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/WordCount/overview/programs>`__,
   click ``RetrieveCounts`` to get to the service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
@@ -176,8 +176,8 @@ Once done, you can stop the application as described in :ref:`Stopping an Applic
 
 You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
 
-- Go to the *WordCount* `application overview page 
-  <http://localhost:9999/ns/default/apps/WordCount/overview/status>`__,
+- Using the CDAP-UI, go to the *WordCount* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/WordCount/overview/programs>`__,
   click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
   then click the *Actions* menu on the right side and select *Delete* to delete the application; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::

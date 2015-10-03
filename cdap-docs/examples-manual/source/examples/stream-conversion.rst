@@ -149,8 +149,8 @@ Once done, you can stop the application as described in :ref:`Stopping an Applic
 
 The only thing you need to do to stop the application is suspend the schedule.
 
-- Go to the *StreamConversionApp* `application overview page 
-  <http://localhost:9999/ns/default/apps/StreamConversionApp/overview/status>`__,
+- Using the CDAP-UI, go to the *StreamConversionApp* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/StreamConversionApp/overview/programs>`__,
   click ``StreamConversionWorkflow`` to get to the workflow detail page, 
   click on the *Schedules* tab to show the schedule, click the disclosure symbol (**>**)
   to show the details of the schedule, and then click the *Pause* button (**| |**) so that
@@ -163,8 +163,8 @@ The only thing you need to do to stop the application is suspend the schedule.
 
 You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
 
-- Go to the *StreamConversionApp* `application overview page 
-  <http://localhost:9999/ns/default/apps/StreamConversionApp/overview/status>`__,
+- Using the CDAP-UI, go to the *StreamConversionApp* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/StreamConversionApp/overview/programs>`__,
   click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
   then click the *Actions* menu on the right side and select *Delete* to delete the application; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::

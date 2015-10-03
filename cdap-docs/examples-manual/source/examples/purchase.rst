@@ -142,10 +142,10 @@ Running the Example
 Starting the Flow
 -----------------
 
-Once the application is deployed:
+Once the application is deployed, either:
 
-- Go to the *PurchaseHistory* `application overview page 
-  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+- Using the CDAP-UI, go to the *PurchaseHistory* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/programs>`__,
   click ``PurchaseFlow`` to get to the flow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
@@ -156,10 +156,10 @@ Once the application is deployed:
 Starting the Services
 ---------------------
 
-Once the application is deployed:
+Once the application is deployed, either:
 
-- Go to the *PurchaseHistory* `application overview page 
-  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+- Using the CDAP-UI, go to the *PurchaseHistory* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/programs>`__,
   click ``PurchaseHistoryService`` to get to the service detail page, then click the *Start* button
   (and do the same for the ``CatalogLookup`` and ``UserProfileService``); or
 
@@ -199,8 +199,8 @@ Starting the Workflow
 
 Once the sentences have been injected:
 
-- Go to the *PurchaseHistory* `application overview page 
-  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+- Using the CDAP-UI, go to the *PurchaseHistory* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/programs>`__,
   click ``PurchaseHistoryWorkflow`` to get to the workflow detail page, then click the *Start* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
@@ -312,8 +312,8 @@ Once done, you can stop the application as described in :ref:`Stopping an Applic
 
 **Stopping the Flow**
 
-- Go to the *PurchaseHistory* `application overview page 
-  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+- Using the CDAP-UI, go to the *PurchaseHistory* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/programs>`__,
   click ``PurchaseFlow`` to get to the flow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
@@ -321,8 +321,8 @@ Once done, you can stop the application as described in :ref:`Stopping an Applic
 
 **Stopping the Services**
 
-- Go to the *PurchaseHistory* `application overview page 
-  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+- Using the CDAP-UI, go to the *PurchaseHistory* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/programs>`__,
   click ``PurchaseHistoryService`` to get to the service detail page, then click the *Stop* button
   (doing the same for ``CatalogLookup`` and ``UserProfileService``); or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
@@ -335,8 +335,8 @@ Once done, you can stop the application as described in :ref:`Stopping an Applic
 
 You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
 
-- Go to the *PurchaseHistory* `application overview page 
-  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/status>`__,
+- Using the CDAP-UI, go to the *PurchaseHistory* `application overview page, programs tab 
+  <http://localhost:9999/ns/default/apps/PurchaseHistory/overview/programs>`__,
   click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
   then click the *Actions* menu on the right side and select *Delete* to delete the application; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::

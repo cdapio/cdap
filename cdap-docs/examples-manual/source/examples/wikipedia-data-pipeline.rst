@@ -98,8 +98,8 @@ Starting the Workflow
 
 There are three ways to start the *WikipediaPipelineWorkflow* program:
 
-#. Go to the *WikipediaPipeline* `application overview page
-   <http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/status>`__,
+#. Go to the *WikipediaPipeline* `application overview page, programs tab
+   <http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/programs>`__,
    click ``WikipediaPipelineWorkflow`` to get to the workflow detail page, then click the *Start* button; or
 
 #. Send a query via an HTTP request using the ``curl`` command::
@@ -132,8 +132,8 @@ performed by the *WikipediaPipelineWorkflow*.
 
 To start the service:
 
-- Go to the *WikipediaPipelineApp* `application overview page
-  <http://localhost:9999/ns/default/apps/WikipediaPipelineApp/overview/status>`__,
+- Using the CDAP-UI, go to the *WikipediaPipelineApp* `application overview page, programs tab
+  <http://localhost:9999/ns/default/apps/WikipediaPipelineApp/overview/programs>`__,
   click ``WikipediaService`` to get to the service detail page, then click the *Start* button; or
 
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
@@ -162,8 +162,8 @@ Once done, you can stop the application as described in :ref:`Stopping an Applic
 
 **Stopping the Workflow**
 
-- Go to the *WikipediaPipelineWorkflow* `application overview page
-  <http://localhost:9999/ns/default/apps/WikipediaPipelineWorkflow/overview/status>`__,
+- Using the CDAP-UI, go to the *WikipediaPipelineWorkflow* `application overview page, programs tab
+  <http://localhost:9999/ns/default/apps/WikipediaPipelineWorkflow/overview/programs>`__,
   click ``WikipediaPipelineWorkflow`` to get to the workflow detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
@@ -172,8 +172,8 @@ Once done, you can stop the application as described in :ref:`Stopping an Applic
 
 **Stopping the Service**
 
-- Go to the *WikipediaService* `application overview page
-  <http://localhost:9999/ns/default/apps/WikipediaService/overview/status>`__,
+- Using the CDAP-UI, go to the *WikipediaService* `application overview page, programs tab
+  <http://localhost:9999/ns/default/apps/WikipediaService/overview/programs>`__,
   click ``WikipediaService`` to get to the service detail page, then click the *Stop* button; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 
@@ -184,8 +184,8 @@ Once done, you can stop the application as described in :ref:`Stopping an Applic
 
 You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
 
-- Go to the *WikipediaPipeline* `application overview page
-  <http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/status>`__,
+- Using the CDAP-UI, go to the *WikipediaPipeline* `application overview page, programs tab
+  <http://localhost:9999/ns/default/apps/WikipediaPipeline/overview/programs>`__,
   click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
   then click the *Actions* menu on the right side and select *Delete* to delete the application; or
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
