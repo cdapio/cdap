@@ -274,9 +274,7 @@ public class UnitTestManager implements TestManager {
   public final <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
                                                              String datasetTypeName,
                                                              String datasetInstanceName) throws Exception {
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespace, datasetInstanceName);
-    datasetFramework.addInstance(datasetTypeName, datasetInstanceId, DatasetProperties.EMPTY);
-    return datasetFramework.getAdmin(datasetInstanceId, null);
+    return addDatasetInstance(namespace, datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
   }
 
   /**

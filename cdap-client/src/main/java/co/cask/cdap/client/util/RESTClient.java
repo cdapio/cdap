@@ -102,26 +102,28 @@ public class RESTClient {
       onRequest(request, currentTry);
       response = HttpRequests.execute(request, clientConfig.getDefaultRequestConfig());
 
-      int responseCode = response.getResponseCode();
-      if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
-        currentTry++;
-        try {
-          TimeUnit.MILLISECONDS.sleep(100);
-        } catch (InterruptedException e) {
-          break;
-        }
-        continue;
+      if (response.getResponseCode() != HttpURLConnection.HTTP_UNAVAILABLE) {
+        // only retry if unavailable
+        break;
       }
 
-      onResponse(request, response, currentTry);
-      if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-        throw new UnauthorizedException("Unauthorized status code received from the server.");
+      currentTry++;
+      try {
+        TimeUnit.MILLISECONDS.sleep(1000);
+      } catch (InterruptedException e) {
+        break;
       }
-      if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
-        throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
-      }
-      return response;
     } while (currentTry <= clientConfig.getUnavailableRetryLimit());
+
+    onResponse(request, response, currentTry);
+
+    int responseCode = response.getResponseCode();
+    if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+      throw new UnauthorizedException("Unauthorized status code received from the server.");
+    }
+    if (!isSuccessful(responseCode) && !ArrayUtils.contains(allowedErrorCodes, responseCode)) {
+      throw new IOException(responseCode + ": " + response.getResponseBodyAsString());
+    }
     return response;
   }
 
