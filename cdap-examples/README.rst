@@ -49,9 +49,9 @@ HelloWorld
 ----------
 - This is a simple HelloWorld example that uses a stream, a dataset, a flow, and a
   service.
-- A dataset, a KeyValueTable.
-- A flow, with a single flowlet that reads from the stream and stores each name in the KeyValueTable.
-- A service, that reads the name from the KeyValueTable and responds with "Hello [Name]!"
+- A dataset created using a KeyValueTable.
+- A flow with a single flowlet that reads from the stream and stores each name in the KeyValueTable.
+- A service that reads the name from the KeyValueTable and responds with "Hello [Name]!"
 
 LogAnalysis
 -----------
