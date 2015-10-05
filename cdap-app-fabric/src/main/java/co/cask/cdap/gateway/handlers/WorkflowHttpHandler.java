@@ -144,16 +144,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     responder.sendString(HttpResponseStatus.OK, "Program run resumed.");
   }
 
-  // TODO: CDAP-2481. Deprecated API. Remove in 3.2.
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/current")
-  public void getWorkflowStatusOld(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
-                                  @PathParam("run-id") String runId) throws IOException {
-    getWorkflowStatus(request, responder, namespaceId, appId, workflowName, runId);
-  }
-
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/current")
   public void getWorkflowStatus(HttpRequest request, final HttpResponder responder,
