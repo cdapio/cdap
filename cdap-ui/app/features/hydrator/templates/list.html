@@ -110,7 +110,9 @@
             </td>
             <td>
               <span ng-if="pipeline._latest">
-                {{ pipeline._latest.status | lowercase }} at {{ pipeline._latest.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}
+                <strong ng-class="{ 'text-success': pipeline._latest.status === 'COMPLETED',
+                  'text-danger': pipeline._latest.status === 'KILLED' || pipeline._latest.status === 'FAILED' }">{{ pipeline._latest.status | uppercase }}</strong>
+                  {{ pipeline._latest.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}
               </span>
               <span ng-if="!pipeline._latest">
                 &mdash;
