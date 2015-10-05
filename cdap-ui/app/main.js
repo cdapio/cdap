@@ -103,6 +103,10 @@ angular
     $locationProvider.html5Mode(true);
   })
 
+  .run(function ($rootScope) {
+    $rootScope.defaultPollInterval = 10000;
+  })
+
   .config(function($provide) {
 
     $provide.decorator('$http', function($delegate, MyDataSource) {

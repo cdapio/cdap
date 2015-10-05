@@ -29,6 +29,7 @@ angular.module(PKG.name + '.feature.flows')
         this.data.metrics = {};
         this.data.instances = {};
         pollMetrics.bind(this)();
+        this.onChangeFlag +=1;
       }.bind(this));
 
     function generateStreamMetricsPath(streamName) {
@@ -53,6 +54,7 @@ angular.module(PKG.name + '.feature.flows')
             interval: 2000
           }, function(data) {
             this.data.metrics[node.name] = myHelpers.objectQuery(data, 'series' , 0, 'data', 0, 'value') || 0;
+            this.onChangeFlag += 1;
           }.bind(this));
         } else {
           var params = {
