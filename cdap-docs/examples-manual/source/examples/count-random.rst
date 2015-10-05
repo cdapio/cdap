@@ -65,54 +65,30 @@ transaction conflicts if the flowlet is scaled to multiple instances:
    :lines: 27-
 
 
+.. Building and Starting
+.. =====================
 .. |example| replace:: CountRandom
-.. include:: building-starting-running-cdap.txt
+.. |example-italic| replace:: *CountRandom*
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <CountRandom>`
+
+.. include:: _includes/_building-starting-running-cdap.txt
 
 
 Running the Example
 ===================
 
-Starting the Flow
------------------
+.. Starting the Flow
 
-Once the application is deployed, either:
+.. |example-flow| replace:: CountRandom
+.. |example-flow-italic| replace:: *CountRandom*
 
-- Using the CDAP-UI, go to the *CountRandom* `application overview page, programs tab
-  <http://localhost:9999/ns/default/apps/CountRandom/overview/programs>`__,
-  click ``CountRandom`` to get to the flow detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh start flow CountRandom.CountRandom 
-    Successfully started flow 'CountRandom' of application 'CountRandom' with stored runtime arguments '{}'
+.. include:: _includes/_starting-flow.txt
 
 Once you start the flow, the *source* flowlet will continuously generate data. You can see
 this by observing the counters for each flowlet in the flow visualization. Even though you
 are not injecting any data into the flow, the counters increase steadily.
 
 
-Stopping and Removing the Application
-=====================================
-Once done, you can stop the application as described in :ref:`Stopping an Application 
-<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
-
-**Stopping the Flow**
-
-- Using the CDAP-UI, go to the *CountRandom* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/CountRandom/overview/programs>`__,
-  click ``CountRandom`` to get to the flow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh stop flow CountRandom.CountRandom
-    Successfully stopped flow 'CountRandom' of application 'CountRandom'
-
-**Removing the Application**
-
-You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
-
-- Using the CDAP-UI, go to the *CountRandom* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/CountRandom/overview/programs>`__,
-  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
-  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh delete app CountRandom
+.. Stopping and Removing the Application
+.. =====================================
+.. include:: _includes/_stopping-flow-removing-application.txt

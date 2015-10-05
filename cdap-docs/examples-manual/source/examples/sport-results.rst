@@ -11,9 +11,9 @@ Sport Results
 
 A Cask Data Application Platform (CDAP) example demonstrating partitioned file sets through sport results analytics.
 
+
 Overview
 ========
-
 This application demonstrates the use of the PartitionedFileSet datasets, 
 MapReduce with runtime arguments, and ad-hoc queries over file sets:
 
@@ -30,7 +30,6 @@ Let's look at some of these components, and then run the application and see the
 
 The SportResults Application
 ----------------------------
-
 As in the other :ref:`examples <examples-index>`, the components
 of the application are tied together by the class ``SportResults``:
 
@@ -59,7 +58,6 @@ then compute the ``totals`` aggregates using MapReduce, and we will explore both
 
 UploadService
 -------------
-
 This service has two handler methods: one to upload and another to download a partition of the ``results``
 dataset as a file. It declares its use of the dataset using a ``@UseDataSet`` annotation:
 
@@ -88,7 +86,6 @@ Let's take a closer look at the upload method:
 
 MapReduce over File Partitions
 ==============================
-
 ``ScoreCounter`` is a simple MapReduce that reads from the ``results`` PartitionedFileSet and writes to
 the ``totals`` PartitionedFileSet. The ``beforeSubmit()`` method prepares the MapReduce program for this:
 
@@ -107,30 +104,27 @@ It is worth mentioning that nothing else in ``ScoreCounter`` is specifically pro
 Instead of ``results`` and ``totals``, it could use any other dataset as long as the key and value types match.
 
 
+.. Building and Starting
+.. =====================
 .. |example| replace:: SportResults
-.. include:: building-starting-running-cdap.txt
+.. |example-italic| replace:: *SportResults*
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <SportResults>`
+
+.. include:: _includes/_building-starting-running-cdap.txt
 
 
 Running the Example
 ===================
 
-Starting the Service
---------------------
+.. Starting the Service
+.. --------------------
+.. |example-service| replace:: UploadService
+.. |example-service-italic| replace:: *UploadService*
 
-Once the application is deployed, either:
-
-- Using the CDAP-UI, go to the *SportResults* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/SportResults/overview/programs>`__,
-  click ``UploadService`` to get to the service detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh start service SportResults.UploadService
-    
-    Successfully started service 'UploadService' of application 'SportResults' with stored runtime arguments '{}'
+.. include:: _includes/_starting-service.txt
 
 Uploading Game Results
 ----------------------
-
 Begin by uploading some CSV files into the ``results`` dataset. For example, to upload the results
 for the 2012 season of the NFL (National Football League)::
 
@@ -143,7 +137,6 @@ Feel free to add more seasons and sport leagues::
 
 Starting the MapReduce
 ----------------------
-
 To run the ``ScoreCounter`` over all seasons of the NFL::
 
   $ cdap-cli.sh start mapreduce SportResults.ScoreCounter \"league=nfl\"
@@ -155,7 +148,6 @@ Both of the partitioned file sets are registered as external tables in Hive and 
 see the existing partitions of a dataset, use the ``show partitions`` query::
 
   $ cdap-cli.sh execute \"show partitions dataset_results\"
-
 
 For example, to find the three games with the highest point difference in the 2012 NFL season, over all
 seasons (that have been uploaded), and for all seasons of all sport leagues::
@@ -187,28 +179,6 @@ The last command would produce results (reformatted to fit) such as::
   Fetched 3 rows
 
 
-Stopping and Removing the Application
-=====================================
-Once done, you can stop the application as described in :ref:`Stopping an Application 
-<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
-
-**Stopping the Service**
-
-- Using the CDAP-UI, go to the *SportResults* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/SportResults/overview/programs>`__,
-  click ``UploadService`` to get to the service detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh stop service SportResults.UploadService   
-
-**Removing the Application**
-
-You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
-
-- Using the CDAP-UI, go to the *SportResults* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/SportResults/overview/programs>`__,
-  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
-  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh delete app SportResults
+.. Stopping and Removing the Application
+.. =====================================
+.. include:: _includes/_stopping-service-removing-application.txt

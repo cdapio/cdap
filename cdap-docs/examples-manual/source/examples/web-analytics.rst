@@ -12,9 +12,9 @@ Web Analytics Application
 A Cask Data Application Platform (CDAP) tutorial demonstrating how to perform analytics
 using access logs.
 
+
 Overview
 ========
-
 This tutorial provides the basic steps for the development of a data application using the
 Cask Data Application Platform (CDAP). We will use a web analytics application to
 demonstrate how to develop with CDAP and how CDAP helps when building data applications
@@ -38,6 +38,7 @@ In particular, we'll use these CDAP components:
 - A **stream** for web server log collection and persistence to the file system;
 - A **flow** for real-time data analysis over collected logs; and
 - **SQL Queries** to explore and develop insights from the data.
+
 
 How It Works
 ============
@@ -97,30 +98,27 @@ and executed in CDAP:
    :lines: 26-
 
 
+.. Building and Starting
+.. =====================
 .. |example| replace:: WebAnalytics
-.. include:: building-starting-running-cdap.txt
+.. |example-italic| replace:: *WebAnalytics*
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <WebAnalytics>`
+
+.. include:: _includes/_building-starting-running-cdap.txt
 
 
 Running the Example
 ===================
 
-Starting the Flow
------------------
+.. Starting the Flow
+.. -----------------
+.. |example-flow| replace:: WebAnalyticsFlow
+.. |example-flow-italic| replace:: *WebAnalyticsFlow*
 
-Once the application is deployed, either:
-
-- Using the CDAP-UI, go to the *WebAnalytics* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/WebAnalytics/overview/programs>`__,
-  click ``WebAnalyticsFlow`` to get to the flow detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh start flow WebAnalytics.WebAnalyticsFlow
-  
-    Successfully started Flow 'WebAnalyticsFlow' of application 'WebAnalytics' with stored runtime arguments '{}'
+.. include:: _includes/_starting-flow.txt
 
 Injecting Log Events
 ---------------------
-
 To inject a single log event, you can use the ``curl`` command:
 
 .. container:: highlight
@@ -174,28 +172,6 @@ section to expand the display and see the query results:
    :width: 8in
 
 
-Stopping and Removing the Application
-=====================================
-Once done, you can stop the application as described in :ref:`Stopping an Application 
-<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
-
-**Stopping the Flow**
-
-- Using the CDAP-UI, go to the *WebAnalytics* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/UserProfiles/overview/programs>`__,
-  click ``WebAnalyticsFlow`` to get to the flow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh stop flow WebAnalytics.WebAnalyticsFlow 
-
-**Removing the Application**
-
-You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
-
-- Using the CDAP-UI, go to the *WebAnalytics* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/WebAnalytics/overview/programs>`__,
-  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
-  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh delete app WebAnalytics
+.. Stopping and Removing the Application
+.. =====================================
+.. include:: _includes/_stopping-flow-removing-application.txt

@@ -11,9 +11,9 @@ Stream Conversion
 
 A Cask Data Application Platform (CDAP) example demonstrating Time-Partitioned FileSets.
 
+
 Overview
 ========
-
 This application receives simple events through a stream, and periodically converts these events into
 partitions of a time-partitioned file set. These partitions can be queried with SQL. These are the
 components of the application:
@@ -29,7 +29,6 @@ Let's look at some of these components, and then run the application and see the
 
 The Stream Conversion Application
 ---------------------------------
-
 As in the other :ref:`examples <examples-index>`, the components
 of the application are tied together by the class ``StreamConversionApp``:
 
@@ -51,7 +50,6 @@ The interesting part is the creation of the dataset ``converted``:
 
 The MapReduce Program
 ---------------------
-
 In its ``beforeSubmit`` method, the ``StreamConversionMapReduce`` determines its logical start time,
 and it configures the ``events`` stream as its input and the ``converted`` dataset as its output:
 
@@ -92,14 +90,28 @@ and it configures the ``events`` stream as its input and the ``converted`` datas
      :dedent: 2
 
 
-
+.. Building and Starting
+.. =====================
 .. |example| replace:: StreamConversion
-.. include:: building-starting-running-cdap.txt
+.. |example-italic| replace:: *StreamConversion*
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <StreamConversion>`
+
+.. include:: _includes/_building-starting-running-cdap.txt
 
 
 Running the Example
 ===================
 
+.. Resuming the Schedule
+.. ---------------------
+.. |example-workflow| replace:: StreamConversionWorkflow
+.. |example-workflow-italic| replace:: *StreamConversionWorkflow*
+.. |example-schedule| replace:: every5min
+
+.. include:: _includes/_resuming-schedule.txt
+
+Running the Workflow
+--------------------
 The ``StreamConversionWorkflow`` will run automatically every five minutes based on its schedule.
 To give it some data, you can use a provided script to send events to the stream, for example,
 to send 10000 events at a rate of roughly two per second::
@@ -110,6 +122,7 @@ You can now wait for the workflow to run, after which you can query the partitio
 ``converted`` dataset::
 
   $ cdap-cli.sh execute \"show partitions dataset_converted\"
+  
   +============================================+
   | partition: STRING                          |
   +============================================+
@@ -124,6 +137,7 @@ than the time since the Epoch: the year, month, day of the month, hour and minut
 You can also query the data in the dataset. For example, to find the five most frequent body texts, issue::
 
   $ cdap-cli.sh execute '"select count(*) as count, body from dataset_converted group by body order by count desc limit 5"'
+  
   +==============================+
   | count: BIGINT | body: STRING |
   +==============================+
@@ -140,33 +154,10 @@ of the query. For example, to run the same query for only the month of January, 
   select count(*) as count, body from dataset_converted where month=5 group by body order by count desc limit 5
 
 
-Stopping and Removing the Application
-=====================================
-Once done, you can stop the application as described in :ref:`Stopping an Application 
-<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
+.. Stopping and Removing the Application
+.. =====================================
+.. include:: _includes/_stopping-removing-application-title.txt
 
-**Suspending the Schedule**
+.. include:: _includes/_suspending-schedule.txt
 
-The only thing you need to do to stop the application is suspend the schedule.
-
-- Using the CDAP-UI, go to the *StreamConversionApp* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/StreamConversionApp/overview/programs>`__,
-  click ``StreamConversionWorkflow`` to get to the workflow detail page, 
-  click on the *Schedules* tab to show the schedule, click the disclosure symbol (**>**)
-  to show the details of the schedule, and then click the *Pause* button (**| |**) so that
-  the status shows as *suspended*; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh suspend schedule StreamConversionApp.every5min
-
-**Removing the Application**
-
-You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
-
-- Using the CDAP-UI, go to the *StreamConversionApp* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/StreamConversionApp/overview/programs>`__,
-  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
-  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh delete app StreamConversionApp
+.. include:: _includes/_removing-application.txt

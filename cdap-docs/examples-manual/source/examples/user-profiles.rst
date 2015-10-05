@@ -15,7 +15,6 @@ detection in datasets using the example of managing user profiles in a Table.
 
 Overview
 ========
-
 This application demonstrates the use of the column-level conflict detection in a dataset,
 through the example of an application that manages user profiles in a Table.
 The fields of a user profile are updated in different ways:
@@ -34,7 +33,6 @@ Let's look at some of these components, and then run the application and see the
 
 Introducing Column-Level Conflict Detection
 ===========================================
-
 As in the other :ref:`examples <examples-index>`, the components
 of the application are tied together by a class ``UserProfiles``:
 
@@ -65,7 +63,6 @@ transactions frequently modify different columns of the same row concurrently.
 
 UserProfiles Application
 ------------------------
-
 This application uses:
 
 - a stream ``events`` to receive events of user activity;
@@ -82,8 +79,13 @@ scripts (``update-login.sh`` and ``send-events.sh``) are used to create a confli
 to write to two different columns of the same row at the same time.
 
 
+.. Building and Starting
+.. =====================
 .. |example| replace:: UserProfiles
-.. include:: building-starting-running-cdap.txt
+.. |example-italic| replace:: *UserProfiles*
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <UserProfiles>`
+
+.. include:: _includes/_building-starting-running-cdap.txt
 
 
 Running the Example
@@ -91,7 +93,6 @@ Running the Example
 
 Observing Conflict Detection
 ----------------------------
-
 To observe conflict detection at both the row-level and column-level, you will need to modify 
 and build this example twice:
 
@@ -100,7 +101,6 @@ and build this example twice:
   
 Build the Application with Row-level Conflict Detection
 -------------------------------------------------------
-
 Before building the application, set the ``ConflictDetection`` appropriately in the class ``UserProfiles``:
 
 .. literalinclude:: /../../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
@@ -118,7 +118,6 @@ Before building the application, set the ``ConflictDetection`` appropriately in 
 
 Re-build the Application with Column-level Conflict Detection
 -------------------------------------------------------------
-
 - Stop the application's flow and service (as described `below <#stopping-and-removing-the-application>`__).
 - Delete the ``profiles`` dataset, either through the CDAP Command Line Interface or
   by making a ``curl`` call::
@@ -129,10 +128,8 @@ Re-build the Application with Column-level Conflict Detection
   original value, ``ConflictDetection.COLUMN.name()``.
 - Re-deploy and re-run the application. You should not see any errors in the log.    
 
-
 Deleting any Existing *profiles* Dataset
 ----------------------------------------
-
 If a ``profiles`` dataset has been created from an earlier deployment of the application and
 running of the example, it needs to be removed before the next deployment, so that it is created
 with the correct properties.
@@ -147,37 +144,22 @@ or by making a ``curl`` call::
   
 Then re-deploy the application.
 
-Starting the Flow
------------------
+.. Starting the Flow
+.. -----------------
+.. |example-flow| replace:: ActivityFlow
+.. |example-flow-italic| replace:: *ActivityFlow*
 
-Once the application is deployed, either:
+.. include:: _includes/_starting-flow.txt
 
-- Using the CDAP-UI, go to the *UserProfiles* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/UserProfiles/overview/programs>`__,
-  click ``ActivityFlow`` to get to the flow detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
+.. Starting the Service
+.. --------------------
+.. |example-service| replace:: UserProfileService
+.. |example-service-italic| replace:: *UserProfileService*
 
-    $ cdap-cli.sh start flow UserProfiles.ActivityFlow
-  
-    Successfully started Flow 'ActivityFlow' of application 'UserProfiles' with stored runtime arguments '{}'
-
-Starting the Service
---------------------
-
-Once the application is deployed, either:
-
-- Using the CDAP-UI, go to the *UserProfiles* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/UserProfiles/overview/programs>`__,
-  click ``UserProfileService`` to get to the service detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh start service UserProfiles.UserProfileService
-    
-    Successfully started service 'UserProfileService' of application 'UserProfiles' with stored runtime arguments '{}'
+.. include:: _includes/_starting-service.txt
 
 Populate the ``profiles`` Table
 -------------------------------
-
 Populate the ``profiles`` table with users using a script. From the Standalone CDAP SDK directory, use::
 
   $ ./examples/UserProfiles/bin/add-users.sh
@@ -226,37 +208,6 @@ Running the example with ``ConflictDetection.COLUMN.name()`` will result in the 
 concurrently without transaction conflicts.
 
 
-Stopping and Removing the Application
-=====================================
-Once done, you can stop the application as described in :ref:`Stopping an Application 
-<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
-
-**Stopping the Flow**
-
-- Using the CDAP-UI, go to the *UserProfiles* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/UserProfiles/overview/programs>`__,
-  click ``ActivityFlow`` to get to the flow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh stop flow UserProfiles.ActivityFlow   
-
-**Stopping the Service**
-
-- Using the CDAP-UI, go to the *UserProfiles* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/UserProfiles/overview/programs>`__,
-  click ``UserProfileService`` to get to the service detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh stop service UserProfiles.UserProfileService   
-
-**Removing the Application**
-
-You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
-
-- Using the CDAP-UI, go to the *UserProfiles* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/UserProfiles/overview/programs>`__,
-  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
-  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh delete app UserProfiles
+.. Stopping and Removing the Application
+.. =====================================
+.. include:: _includes/_stopping-flow-service-removing-application.txt

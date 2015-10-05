@@ -12,20 +12,19 @@ FileSet Example
 A Cask Data Application Platform (CDAP) example demonstrating the FileSet dataset and its
 use in services and MapReduce.
 
+
 Overview
 ========
-
 This application demonstrates the use of the FileSet dataset:
 
-  - The ``lines`` FileSet is used as input for the ``WordCount`` MapReduce program.
-  - The ``counts`` FileSet is used as output for the ``WordCount`` MapReduce program.
-  - The ``FileSetService`` allows uploading and downloading files within these two file sets.
+- The ``lines`` FileSet is used as input for the ``WordCount`` MapReduce program.
+- The ``counts`` FileSet is used as output for the ``WordCount`` MapReduce program.
+- The ``FileSetService`` allows uploading and downloading files within these two file sets.
 
 Let's look at some of these components, and then run the application and see the results.
 
 The FileSetExample Application
 ------------------------------
-
 As in the other :ref:`examples <examples-index>`, the components
 of the application are tied together by the class ``FileSetExample``:
 
@@ -43,7 +42,6 @@ that file using MapReduce, and finally download the word counts from the ``count
 
 FileSetService
 --------------
-
 This service has two handler methods: one to upload and another to download a file.
 It declares the datasets that it needs to access using ``@UseDataSet`` annotations:
 
@@ -66,7 +64,6 @@ and then opens an input stream for that location. ``Location`` is a file system 
 
 MapReduce over Files
 ====================
-
 ``WordCount`` is a simple word counting implementation in MapReduce. It reads its input from the
 ``lines`` FileSet and writes its output to the ``counts`` FileSet:
 
@@ -78,26 +75,23 @@ It is worth mentioning that nothing in ``WordCount`` is specifically programmed 
 ``lines`` and ``counts``, it could use any other dataset as long as the key and value types match.
 
 
+.. Building and Starting
+.. =====================
 .. |example| replace:: FileSetExample
-.. include:: building-starting-running-cdap.txt
+.. |example-italic| replace:: *FileSetExample*
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <FileSetExample>`
+.. include:: _includes/_building-starting-running-cdap.txt
 
 
 Running the Example
 ===================
 
-Starting the Service
---------------------
+.. Starting the Service
+.. --------------------
+.. |example-service| replace:: FileSetService
+.. |example-service-italic| replace:: *FileSetService*
 
-Once the application is deployed, either:
-
-- Using the CDAP-UI, go to the *FileSetExample* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/FileSetExample/overview/programs>`__,
-  click ``FileSetService`` to get to the service detail page, then click the *Start* button; or
-
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh start service FileSetExample.FileSetService
- 
+.. include:: _includes/_starting-service.txt
 
 Uploading and Downloading Files
 -------------------------------
@@ -123,30 +117,6 @@ This is because in MapReduce, every reducer writes a separate part file into the
 In this case, as we have fixed the number of reducers to one, there is only a single part file to download.
 
 
-Stopping and Removing the Application
-=====================================
-Once done, you can stop the application as described in :ref:`Stopping an Application 
-<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
-
-**Stopping the Service**
-
-- Using the CDAP-UI, go to the *FileSetExample* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/FileSetExample/overview/programs>`__,
-  click ``FileSetService`` to get to the service detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh stop service FileSetExample.FileSetService   
-    Successfully stopped service 'FileSetService' of application 'FileSetExample'
-
-**Removing the Application**
-
-You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
-
-- Using the CDAP-UI, go to the *FileSetExample* `application overview page, programs tab 
-  <http://localhost:9999/ns/default/apps/FileSetExample/overview/programs>`__,
-  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
-  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh delete app FileSetExample
-
+.. Stopping and Removing the Application
+.. =====================================
+.. include:: _includes/_stopping-service-removing-application.txt

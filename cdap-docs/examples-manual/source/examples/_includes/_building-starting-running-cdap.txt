@@ -1,3 +1,5 @@
+.. |application-overview| replace:: |example-italic| |application-overview-page|
+
 Building and Starting
 =====================
 
@@ -11,6 +13,7 @@ Building and Starting
     examples/|example|/target/|example|-|release|.jar
   
 - Start CDAP (as described in :ref:`Starting and Stopping CDAP <start-stop-cdap>`). 
+
 - Deploy the application, as described in :ref:`Deploying an Application <cdap-building-running-deploying>`.
   For example, from the Standalone CDAP SDK directory, use the :ref:`Command Line Interface (CLI) <cli>`:
 
@@ -26,6 +29,8 @@ Building and Starting
 - Once the application has been deployed, you can start its components, as described in
   :ref:`Starting an Application <cdap-building-running-starting-application>`, and detailed at the 
   start of `running the example <#running-the-example>`__.
+  
 - Once all components are started, `run the example <#running-the-example>`__.
+
 - When finished, you can :ref:`stop <cdap-building-running-stopping>`
   and :ref:`remove the application <cdap-building-running-removing>`.

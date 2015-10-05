@@ -12,9 +12,9 @@ Log Analysis Example
 A Cask Data Application Platform (CDAP) example demonstrating Spark and MapReduce
 running in parallel inside a Workflow through fork.
 
+
 Overview
 ========
-
 This example demonstrates Spark and MapReduce performing log analysis, computing
 total number of hits for every unique URL, total number of responses for every
 unique response code, and total number of requests made by every unique IP address,
@@ -51,7 +51,6 @@ Let's look at some of these components, and then run the application and see the
 
 The LogAnalysis Application
 ---------------------------
-
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``LogAnalysisApp``:
 
@@ -59,17 +58,15 @@ of the application are tied together by the class ``LogAnalysisApp``:
    :language: java
    :lines: 60-94
 
-The *hitCount* and *responseCount* ``KeyValueTables`` and *reqCount* ``TimePartitionedFileSet``
------------------------------------------------------------------------------------------------
-
+The *hitCount* and *responseCount* ``KeyValueTable``\ s and *reqCount* ``TimePartitionedFileSet``
+-------------------------------------------------------------------------------------------------
 The calculated hit count for every unique URL is stored in a ``KeyValueTable`` dataset,
 *hitCount* and the total number of responses for a response code is stored in another
 ``KeyValueTable`` dataset, *responseCount*. The total number of requests made by every
 unique IP address is written to a ``TimePartitionedFileSet``, *ipCount*.
 
-The ``HitCounterService``, ``ResponseCounterService`` and ``RequestCounterService``
------------------------------------------------------------------------------------
-
+The ``HitCounterService``, ``ResponseCounterService``, and ``RequestCounterService``
+------------------------------------------------------------------------------------
 These services provide convenient endpoints:
 
 - ``HitCounterService:`` ``hitcount`` endpoint to obtain the total number of hits for a given URL;
@@ -78,137 +75,93 @@ These services provide convenient endpoints:
 - ``RequestCounterService:`` ``reqfile`` endpoint to retrieve data from a particular partition.
 
 
+.. Building and Starting
+.. =====================
 .. |example| replace:: LogAnalysisApp
-.. include:: building-starting-running-cdap.txt
+.. |example-italic| replace:: *LogAnalysisApp*
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <LogAnalysisApp>`
+
+.. include:: _includes/_building-starting-running-cdap.txt
 
 
 Running the Example
 ===================
 
-Starting the Services
----------------------
+.. Starting the Services
+.. ---------------------
+.. |example-service1| replace:: ResponseCounterService
+.. |example-service1-italic| replace:: *ResponseCounterService*
 
-Once the application is deployed, either:
+.. |example-service2| replace:: HitCounterService
+.. |example-service2-italic| replace:: *HitCounterService*
 
-- Using the CDAP-UI, go to the *LogAnalysisApp* `application overview page, programs tab
-  <http://localhost:9999/ns/default/apps/LogAnalysisApp/overview/programs>`__,
-  click *ResponseCounterService* to get to the service detail page, then click the *Start* button,
-  and then do the same for the *HitCounterService* and *RequestCounterService* services; or
-- From the Standalone CDAP SDK directory, use the CDAP Command Line Interface::
+.. |example-service3| replace:: RequestCounterService
+.. |example-service3-italic| replace:: *RequestCounterService*
 
-    $ cdap-cli.sh start service LogAnalysisApp.ResponseCounterService
-    $ cdap-cli.sh start service LogAnalysisApp.HitCounterService
-    $ cdap-cli.sh start service LogAnalysisApp.RequestCounterService
-    
-    Successfully started service 'ResponseCounterService' of application 'LogAnalysisApp' with stored runtime arguments '{}'
-    Successfully started service 'HitCounterService' of application 'LogAnalysisApp' with stored runtime arguments '{}'
-    Successfully started service 'RequestCounterService' of application 'LogAnalysisApp' with stored runtime arguments '{}'
+.. include:: _includes/_starting-services.txt
 
 Injecting Access Logs
 ---------------------
-
 Inject a file of Apache access log to the stream *logStream* by running this command from the
 Standalone CDAP SDK directory, using the Command Line Interface::
   
   $ cdap-cli.sh load stream logStream cdap-examples/LogAnalysis/resources/apache.accesslog "text/plain"
   Successfully sent stream event to stream 'logStream'
 
-Running the Workflow
---------------------
-There are three ways to start the workflow:
+.. Starting the Workflow
+.. ---------------------
+.. |example-workflow| replace:: LogAnalysisWorkflow
+.. |example-workflow-italic| replace:: *LogAnalysisWorkflow*
 
-1. Go to the *LogAnalysisApp* `application overview page, programs tab
-   <http://localhost:9999/ns/default/apps/LogAnalysisApp/overview/programs>`__,
-   click ``LogAnalysisWorkflow`` to get to the Workflow detail page, then click the *Start* button; or
-   
-#. Send a query via an HTTP request using the ``curl`` command::
-
-    $ curl -w'\n' -v \
-        http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/workflows/LogAnalysisWorkflow/start
-
-#. Use the Command Line Interface::
-
-    $ cdap-cli.sh start workflow LogAnalysisApp.LogAnalysisWorkflow
+.. include:: _includes/_starting-workflow.txt
 
 Querying the Results
 --------------------
+- To query the *hitCount* KeyValueTable through the ``HitCounterService``, send a query via an HTTP
+  request using the ``curl`` command. For example::
 
-To query the *hitCount* KeyValueTable through the ``HitCounterService``, send a query via an HTTP
-request using the ``curl`` command. For example::
+    $ curl -w'\n' -X POST -d'{"url":"/index.html"}' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/HitCounterService/methods/hitcount
 
-  $ curl -w'\n' -X POST -d'{"url":"/index.html"}' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/HitCounterService/methods/hitcount
+  You can also use the Command Line Interface::
 
-You can also use the Command Line Interface::
+    $ cdap-cli.sh call service LogAnalysisApp.HitCounterService POST 'hitcount' body '{"url":"/index.html"}'
 
-  $ cdap-cli.sh call service LogAnalysisApp.HitCounterService POST 'hitcount' body '{"url":"/index.html"}'
+  On success, this command will return the hit count for the above URL, such as ``4``.
 
-On success, this command will return the hit count for the above URL, such as ``4``.
+- Similarly, to query the *responseCount* ``KeyValueTable`` through the *ResponseCounterService*, the *reqCount*
+  ``TimePartitionedFileSet`` through the *RequestCounterService*, and to retrieve data from a particular partition of
+  the ``TimePartitionedFileSet``, use either ``curl`` or the Command Line Interface::
 
-Similarly, to query the *responseCount* ``KeyValueTable`` through the *ResponseCounterService*, the *reqCount*
-``TimePartitionedFileSet`` through the *RequestCounterService*, and to retrieve data from a particular partition of
-the ``TimePartitionedFileSet``, use:
+    $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/ResponseCounterService/methods/rescount/200
+    $ cdap-cli.sh call service LogAnalysisApp.ResponseCounterService GET 'rescount/200'
 
-curl and Command Line Interface::
+  On success, this command will return the total number of responses sent with the queried response code, ``30``.
 
-  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/ResponseCounterService/methods/rescount/200
-  $ cdap-cli.sh call service LogAnalysisApp.ResponseCounterService GET 'rescount/200'
+- To query the set of all the available partitions, use either of these commands::
 
-On success, this command will return the total number of responses sent with the queried response code, ``30``.
+    $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/RequestCounterService/methods/reqcount
+    $ cdap-cli.sh call service LogAnalysisApp.RequestCounterService GET 'reqcount'
 
-::
+  A possible successful response::
+  
+    ["7/29/15 7:47 PM"]
 
-  $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/RequestCounterService/methods/reqcount
-  $ cdap-cli.sh call service LogAnalysisApp.RequestCounterService GET 'reqcount'
+- To return a map of all the unique IP addresses with the number of requests made by them, use::
 
-On success, this command will return a set of all the available partitions::
+    $ curl -w'\n' -X POST -d'{"time":"7/27/15 5:58 PM"}' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/RequestCounterService/methods/reqfile
+    $ cdap-cli.sh call service LogAnalysisApp.RequestCounterService POST 'reqfile' body '{"time":"7/27/15 5:58 PM"}'
 
-  ["7/29/15 7:47 PM"]
+  A possible successful response::
 
-|
+    {"255.255.255.109":1,255.255.255.121":1,"255.255.255.211":1}
 
-::
 
-  $ curl -w'\n' -X POST -d'{"time":"7/27/15 5:58 PM"}' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/RequestCounterService/methods/reqfile
-  $ cdap-cli.sh call service LogAnalysisApp.RequestCounterService POST 'reqfile' body '{"time":"7/27/15 5:58 PM"}'
+.. Stopping and Removing the Application
+.. =====================================
+.. include:: _includes/_stopping-removing-application-title.txt
 
-On success, this above command will return a map of all the unique IP addresses with number of request made by them::
+.. include:: _includes/_stopping-workflow.txt
 
-  {"255.255.255.109":1,255.255.255.121":1,"255.255.255.211":1}
+.. include:: _includes/_stopping-services.txt
 
-Stopping and Removing the Application
-=====================================
-Once done, you can stop the application as described above in `Stopping an Application. 
-<#stopping-an-application>`__ Here is an example-specific description of the steps:
-
-**Stopping the Workflow**
-
-- Using the CDAP-UI, go to the *LogAnalysisApp* `application overview page, programs tab
-  <http://localhost:9999/ns/default/apps/LogAnalysisApp/overview/programs>`__,
-  click *LogAnalysisWorkflow* to get to the workflow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh stop workflow LogAnalysisApp.LogAnalysisWorkflow
-
-**Stopping the Services**
-
-- Using the CDAP-UI, go to the *LogAnalysisApp* `application overview page, programs tab
-  <http://localhost:9999/ns/default/apps/LogAnalysisApp/overview/programs>`__,
-  click ``ResponseCounterService`` to get to the service detail page, then click the *Stop* button,
-  doing the same for the ``HitCounterService`` and ``RequestCounterService`` services; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh stop service LogAnalysisApp.ResponseCounterService
-    $ cdap-cli.sh stop service LogAnalysisApp.HitCounterService
-    $ cdap-cli.sh stop service LogAnalysisApp.RequestCounterService
-
-**Removing the Application**
-
-You can now remove the application as described above, `Removing an Application <#removing-an-application>`__, or:
-
-- Using the CDAP-UI, go to the *LogAnalysisApp* `application overview page, programs tab
-  <http://localhost:9999/ns/default/apps/LogAnalysisApp/overview/programs>`__,
-  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
-  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh delete app LogAnalysisApp
+.. include:: _includes/_removing-application.txt
