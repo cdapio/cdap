@@ -35,7 +35,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests explore metadata endpoints.

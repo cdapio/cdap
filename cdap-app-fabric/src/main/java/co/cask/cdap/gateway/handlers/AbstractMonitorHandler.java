@@ -23,7 +23,6 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;

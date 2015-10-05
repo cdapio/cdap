@@ -27,13 +27,19 @@ import co.cask.cdap.app.MockAppConfigurer;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ArtifactClient;
+import co.cask.cdap.client.DatasetClient;
+import co.cask.cdap.client.DatasetModuleClient;
 import co.cask.cdap.client.NamespaceClient;
 import co.cask.cdap.client.ProgramClient;
 import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.explore.jdbc.ExploreDriver;
 import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
+import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -61,6 +67,7 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.sql.Connection;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
@@ -73,13 +80,17 @@ public class IntegrationTestManager implements TestManager {
   private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestManager.class);
   private static final Gson GSON = new Gson();
 
-  private final ArtifactClient artifactClient;
   private final ApplicationClient applicationClient;
+  private final ArtifactClient artifactClient;
+  private final DatasetClient datasetClient;
+  private final DatasetModuleClient datasetModuleClient;
+  private final NamespaceClient namespaceClient;
+  private final ProgramClient programClient;
+
   private final ClientConfig clientConfig;
   private final RESTClient restClient;
+
   private final LocationFactory locationFactory;
-  private final ProgramClient programClient;
-  private final NamespaceClient namespaceClient;
   private final File tmpFolder;
 
   public IntegrationTestManager(ClientConfig clientConfig, RESTClient restClient, File tmpFolder) {
@@ -87,10 +98,13 @@ public class IntegrationTestManager implements TestManager {
     this.restClient = restClient;
     this.tmpFolder = tmpFolder;
     this.locationFactory = new LocalLocationFactory(tmpFolder);
+
     this.applicationClient = new ApplicationClient(clientConfig, restClient);
-    this.programClient = new ProgramClient(clientConfig, restClient);
-    this.namespaceClient = new NamespaceClient(clientConfig, restClient);
     this.artifactClient = new ArtifactClient(clientConfig, restClient);
+    this.datasetClient = new DatasetClient(clientConfig, restClient);
+    this.datasetModuleClient = new DatasetModuleClient(clientConfig, restClient);
+    this.namespaceClient = new NamespaceClient(clientConfig, restClient);
+    this.programClient = new ProgramClient(clientConfig, restClient);
   }
 
   @Override
@@ -259,21 +273,36 @@ public class IntegrationTestManager implements TestManager {
   @Override
   public void deployDatasetModule(Id.Namespace namespace, String moduleName,
                                   Class<? extends DatasetModule> datasetModule) throws Exception {
-    throw new UnsupportedOperationException();
+    datasetModuleClient.add(Id.DatasetModule.from(namespace, moduleName),
+                            datasetModule.getName(),
+                            createModuleJarFile(datasetModule));
+  }
+
+  private File createModuleJarFile(Class<?> cls) throws IOException {
+    String version = String.format("1.0.%d-SNAPSHOT", System.currentTimeMillis());
+    File moduleJarFile = new File(tmpFolder, String.format("%s-%s.jar", cls.getSimpleName(), version));
+    Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
+    Files.copy(Locations.newInputSupplier(deploymentJar), moduleJarFile);
+    return moduleJarFile;
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
                                                        String datasetTypeName, String datasetInstanceName,
                                                        DatasetProperties props) throws Exception {
-    throw new UnsupportedOperationException();
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespace, datasetInstanceName);
+    DatasetInstanceConfiguration dsConf = new DatasetInstanceConfiguration(datasetTypeName, props.getProperties());
+
+    datasetClient.create(datasetInstance, dsConf);
+    return (T) new RemoteDatasetAdmin(datasetClient, datasetInstance, dsConf);
   }
 
   @Override
   public <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
                                                        String datasetTypeName,
                                                        String datasetInstanceName) throws Exception {
-    throw new UnsupportedOperationException();
+    return addDatasetInstance(namespace, datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
   }
 
   @Override
@@ -283,7 +312,10 @@ public class IntegrationTestManager implements TestManager {
 
   @Override
   public Connection getQueryClient(Id.Namespace namespace) throws Exception {
-    throw new UnsupportedOperationException();
+    ConnectionConfig connConfig = clientConfig.getConnectionConfig();
+    String url = String.format("%s%s:%d?namespace=%s", Constants.Explore.Jdbc.URL_PREFIX, connConfig.getHostname(),
+                               connConfig.getPort(), namespace.getId());
+    return new ExploreDriver().connect(url, new Properties());
   }
 
   @Override
