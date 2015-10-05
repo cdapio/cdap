@@ -1021,24 +1021,26 @@ public class StreamSizeScheduler implements Scheduler {
         basePollTs = pollingInfo.getTimestamp();
       }
 
-      final ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver,
-                                                                   taskExecutorService);
       try {
-        scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(),
-                                    pollingInfo.getSize(), pollingInfo.getTimestamp(),
-                                    new DatasetBasedStreamSizeScheduleStore.TransactionMethod() {
-                                      @Override
-                                      public void execute() throws Exception {
-                                        LOG.info("About to start streamSizeSchedule {}", currentSchedule.getName());
-                                        taskRunner.run(programId, ProgramType.valueOf(programType.name()),
-                                                       argsBuilder.build());
-                                      }
-                                    });
-        lastRunSize = pollingInfo.getSize();
-        lastRunTs = pollingInfo.getTimestamp();
-      } catch (Throwable t) {
-        LOG.error("Error when persisting last run information for schedule {} in store",
-                  streamSizeSchedule.getName(), t);
+        ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver,
+                                                               taskExecutorService);
+        LOG.info("About to start streamSizeSchedule {}", currentSchedule.getName());
+        taskRunner.run(programId, ProgramType.valueOf(programType.name()), argsBuilder.build());
+      } catch (TaskExecutionException | IOException e) {
+        LOG.error("Failed to run the program {} for the streamSizeSchedule {}", programId, currentSchedule.getName(),
+                  e);
+      }
+
+      synchronized (this) {
+        try {
+          scheduleStore.updateLastRun(programId, programType, streamSizeSchedule.getName(), pollingInfo.getSize(),
+                                      pollingInfo.getTimestamp(), null);
+          lastRunSize = pollingInfo.getSize();
+          lastRunTs = pollingInfo.getTimestamp();
+        } catch (Throwable t) {
+          LOG.error("Error when persisting last run information for schedule {} in store",
+                    streamSizeSchedule.getName(), t);
+        }
       }
     }
 
