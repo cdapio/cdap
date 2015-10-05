@@ -31,7 +31,8 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'A',
       scope: {
-        substractHeight: '='
+        substractHeight: '=',
+        calculateEnabled: '='
       },
       link: function (scope, elem) {
         var element = elem[0],
@@ -40,6 +41,10 @@ angular.module(PKG.name + '.commons')
         scope.$watch(function () {
           return container[0].offsetHeight;
         }, function () {
+          if (!scope.enabled) {
+            return;
+          }
+
           var containerHeight = container[0].offsetHeight,
               height = containerHeight - scope.substractHeight;
           element.style.height = height + 'px';
