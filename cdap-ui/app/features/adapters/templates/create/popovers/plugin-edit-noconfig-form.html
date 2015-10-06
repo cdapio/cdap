@@ -20,7 +20,7 @@
       <div ng-if="PluginEditController.noconfig">
         <div class="well well-lg widget-group-container">
           <div ng-repeat="(name, value) in pluginCopy.properties track by $index">
-            <div class="form-group">
+            <div class="form-group" ng-class="{ 'has-error': pluginCopy._backendProperties[name].required && pluginCopy.properties[name].length === 0 }">
               <label ng-init="title='info';description=pluginCopy._backendProperties[name].description"
                       class="control-label">
                 <span>{{name}}</span>
