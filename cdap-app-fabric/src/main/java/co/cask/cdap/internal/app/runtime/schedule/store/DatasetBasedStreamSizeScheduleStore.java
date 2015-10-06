@@ -277,8 +277,8 @@ public class DatasetBasedStreamSizeScheduleStore {
   }
 
   private synchronized void updateTable(final Id.Program programId, final SchedulableProgramType programType,
-                           final String scheduleName, final byte[][] columns, final byte[][] values,
-                           @Nullable final TransactionMethod txMethod)
+                                        final String scheduleName, final byte[][] columns, final byte[][] values,
+                                        @Nullable final TransactionMethod txMethod)
     throws InterruptedException, TransactionFailureException {
     factory.createExecutor(ImmutableList.of((TransactionAware) table))
       .execute(new TransactionExecutor.Subroutine() {
