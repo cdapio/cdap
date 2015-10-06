@@ -110,7 +110,9 @@
             </td>
             <td>
               <span ng-if="adapter._latest">
-                {{ adapter._latest.status | lowercase }} at {{ adapter._latest.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}
+                <strong ng-class="{ 'text-success': adapter._latest.status === 'COMPLETED',
+                  'text-danger': adapter._latest.status === 'KILLED' || adapter._latest.status === 'FAILED' }">{{ adapter._latest.status | uppercase }}</strong>
+                  {{ adapter._latest.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}
               </span>
               <span ng-if="!adapter._latest">
                 &mdash;
