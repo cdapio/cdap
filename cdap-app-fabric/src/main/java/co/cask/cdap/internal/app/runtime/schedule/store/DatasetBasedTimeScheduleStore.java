@@ -95,7 +95,12 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   public void storeJobsAndTriggers(Map<JobDetail, Set<? extends Trigger>> triggersAndJobs,
                                    boolean replace) throws JobPersistenceException {
     super.storeJobsAndTriggers(triggersAndJobs, replace);
-    // TODO (sree): Add persisting job and triggers
+    for (Map.Entry<JobDetail, Set<? extends Trigger>> e: triggersAndJobs.entrySet()) {
+      storeJob(e.getKey(), replace);
+      for (Trigger trigger: e.getValue()) {
+        storeTrigger((OperableTrigger) trigger, replace);
+      }
+    }
   }
 
   @Override

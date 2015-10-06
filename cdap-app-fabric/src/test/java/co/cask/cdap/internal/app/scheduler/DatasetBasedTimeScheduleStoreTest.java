@@ -37,6 +37,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
+import com.google.common.collect.Sets;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
@@ -57,7 +58,11 @@ import org.quartz.simpl.RAMJobStore;
 import org.quartz.simpl.SimpleThreadPool;
 import org.quartz.spi.JobStore;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -132,7 +137,7 @@ public class DatasetBasedTimeScheduleStoreTest {
   @Test
   public void testJobProperties() throws SchedulerException, UnsupportedTypeException, InterruptedException {
     schedulerSetup(true);
-    JobDetail jobDetail = getJobDetail();
+    JobDetail jobDetail = getJobDetail("mapreduce1");
 
     Trigger trigger = TriggerBuilder.newTrigger()
       .withIdentity("g2")
@@ -203,6 +208,33 @@ public class DatasetBasedTimeScheduleStoreTest {
     schedulerTearDown();
   }
 
+  @Test
+  public void testStoreJobsAndTriggers() throws SchedulerException {
+    schedulerSetup(true);
+    Map<JobDetail, Set<? extends Trigger>> multiJobsTriggers = new HashMap<>();
+
+    JobDetail job1 = getJobDetail("mapreduce1");
+    multiJobsTriggers.put(job1, Sets.newHashSet(getTrigger("p1"), getTrigger("p2")));
+
+    JobDetail job2 = getJobDetail("mapreduce2");
+    multiJobsTriggers.put(job2, Sets.newHashSet(getTrigger("p3")));
+
+    scheduler.scheduleJobs(multiJobsTriggers, true);
+
+    verifyJobAndTriggers(job1.getKey(), 2, Trigger.TriggerState.NORMAL);
+    verifyJobAndTriggers(job2.getKey(), 1, Trigger.TriggerState.NORMAL);
+
+    // verify across restart that the jobs and triggers gets retrieved from the store
+    //Shutdown scheduler.
+    schedulerTearDown();
+    //restart scheduler.
+    schedulerSetup(true);
+    verifyJobAndTriggers(job1.getKey(), 2, Trigger.TriggerState.NORMAL);
+    verifyJobAndTriggers(job2.getKey(), 1, Trigger.TriggerState.NORMAL);
+
+    schedulerTearDown();
+  }
+
   private void verifyJobAndTriggers(JobKey jobKey, int expectedTriggersSize,
                                     Trigger.TriggerState expectedTriggerState) throws SchedulerException {
     JobDetail jobStored = scheduler.getJobDetail(jobKey);
@@ -222,22 +254,26 @@ public class DatasetBasedTimeScheduleStoreTest {
   private JobKey scheduleJobWithTrigger(boolean enablePersistence) throws UnsupportedTypeException, SchedulerException {
     //start scheduler with given persistence setting
     schedulerSetup(enablePersistence);
-    JobDetail jobDetail = getJobDetail();
+    JobDetail jobDetail = getJobDetail("mapreduce1");
 
-    Trigger trigger = TriggerBuilder.newTrigger()
-      .withIdentity("p1")
-      .startNow()
-      .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?"))
-      .build();
+    Trigger trigger = getTrigger("p1");
 
     //Schedule job
     scheduler.scheduleJob(jobDetail, trigger);
     return jobDetail.getKey();
   }
 
-  private JobDetail getJobDetail() {
+  private Trigger getTrigger(String triggerName) {
+    return TriggerBuilder.newTrigger()
+        .withIdentity(triggerName)
+        .startNow()
+        .withSchedule(CronScheduleBuilder.cronSchedule("0 0/5 * * * ?"))
+        .build();
+  }
+
+  private JobDetail getJobDetail(String jobName) {
     return JobBuilder.newJob(LogPrintingJob.class)
-      .withIdentity("developer:application1:mapreduce1")
+      .withIdentity(String.format("developer:application1:%s", jobName))
       .build();
   }
 
