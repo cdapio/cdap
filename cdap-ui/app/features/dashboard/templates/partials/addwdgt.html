@@ -14,12 +14,14 @@
   the License.
 -->
 
+
+
 <form name="addWdgtForm"
       class="form-horizontal"
       ng-submit="doAddWidget()"
         novalidate>
   <div class="modal-header clearfix">
-      <h4 class="modal-title pull-left">Add Widget(s)</h4>
+      <h3 class="pull-left">Add Widget(s)</h3>
       <a class="btn pull-right" ng-click="closeModal()">
         <span class="fa fa-remove"></span>
         <span class="sr-only"> Close </span>
@@ -52,7 +54,7 @@
               <my-metric-picker
                 ng-model="model.metric"
                 data-metrics-limit="metricsLimit"
-                data-metrics-slots-filled="pendingMetricsSlots"
+                data-metrics-slots-filled="metricsSlotsFilled"
                 required
               ></my-metric-picker>
 
@@ -72,12 +74,16 @@
             </div>
           </div>
 
-        </div>
   </div>
   <div class="modal-footer">
-      <button type="submit"
-        ng-disabled="addWdgtForm.$invalid"
-        class="btn btn-primary"
-      >Add</button>
+    <button ng-click="addMetricsToWidget()"
+      class="btn btn-default">
+      Add to a widget
+    </button>
+    <button ng-click="addMetricsToIndividualWidgets()"
+      class="btn btn-default"
+      ng-disabled="!model.metric || ((metricsLimit - metricsSlotsFilled) < model.metric.names.length)">
+      Add widgets
+    </button>
   </div>
 </form>

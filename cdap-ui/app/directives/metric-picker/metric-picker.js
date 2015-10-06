@@ -15,11 +15,9 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log, MyMetricsQueryHelper, myHelpers) {
+  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log, MyMetricsQueryHelper) {
 
     var dSrc = new MyDataSource();
-    var addAllOptionId = 'allMetricsAsWidgets';
-    var addAllOptionLabel = 'Add all metrics as individual widgets';
 
     function MetricPickerCtrl ($scope) {
 
@@ -28,7 +26,7 @@ angular.module(PKG.name + '.commons')
       $scope.metricsSettings = {
         externalProp: ''
       };
-      
+
       $scope.available = {
         contexts: [],
         types: ['system', ns],
@@ -38,22 +36,18 @@ angular.module(PKG.name + '.commons')
       $scope.metric = {
         context: '',
         type: ns,
-        names: [{name: ''}],
+        names: [],
         resetNames: function() {
-          this.names = [{name: ''}];
+          this.names = [];
         },
         getNames: function() {
           return this.names.map(function(value) {
-            return value.name;
+            return value.id;
           });
         },
         getName: function() {
           return this.getNames().join(', ');
         }
-      };
-
-      $scope.addMetricName = function() {
-        $scope.metric.names.push({name: ''});
       };
 
       $scope.deleteMetric = function(idx) {
@@ -103,16 +97,6 @@ angular.module(PKG.name + '.commons')
             }
             return true;
           };
-
-          ngModel.$validators.metricsLimitValidation = function() {
-            var availableMetricSlots = scope.metricsLimit - scope.metricsSlotsFilled;
-            var hasMetricsLimitReached = myHelpers.objectQuery(scope, 'metric', 'names', 0, 'name', 'id') === addAllOptionId &&  availableMetricSlots < scope.available.names.length;
-            if (hasMetricsLimitReached) {
-              return false;
-            }
-            return true;
-          };
-
         }
 
         function getBaseContext () {
@@ -176,10 +160,6 @@ angular.module(PKG.name + '.commons')
             },
             function (res) {
               var metricsArray = [];
-              metricsArray.push({
-                id: addAllOptionId,
-                label: addAllOptionLabel
-              });
               // 'Add All' option to add all metrics in current context.
               res.forEach(function(metric) {
                 metricsArray.push({
@@ -214,33 +194,16 @@ angular.module(PKG.name + '.commons')
           }
 
           if(newVal.names) {
-            var isAddAll = false;
-            for (var i = 0; i < newVal.names.length; i++) {
-              if (newVal.names[i].name === addAllOptionId) {
-                isAddAll = true;
-              }
-            }
             var context = getBaseContext();
             if (newVal.context) {
               context += '.' + newVal.context;
             }
-            var allMetrics = scope.available.names.slice(1).map(function(e) {return e.id;}); // Remove 'Add All' option
-            if (isAddAll) {
-              ngModel.$setViewValue({
-                addAll: true,
-                allMetrics: allMetrics,
-                context: context,
-                names: newVal.getNames(),
-                name: newVal.getName()
-              });
-              return;
-            } else {
-              ngModel.$setViewValue({
-                context: context,
-                names: newVal.getNames(),
-                name: newVal.getName()
-              });
-            }
+
+            ngModel.$setViewValue({
+              context: context,
+              names: newVal.getNames(),
+              name: newVal.getName()
+            });
           } else {
             if(ngModel.$dirty) {
               ngModel.$setViewValue(null);
@@ -250,7 +213,6 @@ angular.module(PKG.name + '.commons')
 
         };
         scope.$watch('metric', metricChanged, true);
-
         fetchAhead();
       }
     };
