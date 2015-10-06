@@ -31,7 +31,9 @@ angular.module(PKG.name + '.feature.hydrator')
         $scope.stats.lastRunTime = runs.length > 0 && runs[0].end ? runs[0].end - runs[0].start : 'N/A';
 
         for (var i = 0; i < runs.length; i++) {
-          if (runs[i].status !== 'RUNNING') {
+          var status = runs[i].status;
+
+          if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
             $scope.stats.lastFinished = runs[i];
             break;
           }
