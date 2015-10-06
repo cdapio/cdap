@@ -16,9 +16,9 @@ Overview
 This application does not have a stream; instead, it uses a tick annotation in the ``source`` flowlet to generate data:
 
 - The ``generate`` method of the  ``source`` flowlet has a ``@Tick`` annotation which specifies how frequently the method will be called.
-- The ``source`` flowlet generates a random integer in the range {1..10000} and emits it to the next flowlet ``splitter``.
-- The ``splitter`` flowlet splits the number into digits, and emits these digits to the next stage.
-- The ``counter`` increments the count of the received number in the KeyValueTable.
+- The *source* flowlet generates a random integer in the range {1..10000} and emits it to the next flowlet *splitter*.
+- The *splitter* flowlet splits the number into digits, and emits these digits to the next stage.
+- The *counter* flowlet increments the count of the received number in the ``KeyValueTable``.
 
 Let's look at some of these components, and then run the application and see the results.
 
@@ -87,6 +87,14 @@ Running the Example
 Once you start the flow, the *source* flowlet will continuously generate data. You can see
 this by observing the counters for each flowlet in the flow visualization. Even though you
 are not injecting any data into the flow, the counters increase steadily.
+
+Querying the Results
+--------------------
+You can see the results by executing a SQL query using the CDAP-UI. Go to the *randomTable* 
+:cdap-ui-datasets-explore:`dataset overview page, explore tab <randomTable>` and click the 
+*Execute SQL* button. When the query has finished and is hi-lighted in color, you can view
+the results by clicking a middle *Action* button in the right-side of the *Results* table.
+A pop-up window will show you the different keys and their values.
 
 
 .. Stopping and Removing the Application

@@ -18,5 +18,4 @@ Starting the Workflow
   .. container:: highlight
 
     .. parsed-literal::
-      |$|  curl -w'\n' -v \
-        http://localhost:10000/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start
+      |$|  curl -w'\\n' -v -X POST '\http://localhost:10000/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start'

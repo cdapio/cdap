@@ -18,11 +18,11 @@ Starting the Services
       Successfully started service '|example-service2|' of application '|example|' with stored runtime arguments '{}'
       Successfully started service '|example-service3|' of application '|example|' with stored runtime arguments '{}'
 
-- Or, you can send ``curl`` requests to CDAP::
+- or, you can send ``curl`` requests to CDAP:
 
   .. container:: highlight
 
     .. parsed-literal::
-      |$| curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/start'
-      |$| curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/start'
-      |$| curl -v -X POST 'http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service3|/start'
+      |$| curl -w'\\n' -v -X POST '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/start'
+      |$| curl -w'\\n' -v -X POST '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/start'
+      |$| curl -w'\\n' -v -X POST '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service3|/start'

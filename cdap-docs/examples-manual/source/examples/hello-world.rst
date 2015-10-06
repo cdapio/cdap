@@ -17,8 +17,8 @@ Overview
 This application uses one stream, one dataset, one flow, and one service to implement the classic "Hello World":
 
 - A stream to send names to;
-- A flow with a single flowlet that reads the stream and stores in a dataset each name in a KeyValueTable; and
-- A service that reads the name from the KeyValueTable and responds with "Hello [Name]!"
+- A flow with a single flowlet that reads the stream and stores in a dataset each name in a ``KeyValueTable``; and
+- A service that reads the name from the ``KeyValueTable`` and responds with ``"Hello [Name]!"``
 
 The ``HelloWorld`` Application
 ------------------------------
@@ -95,7 +95,7 @@ Injecting a Name
 In the |application-overview-page|, click on |example-flow-italic|. 
 This takes you to the flow details page. (If you haven't already started the flow, click
 on the *Start* button in the right-side, below the green arrow.) The flow's *status* will
-read *RUNNING* when it is ready to receive events.
+read *Running* when it is ready to receive events.
 
 Now double-click on the *who* stream on the left side of the flow visualization, which brings up
 a pop-up window. Enter a name and click the *Inject* button. After you close the pop-up
@@ -113,7 +113,7 @@ and send *Jane Doe* a number of times.
 
 Using the Service
 -----------------
-Go back to the application's overview page, programs tab, and click on the *Greeting* service. (If you
+Go back to the |application-overview-page|, and click on the *Greeting* service. (If you
 haven't already started the service, click on the *Start* button on the right-side.) The
 service's label will read *Running* when it is ready to receive events.
 
@@ -123,16 +123,19 @@ Now you can make a request to the service using ``curl``::
 
 If the last name you entered was *Tom*, the service will respond with ``Hello Tom!``
 
-There is a *Make Request* button in the CDAP UI that will make the same request, with a
+There is a *Make Request* button in the :cdap-ui-apps:`CDAP UI, Greeting service
+<HelloWorld/programs/services/Greeting/runs/>` that will make the same request, with a
 similar response.
+
 
 Retrieving Metrics
 ------------------
 .. highlight:: console
 
-You can now query the metrics that are emitted by the flow and service. If a particular
-metric has no value, it will return an empty array in the ``"series"`` of the results, such
-as::
+You can now query the metrics that are emitted by the flow and service. The results you
+receive will vary depending on the entries you have made to the flow. If a particular
+metric has no value, it will return an empty array in the ``"series"`` of the results,
+such as::
 
   {"startTime":0,"endTime":1429475995,"series":[]}
 
@@ -142,19 +145,17 @@ To see the value of the ``names.bytes`` metric, you can make an HTTP request to 
   $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.bytes&aggregate=true'
   {"startTime":0,"endTime":1429477634,"series":[{"metricName":"user.names.bytes","grouping":{},"data":[{"time":0,"value":44}]}]}
 
-To see the value of the ``names.longnames`` metric (the number of names, each greater than 10 characters),
+To see the value of the ``names.longnames`` metric (the number of names, each of which is greater than 10 characters in length),
 you can use::
 
   $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=flow:WhoFlow&tag=flowlet:saver&metric=user.names.longnames&aggregate=true'
-  {"startTime":0,"endTime":1429476082,"series":[{"metricName":"user.names.longnames","grouping":{},"data":[{"time":0,"value":1}]}]}
+  {"startTime":0,"endTime":1429476082,"series":[{"metricName":"user.names.longnames","grouping":{},"data":[{"time":0,"value":2}]}]}
   
-To see the value of the ``greetings.count.jane_doe`` metric (the number of times the name *Jane Doe* has been "greeted"),
+To see the value of the ``greetings.count.jane_doe`` metric (the number of times the specific name *Jane Doe* has been "greeted"),
 you can use::
 
   $ curl -w'\n' -X POST 'http://localhost:10000/v3/metrics/query?tag=namespace:default&tag=app:HelloWorld&tag=service:Greeting&metric=user.greetings.count.jane_doe&aggregate=true'
-  {"startTime":0,"endTime":1429464632,"series":[{"metricName":"user.greetings.count.jane_doe","grouping":{},"data":[{"time":0,"value":0}]}]}
-
-The results you receive will vary depending on the entries you have made to the flow.
+  {"startTime":0,"endTime":1429464632,"series":[{"metricName":"user.greetings.count.jane_doe","grouping":{},"data":[{"time":0,"value":1}]}]}
 
 
 .. Stopping and Removing the Application

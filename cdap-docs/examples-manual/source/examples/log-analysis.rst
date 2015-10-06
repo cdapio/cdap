@@ -77,9 +77,9 @@ These services provide convenient endpoints:
 
 .. Building and Starting
 .. =====================
-.. |example| replace:: LogAnalysisApp
-.. |example-italic| replace:: *LogAnalysisApp*
-.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <LogAnalysisApp>`
+.. |example| replace:: LogAnalysis
+.. |example-italic| replace:: *LogAnalysis*
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <LogAnalysis>`
 
 .. include:: _includes/_building-starting-running-cdap.txt
 
@@ -105,7 +105,7 @@ Injecting Access Logs
 Inject a file of Apache access log to the stream *logStream* by running this command from the
 Standalone CDAP SDK directory, using the Command Line Interface::
   
-  $ cdap-cli.sh load stream logStream cdap-examples/LogAnalysis/resources/apache.accesslog "text/plain"
+  $ cdap-cli.sh load stream logStream examples/LogAnalysis/resources/apache.accesslog "text/plain"
   Successfully sent stream event to stream 'logStream'
 
 .. Starting the Workflow
@@ -118,38 +118,56 @@ Standalone CDAP SDK directory, using the Command Line Interface::
 Querying the Results
 --------------------
 - To query the *hitCount* KeyValueTable through the ``HitCounterService``, send a query via an HTTP
-  request using the ``curl`` command. For example::
+  request using the ``curl`` command. For example:
+  
+  .. container:: highlight
 
-    $ curl -w'\n' -X POST -d'{"url":"/index.html"}' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/HitCounterService/methods/hitcount
+    .. parsed-literal::
+      |$| curl -w'\\n' -X POST -d'{"url":"/index.html"}' '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/methods/hitcount'
 
-  You can also use the Command Line Interface::
+  You can also use the Command Line Interface:
+  
+  .. container:: highlight
 
-    $ cdap-cli.sh call service LogAnalysisApp.HitCounterService POST 'hitcount' body '{"url":"/index.html"}'
+    .. parsed-literal::
+      |$| cdap-cli.sh call service |example|.\ |example-service2| POST 'hitcount' body '{"url":"/index.html"}'
 
   On success, this command will return the hit count for the above URL, such as ``4``.
 
 - Similarly, to query the *responseCount* ``KeyValueTable`` through the *ResponseCounterService*, the *reqCount*
   ``TimePartitionedFileSet`` through the *RequestCounterService*, and to retrieve data from a particular partition of
-  the ``TimePartitionedFileSet``, use either ``curl`` or the Command Line Interface::
+  the ``TimePartitionedFileSet``, use either ``curl`` or the Command Line Interface:
 
-    $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/ResponseCounterService/methods/rescount/200
-    $ cdap-cli.sh call service LogAnalysisApp.ResponseCounterService GET 'rescount/200'
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| curl -w'\\n' '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/methods/rescount/200'
+
+      |$| cdap-cli.sh call service |example|.\ |example-service1| GET 'rescount/200'
 
   On success, this command will return the total number of responses sent with the queried response code, ``30``.
 
-- To query the set of all the available partitions, use either of these commands::
+- To query the set of all the available partitions, use either of these commands:
 
-    $ curl -w'\n' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/RequestCounterService/methods/reqcount
-    $ cdap-cli.sh call service LogAnalysisApp.RequestCounterService GET 'reqcount'
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| curl -w'\\n' '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service3|/methods/reqcount'
+
+      |$| cdap-cli.sh call service |example|.\ |example-service3| GET 'reqcount'
 
   A possible successful response::
   
     ["7/29/15 7:47 PM"]
 
-- To return a map of all the unique IP addresses with the number of requests made by them, use::
+- To return a map of all the unique IP addresses with the number of requests made by them, use one of the available partitions:
 
-    $ curl -w'\n' -X POST -d'{"time":"7/27/15 5:58 PM"}' http://localhost:10000/v3/namespaces/default/apps/LogAnalysisApp/services/RequestCounterService/methods/reqfile
-    $ cdap-cli.sh call service LogAnalysisApp.RequestCounterService POST 'reqfile' body '{"time":"7/27/15 5:58 PM"}'
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| curl -w'\\n' -X POST -d'{"time":"7/29/15 7:47 PM"}' '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service3|/methods/reqfile'
+
+      |$| cdap-cli.sh call service |example|.\ |example-service3| POST 'reqfile' body '{"time":"7/29/15 7:47 PM"}'
 
   A possible successful response::
 
