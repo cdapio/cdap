@@ -31,7 +31,7 @@ import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
-import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.registry.SystemUsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
@@ -44,7 +44,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -59,13 +58,13 @@ public class DatasetInstanceService {
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
   private final boolean allowDatasetUncheckedUpgrade;
-  private final UsageRegistry usageRegistry;
+  private final SystemUsageRegistry usageRegistry;
   private final AbstractNamespaceClient namespaceClient;
 
   @Inject
   public DatasetInstanceService(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf,
-                                UsageRegistry usageRegistry, AbstractNamespaceClient namespaceClient) {
+                                SystemUsageRegistry usageRegistry, AbstractNamespaceClient namespaceClient) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
@@ -98,7 +97,7 @@ public class DatasetInstanceService {
    * @throws NotFoundException if either the namespace or dataset instance is not found,
    * @throws IOException if there is a problem in making an HTTP request to check if the namespace exists.
    */
-  public DatasetMeta get(Id.DatasetInstance instance, List<? extends Id> owners) throws Exception {
+  public DatasetMeta get(Id.DatasetInstance instance, @Nullable Iterable<? extends Id> owners) throws Exception {
     // Throws NamespaceNotFoundException if the namespace does not exist
     ensureNamespaceExists(instance.getNamespace());
     DatasetSpecification spec = instanceManager.get(instance);
@@ -117,7 +116,23 @@ public class DatasetInstanceService {
     return new DatasetMeta(spec, typeMeta, null);
   }
 
-  private void registerUsage(Id.DatasetInstance instance, List<? extends Id> owners) {
+  /**
+   * Gets a dataset instance.
+   *
+   * @param instance instance to get
+   * @return the dataset instance's {@link DatasetMeta}
+   * @throws NotFoundException if either the namespace or dataset instance is not found,
+   * @throws IOException if there is a problem in making an HTTP request to check if the namespace exists.
+   */
+  public DatasetMeta get(Id.DatasetInstance instance) throws Exception {
+    return get(instance, null);
+  }
+
+  private void registerUsage(Id.DatasetInstance instance, @Nullable Iterable<? extends Id> owners) {
+    if (owners == null) {
+      return;
+    }
+
     for (Id owner : owners) {
       try {
         if (owner instanceof Id.Program) {

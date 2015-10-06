@@ -27,10 +27,12 @@ import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.ClassLoaders;
+import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -438,6 +440,12 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     } finally {
       writeLock.unlock();
     }
+  }
+
+  @Override
+  public <T extends DatasetType> T getDatasetType(
+    DatasetTypeMeta implementationInfo, ClassLoader classLoader, DatasetClassLoaderProvider classLoaderProvider) {
+    throw new UnsupportedOperationException();
   }
 
   // because there may be dependencies between modules, it is important that they are ordered correctly.

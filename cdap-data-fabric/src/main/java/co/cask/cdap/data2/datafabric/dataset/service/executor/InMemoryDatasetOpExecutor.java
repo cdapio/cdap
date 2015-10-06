@@ -21,11 +21,12 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
-import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 
@@ -36,11 +37,11 @@ import java.io.IOException;
  */
 public class InMemoryDatasetOpExecutor extends AbstractIdleService implements DatasetOpExecutor {
 
-  private final RemoteDatasetFramework client;
+  private final DatasetFramework client;
 
   @Inject
-  public InMemoryDatasetOpExecutor(RemoteDatasetFramework client) {
-    this.client = client;
+  public InMemoryDatasetOpExecutor(DatasetFramework client) {
+    this.client = Preconditions.checkNotNull(client);
   }
 
   @Override

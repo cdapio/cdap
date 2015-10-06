@@ -54,6 +54,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
+import com.google.inject.Provider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Threads;
@@ -74,16 +75,19 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Tests for {@link RemoteDatasetFramework}
+ * Tests for {@link LocalDatasetFramework}
  */
-public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
+public class LocalDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
   private TransactionManager txManager;
   private DatasetOpExecutorService opExecutorService;
   private DatasetService service;
-  private RemoteDatasetFramework framework;
+  private LocalDatasetFramework framework;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
+
+  private DatasetTypeManager typeManager;
+  private DatasetInstanceService instanceService;
 
   @Before
   public void before() throws Exception {
@@ -105,16 +109,20 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
 
     LocalLocationFactory locationFactory = new LocalLocationFactory(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR)));
     NamespacedLocationFactory namespacedLocationFactory = new DefaultNamespacedLocationFactory(cConf, locationFactory);
-    framework = new RemoteDatasetFramework(discoveryService, registryFactory);
-
-    SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
-      new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
-
-    ImmutableSet<HttpHandler> handlers = ImmutableSet.<HttpHandler>of(
-      new DatasetAdminOpHTTPHandler(framework, cConf, locationFactory, datasetInstantiatorFactory));
-    opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
-
-    opExecutorService.startAndWait();
+    framework = new LocalDatasetFramework(
+      registryFactory,
+      new Provider<DatasetInstanceService>() {
+        @Override
+        public DatasetInstanceService get() {
+          return instanceService;
+        }
+      },
+      new Provider<DatasetTypeManager>() {
+        @Override
+        public DatasetTypeManager get() {
+          return typeManager;
+        }
+      }, NAMESPACE_CLIENT);
 
     ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
       .put("memoryTable", new InMemoryTableModule())
@@ -126,15 +134,22 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     MDSDatasetsRegistry mdsDatasetsRegistry = new MDSDatasetsRegistry(txSystemClient, mdsFramework);
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
-    DatasetTypeManager typeManager = new DatasetTypeManager(
-      cConf, mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES);
-    DatasetInstanceService instanceService = new DatasetInstanceService(
+    typeManager = new DatasetTypeManager(cConf, mdsDatasetsRegistry, locationFactory, DEFAULT_MODULES);
+    instanceService = new DatasetInstanceService(
       typeManager,
       new DatasetInstanceManager(mdsDatasetsRegistry),
       new InMemoryDatasetOpExecutor(framework),
       exploreFacade,
       cConf,
       new SystemUsageRegistry(txExecutorFactory, framework), NAMESPACE_CLIENT);
+
+    SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
+      new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
+
+    ImmutableSet<HttpHandler> handlers = ImmutableSet.<HttpHandler>of(
+      new DatasetAdminOpHTTPHandler(framework, cConf, locationFactory, datasetInstantiatorFactory));
+    opExecutorService = new DatasetOpExecutorService(cConf, discoveryService, metricsCollectionService, handlers);
+    opExecutorService.startAndWait();
 
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,

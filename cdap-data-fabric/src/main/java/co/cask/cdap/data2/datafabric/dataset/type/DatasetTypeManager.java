@@ -54,6 +54,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -101,11 +102,22 @@ public class DatasetTypeManager extends AbstractIdleService {
    * @param className module class
    * @param jarLocation location of the module jar
    */
-  public void addModule(final Id.DatasetModule datasetModuleId, final String className, final Location jarLocation)
+  public void addModule(final Id.DatasetModule datasetModuleId, final String className, final Location jarLocation,
+                        boolean allowSystemNamespace)
     throws DatasetModuleConflictException {
+
+    if (!allowSystemNamespace) {
+      Preconditions.checkArgument(datasetModuleId != null && datasetModuleId.getNamespace() != null
+                                    && !Id.Namespace.SYSTEM.equals(datasetModuleId.getNamespace()),
+                                  "Cannot add modules to system namespace");
+    }
 
     LOG.info("adding module: {}, className: {}, jarLocation: {}",
              datasetModuleId, className, jarLocation == null ? "[local]" : jarLocation.toURI());
+
+    if (!datasetModuleId.getNamespace().equals(Id.Namespace.SYSTEM)) {
+      Preconditions.checkArgument(jarLocation != null, "Jar location is required when adding non-system module");
+    }
 
     try {
       mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
@@ -165,11 +177,22 @@ public class DatasetTypeManager extends AbstractIdleService {
             }
           }
 
+          if (!datasetModuleId.getNamespace().equals(Id.Namespace.SYSTEM)) {
+            try {
+              Preconditions.checkArgument(jarLocation.exists(),
+                                          "Failed to generate jar at " + jarLocation.toURI().toASCIIString());
+            } catch (IOException e) {
+              throw new RuntimeException(
+                "Failed to check jar location existence after adding module: " + datasetModuleId, e);
+            }
+          } else {
+            Preconditions.checkState(jarLocation == null, "Expected no jar file for module in system namespace");
+          }
+
           DatasetModuleMeta moduleMeta = new DatasetModuleMeta(datasetModuleId.getId(), className,
                                                                jarLocation == null ? null : jarLocation.toURI(),
                                                                reg.getTypes(), Lists.newArrayList(moduleDependencies));
           datasets.getTypeMDS().writeModule(datasetModuleId.getNamespace(), moduleMeta);
-
           return null;
         }
       });
@@ -188,6 +211,11 @@ public class DatasetTypeManager extends AbstractIdleService {
       LOG.error("Operation failed", e);
       throw Throwables.propagate(e);
     }
+  }
+
+  public void addModule(final Id.DatasetModule datasetModuleId, final String className, final Location jarLocation)
+    throws DatasetModuleConflictException {
+    addModule(datasetModuleId, className, jarLocation, false);
   }
 
   /**
@@ -301,12 +329,18 @@ public class DatasetTypeManager extends AbstractIdleService {
           }
 
           datasets.getTypeMDS().deleteModule(datasetModuleId);
-          // Also delete module jar
-          Location moduleJarLocation = locationFactory.create(module.getJarLocation());
-          if (!moduleJarLocation.delete()) {
-            LOG.debug("Could not delete dataset module archive");
+          // Also delete module jar if not system module
+          if (!datasetModuleId.getNamespace().equals(Id.Namespace.SYSTEM)) {
+            Preconditions.checkState(module.getJarLocation() != null,
+                                     "Missing jar file for module " + datasetModuleId
+                                       + " while trying to delete the module");
+            Location moduleJarLocation = locationFactory.create(module.getJarLocation());
+            if (!moduleJarLocation.delete()) {
+              LOG.debug("Could not delete dataset module archive");
+            }
+          } else {
+            Preconditions.checkState(module.getJarLocation() == null, "Expected no jar file for system modules");
           }
-
           return true;
         }
       });
@@ -339,7 +373,11 @@ public class DatasetTypeManager extends AbstractIdleService {
           List<Location> moduleLocations = Lists.newArrayList();
           for (DatasetModuleMeta module : datasets.getTypeMDS().getModules(namespaceId)) {
             typesToDelete.addAll(module.getTypes());
-            moduleLocations.add(locationFactory.create(module.getJarLocation()));
+            URI jarLocation = Preconditions.checkNotNull(
+              module.getJarLocation(),
+              "Missing jar file to delete for module " + module.getName()
+                + " in namespace " + namespaceId);
+            moduleLocations.add(locationFactory.create(jarLocation));
           }
 
           // check if there are any instances that use types of these modules?
@@ -381,7 +419,7 @@ public class DatasetTypeManager extends AbstractIdleService {
         // NOTE: we assume default modules are always in classpath, hence passing null for jar location
         // NOTE: we add default modules in the system namespace
         Id.DatasetModule defaultModule = Id.DatasetModule.from(Id.Namespace.SYSTEM, module.getKey());
-        addModule(defaultModule, module.getValue().getClass().getName(), null);
+        addModule(defaultModule, module.getValue().getClass().getName(), null, true);
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add default modules only the very first time service is started
         LOG.info("Not adding " + module.getKey() + " module: it already exists");

@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
@@ -96,8 +97,10 @@ class DatasetDefinitionLoader {
           // just assume that this may happen if the module was already loaded.
         }
       }
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException("Jar file for required module not found: " + e.getMessage(), e);
     } catch (Exception e) {
-      LOG.warn("Exception while loading DatasetDefinition for DatasetTypeMeta : {}", meta.getName());
+      LOG.warn("Exception while loading DatasetDefinition for DatasetTypeMeta : {}", meta.getName(), e);
     } finally {
       try {
         DirUtils.deleteDirectoryContents(unpackedLocation);
