@@ -25,7 +25,7 @@
         <div class="widget-group-container">
           <div ng-repeat="field in PluginEditController.groups[group].position">
             <div ng-if="field !== 'schema'">
-              <div class="form-group">
+              <div class="form-group" ng-class="{ 'has-error': plugin._backendProperties[field].required && pluginCopy.properties[field].length === 0 }">
                 <label class="control-label"
                         ng-init="title=PluginEditController.groups[group].fields[field].info;description=PluginEditController.groups[group].fields[field].description">
                   <span>{{PluginEditController.groups[group].fields[field].label}}</span>
