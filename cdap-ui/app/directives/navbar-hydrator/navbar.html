@@ -23,13 +23,13 @@
 
 <nav>
   <ul class="nav navbar-nav">
-    <li>
-      <a ui-sref="hydrator.list" ng-class="{active: highlightTab == 'hydratorList'}">
+    <li ng-class="{active: highlightTab == 'hydratorList'}">
+      <a ui-sref="hydrator.list">
         <span> My Pipelines </span>
       </a>
     </li>
-    <li>
-      <a ui-sref="hydrator.create" ng-class="{active: highlightTab == 'hydratorStudio'}" ui-sref-active="active">
+    <li ng-class="{active: highlightTab == 'hydratorStudio'}">
+      <a ui-sref="hydrator.create">
         <span> Create Pipeline </span>
       </a>
     </li>
