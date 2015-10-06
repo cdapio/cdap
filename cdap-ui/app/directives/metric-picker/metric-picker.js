@@ -25,6 +25,10 @@ angular.module(PKG.name + '.commons')
 
       var ns = [$stateParams.namespace,'namespace'].join(' ');
 
+      $scope.metricsSettings = {
+        externalProp: ''
+      };
+      
       $scope.available = {
         contexts: [],
         types: ['system', ns],

@@ -42,7 +42,7 @@
     <small class="pull-right">Max 12 per dashboard</small>
   </div>
 
-  <div ng-repeat="name in metric.names" class="h6">
+  <!-- <div ng-repeat="name in metric.names" class="h6">
     <div class="input-group">
       <span class="input-group-addon">
         <i class="fa fa-line-chart"></i>
@@ -62,14 +62,20 @@
         </span>
       </div>
     </div>
+  </div> -->
+  <div ng-dropdown-multiselect=""
+       options="available.names"
+       selected-model="metric.names"
+       extra-settings="metricsSettings">
   </div>
-</div>
 
+</div>
+<!--
 <button class="btn btn-primary"
         ng-click="addMetricName()"
         type="button"
         tooltip-class="tooltip-info"
         tooltip-placement="right"
         tooltip="Add metrics to the same widget">
-  <span class="fa fa-fw fa-plus"></span>
+  <span class="fa fa-fw fa-plus"></span> -->
 </button>
