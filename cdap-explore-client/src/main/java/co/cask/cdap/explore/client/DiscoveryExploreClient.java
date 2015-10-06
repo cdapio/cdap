@@ -57,8 +57,22 @@ public class DiscoveryExploreClient extends AbstractExploreClient {
       String.format("Cannot discover service %s", Service.EXPLORE_HTTP_USER_SERVICE));
   }
 
+  // This class is only used internally.
+  // It does not go through router, so it doesn't ever need an auth token, sslEnabled, or verifySSLCert.
+
   @Override
-  protected String getAuthorizationToken() {
+  protected String getAuthToken() {
     return null;
+  }
+
+
+  @Override
+  protected boolean isSSLEnabled() {
+    return false;
+  }
+
+  @Override
+  protected boolean verifySSLCert() {
+    return false;
   }
 }

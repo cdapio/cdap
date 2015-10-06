@@ -17,11 +17,13 @@
 package co.cask.cdap.explore.jdbc;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import org.slf4j.Logger;
@@ -33,6 +35,8 @@ import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
@@ -65,26 +69,26 @@ public class ExploreDriver implements Driver {
 
     ConnectionParams params = parseConnectionUrl(url);
 
-    String authToken = null;
-    String namespace;
+    String authToken = getString(params, ConnectionParams.Info.EXPLORE_AUTH_TOKEN, null);
+    String namespace = getString(params, ConnectionParams.Info.NAMESPACE, Id.Namespace.DEFAULT.getId());
+    boolean sslEnabled = getBoolean(params, ConnectionParams.Info.SSL_ENABLED, false);
+    boolean verifySSLCert = getBoolean(params, ConnectionParams.Info.VERIFY_SSL_CERT, true);
 
-    List<String> tokenParams = Lists.newArrayList(params.getExtraInfos().get(ConnectionParams.Info.EXPLORE_AUTH_TOKEN));
-    if (!tokenParams.isEmpty() && !tokenParams.get(0).isEmpty()) {
-      authToken = tokenParams.get(0);
-    }
-
-    List<String> namespaceParams = Lists.newArrayList(params.getExtraInfos().get(ConnectionParams.Info.NAMESPACE));
-    if (!namespaceParams.isEmpty() && !namespaceParams.get(0).isEmpty()) {
-      namespace = namespaceParams.get(0);
-    } else {
-      namespace = Id.Namespace.DEFAULT.getId();
-    }
-
-    ExploreClient exploreClient = new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken);
+    ExploreClient exploreClient =
+      new FixedAddressExploreClient(params.getHost(), params.getPort(), authToken, sslEnabled, verifySSLCert);
     if (!exploreClient.isServiceAvailable()) {
       throw new SQLException("Cannot connect to " + url + ", service unavailable");
     }
     return new ExploreConnection(exploreClient, namespace);
+  }
+
+  private String getString(ConnectionParams params, ConnectionParams.Info param, String defaultValue) {
+    return Iterables.getFirst(params.getExtraInfos().get(param), defaultValue);
+  }
+
+  private boolean getBoolean(ConnectionParams params, ConnectionParams.Info param, boolean defaultValue) {
+    String string = getString(params, param, null);
+    return string != null ? Boolean.valueOf(string) : defaultValue;
   }
 
   @Override
@@ -101,16 +105,21 @@ public class ExploreDriver implements Driver {
    * Get the major version number of the Explore driver.
    */
   static int getMajorDriverVersion() {
-    // TODO make it dynamic, see CDAP-13
-    return 2;
+    return ProjectInfo.getVersion().getMajor();
   }
 
   /**
    * Get the minor version number of the Explore driver.
    */
   static int getMinorDriverVersion() {
-    // TODO make it dynamic, see CDAP-13
-    return 4;
+    return ProjectInfo.getVersion().getMinor();
+  }
+
+  /**
+   * Get the fix version number of the Explore driver.
+   */
+  static int getFixDriverVersion() {
+    return ProjectInfo.getVersion().getFix();
   }
 
   @Override
@@ -173,7 +182,9 @@ public class ExploreDriver implements Driver {
      */
     public enum Info {
       EXPLORE_AUTH_TOKEN("auth.token"),
-      NAMESPACE("namespace");
+      NAMESPACE("namespace"),
+      SSL_ENABLED("ssl.enabled"),
+      VERIFY_SSL_CERT("verify.ssl.cert");
 
       private final String name;
 
