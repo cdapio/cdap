@@ -107,6 +107,20 @@ body.theme-cdap.state-hydrator-create {
       color: @cdap-lightgray;
       cursor: pointer;
       font-size: 14px;
+
+      &.group-default {
+        height: 33%;
+        position: relative;
+
+        .item-body-wrapper {
+          bottom: 0;
+          top: 40px;
+          overflow-y: auto;
+          position: absolute;
+          bottom: 0;
+          top: 40px;
+        }
+      }
       .item-body, .item-heading {
         .name {
           display: inline-block;

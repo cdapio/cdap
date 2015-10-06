@@ -20,13 +20,7 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         panelGroups: '=',
-        onGroupClick: '&',
-        onGroupClickContext: '=',
 
-        isSubMenu: '@',
-        placement: '@',
-
-        panel: '=',
         onPanelItemClick: '&',
         onPanelItemClickContext: '='
       },

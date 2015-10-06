@@ -18,15 +18,79 @@ angular.module(PKG.name + '.feature.hydrator')
   .controller('LeftPanelController', function(myPipelineApi, MyAppDAGService, MyDAGFactory, mySettings, $state, MySidebarService, $scope, rVersion, $stateParams, GLOBALS) {
     this.pluginTypes = [
       {
-        name: 'source'
+        name: 'source',
+        expanded: false,
+        plugins: []
       },
       {
-        name: 'transform'
+        name: 'transform',
+        expanded: false,
+        plugins: []
       },
       {
-        name: 'sink'
+        name: 'sink',
+        expanded: false,
+        plugins: []
       }
     ];
+
+    angular.forEach(this.pluginTypes, function (group) {
+      var templateType = MyAppDAGService.metadata.template.type;
+      var params = {
+        namespace: $stateParams.namespace,
+        pipelineType: templateType,
+        version: rVersion.version,
+        extensionType: GLOBALS.pluginTypes[templateType][group.name],
+        scope: $scope
+      };
+
+      myPipelineApi.fetchPlugins(params)
+        .$promise
+        .then(function (res) {
+          var plugins = res.map(function (p) {
+            p.type = params.extensionType;
+            p.icon = MyDAGFactory.getIcon(p.name);
+            return p;
+          });
+          group.plugins = group.plugins.concat(plugins);
+        });
+    });
+
+    mySettings.get('pluginTemplates')
+      .then(function (res) {
+        if (!angular.isObject(res)) {
+          return;
+        }
+        if (!res || !res[$state.params.namespace]) {
+          return;
+        }
+        var templates = res[$state.params.namespace][MyAppDAGService.metadata.template.type];
+        if (!templates) {
+          return;
+        }
+
+        var templateType = MyAppDAGService.metadata.template.type;
+
+        angular.forEach(GLOBALS.pluginTypes[templateType], function (value, key) {
+          var group;
+
+          switch (key) {
+            case 'source':
+              group = this.pluginTypes[0];
+              break;
+            case 'transform':
+              group = this.pluginTypes[1];
+              break;
+            case 'sink':
+              group = this.pluginTypes[2];
+              break;
+          }
+
+          group.plugins = group.plugins.concat(objectToArray(templates[value]));
+
+        }.bind(this));
+      }.bind(this));
+
 
     this.plugins= {
       items: []
@@ -41,70 +105,6 @@ angular.module(PKG.name + '.feature.hydrator')
       MySidebarService.setIsExpanded(this.panelstatus.isExpanded);
     }.bind(this));
 
-    this.onLeftSideGroupItemClicked = function(group) {
-      var prom;
-      var templateType = MyAppDAGService.metadata.template.type;
-      var params = {
-        namespace: $stateParams.namespace,
-        pipelineType: templateType,
-        version: rVersion.version
-      };
-      switch(group.name) {
-        case 'source':
-          params.extensionType = GLOBALS.pluginTypes[templateType].source;
-          prom = myPipelineApi.fetchSources(params).$promise;
-          break;
-        case 'transform':
-          params.extensionType = GLOBALS.pluginTypes[templateType].transform;
-          prom = myPipelineApi.fetchTransforms(params).$promise;
-          break;
-        case 'sink':
-          params.extensionType = GLOBALS.pluginTypes[templateType].sink;
-          prom = myPipelineApi.fetchSinks(params).$promise;
-          break;
-
-      }
-      prom
-        .then(function(res) {
-          this.plugins.items = [];
-          res.forEach(function(plugin) {
-            this.plugins.items.push(
-              angular.extend(
-                {
-                  type: group.name,
-                  icon: MyDAGFactory.getIcon(plugin.name)
-                },
-                plugin
-              )
-            );
-          }.bind(this));
-          // This request is made only first time. Subsequent requests are fetched from
-          // cache and not actual backend calls are made unless we force it.
-          return mySettings.get('pluginTemplates');
-        }.bind(this))
-        .then(
-          function success(res) {
-            if (!angular.isObject(res)) {
-              return;
-            }
-            if (!res || !res[$state.params.namespace]) {
-              return;
-            }
-            var templates = res[$state.params.namespace][MyAppDAGService.metadata.template.type];
-            if (!templates) {
-              return;
-            }
-
-            this.plugins.items = this.plugins.items.concat(
-              objectToArray(templates[GLOBALS.pluginTypes[templateType][group.name]])
-            );
-          }.bind(this),
-          function error() {
-            console.log('ERROR: fetching plugin templates');
-          }
-        );
-
-    };
 
     this.onLeftSidePanelItemClicked = function(event, item) {
       if (item.type === 'source' && this.pluginTypes[0].error) {

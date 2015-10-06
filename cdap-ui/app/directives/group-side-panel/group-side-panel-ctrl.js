@@ -17,21 +17,21 @@
 angular.module(PKG.name + '.commons')
   .controller('MySidePanel', function ($scope) {
     this.groups = $scope.panelGroups;
-    this.placement = $scope.placement;
-    this.panel = $scope.panel;
-    this.isSubMenu = $scope.isSubMenu === 'true';
+    this.openedGroup = null;
 
-    this.openGroup = function (group) {
-      if (this.openedGroup === group.name && this.showGroupItems) {
-        this.showGroupItems = false;
+    this.toggleGroup = function (group) {
+      if (this.openedGroup === group.name) {
         this.openedGroup = null;
+        group.expanded = false;
         return;
       }
+
+      angular.forEach(this.groups, function (g) {
+        g.expanded = false;
+      });
+
+      group.expanded = true;
       this.openedGroup = group.name;
-      var fn = $scope.onGroupClick();
-      if ('undefined' !== typeof fn) {
-        fn.call($scope.onGroupClickContext, group);
-      }
     };
 
     this.onItemClicked = function(event, item) {
@@ -40,8 +40,4 @@ angular.module(PKG.name + '.commons')
         fn.call($scope.onPanelItemClickContext, event, item);
       }
     };
-    if (this.isSubMenu) {
-      this.openGroup(this.groups[0]);
-    }
-
   });
