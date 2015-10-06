@@ -39,6 +39,7 @@ The flow contains three flowlets:
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandomFlow.java
    :language: java
    :lines: 25-
+   :dedent: 2
 
 The *source* flowlet generates random numbers every 1 millisecond. It can also be configured through runtime
 arguments:

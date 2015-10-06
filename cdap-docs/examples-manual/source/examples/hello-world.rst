@@ -35,6 +35,7 @@ This is a trivial flow with a single flowlet named *saver* of type ``NameSaver``
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
    :lines: 62-71
+   :dedent: 2
    
 The flowlet uses a dataset of type ``KeyValueTable`` to store the names it reads from the stream. Every time a new
 name is received, it is stored in the table under the key ``name``, and it overwrites any name that was previously
@@ -43,6 +44,7 @@ stored:
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
    :lines: 76-97
+   :dedent: 2
   
 Note that the flowlet also emits metrics: every time a name longer than 10 characters is received,
 the counter ``names.longnames`` is incremented by one, and the metric ``names.bytes`` is incremented
@@ -57,6 +59,7 @@ reads the name stored by the ``NameSaver`` from the key-value table. It return a
 .. literalinclude:: /../../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
    :language: java
    :lines: 102-112
+   :dedent: 2
 
 Note that the service, like the flowlet, also emits metrics: every time the name *Jane Doe* is received,
 the counter ``greetings.count.jane_doe`` is incremented by one.

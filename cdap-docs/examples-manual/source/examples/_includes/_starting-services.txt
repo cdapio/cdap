@@ -18,7 +18,7 @@ Starting the Services
       Successfully started service '|example-service2|' of application '|example|' with stored runtime arguments '{}'
       Successfully started service '|example-service3|' of application '|example|' with stored runtime arguments '{}'
 
-- or, you can send ``curl`` requests to CDAP:
+- Or, you can send ``curl`` requests to CDAP:
 
   .. container:: highlight
 

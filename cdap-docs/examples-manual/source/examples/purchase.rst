@@ -104,9 +104,9 @@ This service has a ``history/{customer}`` endpoint to obtain the purchase histor
 the use of ``Resources`` to configure the memory requirements of the service:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
-   :language: java
-   :lines: 39-45
-
+    :language: java
+    :lines: 39-45
+    :dedent: 2
 
 ``UserProfileService`` Service
 ------------------------------
@@ -181,7 +181,10 @@ CDAP SDK directory, using the Command Line Interface::
 
 Querying the Results
 --------------------
-To query the *history* ObjectStore through the ``PurchaseHistoryService``, you can
+To query the *history* ObjectStore through the ``PurchaseHistoryService``, you can:
+
+- Using the CDAP-UI, go to the |application-overview|,
+  click |example-service-italic| to get to the service detail page, then click the *Start* button; or
 
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 

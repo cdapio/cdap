@@ -89,11 +89,11 @@ Running the Example
 
 .. Starting the Services
 .. ---------------------
-.. |example-service1| replace:: ResponseCounterService
-.. |example-service1-italic| replace:: *ResponseCounterService*
+.. |example-service1| replace:: HitCounterService
+.. |example-service1-italic| replace:: *HitCounterService*
 
-.. |example-service2| replace:: HitCounterService
-.. |example-service2-italic| replace:: *HitCounterService*
+.. |example-service2| replace:: ResponseCounterService
+.. |example-service2-italic| replace:: *ResponseCounterService*
 
 .. |example-service3| replace:: RequestCounterService
 .. |example-service3-italic| replace:: *RequestCounterService*
@@ -123,14 +123,14 @@ Querying the Results
   .. container:: highlight
 
     .. parsed-literal::
-      |$| curl -w'\\n' -X POST -d'{"url":"/index.html"}' '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/methods/hitcount'
+      |$| curl -w'\\n' -X POST -d'{"url":"/index.html"}' '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/methods/hitcount'
 
   You can also use the Command Line Interface:
   
   .. container:: highlight
 
     .. parsed-literal::
-      |$| cdap-cli.sh call service |example|.\ |example-service2| POST 'hitcount' body '{"url":"/index.html"}'
+      |$| cdap-cli.sh call service |example|.\ |example-service1| POST 'hitcount' body '{"url":"/index.html"}'
 
   On success, this command will return the hit count for the above URL, such as ``4``.
 
@@ -141,9 +141,9 @@ Querying the Results
   .. container:: highlight
 
     .. parsed-literal::
-      |$| curl -w'\\n' '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/methods/rescount/200'
+      |$| curl -w'\\n' '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/methods/rescount/200'
 
-      |$| cdap-cli.sh call service |example|.\ |example-service1| GET 'rescount/200'
+      |$| cdap-cli.sh call service |example|.\ |example-service2| GET 'rescount/200'
 
   On success, this command will return the total number of responses sent with the queried response code, ``30``.
 
