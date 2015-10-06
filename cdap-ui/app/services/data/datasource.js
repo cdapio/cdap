@@ -49,12 +49,12 @@ var service = angular.module(PKG.name+'.services');
 
    */
 
-  service.factory('md5Hash', function ($window) {
-    return $window.md5;
+  service.factory('uuid', function ($window) {
+    return $window.uuid;
   });
 
 
-  service.factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket, MYSOCKET_EVENT, $q, myCdapUrl, MyPromise, myHelpers, md5Hash) {
+  service.factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket, MYSOCKET_EVENT, $q, myCdapUrl, MyPromise, myHelpers, uuid, EventPipe) {
 
     var instances = {}; // keyed by scopeid
 
@@ -143,7 +143,7 @@ var service = angular.module(PKG.name+'.services');
       this.scopeId = id;
       this.bindings = {};
 
-      scope.$on(MYSOCKET_EVENT.message, function (event, data) {
+      EventPipe.on(MYSOCKET_EVENT.message, function (data) {
         var hash;
         hash = data.resource.id;
 
@@ -209,8 +209,6 @@ var service = angular.module(PKG.name+'.services');
     DataSource.prototype.poll = function (resource, cb, errorCb) {
       var self = this;
       var generatedResource = {};
-      var hash;
-      var hashArgs = [];
       var promise = new MyPromise(function(resolve, reject) {
         generatedResource = {
           json: resource.json,
@@ -224,14 +222,9 @@ var service = angular.module(PKG.name+'.services');
         } else {
           generatedResource.url = buildUrl(resource.url, resource.params || {});
         }
-        hashArgs = [generatedResource.url, generatedResource.method, generatedResource.interval, self.scopeId];
-        if (resource.method === 'POST' && generatedResource.body) {
-          hashArgs.push(JSON.stringify(generatedResource.body));
-        }
 
-        hash = md5Hash(hashArgs);
-        generatedResource.id = hash;
-        self.bindings[hash] = {
+        generatedResource.id = uuid.v4();
+        self.bindings[generatedResource.id] = {
           poll: true,
           callback: cb,
           resource: generatedResource,
@@ -246,11 +239,11 @@ var service = angular.module(PKG.name+'.services');
       if (!resource.$isResource) {
         promise = promise.then(function(res) {
           res = res.data;
-          res.__pollId__ = hash;
+          res.__pollId__ = generatedResource.id;
           return $q.when(res);
         });
       }
-      promise.__pollId__ = hash;
+      promise.__pollId__ = generatedResource.id;
       return promise;
     };
 
@@ -289,9 +282,8 @@ var service = angular.module(PKG.name+'.services');
       var deferred = $q.defer();
 
       resource.suppressErrors = true;
-      var hash = md5Hash([resource.templateid, resource.pluginid, this.scopeId]);
-      resource.id = hash;
-      this.bindings[hash] = {
+      resource.id = uuid.v4();
+      this.bindings[resource.id] = {
         resource: resource,
         callback: function (result) {
           if (cb) {
@@ -317,8 +309,6 @@ var service = angular.module(PKG.name+'.services');
      */
     DataSource.prototype.request = function (resource, cb) {
       var self = this;
-      var hashArgs = [];
-
       var promise = new MyPromise(function(resolve, reject) {
 
         var generatedResource = {
@@ -351,14 +341,9 @@ var service = angular.module(PKG.name+'.services');
         } else {
           generatedResource.url = buildUrl(resource.url, resource.params || {});
         }
-        hashArgs = [generatedResource.url, generatedResource.method, self.scopeId];
-        if (generatedResource.method === 'POST' && generatedResource.body) {
-          hashArgs.push(JSON.stringify(generatedResource.body));
-        }
 
-        var hash = md5Hash(hashArgs);
-        generatedResource.id = hash;
-        self.bindings[hash] = {
+        generatedResource.id = uuid.v4();
+        self.bindings[generatedResource.id] = {
           callback: cb,
           resource: generatedResource,
           resolve: resolve,
