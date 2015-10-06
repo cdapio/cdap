@@ -200,6 +200,16 @@ public class DatasetBasedTimeScheduleStoreTest {
     schedulerSetup(true);
 
     verifyJobAndTriggers(jobKey, 1, Trigger.TriggerState.PAUSED);
+
+    // remove job and check if the associated trigger gets removed too
+    Assert.assertTrue("Failed to delete the job", scheduler.deleteJob(jobKey));
+    Assert.assertFalse("Trigger for the deleted job still exists", scheduler.checkExists(triggers.get(0).getKey()));
+    // check for trigger to not exist in the datastore too from which scheduler will get initialized across restart
+    //Shutdown scheduler.
+    schedulerTearDown();
+    //restart scheduler.
+    schedulerSetup(true);
+    Assert.assertFalse("Trigger for the deleted job still exists", scheduler.checkExists(triggers.get(0).getKey()));
     schedulerTearDown();
   }
 
