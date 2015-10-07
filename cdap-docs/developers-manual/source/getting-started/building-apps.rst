@@ -145,11 +145,11 @@ Once an application is deployed, there are multiple methods for starting an appl
     * - Parameter
       - Description
     * - ``<program-type>``
-      - One of ``adapter``, ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
+      - One of ``flow``, ``mapreduce``, ``service``, ``spark``, ``worker``, or ``workflow``
     * - ``<app-id>``
       - Name of the application being called
     * - ``<program-id>``
-      - Name of the *adapter*, *flow*, *MapReduce*, *service*, *spark*, *worker* or *workflow* being called
+      - Name of the *flow*, *MapReduce*, *service*, *spark*, *worker* or *workflow* being called
       
 
 .. _cdap-building-running-stopping:

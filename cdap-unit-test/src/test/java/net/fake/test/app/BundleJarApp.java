@@ -35,7 +35,6 @@ import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.Job;

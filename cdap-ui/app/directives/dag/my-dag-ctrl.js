@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, AdapterErrorFactory) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, HydratorErrorFactory) {
     this.plugins = $scope.config || [];
     this.MyAppDAGService = MyAppDAGService;
     this.isDisabled = $scope.isDisabled;
@@ -58,7 +58,7 @@ angular.module(PKG.name + '.commons')
         });
       }
 
-      AdapterErrorFactory.isValidPlugin(plugin);
+      HydratorErrorFactory.isValidPlugin(plugin);
 
       this.plugins.forEach(function(p) {
         if (!p._backendProperties) {
@@ -80,6 +80,7 @@ angular.module(PKG.name + '.commons')
             p.error.message = 'Missing required fields';
             p.warning = true;
           }
+          p.properties = plugin.properties;
         }
       });
     };
@@ -120,7 +121,7 @@ angular.module(PKG.name + '.commons')
           // The nodes could just lie there on the canvas without connected.
           // In such cases there might still be some required fields not set in those nodes.
           // we would still want to show them as a warning.
-          AdapterErrorFactory.isValidPlugin(plugin);
+          HydratorErrorFactory.isValidPlugin(plugin);
           if (plugin.valid) {
             delete plugin.error;
           } else {
@@ -285,7 +286,7 @@ angular.module(PKG.name + '.commons')
         trigger: 'manual',
         placement: 'auto',
         target: label,
-        template: '/assets/features/adapters/templates/partial/schema-popover.html',
+        template: '/assets/features/hydrator/templates/partial/schema-popover.html',
         container: 'main',
         scope: scope
       });

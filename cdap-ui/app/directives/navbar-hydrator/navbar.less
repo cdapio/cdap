@@ -111,12 +111,17 @@ body {
 
       nav {
         ul.navbar-nav {
-          li a {
-            color: fade(white, 45%);
-            &.active, &:active, &:hover, &:focus {
+          li {
+            a {
               background-color: transparent;
-              border-bottom: 4px solid #397cf1;
-              color: white;
+              color: fade(white, 45%);
+            }
+            &.active, &:active, &:hover, &:focus {
+              a {
+                background-color: transparent;
+                border-bottom: 4px solid #397cf1;
+                color: white;
+              }
             }
           }
         }

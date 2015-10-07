@@ -15,19 +15,18 @@
  */
 
 angular.module(PKG.name + '.feature.worker')
-  .controller('WorkersRunDetailLogController', function($scope, MyDataSource, $state) {
+  .controller('WorkersRunDetailLogController', function($scope, $state) {
 
-    var dataSrc = new MyDataSource($scope),
-        basePath = '/apps/' + $state.params.appId +
-                   '/workers/' + $state.params.programId +
-                   '/runs/' + $scope.RunsController.runs.selected.runid;
+    if (!$scope.RunsController.runs.length) {
+      return;
+    }
 
-    $scope.logs = [];
-
-    dataSrc.poll({
-      _cdapNsPath: basePath + '/logs/next?max=50'
-    }, function(res) {
-      $scope.logs = res;
-    });
+    this.params = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId,
+      programType: 'workers',
+      programId: $state.params.programId,
+      runId: $scope.RunsController.runs.selected.runid,
+    };
 
 });

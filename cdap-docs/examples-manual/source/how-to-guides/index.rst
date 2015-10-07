@@ -43,10 +43,10 @@ instructions for building the “Hello World” of any development task with CDA
 - |cube-guide|_ Use a **Cube Dataset** to perform **online analytical processing** of weblogs with CDAP.
 
 
-.. |etl-adapter-guide| replace:: **Creating ETL Pipelines:**
+.. |etl-adapter-guide| replace:: **Creating ETL Applications:**
 .. _etl-adapter-guide: cdap-etl-adapter-guide.html
 
-- |etl-adapter-guide|_ Using CDAP **ETL Application Templates and Adapters**.
+- |etl-adapter-guide|_ Using CDAP **System Artifacts** to create **ETL pipelines** and applications.
 
 
 .. |flow-guide| replace:: **Real-time Data Processing With a Flow:**

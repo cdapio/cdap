@@ -990,36 +990,36 @@ public class StreamSizeScheduler implements Scheduler {
 
       final StreamSizeSchedule currentSchedule;
       final ImmutableMap.Builder<String, String> argsBuilder = ImmutableMap.builder();
-      synchronized (this) {
-        if (pollingInfo.getSize() - basePollSize < toBytes(streamSizeSchedule.getDataTriggerMB())) {
-          return;
-        }
 
-        argsBuilder.put(ProgramOptionConstants.SCHEDULE_NAME, streamSizeSchedule.getName());
-        argsBuilder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(pollingInfo.getTimestamp()));
-        argsBuilder.put(ProgramOptionConstants.RUN_DATA_SIZE, Long.toString(pollingInfo.getSize()));
-        argsBuilder.put(ProgramOptionConstants.RUN_BASE_COUNT_TIME, Long.toString(basePollTs));
-        argsBuilder.put(ProgramOptionConstants.RUN_BASE_COUNT_SIZE, Long.toString(basePollSize));
-        argsBuilder.putAll(properties);
-
-        if (lastRunSize != -1 && lastRunTs != -1) {
-          argsBuilder.put(ProgramOptionConstants.LAST_SCHEDULED_RUN_LOGICAL_START_TIME, Long.toString(lastRunTs));
-          argsBuilder.put(ProgramOptionConstants.LAST_SCHEDULED_RUN_DATA_SIZE, Long.toString(lastRunSize));
-        }
-
-        try {
-          scheduleStore.updateBaseRun(programId, programType, streamSizeSchedule.getName(),
-                                      pollingInfo.getSize(), pollingInfo.getTimestamp());
-        } catch (Throwable t) {
-          LOG.error("Error when persisting new base information for schedule {} in store. Program will not be executed",
-                    streamSizeSchedule.getName(), t);
-          return;
-        }
-
-        currentSchedule = streamSizeSchedule;
-        basePollSize = pollingInfo.getSize();
-        basePollTs = pollingInfo.getTimestamp();
+      if (pollingInfo.getSize() - basePollSize < toBytes(streamSizeSchedule.getDataTriggerMB())) {
+        return;
       }
+
+      argsBuilder.put(ProgramOptionConstants.SCHEDULE_NAME, streamSizeSchedule.getName());
+      argsBuilder.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(pollingInfo.getTimestamp()));
+      argsBuilder.put(ProgramOptionConstants.RUN_DATA_SIZE, Long.toString(pollingInfo.getSize()));
+      argsBuilder.put(ProgramOptionConstants.RUN_BASE_COUNT_TIME, Long.toString(basePollTs));
+      argsBuilder.put(ProgramOptionConstants.RUN_BASE_COUNT_SIZE, Long.toString(basePollSize));
+      argsBuilder.putAll(properties);
+
+      if (lastRunSize != -1 && lastRunTs != -1) {
+        argsBuilder.put(ProgramOptionConstants.LAST_SCHEDULED_RUN_LOGICAL_START_TIME, Long.toString(lastRunTs));
+        argsBuilder.put(ProgramOptionConstants.LAST_SCHEDULED_RUN_DATA_SIZE, Long.toString(lastRunSize));
+      }
+
+      try {
+        scheduleStore.updateBaseRun(programId, programType, streamSizeSchedule.getName(),
+                                    pollingInfo.getSize(), pollingInfo.getTimestamp());
+      } catch (Throwable t) {
+        LOG.error("Error when persisting new base information for schedule {} in store. Program will not be executed",
+                  streamSizeSchedule.getName(), t);
+        return;
+      }
+
+      currentSchedule = streamSizeSchedule;
+      basePollSize = pollingInfo.getSize();
+      basePollTs = pollingInfo.getTimestamp();
+
 
       final ScheduleTaskRunner taskRunner = new ScheduleTaskRunner(store, lifecycleService, propertiesResolver,
                                                                    taskExecutorService);
@@ -1045,7 +1045,7 @@ public class StreamSizeScheduler implements Scheduler {
     /**
      * @return true if we successfully suspended the schedule, false if it was already suspended
      */
-    public synchronized boolean suspend() throws SchedulerException {
+    public boolean suspend() throws SchedulerException {
       if (active.compareAndSet(true, false)) {
         try {
           scheduleStore.suspend(programId, programType, streamSizeSchedule.getName());
@@ -1063,7 +1063,7 @@ public class StreamSizeScheduler implements Scheduler {
     /**
      * @return true if we successfully resumed the schedule, false if it was already active
      */
-    public synchronized boolean resume() throws SchedulerException {
+    public boolean resume() throws SchedulerException {
       if (active.compareAndSet(false, true)) {
         try {
           scheduleStore.resume(programId, programType, streamSizeSchedule.getName());
@@ -1081,7 +1081,7 @@ public class StreamSizeScheduler implements Scheduler {
     /**
      * Replace the {@link StreamSizeSchedule} of this task.
      */
-    public synchronized void updateSchedule(StreamSizeSchedule schedule) throws SchedulerException {
+    public void updateSchedule(StreamSizeSchedule schedule) throws SchedulerException {
       if (!schedule.equals(streamSizeSchedule)) {
         try {
           scheduleStore.updateSchedule(programId, programType, streamSizeSchedule.getName(), schedule);

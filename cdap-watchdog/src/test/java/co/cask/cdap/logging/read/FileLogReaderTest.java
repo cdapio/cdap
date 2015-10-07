@@ -42,6 +42,9 @@ public class FileLogReaderTest {
                                                                                    28L, base.append("28"),
                                                                                    35L, base.append("35")));
 
+    // JIRA: CDAP-3900. Query for the logs not within the range of the sortedFiles.
+    Assert.assertEquals(Collections.<Location>emptyList(), FileLogReader.getFilesInRange(sortedFiles, 1, 9));
+
     Assert.assertEquals(Collections.<Location>emptyList(), FileLogReader.getFilesInRange(sortedFiles, 1, 10));
 
     Assert.assertEquals(ImmutableList.of(base.append("10")), FileLogReader.getFilesInRange(sortedFiles, 1, 11));

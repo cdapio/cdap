@@ -14,8 +14,8 @@
   the License.
 */
 angular.module(PKG.name + '.feature.apps')
-  .controller('AppDetailController', function(rAppData, GLOBALS, myAdapterFactory) {
-    this.myAdapterFactory = myAdapterFactory;
+  .controller('AppDetailController', function(rAppData, GLOBALS, myHydratorFactory) {
+    this.myHydratorFactory = myHydratorFactory;
 
     this.isHydrator = ([GLOBALS.etlBatch, GLOBALS.etlRealtime].indexOf(rAppData.artifact.name) !== -1);
     this.artifact = {

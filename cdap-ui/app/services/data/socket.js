@@ -30,7 +30,7 @@ angular.module(PKG.name+'.services')
 
   this.prefix = '/_sock';
 
-  this.$get = function (MYSOCKET_EVENT, $rootScope, SockJS, $log, myCdapUrl, EventPipe, MY_CONFIG) {
+  this.$get = function (MYSOCKET_EVENT, SockJS, $log, myCdapUrl, EventPipe, MY_CONFIG) {
 
     var self = this,
         socket = null,
@@ -49,7 +49,7 @@ angular.module(PKG.name+'.services')
           if (!MY_CONFIG.securityEnabled) {
             $log.debug('[mySocket] ←', data);
           }
-          $rootScope.$broadcast(MYSOCKET_EVENT.message, data);
+          EventPipe.emit(MYSOCKET_EVENT.message, data);
         }
         catch(e) {
           $log.error(e);
@@ -59,7 +59,7 @@ angular.module(PKG.name+'.services')
       socket.onopen = function (event) {
         EventPipe.emit('backendUp', 'User interface service is online');
         if(attempt>1) {
-          $rootScope.$broadcast(MYSOCKET_EVENT.reconnected, event);
+          EventPipe.emit(MYSOCKET_EVENT.reconnected, event);
           attempt = 1;
         }
 
@@ -73,7 +73,7 @@ angular.module(PKG.name+'.services')
         EventPipe.emit('backendDown', 'User interface service is down');
 
         if(attempt<2) {
-          $rootScope.$broadcast(MYSOCKET_EVENT.closed, event);
+          EventPipe.emit(MYSOCKET_EVENT.closed, event);
         }
 
         // reconnect with exponential backoff

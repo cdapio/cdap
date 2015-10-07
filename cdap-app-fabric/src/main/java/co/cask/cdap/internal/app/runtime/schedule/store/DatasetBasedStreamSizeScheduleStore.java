@@ -79,7 +79,7 @@ public class DatasetBasedStreamSizeScheduleStore {
   /**
    * Initialize this persistent store.
    */
-  public void initialize() throws IOException, DatasetManagementException {
+  public synchronized void initialize() throws IOException, DatasetManagementException {
     table = tableUtil.getMetaTable();
     Preconditions.checkNotNull(table, "Could not get dataset client for data set: %s",
                                ScheduleStoreTableUtil.SCHEDULE_STORE_DATASET_NAME);
@@ -207,8 +207,8 @@ public class DatasetBasedStreamSizeScheduleStore {
    * @param programType program type the schedule is running for
    * @param scheduleName name of the schedule
    */
-  public void delete(final Id.Program programId, final SchedulableProgramType programType, final String scheduleName)
-    throws InterruptedException, TransactionFailureException {
+  public synchronized void delete(final Id.Program programId, final SchedulableProgramType programType,
+                                  final String scheduleName) throws InterruptedException, TransactionFailureException {
     factory.createExecutor(ImmutableList.of((TransactionAware) table))
       .execute(new TransactionExecutor.Subroutine() {
         @Override
@@ -224,7 +224,7 @@ public class DatasetBasedStreamSizeScheduleStore {
   /**
    * @return a list of all the schedules and their states present in the store
    */
-  public List<StreamSizeScheduleState> list() throws InterruptedException, TransactionFailureException {
+  public synchronized List<StreamSizeScheduleState> list() throws InterruptedException, TransactionFailureException {
     final List<StreamSizeScheduleState> scheduleStates = Lists.newArrayList();
     factory.createExecutor(ImmutableList.of((TransactionAware) table))
       .execute(new TransactionExecutor.Subroutine() {
@@ -276,9 +276,9 @@ public class DatasetBasedStreamSizeScheduleStore {
     return scheduleStates;
   }
 
-  private void updateTable(final Id.Program programId, final SchedulableProgramType programType,
-                           final String scheduleName, final byte[][] columns, final byte[][] values,
-                           @Nullable final TransactionMethod txMethod)
+  private synchronized void updateTable(final Id.Program programId, final SchedulableProgramType programType,
+                                        final String scheduleName, final byte[][] columns, final byte[][] values,
+                                        @Nullable final TransactionMethod txMethod)
     throws InterruptedException, TransactionFailureException {
     factory.createExecutor(ImmutableList.of((TransactionAware) table))
       .execute(new TransactionExecutor.Subroutine() {

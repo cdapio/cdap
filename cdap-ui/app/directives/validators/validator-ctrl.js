@@ -34,7 +34,7 @@
  * }
  **/
 angular.module(PKG.name + '.commons')
-  .controller('MyValidatorsCtrl', function($scope, myAdapterValidatorsApi, EventPipe) {
+  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe) {
     var vm = this;
 
     vm.validators = [];
@@ -44,7 +44,7 @@ angular.module(PKG.name + '.commons')
 
     var validatorsList;
 
-    myAdapterValidatorsApi.get()
+    myHydratorValidatorsApi.get()
       .$promise
       .then(function (res) {
         delete res.$promise;

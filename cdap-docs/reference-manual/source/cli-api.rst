@@ -24,7 +24,7 @@ Interactive Mode
 
 To run the CLI in interactive mode, run the ``cdap-cli.sh`` executable with no arguments from the terminal::
 
-  $ /bin/cdap-cli.sh
+  $ ./bin/cdap-cli.sh
 
 or, on Windows::
 
@@ -56,7 +56,7 @@ Non-Interactive Mode
 To run the CLI in non-interactive mode, run the ``cdap-cli.sh`` executable, passing the command you want executed
 as the argument. For example, to list all applications currently deployed to CDAP, execute::
 
-  cdap-cli.sh list apps
+  $ cdap-cli.sh list apps
 
 Connecting to Secure CDAP Instances
 -----------------------------------

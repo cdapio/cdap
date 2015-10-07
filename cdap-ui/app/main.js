@@ -29,7 +29,7 @@ angular
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
       PKG.name+'.feature.foo',
-      PKG.name+'.feature.adapters',
+      PKG.name+'.feature.hydrator',
       PKG.name+'.feature.explore'
     ]).name,
 
@@ -101,6 +101,10 @@ angular
 
   .config(function ($locationProvider) {
     $locationProvider.html5Mode(true);
+  })
+
+  .run(function ($rootScope) {
+    $rootScope.defaultPollInterval = 10000;
   })
 
   .config(function($provide) {
@@ -205,8 +209,8 @@ angular
     ]);
   })
 
-  .run(function ($rootScope, MYSOCKET_EVENT, myAlert) {
-    $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, data) {
+  .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
+    EventPipe.on(MYSOCKET_EVENT.closed, function (angEvent, data) {
       myAlert({
         title: 'Error',
         content: data.reason || 'Unable to connect to CDAP',
@@ -214,7 +218,7 @@ angular
       });
     });
 
-    $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
+    EventPipe.on(MYSOCKET_EVENT.message, function (data) {
       if(data.statusCode > 399 && !data.resource.suppressErrors) {
         myAlert({
           title: data.statusCode.toString(),
@@ -242,7 +246,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyDataSource, MY_CONFIG, MYAUTH_EVENT) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe) {
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyDataSource($scope);
@@ -290,7 +294,7 @@ angular
       $scope.bodyClass = classes.join(' ');
     });
 
-    $rootScope.$on(MYSOCKET_EVENT.reconnected, function () {
+    EventPipe.on(MYSOCKET_EVENT.reconnected, function () {
       $log.log('[DataSource] reconnected, reloading...');
 
       // https://github.com/angular-ui/ui-router/issues/582
