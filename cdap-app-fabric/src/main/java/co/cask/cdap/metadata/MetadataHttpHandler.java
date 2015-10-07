@@ -37,6 +37,7 @@ import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
@@ -521,31 +522,41 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   private Map<String, String> readMetadata(HttpRequest request) throws BadRequestException {
-    try {
-      ChannelBuffer content = request.getContent();
-      Preconditions.checkArgument(content.readable());
-      try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
-        Map<String, String> metadata = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
-        Preconditions.checkNotNull(metadata);
-        return metadata;
-      }
-    } catch (Throwable t) {
-      throw new BadRequestException("Unable to read business metadata from the request.", t);
+    ChannelBuffer content = request.getContent();
+    if (!content.readable()) {
+      throw new BadRequestException("Unable to read business metadata from the request.");
     }
+
+    Map<String, String> metadata;
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
+      metadata = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
+    } catch (IOException e) {
+      throw new BadRequestException("Unable to read business metadata from the request.", e);
+    }
+
+    if (metadata == null) {
+      throw new BadRequestException("Null metadata was read from the request");
+    }
+    return metadata;
   }
 
   private String[] readArray(HttpRequest request) throws BadRequestException {
-    try {
-      ChannelBuffer content = request.getContent();
-      Preconditions.checkArgument(content.readable());
-      try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
-        List<String> toReturn = GSON.fromJson(reader, LIST_STRING_TYPE);
-        Preconditions.checkNotNull(toReturn);
-        return toReturn.toArray(new String[toReturn.size()]);
-      }
-    } catch (Throwable t) {
-      throw new BadRequestException("Unable to read a list of keys from the request.", t);
+    ChannelBuffer content = request.getContent();
+    if (!content.readable()) {
+      throw new BadRequestException("Unable to read a list of keys from the request.");
     }
+
+    List<String> toReturn;
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
+      toReturn = GSON.fromJson(reader, LIST_STRING_TYPE);
+    } catch (IOException e) {
+      throw new BadRequestException("Unable to read a list of keys from the request.", e);
+    }
+
+    if (toReturn == null) {
+      throw new BadRequestException("Null value was read from the request.");
+    }
+    return toReturn.toArray(new String[toReturn.size()]);
   }
 
   // *** Search endpoints ***
