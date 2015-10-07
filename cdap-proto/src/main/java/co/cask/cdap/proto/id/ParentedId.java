@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.common;
-
-import co.cask.cdap.proto.Id;
+package co.cask.cdap.proto.id;
 
 /**
- * Thrown when an element already exists.
+ * An {@link ElementId} which has a parent {@link ElementId}.
+ *
+ * @param <T> the type of parent
  */
-public class AlreadyExistsException extends ConflictException {
-
-  private final Id objectId;
-
-  public AlreadyExistsException(Id id) {
-    super(String.format("'%s' already exists", id));
-    this.objectId = id;
-  }
-
-  public Id getObjectId() {
-    return objectId;
-  }
-
+public interface ParentedId<T extends ElementId> {
+  T getParent();
 }

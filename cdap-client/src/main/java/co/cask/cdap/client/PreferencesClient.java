@@ -129,7 +129,7 @@ public class PreferencesClient {
    */
   public void setNamespacePreferences(Id.Namespace namespace, Map<String, String> preferences) throws IOException,
     UnauthorizedException, NotFoundException {
-    URL url = config.resolveURLV3(String.format("namespaces/%s/preferences", namespace));
+    URL url = config.resolveURLV3(String.format("namespaces/%s/preferences", namespace.getId()));
     HttpResponse response = restClient.execute(HttpMethod.PUT, url, GSON.toJson(preferences), null,
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

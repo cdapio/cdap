@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,25 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package co.cask.cdap.common;
-
-import co.cask.cdap.proto.Id;
+package co.cask.cdap.proto.id;
 
 /**
- * Thrown when an element already exists.
+ * Helper methods for constructing {@link ElementId}s.
  */
-public class AlreadyExistsException extends ConflictException {
+public class Ids {
 
-  private final Id objectId;
+  private Ids() {}
 
-  public AlreadyExistsException(Id id) {
-    super(String.format("'%s' already exists", id));
-    this.objectId = id;
+  public static NamespaceId namespace(String namespace) {
+    return new NamespaceId(namespace);
   }
 
-  public Id getObjectId() {
-    return objectId;
+  public static QueryId query(String query) {
+    return new QueryId(query);
   }
 
+  public static SystemServiceId systemService(String systemService) {
+    return new SystemServiceId(systemService);
+  }
 }

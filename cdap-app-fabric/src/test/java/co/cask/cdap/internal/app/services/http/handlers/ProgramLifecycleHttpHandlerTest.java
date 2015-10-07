@@ -392,8 +392,10 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(new NotFoundException(Id.Program.from("testnamespace1", "WordCountApp", ProgramType.FLOW,
                                                               "NotExist")).getMessage(),
                         returnedBody.get(0).get("error").getAsString());
-    Assert.assertEquals("'namespace:testnamespace1/application:WordCountApp/program:flows:NotExist' was not found.",
-                        returnedBody.get(0).get("error").getAsString());
+    Assert.assertEquals(
+      new NotFoundException(
+        Id.Program.from("testnamespace1", "WordCountApp", ProgramType.FLOW, "NotExist")).getMessage(),
+      returnedBody.get(0).get("error").getAsString());
     // The programType should be consistent. Second object should have proper status
     Assert.assertEquals("Flow", returnedBody.get(1).get("programType").getAsString());
     Assert.assertEquals(STOPPED, returnedBody.get(1).get("status").getAsString());
