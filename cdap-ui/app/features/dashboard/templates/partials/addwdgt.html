@@ -77,12 +77,13 @@
   </div>
   <div class="modal-footer">
     <button ng-click="addMetricsToWidget()"
+      ng-disabled="addWdgtForm.$invalid"
       class="btn btn-default">
       Add to a widget
     </button>
     <button ng-click="addMetricsToIndividualWidgets()"
       class="btn btn-default"
-      ng-disabled="!model.metric || ((metricsLimit - metricsSlotsFilled) < model.metric.names.length)">
+      ng-disabled="addWdgtForm.$invalid || (!model.metric && ((metricsLimit - metricsSlotsFilled) < model.metric.names.length))">
       Add widgets
     </button>
   </div>
