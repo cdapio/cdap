@@ -14,38 +14,17 @@
  * the License.
  */
 
-package co.cask.cdap.api.worker;
+package co.cask.cdap.api;
 
-import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.api.data.stream.StreamWriter;
 import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.tephra.TransactionFailureException;
 
 /**
- * Context for {@link Worker}.
+ * An object that executes submitted {@link TxRunnable} tasks. Each task submitted will be executed inside
+ * a transaction.
  */
-public interface WorkerContext extends RuntimeContext, ServiceDiscoverer, StreamWriter, PluginContext, Transactional {
-
-  /**
-   * Returns the specification used to configure {@link Worker} bounded to this context.
-   */
-  WorkerSpecification getSpecification();
-
-  /**
-   * @return number of instances of this worker
-   */
-  int getInstanceCount();
-
-  /**
-   * @return the instance id of this worker
-   */
-  int getInstanceId();
-
+public interface Transactional {
 
   /**
    * Executes a set of operations via a {@link TxRunnable} that are committed as a single transaction.
@@ -53,8 +32,7 @@ public interface WorkerContext extends RuntimeContext, ServiceDiscoverer, Stream
    * to it.
    *
    * @param runnable the runnable to be executed in the transaction
-   * @throws RuntimeException if failed to execute the given {@link TxRunnable} in a transaction
+   * @throws TransactionFailureException if failed to execute the given {@link TxRunnable} in a transaction
    */
-  @Override
-  void execute(TxRunnable runnable);
+  void execute(TxRunnable runnable) throws TransactionFailureException;
 }

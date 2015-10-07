@@ -297,7 +297,7 @@ public class ServiceHttpServer extends AbstractIdleService {
    * @param host the host which the service will run on
    * @param pathPrefix a string prepended to the paths which the handlers in handlerContextPairs will bind to
    * @param delegatorContexts the list {@link HandlerDelegatorContext}
-   * @param metricsCollectionService
+   * @param metricsCollectionService a {@link MetricsCollectionService} for metrics collection
    * @return a NettyHttpService which delegates to the {@link HttpServiceHandler}s to handle the HTTP requests
    */
   private NettyHttpService createNettyHttpService(RunId runId, String host, String pathPrefix,
