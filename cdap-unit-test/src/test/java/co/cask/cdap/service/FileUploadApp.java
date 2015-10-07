@@ -18,7 +18,6 @@ package co.cask.cdap.service;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
-import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.DatasetContext;
@@ -32,7 +31,6 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.api.service.http.NonTransactionalHttpContentConsumer;
 import com.google.common.base.Throwables;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.Closeables;
@@ -72,9 +70,6 @@ public class FileUploadApp extends AbstractApplication {
   }
 
   public static final class FileHandler extends AbstractHttpServiceHandler {
-
-    @UseDataSet(KV_TABLE_NAME)
-    private KeyValueTable trackingTable;
 
     @Override
     protected void configure() {
@@ -117,7 +112,7 @@ public class FileUploadApp extends AbstractApplication {
       final WritableByteChannel channel = Channels.newChannel(location.getOutputStream());
 
       // Handle upload content. The onReceived method is non-transactional.
-      return new NonTransactionalHttpContentConsumer() {
+      return new HttpContentConsumer() {
 
         @Override
         public void onReceived(final ByteBuffer chunk, Transactional transactional) throws Exception {
@@ -128,84 +123,6 @@ public class FileUploadApp extends AbstractApplication {
               trackingTable.increment(Bytes.toBytes(chunk.remaining()), 1L);
             }
           });
-          chunk.mark();
-          messageDigest.update(chunk);
-          chunk.reset();
-          channel.write(chunk);
-        }
-
-        @Override
-        public void onFinish(HttpServiceResponder responder) throws Exception {
-          channel.close();
-          String uploadedMd5 = BaseEncoding.base64().encode(messageDigest.digest());
-          if (!md5.equals(uploadedMd5)) {
-            throw new IllegalArgumentException("MD5 not match. Expected '" + md5 + "', received '" + uploadedMd5 + "'");
-          }
-          partitionOutput.addPartition();
-          responder.sendStatus(HttpURLConnection.HTTP_OK);
-        }
-
-        @Override
-        public void onError(HttpServiceResponder responder, Throwable failureCause) {
-          try {
-            Closeables.closeQuietly(channel);
-            partitionDir.delete(true);
-          } catch (IOException e) {
-            // Nothing much can be done.
-            throw Throwables.propagate(e);
-          } finally {
-            if (Throwables.getRootCause(failureCause) instanceof IllegalArgumentException) {
-              responder.sendStatus(HttpURLConnection.HTTP_BAD_REQUEST);
-            } else {
-              responder.sendStatus(HttpURLConnection.HTTP_INTERNAL_ERROR);
-            }
-          }
-        }
-      };
-    }
-
-    /**
-     * This method functionality is the same as the
-     * {@link #upload(HttpServiceRequest, HttpServiceResponder, String, long)},
-     * except that it returns a {@link HttpContentConsumer} instead of {@link NonTransactionalHttpContentConsumer}
-     * so that it updates the tracking table directly in the onReceive method
-     */
-    @POST
-    @Path("/txUpload/{dataset}/{partition}")
-    public HttpContentConsumer txUpload(HttpServiceRequest request,
-                                        HttpServiceResponder responder,
-                                        @PathParam("dataset") String dataset,
-                                        @PathParam("partition") long partition) throws Exception {
-      final String md5 = request.getHeader("Content-MD5");
-      if (md5 == null) {
-        responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST, "Missing header \"Content-MD5\"");
-        return null;
-      }
-
-      // Construct the partition and the partition location
-      PartitionKey partitionKey = PartitionKey.builder().addLongField("time", partition).build();
-      PartitionedFileSet pfs = getContext().getDataset(dataset);
-      final PartitionOutput partitionOutput = pfs.getPartitionOutput(
-        partitionKey);
-      final Location partitionDir = partitionOutput.getLocation();
-      if (!partitionDir.mkdirs()) {
-        responder.sendError(HttpURLConnection.HTTP_CONFLICT,
-                            String.format("Partition for key '%s' already exists for dataset '%s'",
-                                          partitionKey, dataset));
-        return null;
-      }
-
-      final MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-
-      final Location location = partitionDir.append("upload-" + System.currentTimeMillis());
-      final WritableByteChannel channel = Channels.newChannel(location.getOutputStream());
-
-      // Handle upload content. The onReceived method is transactional.
-      return new HttpContentConsumer() {
-
-        @Override
-        public void onReceived(final ByteBuffer chunk) throws Exception {
-          trackingTable.increment(Bytes.toBytes(chunk.remaining()), 1L);
           chunk.mark();
           messageDigest.update(chunk);
           chunk.reset();

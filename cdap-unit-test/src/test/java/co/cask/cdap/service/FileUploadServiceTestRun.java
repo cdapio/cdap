@@ -67,7 +67,7 @@ public class FileUploadServiceTestRun extends TestFrameworkTestBase {
 
       // Upload with right MD5, should get 200
       Assert.assertEquals(HttpURLConnection.HTTP_OK,
-                          upload(serviceURI.resolve("txUpload/" + FileUploadApp.PFS_NAME + "/1").toURL(), content,
+                          upload(serviceURI.resolve("upload/" + FileUploadApp.PFS_NAME + "/1").toURL(), content,
                                  BaseEncoding.base64().encode(Hashing.md5().hashBytes(content).asBytes()), 20));
 
       // Inspect the partitioned file set and verify the content
