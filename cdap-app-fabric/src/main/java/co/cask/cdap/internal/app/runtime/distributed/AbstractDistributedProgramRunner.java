@@ -289,7 +289,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
         return program.getJarLocation().getInputStream();
       }
     }, tempJar);
-    return Programs.createWithUnpack(Locations.toLocation(tempJar), programDir);
+    return Programs.createWithUnpack(cConf, Locations.toLocation(tempJar), programDir);
   }
 
   /**

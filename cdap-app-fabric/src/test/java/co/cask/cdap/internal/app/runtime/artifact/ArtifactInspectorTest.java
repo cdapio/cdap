@@ -61,7 +61,7 @@ public class ArtifactInspectorTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
 
-    classLoaderFactory = new ArtifactClassLoaderFactory(TMP_FOLDER.newFolder());
+    classLoaderFactory = new ArtifactClassLoaderFactory(cConf, TMP_FOLDER.newFolder());
     artifactInspector = new ArtifactInspector(cConf, classLoaderFactory, TMP_FOLDER.newFolder());
   }
 

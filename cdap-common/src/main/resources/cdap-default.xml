@@ -218,6 +218,14 @@
   </property>
 
   <property>
+    <name>app.program.extra.classpath</name>
+    <value/>
+    <description>
+      Extra Java classpath for CDAP program.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runid.corrector.interval</name>
     <value>180</value>
     <description>

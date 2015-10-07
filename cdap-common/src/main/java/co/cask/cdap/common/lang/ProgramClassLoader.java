@@ -16,6 +16,8 @@
 
 package co.cask.cdap.common.lang;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.ProgramType;
 
 import java.io.File;
@@ -33,8 +35,9 @@ public class ProgramClassLoader extends DirectoryClassLoader {
    * {@link ProgramResources#getVisibleResources(ClassLoader, ProgramType)} for details on system classes that
    * are visible to the returned ClassLoader.
    */
-  public static ProgramClassLoader create(File unpackedJarDir, ClassLoader parentClassLoader) throws IOException {
-    return create(unpackedJarDir, parentClassLoader, null);
+  public static ProgramClassLoader create(CConfiguration cConf, File unpackedJarDir,
+                                          ClassLoader parentClassLoader) throws IOException {
+    return create(cConf, unpackedJarDir, parentClassLoader, null);
   }
 
   /**
@@ -48,13 +51,14 @@ public class ProgramClassLoader extends DirectoryClassLoader {
    * [dir]/lib/*.jar
    * </pre>
    */
-  public static ProgramClassLoader create(File unpackedJarDir, ClassLoader parentClassLoader,
+  public static ProgramClassLoader create(CConfiguration cConf, File unpackedJarDir, ClassLoader parentClassLoader,
                                           @Nullable ProgramType programType) throws IOException {
     ClassLoader filteredParent = FilterClassLoader.create(programType, parentClassLoader);
-    return new ProgramClassLoader(unpackedJarDir, filteredParent);
+    return new ProgramClassLoader(unpackedJarDir, filteredParent,
+                                  cConf.get(Constants.AppFabric.PROGRAM_EXTRA_CLASSPATH, ""));
   }
 
-  private ProgramClassLoader(File dir, ClassLoader parent) {
-    super(dir, parent, "lib");
+  private ProgramClassLoader(File dir, ClassLoader parent, String extraClassPath) {
+    super(dir, extraClassPath, parent, "lib");
   }
 }

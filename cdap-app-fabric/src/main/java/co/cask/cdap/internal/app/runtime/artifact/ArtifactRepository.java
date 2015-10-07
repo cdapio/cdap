@@ -77,7 +77,7 @@ public class ArtifactRepository {
     this.artifactStore = artifactStore;
     File baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(baseUnpackDir);
+    this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, baseUnpackDir);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory, baseUnpackDir);
     this.systemArtifactDir = new File(cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR));
     this.configReader = new ArtifactConfigReader();

@@ -459,16 +459,18 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
    */
   private static final class ProgramFactory {
 
+    private final CConfiguration cConf;
     private final LocationFactory locationFactory;
 
     @Inject
-    ProgramFactory(@Named("program.location.factory") LocationFactory locationFactory) {
+    ProgramFactory(CConfiguration cConf, @Named("program.location.factory") LocationFactory locationFactory) {
+      this.cConf = cConf;
       this.locationFactory = locationFactory;
     }
 
     public Program create(String path) throws IOException {
       Location location = locationFactory.create(path);
-      return Programs.createWithUnpack(location, Files.createTempDir());
+      return Programs.createWithUnpack(cConf, location, Files.createTempDir());
     }
   }
 
