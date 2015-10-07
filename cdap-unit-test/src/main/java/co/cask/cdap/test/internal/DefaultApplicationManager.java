@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.data.dataset.DatasetInstantiator;
@@ -72,7 +73,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   private final MetricsManager metricsManager;
 
   @Inject
-  public DefaultApplicationManager(DatasetFramework datasetFramework,
+  public DefaultApplicationManager(CConfiguration cConf,
+                                   DatasetFramework datasetFramework,
                                    TransactionSystemClient txSystemClient,
                                    StreamWriterFactory streamWriterFactory,
                                    DiscoveryServiceClient discoveryServiceClient,
@@ -90,7 +92,7 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
     try {
       File tempDir = tempFolder.newFolder();
       BundleJarUtil.unpackProgramJar(deployedJar, tempDir);
-      ClassLoader classLoader = ProgramClassLoader.create(tempDir, getClass().getClassLoader());
+      ClassLoader classLoader = ProgramClassLoader.create(cConf, tempDir, getClass().getClassLoader());
       this.datasetInstantiator = new DatasetInstantiator(application.getNamespace(),
                                                          datasetFramework,
                                                          new DataSetClassLoader(classLoader),

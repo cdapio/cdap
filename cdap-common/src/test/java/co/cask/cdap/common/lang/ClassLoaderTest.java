@@ -21,20 +21,26 @@ import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.ImmutableList;
+import com.google.gson.Gson;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ApplicationBundler;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 
 /**
@@ -122,5 +128,30 @@ public class ClassLoaderTest {
     Assert.assertSame(cl, Delegators.getDelegate(classLoader, ClassLoader.class));
 
     // There is no good way to test the GC of the weak reference referent since it depends on GC.
+  }
+
+  @Test
+  public void testExtraClassPath() throws IOException, ClassNotFoundException {
+    File tmpDir = TMP_FOLDER.newFolder();
+
+    // Create two jars, one with guava, one with gson
+    ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor());
+    Location guavaJar = Locations.toLocation(new File(tmpDir, "guava.jar"));
+    bundler.createBundle(guavaJar, ImmutableList.class);
+
+    Location gsonJar = Locations.toLocation(new File(tmpDir, "gson.jar"));
+    bundler.createBundle(gsonJar, Gson.class);
+
+    // Unpack them
+    File guavaDir = BundleJarUtil.unpackProgramJar(guavaJar, TMP_FOLDER.newFolder());
+    File gsonDir = BundleJarUtil.unpackProgramJar(gsonJar, TMP_FOLDER.newFolder());
+
+    // Create a DirectoryClassLoader using guava dir as the main directory, with the gson dir in the extra classpath
+    String extraClassPath = gsonDir.getAbsolutePath() + File.pathSeparatorChar + gsonDir.getAbsolutePath() + "/lib/*";
+    ClassLoader cl = new DirectoryClassLoader(guavaDir, extraClassPath, null, "lib");
+
+    // Should be able to load both guava and gson class from the class loader
+    cl.loadClass(ImmutableList.class.getName());
+    cl.loadClass(Gson.class.getName());
   }
 }

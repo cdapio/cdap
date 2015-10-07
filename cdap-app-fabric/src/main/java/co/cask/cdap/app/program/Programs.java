@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.app.program;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
@@ -29,13 +30,13 @@ import java.io.IOException;
  */
 public final class Programs {
 
-  public static Program createWithUnpack(Location location, File destinationUnpackedJarDir,
-                                         ClassLoader parentClassLoader) throws IOException {
-    return new DefaultProgram(location, destinationUnpackedJarDir, parentClassLoader);
-  }
-
-  public static Program createWithUnpack(Location location, File destinationUnpackedJarDir) throws IOException {
-    return createWithUnpack(location, destinationUnpackedJarDir, getClassLoader());
+  /**
+   * Creates a {@link Program} by expanding the location jar into a given dir. The unpacked directory
+   * is used to create the program class loader.
+   */
+  public static Program createWithUnpack(CConfiguration cConf, Location location,
+                                         File destinationUnpackedJarDir) throws IOException {
+    return new DefaultProgram(location, cConf, destinationUnpackedJarDir, getClassLoader());
   }
 
   /**

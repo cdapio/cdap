@@ -369,7 +369,7 @@ public class ArtifactRepositoryTest {
   private static ClassLoader createAppClassLoader(File jarFile) throws IOException {
     final File unpackDir = DirUtils.createTempDir(TMP_FOLDER.newFolder());
     BundleJarUtil.unpackProgramJar(Files.newInputStreamSupplier(jarFile), unpackDir);
-    return ProgramClassLoader.create(unpackDir, ArtifactRepositoryTest.class.getClassLoader());
+    return ProgramClassLoader.create(cConf, unpackDir, ArtifactRepositoryTest.class.getClassLoader());
   }
 
   private static File createAppJar(Class<?> cls, File destFile, Manifest manifest) throws IOException {
