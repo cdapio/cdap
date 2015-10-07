@@ -42,10 +42,8 @@
       <div ng-if="stats.lastFinished">
         <h2 class="status-value">
           <span ng-class="{ 'text-success': stats.lastFinished.status === 'COMPLETED', 'text-danger': stats.lastFinished.status === 'KILLED' || stats.lastFinished.status === 'FAILED' }">{{ stats.lastFinished.status }}</span>
+          <small>{{ stats.lastFinished.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}</small>
         </h2>
-        <h4 class="last-finished-time">
-          <span>{{ stats.lastFinished.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}</span>
-        </h4>
       </div>
       <h2 class="status-value" ng-if="!stats.lastFinished"> &mdash; </h2>
     </div>
