@@ -24,15 +24,24 @@ angular.module(PKG.name + '.feature.hydrator')
 
     $scope.programType = HydratorDetail.programType;
 
-    HydratorDetail.api.runs(params)
+    HydratorDetail.api.pollRuns(params)
       .$promise
       .then(function (runs) {
         $scope.stats.numRuns = runs.length;
         $scope.stats.lastRunTime = runs.length > 0 && runs[0].end ? runs[0].end - runs[0].start : 'N/A';
+
+        for (var i = 0; i < runs.length; i++) {
+          var status = runs[i].status;
+
+          if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
+            $scope.stats.lastFinished = runs[i];
+            break;
+          }
+        }
       });
 
     if (HydratorDetail.programType === 'WORKFLOWS') {
-      HydratorDetail.api.getStatistics(params)
+      HydratorDetail.api.pollStatistics(params)
         .$promise
         .then(function (stats) {
           $scope.stats.avgRunTime = stats.avgRunTime ? stats.avgRunTime : 'N/A';

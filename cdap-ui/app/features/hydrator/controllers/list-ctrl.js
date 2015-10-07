@@ -95,7 +95,9 @@ angular.module(PKG.name + '.feature.hydrator')
           app._stats.lastStartTime = runs.length > 0 ? runs[0].start : 'N/A';
 
           for (var i = 0; i < runs.length; i++) {
-            if (runs[i].status !== 'RUNNING') {
+            var status = runs[i].status;
+
+            if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
               app._latest = runs[i];
               break;
             }
