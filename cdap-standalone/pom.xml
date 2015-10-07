@@ -314,6 +314,13 @@
                       <targetPath>examples</targetPath>
                       <includes>
                         <include>README*</include>
+                      </includes>
+                      <filtering>true</filtering>
+                    </resource>
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-examples</directory>
+                      <targetPath>examples</targetPath>
+                      <includes>
                         <include>resources/**</include>
                         <include>**/src/**</include>
                         <include>**/bin/**</include>
