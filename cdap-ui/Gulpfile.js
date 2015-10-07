@@ -147,7 +147,6 @@ gulp.task('js:lib', function() {
       './bower_components/angular-gridster/dist/angular-gridster.min.js',
       './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.js'
 
-
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
     ], mainBowerFiles({
