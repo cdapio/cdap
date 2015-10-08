@@ -61,6 +61,7 @@ angular.module(PKG.name + '.services')
       getUserNodeToken: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/nodes/:nodeId/token?scope=user'),
       getSystemNodeToken: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/nodes/:nodeId/token?scope=system'),
       getStatistics: myHelpers.getConfig('GET', 'REQUEST', basepath + '/statistics'),
+      pollStatistics: myHelpers.getConfig('GET', 'POLL', basepath + '/statistics'),
       doAction: myHelpers.getConfig('POST', 'REQUEST', basepath + '/:action')
     });
   });

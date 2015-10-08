@@ -14,7 +14,7 @@
  * the License.
  */
 
-angular.module(PKG.name+'.services')
+var service = angular.module(PKG.name+'.services');
 
   /**
     Example Usage:
@@ -49,17 +49,14 @@ angular.module(PKG.name+'.services')
 
    */
 
-  .factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket, MYSOCKET_EVENT, $q, $filter, myCdapUrl, MyPromise, myHelpers) {
+  service.factory('uuid', function ($window) {
+    return $window.uuid;
+  });
+
+
+  service.factory('MyDataSource', function ($log, $rootScope, caskWindowManager, mySocket, MYSOCKET_EVENT, $q, myCdapUrl, MyPromise, myHelpers, uuid, EventPipe) {
 
     var instances = {}; // keyed by scopeid
-
-    /**
-     * Generates unique id's for each request that is being sent on
-     * the websocket connection.
-     */
-    var generateUUID = function() {
-      return uuid.v4();
-    };
 
     /**
      * Start polling of the resource - sends the action 'poll-start' to
@@ -71,8 +68,8 @@ angular.module(PKG.name+'.services')
         re = resource;
       }else {
         re = {
-          url: resource.url,
           id: resource.id,
+          url: resource.url,
           json: resource.json,
           method: resource.method
         };
@@ -108,8 +105,8 @@ angular.module(PKG.name+'.services')
         re = resource;
       }else {
         re = {
-          url: resource.url,
           id: resource.id,
+          url: resource.url,
           json: resource.json,
           method: resource.method
         };
@@ -143,72 +140,67 @@ angular.module(PKG.name+'.services')
       }
       instances[id] = self;
 
-      this.bindings = [];
+      this.scopeId = id;
+      this.bindings = {};
 
-
-
-      scope.$on(MYSOCKET_EVENT.message, function (event, data) {
+      EventPipe.on(MYSOCKET_EVENT.message, function (data) {
+        var hash;
+        hash = data.resource.id;
 
         if(data.statusCode>299 || data.warning) {
-          angular.forEach(self.bindings, function (b) {
-            if (b.resource.id === data.resource.id) {
-              if (b.errorCallback) {
-                $rootScope.$apply(b.errorCallback.bind(null, data.response));
-              } else if (b.reject) {
-                $rootScope.$apply(b.reject.bind(null, {data: data.response}));
-              }
+          if (self.bindings[hash]) {
+            if(self.bindings[hash].errorCallback) {
+              $rootScope.$apply(self.bindings[hash].errorCallback.bind(null, data.response));
+            } else if (self.bindings[hash].reject) {
+              $rootScope.$apply(self.bindings[hash].reject.bind(null, {data: data.response}));
             }
-          });
+          }
           return; // errors are handled at $rootScope level
         }
-        // Not using angular.forEach for performance reasons.
-        for (var i=0; i<self.bindings.length; i++) {
-          var b = self.bindings[i];
-          if (b.resource.id === data.resource.id) {
-            if (angular.isFunction(b.callback)) {
-              data.response = data.response || {};
-              data.response.__pollId__ = b.resource.id;
-              scope.$apply(b.callback.bind(null, data.response));
-            } else if (b && b.resolve) {
-              // https://github.com/angular/angular.js/wiki/When-to-use-$scope.$apply%28%29
-              scope.$apply(b.resolve.bind(null, {data: data.response, id: b.resource.id}));
-              return;
-            }
+
+        if (self.bindings[hash]) {
+          if (self.bindings[hash].callback) {
+            data.response = data.response || {};
+            data.response.__pollId__ = hash;
+            scope.$apply(self.bindings[hash].callback.bind(null, data.response));
+          } else if (self.bindings[hash].resolve) {
+            // https://github.com/angular/angular.js/wiki/When-to-use-$scope.$apply%28%29
+            scope.$apply(self.bindings[hash].resolve.bind(null, {data: data.response, id: hash}));
+            return;
           }
         }
 
       });
 
       scope.$on('$destroy', function () {
-        setTimeout(function() {
-          for (var i=0; i<self.bindings.length; i++) {
-            var b = self.bindings[i];
-            if (b.poll) {
-              _pollStop(b.resource);
-            }
+        Object.keys(self.bindings).forEach(function(key) {
+          var b = self.bindings[key];
+          if (b.poll) {
+            _pollStop(b.resource);
           }
-
-          delete instances[id];
         });
+
+        delete instances[self.scopeId];
       });
 
       scope.$on(caskWindowManager.event.blur, function () {
-        angular.forEach(self.bindings, function (b) {
-          if(b.poll) {
+        Object.keys(self.bindings).forEach(function(key) {
+          var b = self.bindings[key];
+          if (b.poll) {
             _pollStop(b.resource);
           }
         });
       });
 
       scope.$on(caskWindowManager.event.focus, function () {
-        angular.forEach(self.bindings, function (b) {
-          if(b.poll) {
+        Object.keys(self.bindings).forEach(function(key) {
+          var b = self.bindings[key];
+          if (b.poll) {
             _pollStart(b.resource);
           }
         });
       });
 
-      this.scope = scope;
     }
 
     /**
@@ -216,13 +208,11 @@ angular.module(PKG.name+'.services')
      */
     DataSource.prototype.poll = function (resource, cb, errorCb) {
       var self = this;
-      var id = generateUUID();
       var generatedResource = {};
       var promise = new MyPromise(function(resolve, reject) {
         generatedResource = {
           json: resource.json,
-          id: id,
-          interval: resource.interval || myHelpers.objectQuery(resource, 'options', 'interval') ,
+          interval: resource.interval || myHelpers.objectQuery(resource, 'options', 'interval') || $rootScope.defaultPollInterval,
           body: resource.body,
           method: resource.method || 'GET'
         };
@@ -233,27 +223,27 @@ angular.module(PKG.name+'.services')
           generatedResource.url = buildUrl(resource.url, resource.params || {});
         }
 
-        self.bindings.push({
+        generatedResource.id = uuid.v4();
+        self.bindings[generatedResource.id] = {
           poll: true,
-          resource: generatedResource,
           callback: cb,
+          resource: generatedResource,
           errorCallback: errorCb,
           resolve: resolve,
           reject: reject
-        });
+        };
 
         _pollStart(generatedResource);
       }, true);
 
       if (!resource.$isResource) {
         promise = promise.then(function(res) {
-          var id = res.id;
           res = res.data;
-          res.__pollId__ = id;
+          res.__pollId__ = generatedResource.id;
           return $q.when(res);
         });
       }
-      promise.__pollId__ = id;
+      promise.__pollId__ = generatedResource.id;
       return promise;
     };
 
@@ -262,20 +252,21 @@ angular.module(PKG.name+'.services')
      * (when scope is destroyed Line 196 takes care of deleting the polling resource)
      */
     DataSource.prototype.stopPoll = function(resourceId) {
-      var filterFilter = $filter('filter');
       // Duck Typing for angular's $resource.
       var defer = $q.defer();
-      var id;
+      var id, resource;
       if (angular.isObject(resourceId)) {
         id = resourceId.params.pollId;
       } else {
         id = resourceId;
       }
-      var match = filterFilter(this.bindings, { 'resource': {id: id} });
 
-      if (match.length) {
-        _pollStop(match[0].resource);
-        this.bindings.splice(this.bindings.indexOf(match[0]), 1);
+      var match = this.bindings[resourceId];
+
+      if (match) {
+        resource = match.resource;
+        _pollStop(resource);
+        delete this.bindings[resourceId];
         defer.resolve({});
       } else {
         defer.reject({});
@@ -290,12 +281,10 @@ angular.module(PKG.name+'.services')
     DataSource.prototype.config = function (resource, cb) {
       var deferred = $q.defer();
 
-      var id = generateUUID();
-      resource.id = id;
       resource.suppressErrors = true;
-      this.bindings.push({
+      resource.id = uuid.v4();
+      this.bindings[resource.id] = {
         resource: resource,
-        id: id,
         callback: function (result) {
           if (cb) {
             cb.apply(this, arguments);
@@ -305,7 +294,8 @@ angular.module(PKG.name+'.services')
         errorCallback: function(err) {
           deferred.reject(err);
         }
-      });
+      };
+
       mySocket.send({
         action: 'template-config',
         resource: resource
@@ -319,14 +309,11 @@ angular.module(PKG.name+'.services')
      */
     DataSource.prototype.request = function (resource, cb) {
       var self = this;
-
       var promise = new MyPromise(function(resolve, reject) {
-        var id = generateUUID();
 
         var generatedResource = {
-          id: id,
           json: resource.json,
-          method: resource.method
+          method: resource.method || 'GET'
         };
         if (resource.body) {
           generatedResource.body = resource.body;
@@ -355,12 +342,13 @@ angular.module(PKG.name+'.services')
           generatedResource.url = buildUrl(resource.url, resource.params || {});
         }
 
-        self.bindings.push({
-          resource: generatedResource,
+        generatedResource.id = uuid.v4();
+        self.bindings[generatedResource.id] = {
           callback: cb,
+          resource: generatedResource,
           resolve: resolve,
           reject: reject
-        });
+        };
 
         mySocket.send({
           action: 'request',

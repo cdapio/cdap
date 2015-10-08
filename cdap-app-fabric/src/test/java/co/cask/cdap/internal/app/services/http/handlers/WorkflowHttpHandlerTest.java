@@ -59,6 +59,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -1293,6 +1294,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(1, sparkProgramRuns.size());
   }
 
+  @Ignore
   @Test
   public void testWorkflowForkFailure() throws Exception {
     // Deploy an application containing workflow with fork. Fork executes MapReduce programs
