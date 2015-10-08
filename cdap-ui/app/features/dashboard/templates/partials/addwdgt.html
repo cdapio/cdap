@@ -19,7 +19,7 @@
       ng-submit="doAddWidget()"
         novalidate>
   <div class="modal-header clearfix">
-      <h4 class="modal-title pull-left">Add a Widget</h4>
+      <h3 class="modal-title pull-left">Add a Widget</h3>
       <a class="btn pull-right" ng-click="closeModal()">
         <span class="fa fa-remove"></span>
         <span class="sr-only"> Close </span>
@@ -73,9 +73,9 @@
         </div>
   </div>
   <div class="modal-footer">
-      <button type="submit"
-        ng-disabled="addWdgtForm.$invalid"
-        class="btn btn-primary"
-      >Add</button>
+    <button type="submit"
+            ng-disabled="addWdgtForm.$invalid"
+            class="btn"
+            ng-class="{'disabled': addWdgtForm.$invalid, 'btn-success': !addWdgtForm.$invalid}">Add</button>
   </div>
 </form>
