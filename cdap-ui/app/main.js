@@ -79,7 +79,8 @@ angular
       'angularMoment',
       'ui.ace',
       'gridster',
-      'angular-cron-jobs'
+      'angular-cron-jobs',
+      'angularjs-dropdown-multiselect'
 
     ]).name,
 

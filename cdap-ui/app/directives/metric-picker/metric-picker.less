@@ -14,9 +14,19 @@
  * the License.
  */
 
+@import "../../../bower_components/font-awesome/less/font-awesome.less";
+
 my-metric-picker {
   > .metrics-container {
-    overflow-y: auto;
-    max-height: 180px;
+    .dropdown-menu {
+      .divider {
+        margin: 0;
+      }
+    }
   }
+  .glyphicon {
+    .fa;
+  }
+  .glyphicon-ok:before { content: @fa-var-check; }
+  .glyphicon-remove:before {content: @fa-var-times; }
 }
