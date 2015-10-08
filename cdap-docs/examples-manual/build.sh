@@ -144,7 +144,7 @@ function download_includes() {
   test_an_include d2c5d88f05bc2616f3b3eff2aa0b202d ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
 
   test_an_include 8a7b4aacee88800cd82d96b07280cc64 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetExample.java
-  test_an_include 2ad024c8093bea2b3cb9b5fa14f1224b ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+  test_an_include 982c2ad6f7297005e276a06ce6c5cd53 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
   test_an_include 31c9d6fd543a48ce5e3f2b9cdc630b6d ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
   
   test_an_include f2eb96409a39f0cd1cfa09cb7c917946 ../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
@@ -161,7 +161,7 @@ function download_includes() {
   test_an_include 399a0027e63a25f9be0486583bff0896 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
   test_an_include afe12d26b79607a846d3eaa58958ea5f ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
-  test_an_include 2d85727db18c3261b60d4cb278846329 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
+  test_an_include 8baaed27c21fe2dd96eddde108722ea6 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
   test_an_include 45b100e826b51372fd7783b3465e87e9 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
   
   test_an_include a33ca6df16ab5443d1d446f13d16348d ../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionApp.java
