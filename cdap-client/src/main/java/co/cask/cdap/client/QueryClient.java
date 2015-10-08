@@ -37,7 +37,6 @@ public class QueryClient {
 
   @Inject
   public QueryClient(final ClientConfig config) {
-
     Supplier<String> hostname = new Supplier<String>() {
       @Override
       public String get() {
@@ -58,12 +57,25 @@ public class QueryClient {
         if (config.getAccessToken() != null) {
           return config.getAccessToken().getValue();
         }
-
         return null;
       }
     };
 
-    exploreClient = new SuppliedAddressExploreClient(hostname, port, accessToken);
+    Supplier<Boolean> sslEnabled = new Supplier<Boolean>() {
+      @Override
+      public Boolean get() {
+        return config.getConnectionConfig().isSSLEnabled();
+      }
+    };
+
+    Supplier<Boolean> verifySSLCert = new Supplier<Boolean>() {
+      @Override
+      public Boolean get() {
+        return config.isVerifySSLCert();
+      }
+    };
+
+    exploreClient = new SuppliedAddressExploreClient(hostname, port, accessToken, sslEnabled, verifySSLCert);
   }
 
   /**
