@@ -61,8 +61,7 @@
             <li class="text-danger" ng-repeat="error in errors">{{ error }}</li>
           </ul>
         </div>
-
-        <h4 class="sink-schema" ng-if="pluginCopy.properties.schema || pluginCopy.implicitSchema || pluginCopy._backendProperties['schema'].required">
+        <h4 class="sink-schema" ng-if="pluginCopy.properties.schema !== undefined || pluginCopy.implicitSchema">
           <span>Schema</span>
           <span class="fa fa-asterisk ng-scope" ng-if="pluginCopy._backendProperties['schema'].required"></span>
           <button
@@ -76,7 +75,7 @@
 
         <fieldset ng-disabled="isDisabled">
           <my-schema-editor
-            ng-if="pluginCopy.properties.schema || pluginCopy.implicitSchema || pluginCopy._backendProperties['schema'].required"
+            ng-if="pluginCopy.properties.schema !== undefined || pluginCopy.implicitSchema"
             ng-model="pluginCopy.outputSchema"
             data-disabled="pluginCopy.implicitSchema || isDisabled"
             plugin-properties="pluginCopy.properties"
@@ -84,7 +83,7 @@
           </my-schema-editor>
         </fieldset>
 
-        <div ng-if="pluginCopy.properties.schema && !pluginCopy.outputSchema && isDisabled">
+        <div ng-if="pluginCopy.properties.schema !== undefined && !pluginCopy.outputSchema && isDisabled">
           <div class="well well-lg">
             <h4>There is no output schema</h4>
           </div>
