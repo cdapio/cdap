@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 @Beta
 public final class ArtifactVersion implements Comparable<ArtifactVersion> {
 
-  private static final Pattern PATTERN = Pattern.compile("(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?");
+  private static final Pattern PATTERN = Pattern.compile("(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?(?:[.\\-](.*))?$");
 
   private final String version;
   private final Integer major;
@@ -68,7 +68,7 @@ public final class ArtifactVersion implements Comparable<ArtifactVersion> {
     String suffix = null;
     if (str != null) {
       Matcher matcher = PATTERN.matcher(str);
-      boolean matches = matchSuffix ? (matcher.find() && matcher.hitEnd()) : matcher.matches();
+      boolean matches = matchSuffix ? (matcher.find()) : matcher.matches();
 
       if (matches) {
         tmpVersion = matcher.group(0);
