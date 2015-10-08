@@ -62,7 +62,7 @@
           </ul>
         </div>
 
-        <h4 class="sink-schema" ng-if="pluginCopy.properties.schema !== undefined">
+        <h4 class="sink-schema" ng-if="pluginCopy.implicitSchema || pluginCopy.properties.schema !== undefined">
           <span>Schema</span>
           <button
             class="btn btn-sm btn-default pull-right"
