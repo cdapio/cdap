@@ -103,13 +103,13 @@ function download_includes() {
   local project_img=$project_source/docs/img
 
   # 1:Includes directory 2:GitHub directory 3:Java filename   4:MD5 hash of file
-  download_file $includes $project_main BounceCountsMapReduce.java f2f8d36e4049ba69b40282057accf38a
+  download_file $includes $project_main BounceCountsMapReduce.java 72f01be483fe6aa9a2d07bf2d324594f
   download_file $includes $project_main BounceCountStore.java      d476c15655c6a6c6cd7fe682dea4a8b7
-  download_file $includes $project_main PageViewStore.java         576d76c60b8f5fddeee916a87318d209
-  download_file $includes $project_main WiseApp.java               69825da7d5f6d1852fd5d28415418a45
-  download_file $includes $project_test WiseAppTest.java           7256c18cb80f59b4a9abcb5da320b337
+  download_file $includes $project_main PageViewStore.java         7dc8d2fec04ce89fae4f0356db17e19d
+  download_file $includes $project_main WiseApp.java               1ee41e950a4b34b75fe0d2cd0ff94508
+  download_file $includes $project_test WiseAppTest.java           5145832dc315f4253fa6b2aac3ee9164
   download_file $includes $project_main WiseFlow.java              2deba0633a0dcca14ef426929f543872
-  download_file $includes $project_main WiseWorkflow.java          8fe51eed165e85d95c4f5e25953e3489
+  download_file $includes $project_main WiseWorkflow.java          d24a138d3a96bfb41e6d166866b72291
   download_file $includes $project_main WiseService.java           dccfeb2d5726a031b5aff9897ccf8257
 
   echo_red_bold "Downloading image files from GitHub..."
