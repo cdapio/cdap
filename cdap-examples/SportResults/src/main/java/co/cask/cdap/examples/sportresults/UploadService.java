@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.sportresults;
 
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
@@ -23,12 +24,16 @@ import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -56,6 +61,8 @@ public class UploadService extends AbstractService {
    * A handler that allows reading and writing files.
    */
   public static class UploadHandler extends AbstractHttpServiceHandler {
+
+    private static final Logger LOG = LoggerFactory.getLogger(UploadHandler.class);
 
     @UseDataSet("results")
     private PartitionedFileSet results;
@@ -87,8 +94,8 @@ public class UploadService extends AbstractService {
 
     @PUT
     @Path("leagues/{league}/seasons/{season}")
-    public void write(HttpServiceRequest request, HttpServiceResponder responder,
-                      @PathParam("league") String league, @PathParam("season") int season) {
+    public HttpContentConsumer write(HttpServiceRequest request, HttpServiceResponder responder,
+                                     @PathParam("league") String league, @PathParam("season") int season) {
 
       PartitionKey key = PartitionKey.builder()
         .addStringField("league", league)
@@ -97,21 +104,50 @@ public class UploadService extends AbstractService {
 
       if (results.getPartition(key) != null) {
         responder.sendString(409, "Partition exists.", Charsets.UTF_8);
-        return;
+        return null;
       }
 
-      PartitionOutput output = results.getPartitionOutput(key);
+      final PartitionOutput output = results.getPartitionOutput(key);
       try {
-        Location location = output.getLocation().append("file");
-        try (WritableByteChannel channel = Channels.newChannel(location.getOutputStream())) {
-          channel.write(request.getContent());
+        final Location partitionDir = output.getLocation();
+        if (!partitionDir.mkdirs()) {
+          responder.sendString(409, "Partition exists.", Charsets.UTF_8);
+          return null;
         }
+
+        final Location location = partitionDir.append("file");
+        final WritableByteChannel channel = Channels.newChannel(location.getOutputStream());
+        return new HttpContentConsumer() {
+          @Override
+          public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
+            channel.write(chunk);
+          }
+
+          @Override
+          public void onFinish(HttpServiceResponder responder) throws Exception {
+            channel.close();
+            output.addPartition();
+            responder.sendStatus(200);
+          }
+
+          @Override
+          public void onError(HttpServiceResponder responder, Throwable failureCause) {
+            Closeables.closeQuietly(channel);
+            try {
+              partitionDir.delete(true);
+            } catch (IOException e) {
+              LOG.warn("Failed to delete partition directory '{}'", partitionDir, e);
+            }
+            LOG.debug("Unable to write path {}", location, failureCause);
+            responder.sendError(400, String.format("Unable to write path '%s'. Reason: '%s'",
+                                                   location, failureCause.getMessage()));
+          }
+        };
       } catch (IOException e) {
-        responder.sendError(400, String.format("Unable to write path '%s'", output.getRelativePath()));
-        return;
+        responder.sendError(400, String.format("Unable to write path '%s'. Reason: '%s'",
+                                               output.getRelativePath(), e.getMessage()));
+        return null;
       }
-      output.addPartition();
-      responder.sendStatus(200);
     }
   }
 }

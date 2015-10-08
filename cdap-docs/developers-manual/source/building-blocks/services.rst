@@ -103,6 +103,25 @@ An example of calling this endpoint with the HTTP RESTful API is shown in the :r
 :ref:`percent-encoding <http-restful-api-conventions-reserved-unsafe-characters>`.
 See the next section, :ref:`services-path-parameters`.
 
+Handling a Large Request Body
+=============================
+Sometimes the request body for a ``PUT`` or ``POST`` request can be huge and it is not feasible to keep all
+of it in memory. You can have the handler method return an ``HttpContentConsumer`` instead of ``void``
+to process the request body in smaller pieces.
+
+For example, the ``SportResults`` application has an ``UploadService`` that exposes an endpoint for uploading files
+to ``PartitionedFileSets``. It returns an ``HttpContentConsumer`` so that it receives the request body in a series
+of small chunks::
+
+  @PUT
+  @Path("leagues/{league}/seasons/{season}")
+  public HttpContentConsumer write(HttpServiceRequest request, HttpServiceResponder responder,
+                                   @PathParam("league") String league, @PathParam("season") int season) {
+    // ...
+  }
+
+An example of how to implement ``HttpContentConsumer`` is shown in the :ref:`Sport Results Example <examples-sport-results>`.
+
 .. _services-path-parameters:
 
 About Path Parameters
