@@ -17,10 +17,23 @@
 # limitations under the License.
 #
 
-# auth
-default['cdap']['cdap_site']['security.server.ssl.keystore.password'] = 'defaultpassword'
-default['cdap']['cdap_site']['security.server.ssl.keystore.path'] = '/opt/cdap/security/conf/keystore.jks'
-default['cdap']['cdap_site']['security.auth.server.address'] = node['fqdn']
+# SSL Settings
+if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('ssl.enabled') &&
+   node['cdap']['cdap_site']['ssl.enabled'].to_s == 'true'
+
+  # auth
+  default['cdap']['cdap_security']['security.server.ssl.keystore.password'] = 'somedefaultpassword'
+  default['cdap']['cdap_security']['security.server.ssl.keystore.path'] = '/opt/cdap/security/conf/keystore.jks'
+  default['cdap']['cdap_security']['security.auth.server.address'] = node['fqdn']
+
+  # router
+  default['cdap']['cdap_security']['router.ssl.keystore.password'] = 'somedefaultpassword'
+  default['cdap']['cdap_security']['router.ssl.keystore.path'] = '/opt/cdap/gateway/conf/keystore.jks'
+
+  # web ui
+  default['cdap']['cdap_security']['dashboard.ssl.key'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.key"
+  default['cdap']['cdap_security']['dashboard.ssl.cert'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.crt"
+end
 
 # realmfile creation
 # node['cdap']['cdap_site']['security.authentication.handlerClassName'] must equal 'security.authentication.basic.realmfile'
@@ -29,14 +42,7 @@ default['cdap']['security']['manage_realmfile'] = false
 # realmfile username/passwords
 default['cdap']['security']['realmfile']['cdap'] = 'cdap'
 
-# router
-default['cdap']['cdap_site']['router.ssl.keystore.password'] = 'defaultpassword'
-default['cdap']['cdap_site']['router.ssl.keystore.path'] = '/opt/cdap/gateway/conf/keystore.jks'
-
-# web ui
-default['cdap']['cdap_site']['dashboard.ssl.key'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.key"
-default['cdap']['cdap_site']['dashboard.ssl.cert'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.crt"
-
+# SSL common name
 default['cdap']['security']['ssl_common_name'] = node['fqdn']
 
 if node['cdap']['cdap_site'].key?('kerberos.auth.enabled') && node['cdap']['cdap_site']['kerberos.auth.enabled'].to_s == 'true'

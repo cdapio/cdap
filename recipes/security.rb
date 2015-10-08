@@ -49,18 +49,18 @@ execute 'create-security-server-ssl-keystore' do
       false
     end
 
-  password = node['cdap']['cdap_site']['security.server.ssl.keystore.password']
+  password = node['cdap']['cdap_security']['security.server.ssl.keystore.password']
   keypass =
-    if node['cdap']['cdap_site'].key?('security.server.ssl.keystore.keypassword')
-      node['cdap']['cdap_site']['security.server.ssl.keystore.keypassword']
+    if node['cdap']['cdap_security'].key?('security.server.ssl.keystore.keypassword')
+      node['cdap']['cdap_security']['security.server.ssl.keystore.keypassword']
     else
-      node['cdap']['cdap_site']['security.server.ssl.keystore.password']
+      node['cdap']['cdap_security']['security.server.ssl.keystore.password']
     end
-  path = node['cdap']['cdap_site']['security.server.ssl.keystore.path']
+  path = node['cdap']['cdap_security']['security.server.ssl.keystore.path']
   common_name = node['cdap']['security']['ssl_common_name']
   jks =
-    if node['cdap']['cdap_site'].key?('security.server.ssl.keystore.type') &&
-       node['cdap']['cdap_site']['security.server.ssl.keystore.type'] != 'JKS'
+    if node['cdap']['cdap_security'].key?('security.server.ssl.keystore.type') &&
+       node['cdap']['cdap_security']['security.server.ssl.keystore.type'] != 'JKS'
       false
     else
       true
