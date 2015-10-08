@@ -129,6 +129,8 @@ public abstract class AbstractDatasetFramework implements DatasetFramework {
           }
         }
       }
+    } catch (DatasetManagementException e) {
+      throw e;
     } catch (Exception e) {
       String msg = String.format("Could not create jar for deploying dataset module %s with main class %s",
                                  moduleId, typeClass.getName());

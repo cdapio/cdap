@@ -103,6 +103,8 @@ public class DatasetModulesDeployer {
           LOG.info("Not deploying module " + moduleName + " as it already exists");
         }
       }
+    } catch (Exception e) {
+      LOG.error("Failed to deploy modules", e);
     } finally {
       DirUtils.deleteDirectoryContents(unpackDir);
     }
