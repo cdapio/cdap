@@ -79,6 +79,7 @@ given IP. It exposes an ``increment`` method, implemented as:
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java
    :language: java
    :lines: 60-63
+   :dedent: 2
 
 The complete source code of the ``UniqueVisitCount`` class can be found in the example in
 ``src/main/java/co/cask/cdap/examples/webanalytics/UniqueVisitCount.java``
@@ -88,14 +89,16 @@ that specifies the flow:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalyticsFlow.java
    :language: java
-   :lines: 26-
+   :lines: 26-35
+   :dedent: 2
 
 Lastly, we bundle up the dataset and the flow we've defined together to form an ``application`` that can be deployed
 and executed in CDAP:
 
 .. literalinclude:: /../../../cdap-examples/WebAnalytics/src/main/java/co/cask/cdap/examples/webanalytics/WebAnalytics.java
    :language: java
-   :lines: 26-
+   :lines: 26-35
+   :dedent: 2
 
 
 .. Building and Starting
@@ -134,7 +137,6 @@ The application includes sample logs, located in ``examples/resources/accesslog.
 using the CDAP Commmand Line Interface::
 
   $ cdap-cli.sh load stream log examples/resources/accesslog.txt
-  
   Successfully sent stream event to stream 'log'
 
 Query the Unique Visitor Page Views

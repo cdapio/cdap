@@ -61,9 +61,9 @@ Memory Requirements
 When a Spark program is running inside a workflow, the memory requirements configured for the Spark program may need increasing beyond the defaults:
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
-   :language: java
-   :lines: 113-114
-
+    :language: java
+    :lines: 113-114
+    :dedent: 6
 
 .. Building and Starting
 .. =====================
@@ -91,7 +91,6 @@ Inject a file of URL pairs to the stream *backlinkURLStream* by running this com
 Standalone CDAP SDK directory, using the Command Line Interface::
   
   $ cdap-cli.sh load stream backlinkURLStream examples/SparkPageRank/resources/urlpairs.txt
-  
   Successfully sent stream event to stream 'backlinkURLStream'
 
 Starting the Workflow
