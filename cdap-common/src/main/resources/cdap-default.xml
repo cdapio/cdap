@@ -210,6 +210,14 @@
   </property>
 
   <property>
+    <name>app.program.extra.classpath</name>
+    <value/>
+    <description>
+      Extra Java classpath for CDAP programs
+    </description>
+  </property>
+
+  <property>
     <name>app.program.jvm.opts</name>
     <value>-XX:MaxPermSize=128M ${twill.jvm.gc.opts}</value>
     <description>

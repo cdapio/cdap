@@ -176,8 +176,8 @@ angular.module(PKG.name + '.commons')
           this.instance.addEndpoint(id, sinkSettings, {uuid: id});
           break;
         case artifactType.transform:
-          sourceSettings.anchor = [ 0.5, 1, 0, 0, 26, -43, 'transformAnchor'];
-          sinkSettings.anchor = [ 0.5, 1, 0, 0, -26, -43, 'transformAnchor'];
+          sourceSettings.anchor = [ 0.5, 1, 1, 0, 26, -43, 'transformAnchor'];
+          sinkSettings.anchor = [ 0.5, 1, -1, 0, -26, -43, 'transformAnchor'];
           // Need to id each end point so that it can be used later to make connections.
           this.instance.addEndpoint(id, sourceSettings, {uuid: 'Left' + id});
           this.instance.addEndpoint(id, sinkSettings, {uuid: 'Right' + id});

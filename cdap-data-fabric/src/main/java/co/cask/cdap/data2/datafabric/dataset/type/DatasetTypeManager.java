@@ -67,6 +67,7 @@ import javax.annotation.Nullable;
 public class DatasetTypeManager extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetTypeManager.class);
 
+  private final CConfiguration cConf;
   private final MDSDatasetsRegistry mdsDatasets;
   private final LocationFactory locationFactory;
 
@@ -74,13 +75,14 @@ public class DatasetTypeManager extends AbstractIdleService {
   private final boolean allowDatasetUncheckedUpgrade;
 
   @Inject
-  public DatasetTypeManager(CConfiguration configuration, MDSDatasetsRegistry mdsDatasets,
+  public DatasetTypeManager(CConfiguration cConf, MDSDatasetsRegistry mdsDatasets,
                             LocationFactory locationFactory,
                             @Named("defaultDatasetModules") Map<String, DatasetModule> defaultModules) {
+    this.cConf = cConf;
     this.mdsDatasets = mdsDatasets;
     this.locationFactory = locationFactory;
     this.defaultModules = Maps.newLinkedHashMap(defaultModules);
-    this.allowDatasetUncheckedUpgrade = configuration.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+    this.allowDatasetUncheckedUpgrade = cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
   }
 
   @Override
@@ -129,7 +131,7 @@ public class DatasetTypeManager extends AbstractIdleService {
               BundleJarUtil.unpackProgramJar(jarLocation, unpackedLocation);
             }
             cl = jarLocation == null ? this.getClass().getClassLoader() :
-              ProgramClassLoader.create(unpackedLocation, getClass().getClassLoader());
+              ProgramClassLoader.create(cConf, unpackedLocation, getClass().getClassLoader());
             @SuppressWarnings("unchecked")
             Class clazz = ClassLoaders.loadClass(className, cl, this);
             module = DatasetModules.getDatasetModule(clazz);
@@ -471,7 +473,7 @@ public class DatasetTypeManager extends AbstractIdleService {
         def = registry.get(datasetTypeName);
       } else {
         try {
-          def = new DatasetDefinitionLoader(locationFactory).load(typeMeta, registry);
+          def = new DatasetDefinitionLoader(cConf, locationFactory).load(typeMeta, registry);
         } catch (IOException e) {
           throw Throwables.propagate(e);
         }
