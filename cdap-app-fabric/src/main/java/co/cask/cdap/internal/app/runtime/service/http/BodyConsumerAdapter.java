@@ -21,7 +21,6 @@ import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
-import co.cask.cdap.api.service.http.NonTransactionalHttpContentConsumer;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.http.BodyConsumer;
@@ -76,21 +75,11 @@ final class BodyConsumerAdapter extends BodyConsumer {
     }
 
     try {
-      // Based on the type of the content consumer, call onReceive with transaction or not.
-      if (delegate instanceof NonTransactionalHttpContentConsumer) {
-        final ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassLoader);
-        try {
-          ((NonTransactionalHttpContentConsumer) delegate).onReceived(request.toByteBuffer(), transactional);
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
-        }
-      } else {
-        txExecute(txContext, datasetContext, new TxRunnable() {
-          @Override
-          public void run(DatasetContext context) throws Exception {
-            delegate.onReceived(request.toByteBuffer());
-          }
-        });
+      final ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassLoader);
+      try {
+        delegate.onReceived(request.toByteBuffer(), transactional);
+      } finally {
+        ClassLoaders.setContextClassLoader(oldClassLoader);
       }
     } catch (Throwable t) {
       onError(t, this.responder);

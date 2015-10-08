@@ -17,6 +17,7 @@
 package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.Transactional;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.nio.ByteBuffer;
@@ -71,20 +72,15 @@ public abstract class HttpContentConsumer {
    * This method will get invoked when a new chunk of the request body is available to be consumed.
    * It is guaranteed that no concurrent calls to this method will be made.
    * <p>
-   * Also note that each invocation
-   * to this method is executed inside a single transaction, hence access to transactional {@link Dataset Datasets}
-   * is possible through the {@link HttpServiceContext} provided to the
-   * {@link HttpServiceHandler#initialize(HttpServiceContext)} method.
+   * Access to transactional {@link Dataset Datasets} should be done through the
+   * {@link Transactional#execute(TxRunnable)} method.
    * </p>
    *
-   * If transaction is not needed, you can extend from the {@link NonTransactionalHttpContentConsumer} class and
-   * implement the {@link NonTransactionalHttpContentConsumer#onReceived(ByteBuffer, Transactional)} method instead
-   * to get better performance.
-   *
    * @param chunk a {@link ByteBuffer} containing a chunk of the request body
+   * @param transactional for executing a {@link TxRunnable} in a single transaction.
    * @throws Exception if there is any error when processing the received chunk
    */
-  public abstract void onReceived(ByteBuffer chunk) throws Exception;
+  public abstract void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception;
 
   /**
    * This method will get invoked when reached the end of the request body. It must use the given
@@ -101,8 +97,8 @@ public abstract class HttpContentConsumer {
    * {@link HttpServiceResponder} to send response in order to complete the HTTP call.
    *
    * Any issues related to network as well as any {@link Exception Exceptions} raised
-   * from either {@link #onReceived(ByteBuffer)} or {@link #onFinish(HttpServiceResponder)} methods will have this
-   * method invoked.
+   * from either {@link #onReceived(ByteBuffer, Transactional)}
+   * or {@link #onFinish(HttpServiceResponder)} methods will have this method invoked.
    *
    * This method is always executed inside a single transaction.
    *

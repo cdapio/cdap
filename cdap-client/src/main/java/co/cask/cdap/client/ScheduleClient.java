@@ -60,8 +60,7 @@ public class ScheduleClient {
   }
 
   public ScheduleClient(ClientConfig config) {
-    this.config = config;
-    this.restClient = new RESTClient(config);
+    this(config, new RESTClient(config));
   }
 
   public List<ScheduleSpecification> list(Id.Workflow workflow)

@@ -240,8 +240,6 @@ with a JSON array in the request body consisting of multiple JSON objects with t
 
    * - Parameter
      - Description
-   * - ``<namespace>``
-     - Namespace ID
    * - ``"appId"``
      - Name of the application being called
    * - ``"programType"``

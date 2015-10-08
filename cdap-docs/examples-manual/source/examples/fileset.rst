@@ -49,14 +49,16 @@ It declares the datasets that it needs to access using ``@UseDataSet`` annotatio
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 58-62
+    :lines: 65-69
+    :dedent: 4
 
 Both methods of this service have two arguments: the name of the FileSet and the relative path within that FileSet.
 For example, the ``read`` method returns the contents of the requested file for a GET request:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 64-86
+    :lines: 71-93
+    :dedent: 4
 
 It uses the ``getLocation()`` of the file set to obtain the location representing the requested file,
 and then opens an input stream for that location. ``Location`` is a file system abstraction from

@@ -114,7 +114,7 @@ public final class SparkContextProvider {
                                "SparkContextProvider.getSparkContext should only be called in Spark executor process.");
 
       // Create the program ClassLoader
-      ProgramClassLoader classLoader = ProgramClassLoader.create(new File(PROGRAM_JAR_NAME),
+      ProgramClassLoader classLoader = ProgramClassLoader.create(cConf, new File(PROGRAM_JAR_NAME),
                                                                  SparkClassLoader.class.getClassLoader(),
                                                                  ProgramType.SPARK);
       Injector injector = createInjector(cConf, hConf);

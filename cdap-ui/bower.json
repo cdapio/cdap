@@ -36,10 +36,12 @@
     "angular-ui-ace": "bower",
     "jsPlumb": "1.7.5",
     "angular-gridster": "0.13.5",
-    "angular-cron-jobs": "1.4.1"
+    "angular-cron-jobs": "1.4.1",
+    "angularjs-dropdown-multiselect": "1.5.2"
   },
   "resolutions": {
     "angular": "1.4.3",
-    "d3": "3.5.5"
+    "d3": "3.5.5",
+    "lodash": "3.10.1"
   }
 }

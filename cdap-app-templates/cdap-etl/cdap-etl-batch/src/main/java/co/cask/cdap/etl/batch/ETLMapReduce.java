@@ -79,7 +79,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * MapReduce driver for Batch ETL Adapters.
+ * MapReduce Driver for ETL Batch Applications.
  */
 public class ETLMapReduce extends AbstractMapReduce {
   public static final String NAME = ETLMapReduce.class.getSimpleName();
@@ -118,7 +118,7 @@ public class ETLMapReduce extends AbstractMapReduce {
   @Override
   public void configure() {
     setName(NAME);
-    setDescription("MapReduce driver for Batch ETL Adapters");
+    setDescription("MapReduce Driver for ETL Batch Applications");
 
     PipelineRegisterer pipelineRegisterer = new PipelineRegisterer(getConfigurer(), "batch");
 
@@ -173,7 +173,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     List<SinkOutput> sinkOutputs = new ArrayList<>();
     String sinkPluginIdsStr = properties.get(Constants.Sink.PLUGINIDS);
     // should never happen
-    Preconditions.checkNotNull(sinkPluginIdsStr, "sink plugin ids could not be found in program properties.");
+    Preconditions.checkNotNull(sinkPluginIdsStr, "Sink plugin ids could not be found in program properties.");
 
     List<SinkInfo> sinkInfos = GSON.fromJson(sinkPluginIdsStr, SINK_INFO_TYPE);
     batchSinks = Lists.newArrayListWithCapacity(sinkInfos.size());
@@ -224,7 +224,7 @@ public class ETLMapReduce extends AbstractMapReduce {
   private void onRunFinishSink(MapReduceContext context, boolean succeeded) {
     String sinkPluginIdsStr = context.getSpecification().getProperty(Constants.Sink.PLUGINIDS);
     // should never happen
-    Preconditions.checkNotNull(sinkPluginIdsStr, "sink plugin ids could not be found in program properties.");
+    Preconditions.checkNotNull(sinkPluginIdsStr, "Sink plugin ids could not be found in program properties.");
 
     List<SinkInfo> sinkInfos = GSON.fromJson(sinkPluginIdsStr, SINK_INFO_TYPE);
     for (int i = 0; i < sinkInfos.size(); i++) {
@@ -283,12 +283,12 @@ public class ETLMapReduce extends AbstractMapReduce {
       Context hadoopContext = context.getHadoopContext();
       String sinkOutputsStr = hadoopContext.getConfiguration().get(SINK_OUTPUTS_KEY);
       // should never happen, this is set in beforeSubmit
-      Preconditions.checkNotNull(sinkOutputsStr, "Sink outputs not found in hadoop conf.");
+      Preconditions.checkNotNull(sinkOutputsStr, "Sink outputs not found in Hadoop conf.");
 
       List<SinkOutput> sinkOutputs = GSON.fromJson(sinkOutputsStr, SINK_OUTPUTS_TYPE);
 
       // should never happen, this is checked and set in beforeSubmit
-      Preconditions.checkArgument(!sinkOutputs.isEmpty(), "Sink outputs not found in hadoop conf.");
+      Preconditions.checkArgument(!sinkOutputs.isEmpty(), "Sink outputs not found in Hadoop conf.");
 
       boolean hasOneOutput = hasOneOutput(transformInfos, sinkOutputs);
       sinks = new ArrayList<>(sinkOutputs.size());
@@ -377,7 +377,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
         transformExecutor.resetEmitters();
       } catch (Exception e) {
-        LOG.error("Exception thrown in BatchDriver Mapper : {}", e);
+        LOG.error("Exception thrown in BatchDriver Mapper: {}", e);
         Throwables.propagate(e);
       }
     }
@@ -496,7 +496,7 @@ public class ETLMapReduce extends AbstractMapReduce {
         errorMsg = "Exception while converting StructuredRecord to String, " + e.getCause();
       }
     } else {
-      errorMsg = String.format("Error Entry is of type %s, only records of type %s is supported currently",
+      errorMsg = String.format("Error Entry is of type %s, only a record of type %s is supported currently",
                                   invalidEntry.getInvalidRecord().getClass().getName(),
                                   StructuredRecord.class.getName());
     }

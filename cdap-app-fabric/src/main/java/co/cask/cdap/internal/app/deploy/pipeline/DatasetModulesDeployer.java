@@ -113,7 +113,7 @@ public class DatasetModulesDeployer {
       BundleJarUtil.unpackProgramJar(jarLocation, unpackDir);
 
       // Create a ProgramClassLoader with the CDAP system ClassLoader as filter parent
-      return ProgramClassLoader.create(unpackDir, ApplicationDeployable.class.getClassLoader());
+      return ProgramClassLoader.create(cConf, unpackDir, ApplicationDeployable.class.getClassLoader());
     } catch (Exception e) {
       try {
         DirUtils.deleteDirectoryContents(unpackDir);

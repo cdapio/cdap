@@ -103,13 +103,13 @@ function download_includes() {
   local project_img=$project_source/docs/img
 
   # 1:Includes directory 2:GitHub directory 3:Java filename   4:MD5 hash of file
-  download_file $includes $project_main BounceCountsMapReduce.java f2f8d36e4049ba69b40282057accf38a
+  download_file $includes $project_main BounceCountsMapReduce.java 72f01be483fe6aa9a2d07bf2d324594f
   download_file $includes $project_main BounceCountStore.java      d476c15655c6a6c6cd7fe682dea4a8b7
-  download_file $includes $project_main PageViewStore.java         576d76c60b8f5fddeee916a87318d209
-  download_file $includes $project_main WiseApp.java               69825da7d5f6d1852fd5d28415418a45
-  download_file $includes $project_test WiseAppTest.java           7256c18cb80f59b4a9abcb5da320b337
+  download_file $includes $project_main PageViewStore.java         7dc8d2fec04ce89fae4f0356db17e19d
+  download_file $includes $project_main WiseApp.java               1ee41e950a4b34b75fe0d2cd0ff94508
+  download_file $includes $project_test WiseAppTest.java           5145832dc315f4253fa6b2aac3ee9164
   download_file $includes $project_main WiseFlow.java              2deba0633a0dcca14ef426929f543872
-  download_file $includes $project_main WiseWorkflow.java          8fe51eed165e85d95c4f5e25953e3489
+  download_file $includes $project_main WiseWorkflow.java          d24a138d3a96bfb41e6d166866b72291
   download_file $includes $project_main WiseService.java           dccfeb2d5726a031b5aff9897ccf8257
 
   echo_red_bold "Downloading image files from GitHub..."
@@ -144,7 +144,7 @@ function download_includes() {
   test_an_include d2c5d88f05bc2616f3b3eff2aa0b202d ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
 
   test_an_include 8a7b4aacee88800cd82d96b07280cc64 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetExample.java
-  test_an_include 2ad024c8093bea2b3cb9b5fa14f1224b ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+  test_an_include 982c2ad6f7297005e276a06ce6c5cd53 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
   test_an_include 31c9d6fd543a48ce5e3f2b9cdc630b6d ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
   
   test_an_include f2eb96409a39f0cd1cfa09cb7c917946 ../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
@@ -161,7 +161,7 @@ function download_includes() {
   test_an_include 399a0027e63a25f9be0486583bff0896 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
 
   test_an_include afe12d26b79607a846d3eaa58958ea5f ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/SportResults.java
-  test_an_include 2d85727db18c3261b60d4cb278846329 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
+  test_an_include 8baaed27c21fe2dd96eddde108722ea6 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
   test_an_include 45b100e826b51372fd7783b3465e87e9 ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
   
   test_an_include a33ca6df16ab5443d1d446f13d16348d ../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionApp.java

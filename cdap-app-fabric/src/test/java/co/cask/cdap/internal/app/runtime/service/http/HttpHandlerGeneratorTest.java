@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.service.http;
 
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
@@ -39,7 +40,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
-import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -160,7 +160,7 @@ public class HttpHandlerGeneratorTest {
       final WritableByteChannel channel = Channels.newChannel(new FileOutputStream(new File(outputDir, file)));
       return new HttpContentConsumer() {
         @Override
-        public void onReceived(ByteBuffer chunk) throws Exception {
+        public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
           channel.write(chunk);
         }
 
@@ -273,7 +273,7 @@ public class HttpHandlerGeneratorTest {
       File localFile = TEMP_FOLDER.newFile();
       try (
         OutputStream os = urlConn.getOutputStream();
-        FileOutputStream fos = new FileOutputStream(localFile);
+        FileOutputStream fos = new FileOutputStream(localFile)
       ) {
         for (int i = 0; i < 20000; i++) {
           os.write(fragment);
