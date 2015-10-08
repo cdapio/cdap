@@ -49,8 +49,7 @@ public class MetaClient {
   }
 
   public MetaClient(ClientConfig config) {
-    this.config = config;
-    this.restClient = new RESTClient(config);
+    this(config, new RESTClient(config));
   }
 
   public void ping() throws IOException, UnauthorizedException {
