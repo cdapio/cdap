@@ -303,9 +303,20 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                                       ProgramTerminator programTerminator) throws Exception {
 
     ArtifactDetail artifactDetail = artifactRepository.addArtifact(artifactId, jarFile);
-    return deployApp(namespace, appName, configStr, programTerminator, artifactDetail);
+    try {
+      return deployApp(namespace, appName, configStr, programTerminator, artifactDetail);
+    } catch (Exception e) {
+      // if we added the artifact, but failed to deploy the application, delete the artifact to bring us back
+      // to the state we were in before this call.
+      try {
+        artifactRepository.deleteArtifact(artifactId);
+      } catch (IOException e2) {
+        // if the delete fails, nothing we can do, just log it and continue on
+        LOG.warn("Failed to delete artifact {} after deployment of artifact and application failed.", artifactId, e2);
+      }
+      throw e;
+    }
   }
-
 
   /**
    * Deploy an application using the specified artifact and configuration. When an app is deployed, the Application
