@@ -81,7 +81,7 @@ These services provide convenient endpoints:
 .. |example-italic| replace:: *LogAnalysis*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <LogAnalysis>`
 
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example

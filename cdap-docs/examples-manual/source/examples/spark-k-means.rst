@@ -53,7 +53,7 @@ This service has a ``centers/{index}`` endpoint to obtain the center's coordinat
 .. |example-italic| replace:: *SparkKMeans*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <SparkKMeans>`
 
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example

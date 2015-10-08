@@ -1,0 +1,4 @@
+.. |example-dir|      replace:: |example|
+.. |example-artifact| replace:: |example|
+
+.. include:: _includes/_building-starting-running-example.txt

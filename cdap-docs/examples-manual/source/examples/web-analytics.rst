@@ -104,7 +104,7 @@ and executed in CDAP:
 .. |example-italic| replace:: *WebAnalytics*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <WebAnalytics>`
 
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example

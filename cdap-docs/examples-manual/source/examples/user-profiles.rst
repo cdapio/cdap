@@ -85,7 +85,7 @@ to write to two different columns of the same row at the same time.
 .. |example-italic| replace:: *UserProfiles*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <UserProfiles>`
 
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example

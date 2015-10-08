@@ -110,7 +110,7 @@ Instead of ``results`` and ``totals``, it could use any other dataset as long as
 .. |example-italic| replace:: *SportResults*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <SportResults>`
 
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example

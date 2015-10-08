@@ -69,7 +69,7 @@ It exposes these endpoints:
 .. |example-italic| replace:: *WordCount*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <WordCount>`
 
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example

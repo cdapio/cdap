@@ -17,39 +17,39 @@ Overview
 This example demonstrates use of many of the CDAP components |---| streams, flows, flowlets,
 datasets, queries, MapReduce programs, workflows, and services |---| all in a single application.
 
-The application uses a scheduled MapReduce and workflow to read from an ObjectMappedTable dataset
-and write to an ObjectStore dataset.
+The application uses a scheduled MapReduce and workflow to read from an ``ObjectMappedTable`` dataset
+and write to an ``ObjectStore`` dataset.
 
-  - Send sentences of the form "Tom bought 5 apples for $10" to the ``purchaseStream``.
+  - Send sentences of the form "Tom bought 5 apples for $10" to the *purchaseStream*.
     You can send sentences either by using a ``curl`` call, using the ``inject-data`` script
     included in the example's ``/bin`` directory, or by using the CDAP UI.
-  - The ``PurchaseFlow`` reads the ``purchaseStream`` and converts every input string into a
+  - The *PurchaseFlow* reads the *purchaseStream* and converts every input string into a
     Purchase object and stores the object in the *purchases* dataset.
-  - The ``PurchaseStore`` flowlet demonstrates the setting of memory used by its YARN container. 
+  - The *PurchaseStore* flowlet demonstrates the setting of memory used by its YARN container. 
   - User profile information for the user can be added by using ``curl`` calls (or another method) which are
-    then stored in the ``userProfiles`` dataset.
-  - The ``CatalogLookup`` service fetches the catalog id for a given product. The ``CatalogLookup`` service
-    is called from the PurchaseStore flowlet. The host and port of the ``CatalogLookup`` service is discovered
+    then stored in the *userProfiles* dataset.
+  - The *CatalogLookup* service fetches the catalog id for a given product. The *CatalogLookup* service
+    is called from the *PurchaseStore* flowlet. The host and port of the *CatalogLookup* service is discovered
     using the service discovery framework.
-  - The ``UserProfileService`` is responsible for storing and retrieving the user information
-    for a given user ID from the ``userProfiles`` dataset. The host and port of the ``UserProfileService`` is
+  - The *UserProfileService* is responsible for storing and retrieving the user information
+    for a given user ID from the *userProfiles* dataset. The host and port of the *UserProfileService* is
     discovered using the service discovery framework.
-  - When scheduled by the ``PurchaseHistoryWorkFlow``, the ``PurchaseHistoryBuilder`` MapReduce
-    reads the ``purchases`` dataset. It fetches the user profile information, if it is available, from
-    the ``UserProfileService`` and creates a purchase history. It stores the purchase history in the
-    ``history`` dataset every morning at 4:00 A.M. using a time schedule, and also every time 1MB of data
-    is ingested by the ``purchaseStream`` using a data schedule.
+  - When scheduled by the *PurchaseHistoryWorkFlow*, the ``PurchaseHistoryBuilder`` MapReduce
+    reads the *purchases* dataset. It fetches the user profile information, if it is available, from
+    the *UserProfileService* and creates a purchase history. It stores the purchase history in the
+    history dataset every morning at 4:00 A.M. using a time schedule, and also every time 1MB of data
+    is ingested by the *purchaseStream* using a data schedule.
   - You can either manually (in the Process screen of the CDAP UI) or programmatically execute the 
-    ``PurchaseHistoryBuilder`` MapReduce to store customers' purchase history in the ``history`` dataset.
+    ``PurchaseHistoryBuilder`` MapReduce to store customers' purchase history in the history dataset.
   - The ``PurchaseHistoryBuilder`` MapReduce demonstrates the setting of memory used by its YARN container, both 
     as default values and as runtime arguments.
-  - Use the ``PurchaseHistoryService`` to retrieve from the ``history`` dataset the purchase history of a user.
-  - Execute a SQL query over the ``history`` dataset. You can do this using a series of ``curl``
+  - Use the *PurchaseHistoryService* to retrieve from the history dataset the purchase history of a user.
+  - Execute a SQL query over the history dataset. You can do this using a series of curl
     calls, or more conveniently using the :ref:`Command Line Interface <cli>`.
 
-**Note:** Because the ``PurchaseHistoryWorkFlow`` is only scheduled to run at 4:00 A.M.,
+**Note:** Because the *PurchaseHistoryWorkFlow* is only scheduled to run at 4:00 A.M.,
 you should not start it manually until after entering the first customers' purchases, or the
-``PurchaseHistoryService`` will respond with a ``204 No Response`` status code.
+*PurchaseHistoryService* will respond with a ``204 No Response`` status code.
 
 Let's look at some of these components, and then run the application and see the results.
 
@@ -59,35 +59,38 @@ As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``PurchaseApp``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseApp.java
-   :language: java
-   :prepend: public class PurchaseApp extends AbstractApplication {
-   :start-after: public class PurchaseApp extends AbstractApplication {
+    :language: java
+    :prepend: public class PurchaseApp extends AbstractApplication {
+    :start-after: public class PurchaseApp extends AbstractApplication {
+    :dedent: 2
 
 ``PurchaseHistory`` and ``Purchase``: ObjectStore Data Storage
 --------------------------------------------------------------
-The raw purchase data is stored in an ObjectMappedTable dataset, *purchases*,
+The raw purchase data is stored in an ``ObjectMappedTable`` dataset, *purchases*,
 with this method defined in ``PurchaseStore.java``:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
-   :language: java
-   :start-after: @ProcessInput
-   :end-before: @Override
+    :language: java
+    :start-after: @ProcessInput
+    :end-before: @Override
+    :dedent: 2
 
 This method is what actually puts data into the *purchases* dataset, by writing to the
 dataset with each purchase's timestamp and the ``Purchase`` Object.
 
-The purchase history for each customer is compiled by the ``PurchaseHistoryWorkflow``, which uses a
+The purchase history for each customer is compiled by the *PurchaseHistoryWorkflow*, which uses a
 MapReduce |---| ``PurchaseHistoryBuilder`` |---| to aggregate all purchases into a per-customer purchase
 history. It writes to the *history* dataset, a custom dataset that embeds an ``ObjectStore`` and 
 implements the ``RecordScannable`` interface to allow SQL queries over the dataset.
 
-The memory requirements of the flowlet ``PurchaseStore`` are set in its ``configure`` method:
+The memory requirements of the flowlet *PurchaseStore* are set in its ``configure`` method:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
    :language: java
    :lines: 60-71
    :start-after: }
    :end-before:   /**
+   :dedent: 2
 
 ``PurchaseHistoryBuilder`` MapReduce
 ------------------------------------
@@ -105,7 +108,7 @@ the use of ``Resources`` to configure the memory requirements of the service:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
     :language: java
-    :lines: 39-45
+    :lines: 39-46
     :dedent: 2
 
 ``UserProfileService`` Service
@@ -126,11 +129,13 @@ A ``user/{id}`` endpoint to obtain profile information for a specified user::
 
 .. Building and Starting
 .. =====================
-.. |example| replace:: Purchase
-.. |example-italic| replace:: *Purchase*
-.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <Purchase>`
+.. |example| replace:: PurchaseHistory
+.. |example-italic| replace:: *PurchaseHistory*
+.. |example-dir| replace:: Purchase
+.. |example-artifact| replace:: Purchase
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <PurchaseHistory>`
 
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running-example.txt
 
 
 Running the Example
@@ -163,6 +168,8 @@ CDAP SDK directory, using the Command Line Interface::
 
   $ cdap-cli.sh call service PurchaseHistory.UserProfileService POST user body \
     "{'id':'Alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
+  Successfully connected to CDAP instance at http://localhost:10000/default
+  < 200 OK
     
 Injecting Sentences
 -------------------
@@ -181,10 +188,10 @@ CDAP SDK directory, using the Command Line Interface::
 
 Querying the Results
 --------------------
-To query the *history* ObjectStore through the ``PurchaseHistoryService``, you can:
+To query the *history* ``ObjectStore`` through the |example-service1-italic|, you can:
 
 - Using the CDAP-UI, go to the |application-overview|,
-  click |example-service-italic| to get to the service detail page, then click the *Start* button; or
+  click |example-service1-italic| to get to the service detail page, then click the *Start* button; or
 
 - From the Standalone CDAP SDK directory, use the Command Line Interface::
 

@@ -96,7 +96,7 @@ and it configures the ``events`` stream as its input and the ``converted`` datas
 .. |example-italic| replace:: *StreamConversion*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <StreamConversion>`
 
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example

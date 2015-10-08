@@ -73,7 +73,7 @@ We will see below how to retrieve this metric using the
 .. |example-italic| replace:: *HelloWorld*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <HelloWorld>`
 
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example

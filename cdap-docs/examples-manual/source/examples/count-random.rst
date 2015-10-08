@@ -72,7 +72,7 @@ transaction conflicts if the flowlet is scaled to multiple instances:
 .. |example-italic| replace:: *CountRandom*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <CountRandom>`
 
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example

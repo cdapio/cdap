@@ -10,7 +10,7 @@ Building and Starting
   (as described in :ref:`Deploying an Application <cdap-building-running-deploying>`):
   
   .. parsed-literal::
-    examples/|example|/target/|example|-|release|.jar
+    examples/|example-dir|/target/|example-artifact|-|release|.jar
   
 - Start CDAP (as described in :ref:`Starting and Stopping CDAP <start-stop-cdap>`). 
 
@@ -20,10 +20,10 @@ Building and Starting
   .. container:: highlight
 
     .. parsed-literal::
-      |$| cdap-cli.sh load artifact examples/|example|/target/|example|-|release|.jar
-      Successfully added artifact with name '|example|'
+      |$| cdap-cli.sh load artifact examples/|example-dir|/target/|example-artifact|-|release|.jar
+      Successfully added artifact with name '|example-artifact|'
 
-      |$| cdap-cli.sh create app |example| |example| |release| user
+      |$| cdap-cli.sh create app |example| |example-artifact| |release| user
       Successfully created application
   
 - Once the application has been deployed, you can start its components, as described in

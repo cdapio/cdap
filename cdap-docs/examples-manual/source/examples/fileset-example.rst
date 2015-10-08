@@ -82,7 +82,7 @@ It is worth mentioning that nothing in ``WordCount`` is specifically programmed 
 .. |example| replace:: FileSetExample
 .. |example-italic| replace:: *FileSetExample*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <FileSetExample>`
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example

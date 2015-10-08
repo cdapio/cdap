@@ -62,7 +62,7 @@ the *cleanRecords* ``PartitionedFileSet``. The ``beforeSubmit`` method prepares 
 .. |example-italic| replace:: *DataCleansing*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <DataCleansing>`
 
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example

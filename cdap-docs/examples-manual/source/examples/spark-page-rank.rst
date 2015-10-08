@@ -71,7 +71,7 @@ When a Spark program is running inside a workflow, the memory requirements confi
 .. |example-italic| replace:: *SparkPageRank*
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <SparkPageRank>`
 
-.. include:: _includes/_building-starting-running-cdap.txt
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example
