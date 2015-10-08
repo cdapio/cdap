@@ -19,6 +19,7 @@ package co.cask.cdap.data2.datafabric.dataset.type;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -43,13 +44,15 @@ import java.util.List;
 class DatasetDefinitionLoader {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetDefinitionLoader.class);
 
+  private final CConfiguration cConf;
   private final LocationFactory locationFactory;
 
   /**
    * Creates instance of {@link DatasetDefinitionLoader}
    * @param locationFactory instance of {@link LocationFactory} used to access dataset modules jars
    */
-  public DatasetDefinitionLoader(LocationFactory locationFactory) {
+  public DatasetDefinitionLoader(CConfiguration cConf, LocationFactory locationFactory) {
+    this.cConf = cConf;
     this.locationFactory = locationFactory;
   }
 
@@ -83,7 +86,7 @@ class DatasetDefinitionLoader {
         // for default "system" modules it can be null, see getJarLocation() javadoc
         if (moduleMeta.getJarLocation() != null) {
           BundleJarUtil.unpackProgramJar(locationFactory.create(moduleMeta.getJarLocation()), temp);
-          classLoader = ProgramClassLoader.create(temp, getClass().getClassLoader());
+          classLoader = ProgramClassLoader.create(cConf, temp, getClass().getClassLoader());
         }
         Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
         DatasetModule module = DatasetModules.getDatasetModule(moduleClass);
