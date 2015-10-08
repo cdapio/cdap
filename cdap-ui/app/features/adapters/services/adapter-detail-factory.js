@@ -45,10 +45,10 @@ angular.module(PKG.name + '.feature.adapters')
       publicObj.transforms = config.transforms.map(function (n) { return n.name; });
       publicObj.sinks = config.sinks.map(function (n) { return n.name; });
 
-
       if (publicObj.programType === 'WORKFLOWS') {
         publicObj.api = myWorkFlowApi;
         publicObj.logsApi = myMapreduceApi;
+        publicObj.schedule = config.schedule;
 
         angular.forEach(app.programs, function (program) {
           if (program.type === 'Workflow') {
@@ -61,6 +61,7 @@ angular.module(PKG.name + '.feature.adapters')
       } else {
         publicObj.api = myWorkersApi;
         publicObj.logsApi = myWorkersApi;
+        publicObj.instances = config.instances;
 
         angular.forEach(app.programs, function (program) {
           if (program.type === 'Worker') {
