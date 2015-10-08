@@ -103,17 +103,17 @@ public class ResourceCoordinatorTest {
           Cancellable cancelSubscribe1 = subscribe(client, discoverable1, assignmentQueue, finishSemaphore);
 
           // Assert that it received the changes.
-          Collection<PartitionReplica> assigned = assignmentQueue.poll(5, TimeUnit.SECONDS);
+          Collection<PartitionReplica> assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(5, assigned.size());
 
           // Unregister from discovery, the handler should receive a change with empty collection
           cancelDiscoverable1.cancel();
-          Assert.assertTrue(assignmentQueue.poll(5, TimeUnit.SECONDS).isEmpty());
+          Assert.assertTrue(assignmentQueue.poll(30, TimeUnit.SECONDS).isEmpty());
 
           // Register to discovery again, would receive changes.
           cancelDiscoverable1 = discoveryService.register(ResolvingDiscoverable.of(discoverable1));
-          assigned = assignmentQueue.poll(5, TimeUnit.SECONDS);
+          assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(5, assigned.size());
 
@@ -123,7 +123,7 @@ public class ResourceCoordinatorTest {
 
           // Changes should be received by the handler, with only 3 resources,
           // as 2 out of 5 should get moved to the new discoverable.
-          assigned = assignmentQueue.poll(5, TimeUnit.SECONDS);
+          assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(3, assigned.size());
 
@@ -131,7 +131,7 @@ public class ResourceCoordinatorTest {
           // This also make sure the latest assignment get cached in the ResourceCoordinatorClient.
           // It is the the next test step.
           cancelDiscoverable1.cancel();
-          Assert.assertTrue(assignmentQueue.poll(5, TimeUnit.SECONDS).isEmpty());
+          Assert.assertTrue(assignmentQueue.poll(30, TimeUnit.SECONDS).isEmpty());
 
           // Cancel the handler.
           cancelSubscribe1.cancel();
@@ -140,23 +140,23 @@ public class ResourceCoordinatorTest {
           // Subscribe to changes for the second discoverable,
           // it should see the latest assignment, even though no new fetch from ZK is triggered.
           Cancellable cancelSubscribe2 = subscribe(client, discoverable2, assignmentQueue, finishSemaphore);
-          assigned = assignmentQueue.poll(5, TimeUnit.SECONDS);
+          assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(5, assigned.size());
 
           // Update the requirement to be an empty requirement, the handler should receive an empty collection
           client.submitRequirement(ResourceRequirement.builder(serviceName).build());
-          Assert.assertTrue(assignmentQueue.poll(5, TimeUnit.SECONDS).isEmpty());
+          Assert.assertTrue(assignmentQueue.poll(30, TimeUnit.SECONDS).isEmpty());
 
           // Update the requirement to have one partition, the handler should receive one resource
           client.submitRequirement(ResourceRequirement.builder(serviceName).addPartitions("p", 1, 1).build());
-          assigned = assignmentQueue.poll(5, TimeUnit.SECONDS);
+          assigned = assignmentQueue.poll(30, TimeUnit.SECONDS);
           Assert.assertNotNull(assigned);
           Assert.assertEquals(1, assigned.size());
 
           // Delete the requirement, the handler should receive a empty collection
           client.deleteRequirement(requirement.getName());
-          Assert.assertTrue(assignmentQueue.poll(5, TimeUnit.SECONDS).isEmpty());
+          Assert.assertTrue(assignmentQueue.poll(30, TimeUnit.SECONDS).isEmpty());
 
           // Cancel the second handler.
           cancelSubscribe2.cancel();
