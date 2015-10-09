@@ -1193,6 +1193,44 @@
     </description>
   </property>
 
+  <property>
+    <name>router.connection.backlog</name>
+    <value>20000</value>
+    <description>Determines the connection backlog in the Router Server.</description>
+  </property>
+
+  <property>
+    <name>router.server.boss.threads</name>
+    <value>1</value>
+    <description>Deterermines the number of boss threads in the Router Server.</description>
+  </property>
+
+  <property>
+    <name>router.server.worker.threads</name>
+    <value>10</value>
+    <description>Determines the number of worker threads in the Router Server.</description>
+  </property>
+
+  <property>
+    <name>router.client.boss.threads</name>
+    <value>1</value>
+    <description>Determines the number of boss threads in the Router Client.</description>
+  </property>
+
+  <property>
+    <name>router.client.worker.threads</name>
+    <value>10</value>
+    <description>Determines the number of worker threads in in the Router Client.</description>
+  </property>
+
+  <property>
+    <name>router.connection.timeout.secs</name>
+    <value>15</value>
+    <description>
+      Determines the number of seconds after which idle router connections are closed.
+    </description>
+  </property>
+
 
   <!-- Security Configuration -->
 

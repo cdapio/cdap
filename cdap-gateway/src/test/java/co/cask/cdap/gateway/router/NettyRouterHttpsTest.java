@@ -137,6 +137,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       cConf.setInt(Constants.Router.ROUTER_PORT, 0);
       cConf.setBoolean(Constants.Router.WEBAPP_ENABLED, true);
       cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
+      cConf.setInt(Constants.Router.CONNECTION_TIMEOUT_SECS, 5);
 
       sConf.set(Constants.Security.Router.SSL_KEYSTORE_PATH, certUrl.getPath());
 
