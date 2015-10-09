@@ -32,6 +32,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -68,6 +69,12 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   @Override
   public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException {
     delegate.addModule(moduleId, module);
+  }
+
+  @Override
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module,
+                        Location jarLocation) throws DatasetManagementException {
+    delegate.addModule(moduleId, module, jarLocation);
   }
 
   @Override

@@ -155,7 +155,7 @@ public abstract class DatasetServiceTestBase {
 
     locationFactory = injector.getInstance(LocationFactory.class);
     NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
-    dsFramework = new RemoteDatasetFramework(discoveryService, registryFactory);
+    dsFramework = new RemoteDatasetFramework(cConf, discoveryService, registryFactory);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
 
