@@ -47,7 +47,7 @@ ${__packerdir}/cookbook-dir.sh || die "Failed to setup cookbook dir"
 ${__packerdir}/cookbook-setup.sh || die "Failed to install cookbooks"
 
 # CDAP base install, ensures package dependencies are present
-chef-solo -o 'recipe[default]'
+chef-solo -o 'recipe[cdap::default]'
 
 # Read zookeeper quorum from hbase-site.xml, using sourced init script function
 source ${__gitdir}/cdap-common/bin/common.sh || die "Cannot source cdap common script"
