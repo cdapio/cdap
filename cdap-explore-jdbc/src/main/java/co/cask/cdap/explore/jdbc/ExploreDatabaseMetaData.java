@@ -137,7 +137,8 @@ public class ExploreDatabaseMetaData implements DatabaseMetaData {
 
   @Override
   public String getDriverVersion() throws SQLException {
-    return String.format("%d.%d.0", ExploreDriver.getMajorDriverVersion(), ExploreDriver.getMinorDriverVersion());
+    return String.format("%d.%d.%d", ExploreDriver.getMajorDriverVersion(), ExploreDriver.getMinorDriverVersion(),
+                         ExploreDriver.getFixDriverVersion());
   }
 
   @Override

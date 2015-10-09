@@ -94,7 +94,10 @@ public enum ArgumentName {
   ARTIFACT_CONFIG_FILE("artifact-config"),
   SCOPE("scope"),
   PLUGIN_TYPE("plugin-type"),
-  PLUGIN_NAME("plugin-name");
+  PLUGIN_NAME("plugin-name"),
+
+  INSTANCE_URI("cdap-instance-uri"),
+  VERIFY_SSL_CERT("verify-ssl-cert");
 
   private final String name;
 
