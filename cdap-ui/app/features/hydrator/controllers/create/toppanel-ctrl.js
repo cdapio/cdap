@@ -44,6 +44,16 @@ angular.module(PKG.name + '.feature.hydrator')
       this.metadataExpanded = false;
     };
 
+    this.onEnterOnMetadata = function(event) {
+      // Save when user hits ENTER key.
+      if (event.keyCode === 13) {
+        this.metadataExpanded = false;
+      } else if (event.keyCode === 27) {
+        // Reset if the user hits ESC key.
+        this.resetMetadata();
+      }
+    };
+
     this.openMetadata = function () {
       this.metadata = MyAppDAGService['metadata'];
       if (this.metadataExpanded) { return; }
