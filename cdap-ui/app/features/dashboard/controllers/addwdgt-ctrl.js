@@ -41,9 +41,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
   ];
 
   $scope.$watch('model.metric.name', function (newVal) {
-    if(newVal) {
-      $scope.model.title = newVal;
-    }
+    $scope.model.title = newVal;
   });
 
   $scope.addMetricsToIndividualWidgets = _.debounce(function() {
