@@ -313,6 +313,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       } catch (IOException e2) {
         // if the delete fails, nothing we can do, just log it and continue on
         LOG.warn("Failed to delete artifact {} after deployment of artifact and application failed.", artifactId, e2);
+        e.addSuppressed(e2);
       }
       throw e;
     }
