@@ -67,18 +67,18 @@ angular.module(PKG.name + '.feature.hydrator')
       return true;
     }
 
-    if (AdapterDetail.programType === 'WORKFLOWS') {
-      $scope.schedule = AdapterDetail.schedule;
+    if (HydratorDetail.programType === 'WORKFLOWS') {
+      $scope.schedule = HydratorDetail.schedule;
       $scope.isBasic = checkCron($scope.schedule);
       $scope.tabs.push({
         title: 'Schedule',
-        template: '/assets/features/adapters/templates/tabs/schedule.html'
+        template: '/assets/features/hydrator/templates/tabs/schedule.html'
       });
     } else {
-      $scope.instances = AdapterDetail.instances;
+      $scope.instances = HydratorDetail.instances;
       $scope.tabs.push({
         title: 'Instance',
-        template: '/assets/features/adapters/templates/tabs/instance.html'
+        template: '/assets/features/hydrator/templates/tabs/instance.html'
       });
     }
 
