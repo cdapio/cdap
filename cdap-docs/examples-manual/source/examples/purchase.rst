@@ -11,6 +11,7 @@ Purchase
 
 A Cask Data Application Platform (CDAP) example demonstrating many of the CDAP components.
 
+.. highlight:: console
 
 Overview
 ========
@@ -125,7 +126,11 @@ A ``user`` endpoint to add a user's profile information to the system::
 A ``user/{id}`` endpoint to obtain profile information for a specified user::
 
   $ cdap-cli.sh call service PurchaseHistory.UserProfileService GET user/Alice
-
+  < 200 OK
+  < Content-Length: 79
+  < Connection: keep-alive
+  < Content-Type: application/json
+  {"id":"Alice","firstName":"Alice","lastName":"Bernard","categories":["fruits"]}
 
 .. Building and Starting
 .. =====================
@@ -201,7 +206,14 @@ To query the *history* ``ObjectStore`` through the |example-service1-italic|, yo
 
     $ curl -w'\n' -v 'http://localhost:10000/v3/namespaces/default/apps/PurchaseHistory/services/PurchaseHistoryService/methods/history/Alice'
 
-Exploring the Results Using SQL
+The results will be in JSON::
+
+  {"customer":"Alice","userProfile":{"id":"Alice","firstName":"Alice","lastName":"Bernard","
+  categories":["fruits"]},"purchases":[{"customer":"Alice","product":"coconut","quantity":2,
+  "price":5,"purchaseTime":1444411198435,"catalogId":""},{"customer":"Alice","product":"
+  grapefruit","quantity":12,"price":10,"purchaseTime":1444411198432,"catalogId":""}]}
+
+Exploring the Results using SQL
 -------------------------------
 You can use SQL to formulate ad-hoc queries over the *history* and *purchases* datasets.
 This is done by a series of ``curl`` calls, as described in the :ref:`RESTful API

@@ -18,8 +18,8 @@ This application receives simple events through a stream, and periodically conve
 partitions of a time-partitioned file set. These partitions can be queried with SQL. These are the
 components of the application:
 
-- The ``events`` stream receives simple events, where each event body is a number.
-- The ``converted`` dataset is a time-partitioned file set in Avro format.
+- The *events* stream receives simple events, where each event body is a number.
+- The *converted* dataset is a time-partitioned file set in Avro format.
 - The ``StreamConversionMapReduce`` reads the last five minutes of events from the
   stream and writes them to a new partition in the ``converted`` dataset.
 - The ``StreamConversionWorkflow`` is scheduled every five minutes and only runs the
@@ -36,10 +36,10 @@ of the application are tied together by the class ``StreamConversionApp``:
      :language: java
      :lines: 32-
 
-The interesting part is the creation of the dataset ``converted``:
+The interesting part is the creation of the dataset *converted*:
 
-- It is a ``TimePartitionedFileSet``. This is an experimental new dataset type, introduced in CDAP 2.7.1. This
-  dataset manages the files in a ``FileSet`` by associating each file with a time stamp.
+- It is a ``TimePartitionedFileSet``. This dataset manages the files in a ``FileSet`` by
+  associating each file with a time stamp.
 - The properties are divided in two sections:
 
   - The first set of properties configures the underlying FileSet, as documented in the
@@ -51,7 +51,7 @@ The interesting part is the creation of the dataset ``converted``:
 The MapReduce Program
 ---------------------
 In its ``beforeSubmit`` method, the ``StreamConversionMapReduce`` determines its logical start time,
-and it configures the ``events`` stream as its input and the ``converted`` dataset as its output:
+and it configures the *events* stream as its input and the *converted* dataset as its output:
 
 - This is a map-only MapReduce program; in other words, it has no reducers,
   and the mappers write directly to the output in Avro format:
@@ -119,7 +119,7 @@ to send 10000 events at a rate of roughly two per second::
   $ examples/StreamConversion/bin/send-events.sh --events 10000 --delay 0.5
 
 You can now wait for the workflow to run, after which you can query the partitions in the
-``converted`` dataset::
+*converted* dataset::
 
   $ cdap-cli.sh execute \"show partitions dataset_converted\"
   
