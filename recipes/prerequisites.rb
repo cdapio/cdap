@@ -17,6 +17,9 @@
 # limitations under the License.
 #
 
+# We require ntp
+include_recipe 'ntp'
+
 # We require Java, so include it and add it to Hadoop env
 include_recipe 'java'
 log 'java-home' do
