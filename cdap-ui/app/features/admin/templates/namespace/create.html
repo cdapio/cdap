@@ -67,9 +67,9 @@
 <div class="modal-footer">
   <div class="form-group">
     <a ui-sref="admin.overview" class="btn btn-default" ng-click="closeModal()">Cancel</a>
-    <a ng-disabled="isSaving == true"
+    <a ng-disabled="isSaving == true || !model.name.length"
        class="btn"
-       ng-class="{'btn-success': isSaving == false && model.name.length > 0, 'disabled': isSaving == true || !model.name.length}"
+       ng-class="{'btn-success': isSaving == false && model.name.length > 0}"
        ng-click="submitHandler()">
       <div ng-if="isSaving == true" >
        <span class="fa fa-spin fa-refresh"></span>
