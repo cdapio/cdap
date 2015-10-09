@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package co.cask.cdap.etl.common.db;
 
 import co.cask.cdap.etl.batch.sink.DBSink;
 import co.cask.cdap.etl.batch.source.DBSource;

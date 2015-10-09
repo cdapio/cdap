@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package co.cask.cdap.etl.common.db;
 
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.plugin.PluginConfig;
@@ -29,7 +29,7 @@ public class DBConfig extends PluginConfig {
   @Description("JDBC connection string including database name.")
   public String connectionString;
 
-  @Description("User identity for connecting to the specified database. Required for databases that " +
+  @Description("User to use to connect to the specified database. Required for databases that " +
     "need authentication. Optional for databases that do not require authentication.")
   @Nullable
   public String user;
@@ -43,10 +43,21 @@ public class DBConfig extends PluginConfig {
     "for the JDBC plugin.")
   public String jdbcPluginName;
 
+  @Description("Name of the database table to use as a source or a sink.")
+  public String tableName;
+
   @Description("Type of the JDBC plugin to use. This is the value of the 'type' key defined in the JSON file " +
     "for the JDBC plugin. Defaults to 'jdbc'.")
   @Nullable
   public String jdbcPluginType = "jdbc";
+
+  @Description("Sets the case of the column names returned from the query. " +
+    "Possible options are upper or lower. By default or for any other input, the column names are not modified and " +
+    "the names returned from the database are used as-is. Note that setting this property provides predictability " +
+    "of column name cases across different databases but might result in column name conflicts if multiple column " +
+    "names are the same when the case is ignored.")
+  @Nullable
+  public String columnNameCase;
 
   public DBConfig() {
     jdbcPluginType = "jdbc";

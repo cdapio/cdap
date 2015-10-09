@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package co.cask.cdap.etl.common.db;
 
 import java.sql.Connection;
 import java.sql.Driver;
