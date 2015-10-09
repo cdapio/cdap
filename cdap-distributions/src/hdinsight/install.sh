@@ -20,52 +20,57 @@
 
 die() { echo "ERROR: ${*}"; exit 1; };
 
-# Fetch repo file for Apt
-curl http://repository.cask.co/ubuntu/precise/amd64/cdap/3.2/cask.list > /etc/apt/sources.list.d/cask.list || die "Cannot fetch repo"
-curl -s http://repository.cask.co/ubuntu/precise/amd64/cdap/3.2/pubkey.gpg | sudo apt-key add - || die "Cannot import GPG key from repo"
-# install node.js
-curl --silent --location https://deb.nodesource.com/setup | sudo bash - || die "Failed to configure nodejs repo"
-sudo apt-get install --yes nodejs || die "Failed to install nodejs"
+__tmpdir="/tmp/cdap_install.$$.$(date +%s)"
+__gitdir="${__tmpdir}/cdap"
 
-# Redundant - nodejs install does an apt-get update
-# apt-get update
+__packerdir="${__gitdir}/cdap-distributions/src/packer/scripts"
+__cdap_site_template="${__gitdir}/cdap-distribution/src/hdinsight/cdap-site.xml.template"
 
-# Install CDAP packages
-apt-get install cdap-{gateway,kafka,master,ui} --yes || die "Failed installing CDAP packages"
+__cleanup_tmpdir() { test -d ${__tmpdir} && rm -rf ${__tmpdir}; };
+__create_tmpdir() { mkdir -p ${__tmpdir}; };
 
-# Setup kafka storage dir
-mkdir -p /var/cdap/kafka-logs
-chown -R cdap:cdap /var/cdap/kafka-logs
+# Install git
+apt-get install --yes git || die "Failed to install git"
 
-# We need to get the zookeeper quorum
-# Read it from hbase-site.xml
+# Install chef
+curl -L https://www.chef.io/chef/install.sh | sudo bash || die "Failed to install chef"
 
-. /opt/cdap/master/bin/common.sh || die "Cannot source cdap-master common script"
-__zk_quorum=$(get_conf 'hbase.zookeeper.quorum' '/usr/hdp/current/hbase-client/conf/hbase-site.xml')
+# Clone cdap repo
+__create_tmpdir
+git clone --depth 1 https://github.com/caskdata/cdap.git ${__gitdir}
 
-# Configure CDAP
-__ipaddr=`ifconfig eth0 | grep addr: | cut -d: -f2 | head -n 1 | awk '{print $1}'`
+# Setup cookbook repo using packer scripts
+test -d /var/chef/cookbooks && rm -rf /var/chef/cookbooks
+${__packerdir}/cookbook-dir.sh || die "Failed to setup cookbook dir"
+
+# Install cookbooks via knife
+${__packerdir}/cookbook-setup.sh || die "Failed to install cookbooks"
+
+# CDAP base install, ensures package dependencies are present
+chef-solo -o 'recipe[default]'
+
+# Read zookeeper quorum from hbase-site.xml, using sourced init script function
+source ${__gitdir}/cdap-common/bin/common.sh || die "Cannot source cdap common script"
+__zk_quorum=$(get_conf 'hbase.zookeeper.quorum' '/etc/hbase/conf/hbase-site.xml') || die "Cannot determine zookeeper quorum"
+
+# Get HDP version, allow for the future addition hdp-select "current" directory
+__hdp_version=$(ls /usr/hdp | grep "^[0-9]*\.") || die "Cannot determine HDP version"
+
+# Create chef json configuration
 sed \
-  -e "s/FQDN1:2181,FQDN2/${__zk_quorum}/" \
-  -e 's:/data/cdap/kafka-logs:/var/cdap/kafka-logs:' \
-  -e "s/FQDN1:9092,FQDN2:9092/${__ipaddr}:9092/" \
-  -e "s/LOCAL-ROUTER-IP/${__ipaddr}/" \
-  -e 's/LOCAL-APP-FABRIC-IP//' \
-  -e 's/LOCAL-DATA-FABRIC-IP//' \
-  -e 's/LOCAL-WATCHDOG-IP//' \
-  -e "s/ROUTER-HOST-IP/${__ipaddr}/" \
-  -e 's/router.server.port/router.bind.port/' \
-  /etc/cdap/conf/cdap-site.xml.example > /etc/cdap/conf/cdap-site.xml
+  -e "s/ZK_QUORUM/${__zk_quorum}/" \
+  -e "s/HDP_VERSION/${__hdp_version}/" \
+  ${__cdap_site_template} > ${__tmpdir}/generated-conf.json
 
-__hdp_version=$(basename $(dirname $(readlink /usr/hdp/current/hadoop-client)))
+# Install/Configure ntp, CDAP
+chef-solo -o 'recipe[ntp::default],recipe[cdap::fullstack]' -j ${__tmpdir}/generated-conf.json
 
-sed -i \
-  -e "s/# export OPTS=\"\${OPTS} -Dhdp.version=2.2.6.0-2800\"/export \"OPTS=\${OPTS} -Dhdp.version=${__hdp_version}\"/" \
-  /etc/cdap/conf/cdap-env.sh
-
-# Start services
+# Start CDAP Services
 for i in /etc/init.d/cdap-*
 do
   $i start || die "Failed to start $i"
 done
+
+__cleanup_tmpdir
 exit 0
+
