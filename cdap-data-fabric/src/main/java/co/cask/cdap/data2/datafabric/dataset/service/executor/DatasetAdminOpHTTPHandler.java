@@ -26,9 +26,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetType;
-import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
@@ -59,13 +59,13 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetAdminOpHTTPHandler.class);
   private static final Gson GSON = new Gson();
 
-  private final RemoteDatasetFramework dsFramework;
+  private final DatasetFramework dsFramework;
   private final CConfiguration cConf;
   private final LocationFactory locationFactory;
   private final SystemDatasetInstantiatorFactory datasetInstantiatorFactory;
 
   @Inject
-  public DatasetAdminOpHTTPHandler(RemoteDatasetFramework dsFramework,
+  public DatasetAdminOpHTTPHandler(DatasetFramework dsFramework,
                                    CConfiguration cConf, LocationFactory locationFactory,
                                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
     this.dsFramework = dsFramework;

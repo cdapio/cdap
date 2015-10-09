@@ -22,12 +22,14 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
@@ -195,6 +197,12 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   @Override
   public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
     delegate.deleteNamespace(namespaceId);
+  }
+
+  @Override
+  public <T extends DatasetType> T getDatasetType(DatasetTypeMeta meta, ClassLoader cl,
+                                                  DatasetClassLoaderProvider clProvider) {
+    return delegate.getDatasetType(meta, cl, clProvider);
   }
 
   private <T extends Dataset> void writeLineage(Id.DatasetInstance datasetInstanceId, T dataset) {

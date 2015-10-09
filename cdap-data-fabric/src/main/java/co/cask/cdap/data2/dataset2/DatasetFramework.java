@@ -22,8 +22,10 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.data2.datafabric.dataset.DatasetType;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 
@@ -293,4 +295,22 @@ public interface DatasetFramework {
    * @param namespaceId the {@link Id.Namespace} to create
    */
   void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException;
+
+  /**
+   * Return an instance of the {@link DatasetType} corresponding to given dataset modules. Uses the given
+   * classloader as a parent for all dataset modules, and the given classloader provider to get classloaders for
+   * each dataset module in given the dataset type meta. Order of dataset modules in the given
+   * {@link DatasetTypeMeta} is important. The classloader for the first dataset module is used as the parent of
+   * the second dataset module and so on until the last dataset module. The classloader for the last dataset module
+   * is then used as the classloader for the returned {@link DatasetType}.
+   *
+   * @param implementationInfo the dataset type metadata to instantiate the type from
+   * @param classLoader the parent classloader to use for dataset modules
+   * @param classLoaderProvider the classloader provider to get classloaders for each dataset module
+   * @param <T> the type of DatasetType
+   * @return an instance of the DatasetType
+   */
+  <T extends DatasetType> T getDatasetType(DatasetTypeMeta implementationInfo,
+                                           ClassLoader classLoader,
+                                           DatasetClassLoaderProvider classLoaderProvider);
 }

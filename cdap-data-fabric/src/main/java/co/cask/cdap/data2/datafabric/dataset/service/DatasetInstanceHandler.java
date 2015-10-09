@@ -236,7 +236,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     });
   }
 
-  private Collection<DatasetSpecificationSummary> spec2Summary(Collection<DatasetSpecification> specs) {
+  public static Collection<DatasetSpecificationSummary> spec2Summary(Collection<DatasetSpecification> specs) {
     List<DatasetSpecificationSummary> datasetSummaries = Lists.newArrayList();
     for (DatasetSpecification spec : specs) {
       // TODO: (CDAP-3097) handle system datasets specially within a namespace instead of filtering them out

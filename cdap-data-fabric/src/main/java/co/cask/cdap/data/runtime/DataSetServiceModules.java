@@ -39,6 +39,8 @@ import co.cask.cdap.data2.dataset2.StaticDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
+import co.cask.cdap.data2.registry.SystemUsageRegistryProvider;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
 import com.google.common.collect.ImmutableMap;
@@ -69,6 +71,10 @@ public class DataSetServiceModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
+
+        bind(UsageRegistry.class).toProvider(SystemUsageRegistryProvider.class);
+        expose(UsageRegistry.class);
+
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).toProvider(DatasetMdsProvider.class);
         expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
@@ -104,6 +110,10 @@ public class DataSetServiceModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
+
+        bind(UsageRegistry.class).toProvider(SystemUsageRegistryProvider.class);
+        expose(UsageRegistry.class);
+
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).toProvider(DatasetMdsProvider.class);
         expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
@@ -141,6 +151,10 @@ public class DataSetServiceModules extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
+
+        bind(UsageRegistry.class).toProvider(SystemUsageRegistryProvider.class);
+        expose(UsageRegistry.class);
+
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).toProvider(DatasetMdsProvider.class);
         expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
         bind(MDSDatasetsRegistry.class).in(Singleton.class);
