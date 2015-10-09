@@ -80,7 +80,8 @@ public class BatchFileFilter extends Configured implements PathFilter {
 
     //filter by file name using regex from configuration
     if (!useTimeFilter) {
-      Matcher matcher = regex.matcher(filePathName);
+      String fileName = path.getName();
+      Matcher matcher = regex.matcher(fileName);
       return matcher.matches();
     }
 

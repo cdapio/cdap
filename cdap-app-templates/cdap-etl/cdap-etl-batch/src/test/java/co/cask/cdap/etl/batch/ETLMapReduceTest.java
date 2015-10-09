@@ -101,9 +101,10 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
 
     DataSetManager<KeyValueTable> table2 = getDataset("table2");
-    KeyValueTable outputTable = table2.get();
-    for (int i = 0; i < 10000; i++) {
-      Assert.assertEquals("world" + i, Bytes.toString(outputTable.read("hello" + i)));
+    try (KeyValueTable outputTable = table2.get()) {
+      for (int i = 0; i < 10000; i++) {
+        Assert.assertEquals("world" + i, Bytes.toString(outputTable.read("hello" + i)));
+      }
     }
   }
 
@@ -129,11 +130,12 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
                         Bytes.toString(sourceTable.read(MetaKVTableSource.FINISH_RUN_KEY)));
 
     DataSetManager<KeyValueTable> sinkMetaTable = getDataset(MetaKVTableSink.META_TABLE);
-    KeyValueTable sinkTable = sinkMetaTable.get();
-    Assert.assertEquals(MetaKVTableSink.PREPARE_RUN_KEY,
-                        Bytes.toString(sinkTable.read(MetaKVTableSink.PREPARE_RUN_KEY)));
-    Assert.assertEquals(MetaKVTableSink.FINISH_RUN_KEY,
-                        Bytes.toString(sinkTable.read(MetaKVTableSink.FINISH_RUN_KEY)));
+    try (KeyValueTable sinkTable = sinkMetaTable.get()) {
+      Assert.assertEquals(MetaKVTableSink.PREPARE_RUN_KEY,
+                          Bytes.toString(sinkTable.read(MetaKVTableSink.PREPARE_RUN_KEY)));
+      Assert.assertEquals(MetaKVTableSink.FINISH_RUN_KEY,
+                          Bytes.toString(sinkTable.read(MetaKVTableSink.FINISH_RUN_KEY)));
+    }
   }
 
   @SuppressWarnings("ConstantConditions")
@@ -218,17 +220,20 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     Assert.assertEquals(0, row.getColumns().size());
 
     DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("keyErrors");
-    TimePartitionedFileSet fileSet = fileSetManager.get();
-    List<GenericRecord> records = readOutput(fileSet, ETLMapReduce.ERROR_SCHEMA);
-    Assert.assertEquals(1, records.size());
-    fileSet.close();
-
+    try (TimePartitionedFileSet fileSet = fileSetManager.get()) {
+      List<GenericRecord> records = readOutput(fileSet, ETLMapReduce.ERROR_SCHEMA);
+      Assert.assertEquals(1, records.size());
+    }
   }
 
   @Test
   public void testS3toTPFS() throws Exception {
-    String testPath = "s3n://test/2015-06-17-00-00-00.txt";
-    String testData = "Sample data for testing.";
+    String testPath = "s3n://test/";
+    String testFile1 = "2015-06-17-00-00-00.txt";
+    String testData1 = "Sample data for testing.";
+
+    String testFile2 = "abc.txt";
+    String testData2 = "Sample data for testing.";
 
     S3NInMemoryFileSystem fs = new S3NInMemoryFileSystem();
     Configuration conf = new Configuration();
@@ -236,19 +241,25 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     fs.initialize(URI.create("s3n://test/"), conf);
     fs.createNewFile(new Path(testPath));
 
-    FSDataOutputStream writeData = fs.create(new Path(testPath));
-    writeData.write(testData.getBytes());
-    writeData.flush();
-    writeData.close();
+    try (FSDataOutputStream fos1 = fs.create(new Path(testPath + testFile1))) {
+      fos1.write(testData1.getBytes());
+      fos1.flush();
+    }
+
+    try (FSDataOutputStream fos2 = fs.create(new Path(testPath + testFile2))) {
+      fos2.write(testData2.getBytes());
+      fos2.flush();
+    }
 
     Method method = FileSystem.class.getDeclaredMethod("addFileSystemForTesting",
-                                                       new Class[]{URI.class, Configuration.class, FileSystem.class});
+                                                       URI.class, Configuration.class, FileSystem.class);
     method.setAccessible(true);
     method.invoke(FileSystem.class, URI.create("s3n://test/"), conf, fs);
     ETLStage source = new ETLStage("S3", ImmutableMap.<String, String>builder()
       .put(Properties.S3.ACCESS_KEY, "key")
       .put(Properties.S3.ACCESS_ID, "ID")
       .put(Properties.S3.PATH, testPath)
+      .put(Properties.S3.FILE_REGEX, "abc.*")
       .build());
 
     ETLStage sink = new ETLStage("TPFSAvro",
@@ -266,11 +277,13 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
     mrManager.waitForFinish(2, TimeUnit.MINUTES);
 
     DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("TPFSsink");
-    TimePartitionedFileSet fileSet = fileSetManager.get();
-    List<GenericRecord> records = readOutput(fileSet, FileBatchSource.DEFAULT_SCHEMA);
-    Assert.assertEquals(1, records.size());
-    Assert.assertEquals(testData, records.get(0).get("body").toString());
-    fileSet.close();
+    try (TimePartitionedFileSet fileSet = fileSetManager.get()) {
+      List<GenericRecord> records = readOutput(fileSet, FileBatchSource.DEFAULT_SCHEMA);
+      // Two input files, each with one input record were specified. However, only one file matches the regex,
+      // so only one record should be found in the output.
+      Assert.assertEquals(1, records.size());
+      Assert.assertEquals(testData1, records.get(0).get("body").toString());
+    }
   }
 
   @Test
@@ -316,12 +329,11 @@ public class ETLMapReduceTest extends BaseETLBatchTest {
 
     for (String sinkName : new String[] { "fileSink1", "fileSink2" }) {
       DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset(sinkName);
-      TimePartitionedFileSet fileSet = fileSetManager.get();
-      List<GenericRecord> records = readOutput(fileSet, FileBatchSource.DEFAULT_SCHEMA);
-      Assert.assertEquals(1, records.size());
-      Assert.assertEquals(testData, records.get(0).get("body").toString());
-      fileSet.close();
+      try (TimePartitionedFileSet fileSet = fileSetManager.get()) {
+        List<GenericRecord> records = readOutput(fileSet, FileBatchSource.DEFAULT_SCHEMA);
+        Assert.assertEquals(1, records.size());
+        Assert.assertEquals(testData, records.get(0).get("body").toString());
+      }
     }
   }
-
 }
