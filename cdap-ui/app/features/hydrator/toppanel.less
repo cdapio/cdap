@@ -188,6 +188,8 @@ body.theme-cdap.state-hydrator {
             height: 32px;
             .border-radius(4px);
             .opacity(1);
+            .transition(all 0.5s ease);
+            visibility: visible;
             &:first-child {
               background-color: @body-bg;
               &:hover, &:focus {
@@ -248,13 +250,14 @@ body.theme-cdap.state-hydrator {
         margin-bottom: 0;
         .placeholder-color(@color: gray);
       }
-      a {
+      button {
         font-weight: 500;
         text-decoration: none;
         &.btn {
           width: 0;
           height: 0;
           .opacity(0);
+          visibility: hidden;
           .transition(all 0.5s ease);
         }
       }

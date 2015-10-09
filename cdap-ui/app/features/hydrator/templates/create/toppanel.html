@@ -25,6 +25,7 @@
                  ng-model="TopPanelController.metadata['name']"
                  my-maxlength="64"
                  placeholder="[Pipeline Name]"
+                 ng-keyup="TopPanelController.onEnterOnMetadata($event)"
                  tooltip="{{ TopPanelController.metadata.name }}"
                  tooltip-placement="right"
                  tooltip-enable="TopPanelController.metadata.name.length > 27"
@@ -50,8 +51,8 @@
     </div>
 
     <div class="btn-group pull-right">
-      <a class="btn btn-default" ng-click="TopPanelController.resetMetadata()">Cancel</a>
-      <a class="btn btn-success" ng-click="TopPanelController.metadataExpanded = false;">Save</a>
+      <button type="button" class="btn btn-default" ng-click="TopPanelController.resetMetadata()">Cancel</button>
+      <button type="button" class="btn btn-success" ng-click="TopPanelController.metadataExpanded = false;">Save</button>
     </div>
   </div>
   <div class="btn-group pull-right clearfix">
