@@ -121,18 +121,17 @@ public class DatasetTypeManager extends AbstractIdleService {
             throw new DatasetModuleConflictException(msg);
           }
 
-          ClassLoader cl;
           DatasetModule module;
           File unpackedLocation = Files.createTempDir();
           DependencyTrackingRegistry reg;
           try {
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
+            ClassLoader cl = getClass().getClassLoader();
             if (jarLocation != null) {
               BundleJarUtil.unpackProgramJar(jarLocation, unpackedLocation);
+              cl = ProgramClassLoader.create(cConf, unpackedLocation, getClass().getClassLoader());
             }
-            cl = jarLocation == null ? this.getClass().getClassLoader() :
-              ProgramClassLoader.create(cConf, unpackedLocation, getClass().getClassLoader());
-            @SuppressWarnings("unchecked")
+
             Class clazz = ClassLoaders.loadClass(className, cl, this);
             module = DatasetModules.getDatasetModule(clazz);
             reg = new DependencyTrackingRegistry(datasetModuleId.getNamespace(), datasets);
@@ -349,9 +348,9 @@ public class DatasetTypeManager extends AbstractIdleService {
                                                                                                      typesToDelete);
           // cannot delete when there's instance that uses it
           if (dependentInstances.size() > 0) {
-            String msg =
-              String.format("Cannot delete all modules: existing dataset instances depend on it. Delete them first");
-            throw new DatasetModuleConflictException(msg);
+            throw new DatasetModuleConflictException(
+              "Cannot delete all modules: existing dataset instances depend on it. Delete them first"
+            );
           }
 
           datasets.getTypeMDS().deleteModules(namespaceId);
