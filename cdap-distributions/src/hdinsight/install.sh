@@ -24,7 +24,7 @@ __tmpdir="/tmp/cdap_install.$$.$(date +%s)"
 __gitdir="${__tmpdir}/cdap"
 
 __packerdir="${__gitdir}/cdap-distributions/src/packer/scripts"
-__cdap_site_template="${__gitdir}/cdap-distribution/src/hdinsight/cdap-site.xml.template"
+__cdap_site_template="${__gitdir}/cdap-distributions/src/hdinsight/cdap-site.xml.template"
 
 __cleanup_tmpdir() { test -d ${__tmpdir} && rm -rf ${__tmpdir}; };
 __create_tmpdir() { mkdir -p ${__tmpdir}; };
@@ -46,8 +46,8 @@ ${__packerdir}/cookbook-dir.sh || die "Failed to setup cookbook dir"
 # Install cookbooks via knife
 ${__packerdir}/cookbook-setup.sh || die "Failed to install cookbooks"
 
-# CDAP base install, ensures package dependencies are present
-chef-solo -o 'recipe[cdap::default]'
+# CDAP cli install, ensures package dependencies are present
+chef-solo -o 'recipe[cdap::cli]'
 
 # Read zookeeper quorum from hbase-site.xml, using sourced init script function
 source ${__gitdir}/cdap-common/bin/common.sh || die "Cannot source cdap common script"
