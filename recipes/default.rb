@@ -22,7 +22,6 @@ unless node['cdap'].key?('skip_prerequisites') && node['cdap']['skip_prerequisit
   include_recipe 'cdap::prerequisites'
 end
 
-include_recipe 'ntp'
 include_recipe 'cdap::repo'
 
 # add global CDAP_HOME environment variable
