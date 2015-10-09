@@ -396,7 +396,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         } catch (InvalidArtifactException e) {
           responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (ArtifactAlreadyExistsException e) {
-          responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
+          responder.sendString(HttpResponseStatus.CONFLICT, String.format(
+            "Artifact '%s' already exists. Please use the API that creates an application from an existing artifact. " +
+            "If you are trying to replace the artifact, please delete it and then try again.", artifactId));
         } catch (WriteConflictException e) {
           // don't really expect this to happen. It means after multiple retries there were still write conflicts.
           LOG.warn("Write conflict while trying to add artifact {}.", artifactId, e);
