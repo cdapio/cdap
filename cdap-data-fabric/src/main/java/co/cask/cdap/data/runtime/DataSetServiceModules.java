@@ -22,7 +22,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
-import co.cask.cdap.data2.datafabric.dataset.LocalDatasetFramework;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.DistributedStorageProviderNamespaceAdmin;
 import co.cask.cdap.data2.datafabric.dataset.service.LocalStorageProviderNamespaceAdmin;
@@ -40,6 +39,8 @@ import co.cask.cdap.data2.dataset2.StaticDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.HBaseDatasetMetricsReporter;
 import co.cask.cdap.data2.metrics.LevelDBDatasetMetricsReporter;
+import co.cask.cdap.data2.registry.SystemUsageRegistryProvider;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.http.HttpHandler;
 import com.google.common.collect.ImmutableMap;
@@ -71,9 +72,8 @@ public class DataSetServiceModules extends RuntimeModule {
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
 
-        bind(DatasetFramework.class)
-          .annotatedWith(Names.named(Constants.Bindings.SYSTEM_DATASET_FRAMEWORK))
-          .to(LocalDatasetFramework.class);
+        bind(UsageRegistry.class).toProvider(SystemUsageRegistryProvider.class);
+        expose(UsageRegistry.class);
 
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).toProvider(DatasetMdsProvider.class);
         expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
@@ -111,9 +111,8 @@ public class DataSetServiceModules extends RuntimeModule {
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
 
-        bind(DatasetFramework.class)
-          .annotatedWith(Names.named(Constants.Bindings.SYSTEM_DATASET_FRAMEWORK))
-          .to(LocalDatasetFramework.class);
+        bind(UsageRegistry.class).toProvider(SystemUsageRegistryProvider.class);
+        expose(UsageRegistry.class);
 
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).toProvider(DatasetMdsProvider.class);
         expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));
@@ -153,9 +152,8 @@ public class DataSetServiceModules extends RuntimeModule {
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));
 
-        bind(DatasetFramework.class)
-          .annotatedWith(Names.named(Constants.Bindings.SYSTEM_DATASET_FRAMEWORK))
-          .to(LocalDatasetFramework.class);
+        bind(UsageRegistry.class).toProvider(SystemUsageRegistryProvider.class);
+        expose(UsageRegistry.class);
 
         bind(DatasetFramework.class).annotatedWith(Names.named("datasetMDS")).toProvider(DatasetMdsProvider.class);
         expose(DatasetFramework.class).annotatedWith(Names.named("datasetMDS"));

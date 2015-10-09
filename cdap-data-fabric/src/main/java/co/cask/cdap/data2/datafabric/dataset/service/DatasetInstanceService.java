@@ -31,7 +31,7 @@ import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
-import co.cask.cdap.data2.registry.SystemUsageRegistry;
+import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
@@ -58,13 +58,13 @@ public class DatasetInstanceService {
   private final DatasetOpExecutor opExecutorClient;
   private final ExploreFacade exploreFacade;
   private final boolean allowDatasetUncheckedUpgrade;
-  private final SystemUsageRegistry usageRegistry;
+  private final UsageRegistry usageRegistry;
   private final AbstractNamespaceClient namespaceClient;
 
   @Inject
   public DatasetInstanceService(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf,
-                                SystemUsageRegistry usageRegistry, AbstractNamespaceClient namespaceClient) {
+                                UsageRegistry usageRegistry, AbstractNamespaceClient namespaceClient) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;

@@ -66,13 +66,6 @@ public final class Constants {
   }
 
   /**
-   * Guice bindings.
-   */
-  public static final class Bindings {
-    public static final String SYSTEM_DATASET_FRAMEWORK = "system.dataset.framework";
-  }
-
-  /**
    * Dangerous Options.
    */
   public static final class Dangerous {

@@ -48,7 +48,7 @@ import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.data2.metadata.service.NoOpBusinessMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
-import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.registry.DefaultUsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
@@ -441,6 +441,6 @@ public class UpgradeTool {
     DefaultMetricDatasetFactory.setupDatasets(factory);
 
     // Usage registry
-    UsageRegistry.setupDatasets(datasetFramework);
+    DefaultUsageRegistry.setupDatasets(datasetFramework);
   }
 }

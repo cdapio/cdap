@@ -62,13 +62,13 @@ public class LocalDatasetFramework extends AbstractDatasetFramework {
 
   private final Provider<DatasetInstanceService> instances;
   private final Provider<DatasetTypeManager> types;
-  private final AbstractNamespaceClient namespaces;
+  private final Provider<AbstractNamespaceClient> namespaces;
 
   @Inject
   public LocalDatasetFramework(DatasetDefinitionRegistryFactory registryFactory,
                                Provider<DatasetInstanceService> instances,
                                Provider<DatasetTypeManager> types,
-                               AbstractNamespaceClient namespaces) {
+                               Provider<AbstractNamespaceClient> namespaces) {
     super(registryFactory);
     this.instances = instances;
     this.types = types;
@@ -264,7 +264,7 @@ public class LocalDatasetFramework extends AbstractDatasetFramework {
   @Override
   public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
     try {
-      namespaces.create(new NamespaceMeta.Builder().setName(namespaceId).build());
+      namespaces.get().create(new NamespaceMeta.Builder().setName(namespaceId).build());
     } catch (Exception e) {
       throw new DatasetManagementException("Failed to create namespace " + namespaceId, e);
     }
@@ -273,7 +273,7 @@ public class LocalDatasetFramework extends AbstractDatasetFramework {
   @Override
   public void deleteNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
     try {
-      namespaces.delete(namespaceId);
+      namespaces.get().delete(namespaceId);
     } catch (Exception e) {
       throw new DatasetManagementException("Failed to create namespace " + namespaceId, e);
     }

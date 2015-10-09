@@ -16,25 +16,8 @@
 
 package co.cask.cdap.data2.registry;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
-import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
-import com.google.common.base.Supplier;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Iterators;
-import com.google.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -42,36 +25,7 @@ import java.util.Set;
  *
  * TODO: Reduce duplication between this and {@link UsageDataset}.
  */
-public class UsageRegistry {
-
-  private static final Logger LOG = LoggerFactory.getLogger(UsageRegistry.class);
-
-  private static final Id.DatasetInstance USAGE_INSTANCE_ID =
-    Id.DatasetInstance.from(Id.Namespace.SYSTEM, "usage.registry");
-
-  private final Transactional<UsageDatasetIterable, UsageDataset> txnl;
-
-  @Inject
-  public UsageRegistry(TransactionExecutorFactory txExecutorFactory, final DatasetFramework datasetFramework) {
-    txnl = Transactional.of(txExecutorFactory, new Supplier<UsageDatasetIterable>() {
-      @Override
-      public UsageDatasetIterable get() {
-        try {
-          Object usageDataset = DatasetsUtil.getOrCreateDataset(datasetFramework, USAGE_INSTANCE_ID,
-                                                                UsageDataset.class.getSimpleName(),
-                                                                DatasetProperties.EMPTY, null, null);
-          // Backward compatible check for version <= 3.0.0
-          if (usageDataset instanceof UsageDataset) {
-            return new UsageDatasetIterable((UsageDataset) usageDataset);
-          }
-          return new UsageDatasetIterable(new UsageDataset((Table) usageDataset));
-        } catch (Exception e) {
-          LOG.error("Failed to access usage table", e);
-          throw Throwables.propagate(e);
-        }
-      }
-    });
-  }
+public interface UsageRegistry {
 
   /**
    * Registers usage of a stream by multiple ids.
@@ -79,20 +33,7 @@ public class UsageRegistry {
    * @param users the users of the stream
    * @param streamId the stream
    */
-  public void registerAll(final Iterable<? extends Id> users, final Id.Stream streamId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
-      @Override
-      public Void apply(UsageDatasetIterable input) throws Exception {
-        for (Id user : users) {
-          // TODO: CDAP-2251: remove redundancy
-          if (user instanceof Id.Program) {
-            register((Id.Program) user, streamId);
-          }
-        }
-        return null;
-      }
-    });
-  }
+  void registerAll(final Iterable<? extends Id> users, final Id.Stream streamId);
 
   /**
    * Register usage of a stream by an id.
@@ -100,9 +41,7 @@ public class UsageRegistry {
    * @param user the user of the stream
    * @param streamId the stream
    */
-  public void register(Id user, Id.Stream streamId) {
-    registerAll(Collections.singleton(user), streamId);
-  }
+  void register(Id user, Id.Stream streamId);
 
   /**
    * Registers usage of a dataset by multiple ids.
@@ -110,20 +49,7 @@ public class UsageRegistry {
    * @param users the users of the dataset
    * @param datasetId the dataset
    */
-  public void registerAll(final Iterable<? extends Id> users, final Id.DatasetInstance datasetId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
-      @Override
-      public Void apply(UsageDatasetIterable input) throws Exception {
-        for (Id user : users) {
-          // TODO: CDAP-2251: remove redundancy
-          if (user instanceof Id.Program) {
-            register((Id.Program) user, datasetId);
-          }
-        }
-        return null;
-      }
-    });
-  }
+  void registerAll(final Iterable<? extends Id> users, final Id.DatasetInstance datasetId);
 
   /**
    * Registers usage of a dataset by multiple ids.
@@ -131,9 +57,7 @@ public class UsageRegistry {
    * @param user the user of the dataset
    * @param datasetId the dataset
    */
-  public void register(Id user, Id.DatasetInstance datasetId) {
-    registerAll(Collections.singleton(user), datasetId);
-  }
+  void register(Id user, Id.DatasetInstance datasetId);
 
   /**
    * Registers usage of a dataset by a program.
@@ -141,15 +65,7 @@ public class UsageRegistry {
    * @param programId program
    * @param datasetInstanceId dataset
    */
-  public void register(final Id.Program programId, final Id.DatasetInstance datasetInstanceId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
-      @Override
-      public Void apply(UsageDatasetIterable input) throws Exception {
-        input.getUsageDataset().register(programId, datasetInstanceId);
-        return null;
-      }
-    });
-  }
+  void register(final Id.Program programId, final Id.DatasetInstance datasetInstanceId);
 
   /**
    * Registers usage of a stream by a program.
@@ -157,112 +73,19 @@ public class UsageRegistry {
    * @param programId program
    * @param streamId stream
    */
-  public void register(final Id.Program programId, final Id.Stream streamId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
-      @Override
-      public Void apply(UsageDatasetIterable input) throws Exception {
-        input.getUsageDataset().register(programId, streamId);
-        return null;
-      }
-    });
-  }
+  void register(final Id.Program programId, final Id.Stream streamId);
 
   /**
    * Unregisters all usage information of an application.
    *
    * @param applicationId application
    */
-  public void unregister(final Id.Application applicationId) {
-    txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Void>() {
-      @Override
-      public Void apply(UsageDatasetIterable input) throws Exception {
-        input.getUsageDataset().unregister(applicationId);
-        return null;
-      }
-    });
-  }
+  void unregister(final Id.Application applicationId);
 
-  public Set<Id.DatasetInstance> getDatasets(final Id.Application id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.DatasetInstance>>() {
-      @Override
-      public Set<Id.DatasetInstance> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getDatasets(id);
-      }
-    });
-  }
-
-  public Set<Id.Stream> getStreams(final Id.Application id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Stream>>() {
-      @Override
-      public Set<Id.Stream> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getStreams(id);
-      }
-    });
-  }
-
-  public Set<Id.DatasetInstance> getDatasets(final Id.Program id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.DatasetInstance>>() {
-      @Override
-      public Set<Id.DatasetInstance> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getDatasets(id);
-      }
-    });
-  }
-
-  public Set<Id.Stream> getStreams(final Id.Program id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Stream>>() {
-      @Override
-      public Set<Id.Stream> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getStreams(id);
-      }
-    });
-  }
-
-  public Set<Id.Program> getPrograms(final Id.Stream id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Program>>() {
-      @Override
-      public Set<Id.Program> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getPrograms(id);
-      }
-    });
-  }
-
-  public Set<Id.Program> getPrograms(final Id.DatasetInstance id) {
-    return txnl.executeUnchecked(new TransactionExecutor.Function<UsageDatasetIterable, Set<Id.Program>>() {
-      @Override
-      public Set<Id.Program> apply(UsageDatasetIterable input) throws Exception {
-        return input.getUsageDataset().getPrograms(id);
-      }
-    });
-  }
-
-  /**
-   * For passing {@link UsageDataset} to {@link Transactional#of}.
-   */
-  public static final class UsageDatasetIterable implements Iterable<UsageDataset> {
-    private final UsageDataset usageDataset;
-
-    private UsageDatasetIterable(UsageDataset usageDataset) {
-      this.usageDataset = usageDataset;
-    }
-
-    public UsageDataset getUsageDataset() {
-      return usageDataset;
-    }
-
-    @Override
-    public Iterator<UsageDataset> iterator() {
-      return Iterators.singletonIterator(usageDataset);
-    }
-  }
-
-  /**
-   * Adds datasets and types to the given {@link DatasetFramework} used by usage registry.
-   *
-   * @param datasetFramework framework to add types and datasets to
-   */
-  public static void setupDatasets(DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
-    datasetFramework.addInstance(Table.class.getName(), USAGE_INSTANCE_ID, DatasetProperties.EMPTY);
-  }
-
+  Set<Id.DatasetInstance> getDatasets(final Id.Application id);
+  Set<Id.Stream> getStreams(final Id.Application id);
+  Set<Id.DatasetInstance> getDatasets(final Id.Program id);
+  Set<Id.Stream> getStreams(final Id.Program id);
+  Set<Id.Program> getPrograms(final Id.Stream id);
+  Set<Id.Program> getPrograms(final Id.DatasetInstance id);
 }

@@ -43,7 +43,7 @@ import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.data2.registry.SystemUsageRegistry;
+import co.cask.cdap.data2.registry.DefaultUsageRegistry;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.Id;
@@ -55,6 +55,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Provider;
+import com.google.inject.util.Providers;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.common.Threads;
@@ -122,7 +123,8 @@ public class LocalDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
         public DatasetTypeManager get() {
           return typeManager;
         }
-      }, NAMESPACE_CLIENT);
+      },
+      Providers.of(NAMESPACE_CLIENT));
 
     ImmutableMap<String, DatasetModule> modules = ImmutableMap.<String, DatasetModule>builder()
       .put("memoryTable", new InMemoryTableModule())
@@ -141,7 +143,8 @@ public class LocalDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
       new InMemoryDatasetOpExecutor(framework),
       exploreFacade,
       cConf,
-      new SystemUsageRegistry(txExecutorFactory, framework), NAMESPACE_CLIENT);
+      new DefaultUsageRegistry(txExecutorFactory, framework),
+      NAMESPACE_CLIENT);
 
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, framework, cConf);
