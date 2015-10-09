@@ -35,11 +35,11 @@ apt-get install --yes git || die "Failed to install git"
 # Install chef
 curl -L https://www.chef.io/chef/install.sh | sudo bash || die "Failed to install chef"
 
-# Clone cdap repo
+# Clone CDAP repo
 __create_tmpdir
 git clone --depth 1 https://github.com/caskdata/cdap.git ${__gitdir}
 
-# Setup cookbook repo using packer scripts
+# Setup cookbook repo
 test -d /var/chef/cookbooks && rm -rf /var/chef/cookbooks
 ${__packerdir}/cookbook-dir.sh || die "Failed to setup cookbook dir"
 
@@ -50,7 +50,7 @@ ${__packerdir}/cookbook-setup.sh || die "Failed to install cookbooks"
 chef-solo -o 'recipe[cdap::cli]'
 
 # Read zookeeper quorum from hbase-site.xml, using sourced init script function
-source ${__gitdir}/cdap-common/bin/common.sh || die "Cannot source cdap common script"
+source ${__gitdir}/cdap-common/bin/common.sh || die "Cannot source CDAP common script"
 __zk_quorum=$(get_conf 'hbase.zookeeper.quorum' '/etc/hbase/conf/hbase-site.xml') || die "Cannot determine zookeeper quorum"
 
 # Get HDP version, allow for the future addition hdp-select "current" directory
