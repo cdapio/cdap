@@ -62,7 +62,7 @@ import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import co.cask.tephra.distributed.TransactionService;
-import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.persist.TransactionVisibilityState;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -644,9 +644,9 @@ public abstract class HBaseQueueTest extends QueueTest {
       HTableNameConverter nameConverter = new HTableNameConverterFactory().get();
       CConfigurationReader cConfReader = new CConfigurationReader(hConf, nameConverter.getSysConfigTablePrefix(htd));
       return ConsumerConfigCache.getInstance(configTableName,
-                                             cConfReader, new Supplier<TransactionSnapshot>() {
+                                             cConfReader, new Supplier<TransactionVisibilityState>() {
           @Override
-          public TransactionSnapshot get() {
+          public TransactionVisibilityState get() {
             try {
               return transactionManager.getSnapshot();
             } catch (IOException e) {
