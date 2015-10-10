@@ -59,11 +59,11 @@ angular.module(PKG.name + '.commons')
     var sourceSettings = angular.extend({
       isSource: true,
       connectorStyle: connectorStyle,
-      anchor: [ 0.5, 1, 0, 0, 26, -43, 'sourceAnchor']
+      anchor: [ 0.5, 1, 1, 0, 26, -43, 'sourceAnchor']
     }, commonSettings);
     var sinkSettings = angular.extend({
       isTarget: true,
-      anchor: [ 0.5, 1, 0, 0, -26, -43, 'sinkAnchor'],
+      anchor: [ 0.5, 1, -1, 0, -26, -43, 'sinkAnchor'],
       connectorStyle: connectorStyle
     }, commonSettings);
 

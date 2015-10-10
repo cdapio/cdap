@@ -26,6 +26,7 @@ import co.cask.cdap.etl.common.ETLStage;
 public class ETLWorkflow extends AbstractWorkflow {
 
   public static final String NAME = "ETLWorkflow";
+  public static final String DESCRIPTION = "Workflow for ETL Batch MapReduce Driver";
 
   private final ETLBatchConfig config;
 
@@ -36,7 +37,7 @@ public class ETLWorkflow extends AbstractWorkflow {
   @Override
   protected void configure() {
     setName(NAME);
-    setDescription("Workflow for Batch ETL MapReduce Driver");
+    setDescription(DESCRIPTION);
     addMapReduce(ETLMapReduce.NAME);
     if (config.getActions() != null) {
       for (ETLStage action : config.getActions()) {

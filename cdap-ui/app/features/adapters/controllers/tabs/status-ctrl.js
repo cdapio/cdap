@@ -24,15 +24,24 @@ angular.module(PKG.name + '.feature.adapters')
 
     $scope.programType = AdapterDetail.programType;
 
-    AdapterDetail.api.runs(params)
+    AdapterDetail.api.pollRuns(params)
       .$promise
       .then(function (runs) {
         $scope.stats.numRuns = runs.length;
         $scope.stats.lastRunTime = runs.length > 0 && runs[0].end ? runs[0].end - runs[0].start : 'N/A';
+
+        for (var i = 0; i < runs.length; i++) {
+          var status = runs[i].status;
+
+          if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
+            $scope.stats.lastFinished = runs[i];
+            break;
+          }
+        }
       });
 
     if (AdapterDetail.programType === 'WORKFLOWS') {
-      AdapterDetail.api.getStatistics(params)
+      AdapterDetail.api.pollStatistics(params)
         .$promise
         .then(function (stats) {
           $scope.stats.avgRunTime = stats.avgRunTime ? stats.avgRunTime : 'N/A';

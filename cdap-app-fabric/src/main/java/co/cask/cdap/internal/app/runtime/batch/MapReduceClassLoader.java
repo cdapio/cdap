@@ -273,7 +273,8 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
         LOG.info("Create ProgramClassLoader from {}, expand to {}", programLocation.toURI(), unpackDir);
 
         BundleJarUtil.unpackProgramJar(programLocation, unpackDir);
-        return ProgramClassLoader.create(unpackDir, contextConfig.getHConf().getClassLoader(), ProgramType.MAPREDUCE);
+        return ProgramClassLoader.create(contextConfig.getCConf(), unpackDir,
+                                         contextConfig.getHConf().getClassLoader(), ProgramType.MAPREDUCE);
       } catch (IOException e) {
         LOG.error("Failed to create ProgramClassLoader", e);
         throw Throwables.propagate(e);

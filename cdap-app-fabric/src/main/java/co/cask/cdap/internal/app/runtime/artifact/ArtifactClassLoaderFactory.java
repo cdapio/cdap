@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.artifact;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -38,9 +39,12 @@ import java.net.URLClassLoader;
  */
 public class ArtifactClassLoaderFactory {
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactClassLoaderFactory.class);
+
+  private final CConfiguration cConf;
   private final File baseUnpackDir;
 
-  public ArtifactClassLoaderFactory(File baseUnpackDir) {
+  public ArtifactClassLoaderFactory(CConfiguration cConf, File baseUnpackDir) {
+    this.cConf = cConf;
     this.baseUnpackDir = baseUnpackDir;
   }
 
@@ -61,7 +65,7 @@ public class ArtifactClassLoaderFactory {
     // any classes inside the artifact is a Spark program
     final URLClassLoader parentClassLoader = SparkUtils.createSparkFrameworkClassLoader(getClass().getClassLoader());
     final ProgramClassLoader programClassLoader =
-      ProgramClassLoader.create(unpackDir, parentClassLoader, ProgramType.SPARK);
+      ProgramClassLoader.create(cConf, unpackDir, parentClassLoader, ProgramType.SPARK);
     return new CloseableClassLoader(programClassLoader, new Closeable() {
       @Override
       public void close() {

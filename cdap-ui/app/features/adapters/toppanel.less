@@ -60,10 +60,15 @@ body.theme-cdap.state-adapters {
       &.btn-status {
         width: 200px;
         cursor: default;
-        &:hover, &:hover {
+        &:hover, &:focus {
           border-left: 1px solid #eee;
+          background-color: white;
         }
-
+        &:active {
+          background-color: white;
+          color: inherit;
+          .box-shadow(none);
+        }
         span {
           display: inline-block;
           width: 10px;
