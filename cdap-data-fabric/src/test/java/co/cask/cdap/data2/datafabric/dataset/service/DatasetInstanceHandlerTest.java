@@ -288,8 +288,9 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
     HttpResponse response = makeInstancesRequest(nonExistent.getId());
     assertNamespaceNotFound(response, nonExistent);
 
-    response = getInstance(datasetInstance);
-    assertNamespaceNotFound(response, nonExistent);
+    // TODO: commented out for now until we add back namespace checks on get dataset CDAP-3901
+//    response = getInstance(datasetInstance);
+//    assertNamespaceNotFound(response, nonExistent);
 
     response = createInstance(datasetInstance, Table.class.getName(), null);
     assertNamespaceNotFound(response, nonExistent);
