@@ -31,6 +31,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -417,6 +418,16 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     } finally {
       readLock.unlock();
     }
+  }
+
+  @Override
+  public DatasetTypeMeta getType(Id.DatasetInstance instance) throws Exception {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public DatasetSpecification getSpec(Id.DatasetInstance instance) throws Exception {
+    return instances.get(instance.getNamespace(), instance);
   }
 
   @Override

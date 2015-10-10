@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.ServiceUnavailableException;
+import co.cask.cdap.data2.datafabric.dataset.DatasetMetaProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
@@ -52,7 +53,7 @@ import javax.annotation.Nullable;
  * </tt>
  */
 // todo: use dataset instead of dataset instance in namings
-public interface DatasetFramework {
+public interface DatasetFramework extends DatasetMetaProvider {
 
   /**
    * Adds dataset types by adding dataset module to the system. Calling this method to add {@link DatasetModule} may
