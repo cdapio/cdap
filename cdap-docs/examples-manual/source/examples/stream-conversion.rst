@@ -92,11 +92,13 @@ and it configures the *events* stream as its input and the *converted* dataset a
 
 .. Building and Starting
 .. =====================
-.. |example| replace:: StreamConversion
-.. |example-italic| replace:: *StreamConversion*
-.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <StreamConversion>`
+.. |example| replace:: StreamConversionApp
+.. |example-italic| replace:: *StreamConversionApp*
+.. |example-dir| replace:: StreamConversion
+.. |example-artifact| replace:: StreamConversion
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <StreamConversionApp>`
 
-.. include:: _includes/_building-starting-running.txt
+.. include:: _includes/_building-starting-running-example-with-dir.txt
 
 
 Running the Example

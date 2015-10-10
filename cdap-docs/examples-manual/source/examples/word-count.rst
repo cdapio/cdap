@@ -54,13 +54,23 @@ Data Storage
 
 RetrieveCounts Service
 ----------------------
-The service serves read requests for calculated statistics, word counts and associations.
+The service serves read requests for calculated statistics, word counts, and associations.
 It exposes these endpoints:
 
-- ``/stats`` returns the total number of words, the number of unique words, and the average word length;
-- ``/count/{word}`` returns the word count of a specified word and its word associations,
-  up to the specified limit or a pre-set limit of ten if not specified;
-- ``/assoc/{word1}/{word2}`` returns the top associated words (those with the highest counts).
+- ``/stats`` returns the total number of words, the number of unique words, and the
+  average word length.
+
+- ``/count/{word}?limit={limit}`` returns the word count of a specified word and its word
+  associations, up to a specified limit or, if not specified, the default limit of ten.
+
+- ``/counts`` returns the counts for all words in the input, with the request body
+  expected to contain a comma-separated list of words.
+
+- ``/multicounts`` returns the counts for all words in the input, with the request body
+  expected to contain a comma-separated list of words. It differs from the ``/counts``
+  endpoint in that it uses a ``KeyValueTable`` to perform a batched read.
+
+- ``/assoc/{word1}/{word2}`` returns the count of associations for a specific word pair.
 
 
 .. Building and Starting
@@ -87,34 +97,6 @@ Running the Example
 .. |example-service-italic| replace:: *RetrieveCounts*
 .. include:: _includes/_starting-service.txt
 
-.. Starting the Flow
-.. -----------------
-.. 
-.. Once the application is deployed, either:
-.. 
-.. - Using the CDAP-UI, go to the *WordCount* `application overview page, programs tab 
-..   <http://localhost:9999/ns/default/apps/WordCount/overview/programs>`__,
-..   click ``WordCounter`` to get to the flow detail page, then click the *Start* button; or
-.. - From the Standalone CDAP SDK directory, use the Command Line Interface::
-.. 
-..     $ cdap-cli.sh start flow WordCount.WordCounter
-..   
-..     Successfully started flow 'WordCounter' of application 'WordCount' with stored runtime arguments '{}'
-.. 
-.. Starting the Service
-.. --------------------
-.. 
-.. Once the application is deployed, either:
-.. 
-.. - Using the CDAP-UI, go to the *WordCount* `application overview page, programs tab 
-..   <http://localhost:9999/ns/default/apps/WordCount/overview/programs>`__,
-..   click ``RetrieveCounts`` to get to the service detail page, then click the *Start* button; or
-.. - From the Standalone CDAP SDK directory, use the Command Line Interface::
-.. 
-..     $ cdap-cli.sh start service WordCount.RetrieveCounts
-..     
-..     Successfully started service 'RetrieveCounts' of application 'WordCount' with stored runtime arguments '{}'
-
 Injecting Sentences
 -------------------
 In the application's `detail page
@@ -128,7 +110,10 @@ enclosing quotes) and click on the *Inject* button.
 After you close the pop-up window (using the button in the window's upper-right), you will
 see that the counter for the stream increases to 1, the counters for the flowlets
 *splitter* and *associator* increase to 1 and the counters for the flowlets *counter* and
-*unique* increase to 2. You can repeat this step to enter additional sentences.
+*unique* increase to 2. 
+
+You can repeat these steps to enter additional sentences. In the dialog box is an *+Upload* button that will
+send a file to the stream; you can use that to upload a text file if you wish.
 
 Querying the Results
 --------------------

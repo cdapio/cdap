@@ -1,4 +1,8 @@
 
+.. To use this include, define these replacements:
+.. example-flow
+.. example-flow-italic
+
 Starting the Flow
 -----------------
 

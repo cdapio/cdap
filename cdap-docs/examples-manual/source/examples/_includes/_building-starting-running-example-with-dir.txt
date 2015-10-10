@@ -1,3 +1,10 @@
+
+.. To use this include, define these replacements:
+.. example
+.. example-italic
+.. example-dir
+.. example-artifact
+
 .. |application-overview| replace:: |example-italic| |application-overview-page|
 
 Building and Starting

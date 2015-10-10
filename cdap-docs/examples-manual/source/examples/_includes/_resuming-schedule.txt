@@ -1,4 +1,9 @@
 
+.. To use this include, define these replacements:
+.. example-schedule
+.. example-workflow
+.. example-workflow-italic
+
 Resuming the Schedule
 ---------------------
 

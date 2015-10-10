@@ -140,7 +140,7 @@ A ``user/{id}`` endpoint to obtain profile information for a specified user::
 .. |example-artifact| replace:: Purchase
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <PurchaseHistory>`
 
-.. include:: _includes/_building-starting-running-example.txt
+.. include:: _includes/_building-starting-running-example-with-dir.txt
 
 
 Running the Example

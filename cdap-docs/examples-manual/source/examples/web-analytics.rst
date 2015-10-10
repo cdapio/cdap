@@ -143,16 +143,16 @@ Query the Unique Visitor Page Views
 ---------------------------------------
 Once the log data has been processed by the ``WebAnalyticsFlow``, we can explore the
 dataset ``UniqueVisitCount`` with a SQL query. You can easily execute SQL queries against
-datasets using the CDAP UI by going to the *Data* page showing `all datasets 
-<http://localhost:9999/ns/default/data>`__, selecting the **UniqueVisitCount**
+datasets using the CDAP UI by going to the *Data* page showing `All Datasets 
+<http://localhost:9999/ns/default/data>`__, clicking on the **UniqueVisitCount**
 dataset:
 
-.. image:: ../_images/wa_explore_store.png
+.. image:: _images/web-analytics-0.png
    :width: 8in
+  
+Then, once at the dataset detail page, select the *Explore* tab:
 
-Then, select the *Explore* tab:
-
-.. image:: ../_images/wa_explore_dataset.png
+.. image:: _images/web-analytics-1.png
    :width: 8in
 
 You can then run SQL queries against the dataset. Let's try to find the top five IP
@@ -160,17 +160,22 @@ addresses that visited the site by running a SQL query::
 
   SELECT * FROM dataset_uniquevisitcount ORDER BY value DESC LIMIT 5
 
-You can copy and paste the above SQL into the **Write & Execute SQL** box as shown below (replacing the
-default query that is there) and click the **Execute** button to run it. It may take a
+You can copy and paste the above SQL into the text box as shown below (replacing the
+default query that is there) and click the **Execute SQL** button to run it. It may take a
 moment for the query to finish.
 
-.. image:: ../_images/wa_explore_query.png
+.. image:: _images/web-analytics-2.png
    :width: 8in
 
-Once it's finished, click on the disclosure symbol on the left side of the **View Queries**
-section to expand the display and see the query results:
+Once it's finished, click on the preview button the right side of the **Results**
+table:
 
-.. image:: ../_images/wa_explore_result.png
+.. image:: _images/web-analytics-3.png
+   :width: 8in
+
+This will display the first five rows of the query results:
+
+.. image:: _images/web-analytics-4.png
    :width: 8in
 
 

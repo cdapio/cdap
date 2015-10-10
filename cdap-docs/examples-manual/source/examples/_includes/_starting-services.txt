@@ -1,4 +1,12 @@
 
+.. To use this include, define these replacements:
+.. example-service1
+.. example-service1-italic
+.. example-service2
+.. example-service2-italic
+.. example-service3
+.. example-service3-italic
+
 Starting the Services
 ---------------------
 

@@ -1,4 +1,8 @@
 
+.. To use this include, define these replacements:
+.. example-workflow
+.. example-workflow-italic
+
 Starting the Workflow
 ---------------------
 

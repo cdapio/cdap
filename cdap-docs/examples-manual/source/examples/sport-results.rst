@@ -143,6 +143,8 @@ Starting the MapReduce
 To run the ``ScoreCounter`` over all seasons of the NFL::
 
   $ cdap-cli.sh start mapreduce SportResults.ScoreCounter \"league=nfl\"
+  
+Note that the MapReduce can only be run once for each league. A subsequent run would fail because the output already exists.
 
 Exploring with Ad-hoc SQL
 -------------------------
@@ -164,7 +166,7 @@ have scored the least points compared to the points they conceded::
 
   $ cdap-cli.sh execute \""select * from dataset_totals where league = 'nfl' order by conceded - scored desc limit 3"\"
   
-The last command would produce results (reformatted to fit) such as::
+The last command would produce results (your results may vary, depending on the datasets you load) such as::
 
   Successfully connected CDAP instance at http://localhost:10000/default
   +=====================================================================================================================================+
