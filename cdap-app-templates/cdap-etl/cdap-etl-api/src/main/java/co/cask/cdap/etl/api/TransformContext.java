@@ -55,6 +55,13 @@ public interface TransformContext {
   Metrics getMetrics();
 
   /**
+   * Gets the stage number of the transform, useful for setting the context of logging in transforms.
+   *
+   * @return stage number
+   */
+  int getStageId();
+
+  /**
    * Creates a new instance of a plugin.
    * The instance returned will have the {@link PluginConfig} setup with
    * {@link PluginProperties} provided at the time when the

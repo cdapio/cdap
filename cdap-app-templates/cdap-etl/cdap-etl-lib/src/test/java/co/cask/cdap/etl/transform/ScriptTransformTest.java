@@ -21,12 +21,14 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.common.MockEmitter;
+import co.cask.cdap.etl.common.MockMetrics;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -75,9 +77,9 @@ public class ScriptTransformTest {
   @Test
   public void testSimple() throws Exception {
     ScriptTransform.Config config = new ScriptTransform.Config(
-      "function transform(x) { x.intField = x.intField * 1024; return x; }", null);
+      "function transform(x, context) { x.intField = x.intField * 1024; return x; }", null);
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
-    transform.initialize(null);
+    transform.initialize(new MockTransformContext());
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(RECORD1, emitter);
@@ -126,10 +128,10 @@ public class ScriptTransformTest {
       Schema.Field.of("x", Schema.of(Schema.Type.INT)),
       Schema.Field.of("y", Schema.of(Schema.Type.LONG)));
     ScriptTransform.Config config = new ScriptTransform.Config(
-      "function transform(input) { return { 'x':input.intField, 'y':input.longField }; }",
+      "function transform(input, context) { return { 'x':input.intField, 'y':input.longField }; }",
       outputSchema.toString());
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
-    transform.initialize(null);
+    transform.initialize(new MockTransformContext());
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(RECORD1, emitter);
@@ -192,11 +194,13 @@ public class ScriptTransformTest {
 
     Schema outputSchema = Schema.recordOf("output", Schema.Field.of("x", Schema.of(Schema.Type.DOUBLE)));
     ScriptTransform.Config config = new ScriptTransform.Config(
-      "function transform(input) {\n" +
+      "function transform(input, context) {\n" +
       "  var pi = input.inner1.list[0].p;\n" +
       "  var e = input.inner1.list[0].e;\n" +
       "  var val = power(pi.val, 3) + power(e.val, 2);\n" +
-      "  print(pi); print(e);\n" +
+      "  print(pi); print(e);\n print(context);\n" +
+      "  context.getMetrics().count(\"script.transform.count\", 1);\n" +
+      "  context.getLogger().info(\"Log test from Script Transform\");\n" +
       "  return { 'x':val };\n" +
       "}" +
       "function power(x, y) { \n" +
@@ -208,12 +212,14 @@ public class ScriptTransformTest {
       "}",
       outputSchema.toString());
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
-    transform.initialize(null);
+    MockMetrics mockMetrics = new MockMetrics();
+    transform.initialize(new MockTransformContext(new HashMap<String, String>(), mockMetrics));
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
     StructuredRecord output = emitter.getEmitted().get(0);
     Assert.assertEquals(outputSchema, output.getSchema());
     Assert.assertTrue(Math.abs(2.71 * 2.71 + 3.14 * 3.14 * 3.14 - (Double) output.get("x")) < 0.000001);
+    Assert.assertEquals(1, mockMetrics.getCount("script.transform.count"));
   }
 }

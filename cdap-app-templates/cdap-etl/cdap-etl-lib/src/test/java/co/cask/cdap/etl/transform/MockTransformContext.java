@@ -19,6 +19,7 @@ package co.cask.cdap.etl.transform;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.common.MockMetrics;
 import co.cask.cdap.etl.common.NoopMetrics;
 import com.google.common.collect.Maps;
 
@@ -29,9 +30,15 @@ import java.util.Map;
  */
 public class MockTransformContext implements TransformContext {
   private final PluginProperties pluginProperties;
+  private final Metrics metrics;
 
   public MockTransformContext(Map<String, String> args) {
+    this(args, new MockMetrics());
+  }
+
+  public MockTransformContext(Map<String, String> args, Metrics metrics) {
     this.pluginProperties = PluginProperties.builder().addAll(args).build();
+    this.metrics = metrics;
   }
 
   public MockTransformContext() {
@@ -50,7 +57,12 @@ public class MockTransformContext implements TransformContext {
 
   @Override
   public Metrics getMetrics() {
-    return NoopMetrics.INSTANCE;
+    return metrics;
+  }
+
+  @Override
+  public int getStageId() {
+    return 1;
   }
 
   @Override
