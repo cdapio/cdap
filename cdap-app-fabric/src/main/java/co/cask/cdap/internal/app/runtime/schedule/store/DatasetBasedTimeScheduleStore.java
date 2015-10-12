@@ -303,7 +303,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
                 LOG.debug("Schedule: trigger with key {} added", trigger.trigger.getKey());
               } else {
                 LOG.debug("Schedule: trigger with key {} and state {} skipped", trigger.trigger.getKey(),
-                          trigger.state.toString());
+                          trigger.state);
               }
             }
           } else {
