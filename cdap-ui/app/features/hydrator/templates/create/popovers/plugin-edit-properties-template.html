@@ -23,6 +23,7 @@
       </div>
       <div ng-repeat="group in PluginEditController.config.groups.position">
         <div class="widget-group-container">
+          <h4>{{PluginEditController.config.groups[group].display}}</h4>
           <div ng-repeat="field in PluginEditController.groups[group].position">
             <div ng-if="field !== 'schema'">
               <div class="form-group">

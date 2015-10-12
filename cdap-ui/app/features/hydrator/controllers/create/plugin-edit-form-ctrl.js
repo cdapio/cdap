@@ -24,7 +24,7 @@ angular.module(PKG.name + '.feature.hydrator')
       position: []
     };
     var missedFieldsGroup = {
-      display: '',
+      display: 'Generic',
       position: [],
       fields: {
 
@@ -175,8 +175,21 @@ angular.module(PKG.name + '.feature.hydrator')
         .then(
           function success(res) {
             var jsonBlob;
-            if (res.schema) {
-              this.schemaProperties = res.schema;
+            var outputSchemaProperty;
+            var index;
+            if (res.outputschema) {
+              outputSchemaProperty = Object.keys(res.outputschema);
+              if (!res.outputschema.implicit) {
+                this.schemaProperties = res.outputschema[outputSchemaProperty[0]];
+                this.isOuputSchemaExists = (propertiesFromBackend.indexOf(outputSchemaProperty[0]) !== -1);
+                this.isOutputSchemaRequired = $scope.plugin._backendProperties[outputSchemaProperty[0]].required;
+                index = propertiesFromBackend.indexOf(outputSchemaProperty[0]);
+                if (index !== -1) {
+                  propertiesFromBackend.splice(index, 1);
+                }
+              }
+            } else {
+              this.isOuputSchemaExists = false;
             }
 
             this.groups.position = res.groups.position;
@@ -197,21 +210,21 @@ angular.module(PKG.name + '.feature.hydrator')
               this.groups['generic'] = missedFieldsGroup;
             }
 
-            if (res.implicit) {
-              var schema = res.implicit.schema;
-              var keys = Object.keys(schema);
+            if (res.outputschema && res.outputschema.implicit) {
+              var keys = Object.keys(res.outputschema.implicit);
 
               var formattedSchema = [];
               angular.forEach(keys, function (key) {
                 formattedSchema.push({
                   name: key,
-                  type: schema[key]
+                  type: res.outputschema.implicit[key]
                 });
               });
 
               var obj = { fields: formattedSchema };
               $scope.plugin.outputSchema = constructOutputSchema(obj, this.schemaProperties, $scope.plugin.properties);
               $scope.plugin.implicitSchema = true;
+              this.isOuputSchemaExists = true;
             } else {
               try {
                 jsonBlob = JSON.parse($scope.plugin.outputSchema);
@@ -220,9 +233,9 @@ angular.module(PKG.name + '.feature.hydrator')
               }
               $scope.plugin.outputSchema = constructOutputSchema(jsonBlob, this.schemaProperties, $scope.plugin.properties);
             }
-            if ($scope.plugin._backendProperties.schema) {
-              if ($scope.plugin.properties.schema !== $scope.plugin.outputSchema) {
-                $scope.plugin.properties.schema = $scope.plugin.outputSchema;
+            if (this.isOuputSchemaExists) {
+              if ($scope.plugin.properties[outputSchemaProperty[0]] !== $scope.plugin.outputSchema) {
+                $scope.plugin.properties[outputSchemaProperty[0]] = $scope.plugin.outputSchema;
               }
             }
             $scope.pluginCopy = angular.copy($scope.plugin);
