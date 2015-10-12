@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.AppWithMR;
+import co.cask.cdap.MissingMapReduceWorkflowApp;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
@@ -26,7 +27,9 @@ import co.cask.cdap.app.DefaultAppConfigurer;
 import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ArtifactNotFoundException;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -57,6 +60,34 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     store = getInjector().getInstance(DefaultStore.class);
     locationFactory = getInjector().getInstance(LocationFactory.class);
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+  }
+
+  // test that the call to deploy an artifact and application in a single step will delete the artifact
+  // if the application could not be created
+  @Test(expected = ArtifactNotFoundException.class)
+  public void testDeployArtifactAndApplicationCleansUpArtifactOnFailure() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "missing-mr", "1.0.0-SNAPSHOT");
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, MissingMapReduceWorkflowApp.class);
+    File appJarFile = new File(tmpFolder.newFolder(),
+                               String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    appJar.delete();
+
+    try {
+      applicationLifecycleService.deployAppAndArtifact(Id.Namespace.DEFAULT, "appName", artifactId, appJarFile, null,
+        new ProgramTerminator() {
+          @Override
+          public void stop(Id.Program programId) throws Exception {
+            // no-op
+          }
+        });
+      Assert.fail("expected application deployment to fail.");
+    } catch (Exception e) {
+      // expected
+    }
+
+    // the artifact should have been cleaned up, and this should throw a not found exception
+    artifactRepository.getArtifact(artifactId);
   }
 
   @Test
