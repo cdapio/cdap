@@ -255,7 +255,7 @@ Using the CLI:
 .. container:: highlight
 
   .. parsed-literal:: 
-    load artifact /path/to/custom-transforms-1.0.0.jar /path/to/config.json
+    load artifact /path/to/custom-transforms-1.0.0.jar config-file /path/to/config.json
 
 where ``config.json`` contains:
 
@@ -290,7 +290,7 @@ Using the CLI:
 .. container:: highlight
 
   .. parsed-literal::
-    load artifact /path/to/mysql-connector-java-5.1.35.jar /path/to/config.json
+    load artifact /path/to/mysql-connector-java-5.1.35.jar config-file /path/to/config.json
 
 where ``config.json`` contains:
 
