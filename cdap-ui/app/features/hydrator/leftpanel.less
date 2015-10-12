@@ -132,6 +132,8 @@ body.theme-cdap.state-hydrator-create {
       }
 
       &.item-open {
+        height: 100%;
+
         .item-heading {
           border-bottom-color: transparent;
           color: white;
@@ -155,6 +157,13 @@ body.theme-cdap.state-hydrator-create {
         }
         .sink {
           position: static;
+        }
+
+        .item-body-wrapper {
+          // Syntax needed to avoid LESS parsing issue affecting calc()
+          height: ~"-moz-calc(100% - 120px)";
+          height: ~"-webkit-calc(100% - 120px)";
+          height: ~"calc(100% - 120px)";
         }
       }
 
