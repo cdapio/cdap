@@ -65,7 +65,6 @@ angular.module(PKG.name + '.feature.spark')
     this.openHistory = function() {
       this.$bootstrapModal.open({
         size: 'lg',
-        windowClass: 'center cdap-modal',
         templateUrl: '/assets/features/spark/templates/tabs/history.html',
         controller: ['runs', '$scope', function(runs, $scope) {
           $scope.runs = runs;

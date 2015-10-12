@@ -70,7 +70,6 @@ angular.module(PKG.name + '.feature.worker')
   this.openHistory = function() {
     this.$bootstrapModal.open({
       size: 'lg',
-      windowClass: 'center cdap-modal',
       templateUrl: '/assets/features/workers/templates/tabs/history.html',
       controller: ['runs', '$scope', function(runs, $scope) {
         $scope.runs = runs;

@@ -130,7 +130,6 @@ class WorkflowsRunsController {
   openHistory() {
     this.$bootstrapModal.open({
       size: 'lg',
-      windowClass: 'center cdap-modal',
       templateUrl: '/assets/features/workflows/templates/tabs/history.html',
       controller: ['runs', '$scope', function(runs, $scope) {
         $scope.runs = runs;
@@ -144,7 +143,6 @@ class WorkflowsRunsController {
   openSchedules() {
     this.$bootstrapModal.open({
       size: 'lg',
-      windowClass: 'center cdap-modal',
       templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
       controller: 'WorkflowsSchedulesController',
       controllerAs: 'SchedulesController'

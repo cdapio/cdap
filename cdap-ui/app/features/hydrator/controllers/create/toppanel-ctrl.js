@@ -95,7 +95,6 @@ angular.module(PKG.name + '.feature.hydrator')
           $bootstrapModal.open({
             templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
             size: 'lg',
-            windowClass: 'cdap-modal',
             keyboard: true,
             controller: ['$scope', 'config', 'CanvasFactory', 'MyAppDAGService', function($scope, config, CanvasFactory, MyAppDAGService) {
               $scope.config = JSON.stringify(config);
