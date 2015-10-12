@@ -95,10 +95,10 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
   public void storeJobsAndTriggers(Map<JobDetail, Set<? extends Trigger>> triggersAndJobs,
                                    boolean replace) throws JobPersistenceException {
     super.storeJobsAndTriggers(triggersAndJobs, replace);
-    for (Map.Entry<JobDetail, Set<? extends Trigger>> e: triggersAndJobs.entrySet()) {
-      storeJob(e.getKey(), replace);
-      for (Trigger trigger: e.getValue()) {
-        storeTrigger((OperableTrigger) trigger, replace);
+    for (Map.Entry<JobDetail, Set<? extends Trigger>> e : triggersAndJobs.entrySet()) {
+      persistJobAndTrigger(e.getKey(), null);
+      for (Trigger trigger : e.getValue()) {
+        persistJobAndTrigger(null, (OperableTrigger) trigger);
       }
     }
   }
@@ -303,7 +303,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
                 LOG.debug("Schedule: trigger with key {} added", trigger.trigger.getKey());
               } else {
                 LOG.debug("Schedule: trigger with key {} and state {} skipped", trigger.trigger.getKey(),
-                                                                                trigger.state.toString());
+                          trigger.state.toString());
               }
             }
           } else {
