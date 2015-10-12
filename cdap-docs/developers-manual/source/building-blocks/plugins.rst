@@ -226,7 +226,7 @@ list them in the configuration:
 
 Once your JARs and matching configuration files are in place, a CDAP CLI command (``load artifact``) or 
 a RESTful API call to :ref:`load system artifacts <http-restful-api-artifact-system-load>`
-can be made to load the artifacts. As described on the documentation on :ref:`artifacts`, only
+can be made to load the artifacts. As described in the documentation on :ref:`artifacts`, only
 snapshot artifacts can be re-deployed without requiring that they first be deleted.
 
 Alternatively, the CDAP Standalone should be restarted for this change to take effect in Standalone
@@ -272,7 +272,7 @@ This is in case there is a user artifact with the same name as the system artifa
 If you are extending a user artifact, no prefix is required.
 
 You can deploy third-party JARs in the same way except the plugin information needs to be explicitly listed.
-As described on the documentation on :ref:`artifacts`, only snapshot artifacts can be
+As described in the documentation on :ref:`artifacts`, only snapshot artifacts can be
 re-deployed without requiring that they first be deleted.
 
 Using the RESTful API:
