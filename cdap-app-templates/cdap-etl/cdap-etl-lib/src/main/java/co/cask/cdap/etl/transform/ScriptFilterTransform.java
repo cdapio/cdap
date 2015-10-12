@@ -31,6 +31,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -60,6 +62,7 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
   private ScriptEngine engine;
   private Invocable invocable;
   private Metrics metrics;
+  private Logger logger;
 
   public ScriptFilterTransform(ScriptFilterConfig scriptFilterConfig) {
     this.scriptFilterConfig = scriptFilterConfig;
@@ -75,8 +78,9 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
 
   @Override
   public void initialize(TransformContext context) {
-    init();
     metrics = context.getMetrics();
+    logger = LoggerFactory.getLogger(ScriptFilterTransform.class.getName() + ".stage-" + context.getStageId());
+    init();
   }
 
   @Override
@@ -97,6 +101,10 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
   private void init() {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
+
+    // initialize metrics and logging
+    engine.put("metrics", metrics);
+    engine.put("LOG", logger);
 
     // this is pretty ugly, but doing this so that we can pass the 'input' json into the shouldFilter function.
     // that is, we want people to implement

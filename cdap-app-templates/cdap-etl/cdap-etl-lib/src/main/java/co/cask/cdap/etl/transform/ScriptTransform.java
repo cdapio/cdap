@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
@@ -31,6 +32,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -57,6 +60,8 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   private Invocable invocable;
   private Schema schema;
   private final Config config;
+  private Metrics metrics;
+  private Logger logger;
 
   /**
    * Configuration for the script transform.
@@ -94,6 +99,8 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
 
   @Override
   public void initialize(TransformContext context) {
+    metrics = context.getMetrics();
+    logger = LoggerFactory.getLogger(ScriptTransform.class.getName() + ".stage-" + context.getStageId());
     init();
   }
 
@@ -215,6 +222,11 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   private void init() {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
+
+    // initialize metrics and logging
+    engine.put("metrics", metrics);
+    engine.put("LOG", logger);
+
     try {
       // this is pretty ugly, but doing this so that we can pass the 'input' json into the transform function.
       // that is, we want people to implement
