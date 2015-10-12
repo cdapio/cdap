@@ -17,38 +17,8 @@
 angular.module(PKG.name + '.feature.hydrator')
   .service('MyNodeConfigService', function() {
     this.pluginChangeListeners = {};
-    this.pluginResetListeners = {};
     this.pluginRemoveListeners = {};
     this.pluginSaveListeners = {};
-
-    this.isModelTouched = false;
-
-    this.setIsPluginBeingEdited = function(isPluginSaved) {
-      this.isModelTouched = isPluginSaved;
-    };
-
-    this.getIsPluginBeingEdited = function() {
-      return this.isModelTouched;
-    };
-
-    this.resetPlugin = function(plugin) {
-      this.plugin = plugin;
-      this.notifyPluginResetListeners();
-    };
-
-    this.notifyPluginResetListeners = function() {
-      angular.forEach(this.pluginResetListeners, function(callback) {
-        callback(this.plugin);
-      }.bind(this));
-    };
-
-    this.registerPluginResetCallback = function(id, callback) {
-      this.pluginResetListeners[id] = callback;
-    };
-
-    this.unRegisterPluginResetCallback = function(id) {
-      delete this.pluginResetListeners[id];
-    };
 
     this.setPlugin = function(plugin) {
       this.plugin = plugin;

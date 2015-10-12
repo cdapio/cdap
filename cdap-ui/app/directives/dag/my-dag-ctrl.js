@@ -300,7 +300,6 @@ angular.module(PKG.name + '.commons')
     }
 
     $scope.$on('$destroy', function() {
-      MyNodeConfigService.unRegisterPluginResetCallback($scope.$id);
       MyNodeConfigService.unRegisterPluginSaveCallback($scope.$id);
       closeAllPopovers();
       angular.forEach(popoverScopes, function (s) {
