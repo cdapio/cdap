@@ -77,7 +77,7 @@ public class ScriptTransformTest {
     ScriptTransform.Config config = new ScriptTransform.Config(
       "function transform(x) { x.intField = x.intField * 1024; return x; }", null);
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
-    transform.initialize(null);
+    transform.initialize(new MockTransformContext());
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(RECORD1, emitter);
@@ -129,7 +129,7 @@ public class ScriptTransformTest {
       "function transform(input) { return { 'x':input.intField, 'y':input.longField }; }",
       outputSchema.toString());
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
-    transform.initialize(null);
+    transform.initialize(new MockTransformContext());
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(RECORD1, emitter);
@@ -197,6 +197,8 @@ public class ScriptTransformTest {
       "  var e = input.inner1.list[0].e;\n" +
       "  var val = power(pi.val, 3) + power(e.val, 2);\n" +
       "  print(pi); print(e);\n" +
+      "  metrics.count(\"script.transform.count\", 1);\n" +
+      "  LOG.info(\"Log test from Script Transform\");\n" +
       "  return { 'x':val };\n" +
       "}" +
       "function power(x, y) { \n" +
@@ -208,7 +210,7 @@ public class ScriptTransformTest {
       "}",
       outputSchema.toString());
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
-    transform.initialize(null);
+    transform.initialize(new MockTransformContext());
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);

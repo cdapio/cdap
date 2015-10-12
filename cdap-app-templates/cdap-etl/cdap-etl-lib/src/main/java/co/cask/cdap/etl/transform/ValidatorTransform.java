@@ -87,6 +87,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   private Metrics metrics;
   private Invocable invocable;
   private ScriptEngine engine;
+  private Logger logger;
 
   // for unit tests, otherwise config is injected by plugin framework.
   public ValidatorTransform(ValidatorConfig config) {
@@ -123,8 +124,9 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
 
   @VisibleForTesting
   void setUpInitialScript(TransformContext context, List<Validator> validators) throws ScriptException {
-    init(validators);
     metrics = context.getMetrics();
+    logger = LoggerFactory.getLogger(ValidatorTransform.class.getName() + ".stage-" + context.getStageId());
+    init(validators);
   }
 
   @Override
@@ -171,6 +173,8 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     for (Validator validator : validators) {
       engine.put(validator.getValidatorName(), validator.getValidator());
     }
+    engine.put("metrics", metrics);
+    engine.put("LOG", logger);
 
     // this is pretty ugly, but doing this so that we can pass the 'input' json into the isValid function.
     // that is, we want people to implement

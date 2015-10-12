@@ -50,6 +50,8 @@ public class ValidatorTransformTest {
         "      } else if (!coreValidator.isInRange(input.content_length, 0, 1024 * 1024)) {" +
         "         isValid = false; errMsg = \"content length >1MB\"; errCode = 10;" +
         "      }" +
+        " metrics.count(\"valid.processed\", 1);" +
+        " LOG.info(\"Test Log from Validator Transform\");" +
         "      return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
         "   };";
 

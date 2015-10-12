@@ -54,6 +54,11 @@ public class MockTransformContext implements TransformContext {
   }
 
   @Override
+  public Integer getStageId() {
+    return 1;
+  }
+
+  @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
     return null;
   }
