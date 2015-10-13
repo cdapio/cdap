@@ -30,12 +30,12 @@
 
     <div class="clearfix">
 
-      <div class="row alert-danger">
+      <div class="row alert-danger" ng-repeat="alert in alerts track by $index">
         <div class="col-xs-10">
-          <span class="badge">2</span>
-          <strong>Test alert</strong>  Nothing is wrong
+          <span class="badge" ng-if="alert.count > 1">{{alert.count}}</span>
+          <strong>{{ alert.title }}</strong>  {{ alert.content }}
           <p>
-            <small class="text-muted">2:50PM 10/12/2015</small>
+            <small class="text-muted">{{ alert.time | amCalendar }}</small>
           </p>
         </div>
         <div class="col-xs-2">
