@@ -33,7 +33,7 @@
       </td>
       <td>
         <span>Duration</span>
-        <span ng-if="duration && duration < 60">{{duration}} seconds</span>
+        <span ng-if="duration && duration <= 60">{{duration}} seconds</span>
         <span ng-if="duration && duration > 60" ng-bind="(duration * 1000) | amDurationFormat | caskCapitalizeFilter"></span>
         <span ng-if="!duration">&mdash;</span>
       </td>
