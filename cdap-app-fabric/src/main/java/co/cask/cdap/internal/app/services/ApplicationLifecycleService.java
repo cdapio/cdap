@@ -30,7 +30,6 @@ import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.deploy.Manager;
 import co.cask.cdap.app.deploy.ManagerFactory;
-import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
@@ -42,7 +41,6 @@ import co.cask.cdap.common.InvalidArtifactException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
@@ -61,7 +59,6 @@ import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ProgramTypes;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -73,7 +70,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
@@ -90,9 +86,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -101,13 +94,6 @@ import javax.annotation.Nullable;
 public class ApplicationLifecycleService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLifecycleService.class);
   private static final Gson GSON = new Gson();
-  // for upgrades only
-  private static final ProgramTerminator NO_OP_TERMINATOR = new ProgramTerminator() {
-    @Override
-    public void stop(Id.Program programId) throws Exception {
-      // no-op
-    }
-  };
 
   /**
    * Runtime program service for running and managing programs.
@@ -402,109 +388,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     deleteApp(appId, spec);
-  }
-
-  /**
-   * Upgrade from the previous version of CDAP to the current version. In 3.2, this means adding artifacts for all
-   * existing applications and updating their specs to include the artifact id.
-   */
-  public void upgrade(boolean continueOnFailure) throws Exception {
-    File tmpDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
-      configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-    if (!tmpDir.exists()) {
-      if (!tmpDir.mkdirs()) {
-        throw new IOException("Unable to create tmp dir " + tmpDir.getAbsolutePath());
-      }
-    }
-
-    for (NamespaceMeta namespaceMeta : store.listNamespaces()) {
-      Id.Namespace namespaceId = Id.Namespace.from(namespaceMeta.getName());
-      for (ApplicationSpecification appSpec : store.getAllApplications(namespaceId)) {
-        Id.Application appId = Id.Application.from(namespaceId, appSpec.getName());
-
-        if (appSpec.getArtifactId() != null) {
-          // this is possible if upgrade failed midway through. It means this app was already updated so continue on.
-          continue;
-        }
-
-        Location appJarLocation;
-        try {
-          appJarLocation = findAppJarLocation(appId);
-        } catch (FileNotFoundException e) {
-          // nothing we can do... skip and log a message
-          LOG.error("Unable to find the application jar for app '{}' in namespace '{}'. " +
-            "Please re-deploy the app manually after upgrade.", appId.getId(), appId.getNamespaceId(), e);
-          continue;
-        }
-
-        // copy jar to local file
-        File tmpFile = File.createTempFile("tmpApp", ".jar", tmpDir);
-        Files.copy(Locations.newInputSupplier(appJarLocation), tmpFile);
-
-        String version = "1.0.0";
-        // version derived from manifest.
-        JarFile jarFile = new JarFile(tmpFile);
-        Manifest manifest = jarFile.getManifest();
-        if (manifest != null) {
-          Attributes attributes = manifest.getMainAttributes();
-          if (attributes != null) {
-            String versionAttribute = attributes.getValue(ManifestFields.BUNDLE_VERSION);
-            if (versionAttribute != null && !versionAttribute.isEmpty()) {
-              version = versionAttribute;
-            }
-          }
-        }
-
-        ArtifactDetail artifactDetail;
-        // use app name as artifact name
-        Id.Artifact artifactId = Id.Artifact.from(namespaceId, appId.getId(), version);
-        try {
-          artifactDetail = artifactRepository.addArtifact(artifactId, tmpFile);
-        } catch (WriteConflictException e) {
-          // this shouldn't happen since nothing else should be running
-          LOG.error("Write conflict when adding artifact for app '%s' in namespace '%s'. " +
-                    "Please try re-running the upgrade.");
-          if (continueOnFailure) {
-            continue;
-          }
-          throw e;
-        } catch (ArtifactAlreadyExistsException e) {
-          // this can happen if the upgrade tool ran already, the artifact was added, but the app metadata was not
-          // updated. In that case, just look up artifact detail from the repository instead of adding the artifact,
-          // and proceed to update the app metadata again
-          try {
-            artifactDetail = artifactRepository.getArtifact(artifactId);
-          } catch (Exception e2) {
-            LOG.error("Error looking up artifact detail for artifact {}. Please try re-running the upgrade.",
-                      artifactId, e);
-            if (continueOnFailure) {
-              continue;
-            }
-            throw e2;
-          }
-        } catch (InvalidArtifactException e) {
-          LOG.error("Artifact {} is invalid. You will need to redeploy the app manually after upgrade.",
-                    artifactId, e);
-          // this should not happen either since the app jar was successfully deployed already
-          if (continueOnFailure) {
-            continue;
-          }
-          throw e;
-        }
-
-        // app programs will not change during upgrade so we can pass a no-op terminator
-        try {
-          deployApp(namespaceId, appSpec.getName(), appSpec.getConfiguration(), NO_OP_TERMINATOR, artifactDetail);
-        } catch (Exception e) {
-          LOG.error("Error updating app metadata. Please try re-running the upgrade. If that fails, you will need " +
-            "to delete and redeploy the app manually.", e);
-          if (continueOnFailure) {
-            continue;
-          }
-          throw e;
-        }
-      }
-    }
   }
 
   /**
