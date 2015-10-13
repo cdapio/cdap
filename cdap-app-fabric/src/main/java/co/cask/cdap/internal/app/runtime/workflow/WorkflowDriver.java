@@ -35,6 +35,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -67,6 +68,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -399,15 +401,19 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     store.setWorkflowProgramStart(customActionId, customActionRunId.getId(), workflowId.getId(), runId.getId(),
                                   actionNode.getNodeId(), startTimeInSeconds, null);
-    boolean bException = false;
+
+    ProgramRunStatus runStatus = ProgramRunStatus.COMPLETED;
+
     try {
       executeAction(actionNode, instantiator, classLoader, token);
     } catch (Throwable t) {
-      bException = true;
+      runStatus = ProgramRunStatus.FAILED;
+      if (Iterables.size(Iterables.filter(Throwables.getCausalChain(t), InterruptedException.class)) > 0) {
+        runStatus = ProgramRunStatus.KILLED;
+      }
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
     } finally {
-      ProgramRunStatus runStatus = bException ? ProgramRunStatus.FAILED : ProgramRunStatus.COMPLETED;
       store.setStop(customActionId, customActionRunId.getId(),
                     TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), runStatus);
     }
