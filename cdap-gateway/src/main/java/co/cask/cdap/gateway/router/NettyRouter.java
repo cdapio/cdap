@@ -221,7 +221,7 @@ public class NettyRouter extends AbstractIdleService {
           }
           pipeline.addLast("tracker", connectionTracker);
           // idle state handler
-          pipeline.addLast("idle-state-handler",
+          pipeline.addLast("idle-event-generator",
                            new IdleStateHandler(timer, connectionTimeout, connectionTimeout, connectionTimeout));
           pipeline.addLast("router-idle-state-handler", new RouterIdleStateHandler());
           pipeline.addLast("http-response-encoder", new HttpResponseEncoder());
@@ -283,7 +283,7 @@ public class NettyRouter extends AbstractIdleService {
         ChannelPipeline pipeline = Channels.pipeline();
         pipeline.addLast("tracker", connectionTracker);
         // idle state handler
-        pipeline.addLast("idle-state-handler",
+        pipeline.addLast("idle-event-generator",
                          new IdleStateHandler(timer, connectionTimeout, connectionTimeout, connectionTimeout));
         pipeline.addLast("router-idle-state-handler", new RouterIdleStateHandler());
         pipeline.addLast("request-encoder", new HttpRequestEncoder());

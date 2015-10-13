@@ -94,6 +94,7 @@ public abstract class NettyRouterTestBase {
   protected static final String WEBAPP_SERVICE = Constants.Router.WEBAPP_DISCOVERY_NAME;
   protected static final String APP_FABRIC_SERVICE = Constants.Service.APP_FABRIC_HTTP;
   protected static final String WEB_APP_SERVICE_PREFIX = "webapp/";
+  protected static final int CONNECTION_IDLE_TIMEOUT_SECS = 5;
 
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTestBase.class);
   private static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -333,7 +334,7 @@ public abstract class NettyRouterTestBase {
 
   @Test
   public void testUpload() throws Exception {
-    testUpload(null, null);
+    testUpload(null);
   }
 
   @Test
@@ -366,25 +367,28 @@ public abstract class NettyRouterTestBase {
 
   @Test
   public void testConnectionNoIdleTimeout() throws Exception {
-    // 4700ms is just under the configured idle timeout of 5 seconds
-    URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/timeout/4700"));
-    HttpURLConnection urlConnection = openURL(url);
-    urlConnection.getResponseCode();
+    // 300ms under the configured idle timeout
+    testConnectionIdleTimeout(TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) - 300);
   }
 
   @Test(expected = SocketException.class)
   public void testConnectionIdleTimeout() throws Exception {
-    // 5300ms is just over the configured idle timeout of 5 seconds
-    URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/timeout/5300"));
+    // 300ms over the configured idle timeout
+    testConnectionIdleTimeout(TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 300);
+  }
+
+  private void testConnectionIdleTimeout(long timeoutMillis) throws Exception {
+    URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/timeout/" + timeoutMillis));
     HttpURLConnection urlConnection = openURL(url);
     urlConnection.getResponseCode();
   }
 
-  // because the connection is closed after a timeout, the NettyResponseFuture.get() throws an ExecutionException
+  // NettyResponseFuture.get() throws an ExecutionException because the connection is closed after a timeout
   @Test(expected = ExecutionException.class)
   @Category(SlowTests.class)
   public void testUploadWithTimeout() throws Exception {
-    testUpload(5300, TimeUnit.MILLISECONDS);
+    // 300ms over the configured idle timeout
+    testUpload(TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 300);
   }
 
   protected HttpURLConnection openURL(URL url) throws Exception {
@@ -418,7 +422,7 @@ public abstract class NettyRouterTestBase {
     return bytes;
   }
 
-  private void testUpload(@Nullable final Integer sleepTime, @Nullable final TimeUnit sleepUnit) throws Exception {
+  private void testUpload(@Nullable final Long sleepTimeMillis) throws Exception {
     AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
 
     final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
@@ -441,8 +445,8 @@ public abstract class NettyRouterTestBase {
 
       @Override
       public STATE onBodyPartReceived(HttpResponseBodyPart content) throws Exception {
-        if (sleepTime != null && sleepUnit != null) {
-          sleepUnit.sleep(sleepTime);
+        if (sleepTimeMillis != null) {
+          TimeUnit.MILLISECONDS.sleep(sleepTimeMillis);
         }
         content.writeTo(byteArrayOutputStream);
         return super.onBodyPartReceived(content);
