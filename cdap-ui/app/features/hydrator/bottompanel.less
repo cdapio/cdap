@@ -26,6 +26,31 @@ body.theme-cdap.state-hydrator {
       div.console-type {
         height: inherit;
         min-height: inherit;
+        // Avoid unnecessary horizontal scroll
+        overflow-x: hidden;
+        padding: 0;
+        width: 100%;
+        .p-10 {
+          padding: 10px;
+        }
+      }
+      div.bottompanel-body {
+        width: 100%;
+      }
+      div.terminal {
+        overflow-x: hidden;
+        overflow-y: visible;
+        max-height: 100%;
+        word-wrap: break-word;
+        pre {
+          white-space: normal;
+        }
+      }
+      .history-table .table {
+        border: 1px solid #ddd;
+      }
+      .table th {
+        padding-left: 5px;
       }
     }
   }
@@ -346,7 +371,7 @@ body.theme-cdap.state-hydrator {
     }
 
     .status-view {
-      margin-top: 15px;
+      // margin-top: 15px;
 
       h4 {
         color: black;
