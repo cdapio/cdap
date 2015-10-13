@@ -16,7 +16,6 @@
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyAppDAGService, GLOBALS, MyNodeConfigService) {
-    $scope.pluginCopy = {};
 
     var propertiesFromBackend = Object.keys($scope.plugin._backendProperties);
     // Make a local copy that is a mix of properties from backend + config from nodejs
@@ -24,7 +23,7 @@ angular.module(PKG.name + '.feature.hydrator')
       position: []
     };
     var missedFieldsGroup = {
-      display: '',
+      display: 'Generic',
       position: [],
       fields: {
 
@@ -34,7 +33,6 @@ angular.module(PKG.name + '.feature.hydrator')
     this.configfetched = false;
     this.properties = [];
     this.noconfig = null;
-    this.MyNodeConfigService = MyNodeConfigService;
     /////////////////////////////////////
     /*
      This is snippet is here because the widget-schema-editor edits the outputschema that we pass in
@@ -44,9 +42,6 @@ angular.module(PKG.name + '.feature.hydrator')
      So we are temporarily doing the coversion here before passing it to the widget-schema-editor so that it doesn't trigger that initial change.
      This should eventually be removed and moved to a service (or a factory). For lack of time my sin stays here. - Ajai
     */
-    if (!$scope.isDisabled) {
-      MyNodeConfigService.setIsPluginBeingEdited(false);
-    }
 
     var typeMap = 'map<string, string>';
     var mapObj = {
@@ -175,8 +170,21 @@ angular.module(PKG.name + '.feature.hydrator')
         .then(
           function success(res) {
             var jsonBlob;
-            if (res.schema) {
-              this.schemaProperties = res.schema;
+            var outputSchemaProperty;
+            var index;
+            if (res.outputschema) {
+              outputSchemaProperty = Object.keys(res.outputschema);
+              if (!res.outputschema.implicit) {
+                this.schemaProperties = res.outputschema[outputSchemaProperty[0]];
+                this.isOuputSchemaExists = (propertiesFromBackend.indexOf(outputSchemaProperty[0]) !== -1);
+                this.isOutputSchemaRequired = $scope.plugin._backendProperties[outputSchemaProperty[0]].required;
+                index = propertiesFromBackend.indexOf(outputSchemaProperty[0]);
+                if (index !== -1) {
+                  propertiesFromBackend.splice(index, 1);
+                }
+              }
+            } else {
+              this.isOuputSchemaExists = false;
             }
 
             this.groups.position = res.groups.position;
@@ -197,21 +205,21 @@ angular.module(PKG.name + '.feature.hydrator')
               this.groups['generic'] = missedFieldsGroup;
             }
 
-            if (res.implicit) {
-              var schema = res.implicit.schema;
-              var keys = Object.keys(schema);
+            if (res.outputschema && res.outputschema.implicit) {
+              var keys = Object.keys(res.outputschema.implicit);
 
               var formattedSchema = [];
               angular.forEach(keys, function (key) {
                 formattedSchema.push({
                   name: key,
-                  type: schema[key]
+                  type: res.outputschema.implicit[key]
                 });
               });
 
               var obj = { fields: formattedSchema };
               $scope.plugin.outputSchema = constructOutputSchema(obj, this.schemaProperties, $scope.plugin.properties);
               $scope.plugin.implicitSchema = true;
+              this.isOuputSchemaExists = true;
             } else {
               try {
                 jsonBlob = JSON.parse($scope.plugin.outputSchema);
@@ -220,35 +228,21 @@ angular.module(PKG.name + '.feature.hydrator')
               }
               $scope.plugin.outputSchema = constructOutputSchema(jsonBlob, this.schemaProperties, $scope.plugin.properties);
             }
-            if ($scope.plugin._backendProperties.schema) {
-              if ($scope.plugin.properties.schema !== $scope.plugin.outputSchema) {
-                $scope.plugin.properties.schema = $scope.plugin.outputSchema;
+            if (this.isOuputSchemaExists) {
+              if ($scope.plugin.properties[outputSchemaProperty[0]] !== $scope.plugin.outputSchema) {
+                $scope.plugin.properties[outputSchemaProperty[0]] = $scope.plugin.outputSchema;
               }
             }
-            $scope.pluginCopy = angular.copy($scope.plugin);
 
             // Mark the configfetched to show that configurations have been received.
             this.configfetched = true;
             this.config = res;
             this.noconfig = false;
 
-            if (!$scope.isDisabled) {
-              setWatchersForPropertiesAndSchema();
-            }
           }.bind(this),
           function error() {
             // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
             $timeout(function() {
-              $scope.pluginCopy = angular.copy($scope.plugin);
-              if (!$scope.isDisabled) {
-                $scope.$watch('pluginCopy.properties', function() {
-                    var strProp1 = JSON.stringify($scope.pluginCopy.properties);
-                    var strProp2 = JSON.stringify($scope.plugin.properties);
-                    if (strProp1 !== strProp2) {
-                      MyNodeConfigService.setIsPluginBeingEdited(true);
-                    }
-                }, true);
-              }
               // Didn't receive a configuration from the backend. Fallback to all textboxes.
               this.noconfig = true;
               this.configfetched = true;
@@ -258,6 +252,11 @@ angular.module(PKG.name + '.feature.hydrator')
     } else {
       this.configfetched = true;
     }
+
+    $scope.$watch('plugin.outputSchema', validateSchema);
+    $scope.$watchCollection('plugin.properties', function() {
+      MyNodeConfigService.notifyPluginSaveListeners($scope.plugin.id);
+    });
 
     function setGroups(propertiesFromBackend, res, group) {
       // For each group in groups iterate over its fields in position (order of all fields)
@@ -310,96 +309,15 @@ angular.module(PKG.name + '.feature.hydrator')
       };
     }
 
-    function setWatchersForPropertiesAndSchema() {
-      if ($scope.plugin._backendProperties.schema) {
-        $scope.$watch('pluginCopy.outputSchema', function () {
-          if (!$scope.pluginCopy.outputSchema) {
-            if ($scope.pluginCopy.properties && $scope.plugin.properties.schema) {
-              $scope.pluginCopy.properties.schema = null;
-            }
-            return;
-          }
-
-          if (!$scope.pluginCopy.properties) {
-            $scope.pluginCopy.properties = {};
-          }
-          if ($scope.pluginCopy.properties.schema !== $scope.pluginCopy.outputSchema) {
-            $scope.pluginCopy.properties.schema = $scope.pluginCopy.outputSchema;
-          }
-        });
-      } else {
-        $scope.$watch('pluginCopy.outputSchema', function () {
-          var originalOutputSchema = $scope.plugin.outputSchema;
-          var copyOutputSchema = $scope.pluginCopy.outputSchema;
-          if (originalOutputSchema !== copyOutputSchema) {
-            MyNodeConfigService.setIsPluginBeingEdited(true);
-          }
-        });
-      }
-
-      $scope.$watch('pluginCopy.label', function() {
-        var copyLabel = $scope.pluginCopy.label;
-        var originalLabel = $scope.plugin.label;
-        if (copyLabel !== originalLabel) {
-          MyNodeConfigService.setIsPluginBeingEdited(true);
-        }
-      });
-
-      $scope.$watch('pluginCopy.errorDatasetName', function() {
-        var copyErrorDataset = $scope.pluginCopy.errorDatasetName;
-        var originalErrorDataset = $scope.plugin.errorDatasetName;
-        if (copyErrorDataset !== originalErrorDataset) {
-          MyNodeConfigService.setIsPluginBeingEdited(true);
-        }
-      });
-
-      $scope.$watch('pluginCopy.validationFields', function() {
-        var copyValidationFields = JSON.stringify($scope.pluginCopy.validationFields);
-        var originalValidationFields = JSON.stringify($scope.plugin.validationFields);
-        if (copyValidationFields !== originalValidationFields) {
-          MyNodeConfigService.setIsPluginBeingEdited(true);
-        }
-      });
-
-      $scope.$watch('pluginCopy.properties', function() {
-          var strProp1 = JSON.stringify($scope.pluginCopy.properties);
-          var strProp2 = JSON.stringify($scope.plugin.properties);
-          if (strProp1 !== strProp2) {
-            MyNodeConfigService.setIsPluginBeingEdited(true);
-          }
-      }, true);
-    }
-
-    this.reset = function () {
-      $scope.pluginCopy.properties = angular.copy($scope.plugin.properties);
-      $scope.pluginCopy.outputSchema = angular.copy($scope.plugin.outputSchema);
-      $scope.pluginCopy.errorDatasetName = angular.copy($scope.plugin.errorDatasetName);
-      EventPipe.emit('resetValidatorValidationFields', $scope.plugin.validationFields);
-      MyNodeConfigService.setIsPluginBeingEdited(false);
-      EventPipe.emit('plugin.reset');
-    };
-
     this.schemaClear = function () {
       EventPipe.emit('schema.clear');
-    };
-
-    this.save = function () {
-      if (validateSchema() || $scope.plugin.name === 'Validator') {
-        $scope.plugin.properties = angular.copy($scope.pluginCopy.properties);
-        $scope.plugin.outputSchema = angular.copy($scope.pluginCopy.outputSchema);
-        $scope.plugin.errorDatasetName = $scope.pluginCopy.errorDatasetName;
-        $scope.plugin.validationFields = angular.copy($scope.pluginCopy.validationFields);
-        $scope.plugin.label = $scope.pluginCopy.label;
-        MyNodeConfigService.setIsPluginBeingEdited(false);
-        MyNodeConfigService.notifyPluginSaveListeners($scope.plugin.id);
-      }
     };
 
     function validateSchema() {
       $scope.errors = [];
       var schema;
       try {
-        schema = JSON.parse($scope.pluginCopy.outputSchema);
+        schema = JSON.parse($scope.plugin.outputSchema);
         schema = schema.fields;
       } catch (e) {
         schema = null;

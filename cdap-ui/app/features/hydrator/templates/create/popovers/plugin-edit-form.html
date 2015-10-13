@@ -36,18 +36,6 @@
       <h3>{{plugin.name}} Properties</h3>
       <p>{{plugin.description}}</p>
     </div>
-    <div class="btn-group pull-right">
-      <div ng-if="!isDisabled" class="non-info">
-        <a class="btn btn-default"
-            ng-disabled="PluginEditController.MyNodeConfigService.isModelTouched == false"
-            ng-click="PluginEditController.reset()">Reset</a>
-      </div>
-      <div ng-if="!isDisabled"  class="non-info">
-        <a class="btn btn-success"
-            ng-disabled="PluginEditController.MyNodeConfigService.isModelTouched == false"
-            ng-click="PluginEditController.save()">Save</a>
-      </div>
-    </div>
   </div>
 
   <div class="bottompanel-body" ng-class="{'modal-sink': plugin.type === 'sink'}">

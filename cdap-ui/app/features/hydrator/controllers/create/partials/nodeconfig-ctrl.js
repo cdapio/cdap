@@ -16,7 +16,7 @@
 
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('NodeConfigController', function($scope, IMPLICIT_SCHEMA, MyAppDAGService, $filter, $q, $rootScope, myPipelineApi, $state, $timeout, GLOBALS, MyNodeConfigService, $bootstrapModal) {
+  .controller('NodeConfigController', function($scope, IMPLICIT_SCHEMA, MyAppDAGService, $filter, $q, $rootScope, myPipelineApi, $state, $timeout, GLOBALS, MyNodeConfigService) {
 
     $scope.type = MyAppDAGService.metadata.template.type;
 
@@ -28,60 +28,15 @@ angular.module(PKG.name + '.feature.hydrator')
     function onPluginRemoved(nodeId) {
       if ($scope.plugin && $scope.plugin.id === nodeId){
         $scope.isValidPlugin = false;
-        MyNodeConfigService.setIsPluginBeingEdited(false);
       }
     }
 
     function onPluginChange(plugin) {
-      var defer = $q.defer();
       $scope.type = MyAppDAGService.metadata.template.type;
       if (plugin && $scope.plugin && plugin.id === $scope.plugin.id) {
         return;
       }
-      if (!MyNodeConfigService.getIsPluginBeingEdited()) {
-        switchPlugin(plugin);
-        defer.resolve(true);
-      } else {
-        confirmPluginSwitch()
-          .then(
-            function yes() {
-              switchPlugin(plugin);
-            },
-            function no() {
-              MyNodeConfigService.resetPlugin($scope.plugin);
-              console.log('User chose to stay in the same plugin');
-            }
-          );
-        defer.resolve(false);
-      }
-      return defer.promise;
-    }
-
-    function confirmPluginSwitch() {
-      var defer = $q.defer();
-
-      $bootstrapModal.open({
-        keyboard: false,
-        templateUrl: '/assets/features/hydrator/templates/partial/confirm.html',
-        size: 'sm',
-        windowClass: 'center',
-        controller: ['$scope', function ($scope) {
-          $scope.continue = function () {
-            $scope.$close('close');
-          };
-
-          $scope.cancel = function () {
-            $scope.$close('keep open');
-          };
-        }]
-      }).result.then(function (closing) {
-        if (closing === 'close') {
-          defer.resolve(true);
-        } else {
-          defer.reject(false);
-        }
-      });
-      return defer.promise;
+      switchPlugin(plugin);
     }
 
     function switchPlugin(plugin) {

@@ -15,14 +15,16 @@
 -->
 
 <form plugin-property-edit-view>
+  p:{{plugin.properties}}
   <fieldset ng-disabled="isDisabled">
       <h4>Configuration</h4>
       <div class="form-group">
         <label class="control-label">Label</label>
-        <input type="text" class="form-control" ng-model="pluginCopy.label"/>
+        <input type="text" class="form-control" ng-model="plugin.label"/>
       </div>
       <div ng-repeat="group in PluginEditController.config.groups.position">
         <div class="widget-group-container">
+          <h4>{{PluginEditController.config.groups[group].display}}</h4>
           <div ng-repeat="field in PluginEditController.groups[group].position">
             <div ng-if="field !== 'schema'">
               <div class="form-group">
@@ -41,10 +43,10 @@
                        class="my-widget-container"
                        data-info="{{plugin.myconfig.widget}}"
                        ng-class="{'select-wrapper': PluginEditController.groups[group].fields[field].widget === 'select'}"
-                       data-model="pluginCopy.properties[field]"
+                       data-model="plugin.properties[field]"
                        data-myconfig="PluginEditController.groups[group].fields[field]"
-                       data-properties="pluginCopy.properties"
-                       widget-disabled="pluginCopy.pluginTemplate && pluginCopy.lock[field]"
+                       data-properties="plugin.properties"
+                       widget-disabled="plugin.pluginTemplate && plugin.lock[field]"
                        widget-container>
                   </div>
                 </div>

@@ -55,39 +55,8 @@
         <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-properties-template.html'"></div>
       </div>
 
-      <div class="col-xs-12">
-        <div class="schema-error">
-          <ul>
-            <li class="text-danger" ng-repeat="error in errors">{{ error }}</li>
-          </ul>
-        </div>
-        <h4 class="sink-schema" ng-if="pluginCopy.properties.schema !== undefined || pluginCopy.implicitSchema">
-          <span>Schema</span>
-          <span class="fa fa-asterisk ng-scope" ng-if="pluginCopy._backendProperties['schema'].required"></span>
-          <button
-            class="btn btn-sm btn-default pull-right"
-            ng-click="PluginEditController.schemaClear()"
-            ng-if="(!pluginCopy.implicitSchema && !isDisabled)"
-            ng-disabled="pluginCopy.implicitSchema || pluginCopy.properties.format === 'clf' || pluginCopy.properties.format === 'syslog'">
-            Clear
-          </button>
-        </h4>
-
-        <fieldset ng-disabled="isDisabled">
-          <my-schema-editor
-            ng-if="pluginCopy.properties.schema !== undefined || pluginCopy.implicitSchema"
-            ng-model="pluginCopy.outputSchema"
-            data-disabled="pluginCopy.implicitSchema || isDisabled"
-            plugin-properties="pluginCopy.properties"
-            config="PluginEditController.schemaProperties">
-          </my-schema-editor>
-        </fieldset>
-
-        <div ng-if="pluginCopy.properties.schema !== undefined && !pluginCopy.outputSchema && isDisabled">
-          <div class="well well-lg">
-            <h4>There is no output schema</h4>
-          </div>
-        </div>
+      <div class="col-xs-12 sink-output-schema" ng-if="PluginEditController.isOuputSchemaExists || plugin.implicitSchema">
+        <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-output-schema.html'"></div>
       </div>
     </div>
   </div>

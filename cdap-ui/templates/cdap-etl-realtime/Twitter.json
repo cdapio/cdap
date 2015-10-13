@@ -47,8 +47,8 @@
       }
     }
   },
-  "implicit": {
-    "schema": {
+  "outputschema": {
+    "implicit": {
       "id": "long",
       "message": "string",
       "lang": ["string", "null"],

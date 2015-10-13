@@ -24,8 +24,8 @@
        }
     }
   },
-  "implicit" : {
-    "schema": {
+  "outputschema": {
+    "implicit": {
       "key": "bytes",
       "value": "bytes"
     }
