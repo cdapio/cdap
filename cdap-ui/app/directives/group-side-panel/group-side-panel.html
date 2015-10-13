@@ -14,8 +14,7 @@
   the License.
 -->
 
-<div class="side-panel text-center left" parent-height>
-      <!-- parent-height is part of the my-calculate-height directive used down for sidepanel list container -->
+<div class="side-panel text-center left">
   <div class="hydrator-filter clearfix">
     <input class="form-control pull-left" placeholder="Filter" type="text" ng-model="MySidePanel.searchText" />
   </div>
@@ -33,10 +32,7 @@
       </div>
 
       <div class="item-body-wrapper"
-        ng-show="MySidePanel.openedGroup === null || MySidePanel.openedGroup === group.name"
-        my-calculate-height
-        substract-height="195"
-        calculate-enabled="MySidePanel.openedGroup === group.name">
+           ng-show="MySidePanel.openedGroup === null || MySidePanel.openedGroup === group.name">
         <div class="item-body">
           <div ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText}) track by $index"
                class="plugin-item"
