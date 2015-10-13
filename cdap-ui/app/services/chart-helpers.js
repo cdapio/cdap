@@ -14,7 +14,7 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.dashboard')
+angular.module(PKG.name + '.services')
   .factory('MyChartHelpers', function(myHelpers, MyMetricsQueryHelper) {
 
     function processData (queryResults, queryId, metricNames, metricResolution, isAggregate) {
@@ -170,7 +170,41 @@ angular.module(PKG.name + '.feature.dashboard')
       return dashboards;
     }
 
+    function formatTimeseries(aggregate, series, input, metric) {
+      var processedData = processData(
+        series,
+        'qid',
+        metric.names,
+        metric.resolution
+      );
+      processedData = c3ifyData(processedData, metric, metric.names);
+
+      var data = processedData.columns[0].slice(1);
+      var format = [];
+
+      format.unshift(aggregate - data[data.length-1]);
+      for (var i = data.length - 2; i >= 0; i--) {
+        format.unshift(format[0] - data[i]);
+      }
+
+      format.unshift(processedData.columns[0][0]);
+      processedData.columns[0] = format;
+
+      input.chartData = {
+        x: 'x',
+        columns: processedData.columns,
+        keys: {
+          x: 'x'
+        }
+      };
+
+      input.max = Math.max.apply(Math, format.slice(1));
+
+      return input;
+    }
+
     return  {
+      formatTimeseries: formatTimeseries,
       processData: processData,
       resolutionFromAuto: resolutionFromAuto,
       skipAmtFromResolution: skipAmtFromResolution,
