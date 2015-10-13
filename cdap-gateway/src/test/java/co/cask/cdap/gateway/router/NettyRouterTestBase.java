@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -78,7 +78,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.annotation.Nullable;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -334,7 +333,7 @@ public abstract class NettyRouterTestBase {
 
   @Test
   public void testUpload() throws Exception {
-    testUpload(null);
+    testUpload(0);
   }
 
   @Test
@@ -422,7 +421,7 @@ public abstract class NettyRouterTestBase {
     return bytes;
   }
 
-  private void testUpload(@Nullable final Long sleepTimeMillis) throws Exception {
+  private void testUpload(final long sleepTimeMillis) throws Exception {
     AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
 
     final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
@@ -445,9 +444,7 @@ public abstract class NettyRouterTestBase {
 
       @Override
       public STATE onBodyPartReceived(HttpResponseBodyPart content) throws Exception {
-        if (sleepTimeMillis != null) {
-          TimeUnit.MILLISECONDS.sleep(sleepTimeMillis);
-        }
+        TimeUnit.MILLISECONDS.sleep(sleepTimeMillis);
         content.writeTo(byteArrayOutputStream);
         return super.onBodyPartReceived(content);
       }
