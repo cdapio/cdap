@@ -6,6 +6,11 @@
       "display" : "S3 Batch Source",
       "position" : [ "accessID", "accessKey", "path", "fileRegex", "timeTable", "inputFormatClass", "maxSplitSize" ],
       "fields" : {
+        "fileSystemProperties" : {
+          "widget": "json-editor",
+          "label": "File System Properties"
+        },
+
         "accessID" : {
           "widget": "textbox",
           "label": "Access ID"

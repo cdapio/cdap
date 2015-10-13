@@ -81,13 +81,15 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
     @Description(SCHEMA_DESC)
     private String schema;
 
+    @SuppressWarnings("unused")
     public S3ParquetSinkConfig() {
       super();
     }
 
-    public S3ParquetSinkConfig(String basePath, String pathFormat, String schema,
-                               String accessID, String accessKey) {
-      super(basePath, pathFormat, accessID, accessKey);
+    @SuppressWarnings("unused")
+    public S3ParquetSinkConfig(String basePath, String schema, String accessID, String accessKey, String pathFormat,
+                               String fileSystemProperties) {
+      super(basePath, accessID, accessKey, pathFormat, fileSystemProperties);
       this.schema = schema;
     }
   }
@@ -100,6 +102,7 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
     private final Map<String, String> conf;
 
     public S3ParquetOutputFormatProvider(S3ParquetSinkConfig config, BatchSinkContext context) {
+      @SuppressWarnings("ConstantConditions")
       SimpleDateFormat format = new SimpleDateFormat(config.pathFormat);
 
       conf = Maps.newHashMap();

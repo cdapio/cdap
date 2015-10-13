@@ -19,11 +19,13 @@ package co.cask.cdap.etl.batch.source;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.batch.BatchSource;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -35,68 +37,56 @@ import javax.annotation.Nullable;
 public class S3BatchSource extends FileBatchSource {
   private static final String ACCESS_ID_DESCRIPTION = "Access ID of the Amazon S3 instance to connect to.";
   private static final String ACCESS_KEY_DESCRIPTION = "Access Key of the Amazon S3 instance to connect to.";
+  private static final Gson GSON = new Gson();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
+  @SuppressWarnings("unused")
   private final S3BatchConfig config;
 
   public S3BatchSource(S3BatchConfig config) {
-    super(new FileBatchConfig("S3", config.path, config.fileRegex, config.timeTable, config.inputFormatClass,
-                              createFileSystemProperties(config.accessID, config.accessKey), config.maxSplitSize));
+    // update fileSystemProperties with S3 properties, so FileBatchSource.prepareRun can use them
+    super(new FileBatchConfig(config.path, config.fileRegex, config.timeTable, config.inputFormatClass,
+                              updateFileSystemProperties(
+                                config.fileSystemProperties, config.accessID, config.accessKey
+                              ),
+                              config.maxSplitSize));
     this.config = config;
   }
 
-  private static String createFileSystemProperties(String accessID, String accessKey) {
-    return new Gson().toJson(ImmutableMap.of(
-      "fs.s3n.awsAccessKeyId", accessID,
-      "fs.s3n.awsSecretAccessKey", accessKey
-    ));
+  private static String updateFileSystemProperties(@Nullable String fileSystemProperties, String accessID,
+                                                   String accessKey) {
+    Map<String, String> providedProperties;
+    if (fileSystemProperties == null) {
+      providedProperties = new HashMap<>();
+    } else {
+      providedProperties = GSON.fromJson(fileSystemProperties, MAP_STRING_STRING_TYPE);
+    }
+    providedProperties.put("fs.s3n.awsAccessKeyId", accessID);
+    providedProperties.put("fs.s3n.awsSecretAccessKey", accessKey);
+    return GSON.toJson(providedProperties);
   }
 
   /**
    * Config class that contains properties needed for the S3 source.
    */
-  public static class S3BatchConfig extends PluginConfig {
-    @Name("accessID")
+  public static class S3BatchConfig extends FileBatchConfig {
     @Description(ACCESS_ID_DESCRIPTION)
     private String accessID;
 
-    @Name("accessKey")
     @Description(ACCESS_KEY_DESCRIPTION)
     private String accessKey;
 
-    @Name("path")
-    @Description(PATH_DESCRIPTION)
-    private String path;
-
-    @Name("fileRegex")
-    @Nullable
-    @Description(REGEX_DESCRIPTION)
-    private String fileRegex;
-
-    @Name("timeTable")
-    @Nullable
-    @Description(TABLE_DESCRIPTION)
-    private String timeTable;
-
-    @Name("inputFormatClass")
-    @Nullable
-    @Description(INPUT_FORMAT_CLASS_DESCRIPTION)
-    private String inputFormatClass;
-
-    @Name("maxSplitSize")
-    @Nullable
-    @Description(MAX_SPLIT_SIZE_DESCRIPTION)
-    private String maxSplitSize;
+    public S3BatchConfig(String accessID, String accessKey, String path) {
+      this(accessID, accessKey, path, null, null, null, null, null);
+    }
 
     public S3BatchConfig(String accessID, String accessKey, String path, @Nullable String regex,
                          @Nullable String timeTable, @Nullable String inputFormatClass,
-                         @Nullable String maxSplitSize) {
+                         @Nullable String fileSystemProperties, @Nullable String maxSplitSize) {
+      super(path, regex, timeTable, inputFormatClass,
+            updateFileSystemProperties(fileSystemProperties, accessID, accessKey), maxSplitSize);
       this.accessID = accessID;
       this.accessKey = accessKey;
-      this.path = path;
-      this.fileRegex = regex;
-      this.timeTable = timeTable;
-      this.inputFormatClass = inputFormatClass;
-      this.maxSplitSize = maxSplitSize;
     }
   }
 }

@@ -6,11 +6,6 @@
       "display" : "File Batch Source Properties",
       "position" : [ "fileSystem", "fileSystemProperties", "path", "fileRegex", "timeTable", "inputFormatClass", "maxSplitSize" ],
       "fields" : {
-        "fileSystem" : {
-          "widget": "textbox",
-          "label": "File System"
-        },
-
         "fileSystemProperties" : {
           "widget": "json-editor",
           "label": "File System Properties"

@@ -84,13 +84,15 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
     @Description(SCHEMA_DESC)
     private String schema;
 
+    @SuppressWarnings("unused")
     public S3AvroSinkConfig() {
       super();
     }
 
-    public S3AvroSinkConfig(String basePath, String pathFormat, String schema,
-                            String accessID, String accessKey) {
-      super(basePath, pathFormat, accessID, accessKey);
+    @SuppressWarnings("unused")
+    public S3AvroSinkConfig(String basePath, String schema, String accessID, String accessKey, String pathFormat,
+                            String filesystemProperties) {
+      super(basePath, accessID, accessKey, pathFormat, filesystemProperties);
       this.schema = schema;
     }
   }
@@ -103,6 +105,7 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
     private final Map<String, String> conf;
 
     public S3AvroOutputFormatProvider(S3AvroSinkConfig config, BatchSinkContext context) {
+      @SuppressWarnings("ConstantConditions")
       SimpleDateFormat format = new SimpleDateFormat(config.pathFormat);
 
       conf = Maps.newHashMap();
