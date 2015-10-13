@@ -202,9 +202,6 @@ public class ArtifactInspector {
       ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactId);
       for (Class<?> cls : getPluginClasses(exportPackages, pluginClassLoader)) {
         Plugin pluginAnnotation = cls.getAnnotation(Plugin.class);
-        if (pluginAnnotation == null) {
-          continue;
-        }
         Map<String, PluginPropertyField> pluginProperties = Maps.newHashMap();
         try {
           String configField = getProperties(TypeToken.of(cls), pluginProperties);

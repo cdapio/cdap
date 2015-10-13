@@ -32,6 +32,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLClassLoader;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Given an artifact, creates a {@link CloseableClassLoader} from it. Takes care of unpacking the artifact and
@@ -50,7 +51,7 @@ public class ArtifactClassLoaderFactory {
 
   /**
    * Create a classloader that uses the artifact at the specified location to load classes, with access to
-   * packages that the given program type has access to. See {@link FilterClassLoader} for more detail on
+   * packages that the Spark program type has access to. See {@link FilterClassLoader} for more detail on
    * what program types have access to what packages.
    *
    * @param artifactLocation the location of the artifact to create the classloader from
@@ -61,9 +62,20 @@ public class ArtifactClassLoaderFactory {
     final File unpackDir = DirUtils.createTempDir(baseUnpackDir);
     BundleJarUtil.unpackProgramJar(artifactLocation, unpackDir);
 
-    // Always have spark classes visible for artifact class loading purpose since we don't know if
+    // If possible, have spark classes visible for artifact class loading purpose since we don't know if
     // any classes inside the artifact is a Spark program
-    final URLClassLoader parentClassLoader = SparkUtils.createSparkFrameworkClassLoader(getClass().getClassLoader());
+    ClassLoader parentClassLoader;
+    final AtomicReference<Closeable> toClose = new AtomicReference<>();
+    try {
+      // try to create a Spark framework classloader
+      URLClassLoader sparkClassLoader = SparkUtils.createSparkFrameworkClassLoader(getClass().getClassLoader());
+      parentClassLoader = sparkClassLoader;
+      toClose.set(sparkClassLoader);
+    } catch (NoClassDefFoundError e) {
+      // if not possible, just have the current class's classloader be the parent classloader.
+      parentClassLoader = getClass().getClassLoader();
+    }
+
     final ProgramClassLoader programClassLoader =
       ProgramClassLoader.create(cConf, unpackDir, parentClassLoader, ProgramType.SPARK);
     return new CloseableClassLoader(programClassLoader, new Closeable() {
@@ -71,7 +83,9 @@ public class ArtifactClassLoaderFactory {
       public void close() {
         try {
           Closeables.closeQuietly(programClassLoader);
-          Closeables.closeQuietly(parentClassLoader);
+          if (toClose.get() != null) {
+            Closeables.closeQuietly(toClose.get());
+          }
           DirUtils.deleteDirectoryContents(unpackDir);
         } catch (IOException e) {
           LOG.warn("Failed to delete directory {}", unpackDir, e);
