@@ -33,6 +33,8 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.dataset.DatasetMethodRequest;
+import co.cask.cdap.proto.dataset.DatasetMethodResponse;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionAware;
