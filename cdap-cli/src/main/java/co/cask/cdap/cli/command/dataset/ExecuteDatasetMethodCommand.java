@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.cli.command.dataset;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
@@ -48,9 +49,12 @@ public class ExecuteDatasetMethodCommand extends AbstractAuthCommand {
     String body = arguments.getOptional(ArgumentName.BODY.getName(), null);
 
     try {
-      client.execute(instance, method, body);
-      output.printf("Successfully executed method %s on dataset %s%s",
-                    method, instance.getId(), body != null ? " with body" : "");
+      byte[] response = client.execute(instance, method, body);
+      if (response == null || response.length == 0) {
+        output.printf("Successfully executed method %s on dataset %s\n", method, instance.getId());
+      } else {
+        output.println(Bytes.toString(response));
+      }
     } catch (NotFoundException e) {
       output.printf("Dataset instance %s was not found\n", instance.getId());
     }

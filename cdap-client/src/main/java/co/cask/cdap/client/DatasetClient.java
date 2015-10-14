@@ -220,7 +220,7 @@ public class DatasetClient {
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    */
-  public void execute(Id.DatasetInstance instance, String method, @Nullable String body)
+  public byte[] execute(Id.DatasetInstance instance, String method, @Nullable String body)
     throws DatasetNotFoundException, IOException, UnauthorizedException {
 
     URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
@@ -235,6 +235,8 @@ public class DatasetClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new DatasetNotFoundException(instance);
     }
+
+    return response.getResponseBody();
   }
 
   /**
