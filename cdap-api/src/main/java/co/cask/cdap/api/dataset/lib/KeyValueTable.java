@@ -305,24 +305,21 @@ public class KeyValueTable extends AbstractDataset implements
     switch (method) {
       case "read": {
         StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
-        if (input.getKey() == null) {
-          throw new BadRequestException(
-            "Missing key in body. Expected format: {\"key\":\"<your-key>\"}");
-        }
-
+        input.validateKey();
         StringKeyValue response = new StringKeyValue(input.getKey(), read(input.getKey()));
         return Bytes.toBytes(GSON.toJson(response));
       }
       case "write": {
         StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
-        if (input.getKey() == null) {
-          throw new BadRequestException(
-            "Missing key in body. Expected format: {\"key\":\"<your-key>\", \"value\":\"<your-value>\"}");
-        }
-
+        input.validateKeyValue();
         write(input.getKey(), input.getValue());
         return new byte[0];
       }
+      case "delete":
+        StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
+        input.validateKey();
+        delete(Bytes.toBytes(input.getKey()));
+        return new byte[0];
       default:
         throw new BadRequestException(String.format("Method %s is not supported", method));
     }
@@ -343,6 +340,20 @@ public class KeyValueTable extends AbstractDataset implements
 
     public String getValue() {
       return value;
+    }
+
+    public void validateKey() {
+      if(key == null) {
+        throw new BadRequestException(
+          "Missing key in body. Expected format: {\"key\":\"<your-key>\"}");
+      }
+    }
+
+    public void validateKeyValue() {
+      if(key == null) {
+        throw new BadRequestException(
+          "Missing key in body. Expected format: {\"key\":\"<your-key>\", \"value\":\"<your-value>\"}");
+      }
     }
   }
 }

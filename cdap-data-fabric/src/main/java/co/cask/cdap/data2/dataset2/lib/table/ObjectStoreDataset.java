@@ -47,7 +47,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -197,10 +196,7 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
       case "read": {
         StringKeyObjectValue input = GSON.fromJson(body, new TypeToken<StringKeyObjectValue<T>>() {
         }.getType());
-        if (input.getKey() == null) {
-          throw new BadRequestException(
-            "Missing key in body. Expected format: {\"key\":\"<your-key>\"}");
-        }
+        input.validateKey();
 
         StringKeyObjectValue response = new StringKeyObjectValue<>(input.getKey(), read(input.getKey()));
         return Bytes.toBytes(GSON.toJson(response));
@@ -208,12 +204,17 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
       case "write": {
         StringKeyObjectValue<T> input = GSON.fromJson(body, new TypeToken<StringKeyObjectValue<T>>() {
         }.getType());
-        if (input.getKey() == null) {
-          throw new BadRequestException(
-            "Invalid body. Expected format: {\"key\":\"<your-key>\", \"value\":\"<your-value>\"}");
-        }
+        input.validateKeyValue();
 
         write(input.getKey(), input.getValue());
+        return new byte[0];
+      }
+
+      case "delete": {
+        StringKeyObjectValue input = GSON.fromJson(body, new TypeToken<StringKeyObjectValue<T>>() {
+        }.getType());
+        input.validateKey();
+        delete(Bytes.toBytes(input.getKey()));
         return new byte[0];
       }
       default:
@@ -286,6 +287,20 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
 
     public T getValue() {
       return value;
+    }
+
+    public void validateKey() {
+      if(key == null) {
+        throw new javax.ws.rs.BadRequestException(
+          "Missing key in body. Expected format: {\"key\":\"<your-key>\"}");
+      }
+    }
+
+    public void validateKeyValue() {
+      if(key == null) {
+        throw new javax.ws.rs.BadRequestException(
+          "Missing key in body. Expected format: {\"key\":\"<your-key>\", \"value\":\"<your-value>\"}");
+      }
     }
   }
 }
