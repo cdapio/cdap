@@ -39,9 +39,3 @@ A sample JDBC Driver Plugin configuration:
         }
       ]
     }
-
-.. "Third Party Plugins"
-
-.. include:: ../../../../developers-manual/source/building-blocks/plugins.rst 
-   :start-after: .. _plugins-deployment-packaging:
-   :end-before:  .. _plugins-use-case:

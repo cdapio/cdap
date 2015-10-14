@@ -113,6 +113,8 @@ can be annotated with a ``@Description`` that will be returned by the
 
 .. _plugins-third-party:
 
+.. highlight:: console
+
 Third-Party Plugins
 ===================
 Sometimes there is a need to use classes in a third-party JAR as plugins. For example, you may want to be able to use
@@ -146,23 +148,25 @@ that is not from the plugin JAR itself. This means the Java package which the pl
 is in must be listed in "Export-Package", otherwise the plugin class will not be visible,
 and hence no one will be able to use it. This can be done in Maven by editing your pom.xml.
 For example, if your plugins are in the ``com.example.runnable`` and ``com.example.callable``
-packages, you would edit the bunlder plugin in your pom.xml::
+packages, you would edit the bunlder plugin in your pom.xml:
 
-        <plugin>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>maven-bundle-plugin</artifactId>
-          <version>2.3.7</version>
-          <extensions>true</extensions>
-          <configuration>
-            <instructions>
-              <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
-              <Embed-Transitive>true</Embed-Transitive>
-              <Embed-Directory>lib</Embed-Directory>
-              <Export-Package>com.example.runnable;com.example.callable</Export-Package>
-            </instructions>
-          </configuration>
-          ...
-        </plugin>
+.. code-block:: xml
+
+  <plugin>
+    <groupId>org.apache.felix</groupId>
+    <artifactId>maven-bundle-plugin</artifactId>
+    <version>2.3.7</version>
+    <extensions>true</extensions>
+    <configuration>
+      <instructions>
+        <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
+        <Embed-Transitive>true</Embed-Transitive>
+        <Embed-Directory>lib</Embed-Directory>
+        <Export-Package>com.example.runnable;com.example.callable</Export-Package>
+      </instructions>
+    </configuration>
+    ...
+  </plugin>
 
 
 .. _plugins-deployment-system:
@@ -176,7 +180,7 @@ must be placed in the appropriate directory.
 
 - **Distributed mode:** The plugin JARs should be placed in the local file system and the path
   can be provided to CDAP by setting the property ``app.artifact.dir`` in
-  :ref:`cdap-site.xml <appendix-cdap-site.xml>`. The default path is ``/opt/cdap/master/artifacts``
+  :ref:`cdap-site.xml <appendix-cdap-site.xml>`. The default path is ``/opt/cdap/master/artifacts``.
 
 For each plugin JAR, there must also be a corresponding configuration file to specify which artifacts
 can use the plugins. The file name must match the name of the JAR, except it must have the ``.json``
@@ -185,11 +189,13 @@ extension instead of the ``.jar`` extension. For example, if your JAR file is na
 If your ``custom-transforms-1.0.0.jar`` contains transforms that can be used by both the ``cdap-etl-batch``
 and ``cdap-etl-realtime`` artifacts, ``custom-transforms-1.0.0.json`` would contain:
 
+.. highlight:: json
+
 .. container:: highlight
 
   .. parsed-literal:: 
     {
-      "parents": [ "cdap-etl-batch\[|version|,\ |version|]", "cdap-etl-realtime[|version|,\ |version|]" ]
+      "parents": [ "cdap-etl-batch[\ |version|,\ |version|]", "cdap-etl-realtime[|version|,\ |version|]" ]
     }
 
 This file specifies that the plugins in ``custom-transforms-1.0.0.jar`` can be used by version |version| of
@@ -245,10 +251,12 @@ the CLI, a configuration file exactly like the one described in the
 
 For example, to deploy ``custom-transforms-1.0.0.jar`` using the RESTful API:
 
+.. highlight:: console
+
 .. container:: highlight
 
   .. parsed-literal:: 
-    curl localhost:10000/v3/namespaces/default/artifacts/custom-transforms \\
+    |$| curl -w'\\n' localhost:10000/v3/namespaces/default/artifacts/custom-transforms \\
       -H 'Artifact-Extends: system:cdap-etl-batch\[|version|, |version|]/system:cdap-etl-realtime\[|version|, |version|]' \\
       --data-binary @/path/to/custom-transforms-1.0.0.jar
 
@@ -260,6 +268,8 @@ Using the CLI:
     load artifact /path/to/custom-transforms-1.0.0.jar config-file /path/to/config.json
 
 where ``config.json`` contains:
+
+.. highlight:: json
 
 .. container:: highlight
 
@@ -279,10 +289,12 @@ re-deployed without requiring that they first be deleted.
 
 Using the RESTful API:
 
+.. highlight:: console
+
 .. container:: highlight
 
   .. parsed-literal:: 
-    curl localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java \\
+    |$| curl -w'\\n' localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java \\
       -H 'Artifact-Extends: system:cdap-etl-batch\[|version|,\ |version|]/system:cdap-etl-realtime\[|version|,\ |version|]' \\
       -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \\
       --data-binary @/path/to/mysql-connector-java-5.1.35.jar
@@ -295,6 +307,8 @@ Using the CLI:
     load artifact /path/to/mysql-connector-java-5.1.35.jar config-file /path/to/config.json
 
 where ``config.json`` contains:
+
+.. highlight:: xml
 
 .. container:: highlight
 
@@ -318,10 +332,12 @@ You can verify that a plugin artifact was added successfully by using the
 :ref:`RESTful Artifact API <http-restful-api-artifact-detail>` to retrieve artifact details.
 For example, to retrieve detail about our ``custom-transforms`` artifact:
 
+.. highlight:: console
+
 .. container:: highlight
 
   .. parsed-literal:: 
-    curl localhost:10000/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]
+    |$| curl -w'\\n' localhost:10000/v3/namespaces/default/artifacts/custom-transforms/versions/1.0.0?scope=[system | user]
 
 If you deployed the ``custom-transforms`` artifact as a system artifact, the scope is ``system``.
 If you deployed the ``custom-transforms`` artifact as a user artifact, the scope is ``user``.
@@ -334,7 +350,7 @@ specific type. For example, to check if ``cdap-etl-batch`` can access the plugin
 .. container:: highlight
 
   .. parsed-literal:: 
-    curl localhost:10000/v3/namespaces/default/artifacts/cdap-etl-batch/versions/|version|/extensions/transform?scope=system
+    |$| curl -w'\\n' localhost:10000/v3/namespaces/default/artifacts/cdap-etl-batch/versions/|version|/extensions/transform?scope=system
 
 You can then check the list returned to see if your transforms are in the list. Note that
 the scope here refers to the scope of the parent artifact. In this example it is the ``system``
@@ -348,6 +364,8 @@ Example Use Case
 When writing an application class, it is often useful to create interfaces or abstract classes that define
 a logical contract in your code, but do not provide an implementation of that contract. This lets you plug in
 different implementations to fit your needs.
+
+.. highlight:: java
 
 For example, consider the classic word count example for MapReduce. The program reads files, tokenizes lines
 in those files into words, and then counts how many times each word appears. The code consists of several classes::
@@ -399,16 +417,18 @@ in those files into words, and then counts how many times each word appears. The
     }
   }
 
+.. highlight:: console
+
 We package our code into a JAR file named ``wordcount-1.0.0.jar`` and add it to CDAP::
 
-  curl localhost:10000/v3/namespaces/default/artifacts/wordcount --data-binary @wordcount-1.0.0.jar
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/artifacts/wordcount --data-binary @wordcount-1.0.0.jar
 
 We then create an application from that artifact::
 
-  curl -X PUT localhost:10000/v3/namespaces/default/apps/basicwordcount -H 'Content-Type: application/json' -d '
-  {
-    "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" }
-  }'
+  $ curl -w'\n' -X PUT localhost:10000/v3/namespaces/default/apps/basicwordcount -H 'Content-Type: application/json' \
+    -d '{
+      "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" }
+    }'
 
 This program runs just fine. It counts all words in the input. However, what if we want to count phrases
 instead of words? Or what if we want to filter out common words such as 'the' and 'a'? We would not want
@@ -418,19 +438,21 @@ Instead, we would like to be able to create applications that
 are configured to tokenize the line in different ways. That is, if we want an application that filters
 stopwords, we want to be able to create it through a configuration::
 
-  curl -X PUT localhost:10000/v3/namespaces/default/apps/stopwordcount -H 'Content-Type: application/json' -d '
-  {
-    "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" },
-    "config": { "tokenizer": "stopword" }
-  }'
+  $ curl -w'\n' -X PUT localhost:10000/v3/namespaces/default/apps/stopwordcount -H 'Content-Type: application/json' \
+    -d '{
+      "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" },
+      "config": { "tokenizer": "stopword" }
+    }'
 
 Similarly, we want to be able to create an application that counts phrases through a configuration::
 
-  curl -X PUT localhost:10000/v3/namespaces/default/apps/phrasecount -H 'Content-Type: application/json' -d '
-  {
-    "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" },
-    "config": { "tokenizer": "phrase" }
-  }'
+  $ curl -w'\n' -X PUT localhost:10000/v3/namespaces/default/apps/phrasecount -H 'Content-Type: application/json' \
+    -d '{
+      "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" },
+      "config": { "tokenizer": "phrase" }
+    }'
+
+.. highlight:: java
 
 This is possible by changing our code to use the *Plugin* framework. The first thing we need to do is
 introduce a ``Tokenizer`` interface::
@@ -490,7 +512,9 @@ use a configuration object that will specify the name of the ``Tokenizer`` to us
 
 CDAP will take whatever is specified in the ``config`` section of the application creation
 request and convert it into the ``Config`` object expected by the application class.
-If it receives this request::
+If it receives this request:
+
+.. code-block:: json
 
   {
     "artifact": { "name": "wordcount", "version": "1.0.0", "scope": "user" },
@@ -504,35 +528,41 @@ Since we want other artifacts to implement the ``Tokenizer`` interface, we need 
 sure the class is exposed to other artifacts. We do this by including the ``Tokenizer``'s package
 in the ``Export-Package`` manifest attribute of our JAR file. For example, if our ``Tokenizer`` full
 class name is ``com.example.api.Tokenizer``, we need to expose the ``com.example.api``
-package in our pom.xml::
+package in our pom.xml:
 
-        <plugin>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>maven-bundle-plugin</artifactId>
-          <version>2.3.7</version>
-          <extensions>true</extensions>
-          <configuration>
-            <archive>
-              <manifest>
-                <mainClass>${app.main.class}</mainClass>
-              </manifest>
-            </archive>
-            <instructions>
-              <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
-              <Embed-Transitive>true</Embed-Transitive>
-              <Embed-Directory>lib</Embed-Directory>
-              <Export-Package>com.example.api</Export-Package>
-            </instructions>
-          </configuration>
-          ...
-        </plugin>
+.. code-block:: xml
 
-We then package the code in a new version of the artifact ``wordcount-1.1.0.jar`` and deploy it::
+  <plugin>
+    <groupId>org.apache.felix</groupId>
+    <artifactId>maven-bundle-plugin</artifactId>
+    <version>2.3.7</version>
+    <extensions>true</extensions>
+    <configuration>
+      <archive>
+        <manifest>
+          <mainClass>${app.main.class}</mainClass>
+        </manifest>
+      </archive>
+      <instructions>
+        <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
+        <Embed-Transitive>true</Embed-Transitive>
+        <Embed-Directory>lib</Embed-Directory>
+        <Export-Package>com.example.api</Export-Package>
+      </instructions>
+    </configuration>
+    ...
+  </plugin>
 
-  curl localhost:10000/v3/namespaces/default/artifacts/wordcount --data-binary @wordcount-1.1.0.jar
+We then package the code in a new version of the artifact ``wordcount-1.1.0.jar`` and deploy it:
+
+.. code-block:: console
+
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/artifacts/wordcount --data-binary @wordcount-1.1.0.jar
 
 Finally, we need to implement some tokenizer plugins. *Plugins* are just Java classes that have
-been annotated with a plugin type and name::
+been annotated with a plugin type and name:
+
+.. code-block:: java
 
   @Plugin(type = "tokenizer")
   @Name("default")
@@ -585,42 +615,49 @@ been annotated with a plugin type and name::
 We package these tokenizers in a separate artifact named ``tokenizers-1.0.0.jar``. In order to make these
 plugins visibile to programs using them, we need to include their packages in the ``Export-Packages``
 manifest attribute. For example, if our classes are all in the ``com.example.tokenizer`` package,
-we need to expose the ``com.example.tokenizer`` package in our pom.xml::
+we need to expose the ``com.example.tokenizer`` package in our pom.xml:
 
-        <plugin>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>maven-bundle-plugin</artifactId>
-          <version>2.3.7</version>
-          <extensions>true</extensions>
-          <configuration>
-            <archive>
-              <manifest>
-                <mainClass>${app.main.class}</mainClass>
-              </manifest>
-            </archive>
-            <instructions>
-              <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
-              <Embed-Transitive>true</Embed-Transitive>
-              <Embed-Directory>lib</Embed-Directory>
-              <Export-Package>com.example.tokenizer</Export-Package>
-            </instructions>
-          </configuration>
-          ...
-        </plugin>
+.. code-block:: xml
+
+  <plugin>
+    <groupId>org.apache.felix</groupId>
+    <artifactId>maven-bundle-plugin</artifactId>
+    <version>2.3.7</version>
+    <extensions>true</extensions>
+    <configuration>
+      <archive>
+        <manifest>
+          <mainClass>${app.main.class}</mainClass>
+        </manifest>
+      </archive>
+      <instructions>
+        <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
+        <Embed-Transitive>true</Embed-Transitive>
+        <Embed-Directory>lib</Embed-Directory>
+        <Export-Package>com.example.tokenizer</Export-Package>
+      </instructions>
+    </configuration>
+    ...
+  </plugin>
+
+.. highlight:: console
 
 When deploying this artifact, we tell CDAP that the artifact extends the ``wordcount`` artifact, versions
 ``1.1.0`` inclusive to ``2.0.0`` exclusive::
 
-  curl localhost:10000/v3/namespaces/default/artifacts/tokenizers --data-binary @tokenizers-1.0.0.jar -H 'Artifact-Extends:wordcount[1.1.0,2.0.0)'
+ $ curl -w'\n' localhost:10000/v3/namespaces/default/artifacts/tokenizers --data-binary @tokenizers-1.0.0.jar \
+    -H 'Artifact-Extends:wordcount[1.1.0,2.0.0)'
 
 This will make the plugins available to those versions of the ``wordcount`` artifact. We can now create
 applications that use the tokenizer we want::
 
-  curl -X PUT localhost:10000/v3/namespaces/default/apps/phrasecount -H 'Content-Type: application/json' -d '
-  {
-    "artifact": { "name": "wordcount", "version": "1.1.0", "scope": "user" },
-    "config": { "tokenizer": "phrase" }
-  }'
+  $ curl -w'\n' -X PUT localhost:10000/v3/namespaces/default/apps/phrasecount -H 'Content-Type: application/json' \
+    -d '{
+      "artifact": { "name": "wordcount", "version": "1.1.0", "scope": "user" },
+      "config": { "tokenizer": "phrase" }
+    }'
+
+.. highlight:: java
 
 After a while, we find that we need to support reading files where words are delimited by a character
 other than a space. We decide to modify our ``DefaultTokenizer`` to use a ``PluginConfig`` that contains
@@ -671,13 +708,16 @@ property must be given when registering the plugin::
     }
   }
 
+.. highlight:: console
+
 Now we can create an application that uses a comma instead of a space to split text::
 
-  curl -X PUT localhost:10000/v3/namespaces/default/apps/wordcount2 -H 'Content-Type: application/json' -d '{
-    "artifact": { "name": "wordcount", "version": "1.2.0", "scope": "user" },
-    "config": {
-      "tokenizer": "default",
-      "tokenizerProperties": { "delimiter": "," }
-    }
-  }'
+  $ curl -w'\n' -X PUT localhost:10000/v3/namespaces/default/apps/wordcount2 -H 'Content-Type: application/json' \
+    -d '{
+      "artifact": { "name": "wordcount", "version": "1.2.0", "scope": "user" },
+      "config": {
+        "tokenizer": "default",
+        "tokenizerProperties": { "delimiter": "," }
+      }
+    }'
 
