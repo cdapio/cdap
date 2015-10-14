@@ -231,6 +231,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
     Dataset dataset;
     try {
+      // TODO: use proper classloader
       dataset = framework.getDataset(instance, DatasetDefinition.NO_ARGUMENTS, null);
     } catch (DatasetManagementException | IOException e) {
       LOG.error("Error getting dataset {}", name, e);
