@@ -68,6 +68,17 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
+   * Read the value as a string for a given key.
+   *
+   * @param key the key to read for
+   * @return the value for that key, or null if no value was found
+   */
+  @Nullable
+  public String readString(String key) {
+    return Bytes.toString(read(Bytes.toBytes(key)));
+  }
+
+  /**
    * Read the value for a given key.
    *
    * @param key the key to read for
@@ -190,7 +201,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   /**
   * Returns splits for a range of keys in the table.
-  * 
+  *
   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
   *                  If less than or equal to zero, any number of splits can be returned.
   * @param start if non-null, the returned splits will only cover keys that are greater or equal

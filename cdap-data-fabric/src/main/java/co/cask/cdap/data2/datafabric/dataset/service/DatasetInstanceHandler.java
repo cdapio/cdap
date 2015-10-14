@@ -16,14 +16,20 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
@@ -31,8 +37,14 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -49,10 +61,16 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -78,10 +96,15 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     .create();
 
   private final DatasetInstanceService instanceService;
+  private final DatasetFramework framework;
+  private final TransactionExecutorFactory txFactory;
 
   @Inject
-  public DatasetInstanceHandler(DatasetInstanceService instanceService) {
+  public DatasetInstanceHandler(DatasetInstanceService instanceService, DatasetFramework framework,
+                                TransactionExecutorFactory txFactory) {
     this.instanceService = instanceService;
+    this.framework = framework;
+    this.txFactory = txFactory;
   }
 
   @GET
@@ -196,6 +219,100 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     } catch (HandlerException e) {
       responder.sendStatus(e.getFailureStatus());
     }
+  }
+
+  /**
+   * Executes a data operation on a dataset instance using reflection.
+   *
+   * @param namespaceId namespace of the dataset instance
+   * @param name name of the dataset instance
+   */
+  @POST
+  @Path("/data/datasets/{name}")
+  public void executeDataOpWithReflection(
+    HttpRequest request, HttpResponder responder,
+    @PathParam("namespace-id") String namespaceId,
+    @PathParam("name") String name) throws Throwable {
+
+    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
+    Dataset dataset;
+    try {
+      // TODO: use proper classloader
+      dataset = framework.getDataset(instance, DatasetDefinition.NO_ARGUMENTS, null);
+    } catch (DatasetManagementException | IOException e) {
+      LOG.error("Error getting dataset {}", name, e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      return;
+    }
+
+    if (dataset == null) {
+      throw new NotFoundException(instance);
+    }
+
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()))) {
+      final DatasetMethodRequest methodRequest = GSON.fromJson(reader, DatasetMethodRequest.class);
+      final ClassLoader cl = getClass().getClassLoader();
+
+      final MethodHandle handle;
+      try {
+        MethodType type = MethodType.methodType(
+          methodRequest.getReturnTypeClass(cl), methodRequest.getArgumentClasses(cl));
+        handle = MethodHandles.lookup().findVirtual(dataset.getClass(), methodRequest.getMethod(), type);
+      } catch (NoSuchMethodException e) {
+        LOG.error("Error finding method", e);
+        throw new BadRequestException(
+          String.format("Method %s with return type %s and arguments %s does not exist for dataset type %s",
+                        methodRequest.getMethod(), methodRequest.getReturnType(),
+                        methodRequest.getArgumentTypes(), dataset.getClass().getName()), e);
+      }
+
+      Object response = txFactory.createExecutor(ImmutableList.of((TransactionAware) dataset))
+        .execute(
+          new TransactionExecutor.Function<Dataset, Object>() {
+            @Override
+            public Object apply(Dataset o) throws Exception {
+              try {
+                // TODO: allow nullable arguments
+                return handle.invokeWithArguments(
+                  Lists.newArrayList(
+                    Iterables.concat(
+                      ImmutableList.<Object>of(o),
+                      methodRequest.getArgumentList(GSON, cl)
+                    )
+                  ));
+              } catch (Throwable t) {
+                // TODO: exception handling
+                throw Throwables.propagate(t);
+              }
+            }
+          }, dataset);
+
+      if (response instanceof Iterator) {
+        // transform response from iterator to list, for GSON serialization
+        // TODO: limit
+        Iterator<?> it = (Iterator<?>) response;
+        try {
+          List<Object> newResponse = new ArrayList<>();
+          while (it.hasNext()) {
+            newResponse.add(it.next());
+          }
+          response = newResponse;
+        } finally {
+          if (it instanceof CloseableIterator) {
+            ((CloseableIterator) it).close();
+          }
+        }
+      }
+
+      DatasetMethodResponse methodResponse = new DatasetMethodResponse(response);
+      responder.sendJson(HttpResponseStatus.OK, methodResponse, methodResponse.getClass(), GSON);
+    } catch (ClassNotFoundException e) {
+      throw new BadRequestException(String.format("Class not found: %s", e.getMessage()), e);
+    } catch (IOException e) {
+      LOG.error("Failed to read request body", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
+
   }
 
   /**
