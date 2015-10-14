@@ -46,6 +46,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -271,11 +272,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
             @Override
             public Object apply(Dataset o) throws Exception {
               try {
+                // TODO: allow nullable arguments
                 return handle.invokeWithArguments(
-                  ImmutableList.builder()
-                    .add(o)
-                    .addAll(methodRequest.getArgumentList(GSON, cl))
-                    .build());
+                  Lists.newArrayList(
+                    Iterables.concat(
+                      ImmutableList.<Object>of(o),
+                      methodRequest.getArgumentList(GSON, cl)
+                    )
+                  ));
               } catch (Throwable t) {
                 // TODO: exception handling
                 throw Throwables.propagate(t);
@@ -283,12 +287,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
             }
           }, dataset);
 
-      if (response != null) {
-        DatasetMethodResponse methodResponse = new DatasetMethodResponse(response);
-        responder.sendJson(HttpResponseStatus.OK, methodResponse, methodResponse.getClass(), GSON);
-      } else {
-        responder.sendStatus(HttpResponseStatus.OK);
-      }
+      DatasetMethodResponse methodResponse = new DatasetMethodResponse(response);
+      responder.sendJson(HttpResponseStatus.OK, methodResponse, methodResponse.getClass(), GSON);
     } catch (ClassNotFoundException e) {
       throw new BadRequestException(String.format("Class not found: %s", e.getMessage()), e);
     } catch (IOException e) {

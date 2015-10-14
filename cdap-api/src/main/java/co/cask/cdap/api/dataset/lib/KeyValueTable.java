@@ -30,6 +30,7 @@ import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -226,6 +227,15 @@ public class KeyValueTable extends AbstractDataset implements
   @Override
   public void write(KeyValue<byte[], byte[]> keyValue) throws IOException {
     write(keyValue.getKey(), keyValue.getValue());
+  }
+
+  public List<KeyValue<byte[], byte[]>> scanList(byte[] startRow, byte[] stopRow) {
+    CloseableIterator<KeyValue<byte[], byte[]>> it = scan(startRow, stopRow);
+    try {
+      return Lists.newArrayList(it);
+    } finally {
+      it.close();
+    }
   }
 
   /**
