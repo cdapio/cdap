@@ -48,8 +48,8 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
     "basePath; for example: the format 'yyyy-MM-dd-HH-mm' will create a file path ending in '2015-01-01-20-42'. " +
     "Default format used is 'yyyy-MM-dd-HH-mm'.";
   private static final String FILESYSTEM_PROPERTIES_DESCRIPTION = "A JSON string representing a map of properties " +
-    "needed for the distributed file system. For example, the property names needed for S3 are " +
-    "\"fs.s3n.awsSecretAccessKey\" and \"fs.s3n.awsAccessKeyId\".";
+    "needed for the distributed file system. For example, the property names needed for S3 (accessID and accessKey) " +
+    "will be included as \"fs.s3n.awsSecretAccessKey\" and \"fs.s3n.awsAccessKeyId\".";
   private static final String DEFAULT_PATH_FORMAT = "yyyy-MM-dd-HH-mm";
   private static final Gson GSON = new Gson();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
