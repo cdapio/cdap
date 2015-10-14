@@ -70,7 +70,14 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
   protected final TransactionContext getTransactionContext() {
     Preconditions.checkState(context.getServiceContext() instanceof TransactionalHttpServiceContext,
                              "This instance of HttpServiceContext does not support transactions.");
-    return ((TransactionalHttpServiceContext) context.getServiceContext()).getTransactionContext();
+    return ((TransactionalHttpServiceContext) context.getServiceContext()).newTransactionContext();
+  }
+
+  /**
+   * Dismiss the current transaction context.
+   */
+  protected final void dismissTransactionContext() {
+    ((TransactionalHttpServiceContext) context.getServiceContext()).dismissTransactionContext();
   }
 
   /**
@@ -104,6 +111,9 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
   @SuppressWarnings("unused")
   protected final BodyConsumer wrapContentConsumer(HttpContentConsumer consumer,
                                                    DelayedHttpServiceResponder responder) {
-    return new BodyConsumerAdapter(responder, consumer, context.getServiceContext(), getTransactionContext());
+    Preconditions.checkState(context.getServiceContext() instanceof TransactionalHttpServiceContext,
+                             "This instance of HttpServiceContext does not support transactions.");
+    return new BodyConsumerAdapter(responder, consumer,
+                                   ((TransactionalHttpServiceContext) context.getServiceContext()));
   }
 }

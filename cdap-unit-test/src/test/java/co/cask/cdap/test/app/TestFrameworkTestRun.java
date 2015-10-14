@@ -816,12 +816,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testTransactionHandlerService() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithServices.class);
     LOG.info("Deployed.");
+
     ServiceManager serviceManager =
       applicationManager.getServiceManager(AppWithServices.TRANSACTIONS_SERVICE_NAME).start();
     serviceManager.waitForStatus(true);
-
     LOG.info("Service Started");
-
 
     final URL baseUrl = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
     Assert.assertNotNull(baseUrl);

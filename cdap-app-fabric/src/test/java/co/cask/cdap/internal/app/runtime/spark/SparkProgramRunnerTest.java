@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.spark;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
@@ -43,8 +44,11 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data.dataset.DatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
+import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.TempFolder;
@@ -58,9 +62,9 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionManager;
+import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -106,7 +110,7 @@ public class SparkProgramRunnerTest {
 
   private static TransactionManager txService;
   private static DatasetFramework dsFramework;
-  private static DatasetInstantiator datasetInstantiator;
+  private static DynamicDatasetCache datasetCache;
   private static MetricStore metricStore;
 
   final String testString1 = "persisted data";
@@ -138,9 +142,10 @@ public class SparkProgramRunnerTest {
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
-                                                  SparkProgramRunnerTest.class.getClassLoader(),
-                                                  null, null);
+    datasetCache = new SingleThreadDatasetCache(
+      new SystemDatasetInstantiator(dsFramework, SparkProgramRunnerTest.class.getClassLoader(), null),
+      injector.getInstance(TransactionSystemClient.class),
+      DefaultId.NAMESPACE, DatasetDefinition.NO_ARGUMENTS, null, null);
     metricStore = injector.getInstance(MetricStore.class);
 
     txService.startAndWait();
@@ -157,6 +162,7 @@ public class SparkProgramRunnerTest {
     for (DatasetSpecificationSummary spec : dsFramework.getInstances(DefaultId.NAMESPACE)) {
       dsFramework.deleteInstance(Id.DatasetInstance.from(DefaultId.NAMESPACE, spec.getName()));
     }
+    datasetCache.invalidate();
   }
 
   @Test
@@ -184,7 +190,8 @@ public class SparkProgramRunnerTest {
     Assert.assertEquals(1, metrics.size());
     MetricTimeSeries ts = metrics.iterator().next();
     Assert.assertEquals(1, ts.getTimeValues().size());
-    Assert.assertEquals(1, ts.getTimeValues().get(0).getValue());
+    // 1 read + one write in beforeSubmit(), increment (= read + write) in main -> 4
+    Assert.assertEquals(4, ts.getTimeValues().get(0).getValue());
   }
 
   @Test
@@ -211,7 +218,7 @@ public class SparkProgramRunnerTest {
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
 
-    final FileSet fileset = datasetInstantiator.getDataset("fs");
+    final FileSet fileset = datasetCache.getDataset("fs");
     Location location = fileset.getLocation("nn");
     prepareFileInput(location);
 
@@ -244,12 +251,14 @@ public class SparkProgramRunnerTest {
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
 
-    final PartitionedFileSet pfs = datasetInstantiator.getDataset("pfs");
+    // we need to start a tx context and do a "get" on all datasets so that they are in datasetCache
+    datasetCache.newTransactionContext();
+    final PartitionedFileSet pfs = datasetCache.getDataset("pfs");
     final PartitionOutput partitionOutput = pfs.getPartitionOutput(
       PartitionKey.builder().addStringField("x", "nn").build());
     Location location = partitionOutput.getLocation();
     prepareFileInput(location);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetCache.getTransactionAwares()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -271,7 +280,7 @@ public class SparkProgramRunnerTest {
 
     runProgram(app, programClass, args);
 
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetCache.getTransactionAwares()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -280,6 +289,7 @@ public class SparkProgramRunnerTest {
           validateFileOutput(partition.getLocation());
         }
       });
+    datasetCache.dismissTransactionContext();
   }
 
   @Test
@@ -300,7 +310,9 @@ public class SparkProgramRunnerTest {
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
 
-    final TimePartitionedFileSet tpfs = datasetInstantiator.getDataset("tpfs");
+    // we need to start a tx context and do a "get" on all datasets so that they are in datasetCache
+    datasetCache.newTransactionContext();
+    final TimePartitionedFileSet tpfs = datasetCache.getDataset("tpfs");
     long inputTime = System.currentTimeMillis();
     final long outputTime = inputTime + TimeUnit.HOURS.toMillis(1);
 
@@ -322,7 +334,7 @@ public class SparkProgramRunnerTest {
 
     runProgram(app, programClass, args);
 
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetCache.getTransactionAwares()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -337,6 +349,7 @@ public class SparkProgramRunnerTest {
           validateFileOutput(customPartition.getLocation());
         }
       });
+    datasetCache.dismissTransactionContext();
   }
 
   private void addTimePartition(TimePartitionedFileSet tpfs, long inputTime) throws IOException,
@@ -344,7 +357,7 @@ public class SparkProgramRunnerTest {
     final PartitionOutput partitionOutput = tpfs.getPartitionOutput(inputTime);
     Location location = partitionOutput.getLocation();
     prepareFileInput(location);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetCache.getTransactionAwares()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
@@ -367,7 +380,7 @@ public class SparkProgramRunnerTest {
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
 
-    final SparkAppUsingFileSet.MyFileSet myfileset = datasetInstantiator.getDataset("myfs");
+    final SparkAppUsingFileSet.MyFileSet myfileset = datasetCache.getDataset("myfs");
     final FileSet fileset = myfileset.getEmbeddedFileSet();
     Location location = fileset.getLocation("nn");
     prepareFileInput(location);
@@ -413,7 +426,7 @@ public class SparkProgramRunnerTest {
   private void testSparkWithGetDataset(Class<?> appClass, Class<?> programClass) throws Exception {
     ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
-    FileSet fileset = datasetInstantiator.getDataset("logs");
+    FileSet fileset = datasetCache.getDataset("logs");
     Location location = fileset.getLocation("nn");
     prepareInputFileSetWithLogData(location);
 
@@ -426,7 +439,7 @@ public class SparkProgramRunnerTest {
 
     runProgram(app, programClass, args);
 
-    KeyValueTable logStatsTable = datasetInstantiator.getDataset("logStats");
+    KeyValueTable logStatsTable = datasetCache.getDataset("logStats");
     validateGetDatasetOutput(logStatsTable);
   }
 
@@ -452,7 +465,7 @@ public class SparkProgramRunnerTest {
     try {
       // must have 4 records
       for (int i = 0; i < 4; i++) {
-        Assert.assertTrue(scan.hasNext());
+        Assert.assertTrue("Expected next for i = " + i, scan.hasNext());
         KeyValue<byte[], byte[]> next = scan.next();
         SparkAppUsingGetDataset.LogKey logKey =
           GSON.fromJson(Bytes.toString(next.getKey()), SparkAppUsingGetDataset.LogKey.class);
@@ -530,13 +543,13 @@ public class SparkProgramRunnerTest {
   }
 
   private void prepareInputData() throws TransactionFailureException, InterruptedException {
-    final ObjectStore<String> input = datasetInstantiator.getDataset("keys");
 
     //Populate some input
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetCache).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
+          ObjectStore<String> input = datasetCache.getDataset("keys");
           input.write(Bytes.toBytes(testString1), testString1);
           input.write(Bytes.toBytes(testString2), testString2);
         }
@@ -544,9 +557,9 @@ public class SparkProgramRunnerTest {
   }
 
   private void checkOutputData() throws TransactionFailureException, InterruptedException {
-    final KeyValueTable output = datasetInstantiator.getDataset("count");
+    final KeyValueTable output = datasetCache.getDataset("count");
     //read output and verify result
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    txExecutorFactory.createExecutor(datasetCache.getTransactionAwares()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {

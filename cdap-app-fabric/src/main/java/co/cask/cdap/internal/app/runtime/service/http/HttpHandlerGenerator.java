@@ -538,6 +538,7 @@ final class HttpHandlerGenerator {
      *        wrappedResponder.setTransactionFailureResponse(e);
      *        contentConsunmer = null;
      *     }
+     *     dismissTransactionContext();
      *     if (contentConsumer == null) {
      *       wrappedResponder.execute();
      *       // Only return null if handler method returns HttpContentConsumer
@@ -682,6 +683,11 @@ final class HttpHandlerGenerator {
 
       // } // end of outer catch
       mg.mark(txFinish);
+
+      // dismissTransactionContext();
+      mg.loadThis();
+      mg.invokeVirtual(classType,
+                       Methods.getMethod(void.class, "dismissTransactionContext"));
 
       // If body consumer is used, generates:
       //

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
@@ -35,8 +37,11 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -63,9 +68,15 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private final WorkflowToken workflowToken;
   private final Metrics userMetrics;
   private final Map<String, Plugin> plugins;
+  private final Transaction transaction;
 
   private MultipleOutputs multipleOutputs;
   private TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context;
+
+  // keeps track of all tx-aware datasets to perform the transaction lifecycle for them. Note that
+  // the transaction is already started, and it will be committed or aborted outside of this task.
+  // TODO: (CDAP-3983) The datasets should be managed by the dataset context. That requires TEPHRA-99.
+  private Set<TransactionAware> txAwares = Sets.newIdentityHashSet();
 
   public BasicMapReduceTaskContext(Program program,
                                    @Nullable MapReduceMetrics.TaskType type,
@@ -77,13 +88,16 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    @Nullable WorkflowToken workflowToken,
                                    DiscoveryServiceClient discoveryServiceClient,
                                    MetricsCollectionService metricsCollectionService,
+                                   TransactionSystemClient txClient,
+                                   Transaction transaction,
                                    DatasetFramework dsFramework,
                                    PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
-          dsFramework, discoveryServiceClient, pluginInstantiator);
+          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.workflowToken = workflowToken;
+    this.transaction = transaction;
 
     if (metricsCollectionService != null) {
       this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
@@ -93,6 +107,8 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.loggingContext = createLoggingContext(program.getId(), runId);
     this.spec = spec;
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
+
+    initializeTransactionAwares();
   }
 
   private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {
@@ -192,8 +208,38 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     return loggingContext;
   }
 
+  //---- following are methods to manage transaction lifecycle for the datasets. This needs to
+  //---- be refactored after [TEPHRA-99] and [CDAP-3893] are resolved.
+
+  private void initializeTransactionAwares() {
+    // initially the tx-awares of the dataset cache are only the static datasets
+    for (TransactionAware txAware : getDatasetCache().getTransactionAwares()) {
+      txAwares.add(txAware);
+      txAware.startTx(transaction);
+    }
+  }
+
+  /**
+   * This delegates the instantiation of the dataset to the super class, but in addition, if
+   * the dataset is a transaction-aware, it starts the transaction and remembers the dataset.
+   */
+  @Override
+  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+    throws DatasetInstantiationException {
+    T dataset = super.getDataset(name, arguments);
+    if (dataset instanceof TransactionAware) {
+      TransactionAware txAware = (TransactionAware) dataset;
+      txAwares.add(txAware);
+      txAware.startTx(transaction);
+    }
+    return dataset;
+  }
+
+  /**
+   * Force all transaction-aware datasets participating in this context to flush their writes.
+   */
   public void flushOperations() throws Exception {
-    for (TransactionAware txAware : getDatasetInstantiator().getTransactionAware()) {
+    for (TransactionAware txAware : txAwares) {
       txAware.commitTx();
     }
   }

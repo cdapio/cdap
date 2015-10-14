@@ -31,9 +31,9 @@ import java.io.IOException;
  */
 public interface DataFabricFacade extends QueueClientFactory {
 
-  DatasetContext getDataSetContext();
+  DatasetContext getDatasetContext();
 
-  TransactionContext createTransactionManager();
+  TransactionContext createTransactionContext();
 
   TransactionExecutor createTransactionExecutor();
 

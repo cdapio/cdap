@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime;
 
-import co.cask.cdap.data.dataset.DatasetInstantiator;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.queue.ForwardingQueueConsumer;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.tephra.TransactionAware;
@@ -28,9 +28,9 @@ import java.io.IOException;
  */
 final class CloseableQueueConsumer extends ForwardingQueueConsumer {
 
-  private final DatasetInstantiator context;
+  private final DynamicDatasetCache context;
 
-  CloseableQueueConsumer(DatasetInstantiator context, QueueConsumer consumer) {
+  CloseableQueueConsumer(DynamicDatasetCache context, QueueConsumer consumer) {
     super(consumer);
     this.context = context;
   }
@@ -40,7 +40,7 @@ final class CloseableQueueConsumer extends ForwardingQueueConsumer {
     try {
       consumer.close();
     } finally {
-      context.removeTransactionAware(this);
+      context.removeExtraTransactionAware(this);
     }
   }
 }

@@ -43,9 +43,10 @@ final class BodyConsumerAdapter extends BodyConsumer {
   private final DelayedHttpServiceResponder responder;
   private final HttpContentConsumer delegate;
   private final TransactionContext txContext;
-  private final DatasetContext datasetContext;
+  private final TransactionalHttpServiceContext serviceContext;
   private final Transactional transactional;
   private final ClassLoader programContextClassLoader;
+
   private boolean completed;
 
   /**
@@ -53,16 +54,15 @@ final class BodyConsumerAdapter extends BodyConsumer {
    *
    * @param responder the responder used for sending response back to client
    * @param delegate the {@link HttpContentConsumer} to delegate calls to
-   * @param datasetContext context for accessing dataset inside transaction
-   * @param txContext the {@link TransactionContext} for creating transaction
+   * @param serviceContext the {@link TransactionalHttpServiceContext} for this handler.
    */
   BodyConsumerAdapter(DelayedHttpServiceResponder responder, HttpContentConsumer delegate,
-                      DatasetContext datasetContext, TransactionContext txContext) {
+                      TransactionalHttpServiceContext serviceContext) {
     this.responder = responder;
     this.delegate = delegate;
-    this.txContext = txContext;
-    this.datasetContext = datasetContext;
-    this.transactional = createTransactional(txContext, datasetContext);
+    this.txContext = serviceContext.newTransactionContext();
+    this.serviceContext = serviceContext;
+    this.transactional = createTransactional(txContext);
     this.programContextClassLoader = new CombineClassLoader(null, ImmutableList.of(delegate.getClass().getClassLoader(),
                                                                                    getClass().getClassLoader()));
   }
@@ -89,7 +89,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
   @Override
   public void finished(HttpResponder responder) {
     try {
-      txExecute(txContext, datasetContext, new TxRunnable() {
+      txExecute(txContext, new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
           delegate.onFinish(BodyConsumerAdapter.this.responder);
@@ -139,7 +139,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
     // To the HttpContentConsumer, once onError is called, no other methods will be triggered
     completed = true;
     try {
-      txExecute(txContext, datasetContext, new TxRunnable() {
+      txExecute(txContext, new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
           delegate.onError(responder, cause);
@@ -152,8 +152,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
     }
   }
 
-  private Transactional createTransactional(final TransactionContext txContext,
-                                            final DatasetContext datasetContext) {
+  private Transactional createTransactional(final TransactionContext txContext) {
     return new Transactional() {
       @Override
       public void execute(final TxRunnable runnable) throws TransactionFailureException {
@@ -163,7 +162,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
         // since it starting of transaction should happens in CDAP system context, not program context
         ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
         try {
-          txExecute(txContext, datasetContext, runnable);
+          txExecute(txContext, runnable);
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
@@ -178,13 +177,12 @@ final class BodyConsumerAdapter extends BodyConsumer {
    * @throws TransactionFailureException if execution failed
    * @throws TransactionConflictException if conflict is detected when trying to commit the transaction
    */
-  private void txExecute(TransactionContext txContext,
-                         DatasetContext datasetContext, TxRunnable runnable) throws TransactionFailureException {
+  private void txExecute(TransactionContext txContext, TxRunnable runnable) throws TransactionFailureException {
     txContext.start();
     try {
       ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassLoader);
       try {
-        runnable.run(datasetContext);
+        runnable.run(serviceContext);
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
@@ -192,5 +190,6 @@ final class BodyConsumerAdapter extends BodyConsumer {
       txContext.abort(new TransactionFailureException("Exception raised from TxRunnable.run()", t));
     }
     txContext.finish();
+    serviceContext.dismissTransactionContext();
   }
 }
