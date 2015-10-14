@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.data2.datafabric.dataset.service;
+package co.cask.cdap.proto.dataset;
 
 import com.google.gson.JsonElement;
 
