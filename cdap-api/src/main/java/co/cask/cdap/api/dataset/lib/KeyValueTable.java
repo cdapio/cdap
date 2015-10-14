@@ -302,7 +302,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   @Override
   public byte[] handleOperation(String method, Reader body) throws Exception {
-    if (method.equals("get")) {
+    if (method.equals("read")) {
       StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
       if (input.getKey() == null) {
         throw new BadRequestException(
@@ -311,7 +311,7 @@ public class KeyValueTable extends AbstractDataset implements
 
       StringKeyValue response = new StringKeyValue(input.getKey(), read(input.getKey()));
       return Bytes.toBytes(GSON.toJson(response));
-    } else if (method.equals("put")) {
+    } else if (method.equals("write")) {
       StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
       if (input.getKey() == null) {
         throw new BadRequestException(
