@@ -87,8 +87,12 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
   public void addStream(Stream stream) {
     checkArgument(stream != null, "Stream cannot be null.");
     StreamSpecification spec = stream.configure();
-    checkArgument(!streams.containsKey(spec.getName()),
-                  "Stream %s has already been added. Remove the duplicate addition.", spec.getName());
+
+    StreamSpecification existingSpec = streams.get(spec.getName());
+    if (existingSpec != null && !existingSpec.equals(spec)) {
+      throw new IllegalArgumentException(String.format("Stream '%s' was added multiple times with different specs. " +
+        "Please resolve the conflict so that there is only one spec for the stream.", spec.getName()));
+    }
     streams.put(spec.getName(), spec);
   }
 
@@ -102,17 +106,27 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
   public void addDatasetModule(String moduleName, Class<? extends DatasetModule> moduleClass) {
     checkArgument(moduleName != null, "Dataset module name cannot be null.");
     checkArgument(moduleClass != null, "Dataset module class cannot be null.");
-    checkArgument(!datasetModules.containsKey(moduleName),
-                  "DatasetModule %s has already been added. Remove the duplicate addition.", moduleName);
-    datasetModules.put(moduleName, moduleClass.getName());
+
+    String moduleClassName = moduleClass.getName();
+    String existingModuleClass = datasetModules.get(moduleName);
+    if (existingModuleClass != null && !existingModuleClass.equals(moduleClass.getName())) {
+      throw new IllegalArgumentException(String.format("Module '%s' added multiple times with different classes " +
+        "'%s' and '%s'. Please resolve the conflict.", moduleName, existingModuleClass, moduleClassName));
+    }
+    datasetModules.put(moduleName, moduleClassName);
   }
 
   @Override
   public void addDatasetType(Class<? extends Dataset> datasetClass) {
     checkArgument(datasetClass != null, "Dataset class cannot be null.");
-    checkArgument(!datasetModules.containsKey(datasetClass.getName()),
-                  "DatasetType %s has already been added. Remove the duplicate addition.", datasetClass.getName());
-    datasetModules.put(datasetClass.getName(), datasetClass.getName());
+
+    String className = datasetClass.getName();
+    String existingClassName = datasetModules.get(datasetClass.getName());
+    if (existingClassName != null && !existingClassName.equals(className)) {
+      throw new IllegalArgumentException(String.format("Dataset class '%s' was added already as a module with class " +
+        "'%s'. Please resolve the conflict so there is only one class.", className, existingClassName));
+    }
+    datasetModules.put(datasetClass.getName(), className);
   }
 
   @Override
@@ -120,10 +134,15 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
     checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
     checkArgument(typeName != null, "Dataset type name cannot be null.");
     checkArgument(properties != null, "Instance properties name cannot be null.");
-    checkArgument(!datasetSpecs.containsKey(datasetInstanceName),
-                  "DatasetInstance %s has already been added. Remove the duplicate addition.", datasetInstanceName);
-    datasetSpecs.put(datasetInstanceName,
-                         new DatasetCreationSpec(datasetInstanceName, typeName, properties));
+
+    DatasetCreationSpec spec = new DatasetCreationSpec(datasetInstanceName, typeName, properties);
+    DatasetCreationSpec existingSpec = datasetSpecs.get(datasetInstanceName);
+    if (existingSpec != null && !existingSpec.equals(spec)) {
+      throw new IllegalArgumentException(String.format("DatasetInstance '%s' was added multiple times with " +
+        "different specifications. Please resolve the conlict so that there is only one specification for " +
+        "the dataset instance.", datasetInstanceName));
+    }
+    datasetSpecs.put(datasetInstanceName, spec);
   }
 
   @Override
@@ -134,14 +153,8 @@ public class DefaultDatasetConfigurer implements DatasetConfigurer {
   @Override
   public void createDataset(String datasetInstanceName, Class<? extends Dataset> datasetClass,
                             DatasetProperties properties) {
-    checkArgument(datasetInstanceName != null, "Dataset instance name cannot be null.");
-    checkArgument(datasetClass != null, "Dataset class name cannot be null.");
-    checkArgument(properties != null, "Instance properties name cannot be null.");
-    checkArgument(!datasetSpecs.containsKey(datasetInstanceName),
-                  "DatasetInstance %s has already been added. Remove the duplicate addition.", datasetInstanceName);
-    datasetSpecs.put(datasetInstanceName,
-                     new DatasetCreationSpec(datasetInstanceName, datasetClass.getName(), properties));
-    datasetModules.put(datasetClass.getName(), datasetClass.getName());
+    createDataset(datasetInstanceName, datasetClass.getName(), properties);
+    addDatasetType(datasetClass);
   }
 
   @Override
