@@ -121,7 +121,9 @@ annotate the relevant class with the ``@Plugin`` annotation. If this is the case
 the plugins when deploying the artifact. For example, if you are using the RESTful API, you can set the
 ``Artifact-Plugins`` header when deploying the artifact::
 
-  curl localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' --data-binary @mysql-connector-java-5.1.3.jar
+  $ curl -w'\n' localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java \
+      -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \
+      --data-binary @mysql-connector-java-5.1.3.jar
 
 .. _plugins-deployment:
 
