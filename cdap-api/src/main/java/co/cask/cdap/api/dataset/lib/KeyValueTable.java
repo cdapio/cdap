@@ -302,37 +302,35 @@ public class KeyValueTable extends AbstractDataset implements
 
   @Override
   public byte[] handleOperation(String method, Reader body) throws Exception {
-    if (method.equals("get")) {
-      StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
-      if (input.getKey() == null) {
-        throw new BadRequestException(
-          "Missing key in body. Expected format: {\"key\":\"<your-key>\"}");
-      }
+    switch (method) {
+      case "get": {
+        StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
+        if (input.getKey() == null) {
+          throw new BadRequestException(
+            "Missing key in body. Expected format: {\"key\":\"<your-key>\"}");
+        }
 
-      StringKeyValue response = new StringKeyValue(input.getKey(), read(input.getKey()));
-      return Bytes.toBytes(GSON.toJson(response));
-    } else if (method.equals("put")) {
-      StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
-      if (input.getKey() == null) {
-        throw new BadRequestException(
-          "Missing key in body. Expected format: {\"key\":\"<your-key>\", \"value\":\"<your-value>\"}");
+        StringKeyValue response = new StringKeyValue(input.getKey(), read(input.getKey()));
+        return Bytes.toBytes(GSON.toJson(response));
       }
+      case "put": {
+        StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
+        if (input.getKey() == null) {
+          throw new BadRequestException(
+            "Missing key in body. Expected format: {\"key\":\"<your-key>\", \"value\":\"<your-value>\"}");
+        }
 
-      write(input.getKey(), input.getValue());
-      return new byte[0];
-    } else {
-      throw new BadRequestException(String.format("Method %s is not supported", method));
+        write(input.getKey(), input.getValue());
+        return new byte[0];
+      }
+      default:
+        throw new BadRequestException(String.format("Method %s is not supported", method));
     }
   }
 
   private static class StringKeyValue {
     private final String key;
     private final String value;
-
-    private StringKeyValue(String key, String value) {
-      this.key = key;
-      this.value = value;
-    }
 
     private StringKeyValue(String key, byte[] value) {
       this.key = key;
