@@ -20,14 +20,12 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.Table;
-import com.google.gson.Gson;
 import org.apache.hadoop.hbase.util.Bytes;
 
 /**
  *
  */
 public class SimpleKVTable extends AbstractDataset implements KeyValueTable {
-  private static final Gson GSON = new Gson();
   private static final byte[] COL = new byte[0];
 
   private final Table table;

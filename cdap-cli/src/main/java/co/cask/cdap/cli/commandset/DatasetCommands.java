@@ -30,7 +30,6 @@ import co.cask.cdap.cli.command.ListDatasetModulesCommand;
 import co.cask.cdap.cli.command.ListDatasetTypesCommand;
 import co.cask.cdap.cli.command.SetDatasetInstancePropertiesCommand;
 import co.cask.cdap.cli.command.TruncateDatasetInstanceCommand;
-import co.cask.cdap.cli.command.dataset.ExecuteDatasetMethodCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
@@ -58,7 +57,6 @@ public class DatasetCommands extends CommandSet<Command> implements Categorized 
         .add(injector.getInstance(DeployDatasetModuleCommand.class))
         .add(injector.getInstance(DeleteDatasetModuleCommand.class))
         .add(injector.getInstance(DescribeDatasetTypeCommand.class))
-        .add(injector.getInstance(ExecuteDatasetMethodCommand.class))
         .build());
   }
 

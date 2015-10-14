@@ -18,7 +18,6 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
-import co.cask.cdap.api.dataset.DatasetOpHandler;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.table.Table;
@@ -45,7 +44,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -326,52 +324,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    * @param method the data operation to execute
    */
   @POST
-  @Path("/data/datasets/{name}/method/{method}")
+  @Path("/data/datasets/{name}/data/{method}")
   public void executeDataOp(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                            @PathParam("name") String name,
-                            @PathParam("method") final String method) throws Exception {
-
-    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
-    Dataset dataset;
-    try {
-      // TODO: use proper classloader
-      dataset = framework.getDataset(instance, DatasetDefinition.NO_ARGUMENTS, null);
-    } catch (DatasetManagementException | IOException e) {
-      LOG.error("Error getting dataset {}", name, e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      return;
-    }
-
-    if (dataset == null) {
-      throw new NotFoundException(instance);
-    }
-
-    if (!(dataset instanceof DatasetOpHandler)) {
-      LOG.warn("Dataset {} of type {} does not support data operations", name, dataset.getClass().getName());
-      responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
-      return;
-    }
-
-
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()))) {
-      byte[] response = txFactory.createExecutor(ImmutableList.of((TransactionAware) dataset))
-        .execute(
-          new TransactionExecutor.Function<Dataset, byte[]>() {
-            @Override
-            public byte[] apply(Dataset o) throws Exception {
-              DatasetOpHandler ops = (DatasetOpHandler) o;
-              return ops.handleOperation(method, reader);
-            }
-          }, dataset);
-      if (response != null) {
-        responder.sendByteArray(HttpResponseStatus.OK, response, HashMultimap.<String, String>create());
-      } else {
-        responder.sendStatus(HttpResponseStatus.OK);
-      }
-    } catch (IOException e) {
-      LOG.error("Failed to read request body", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
+                            @PathParam("name") String name, @PathParam("method") final String method) throws Exception {
+    // todo: execute data operation
+    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
   }
 
   private List<? extends Id> strings2Ids(List<String> strings) {

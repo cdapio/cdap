@@ -37,7 +37,6 @@ public enum ArgumentName {
   HOSTNAME("hostname"),
   DATASET_TYPE("dataset-type"),
   DATASET_MODULE("dataset-module"),
-  DATASET_METHOD("dataset-method"),
   DATASET_PROPERTIES("dataset-properties"),
   NEW_DATASET_MODULE("new-dataset-module"),
   DATASET("dataset-name"),
@@ -98,8 +97,7 @@ public enum ArgumentName {
   PLUGIN_NAME("plugin-name"),
 
   INSTANCE_URI("cdap-instance-uri"),
-  VERIFY_SSL_CERT("verify-ssl-cert"),
-  BODY("body");
+  VERIFY_SSL_CERT("verify-ssl-cert");
 
   private final String name;
 
