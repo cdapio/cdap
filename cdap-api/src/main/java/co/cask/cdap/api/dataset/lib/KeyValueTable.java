@@ -25,27 +25,33 @@ import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.data.batch.Scannables;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
+import co.cask.cdap.api.dataset.DatasetOpHandler;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
+import javax.ws.rs.BadRequestException;
 
 /**
  * A key/value map implementation on top of {@link Table} supporting read, write and delete operations.
  */
 public class KeyValueTable extends AbstractDataset implements
   BatchReadable<byte[], byte[]>, BatchWritable<byte[], byte[]>,
-  RecordScannable<KeyValue<byte[], byte[]>>, RecordWritable<KeyValue<byte[], byte[]>> {
+  RecordScannable<KeyValue<byte[], byte[]>>, RecordWritable<KeyValue<byte[], byte[]>>,
+  DatasetOpHandler {
 
+  private static final Gson GSON = new Gson();
   // the fixed single column to use for the key
   static final byte[] KEY_COLUMN = { 'c' };
 
@@ -190,7 +196,7 @@ public class KeyValueTable extends AbstractDataset implements
 
   /**
   * Returns splits for a range of keys in the table.
-  * 
+  *
   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
   *                  If less than or equal to zero, any number of splits can be returned.
   * @param start if non-null, the returned splits will only cover keys that are greater or equal
@@ -290,6 +296,55 @@ public class KeyValueTable extends AbstractDataset implements
     @Override
     public void close() {
       this.reader.close();
+    }
+  }
+
+
+  @Override
+  public byte[] handleOperation(String method, Reader body) throws Exception {
+    if (method.equals("get")) {
+      StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
+      if (input.getKey() == null) {
+        throw new BadRequestException(
+          "Missing key in body. Expected format: {\"key\":\"<your-key>\"}");
+      }
+
+      StringKeyValue response = new StringKeyValue(input.getKey(), read(input.getKey()));
+      return Bytes.toBytes(GSON.toJson(response));
+    } else if (method.equals("put")) {
+      StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
+      if (input.getKey() == null) {
+        throw new BadRequestException(
+          "Missing key in body. Expected format: {\"key\":\"<your-key>\", \"value\":\"<your-value>\"}");
+      }
+
+      write(input.getKey(), input.getValue());
+      return new byte[0];
+    } else {
+      throw new BadRequestException(String.format("Method %s is not supported", method));
+    }
+  }
+
+  private static class StringKeyValue {
+    private final String key;
+    private final String value;
+
+    private StringKeyValue(String key, String value) {
+      this.key = key;
+      this.value = value;
+    }
+
+    private StringKeyValue(String key, byte[] value) {
+      this.key = key;
+      this.value = value == null ? null : Bytes.toString(value);
+    }
+
+    public String getKey() {
+      return key;
+    }
+
+    public String getValue() {
+      return value;
     }
   }
 }

@@ -36,10 +36,14 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionExecutor;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -87,11 +91,14 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   private final DatasetInstanceService instanceService;
   private final DatasetFramework framework;
+  private final TransactionExecutorFactory txFactory;
 
   @Inject
-  public DatasetInstanceHandler(DatasetInstanceService instanceService, DatasetFramework framework) {
+  public DatasetInstanceHandler(DatasetInstanceService instanceService, DatasetFramework framework,
+                                TransactionExecutorFactory txFactory) {
     this.instanceService = instanceService;
     this.framework = framework;
+    this.txFactory = txFactory;
   }
 
   @GET
@@ -219,7 +226,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}/data/{method}")
   public void executeDataOp(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                             @PathParam("name") String name,
-                            @PathParam("method") String method) throws Exception {
+                            @PathParam("method") final String method) throws Exception {
 
     Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
     Dataset dataset;
@@ -241,10 +248,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       return;
     }
 
-    DatasetOpHandler ops = (DatasetOpHandler) dataset;
 
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()))) {
-      byte[] response = ops.handleOperation(method, reader);
+      byte[] response = txFactory.createExecutor(ImmutableList.of((TransactionAware) dataset))
+        .execute(
+          new TransactionExecutor.Function<Dataset, byte[]>() {
+            @Override
+            public byte[] apply(Dataset o) throws Exception {
+              DatasetOpHandler ops = (DatasetOpHandler) o;
+              return ops.handleOperation(method, reader);
+            }
+          }, dataset);
       if (response != null) {
         responder.sendByteArray(HttpResponseStatus.OK, response, HashMultimap.<String, String>create());
       } else {

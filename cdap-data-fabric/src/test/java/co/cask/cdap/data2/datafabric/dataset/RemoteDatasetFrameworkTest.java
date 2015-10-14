@@ -145,7 +145,9 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
                                                                         exploreFacade),
-                                 NAMESPACE_CLIENT
+                                 NAMESPACE_CLIENT,
+                                 framework,
+                                 txExecutorFactory
     );
     // Start dataset service, wait for it to be discoverable
     service.start();
