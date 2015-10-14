@@ -203,7 +203,9 @@ public abstract class DatasetServiceTestBase {
                                  instanceService,
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
                                                                         exploreFacade),
-                                 namespaceClient
+                                 namespaceClient,
+                                 dsFramework,
+                                 txExecutorFactory
     );
 
     // Start dataset service, wait for it to be discoverable
