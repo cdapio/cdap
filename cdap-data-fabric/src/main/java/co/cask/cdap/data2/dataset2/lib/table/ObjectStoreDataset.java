@@ -194,22 +194,22 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
   @Override
   public byte[] handleOperation(String method, Reader body) throws Exception {
     switch (method) {
-      case "get": {
+      case "read": {
         StringKeyObjectValue input = GSON.fromJson(body, new TypeToken<StringKeyObjectValue<T>>() {
         }.getType());
         if (input.getKey() == null) {
-          throw new javax.ws.rs.BadRequestException(
+          throw new BadRequestException(
             "Missing key in body. Expected format: {\"key\":\"<your-key>\"}");
         }
 
         StringKeyObjectValue response = new StringKeyObjectValue<>(input.getKey(), read(input.getKey()));
         return Bytes.toBytes(GSON.toJson(response));
       }
-      case "put": {
+      case "write": {
         StringKeyObjectValue<T> input = GSON.fromJson(body, new TypeToken<StringKeyObjectValue<T>>() {
         }.getType());
-        if (input.getKey() == null || input.getValue() == null) {
-          throw new javax.ws.rs.BadRequestException(
+        if (input.getKey() == null) {
+          throw new BadRequestException(
             "Invalid body. Expected format: {\"key\":\"<your-key>\", \"value\":\"<your-value>\"}");
         }
 
@@ -217,7 +217,7 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
         return new byte[0];
       }
       default:
-        throw new javax.ws.rs.BadRequestException(String.format("Method %s is not supported", method));
+        throw new BadRequestException(String.format("Method %s is not supported", method));
     }
   }
 
