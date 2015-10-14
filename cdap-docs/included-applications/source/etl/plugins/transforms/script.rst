@@ -25,10 +25,11 @@ to ``'megabytes'``. Or you might want to convert a timestamp into a human-readab
 
 **script:** Javascript defining how to transform one record into another. The script must
 implement a function called ``'transform'``, which takes as input a JSON object that represents
-the input record, and returns a JSON object that represents the transformed input.
+the input record and a context object (which contains CDAP metrics and logger),
+and returns a JSON object that represents the transformed input.
 For example::
 
-   'function transform(input) { input.count = input.count * 1024; return input; }'
+   'function transform(input, context) { input.count = input.count * 1024; return input; }'
    
 will scale the ``'count'`` field by 1024.
 
@@ -42,8 +43,14 @@ schema is the same as the input schema.
   {
     "name": "Script",
     "properties": {
-      "script": "function transform(input) {
+      "script": "function transform(input, context) {
                    var tax = input.subtotal * 0.0975;
+                   if (tax > 1000.0) {
+                     context.getMetrics().count("tax.above.1000", 1);
+                   }
+                   if (tax < 0.0) {
+                     context.getLogger().info("Received record with negative subtotal");
+                   }
                    return {
                      'subtotal': input.subtotal,
                      'tax': tax,
@@ -82,3 +89,14 @@ it will transform it to this output record::
   | tax        | double              | 9.75                 |
   | total      | double              | 109.75               |
   +=========================================================+
+
+
+**Note:** These default metrics are emitted by this transform:
+
+.. csv-table::
+   :header: "Metric Name","Description"
+   :widths: 40,60
+
+   "``records.in``","Input records processed by this transform stage"
+   "``records.out``","Output records sent to the next stage"
+

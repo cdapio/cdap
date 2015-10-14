@@ -20,10 +20,13 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.api.Validator;
 import co.cask.cdap.etl.common.MockEmitter;
+import co.cask.cdap.etl.common.MockMetrics;
 import co.cask.cdap.etl.validator.CoreValidator;
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.HashMap;
 
 /**
  * Validator transformation testing
@@ -39,10 +42,11 @@ public class ValidatorTransformTest {
   public void testValidatorTransformWithMap() throws Exception {
     ValidatorTransform.ValidatorConfig config = new ValidatorTransform.ValidatorConfig();
     config.validationScript =
-      "   function isValid(input) { " +
+      "   function isValid(input, context) { " +
         "      var isValid = true; " +
         "      var errMsg = \"\";" +
         "      var errCode = 0;" +
+        "      var coreValidator = context.getValidator(\"coreValidator\");" +
         "      if (!coreValidator.isDate(input.date)) { " +
         "         isValid = false; errMsg = input.date + \"is invalid date\"; errCode = 5;" +
         "      } else if (!coreValidator.isUrl(input.url)) { " +
@@ -50,13 +54,17 @@ public class ValidatorTransformTest {
         "      } else if (!coreValidator.isInRange(input.content_length, 0, 1024 * 1024)) {" +
         "         isValid = false; errMsg = \"content length >1MB\"; errCode = 10;" +
         "      }" +
+        "      context.getMetrics().count(\"total.processed\", 1);" +
+        "      context.getLogger().info(\"Test Log from Validator Transform\");" +
         "      return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
         "   };";
 
     config.validators = "apache";
 
     ValidatorTransform transform = new ValidatorTransform(config);
-    transform.setUpInitialScript(new MockTransformContext(), ImmutableList.<Validator>of(new CoreValidator()));
+    MockMetrics metrics = new MockMetrics();
+    transform.setUpInitialScript(new MockTransformContext(new HashMap<String, String>(), metrics),
+                                 ImmutableList.<Validator>of(new CoreValidator()));
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
 
     StructuredRecord validRecord = StructuredRecord.builder(SCHEMA)
@@ -90,5 +98,6 @@ public class ValidatorTransformTest {
 
     Assert.assertEquals(1, emitter.getEmitted().size());
     Assert.assertEquals(3, emitter.getErrors().size());
+    Assert.assertEquals(4, metrics.getCount("total.processed"));
   }
 }

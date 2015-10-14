@@ -31,6 +31,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -45,21 +47,30 @@ import javax.script.ScriptException;
 @Description("A transform plugin that filters records using a custom Javascript provided in the plugin's config.")
 public class ScriptFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
   private static final String SCRIPT_DESCRIPTION = "Javascript that must implement a function 'shouldFilter' that " +
-    "takes a JSON object representation of the input record, " +
-    "and returns true if the input record should be filtered and false if not. " +
-    "For example: 'function shouldFilter(input) { return input.count > 100; }' " +
+    "takes a JSON object representation of the input record and a context object (which encapsulates CDAP metrics " +
+    "and logger) and returns true if the input record should be filtered and false if not. " +
+    "For example: " +
+    "'function shouldFilter(input, context) {" +
+      "if (input.count < 0) {" +
+        "context.getLogger().info(\"Got input record with negative count\");" +
+        "context.getMetrics().count(\"negative.count\", 1);" +
+      "}" +
+      "return input.count > 100; " +
+    "}' " +
     "will filter out any records whose 'count' field is greater than 100.";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())
     .create();
   private static final String FUNCTION_NAME = "dont_name_your_function_this";
   private static final String VARIABLE_NAME = "dont_name_your_variable_this";
+  private static final String CONTEXT_NAME = "dont_name_your_context_this";
 
   private final ScriptFilterConfig scriptFilterConfig;
 
   private ScriptEngine engine;
   private Invocable invocable;
   private Metrics metrics;
+  private Logger logger;
 
   public ScriptFilterTransform(ScriptFilterConfig scriptFilterConfig) {
     this.scriptFilterConfig = scriptFilterConfig;
@@ -75,8 +86,9 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
 
   @Override
   public void initialize(TransformContext context) {
-    init();
     metrics = context.getMetrics();
+    logger = LoggerFactory.getLogger(ScriptFilterTransform.class.getName() + " - Stage:" + context.getStageId());
+    init();
   }
 
   @Override
@@ -98,13 +110,15 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
 
+    engine.put(CONTEXT_NAME, new ScriptContext(logger, metrics));
+
     // this is pretty ugly, but doing this so that we can pass the 'input' json into the shouldFilter function.
     // that is, we want people to implement
     // function shouldFilter(input) { ... }
     // rather than function shouldFilter() { ... } and have them access a global variable in the function
     try {
-      String script = String.format("function %s() { return shouldFilter(%s); }\n%s",
-        FUNCTION_NAME, VARIABLE_NAME, scriptFilterConfig.script);
+      String script = String.format("function %s() { return shouldFilter(%s, %s); }\n%s",
+        FUNCTION_NAME, VARIABLE_NAME, CONTEXT_NAME, scriptFilterConfig.script);
       engine.eval(script);
     } catch (ScriptException e) {
       throw new IllegalArgumentException("Invalid script: " + e.getMessage(), e);
