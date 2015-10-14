@@ -9,7 +9,8 @@
 Wikipedia Pipeline
 ==================
 
-A Cask Data Application Platform (CDAP) example demonstrating a typical data processing pipeline using CDAP Workflows.
+A Cask Data Application Platform (CDAP) example demonstrating a typical batch data
+processing pipeline using CDAP Workflows.
 
 
 Overview
@@ -42,7 +43,8 @@ output in another ``KeyValueTable`` dataset called *normalized*.
 The *WikipediaPipelineWorkflow* then contains a fork, with two branches:
 
 - One branch runs the Apache Spark program *SparkWikipediaAnalyzer*. This program consumes
-  normalized data and runs topic modeling on it using the Latent Dirichlet Allocation (LDA)
+  normalized data and runs topic modeling on it using the 
+  `Latent Dirichlet Allocation (LDA) <https://en.wikipedia.org/wiki/Latent_Dirichlet_allocation>`__
   algorithm. It stores its output in the CDAP Table dataset *lda*, with one row for each
   iteration, and a column per topic containing the score for that topic.
 
@@ -140,7 +142,10 @@ setting either the runtime arguments (which changes the *next* run) or the prefe
 .. image:: _images/wikipedia-data-pipeline-2.png
    :width: 8in
 
-Once the pipeline has run through to the end, you can start the service and query the results.
+Once the pipeline has run through to the end (below), you can start the service and query the results.
+
+.. image:: _images/wikipedia-data-pipeline-3.png
+   :width: 8in
 
 .. Start the Service
 .. -----------------
