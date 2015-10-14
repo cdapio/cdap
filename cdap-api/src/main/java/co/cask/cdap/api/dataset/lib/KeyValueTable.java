@@ -30,6 +30,8 @@ import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
@@ -37,6 +39,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -319,21 +323,34 @@ public class KeyValueTable extends AbstractDataset implements
         input.validateKey();
         StringKeyValue response = new StringKeyValue(input.getKey(), read(input.getKey()));
         return Bytes.toBytes(GSON.toJson(response));
-      }
-      case "write": {
+      } case "write": {
         StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
         input.validateKeyValue();
         write(input.getKey(), input.getValue());
         return new byte[0];
-      }
-      case "delete":
+      } case "delete": {
         StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
         input.validateKey();
         delete(Bytes.toBytes(input.getKey()));
         return new byte[0];
+      } case "scan" : {
+        StringKeyValue input = GSON.fromJson(body, StringKeyValue.class);
+        input.validateKeyValue();
+        CloseableIterator<KeyValue<byte[], byte[]>> scan = scan(Bytes.toBytes(input.getKey()), Bytes.toBytes(input.getValue()));
+        Bytes.toBytes(GSON.toJson(mapFromIterator(scan)));
+      }
       default:
         throw new BadRequestException(String.format("Method %s is not supported", method));
     }
+  }
+
+  private Map<byte[], byte[]> mapFromIterator(Iterator<KeyValue<byte[], byte[]>> iterator) {
+    Map<byte[], byte[]> map = new HashMap<>();
+    while (iterator.hasNext()) {
+      KeyValue<byte[], byte[]> keyValue = iterator.next();
+      map.put(keyValue.getKey(), keyValue.getValue());
+    }
+    return map;
   }
 
   private static class StringKeyValue {

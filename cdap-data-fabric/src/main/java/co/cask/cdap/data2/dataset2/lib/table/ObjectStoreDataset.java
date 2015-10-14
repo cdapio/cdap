@@ -46,7 +46,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -216,12 +219,27 @@ public class ObjectStoreDataset<T> extends AbstractDataset implements ObjectStor
         input.validateKey();
         delete(Bytes.toBytes(input.getKey()));
         return new byte[0];
+      }case "scan" : {
+        StringKeyObjectValue<T> input = GSON.fromJson(body, new TypeToken<StringKeyObjectValue<T>>() {
+        }.getType());
+        input.validateKeyValue();
+
+        CloseableIterator<KeyValue<byte[], T>> scan = scan(Bytes.toBytes(input.getKey()), Bytes.toBytes((String) input.getValue()));
+        Bytes.toBytes(GSON.toJson(mapFromIterator(scan)));
       }
       default:
         throw new BadRequestException(String.format("Method %s is not supported", method));
     }
   }
 
+  private Map<byte[], T> mapFromIterator(Iterator<KeyValue<byte[], T>> iterator) {
+    Map<byte[], T> map = new HashMap<>();
+    while (iterator.hasNext()) {
+      KeyValue<byte[], T> keyValue = iterator.next();
+      map.put(keyValue.getKey(), keyValue.getValue());
+    }
+    return map;
+  }
 
   /**
    * {@link co.cask.cdap.api.data.batch.Scannables.RecordMaker} for {@link ObjectStoreDataset}.
