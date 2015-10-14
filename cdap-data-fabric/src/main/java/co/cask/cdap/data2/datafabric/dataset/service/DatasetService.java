@@ -28,8 +28,10 @@ import co.cask.cdap.common.service.UnloggedExceptionIdleService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
 import co.cask.http.NettyHttpService;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -83,12 +85,15 @@ public class DatasetService extends AbstractExecutionThreadService {
                         Set<DatasetMetricsReporter> metricReporters,
                         DatasetInstanceService datasetInstanceService,
                         StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                        AbstractNamespaceClient namespaceClient) throws Exception {
+                        AbstractNamespaceClient namespaceClient,
+                        DatasetFramework framework,
+                        TransactionExecutorFactory txFactory) throws Exception {
 
     this.typeManager = typeManager;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory,
                                                                    namespaceClient);
-    DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService);
+    DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService, framework,
+                                                                               txFactory);
     StorageProviderNamespaceHandler storageProviderNamespaceHandler =
       new StorageProviderNamespaceHandler(storageProviderNamespaceAdmin);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);

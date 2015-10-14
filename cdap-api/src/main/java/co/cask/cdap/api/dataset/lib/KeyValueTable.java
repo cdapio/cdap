@@ -68,6 +68,17 @@ public class KeyValueTable extends AbstractDataset implements
   }
 
   /**
+   * Read the value as a string for a given key.
+   *
+   * @param key the key to read for
+   * @return the value for that key, or null if no value was found
+   */
+  @Nullable
+  public String readString(String key) {
+    return Bytes.toString(read(Bytes.toBytes(key)));
+  }
+
+  /**
    * Read the value for a given key.
    *
    * @param key the key to read for
