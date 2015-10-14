@@ -15,25 +15,25 @@
 -->
 
 <div class="row one-divider" ng-if="isSource">
-  <div class="col-lg-6">
+  <div class="col-lg-8">
     <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
   </div>
 
-  <div class="col-lg-6">
+  <div class="col-lg-4">
     <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-output-schema.html'"></div>
   </div>
 </div>
 
 <div class="row two-divider" ng-if="isTransform && plugin.name !== 'Validator'">
-  <div class="col-lg-4">
+  <div class="col-lg-3">
     <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-input-schema.html'"></div>
   </div>
 
-  <div class="col-lg-4">
+  <div class="col-lg-6">
     <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
   </div>
 
-  <div class="col-lg-4">
+  <div class="col-lg-3">
     <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-output-schema.html'"></div>
   </div>
 </div>
@@ -44,12 +44,12 @@
   </div>
 </div>
 
-<div class="row one-divider" ng-if="isSink">
-  <div class="col-lg-6">
+<div class="row sink-divider" ng-if="isSink">
+  <div class="col-lg-4">
     <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-input-schema.html'"></div>
   </div>
 
-  <div class="col-lg-6">
+  <div class="col-lg-8">
     <div class="row">
       <div class="col-xs-12">
         <div ng-include="'/assets/features/adapters/templates/create/popovers/plugin-edit-properties-template.html'"></div>
