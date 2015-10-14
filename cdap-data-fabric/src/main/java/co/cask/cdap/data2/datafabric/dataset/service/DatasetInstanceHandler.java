@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetOpHandler;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
@@ -70,7 +71,9 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -286,6 +289,23 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
               }
             }
           }, dataset);
+
+      if (response instanceof Iterator) {
+        // transform response from iterator to list, for GSON serialization
+        // TODO: limit
+        Iterator<?> it = (Iterator<?>) response;
+        try {
+          List<Object> newResponse = new ArrayList<>();
+          while (it.hasNext()) {
+            newResponse.add(it.next());
+          }
+          response = newResponse;
+        } finally {
+          if (it instanceof CloseableIterator) {
+            ((CloseableIterator) it).close();
+          }
+        }
+      }
 
       DatasetMethodResponse methodResponse = new DatasetMethodResponse(response);
       responder.sendJson(HttpResponseStatus.OK, methodResponse, methodResponse.getClass(), GSON);
