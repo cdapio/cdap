@@ -48,6 +48,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 
 /**
@@ -204,6 +205,32 @@ public class DatasetClient {
     URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
                                             String.format("data/datasets/%s", instance.getId()));
     HttpResponse response = restClient.execute(HttpMethod.DELETE, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new DatasetNotFoundException(instance);
+    }
+  }
+
+  /**
+   * Executes a dataset operation.
+   *
+   * @param instance the dataset to execute the operation on
+   * @param method the name of the operation
+   * @throws DatasetNotFoundException if the dataset with the specified name could not be found
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   */
+  public void execute(Id.DatasetInstance instance, String method, @Nullable String body)
+    throws DatasetNotFoundException, IOException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
+                                            String.format("data/datasets/%s/method/%s", instance.getId(), method));
+    HttpRequest.Builder request = HttpRequest.builder(HttpMethod.POST, url);
+    if (body != null) {
+      request.withBody(body);
+    }
+
+    HttpResponse response = restClient.execute(request.build(), config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new DatasetNotFoundException(instance);

@@ -125,7 +125,7 @@ public class ExecuteQueryCommand extends AbstractAuthCommand implements Categori
 
   @Override
   public String getPattern() {
-    return String.format("execute <%s> [<%s>]", ArgumentName.QUERY, ArgumentName.TIMEOUT);
+    return String.format("execute query <%s> [<%s>]", ArgumentName.QUERY, ArgumentName.TIMEOUT);
   }
 
   @Override
