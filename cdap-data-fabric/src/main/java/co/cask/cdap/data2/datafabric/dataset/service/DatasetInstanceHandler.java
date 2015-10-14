@@ -219,7 +219,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    * @param name name of the dataset instance
    */
   @POST
-  @Path("/data/datasets/{name}")
+  @Path("/data/datasets/{name}/execute")
   public void executeDataOpWithReflection(
     HttpRequest request, HttpResponder responder,
     @PathParam("namespace-id") String namespaceId,

@@ -19,6 +19,7 @@ package co.cask.cdap.client;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
@@ -29,6 +30,8 @@ import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.dataset.DatasetMethodRequest;
+import co.cask.cdap.proto.dataset.DatasetMethodResponse;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
@@ -289,5 +292,35 @@ public class DatasetClient {
     URL url = config.resolveNamespacedURLV3(instance.getNamespace(),
                                             String.format("data/datasets/%s/admin/truncate", instance.getId()));
     restClient.execute(HttpMethod.POST, url, config.getAccessToken());
+  }
+
+  /**
+   * Executes a method on a dataset.
+   *
+   * @param instance the dataset to execute the method on
+   * @param request the method execution request
+   * @return the method response
+   * @throws IOException if a network error occurred
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws NotFoundException if the dataset instance is not found
+   * @throws BadRequestException if the input was bad
+   */
+  public DatasetMethodResponse execute(
+    Id.DatasetInstance instance, DatasetMethodRequest request)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+
+    URL url = config.resolveNamespacedURLV3(
+      instance.getNamespace(), String.format("data/datasets/%s/execute", instance.getId()));
+
+    HttpResponse response = restClient.execute(
+      HttpRequest.post(url).withBody(GSON.toJson(request)).build(), config.getAccessToken(),
+      HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_BAD_REQUEST);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new NotFoundException(instance);
+    }
+    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(response.getResponseBodyAsString());
+    }
+    return ObjectResponse.fromJsonBody(response, DatasetMethodResponse.class).getResponseObject();
   }
 }
