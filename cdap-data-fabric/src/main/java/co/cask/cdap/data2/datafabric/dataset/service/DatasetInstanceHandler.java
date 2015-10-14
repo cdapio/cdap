@@ -223,7 +223,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    * @param method the data operation to execute
    */
   @POST
-  @Path("/data/datasets/{name}/data/{method}")
+  @Path("/data/datasets/{name}/method/{method}")
   public void executeDataOp(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                             @PathParam("name") String name,
                             @PathParam("method") final String method) throws Exception {
