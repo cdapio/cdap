@@ -31,6 +31,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
+import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.common.SolrInputDocument;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -64,10 +67,12 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private static final Type SET_METADATA_SEARCH_RESULT_TYPE =
     new TypeToken<Set<MetadataSearchResultRecord>>() { }.getType();
   private final MetadataAdmin metadataAdmin;
+  private final SolrServer solrServer;
 
   @Inject
   public MetadataHttpHandler(MetadataAdmin metadataAdmin) {
     this.metadataAdmin = metadataAdmin;
+    this.solrServer = new HttpSolrServer("http://localhost:8983/solr");
   }
 
   @GET
@@ -343,6 +348,14 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                          @PathParam("app-id") String appId) throws Exception {
     Id.Application app = Id.Application.from(namespaceId, appId);
     metadataAdmin.addTags(app, readArray(request));
+
+    SolrInputDocument doc1 = new SolrInputDocument();
+    doc1.addField("namespace", namespaceId);
+    doc1.addField("app", appId);
+    doc1.addField("tags", readArray(request));
+    solrServer.add(doc1);
+    solrServer.commit();
+
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Added tags to application %s successfully", app));
   }
@@ -357,6 +370,14 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     Id.Program program = Id.Program.from(Id.Application.from(namespaceId, appId),
                                          ProgramType.valueOfCategoryName(programType), programId);
     metadataAdmin.addTags(program, readArray(request));
+    SolrInputDocument doc1 = new SolrInputDocument();
+    doc1.addField("namespace", namespaceId);
+    doc1.addField("app", appId);
+    doc1.addField("programType", programType);
+    doc1.addField("programId", programId);
+    doc1.addField("tags", readArray(request));
+    solrServer.add(doc1);
+    solrServer.commit();
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Added tags to program %s successfully", program));
   }

@@ -56,6 +56,7 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.search.SearchService;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
@@ -86,6 +87,7 @@ public class StandaloneMain {
   private static final Logger LOG = LoggerFactory.getLogger(StandaloneMain.class);
 
   private final UserInterfaceService userInterfaceService;
+  private final SearchService searchService;
   private final NettyRouter router;
   private final MetricsQueryService metricsQueryService;
   private final AppFabricServer appFabricServer;
@@ -125,6 +127,8 @@ public class StandaloneMain {
     } else {
       userInterfaceService = injector.getInstance(UserInterfaceService.class);
     }
+
+    searchService = injector.getInstance(SearchService.class);
 
     sslEnabled = configuration.getBoolean(Constants.Security.SSL_ENABLED);
     securityEnabled = configuration.getBoolean(Constants.Security.ENABLED);
@@ -186,6 +190,8 @@ public class StandaloneMain {
     if (userInterfaceService != null) {
       userInterfaceService.startAndWait();
     }
+
+    searchService.startAndWait();
 
     if (securityEnabled) {
       externalAuthenticationServer.startAndWait();
