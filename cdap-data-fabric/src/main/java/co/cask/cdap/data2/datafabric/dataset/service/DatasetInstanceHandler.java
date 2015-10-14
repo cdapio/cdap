@@ -277,6 +277,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                     .addAll(methodRequest.getArgumentList(GSON, cl))
                     .build());
               } catch (Throwable t) {
+                // TODO: exception handling
                 throw Throwables.propagate(t);
               }
             }
