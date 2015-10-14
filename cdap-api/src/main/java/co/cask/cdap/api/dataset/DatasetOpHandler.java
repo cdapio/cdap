@@ -16,11 +16,11 @@
 
 package co.cask.cdap.api.dataset;
 
-import javax.annotation.Nullable;
+import java.io.Reader;
 
 /**
  *
  */
 public interface DatasetOpHandler {
-  Object handleOperation(String method, @Nullable byte[] body);
+  byte[] handleOperation(String method, Reader body) throws Exception;
 }

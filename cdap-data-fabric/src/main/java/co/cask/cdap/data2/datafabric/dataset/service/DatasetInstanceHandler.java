@@ -16,6 +16,9 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.DatasetOpHandler;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
@@ -24,6 +27,8 @@ import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
@@ -34,6 +39,7 @@ import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -50,6 +56,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
@@ -79,10 +86,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     .create();
 
   private final DatasetInstanceService instanceService;
+  private final DatasetFramework framework;
 
   @Inject
-  public DatasetInstanceHandler(DatasetInstanceService instanceService) {
+  public DatasetInstanceHandler(DatasetInstanceService instanceService, DatasetFramework framework) {
     this.instanceService = instanceService;
+    this.framework = framework;
   }
 
   @GET
@@ -200,7 +209,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   }
 
   /**
-   * Executes a data operation on a dataset instance. Not yet implemented.
+   * Executes a data operation on a dataset instance.
    *
    * @param namespaceId namespace of the dataset instance
    * @param name name of the dataset instance
@@ -209,9 +218,42 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @POST
   @Path("/data/datasets/{name}/data/{method}")
   public void executeDataOp(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                            @PathParam("name") String name, @PathParam("method") String method) {
-    // todo: execute data operation
-    responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+                            @PathParam("name") String name,
+                            @PathParam("method") String method) throws Exception {
+
+    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
+    Dataset dataset;
+    try {
+      dataset = framework.getDataset(instance, DatasetDefinition.NO_ARGUMENTS, null);
+    } catch (DatasetManagementException | IOException e) {
+      LOG.error("Error getting dataset {}", name, e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      return;
+    }
+
+    if (dataset == null) {
+      throw new NotFoundException(instance);
+    }
+
+    if (!(dataset instanceof DatasetOpHandler)) {
+      LOG.warn("Dataset {} of type {} does not support data operations", name, dataset.getClass().getName());
+      responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
+      return;
+    }
+
+    DatasetOpHandler ops = (DatasetOpHandler) dataset;
+
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()))) {
+      byte[] response = ops.handleOperation(method, reader);
+      if (response != null) {
+        responder.sendByteArray(HttpResponseStatus.OK, response, HashMultimap.<String, String>create());
+      } else {
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
+    } catch (IOException e) {
+      LOG.error("Failed to read request body", e);
+      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   private List<? extends Id> strings2Ids(List<String> strings) {
