@@ -21,8 +21,14 @@
 body.theme-cdap.state-hydrator {
 
   &.state-hydrator-detail {
+    my-dag .my-js-dag {
+      border-bottom: 0;
+    }
     div.console {
       min-height: 60vh;
+      div.console-tabs ul.nav-tabs li {
+        margin-bottom: -1px;
+      }
       div.console-type {
         height: inherit;
         min-height: inherit;
@@ -38,9 +44,6 @@ body.theme-cdap.state-hydrator {
         width: 100%;
       }
       div.terminal {
-        overflow-x: hidden;
-        overflow-y: visible;
-        max-height: 100%;
         word-wrap: break-word;
         pre {
           white-space: normal;
@@ -49,8 +52,58 @@ body.theme-cdap.state-hydrator {
       .history-table .table {
         border: 1px solid #ddd;
       }
-      .table th {
-        padding-left: 5px;
+      .table {
+        th {
+          height: 30px;
+          padding: 0 5px;
+          vertical-align: middle;
+        }
+        // Metrics view
+        td.metric-cell {
+          padding: 0;
+        }
+        &.metric-table {
+          tr {
+            &:first-child > td {
+              border-top: 0;
+            }
+
+            &:last-child > td {
+              border-bottom: 0;
+            }
+          }
+          td {
+            &:first-child {
+              border-left: 0;
+            }
+            &:last-child {
+              border-right: 0;
+            }
+          }
+        }
+        // Status view
+        &.status-view {
+          th {
+            font-weight: 500;
+            font-size: 15px;
+          }
+          td {
+            vertical-align: top;
+            span {
+              font-weight: 500;
+              font-size: 24px;
+            }
+          }
+          td.status-value span {
+            color: @brand-primary;
+          }
+        }
+        &.borderless {
+          th, td {
+            border: 0;
+            text-align: center;
+          }
+        }
       }
     }
   }
@@ -60,7 +113,7 @@ body.theme-cdap.state-hydrator {
     position: relative;
     width: 100%;
     .transition(all 0.2s ease);
-   // Console height is 40% on larger screen
+    // Console height is 40% on larger screen
     min-height: 40vh;
     @media (min-height: 800px) {
       min-height: 60vh;
@@ -370,49 +423,6 @@ body.theme-cdap.state-hydrator {
       }
     }
 
-    .status-view {
-      // margin-top: 15px;
-
-      h4 {
-        color: black;
-        font-weight: 500;
-        font-size: 15px;
-      }
-
-      h2.status-value {
-        color: @brand-primary;
-        font-weight: 500;
-        font-size: 24px;
-      }
-    }
-
-    .table.table-bordered {
-
-      td.metric-cell {
-        padding: 0;
-      }
-
-      .table.metric-table {
-        tr {
-          &:first-child > td {
-            border-top: 0;
-          }
-
-          &:last-child > td {
-            border-bottom: 0;
-          }
-        }
-
-        td {
-          &:first-child {
-            border-left: 0;
-          }
-          &:last-child {
-            border-right: 0;
-          }
-        }
-      }
-    }
     .console-wrapper {
       padding: 10px 0;
       div.btn {
@@ -434,7 +444,7 @@ body.theme-cdap.state-hydrator {
     }
   }
   footer {
-    // Creates a bottom border for the bottom panel, needed here in order to accommodate the single scroll
+    // Creates a bottom border for the bottom panel, needed to accommodate the single scroll
     border-top: 1px solid @table-border-color;
     position: fixed;
     z-index: 1025;

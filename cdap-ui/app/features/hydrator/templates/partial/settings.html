@@ -48,7 +48,7 @@
   <div class="bottompanel-body">
     <div ng-if="HydratorSettingsController.metadata.template.type === HydratorSettingsController.GLOBALS.etlBatch">
       <div class="basic-cron" ng-if="HydratorSettingsController.isBasic">
-        <cron-selection output="HydratorSettingsController.cron"
+        <cron-selection class="select-wrapper" output="HydratorSettingsController.cron"
           init="HydratorSettingsController.initialCron"></cron-selection>
       </div>
 
