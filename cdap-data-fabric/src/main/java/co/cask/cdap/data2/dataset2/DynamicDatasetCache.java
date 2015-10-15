@@ -30,12 +30,9 @@ import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
-import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 
-import java.io.Closeable;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -43,8 +40,8 @@ import javax.annotation.Nullable;
  * into a started {@link TransactionContext}. Datasets acquired from this context are
  * distinct from any Datasets instantiated outside this class. Datasets are cached,
  * such that repeated calls to (@link #getDataset()} for the same dataset and arguments
- * return the same instance. Caching happens with soft references, that is, a dataset is
- * removed from the cache only if no object is holding a reference to it.
+ * return the same instance. Caching happens with weak references, that is, a dataset is
+ * removed from the cache only if no other object is holding a reference to it.
  *
  * The cache also maintains a transaction context and adds all acquired datasets to that
  * context, so that they participate in the transactions executed with that context. A side
@@ -65,7 +62,6 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
   protected final Id.Namespace namespace;
   protected final Map<String, String> runtimeArguments;
   protected final MetricsContext metricsContext;
-  protected final Set<TransactionAware> extraTxAwares;
 
   /**
    * Create a dynamic dataset factory.
@@ -88,7 +84,6 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
     this.namespace = namespace;
     this.runtimeArguments = runtimeArguments;
     this.metricsContext = metricsContext;
-    this.extraTxAwares = Sets.newIdentityHashSet();
   }
 
   @Override
@@ -129,18 +124,21 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
     throws DatasetInstantiationException;
 
   /**
-   * Return a new transaction context. Any transaction-aware datasets obtained via
-   * (@link #getDataset()) will be added to this transaction context and thus participate
+   * Return a new transaction context for the current thread. All transaction-aware static datasets and all
+   * extra transaction-awares are added to this transaction initially. Any transaction-aware datasets obtained via
+   * (@link #getDataset()) from the same thread will be added to this transaction context and thus participate
    * in its transaction. These datasets can also be retrieved using {@link #getTransactionAwares()}.
    *
-   * @return a new transactiopn context
+   * @return a new transaction context
    */
   public abstract TransactionContext newTransactionContext();
 
   /**
    * Dismiss the current transaction context. This releases the references to the context's
    * transaction-aware datasets so that they can be collected by the garbage collector (if no one
-   * else is holding a reference to them).
+   * else is holding a reference to them). The static datasets and the extra transaction-awares,
+   * however, will not be made available to garbage collection, and will participate in the
+   * next transaction (created by {@link #newTransactionContext()}).
    */
   public abstract void dismissTransactionContext();
 
@@ -150,35 +148,37 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
   }
 
   /**
-   * @return the transaction-aware datasets that participate in the current transaction.
+   * @return the static datasets that are transaction-aware. This is the same independent of whether a
+   * transaction context was started using {@link #newTransactionContext()}.
+   */
+  public abstract Iterable<TransactionAware> getStaticTransactionAwares();
+
+  /**
+   * @return the transaction-aware datasets that participate in the current transaction. If
+   * {@link #newTransactionContext()} has not been called (or {@link #dismissTransactionContext()} has been
+   * called), then there is no transaction and this will return an empty iterable.
    */
   public abstract Iterable<TransactionAware> getTransactionAwares();
 
   /**
    * Add an extra transaction aware to the static datasets. This is a transaction aware that
    * is not instantiated through this factory, but needs to participate in every transaction.
+   * Note that if a transaction is in progress, then this transaction aware will join that transaction.
    */
-  public void addExtraTransactionAware(TransactionAware txAware) {
-    extraTxAwares.add(txAware);
-  }
-
+  public abstract void addExtraTransactionAware(TransactionAware txAware);
 
   /**
    * Remove a transaction-aware that was added via {@link #addExtraTransactionAware(TransactionAware)}.
+   * Note that if a transaction is in progress, then this transaction aware will leave that transaction.
    */
-  public void removeExtraTransactionAware(TransactionAware txAware) {
-    extraTxAwares.remove(txAware);
-  }
+  public abstract void removeExtraTransactionAware(TransactionAware txAware);
 
   /**
    * Close and dismiss all datasets that were obtained through this factory, and destroy the factory.
+   * If an extra transaction-awares were added to this cache (and not removed), then they will also
+   * be closed.
    */
   public void close() {
-    for (TransactionAware txAware : extraTxAwares) {
-      if (txAware instanceof Closeable) {
-        Closeables.closeQuietly((Closeable) txAware);
-      }
-    }
     Closeables.closeQuietly(instantiator);
   }
 
@@ -228,6 +228,11 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
     @Override
     public int hashCode() {
       return Objects.hashCode(name, arguments);
+    }
+
+    @Override
+    public String toString() {
+      return Objects.toStringHelper(this).add("name", name).add("arguments", arguments).toString();
     }
   }
 }

@@ -110,10 +110,11 @@ public abstract class AbstractHttpHandlerDelegator<T extends HttpServiceHandler>
    */
   @SuppressWarnings("unused")
   protected final BodyConsumer wrapContentConsumer(HttpContentConsumer consumer,
-                                                   DelayedHttpServiceResponder responder) {
+                                                   DelayedHttpServiceResponder responder,
+                                                   TransactionContext txContext) {
     Preconditions.checkState(context.getServiceContext() instanceof TransactionalHttpServiceContext,
                              "This instance of HttpServiceContext does not support transactions.");
-    return new BodyConsumerAdapter(responder, consumer,
+    return new BodyConsumerAdapter(responder, consumer, txContext,
                                    ((TransactionalHttpServiceContext) context.getServiceContext()));
   }
 }

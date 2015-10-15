@@ -54,15 +54,16 @@ final class BodyConsumerAdapter extends BodyConsumer {
    *
    * @param responder the responder used for sending response back to client
    * @param delegate the {@link HttpContentConsumer} to delegate calls to
+   * @param txContext
    * @param serviceContext the {@link TransactionalHttpServiceContext} for this handler.
    */
   BodyConsumerAdapter(DelayedHttpServiceResponder responder, HttpContentConsumer delegate,
-                      TransactionalHttpServiceContext serviceContext) {
+                      TransactionContext txContext, TransactionalHttpServiceContext serviceContext) {
     this.responder = responder;
     this.delegate = delegate;
-    this.txContext = serviceContext.newTransactionContext();
+    this.txContext = txContext;
     this.serviceContext = serviceContext;
-    this.transactional = createTransactional(txContext);
+    this.transactional = createTransactional(this.txContext);
     this.programContextClassLoader = new CombineClassLoader(null, ImmutableList.of(delegate.getClass().getClassLoader(),
                                                                                    getClass().getClassLoader()));
   }
@@ -102,6 +103,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
 
     // To the HttpContentConsumer, the call is completed even if it fails to send response back to client.
     completed = true;
+    serviceContext.dismissTransactionContext();
     BodyConsumerAdapter.this.responder.execute();
   }
 
@@ -148,6 +150,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
     } catch (Throwable t) {
       responder.setTransactionFailureResponse(t);
     } finally {
+      serviceContext.dismissTransactionContext();
       responder.execute(false);
     }
   }
@@ -190,6 +193,5 @@ final class BodyConsumerAdapter extends BodyConsumer {
       txContext.abort(new TransactionFailureException("Exception raised from TxRunnable.run()", t));
     }
     txContext.finish();
-    serviceContext.dismissTransactionContext();
   }
 }

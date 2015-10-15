@@ -27,7 +27,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 
 /**
- * DataFabricLocalModule defines the Local/HyperSQL bindings for the data fabric.
+ * Module to implement DynamicTransactionExecutorFactory.
+ * TODO (CDAP-3988): this should go away after TEPHRA-137.
  */
 public class TransactionExecutorModule extends AbstractModule {
 

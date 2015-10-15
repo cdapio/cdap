@@ -61,14 +61,14 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
                                  @Nullable final Map<String, Map<String, String>> staticDatasets) {
     super(instantiator, txClient, namespace, runtimeArguments, metricsContext);
     this.perThreadMap = CacheBuilder.newBuilder()
-      .softValues()
+      .weakValues()
       .removalListener(new RemovalListener<Long, DynamicDatasetCache>() {
         @Override
         @ParametersAreNonnullByDefault
         public void onRemoval(RemovalNotification<Long, DynamicDatasetCache> notification) {
-          DynamicDatasetCache factory = notification.getValue();
-          if (factory != null) {
-            factory.close();
+          DynamicDatasetCache cache = notification.getValue();
+          if (cache != null) {
+            cache.close();
           }
         }
       })
@@ -96,7 +96,7 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
   }
 
   @Override
-  public synchronized <T extends Dataset> T getDataset(DatasetCacheKey key, boolean bypass)
+  public <T extends Dataset> T getDataset(DatasetCacheKey key, boolean bypass)
     throws DatasetInstantiationException {
     return entryForCurrentThread().getDataset(key, bypass);
   }
@@ -109,6 +109,11 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
   @Override
   public void dismissTransactionContext() {
     entryForCurrentThread().dismissTransactionContext();
+  }
+
+  @Override
+  public Iterable<TransactionAware> getStaticTransactionAwares() {
+    return entryForCurrentThread().getStaticTransactionAwares();
   }
 
   @Override

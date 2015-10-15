@@ -76,7 +76,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   // keeps track of all tx-aware datasets to perform the transaction lifecycle for them. Note that
   // the transaction is already started, and it will be committed or aborted outside of this task.
   // TODO: (CDAP-3983) The datasets should be managed by the dataset context. That requires TEPHRA-99.
-  private Set<TransactionAware> txAwares = Sets.newIdentityHashSet();
+  private final Set<TransactionAware> txAwares = Sets.newIdentityHashSet();
 
   public BasicMapReduceTaskContext(Program program,
                                    @Nullable MapReduceMetrics.TaskType type,
@@ -211,9 +211,11 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   //---- following are methods to manage transaction lifecycle for the datasets. This needs to
   //---- be refactored after [TEPHRA-99] and [CDAP-3893] are resolved.
 
+  /**
+   * Initializes the transaction-awares to be only the static datasets.
+   */
   private void initializeTransactionAwares() {
-    // initially the tx-awares of the dataset cache are only the static datasets
-    for (TransactionAware txAware : getDatasetCache().getTransactionAwares()) {
+    for (TransactionAware txAware : getDatasetCache().getStaticTransactionAwares()) {
       txAwares.add(txAware);
       txAware.startTx(transaction);
     }
@@ -221,7 +223,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
 
   /**
    * This delegates the instantiation of the dataset to the super class, but in addition, if
-   * the dataset is a transaction-aware, it starts the transaction and remembers the dataset.
+   * the dataset is a new transaction-aware, it starts the transaction and remembers the dataset.
    */
   @Override
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
@@ -229,8 +231,9 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     T dataset = super.getDataset(name, arguments);
     if (dataset instanceof TransactionAware) {
       TransactionAware txAware = (TransactionAware) dataset;
-      txAwares.add(txAware);
-      txAware.startTx(transaction);
+      if (txAwares.add(txAware)) {
+        txAware.startTx(transaction);
+      }
     }
     return dataset;
   }

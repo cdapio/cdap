@@ -521,7 +521,6 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       LOG.warn("Exception on WorkflowAction.destroy(): {}", actionSpec, t);
       // Just log, but not propagate
     } finally {
-
       ClassLoaders.setContextClassLoader(oldClassLoader);
     }
   }

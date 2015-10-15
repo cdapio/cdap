@@ -32,11 +32,17 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
+import com.google.common.io.Closeables;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -48,12 +54,16 @@ import javax.annotation.ParametersAreNonnullByDefault;
  */
 public class SingleThreadDatasetCache extends DynamicDatasetCache {
 
-  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(SingleThreadDatasetCache.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SingleThreadDatasetCache.class);
+
+  private static final Iterable<TransactionAware> NO_TX_AWARES = ImmutableList.of();
 
   private final LoadingCache<DatasetCacheKey, Dataset> datasetCache;
   private final CacheLoader<DatasetCacheKey, Dataset> datasetLoader;
   private final Map<DatasetCacheKey, TransactionAware> inProgress = new HashMap<>();
   private final Map<DatasetCacheKey, Dataset> staticDatasets = new HashMap<>();
+  private final Set<TransactionAware> extraTxAwares = Sets.newIdentityHashSet();
+
   private TransactionContext txContext = null;
 
   /**
@@ -88,16 +98,23 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
         @Override
         @ParametersAreNonnullByDefault
         public void onRemoval(RemovalNotification<DatasetCacheKey, Dataset> notification) {
-          if (notification.getValue() != null) {
+          Dataset dataset = notification.getValue();
+          if (dataset != null) {
             try {
-              notification.getValue().close();
+              dataset.close();
             } catch (Throwable e) {
-              LOG.warn("Error closing dataset '{}'", notification.getKey());
+              LOG.warn(String.format("Error closing dataset '%s' of type %s",
+                                     String.valueOf(notification.getKey()), dataset.getClass().getName()), e);
             }
           }
         }
       })
+      .weakValues()
       .build(datasetLoader);
+
+    // add all the static datasets to the cache. This makes sure that a) the cache is preloaded and
+    // b) if any static datasets cannot be loaded, the problem show right away (and not later). See
+    // also the javadoc of this c'tor, which states that all static datasets get loaded right away.
     if (staticDatasets != null) {
       for (Map.Entry<String, Map<String, String>> entry : staticDatasets.entrySet()) {
         this.staticDatasets.put(new DatasetCacheKey(entry.getKey(), entry.getValue()),
@@ -107,7 +124,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   }
 
   @Override
-  public synchronized <T extends Dataset> T getDataset(DatasetCacheKey key, boolean bypass)
+  public <T extends Dataset> T getDataset(DatasetCacheKey key, boolean bypass)
     throws DatasetInstantiationException {
 
     Dataset dataset;
@@ -147,13 +164,6 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     }
   }
 
-  /**
-   * Return a new transaction context for the current thread. Any transaction-aware datasets obtained via
-   * (@link #getDataset()) from the same thread will be added to this transaction context and thus participate
-   * in its transaction. These datasets can also be retrieved using {@link #getTransactionAwares()}.
-   *
-   * @return a new transactiopn context
-   */
   @Override
   public TransactionContext newTransactionContext() {
     dismissTransactionContext();
@@ -178,8 +188,29 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   }
 
   @Override
+  public Iterable<TransactionAware> getStaticTransactionAwares() {
+    return Iterables.filter(staticDatasets.values(), TransactionAware.class);
+  }
+
+  @Override
   public Iterable<TransactionAware> getTransactionAwares() {
-    return Iterables.concat(extraTxAwares, inProgress.values());
+    return txContext == null ? NO_TX_AWARES : Iterables.concat(extraTxAwares, inProgress.values());
+  }
+
+  @Override
+  public void addExtraTransactionAware(TransactionAware txAware) {
+    extraTxAwares.add(txAware);
+    if (txContext != null) {
+      txContext.addTransactionAware(txAware);
+    }
+  }
+
+  @Override
+  public void removeExtraTransactionAware(TransactionAware txAware) {
+    extraTxAwares.remove(txAware);
+    if (txContext != null) {
+      txContext.removeTransactionAware(txAware);
+    }
   }
 
   @Override
@@ -199,8 +230,13 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
 
   @Override
   public void close() {
-    super.close();
+    for (TransactionAware txAware : extraTxAwares) {
+      if (txAware instanceof Closeable) {
+        Closeables.closeQuietly((Closeable) txAware);
+      }
+    }
     invalidate();
+    super.close();
   }
 }
 
