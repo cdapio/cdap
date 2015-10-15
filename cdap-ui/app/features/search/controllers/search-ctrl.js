@@ -1,13 +1,26 @@
 
 
 class SearchController {
-  constructor(myTagsApi, myAppsApi, myDatasetApi, myStreamApi, $stateParams) {
+  constructor(myTagsApi, myAppsApi, myDatasetApi, myStreamApi, $stateParams, $state) {
     this.myTagsApi = myTagsApi;
     this.myAppsApi = myAppsApi;
     this.myDatasetApi = myDatasetApi;
     this.myStreamApi = myStreamApi;
     this.$stateParams = $stateParams;
+    this.$state = $state;
+    window.sss = $state;
     this.tags = [];
+
+    this.gridsterOpts = {
+      rowHeight: '40',
+      columns: 12,
+      minSizeX: 2,
+      swapping: false,
+      draggable: {
+        enabled: false
+      }
+
+    };
 
     this.getAppsTags();
     this.getDatasetsTags();
@@ -25,7 +38,7 @@ class SearchController {
         (apps) => {
           apps.forEach((app) => {
             this.fetchAppTags(app.id);
-            this.getProgramTags(app.id)
+            this.getProgramTags(app.id);
           });
         },
         () => { console.error('Apps Fetch errored'); }
@@ -102,7 +115,7 @@ class SearchController {
       .list(params)
       .$promise
       .then(
-        (streams) => { debugger; streams.forEach((stream) => { this.fetchStreamTags(stream.name); } ); },
+        (streams) => {  streams.forEach((stream) => { this.fetchStreamTags(stream.name); } ); },
         () => { console.error('Fetching streams tags failed'); }
       );
   }
@@ -136,7 +149,7 @@ class SearchController {
   }
 }
 
-SearchController.$inject = ['myTagsApi', 'myAppsApi', 'myDatasetApi', 'myStreamApi', '$stateParams'];
+SearchController.$inject = ['myTagsApi', 'myAppsApi', 'myDatasetApi', 'myStreamApi', '$stateParams', '$state'];
 
 angular.module(`${PKG.name}.feature.search`)
   .controller('SearchController', SearchController);

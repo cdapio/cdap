@@ -1,4 +1,4 @@
-<div class="row">
+<div class="row main-search">
   <div class="col-xs-12">
     <div class="input-group">
       <div class="input-group-addon">
@@ -8,10 +8,16 @@
     </div>
   </div>
   <div class="col-xs-12">
-    <a href class="btn btn-info"
-            style="margin: 10px;"
-            ng-bind="tag"
-            ng-repeat="tag in SearchController.filteredTags = (SearchController.tags | filter: SearchController.searchTxt ) "
-    ></a>
+
+    <div gridster="SearchController.gridsterOpts" ng-show="SearchController.$state.is('search')">
+      <a href="http://www.google.com" class="btn btn-info"
+              gridster-item="tag"
+              ng-repeat="tag in SearchController.filteredTags = (SearchController.tags | filter: SearchController.searchTxt ) "
+              style="margin: 10px;"
+              ng-bind="tag"
+      ></a>
+    </div>
+
+    <div ui-view ng-show="SearchController.$state.includes('search.**')"></div>
   </div>
 </div>
