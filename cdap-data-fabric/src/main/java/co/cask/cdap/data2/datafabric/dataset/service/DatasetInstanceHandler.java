@@ -26,13 +26,17 @@ import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.dataset.DatasetMethodRequest;
@@ -49,6 +53,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -57,12 +62,15 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -72,10 +80,13 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
@@ -100,13 +111,17 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private final DatasetInstanceService instanceService;
   private final DatasetFramework framework;
   private final TransactionExecutorFactory txFactory;
+  private final CConfiguration cConf;
+  private final ConcurrentMap<Id.DatasetInstance, ClassLoader> datasetInstanceClassLoader;
 
   @Inject
   public DatasetInstanceHandler(DatasetInstanceService instanceService, DatasetFramework framework,
-                                TransactionExecutorFactory txFactory) {
+                                TransactionExecutorFactory txFactory, CConfiguration cConf) {
     this.instanceService = instanceService;
     this.framework = framework;
     this.txFactory = txFactory;
+    this.cConf = cConf;
+    this.datasetInstanceClassLoader = new ConcurrentHashMap<>();
   }
 
   @GET
@@ -238,9 +253,18 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
     Dataset dataset;
+    final ClassLoader datasetClassloader;
+    if (datasetInstanceClassLoader.containsKey(instance)) {
+      datasetClassloader = datasetInstanceClassLoader.get(instance);
+    } else {
+      datasetClassloader = getDatasetClassloader(instance);
+      // store program classloader only for custom user classes
+      if (datasetClassloader != getClass().getClassLoader()) {
+        datasetInstanceClassLoader.put(instance, datasetClassloader);
+      }
+    }
     try {
-      // TODO: use proper classloader
-      dataset = framework.getDataset(instance, DatasetDefinition.NO_ARGUMENTS, null);
+      dataset = framework.getDataset(instance, DatasetDefinition.NO_ARGUMENTS, datasetClassloader);
     } catch (DatasetManagementException | IOException e) {
       LOG.error("Error getting dataset {}", name, e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
@@ -253,12 +277,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()))) {
       final DatasetMethodRequest methodRequest = GSON.fromJson(reader, DatasetMethodRequest.class);
-      final ClassLoader cl = getClass().getClassLoader();
 
       final MethodHandle handle;
       try {
         MethodType type = MethodType.methodType(
-          methodRequest.getReturnTypeClass(cl), methodRequest.getArgumentClasses(cl));
+          methodRequest.getReturnTypeClass(datasetClassloader), methodRequest.getArgumentClasses(datasetClassloader));
         handle = MethodHandles.lookup().findVirtual(dataset.getClass(), methodRequest.getMethod(), type);
       } catch (NoSuchMethodException e) {
         LOG.error("Error finding method", e);
@@ -279,7 +302,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                   Lists.newArrayList(
                     Iterables.concat(
                       ImmutableList.<Object>of(o),
-                      methodRequest.getArgumentList(GSON, cl)
+                      methodRequest.getArgumentList(GSON, datasetClassloader)
                     )
                   ));
               } catch (Throwable t) {
@@ -314,7 +337,29 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       LOG.error("Failed to read request body", e);
       responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
+  }
 
+  /**
+   * Gets a {@link ProgramClassLoader} for custom user dataset
+   * @param instance the dataset instance
+   * @return the {@link ProgramClassLoader}
+   * @throws Exception
+   */
+  private ClassLoader getDatasetClassloader(Id.DatasetInstance instance) throws Exception {
+    List<DatasetModuleMeta> modules = instanceService.get(instance,
+                                                          strings2Ids(Collections.EMPTY_LIST)).getType().getModules();
+    for (DatasetModuleMeta module : modules) {
+      if (module.getJarLocation() != null) {
+        Location jarLocation = new LocalLocationFactory().create(module.getJarLocation());
+        File tempDir = Files.createTempDir();
+        BundleJarUtil.unpackProgramJar(jarLocation, tempDir);
+        //TODO: improvise to support custom user dataset which embed custom user dataset
+        return ProgramClassLoader.create(cConf, tempDir, getClass().getClassLoader(), null);
+      }
+    }
+    // in case of system datasets none of the module entries will have a jar location and no ProgramClassloader
+    // construction is necessary
+    return getClass().getClassLoader();
   }
 
   /**
