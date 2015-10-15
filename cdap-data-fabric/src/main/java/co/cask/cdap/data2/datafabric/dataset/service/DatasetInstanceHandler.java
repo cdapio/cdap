@@ -339,14 +339,18 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   private ClassLoader getDatasetClassloader(Id.DatasetInstance instance) throws Exception {
     List<DatasetModuleMeta> modules = instanceService.get(instance,
                                                           strings2Ids(Collections.EMPTY_LIST)).getType().getModules();
+    boolean userDataset = false;
+    File tempDir = Files.createTempDir();
     for (DatasetModuleMeta module : modules) {
+      // Note: This does not do any conflict resolution in case when two jars has same class.
       if (module.getJarLocation() != null) {
+        userDataset = true;
         Location jarLocation = new LocalLocationFactory().create(module.getJarLocation());
-        File tempDir = Files.createTempDir();
         BundleJarUtil.unJar(jarLocation, tempDir);
-        //TODO: improvise to support custom user dataset which embed custom user dataset
-        return ProgramClassLoader.create(cConf, tempDir, getClass().getClassLoader(), null);
       }
+    }
+    if (userDataset) {
+      return ProgramClassLoader.create(cConf, tempDir, getClass().getClassLoader(), null);
     }
     // in case of system datasets none of the module entries will have a jar location and no ProgramClassloader
     // construction is necessary
