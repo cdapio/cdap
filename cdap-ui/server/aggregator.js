@@ -168,7 +168,6 @@ Aggregator.prototype.pushConfiguration = function(resource) {
       config = JSON.parse(configString);
       statusCode = 200;
     } catch(e) {
-      log.info(e);
       statusCode = 500;
       config = 'CONFIG_SYNTAX_JSON_ERROR';
     }
@@ -205,10 +204,14 @@ function validateSemanticsOfConfigJSON(config) {
     fields = groupsMap[groups[i]].position;
     fieldsMap = groupsMap[groups[i]].fields;
 
-    for (j=0; j<fields.length; j++) {
-      if (!fieldsMap[fields[j]]) {
-        isValid = false;
-        break;
+    if (!fields || !fieldsMap) {
+      isValid = false;
+    } else {
+      for (j=0; j<fields.length; j++) {
+        if (!fieldsMap[fields[j]]) {
+          isValid = false;
+          break;
+        }
       }
     }
   }
