@@ -14,42 +14,45 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsFlowletDetailController', function($state, $scope, myHelpers, myFlowsApi) {
-
+class FlowsFlowletDetailController {
+  constructor($state, $scope, myHelpers, myFlowsApi) {
     this.activeTab = 0;
-    var flowletid = $scope.FlowletsController.activeFlowlet.name;
+    let flowletid = $scope.FlowletsController.activeFlowlet.name;
+    this.myFlowsApi = myFlowsApi;
 
-    var params = {
+    this.params = {
       namespace: $state.params.namespace,
       appId: $state.params.appId,
       flowId: $state.params.programId,
       scope: $scope
     };
 
-    myFlowsApi.get(params)
+    myFlowsApi.get(this.params)
       .$promise
-      .then(function (res) {
+      .then( (res)=> {
         this.description = myHelpers.objectQuery(res, 'flowlets', flowletid, 'flowletSpec', 'description');
-      }.bind(this));
+      });
 
-    params.flowletId = flowletid;
+    this.params.flowletId = flowletid;
 
-    myFlowsApi.getFlowletInstance(params)
+    myFlowsApi.getFlowletInstance(this.params)
       .$promise
-      .then(function (res){
+      .then( (res) =>{
         this.provisionedInstances = res.instances;
         this.instance = res.instances;
-      }.bind(this));
+      });
 
-    myFlowsApi.pollFlowletInstance(params)
+    myFlowsApi.pollFlowletInstance(this.params)
       .$promise
       .then(function (res) {
         this.provisionedInstances = res.instances;
       }.bind(this));
+  }
+  setInstance() {
+    this.myFlowsApi.setFlowletInstance(this.params, { 'instances': this.instance });
+  }
+}
 
-    this.setInstance = function () {
-      myFlowsApi.setFlowletInstance(params, { 'instances': this.instance });
-    };
-
-  });
+FlowsFlowletDetailController.$inject = ['$state', '$scope', 'myHelpers', 'myFlowsApi'];
+angular.module(`${PKG.name}.feature.flows`)
+  .controller('FlowsFlowletDetailController', FlowsFlowletDetailController);
