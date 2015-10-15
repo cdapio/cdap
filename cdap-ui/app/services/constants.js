@@ -36,6 +36,9 @@ angular.module(PKG.name + '.services')
       hydrator: {
         appLabel: 'Hydrator Pipeline',
         studio: {
+          noConfigMessage: 'No configuration found for plugin',
+          syntaxConfigJsonError: 'Syntax error in configuration JSON for plugin',
+          semanticConfigJsonError: 'Semantic error in configuration JSON for plugin',
           oneSinkError: 'Please add at least one sink to your pipeline.',
           sourceRequiredFieldsError: 'Please provide required fields for the source.',
           sinkRequiredFieldsError: 'Please provide required fields for the sink.',
