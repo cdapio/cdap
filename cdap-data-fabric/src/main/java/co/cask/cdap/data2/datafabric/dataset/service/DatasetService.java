@@ -91,7 +91,7 @@ public class DatasetService extends AbstractExecutionThreadService {
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory,
                                                                    namespaceClient);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(datasetInstanceService, framework,
-                                                                               txFactory);
+                                                                               txFactory, cConf);
     StorageProviderNamespaceHandler storageProviderNamespaceHandler =
       new StorageProviderNamespaceHandler(storageProviderNamespaceAdmin);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
