@@ -148,7 +148,7 @@ that is not from the plugin JAR itself. This means the Java package which the pl
 is in must be listed in "Export-Package", otherwise the plugin class will not be visible,
 and hence no one will be able to use it. This can be done in Maven by editing your pom.xml.
 For example, if your plugins are in the ``com.example.runnable`` and ``com.example.callable``
-packages, you would edit the bunlder plugin in your pom.xml:
+packages, you would edit the bundler plugin in your pom.xml:
 
 .. code-block:: xml
 
