@@ -365,6 +365,8 @@ When writing an application class, it is often useful to create interfaces or ab
 a logical contract in your code, but do not provide an implementation of that contract. This lets you plug in
 different implementations to fit your needs.
 
+.. rubric:: Classic WordCount Example
+
 .. highlight:: java
 
 For example, consider the classic word count example for MapReduce. The program reads files, tokenizes lines
@@ -433,6 +435,8 @@ We then create an application from that artifact::
 This program runs just fine. It counts all words in the input. However, what if we want to count phrases
 instead of words? Or what if we want to filter out common words such as 'the' and 'a'? We would not want
 to copy and paste our application class and then make just small tweaks.
+
+.. rubric:: A Configurable Application
 
 Instead, we would like to be able to create applications that
 are configured to tokenize the line in different ways. That is, if we want an application that filters
@@ -559,6 +563,8 @@ We then package the code in a new version of the artifact ``wordcount-1.1.0.jar`
 
   $ curl -w'\n' localhost:10000/v3/namespaces/default/artifacts/wordcount --data-binary @wordcount-1.1.0.jar
 
+.. rubric:: Implementing Tokenizer Plugins
+
 Finally, we need to implement some tokenizer plugins. *Plugins* are just Java classes that have
 been annotated with a plugin type and name:
 
@@ -656,6 +662,8 @@ applications that use the tokenizer we want::
       "artifact": { "name": "wordcount", "version": "1.1.0", "scope": "user" },
       "config": { "tokenizer": "phrase" }
     }'
+
+.. rubric:: Adding a Plugin Configuration to the Application
 
 .. highlight:: java
 
