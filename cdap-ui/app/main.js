@@ -30,7 +30,8 @@ angular
       PKG.name+'.feature.userprofile',
       PKG.name+'.feature.foo',
       PKG.name+'.feature.hydrator',
-      PKG.name+'.feature.explore'
+      PKG.name+'.feature.explore',
+      PKG.name +'.feature.search'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -319,5 +320,11 @@ angular
       $state.go('login');
     });
 
+    $scope.onSearch = _.debounce(function(event) {
+      if (event.keyCode === 70 && event.target.nodeName === 'BODY') {
+        $state.go('search');
+      }
+      console.info('pressed');
+    }, 500);
     console.timeEnd(PKG.name);
   });
