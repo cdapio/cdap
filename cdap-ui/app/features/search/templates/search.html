@@ -1,0 +1,17 @@
+<div class="row">
+  <div class="col-xs-12">
+    <div class="input-group">
+      <div class="input-group-addon">
+        <span class="fa fa-search"></span>
+      </div>
+      <input type="text" ng-model="SearchController.searchTxt" class="form-control">
+    </div>
+  </div>
+  <div class="col-xs-12">
+    <a href class="btn btn-info"
+            style="margin: 10px;"
+            ng-bind="tag"
+            ng-repeat="tag in SearchController.filteredTags = (SearchController.tags | filter: SearchController.searchTxt ) "
+    ></a>
+  </div>
+</div>
