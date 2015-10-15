@@ -30,10 +30,17 @@ public class DatasetMethodRequest {
 
   private static final Map<String, Class<?>> PRIMITIVES;
   static {
-    List<Class<?>> primitiveClasses = ImmutableList.of(
-      void.class,
-      boolean[].class, byte[].class, char[].class, double[].class,
-      float[].class, int[].class, long[].class, short[].class);
+    List<Class<?>> primitiveClasses = ImmutableList.<Class<?>>builder()
+      .add(void.class)
+      .add(boolean.class).add(boolean[].class)
+      .add(byte.class).add(byte[].class)
+      .add(char.class).add(char[].class)
+      .add(double.class).add(double[].class)
+      .add(float.class).add(float[].class)
+      .add(int.class).add(int[].class)
+      .add(long.class).add(long[].class)
+      .add(short.class).add(short[].class)
+      .build();
 
     PRIMITIVES = new HashMap<>();
     for (Class<?> primitiveClass : primitiveClasses) {

@@ -36,13 +36,16 @@ import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
+import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
@@ -299,14 +302,15 @@ public class DatasetClient {
    *
    * @param instance the dataset to execute the method on
    * @param request the method execution request
+   * @param responseType type of response
    * @return the method response
    * @throws IOException if a network error occurred
    * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
    * @throws NotFoundException if the dataset instance is not found
    * @throws BadRequestException if the input was bad
    */
-  public DatasetMethodResponse execute(
-    Id.DatasetInstance instance, DatasetMethodRequest request)
+  public <T> DatasetMethodResponse<T> execute(
+    Id.DatasetInstance instance, DatasetMethodRequest request, Type responseType)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
 
     URL url = config.resolveNamespacedURLV3(
@@ -321,6 +325,12 @@ public class DatasetClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
       throw new BadRequestException(response.getResponseBodyAsString());
     }
-    return ObjectResponse.fromJsonBody(response, DatasetMethodResponse.class).getResponseObject();
+
+    if (response.getResponseBody() == null) {
+      return new DatasetMethodResponse<>(null);
+    }
+
+    JsonObject responseJson = GSON.fromJson(response.getResponseBodyAsString(Charsets.UTF_8), JsonObject.class);
+    return new DatasetMethodResponse<>(GSON.<T>fromJson(responseJson.get("response"), responseType));
   }
 }
