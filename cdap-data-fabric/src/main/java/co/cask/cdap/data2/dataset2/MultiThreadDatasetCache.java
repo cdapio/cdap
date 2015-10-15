@@ -24,6 +24,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -31,6 +32,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -44,7 +46,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 public class MultiThreadDatasetCache extends DynamicDatasetCache {
 
   // maintains a single threaded factory for each thread.
-  private final LoadingCache<Long, SingleThreadDatasetCache> perThreadMap;
+  private final LoadingCache<Thread, SingleThreadDatasetCache> perThreadMap;
 
   /**
    * See {@link DynamicDatasetCache ).
@@ -61,11 +63,11 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
                                  @Nullable final Map<String, Map<String, String>> staticDatasets) {
     super(instantiator, txClient, namespace, runtimeArguments, metricsContext);
     this.perThreadMap = CacheBuilder.newBuilder()
-      .weakValues()
-      .removalListener(new RemovalListener<Long, DynamicDatasetCache>() {
+      .weakKeys()
+      .removalListener(new RemovalListener<Thread, DynamicDatasetCache>() {
         @Override
         @ParametersAreNonnullByDefault
-        public void onRemoval(RemovalNotification<Long, DynamicDatasetCache> notification) {
+        public void onRemoval(RemovalNotification<Thread, DynamicDatasetCache> notification) {
           DynamicDatasetCache cache = notification.getValue();
           if (cache != null) {
             cache.close();
@@ -73,10 +75,10 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
         }
       })
       .build(
-        new CacheLoader<Long, SingleThreadDatasetCache>() {
+        new CacheLoader<Thread, SingleThreadDatasetCache>() {
           @Override
           @ParametersAreNonnullByDefault
-          public SingleThreadDatasetCache load(Long threadId) throws Exception {
+          public SingleThreadDatasetCache load(Thread thread) throws Exception {
             return new SingleThreadDatasetCache(
               instantiator, txClient, namespace, runtimeArguments, metricsContext, staticDatasets);
           }
@@ -133,11 +135,17 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
 
   private DynamicDatasetCache entryForCurrentThread() {
     try {
-      return perThreadMap.get(Thread.currentThread().getId());
+      return perThreadMap.get(Thread.currentThread());
     } catch (ExecutionException e) {
       // this should never happen because all we do in the cache loader is crete a new entry.
       throw Throwables.propagate(e);
     }
+  }
+
+  @VisibleForTesting
+  public Collection<Thread> getCacheKeys() {
+    perThreadMap.cleanUp();
+    return perThreadMap.asMap().keySet();
   }
 
 }

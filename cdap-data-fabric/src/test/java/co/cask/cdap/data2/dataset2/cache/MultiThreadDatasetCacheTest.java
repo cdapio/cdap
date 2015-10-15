@@ -16,18 +16,18 @@
 
 package co.cask.cdap.data2.dataset2.cache;
 
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
-import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Throwables;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 public class MultiThreadDatasetCacheTest extends DynamicDatasetCacheTest {
 
@@ -38,12 +38,11 @@ public class MultiThreadDatasetCacheTest extends DynamicDatasetCacheTest {
     return new MultiThreadDatasetCache(instantiator, txClient, NAMESPACE, arguments, null, staticDatasets);
   }
 
-  @Test
-  public void testDatasetCache()
-    throws IOException, DatasetManagementException, TransactionFailureException, InterruptedException {
+  @Test()
+  public void testDatasetCache() throws Exception {
 
-    final Map<String, TestDataset> thread1map = new HashMap<>();
-    final Map<String, TestDataset> thread2map = new HashMap<>();
+    Map<String, TestDataset> thread1map = new HashMap<>();
+    Map<String, TestDataset> thread2map = new HashMap<>();
 
     Thread thread1 = createThread(thread1map);
     Thread thread2 = createThread(thread2map);
@@ -54,6 +53,23 @@ public class MultiThreadDatasetCacheTest extends DynamicDatasetCacheTest {
 
     Assert.assertNotSame(thread1map.get("a"), thread2map.get("a"));
     Assert.assertNotSame(thread1map.get("b"), thread2map.get("b"));
+
+    // we want to test that the per-thread entries get removed when the thread goes away. Unfortunately there
+    // is not reliable way to force GC to collect a weak reference (which is required to trigger removal from
+    // the cache. The following code works every time when I run it manually.
+
+    //noinspection UnusedAssignment
+    thread1 = thread2 = null;
+    //noinspection UnusedAssignment
+    thread1map = thread2map = null;
+
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        System.gc();
+        return ((MultiThreadDatasetCache) cache).getCacheKeys().isEmpty();
+      }
+    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   private Thread createThread(final Map<String, TestDataset> datasetMap) {
