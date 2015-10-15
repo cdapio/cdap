@@ -143,7 +143,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private final MapReduce mapReduce;
   private final MapReduceSpecification specification;
   private final Location programJarLocation;
-  private final DynamicMapReduceContext context;
+  private final BasicMapReduceContext context;
   private final LocationFactory locationFactory;
   private final StreamAdmin streamAdmin;
   private final TransactionSystemClient txClient;
@@ -160,7 +160,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
   MapReduceRuntimeService(Injector injector, CConfiguration cConf, Configuration hConf,
                           MapReduce mapReduce, MapReduceSpecification specification,
-                          DynamicMapReduceContext context,
+                          BasicMapReduceContext context,
                           Location programJarLocation, LocationFactory locationFactory,
                           StreamAdmin streamAdmin, TransactionSystemClient txClient,
                           UsageRegistry usageRegistry) {
@@ -1016,7 +1016,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
   }
 
-  private ClassLoader setContextCombinedClassLoader(DynamicMapReduceContext context) {
+  private ClassLoader setContextCombinedClassLoader(BasicMapReduceContext context) {
     return ClassLoaders.setContextClassLoader(new CombineClassLoader(
       null, ImmutableList.of(context.getProgram().getClassLoader(), getClass().getClassLoader())));
   }

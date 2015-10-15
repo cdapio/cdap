@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.data.dataset.DatasetInstantiator;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 
 /**
  * A Guice assisted inject factory for creating different types of {@link DataFabricFacade}.
@@ -27,5 +27,6 @@ public interface DataFabricFacadeFactory {
   /**
    * Creates a {@link DataFabricFacade} for the given program, with transaction supports.
    */
-  DataFabricFacade create(Program program, DatasetInstantiator instantiator);
+  DataFabricFacade create(Program program, DynamicDatasetCache datasetCache);
+
 }

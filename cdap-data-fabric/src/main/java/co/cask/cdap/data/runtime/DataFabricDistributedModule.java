@@ -61,7 +61,7 @@ public class DataFabricDistributedModule extends AbstractModule {
     // bind transactions
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     install(new TransactionModules().getDistributedModules());
-
+    install(new TransactionExecutorModule());
   }
 
   /**

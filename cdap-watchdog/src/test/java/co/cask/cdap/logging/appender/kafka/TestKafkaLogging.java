@@ -23,6 +23,7 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppender;
@@ -70,6 +71,7 @@ public class TestKafkaLogging extends KafkaTestBase {
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
+      new TransactionExecutorModule(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules()
     );

@@ -18,7 +18,7 @@ package co.cask.cdap.app.guice;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.common.queue.QueueName;
-import co.cask.cdap.data.dataset.DatasetInstantiator;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.ProgramContext;
@@ -27,6 +27,7 @@ import co.cask.cdap.data2.queue.ConsumerConfig;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.queue.QueueConsumer;
 import co.cask.cdap.data2.queue.QueueProducer;
+import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.data2.transaction.queue.QueueMetrics;
 import co.cask.cdap.data2.transaction.stream.StreamConsumer;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -36,8 +37,6 @@ import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.assistedinject.Assisted;
@@ -68,13 +67,12 @@ public final class DataFabricFacadeModule extends PrivateModule {
   private static final class TransactionDataFabricFacade extends AbstractDataFabricFacade {
 
     @Inject
-    public TransactionDataFabricFacade(TransactionSystemClient txSystemClient,
-                                       TransactionExecutorFactory txExecutorFactory,
-                                       QueueClientFactory queueClientFactory,
-                                       StreamConsumerFactory streamConsumerFactory,
-                                       @Assisted Program program,
-                                       @Assisted DatasetInstantiator instantiator) {
-      super(txSystemClient, txExecutorFactory, queueClientFactory, streamConsumerFactory, program, instantiator);
+    TransactionDataFabricFacade(TransactionExecutorFactory txExecutorFactory,
+                                QueueClientFactory queueClientFactory,
+                                StreamConsumerFactory streamConsumerFactory,
+                                @Assisted Program program,
+                                @Assisted DynamicDatasetCache datasetCache) {
+      super(txExecutorFactory, queueClientFactory, streamConsumerFactory, program, datasetCache);
     }
   }
 
@@ -87,15 +85,14 @@ public final class DataFabricFacadeModule extends PrivateModule {
     private final ProgramContext programContext = new ProgramContext();
 
     @Inject
-    public LineageWriterDataFabricFacade(TransactionSystemClient txSystemClient,
-                                         TransactionExecutorFactory txExecutorFactory,
-                                         QueueClientFactory queueClientFactory,
-                                         StreamConsumerFactory streamConsumerFactory,
-                                         LineageWriter lineageWriter,
-                                         @Assisted Program program,
-                                         @Assisted DatasetInstantiator instantiator) {
-      this.delegate = new TransactionDataFabricFacade(txSystemClient, txExecutorFactory, queueClientFactory,
-                                                      streamConsumerFactory, program, instantiator);
+    LineageWriterDataFabricFacade(TransactionExecutorFactory txExecutorFactory,
+                                  QueueClientFactory queueClientFactory,
+                                  StreamConsumerFactory streamConsumerFactory,
+                                  LineageWriter lineageWriter,
+                                  @Assisted Program program,
+                                  @Assisted DynamicDatasetCache datasetCache) {
+      this.delegate = new TransactionDataFabricFacade(txExecutorFactory, queueClientFactory,
+                                                      streamConsumerFactory, program, datasetCache);
       this.lineageWriter = lineageWriter;
     }
 
@@ -110,13 +107,13 @@ public final class DataFabricFacadeModule extends PrivateModule {
     }
 
     @Override
-    public DatasetContext getDataSetContext() {
-      return delegate.getDataSetContext();
+    public DatasetContext getDatasetContext() {
+      return delegate.getDatasetContext();
     }
 
     @Override
-    public TransactionContext createTransactionManager() {
-      return delegate.createTransactionManager();
+    public TransactionContext createTransactionContext() {
+      return delegate.createTransactionContext();
     }
 
     @Override

@@ -256,7 +256,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   private void initHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
     ClassLoader classLoader = setContextCombinedClassLoader(handler);
     DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program,
-                                                                       serviceContext.getDatasetInstantiator());
+                                                                       serviceContext.getDatasetCache());
     try {
       dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
         @Override
@@ -274,8 +274,7 @@ public class ServiceHttpServer extends AbstractIdleService {
 
   private void destroyHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
     ClassLoader classLoader = setContextCombinedClassLoader(handler);
-    DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program,
-                                                                       serviceContext.getDatasetInstantiator());
+    DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program, serviceContext.getDatasetCache());
     try {
       dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
         @Override

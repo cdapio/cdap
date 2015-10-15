@@ -41,16 +41,18 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionContext;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -67,6 +69,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final Map<String, Plugin> plugins;
   private final Map<String, Dataset> outputDatasets;
   private final Map<String, OutputFormatProvider> outputFormatProviders;
+  private final TransactionContext txContext;
 
   private String inputDatasetName;
   private List<Split> inputDataSelection;
@@ -78,18 +81,18 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   public BasicMapReduceContext(Program program,
                                RunId runId,
                                Arguments runtimeArguments,
-                               Set<String> datasets,
                                MapReduceSpecification spec,
                                long logicalStartTime,
                                @Nullable String programNameInWorkflow,
                                @Nullable WorkflowToken workflowToken,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
+                               TransactionSystemClient txClient,
                                DatasetFramework dsFramework,
                                @Nullable PluginInstantiator pluginInstantiator) {
-    super(program, runId, runtimeArguments, datasets,
+    super(program, runId, runtimeArguments, Collections.<String>emptySet(),
           getMetricsCollector(program, runId.getId(), metricsCollectionService),
-          dsFramework, discoveryServiceClient, pluginInstantiator);
+          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
     this.programNameInWorkflow = programNameInWorkflow;
     this.workflowToken = workflowToken;
@@ -117,6 +120,11 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     }
 
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
+    this.txContext = getDatasetCache().newTransactionContext();
+  }
+
+  public TransactionContext getTransactionContext() {
+    return txContext;
   }
 
   private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {

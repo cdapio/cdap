@@ -795,6 +795,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       getServiceInstances(service1);
       Assert.fail("Should not find service in " + TEST_NAMESPACE1);
     } catch (AssertionError expected) {
+      // expected
     }
     ServiceInstances instances = getServiceInstances(service2);
     Assert.assertEquals(1, instances.getRequested());
