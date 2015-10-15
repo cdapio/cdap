@@ -16,17 +16,17 @@
 package co.cask.cdap.proto.dataset;
 
 /**
- *
+ * @param <T> type of response object
  */
-public class DatasetMethodResponse {
+public class DatasetMethodResponse<T> {
 
-  private final Object response;
+  private final T response;
 
-  public DatasetMethodResponse(Object response) {
+  public DatasetMethodResponse(T response) {
     this.response = response;
   }
 
-  public Object getResponse() {
+  public T getResponse() {
     return response;
   }
 }
