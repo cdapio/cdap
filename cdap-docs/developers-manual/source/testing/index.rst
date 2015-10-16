@@ -15,8 +15,6 @@ Testing and Debugging
     Debugging <debugging>
     Troubleshooting <troubleshooting>
 
-..    Packaging <packaging>
-
 
 CDAP comes with a number of tools to make a developer's life easier. These tools
 help with testing and debugging CDAP applications:

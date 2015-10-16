@@ -68,8 +68,8 @@ the types, only one method is required to be implemented:
 
   ``prepareRun()``
 
-Methods
--------
+.. rubric:: Methods
+
 - ``prepareRun()``: Used to configure the Hadoop Job configuration (for example, set the
   ``InputFormatClass``).
 - ``configurePipeline()``: Used to create any streams or datasets or perform any validation 
@@ -117,8 +117,8 @@ After defining the types, only one method is required to be implemented:
 
   ``prepareRun()``
 
-Methods
--------
+.. rubric:: Methods
+
 - ``prepareRun()``: Used to configure the Hadoop Job configuration (for ex, set ``OutputFormatClass``).
 - ``configurePipeline()``: Used to create any datasets or perform any validation 
   on the application configuration that are required by this plugin.
@@ -162,8 +162,8 @@ The only method that needs to be implemented is:
 
 	``poll()``
 
-Methods
--------
+.. rubric:: Methods
+
 - ``initialize()``: Initialize the real-time source runtime. Guaranteed to be executed
   before any call to the poll method. Usually used to setup the connection to external
   sources.
@@ -251,8 +251,8 @@ The only method that needs to be implemented is:
 
  ``write()``
 
-Methods
--------
+.. rubric:: Methods
+
 - ``initialize()``: Initialize the real-time sink runtime. Guaranteed to be executed before
   any call to the ``write`` method. 
 - ``configurePipeline()``: Used to create any datasets or perform any validation 
@@ -302,8 +302,8 @@ The only method that needs to be implemented is:
 
 	``transform()``
 
-Methods
--------
+.. rubric:: Methods
+
 - ``initialize()``: Used to perform any initialization step that might be required during
   the runtime of the ``Transform``. It is guaranteed that this method will be invoked
   before the ``transform`` method.
@@ -351,7 +351,13 @@ copies in each transform is emitted. The user metrics can be queried by using th
 
 Test Framework for Plugins
 ==========================
-To unit test a plugin, see the section on plugin testing in :ref:`Testing a CDAP Application <test-framework>`.
+
+.. include:: ../../../developers-manual/source/testing/testing.rst
+   :start-after: .. _test-framework-strategies-artifacts:
+   :end-before:  .. _test-framework-validating-sql:
+
+Additional information on unit testing with CDAP is in the Developers’ Manual section
+on :ref:`Testing a CDAP Application <test-framework>`.
 
 
 Source State in a Real-Time Source
@@ -408,8 +414,8 @@ of failures.
 
 Plugin Packaging and Deployment
 ===============================
-To package and deploy your plugin, follow the instructions in the
-:ref:`Plugin Packaging and Deployment Guide <plugins-deployment>`.
+To package and deploy your plugin, follow these instructions on `plugin packaging <#plugin-packaging>`__,
+`deployment <#deploying-a-system-artifact>`__ and `verification <#deployment-verification>`__.
 
 By using one of the ``etl-plugin`` Maven archetypes, your project will be set up to generate
 the required JAR manifest. If you move the plugin class to a different Java package after
@@ -422,3 +428,7 @@ classes inside the plugin JAR that you have added to the Hadoop Job configuratio
 of those classes to the "Export-Package" as well. This is to ensure those classes are
 visible to the Hadoop MapReduce framework during the plugin execution. Otherwise, the
 execution will typically fail with a ``ClassNotFoundException``.
+
+.. include:: ../../../developers-manual/source/building-blocks/plugins.rst 
+   :start-after: .. _plugins-deployment-packaging:
+   :end-before:  .. _plugins-use-case:
