@@ -33,7 +33,6 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -223,15 +222,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
           return null;
         }
 
-        String[] parts = input.split("::", 2);
-        Preconditions.checkArgument(parts.length == 2);
-        String ownerType = parts[0];
-        String ownerId = parts[1];
-        if (ownerType.equals(Id.getType(Id.Program.class))) {
-          return Id.Program.fromStrings(ownerId.split("/"));
-        } else {
-          return null;
-        }
+        return Id.fromString(input, Id.Program.class);
       }
     });
   }
