@@ -125,6 +125,7 @@ public class BatchETLDBTest extends BaseETLBatchTest {
 
   private static void createTestTables(Connection conn) throws SQLException {
     try (Statement stmt = conn.createStatement()) {
+      // note that the tables need quotation marks around them; otherwise, hsql creates them in upper case
       stmt.execute("CREATE TABLE \"my_table\"" +
                      "(" +
                      "ID INT NOT NULL, " +
@@ -149,40 +150,50 @@ public class BatchETLDBTest extends BaseETLBatchTest {
                      ")");
       stmt.execute("CREATE TABLE \"my_dest_table\" AS (" +
                      "SELECT * FROM \"my_table\") WITH DATA");
+      stmt.execute("CREATE TABLE \"your_table\" AS (" +
+                     "SELECT * FROM \"my_table\") WITH DATA");
     }
   }
 
   private static void prepareTestData(Connection conn) throws SQLException {
     try (
-      PreparedStatement pStmt = conn.prepareStatement(
-        "INSERT INTO \"my_table\" VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      PreparedStatement pStmt1 =
+        conn.prepareStatement("INSERT INTO \"my_table\" " +
+                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      PreparedStatement pStmt2 =
+        conn.prepareStatement("INSERT INTO \"your_table\" " +
+                                "VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     ) {
-      for (int i = 1; i <= 5; i++) {
-        String name = "user" + i;
-        pStmt.setInt(1, i);
-        pStmt.setString(2, name);
-        pStmt.setDouble(3, 123.45 + i);
-        pStmt.setBoolean(4, (i % 2 == 0));
-        pStmt.setString(5, "random" + i);
-        pStmt.setShort(6, (short) i);
-        pStmt.setShort(7, (short) i);
-        pStmt.setLong(8, (long) i);
-        pStmt.setFloat(9, (float) 123.45 + i);
-        pStmt.setFloat(10, (float) 123.45 + i);
-        pStmt.setDouble(11, 123.45 + i);
-        if ((i % 2 == 0)) {
-          pStmt.setNull(12, Types.DOUBLE);
-        } else {
-          pStmt.setDouble(12, 123.45 + i);
+      // insert the same data into both tables: my_table and your_table
+      final PreparedStatement[] preparedStatements = {pStmt1, pStmt2};
+        for (PreparedStatement pStmt : preparedStatements) {
+        for (int i = 1; i <= 5; i++) {
+          String name = "user" + i;
+          pStmt.setInt(1, i);
+          pStmt.setString(2, name);
+          pStmt.setDouble(3, 123.45 + i);
+          pStmt.setBoolean(4, (i % 2 == 0));
+          pStmt.setString(5, "random" + i);
+          pStmt.setShort(6, (short) i);
+          pStmt.setShort(7, (short) i);
+          pStmt.setLong(8, (long) i);
+          pStmt.setFloat(9, (float) 123.45 + i);
+          pStmt.setFloat(10, (float) 123.45 + i);
+          pStmt.setDouble(11, 123.45 + i);
+          if ((i % 2 == 0)) {
+            pStmt.setNull(12, Types.DOUBLE);
+          } else {
+            pStmt.setDouble(12, 123.45 + i);
+          }
+          pStmt.setBoolean(13, (i % 2 == 1));
+          pStmt.setDate(14, new Date(currentTs));
+          pStmt.setTime(15, new Time(currentTs));
+          pStmt.setTimestamp(16, new Timestamp(currentTs));
+          pStmt.setBytes(17, name.getBytes(Charsets.UTF_8));
+          pStmt.setBlob(18, new SerialBlob(name.getBytes(Charsets.UTF_8)));
+          pStmt.setClob(19, new InputStreamReader(new ByteArrayInputStream(clobData.getBytes(Charsets.UTF_8))));
+          pStmt.executeUpdate();
         }
-        pStmt.setBoolean(13, (i % 2 == 1));
-        pStmt.setDate(14, new Date(currentTs));
-        pStmt.setTime(15, new Time(currentTs));
-        pStmt.setTimestamp(16, new Timestamp(currentTs));
-        pStmt.setBytes(17, name.getBytes(Charsets.UTF_8));
-        pStmt.setBlob(18, new SerialBlob(name.getBytes(Charsets.UTF_8)));
-        pStmt.setClob(19, new InputStreamReader(new ByteArrayInputStream(clobData.getBytes(Charsets.UTF_8))));
-        pStmt.executeUpdate();
       }
     }
   }
@@ -322,7 +333,65 @@ public class BatchETLDBTest extends BaseETLBatchTest {
     List<RunRecord> runRecords = mrManager.getHistory();
     Assert.assertEquals(ProgramRunStatus.COMPLETED, runRecords.get(0).getStatus());
 
-    // No records should be written
+    // records should be written
+    DataSetManager<Table> outputManager = getDataset("outputTable1");
+    Table outputTable = outputManager.get();
+    Scanner scanner = outputTable.scan(null, null);
+    Row row1 = scanner.next();
+    Row row2 = scanner.next();
+    Assert.assertNotNull(row1);
+    Assert.assertNotNull(row2);
+    Assert.assertNull(scanner.next());
+    scanner.close();
+    // Verify data
+    Assert.assertEquals("user1", row1.getString("name"));
+    Assert.assertEquals("user2", row2.getString("name"));
+    Assert.assertEquals(1, Bytes.toInt(row1.getRow()));
+    Assert.assertEquals(2, Bytes.toInt(row2.getRow()));
+  }
+
+  @Test
+  @Category(SlowTests.class)
+  public void testDbSourceMultipleTables() throws Exception {
+    Schema schema = Schema.recordOf("student",
+                                    Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+                                    Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+
+    // have the same data in both tables ('\"my_table\"' and '\"your_table\"'), and select the ID and NAME fields from
+    // separate tables
+    String importQuery = "SELECT \"my_table\".ID, \"your_table\".NAME FROM \"my_table\", \"your_table\"" +
+      "WHERE \"my_table\".ID < 3 and \"my_table\".ID = \"your_table\".ID";
+    String countQuery = "SELECT COUNT(\"my_table\".ID) FROM \"my_table\", \"your_table\"" +
+      "WHERE \"my_table\".ID < 3 and \"my_table\".ID = \"your_table\".ID";
+    ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
+      .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
+      .put(Properties.DB.TABLE_NAME, "my_table")
+      .put(Properties.DB.IMPORT_QUERY, importQuery)
+      .put(Properties.DB.COUNT_QUERY, countQuery)
+      .put(Properties.DB.JDBC_PLUGIN_NAME, "hypersql")
+      .put(Properties.DB.COLUMN_NAME_CASE, "lower")
+      .build()
+    );
+
+    ETLStage sink = new ETLStage("Table", ImmutableMap.of(
+      "name", "outputTable1",
+      Properties.Table.PROPERTY_SCHEMA, schema.toString(),
+      // smaller case since we have set the db data's column case to be lower
+      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "id"));
+
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "dbSourceTest");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
+    mrManager.start();
+    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+    List<RunRecord> runRecords = mrManager.getHistory();
+    Assert.assertEquals(ProgramRunStatus.COMPLETED, runRecords.get(0).getStatus());
+
+    // records should be written
     DataSetManager<Table> outputManager = getDataset("outputTable1");
     Table outputTable = outputManager.get();
     Scanner scanner = outputTable.scan(null, null);
@@ -563,6 +632,7 @@ public class BatchETLDBTest extends BaseETLBatchTest {
       Statement stmt = conn.createStatement()
     ) {
       stmt.execute("DROP TABLE \"my_table\"");
+      stmt.execute("DROP TABLE \"your_table\"");
       stmt.execute("DROP USER \"emptyPwdUser\"");
     }
 
