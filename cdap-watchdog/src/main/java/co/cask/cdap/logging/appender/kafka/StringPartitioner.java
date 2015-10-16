@@ -28,7 +28,7 @@ import kafka.utils.VerifiableProperties;
  * A simple partitioner based on String keys.
  */
 @SuppressWarnings("UnusedDeclaration")
-public final class StringPartitioner implements Partitioner<String> {
+public final class StringPartitioner implements Partitioner {
   private final int numPartitions;
 
   public StringPartitioner(VerifiableProperties props) {
@@ -45,7 +45,7 @@ public final class StringPartitioner implements Partitioner<String> {
   }
 
   @Override
-  public int partition(String key, int numPartitions) {
-    return Math.abs(Hashing.md5().hashString(key).asInt()) % this.numPartitions;
+  public int partition(Object key, int numPartitions) {
+    return Math.abs(Hashing.md5().hashString(key.toString()).asInt()) % this.numPartitions;
   }
 }
