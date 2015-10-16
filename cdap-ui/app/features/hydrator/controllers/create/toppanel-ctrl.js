@@ -132,6 +132,7 @@ angular.module(PKG.name + '.feature.hydrator')
           });
           break;
         case 'Publish':
+          MyConsoleTabService.resetMessages();
           MyAppDAGService
             .save()
             .then(
@@ -163,6 +164,7 @@ angular.module(PKG.name + '.feature.hydrator')
             );
           break;
         case 'Validate':
+          MyConsoleTabService.resetMessages();
           this.validatePipeline();
           break;
       }
