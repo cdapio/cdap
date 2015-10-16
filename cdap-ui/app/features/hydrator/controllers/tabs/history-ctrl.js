@@ -27,7 +27,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     $scope.programType = HydratorDetail.programType;
 
-    HydratorDetail.api.runs(params)
+    HydratorDetail.api.pollRuns(params)
       .$promise
       .then(function (res) {
         $scope.runsHistory = res;

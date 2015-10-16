@@ -31,7 +31,7 @@ angular.module(PKG.name + '.commons')
         $scope.programId = $scope.programId || $state.params.programId;
 
         $scope.currentPage = 1;
-        $scope.$watch('model', function (newVal) {
+        $scope.$watchCollection('model', function (newVal) {
             if (!angular.isArray(newVal)) {
               return;
             }
