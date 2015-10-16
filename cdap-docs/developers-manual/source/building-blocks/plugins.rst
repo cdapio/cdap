@@ -195,7 +195,7 @@ and ``cdap-etl-realtime`` artifacts, ``custom-transforms-1.0.0.json`` would cont
 
   .. parsed-literal:: 
     {
-      "parents": [ "cdap-etl-batch[\ |version|,\ |version|]", "cdap-etl-realtime[|version|,\ |version|]" ]
+      "parents": [ "cdap-etl-batch[|version|,\ |version|]", "cdap-etl-realtime[|version|,\ |version|]" ]
     }
 
 This file specifies that the plugins in ``custom-transforms-1.0.0.jar`` can be used by version |version| of
@@ -257,7 +257,7 @@ For example, to deploy ``custom-transforms-1.0.0.jar`` using the RESTful API:
 
   .. parsed-literal:: 
     |$| curl -w'\\n' localhost:10000/v3/namespaces/default/artifacts/custom-transforms \\
-      -H 'Artifact-Extends: system:cdap-etl-batch\[|version|, |version|]/system:cdap-etl-realtime\[|version|, |version|]' \\
+      -H 'Artifact-Extends: system:cdap-etl-batch[|version|, |version|]/system:cdap-etl-realtime[|version|, |version|]' \\
       --data-binary @/path/to/custom-transforms-1.0.0.jar
 
 Using the CLI:
@@ -275,7 +275,7 @@ where ``config.json`` contains:
 
   .. parsed-literal:: 
     {
-      "parents": [ "system:cdap-etl-batch\[|version|,\ |version|]", "system:cdap-etl-realtime\[|version|,\ |version|]" ]
+      "parents": [ "system:cdap-etl-batch[|version|,\ |version|]", "system:cdap-etl-realtime[|version|,\ |version|]" ]
     }
 
 Note that when deploying a user artifact that extends a system artifact,
@@ -295,7 +295,7 @@ Using the RESTful API:
 
   .. parsed-literal:: 
     |$| curl -w'\\n' localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java \\
-      -H 'Artifact-Extends: system:cdap-etl-batch\[|version|,\ |version|]/system:cdap-etl-realtime\[|version|,\ |version|]' \\
+      -H 'Artifact-Extends: system:cdap-etl-batch[|version|,\ |version|]/system:cdap-etl-realtime[|version|,\ |version|]' \\
       -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \\
       --data-binary @/path/to/mysql-connector-java-5.1.35.jar
 
@@ -314,7 +314,7 @@ where ``config.json`` contains:
 
   .. parsed-literal:: 
     {
-      "parents": [ "system:cdap-etl-batch\[|version|,\ |version|]", "system:cdap-etl-realtime\[|version|,\ |version|]" ],
+      "parents": [ "system:cdap-etl-batch\[|version|,\ |version|]", "system:cdap-etl-realtime[|version|,\ |version|]" ],
       "plugins": [
         {
           "name": "mysql",
