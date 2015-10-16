@@ -28,6 +28,7 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
+import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
@@ -209,5 +210,15 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
       lineageWriter.addAccess(programContext.getRun(), datasetInstanceId, AccessType.UNKNOWN,
                               programContext.getComponentId());
     }
+  }
+
+  @Override
+  public DatasetTypeMeta getType(Id.DatasetInstance instance) throws Exception {
+    return delegate.getType(instance);
+  }
+
+  @Override
+  public DatasetSpecification getSpec(Id.DatasetInstance instance) throws Exception {
+    return delegate.getSpec(instance);
   }
 }
