@@ -55,7 +55,7 @@ angular.module(PKG.name + '.feature.hydrator')
       $scope.isExpanded = !value;
     }
 
-    $scope.isCollapsed = false;
+    $scope.isCollapsed = true;
 
     $scope.collapseToggle = function() {
       $scope.isMaximized = false;
