@@ -1,0 +1,40 @@
+<my-breadcrumbs></my-breadcrumbs>
+<div class="row">
+  <div class="col-xs-12">
+    <div class="row">
+      <div class="clearfix">
+        <div class="col-xs-6">
+          <h2 class="pull-left">
+            <span>Search</span>
+          </h2>
+        </div>
+        <div class="col-xs-4 h2 pull-right">
+          <div class="input-group">
+            <div class="input-group-addon">
+              <span class="fa fa-search"></span>
+            </div>
+            <input type="text"
+                name="searchByTags"
+                ng-model="SearchController.searchTxt"
+                cask-focus="searchByTags"
+                class="form-control">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="main-search">
+    <div class="col-xs-12">
+      <div gridster="SearchController.gridsterOpts">
+        <a  class="btn btn-info"
+            gridster-item="tag"
+            ng-repeat="tag in SearchController.filteredTags = (SearchController.tags | filter: SearchController.searchTxt ) track by $index "
+            style="margin: 10px;"
+            ng-bind="tag.value"
+            ui-sref="search.objectswithtags({tag: tag.value})"
+        ></a>
+      </div>
+    </div>
+  </div>
+
+</div>

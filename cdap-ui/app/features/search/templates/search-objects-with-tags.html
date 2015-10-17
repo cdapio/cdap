@@ -1,1 +1,93 @@
-<h3>{{SearchObjectWithTagsController.tag}}</h3>
+<my-breadcrumbs></my-breadcrumbs>
+<div class="row">
+  <div class="col-sm-6">
+    <h2>
+      <span>Search</span>
+    </h2>
+  </div>
+  <div class="col-sm-6 text-right">
+  </div>
+</div>
+
+<div class="row main-search">
+  <div class="col-xs-12">
+    <div class="input-group pull-right">
+      <div class="input-group-addon">
+        <span class="fa fa-search"></span>
+      </div>
+      <input type="text"
+          ng-model="SearchObjectWithTagsController.searchTxt"
+          cask-focus="searchObjectWithTags"
+          class="form-control">
+    </div>
+  </div>
+  <div class="col-xs-12">
+    <div gridster="SearchObjectWithTagsController.gridsterOpts">
+
+      <div ng-repeat="tObject in SearchController.filteredTObjects = (SearchObjectWithTagsController.taggedObjects | filter: SearchObjectWithTagsController.searchTxt ) ">
+        <div ng-if="tObject.type === 'application'">
+          <a class="btn btn-info"
+              gridster-item="tag"
+              style="margin: 10px;"
+              ng-bind="tObject.appId"
+              ui-sref="apps.detail.overview.status({namespace: tObject.namespaceId, appId: tObject.appId})"
+          ></a>
+        </div>
+        <div ng-if="tObject.type === 'datasetinstance'">
+          <a class="btn btn-info"
+              gridster-item="tag"
+              style="margin: 10px;"
+              ng-bind="tObject.datasetId"
+              ui-sref="datasets.detail.overview.status({namespace: tObject.namespaceId, datasetId: tObject.datasetId})"
+          ></a>
+        </div>
+        <div ng-if="tObject.type === 'stream'">
+          <a class="btn btn-info"
+              gridster-item="tag"
+              style="margin: 10px;"
+              ng-bind="tObject.streamId"
+              ui-sref="streams.detail.overview.status({namespace: tObject.namespaceId, streamId: tObject.streamId})"
+          ></a>
+        </div>
+        <div ng-if="tObject.type === 'program'">
+          <div ng-if="tObject.programType === 'Workflow'">
+            <a class="btn btn-info"
+                gridster-item="tag"
+                style="margin: 10px;"
+                ng-bind="tObject.programId"
+                ui-sref="workflows.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
+            ></a>
+          </div>
+          <div ng-if="tObject.programType === 'Mapreduce'">
+            <a class="btn btn-info"
+                gridster-item="tag"
+                style="margin: 10px;"
+                ng-bind="tObject.programId"
+                ui-sref="mapreduce.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
+            ></a>
+          </div>
+          <div ng-if="tObject.programType === 'Flow'">
+            <a class="btn btn-info"
+                gridster-item="tag"
+                style="margin: 10px;"
+                ng-bind="tObject.programId"
+                ui-sref="flow.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
+            ></a>
+          </div>
+          <div ng-if="tObject.programType === 'Service'">
+            <a class="btn btn-info"
+                gridster-item="tag"
+                style="margin: 10px;"
+                ng-bind="tObject.programId"
+                ui-sref="workflows.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
+            ></a>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>

@@ -322,7 +322,7 @@ angular
 
     $scope.onSearch = _.debounce(function(event) {
       if (event.keyCode === 70 && event.target.nodeName === 'BODY') {
-        $state.go('search');
+        $state.go('search.list');
       }
       console.info('pressed');
     }, 500);

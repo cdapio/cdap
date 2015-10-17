@@ -3,7 +3,7 @@ angular.module(PKG.name + '.commons')
     this.searchTxt = '';
     this.onSearch = function(event) {
       if (event.keyCode === 13) {
-        $state.go('search');
+        $state.go('search.list');
       }
     };
   });

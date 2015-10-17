@@ -1,15 +1,16 @@
 
 
 class SearchController {
-  constructor(myTagsApi, myAppsApi, myDatasetApi, myStreamApi, $stateParams, $state) {
+  constructor(myTagsApi, myAppsApi, myDatasetApi, myStreamApi, $stateParams, $state, caskFocusManager) {
     this.myTagsApi = myTagsApi;
     this.myAppsApi = myAppsApi;
     this.myDatasetApi = myDatasetApi;
     this.myStreamApi = myStreamApi;
     this.$stateParams = $stateParams;
     this.$state = $state;
-    window.sss = $state;
+
     this.tags = [];
+    caskFocusManager.select('searchByTags');
 
     this.gridsterOpts = {
       rowHeight: '40',
@@ -25,6 +26,18 @@ class SearchController {
     this.getAppsTags();
     this.getDatasetsTags();
     this.getStreamsTags();
+  }
+
+  setDefaultsForGridster (tags) {
+    tags = tags.map( (tag) => {
+      var t = {value: tag};
+      t.sizeX = null;
+      t.sizeY = null;
+      t.row = null;
+      t.col = null;
+      return t;
+    });
+    return tags;
   }
 
   getAppsTags() {
@@ -54,6 +67,7 @@ class SearchController {
       .$promise
       .then(
         (appTags) => {
+          appTags = this.setDefaultsForGridster(appTags);
           this.tags = this.tags.concat(appTags);
         },
         () => { console.error('Error on fetching tags for app: ', appId); }
@@ -102,6 +116,7 @@ class SearchController {
       .$promise
       .then(
         (datasetTags) => {
+          datasetTags = this.setDefaultsForGridster(datasetTags);
           this.tags = this.tags.concat(datasetTags);
         },
         () => { console.error('Fetching tags for dataset failed: ', datasetId); }
@@ -128,7 +143,10 @@ class SearchController {
       .getStreamTags(params)
       .$promise
       .then(
-        (streamTags) => { this.tags = this.tags.concat(streamTags); },
+        (streamTags) => {
+          streamTags = this.setDefaultsForGridster(streamTags);
+          this.tags = this.tags.concat(streamTags);
+        },
         () => { console.error('Fetching stream tags failed for: ', streamId); }
       );
   }
@@ -143,13 +161,16 @@ class SearchController {
       .getProgramTags(params)
       .$promise
       .then(
-        (programTags) => { this.tags = this.tags.concat(programTags); },
+        (programTags) => {
+          programTags = this.setDefaultsForGridster(programTags);
+          this.tags = this.tags.concat(programTags);
+        },
         () => { console.error('Fetching tags'); }
       );
   }
 }
 
-SearchController.$inject = ['myTagsApi', 'myAppsApi', 'myDatasetApi', 'myStreamApi', '$stateParams', '$state'];
+SearchController.$inject = ['myTagsApi', 'myAppsApi', 'myDatasetApi', 'myStreamApi', '$stateParams', '$state', 'caskFocusManager'];
 
 angular.module(`${PKG.name}.feature.search`)
   .controller('SearchController', SearchController);

@@ -54,7 +54,7 @@
   </nav>
 
   <ul class="nav navbar-nav navbar-right">
-    <li id="navbar-search">
+    <li id="navbar-search" ng-if="!$state.includes('search.**')">
       <form class="navbar-form">
         <my-search></my-search>
       </form>

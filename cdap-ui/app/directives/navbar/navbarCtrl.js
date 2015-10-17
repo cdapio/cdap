@@ -18,7 +18,8 @@ angular.module(PKG.name + '.commons')
   .controller('navbarCtrl', function (myAlert, MYAUTH_EVENT, myNamespace, $scope, EventPipe, $state) {
 
     $scope.namespaces = [];
-
+    $scope.$state = $state;
+    
     function updateNamespaceList() {
       myNamespace.getList()
         .then(function(list) {
