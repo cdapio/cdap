@@ -13,6 +13,9 @@ class SearchObjectWithTagsController {
       swapping: false,
       draggable: {
         enabled: false
+      },
+      resizable: {
+        enabled: false
       }
     };
     caskFocusManager.select('searchObjectWithTags');
@@ -50,30 +53,35 @@ class SearchObjectWithTagsController {
         angular.extend(modifiedTObject, {
           namespaceId: entityObj.namespace.id,
           streamId: entityObj.streamName,
-          type: type
+          type: type,
+          icon: 'icon-app'
         });
         break;
       case 'datasetinstance':
         angular.extend(modifiedTObject, {
           namespaceId: entityObj.namespace.id,
           datasetId: entityObj.instanceId,
-          type: type
+          type: type,
+          icon: 'icon-datasets'
         });
         break;
       case 'application':
         angular.extend(modifiedTObject, {
           namespaceId: entityObj.namespace.id,
           appId: entityObj.applicationId,
-          type: type
+          type: type,
+          icon: 'icon-app'
         });
         break;
       case 'program':
+
         angular.extend(modifiedTObject, {
           namespaceId: entityObj.application.namespace.id,
           appId: entityObj.application.applicationId,
           programType: entityObj.type,
           programId: entityObj.id,
-          type: type
+          type: type,
+          icon: (entityObj.type.toLowerCase() === 'flow'? 'icon-tigon': 'icon-' + entityObj.type.toLowerCase())
         });
         break;
     }

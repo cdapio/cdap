@@ -26,13 +26,14 @@
   <div class="main-search">
     <div class="col-xs-12">
       <div gridster="SearchController.gridsterOpts">
-        <a  class="btn btn-info"
+        <a  class="btn btn-default "
             gridster-item="tag"
             ng-repeat="tag in SearchController.filteredTags = (SearchController.tags | filter: SearchController.searchTxt ) track by $index "
-            style="margin: 10px;"
-            ng-bind="tag.value"
             ui-sref="search.objectswithtags({tag: tag.value})"
-        ></a>
+        >
+        <span class="fa fa-tag"></span>
+        <span ng-bind="tag.value | myEllipsis: 10" tooltip="{{tag.value}}" tooltip-enable="tag.value.length > 10"></span>
+      </a>
       </div>
     </div>
   </div>

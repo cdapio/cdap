@@ -19,8 +19,10 @@ class SearchController {
       swapping: false,
       draggable: {
         enabled: false
+      },
+      resizable: {
+        enabled: false
       }
-
     };
 
     this.getAppsTags();

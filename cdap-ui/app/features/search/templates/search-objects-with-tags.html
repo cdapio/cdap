@@ -26,61 +26,68 @@
 
       <div ng-repeat="tObject in SearchController.filteredTObjects = (SearchObjectWithTagsController.taggedObjects | filter: SearchObjectWithTagsController.searchTxt ) ">
         <div ng-if="tObject.type === 'application'">
-          <a class="btn btn-info"
+          <a class="btn btn-default"
               gridster-item="tag"
-              style="margin: 10px;"
-              ng-bind="tObject.appId"
               ui-sref="apps.detail.overview.status({namespace: tObject.namespaceId, appId: tObject.appId})"
-          ></a>
+          >
+            <span class="{{tObject.icon}}"></span>
+            <span ng-bind="tObject.appId | myEllipsis: 15" tooltip="{{tObject.appId}}" tooltip-enable="tObject.appId.length > 15"></span>
+          </a>
         </div>
         <div ng-if="tObject.type === 'datasetinstance'">
-          <a class="btn btn-info"
+          <a class="btn btn-default"
               gridster-item="tag"
-              style="margin: 10px;"
-              ng-bind="tObject.datasetId"
               ui-sref="datasets.detail.overview.status({namespace: tObject.namespaceId, datasetId: tObject.datasetId})"
-          ></a>
+          >
+            <span class="{{tObject.icon}}"></span>
+            <span ng-bind="tObject.datasetId | myEllipsis: 15" tooltip="{{tObject.datasetId}}" tooltip-enable="tObject.datasetId.length > 15"></span>
+          </a>
         </div>
         <div ng-if="tObject.type === 'stream'">
-          <a class="btn btn-info"
+          <a class="btn btn-default"
               gridster-item="tag"
-              style="margin: 10px;"
-              ng-bind="tObject.streamId"
               ui-sref="streams.detail.overview.status({namespace: tObject.namespaceId, streamId: tObject.streamId})"
-          ></a>
+          >
+            <span class="{{tObject.icon}}"></span>
+            <span ng-bind="tObject.streamId | myEllipsis: 15" tooltip="{{tObject.streamId}}" tooltip-enable="tObject.streamId.length > 15"></span>
+          </a>
         </div>
         <div ng-if="tObject.type === 'program'">
           <div ng-if="tObject.programType === 'Workflow'">
-            <a class="btn btn-info"
+            <a class="btn btn-default"
                 gridster-item="tag"
-                style="margin: 10px;"
-                ng-bind="tObject.programId"
                 ui-sref="workflows.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
-            ></a>
+            >
+              <span class="{{tObject.icon}}"></span>
+              <span ng-bind="tObject.programId | myEllipsis: 15" tooltip="{{tObject.programId}}" tooltip-enable="tObject.programId.length > 15"></span>
+            </a>
           </div>
           <div ng-if="tObject.programType === 'Mapreduce'">
-            <a class="btn btn-info"
+            <a class="btn btn-default"
                 gridster-item="tag"
-                style="margin: 10px;"
-                ng-bind="tObject.programId"
                 ui-sref="mapreduce.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
-            ></a>
+            >
+              <span class="{{tObject.icon}}"></span>
+              <span ng-bind="tObject.programId | myEllipsis: 15" tooltip="{{tObject.programId}}" tooltip-enable="tObject.programId.length > 15"></span>
+            </a>
           </div>
           <div ng-if="tObject.programType === 'Flow'">
-            <a class="btn btn-info"
+            <a class="btn btn-default"
                 gridster-item="tag"
-                style="margin: 10px;"
-                ng-bind="tObject.programId"
                 ui-sref="flow.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
-            ></a>
+            >
+            <span class="{{tObject.icon}}"></span>
+              <span ng-bind="tObject.programId | myEllipsis: 15" tooltip="{{tObject.programId}}" tooltip-enable="tObject.programId.length > 15"></span>
+            </a>
           </div>
           <div ng-if="tObject.programType === 'Service'">
-            <a class="btn btn-info"
+            <a class="btn btn-default"
                 gridster-item="tag"
-                style="margin: 10px;"
-                ng-bind="tObject.programId"
                 ui-sref="workflows.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
-            ></a>
+            >
+              <span class="{{tObject.icon}}"></span>
+              <span ng-bind="tObject.programId | myEllipsis: 15" tooltip="{{tObject.programId}}" tooltip-enable="tObject.programId.length > 15"></span>
+            </a>
           </div>
 
         </div>
