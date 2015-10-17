@@ -24,6 +24,7 @@ import co.cask.cdap.explore.service.ExploreServiceUtils;
 import co.cask.cdap.logging.run.LogSaverTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsProcessorTwillRunnable;
 import co.cask.cdap.metrics.runtime.MetricsTwillRunnable;
+import co.cask.cdap.search.SearchTwillRunnable;
 import com.google.common.base.Preconditions;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillApplication;
@@ -71,7 +72,8 @@ public class MasterTwillApplication implements TwillApplication {
                     addTransactionService(
                         addMetricsProcessor (
                             addMetricsService(
-                                TwillSpecification.Builder.with().setName(NAME).withRunnable()))))));
+                              addSearchService(
+                                TwillSpecification.Builder.with().setName(NAME).withRunnable())))))));
 
     if (runHiveService) {
       LOG.info("Adding explore runnable.");
@@ -147,6 +149,26 @@ public class MasterTwillApplication implements TwillApplication {
       .build();
 
     return builder.add(new MetricsTwillRunnable(Constants.Service.METRICS, "cConf.xml", "hConf.xml"), metricsSpec)
+      .withLocalFiles()
+      .add("cConf.xml", cConfFile.toURI())
+      .add("hConf.xml", hConfFile.toURI())
+      .apply();
+
+  }
+
+  private TwillSpecification.Builder.RunnableSetter addSearchService(TwillSpecification.Builder.MoreRunnable builder) {
+    int metricsNumCores = cConf.getInt(Constants.Metrics.NUM_CORES, 2);
+    int metricsMemoryMb = cConf.getInt(Constants.Metrics.MEMORY_MB, 2048);
+    int searchInstances = 1;
+
+    ResourceSpecification specification = ResourceSpecification.Builder
+      .with()
+      .setVirtualCores(metricsNumCores)
+      .setMemory(metricsMemoryMb, ResourceSpecification.SizeUnit.MEGA)
+      .setInstances(searchInstances)
+      .build();
+
+    return builder.add(new SearchTwillRunnable(Constants.Service.SEARCH, "cConf.xml", "hConf.xml"), specification)
       .withLocalFiles()
       .add("cConf.xml", cConfFile.toURI())
       .add("hConf.xml", hConfFile.toURI())

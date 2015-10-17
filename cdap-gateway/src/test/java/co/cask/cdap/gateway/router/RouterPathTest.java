@@ -122,6 +122,11 @@ public class RouterPathTest {
     String result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);
     Assert.assertEquals(Constants.Service.METRICS, result);
 
+    String searchPath = "/v3/search/index";
+    httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("GET"), searchPath);
+    result = pathLookup.getRoutingService(FALLBACKSERVICE, searchPath, httpRequest);
+    Assert.assertEquals(Constants.Service.SEARCH, result);
+
     flowPath = "///v3/namespaces/default///apps/InvalidApp/flows/FlowName/////logs";
     httpRequest = new DefaultHttpRequest(VERSION, new HttpMethod("POST"), flowPath);
     result = pathLookup.getRoutingService(FALLBACKSERVICE, flowPath, httpRequest);

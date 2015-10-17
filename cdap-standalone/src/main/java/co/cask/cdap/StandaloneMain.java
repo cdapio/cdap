@@ -56,6 +56,7 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.search.SearchService;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
@@ -88,6 +89,7 @@ public class StandaloneMain {
   private final UserInterfaceService userInterfaceService;
   private final NettyRouter router;
   private final MetricsQueryService metricsQueryService;
+  private final SearchService searchService;
   private final AppFabricServer appFabricServer;
   private final ServiceStore serviceStore;
   private final StreamService streamService;
@@ -119,6 +121,7 @@ public class StandaloneMain {
     datasetService = injector.getInstance(DatasetService.class);
     serviceStore = injector.getInstance(ServiceStore.class);
     streamService = injector.getInstance(StreamService.class);
+    searchService = injector.getInstance(SearchService.class);
 
     if (configuration.getBoolean(DISABLE_UI, false)) {
       userInterfaceService = null;
@@ -182,6 +185,7 @@ public class StandaloneMain {
     }
 
     metricsQueryService.startAndWait();
+    searchService.startAndWait();
     router.startAndWait();
     if (userInterfaceService != null) {
       userInterfaceService.startAndWait();
@@ -229,6 +233,7 @@ public class StandaloneMain {
       // all programs are stopped: dataset service, metrics, transactions can stop now
       datasetService.stopAndWait();
       metricsQueryService.stopAndWait();
+      searchService.stopAndWait();
       txService.stopAndWait();
 
       if (securityEnabled) {

@@ -117,6 +117,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     } else if (uriParts.length >= 2 && uriParts[1].equals("metrics")) {
       //Metrics Search Handler Path /v3/metrics
       return Constants.Service.METRICS;
+    } else if (uriParts.length >= 2 && uriParts[1].equals("search")) {
+      //Metrics Search Handler Path /v3/metrics
+      return Constants.Service.SEARCH;
     } else if (uriParts.length >= 5 && uriParts[1].equals("data") && uriParts[2].equals("explore") &&
       (uriParts[3].equals("queries") || uriParts[3].equals("jdbc") || uriParts[3].equals("namespaces"))) {
       // non-namespaced explore operations. For example, /v3/data/explore/queries/{id}

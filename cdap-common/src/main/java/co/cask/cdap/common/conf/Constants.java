@@ -34,6 +34,7 @@ public final class Constants {
     public static final String APP_FABRIC_HTTP = "appfabric";
     public static final String TRANSACTION = "transaction";
     public static final String METRICS = "metrics";
+    public static final String SEARCH = "search";
     public static final String LOGSAVER = "log.saver";
     public static final String GATEWAY = "gateway";
     public static final String STREAMS = "streams";
@@ -401,6 +402,13 @@ public final class Constants {
     public static final String WEBAPP_DIR = "webapp";
   }
 
+  /**
+   * Search constants
+   *
+   */
+  public static final class Search {
+    public static final String ADDRESS = "search.bind.address";
+  }
   /**
    * Metrics constants.
    */
