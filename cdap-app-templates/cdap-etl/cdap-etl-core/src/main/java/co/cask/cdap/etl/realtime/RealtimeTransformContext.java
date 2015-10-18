@@ -20,12 +20,17 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.common.PluginID;
 import co.cask.cdap.etl.common.ScopedPluginContext;
+import co.cask.cdap.etl.common.StageMetrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Context for the Transform Stage.
  */
 public class RealtimeTransformContext extends ScopedPluginContext implements TransformContext {
+  private static final Logger LOG = LoggerFactory.getLogger(RealtimeTransformContext.class);
   private final WorkerContext context;
   private final Metrics metrics;
 
@@ -37,7 +42,12 @@ public class RealtimeTransformContext extends ScopedPluginContext implements Tra
 
   @Override
   public Metrics getMetrics() {
-    return metrics;
+    return new StageMetrics(metrics, PluginID.from(stageId));
+  }
+
+  @Override
+  public int getStageId() {
+    return PluginID.from(stageId).getStage();
   }
 
   @Override

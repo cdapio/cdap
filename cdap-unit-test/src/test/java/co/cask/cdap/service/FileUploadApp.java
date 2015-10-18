@@ -74,7 +74,7 @@ public class FileUploadApp extends AbstractApplication {
     @Override
     protected void configure() {
       // TODO: No need to have this once (CDAP-961) is resolved
-      useDatasets(PFS_NAME, KV_TABLE_NAME);
+      useDatasets(KV_TABLE_NAME);
     }
 
     /**

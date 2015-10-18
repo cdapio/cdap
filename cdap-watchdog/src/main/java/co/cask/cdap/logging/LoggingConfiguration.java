@@ -51,7 +51,7 @@ public final class LoggingConfiguration {
   // Table used to store log metadata
   public static final String LOG_META_DATA_TABLE = "log.meta";
   // Defaults
-  public static final String DEFAULT_LOG_PATTERN = "%d{ISO8601} - %-5p [%t:%C{1}@%L] - %m%n";
+  public static final String DEFAULT_LOG_PATTERN = "%d{ISO8601} - %-5p [%t:%c{1}@%L] - %m%n";
   public static final String DEFAULT_KAFKA_PRODUCER_TYPE = "async";
   public static final long DEFAULT_KAFKA_PROCUDER_BUFFER_MS = 1000;
   public static final String DEFAULT_NUM_PARTITIONS = "10";

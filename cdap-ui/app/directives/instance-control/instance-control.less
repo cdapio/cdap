@@ -52,16 +52,21 @@ my-instance-control {
   }
 
   input[type="number"] {
+    padding: 0 12px 0 0;
+    text-indent: 12px;
     position: relative;
+
     // Only apply number input styling to Chrome
     @supports (-webkit-appearance:none) {
       &.mod::-webkit-outer-spin-button,
       &.mod::-webkit-inner-spin-button {
         display: block;
-        width: 45px;
+        width: 32px;
         height: 32px;
         border-left: 1px solid @table-border-color;
         color: @cdap-header;
+        overflow: hidden;
+        padding-right: 12px;
         position: absolute;
         top: 0;
         right: 0;
@@ -72,8 +77,8 @@ my-instance-control {
         &:before, &:after {
           display: block;
           font-family: 'FontAwesome';
-          width: 8px;
-          margin: 0 auto;
+          width: 32px;
+          text-align: center;
         }
         &:before {
           content: '\f0d8';
@@ -85,10 +90,11 @@ my-instance-control {
         }
       }
       + span {
+        background-image: url('@{img-path}/divider.png');
+        display: block;
         position: absolute;
-        width: 46px;
-        background-color: @table-border-color;
         height: 1px;
+        width: 46px;
         right: 10px;
         bottom: 25px;
       }

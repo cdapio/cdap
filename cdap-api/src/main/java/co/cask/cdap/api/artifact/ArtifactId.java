@@ -21,7 +21,7 @@ import co.cask.cdap.api.annotation.Beta;
 import java.util.Objects;
 
 /**
- * Uniquely describes an artifact.
+ * Uniquely describes an artifact within a namespace.
  */
 @Beta
 public final class ArtifactId implements Comparable<ArtifactId> {

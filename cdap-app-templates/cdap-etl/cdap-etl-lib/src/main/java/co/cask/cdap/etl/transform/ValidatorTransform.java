@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.script.Invocable;
@@ -56,21 +57,31 @@ import javax.script.ScriptException;
 public class ValidatorTransform extends Transform<StructuredRecord, StructuredRecord> {
 
   private static final String SCRIPT_DESCRIPTION = "Javascript that must implement a function 'isValid' that " +
-    "takes a JSON object representation of the input record, " +
-    "and returns a result JSON." +
+    "takes a JSON object representation of the input record " +
+    "and a context object (encapsulating CDAP metrics, logger, and validators) " +
+    "and returns a result JSON with validity, error code, and error message." +
     "Example response: " +
     "   {isValid : false, errorCode : 10, errorMsg : \"unidentified record\"} " +
     "Validation script example: " +
-    "   function isValid(input) { " +
+    "   function isValid(input, context) { " +
     "      var isValid = true; " +
     "      var errMsg = \"\";" +
     "      var errCode = 0;" +
+    "      var coreValidator = context.getValidator(\"coreValidator\");" +
+    "      var metrics = context.getMetrics();" +
+    "      var logger = context.getLogger();" +
     "      if (!coreValidator.isDate(input.date)) { " +
     "         isValid = false; errMsg = input.date + \"is invalid date\"; errCode = 5;" +
+    "         metrics.count(\"invalid.date\", 1);" +
     "      } else if (!coreValidator.isUrl(input.url)) { " +
     "         isValid = false; errMsg = \"invalid url\"; errCode = 7;" +
+    "         metrics.count(\"invalid.url\", 1);" +
     "      } else if (!coreValidator.isInRange(input.content_length, 0, 1024 * 1024)) {" +
     "         isValid = false; errMsg = \"content length >1MB\"; errCode = 10;" +
+    "         metrics.count(\"invalid.body.size\", 1);" +
+    "      }" +
+    "      if (!isValid) {" +
+    "       logger.warn(\"Validation failed for record {}\", input);" +
     "      }" +
     "      return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
     "   };" +
@@ -82,11 +93,13 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   private static final Logger LOG = LoggerFactory.getLogger(ValidatorTransform.class);
   private static final String VARIABLE_NAME = "dont_name_your_variable_this";
   private static final String FUNCTION_NAME = "dont_name_your_function_this";
+  private static final String CONTEXT_NAME = "dont_name_your_context_this";
 
   private final ValidatorConfig config;
   private Metrics metrics;
   private Invocable invocable;
   private ScriptEngine engine;
+  private Logger logger;
 
   // for unit tests, otherwise config is injected by plugin framework.
   public ValidatorTransform(ValidatorConfig config) {
@@ -123,8 +136,9 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
 
   @VisibleForTesting
   void setUpInitialScript(TransformContext context, List<Validator> validators) throws ScriptException {
-    init(validators);
     metrics = context.getMetrics();
+    logger = LoggerFactory.getLogger(ValidatorTransform.class.getName() + " - Stage:" + context.getStageId());
+    init(validators);
   }
 
   @Override
@@ -141,7 +155,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
         emitter.emit(input);
       } else {
         emitter.emitError(getErrorObject(result, input));
-        metrics.count("filtered", 1);
+        metrics.count("invalid", 1);
         LOG.trace("Error code : {} , Error Message {}", result.get("errorCode"), result.get("errorMsg"));
       }
     } catch (Exception e) {
@@ -168,17 +182,21 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     String scriptStr = config.validationScript;
     Preconditions.checkArgument(!Strings.isNullOrEmpty(scriptStr), "Filter script must be specified.");
 
+    Map<String, Object> validatorMap = new HashMap<>();
     for (Validator validator : validators) {
+      // NOTE : This has been kept for backward compatibility, can be removed after deprecation.
       engine.put(validator.getValidatorName(), validator.getValidator());
+      validatorMap.put(validator.getValidatorName(), validator.getValidator());
     }
+    engine.put(CONTEXT_NAME, new ValidatorScriptContext(logger, metrics, validatorMap));
 
     // this is pretty ugly, but doing this so that we can pass the 'input' json into the isValid function.
     // that is, we want people to implement
     // function isValid(input) { ... }
     // rather than function isValid() { ... } with the input record assigned to the global variable
     // and have them access the global variable in the function
-    String script = String.format("function %s() { return isValid(%s); }\n%s",
-      FUNCTION_NAME, VARIABLE_NAME, config.validationScript);
+    String script = String.format("function %s() { return isValid(%s, %s); }\n%s",
+      FUNCTION_NAME, VARIABLE_NAME, CONTEXT_NAME, config.validationScript);
     engine.eval(script);
     invocable = (Invocable) engine;
   }

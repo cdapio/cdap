@@ -73,14 +73,15 @@ To create this application, called *streamETLApp*:
 
 - Using the :ref:`Lifecycle RESTful API <http-restful-api-lifecycle-create-app>`::
 
-    curl -X PUT localhost:10000/v3/namespaces/default/apps/streamETLApp -H 'Content-Type: application/json' -d @config.json 
+    $ curl -w'\n' -X PUT localhost:10000/v3/namespaces/default/apps/streamETLApp \
+        -H 'Content-Type: application/json' -d @config.json 
 
 - Using :ref:`CDAP CLI <cli>`:
 
   .. container:: highlight
 
     .. parsed-literal::
-      |$| create app streamETLApp cdap-etl-batch |version| system <path-to-config.json>
+      |$| cdap-cli.sh create app streamETLApp cdap-etl-batch |version| system <path-to-config.json>
 
 where ``config.json`` is the file that contains the application configuration.
 

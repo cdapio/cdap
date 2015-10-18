@@ -273,7 +273,7 @@ public class KafkaSourceTest {
     prop.setProperty("log.retention.hours", "24");
     prop.setProperty("log.flush.interval.messages", "10");
     prop.setProperty("log.flush.interval.ms", "1000");
-    prop.setProperty("log.segment.bytes", "100");
+    prop.setProperty("log.segment.bytes", "200");
     prop.setProperty("zookeeper.connect", zkConnectStr);
     prop.setProperty("zookeeper.connection.timeout.ms", "1000000");
     prop.setProperty("default.replication.factor", "1");

@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
@@ -39,8 +40,11 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.data.dataset.DatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -52,10 +56,12 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionManager;
+import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
@@ -92,6 +98,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -104,7 +111,7 @@ public class MapReduceProgramRunnerTest {
 
   private static TransactionManager txService;
   private static DatasetFramework dsFramework;
-  private static DatasetInstantiator datasetInstantiator;
+  private static DynamicDatasetCache datasetCache;
   private static MetricStore metricStore;
 
   @ClassRule
@@ -132,9 +139,10 @@ public class MapReduceProgramRunnerTest {
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
-                                                  MapReduceProgramRunnerTest.class.getClassLoader(),
-                                                  null, null);
+    datasetCache = new SingleThreadDatasetCache(
+      new SystemDatasetInstantiator(dsFramework, MapReduceProgramRunnerTest.class.getClassLoader(), null),
+      injector.getInstance(TransactionSystemClient.class),
+      DefaultId.NAMESPACE, DatasetDefinition.NO_ARGUMENTS, null, null);
     metricStore = injector.getInstance(MetricStore.class);
 
     txService.startAndWait();
@@ -184,7 +192,8 @@ public class MapReduceProgramRunnerTest {
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "sums", outputArgs));
     testMapreduceWithFile("numbers", "abc, xyz", "sums", "a001",
                           AppWithMapReduceUsingFileSet.class,
-                          AppWithMapReduceUsingFileSet.ComputeSum.class, new BasicArguments(runtimeArguments));
+                          AppWithMapReduceUsingFileSet.ComputeSum.class,
+                          new BasicArguments(runtimeArguments), null);
 
     // test reading and writing same dataset
     // hack to use different datasets at each invocation of this test
@@ -199,7 +208,8 @@ public class MapReduceProgramRunnerTest {
     runtimeArguments.putAll(RuntimeArguments.addScope(Scope.DATASET, "boogie", outputArgs));
     testMapreduceWithFile("boogie", "zzz", "boogie", "f123",
                           AppWithMapReduceUsingFileSet.class,
-                          AppWithMapReduceUsingFileSet.ComputeSum.class, new BasicArguments(runtimeArguments));
+                          AppWithMapReduceUsingFileSet.ComputeSum.class,
+                          new BasicArguments(runtimeArguments), null);
   }
 
   @Test
@@ -230,7 +240,8 @@ public class MapReduceProgramRunnerTest {
     testMapreduceWithFile("rtInput1", "abc, xyz", "rtOutput1", "a001",
                           AppWithMapReduceUsingRuntimeDatasets.class,
                           AppWithMapReduceUsingRuntimeDatasets.ComputeSum.class,
-                          new BasicArguments(runtimeArguments));
+                          new BasicArguments(runtimeArguments),
+                          AppWithMapReduceUsingRuntimeDatasets.COUNTERS);
 
     // validate that the table emitted metrics
     Collection<MetricTimeSeries> metrics =
@@ -265,13 +276,15 @@ public class MapReduceProgramRunnerTest {
     testMapreduceWithFile("rtInput2", "zzz", "rtInput2", "f123",
                           AppWithMapReduceUsingRuntimeDatasets.class,
                           AppWithMapReduceUsingRuntimeDatasets.ComputeSum.class,
-                          new BasicArguments(runtimeArguments));
+                          new BasicArguments(runtimeArguments),
+                          AppWithMapReduceUsingRuntimeDatasets.COUNTERS);
   }
 
   private void testMapreduceWithFile(String inputDatasetName, String inputPaths,
                                      String outputDatasetName, String outputPath,
                                      Class appClass, Class mrClass,
-                                     Arguments runtimeArgs) throws Exception {
+                                     Arguments runtimeArgs,
+                                     @Nullable final String counterTableName) throws Exception {
 
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
@@ -281,9 +294,21 @@ public class MapReduceProgramRunnerTest {
     FileSetArguments.setInputPaths(inputArgs, inputPaths);
     FileSetArguments.setOutputPath(outputArgs, outputPath);
 
+    // clear the counters in case a previous test case left behind some values
+    if (counterTableName != null) {
+      Transactions.execute(datasetCache.newTransactionContext(), "countersVerify", new Runnable() {
+        @Override
+        public void run() {
+          KeyValueTable counters = datasetCache.getDataset(counterTableName);
+          counters.delete(AppWithMapReduceUsingRuntimeDatasets.INPUT_RECORDS);
+          counters.delete(AppWithMapReduceUsingRuntimeDatasets.REDUCE_KEYS);
+        }
+      });
+    }
+
     // write a handful of numbers to a file; compute their sum, too.
     final long[] values = { 15L, 17L, 7L, 3L };
-    final FileSet input = datasetInstantiator.getDataset(inputDatasetName, inputArgs);
+    final FileSet input = datasetCache.getDataset(inputDatasetName, inputArgs);
     long sum = 0L, count = 1;
     for (Location inputLocation : input.getInputLocations()) {
       final PrintWriter writer = new PrintWriter(inputLocation.getOutputStream());
@@ -301,7 +326,7 @@ public class MapReduceProgramRunnerTest {
     // output location in file system is a directory that contains a part file, a _SUCCESS file, and checksums
     // (.<filename>.crc) for these files. Find the actual part file. Its name begins with "part". In this case,
     // there should be only one part file (with this small data, we have a single reducer).
-    final FileSet results = datasetInstantiator.getDataset(outputDatasetName, outputArgs);
+    final FileSet results = datasetCache.getDataset(outputDatasetName, outputArgs);
     Location resultLocation = results.getOutputLocation();
     if (resultLocation.isDirectory()) {
       for (Location child : resultLocation.list()) {
@@ -322,6 +347,17 @@ public class MapReduceProgramRunnerTest {
     Assert.assertEquals(2, fields.length);
     Assert.assertEquals(AppWithMapReduceUsingFileSet.FileMapper.ONLY_KEY, fields[0]);
     Assert.assertEquals(sum, Long.parseLong(fields[1]));
+
+    if (counterTableName != null) {
+      Transactions.execute(datasetCache.newTransactionContext(), "countersVerify", new Runnable() {
+        @Override
+        public void run() {
+          KeyValueTable counters = datasetCache.getDataset(counterTableName);
+          Assert.assertEquals(4L, counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.INPUT_RECORDS, 0L));
+          Assert.assertEquals(1L, counters.incrementAndGet(AppWithMapReduceUsingRuntimeDatasets.REDUCE_KEYS, 0L));
+        }
+      });
+    }
   }
 
 
@@ -330,12 +366,12 @@ public class MapReduceProgramRunnerTest {
     final ApplicationWithPrograms app =
       AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduceUsingObjectStore.class, TEMP_FOLDER_SUPPLIER);
 
-    final ObjectStore<String> input = datasetInstantiator.getDataset("keys");
+    final ObjectStore<String> input = datasetCache.getDataset("keys");
 
     final String testString = "persisted data";
 
     //Populate some input
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) input).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -346,9 +382,9 @@ public class MapReduceProgramRunnerTest {
 
     runProgram(app, AppWithMapReduceUsingObjectStore.ComputeCounts.class, false);
 
-    final KeyValueTable output = datasetInstantiator.getDataset("count");
+    final KeyValueTable output = datasetCache.getDataset("count");
     //read output and verify result
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -372,10 +408,10 @@ public class MapReduceProgramRunnerTest {
     final String inputPath = createInput();
     final java.io.File outputDir = new java.io.File(tmpFolder.newFolder(), "output");
 
-    final KeyValueTable jobConfigTable = datasetInstantiator.getDataset("jobConfig");
+    final KeyValueTable jobConfigTable = datasetCache.getDataset("jobConfig");
 
     // write config into dataset
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, jobConfigTable).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -420,15 +456,16 @@ public class MapReduceProgramRunnerTest {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
 
-    // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
-    final TimeseriesTable table = datasetInstantiator.getDataset("timeSeries");
-    final KeyValueTable beforeSubmitTable = datasetInstantiator.getDataset("beforeSubmit");
-    final KeyValueTable onFinishTable = datasetInstantiator.getDataset("onFinish");
-    final Table counters = datasetInstantiator.getDataset("counters");
-    final Table countersFromContext = datasetInstantiator.getDataset("countersFromContext");
+    // we need to start a tx context and do a "get" on all datasets so that they are in datasetCache
+    datasetCache.newTransactionContext();
+    final TimeseriesTable table = datasetCache.getDataset("timeSeries");
+    final KeyValueTable beforeSubmitTable = datasetCache.getDataset("beforeSubmit");
+    final KeyValueTable onFinishTable = datasetCache.getDataset("onFinish");
+    final Table counters = datasetCache.getDataset("counters");
+    final Table countersFromContext = datasetCache.getDataset("countersFromContext");
 
     // 1) fill test data
-    fillTestInputData(txExecutorFactory, datasetInstantiator, table, false);
+    fillTestInputData(txExecutorFactory, table, false);
 
     // 2) run job
     final long start = System.currentTimeMillis();
@@ -436,7 +473,7 @@ public class MapReduceProgramRunnerTest {
     final long stop = System.currentTimeMillis();
 
     // 3) verify results
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, datasetCache.getTransactionAwares()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -467,6 +504,7 @@ public class MapReduceProgramRunnerTest {
           Assert.assertTrue(countersFromContext.get(new Get("reducer")).getLong("records", 0) > 0);
         }
       });
+    datasetCache.dismissTransactionContext();
 
     // todo: verify metrics. Will be possible after refactor for CDAP-765
   }
@@ -494,15 +532,16 @@ public class MapReduceProgramRunnerTest {
     final ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class,
                                                                                          TEMP_FOLDER_SUPPLIER);
 
-    // we need to do a "get" on all datasets we use so that they are in dataSetInstantiator.getTransactionAware()
-    final TimeseriesTable table = datasetInstantiator.getDataset("timeSeries");
-    final KeyValueTable beforeSubmitTable = datasetInstantiator.getDataset("beforeSubmit");
-    final KeyValueTable onFinishTable = datasetInstantiator.getDataset("onFinish");
-    final Table counters = datasetInstantiator.getDataset("counters");
-    final Table countersFromContext = datasetInstantiator.getDataset("countersFromContext");
+    // we need to start a tx context and do a "get" on all datasets so that they are in datasetCache
+    datasetCache.newTransactionContext();
+    final TimeseriesTable table = datasetCache.getDataset("timeSeries");
+    final KeyValueTable beforeSubmitTable = datasetCache.getDataset("beforeSubmit");
+    final KeyValueTable onFinishTable = datasetCache.getDataset("onFinish");
+    final Table counters = datasetCache.getDataset("counters");
+    final Table countersFromContext = datasetCache.getDataset("countersFromContext");
 
     // 1) fill test data
-    fillTestInputData(txExecutorFactory, datasetInstantiator, table, true);
+    fillTestInputData(txExecutorFactory, table, true);
 
     // 2) run job
     final long start = System.currentTimeMillis();
@@ -510,7 +549,7 @@ public class MapReduceProgramRunnerTest {
     final long stop = System.currentTimeMillis();
 
     // 3) verify results
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, datasetCache.getTransactionAwares()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -527,14 +566,15 @@ public class MapReduceProgramRunnerTest {
           Assert.assertEquals(0, countersFromContext.get(new Get("mapper")).getLong("records", 0));
           Assert.assertEquals(0, countersFromContext.get(new Get("reducer")).getLong("records", 0));
         }
-    });
+      });
+
+    datasetCache.dismissTransactionContext();
   }
 
   private void fillTestInputData(TransactionExecutorFactory txExecutorFactory,
-                                 DatasetInstantiator datasetInstantiator,
                                  final TimeseriesTable table,
                                  final boolean withBadData) throws TransactionFailureException, InterruptedException {
-    TransactionExecutor executor = txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware());
+    TransactionExecutor executor = Transactions.createTransactionExecutor(txExecutorFactory, table);
     executor.execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() {
@@ -625,13 +665,10 @@ public class MapReduceProgramRunnerTest {
 
     java.io.File inputFile = new java.io.File(inputDir.getPath() + "/words.txt");
     inputFile.deleteOnExit();
-    BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile));
-    try {
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile))) {
       writer.write("this text has");
       writer.newLine();
       writer.write("two words text inside");
-    } finally {
-      writer.close();
     }
 
     return inputDir.getPath();

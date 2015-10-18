@@ -52,10 +52,12 @@ starting with::
 
   -Xmx1024m -XX:MaxPermSize=128m
 
-.. highlight:: java
+.. _test-framework-strategies-flow:
 
 Strategies in Testing Flows
 ===========================
+.. highlight:: java
+
 Let’s write a test case for the *WordCount* example::
 
   public class WordCountTest extends TestBase {
@@ -165,6 +167,8 @@ as a response, and the value types in the top-level map are not uniform::
       Assert.assertEquals(2.0, (double)assocs.get("hello"), 0.000001);
       Assert.assertTrue(assocs.containsKey("hello"));
 
+.. _test-framework-strategies-mapreduce:
+
 Strategies in Testing MapReduce Programs
 ========================================
 In a fashion similar to `Strategies in Testing Flows`_, we can write
@@ -230,6 +234,8 @@ using the ``PurchaseHistoryService`` to retrieve a customer's purchase history::
 
 The assertion will verify that the correct result was received.
 
+.. _test-framework-strategies-spark:
+
 Strategies in Testing Spark Programs
 ====================================
 Let's write a test case for an application that uses a Spark program.
@@ -282,6 +288,11 @@ The assertion will verify that the correct result was received.
 
 Strategies in Testing Artifacts
 ===============================
+
+.. _test-framework-strategies-artifacts:
+
+.. highlight:: java
+
 The Test Framework provides methods to create and deploy JAR files as artifacts. This lets you
 test the creation of multiple applications from the same artifact, as well as the use of plugin artifacts.
 
@@ -326,11 +337,12 @@ to ensure that the JAR can trace all required dependencies to correctly build th
 The examples are taken directly from the ``BaseETLBatchTest`` in the ``cdap-etl-batch`` artifact
 included with CDAP. 
 
+.. _test-framework-validating-sql:
 
 Validating Test Data with SQL
 =============================
-Often the easiest way to verify that a test produced the right data is to run a SQL query—if the data sets involved
-in the test case are record-scannable as described in :ref:`data-exploration`.
+Often the easiest way to verify that a test produced the right data is to run a SQL query |---| if the data sets involved
+in the test case are record-scannable, as described in :ref:`data-exploration`.
 This can be done using a JDBC connection obtained from the test base::
 
 
@@ -353,6 +365,8 @@ This can be done using a JDBC connection obtained from the test base::
 The JDBC connection does not implement the full JDBC functionality: it does not allow variable replacement and
 will not allow you to make any changes to datasets. But it is sufficient to perform test validation: you can create
 or prepare statements and execute queries, then iterate over the results set and validate its correctness.
+
+.. _test-framework-configuring-cdap:
 
 Configuring CDAP Runtime for Test Framework
 ===========================================

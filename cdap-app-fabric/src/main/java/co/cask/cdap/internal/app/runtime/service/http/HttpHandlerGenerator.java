@@ -148,7 +148,7 @@ final class HttpHandlerGenerator {
 
     ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className, preservedClasses);
     // DEBUG block. Uncomment for debug
-//    co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
+    // co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
     // End DEBUG block
     return classDefinition;
   }
@@ -539,13 +539,14 @@ final class HttpHandlerGenerator {
      *        contentConsunmer = null;
      *     }
      *     if (contentConsumer == null) {
+     *       dismissTransactionContext();
      *       wrappedResponder.execute();
      *       // Only return null if handler method returns HttpContentConsumer
      *       [return null;]
      *     }
      *
      *     // Only generated if handler method returns HttpContentConsumer
-     *     [return wrapContentConsumer(wrappedResponder, httpContentConsumer);]
+     *     [return wrapContentConsumer(wrappedResponder, httpContentConsumer, txContext);]
      *   }
      * }
      * </pre>
@@ -686,12 +687,14 @@ final class HttpHandlerGenerator {
       // If body consumer is used, generates:
       //
       // if (httpContentConsumer == null) {
+      //   dismissTransactionContext();
       //   wrappedResponder.execute();
       //   return null;
       // }
-      // return wrapContentConsumer(wrappedResponder, httpContentConsumer);
+      // return wrapContentConsumer(wrappedResponder, httpContentConsumer, txContext);
       //
       // Otherwise, generates
+      // dismissTransactionContext();
       // wrappedResponder.execute();
       if (method.getReturnType().getSort() == Type.OBJECT) {
         Label hasContentConsumer = mg.newLabel();
@@ -699,6 +702,11 @@ final class HttpHandlerGenerator {
 
         // if contentConsumer != null, goto label hasContentConsumer
         mg.ifNonNull(hasContentConsumer);
+
+        // dismissTransactionContext();
+        mg.loadThis();
+        mg.invokeVirtual(classType,
+                         Methods.getMethod(void.class, "dismissTransactionContext"));
 
         //   wrappedResponder.execute();
         //   return null;
@@ -709,14 +717,22 @@ final class HttpHandlerGenerator {
 
         mg.mark(hasContentConsumer);
 
-        // return wrapContentConsumer(wrappedResponder, httpContentConsumer);
+        // return wrapContentConsumer(wrappedResponder, httpContentConsumer, txContext);
         mg.loadThis();
         mg.loadLocal(contentConsumer);
         mg.loadLocal(wrappedResponder);
+        mg.loadLocal(txContext);
         mg.invokeVirtual(classType, Methods.getMethod(BodyConsumer.class, "wrapContentConsumer",
-                                                      HttpContentConsumer.class, DelayedHttpServiceResponder.class));
+                                                      HttpContentConsumer.class,
+                                                      DelayedHttpServiceResponder.class,
+                                                      TransactionContext.class));
         mg.returnValue();
       } else {
+        // dismissTransactionContext();
+        mg.loadThis();
+        mg.invokeVirtual(classType,
+                         Methods.getMethod(void.class, "dismissTransactionContext"));
+
         // wrappedResponder.execute()
         mg.loadLocal(wrappedResponder);
         mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "execute"));
