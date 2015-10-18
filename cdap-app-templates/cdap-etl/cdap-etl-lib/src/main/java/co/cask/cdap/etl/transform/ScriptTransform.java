@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
@@ -31,6 +32,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -53,19 +56,29 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
     .create();
   private static final String FUNCTION_NAME = "dont_name_your_function_this";
   private static final String VARIABLE_NAME = "dont_name_your_variable_this";
+  private static final String CONTEXT_NAME = "dont_name_your_context_this";
   private ScriptEngine engine;
   private Invocable invocable;
   private Schema schema;
   private final Config config;
+  private Metrics metrics;
+  private Logger logger;
 
   /**
    * Configuration for the script transform.
    */
   public static class Config extends PluginConfig {
     @Description("Javascript defining how to transform one record into another. The script must implement a function " +
-      "called 'transform', which takes as input a JSON object that represents the input record, and returns " +
+      "called 'transform', which takes as input a JSON object representing the input record " +
+      "and a context object (which contains CDAP metrics and logger), and returns " +
       "a JSON object that represents the transformed input. " +
-      "For example: 'function transform(input) { input.count = input.count * 1024; return input; }' " +
+      "For example: " +
+      "'function transform(input, context) {" +
+      " input.count = input.count * 1024; " +
+      " if(input.count < 0) {" +
+      " context.getMetrics().count(\"negative.count\", 1);" +
+      " context.getLogger().debug(\"Received record with negative count\");" +
+      "return input; }' " +
       "will scale the 'count' field by 1024.")
     private final String script;
 
@@ -94,6 +107,8 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
 
   @Override
   public void initialize(TransformContext context) {
+    metrics = context.getMetrics();
+    logger = LoggerFactory.getLogger(ScriptTransform.class.getName() + " - Stage:" + context.getStageId());
     init();
   }
 
@@ -215,13 +230,16 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   private void init() {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
+    engine.put(CONTEXT_NAME, new ScriptContext(logger, metrics));
+
     try {
       // this is pretty ugly, but doing this so that we can pass the 'input' json into the transform function.
       // that is, we want people to implement
       // function transform(input) { ... }
       // rather than function transform() { ... } and have them access a global variable in the function
-      String script = String.format("function %s() { return transform(%s); }\n%s",
-        FUNCTION_NAME, VARIABLE_NAME, config.script);
+
+      String script = String.format("function %s() { return transform(%s, %s); }\n%s",
+        FUNCTION_NAME, VARIABLE_NAME, CONTEXT_NAME, config.script);
       engine.eval(script);
     } catch (ScriptException e) {
       throw new IllegalArgumentException("Invalid script: " + e.getMessage(), e);

@@ -36,8 +36,8 @@ is also not a snapshot version because the suffix does not begin with SNAPSHOT.
 
 Artifacts are managed using the :ref:`Artifact HTTP RESTful APIs <http-restful-api-artifact>`.
 
-.. rubric:: Deploying an Artifact
-
+Deploying an Artifact
+=====================
 An artifact is deployed through the RESTful API. If it contains an Application class, the artifact
 can then be used to create applications. Once an artifact is deployed, it cannot be changed, with
 the exception of snapshot versions of artifacts. Snapshot artifacts can be deployed multiple times,
@@ -45,8 +45,8 @@ with each deployment overwriting the previous artifact. If a program is using a 
 changes made to the artifact are picked up when the program is started. Once a program has started,
 it is unaffected by changes made to the artifact.
 
-.. rubric:: Plugin Artifacts
-
+Plugin Artifacts
+================
 Sometimes an application class exposes an interface that it expects other artifacts to implement.
 For example, CDAP ships with a ``cdap-etl-batch`` artifact that can be used to create ETL applications.
 The artifact exposes a ``batchsource`` interface that it expects others to implement.
@@ -55,8 +55,8 @@ for databases, another for HDFS files, etc. To make plugins in one artifact avai
 another artifact, the plugin artifact must specify its parent artifacts. All of those parent artifacts
 will then be able to use those plugins. 
 
-.. rubric:: Deleting an Artifact
-
+Deleting an Artifact
+====================
 Though artifacts cannot be modified once deployed, they can be deleted. Artifact deletion is an advanced
 feature and is only meant to be used if there was some error deploying the artifact. When an artifact is
 deleted, any application that is configured to use the artifact will be unable to start their programs.
@@ -64,8 +64,8 @@ If a program is already running, it will be unaffected. If that running program 
 be able to start again until the artifact is replaced, or the application is updated to use another
 artifact.
 
-.. rubric:: System Artifacts
-
+System Artifacts
+================
 Normally an artifact is added to a specific namespace. Users in one namespace cannot see or use
 artifacts in another namespace. Sometimes there is a need to provide an artifact that can be used
 across namespaces. One example of this are the etl artifacts shipped with CDAP. In such scenarios,
@@ -101,8 +101,8 @@ of the cdap-etl-batch artifact. It also specifies that there is one plugin of ty
 ``mysql`` with class ``com.mysql.jdbc.Driver``. Once added, this system artifact would be usable by
 applications in all namespaces.
 
-.. rubric:: Example Use Case: Configurable Applications
-
+Example Use Case: Configurable Applications
+===========================================
 We will now walk through an example use case in order to illustrate how artifacts are used.
 In this example, we decide to implement an application class that reads from a stream and writes
 to a table using a flow. The stream that it reads from |---| and the table that it writes to |---| will be configurable.

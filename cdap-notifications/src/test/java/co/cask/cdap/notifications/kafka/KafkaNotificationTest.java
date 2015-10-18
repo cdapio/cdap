@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.KafkaConstants;
 import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.notifications.NotificationTest;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
@@ -38,6 +39,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -86,8 +89,32 @@ public class KafkaNotificationTest extends NotificationTest {
     // TODO remove once Twill addLatest bug is fixed
     feedManager.createFeed(FEED1);
     feedManager.createFeed(FEED2);
-    getNotificationService().publish(FEED1, "test").get();
-    getNotificationService().publish(FEED2, "test").get();
+
+    // Try to publish to the feeds. Needs to retry multiple times due to race between Kafka server registers itself
+    // to ZK and the publisher be able to see the changes in the ZK to get the broker list
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        try {
+          getNotificationService().publish(FEED1, "test").get();
+          return true;
+        } catch (Throwable t) {
+          return false;
+        }
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        try {
+          getNotificationService().publish(FEED2, "test").get();
+          return true;
+        } catch (Throwable t) {
+          return false;
+        }
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
     feedManager.deleteFeed(FEED1);
     feedManager.deleteFeed(FEED2);
   }

@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.common.MockEmitter;
+import co.cask.cdap.etl.common.MockMetrics;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
@@ -43,15 +44,18 @@ public class ScriptFilterTransformTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidFilter() throws Exception {
     ScriptFilterTransform.ScriptFilterConfig config = new ScriptFilterTransform.ScriptFilterConfig();
-    config.script = "function shouldFilter(input) { return 'foobar'; }";
+    config.script =
+      "function shouldFilter(input, context) { context.getMetrics.count(\"invalid\", 1); return 'foobar'; }";
     Transform transform = new ScriptFilterTransform(config);
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.<String, String>of());
+    MockMetrics metrics = new MockMetrics();
+    TransformContext transformContext = new MockTransformContext(ImmutableMap.<String, String>of(), metrics);
     transform.initialize(transformContext);
 
     Schema schema = Schema.recordOf("number", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     StructuredRecord input = StructuredRecord.builder(schema).set("x", 1).build();
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
+    Assert.assertEquals(1, metrics.getCount("invalid"));
   }
 
   @Test
