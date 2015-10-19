@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginConfigurer;
@@ -26,7 +27,7 @@ import co.cask.cdap.api.plugin.PluginProperties;
  * Context passed to ETL stages.
  */
 @Beta
-public interface TransformContext {
+public interface TransformContext extends DatasetContext {
 
   /**
    * Gets the {@link PluginProperties} associated with the stage.

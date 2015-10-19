@@ -28,7 +28,7 @@ public class WorkerRealtimeContext extends RealtimeTransformContext implements R
   private final WorkerContext context;
 
   public WorkerRealtimeContext(WorkerContext context, Metrics metrics, String pluginPrefix) {
-    super(context, metrics, pluginPrefix);
+    super(context, metrics, pluginPrefix, null);
     this.context = context;
   }
 
