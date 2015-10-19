@@ -42,7 +42,6 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -177,7 +176,9 @@ public abstract class DatasetServiceTestBase {
       new InMemoryDatasetOpExecutor(dsFramework),
       exploreFacade,
       cConf,
-      new UsageRegistry(txExecutorFactory, dsFramework));
+      txExecutorFactory,
+      registryFactory);
+
     service = new DatasetService(cConf,
                                  namespacedLocationFactory,
                                  discoveryService,

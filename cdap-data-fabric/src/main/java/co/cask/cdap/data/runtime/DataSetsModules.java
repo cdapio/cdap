@@ -18,6 +18,8 @@ package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.runtime.RuntimeModule;
+import co.cask.cdap.data2.datafabric.dataset.DatasetProvider;
+import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetProvider;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -43,6 +45,10 @@ public class DataSetsModules extends RuntimeModule {
                   .build(DatasetDefinitionRegistryFactory.class));
         bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
         expose(DatasetFramework.class);
+
+        bind(DatasetProvider.class)
+          .to(DefaultDatasetProvider.class);
+        expose(DatasetProvider.class);
       }
     };
   }
@@ -57,6 +63,10 @@ public class DataSetsModules extends RuntimeModule {
                   .build(DatasetDefinitionRegistryFactory.class));
         bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
         expose(DatasetFramework.class);
+
+        bind(DatasetProvider.class)
+          .to(DefaultDatasetProvider.class);
+        expose(DatasetProvider.class);
       }
     };
 
@@ -72,6 +82,10 @@ public class DataSetsModules extends RuntimeModule {
                   .build(DatasetDefinitionRegistryFactory.class));
         bind(DatasetFramework.class).to(RemoteDatasetFramework.class);
         expose(DatasetFramework.class);
+
+        bind(DatasetProvider.class)
+          .to(DefaultDatasetProvider.class);
+        expose(DatasetProvider.class);
       }
     };
   }
