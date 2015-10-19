@@ -20,10 +20,13 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.source.KVTableSource;
+import com.google.common.base.Preconditions;
 
 /**
  * Test Batch Source that writes to a table in {@link BatchSource#prepareRun} and {@link BatchSource#onRunFinish}.
@@ -43,6 +46,13 @@ public class MetaKVTableSource extends KVTableSource {
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     super.configurePipeline(pipelineConfigurer);
     pipelineConfigurer.createDataset(META_TABLE, KeyValueTable.class, DatasetProperties.EMPTY);
+  }
+
+  @Override
+  public void initialize(BatchRuntimeContext context) throws Exception {
+    super.initialize(context);
+    Preconditions.checkArgument(context.getOriginalContext() instanceof MapReduceTaskContext,
+                                "Expected the original context to be an instance of MapReduceTaskContext");
   }
 
   @Override

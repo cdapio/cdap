@@ -47,6 +47,13 @@ public interface BatchRuntimeContext<T> extends DatasetContext, TransformContext
    */
   Map<String, String> getRuntimeArguments();
 
-  T getOriginalContext();
+  /**
+   * Returns the processing framework's context, to enable advanced use-cases in plugins.
+   * E.g. this method could give access to the {@link MapReduceTaskContext} for pipelines that use
+   * MapReduce as the processing framework.
+   *
+   * @return the processing framework context
+   */
 
+  T getOriginalContext();
 }

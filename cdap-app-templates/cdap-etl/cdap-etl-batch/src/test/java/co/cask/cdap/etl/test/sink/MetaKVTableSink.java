@@ -20,10 +20,13 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.batch.sink.KVTableSink;
+import com.google.common.base.Preconditions;
 
 /**
  * Test Batch Sink that writes to a table in {@link BatchSink#prepareRun} and {@link BatchSink#onRunFinish}.
@@ -50,6 +53,14 @@ public class MetaKVTableSink extends KVTableSink {
     super.prepareRun(context);
     KeyValueTable table = context.getDataset(META_TABLE);
     table.write(PREPARE_RUN_KEY, PREPARE_RUN_KEY);
+  }
+
+  @Override
+  public void initialize(BatchRuntimeContext context) throws Exception {
+    super.initialize(context);
+    Preconditions.checkArgument(context.getOriginalContext() instanceof MapReduceTaskContext,
+                                "Expected the original context to be an instance of MapReduceTaskContext");
+
   }
 
   @Override
