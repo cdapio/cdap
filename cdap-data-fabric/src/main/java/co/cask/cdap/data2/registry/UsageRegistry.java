@@ -18,7 +18,6 @@ package co.cask.cdap.data2.registry;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.data2.datafabric.dataset.DatasetProvider;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -26,7 +25,6 @@ import co.cask.cdap.data2.dataset2.tx.Transactional;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
@@ -54,22 +52,14 @@ public class UsageRegistry {
   private final Transactional<UsageDatasetIterable, UsageDataset> txnl;
 
   @Inject
-  public UsageRegistry(TransactionExecutorFactory txExecutorFactory,
-                       final DatasetProvider provider,
-                       final DatasetFramework framework) {
+  public UsageRegistry(TransactionExecutorFactory txExecutorFactory, final DatasetFramework datasetFramework) {
     txnl = Transactional.of(txExecutorFactory, new Supplier<UsageDatasetIterable>() {
       @Override
       public UsageDatasetIterable get() {
         try {
-          Object usageDataset = provider.get(USAGE_INSTANCE_ID, null, null);
-          if (usageDataset == null) {
-            // use DatasetFramework only to create
-            DatasetsUtil.createIfNotExists(framework, USAGE_INSTANCE_ID,
-                                           UsageDataset.class.getSimpleName(), DatasetProperties.EMPTY);
-            usageDataset = Preconditions.checkNotNull(provider.get(USAGE_INSTANCE_ID, null, null),
-                                                      "Couldn't create usage registry dataset");
-          }
-
+          Object usageDataset = DatasetsUtil.getOrCreateDataset(datasetFramework, USAGE_INSTANCE_ID,
+                                                                UsageDataset.class.getSimpleName(),
+                                                                DatasetProperties.EMPTY, null, null);
           // Backward compatible check for version <= 3.0.0
           if (usageDataset instanceof UsageDataset) {
             return new UsageDatasetIterable((UsageDataset) usageDataset);

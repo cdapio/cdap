@@ -32,7 +32,6 @@ import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
-import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
@@ -73,7 +72,6 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -151,21 +149,6 @@ public class UpgradeTool {
       new LocationRuntimeModule().getDistributedModules(),
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      Modules.override(new DataSetsModules().getDistributedModules()).with(
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
-            install(new FactoryModuleBuilder()
-                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                      .build(DatasetDefinitionRegistryFactory.class));
-            // Upgrade tool does not need to record lineage for now.
-            bind(LineageWriter.class).to(NoOpLineageWriter.class);
-            // No need to do anything with Metadata store for now.
-            bind(BusinessMetadataStore.class).to(NoOpBusinessMetadataStore.class);
-          }
-        }
-      ),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
@@ -185,8 +168,17 @@ public class UpgradeTool {
           // the DataFabricDistributedModule needs MetricsCollectionService binding and since Upgrade tool does not do
           // anything with Metrics we just bind it to NoOpMetricsCollectionService
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
+          install(new FactoryModuleBuilder()
+                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                    .build(DatasetDefinitionRegistryFactory.class));
+
           bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
           bind(MetricStore.class).to(DefaultMetricStore.class);
+          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+          // Upgrade tool does not need to record lineage for now.
+          bind(LineageWriter.class).to(NoOpLineageWriter.class);
+          // No need to do anything with Metadata store for now.
+          bind(BusinessMetadataStore.class).to(NoOpBusinessMetadataStore.class);
         }
 
         @Provides
