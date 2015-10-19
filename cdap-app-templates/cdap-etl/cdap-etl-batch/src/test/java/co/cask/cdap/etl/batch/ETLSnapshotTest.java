@@ -133,32 +133,41 @@ public class ETLSnapshotTest extends BaseETLBatchTest {
       Assert.assertEquals(expected, actual);
     }
 
-    // run another pipeline that uses one of the outputs as a source
-    source = new ETLStage("SnapshotAvro", ImmutableMap.<String, String>builder()
-      .put(Properties.Table.NAME, "testAvro")
+    // test snapshot sources
+    testSource("SnapshotAvro", "testAvro", expected);
+    testSource("SnapshotParquet", "testParquet", expected);
+  }
+
+  // deploys a pipeline that reads using a snapshot source and checks that it writes the expected records.
+  private void testSource(String sourcePlugin, String sourceName, Map<String, Integer> expected) throws Exception {
+    // run another pipeline that reads from avro dataset
+    ETLStage source = new ETLStage(sourcePlugin, ImmutableMap.<String, String>builder()
+      .put(Properties.Table.NAME, sourceName)
       .put(Properties.Table.PROPERTY_SCHEMA, SCHEMA.toString())
       .put(Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
       .build());
 
+    String outputName = sourceName + "Output";
     ETLStage sink = new ETLStage("SnapshotAvro", ImmutableMap.<String, String>builder()
-      .put(Properties.SnapshotFileSetSink.NAME, "testAvro2")
+      .put(Properties.SnapshotFileSetSink.NAME, outputName)
       .put("schema", SCHEMA.toString())
       .build());
 
-    sinks = ImmutableList.of(sink);
-    etlConfig = new ETLBatchConfig("* * * * *", source, sinks, transforms,
+    List<ETLStage> transforms = ImmutableList.of();
+    List<ETLStage> sinks = ImmutableList.of(sink);
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sinks, transforms,
       new Resources(), Lists.<ETLStage>newArrayList());
 
-    appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
-    appId = Id.Application.from(Id.Namespace.DEFAULT, "snapshotSinkTest2");
-    appManager = deployApplication(appId, appRequest);
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "snapshotSinkTest2");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // run the pipeline, should see the 2nd state of the table
-    mrManager = appManager.getMapReduceManager("ETLMapReduce");
+    MapReduceManager mrManager = appManager.getMapReduceManager("ETLMapReduce");
     mrManager.start();
     mrManager.waitForFinish(5, TimeUnit.MINUTES);
 
-    DataSetManager<PartitionedFileSet> output = getDataset("testAvro2");
+    DataSetManager<PartitionedFileSet> output = getDataset(outputName);
     Location partitionLocation = new SnapshotFileSet(output.get()).getLocation();
     Map<String, Integer> actual = readOutput(partitionLocation);
     Assert.assertEquals(expected, actual);
