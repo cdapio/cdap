@@ -19,6 +19,7 @@
         ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-form.html'">
   </div>
   <div class="bottompanel-body" ng-if="!isValidPlugin">
-    <p>Please select a plugin to edit configuration.</p>
+    <p ng-if="$state.includes('hydrator.create.studio')">Please select a plugin to edit configuration.</p>
+    <p ng-if="$state.includes('hydrator.detail')">Please select a plugin to view configuration.</p>
   </div>
 </div>
