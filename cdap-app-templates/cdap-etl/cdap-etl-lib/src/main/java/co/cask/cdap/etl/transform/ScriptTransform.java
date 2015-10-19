@@ -120,7 +120,7 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
       StructuredRecord output = decodeRecord(scriptOutput, schema == null ? input.getSchema() : schema);
       emitter.emit(output);
     } catch (Exception e) {
-      throw new IllegalArgumentException("Could not transform input: " + e.getMessage(), e);
+      throw new IllegalArgumentException("Could not transform input: " + input, e);
     }
   }
 
@@ -153,7 +153,7 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
         return decodeUnion(object, schema.getUnionSchemas());
     }
 
-    throw new RuntimeException("Unable decode object with schema " + schema);
+    throw new RuntimeException("Unable to decode object with schema: " + schema);
   }
 
   private StructuredRecord decodeRecord(Map nativeObject, Schema schema) {
@@ -196,7 +196,7 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
       case STRING:
         return (String) object;
     }
-    throw new RuntimeException("Unable decode object with schema " + schema);
+    throw new RuntimeException("Unable decode object with schema: " + schema);
   }
 
   private Map<Object, Object> decodeMap(Map<Object, Object> object, Schema keySchema, Schema valSchema) {

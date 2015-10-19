@@ -102,7 +102,7 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
         metrics.count("filtered", 1);
       }
     } catch (Exception e) {
-      throw new IllegalArgumentException("Invalid filter condition.", e);
+      throw new IllegalArgumentException("Could not transform input: " + input, e);
     }
   }
 
