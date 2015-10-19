@@ -19,7 +19,6 @@
 @import '../../styles/themes/cdap/mixins.less';
 
 body.theme-cdap.state-hydrator {
-
   &.state-hydrator-detail {
     div.console {
       min-height: 60vh;
@@ -34,20 +33,60 @@ body.theme-cdap.state-hydrator {
     background-color: white;
     position: relative;
     width: 100%;
-    .transition(all 0.2s ease);
-   // Console height is 40% on larger screen
-    min-height: 40vh;
+    min-height: ~"-moz-calc(40vh - 113px)";
+    min-height: ~"-webkit-calc(40vh - 113px)";
+    min-height: ~"calc(40vh - 113px)";
     @media (min-height: 800px) {
-      min-height: 60vh;
+      min-height: ~"-moz-calc(60vh - 113px)";
+      min-height: ~"-webkit-calc(60vh - 113px)";
+      min-height: ~"calc(60vh - 113px)";
     }
-    &.collapsed {
-      left: 130px;
+    .transition(all 0.2s ease);
+
+    // Styling for minimized bottom panel
+    &.minimized {
+      position: fixed;
+      right: 0;
+      bottom: 53px;
+      min-height: 0;
+      z-index: 1025;
+
+      .console-type {
+        display: none;
+        height: 0;
+        min-height: 0;
+      }
+    }
+    // Styling for maximized bottom panel
+    &.maximized {
+      position: fixed;
+      top: 120px;
+      right: 0;
+      left: 0;
+      bottom: 53px;
+      overflow-y: scroll;
+      overflow-x: hidden;
+      z-index: 9999;
     }
   }
+  // When bottom panel is in minimized state, set width based on left panel state
+  div.left-panel-wrapper {
+    + .right-wrapper div.console:not(.maximized) {
+      width: ~"-moz-calc(100vw - 130px)";
+      width: ~"-webkit-calc(100vw - 130px)";
+      width: ~"calc(100vw - 130px)";
+    }
+    &.expanded + .right-wrapper div.console:not(.maximized) {
+      width: ~"-moz-calc(100vw - 290px)";
+      width: ~"-webkit-calc(100vw - 290px)";
+      width: ~"calc(100vw - 290px)";
+    }
+  }
+
   div.console-tabs {
     background-color: @body-bg;
     border-top: 1px solid @table-border-color;
-    height: 40px;
+    position: relative;
     ul.nav-tabs {
       border-bottom: 0;
       li {
@@ -70,6 +109,24 @@ body.theme-cdap.state-hydrator {
         }
         &.active {
           border-bottom: 2px solid @cdap-orange;
+        }
+        .badge {
+          display: inline;
+          margin-left: 5px;
+        }
+      }
+    }
+    > div {
+      margin: 0 10px;
+      a {
+        color: @brand-primary;
+        cursor: default;
+        display: inline-block;
+        padding: 10px;
+        .transition(all 0.2s ease);
+        &:hover, &:focus {
+          color: @cdap-orange;
+          cursor: pointer;
         }
       }
     }
@@ -398,9 +455,6 @@ body.theme-cdap.state-hydrator {
     }
     .console-wrapper {
       padding: 10px 0;
-      div.btn {
-        margin: 0 0 5px 20px;
-      }
     }
     pre {
       background-color: transparent;
@@ -415,6 +469,10 @@ body.theme-cdap.state-hydrator {
         margin-bottom: 10px;
       }
     }
+  }
+  // Place bottom panel tooltips (Minimize, Maximize, etc.) at the top of the stacking order
+  .tooltip.tooltip-pane {
+    z-index: 9999;
   }
   footer {
     // Creates a bottom border for the bottom panel, needed here in order to accommodate the single scroll

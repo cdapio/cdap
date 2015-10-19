@@ -14,17 +14,55 @@
   the License.
 -->
 
-<div class="console" ng-class="{'collapsed': isExpanded}">
+<div class="console" ng-class="{'minimized': isCollapsed, 'maximized': isMaximized}">
   <div class="console-tabs clearfix">
     <ul class="nav nav-tabs pull-left" role="tablist">
       <li ng-repeat="tab in tabs"
-          ng-click="selectTab(tab, true)"
+          ng-click="selectTab(tab, true); collapsedTabClick()"
           ng-class="{'active': tab.title == activeTab.title}"
           role="presentation"
           data-toggle="tab">
           {{ tab.title }}
+          <span ng-if="tab.title === 'Console' && errorCount">
+            <span class="badge">{{errorCount}}</span>
+          </span>
       </li>
     </ul>
+    <div class="btn-group pull-right">
+      <a ng-click="collapseToggle()">
+        <span ng-if="!isCollapsed"
+              class="fa fa-minus"
+              tooltip="Minimize"
+              tooltip-class="tooltip-pane"
+              tooltip-placement="top"
+              tooltip-append-to-body="true">
+        </span>
+        <span ng-if="isCollapsed"
+              class="fa fa-expand"
+              tooltip="Grow"
+              tooltip-class="tooltip-pane"
+              tooltip-placement="top"
+              tooltip-append-to-body="true">
+        </span>
+      </a>
+      <a ng-click="fullScreenToggle()">
+        <span ng-if="!isMaximized"
+              class="fa fa-arrows-alt"
+              tooltip="Maximize"
+              tooltip-class="tooltip-pane"
+              tooltip-placement="top"
+              tooltip-append-to-body="true">
+        </span>
+        <span ng-if="isMaximized"
+              class="fa fa-compress"
+              tooltip="Shrink"
+              tooltip-class="tooltip-pane"
+              tooltip-placement="top"
+              tooltip-append-to-body="true">
+        </span>
+      </a>
+    </div>
+
   </div>
   <div class="console-type">
     <div ng-repeat="tab in tabs"

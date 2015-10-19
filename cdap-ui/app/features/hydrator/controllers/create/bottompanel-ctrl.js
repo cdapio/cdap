@@ -24,8 +24,10 @@ angular.module(PKG.name + '.feature.hydrator')
     // Expand and collapse of the sidebar resizes the main container natively.
     MySidebarService.registerIsExpandedCallback(isExpanded.bind(this));
 
+
     function showConsoleTab(errors) {
       if (errors.canvas && errors.canvas.length) {
+        $scope.errorCount = errors.canvas.length;
         errors.canvas.forEach(function(err) {
           MyConsoleTabService.addMessage({
             type: 'error',
@@ -52,6 +54,26 @@ angular.module(PKG.name + '.feature.hydrator')
     function isExpanded(value) {
       $scope.isExpanded = !value;
     }
+
+    $scope.isCollapsed = false;
+
+    $scope.collapseToggle = function() {
+      $scope.isMaximized = false;
+      $scope.isCollapsed = !$scope.isCollapsed;
+    };
+
+    $scope.isMaximized = false;
+
+    $scope.fullScreenToggle = function() {
+      $scope.isCollapsed = false;
+      $scope.isMaximized = !$scope.isMaximized;
+    };
+
+    $scope.collapsedTabClick = function() {
+      if($scope.isCollapsed) {
+        $scope.isCollapsed = false;
+      }
+    };
 
     $scope.tabs = [
       {
