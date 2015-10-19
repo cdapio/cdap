@@ -192,7 +192,7 @@ public class ETLWorker extends AbstractWorker {
   @SuppressWarnings("unchecked")
   private void initializeSinks(WorkerContext context) throws Exception {
     List<SinkInfo> sinkInfos = GSON.fromJson(context.getSpecification().getProperty(Constants.Sink.PLUGINIDS),
-                                                 SINK_INFO_TYPE);
+                                             SINK_INFO_TYPE);
     sinks = Lists.newArrayListWithCapacity(sinkInfos.size());
 
     for (SinkInfo sinkInfo : sinkInfos) {
@@ -205,7 +205,7 @@ public class ETLWorker extends AbstractWorker {
     }
   }
 
-  private List<TransformDetail> initializeTransforms(WorkerContext context) throws Exception {
+  private List<TransformDetail> initializeTransforms(final WorkerContext context) throws Exception {
     List<TransformInfo> transformInfos =
       GSON.fromJson(context.getSpecification().getProperty(Constants.Transform.PLUGINIDS), TRANSFORMDETAILS_LIST_TYPE);
     Preconditions.checkArgument(transformInfos != null);
@@ -213,12 +213,18 @@ public class ETLWorker extends AbstractWorker {
     tranformIdToDatasetName = new HashMap<>(transformInfos.size());
 
     for (int i = 0; i < transformInfos.size(); i++) {
-      String transformId = transformInfos.get(i).getTransformId();
+      final String transformId = transformInfos.get(i).getTransformId();
       try {
-        Transform transform = context.newPluginInstance(transformId);
-        RealtimeTransformContext transformContext = new RealtimeTransformContext(context, metrics, transformId);
+        final Transform transform = context.newPluginInstance(transformId);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
-        transform.initialize(transformContext);
+        getContext().execute(new TxRunnable() {
+          @Override
+          public void run(DatasetContext datasetContext) throws Exception {
+            final RealtimeTransformContext transformContext = new RealtimeTransformContext(
+              context, metrics, transformId, datasetContext);
+            transform.initialize(transformContext);
+          }
+        });
         StageMetrics stageMetrics = new StageMetrics(metrics, PluginID.from(transformId));
         transformDetailList.add(new TransformDetail(transformId, transform, stageMetrics));
         if (transformInfos.get(i).getErrorDatasetName() != null) {
@@ -238,7 +244,7 @@ public class ETLWorker extends AbstractWorker {
     final SourceState nextState = new SourceState();
     final List<Object> dataToSink = Lists.newArrayList();
     final Map<String, List<InvalidEntry>> transformIdToErrorRecords = intializeTransformIdToErrorsList();
-    Set<String> transformErrorsWithoutDataset = Sets.newHashSet();
+    final Set<String> transformErrorsWithoutDataset = Sets.newHashSet();
     // Fetch SourceState from State Table.
     // Only required at the beginning since we persist the state if there is a change.
     getContext().execute(new TxRunnable() {
@@ -267,33 +273,38 @@ public class ETLWorker extends AbstractWorker {
         continue;
       }
 
-      // For each object emitted by the source, invoke the transformExecutor and collect all the data
-      // to be persisted in the sink.
-      for (Object sourceData : sourceEmitter) {
-        try {
-          TransformResponse transformResponse = transformExecutor.runOneIteration(sourceData);
-          while (transformResponse.getEmittedRecords().hasNext()) {
-            dataToSink.add(transformResponse.getEmittedRecords().next());
-          }
-
-          Map<String, Collection<InvalidEntry>> entryMap = transformResponse.getMapTransformIdToErrorEmitter();
-
-          for (Map.Entry<String, Collection<InvalidEntry>> entry : entryMap.entrySet()) {
-            String transformId = entry.getKey();
-            if (!tranformIdToDatasetName.containsKey(transformId)) {
-              if (!transformErrorsWithoutDataset.contains(transformId)) {
-                LOG.warn("Error records were emitted in transform {}, " +
-                           "but error dataset is not configured for this transform", transformId);
+      getContext().execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          // For each object emitted by the source, invoke the transformExecutor and collect all the data
+          // to be persisted in the sink.
+          for (Object sourceData : sourceEmitter) {
+            try {
+              TransformResponse transformResponse = transformExecutor.runOneIteration(sourceData);
+              while (transformResponse.getEmittedRecords().hasNext()) {
+                dataToSink.add(transformResponse.getEmittedRecords().next());
               }
-              continue;
+
+              Map<String, Collection<InvalidEntry>> entryMap = transformResponse.getMapTransformIdToErrorEmitter();
+
+              for (Map.Entry<String, Collection<InvalidEntry>> entry : entryMap.entrySet()) {
+                String transformId = entry.getKey();
+                if (!tranformIdToDatasetName.containsKey(transformId)) {
+                  if (!transformErrorsWithoutDataset.contains(transformId)) {
+                    LOG.warn("Error records were emitted in transform {}, " +
+                               "but error dataset is not configured for this transform", transformId);
+                  }
+                  continue;
+                }
+                transformIdToErrorRecords.get(transformId).addAll(entry.getValue());
+              }
+            } catch (Exception e) {
+              LOG.warn("Exception thrown while processing data {}", sourceData, e);
             }
-            transformIdToErrorRecords.get(transformId).addAll(entry.getValue());
           }
-        } catch (Exception e) {
-          LOG.warn("Exception thrown while processing data {}", sourceData, e);
+          sourceEmitter.reset();
         }
-      }
-      sourceEmitter.reset();
+      });
 
       // Start a Transaction if there is data to persist or if the Source state has changed.
       try {

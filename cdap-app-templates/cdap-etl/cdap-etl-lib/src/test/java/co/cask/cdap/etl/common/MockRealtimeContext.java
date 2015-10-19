@@ -16,6 +16,8 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
@@ -74,6 +76,17 @@ public class MockRealtimeContext implements RealtimeContext {
 
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    return null;
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
+    return null;
+  }
+
+  @Override
+  public <T extends Dataset> T getDataset(String name,
+                                          Map<String, String> arguments) throws DatasetInstantiationException {
     return null;
   }
 }
