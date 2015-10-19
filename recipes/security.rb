@@ -49,22 +49,24 @@ execute 'create-security-server-ssl-keystore' do
       false
     end
 
-  password = node['cdap']['cdap_site']['security.server.ssl.keystore.password']
-  keypass =
-    if node['cdap']['cdap_site'].key?('security.server.ssl.keystore.keypassword')
-      node['cdap']['cdap_site']['security.server.ssl.keystore.keypassword']
-    else
-      node['cdap']['cdap_site']['security.server.ssl.keystore.password']
-    end
-  path = node['cdap']['cdap_site']['security.server.ssl.keystore.path']
-  common_name = node['cdap']['security']['ssl_common_name']
-  jks =
-    if node['cdap']['cdap_site'].key?('security.server.ssl.keystore.type') &&
-       node['cdap']['cdap_site']['security.server.ssl.keystore.type'] != 'JKS'
-      false
-    else
-      true
-    end
+  if ssl_enabled.to_s == 'true'
+    password = node['cdap']['cdap_security']['security.server.ssl.keystore.password']
+    keypass =
+      if node['cdap']['cdap_security'].key?('security.server.ssl.keystore.keypassword')
+        node['cdap']['cdap_security']['security.server.ssl.keystore.keypassword']
+      else
+        node['cdap']['cdap_security']['security.server.ssl.keystore.password']
+      end
+    path = node['cdap']['cdap_security']['security.server.ssl.keystore.path']
+    common_name = node['cdap']['security']['ssl_common_name']
+    jks =
+      if node['cdap']['cdap_security'].key?('security.server.ssl.keystore.type') &&
+         node['cdap']['cdap_security']['security.server.ssl.keystore.type'] != 'JKS'
+        false
+      else
+        true
+      end
+  end
 
   command "keytool -genkey -noprompt -alias ext-auth -keysize 2048 -keyalg RSA -keystore #{path} -storepass #{password} -keypass #{keypass} -dname 'CN=#{common_name}, OU=cdap, O=cdap, L=Palo Alto, ST=CA, C=US'"
   not_if { ::File.exist?(path.to_s) }
