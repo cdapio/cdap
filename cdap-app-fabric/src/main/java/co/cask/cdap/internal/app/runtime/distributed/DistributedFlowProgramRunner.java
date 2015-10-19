@@ -42,6 +42,7 @@ import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,10 +60,10 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
-  DistributedFlowProgramRunner(TwillRunner twillRunner, Configuration hConfig,
+  DistributedFlowProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory, Configuration hConfig,
                                CConfiguration cConfig, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                TransactionExecutorFactory txExecutorFactory) {
-    super(twillRunner, hConfig, cConfig);
+    super(twillRunner, locationFactory, hConfig, cConfig);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;

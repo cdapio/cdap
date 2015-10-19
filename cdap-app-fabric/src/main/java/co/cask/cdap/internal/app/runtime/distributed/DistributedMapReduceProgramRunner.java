@@ -33,6 +33,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,8 +49,9 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
   private static final Logger LOG = LoggerFactory.getLogger(DistributedMapReduceProgramRunner.class);
 
   @Inject
-  public DistributedMapReduceProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
-    super(twillRunner, hConf, cConf);
+  public DistributedMapReduceProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
+                                           Configuration hConf, CConfiguration cConf) {
+    super(twillRunner, locationFactory, hConf, cConf);
   }
 
   @Override
