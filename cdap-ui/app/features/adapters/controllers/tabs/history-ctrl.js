@@ -27,7 +27,7 @@ angular.module(PKG.name + '.feature.adapters')
 
     $scope.programType = AdapterDetail.programType;
 
-    AdapterDetail.api.runs(params)
+    AdapterDetail.api.pollRuns(params)
       .$promise
       .then(function (res) {
         $scope.runsHistory = res;
