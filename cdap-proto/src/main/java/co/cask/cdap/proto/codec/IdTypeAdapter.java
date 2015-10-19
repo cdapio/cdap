@@ -17,8 +17,8 @@
 package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.element.ElementType;
-import co.cask.cdap.proto.id.ElementId;
+import co.cask.cdap.proto.element.EntityType;
+import co.cask.cdap.proto.id.EntityId;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
@@ -31,7 +31,7 @@ import java.lang.reflect.Type;
 
 /**
  * Class for serialize/deserialize Id object to/from json through {@link com.google.gson.Gson Gson}.
- * Uses {@link ElementId} as the actual object to be serialized and deserialized.
+ * Uses {@link EntityId} as the actual object to be serialized and deserialized.
  */
 public final class IdTypeAdapter implements JsonSerializer<Id>, JsonDeserializer<Id> {
 
@@ -45,7 +45,7 @@ public final class IdTypeAdapter implements JsonSerializer<Id>, JsonDeserializer
     }
 
     String elementTypeString = elementTypeJson.getAsString();
-    ElementType type = ElementType.valueOf(elementTypeString);
+    EntityType type = EntityType.valueOf(elementTypeString);
     if (type == null) {
       throw new JsonParseException("Invalid elementType: " + elementTypeString);
     }
@@ -55,6 +55,6 @@ public final class IdTypeAdapter implements JsonSerializer<Id>, JsonDeserializer
 
   @Override
   public JsonElement serialize(Id src, Type typeOfSrc, JsonSerializationContext context) {
-    return context.serialize(src.toElementId());
+    return context.serialize(src.toEntityId());
   }
 }

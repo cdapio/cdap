@@ -16,7 +16,7 @@
 package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.element.ElementType;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Iterator;
@@ -25,14 +25,14 @@ import java.util.Objects;
 /**
  * Uniquely identifies an artifact.
  */
-// TODO: handle duplication with ArtifactId
-public class NamespacedArtifactId extends ElementId implements NamespacedId, ParentedId<NamespaceId> {
+// TODO: handle duplication with ArtifactId in cdap-api
+public class NamespacedArtifactId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
   private final String namespace;
   private final String artifact;
   private final String version;
 
   public NamespacedArtifactId(String namespace, String artifact, String version) {
-    super(ElementType.ARTIFACT);
+    super(EntityType.ARTIFACT);
     this.namespace = namespace;
     this.artifact = artifact;
     this.version = version;
@@ -90,6 +90,6 @@ public class NamespacedArtifactId extends ElementId implements NamespacedId, Par
   }
 
   public static NamespacedArtifactId fromString(String string) {
-    return ElementId.fromString(string, NamespacedArtifactId.class);
+    return EntityId.fromString(string, NamespacedArtifactId.class);
   }
 }

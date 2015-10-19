@@ -20,7 +20,7 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.ElementId;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.FlowletQueueId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -44,9 +44,9 @@ import java.util.Map;
 /**
  * Represents a type of CDAP element. E.g. namespace, application, datasets, streams.
  */
-// TODO: remove duplication with ElementType in cdap-cli
+// TODO: remove duplication with EntityType in cdap-cli
 @SuppressWarnings("unchecked")
-public enum ElementType {
+public enum EntityType {
 
   NAMESPACE(NamespaceId.class, Id.Namespace.class),
   APPLICATION(ApplicationId.class, Id.Application.class),
@@ -68,12 +68,12 @@ public enum ElementType {
   QUERY(QueryId.class, Id.QueryHandle.class),
   SYSTEM_SERVICE(SystemServiceId.class, Id.SystemService.class);
 
-  private static final Map<Class<? extends ElementId>, ElementType> byIdClass;
-  private static final Map<Class<? extends Id>, ElementType> byOldIdClass;
+  private static final Map<Class<? extends EntityId>, EntityType> byIdClass;
+  private static final Map<Class<? extends Id>, EntityType> byOldIdClass;
   static {
-    ImmutableMap.Builder<Class<? extends ElementId>, ElementType> builder = ImmutableMap.builder();
-    ImmutableMap.Builder<Class<? extends Id>, ElementType> builderOld = ImmutableMap.builder();
-    for (ElementType type : ElementType.values()) {
+    ImmutableMap.Builder<Class<? extends EntityId>, EntityType> builder = ImmutableMap.builder();
+    ImmutableMap.Builder<Class<? extends Id>, EntityType> builderOld = ImmutableMap.builder();
+    for (EntityType type : EntityType.values()) {
       builder.put(type.getIdClass(), type);
       builderOld.put(type.getOldIdClass(), type);
     }
@@ -81,22 +81,22 @@ public enum ElementType {
     byOldIdClass = builderOld.build();
   }
 
-  private final Class<? extends ElementId> idClass;
+  private final Class<? extends EntityId> idClass;
   private final Class<? extends Id> oldIdClass;
   private final MethodHandle fromIdParts;
 
-  ElementType(Class<? extends ElementId> idClass, Class<? extends Id> oldIdClass) {
+  EntityType(Class<? extends EntityId> idClass, Class<? extends Id> oldIdClass) {
     this.idClass = idClass;
     this.oldIdClass = oldIdClass;
     try {
       this.fromIdParts = MethodHandles.lookup()
         .findStatic(idClass, "fromIdParts", MethodType.methodType(idClass, Iterable.class));
     } catch (NoSuchMethodException | IllegalAccessException e) {
-      throw new RuntimeException("Failed to initialize ElementType", e);
+      throw new RuntimeException("Failed to initialize EntityType", e);
     }
   }
 
-  public Class<? extends ElementId> getIdClass() {
+  public Class<? extends EntityId> getIdClass() {
     return idClass;
   }
 
@@ -104,21 +104,21 @@ public enum ElementType {
     return oldIdClass;
   }
 
-  public static ElementType valueOfIdClass(Class<? extends ElementId> idClass) {
+  public static EntityType valueOfIdClass(Class<? extends EntityId> idClass) {
     if (!byIdClass.containsKey(idClass)) {
-      throw new IllegalArgumentException("No ElementType registered for ID class: " + idClass.getName());
+      throw new IllegalArgumentException("No EntityType registered for ID class: " + idClass.getName());
     }
     return byIdClass.get(idClass);
   }
 
-  public static ElementType valueOfOldIdClass(Class<? extends Id> oldIdClass) {
+  public static EntityType valueOfOldIdClass(Class<? extends Id> oldIdClass) {
     if (!byOldIdClass.containsKey(oldIdClass)) {
-      throw new IllegalArgumentException("No ElementType registered for old ID class: " + oldIdClass.getName());
+      throw new IllegalArgumentException("No EntityType registered for old ID class: " + oldIdClass.getName());
     }
     return byOldIdClass.get(oldIdClass);
   }
 
-  public <T extends ElementId> T fromIdParts(Iterable<String> idParts) {
+  public <T extends EntityId> T fromIdParts(Iterable<String> idParts) {
     try {
       return (T) fromIdParts.invoke(idParts);
     } catch (Throwable t) {

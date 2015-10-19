@@ -16,7 +16,7 @@
 package co.cask.cdap.proto.id;
 
 /**
- * An {@link ElementId} which belongs to a namespace.
+ * An {@link EntityId} which belongs to a namespace.
  */
 public interface NamespacedId {
   String getNamespace();

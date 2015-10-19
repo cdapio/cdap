@@ -19,8 +19,11 @@ package co.cask.cdap.proto.id;
 import co.cask.cdap.proto.Id;
 
 /**
- * Compatibility from {@link Id} to {@link ElementId}.
+ * Compatibility from {@link Id} to {@link EntityId}.
  */
-public interface ElementIdCompatible {
-  ElementId toElementId();
+public interface EntityIdCompatible {
+  /**
+   * @return the {@link EntityId} corresponding to {@code this}
+   */
+  EntityId toEntityId();
 }
