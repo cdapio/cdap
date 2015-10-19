@@ -1,0 +1,25 @@
+my-search{
+  .search-box {
+    .input-group {
+      .input-group-btn {
+        &.dropdown-right {
+          border: 1px solid #eee;
+          border-radius: 0;
+          border-left: 0;
+
+          &:last-child{
+            > .btn {
+              margin-left: 0;
+            }
+            &:focus, &:active, &:hover {
+
+            }
+          }
+        }
+      }
+      .form-control {
+        border-right: 0;
+      }
+    }
+  }
+}

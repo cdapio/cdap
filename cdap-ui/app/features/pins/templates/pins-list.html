@@ -1,0 +1,44 @@
+<my-breadcrumbs data-hide-ns-dropdown="true"></my-breadcrumbs>
+<div class="row">
+  <div class="col-xs-12">
+    <div class="row">
+      <div class="clearfix">
+        <div class="col-xs-6">
+          <h2 class="pull-left">
+            <span>Pins</span>
+          </h2>
+        </div>
+        <div class="col-xs-4 h2 pull-right">
+          <div class="input-group">
+            <div class="input-group-addon">
+              <span class="fa fa-search"></span>
+            </div>
+            <input type="text"
+                name="searchPinsText"
+                ng-model="PinsListController.searchTxt"
+                cask-focus="searchPinsText"
+                class="form-control">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-xs-12">
+    <div gridster="PinsListController.gridsterOpts">
+      <a  class="btn btn-default"
+          gridster-item="tag"
+          ng-if="PinsListController.filteredPins.length > 0"
+          href="{{pin.href}}"
+          ng-repeat="pin in PinsListController.filteredPins = (PinsListController.pinsList | filter: PinsListController.searchTxt ) track by $index">
+          <span class="fa fa-thumb-tack"></span>
+          <span ng-bind="pin.label | myEllipsis: 10"
+                tooltip="{{pin.label}}"
+                tooltip-enable="pin.label.length > 10">
+          </span>
+      </a>
+      <div class="well well-xs text-center" ng-if="PinsListController.filteredPins.length === 0">
+        <h4>No Pins </h4>
+      </div>
+    </div>
+  </div>
+</div>

@@ -31,7 +31,8 @@ angular
       PKG.name+'.feature.foo',
       PKG.name+'.feature.hydrator',
       PKG.name+'.feature.explore',
-      PKG.name +'.feature.search'
+      PKG.name +'.feature.search',
+      PKG.name +'.feature.pins'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -323,6 +324,8 @@ angular
     $scope.onSearch = _.debounce(function(event) {
       if (event.keyCode === 70 && event.target.nodeName === 'BODY') {
         $state.go('search.list');
+      } else if (event.keyCode === 80 && event.target.nodeName === 'BODY') {
+        $state.go('pins.list');
       }
       console.info('pressed');
     }, 500);
