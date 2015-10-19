@@ -132,27 +132,55 @@ Aggregator.prototype.stopPollingAll = function() {
 Aggregator.prototype.pushConfiguration = function(resource) {
   var templateid = resource.templateid;
   var pluginid = resource.pluginid;
+  var configString;
   var config = {};
   var statusCode = 404;
-  var file;
+  var filePaths = [];
+  var isConfigSemanticsValid;
+  // Some times there might a plugin that is common across multiple templates
+  // in which case, this is stored within the common directory. So, if the
+  // template specific plugin check fails, then attempt to get it from common.
+  filePaths.push(
+    __dirname + '/../templates/' + templateid + '/' + pluginid + '.json',
+    __dirname + '/../templates/common/' + pluginid + '.json'
+  );
+  var i, paths = filePaths.length;
+  var fileFound = true;
 
-  try {
-    // Check if the configuration is present within the plugin for a template
-    file = __dirname + '/../templates/' + templateid + '/' + pluginid + '.json';
-    config = JSON.parse(fs.readFileSync(file, 'utf8'));
-    statusCode = 200;
-  } catch(e1) {
+  // Check if the configuration is present within the plugin for a template
+  for (i=0; i<paths; i++) {
     try {
-      // Some times there might a plugin that is common across multiple templates
-      // in which case, this is stored within the common directory. So, if the
-      // template specific plugin check fails, then attempt to get it from common.
-      file = __dirname + '/../templates/common/' + pluginid + '.json';
-      config = JSON.parse(fs.readFileSync(file, 'utf8'));
+      configString = fs.readFileSync(filePaths[i], 'utf8');
       statusCode = 200;
-    } catch (e2) {
-      log.debug('Unable to find template %s, plugin %s', templateid, pluginid);
+      fileFound = true;
+      break;
+    } catch(e) {
+      if (e.code === 'ENOENT') {
+        fileFound = false;
+      }
     }
   }
+  if (!fileFound) {
+    statusCode = 404;
+    config = 'NO_JSON_FOUND';
+  } else {
+    try {
+      config = JSON.parse(configString);
+      statusCode = 200;
+    } catch(e) {
+      statusCode = 500;
+      config = 'CONFIG_SYNTAX_JSON_ERROR';
+    }
+  }
+
+  if (statusCode === 200) {
+    isConfigSemanticsValid = validateSemanticsOfConfigJSON(config);
+    if (!isConfigSemanticsValid) {
+      statusCode = 500;
+      config = 'CONFIG_SEMANTICS_JSON_ERROR';
+    }
+  }
+
   this.connection.write(JSON.stringify({
     resource: resource,
     statusCode: statusCode,
@@ -160,6 +188,36 @@ Aggregator.prototype.pushConfiguration = function(resource) {
   }));
 };
 
+function validateSemanticsOfConfigJSON(config) {
+  var groups = config.groups.position;
+  var groupsMap = config.groups;
+  var i, j;
+  var isValid = true;
+  var fields, fieldsMap;
+
+  for (i=0; i<groups.length; i++) {
+    if (!groupsMap[groups[i]] || !isValid) {
+      isValid = false;
+      break;
+    }
+
+    fields = groupsMap[groups[i]].position;
+    fieldsMap = groupsMap[groups[i]].fields;
+
+    if (!fields || !fieldsMap) {
+      isValid = false;
+    } else {
+      for (j=0; j<fields.length; j++) {
+        if (!fieldsMap[fields[j]]) {
+          isValid = false;
+          break;
+        }
+      }
+    }
+  }
+
+  return isValid;
+}
 /**
  * Removes the resource id from the websocket connection local resource pool.
  */
