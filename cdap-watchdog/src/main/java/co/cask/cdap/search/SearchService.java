@@ -16,14 +16,12 @@
 
 package co.cask.cdap.search;
 
-import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.http.CommonNettyHttpServiceBuilder;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
-import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
@@ -32,9 +30,8 @@ import com.google.inject.Inject;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.elasticsearch.client.Client;
+import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
 import org.slf4j.Logger;
@@ -89,7 +86,9 @@ public class SearchService extends AbstractIdleService {
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.SEARCH));
 
-    node = NodeBuilder.nodeBuilder().build();
+    node =
+      NodeBuilder.nodeBuilder().settings(ImmutableSettings.settingsBuilder().put("http.cors.enabled", "true")).build();
+
     node.start();
     Client client = node.client();
 
