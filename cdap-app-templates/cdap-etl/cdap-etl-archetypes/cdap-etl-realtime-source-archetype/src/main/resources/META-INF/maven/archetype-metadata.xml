@@ -30,9 +30,5 @@
       </includes>
     </fileSet>
   </fileSets>
-  <requiredProperties>
-    <requiredProperty key="groupId">
-    </requiredProperty>
-  </requiredProperties>
 </archetype-descriptor>
 
