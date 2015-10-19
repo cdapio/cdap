@@ -21,20 +21,26 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
+import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
 import co.cask.cdap.proto.DatasetMeta;
+import co.cask.cdap.proto.DatasetModuleMeta;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import com.google.common.base.Objects;
+import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -53,6 +59,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarEntry;
@@ -64,12 +71,12 @@ import javax.annotation.Nullable;
  * {@link co.cask.cdap.data2.dataset2.DatasetFramework} implementation that talks to DatasetFramework Service
  */
 @SuppressWarnings("unchecked")
-public class RemoteDatasetFramework implements DatasetFramework, DatasetMetaProvider {
+public class RemoteDatasetFramework implements DatasetFramework {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetFramework.class);
 
   private final CConfiguration cConf;
   private final LoadingCache<Id.Namespace, DatasetServiceClient> clientCache;
-  private final LocalDatasetProvider instances;
+  private final DatasetDefinitionRegistryFactory registryFactory;
 
   @Inject
   public RemoteDatasetFramework(CConfiguration cConf, final DiscoveryServiceClient discoveryClient,
@@ -81,7 +88,7 @@ public class RemoteDatasetFramework implements DatasetFramework, DatasetMetaProv
         return new DatasetServiceClient(discoveryClient, namespace);
       }
     });
-    this.instances = new LocalDatasetProvider(registryFactory, this);
+    this.registryFactory = registryFactory;
   }
 
   @Override
@@ -154,12 +161,6 @@ public class RemoteDatasetFramework implements DatasetFramework, DatasetMetaProv
   }
 
   @Override
-  public DatasetMeta getMeta(Id.DatasetInstance instance) throws Exception {
-    return clientCache.getUnchecked(instance.getNamespace())
-      .getInstance(instance.getId());
-  }
-
-  @Override
   public boolean hasInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException {
     return clientCache.getUnchecked(datasetInstanceId.getNamespace()).getInstance(datasetInstanceId.getId()) != null;
   }
@@ -206,7 +207,8 @@ public class RemoteDatasetFramework implements DatasetFramework, DatasetMetaProv
       return null;
     }
 
-    DatasetType type = instances.getType(instanceInfo.getType(), parentClassLoader, classLoaderProvider);
+    DatasetType type =
+      getDatasetType(instanceInfo.getType(), parentClassLoader, classLoaderProvider);
     return (T) type.getAdmin(DatasetContext.from(datasetInstanceId.getNamespaceId()), instanceInfo.getSpec());
   }
 
@@ -231,7 +233,7 @@ public class RemoteDatasetFramework implements DatasetFramework, DatasetMetaProv
   @Override
   public <T extends Dataset> T getDataset(
     Id.DatasetInstance datasetInstanceId, @Nullable Map<String, String> arguments,
-    @Nullable ClassLoader classLoader,
+    ClassLoader classLoader,
     DatasetClassLoaderProvider classLoaderProvider,
     @Nullable Iterable<? extends Id> owners) throws DatasetManagementException, IOException {
 
@@ -241,9 +243,9 @@ public class RemoteDatasetFramework implements DatasetFramework, DatasetMetaProv
       return null;
     }
 
-    return (T) instances.get(
-      datasetInstanceId, instanceInfo.getType(), instanceInfo.getSpec(),
-      classLoaderProvider, classLoader, arguments);
+    DatasetType type = getDatasetType(instanceInfo.getType(), classLoader, classLoaderProvider);
+    return (T) type.getDataset(DatasetContext.from(datasetInstanceId.getNamespaceId()),
+      instanceInfo.getSpec(), arguments);
   }
 
   @Override
@@ -332,7 +334,51 @@ public class RemoteDatasetFramework implements DatasetFramework, DatasetMetaProv
                                                   ClassLoader classLoader,
                                                   DatasetClassLoaderProvider classLoaderProvider) {
 
-    return instances.getType(implementationInfo, classLoader, classLoaderProvider);
+    if (classLoader == null) {
+      classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
+    }
+
+    DatasetDefinitionRegistry registry = registryFactory.create();
+    List<DatasetModuleMeta> modulesToLoad = implementationInfo.getModules();
+    for (DatasetModuleMeta moduleMeta : modulesToLoad) {
+      // adding dataset module jar to classloader
+      try {
+        classLoader = classLoaderProvider.get(moduleMeta, classLoader);
+      } catch (IOException e) {
+        LOG.error("Was not able to init classloader for module {} while trying to load type {}",
+                  moduleMeta, implementationInfo, e);
+        throw Throwables.propagate(e);
+      }
+
+      Class<?> moduleClass;
+
+      // try program class loader then cdap class loader
+      try {
+        moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
+      } catch (ClassNotFoundException e) {
+        try {
+          moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), null, this);
+        } catch (ClassNotFoundException e2) {
+          LOG.error("Was not able to load dataset module class {} while trying to load type {}",
+                    moduleMeta.getClassName(), implementationInfo, e);
+          throw Throwables.propagate(e);
+        }
+      }
+
+      try {
+        DatasetModule module = DatasetModules.getDatasetModule(moduleClass);
+        module.register(registry);
+      } catch (Exception e) {
+        LOG.error("Was not able to load dataset module class {} while trying to load type {}",
+                  moduleMeta.getClassName(), implementationInfo, e);
+        throw Throwables.propagate(e);
+      }
+    }
+
+    // contract of DatasetTypeMeta is that the last module returned by getModules() is the one
+    // that announces the dataset's type. The classloader for the returned DatasetType must be the classloader
+    // for that last module.
+    return (T) new DatasetType(registry.get(implementationInfo.getName()), classLoader);
   }
 
   /**

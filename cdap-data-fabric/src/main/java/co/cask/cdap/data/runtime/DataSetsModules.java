@@ -18,8 +18,6 @@ package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.common.runtime.RuntimeModule;
-import co.cask.cdap.data2.datafabric.dataset.DatasetProvider;
-import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetProvider;
 import co.cask.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -68,10 +66,6 @@ public class DataSetsModules extends RuntimeModule {
           .to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
         expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
 
-        bind(DatasetProvider.class)
-          .to(DefaultDatasetProvider.class);
-        expose(DatasetProvider.class);
-
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
@@ -103,10 +97,6 @@ public class DataSetsModules extends RuntimeModule {
           .to(RemoteDatasetFramework.class);
         expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
 
-        bind(DatasetProvider.class)
-          .to(DefaultDatasetProvider.class);
-        expose(DatasetProvider.class);
-
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
@@ -137,10 +127,6 @@ public class DataSetsModules extends RuntimeModule {
           .annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK))
           .to(RemoteDatasetFramework.class);
         expose(DatasetFramework.class).annotatedWith(Names.named(BASIC_DATASET_FRAMEWORK));
-
-        bind(DatasetProvider.class)
-          .to(DefaultDatasetProvider.class);
-        expose(DatasetProvider.class);
 
         bind(LineageWriter.class).to(BasicLineageWriter.class);
         expose(LineageWriter.class);
