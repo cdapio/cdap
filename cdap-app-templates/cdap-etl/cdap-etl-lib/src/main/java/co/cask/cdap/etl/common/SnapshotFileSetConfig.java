@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
  */
 public abstract class SnapshotFileSetConfig extends PluginConfig {
   @Name(Properties.SnapshotFileSetSink.NAME)
-  @Description("Name of the Fileset Dataset to which the records are written to. " +
+  @Description("Name of the PartitionedFileset Dataset to which the records are written to. " +
     "If it doesn't exist, it will be created.")
   protected String name;
 

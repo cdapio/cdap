@@ -4,14 +4,14 @@
     "position": [ "group1" ],
     "group1": {
       "display" : "Snapshot Fileset - Parquet",
-      "position" : [ "name", "path" ],
+      "position" : [ "name", "basePath" ],
       "fields" : {
         "name" : {
           "widget": "dataset-selector",
           "label": "Dataset Name"
         },
 
-        "path" : {
+        "basePath" : {
           "widget": "textbox",
           "label": "Snapshot Target Path"
         }
