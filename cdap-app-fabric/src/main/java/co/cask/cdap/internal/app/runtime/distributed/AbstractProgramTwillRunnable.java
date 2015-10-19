@@ -306,7 +306,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       @Override
       public void error(Throwable cause) {
-        LOG.error("Program runner error out.", cause);
+        LOG.error("Program runner errored out.", cause);
         state.setException(cause);
       }
     }, MoreExecutors.sameThreadExecutor());
