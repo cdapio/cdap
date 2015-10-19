@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.utils.Networks;
+import co.cask.cdap.test.SlowTests;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
@@ -57,6 +58,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,11 +68,13 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -89,6 +93,7 @@ public abstract class NettyRouterTestBase {
   protected static final String WEBAPP_SERVICE = Constants.Router.WEBAPP_DISCOVERY_NAME;
   protected static final String APP_FABRIC_SERVICE = Constants.Service.APP_FABRIC_HTTP;
   protected static final String WEB_APP_SERVICE_PREFIX = "webapp/";
+  protected static final int CONNECTION_IDLE_TIMEOUT_SECS = 5;
 
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTestBase.class);
   private static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -328,36 +333,7 @@ public abstract class NettyRouterTestBase {
 
   @Test
   public void testUpload() throws Exception {
-    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
-
-    final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
-      new NettyAsyncHttpProvider(configBuilder.build()),
-      configBuilder.build());
-
-    byte [] requestBody = generatePostData();
-    final Request request = new RequestBuilder("POST")
-      .setUrl(resolveURI(DEFAULT_SERVICE, "/v1/upload"))
-      .setContentLength(requestBody.length)
-      .setBody(new ByteEntityWriter(requestBody))
-      .build();
-
-    final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    Future<Void> future = asyncHttpClient.executeRequest(request, new AsyncCompletionHandler<Void>() {
-      @Override
-      public Void onCompleted(Response response) throws Exception {
-        return null;
-      }
-
-      @Override
-      public STATE onBodyPartReceived(HttpResponseBodyPart content) throws Exception {
-        //TimeUnit.MILLISECONDS.sleep(RANDOM.nextInt(10));
-        content.writeTo(byteArrayOutputStream);
-        return super.onBodyPartReceived(content);
-      }
-    });
-
-    future.get();
-    Assert.assertArrayEquals(requestBody, byteArrayOutputStream.toByteArray());
+    testUpload(0);
   }
 
   @Test
@@ -386,6 +362,32 @@ public abstract class NettyRouterTestBase {
     }
 
     Assert.assertEquals(times, defaultServer1.getNumRequests() + defaultServer2.getNumRequests());
+  }
+
+  @Test
+  public void testConnectionNoIdleTimeout() throws Exception {
+    // 300ms under the configured idle timeout
+    testConnectionIdleTimeout(TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) - 300);
+  }
+
+  @Test(expected = SocketException.class)
+  public void testConnectionIdleTimeout() throws Exception {
+    // 300ms over the configured idle timeout
+    testConnectionIdleTimeout(TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 300);
+  }
+
+  private void testConnectionIdleTimeout(long timeoutMillis) throws Exception {
+    URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/timeout/" + timeoutMillis));
+    HttpURLConnection urlConnection = openURL(url);
+    urlConnection.getResponseCode();
+  }
+
+  // NettyResponseFuture.get() throws an ExecutionException because the connection is closed after a timeout
+  @Test(expected = ExecutionException.class)
+  @Category(SlowTests.class)
+  public void testUploadWithTimeout() throws Exception {
+    // 300ms over the configured idle timeout
+    testUpload(TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 300);
   }
 
   protected HttpURLConnection openURL(URL url) throws Exception {
@@ -417,6 +419,39 @@ public abstract class NettyRouterTestBase {
     }
 
     return bytes;
+  }
+
+  private void testUpload(final long sleepTimeMillis) throws Exception {
+    AsyncHttpClientConfig.Builder configBuilder = new AsyncHttpClientConfig.Builder();
+
+    final AsyncHttpClient asyncHttpClient = new AsyncHttpClient(
+      new NettyAsyncHttpProvider(configBuilder.build()),
+      configBuilder.build());
+
+    byte [] requestBody = generatePostData();
+    final Request request = new RequestBuilder("POST")
+      .setUrl(resolveURI(DEFAULT_SERVICE, "/v1/upload"))
+      .setContentLength(requestBody.length)
+      .setBody(new ByteEntityWriter(requestBody))
+      .build();
+
+    final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    Future<Void> future = asyncHttpClient.executeRequest(request, new AsyncCompletionHandler<Void>() {
+      @Override
+      public Void onCompleted(Response response) throws Exception {
+        return null;
+      }
+
+      @Override
+      public STATE onBodyPartReceived(HttpResponseBodyPart content) throws Exception {
+        TimeUnit.MILLISECONDS.sleep(sleepTimeMillis);
+        content.writeTo(byteArrayOutputStream);
+        return super.onBodyPartReceived(content);
+      }
+    });
+
+    future.get();
+    Assert.assertArrayEquals(requestBody, byteArrayOutputStream.toByteArray());
   }
 
   private static class ByteEntityWriter implements Request.EntityWriter {
@@ -580,9 +615,18 @@ public abstract class NettyRouterTestBase {
         responder.sendStatus(HttpResponseStatus.OK);
       }
 
+      @GET
+      @Path("/v1/timeout/{timeout-millis}")
+      public void timeout(HttpRequest request, HttpResponder responder,
+                          @PathParam("timeout-millis") int timeoutMillis) throws InterruptedException {
+        numRequests.incrementAndGet();
+        TimeUnit.MILLISECONDS.sleep(timeoutMillis);
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
+
       @POST
       @Path("/v1/upload")
-      public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException, IOException {
+      public void upload(HttpRequest request, HttpResponder responder) throws IOException {
         ChannelBuffer content = request.getContent();
 
         int readableBytes;
