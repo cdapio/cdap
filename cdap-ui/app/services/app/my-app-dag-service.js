@@ -311,28 +311,6 @@ angular.module(PKG.name + '.services')
 
       this.nodes[config.id] = config;
 
-      PluginConfigFactory.fetch(
-        null,
-        this.metadata.template.type,
-        config.name
-      ).then(function (res) {
-        if (res.implicit) {
-          var schema = res.implicit.schema;
-          var keys = Object.keys(schema);
-
-          var formattedSchema = [];
-          angular.forEach(keys, function (key) {
-            formattedSchema.push({
-              name: key,
-              type: schema[key]
-            });
-          });
-
-          var obj = { fields: formattedSchema };
-          this.nodes[config.id].outputSchema = JSON.stringify(obj);
-        }
-      }.bind(this));
-
       if (!conf._backendProperties) {
         fetchBackendProperties
           .call(this, this.nodes[config.id])
