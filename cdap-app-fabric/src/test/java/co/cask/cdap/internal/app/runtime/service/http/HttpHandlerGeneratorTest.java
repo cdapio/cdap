@@ -406,6 +406,11 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
+    public String getNamespace() {
+      return null;
+    }
+
+    @Override
     public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
       return getDataset(name, null);
     }
