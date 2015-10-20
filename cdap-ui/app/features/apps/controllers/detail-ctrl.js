@@ -13,8 +13,8 @@
   License for the specific language governing permissions and limitations under
   the License.
 */
-angular.module(PKG.name + '.feature.apps')
-  .controller('AppDetailController', function(rAppData, GLOBALS, myHydratorFactory) {
+class AppDetailController {
+  constructor(rAppData, GLOBALS, myHydratorFactory) {
     this.myHydratorFactory = myHydratorFactory;
 
     this.isHydrator = ([GLOBALS.etlBatch, GLOBALS.etlRealtime].indexOf(rAppData.artifact.name) !== -1);
@@ -22,4 +22,10 @@ angular.module(PKG.name + '.feature.apps')
       name: rAppData.artifact.name
     };
     this.GLOBALS = GLOBALS;
-  });
+  }
+}
+
+AppDetailController.$inject = ['rAppData', 'GLOBALS', 'myHydratorFactory'];
+
+angular.module(`${PKG.name}.feature.apps`)
+  .controller('AppDetailController', AppDetailController);
