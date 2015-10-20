@@ -20,6 +20,9 @@
 
 die() { echo "ERROR: ${*}"; exit 1; };
 
+CDAP_BRANCH='release/3.2'
+CHEF_VERSION='11.18.12'
+
 __tmpdir="/tmp/cdap_install.$$.$(date +%s)"
 __gitdir="${__tmpdir}/cdap"
 
@@ -33,11 +36,11 @@ __create_tmpdir() { mkdir -p ${__tmpdir}; };
 apt-get install --yes git || die "Failed to install git"
 
 # Install chef
-curl -L https://www.chef.io/chef/install.sh | sudo bash || die "Failed to install chef"
+curl -L https://www.chef.io/chef/install.sh | sudo bash ./install.sh -v ${CHEF_VERSION} || die "Failed to install chef"
 
 # Clone CDAP repo
 __create_tmpdir
-git clone --depth 1 https://github.com/caskdata/cdap.git ${__gitdir}
+git clone --depth 1 --branch ${CDAP_BRANCH} https://github.com/caskdata/cdap.git ${__gitdir}
 
 # Setup cookbook repo
 test -d /var/chef/cookbooks && rm -rf /var/chef/cookbooks
