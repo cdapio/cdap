@@ -35,9 +35,11 @@ import co.cask.cdap.etl.batch.sink.TimePartitionedFileSetDatasetParquetSink;
 import co.cask.cdap.etl.batch.source.DBSource;
 import co.cask.cdap.etl.batch.source.KVTableSource;
 import co.cask.cdap.etl.batch.source.SnapshotFileBatchAvroSource;
+import co.cask.cdap.etl.batch.source.SnapshotFileBatchParquetSource;
 import co.cask.cdap.etl.batch.source.StreamBatchSource;
 import co.cask.cdap.etl.batch.source.TableSource;
 import co.cask.cdap.etl.batch.source.TimePartitionedFileSetDatasetAvroSource;
+import co.cask.cdap.etl.batch.source.TimePartitionedFileSetDatasetParquetSource;
 import co.cask.cdap.etl.common.DBRecord;
 import co.cask.cdap.etl.test.sink.MetaKVTableSink;
 import co.cask.cdap.etl.test.source.MetaKVTableSource;
@@ -64,6 +66,7 @@ import org.apache.twill.filesystem.Location;
 import org.hsqldb.jdbc.JDBCDriver;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import parquet.avro.AvroParquetInputFormat;
 import parquet.avro.AvroParquetOutputFormat;
 import parquet.avro.AvroParquetReader;
 
@@ -88,17 +91,18 @@ public class BaseETLBatchTest extends TestBase {
     addAppArtifact(APP_ARTIFACT_ID, ETLBatchApplication.class,
       BatchSource.class.getPackage().getName(),
       PipelineConfigurable.class.getPackage().getName(),
-      "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic");
+      "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
 
     // add artifact for batch sources and sinks
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "batch-plugins", "1.0.0"), APP_ARTIFACT_ID,
                       DBSource.class, KVTableSource.class, StreamBatchSource.class, TableSource.class, DBRecord.class,
                       TimePartitionedFileSetDatasetAvroSource.class,
+                      TimePartitionedFileSetDatasetParquetSource.class, AvroParquetInputFormat.class,
                       BatchCubeSink.class, DBSink.class, KVTableSink.class, TableSink.class,
                       TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
                       TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class,
                       SnapshotFileBatchAvroSink.class, SnapshotFileBatchParquetSink.class,
-                      SnapshotFileBatchAvroSource.class,
+                      SnapshotFileBatchAvroSource.class, SnapshotFileBatchParquetSource.class,
                       S3AvroBatchSink.class, S3ParquetBatchSink.class);
     // add artifact for transforms
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "transforms", "1.0.0"), APP_ARTIFACT_ID,

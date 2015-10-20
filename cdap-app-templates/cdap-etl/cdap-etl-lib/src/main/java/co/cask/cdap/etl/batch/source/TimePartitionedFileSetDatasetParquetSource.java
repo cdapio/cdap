@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
@@ -27,32 +28,32 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.AvroToStructuredTransformer;
+import co.cask.cdap.etl.common.SchemaConverter;
+import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.mapred.AvroKey;
-import org.apache.avro.mapreduce.AvroJob;
-import org.apache.avro.mapreduce.AvroKeyInputFormat;
-import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
+import parquet.avro.AvroParquetInputFormat;
+import parquet.avro.AvroParquetOutputFormat;
 
 /**
  * A {@link BatchSource} to read Avro record from {@link TimePartitionedFileSet}
  */
 @Plugin(type = "batchsource")
-@Name("TPFSAvro")
-@Description("Reads from a TimePartitionedFileSet whose data is in Avro format.")
-public class TimePartitionedFileSetDatasetAvroSource extends
-  TimePartitionedFileSetSource<AvroKey<GenericRecord>, NullWritable> {
-  private final TPFSAvroConfig tpfsAvroConfig;
+@Name("TPFSParquet")
+@Description("Reads from a TimePartitionedFileSet whose data is in Parquet format.")
+public class TimePartitionedFileSetDatasetParquetSource extends
+  TimePartitionedFileSetSource<NullWritable, GenericRecord> {
+  private final TPFSParquetConfig tpfsParquetConfig;
 
   private final AvroToStructuredTransformer recordTransformer = new AvroToStructuredTransformer();
 
   /**
-   * Config for TimePartitionedFileSetDatasetAvroSource
+   * Config for TimePartitionedFileSetDatasetParquetSource
    */
-  public static class TPFSAvroConfig extends TPFSConfig {
+  public static class TPFSParquetConfig extends TPFSConfig {
 
-    @Description("The Avro schema of the record being read from the source as a JSON Object.")
+    @Description("The Parquet schema of the record being read from the source as a JSON Object.")
     private String schema;
 
     @Override
@@ -66,33 +67,39 @@ public class TimePartitionedFileSetDatasetAvroSource extends
     }
   }
 
-  public TimePartitionedFileSetDatasetAvroSource(TPFSAvroConfig tpfsAvroConfig) {
-    super(tpfsAvroConfig);
-    this.tpfsAvroConfig = tpfsAvroConfig;
+  public TimePartitionedFileSetDatasetParquetSource(TPFSParquetConfig tpfsParquetConfig) {
+    super(tpfsParquetConfig);
+    this.tpfsParquetConfig = tpfsParquetConfig;
   }
 
   @Override
   protected void addFileSetProperties(FileSetProperties.Builder properties) {
-    properties.setInputFormat(AvroKeyInputFormat.class)
-      .setOutputFormat(AvroKeyOutputFormat.class)
+    properties.setInputFormat(AvroParquetInputFormat.class)
+      .setOutputFormat(AvroParquetOutputFormat.class)
       .setEnableExploreOnCreate(true)
-      .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
-      .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
-      .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", (tpfsAvroConfig.schema));
+      .setExploreFormat("parquet");
+    try {
+      String hiveSchema = SchemaConverter.toHiveSchema(
+        co.cask.cdap.api.data.schema.Schema.parseJson(tpfsParquetConfig.schema.toLowerCase()));
+      properties.setExploreSchema(hiveSchema.substring(1, hiveSchema.length() - 1));
+    } catch (UnsupportedTypeException e) {
+      throw new IllegalArgumentException("schema " + tpfsParquetConfig.schema + " is not supported.", e);
+    } catch (Exception e) {
+      throw new IllegalArgumentException("schema " + tpfsParquetConfig.schema + " is invalid.", e);
+    }
   }
 
   @Override
   public void prepareRun(BatchSourceContext context) {
     setInput(context);
-    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(tpfsAvroConfig.schema);
+    Schema avroSchema = new Schema.Parser().parse(tpfsParquetConfig.schema.toLowerCase());
     Job job = context.getHadoopJob();
-    AvroJob.setInputKeySchema(job, avroSchema);
+    AvroParquetInputFormat.setAvroReadSchema(job, avroSchema);
   }
 
   @Override
-  public void transform(KeyValue<AvroKey<GenericRecord>, NullWritable> input,
+  public void transform(KeyValue<NullWritable, GenericRecord> input,
                         Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(recordTransformer.transform(input.getKey().datum()));
+    emitter.emit(recordTransformer.transform(input.getValue()));
   }
 }
