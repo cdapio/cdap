@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.sink;
+package co.cask.cdap.etl.batch.source;
 
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
@@ -23,9 +23,8 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
+import co.cask.cdap.etl.common.AvroToStructuredTransformer;
 import co.cask.cdap.etl.common.SnapshotFileSetConfig;
-import co.cask.cdap.etl.common.StructuredToAvroTransformer;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaParseException;
 import org.apache.avro.generic.GenericRecord;
@@ -36,32 +35,25 @@ import org.apache.hadoop.io.NullWritable;
 
 import javax.annotation.Nullable;
 
-
 /**
- * {@link SnapshotFileBatchSink} that stores data in Avro format.
+ * Reads data written by a {@link SnapshotFileBatchAvroSource}. Reads only the most recent partition.
  */
-@Plugin(type = "batchsink")
+@Plugin(type = "batchsource")
 @Name("SnapshotAvro")
-@Description("Sink for a SnapshotFileSet that writes data in Avro format.")
-public class SnapshotFileBatchAvroSink extends SnapshotFileBatchSink<AvroKey<GenericRecord>, NullWritable> {
-  private StructuredToAvroTransformer recordTransformer;
+@Description("Reads the most recent snapshot that was written to a SnapshotAvro sink.")
+public class SnapshotFileBatchAvroSource extends SnapshotFileBatchSource<AvroKey<GenericRecord>, NullWritable> {
+  private final AvroToStructuredTransformer recordTransformer = new AvroToStructuredTransformer();
   private final SnapshotAvroConfig config;
 
-  public SnapshotFileBatchAvroSink(SnapshotAvroConfig config) {
+  public SnapshotFileBatchAvroSource(SnapshotAvroConfig config) {
     super(config);
     this.config = config;
   }
 
   @Override
-  public void initialize(BatchRuntimeContext context) throws Exception {
-    super.initialize(context);
-    recordTransformer = new StructuredToAvroTransformer(config.schema);
-  }
-
-  @Override
-  public void transform(StructuredRecord input,
-                        Emitter<KeyValue<AvroKey<GenericRecord>, NullWritable>> emitter) throws Exception {
-    emitter.emit(new KeyValue<>(new AvroKey<>(recordTransformer.transform(input)), NullWritable.get()));
+  public void transform(KeyValue<AvroKey<GenericRecord>, NullWritable> input,
+                        Emitter<StructuredRecord> emitter) throws Exception {
+    emitter.emit(recordTransformer.transform(input.getKey().datum()));
   }
 
   @Override
@@ -84,10 +76,10 @@ public class SnapshotFileBatchAvroSink extends SnapshotFileBatchSink<AvroKey<Gen
   }
 
   /**
-   * Config for SnapshotFileBatchAvroSink
+   * Config for SnapshotFileBatchAvroSource
    */
   public static class SnapshotAvroConfig extends SnapshotFileSetConfig {
-    @Description("The Avro schema of the record being written to the Sink as a JSON Object.")
+    @Description("The Avro schema of the records to read.")
     private String schema;
 
     public SnapshotAvroConfig(String name, @Nullable String basePath, String schema) {

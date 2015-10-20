@@ -14,73 +14,61 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch.sink;
+package co.cask.cdap.etl.batch.source;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.etl.api.PipelineConfigurer;
-import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.SnapshotFileSetConfig;
 import co.cask.cdap.etl.dataset.SnapshotFileSet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Sink that stores snapshots on HDFS, and keeps track of which snapshot is the latest snapshot.
+ * Reads the latest snapshot written by a {@link co.cask.cdap.etl.batch.sink.SnapshotFileBatchSink}.
  *
- * @param <KEY_OUT> the type of key the sink outputs
- * @param <VAL_OUT> the type of value the sink outputs
+ * @param <KEY> type of key to output
+ * @param <VALUE> type of value to output
  */
-public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
-  private static final Logger LOG = LoggerFactory.getLogger(SnapshotFileBatchSink.class);
+public abstract class SnapshotFileBatchSource<KEY, VALUE> extends BatchSource<KEY, VALUE, StructuredRecord> {
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final SnapshotFileSetConfig config;
-  private SnapshotFileSet snapshotFileSet;
 
-  public SnapshotFileBatchSink(SnapshotFileSetConfig config) {
+  public SnapshotFileBatchSource(SnapshotFileSetConfig config) {
     this.config = config;
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    FileSetProperties.Builder fileProperties = SnapshotFileSet.getBaseProperties(config);
-    addFileProperties(fileProperties);
+    PartitionedFileSetProperties.Builder fileProperties = SnapshotFileSet.getBaseProperties(config);
+
     pipelineConfigurer.createDataset(config.getName(), PartitionedFileSet.class, fileProperties.build());
   }
 
   @Override
-  public void prepareRun(BatchSinkContext context) {
-    PartitionedFileSet files = context.getDataset(config.getName());
-    snapshotFileSet = new SnapshotFileSet(files);
+  public void prepareRun(BatchSourceContext context) throws Exception {
+    PartitionedFileSet partitionedFileSet = context.getDataset(config.getName());
+    SnapshotFileSet snapshotFileSet = new SnapshotFileSet(partitionedFileSet);
 
     Map<String, String> arguments = new HashMap<>();
 
     if (config.getFileProperties() != null) {
       arguments = GSON.fromJson(config.getFileProperties(), MAP_TYPE);
     }
-    context.addOutput(config.getName(), snapshotFileSet.getOutputArguments(context.getLogicalStartTime(), arguments));
-  }
 
-  @Override
-  public void onRunFinish(boolean succeeded, BatchSinkContext context) {
-    super.onRunFinish(succeeded, context);
-    if (succeeded) {
-      try {
-        snapshotFileSet.onSuccess(context.getLogicalStartTime());
-      } catch (Exception e) {
-        LOG.error("Exception updating state file with value of latest snapshot, ", e);
-      }
-    }
+    PartitionedFileSet input = context.getDataset(config.getName(), snapshotFileSet.getInputArguments(arguments));
+    context.setInput(config.getName(), input);
   }
 
   /**

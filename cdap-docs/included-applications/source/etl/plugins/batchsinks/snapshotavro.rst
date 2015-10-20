@@ -10,30 +10,29 @@ Batch Sinks: SnapshotAvro
 
 .. rubric:: Description
 
-A batch sink for a FileSet that writes a snapshot of data in Avro format.
-At the end of every pipeline run, the previous run's data will be overwritten
-with the current run's data. All data for the run will be written to that
-location in the file system.
+A batch sink for a PartitionedFileSet that writes snapshots of data as a new
+partition. Data is written in Avro format. A corresponding SnapshotAvro source
+can be used to read only the most recently written snapshot.
 
 .. rubric:: Use Case
 
-This sink is used whenever you want access to a FileSet containing exactly the most
-recent run's data in Avro format. Alternatively, it is used whenever you would like
-the output of a run to be written to a constant location in a file system. For example,
+This sink is used whenever you want access to a PartitionedFileSet containing exactly the most
+recent run's data in Avro format. For example,
 you might want to create daily snapshots of a database by reading the entire contents of
 a table, writing to this sink, and then other programs can analyze the contents of the specified file.
 
 .. rubric:: Properties
 
-**name:** Name of the FileSet to which records are written.
+**name:** Name of the PartitionedFileSet to which records are written.
 If it doesn't exist, it will be created.
 
 **schema:** The Avro schema of the record being written to the sink as a JSON object.
 
-**basePath:** Base path for the FileSet. Defaults to the name of the dataset.
+**basePath:** Base path for the PartitionedFileSet. Defaults to the name of the dataset.
 
-**pathExtension:** The extension where the snapshot will be stored. The snapshot will be stored at
-<basePath>/<pathExtension>.
+**fileProperties:** Advanced feature to specify any additional properties that should be used with the sink,
+specified as a JSON object of string to string. These properties are set on the dataset if one is created.
+The properties are also passed to the dataset at runtime as arguments.
 
 .. rubric:: Example
 
@@ -43,7 +42,6 @@ If it doesn't exist, it will be created.
     "name": "SnapshotAvro",
     "properties": {
       "name": "users",
-      "pathExtension": "latest",
       "schema": "{
         \"type\":\"record\",
         \"name\":\"user\",
@@ -56,6 +54,6 @@ If it doesn't exist, it will be created.
     }
   }
 
-This example will write to a FileSet named 'users'. It will write data in Avro format
+This example will write to a PartitionedFileSet named 'users'. It will write data in Avro format
 using the given schema. Every time the pipeline runs, the most recent run will be stored in
-the FileSet under the directory 'latest', and no records will exist of previous runs.
+a new partition in the PartitionedFileSet.
