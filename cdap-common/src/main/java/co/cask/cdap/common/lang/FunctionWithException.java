@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,29 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.api;
+package co.cask.cdap.common.lang;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
+import com.google.common.base.Function;
 
-import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
- * This interface represents a context for a processor or elements of a processor.
+ * A function interface similar to guava {@link Function}, but allows throwing exception from the
+ * {@link #apply(Object)} method.
+ *
+ * @param <F> from type
+ * @param <T> to type
+ * @param <E> exception type
  */
-public interface RuntimeContext {
-
-  /**
-   * @return The application specification
-   */
-  ApplicationSpecification getApplicationSpecification();
-
-  /**
-   * @return A map of argument key and value.
-   */
-  Map<String, String> getRuntimeArguments();
-
-  /**
-   * @return The application namespace
-   */
-  String getNamespace();
+public interface FunctionWithException<F, T, E extends Exception> {
+  @Nullable
+  T apply(@Nullable F input) throws E;
 }

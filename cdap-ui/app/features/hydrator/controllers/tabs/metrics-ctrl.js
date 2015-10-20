@@ -18,72 +18,99 @@ angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorDetailMetricsController', function($scope, HydratorDetail, MyDataSource, $filter, $state, MyMetricsQueryHelper) {
 
     $scope.metrics = [];
-
+    var metricsPolledId;
     var dataSrc = new MyDataSource($scope);
     var filter = $filter('filter');
+    var logsParams = {};
+    angular.copy(HydratorDetail.logsParams, logsParams);
 
-    var metricParams = {
-      namespace: $state.params.namespace,
-      app: $state.params.pipelineId
-    };
+    HydratorDetail.logsApi.pollLatestRun(logsParams)
+      .$promise
+      .then(function (runs) {
+        if (runs.length === 0) { return; }
+        fetchMetrics(runs[0].runid);
+      });
 
-    metricParams = MyMetricsQueryHelper.tagsToParams(metricParams);
+    function fetchMetrics(runId) {
+      if (metricsPolledId) {
+        dataSrc.stopPoll(metricsPolledId)
+          .then(doPollMetrics.bind(null, runId));
+      } else {
+        doPollMetrics(runId);
+      }
+    }
 
-    var metricBasePath = '/metrics/search?target=metric&' + metricParams;
+    function doPollMetrics(runId) {
+      var metricParams = {
+        namespace: $state.params.namespace,
+        app: $state.params.pipelineId,
+        run: runId
+      };
 
-    var stagesArray = [HydratorDetail.source].concat(HydratorDetail.transforms, HydratorDetail.sinks);
-    stagesArray = stagesArray.map(function (n, i) { return n + '.' + (i+1); });
-
-
-    dataSrc.poll({
-      method: 'POST',
-      _cdapPath: metricBasePath
-    }, function (res) {
-      if (res.length > 0) {
-        var metricQuery = [];
-
-        angular.forEach(stagesArray, function (node) {
-          metricQuery = metricQuery.concat(filter(res, node));
-        });
-
-        if (metricQuery.length === 0) { return; }
-
-        dataSrc.request({
-          method: 'POST',
-          _cdapPath: '/metrics/query?' + metricParams + '&metric=' + metricQuery.join('&metric=')
-        }).then(function (metrics) {
-          var metricObj = {};
-
-          angular.forEach(metrics.series, function (metric) {
-            var split = metric.metricName.split('.');
-            var key = split[2] + '.' + split[3];
-
-            if (!metricObj[key]) {
-              metricObj[key] = {
-                nodeType: split[1],
-                nodeName: split[2],
-                stage: +split[3]
-              };
-            }
-
-            if (split[5] === 'in') {
-              metricObj[key].recordsIn = metric.data[0].value;
-            } else if (split[5] === 'out') {
-              metricObj[key].recordsOut = metric.data[0].value;
-            }
-
-          });
-
-          var metricsArr = [];
-          angular.forEach(metricObj, function (val) {
-            metricsArr.push(val);
-          });
-
-          $scope.metrics = metricsArr;
-        });
+      if (HydratorDetail.programType === 'WORKFLOWS') {
+        metricParams['mapreduce'] = HydratorDetail.logsParams.mapreduceId;
+      } else if (HydratorDetail.programType === 'WORKER') {
+        metricParams['worker'] = HydratorDetail.logsParams.workerId;
       }
 
-    });
+      metricParams = MyMetricsQueryHelper.tagsToParams(metricParams);
 
+      var metricBasePath = '/metrics/search?target=metric&' + metricParams;
+
+      var stagesArray = [HydratorDetail.source].concat(HydratorDetail.transforms, HydratorDetail.sinks);
+      stagesArray = stagesArray.map(function (n, i) { return n + '.' + (i+1); });
+
+      metricsPolledId = dataSrc.poll({
+        method: 'POST',
+        _cdapPath: metricBasePath
+      }, function (res) {
+        if (res.length > 0) {
+          var metricQuery = [];
+
+          angular.forEach(stagesArray, function (node) {
+            metricQuery = metricQuery.concat(filter(res, node));
+          });
+
+          if (metricQuery.length === 0) { return; }
+
+          dataSrc.request({
+            method: 'POST',
+            _cdapPath: '/metrics/query?' + metricParams + '&metric=' + metricQuery.join('&metric=')
+          }).then(function (metrics) {
+            var metricObj = {};
+
+            angular.forEach(metrics.series, function (metric) {
+              var split = metric.metricName.split('.');
+              var key = split[2] + '.' + split[3];
+
+              if (!metricObj[key]) {
+                metricObj[key] = {
+                  nodeType: split[1],
+                  nodeName: split[2],
+                  stage: +split[3]
+                };
+              }
+
+              if (split[5] === 'in') {
+                metricObj[key].recordsIn = metric.data[0].value;
+              } else if (split[5] === 'out') {
+                metricObj[key].recordsOut = metric.data[0].value;
+              }
+
+            });
+
+            var metricsArr = [];
+            angular.forEach(metricObj, function (val) {
+              metricsArr.push(val);
+            });
+
+            $scope.metrics = metricsArr;
+          });
+        }
+
+      });
+
+      metricsPolledId = metricsPolledId.__pollId__;
+    }
 
   });

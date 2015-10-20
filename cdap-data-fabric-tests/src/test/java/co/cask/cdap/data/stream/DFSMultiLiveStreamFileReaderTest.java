@@ -15,10 +15,9 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.io.FileContextLocationFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -39,9 +38,7 @@ public class DFSMultiLiveStreamFileReaderTest extends MultiLiveStreamFileReaderT
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, TMP_FOLDER.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
-    final FileSystem fileSystem = dfsCluster.getFileSystem();
-
-    locationFactory = new HDFSLocationFactory(fileSystem);
+    locationFactory = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
   }
 
   @AfterClass

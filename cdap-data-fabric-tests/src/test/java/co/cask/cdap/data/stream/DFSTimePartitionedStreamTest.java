@@ -15,9 +15,9 @@
  */
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.io.FileContextLocationFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -38,7 +38,7 @@ public class DFSTimePartitionedStreamTest extends TimePartitionedStreamTestBase 
     Configuration conf = new Configuration();
     conf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(conf).numDataNodes(1).build();
-    locationFactory = new HDFSLocationFactory(dfsCluster.getFileSystem());
+    locationFactory = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
   }
 
   @AfterClass

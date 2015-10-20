@@ -2,30 +2,31 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _included-apps-etl-plugins-batch-sinks-snapshotparquet:
+.. _included-apps-etl-plugins-batch-sinks-snapshotavro:
 
-============================
-Batch Sinks: SnapshotParquet
-============================
+===========================
+Batch Sources: SnapshotAvro
+===========================
 
 .. rubric:: Description
 
-A batch sink for a PartitionedFileSet that writes snapshots of data as a new
-partition. Data is written in Parquet format. 
+A batch source that reads from a corresponding SnapshotAvro sink.
+The source will only read the most recent snapshot written to the sink.
 
 .. rubric:: Use Case
 
-This sink is used whenever you want access to a PartitionedFileSet containing exactly the most
-recent run's data in Parquet format. For example,
-you might want to create daily snapshots of a database by reading the entire contents of
-a table, writing to this sink, and then other programs can analyze the contents of the specified file.
+This source is used whenever you want to read data written to the corresponding
+SnapshotAvro sink. It will read only the last snapshot written to that sink.
+For example, you might want to create daily snapshots of a database by reading the entire contents of
+a table and writing it to a SnapshotAvro sink. You might then want to use this source to read the most
+recent snapshot and run some data analysis on it.
 
 .. rubric:: Properties
 
 **name:** Name of the PartitionedFileSet to which records are written.
 If it doesn't exist, it will be created.
 
-**schema:** The Parquet schema of the record being written to the sink as a JSON object.
+**schema:** The Avro schema of the record being written to the sink as a JSON object.
 
 **basePath:** Base path for the PartitionedFileSet. Defaults to the name of the dataset.
 
@@ -38,7 +39,7 @@ The properties are also passed to the dataset at runtime as arguments.
 ::
 
   {
-    "name": "SnapshotParquet",
+    "name": "SnapshotAvro",
     "properties": {
       "name": "users",
       "schema": "{
@@ -53,6 +54,6 @@ The properties are also passed to the dataset at runtime as arguments.
     }
   }
 
-This example will write to a PartitionedFileSet named 'users'. It will write data in Parquet format
-using the given schema. Every time the pipeline runs, the most recent run will be stored in
-a new partition in the PartitionedFileSet.
+This example will read from a SnapshotFileSet named 'users'. It will read data in Avro format
+using the given schema. Every time the pipeline runs, only the most recently added snapshot will
+be read.

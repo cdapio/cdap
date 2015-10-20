@@ -121,6 +121,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
+  public String getNamespace() {
+    return delegate.getNamespace();
+  }
+
+  @Override
   public URL getServiceURL(String applicationId, String serviceId) {
     return delegate.getServiceURL(applicationId, serviceId);
   }
