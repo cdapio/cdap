@@ -185,7 +185,8 @@ function getEs6Features(isNegate) {
   */
   var es6features = [
     'workflows',
-    'flows'
+    'flows',
+    'apps'
   ];
   var returnVal = [];
   es6features.forEach(function(feature) {
@@ -444,11 +445,13 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   gulp.watch([
     './app/**/*.js',
     '!./app/features/workflows/**/*.js',
+    '!./app/features/apps/**/*.js',
     '!./app/features/flows/**/*.js',
     '!./app/**/*-test.js'
   ], ['jshint', 'watch:js:app']);
   gulp.watch([
     './app/features/workflows/**/*.js',
+    './app/features/apps/**/*.js',
     './app/features/flows/**/*.js'
   ], ['jshint', 'watch:js:app:babel']);
 
