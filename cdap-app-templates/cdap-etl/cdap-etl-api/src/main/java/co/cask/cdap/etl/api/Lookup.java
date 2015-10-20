@@ -14,28 +14,13 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api.realtime;
-
-import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.etl.api.StageContext;
+package co.cask.cdap.etl.api;
 
 /**
- * Context passed to the Source and Sink stages of Realtime pipeline.
+ * Exposes lookup operations on datasets.
  */
-@Beta
-public interface RealtimeContext extends StageContext {
-
-  /**
-   * Get Instance Id.
-   *
-   * @return instance id
-   */
-  int getInstanceId();
-
-  /**
-   * Get Instance Count.
-   *
-   * @return instance count
-   */
-  int getInstanceCount();
+public interface Lookup {
+  String lookupKVString(String instance, String key) throws Exception;
+  byte[] lookupKVBytes(String instance, String key) throws Exception;
+  byte[] lookupKVBytes(String instance, byte[] key) throws Exception;
 }

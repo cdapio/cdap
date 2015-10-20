@@ -25,6 +25,7 @@ import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
+import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
@@ -119,7 +120,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
       validators.add(validator);
     }
     try {
-      init(validators);
+      init(getContext(), validators);
     } catch (ScriptException e) {
       throw new IllegalArgumentException("Invalid validation script: " + e.getMessage(), e);
     }
@@ -127,6 +128,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
 
   @Override
   public void initialize(TransformContext context) throws Exception {
+    super.initialize(context);
     List<Validator> validators = new ArrayList<>();
     for (String pluginId : config.validators.split("\\s*,\\s*")) {
       validators.add((Validator) context.newPluginInstance(pluginId));
@@ -138,7 +140,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   void setUpInitialScript(TransformContext context, List<Validator> validators) throws ScriptException {
     metrics = context.getMetrics();
     logger = LoggerFactory.getLogger(ValidatorTransform.class.getName() + " - Stage:" + context.getStageId());
-    init(validators);
+    init(context, validators);
   }
 
   @Override
@@ -163,6 +165,10 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     }
   }
 
+  protected Lookup getLookup(TransformContext context) {
+    return context.getLookup();
+  }
+
   private InvalidEntry<StructuredRecord> getErrorObject(Map result, StructuredRecord input) {
     Preconditions.checkState(result.containsKey("errorCode"));
 
@@ -176,7 +182,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     return new InvalidEntry<>(errorCodeNum.intValue(), (String) result.get("errorMsg"), input);
   }
 
-  private void init(List<Validator> validators) throws ScriptException {
+  private void init(TransformContext context, List<Validator> validators) throws ScriptException {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
     String scriptStr = config.validationScript;
@@ -188,7 +194,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
       engine.put(validator.getValidatorName(), validator.getValidator());
       validatorMap.put(validator.getValidatorName(), validator.getValidator());
     }
-    engine.put(CONTEXT_NAME, new ValidatorScriptContext(logger, metrics, validatorMap));
+    engine.put(CONTEXT_NAME, new ValidatorScriptContext(logger, metrics, getLookup(context), validatorMap));
 
     // this is pretty ugly, but doing this so that we can pass the 'input' json into the isValid function.
     // that is, we want people to implement

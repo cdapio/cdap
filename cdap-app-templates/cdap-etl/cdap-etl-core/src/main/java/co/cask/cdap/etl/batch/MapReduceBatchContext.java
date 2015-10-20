@@ -20,19 +20,26 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.batch.BatchContext;
+import co.cask.cdap.etl.common.PluginID;
+import co.cask.cdap.etl.common.ScopedPluginContext;
 
 import java.util.Map;
 
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
  */
-public abstract class MapReduceBatchContext extends BatchTransformContext implements BatchContext {
+public abstract class MapReduceBatchContext extends ScopedPluginContext implements BatchContext {
 
   protected final MapReduceContext mrContext;
+  private final Metrics metrics;
+  private final String prefixId;
 
   public MapReduceBatchContext(MapReduceContext context, Metrics metrics, String prefixId) {
-    super(context, metrics, prefixId);
+    super(prefixId);
+    this.metrics = metrics;
+    this.prefixId = prefixId;
     this.mrContext = context;
   }
 
@@ -62,4 +69,33 @@ public abstract class MapReduceBatchContext extends BatchTransformContext implem
     return mrContext.getRuntimeArguments();
   }
 
+  @Override
+  public Metrics getMetrics() {
+    return metrics;
+  }
+
+  @Override
+  public int getStageId() {
+    return PluginID.from(stageId).getStage();
+  }
+
+  @Override
+  protected <T> T newScopedPluginInstance(String scopedPluginId) throws InstantiationException {
+    return mrContext.newPluginInstance(scopedPluginId);
+  }
+
+  @Override
+  protected <T> Class<T> loadScopedPluginClass(String scopedPluginId) {
+    return mrContext.loadPluginClass(scopedPluginId);
+  }
+
+  @Override
+  public PluginProperties getPluginProperties() {
+    return mrContext.getPluginProperties(prefixId);
+  }
+
+  @Override
+  public PluginProperties getScopedPluginProperties(String scopedPluginId) {
+    return mrContext.getPluginProperties(scopedPluginId);
+  }
 }

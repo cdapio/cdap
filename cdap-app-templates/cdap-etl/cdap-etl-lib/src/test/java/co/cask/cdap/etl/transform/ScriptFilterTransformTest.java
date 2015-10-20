@@ -37,8 +37,8 @@ public class ScriptFilterTransformTest {
     ScriptFilterTransform.ScriptFilterConfig config = new ScriptFilterTransform.ScriptFilterConfig();
     config.script = "funtion() { return false; }";
     Transform transform = new ScriptFilterTransform(config);
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.<String, String>of());
-    transform.initialize(transformContext);
+    TransformContext context = new MockTransformContext(ImmutableMap.<String, String>of());
+    transform.initialize(context);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -48,8 +48,8 @@ public class ScriptFilterTransformTest {
       "function shouldFilter(input, context) { context.getMetrics.count(\"invalid\", 1); return 'foobar'; }";
     Transform transform = new ScriptFilterTransform(config);
     MockMetrics metrics = new MockMetrics();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.<String, String>of(), metrics);
-    transform.initialize(transformContext);
+    TransformContext context = new MockTransformContext(ImmutableMap.<String, String>of(), metrics);
+    transform.initialize(context);
 
     Schema schema = Schema.recordOf("number", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     StructuredRecord input = StructuredRecord.builder(schema).set("x", 1).build();
@@ -65,8 +65,8 @@ public class ScriptFilterTransformTest {
     Schema schema = Schema.recordOf("number", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     StructuredRecord input = StructuredRecord.builder(schema).set("x", 1).build();
     Transform transform = new ScriptFilterTransform(config);
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.<String, String>of());
-    transform.initialize(transformContext);
+    TransformContext context = new MockTransformContext(ImmutableMap.<String, String>of());
+    transform.initialize(context);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
@@ -136,8 +136,8 @@ public class ScriptFilterTransformTest {
       "return pi.val > e.val;\n" +
       "}";
     Transform transform = new ScriptFilterTransform(config);
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.<String, String>of());
-    transform.initialize(transformContext);
+    TransformContext context = new MockTransformContext(ImmutableMap.<String, String>of());
+    transform.initialize(context);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
@@ -150,8 +150,8 @@ public class ScriptFilterTransformTest {
       "return pi.val > 10 * e.val;\n" +
       "}";
     transform = new ScriptFilterTransform(config);
-    transformContext = new MockTransformContext(ImmutableMap.<String, String>of());
-    transform.initialize(transformContext);
+    context = new MockTransformContext(ImmutableMap.<String, String>of());
+    transform.initialize(context);
     transform.transform(input, emitter);
     Assert.assertEquals(input, emitter.getEmitted().iterator().next());
   }

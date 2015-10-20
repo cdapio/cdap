@@ -19,6 +19,7 @@ package co.cask.cdap.etl.realtime;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
+import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
 
 /**
@@ -27,8 +28,8 @@ import co.cask.cdap.etl.api.realtime.RealtimeContext;
 public class WorkerRealtimeContext extends RealtimeTransformContext implements RealtimeContext {
   private final WorkerContext context;
 
-  public WorkerRealtimeContext(WorkerContext context, Metrics metrics, String pluginPrefix) {
-    super(context, metrics, pluginPrefix);
+  public WorkerRealtimeContext(WorkerContext context, Metrics metrics, Lookup lookup, String pluginPrefix) {
+    super(context, metrics, lookup, pluginPrefix);
     this.context = context;
   }
 

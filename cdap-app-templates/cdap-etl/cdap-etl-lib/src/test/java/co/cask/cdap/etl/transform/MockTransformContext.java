@@ -18,6 +18,7 @@ package co.cask.cdap.etl.transform;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.common.MockMetrics;
 import co.cask.cdap.etl.common.NoopMetrics;
@@ -72,6 +73,11 @@ public class MockTransformContext implements TransformContext {
 
   @Override
   public <T> Class<T> loadPluginClass(String pluginId) {
+    return null;
+  }
+
+  @Override
+  public Lookup getLookup() {
     return null;
   }
 }

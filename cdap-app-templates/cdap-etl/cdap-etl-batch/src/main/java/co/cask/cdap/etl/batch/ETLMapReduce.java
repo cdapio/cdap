@@ -28,6 +28,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.InvalidEntry;
+import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
@@ -38,6 +39,7 @@ import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultEmitter;
+import co.cask.cdap.etl.common.DefaultLookup;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.Pipeline;
 import co.cask.cdap.etl.common.PipelineRegisterer;
@@ -337,7 +339,11 @@ public class ETLMapReduce extends AbstractMapReduce {
       for (TransformInfo transformInfo : transformInfos) {
         String transformId = transformInfo.getTransformId();
         Transform transform = context.newPluginInstance(transformId);
-        BatchRuntimeContext transformContext = new MapReduceRuntimeContext(context, mapperMetrics, transformId);
+        // TODO: lookup not supported in batch
+        Lookup lookup = new DefaultLookup(null);
+        BatchTransformContext transformContext = new BatchTransformContext(
+          context, mapperMetrics, lookup, transformId);
+
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
         pipeline.add(new TransformDetail(transformId, transform,
