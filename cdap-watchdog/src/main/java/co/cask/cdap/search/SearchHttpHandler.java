@@ -17,7 +17,7 @@
 package co.cask.cdap.search;
 
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.search.co.cask.cdap.search.run.LogSearchDocument;
+import co.cask.cdap.search.run.LogSearchDocument;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -34,6 +34,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -73,7 +74,10 @@ public class SearchHttpHandler extends AbstractHttpHandler {
 
     contentBuilder.field("logger", document.getLoggerName()).endObject();
 
-    IndexResponse response = elasticClient.prepareIndex(document.getIndex(), document.getIndexType(),
+    String indexName = document.getIndex() + "-"
+      + String.valueOf(TimeUnit.MILLISECONDS.toHours(document.getTimeStamp()));
+
+    IndexResponse response = elasticClient.prepareIndex(indexName, document.getIndexType(),
                                                         String.valueOf(document.getTimeStamp()))
       .setSource(contentBuilder)
       .execute()

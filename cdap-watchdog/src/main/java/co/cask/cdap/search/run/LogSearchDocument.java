@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.search.co.cask.cdap.search.run;
+package co.cask.cdap.search.run;
 
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
 

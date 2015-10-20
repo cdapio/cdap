@@ -23,7 +23,7 @@ import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.logging.appender.LogAppender;
 import co.cask.cdap.logging.appender.LogMessage;
-import co.cask.cdap.search.co.cask.cdap.search.run.LogSearchDocument;
+import co.cask.cdap.search.run.LogSearchDocument;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import com.google.common.base.Supplier;
@@ -89,7 +89,8 @@ public final class KafkaLogAppender extends LogAppender {
     try {
 
       LogSearchDocument logSearchDocument = new LogSearchDocument("log", logMessage.getLevel().toString().toLowerCase(),
-                                                                  logMessage.getTimeStamp(), logMessage.getMessage(),
+                                                                  logMessage.getTimeStamp(),
+                                                                  logMessage.getFormattedMessage(),
                                                                   logMessage.getLoggerName(),
                                                                   logMessage.getThrowableProxy() == null ? null
                                                                     : logMessage.getThrowableProxy().getClassName(),
