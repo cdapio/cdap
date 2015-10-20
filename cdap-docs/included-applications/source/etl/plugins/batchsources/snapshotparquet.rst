@@ -19,7 +19,7 @@ This source is used whenever you want to read data written to the corresponding
 SnapshotParquet sink. It will read only the last snapshot written to that sink.
 For example, you might want to create daily snapshots of a database by reading the entire contents of
 a table and writing it to a SnapshotParquet sink. You might then want to use this source to read the most
-recent snapshot and run some data analysis on it.
+recent snapshot and run a data analysis on it.
 
 .. rubric:: Properties
 
