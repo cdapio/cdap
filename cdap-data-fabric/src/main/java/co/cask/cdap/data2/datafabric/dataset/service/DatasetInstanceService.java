@@ -27,16 +27,20 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.data2.datafabric.dataset.AbstractDatasetProvider;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
+import co.cask.tephra.TransactionExecutorFactory;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -65,12 +69,27 @@ public class DatasetInstanceService {
   @Inject
   public DatasetInstanceService(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf,
-                                UsageRegistry usageRegistry, AbstractNamespaceClient namespaceClient) {
+                                TransactionExecutorFactory txFactory,
+                                DatasetDefinitionRegistryFactory registryFactory,
+                                AbstractNamespaceClient namespaceClient) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
-    this.usageRegistry = usageRegistry;
+    this.usageRegistry = new UsageRegistry(txFactory, new AbstractDatasetProvider(registryFactory) {
+      @Override
+      public DatasetMeta getMeta(Id.DatasetInstance instance) throws Exception {
+        return DatasetInstanceService.this.get(instance, ImmutableList.<Id>of());
+      }
+
+      @Override
+      public void createIfNotExists(Id.DatasetInstance instance, String type,
+                                    DatasetProperties creationProps) throws Exception {
+        DatasetInstanceService.this.createIfNotExists(
+          instance.getNamespace(), instance.getId(),
+          new DatasetInstanceConfiguration(type, creationProps.getProperties()));
+      }
+    });
     this.namespaceClient = namespaceClient;
     this.allowDatasetUncheckedUpgrade = conf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
   }
@@ -99,8 +118,7 @@ public class DatasetInstanceService {
    * @throws IOException if there is a problem in making an HTTP request to check if the namespace exists.
    */
   public DatasetMeta get(Id.DatasetInstance instance, List<? extends Id> owners) throws Exception {
-    // Throws NamespaceNotFoundException if the namespace does not exist
-    ensureNamespaceExists(instance.getNamespace());
+    // TODO: CDAP-3901 add back namespace existence check
     DatasetSpecification spec = instanceManager.get(instance);
     if (spec == null) {
       throw new NotFoundException(instance);
@@ -169,6 +187,15 @@ public class DatasetInstanceService {
 
     // Enable explore
     enableExplore(newInstance, props);
+  }
+
+  private void createIfNotExists(Id.Namespace namespace, String name,
+                                 DatasetInstanceConfiguration props) throws Exception {
+    try {
+      create(namespace, name, props);
+    } catch (DatasetAlreadyExistsException e) {
+      // ignore
+    }
   }
 
   /**
