@@ -7,6 +7,7 @@
        "fields" : {
           "script" : {
              "widget": "javascript-editor",
+             "label": "Script",
              "properties" : {
                 "default" : "function transform(input, context) {\n  return input;\n}"
              }
