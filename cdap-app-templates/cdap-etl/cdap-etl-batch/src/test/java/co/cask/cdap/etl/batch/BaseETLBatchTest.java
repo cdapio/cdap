@@ -34,6 +34,7 @@ import co.cask.cdap.etl.batch.sink.TimePartitionedFileSetDatasetAvroSink;
 import co.cask.cdap.etl.batch.sink.TimePartitionedFileSetDatasetParquetSink;
 import co.cask.cdap.etl.batch.source.DBSource;
 import co.cask.cdap.etl.batch.source.KVTableSource;
+import co.cask.cdap.etl.batch.source.SnapshotFileBatchAvroSource;
 import co.cask.cdap.etl.batch.source.StreamBatchSource;
 import co.cask.cdap.etl.batch.source.TableSource;
 import co.cask.cdap.etl.batch.source.TimePartitionedFileSetDatasetAvroSource;
@@ -97,6 +98,7 @@ public class BaseETLBatchTest extends TestBase {
                       TimePartitionedFileSetDatasetAvroSink.class, AvroKeyOutputFormat.class, AvroKey.class,
                       TimePartitionedFileSetDatasetParquetSink.class, AvroParquetOutputFormat.class,
                       SnapshotFileBatchAvroSink.class, SnapshotFileBatchParquetSink.class,
+                      SnapshotFileBatchAvroSource.class,
                       S3AvroBatchSink.class, S3ParquetBatchSink.class);
     // add artifact for transforms
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "transforms", "1.0.0"), APP_ARTIFACT_ID,
