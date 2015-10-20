@@ -1,0 +1,3 @@
+.. include:: _includes/_stopping-removing-application-title.txt
+.. include:: _includes/_stopping-flow.txt
+.. include:: _includes/_removing-application.txt

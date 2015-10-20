@@ -9,17 +9,18 @@ Building and Running CDAP Applications
 ======================================
 
 .. |example| replace:: <example>
+.. |example-dir| replace:: <example-directory>
 
-.. |develop| replace:: *Development*
-.. _develop: http://localhost:9999/ns/default
+.. |development| replace:: *Development Home*
+.. _development: http://localhost:9999/ns/default
 
 .. |all_apps| replace:: *All Applications*
 .. _all_apps: http://localhost:9999/ns/default/apps
 
-.. |management| replace:: *Management*
+.. |management| replace:: *Management Applications*
 .. _management: http://localhost:9999/admin/namespace/detail/default/apps
 
-.. |datasets| replace:: *Datasets*
+.. |datasets| replace:: *Management Datasets*
 .. _datasets: http://localhost:9999/admin/namespace/detail/default/data
 
 
@@ -45,7 +46,7 @@ Accessing CLI, curl and the SDK bin
   or ``<CDAP-SDK-HOME>\bin\cdap-cli.bat`` on Windows, as appropriate. 
 
 - A Windows-version of the application ``curl`` is included in the CDAP SDK as
-  ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in the examples shown below.
+  ``libexec\bin\curl.exe``; use it as a substitute for ``curl`` in examples.
 
 - If you add the SDK bin directory to your path, you can simplify the commands. From within
   the CDAP-SDK-home directory, enter::
@@ -54,10 +55,11 @@ Accessing CLI, curl and the SDK bin
 
   or under Windows::
 
-    > setx path "%PATH%;%CD%\bin"
+    > set path=%PATH%;%CD%\bin;%CD%\libexec\bin
   
   Note that under Windows, you'll need to create a new command line window in order to see
-  this change to the path variable.
+  this change to the path variable. The Windows path has been augmented with a directory where
+  the SDK includes Windows-versions of commands such as ``curl``.
 
 .. _cdap-building-running-example:
 
@@ -88,18 +90,19 @@ Deploying an Application
 
 Once CDAP is started, you can deploy an application using an example JAR by any of these methods:
 
-- Use the *Add App* button found on the |management|_ page of the CDAP UI to browse and upload an
-  artifact and create an app:
+- In the CDAP UI, use the *Add App* button |---| found on either the |development|_ or 
+  |management|_ pages |---| selecting the *Custom App* menu item, and then browse and upload an
+  artifact to create an app:
 
   .. parsed-literal::
-    examples/|example|/target/|example|-|release|.jar
+    examples/|example-dir|/target/|example|-|release|.jar
  
 - From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface (CLI) <cli>`:
 
   .. container:: highlight
 
     .. parsed-literal::
-      |$| cdap-cli.sh load artifact examples/|example|/target/|example|-|release|.jar
+      |$| cdap-cli.sh load artifact examples/|example-dir|/target/|example|-|release|.jar
       Successfully added artifact with name '|example|'
 
       |$| cdap-cli.sh create app <app name> |example| |release| user
@@ -114,7 +117,7 @@ Once CDAP is started, you can deploy an application using an example JAR by any 
   
     .. parsed-literal::
       |$| curl -w'\\n' localhost:10000/v3/namespaces/default/artifacts/|example| \\
-        --data-binary @examples/|example|/target/|example|-|release|.jar
+        --data-binary @examples/|example-dir|/target/|example|-|release|.jar
       Artifact added successfully
 
       |$| curl -w'\\n' -X PUT -H "Content-Type: application/json" localhost:10000/v3/namespaces/default/apps/<app name> \\
@@ -130,7 +133,7 @@ Starting an Application
 Once an application is deployed, there are multiple methods for starting an application:
 
 - You can go to the application's detail page in the CDAP UI by clicking on the
-  application's name in either the |develop|_ page or on the |all_apps|_ page. Now you can 
+  application's name in either the |development|_ page or on the |all_apps|_ page. Now you can 
   see the status of any of the programs associated with the application and, by clicking
   on them, go to their detail page where you can start or stop them.
 - From the Standalone CDAP SDK directory, use the :ref:`Command Line Interface<cli>`.
