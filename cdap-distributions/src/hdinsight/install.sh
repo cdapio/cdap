@@ -24,7 +24,7 @@ __tmpdir="/tmp/cdap_install.$$.$(date +%s)"
 __gitdir="${__tmpdir}/cdap"
 
 __packerdir="${__gitdir}/cdap-distributions/src/packer/scripts"
-__cdap_site_template="${__gitdir}/cdap-distributions/src/hdinsight/cdap-site.xml.template"
+__cdap_site_template="${__gitdir}/cdap-distributions/src/hdinsight/cdap-site.xml.template.json"
 
 __cleanup_tmpdir() { test -d ${__tmpdir} && rm -rf ${__tmpdir}; };
 __create_tmpdir() { mkdir -p ${__tmpdir}; };
