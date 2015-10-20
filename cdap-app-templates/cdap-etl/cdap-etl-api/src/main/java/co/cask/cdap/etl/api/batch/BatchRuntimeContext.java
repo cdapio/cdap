@@ -18,15 +18,18 @@ package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.etl.api.TransformContext;
 
 import java.util.Map;
 
 /**
  * Context passed to Batch Source and Sink.
+ *
+ * @param <T>  the context used to construct the BatchRuntimeContext, eg. {@link MapReduceTaskContext}
  */
 @Beta
-public interface BatchRuntimeContext extends DatasetContext, TransformContext {
+public interface BatchRuntimeContext<T> extends DatasetContext, TransformContext {
 
   /**
    * Returns the logical start time of the Batch Job.  Logical start time is the time when this Batch
@@ -44,4 +47,13 @@ public interface BatchRuntimeContext extends DatasetContext, TransformContext {
    */
   Map<String, String> getRuntimeArguments();
 
+  /**
+   * Returns the processing framework's context, to enable advanced use-cases in plugins.
+   * E.g. this method could give access to the {@link MapReduceTaskContext} for pipelines that use
+   * MapReduce as the processing framework.
+   *
+   * @return the processing framework context
+   */
+
+  T getOriginalContext();
 }

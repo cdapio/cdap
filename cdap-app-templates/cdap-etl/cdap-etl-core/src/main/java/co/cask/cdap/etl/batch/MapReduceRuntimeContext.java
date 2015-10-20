@@ -34,7 +34,7 @@ import java.util.Map;
  * transforms, and sinks don't need to worry that plugins they use conflict with plugins other sources, transforms,
  * or sinks use.
  */
-public class MapReduceRuntimeContext extends ScopedPluginContext implements BatchRuntimeContext {
+public class MapReduceRuntimeContext extends ScopedPluginContext implements BatchRuntimeContext<MapReduceTaskContext> {
   private final MapReduceTaskContext context;
   private final Metrics metrics;
 
@@ -82,6 +82,11 @@ public class MapReduceRuntimeContext extends ScopedPluginContext implements Batc
   @Override
   public Map<String, String> getRuntimeArguments() {
     return context.getRuntimeArguments();
+  }
+
+  @Override
+  public MapReduceTaskContext getOriginalContext() {
+    return context;
   }
 
   @Override
