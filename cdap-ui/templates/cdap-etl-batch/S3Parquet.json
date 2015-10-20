@@ -6,6 +6,11 @@
       "display" : "S3 Sink - Parquet",
       "position" : [ "accessID", "accessKey", "basePath", "pathFormat"],
       "fields" : {
+        "fileSystemProperties" : {
+          "widget": "json-editor",
+          "label": "File System Properties"
+        },
+
         "accessID" : {
           "widget": "textbox",
           "label": "Access ID"

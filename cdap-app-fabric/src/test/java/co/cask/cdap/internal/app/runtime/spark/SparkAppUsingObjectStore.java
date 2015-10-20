@@ -20,6 +20,8 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.ObjectStores;
+import co.cask.cdap.api.dataset.table.Get;
+import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.spark.AbstractSpark;
@@ -65,8 +67,13 @@ public class SparkAppUsingObjectStore extends AbstractApplication {
 
     @Override
     public void beforeSubmit(SparkContext context) throws Exception {
+
       context.setSparkConf(new SparkConf().set("spark.io.compression.codec",
                                                "org.apache.spark.io.LZFCompressionCodec"));
+
+      Table totals = context.getDataset("totals");
+      totals.get(new Get("total").add("total")).getLong("total");
+      totals.put(new Put("total").add("total", 0L));
     }
   }
 
@@ -93,7 +100,7 @@ public class SparkAppUsingObjectStore extends AbstractApplication {
       // write a total count to a table (that emits a metric we can validate in the test case)
       long count = stringLengths.count();
       Table totals = context.getDataset("totals");
-      totals.put(new Put("total").add("total", count));
+      totals.increment(new Increment("total").add("total", count));
 
       // write the character count to dataset
       context.writeToDataset(stringLengths, "count", byte[].class, byte[].class);

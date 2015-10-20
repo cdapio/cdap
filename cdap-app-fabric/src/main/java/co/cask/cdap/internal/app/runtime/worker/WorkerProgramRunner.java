@@ -48,7 +48,6 @@ import org.apache.twill.internal.RunIds;
 public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Gson GSON = new Gson();
 
-  private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -60,7 +59,6 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory) {
     super(cConf);
-    this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -108,7 +106,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
 
     BasicWorkerContext context = new BasicWorkerContext(
       newWorkerSpec, program, runId, instanceId, instanceCount,
-      options.getUserArguments(), cConf, metricsCollectionService, datasetFramework,
+      options.getUserArguments(), metricsCollectionService, datasetFramework,
       txClient, discoveryServiceClient, streamWriterFactory,
       createPluginInstantiator(options, program.getClassLoader()));
     WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);

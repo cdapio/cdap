@@ -20,29 +20,27 @@ import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.worker.AbstractWorker;
 
 /**
  * App with streams, datasets, plugins added multiple times that should result in an error.
  */
-public class AppWithDuplicateStreams extends AbstractApplication<AppWithDuplicateStreams.ConfigClass> {
+public class AppWithDuplicateData extends AbstractApplication<AppWithDuplicateData.ConfigClass> {
 
   public static class ConfigClass extends Config {
-    private boolean multiStreams;
     private boolean multiDatasets;
     private boolean multiPlugins;
     private boolean multiModules;
 
     public ConfigClass() {
       multiDatasets = false;
-      multiStreams = false;
       multiPlugins = false;
       multiModules = false;
     }
 
-    public ConfigClass(boolean streams, boolean datasets, boolean plugins, boolean multiModules) {
-      this.multiStreams = streams;
+    public ConfigClass(boolean datasets, boolean plugins, boolean multiModules) {
       this.multiDatasets = datasets;
       this.multiPlugins = plugins;
       this.multiModules = multiModules;
@@ -52,12 +50,9 @@ public class AppWithDuplicateStreams extends AbstractApplication<AppWithDuplicat
   @Override
   public void configure() {
     ConfigClass config = getConfig();
-    if (config.multiStreams) {
-      addStream("input1");
-    }
 
     if (config.multiDatasets) {
-      createDataset("data1", KeyValueTable.class);
+      createDataset("data1", Table.class);
     }
 
     if (config.multiPlugins) {
@@ -65,7 +60,7 @@ public class AppWithDuplicateStreams extends AbstractApplication<AppWithDuplicat
     }
 
     if (config.multiModules) {
-      addDatasetModule(KeyValueTable.class.getName(), IndexedTable.class);
+      addDatasetModule("module", IndexedTable.class);
     }
     addWorker(new DumbWorker());
   }
@@ -80,8 +75,8 @@ public class AppWithDuplicateStreams extends AbstractApplication<AppWithDuplicat
     @Override
     protected void configure() {
       super.configure();
-      addStream("input1");
       createDataset("data1", KeyValueTable.class);
+      addDatasetModule("module", Table.class);
       usePlugin("t1", "n1", "plug", PluginProperties.builder().build());
     }
   }

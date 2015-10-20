@@ -17,7 +17,6 @@ package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
@@ -56,7 +55,6 @@ import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.Id;
 import co.cask.http.NettyHttpService;
-import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -77,7 +75,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -288,18 +285,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return actionSpec;
   }
 
-  private TransactionContext getTransactionContextFromContext(WorkflowContext context) {
-    TransactionContext transactionContext = new TransactionContext(txClient);
-    Collection<Dataset> datasets = ((BasicWorkflowContext) context).getDatasets().values();
-    for (Dataset ds : datasets) {
-      transactionContext.addTransactionAware((TransactionAware) ds);
-    }
-    return transactionContext;
-  }
-
   private void runInTransaction(WorkflowAction action,
-                                WorkflowContext workflowContext) throws TransactionFailureException {
-    TransactionContext transactionContext = getTransactionContextFromContext(workflowContext);
+                                BasicWorkflowContext workflowContext) throws TransactionFailureException {
+    TransactionContext transactionContext = workflowContext.getDatasetCache().newTransactionContext();
     transactionContext.start();
     try {
       action.run();
@@ -311,20 +299,25 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void destroyInTransaction(WorkflowAction action, WorkflowActionSpecification spec,
-                                    WorkflowContext workflowContext) throws TransactionFailureException {
-    TransactionContext transactionContext = getTransactionContextFromContext(workflowContext);
+                                    BasicWorkflowContext workflowContext) throws TransactionFailureException {
+    TransactionContext transactionContext = workflowContext.getDatasetCache().newTransactionContext();
     transactionContext.start();
     try {
-      destroy(spec, action);
-    } catch (Throwable e) {
-      LOG.error("Transaction failed to destroy: " + e.getMessage());
-      transactionContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", e));
+      try {
+        destroy(spec, action);
+      } catch (Throwable e) {
+        LOG.error("Transaction failed to destroy: " + e.getMessage());
+        transactionContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", e));
+      }
+      transactionContext.finish();
+    } finally {
+      // after the action is destroyed, we can release its datasets; TODO: would it be better to hold on to them?
+      workflowContext.getDatasetCache().invalidate();
     }
-    transactionContext.finish();
   }
 
-  private void initializeInTransaction(WorkflowAction action, WorkflowContext workflowContext) throws Exception {
-    TransactionContext transactionContext = getTransactionContextFromContext(workflowContext);
+  private void initializeInTransaction(WorkflowAction action, BasicWorkflowContext workflowContext) throws Exception {
+    TransactionContext transactionContext = workflowContext.getDatasetCache().newTransactionContext();
     transactionContext.start();
     try {
       action.initialize(workflowContext);
@@ -418,7 +411,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, logicalStartTime, null,
                                                        new BasicArguments(runtimeArgs), token,
                                                        program, runId, metricsCollectionService,
-                                                       datasetFramework, discoveryServiceClient);
+                                                       datasetFramework, txClient, discoveryServiceClient);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -484,7 +477,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return new BasicWorkflowContext(workflowSpec, actionSpec, logicalStartTime,
                                     workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId),
                                     new BasicArguments(runtimeArgs), token, program, runId, metricsCollectionService,
-                                    datasetFramework, discoveryServiceClient);
+                                    datasetFramework, txClient, discoveryServiceClient);
   }
 
   /**

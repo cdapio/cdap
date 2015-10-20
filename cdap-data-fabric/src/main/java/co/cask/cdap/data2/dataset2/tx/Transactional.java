@@ -47,7 +47,7 @@ public class Transactional<T extends Iterable<V>, V> {
   private final Supplier<T> supplier;
 
   public static <T extends Iterable<V>, V> Transactional<T, V> of(TransactionExecutorFactory txFactory,
-                                                                            Supplier<T> supplier) {
+                                                                  Supplier<T> supplier) {
     return new Transactional<>(txFactory, supplier);
   }
 

@@ -80,6 +80,7 @@ import co.cask.cdap.internal.specification.FlowletMethod;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.common.io.ByteBufferInputStream;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -131,6 +132,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
   private final QueueReaderFactory queueReaderFactory;
   private final MetricsCollectionService metricsCollectionService;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final TransactionSystemClient txClient;
   private final DatasetFramework dsFramework;
   private final UsageRegistry usageRegistry;
 
@@ -142,6 +144,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
                               QueueReaderFactory queueReaderFactory,
                               MetricsCollectionService metricsCollectionService,
                               DiscoveryServiceClient discoveryServiceClient,
+                              TransactionSystemClient txClient,
                               DatasetFramework dsFramework,
                               UsageRegistry usageRegistry) {
     this.schemaGenerator = schemaGenerator;
@@ -151,6 +154,7 @@ public final class FlowletProgramRunner implements ProgramRunner {
     this.queueReaderFactory = queueReaderFactory;
     this.metricsCollectionService = metricsCollectionService;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.txClient = txClient;
     this.dsFramework = dsFramework;
     this.usageRegistry = usageRegistry;
   }
@@ -212,11 +216,11 @@ public final class FlowletProgramRunner implements ProgramRunner {
                                                runId, instanceCount,
                                                flowletDef.getDatasets(),
                                                options.getUserArguments(), flowletDef.getFlowletSpec(),
-                                               metricsCollectionService, discoveryServiceClient, dsFramework);
+                                               metricsCollectionService, discoveryServiceClient, txClient, dsFramework);
 
       // Creates tx related objects
       DataFabricFacade dataFabricFacade =
-        dataFabricFacadeFactory.create(program, flowletContext.getDatasetInstantiator());
+        dataFabricFacadeFactory.create(program, flowletContext.getDatasetCache());
       if (dataFabricFacade instanceof ProgramContextAware) {
         ((ProgramContextAware) dataFabricFacade).initContext(run, flowletId);
       }

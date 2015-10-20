@@ -139,11 +139,10 @@ public final class Properties {
   /**
    * Properties for SnapshotFileSets
    */
-  public static class SnapshotFileSet {
+  public static class SnapshotFileSetSink {
     public static final String NAME = "name";
     public static final String BASE_PATH = "basePath";
-    public static final String SCHEMA = "schema";
-    public static final String PATH_EXTENSION = "pathExtension";
+    public static final String FILE_PROPERTIES = "fileProperties";
   }
 
   /**

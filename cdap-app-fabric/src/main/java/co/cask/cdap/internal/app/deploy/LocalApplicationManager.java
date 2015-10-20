@@ -38,7 +38,6 @@ import co.cask.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
-import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.pipeline.Pipeline;
 import co.cask.cdap.pipeline.PipelineFactory;
 import co.cask.cdap.proto.Id;

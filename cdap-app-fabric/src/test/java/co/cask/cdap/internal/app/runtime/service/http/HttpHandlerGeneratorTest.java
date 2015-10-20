@@ -406,6 +406,11 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
+    public String getNamespace() {
+      return null;
+    }
+
+    @Override
     public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
       return getDataset(name, null);
     }
@@ -418,7 +423,7 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
-    public TransactionContext getTransactionContext() {
+    public TransactionContext newTransactionContext() {
       return new TransactionContext(null, ImmutableList.<TransactionAware>of()) {
 
         @Override
@@ -442,6 +447,11 @@ public class HttpHandlerGeneratorTest {
         public void abort(TransactionFailureException cause) throws TransactionFailureException {
         }
       };
+    }
+
+    @Override
+    public void dismissTransactionContext() {
+      // no-op
     }
 
     @Override

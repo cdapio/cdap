@@ -65,7 +65,6 @@ import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
-import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
@@ -290,7 +289,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(Store.class).to(DefaultStore.class);
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
-      bind(AdapterService.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
 

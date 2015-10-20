@@ -101,6 +101,11 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   }
 
   @Override
+  public String getNamespace() {
+    return programId.getNamespaceId();
+  }
+
+  @Override
   public SparkSpecification getSpecification() {
     return specification;
   }

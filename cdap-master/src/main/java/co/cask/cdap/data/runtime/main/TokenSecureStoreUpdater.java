@@ -18,6 +18,7 @@ package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.FileContextLocationFactory;
 import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.explore.security.HiveTokenUtils;
@@ -27,16 +28,19 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
 import org.apache.hadoop.hive.thrift.HadoopThriftAuthBridge;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.SecureStore;
 import org.apache.twill.api.SecureStoreUpdater;
+import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.yarn.YarnUtils;
 import org.apache.twill.yarn.YarnSecureStore;
@@ -83,7 +87,18 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
         JobHistoryServerTokenUtils.obtainToken(hConf, refreshedCredentials);
       }
 
-      YarnUtils.addDelegationTokens(hConf, locationFactory, refreshedCredentials);
+      // Perform different logic to get delegation tokens based on the location factory type.
+      if (locationFactory instanceof HDFSLocationFactory) {
+        YarnUtils.addDelegationTokens(hConf, locationFactory, refreshedCredentials);
+      } else if (locationFactory instanceof FileContextLocationFactory) {
+        List<Token<?>> tokens = ((FileContextLocationFactory) locationFactory).getFileContext().getDelegationTokens(
+          new Path(locationFactory.getHomeLocation().toURI()), YarnUtils.getYarnTokenRenewer(hConf)
+        );
+        for (Token<?> token : tokens) {
+          refreshedCredentials.addToken(token.getService(), token);
+        }
+      }
+
       credentials = refreshedCredentials;
     } catch (IOException ioe) {
       throw Throwables.propagate(ioe);

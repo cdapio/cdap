@@ -33,7 +33,10 @@
 <div ng-controller="PluginEditController as PluginEditController">
   <div class="bottompanel-header clearfix" ng-init="showinfo = false">
     <div class="pull-left">
-      <h3>{{plugin.name}} Properties</h3>
+      <h3>
+        {{plugin.name}} Properties
+        <small class="text-danger" ng-if="PluginEditController.noConfigMessage">({{PluginEditController.noConfigMessage}})</small>
+      </h3>
       <p>{{plugin.description}}</p>
     </div>
   </div>

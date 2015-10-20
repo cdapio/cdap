@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.io.FileContextLocationFactory;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
@@ -44,9 +45,7 @@ import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -71,8 +70,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
-    FileSystem fileSystem = dfsCluster.getFileSystem();
-    final HDFSLocationFactory lf = new HDFSLocationFactory(fileSystem);
+    final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
     final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf);
 
     Injector injector = Guice.createInjector(

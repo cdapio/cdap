@@ -27,6 +27,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
@@ -77,6 +78,7 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
       new LocationRuntimeModule().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
+      new TransactionExecutorModule(),
       new PrivateModule() {
         @Override
         protected void configure() {

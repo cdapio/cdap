@@ -48,6 +48,11 @@ public class MockRealtimeContext implements RealtimeContext {
   }
 
   @Override
+  public int getStageId() {
+    return 1;
+  }
+
+  @Override
   public int getInstanceId() {
     return 0;
   }

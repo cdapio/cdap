@@ -14,7 +14,7 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.flows')
+angular.module(`${PKG.name}.feature.flows`)
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('flows', {

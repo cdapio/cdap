@@ -18,6 +18,8 @@ package co.cask.cdap.internal.dataset;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 
+import java.util.Objects;
+
 /**
  * Information for creating dataset instance.
  */
@@ -42,5 +44,26 @@ public final class DatasetCreationSpec {
 
   public DatasetProperties getProperties() {
     return props;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    DatasetCreationSpec that = (DatasetCreationSpec) o;
+
+    return Objects.equals(instanceName, that.instanceName) &&
+      Objects.equals(typeName, that.typeName) &&
+      Objects.equals(props.getProperties(), that.props.getProperties());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(instanceName, typeName, props.getProperties());
   }
 }

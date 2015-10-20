@@ -62,8 +62,10 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Attributes;
@@ -261,6 +263,8 @@ public class ArtifactInspector {
                 // Gets all package resource URL for the given package
                 String resourceName = currentPackage.replace('.', File.separatorChar);
                 Enumeration<URL> resources = pluginClassLoader.getResources(resourceName);
+                List<Iterator<String>> iterators = new ArrayList<>();
+                // Go though all available resources and collect all class names that are plugin classes.
                 while (resources.hasMoreElements()) {
                   URL packageResource = resources.nextElement();
 
@@ -272,7 +276,7 @@ public class ArtifactInspector {
                     Iterator<String> classFiles = DirUtils.list(new File(packageResource.toURI()), "class").iterator();
 
                     // Transform class file into class name and filter by @Plugin class only
-                    classIterator = Iterators.filter(
+                    iterators.add(Iterators.filter(
                       Iterators.transform(classFiles, new Function<String, String>() {
                         @Override
                         public String apply(String input) {
@@ -283,9 +287,11 @@ public class ArtifactInspector {
                         public boolean apply(String className) {
                           return isPlugin(className, pluginClassLoader);
                         }
-                      });
-                    break;
+                      }));
                   }
+                }
+                if (!iterators.isEmpty()) {
+                  classIterator = Iterators.concat(iterators.iterator());
                 }
               } catch (Exception e) {
                 // Cannot happen

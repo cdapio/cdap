@@ -20,6 +20,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.common.PluginID;
 import co.cask.cdap.etl.common.ScopedPluginContext;
 
 /**
@@ -38,6 +39,11 @@ public class BatchTransformContext extends ScopedPluginContext implements Transf
   @Override
   public Metrics getMetrics() {
     return metrics;
+  }
+
+  @Override
+  public int getStageId() {
+    return PluginID.from(stageId).getStage();
   }
 
   @Override

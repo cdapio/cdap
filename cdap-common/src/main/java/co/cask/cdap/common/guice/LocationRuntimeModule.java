@@ -17,6 +17,7 @@ package co.cask.cdap.common.guice;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.FileContextLocationFactory;
 import co.cask.cdap.common.io.RootLocationFactory;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
@@ -28,15 +29,14 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.security.PrivilegedAction;
 
 /**
  * Provides Guice bindings for LocationFactory in different runtime environment.
@@ -84,7 +84,6 @@ public final class LocationRuntimeModule extends RuntimeModule {
 
     @Override
     protected void configure() {
-
       bind(NamespacedLocationFactory.class).to(DefaultNamespacedLocationFactory.class);
 
       expose(LocationFactory.class);
@@ -94,37 +93,39 @@ public final class LocationRuntimeModule extends RuntimeModule {
 
     @Provides
     @Singleton
-    private RootLocationFactory provideRoot(FileSystem fs) {
-      return new RootLocationFactory(new HDFSLocationFactory(fs));
+    private RootLocationFactory provideRoot(Configuration hConf) {
+      return new RootLocationFactory(new FileContextLocationFactory(hConf));
     }
 
     @Provides
     @Singleton
-    private LocationFactory providesHDFSLocationFactory(FileSystem fileSystem, CConfiguration cConf) {
-      String namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
+    private LocationFactory providesLocationFactory(final Configuration hConf, CConfiguration cConf) {
+      final String namespace = cConf.get(Constants.CFG_HDFS_NAMESPACE);
       LOG.info("HDFS namespace is " + namespace);
-      return new HDFSLocationFactory(fileSystem, namespace);
-    }
 
-    @Provides
-    @Singleton
-    private FileSystem providesFileSystem(CConfiguration cConf, Configuration hConf) {
       String hdfsUser = cConf.get(Constants.CFG_HDFS_USER);
+      UserGroupInformation ugi;
       try {
         if (hdfsUser == null || UserGroupInformation.isSecurityEnabled()) {
           if (hdfsUser != null) {
             LOG.debug("Ignoring configuration {}={}, running on secure Hadoop", Constants.CFG_HDFS_USER, hdfsUser);
           }
           LOG.debug("Getting filesystem for current user");
-          return FileSystem.get(FileSystem.getDefaultUri(hConf), hConf);
+          ugi = UserGroupInformation.getCurrentUser();
         } else {
           LOG.debug("Getting filesystem for user {}", hdfsUser);
-          return FileSystem.get(FileSystem.getDefaultUri(hConf), hConf, hdfsUser);
+          ugi = UserGroupInformation.createRemoteUser(hdfsUser);
         }
       } catch (Exception e) {
         throw Throwables.propagate(e);
       }
+
+      return ugi.doAs(new PrivilegedAction<LocationFactory>() {
+        @Override
+        public LocationFactory run() {
+          return new FileContextLocationFactory(hConf, namespace);
+        }
+      });
     }
   }
-
 }

@@ -14,8 +14,8 @@
   the License.
 */
 
-angular.module(PKG.name + '.feature.apps')
-  .controller('AppDetailStatusController', function($state, myPipelineApi, MyAppDAGService, CanvasFactory, GLOBALS, $scope) {
+class AppDetailStatusController {
+  constructor($state, myPipelineApi, MyAppDAGService, CanvasFactory, GLOBALS, $scope) {
     this.nodes = [];
     var params = {
       namespace: $state.params.namespace,
@@ -25,7 +25,7 @@ angular.module(PKG.name + '.feature.apps')
 
     myPipelineApi.get(params)
       .$promise
-      .then(function(res) {
+      .then( (res)=> {
         try{
           res.config = JSON.parse(res.configuration);
         } catch(e) {
@@ -53,12 +53,12 @@ angular.module(PKG.name + '.feature.apps')
           MyAppDAGService.metadata.template.instances = res.config.instances;
         }
         this.nodes = CanvasFactory.getNodes(res.config, MyAppDAGService.metadata.template.type);
-        this.nodes.forEach(function(node) {
-          MyAppDAGService.addNodes(node, node.type);
-        });
+        this.nodes.forEach( (node)=> { MyAppDAGService.addNodes(node, node.type); });
 
         MyAppDAGService.connections = CanvasFactory.getConnectionsBasedOnNodes(this.nodes, res.artifact.name);
+      });
+  }
+}
 
-
-      }.bind(this));
-  });
+angular.module(PKG.name + '.feature.apps')
+  .controller('AppDetailStatusController', AppDetailStatusController);

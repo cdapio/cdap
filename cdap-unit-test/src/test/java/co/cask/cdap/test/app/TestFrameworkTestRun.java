@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.AppUsingNamespace;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.common.Bytes;
@@ -119,20 +120,20 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
-  public void testInvalidAppWithDuplicateStreams() throws Exception {
+  public void testInvalidAppWithDuplicateDatasets() throws Exception {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "invalid-app", "1.0.0-SNAPSHOT");
-    addAppArtifact(artifactId, AppWithDuplicateStreams.class);
+    addAppArtifact(artifactId, AppWithDuplicateData.class);
 
     Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "test-plugin", "1.0.0-SNAPSHOT");
     addPluginArtifact(pluginArtifactId, artifactId, ToStringPlugin.class);
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "InvalidApp");
 
-    for (int choice = 8; choice > 0; choice /= 2) {
+    for (int choice = 4; choice > 0; choice /= 2) {
       try {
-        AppRequest<AppWithDuplicateStreams.ConfigClass> createRequest = new AppRequest<>(
+        AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
           new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
-          new AppWithDuplicateStreams.ConfigClass((choice == 8), (choice == 4), (choice == 2), (choice == 1)));
+          new AppWithDuplicateData.ConfigClass((choice == 4), (choice == 2), (choice == 1)));
         deployApplication(appId, createRequest);
         // fail if we succeed with application deployment
         Assert.fail();
@@ -141,9 +142,9 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       }
     }
 
-    AppRequest<AppWithDuplicateStreams.ConfigClass> createRequest = new AppRequest<>(
+    AppRequest<AppWithDuplicateData.ConfigClass> createRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()),
-      new AppWithDuplicateStreams.ConfigClass(false, false, false, false));
+      new AppWithDuplicateData.ConfigClass(false, false, false));
     deployApplication(appId, createRequest);
   }
 
@@ -211,6 +212,20 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     history = countService.getHistory(ProgramRunStatus.ALL);
     Assert.assertEquals(1, history.size());
     Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
+  }
+
+  @Test
+  public void testNamespaceAvailableAtRuntime() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, AppUsingNamespace.class);
+    ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingNamespace.SERVICE_NAME);
+    serviceManager.start();
+    serviceManager.waitForStatus(true, 1, 10);
+
+    URL serviceURL = serviceManager.getServiceURL(10, TimeUnit.SECONDS);
+    Assert.assertEquals(testSpace.getId(), callServiceGet(serviceURL, "ns"));
+
+    serviceManager.stop();
+    serviceManager.waitForStatus(false, 1, 10);
   }
 
   @Test
@@ -816,12 +831,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testTransactionHandlerService() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithServices.class);
     LOG.info("Deployed.");
+
     ServiceManager serviceManager =
       applicationManager.getServiceManager(AppWithServices.TRANSACTIONS_SERVICE_NAME).start();
     serviceManager.waitForStatus(true);
-
     LOG.info("Service Started");
-
 
     final URL baseUrl = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
     Assert.assertNotNull(baseUrl);

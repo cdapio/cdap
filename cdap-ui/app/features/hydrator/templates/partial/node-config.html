@@ -16,9 +16,10 @@
 
 <div ng-controller="NodeConfigController">
   <div ng-if="isValidPlugin"
-        ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-form.html'">
+       ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-form.html'">
   </div>
-  <div class="p-10" ng-if="!isValidPlugin">
-    <p class="text-left">Please select a plugin to edit configuration.</p>
+  <div class="bottompanel-body" ng-if="!isValidPlugin">
+    <p ng-if="$state.includes('hydrator.create.studio')">Please select a plugin to edit configuration.</p>
+    <p ng-if="$state.includes('hydrator.detail')">Please select a plugin to view configuration.</p>
   </div>
 </div>

@@ -176,11 +176,11 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         closeables.add(pluginInstantiator);
       }
 
-      final DynamicMapReduceContext context =
-        new DynamicMapReduceContext(program, runId, options.getUserArguments(), spec,
-                                    logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
-                                    metricsCollectionService, txSystemClient, datasetFramework,
-                                    pluginInstantiator);
+      final BasicMapReduceContext context =
+        new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
+                                  logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
+                                  metricsCollectionService, txSystemClient, datasetFramework,
+                                  pluginInstantiator);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),

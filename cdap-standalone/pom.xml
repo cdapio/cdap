@@ -332,6 +332,8 @@
                         <exclude>pom.xml</exclude>
                         <exclude>build.gradle</exclude>
                         <exclude>**/target/original*.jar</exclude>
+                        <exclude>**/target/apidocs/**</exclude>
+                        <exclude>**/target/stage-packaging*/**</exclude>
                       </excludes>
                     </resource>
                   </resources>

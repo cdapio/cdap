@@ -10,7 +10,7 @@
              "widget": "javascript-editor",
              "label" : "Filter",
              "properties" : {
-                "default" : "function shouldFilter(input) {\n  return false;\n}"
+                "default" : "function shouldFilter(input, context) {\n  return false;\n}"
              }
           }
        }

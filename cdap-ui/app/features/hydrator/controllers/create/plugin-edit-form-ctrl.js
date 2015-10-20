@@ -240,10 +240,21 @@ angular.module(PKG.name + '.feature.hydrator')
             this.noconfig = false;
 
           }.bind(this),
-          function error() {
+          function error(err) {
             // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
             $timeout(function() {
               // Didn't receive a configuration from the backend. Fallback to all textboxes.
+              switch(err) {
+                case 'NO_JSON_FOUND':
+                  this.noConfigMessage = GLOBALS.en.hydrator.studio.noConfigMessage;
+                  break;
+                case 'CONFIG_SYNTAX_JSON_ERROR':
+                  this.noConfigMessage = GLOBALS.en.hydrator.studio.syntaxConfigJsonError;
+                  break;
+                case 'CONFIG_SEMANTICS_JSON_ERROR':
+                  this.noConfigMessage = GLOBALS.en.hydrator.studio.semanticConfigJsonError;
+                  break;
+              }
               this.noconfig = true;
               this.configfetched = true;
             }.bind(this), 1000);

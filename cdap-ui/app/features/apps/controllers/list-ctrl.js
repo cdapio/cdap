@@ -14,23 +14,29 @@
  * the License.
  */
 
+ class AppListController {
+   constructor($scope, MyDataSource, myAppUploader, MyOrderings, GLOBALS, myHydratorFactory) {
+     this.MyOrderings = MyOrderings;
+     this.apps = [];
+     this.currentPage = 1;
+     this.searchText = '';
+     this.GLOBALS = GLOBALS;
+     this.myHydratorFactory = myHydratorFactory;
+
+     var data = new MyDataSource($scope);
+
+     data.request({
+       _cdapNsPath: '/apps/'
+     })
+       .then( (apps)=> {
+         this.apps = this.apps.concat(apps);
+       });
+     this.onFileSelected = myAppUploader.upload;
+
+   }
+ }
+
+ AppListController.$inject = ['$scope', 'MyDataSource', 'myAppUploader', 'MyOrderings', 'GLOBALS', 'myHydratorFactory'];
+
 angular.module(PKG.name + '.feature.apps')
-  .controller('AppListController', function CdapAppList($timeout, $scope, MyDataSource, myAppUploader, $alert, $state, MyOrderings, GLOBALS, myHydratorFactory) {
-    this.MyOrderings = MyOrderings;
-    this.apps = [];
-    this.currentPage = 1;
-    this.searchText = '';
-    this.GLOBALS = GLOBALS;
-    this.myHydratorFactory = myHydratorFactory;
-
-    var data = new MyDataSource($scope);
-
-    data.request({
-      _cdapNsPath: '/apps/'
-    })
-      .then(function(apps) {
-        this.apps = this.apps.concat(apps);
-      }.bind(this));
-    this.onFileSelected = myAppUploader.upload;
-
-  });
+  .controller('AppListController', AppListController);

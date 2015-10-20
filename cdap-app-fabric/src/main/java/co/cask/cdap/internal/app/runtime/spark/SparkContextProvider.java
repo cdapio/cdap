@@ -39,6 +39,7 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractService;
@@ -156,6 +157,7 @@ public final class SparkContextProvider {
         contextConfig.getSpecification(), contextConfig.getProgramId(), contextConfig.getRunId(),
         classLoader, contextConfig.getLogicalStartTime(), contextConfig.getArguments(),
         contextConfig.getTransaction(), injector.getInstance(DatasetFramework.class),
+        injector.getInstance(TransactionSystemClient.class),
         injector.getInstance(DiscoveryServiceClient.class), metricsCollectionService, hConf,
         injector.getInstance(StreamAdmin.class), contextConfig.getWorkflowToken()
       );

@@ -178,9 +178,6 @@ public class WordCountApp extends AbstractApplication {
    *
    */
   public static class CountByField extends AbstractFlowlet implements Callback {
-    @UseDataSet("mydataset")
-    private KeyValueTable counters;
-
     @Property
     private final String wordKey;
 
@@ -208,9 +205,10 @@ public class WordCountApp extends AbstractApplication {
         token = field + ":" + token;
       }
 
-      this.counters.increment(token.getBytes(Charsets.UTF_8), increment);
+      KeyValueTable counters = getContext().getDataset("mydataset");
+      counters.increment(token.getBytes(Charsets.UTF_8), increment);
 
-      byte[] bytes = this.counters.read(token.getBytes(Charsets.UTF_8));
+      byte[] bytes = counters.read(token.getBytes(Charsets.UTF_8));
       LOG.info(token + " " + Longs.fromByteArray(bytes));
     }
 

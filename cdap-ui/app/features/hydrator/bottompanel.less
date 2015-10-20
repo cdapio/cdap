@@ -105,6 +105,9 @@ body.theme-cdap.state-hydrator {
           }
         }
       }
+      select.cron-select:hover {
+        cursor: not-allowed;
+      }
     }
   }
 
@@ -330,7 +333,7 @@ body.theme-cdap.state-hydrator {
       }
       .one-divider {
         &:before {
-          left: 50%;
+          left: 67%;
         }
         &:after {
           display: none;
@@ -338,10 +341,18 @@ body.theme-cdap.state-hydrator {
       }
       .two-divider {
         &:before {
+          left: 25%;
+        }
+        &:after {
+          right: 25%;
+        }
+      }
+      .sink-divider {
+        &:before {
           left: 33%;
         }
         &:after {
-          right: 33%;
+          display: none;
         }
       }
     }

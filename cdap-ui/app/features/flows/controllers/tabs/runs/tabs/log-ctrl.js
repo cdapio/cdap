@@ -14,9 +14,8 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunDetailLogController', function($scope, $state) {
-
+class FlowsRunDetailLogController {
+  constructor($scope, $state) {
     if (!$scope.RunsController.runs.length) {
       return;
     }
@@ -28,4 +27,8 @@ angular.module(PKG.name + '.feature.flows')
       programId: $state.params.programId,
       runId: $scope.RunsController.runs.selected.runid,
     };
-  });
+  }
+}
+FlowsRunDetailLogController.$inject = ['$scope', '$state'];
+angular.module(`${PKG.name}.feature.flows`)
+  .controller('FlowsRunDetailLogController', FlowsRunDetailLogController);

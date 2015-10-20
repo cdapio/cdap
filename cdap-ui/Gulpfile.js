@@ -184,7 +184,9 @@ function getEs6Features(isNegate) {
     with the package manager build step. The transition process is going to be painful but the end goal is better (hopefully :])
   */
   var es6features = [
-    'workflows'
+    'workflows',
+    'flows',
+    'apps'
   ];
   var returnVal = [];
   es6features.forEach(function(feature) {
@@ -440,8 +442,18 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   gulp.watch('./dist/**/*')
     .on('change', plug.livereload.changed);
 
-  gulp.watch(['./app/**/*.js', '!./app/features/workflows/**/*.js', '!./app/**/*-test.js'], ['jshint', 'watch:js:app']);
-  gulp.watch(['./app/features/workflows/**/*.js'], ['jshint', 'watch:js:app:babel']);
+  gulp.watch([
+    './app/**/*.js',
+    '!./app/features/workflows/**/*.js',
+    '!./app/features/apps/**/*.js',
+    '!./app/features/flows/**/*.js',
+    '!./app/**/*-test.js'
+  ], ['jshint', 'watch:js:app']);
+  gulp.watch([
+    './app/features/workflows/**/*.js',
+    './app/features/apps/**/*.js',
+    './app/features/flows/**/*.js'
+  ], ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
   gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);

@@ -21,6 +21,7 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionSystemClient;
 import org.apache.hadoop.conf.Configuration;
 
 /**
@@ -31,13 +32,15 @@ final class SparkContextFactory {
   private final Configuration hConf;
   private final ClientSparkContext clientContext;
   private final DatasetFramework datasetFramework;
+  private final TransactionSystemClient txClient;
   private final StreamAdmin streamAdmin;
 
   SparkContextFactory(Configuration hConf, ClientSparkContext clientContext,
-                      DatasetFramework datasetFramework, StreamAdmin streamAdmin) {
+                      DatasetFramework datasetFramework, TransactionSystemClient txClient, StreamAdmin streamAdmin) {
     this.hConf = hConf;
     this.clientContext = clientContext;
     this.datasetFramework = datasetFramework;
+    this.txClient = txClient;
     this.streamAdmin = streamAdmin;
   }
 
@@ -59,7 +62,7 @@ final class SparkContextFactory {
     return new ExecutionSparkContext(clientContext.getApplicationSpecification(), spec, clientContext.getProgramId(),
                                      clientContext.getRunId(), clientContext.getProgramClassLoader(),
                                      clientContext.getLogicalStartTime(), clientContext.getRuntimeArguments(),
-                                     transaction, datasetFramework, clientContext.getDiscoveryServiceClient(),
+                                     transaction, datasetFramework, txClient, clientContext.getDiscoveryServiceClient(),
                                      clientContext.getMetricsContext(), clientContext.getLoggingContext(),
                                      hConf, streamAdmin, clientContext.getWorkflowToken());
   }
