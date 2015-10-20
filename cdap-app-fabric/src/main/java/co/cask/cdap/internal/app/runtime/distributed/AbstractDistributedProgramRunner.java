@@ -53,6 +53,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
@@ -351,14 +352,16 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     // This method is needed because Twill is not able to deal with {@link FileContextLocationFactory} yet.
     // Remove after (CDAP-3498)
     try {
-      if (locationFactory instanceof HDFSLocationFactory) {
-        YarnUtils.addDelegationTokens(hConf, locationFactory, credentials);
-      } else if (locationFactory instanceof FileContextLocationFactory) {
-        List<Token<?>> tokens = ((FileContextLocationFactory) locationFactory).getFileContext().getDelegationTokens(
-          new Path(locationFactory.getHomeLocation().toURI()), YarnUtils.getYarnTokenRenewer(hConf)
-        );
-        for (Token<?> token : tokens) {
-          credentials.addToken(token.getService(), token);
+      if (UserGroupInformation.isSecurityEnabled()) {
+        if (locationFactory instanceof HDFSLocationFactory) {
+          YarnUtils.addDelegationTokens(hConf, locationFactory, credentials);
+        } else if (locationFactory instanceof FileContextLocationFactory) {
+          List<Token<?>> tokens = ((FileContextLocationFactory) locationFactory).getFileContext().getDelegationTokens(
+            new Path(locationFactory.getHomeLocation().toURI()), YarnUtils.getYarnTokenRenewer(hConf)
+          );
+          for (Token<?> token : tokens) {
+            credentials.addToken(token.getService(), token);
+          }
         }
       }
     } catch (IOException e) {
