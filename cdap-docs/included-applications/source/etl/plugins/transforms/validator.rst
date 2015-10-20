@@ -29,9 +29,9 @@ valid.
 Example: ``"validators": "core"``
 
 **validationScript:** Javascript that must implement a function ``isValid`` that takes a JSON object
-representation of the input record and a context object (encapsulating CDAP metrics, logger, and validators)
-and returns a result JSON.
-The returned JSON will include these fields; ``errorCode`` and ``errorMsg`` can be ignored for valid records::
+(representing the input record) and a context object (encapsulating CDAP metrics, logger, and validators)
+and returns a result JSON with validity, error code, and error message.
+Example response::
 
   {
     "isValid" : true [or] false,
@@ -48,11 +48,11 @@ The returned JSON will include these fields; ``errorCode`` and ``errorMsg`` can 
         "properties": {
           "validators": "core",
           "validationScript": "function isValid(input, context) {
-                                  var coreValidator = context.getValidator("coreValidator");
+                                  var coreValidator = context.getValidator(\"coreValidator\");
                                   if (!coreValidator.maxLength(input.body, 10))
                                     {
                                       return {'isValid': false, 'errorCode': 10,
-                                              'errorMsg': 'body length greater than 10'};
+                                              'errorMsg': \"body length greater than 10\"};
                                     }
                                   return {'isValid' : true};
                                 };"
@@ -71,25 +71,25 @@ using ``"validators": "core"``) and references a function using its Javascript n
         "name": "Validator",
         "properties": {
           "validators": "core",
-          "validationScript": "function isValid(input) {
+          "validationScript": "function isValid(input, context) {
                                   var isValid = true;
                                   var errMsg = \"\";
                                   var errCode = 0;
-                                  var coreValidator = context.getValidator("coreValidator");
+                                  var coreValidator = context.getValidator(\"coreValidator\");
                                   var metrics = context.getMetrics();
                                   var logger = context.getLogger();
                                   if (!coreValidator.isDate(input.date)) {
                                      isValid = false; errMsg = input.date + \"is invalid date\"; errCode = 5;
-                                     metrics.count("invalid.date", 1);
+                                     metrics.count(\"invalid.date\", 1);
                                   } else if (!coreValidator.isUrl(input.url)) { 
                                      isValid = false; errMsg = \"invalid url\"; errCode = 7;
-                                     metrics.count("invalid.url", 1);
+                                     metrics.count(\"invalid.url\", 1);
                                   } else if (!coreValidator.isInRange(input.content_length, 0, 1024 * 1024)) {
                                      isValid = false; errMsg = \"content length >1MB\"; errCode = 10;
-                                     metrics.count("invalid.body.size", 1);
+                                     metrics.count(\"invalid.body.size\", 1);
                                   }
                                   if (!isValid) {
-                                    logger.warn("Validation failed for record {}", input);
+                                    logger.warn(\"Validation failed for record {}\", input);
                                   }
                                   return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg};
                                 };"
@@ -99,7 +99,7 @@ using ``"validators": "core"``) and references a function using its Javascript n
 This example sends an error code ``'5'`` for any records whose ``'date'`` field is an
 invalid date, sends an error code ``'7'`` for any records whose ``'url'`` field is an
 invalid URL, and sends an error code ``'10'`` for any records whose ``'content_length'``
-field is greater than 1MB.;
+field is greater than 1MB.
 
 It has been "pretty-printed" for readability. It uses the
 :ref:`CoreValidator <included-apps-etl-plugins-shared-core-validator>` (included using

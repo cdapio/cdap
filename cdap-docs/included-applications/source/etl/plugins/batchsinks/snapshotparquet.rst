@@ -11,7 +11,8 @@ Batch Sinks: SnapshotParquet
 .. rubric:: Description
 
 A batch sink for a PartitionedFileSet that writes snapshots of data as a new
-partition. Data is written in Parquet format. 
+partition. Data is written in Parquet format. A corresponding SnapshotParquet source
+can be used to read only the most recently written snapshot.
 
 .. rubric:: Use Case
 
