@@ -1,14 +1,14 @@
 {
-  "id": "Table",
+  "id": "PythonEvaluator",
   "groups" : {
     "position": [ "group1" ],
     "group1": {
        "position" : ["script"],
        "fields" : {
           "script" : {
-             "widget": "javascript-editor",
+             "widget": "python-editor",
              "properties" : {
-                "default" : "function transform(input, context) {\n  return input;\n}"
+                "default" : "def transform(input, emitter, context):\n    emitter.emit(input)\n"
              }
           }
        }

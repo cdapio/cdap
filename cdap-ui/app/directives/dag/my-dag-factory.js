@@ -91,6 +91,7 @@ angular.module(PKG.name + '.commons')
       var iconMap = {
         'script': 'fa-code',
         'scriptfilter': 'fa-code',
+        'pythonevaluator': 'fa-code',
         'twitter': 'fa-twitter',
         'cube': 'fa-cubes',
         'data': 'fa-database',

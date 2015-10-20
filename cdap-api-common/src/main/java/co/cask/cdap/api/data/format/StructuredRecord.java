@@ -188,4 +188,26 @@ public class StructuredRecord {
       return field;
     }
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    StructuredRecord that = (StructuredRecord) o;
+
+    return schema.equals(that.schema) && fields.equals(that.fields);
+
+  }
+
+  @Override
+  public int hashCode() {
+    int result = schema.hashCode();
+    result = 31 * result + fields.hashCode();
+    return result;
+  }
 }

@@ -45,7 +45,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 /**
- * Filters records using custom javascript provided by the config.
+ * Transforms records using custom javascript provided by the config.
  */
 @Plugin(type = "transform")
 @Name("Script")
@@ -72,14 +72,14 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
       "called 'transform', which takes as input a JSON object (representing the input record) " +
       "and a context object (which contains CDAP metrics and logger), and returns " +
       "a JSON object that represents the transformed input. " +
-      "For example: " +
-      "'function transform(input, context) {" +
-      " if(input.count < 0) {" +
-      "  context.getMetrics().count(\"negative.count\", 1);" +
-      "  context.getLogger().debug(\"Received record with negative count\");" +
-      " }" +
-      " input.count = input.count * 1024; " +
-      " return input; }' " +
+      "For example:\n" +
+      "'function transform(input, context) {\n" +
+      "  if(input.count < 0) {\n" +
+      "    context.getMetrics().count(\"negative.count\", 1);\n" +
+      "    context.getLogger().debug(\"Received record with negative count\");\n" +
+      "  }\n" +
+      "  input.count = input.count * 1024;\n" +
+      "return input; }'\n" +
       "will scale the 'count' field by 1024.")
     private final String script;
 
