@@ -131,6 +131,11 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return program.getApplicationSpecification();
   }
 
+  @Override
+  public String getNamespace() {
+    return program.getNamespaceId();
+  }
+
   /**
    * Returns the {@link PluginInstantiator} used by this context or {@code null} if there is no plugin support.
    */

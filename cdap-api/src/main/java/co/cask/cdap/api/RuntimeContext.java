@@ -34,4 +34,9 @@ public interface RuntimeContext {
    * @return A map of argument key and value.
    */
   Map<String, String> getRuntimeArguments();
+
+  /**
+   * @return The application namespace
+   */
+  String getNamespace();
 }

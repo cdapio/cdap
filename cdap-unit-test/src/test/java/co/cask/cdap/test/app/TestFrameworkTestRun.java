@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.AppUsingNamespace;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.common.Bytes;
@@ -211,6 +212,20 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     history = countService.getHistory(ProgramRunStatus.ALL);
     Assert.assertEquals(1, history.size());
     Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
+  }
+
+  @Test
+  public void testNamespaceAvailableAtRuntime() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, AppUsingNamespace.class);
+    ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingNamespace.SERVICE_NAME);
+    serviceManager.start();
+    serviceManager.waitForStatus(true, 1, 10);
+
+    URL serviceURL = serviceManager.getServiceURL(10, TimeUnit.SECONDS);
+    Assert.assertEquals(testSpace.getId(), callServiceGet(serviceURL, "ns"));
+
+    serviceManager.stop();
+    serviceManager.waitForStatus(false, 1, 10);
   }
 
   @Test
