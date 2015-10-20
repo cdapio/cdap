@@ -69,16 +69,17 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
    */
   public static class Config extends PluginConfig {
     @Description("Javascript defining how to transform one record into another. The script must implement a function " +
-      "called 'transform', which takes as input a JSON object representing the input record " +
+      "called 'transform', which takes as input a JSON object (representing the input record) " +
       "and a context object (which contains CDAP metrics and logger), and returns " +
       "a JSON object that represents the transformed input. " +
       "For example: " +
       "'function transform(input, context) {" +
-      " input.count = input.count * 1024; " +
       " if(input.count < 0) {" +
-      " context.getMetrics().count(\"negative.count\", 1);" +
-      " context.getLogger().debug(\"Received record with negative count\");" +
-      "return input; }' " +
+      "  context.getMetrics().count(\"negative.count\", 1);" +
+      "  context.getLogger().debug(\"Received record with negative count\");" +
+      " }" +
+      " input.count = input.count * 1024; " +
+      " return input; }' " +
       "will scale the 'count' field by 1024.")
     private final String script;
 
