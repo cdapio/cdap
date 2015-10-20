@@ -16,6 +16,9 @@
 
 package co.cask.cdap.test.internal;
 
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.MethodNotAllowed;
+import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -161,6 +164,10 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Override
   public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
-    return appFabricClient.getHistory(programId, status);
+    try {
+      return appFabricClient.getHistory(programId, status);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 }
