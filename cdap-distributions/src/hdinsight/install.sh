@@ -36,7 +36,7 @@ __create_tmpdir() { mkdir -p ${__tmpdir}; };
 apt-get install --yes git || die "Failed to install git"
 
 # Install chef
-curl -L https://www.chef.io/chef/install.sh | sudo bash ./install.sh -v ${CHEF_VERSION} || die "Failed to install chef"
+curl -L https://www.chef.io/chef/install.sh | sudo bash -s -- -v ${CHEF_VERSION} || die "Failed to install chef"
 
 # Clone CDAP repo
 __create_tmpdir
