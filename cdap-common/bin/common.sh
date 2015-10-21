@@ -127,6 +127,9 @@ location of your Java installation." >&2
 }
 
 # Sets the correct HBase support library to use, based on what version exists in the classpath
+# NOTE: this function is also sourced and invoked by the CSD control script, found here:
+#   https://github.com/caskdata/cm_csd/blob/develop/src/scripts/cdap-control.sh
+#   Any changes to this function must be compatible with the CSD's invocation
 set_hbase() {
   # Why is this here? Is this not redundant?
   if [ -z "${JAVA}" ]; then
@@ -179,6 +182,9 @@ set_hbase() {
 }
 
 # set the classpath to include hadoop and hbase dependencies
+# NOTE: this function is also sourced and invoked by the CSD control script, found here:
+#   https://github.com/caskdata/cm_csd/blob/develop/src/scripts/cdap-control.sh
+#   Any changes to this function must be compatible with the CSD's invocation
 set_classpath() {
   COMP_HOME=${1}
   CCONF=${2}
@@ -212,6 +218,9 @@ set_classpath() {
 # Determine Hive classpath, and set EXPLORE_CLASSPATH.
 # Hive classpath is not added as part of system classpath as hive jars bundle unrelated jars like guava,
 # and hence need to be isolated.
+# NOTE: this function is also sourced and invoked by the CSD control script, found here:
+#   https://github.com/caskdata/cm_csd/blob/develop/src/scripts/cdap-control.sh
+#   Any changes to this function must be compatible with the CSD's invocation
 set_hive_classpath() {
   local __explore=$(get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml false)
   if [[ "${__explore}" == "true" ]]; then
