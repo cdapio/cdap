@@ -20,7 +20,8 @@ angular.module(PKG.name + '.commons')
       restrict: 'EA',
       scope: {
         model: '=ngModel',
-        config: '='
+        config: '=',
+        mode: '@'
       },
       template: '<div ui-ace="aceoptions" ng-model="model" aceEditorStyle></div>',
       controller: function($scope) {
@@ -28,7 +29,7 @@ angular.module(PKG.name + '.commons')
         config.set('modePath', '/assets/bundle/ace-editor-worker-scripts/');
         $scope.aceoptions = {
           workerPath: '/assets/bundle/ace-editor-worker-scripts',
-          mode: 'javascript',
+          mode: $scope.mode || 'javascript',
           useWrapMode: true,
           newLineMode: 'unix'
         };

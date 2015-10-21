@@ -94,8 +94,6 @@ public class TimePartitionedFileSetDatasetAvroSink extends
   public void transform(StructuredRecord input,
                         Emitter<KeyValue<AvroKey<GenericRecord>, NullWritable>> emitter) throws Exception {
     emitter.emit(new KeyValue<>(new AvroKey<>(recordTransformer.transform(input)), NullWritable.get()));
-    InvalidEntry entry = new InvalidEntry(100, "dummy", input);
-    emitter.emitError(entry);
   }
 
   /**

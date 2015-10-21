@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Test case for {@link ScriptTransform}.
  */
 public class ScriptTransformTest {
   private static final Schema SCHEMA = Schema.recordOf("record",
@@ -150,10 +151,10 @@ public class ScriptTransformTest {
     );
     Schema inner1Schema = Schema.recordOf(
       "inner1",
-      Schema.Field.of("list", Schema.arrayOf(Schema.recordOf(
-        "component",
-        Schema.Field.of("map", Schema.mapOf(Schema.of(Schema.Type.STRING), inner2Schema))
-      )))
+      Schema.Field.of("list",
+        Schema.arrayOf(Schema.mapOf(
+          Schema.of(Schema.Type.STRING), inner2Schema)
+      ))
     );
     Schema schema = Schema.recordOf(
       "complex",
