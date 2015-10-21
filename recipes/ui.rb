@@ -80,7 +80,7 @@ execute 'generate-ui-ssl-cert' do
 
   command "openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout #{keypath} -out #{certpath} -subj '/C=US/ST=CA/L=Palo Alto/OU=cdap/O=cdap/CN=#{common_name}'"
   not_if { File.exist?(certpath) && File.exist?(keypath) }
-  only_if { ssl_enabled }
+  only_if { ssl_enabled.to_s == 'true' }
 end
 
 service 'cdap-ui' do
