@@ -235,6 +235,11 @@ angular.module(PKG.name + '.feature.hydrator')
               if ($scope.plugin.properties[outputSchemaProperty[0]] !== $scope.plugin.outputSchema) {
                 $scope.plugin.properties[outputSchemaProperty[0]] = $scope.plugin.outputSchema;
               }
+              $scope.$watch('plugin.outputSchema', function() {
+                if(validateSchema()) {
+                  $scope.plugin.properties[outputSchemaProperty[0]] = $scope.plugin.outputSchema;
+                }
+              });
             }
 
             // Mark the configfetched to show that configurations have been received.
@@ -267,7 +272,6 @@ angular.module(PKG.name + '.feature.hydrator')
       this.configfetched = true;
     }
 
-    $scope.$watch('plugin.outputSchema', validateSchema);
     $scope.$watchCollection('plugin.properties', function() {
       MyNodeConfigService.notifyPluginSaveListeners($scope.plugin.id);
     });
