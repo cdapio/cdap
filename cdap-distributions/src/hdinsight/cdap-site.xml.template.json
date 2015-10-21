@@ -2,9 +2,11 @@
   "cdap": {
     "cdap_site": {
       "zookeeper.quorum": "ZK_QUORUM",
-      "kafka.log.dir": "/var/cdap/kafka-logs"
+      "kafka.log.dir": "/var/cdap/kafka-logs",
+      "explore.enabled": "true"
     },
-    "skip_prerequisites": "true"
+    "skip_prerequisites": "true",
+    "version": "3.2.0-1"
   },
   "hadoop": {
     "distribution": "hdp",
