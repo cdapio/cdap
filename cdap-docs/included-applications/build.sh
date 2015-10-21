@@ -37,7 +37,7 @@ function download_includes() {
   test_an_include 0c22ee5c57de83614d8235096e8efa8d "${cdap_etl}/batch/sink/SnapshotFileBatchParquetSink.java"
   test_an_include 288b88b520b32f16fb0d0dafab5c52be "${cdap_etl}/batch/sink/SnapshotFileBatchSink.java"
   test_an_include 8e51b83878c90f000e59ada65630457d "${cdap_etl}/batch/sink/TableSink.java"
-  test_an_include 2417871dcd685d2ed75c10df712c9f8c "${cdap_etl}/batch/sink/TimePartitionedFileSetDatasetAvroSink.java"
+  test_an_include ea3eb9208a4bfeaead70ea689fba5cae "${cdap_etl}/batch/sink/TimePartitionedFileSetDatasetAvroSink.java"
   test_an_include 95ae9c116aa257efd5e3bb6cacaa4033 "${cdap_etl}/batch/sink/TimePartitionedFileSetDatasetParquetSink.java"
   test_an_include 3069701c1070f0546d6a73800f558e72 "${cdap_etl}/batch/sink/TimePartitionedFileSetSink.java"
 
@@ -69,8 +69,8 @@ function download_includes() {
   # Transforms
   test_an_include 06ddd340ba65bbc068ab3e3cf2f346c1 "${cdap_etl}/transform/LogParserTransform.java"
   test_an_include 7b5386499cc1a646e5be38ab5269d076 "${cdap_etl}/transform/ProjectionTransform.java"
-  test_an_include 54cc16b74a04a15bd29e8100ae209b2e "${cdap_etl}/transform/ScriptFilterTransform.java"
-  test_an_include d095c2d250bf7cc7c5d4aaa794c2885b "${cdap_etl}/transform/ScriptTransform.java"
+  test_an_include 50f4c36bf7a0fcb5acf0fc72df049afb "${cdap_etl}/transform/ScriptFilterTransform.java"
+  test_an_include 91b2b4ae0e5a4e58a411b387e88d1c4e "${cdap_etl}/transform/ScriptTransform.java"
   test_an_include c3eb291d7b7d4ca0934d151bed882dd3 "${cdap_etl}/transform/StructuredRecordToGenericRecordTransform.java"
   test_an_include c2d115c4993b10f1a787c789665626d4 "${cdap_etl}/transform/ValidatorTransform.java"
 
