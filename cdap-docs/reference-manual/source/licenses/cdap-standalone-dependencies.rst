@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 3.2.0
+    :version: 3.2.1
 
 =================================================
 Cask Data Application Platform |version|
@@ -69,7 +69,6 @@ Cask Data Application Platform Standalone Dependencies
    "com.twitter.parquet-hadoop-bundle-1.6.0rc3.jar","1.6.0","rc3","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.twitter.parquet-jackson-1.6.0rc3.jar","1.6.0","rc3","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.typesafe.config-1.2.1.jar","1.2.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "com.yammer.metrics.metrics-annotation-2.2.0.jar","2.2.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.yammer.metrics.metrics-core-2.2.0.jar","2.2.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-beanutils.commons-beanutils-1.7.0.jar","1.7.0","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-beanutils.commons-beanutils-core-1.8.3.jar","1.8.3","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -83,7 +82,6 @@ Cask Data Application Platform Standalone Dependencies
    "commons-httpclient.commons-httpclient-3.1.jar","3.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-io.commons-io-2.4.jar","2.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-lang.commons-lang-2.5.jar","2.5","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "commons-logging.commons-logging-1.1.1.jar","1.1.1","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-net.commons-net-2.2.jar","2.2","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-pool.commons-pool-1.5.4.jar","1.5.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "eigenbase.eigenbase-properties-1.1.4.jar","1.1.4","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
