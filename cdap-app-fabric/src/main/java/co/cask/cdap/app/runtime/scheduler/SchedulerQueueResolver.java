@@ -38,7 +38,7 @@ public class SchedulerQueueResolver {
    * Construct SchedulerQueueResolver with CConfiguration and Store.
    */
   public SchedulerQueueResolver(CConfiguration cConf, Store store) {
-    this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+    this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE, "");
     this.store = store;
   }
 
