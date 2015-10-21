@@ -164,7 +164,7 @@ angular.module(PKG.name + '.commons')
           currentBlock += ')) {\n' +
             conditions +
             '} else {\n' +
-            'valid = "false";\n' +
+            'valid = false;\n' +
             'errMsg = "' + emessage + '";\n' +
             'errCode = ' + validation.ecode + ';\n' +
             '}\n';
@@ -180,7 +180,7 @@ angular.module(PKG.name + '.commons')
       conditions += '\n\n';
 
       var initFn = 'function isValid(input) {\n' +
-        'var valid = "true";\n' +
+        'var valid = true;\n' +
         'var errMsg = "";\n' +
         'var errCode = 0;\n\n';
 

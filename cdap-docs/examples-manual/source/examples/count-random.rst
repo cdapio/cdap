@@ -16,9 +16,9 @@ Overview
 This application does not have a stream; instead, it uses a tick annotation in the ``source`` flowlet to generate data:
 
 - The ``generate`` method of the  ``source`` flowlet has a ``@Tick`` annotation which specifies how frequently the method will be called.
-- The ``source`` flowlet generates a random integer in the range {1..10000} and emits it to the next flowlet ``splitter``.
-- The ``splitter`` flowlet splits the number into digits, and emits these digits to the next stage.
-- The ``counter`` increments the count of the received number in the KeyValueTable.
+- The *source* flowlet generates a random integer in the range {1..10000} and emits it to the next flowlet *splitter*.
+- The *splitter* flowlet splits the number into digits, and emits these digits to the next stage.
+- The *counter* flowlet increments the count of the received number in the ``KeyValueTable``.
 
 Let's look at some of these components, and then run the application and see the results.
 
@@ -39,6 +39,7 @@ The flow contains three flowlets:
 .. literalinclude:: /../../../cdap-examples/CountRandom/src/main/java/co/cask/cdap/examples/countrandom/CountRandomFlow.java
    :language: java
    :lines: 25-
+   :dedent: 2
 
 The *source* flowlet generates random numbers every 1 millisecond. It can also be configured through runtime
 arguments:
@@ -65,54 +66,38 @@ transaction conflicts if the flowlet is scaled to multiple instances:
    :lines: 27-
 
 
+.. Building and Starting
+.. =====================
 .. |example| replace:: CountRandom
-.. include:: building-starting-running-cdap.txt
+.. |example-italic| replace:: *CountRandom*
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <CountRandom>`
+
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example
 ===================
 
-Starting the Flow
------------------
+.. Starting the Flow
 
-Once the application is deployed:
+.. |example-flow| replace:: CountRandom
+.. |example-flow-italic| replace:: *CountRandom*
 
-- Go to the *CountRandom* `application overview page 
-  <http://localhost:9999/ns/default/apps/CountRandom/overview/status>`__,
-  click ``CountRandom`` to get to the flow detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh start flow CountRandom.CountRandom 
-    Successfully started flow 'CountRandom' of application 'CountRandom' with stored runtime arguments '{}'
+.. include:: _includes/_starting-flow.txt
 
 Once you start the flow, the *source* flowlet will continuously generate data. You can see
 this by observing the counters for each flowlet in the flow visualization. Even though you
 are not injecting any data into the flow, the counters increase steadily.
 
+Querying the Results
+--------------------
+You can see the results by executing a SQL query using the CDAP-UI. Go to the *randomTable* 
+:cdap-ui-datasets-explore:`dataset overview page, explore tab <randomTable>` and click the 
+*Execute SQL* button. When the query has finished and is hi-lighted in color, you can view
+the results by clicking a middle *Action* button in the right-side of the *Results* table.
+A pop-up window will show you the different keys and their values.
 
-Stopping and Removing the Application
-=====================================
-Once done, you can stop the application as described in :ref:`Stopping an Application 
-<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
 
-**Stopping the Flow**
-
-- Go to the *CountRandom* `application overview page 
-  <http://localhost:9999/ns/default/apps/CountRandom/overview/status>`__,
-  click ``CountRandom`` to get to the flow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh stop flow CountRandom.CountRandom
-    Successfully stopped flow 'CountRandom' of application 'CountRandom'
-
-**Removing the Application**
-
-You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
-
-- Go to the *CountRandom* `application overview page 
-  <http://localhost:9999/ns/default/apps/CountRandom/overview/status>`__,
-  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
-  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh delete app CountRandom
+.. Stopping and Removing the Application
+.. =====================================
+.. include:: _includes/_stopping-flow-removing-application.txt

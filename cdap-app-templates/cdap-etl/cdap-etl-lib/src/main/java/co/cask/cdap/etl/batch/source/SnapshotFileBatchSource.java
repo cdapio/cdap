@@ -17,7 +17,6 @@
 package co.cask.cdap.etl.batch.source;
 
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
@@ -52,6 +51,7 @@ public abstract class SnapshotFileBatchSource<KEY, VALUE> extends BatchSource<KE
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     PartitionedFileSetProperties.Builder fileProperties = SnapshotFileSet.getBaseProperties(config);
+    addFileProperties(fileProperties);
 
     pipelineConfigurer.createDataset(config.getName(), PartitionedFileSet.class, fileProperties.build());
   }

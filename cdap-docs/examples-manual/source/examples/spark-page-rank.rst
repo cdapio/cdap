@@ -61,31 +61,28 @@ Memory Requirements
 When a Spark program is running inside a workflow, the memory requirements configured for the Spark program may need increasing beyond the defaults:
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
-   :language: java
-   :lines: 113-114
+    :language: java
+    :lines: 113-114
+    :dedent: 6
 
-
-
+.. Building and Starting
+.. =====================
 .. |example| replace:: SparkPageRank
-.. include:: building-starting-running-cdap.txt
+.. |example-italic| replace:: *SparkPageRank*
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <SparkPageRank>`
+
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example
 ===================
 
-Starting the Services
----------------------
+.. Starting the Service
 
-Once the application is deployed:
+.. |example-service| replace:: SparkPageRankService
+.. |example-service-italic| replace:: *SparkPageRankService*
 
-- Go to the *SparkPageRank* `application overview page 
-  <http://localhost:9999/ns/default/apps/SparkPageRank/overview/status>`__,
-  click ``SparkPageRankService`` to get to the service detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh start service SparkPageRank.SparkPageRankService
-    
-    Successfully started service 'SparkPageRankService' of application 'SparkPageRank' with stored runtime arguments '{}'
+.. include:: _includes/_starting-service.txt
 
 Injecting URL Pairs
 -------------------
@@ -94,25 +91,37 @@ Inject a file of URL pairs to the stream *backlinkURLStream* by running this com
 Standalone CDAP SDK directory, using the Command Line Interface::
   
   $ cdap-cli.sh load stream backlinkURLStream examples/SparkPageRank/resources/urlpairs.txt
-  
   Successfully sent stream event to stream 'backlinkURLStream'
 
-Running the Workflow
---------------------
-There are three ways to start the workflow:
+Starting the Workflow
+---------------------
+.. |example-workflow| replace:: PageRankWorkflow
+.. |example-workflow-italic| replace:: *PageRankWorkflow*
 
-1. Go to the *SparkPageRank* `application overview page 
-   <http://localhost:9999/ns/default/apps/SparkPageRank/overview/status>`__,
-   click ``PageRankWorkflow`` to get to the Workflow detail page, then click the *Start* button; or
-   
-#. Send a query via an HTTP request using the ``curl`` command::
+The workflow must be started with a runtime argument ``spark.SparkPageRankProgram.args``
+that specifies the number of iterations. By default, this is 10; in this example, we'll
+use ``3`` as the value.
 
-    $ curl -w'\n' -v  -d '{spark.SparkPageRankProgram.args=3}' \
-        http://localhost:10000/v3/namespaces/default/apps/SparkPageRank/workflows/PageRankWorkflow/start
+- Using the CDAP-UI, go to the |application-overview|,
+  click |example-workflow-italic| to get to the workflow detail page, set the runtime
+  arguments using ``spark.SparkPageRankProgram.args`` as the key and ``3`` as the value, then click
+  the *Start* button; or
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
 
-#. Use the Command Line Interface::
+  .. container:: highlight
 
-    $ cdap-cli.sh start workflow SparkPageRank.PageRankWorkflow "spark.SparkPageRankProgram.args='3'"
+    .. parsed-literal::
+      |$| cdap-cli.sh start workflow |example|.\ |example-workflow| "spark.SparkPageRankProgram.args='3'"
+      Successfully started workflow '|example-workflow|' of application '|example|' 
+      with provided runtime arguments 'spark.SparkPageRankProgram.args=3'
+      
+- Or, send a query via an HTTP request using the ``curl`` command:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$|  curl -w'\n' -v -d '{spark.SparkPageRankProgram.args=3}' \
+        http://localhost:10000/v3/namespaces/default/apps/|example|/workflows/|example-workflow|/start
 
 Querying the Results
 --------------------
@@ -138,37 +147,12 @@ Command Line Interface::
   $ cdap-cli.sh call service SparkPageRank.SparkPageRankService GET 'total/10'
 
 
-Stopping and Removing the Application
-=====================================
-Once done, you can stop the application as described in :ref:`Stopping an Application 
-<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
+.. Stopping and Removing the Application
+.. =====================================
+.. include:: _includes/_stopping-removing-application-title.txt
 
-**Stopping the Workflow**
+.. include:: _includes/_stopping-workflow.txt
 
-- Go to the *SparkPageRank* `application overview page 
-  <http://localhost:9999/ns/default/apps/SparkPageRank/overview/status>`__,
-  click ``PageRankWorkflow`` to get to the workflow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
+.. include:: _includes/_stopping-service.txt
 
-    $ cdap-cli.sh stop spark SparkPageRank.SparkPageRankProgram   
-
-**Stopping the Service**
-
-- Go to the *SparkPageRank* `application overview page 
-  <http://localhost:9999/ns/default/apps/SparkPageRank/overview/status>`__,
-  click ``SparkPageRankService`` to get to the service detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh stop service SparkPageRank.SparkPageRankService
-
-**Removing the Application**
-
-You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
-
-- Go to the *SparkPageRank* `application overview page 
-  <http://localhost:9999/ns/default/apps/SparkPageRank/overview/status>`__,
-  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
-  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh delete app SparkPageRank
+.. include:: _includes/_removing-application.txt

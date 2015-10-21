@@ -4,12 +4,12 @@
     "position": [ "group1" ],
     "group1": {
        "display" : "KV Table Properties",
-       "position" : [ "name" ],
+       "position" : [ "name", "key", "value" ],
        "fields" : {
           "name" : {
             "widget": "dataset-selector",
             "label": "Table Name",
-            "description" : "Specifies the name of the table the data will be written to"
+            "description" : "Specifies the name of the table the data will be written to."
           },
 
           "key" : {

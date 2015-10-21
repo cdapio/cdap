@@ -119,6 +119,7 @@ extensions = [
     'sphinxcontrib.googleanalytics',
     'sphinx.ext.ifconfig',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.extlinks',
 ]
 
 _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
@@ -132,6 +133,13 @@ intersphinx_mapping = {
   'integrations': ('../../integrations/',         os.path.abspath(_intersphinx_mapping % 'integrations')),
   'examples':     ('../../examples-manual',       os.path.abspath(_intersphinx_mapping % 'examples-manual')),
   'reference':    ('../../reference-manual',      os.path.abspath(_intersphinx_mapping % 'reference-manual')),
+}
+
+extlinks = {
+    'cdap-ui-apps': ('http://localhost:9999/ns/default/apps/%s', None),
+    'cdap-ui-apps-programs': ('http://localhost:9999/ns/default/apps/%s/overview/programs', None),
+    'cdap-ui-datasets': ('http://localhost:9999/ns/default/datasets/%s', None),
+    'cdap-ui-datasets-explore': ('http://localhost:9999/ns/default/datasets/%s/overview/explore', None),
 }
 
 # Add any paths that contain templates here, relative to this directory.

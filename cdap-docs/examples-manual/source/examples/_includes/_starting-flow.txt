@@ -1,0 +1,18 @@
+
+.. To use this include, define these replacements:
+.. example-flow
+.. example-flow-italic
+
+Starting the Flow
+-----------------
+
+- Using the CDAP-UI, go to the |application-overview|,
+  click |example-flow-italic| to get to the flow detail page, then click the *Start* button; or
+  
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| cdap-cli.sh start flow |example|.\ |example-flow|
+      Successfully started flow '|example-flow|' of application '|example|' with stored runtime arguments '{}'
