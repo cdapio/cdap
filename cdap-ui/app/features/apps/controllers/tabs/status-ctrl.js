@@ -60,5 +60,7 @@ class AppDetailStatusController {
   }
 }
 
+AppDetailStatusController.$inject = ['$state', 'myPipelineApi', 'MyAppDAGService', 'CanvasFactory', 'GLOBALS', '$scope'];
+
 angular.module(PKG.name + '.feature.apps')
   .controller('AppDetailStatusController', AppDetailStatusController);

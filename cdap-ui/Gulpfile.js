@@ -427,7 +427,7 @@ gulp.task('style', ['css']);
 gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html.dev']);
 gulp.task('build', ['js', 'css', 'img', 'tpl', 'html']);
 
-gulp.task('distribute', ['build', 'rev:replace']);
+gulp.task('distribute', ['clean', 'build', 'rev:replace']);
 
 gulp.task('default', ['lint', 'build']);
 
