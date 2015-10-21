@@ -24,6 +24,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -37,27 +38,28 @@ import static org.junit.Assert.assertNotNull;
  */
 @Category(SlowTests.class)
 public class ConfigurationTableTest {
+
+  @ClassRule
+  public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
+
   private static HBaseTableUtil tableUtil;
-  private static HBaseTestBase testHBase = new HBaseTestFactory().get();
   private static CConfiguration cConf = CConfiguration.create();
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
-    testHBase.startHBase();
     tableUtil = new HBaseTableUtilFactory(cConf).get();
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
   }
 
   @AfterClass
   public static void teardownAfterClass() throws Exception {
-    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
-    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
-    testHBase.stopHBase();
+    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
+    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
   }
 
   @Test
   public void testConfigurationSerialization() throws Exception {
-    ConfigurationTable configTable = new ConfigurationTable(testHBase.getConfiguration());
+    ConfigurationTable configTable = new ConfigurationTable(TEST_HBASE.getConfiguration());
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
 
     String configTableQualifier = "configuration";
