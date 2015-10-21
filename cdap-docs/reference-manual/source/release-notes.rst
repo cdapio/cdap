@@ -23,6 +23,61 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.2.1 <http://docs.cask.co/cdap/3.2.1/index.html>`__
+=============================================================
+
+New Features
+------------
+
+- `CDAP-3951 <https://issues.cask.co/browse/CDAP-3951>`__ -
+  Added the ability for S3 batch sources and sinks to set additional file system properties.
+  
+Improvements
+------------
+
+- `CDAP-3870 <https://issues.cask.co/browse/CDAP-3870>`__ -
+  Added logging and metrics support for *Script*, *ScriptFilter*, and *Validator* transforms.
+  
+- `CDAP-3884 <https://issues.cask.co/browse/CDAP-3884>`__ -
+  Added "cdap-hbase-compat-1.1", required for HDP 2.3 installations, to the installation instruction documentation.
+  
+- `CDAP-3939 <https://issues.cask.co/browse/CDAP-3939>`__ -
+  Improved artifact and application deployment failure handling.
+
+Bug Fixes
+---------
+
+- `CDAP-3342 <https://issues.cask.co/browse/CDAP-3342>`__ -
+  Fixed a problem with the CDAP SDK unable to start on certain Windows machines by updating
+  the Hadoop native library in CDAP with a version that does not have a dependency on a
+  debug version of the Microsoft ``msvcr100.dll``.
+  
+- `CDAP-3815 <https://issues.cask.co/browse/CDAP-3815>`__ -
+  Fixed an issue where the regex filter for S3 batch sources wasn't being applied correctly.
+  
+- `CDAP-3829 <https://issues.cask.co/browse/CDAP-3829>`__ -
+  Fixed snapshot sinks so that the data is explorable as a ``PartitionedFileSet``.
+  
+- `CDAP-3833 <https://issues.cask.co/browse/CDAP-3833>`__ -
+  Fixed snapshot sinks so that they can be read safely.
+  
+- `CDAP-3859 <https://issues.cask.co/browse/CDAP-3859>`__ -
+  Fixed a compilation error in the Maven application archetype.
+  
+- `CDAP-3860 <https://issues.cask.co/browse/CDAP-3860>`__ -
+  Fixed a bug where plugins, packaged in the same artifact as an application class, could not be used by that application class.
+  
+- `CDAP-3891 <https://issues.cask.co/browse/CDAP-3891>`__ -
+  Updated the documentation to remove references to application templates and adaptors that were removed as of CDAP 3.2.0.
+  
+- `CDAP-3949 <https://issues.cask.co/browse/CDAP-3949>`__ -
+  Fixed a problem with running certain examples on Linux systems by increasing the maximum
+  Java heap size of the Standalone SDK on Linux systems to 2048m.
+
+- `CDAP-3961 <https://issues.cask.co/browse/CDAP-3961>`__ -
+  Fixed a missing dependency on ``cdap-hbase-compat-1.1`` package in the CDAP Master package. 
+
+
 `Release 3.2.0 <http://docs.cask.co/cdap/3.2.0/index.html>`__
 =============================================================
 
