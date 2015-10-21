@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.adapters')
-  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, AdapterDetail, $timeout, MyNodeConfigService) {
+  .controller('AdpaterDetailController', function($scope, rAdapterDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, AdapterDetail, $timeout, MyNodeConfigService, $alert) {
     $scope.GLOBALS = GLOBALS;
     $scope.template = rAdapterDetail.template;
     $scope.description = rAdapterDetail.description;
@@ -170,7 +170,11 @@ angular.module(PKG.name + '.feature.adapters')
               .$promise
               .then(function () {
                 $scope.appStatus = 'RUNNING';
-              }, function () {
+              }, function (err) {
+                $alert({
+                  type: 'danger',
+                  content: err.data
+                });
                 $scope.appStatus = 'FAILED';
               });
           }
@@ -196,17 +200,17 @@ angular.module(PKG.name + '.feature.adapters')
 
           break;
         case 'Run Once':
+          $scope.runOnceLoading = true;
           myWorkFlowApi.doAction(angular.extend(params, { action: 'start' }), {})
             .$promise
             .then(function () {
-              $scope.runOnceLoading = true;
               $scope.appStatus = 'RUNNING';
-
-              $timeout(function () {
-                $scope.runOnceLoading = false;
-              }, 1500);
-
-            }, function error () {
+              $scope.runOnceLoading = false;
+            }, function error (err) {
+              $alert({
+                type: 'danger',
+                content: err.data
+              });
               $scope.runOnceLoading = false;
             });
 
