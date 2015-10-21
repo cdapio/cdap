@@ -31,7 +31,7 @@ function download_includes() {
   test_an_include 7a43b2678e3340696a0de25233d48d2d "${cdap_etl}/batch/sink/DBSink.java"
   test_an_include 2746d991cfad8271977c3f648464acd2 "${cdap_etl}/batch/sink/KVTableSink.java"
   test_an_include 9f8483db2b24a8f6ab04c411e111e21a "${cdap_etl}/batch/sink/S3AvroBatchSink.java"
-  test_an_include cbd4db26d7ead179a8f918f2f8c3594e "${cdap_etl}/batch/sink/S3BatchSink.java"
+  test_an_include d13f0491f034a43cd9de4be7d3550e1e "${cdap_etl}/batch/sink/S3BatchSink.java"
   test_an_include 578f0e9344f71d4f6bb1ed198eb9331d "${cdap_etl}/batch/sink/S3ParquetBatchSink.java"
   test_an_include c48f5570829cd49f4518afe2602007d4 "${cdap_etl}/batch/sink/SnapshotFileBatchAvroSink.java"
   test_an_include 0c22ee5c57de83614d8235096e8efa8d "${cdap_etl}/batch/sink/SnapshotFileBatchParquetSink.java"
