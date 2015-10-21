@@ -38,9 +38,6 @@ Improvements
 - `CDAP-3870 <https://issues.cask.co/browse/CDAP-3870>`__ -
   Added logging and metrics support for *Script*, *ScriptFilter*, and *Validator* transforms.
   
-- `CDAP-3884 <https://issues.cask.co/browse/CDAP-3884>`__ -
-  Added "cdap-hbase-compat-1.1", required for HDP 2.3 installations, to the installation instruction documentation.
-  
 - `CDAP-3939 <https://issues.cask.co/browse/CDAP-3939>`__ -
   Improved artifact and application deployment failure handling.
 
