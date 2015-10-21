@@ -24,13 +24,20 @@ to ``'megabytes'``. Or you might want to convert a timestamp into a human-readab
 .. rubric:: Properties
 
 **script:** Javascript defining how to transform one record into another. The script must
-implement a function called ``'transform'``, which takes as input a JSON object that represents
-the input record and a context object (which contains CDAP metrics and logger),
+implement a function called ``'transform'``, which takes as input a JSON object (representing
+the input record) and a context object (which encapsulates CDAP metrics and logger),
 and returns a JSON object that represents the transformed input.
 For example::
 
-   'function transform(input, context) { input.count = input.count * 1024; return input; }'
-   
+  function transform(input, context) {
+    if(input.count < 0) {
+      context.getMetrics().count("negative.count", 1);
+      context.getLogger().debug("Received record with negative count");
+    }
+    input.count = input.count * 1024;
+    return input;
+  }
+
 will scale the ``'count'`` field by 1024.
 
 **schema:** The schema of output objects. If no schema is given, it is assumed that the output

@@ -24,14 +24,8 @@ the logs in a TimePartitionedFileSet.
 
 .. highlight:: xml
 
-**fileSystemProperties:** JSON of the properties needed for the
-distributed file system. The formatting needs to be as follows::
-
-  {
-    "<property name>": "<property value>"
-    ...
-  }
-
+**fileSystemProperties:** A JSON string representing a map of properties
+needed for the distributed file system.
 For example, the property names needed for S3 are \"fs.s3n.awsSecretAccessKey\"
 and \"fs.s3n.awsAccessKeyId\".
 
