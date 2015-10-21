@@ -42,7 +42,7 @@ function download_includes() {
   test_an_include 3069701c1070f0546d6a73800f558e72 "${cdap_etl}/batch/sink/TimePartitionedFileSetSink.java"
 
   # Batchsources
-  test_an_include 794758bc0afbc404fa33143177afbb81 "${cdap_etl}/batch/source/DBSource.java"
+  test_an_include 014b7cb22cacc1fe1066ea14ed32b945 "${cdap_etl}/batch/source/DBSource.java"
   test_an_include adc1f5035473b6e544f1878da8668f3e "${cdap_etl}/batch/source/FileBatchSource.java"
   test_an_include a3e5de66820f096813a6d58fdba86b52 "${cdap_etl}/batch/source/KVTableSource.java"
   test_an_include 0214c7788410ba6da78e5172c2c061e0 "${cdap_etl}/batch/source/S3BatchSource.java"
