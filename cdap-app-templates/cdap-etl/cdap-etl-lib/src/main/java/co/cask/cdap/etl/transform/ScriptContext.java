@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 
 /**
  * Context passed to {@link co.cask.cdap.etl.transform.ScriptTransform} and
- * {@link co.cask.cdap.etl.transform.ScriptFilterTransform} script's.
+ * {@link co.cask.cdap.etl.transform.ScriptFilterTransform} scripts.
  */
 public class ScriptContext {
   private final Logger logger;

@@ -4,13 +4,8 @@
     "position": [ "group1" ],
     "group1": {
       "display" : "S3 Sink - Parquet",
-      "position" : [ "accessID", "accessKey", "basePath", "pathFormat"],
+      "position" : [ "accessID", "accessKey", "basePath", "pathFormat", "fileSystemProperties" ],
       "fields" : {
-        "fileSystemProperties" : {
-          "widget": "json-editor",
-          "label": "File System Properties"
-        },
-
         "accessID" : {
           "widget": "textbox",
           "label": "Access ID"
@@ -29,6 +24,11 @@
         "pathFormat" : {
           "widget": "textbox",
           "label": "Path Format"
+        },
+
+        "fileSystemProperties" : {
+          "widget": "json-editor",
+          "label": "File System Properties"
         }
       }
     }

@@ -18,7 +18,7 @@ Examples
    Hello World <hello-world>
    Count Random <count-random>
    Data Cleansing <data-cleansing>
-   File Sets <fileset>
+   FileSet Example <fileset-example>
    Log Analysis <log-analysis>
    Purchase <purchase>
    Spark K-Means <spark-k-means>
@@ -48,7 +48,7 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
   * - :doc:`Data Cleansing <data-cleansing>`
     - A Cask Data Application Platform (CDAP) example demonstrating incrementally consuming partitions of a
       partitioned fileset using MapReduce.
-  * - :doc:`File Sets <fileset>`
+  * - :doc:`FileSet Example <fileset-example>`
     - A variation of the *WordCount* example that operates on files. It demonstrates the usage of the FileSet
       dataset, including a service to upload and download files, and a MapReduce that operates over these files.
   * - :doc:`Log Analysis <log-analysis>`
@@ -69,8 +69,8 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
     - An application that demonstrates text analysis using Spark and MapReduce programs. It computes the page rank
       of URLs from an input stream.
   * - :doc:`Sport Results <sport-results>`
-    - An application that illustrates the use of partitioned file sets.
-      It loads game results into a file set partitioned by league and season, and processes them with MapReduce.
+    - An application that illustrates the use of partitioned File sets.
+      It loads game results into a File set partitioned by league and season, and processes them with MapReduce.
   * - :doc:`Stream Conversion <stream-conversion>`
     - An application that demonstrates the use of time-partitioned File sets.
       It periodically converts a stream into partitions of a File set, which can be read by SQL queries.
@@ -82,7 +82,7 @@ In addition to the :ref:`Getting Started's <getting-started-index>`
       of web traffic.
   * - :doc:`Wikipedia Pipeline <wikipedia-data-pipeline>`
     - An application that performs analysis on Wikipedia data using MapReduce and Spark programs
-      running within a CDAP Workflow: *WikipediaPipelineWorkflow*.
+      running within a CDAP workflow: *WikipediaPipelineWorkflow*.
   * - :doc:`Word Count <word-count>`
     - A simple application that counts words, and tracks word associations and unique words seen on the stream.
       It demonstrates the power of using datasets and how they can be employed to simplify storing complex data.

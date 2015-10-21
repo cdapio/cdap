@@ -126,6 +126,13 @@
       <groupId>co.cask.http</groupId>
       <artifactId>netty-http</artifactId>
     </dependency>
+    <dependency>
+      <!-- TODO: Remove this CDAP-4054 -->
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1.1</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

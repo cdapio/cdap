@@ -1,0 +1,9 @@
+
+.. To use this include, define these replacements:
+.. example
+.. example-italic
+
+.. |example-dir|      replace:: |example|
+.. |example-artifact| replace:: |example|
+
+.. include:: _includes/_building-starting-running-example-with-dir.txt

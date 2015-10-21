@@ -1,0 +1,17 @@
+
+**Removing the Application**
+
+You can now remove the application as described in :ref:`Removing an Application
+<cdap-building-running-removing>`, or:
+
+- Using the CDAP-UI, go to the |application-overview|,
+  click the *Actions* menu on the right side and select *Manage* to go to the Management
+  pane for the application, then click the *Actions* menu on the right side and select
+  *Delete* to delete the application; or
+  
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| cdap-cli.sh delete app |example|
