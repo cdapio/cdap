@@ -38,7 +38,7 @@
 
         "driverClass" : {
           "widget": "textbox",
-          "label": "Driver class"
+          "label": "Driver Class"
         },
 
         "connectionString" : {
@@ -49,7 +49,7 @@
     },
     "group3": {
       "display" : "Table Properties",
-      "position" : [ "importQuery", "countQuery", "columnNameCase" , "columns"],
+      "position" : [ "importQuery", "countQuery", "columnNameCase", "columns" ],
       "fields" : {
         "importQuery" : {
           "widget": "textbox",
