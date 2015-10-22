@@ -20,19 +20,14 @@
 
 body {
   [my-navbar-hydrator] {
-    padding-right: 0;
-    margin: 0;
-    width: 100%;
     @media (max-width: @screen-xs-max) {
       padding-left: 0;
     }
     div.navbar-header {
       float: left;
-      position: relative;
     }
     a.navbar-brand {
       height: 60px;
-      padding: 0 15px;
       @media (max-width: @screen-xs-max) {
         padding: 0;
       }
@@ -57,15 +52,19 @@ body {
     }
 
     nav {
-      display: block;
-      padding-right: 15px;
       text-align: center;
       ul.navbar-nav {
         float: none;
         margin: 0 auto;
-        width: 285px;
+        max-width: 300px;
         li {
-          float: left;
+          @media (max-width: @screen-xs-max) {
+            display: inline-block;
+            float: none;
+          }
+          @media (min-width: @screen-sm-min) {
+            float: left;
+          }
           a {
             height: 58px;
             line-height: 60px;
