@@ -175,12 +175,15 @@ angular.module(PKG.name + '.feature.hydrator')
             if (res.outputschema) {
               outputSchemaProperty = Object.keys(res.outputschema);
               if (!res.outputschema.implicit) {
-                this.schemaProperties = res.outputschema[outputSchemaProperty[0]];
                 this.isOuputSchemaExists = (propertiesFromBackend.indexOf(outputSchemaProperty[0]) !== -1);
-                this.isOutputSchemaRequired = $scope.plugin._backendProperties[outputSchemaProperty[0]].required;
-                index = propertiesFromBackend.indexOf(outputSchemaProperty[0]);
-                if (index !== -1) {
-                  propertiesFromBackend.splice(index, 1);
+                if (this.isOuputSchemaExists) {
+                  this.schemaProperties = res.outputschema[outputSchemaProperty[0]];
+                  this.isOutputSchemaRequired = $scope.plugin._backendProperties[outputSchemaProperty[0]].required;
+                  index = propertiesFromBackend.indexOf(outputSchemaProperty[0]);
+
+                  if (index !== -1) {
+                    propertiesFromBackend.splice(index, 1);
+                  }
                 }
               }
             } else {
@@ -232,6 +235,11 @@ angular.module(PKG.name + '.feature.hydrator')
               if ($scope.plugin.properties[outputSchemaProperty[0]] !== $scope.plugin.outputSchema) {
                 $scope.plugin.properties[outputSchemaProperty[0]] = $scope.plugin.outputSchema;
               }
+              $scope.$watch('plugin.outputSchema', function() {
+                if(validateSchema()) {
+                  $scope.plugin.properties[outputSchemaProperty[0]] = $scope.plugin.outputSchema;
+                }
+              });
             }
 
             // Mark the configfetched to show that configurations have been received.
@@ -264,7 +272,6 @@ angular.module(PKG.name + '.feature.hydrator')
       this.configfetched = true;
     }
 
-    $scope.$watch('plugin.outputSchema', validateSchema);
     $scope.$watchCollection('plugin.properties', function() {
       MyNodeConfigService.notifyPluginSaveListeners($scope.plugin.id);
     });

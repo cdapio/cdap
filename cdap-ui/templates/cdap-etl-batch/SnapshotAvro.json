@@ -9,7 +9,7 @@
         "name" : {
           "widget": "dataset-selector",
           "label": "Dataset Name"
-        }
+        },
 
         "basePath" : {
           "widget": "textbox",
