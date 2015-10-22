@@ -62,9 +62,9 @@ __hdp_version=$(ls /usr/hdp | grep "^[0-9]*\.") || die "Cannot determine HDP ver
 
 # Create chef json configuration
 sed \
-  -e "s/ZK_QUORUM/${__zk_quorum}/" \
-  -e "s/HDP_VERSION/${__hdp_version}/" \
-  -e "s/CDAP_VERSION/${CDAP_VERSION}/" \
+  -e "s/{{ZK_QUORUM}}/${__zk_quorum}/" \
+  -e "s/{{HDP_VERSION}}/${__hdp_version}/" \
+  -e "s/{{CDAP_VERSION}}/${CDAP_VERSION}/" \
   ${__cdap_site_template} > ${__tmpdir}/generated-conf.json
 
 # Install/Configure ntp, CDAP
