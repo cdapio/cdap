@@ -470,14 +470,11 @@ public class ApplicationClient {
     URL url = config.resolveNamespacedURLV3(app.getNamespace(), path);
     HttpRequest request = HttpRequest.get(url).build();
 
-    ObjectResponse<ApplicationDetail> response = ObjectResponse.fromJsonBody(
-      restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND),
-      new TypeToken<ApplicationDetail>() { });
-
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(app);
     }
 
-    return response.getResponseObject().getPrograms();
+    return ObjectResponse.fromJsonBody(response, ApplicationDetail.class).getResponseObject().getPrograms();
   }
 }
