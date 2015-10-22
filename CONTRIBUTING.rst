@@ -22,7 +22,7 @@ While proposing a new feature, we look for:
 
 * An issue in http://issues.cask.co that describes the problem and the action that will be taken to fix it
 
- * Please review existing proposals to make sure the feature proposal doesn't already exist
+  * Please review existing proposals to make sure the feature proposal doesn't already exist
 
 * Email the `CDAP mailing list <mailto:cdap-dev@googlegroups.com>`__ 
 
