@@ -118,6 +118,9 @@
                   <exclude>**/*.svg</exclude>
                   <exclude>**/bower_components/**</exclude>
                   <exclude>**/node_modules/**</exclude>
+                  <exclude>**/dist/**</exclude>
+                  <exclude>**/logs/**</exclude>
+                  <exclude>**/npm-debug.log</exclude>
                   <exclude>**/node/**</exclude>
                   <exclude>**/*.json</exclude>
                 </excludes>
