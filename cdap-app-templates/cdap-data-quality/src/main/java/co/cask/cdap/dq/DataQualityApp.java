@@ -38,6 +38,7 @@ import co.cask.cdap.dq.rowkey.ValuesRowKey;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.MapReduceSourceContext;
+import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -180,7 +181,8 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
       BatchSource batchSource = context.newPluginInstance(PLUGIN_ID);
       // Constructs a BatchSourceContext. The stageId needs to match the format expected by PluginID
       BatchSourceContext sourceContext = new MapReduceSourceContext(
-        context, metrics, "batchsource:" + context.getSpecification().getProperty("sourceName") + ":0");
+        context, metrics, new DatasetContextLookupProvider(context),
+        "batchsource:" + context.getSpecification().getProperty("sourceName") + ":0");
       batchSource.prepareRun(sourceContext);
       context.addOutput(context.getSpecification().getProperty("datasetName"));
     }

@@ -18,8 +18,11 @@ package co.cask.cdap.etl.transform;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.etl.api.Lookup;
+import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.common.MockLookupProvider;
 import co.cask.cdap.etl.common.NoopMetrics;
 
 import java.util.HashMap;
@@ -31,17 +34,24 @@ import java.util.Map;
 public class MockTransformContext implements TransformContext {
   private final PluginProperties pluginProperties;
   private final StageMetrics metrics;
+  private final LookupProvider lookup;
 
   public MockTransformContext() {
     this(new HashMap<String, String>());
   }
 
   public MockTransformContext(Map<String, String> args) {
-    this(args, NoopMetrics.INSTANCE, "");
+    this(args, NoopMetrics.INSTANCE, "", new MockLookupProvider(null));
   }
 
   public MockTransformContext(Map<String, String> args, final Metrics metrics, final String stageMetricPrefix) {
+    this(args, metrics, stageMetricPrefix, new MockLookupProvider(null));
+  }
+
+  public MockTransformContext(Map<String, String> args, final Metrics metrics, final String stageMetricPrefix,
+                              LookupProvider lookup) {
     this.pluginProperties = PluginProperties.builder().addAll(args).build();
+    this.lookup = lookup;
     // TODO:
     this.metrics = new StageMetrics() {
       @Override
@@ -94,5 +104,10 @@ public class MockTransformContext implements TransformContext {
   @Override
   public <T> Class<T> loadPluginClass(String pluginId) {
     return null;
+  }
+
+  @Override
+  public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
+    return lookup.provide(table, arguments);
   }
 }

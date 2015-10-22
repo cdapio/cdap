@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 
@@ -34,8 +35,8 @@ import java.util.Map;
 public class MapReduceRuntimeContext extends AbstractTransformContext implements BatchRuntimeContext {
   private final MapReduceTaskContext context;
 
-  public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics, String stageId) {
-    super(context, metrics, stageId);
+  public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics, LookupProvider lookup, String stageId) {
+    super(context, metrics, lookup, stageId);
     this.context = context;
   }
 

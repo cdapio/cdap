@@ -21,7 +21,10 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.etl.ScriptConstants;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.LookupConfig;
+import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transform;
@@ -31,9 +34,11 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -81,14 +86,17 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
     super.configurePipeline(pipelineConfigurer);
     Preconditions.checkArgument(!Strings.isNullOrEmpty(scriptFilterConfig.script), "Filter script must be specified.");
     // try evaluating the script to fail application creation if the script is invalid
-    init();
+    init(null);
+
+    // TODO: CDAP-4169 verify existence of configured lookup tables
   }
 
   @Override
-  public void initialize(TransformContext context) {
+  public void initialize(TransformContext context) throws Exception {
+    super.initialize(context);
     metrics = context.getMetrics();
     logger = LoggerFactory.getLogger(ScriptFilterTransform.class.getName() + " - Stage:" + context.getStageId());
-    init();
+    init(context);
   }
 
   @Override
@@ -107,11 +115,28 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
     }
   }
 
-  private void init() {
+  private void init(LookupProvider lookupProvider) {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
+    try {
+      engine.eval(ScriptConstants.HELPER_DEFINITION);
+    } catch (ScriptException e) {
+      // shouldn't happen
+      throw new IllegalStateException("Couldn't define helper functions", e);
+    }
 
-    engine.put(CONTEXT_NAME, new ScriptContext(logger, metrics));
+    JavaTypeConverters js = ((Invocable) engine).getInterface(
+      engine.get(ScriptConstants.HELPER_NAME), JavaTypeConverters.class);
+
+    LookupConfig lookupConfig;
+    try {
+      lookupConfig = GSON.fromJson(scriptFilterConfig.lookup, LookupConfig.class);
+    } catch (JsonSyntaxException e) {
+      throw new IllegalArgumentException("Invalid lookup config. Expected map of string to string", e);
+    }
+
+    engine.put(CONTEXT_NAME, new ScriptContext(
+      logger, metrics, lookupProvider, lookupConfig, js));
 
     // this is pretty ugly, but doing this so that we can pass the 'input' json into the shouldFilter function.
     // that is, we want people to implement
@@ -133,5 +158,9 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
   public static class ScriptFilterConfig extends PluginConfig {
     @Description(SCRIPT_DESCRIPTION)
     String script;
+
+    @Description("Lookup tables to use during transform. Currently supports KeyValueTable.")
+    @Nullable
+    String lookup;
   }
 }
