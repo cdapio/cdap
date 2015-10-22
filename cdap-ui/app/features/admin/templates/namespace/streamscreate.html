@@ -57,9 +57,9 @@
             ng-disabled="isSaving == true || !streamId.length"
             ng-click="createStream()"
             ng-class="{'btn-success': streamId.length > 0}">
-      <div ng-if="isSaving == true" >
+      <span ng-if="isSaving == true" >
         <span class="fa fa-spin fa-refresh"></span>
-      </div>
+      </span>
       <span>Create</span>
     </button>
 </div>

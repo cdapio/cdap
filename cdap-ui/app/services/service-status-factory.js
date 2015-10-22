@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.services')
-  .service('ServiceStatusFactory', function(MyDataSource, $alert, $timeout, EventPipe, $state, myAuth) {
+  .service('ServiceStatusFactory', function(MyDataSource, $timeout, EventPipe, $state, myAuth) {
     this.systemStatus = 'green';
 
     // Apart from invalid token there should be no scenario
