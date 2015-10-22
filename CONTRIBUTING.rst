@@ -6,21 +6,21 @@ Here are instructions to get you started if you want to contribute to CDAP.
 Security Reports
 ================
 
-Please *DO NOT* file a issue for security related problems. Please send your reports to [security@cask.co](mailto:security@cask.co).
+Please *DO NOT* file a issue for security related problems. Please send your reports to :security@cask.co).
 
 Creating Issues
 ===============
 
-Inorder to file bugs or new feature requests please use [http://issues.cask.co](http://issues.cask.co) to file issues.
+In order to file bugs or new feature requests please use http://issues.cask.co to file issues.
 
 Feature requests
 ================
 
 While proposing a new feature, we look for:
 
-* An issue in [http://issues.cask.co](http://issues.cask.co) that describes the problem and the action that will be taken to fix
-  * Please review existing proposals to make sure the feature proposal doesn't already exists
-* Email the [mailing list](mailto:cdap-developers@cask.co) 
+* An issue in http://issues.cask.co that describes the problem and the action that will be taken to fix
+  * Please review existing proposals to make sure the feature proposal doesn't already exist
+* Email the [mailing list](mailto:cdap-dev@googlegroups.com) 
   * Include "Feature: Name of the feature in the subject"
   * Link to the issue
 
@@ -28,7 +28,7 @@ Build Environment
 =================
 
 For instructions on setting up your development environment, please
-see [BUILD.md](https://github.com/caskco/cdap/blob/develop/BUILD.md) file
+see [BUILD.rst](https://github.com/caskco/cdap/blob/develop/BUILD.rst) file
 
 Contribution Guidelines
 =======================
@@ -36,7 +36,8 @@ Contribution Guidelines
 Creating issues
 ===============
 
-An issue should be created at [http://issues.cask.co](http://issues.cask.co) for any bugs or new features before anybody starts working on it. Please take a moment to check that issue already doesn't exist before creating a new issue. If you see a bug or an improvement already add a "+1"to the issue to indicate the you have this problem as well. This will help us in prioritization
+An issue should be created at [http://issues.cask.co](http://issues.cask.co) for any bugs or new features before anybody starts working on it. Please take a moment to check that issue already doesn't exist before creating a new issue. 
+If you see a bug or an improvement already add a "+1"to the issue to indicate the you have this problem as well. This will help us in prioritization
 
 Discussions on mailing lists
 ============================
@@ -88,5 +89,3 @@ and limitations under the License.
 
 Cask is a trademark of Cask Data, Inc. All rights reserved.
  
-
-
