@@ -25,7 +25,10 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.BatchProgram;
+import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.DistributedProgramLiveInfo;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -47,6 +50,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
@@ -66,7 +70,9 @@ public class ProgramClient {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(WorkflowActionSpecification.class, new WorkflowActionSpecificationCodec())
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .create();
+  private static final Type BATCH_STATUS_RESPONSE_TYPE = new TypeToken<List<BatchProgramStatus>>() { }.getType();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -216,6 +222,25 @@ public class ProgramClient {
     }
 
     return ObjectResponse.fromJsonBody(response, ProgramStatus.class).getResponseObject().getStatus();
+  }
+
+  /**
+   * Gets the status of multiple programs.
+   *
+   * @param namespace the namespace of the programs
+   * @param programs the list of programs to get status for
+   * @return the status of each program
+   */
+  public List<BatchProgramStatus> getBatchStatus(Id.Namespace namespace, List<BatchProgram> programs)
+    throws IOException, UnauthorizedException {
+
+    URL url = config.resolveNamespacedURLV3(namespace, "status");
+
+    HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(programs)).build();
+    HttpResponse response = restClient.execute(request, config.getAccessToken());
+
+    return ObjectResponse.<List<BatchProgramStatus>>fromJsonBody(response, BATCH_STATUS_RESPONSE_TYPE, GSON)
+      .getResponseObject();
   }
 
   /**

@@ -21,7 +21,10 @@ import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.common.ClientTestBase;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.proto.BatchProgram;
+import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.XSlowTests;
@@ -34,7 +37,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -80,6 +85,19 @@ public class ProgramClientTestRun extends ClientTestBase {
       Assert.assertEquals(1, programClient.getFlowletInstances(flowlet));
       programClient.setFlowletInstances(flowlet, 3);
       assertFlowletInstances(programClient, flowlet, 3);
+
+      List<BatchProgram> statusRequest = new ArrayList<>();
+      for (ProgramRecord programRecord : appClient.listPrograms(app)) {
+        statusRequest.add(BatchProgram.from(programRecord));
+      }
+      List<BatchProgramStatus> statuses = programClient.getBatchStatus(namespace, statusRequest);
+      for (BatchProgramStatus status : statuses) {
+        if (status.getProgramType() == ProgramType.FLOW && status.getProgramId().equals(FakeFlow.NAME)) {
+          Assert.assertEquals("RUNNING", status.getStatus());
+        } else {
+          Assert.assertEquals("STOPPED", status.getStatus());
+        }
+      }
 
       LOG.info("Stopping flow");
       programClient.stop(flow);
