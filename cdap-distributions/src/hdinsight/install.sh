@@ -23,6 +23,7 @@ die() { echo "ERROR: ${*}"; exit 1; };
 CDAP_BRANCH='release/3.2'
 CDAP_VERSION='3.2.1-1'
 CHEF_VERSION='11.18.12'
+EXPLORE_ENABLED='false'
 
 __tmpdir="/tmp/cdap_install.$$.$(date +%s)"
 __gitdir="${__tmpdir}/cdap"
@@ -65,6 +66,7 @@ sed \
   -e "s/{{ZK_QUORUM}}/${__zk_quorum}/" \
   -e "s/{{HDP_VERSION}}/${__hdp_version}/" \
   -e "s/{{CDAP_VERSION}}/${CDAP_VERSION}/" \
+  -e "s/{{EXPLORE_ENABLED}}/${EXPLORE_ENABLED}/" \
   ${__cdap_site_template} > ${__tmpdir}/generated-conf.json
 
 # Install/Configure ntp, CDAP
