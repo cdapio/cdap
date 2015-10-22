@@ -44,6 +44,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -59,18 +60,18 @@ import static org.junit.Assert.assertEquals;
 @Category(SlowTests.class)
 public class HBaseMetricsTableTest extends MetricsTableTest {
 
-  private static HBaseTestBase testHBase;
+  @ClassRule
+  public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
+
   private static HBaseTableUtil tableUtil;
   private static DatasetFramework dsFramework;
 
   @BeforeClass
   public static void setup() throws Exception {
-    testHBase = new HBaseTestFactory().get();
-    testHBase.startHBase();
     CConfiguration conf = CConfiguration.create();
     conf.set(Constants.CFG_HDFS_USER, System.getProperty("user.name"));
     Injector injector = Guice.createInjector(new DataFabricDistributedModule(),
-                                             new ConfigModule(conf, testHBase.getConfiguration()),
+                                             new ConfigModule(conf, TEST_HBASE.getConfiguration()),
                                              new ZKClientModule(),
                                              new DiscoveryRuntimeModule().getDistributedModules(),
                                              new TransactionMetricsModule(),
@@ -80,14 +81,13 @@ public class HBaseMetricsTableTest extends MetricsTableTest {
 
     dsFramework = injector.getInstance(DatasetFramework.class);
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
   }
 
   @AfterClass
   public static void tearDown() throws Exception {
-    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
-    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
-    testHBase.stopHBase();
+    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
+    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
   }
 
   @Override
