@@ -82,7 +82,7 @@ public class S3BatchSource extends FileBatchSource {
 
     public S3BatchConfig(String accessID, String accessKey, String path, @Nullable String regex,
                          @Nullable String timeTable, @Nullable String inputFormatClass,
-                         @Nullable String fileSystemProperties, @Nullable String maxSplitSize) {
+                         @Nullable String fileSystemProperties, @Nullable Long maxSplitSize) {
       super(path, regex, timeTable, inputFormatClass,
             updateFileSystemProperties(fileSystemProperties, accessID, accessKey), maxSplitSize);
       this.accessID = accessID;

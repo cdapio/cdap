@@ -43,9 +43,9 @@ function download_includes() {
 
   # Batchsources
   test_an_include 014b7cb22cacc1fe1066ea14ed32b945 "${cdap_etl}/batch/source/DBSource.java"
-  test_an_include adc1f5035473b6e544f1878da8668f3e "${cdap_etl}/batch/source/FileBatchSource.java"
+  test_an_include 974f6d8dfcb73be46e4207ab977998d3 "${cdap_etl}/batch/source/FileBatchSource.java"
   test_an_include a3e5de66820f096813a6d58fdba86b52 "${cdap_etl}/batch/source/KVTableSource.java"
-  test_an_include 0214c7788410ba6da78e5172c2c061e0 "${cdap_etl}/batch/source/S3BatchSource.java"
+  test_an_include 329b73ee4e2bba510f006f1b80ef0089 "${cdap_etl}/batch/source/S3BatchSource.java"
   test_an_include 2af8f3fbf95a9d5f7becd9a7cbfaf6f9 "${cdap_etl}/batch/source/SnapshotFileBatchAvroSource.java"
   test_an_include 91525581c2d6c657c89eb6fac7b5d470 "${cdap_etl}/batch/source/SnapshotFileBatchParquetSource.java"
   test_an_include 1ad8f9d4d9a27f10cdc0304bddf84c2b "${cdap_etl}/batch/source/StreamBatchSource.java"
