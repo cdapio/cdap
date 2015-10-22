@@ -66,7 +66,7 @@ sed \
   ${__cdap_site_template} > ${__tmpdir}/generated-conf.json
 
 # Install/Configure ntp, CDAP
-chef-solo -o 'recipe[ntp::default],recipe[cdap::fullstack]' -j ${__tmpdir}/generated-conf.json
+chef-solo -o 'recipe[ntp::default],recipe[cdap::fullstack],recipe[cdap::init]' -j ${__tmpdir}/generated-conf.json
 
 # Start CDAP Services
 for i in /etc/init.d/cdap-*

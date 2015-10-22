@@ -5,6 +5,7 @@
       "kafka.log.dir": "/var/cdap/kafka-logs",
       "explore.enabled": "true"
     },
+    "fs_superuser": "root",
     "skip_prerequisites": "true",
     "version": "3.2.0-1"
   },
