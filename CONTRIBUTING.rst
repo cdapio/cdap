@@ -7,13 +7,13 @@ Here are instructions to get you started if you want to contribute to CDAP.
 Security Reports
 ================
 
-Please *DO NOT* file a issue for security related problems. 
+Please *DO NOT* file an issue for security related problems. 
 Please send your reports to `security@cask.co <mailto:security@cask.co>`__.
 
 Creating Issues
 ===============
 
-In order to file bugs or new feature requests please use http://issues.cask.co to file issues.
+In order to file bugs or new feature requests, please use http://issues.cask.co.
 
 Feature Requests
 ================
@@ -41,8 +41,8 @@ Contribution Guidelines
 Creating Issues
 ---------------
 An issue should be created at http://issues.cask.co for any bugs or new features before anybody starts working on it. 
-Please take a moment to check that an issue already doesn't exist before creating a new issue. 
-If you see that a bug or an improvement is there already, add a "+1" to the issue to indicate that you have the same
+Please take a moment to check that an issue doesn't already exist before creating a new issue. 
+If you see that a bug or an improvement exists already, add a "+1" to the issue to indicate that you have the same
 problem as well. This will help us in prioritization.
 
 Discuss on the Mailing List
@@ -77,7 +77,7 @@ Conventions
 
 * Commit messages should include a short summary. 
 
-* All pull requests will be reviewed by one or more comitters. Discuss, then make the
+* All pull requests will be reviewed by one or more committers. Discuss, then make the
   suggested modifications and push additional commits to your feature branch. Be
   sure to post a comment after pushing. The new commits will show up in the pull
   request automatically, but the reviewers will not be notified unless you comment. 
