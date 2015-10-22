@@ -116,7 +116,15 @@ public class ElementIdTest {
   @Ignore
   public void testPrintToString() {
     for (ElementId id : ids) {
-      System.out.println(id.toString());
+      System.out.printf("%s: %s\n", id.getClass().getName(), id.toString());
+    }
+  }
+
+  @Test
+  @Ignore
+  public void testPrintJson() {
+    for (ElementId id : ids) {
+      System.out.printf("%s:\n%s\n\n", id.getClass().getName(), GSON.toJson(id));
     }
   }
 
