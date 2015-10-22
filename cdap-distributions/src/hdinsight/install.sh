@@ -21,6 +21,7 @@
 die() { echo "ERROR: ${*}"; exit 1; };
 
 CDAP_BRANCH='release/3.2'
+CDAP_VERSION='3.2.1-1'
 CHEF_VERSION='11.18.12'
 
 __tmpdir="/tmp/cdap_install.$$.$(date +%s)"
@@ -63,6 +64,7 @@ __hdp_version=$(ls /usr/hdp | grep "^[0-9]*\.") || die "Cannot determine HDP ver
 sed \
   -e "s/ZK_QUORUM/${__zk_quorum}/" \
   -e "s/HDP_VERSION/${__hdp_version}/" \
+  -e "s/CDAP_VERSION/${CDAP_VERSION}/" \
   ${__cdap_site_template} > ${__tmpdir}/generated-conf.json
 
 # Install/Configure ntp, CDAP

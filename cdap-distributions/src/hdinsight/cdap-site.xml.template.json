@@ -7,7 +7,7 @@
     },
     "fs_superuser": "root",
     "skip_prerequisites": "true",
-    "version": "3.2.1-1"
+    "version": "CDAP_VERSION"
   },
   "hadoop": {
     "distribution": "hdp",
