@@ -39,7 +39,7 @@
         {%- block rootrellink %}
         
         <script type="text/javascript" src="{{ pathto('_static/version-menu.js', 1) }}"></script>
-        <script src="{{ theme_versions }}"/></script>
+        <script src="{{ theme_json_versions_js }}"/></script>
         <script>window.setVersion('{{ release }}');</script>
        
         <li><a href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a>{{ reldelim1 }}</li>

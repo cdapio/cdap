@@ -1,0 +1,21 @@
+{#
+    doc-issues.html
+    ~~~~~~~~~~~~~~~~~~~~~
+    Sphinx sidebar template to add a link to create an issue for a page.
+#}
+{%- set page_title = title|striptags %}
+{%- set page_url = [ theme_docs_url, theme_release, theme_language, theme_manual, pagename + file_suffix ]|join('/') %}
+{%- set project_search = _('?jql=project=') ~ theme_issues.pid_title ~ _('+AND+resolution=Unresolved+AND+component=Docs+ORDER+BY+priority+DESC') %}
+{%- set create_issue = _('CreateIssueDetails!init.jspa?issuetype=1&priority=3&') %}
+{%- set create_issue = create_issue ~ 'pid=' ~ theme_issues.pid ~ '&' %}
+{%- set create_issue = create_issue ~ 'components=' ~ theme_issues.components ~ '&' %}
+{%- set create_issue = create_issue ~ 'versions=' ~ theme_issues.versions ~ '&' %}
+{%- set create_issue = create_issue ~ 'assignee=' ~ theme_issues.assignee ~ '&' %}
+{%- set create_issue = create_issue ~ "summary=Documentation+Issue+on:+'" ~ page_title ~ "'&" %}
+{%- set create_issue = create_issue ~ 'description=Web+Page:+' ~ page_url ~ '%0A%0AIssue:+' %}
+<div role="note" aria-label="documentation-issues">
+    <h3><a href="{{ theme_issues.url }}/issues/{{ project_search }}" rel="nofollow" target="_blank">Issues</a></h3>
+    <ul class="this-page-menu">
+      <li><a href="{{ theme_issues.url }}/secure/{{ create_issue }}" rel="nofollow" target="_blank">Create an issue about this page</a></li>
+    </ul>
+</div>
