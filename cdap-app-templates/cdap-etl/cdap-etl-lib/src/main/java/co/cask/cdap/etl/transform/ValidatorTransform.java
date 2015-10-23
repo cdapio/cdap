@@ -167,13 +167,21 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     Preconditions.checkState(result.containsKey("errorCode"));
 
     Object errorCode = result.get("errorCode");
-    Preconditions.checkState(errorCode instanceof Double,
+    Preconditions.checkState(errorCode instanceof Number,
                              "errorCode entry in resultMap is not a valid number. " +
                                "please check your script to make sure error-code is a number");
-    Double errorCodeNum = (Double) errorCode;
-    Preconditions.checkState((errorCodeNum >= Integer.MIN_VALUE && errorCodeNum <= Integer.MAX_VALUE),
-                             "errorCode must be a valid Integer");
-    return new InvalidEntry<>(errorCodeNum.intValue(), (String) result.get("errorMsg"), input);
+    int errorCodeInt;
+    if (errorCode instanceof Integer) {
+      errorCodeInt = (Integer) errorCode;
+    } else if (errorCode instanceof Double) {
+      Double errorCodeDouble = ((Double) errorCode);
+      Preconditions.checkState((errorCodeDouble >= Integer.MIN_VALUE && errorCodeDouble <= Integer.MAX_VALUE),
+                               "errorCode must be a valid Integer");
+      errorCodeInt = errorCodeDouble.intValue();
+    } else {
+      throw new IllegalArgumentException("Unsupported errorCode type: " + errorCode.getClass().getName());
+    }
+    return new InvalidEntry<>(errorCodeInt, (String) result.get("errorMsg"), input);
   }
 
   private void init(List<Validator> validators) throws ScriptException {
