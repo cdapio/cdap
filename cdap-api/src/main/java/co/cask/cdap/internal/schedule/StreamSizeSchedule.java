@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.schedule;
 
+import co.cask.cdap.api.schedule.RunRequirements;
 import co.cask.cdap.api.schedule.Schedule;
 
 /**
@@ -27,7 +28,12 @@ public final class StreamSizeSchedule extends Schedule {
   private final int dataTriggerMB;
 
   public StreamSizeSchedule(String name, String description, String streamName, int dataTriggerMB) {
-    super(name, description);
+    this(name, description, streamName, dataTriggerMB, RunRequirements.NONE);
+  }
+
+  public StreamSizeSchedule(String name, String description, String streamName,
+                            int dataTriggerMB, RunRequirements runRequirements) {
+    super(name, description, runRequirements);
     this.streamName = streamName;
     this.dataTriggerMB = dataTriggerMB;
   }

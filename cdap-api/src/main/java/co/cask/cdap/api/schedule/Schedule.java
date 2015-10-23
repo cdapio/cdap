@@ -17,6 +17,8 @@
 package co.cask.cdap.api.schedule;
 
 
+import java.util.Objects;
+
 /**
  * Defines a cron-based schedule for running a program.
  */
@@ -26,6 +28,8 @@ public class Schedule {
 
   private final String description;
 
+  private final RunRequirements runRequirements;
+
   // NOTE: the below attribute is left for backwards compatibility
   private final String cronEntry;
 
@@ -34,12 +38,14 @@ public class Schedule {
     this.name = name;
     this.description = description;
     this.cronEntry = cronEntry;
+    this.runRequirements = null;
   }
 
-  protected Schedule(String name, String description) {
+  protected Schedule(String name, String description, RunRequirements runRequirements) {
     this.name = name;
     this.description = description;
     this.cronEntry = null;
+    this.runRequirements = runRequirements;
   }
 
   /**
@@ -65,6 +71,10 @@ public class Schedule {
     return cronEntry;
   }
 
+  public RunRequirements getRunRequirements() {
+    return runRequirements;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -74,30 +84,17 @@ public class Schedule {
       return false;
     }
 
-    Schedule schedule = (Schedule) o;
+    Schedule that = (Schedule) o;
 
-    if (cronEntry != null
-          ? !cronEntry.equals(schedule.cronEntry)
-          : schedule.cronEntry != null) {
-      return false;
-    }
-    if (description != null ? !description.equals(schedule.description) :
-         schedule.description != null) {
-      return false;
-    }
-    if (name != null ? !name.equals(schedule.name) : schedule.name != null) {
-      return false;
-    }
-
-    return true;
+    return Objects.equals(name, that.name) &&
+      Objects.equals(description, that.description) &&
+      Objects.equals(cronEntry, that.cronEntry) &&
+      Objects.equals(runRequirements, that.runRequirements);
   }
 
   @Override
   public int hashCode() {
-    int result = name != null ? name.hashCode() : 0;
-    result = 31 * result + (description != null ? description.hashCode() : 0);
-    result = 31 * result + (cronEntry != null ? cronEntry.hashCode() : 0);
-    return result;
+    return Objects.hash(name, description, cronEntry, runRequirements);
   }
 
   @Override
@@ -106,6 +103,7 @@ public class Schedule {
     sb.append("name='").append(name).append('\'');
     sb.append(", description='").append(description).append('\'');
     sb.append(", cronEntry='").append(cronEntry).append('\'');
+    sb.append(", runRequirements='").append(runRequirements).append('\'');
     sb.append('}');
     return sb.toString();
   }

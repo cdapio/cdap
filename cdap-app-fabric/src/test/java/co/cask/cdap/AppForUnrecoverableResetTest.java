@@ -31,8 +31,11 @@ public class AppForUnrecoverableResetTest extends AbstractApplication {
     setDescription("Application to test the deletion of the Schedules after unrecoverable reset");
     addWorkflow(new DummyWorkflow());
     addMapReduce(new DummyMR());
-    scheduleWorkflow(Schedules.createTimeSchedule("Every5HourSchedule", "Every 5 hour schedule", "0 */5 * * *"),
-                     "DummyWorkflow");
+    scheduleWorkflow(
+      Schedules.builder("Every5HourSchedule")
+        .setDescription("Every 5 hour schedule")
+        .createTimeSchedule("0 */5 * * *"),
+      "DummyWorkflow");
   }
 
   /**
