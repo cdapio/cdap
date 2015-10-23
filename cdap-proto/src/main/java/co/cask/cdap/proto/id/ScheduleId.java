@@ -17,7 +17,7 @@ package co.cask.cdap.proto.id;
 
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.element.ElementType;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Iterator;
@@ -26,13 +26,13 @@ import java.util.Objects;
 /**
  * Uniquely identifies a schedule.
  */
-public class ScheduleId extends ElementId implements NamespacedId, ParentedId<ApplicationId> {
+public class ScheduleId extends EntityId implements NamespacedId, ParentedId<ApplicationId> {
   private final String namespace;
   private final String application;
   private final String schedule;
 
   public ScheduleId(String namespace, String application, String schedule) {
-    super(ElementType.SCHEDULE);
+    super(EntityType.SCHEDULE);
     this.namespace = namespace;
     this.application = application;
     this.schedule = schedule;
@@ -90,6 +90,6 @@ public class ScheduleId extends ElementId implements NamespacedId, ParentedId<Ap
   }
 
   public static ScheduleId fromString(String string) {
-    return ElementId.fromString(string, ScheduleId.class);
+    return EntityId.fromString(string, ScheduleId.class);
   }
 }
