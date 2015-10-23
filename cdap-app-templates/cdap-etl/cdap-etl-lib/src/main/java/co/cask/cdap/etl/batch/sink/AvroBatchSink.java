@@ -39,20 +39,20 @@ import java.text.SimpleDateFormat;
 import java.util.Map;
 
 /**
- * {@link S3AvroBatchSink} that stores data in avro format to S3.
+ * {@link AvroBatchSink} that stores data in avro format to S3.
  */
 @Plugin(type = "batchsink")
-@Name("S3Avro")
+@Name("Avro")
 @Description("Batch sink to write to Amazon S3 in Avro format.")
-public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWritable> {
+public class AvroBatchSink extends FileBatchSink<AvroKey<GenericRecord>, NullWritable> {
 
   private StructuredToAvroTransformer recordTransformer;
-  private final S3AvroSinkConfig config;
+  private final AvroBatchSinkConfig config;
 
   private static final String SCHEMA_DESC = "The Avro schema of the record being written to the sink as a JSON " +
     "object.";
 
-  public S3AvroBatchSink(S3AvroSinkConfig config) {
+  public AvroBatchSink(AvroBatchSinkConfig config) {
     super(config);
     this.config = config;
   }
@@ -66,7 +66,7 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
   @Override
   public void prepareRun(BatchSinkContext context) {
     super.prepareRun(context);
-    context.addOutput(config.basePath, new S3AvroOutputFormatProvider(config, context));
+    context.addOutput(config.basePath, new AvroOutputFormatProvider(config, context));
   }
 
   @Override
@@ -78,21 +78,21 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
   /**
    * Configuration for the S3AvroSink.
    */
-  public static class S3AvroSinkConfig extends S3BatchSinkConfig {
+  public static class AvroBatchSinkConfig extends FileBatchConfig {
 
     @Name(Properties.FileSink.SCHEMA)
     @Description(SCHEMA_DESC)
     private String schema;
 
     @SuppressWarnings("unused")
-    public S3AvroSinkConfig() {
+    public AvroBatchSinkConfig() {
       super();
     }
 
     @SuppressWarnings("unused")
-    public S3AvroSinkConfig(String basePath, String schema, String accessID, String accessKey, String pathFormat,
-                            String filesystemProperties, String outputField) {
-      super(basePath, accessID, accessKey, pathFormat, filesystemProperties, outputField);
+    public AvroBatchSinkConfig(String basePath, String schema, String pathFormat, String filesystemProperties,
+                               String outputField) {
+      super(basePath, pathFormat, filesystemProperties, outputField);
       this.schema = schema;
     }
   }
@@ -100,11 +100,11 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
   /**
    * Output format provider that sets avro output format to be use in MapReduce.
    */
-  public static class S3AvroOutputFormatProvider implements OutputFormatProvider {
+  public static class AvroOutputFormatProvider implements OutputFormatProvider {
 
     private final Map<String, String> conf;
 
-    public S3AvroOutputFormatProvider(S3AvroSinkConfig config, BatchSinkContext context) {
+    public AvroOutputFormatProvider(AvroBatchSinkConfig config, BatchSinkContext context) {
       @SuppressWarnings("ConstantConditions")
       SimpleDateFormat format = new SimpleDateFormat(config.pathFormat);
 

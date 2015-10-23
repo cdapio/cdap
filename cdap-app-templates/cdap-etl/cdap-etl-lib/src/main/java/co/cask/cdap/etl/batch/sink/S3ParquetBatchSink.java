@@ -77,7 +77,7 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
    */
   public static class S3ParquetSinkConfig extends S3BatchSinkConfig {
 
-    @Name(Properties.S3BatchSink.SCHEMA)
+    @Name(Properties.FileSink.SCHEMA)
     @Description(SCHEMA_DESC)
     private String schema;
 
@@ -88,8 +88,8 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
 
     @SuppressWarnings("unused")
     public S3ParquetSinkConfig(String basePath, String schema, String accessID, String accessKey, String pathFormat,
-                               String fileSystemProperties) {
-      super(basePath, accessID, accessKey, pathFormat, fileSystemProperties);
+                               String fileSystemProperties, String outputField) {
+      super(basePath, accessID, accessKey, pathFormat, fileSystemProperties, outputField);
       this.schema = schema;
     }
   }

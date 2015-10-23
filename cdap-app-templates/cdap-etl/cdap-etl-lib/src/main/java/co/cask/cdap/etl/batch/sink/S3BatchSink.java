@@ -18,43 +18,29 @@ package co.cask.cdap.etl.batch.sink;
 
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.common.Properties;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * {@link S3BatchSink} that stores the data of the latest run of an adapter in S3.
+ * {@link S3BatchSink} that stores the data of the latest run of an ETL Pipeline in S3.
  * @param <KEY_OUT> the type of key the sink outputs
  * @param <VAL_OUT> the type of value the sink outputs
  */
-public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
+public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends FileBatchSink<KEY_OUT, VAL_OUT> {
 
-  public static final String PATH_DESC = "The S3 path where the data is stored. Example: 's3n://logs'.";
   private static final String ACCESS_ID_DESCRIPTION = "Access ID of the Amazon S3 instance to connect to.";
   private static final String ACCESS_KEY_DESCRIPTION = "Access Key of the Amazon S3 instance to connect to.";
-  private static final String PATH_FORMAT_DESCRIPTION = "The format for the path that will be suffixed to the " +
-    "basePath; for example: the format 'yyyy-MM-dd-HH-mm' will create a file path ending in '2015-01-01-20-42'. " +
-    "Default format used is 'yyyy-MM-dd-HH-mm'.";
-  private static final String FILESYSTEM_PROPERTIES_DESCRIPTION = "A JSON string representing a map of properties " +
-    "needed for the distributed file system.";
-  private static final String DEFAULT_PATH_FORMAT = "yyyy-MM-dd-HH-mm";
-  private static final Gson GSON = new Gson();
-  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final S3BatchSinkConfig config;
   protected S3BatchSink(S3BatchSinkConfig config) {
+    super(config);
     this.config = config;
     // update fileSystemProperties to include accessID and accessKey, so prepareRun can only set fileSystemProperties
     // in configuration, and not deal with accessID and accessKey separately
@@ -95,11 +81,7 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
   /**
    * S3 Sink configuration.
    */
-  public static class S3BatchSinkConfig extends PluginConfig {
-
-    @Name(Properties.S3BatchSink.BASE_PATH)
-    @Description(PATH_DESC)
-    protected String basePath;
+  public static class S3BatchSinkConfig extends FileBatchSink.FileBatchConfig {
 
     @Name(Properties.S3.ACCESS_ID)
     @Description(ACCESS_ID_DESCRIPTION)
@@ -109,28 +91,18 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
     @Description(ACCESS_KEY_DESCRIPTION)
     protected String accessKey;
 
-    @Name(Properties.S3BatchSink.PATH_FORMAT)
-    @Description(PATH_FORMAT_DESCRIPTION)
-    @Nullable
-    protected String pathFormat;
-
-    @Description(FILESYSTEM_PROPERTIES_DESCRIPTION)
-    @Nullable
-    protected String fileSystemProperties;
-
     public S3BatchSinkConfig() {
       // Set default value for Nullable properties.
-      this.pathFormat = DEFAULT_PATH_FORMAT;
+      super();
       this.fileSystemProperties = updateFileSystemProperties(null, accessID, accessKey);
     }
 
-    public S3BatchSinkConfig(String basePath, String accessID, String accessKey, @Nullable String pathFormat,
-                             @Nullable String fileSystemProperties) {
-      this.basePath = basePath;
-      this.pathFormat = pathFormat == null || pathFormat.isEmpty() ? DEFAULT_PATH_FORMAT : pathFormat;
+    public S3BatchSinkConfig(String basePath, @Nullable String pathFormat,
+                             @Nullable String fileSystemProperties, @Nullable String outputField,
+                             String accessID, String accessKey) {
+      super(basePath, pathFormat, updateFileSystemProperties(fileSystemProperties, accessID, accessKey), outputField);
       this.accessID = accessID;
       this.accessKey = accessKey;
-      this.fileSystemProperties = updateFileSystemProperties(fileSystemProperties, accessID, accessKey);
     }
   }
 }
