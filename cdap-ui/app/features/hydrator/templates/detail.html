@@ -153,7 +153,8 @@
   <div class="console-type">
     <div ng-repeat="tab in tabs"
          ng-include="tab.template"
-         ng-show="activeTab.title === tab.title">
+         ng-show="activeTab.title === tab.title"
+         ng-class="{'p-10': tab.title !== 'Node Configuration'}">
       </div>
   </div>
 </div>
