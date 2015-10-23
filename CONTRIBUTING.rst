@@ -85,7 +85,7 @@ Conventions
 * Committers use LGTM ("Looks Good To Me") in comments on the code review to indicate acceptance. 
   The code will be merged after the reviewer comments a "LGTM" on the pull request.
   
-* CDAP Developers are on IRC: #cdap on `irc.freenode.net <irc://irc.freenode.net:6667/cdap>`__.
+* CDAP Developers are on IRC: #cdap on `irc.freenode.net <https://freenode.net>`__.
 
 License and Trademarks
 ======================
