@@ -57,7 +57,9 @@ angular
       'cask-angular-confirmable',
       'cask-angular-promptable',
       'cask-angular-json-edit',
-
+      'cask-angular-eventpipe',
+      'cask-angular-observable-promise',
+      
       'mgcrea.ngStrap.datepicker',
       'mgcrea.ngStrap.timepicker',
 
