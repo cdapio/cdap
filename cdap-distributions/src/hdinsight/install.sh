@@ -20,9 +20,15 @@
 
 die() { echo "ERROR: ${*}"; exit 1; };
 
+# The git branch to clone
 CDAP_BRANCH='release/3.2'
+# Optional tag to checkout - All released versions of this script should set this
+CDAP_TAG=''
+# The CDAP package version passed to Chef
 CDAP_VERSION='3.2.1-1'
+# The version of Chef to install
 CHEF_VERSION='11.18.12'
+# cdap-site.xml configuration parameters
 EXPLORE_ENABLED='false'
 
 __tmpdir="/tmp/cdap_install.$$.$(date +%s)"
@@ -43,6 +49,11 @@ curl -L https://www.chef.io/chef/install.sh | sudo bash -s -- -v ${CHEF_VERSION}
 # Clone CDAP repo
 __create_tmpdir
 git clone --depth 1 --branch ${CDAP_BRANCH} https://github.com/caskdata/cdap.git ${__gitdir}
+
+# Check out to specific tag if specified
+if [ -n "${CDAP_TAG}" ]; then
+  git -C ${__gitdir} checkout tags/${CDAP_TAG}
+fi
 
 # Setup cookbook repo
 test -d /var/chef/cookbooks && rm -rf /var/chef/cookbooks
