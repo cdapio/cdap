@@ -62,28 +62,38 @@
           </ul>
         </div>
 
-        <h4 class="sink-schema" ng-if="pluginCopy.implicitSchema || pluginCopy.properties.schema !== undefined">
+        <h4 class="sink-schema" >
           <span>Schema</span>
           <button
             class="btn btn-sm btn-default pull-right"
             ng-click="PluginEditController.schemaClear()"
-            ng-if="(!pluginCopy.implicitSchema && !isDisabled)"
+            ng-if="pluginCopy.properties.schema && (!pluginCopy.implicitSchema && !isDisabled)"
             ng-disabled="pluginCopy.implicitSchema || pluginCopy.properties.format === 'clf' || pluginCopy.properties.format === 'syslog'">
             Clear
           </button>
         </h4>
 
         <fieldset ng-disabled="isDisabled">
-          <my-schema-editor
-            ng-if="pluginCopy.properties.schema !== undefined || pluginCopy.implicitSchema"
-            ng-model="pluginCopy.outputSchema"
-            data-disabled="pluginCopy.implicitSchema || isDisabled"
-            plugin-properties="pluginCopy.properties"
-            config="PluginEditController.schemaProperties">
-          </my-schema-editor>
+          <div ng-if="isDisabled">
+            <my-schema-editor
+              ng-if="pluginCopy.properties.schema || pluginCopy.implicitSchema"
+              ng-model="pluginCopy.outputSchema"
+              data-disabled="pluginCopy.implicitSchema || isDisabled"
+              plugin-properties="pluginCopy.properties"
+              config="PluginEditController.schemaProperties">
+            </my-schema-editor>
+          </div>
+          <div ng-if="!isDisabled">
+            <my-schema-editor
+              ng-model="pluginCopy.outputSchema"
+              data-disabled="pluginCopy.implicitSchema || isDisabled"
+              plugin-properties="pluginCopy.properties"
+              config="PluginEditController.schemaProperties">
+            </my-schema-editor>
+          </div>
         </fieldset>
 
-        <div ng-if="pluginCopy.properties.schema !== undefined && !pluginCopy.outputSchema && isDisabled">
+        <div ng-if="isDisabled && !pluginCopy.properties.schema && !pluginCopy.outputSchema">
           <div class="well well-lg">
             <h4>There is no output schema</h4>
           </div>
