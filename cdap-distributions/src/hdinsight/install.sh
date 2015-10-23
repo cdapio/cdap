@@ -84,7 +84,7 @@ sed \
 chef-solo -o 'recipe[ntp::default],recipe[cdap::fullstack],recipe[cdap::init]' -j ${__tmpdir}/generated-conf.json
 
 # Temporary Hack to workaround CDAP-4089
-rm /opt/cdap/kafka/lib/log4j.log4j-1.2.14.jar
+rm -f /opt/cdap/kafka/lib/log4j.log4j-1.2.14.jar
 
 # Start CDAP Services
 for i in /etc/init.d/cdap-*
