@@ -24,12 +24,23 @@
 
   <h4>Output Schema</h4>
   <fieldset class="clearfix" ng-disabled="isDisabled">
-    <my-schema-editor
-      ng-model="pluginCopy.outputSchema"
-      data-disabled="pluginCopy.implicitSchema || isDisabled"
-      plugin-properties="pluginCopy.properties"
-      config="PluginEditController.schemaProperties">
-    </my-schema-editor>
+    <div ng-if="isDisabled">
+      <my-schema-editor
+        ng-model="pluginCopy.outputSchema"
+        ng-if="pluginCopy.outputSchema"
+        data-disabled="pluginCopy.implicitSchema || isDisabled"
+        plugin-properties="pluginCopy.properties"
+        config="PluginEditController.schemaProperties">
+      </my-schema-editor>
+    </div>
+    <div ng-if="!isDisabled">
+      <my-schema-editor
+        ng-model="pluginCopy.outputSchema"
+        data-disabled="pluginCopy.implicitSchema || isDisabled"
+        plugin-properties="pluginCopy.properties"
+        config="PluginEditController.schemaProperties">
+      </my-schema-editor>
+    </div>
   </fieldset>
 
   <div ng-if="!pluginCopy.outputSchema && isDisabled && pluginCopy.properties.format !== 'clf' && pluginCopy.properties.format !== 'syslog'">
