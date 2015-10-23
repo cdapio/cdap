@@ -48,7 +48,7 @@ problem as well. This will help us in prioritization.
 Discuss on the Mailing List
 ---------------------------
 We recommend that you discuss your plan on the mailing list 
-`cdap-developers@cask.co <mailto: cdap-developers@cask.co>`__
+`cdap-developers@cask.co <mailto:cdap-developers@cask.co>`__
 before starting to code. This gives us a chance to add feedback and help point you in the right direction.
 
 Pull Requests
@@ -56,6 +56,7 @@ Pull Requests
 We love having pull requests and we do our best to review them as quickly as possible. 
 If your pull request is not accepted on the first try, don't be discouraged. 
 If there is a problem with the implementation, you will receive feedback on what to improve.
+Add a link to your PR on the issue, and in an email to `cdap-developers@cask.co <mailto:cdap-developers@cask.co>`__.
 
 Conventions
 -----------
@@ -84,8 +85,7 @@ Conventions
 
 * Committers use LGTM ("Looks Good To Me") in comments on the code review to indicate acceptance. 
   The code will be merged after the reviewer comments a "LGTM" on the pull request.
-  
-* CDAP Developers are on IRC: #cdap on `irc.freenode.net <https://freenode.net>`__.
+
 
 License and Trademarks
 ======================
