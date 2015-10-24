@@ -15,8 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamDetailStatusController', function($scope, $state, myHelpers, MyDataSource, rStreamData) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('StreamDetailStatusController', function($scope, $state, myHelpers, MyCDAPDataSource, rStreamData) {
+    var dataSrc = new MyCDAPDataSource($scope);
     this.storage = null;
     this.events = null;
 

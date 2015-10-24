@@ -14,8 +14,8 @@
  * the License.
  */
 class FlowletDetailDataController {
-  constructor($state, $scope, MyDataSource, myHelpers, MyMetricsQueryHelper, myFlowsApi) {
-    this.dataSrc = new MyDataSource($scope);
+  constructor($state, $scope, MyCDAPDataSource, myHelpers, MyMetricsQueryHelper, myFlowsApi) {
+    this.dataSrc = new MyCDAPDataSource($scope);
     this.$state = $state;
     this.MyMetricsQueryHelper = MyMetricsQueryHelper;
 
@@ -79,7 +79,7 @@ class FlowletDetailDataController {
   }
 }
 
-FlowletDetailDataController.$inject = ['$state', '$scope', 'MyDataSource', 'myHelpers', 'MyMetricsQueryHelper', 'myFlowsApi'];
+FlowletDetailDataController.$inject = ['$state', '$scope', 'MyCDAPDataSource', 'myHelpers', 'MyMetricsQueryHelper', 'myFlowsApi'];
 
 angular.module(PKG.name + '.feature.flows')
   .controller('FlowletDetailDataController', FlowletDetailDataController);

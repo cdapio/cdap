@@ -26,9 +26,9 @@ angular.module(PKG.name + '.feature.worker')
           highlightTab: 'development'
         },
         resolve : {
-          rRuns: function(MyDataSource, $stateParams, $q, $state) {
+          rRuns: function(MyCDAPDataSource, $stateParams, $q, $state) {
             var defer = $q.defer();
-            var dataSrc = new MyDataSource();
+            var dataSrc = new MyCDAPDataSource();
             // Using _cdapPath here as $state.params is not updated with
             // runid param when the request goes out
             // (timing issue with re-direct from login state).
@@ -49,9 +49,9 @@ angular.module(PKG.name + '.feature.worker')
               );
             return defer.promise;
           },
-          rWorkerDetail: function(MyDataSource, $stateParams, $q, $state) {
+          rWorkerDetail: function(MyCDAPDataSource, $stateParams, $q, $state) {
             var defer = $q.defer();
-            var dataSrc = new MyDataSource();
+            var dataSrc = new MyCDAPDataSource();
             // Using _cdapPath here as $state.params is not updated with
             // runid param when the request goes out
             // (timing issue with re-direct from login state).

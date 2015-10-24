@@ -15,8 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('OverviewController', function ($scope, $state, myNamespace, MyDataSource, myLocalStorage, MY_CONFIG, myStreamApi, myDatasetApi) {
-    var dataSrc = new MyDataSource($scope),
+  .controller('OverviewController', function ($scope, $state, myNamespace, MyCDAPDataSource, myLocalStorage, MY_CONFIG, myStreamApi, myDatasetApi) {
+    var dataSrc = new MyCDAPDataSource($scope),
         PREFKEY = 'feature.admin.overview.welcomeIsHidden';
 
     myLocalStorage.get(PREFKEY)
