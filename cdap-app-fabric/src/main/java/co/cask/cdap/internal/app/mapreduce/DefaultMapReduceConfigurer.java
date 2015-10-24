@@ -47,7 +47,7 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
 
   public DefaultMapReduceConfigurer(MapReduce mapReduce, Id.Artifact artifactId, ArtifactRepository artifactRepository,
                                     PluginInstantiator pluginInstantiator) {
-    super(artifactRepository, pluginInstantiator, artifactId);
+    super(artifactId, artifactRepository, pluginInstantiator);
     this.className = mapReduce.getClass().getName();
     this.name = mapReduce.getClass().getSimpleName();
     this.description = "";

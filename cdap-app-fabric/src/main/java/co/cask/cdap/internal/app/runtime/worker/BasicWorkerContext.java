@@ -45,7 +45,6 @@ import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -163,7 +162,6 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
   public void close() {
     super.close();
     datasetCache.close();
-    Closeables.closeQuietly(getPluginInstantiator());
   }
 
   @Override

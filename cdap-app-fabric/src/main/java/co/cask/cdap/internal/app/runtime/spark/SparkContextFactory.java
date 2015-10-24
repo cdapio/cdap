@@ -64,7 +64,8 @@ final class SparkContextFactory {
                                      clientContext.getLogicalStartTime(), clientContext.getRuntimeArguments(),
                                      transaction, datasetFramework, txClient, clientContext.getDiscoveryServiceClient(),
                                      clientContext.getMetricsContext(), clientContext.getLoggingContext(),
-                                     hConf, streamAdmin, clientContext.getWorkflowToken());
+                                     hConf, streamAdmin, clientContext.getPluginInstantiator(),
+                                     clientContext.getWorkflowToken());
   }
 
   private SparkSpecification updateSpecExecutorResources(SparkSpecification originalSpec, Resources executorResources) {

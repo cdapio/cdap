@@ -21,27 +21,19 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.Delegators;
-import co.cask.cdap.common.lang.FilterClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.internal.app.runtime.batch.distributed.DistributedMapReduceTaskContextProvider;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
-import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader;
+import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.ProgramType;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
-import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -55,10 +47,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -72,12 +62,6 @@ import javax.annotation.Nullable;
 public class MapReduceClassLoader extends CombineClassLoader implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(MapReduceClassLoader.class);
-  private static final Function<String, String> CLASS_TO_RESOURCE_NAME = new Function<String, String>() {
-    @Override
-    public String apply(String className) {
-      return className.replace('.', '/') + ".class";
-    }
-  };
 
   private final Parameters parameters;
   // Supplier for MapReduceTaskContextProvider. Need to wrap it with a supplier to delay calling
@@ -161,6 +145,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
   /**
    * Returns the {@link PluginInstantiator} associated with this ClassLoader.
    */
+  @Nullable
   public PluginInstantiator getPluginInstantiator() {
     return parameters.getPluginInstantiator();
   }
@@ -183,12 +168,11 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
    * Creates the delegating list of ClassLoader.
    */
   private static List<ClassLoader> createDelegates(Parameters parameters) {
-    ImmutableList.Builder<ClassLoader> builder = ImmutableList.builder();
-    builder.add(parameters.getProgramClassLoader());
-    builder.addAll(parameters.getFilteredPluginClassLoaders());
-    builder.add(MapReduceClassLoader.class.getClassLoader());
-
-    return builder.build();
+    return ImmutableList.of(
+      parameters.getProgramClassLoader(),
+      parameters.getFilteredPluginsClassLoader(),
+      MapReduceClassLoader.class.getClassLoader()
+    );
   }
 
   /**
@@ -201,7 +185,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
     private final Configuration hConf;
     private final ClassLoader programClassLoader;
     private final PluginInstantiator pluginInstantiator;
-    private final List<ClassLoader> filteredPluginClassLoaders;
+    private final ClassLoader filteredPluginsClassLoader;
 
     /**
      * Creates from the Job Configuration
@@ -216,7 +200,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
 
     Parameters(MapReduceContextConfig contextConfig, ClassLoader programClassLoader) {
       this(contextConfig.getCConf(), contextConfig.getHConf(), programClassLoader, contextConfig.getPlugins(),
-           createPluginInstantiator(contextConfig, programClassLoader, new File(Constants.Plugin.DIRECTORY)));
+           createPluginInstantiator(contextConfig, programClassLoader));
     }
 
     /**
@@ -230,7 +214,8 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
       this.hConf = hConf;
       this.programClassLoader = programClassLoader;
       this.pluginInstantiator = pluginInstantiator;
-      this.filteredPluginClassLoaders = createFilteredPluginClassLoaders(plugins, pluginInstantiator);
+      this.filteredPluginsClassLoader = PluginClassLoaders.createFilteredPluginsClassLoader(plugins,
+                                                                                            pluginInstantiator);
     }
 
     ClassLoader getProgramClassLoader() {
@@ -241,8 +226,8 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
       return pluginInstantiator;
     }
 
-    List<ClassLoader> getFilteredPluginClassLoaders() {
-      return filteredPluginClassLoaders;
+    ClassLoader getFilteredPluginsClassLoader() {
+      return filteredPluginsClassLoader;
     }
 
     CConfiguration getCConf() {
@@ -286,53 +271,12 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
      */
     @Nullable
     private static PluginInstantiator createPluginInstantiator(MapReduceContextConfig contextConfig,
-                                                               ClassLoader programClassLoader, File basePath) {
-      return new PluginInstantiator(contextConfig.getCConf(), programClassLoader, basePath);
-    }
-
-    /**
-     * Returns a list of {@link ClassLoader} for loading plugin classes. The ordering is:
-     *
-     * Plugin Lib ClassLoader, Plugin Export-Package ClassLoader, ...
-     */
-    private static List<ClassLoader> createFilteredPluginClassLoaders(Map<String, Plugin> plugins,
-                                                                      PluginInstantiator pluginInstantiator) {
-      if (plugins.isEmpty()) {
-        return ImmutableList.of();
+                                                               ClassLoader programClassLoader) {
+      String pluginArchive = contextConfig.getHConf().get(Constants.Plugin.ARCHIVE);
+      if (pluginArchive == null) {
+        return null;
       }
-
-      try {
-        Multimap<Plugin, String> artifactPluginClasses = getArtifactPluginClasses(plugins);
-        List<ClassLoader> pluginClassLoaders = Lists.newArrayList();
-        for (Plugin plugin : plugins.values()) {
-          ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(plugin.getArtifactId());
-          if (pluginClassLoader instanceof PluginClassLoader) {
-            Collection<String> allowedClasses = artifactPluginClasses.get(plugin);
-            if (!allowedClasses.isEmpty()) {
-              pluginClassLoaders.add(createClassFilteredClassLoader(allowedClasses, pluginClassLoader));
-            }
-            pluginClassLoaders.add(((PluginClassLoader) pluginClassLoader).getExportPackagesClassLoader());
-          }
-        }
-        return ImmutableList.copyOf(pluginClassLoaders);
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
-    }
-
-    private static Multimap<Plugin, String> getArtifactPluginClasses(Map<String, Plugin> plugins) {
-      Multimap<Plugin, String> result = HashMultimap.create();
-      for (Map.Entry<String, Plugin> entry : plugins.entrySet()) {
-        result.put(entry.getValue(), entry.getValue().getPluginClass().getClassName());
-      }
-      return result;
-    }
-
-    private static ClassLoader createClassFilteredClassLoader(Iterable<String> allowedClasses,
-                                                              ClassLoader parentClassLoader) {
-      Set<String> allowedResources = ImmutableSet.copyOf(Iterables.transform(allowedClasses, CLASS_TO_RESOURCE_NAME));
-      return FilterClassLoader.create(Predicates.in(allowedResources),
-        Predicates.<String>alwaysTrue(), parentClassLoader);
+      return new PluginInstantiator(contextConfig.getCConf(), programClassLoader, new File(pluginArchive));
     }
   }
 

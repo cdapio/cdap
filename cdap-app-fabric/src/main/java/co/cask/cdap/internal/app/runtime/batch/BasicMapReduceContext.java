@@ -49,6 +49,7 @@ import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -70,6 +71,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final Map<String, Dataset> outputDatasets;
   private final Map<String, OutputFormatProvider> outputFormatProviders;
   private final TransactionContext txContext;
+  private final File pluginArchive;
 
   private String inputDatasetName;
   private List<Split> inputDataSelection;
@@ -89,6 +91,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                MetricsCollectionService metricsCollectionService,
                                TransactionSystemClient txClient,
                                DatasetFramework dsFramework,
+                               @Nullable File pluginArchive,
                                @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArguments, Collections.<String>emptySet(),
           getMetricsCollector(program, runId.getId(), metricsCollectionService),
@@ -121,6 +124,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
     this.txContext = getDatasetCache().newTransactionContext();
+    this.pluginArchive = pluginArchive;
   }
 
   public TransactionContext getTransactionContext() {
@@ -381,4 +385,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     return reducerResources;
   }
 
+  public File getPluginArchive() {
+    return pluginArchive;
+  }
 }

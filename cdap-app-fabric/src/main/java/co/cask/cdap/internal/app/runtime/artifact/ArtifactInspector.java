@@ -61,6 +61,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -371,6 +372,11 @@ public class ArtifactInspector {
       }
 
       for (Field field : type.getRawType().getDeclaredFields()) {
+        int modifiers = field.getModifiers();
+        if (Modifier.isTransient(modifiers) || Modifier.isStatic(modifiers) || field.isSynthetic()) {
+          continue;
+        }
+
         PluginPropertyField property = createPluginProperty(field, type);
         if (result.containsKey(property.getName())) {
           throw new IllegalArgumentException("Plugin config with name " + property.getName()
