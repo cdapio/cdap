@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.worker')
           highlightTab: 'development'
         },
         resolve : {
-          rRuns: function(MyDataSource, $stateParams, $q) {
+          rRuns: function(MyDataSource, $stateParams, $q, $state) {
             var defer = $q.defer();
             var dataSrc = new MyDataSource();
             // Using _cdapPath here as $state.params is not updated with
@@ -38,12 +38,18 @@ angular.module(PKG.name + '.feature.worker')
                          '/workers/' + $stateParams.programId +
                          '/runs'
             })
-              .then(function(res) {
-                defer.resolve(res);
-              });
+              .then(
+                function success(res) {
+                  defer.resolve(res);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
             return defer.promise;
           },
-          rWorkerDetail: function(MyDataSource, $stateParams, $q) {
+          rWorkerDetail: function(MyDataSource, $stateParams, $q, $state) {
             var defer = $q.defer();
             var dataSrc = new MyDataSource();
             // Using _cdapPath here as $state.params is not updated with
@@ -54,9 +60,15 @@ angular.module(PKG.name + '.feature.worker')
                          '/apps/' + $stateParams.appId +
                          '/workers/' + $stateParams.programId
             })
-              .then(function(res) {
-                defer.resolve(res);
-              });
+              .then(
+                function success(res) {
+                  defer.resolve(res);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
             return defer.promise;
           }
         },
