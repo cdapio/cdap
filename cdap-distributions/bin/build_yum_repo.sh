@@ -123,9 +123,9 @@ function createrepo_in_repo_staging() {
 
 function create_repo_tarball() {
   cd ${STAGE_DIR}
-  # Delete any previous tarballs
-  rm -f ${TARGET_DIR}/cdap-repo-${__maj_min}.tar.gz
   echo "Create YUM repository tarball"
+  # Delete any previous tarballs
+  rm -f ${TARGET_DIR}/cdap-yumrepo-${__maj_min}.tar.gz
   tar zcf ${TARGET_DIR}/cdap-yumrepo-${__maj_min}.tar.gz ${__maj_min}
 }
 
