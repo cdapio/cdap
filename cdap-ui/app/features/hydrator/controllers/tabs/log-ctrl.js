@@ -29,7 +29,7 @@
      HydratorDetail.logsApi.pollLatestRun(logsParams)
        .$promise
        .then(function (runs) {
-         if (runs.length === 0) { return; }
+         if (runs.length === 0 || (runs.length && $scope.logsGenericParams.runId ===runs[0].runid)) { return; }
          $scope.logsGenericParams.runId = runs[0].runid;
        });
 
