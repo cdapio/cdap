@@ -4,9 +4,9 @@
 
 .. _integrations-index:
 
-==================================================
+============
 Integrations
-==================================================
+============
 
 
 .. rubric:: Cloudera
@@ -39,6 +39,21 @@ Integrations
 .. _cloudera-faq: partners/cloudera/faq.html
 
 .. - |cloudera-faq|_ for Cloudera and Impala
+
+
+.. rubric:: Ambari
+
+.. |ambari-introduction| replace:: **Introduction:**
+.. _ambari-introduction: partners/ambari/index.html
+
+- |ambari-introduction|_ Utilizing CDAP with **Ambari**
+
+
+.. |ambari-configuring| replace:: **Configuring and Installing:**
+.. _ambari-configuring: partners/ambari/configuring.html
+
+- |ambari-configuring|_ Configuring and installing CDAP using Ambari
+
 
 
 .. rubric:: BI Tools: Accessing CDAP Datasets through Business Intelligence Tools

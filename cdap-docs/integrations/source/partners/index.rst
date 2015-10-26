@@ -7,14 +7,15 @@
 
 .. _partners-index:
 
-==================================================
-Partners
-==================================================
+=========================
+Partners and Integrations
+=========================
 
 .. toctree::
    :maxdepth: 1
    
     Cloudera <cloudera/index>
+    Ambari <ambari/index>
 
 
 .. |cloudera| replace:: **Cloudera:**
@@ -22,3 +23,7 @@ Partners
 
 - |cloudera|_ Integration of CDAP with Cloudera
 
+.. |ambari| replace:: **Ambari:**
+.. _ambari: ambari/index.html
+
+- |ambari|_ Integration of CDAP with Ambari
