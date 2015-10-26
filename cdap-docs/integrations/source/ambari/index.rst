@@ -19,8 +19,8 @@ This section will familiarize you with CDAP's integration with `Apache Ambari
 Data Platform) <http://hortonworks.com/>`__.
 
 You can use `Ambari <https://ambari.apache.org>`__ to integrate CDAP into a Hadoop cluster
-by adding the `Cask Ambari Services <https://github.com/caskdata/cdap-ambari-service>`__
-repository to your Ambari server. Once you have restarted your server, you will able to
+by adding the `CDAP Ambari Services <https://github.com/caskdata/cdap-ambari-service>`__
+to your Ambari server. Once you have restarted your server, you will able to
 use the Ambari UI (Ambari Dashboard) to install, start and manage CDAP on Hadoop clusters.
 
 These instructions cover the steps to integrate CDAP using Apache Ambari:
@@ -138,7 +138,8 @@ Installing CDAP
    - **Master:** coordinator service which launches CDAP system services into YARN
    - **Router:** serves HTTP endpoints for CDAP applications and REST API
    - **Kafka Server:** used for storing CDAP metrics and CDAP system service log data
-   - **UI:** web interface to CDAP and `Cask Hydrator <http://blog.cask.co/2015/09/cask-hydrator-and-the-future-of-cdap/>`__ (for CDAP 3.2.x installations)
+   - **UI:** web interface to CDAP and :ref:`Cask Hydrator <included-apps-intro-hydrator>`
+     (for CDAP 3.2.x installations)
  
    .. figure:: ../_images/integration-ambari/ss03-assign-masters.png
       :figwidth: 100%
@@ -267,12 +268,14 @@ Congratulations! CDAP is now running on your cluster, managed by Ambari.
 Roadmap and Future Features
 ===========================
 CDAP integration with Ambari is still evolving and improving. Additional features are
-planned for upcoming versions of the CDAP Ambari Service, including a full smoke test of
-CDAP functionality after installation, pre-defined alerts for CDAP services, CDAP
-component High-availability support, select CDAP metrics, support for Kerberos-enabled
-clusters, and integration with the CDAP Authentication Server.
+planned for upcoming versions of the CDAP Ambari Service, including 
+`a full smoke test of CDAP functionality after installation <https://issues.cask.co/browse/CDAP-4105>`__, 
+`pre-defined alerts for CDAP services <https://issues.cask.co/browse/CDAP-4106>`__, 
+`CDAP component high-availability support <https://issues.cask.co/browse/CDAP-4107>`__, 
+`select CDAP metrics <https://issues.cask.co/browse/CDAP-4108>`__, 
+`support for Kerberos-enabled clusters <https://issues.cask.co/browse/CDAP-4109>`__, and 
+`integration with the CDAP Authentication Server <https://issues.cask.co/browse/CDAP-4110>`__.
 
-The definition used to create the Ambari service is open source; contributions, issues,
-comments, and suggestions are always welcome and encouraged at the `source code
-repository <https://github.com/caskdata/cdap-ambari-service>`__.
-
+The definition used to create the Ambari service is 
+`open source <https://github.com/caskdata/cdap-ambari-service>`__; contributions, issues,
+comments, and suggestions are always welcome and encouraged at `CDAP Issues <https://issues.cask.co/browse/CDAP>`__.
