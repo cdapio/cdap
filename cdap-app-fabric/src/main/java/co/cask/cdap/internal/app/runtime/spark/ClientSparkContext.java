@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.spark.Spark;
@@ -27,13 +28,18 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
+import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.base.Throwables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -46,6 +52,7 @@ public final class ClientSparkContext extends AbstractSparkContext {
   private final TransactionContext transactionContext;
   private final DynamicDatasetCache datasetCache;
   private final File pluginArchive;
+  private final Map<String, LocalizeResource> resourcesToLocalize;
 
   public ClientSparkContext(Program program, RunId runId, long logicalStartTime, Map<String, String> runtimeArguments,
                             TransactionSystemClient txClient, DatasetFramework datasetFramework,
@@ -66,6 +73,7 @@ public final class ClientSparkContext extends AbstractSparkContext {
       txClient, program.getId().getNamespace(), runtimeArguments, getMetricsContext(), null);
     this.transactionContext = datasetCache.newTransactionContext();
     this.pluginArchive = pluginArchive;
+    this.resourcesToLocalize = new HashMap<>();
   }
 
   @Override
@@ -91,6 +99,11 @@ public final class ClientSparkContext extends AbstractSparkContext {
   }
 
   @Override
+  public TaskLocalizationContext getTaskLocalizationContext() {
+    throw new UnsupportedOperationException("Only supported in SparkProgram.run() execution context");
+  }
+
+  @Override
   public synchronized <T extends Dataset> T getDataset(String name, Map<String, String> arguments) {
     return datasetCache.getDataset(name, arguments);
   }
@@ -110,5 +123,31 @@ public final class ClientSparkContext extends AbstractSparkContext {
   @Nullable
   public File getPluginArchive() {
     return pluginArchive;
+  }
+
+  @Override
+  public void localize(String name, URI uri) {
+    localize(name, uri, false);
+  }
+
+  @Override
+  public void localize(String name, URI uri, boolean archive) {
+    URI actualURI;
+    try {
+      actualURI = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), name);
+    } catch (URISyntaxException e) {
+      // Most of the URI is constructed from the passed URI. So ideally, this should not happen.
+      // If it does though, there is nothing that clients can do to recover, so not propagating a checked exception.
+      throw Throwables.propagate(e);
+    }
+    LocalizeResource localizeResource = new LocalizeResource(actualURI, archive);
+    resourcesToLocalize.put(name, localizeResource);
+  }
+
+  /**
+   * Returns the localized resources for the spark program.
+   */
+  Map<String, LocalizeResource> getResourcesToLocalize() {
+    return resourcesToLocalize;
   }
 }

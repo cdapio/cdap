@@ -244,7 +244,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
     localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
 
-    Map<String, String> newSystemArgs = Maps.newHashMap(((Arguments) systemArgs).asMap());
+    Map<String, String> newSystemArgs = Maps.newHashMap(systemArgs.asMap());
     newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
     newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");
     return new SimpleProgramOptions(options.getName(), new BasicArguments(newSystemArgs),
