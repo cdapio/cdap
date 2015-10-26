@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _integrations-index:
+.. _integrations:
 
 ============
 Integrations
@@ -43,17 +43,10 @@ Integrations
 
 .. rubric:: Ambari
 
-.. |ambari-introduction| replace:: **Introduction:**
-.. _ambari-introduction: partners/ambari/index.html
+.. |ambari| replace:: **Configuring and Installing:**
+.. _ambari: ambari/index.html
 
-- |ambari-introduction|_ Utilizing CDAP with **Ambari**
-
-
-.. |ambari-configuring| replace:: **Configuring and Installing:**
-.. _ambari-configuring: partners/ambari/configuring.html
-
-- |ambari-configuring|_ Configuring and installing CDAP using Ambari
-
+- |ambari|_ Configuring and installing CDAP using **Ambari**
 
 
 .. rubric:: BI Tools: Accessing CDAP Datasets through Business Intelligence Tools

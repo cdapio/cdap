@@ -14,6 +14,10 @@ Overview
 
 .. highlight:: console
 
+This section will familiarize you with CDAP's integration with `Apache Ambari
+<https://ambari.apache.org/>`__, the open source provisioning system for `HDP (Hortonworks
+Data Platform) <http://hortonworks.com/>`__.
+
 You can use `Ambari <https://ambari.apache.org>`__ to integrate CDAP into a Hadoop cluster
 by adding the `Cask Ambari Services <https://github.com/caskdata/cdap-ambari-service>`__
 repository to your Ambari server. Once you have restarted your server, you will able to
@@ -58,14 +62,14 @@ Hadoop distributions.
 supplied from Hortonworks.
 
 
-**Installing via APT**
+.. rubric:: Installing via APT
 
 ::
 
   $ sudo apt-get install -y cdap-ambari-service
   $ sudo ambari-server restart
 
-**Installing via YUM**
+.. rubric:: Installing via YUM
 
 ::
 
@@ -76,8 +80,8 @@ supplied from Hortonworks.
 Adding CDAP to Your Cluster
 ===========================
 
-Dependencies
-------------
+.. rubric:: Dependencies
+
 CDAP depends on certain services being present on the cluster. There are **core
 dependencies,** which must be running for CDAP system services to operate correctly, and
 **optional dependencies,** which may be required for certain functionality or program types.
@@ -89,7 +93,7 @@ Internet access on the CDAP service nodes until the issues `CDAP-3957
 <https://issues.cask.co/browse/CDAP-3957>`__ or `AMBARI-13456
 <https://issues.apache.org/jira/browse/AMBARI-13456>`__ are resolved.
 
-**Core Dependencies**
+.. rubric:: Core Dependencies
 
 - **HDFS:** used as the backing file system for distributed storage
 - **MapReduce2:** used for batch operations in workflows and data exploration
@@ -97,7 +101,7 @@ Internet access on the CDAP service nodes until the issues `CDAP-3957
 - **HBase:** used for system runtime storage and queues
 - **ZooKeeper:** used for service discovery and leader election
 
-**Optional Dependencies**
+.. rubric:: Optional Dependencies
 
 - **Hive:** used for data exploration using SQL queries via CDAP Explore system service
 - **Spark:** used for running Spark programs within CDAP applications
@@ -107,7 +111,7 @@ Installing CDAP
 
 1. In the Ambari UI (the Ambari Dashboard), start the **Add Service Wizard**.
 
-   .. figure:: ../../_images/integration-ambari/ss01-add-service.png
+   .. figure:: ../_images/integration-ambari/ss01-add-service.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -119,7 +123,7 @@ Installing CDAP
 #. Select CDAP from the list and click *Next*. If there are core dependencies which are not
    installed on the cluster, Ambari will prompt you to install them.
  
-   .. figure:: ../../_images/integration-ambari/ss02-select-cdap.png
+   .. figure:: ../_images/integration-ambari/ss02-select-cdap.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -136,7 +140,7 @@ Installing CDAP
    - **Kafka Server:** used for storing CDAP metrics and CDAP system service log data
    - **UI:** web interface to CDAP and `Cask Hydrator <http://blog.cask.co/2015/09/cask-hydrator-and-the-future-of-cdap/>`__ (for CDAP 3.2.x installations)
  
-   .. figure:: ../../_images/integration-ambari/ss03-assign-masters.png
+   .. figure:: ../_images/integration-ambari/ss03-assign-masters.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -151,7 +155,7 @@ Installing CDAP
 #. Select hosts for the CDAP CLI client. This should be installed on every edge node on
    the cluster, or the same node as CDAP for smaller clusters.
 
-   .. figure:: ../../_images/integration-ambari/ss04-choose-clients.png
+   .. figure:: ../_images/integration-ambari/ss04-choose-clients.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -165,7 +169,7 @@ Installing CDAP
    Under *Advanced cdap-env*, you can configure heap sizes, and log and pid directories for the
    CDAP services which run on the edge nodes.
 
-   .. figure:: ../../_images/integration-ambari/ss05-config-cdap-env.png
+   .. figure:: ../_images/integration-ambari/ss05-config-cdap-env.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -176,7 +180,7 @@ Installing CDAP
 #. Under *Advanced cdap-site*, you can configure all options for the operation and running
    of CDAP and CDAP applications.
 
-   .. figure:: ../../_images/integration-ambari/ss06-config-cdap-site.png
+   .. figure:: ../_images/integration-ambari/ss06-config-cdap-site.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -188,7 +192,7 @@ Installing CDAP
    Hive installed on the cluster; have the Hive client on the same host as CDAP; and set the
    ``explore.enabled`` option to true.
 
-   .. figure:: ../../_images/integration-ambari/ss07-config-enable-explore.png
+   .. figure:: ../_images/integration-ambari/ss07-config-enable-explore.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -202,7 +206,7 @@ Installing CDAP
 
 #. Review the desired service layout and click *Deploy* to begin installing CDAP.
 
-   .. figure:: ../../_images/integration-ambari/ss08-review-deploy.png
+   .. figure:: ../_images/integration-ambari/ss08-review-deploy.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -210,21 +214,23 @@ Installing CDAP
  
       **Ambari Dashboard:** Summary of Services
 
-#. Ambari will install CDAP and start the services. After the services are installed and
-   started, you will click *Next* to get to the Summary screen.
+#. Ambari will install CDAP and start the services.
 
-   .. figure:: ../../_images/integration-ambari/ss09-install-start-test.png
+   .. figure:: ../_images/integration-ambari/ss09-install-start-test.png
       :figwidth: 100%
       :width: 800px
       :align: center
       :class: bordered-image
  
       **Ambari Dashboard:** Install, Start, and Test
+      
+#. After the services are installed and started, you will click *Next* to get to the
+   Summary screen.
 
 #. This screen shows a summary of the changes that were made to the cluster. No services
    should need to be restarted following this operation.
 
-   .. figure:: ../../_images/integration-ambari/ss10-post-install-summary.png
+   .. figure:: ../_images/integration-ambari/ss10-post-install-summary.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -236,7 +242,7 @@ Installing CDAP
 
 #. Now, you should see **CDAP** listed on the main summary screen for your cluster.
 
-   .. figure:: ../../_images/integration-ambari/ss11-main-screen.png
+   .. figure:: ../_images/integration-ambari/ss11-main-screen.png
       :figwidth: 100%
       :width: 800px
       :align: center
@@ -247,7 +253,7 @@ Installing CDAP
 #. Selecting *CDAP* from the left, or choosing it from the Services drop-down menu, will take
    you to the CDAP service screen.
 
-   .. figure:: ../../_images/integration-ambari/ss12-cdap-screen.png
+   .. figure:: ../_images/integration-ambari/ss12-cdap-screen.png
       :figwidth: 100%
       :width: 800px
       :align: center
