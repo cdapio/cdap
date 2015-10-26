@@ -147,8 +147,10 @@ angular.module(PKG.name + '.feature.hydrator')
                 console.info('ERROR: ', errorObj);
               }.bind(this)
             );
+          MyBottomPanelService.setIsCollapsed(false);
           break;
         case 'Save Draft':
+          MyConsoleTabService.resetMessages();
           MyAppDAGService
             .saveAsDraft()
             .then(
@@ -162,6 +164,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 console.info('Failed saving as draft.');
               }
             );
+          MyBottomPanelService.setIsCollapsed(false);
           break;
         case 'Validate':
           MyConsoleTabService.resetMessages();
