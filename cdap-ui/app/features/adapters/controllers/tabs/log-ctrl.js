@@ -23,11 +23,10 @@ angular.module(PKG.name + '.feature.adapters')
     angular.copy(AdapterDetail.params, runsParams);
     angular.copy(AdapterDetail.logsParams, logsParams);
     logsParams.scope = $scope;
-
     AdapterDetail.logsApi.pollLatestRun(logsParams)
       .$promise
       .then(function (runs) {
-        if (runs.length === 0) { return; }
+        if (runs.length === 0 || (runs.length && logsParams.runId === runs[0].runid)) { return; }
 
         logsParams.runId = runs[0].runid;
 
@@ -53,6 +52,7 @@ angular.module(PKG.name + '.feature.adapters')
         .then(function (res) {
           $scope.logs = _.uniq($scope.logs.concat(res));
           $scope.loadingNext = false;
+
         });
     };
 
