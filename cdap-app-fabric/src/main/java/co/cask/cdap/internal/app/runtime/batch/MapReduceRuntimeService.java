@@ -29,7 +29,6 @@ import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -37,7 +36,6 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
-import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
@@ -220,10 +218,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // After calling beforeSubmit, we know what plugins are needed for the program, hence construct the proper
         // ClassLoader from here and use it for setting up the job
-        Location artifactArchive = createArchive(new File(Constants.Plugin.DIRECTORY), context.getPlugins(),
-                                                 tempDir, tempLocation);
-        if (artifactArchive != null) {
-          job.addCacheArchive(artifactArchive.toURI());
+        File pluginArchive = context.getPluginArchive();
+        if (pluginArchive != null) {
+          job.addCacheArchive(pluginArchive.toURI());
+          mapredConf.set(Constants.Plugin.ARCHIVE, pluginArchive.getName());
         }
       }
 
@@ -924,19 +922,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     ContainerLauncherGenerator.generateLauncherJar(applicationClassPath, MapReduceClassLoader.class.getName(),
                                                    Locations.newOutputSupplier(launcherJar));
     return launcherJar;
-  }
-
-  @Nullable
-  private Location createArchive(File localDir, Map<String, Plugin> plugins, File tempDir, Location targetDir)
-    throws IOException {
-    if (plugins == null || plugins.isEmpty()) {
-      return null;
-    }
-
-    Location targetLocation = targetDir.append(Constants.Plugin.DIRECTORY);
-    BundleJarUtil.packDirFiles(localDir, targetLocation, tempDir);
-    LOG.debug("Copying Plugin Archive to Location {}", targetLocation);
-    return targetLocation;
   }
 
   private Runnable createCleanupTask(final Object...resources) {

@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.plugin.PluginConfig;
 
+import java.io.Serializable;
 import javax.annotation.Nullable;
 
 /**
@@ -27,7 +28,9 @@ import javax.annotation.Nullable;
  */
 @Plugin(type = "t1")
 @Name("n1")
-public class ToStringPlugin {
+public class ToStringPlugin implements Serializable {
+
+  private static final long serialVersionUID = -4818590442766677617L;
 
   @Override
   public String toString() {
@@ -35,6 +38,8 @@ public class ToStringPlugin {
   }
 
   public static class Config extends PluginConfig {
+    private static final long serialVersionUID = -2563532875802323220L;
+
     @Nullable
     public String toString;
   }

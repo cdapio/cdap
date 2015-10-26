@@ -40,15 +40,12 @@ import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +68,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final DynamicDatasetCache datasetCache;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final PluginInstantiator pluginInstantiator;
+  private final PluginContext pluginContext;
 
   /**
    * Constructs a context without application template adapter support.
@@ -112,6 +110,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
       : new SingleThreadDatasetCache(instantiator, txClient, Id.Namespace.from(namespaceId),
                                      runtimeArguments, programMetrics, staticDatasets);
     this.pluginInstantiator = pluginInstantiator;
+    this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
+                                                  program.getApplicationSpecification().getPlugins());
   }
 
   private List<Id> createOwners(Id.Program programId) {
@@ -220,51 +220,16 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   @Override
   public PluginProperties getPluginProperties(String pluginId) {
-    return getPlugin(pluginId).getProperties();
+    return pluginContext.getPluginProperties(pluginId);
   }
 
   @Override
   public <T> Class<T> loadPluginClass(String pluginId) {
-    if (pluginInstantiator == null) {
-      throw new UnsupportedOperationException("Plugin not supported for this program type");
-    }
-    Plugin plugin = getPlugin(pluginId);
-    try {
-      return pluginInstantiator.loadClass(plugin);
-    } catch (ClassNotFoundException e) {
-      // Shouldn't happen, unless there is bug in file localization
-      throw new IllegalArgumentException("Plugin class not found", e);
-    } catch (IOException e) {
-      // This is fatal, since jar cannot be expanded.
-      throw Throwables.propagate(e);
-    }
+    return pluginContext.loadPluginClass(pluginId);
   }
 
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    if (pluginInstantiator == null) {
-      throw new UnsupportedOperationException("Plugin not supported for this program type");
-    }
-    Plugin plugin = getPlugin(pluginId);
-    try {
-      return pluginInstantiator.newInstance(plugin);
-    } catch (ClassNotFoundException e) {
-      // Shouldn't happen, unless there is bug in file localization
-      throw new IllegalArgumentException("Plugin class not found", e);
-    } catch (IOException e) {
-      // This is fatal, since jar cannot be expanded.
-      throw Throwables.propagate(e);
-    }
-  }
-
-  private Plugin getPlugin(String pluginId) {
-    if (getPlugins() == null) {
-      throw new UnsupportedOperationException("Plugin not supported in this program");
-    }
-
-    Plugin plugin = getPlugins().get(pluginId);
-    Preconditions.checkArgument(plugin != null, "Plugin with id %s does not exist in program %s of application %s.",
-      pluginId, program.getId(), program.getApplicationId());
-    return plugin;
+    return pluginContext.newPluginInstance(pluginId);
   }
 }

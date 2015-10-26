@@ -46,6 +46,7 @@ import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.spark.dataset.CloseableBatchWritable;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
@@ -103,11 +104,13 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                TransactionSystemClient txClient,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
-                               Configuration hConf, StreamAdmin streamAdmin, @Nullable WorkflowToken workflowToken) {
+                               Configuration hConf, StreamAdmin streamAdmin,
+                               @Nullable PluginInstantiator pluginInstantiator,
+                               @Nullable WorkflowToken workflowToken) {
     this(appSpec, specification, programId, runId, programClassLoader, logicalStartTime, runtimeArguments,
          transaction, datasetFramework, txClient, discoveryServiceClient,
          createMetricsContext(metricsCollectionService, programId, runId),
-         createLoggingContext(programId, runId), hConf, streamAdmin, workflowToken);
+         createLoggingContext(programId, runId), hConf, streamAdmin, pluginInstantiator, workflowToken);
   }
 
   public ExecutionSparkContext(ApplicationSpecification appSpec,
@@ -116,11 +119,13 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                Map<String, String> runtimeArguments,
                                Transaction transaction, DatasetFramework datasetFramework,
                                TransactionSystemClient txClient,
-                               DiscoveryServiceClient discoveryServiceClient, MetricsContext metricsContext,
-                               LoggingContext loggingContext, Configuration hConf, StreamAdmin streamAdmin,
-                               WorkflowToken workflowToken) {
+                               DiscoveryServiceClient discoveryServiceClient,
+                               MetricsContext metricsContext, LoggingContext loggingContext,
+                               Configuration hConf, StreamAdmin streamAdmin,
+                               @Nullable PluginInstantiator pluginInstantiator,
+                               @Nullable WorkflowToken workflowToken) {
     super(appSpec, specification, programId, runId, programClassLoader, logicalStartTime,
-          runtimeArguments, discoveryServiceClient, metricsContext, loggingContext, workflowToken);
+          runtimeArguments, discoveryServiceClient, metricsContext, loggingContext, pluginInstantiator, workflowToken);
 
     this.datasets = new HashMap<>();
     this.hConf = hConf;
@@ -292,12 +297,15 @@ public class ExecutionSparkContext extends AbstractSparkContext {
       return;
     }
     stopped = true;
-    if (sparkFacade != null) {
-      sparkFacade.stop();
-    }
-    // No need to flush datasets, just close them
-    for (Dataset dataset : datasets.values()) {
-      Closeables.closeQuietly(dataset);
+    try {
+      if (sparkFacade != null) {
+        sparkFacade.stop();
+      }
+    } finally {
+      // No need to flush datasets, just close them
+      for (Dataset dataset : datasets.values()) {
+        Closeables.closeQuietly(dataset);
+      }
     }
   }
 
