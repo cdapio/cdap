@@ -36,6 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -63,6 +65,9 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   private final Config config;
   private Metrics metrics;
   private Logger logger;
+
+  @Nullable
+  private Method somValuesMethod;
 
   /**
    * Configuration for the script transform.
@@ -110,6 +115,19 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   public void initialize(TransformContext context) {
     metrics = context.getMetrics();
     logger = LoggerFactory.getLogger(ScriptTransform.class.getName() + " - Stage:" + context.getStageId());
+
+    // for Nashorn (Java 8+) support -- get method to convert ScriptObjectMirror to List
+    try {
+      Class<?> somClass = Class.forName("jdk.nashorn.api.scripting.ScriptObjectMirror");
+      somValuesMethod = somClass.getMethod("values");
+    } catch (NoSuchMethodException e) {
+      throw new RuntimeException(
+        "Failed to get method ScriptObjectMirror#values() for converting ScriptObjectMirror to List. " +
+        "Please check your version of Nashorn is supported.", e);
+    } catch (ClassNotFoundException e) {
+      // Ignore -- we don't have Nashorn, so no need to handle Nashorn
+    }
+
     init();
   }
 
@@ -141,7 +159,7 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
       case ENUM:
         break;
       case ARRAY:
-        return decodeArray((List) object, schema.getComponentSchema());
+        return decodeArray(jsObject2List(object), schema.getComponentSchema());
       case MAP:
         Schema keySchema = schema.getMapSchema().getKey();
         Schema valSchema = schema.getMapSchema().getValue();
@@ -167,31 +185,43 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
     return builder.build();
   }
 
+  private List jsObject2List(Object object) {
+    if (somValuesMethod != null) {
+      // using Nashorn (Java 8+) -- convert ScriptObjectMirror to List
+      try {
+        return (List) somValuesMethod.invoke(object);
+      } catch (InvocationTargetException | IllegalAccessException | ClassCastException e) {
+        throw new RuntimeException("Failed to convert ScriptObjectMirror to List", e);
+      }
+    }
+    return (List) object;
+  }
+
   @SuppressWarnings("RedundantCast")
   private Object decodeSimpleType(Object object, Schema schema) {
     Schema.Type type = schema.getType();
     switch (type) {
       case NULL:
         return null;
-      // numbers come back as doubles
+      // numbers come back as Numbers
       case INT:
-        return ((Double) object).intValue();
+        return ((Number) object).intValue();
       case LONG:
-        return ((Double) object).longValue();
+        return ((Number) object).longValue();
       case FLOAT:
-        return ((Double) object).floatValue();
+        return ((Number) object).floatValue();
       case BYTES:
-        List byteArr = (List) object;
+        List byteArr = jsObject2List(object);
         byte[] output = new byte[byteArr.size()];
         for (int i = 0; i < output.length; i++) {
-          // everything is a double
-          output[i] = ((Double) byteArr.get(i)).byteValue();
+          // everything is a number
+          output[i] = ((Number) byteArr.get(i)).byteValue();
         }
         return output;
       case DOUBLE:
         // case so that if it's not really a double it will fail. This is possible for unions,
         // where we don't know what the actual type of the object should be.
-        return (Double) object;
+        return ((Number) object).doubleValue();
       case BOOLEAN:
         return (Boolean) object;
       case STRING:
