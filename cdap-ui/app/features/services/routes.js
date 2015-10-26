@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.services')
           highlightTab: 'development'
         },
         resolve : {
-          rRuns: function($stateParams, $q, myServiceApi) {
+          rRuns: function($stateParams, $q, myServiceApi, $state) {
             var defer = $q.defer();
 
             var params = {
@@ -36,19 +36,38 @@ angular.module(PKG.name + '.feature.services')
             };
             myServiceApi.runs(params)
               .$promise
-              .then(function (res) {
-                defer.resolve(res);
-              });
+              .then(
+                function success(res) {
+                  defer.resolve(res);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
 
             return defer.promise;
           },
-          rServiceDetail: function($stateParams, myServiceApi) {
+          rServiceDetail: function($stateParams, myServiceApi, $q, $state) {
             var params = {
               namespace: $stateParams.namespace,
               appId: $stateParams.appId,
               serviceId: $stateParams.programId
             };
-            return myServiceApi.get(params).$promise;
+            var defer = $q.defer();
+            myServiceApi
+              .get(params)
+              .$promise
+              .then(
+                function success(serviceDetail) {
+                  defer.resolve(serviceDetail);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
+            return defer.promise;
           }
         },
         template: '<ui-view/>'

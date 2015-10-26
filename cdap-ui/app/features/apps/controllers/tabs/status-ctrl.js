@@ -56,7 +56,11 @@ class AppDetailStatusController {
         this.nodes.forEach( (node)=> { MyAppDAGService.addNodes(node, node.type); });
 
         MyAppDAGService.connections = CanvasFactory.getConnectionsBasedOnNodes(this.nodes, res.artifact.name);
-      });
+      },
+      () => {
+        $state.go('404');
+      }
+    );
   }
 }
 
