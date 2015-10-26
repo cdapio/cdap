@@ -45,13 +45,10 @@ REPO_HOME=`pwd -P`
 TARGET_DIR=${DISTRIBUTIONS_HOME}/target
 STAGE_DIR=${TARGET_DIR}/yumrepo
 
-echo "REPO_HOME: ${REPO_HOME}"
-
-CDAP_HOME=${CDAP_HOME:-${REPO_HOME}}
 S3_BUCKET=${S3_BUCKET:-repository.cask.co}
 S3_REPO_PATH=${S3_REPO_PATH:-centos/6/x86_64/cdap} # No leading or trailing slashes
 VERSION=${VERSION:-$(basename ${TARGET_DIR}/cdap-*.rpm | cut -d- -f2)}
-__version=${VERSION/-SNAPSHOT//}
+__version=${VERSION/-SNAPSHOT/}
 __maj_min=$(echo ${__version} | cut -d. -f1,2)
 
 function die() { echo "ERROR: ${1}" 1>&2; exit 1; }
@@ -140,4 +137,5 @@ export_public_key
 createrepo_in_repo_staging || die "Failed to create repository from staging directory"
 create_repo_tarball || die "Failed to create YUM repository tarball"
 
+echo "Complete: cdap-yumrepo-${__maj_min}.tar.gz created"
 exit 0 # We made it!
