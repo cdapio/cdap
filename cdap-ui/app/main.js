@@ -59,6 +59,7 @@ angular
       'cask-angular-json-edit',
       'cask-angular-eventpipe',
       'cask-angular-observable-promise',
+      'cask-angular-socket-datasource',
 
       'mgcrea.ngStrap.datepicker',
       'mgcrea.ngStrap.timepicker',
