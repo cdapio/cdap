@@ -117,20 +117,54 @@
 </div>
 
 <!-- DAG DIAGRAM -->
-<my-dag data-is-disabled="true" data-config="nodes"></my-dag>
+<my-dag data-is-disabled="true" data-config="nodes" ng-class="{'canvas-scroll': !isCollapsed}"></my-dag>
 
 <!-- CONSOLE BOTTOM PANNEL -->
-<div class="console">
+<div class="console" ng-class="{'minimized': isCollapsed, 'maximized': isMaximized}">
   <div class="console-tabs clearfix">
     <ul class="nav nav-tabs pull-left" role="tablist">
       <li ng-repeat="tab in tabs"
-          ng-click="selectTab(tab)"
+          ng-click="selectTab(tab); collapsedTabClick()"
           ng-class="{'active': tab.title == activeTab.title}"
           role="presentation"
           data-toggle="tab">
           {{ tab.title }}
       </li>
     </ul>
+    <div class="btn-group pull-right">
+      <a ng-click="collapseToggle()">
+        <span ng-if="!isCollapsed"
+              class="fa fa-minus"
+              tooltip="Minimize"
+              tooltip-class="tooltip-pane"
+              tooltip-placement="top"
+              tooltip-append-to-body="true">
+        </span>
+        <span ng-if="isCollapsed"
+              class="fa fa-expand"
+              tooltip="Grow"
+              tooltip-class="tooltip-pane"
+              tooltip-placement="top"
+              tooltip-append-to-body="true">
+        </span>
+      </a>
+      <a ng-click="fullScreenToggle()">
+        <span ng-if="!isMaximized"
+              class="fa fa-arrows-alt"
+              tooltip="Maximize"
+              tooltip-class="tooltip-pane"
+              tooltip-placement="top"
+              tooltip-append-to-body="true">
+        </span>
+        <span ng-if="isMaximized"
+              class="fa fa-compress"
+              tooltip="Shrink"
+              tooltip-class="tooltip-pane"
+              tooltip-placement="top"
+              tooltip-append-to-body="true">
+        </span>
+      </a>
+    </div>
   </div>
 
   <div class="console-type">

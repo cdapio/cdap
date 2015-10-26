@@ -67,6 +67,15 @@ body.theme-cdap {
     my-dag {
       width: 100%;
       height: 40vh;
+      &:not(.canvas-scroll) {
+        // Subtract navbar, top panel, collapsed bottom panel and footer from total viewport height
+        height: ~"-moz-calc(100vh - 213px)";
+        height: ~"-webkit-calc(100vh - 213px)";
+        height: ~"calc(100vh - 213px)";
+      }
+      .my-js-dag {
+        overflow: auto;
+      }
     }
     my-program-history {
       ul.pagination {
@@ -78,6 +87,9 @@ body.theme-cdap {
   &.state-hydrator-create-studio {
     background-image: url('../img/grid.png');
     height: 100%;
+    div.canvas-scroll {
+      overflow: auto;
+    }
   }
 
   &.state-hydrator-create {

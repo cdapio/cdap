@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, $alert, $state, $stateParams, GLOBALS, HydratorErrorFactory, MyConsoleTabService) {
+  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, $alert, $state, $stateParams, GLOBALS, HydratorErrorFactory, MyConsoleTabService, MyBottomPanelService) {
 
     this.metadata = MyAppDAGService['metadata'];
     function resetMetadata() {
@@ -166,6 +166,7 @@ angular.module(PKG.name + '.feature.hydrator')
         case 'Validate':
           MyConsoleTabService.resetMessages();
           this.validatePipeline();
+          MyBottomPanelService.setIsCollapsed(false);
           break;
       }
     };

@@ -23,7 +23,7 @@
           role="presentation"
           data-toggle="tab">
           {{ tab.title }}
-          <span ng-if="tab.title === 'Console' && errorCount">
+          <span ng-show="tab.title === 'Console' && errorCount">
             <span class="badge">{{errorCount}}</span>
           </span>
       </li>

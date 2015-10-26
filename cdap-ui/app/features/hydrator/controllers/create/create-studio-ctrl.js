@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorCreateStudioController', function(MyAppDAGService, $scope, rConfig, $modalStack, EventPipe, $window, $timeout, MyConsoleTabService) {
+  .controller('HydratorCreateStudioController', function(MyAppDAGService, $scope, rConfig, $modalStack, EventPipe, $window, $timeout, MyConsoleTabService, MyBottomPanelService) {
     this.isExpanded = true;
     var confirmOnPageExit = function (e) {
 
@@ -58,4 +58,10 @@ angular.module(PKG.name + '.feature.hydrator')
     this.toggleSidebar = function() {
       this.isExpanded = !this.isExpanded;
     };
+
+    this.isCollapsed = true;
+    MyBottomPanelService.registerIsCollapsedCallback(function(isCollapsed) {
+      $scope.isCanvasScrollable = !isCollapsed;
+    });
+
   });

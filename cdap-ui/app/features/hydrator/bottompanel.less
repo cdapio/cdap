@@ -20,6 +20,7 @@
 
 body.theme-cdap.state-hydrator {
   &.state-hydrator-detail {
+    background-color: @table-bg;
     div.console {
       min-height: 60vh;
       div.console-type {
@@ -55,6 +56,11 @@ body.theme-cdap.state-hydrator {
         display: none;
         height: 0;
         min-height: 0;
+      }
+    }
+    &:not(.minimized) {
+      span.badge {
+        position: relative;
       }
     }
     // Styling for maximized bottom panel
@@ -106,6 +112,15 @@ body.theme-cdap.state-hydrator {
           border: 0;
           border-bottom: 2px solid transparent;
           cursor: pointer;
+        }
+        &.bg-danger {
+          background-color: fade(@brand-danger, 40%);
+        }
+        &.bg-success {
+          background-color: fade(@brand-success, 40%);
+        }
+        &.bg-primary {
+          background-color: fade(@brand-primary, 40%);
         }
         &.active {
           border-bottom: 2px solid @cdap-orange;

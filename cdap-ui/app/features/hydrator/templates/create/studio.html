@@ -26,7 +26,8 @@
   </div>
 
   <div class="right-wrapper">
-    <div ui-view="canvas"></div>
+    <div ui-view="canvas"
+         ng-class="{'canvas-scroll': isCanvasScrollable}"></div>
     <div ui-view="bottompanel"></div>
   </div>
 </div>

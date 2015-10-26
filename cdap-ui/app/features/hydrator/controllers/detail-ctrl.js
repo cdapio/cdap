@@ -229,7 +229,6 @@ angular.module(PKG.name + '.feature.hydrator')
       }
     };
 
-
     $scope.nodes = [];
 
     function initializeDAG() {
@@ -282,5 +281,34 @@ angular.module(PKG.name + '.feature.hydrator')
         stream.type = 'Stream';
         return stream;
       }));
+
+    $scope.isCollapsed = false;
+
+    $scope.collapseToggle = function() {
+      $scope.isMaximized = false;
+      $scope.isCollapsed = !$scope.isCollapsed;
+    };
+
+    $scope.externalCollapseToggle = function(value) {
+      if($scope.isMaximized) {
+        return;
+      } else {
+        $scope.isMaximized = false;
+        $scope.isCollapsed = value;
+      }
+    };
+
+    $scope.isMaximized = false;
+
+    $scope.fullScreenToggle = function() {
+      $scope.isCollapsed = false;
+      $scope.isMaximized = !$scope.isMaximized;
+    };
+
+    $scope.collapsedTabClick = function() {
+      if($scope.isCollapsed) {
+        $scope.isCollapsed = false;
+      }
+    };
 
   });

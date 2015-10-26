@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('BottomPanelController', function ($scope, MySidebarService, MyAppDAGService, MyNodeConfigService, $timeout, MyConsoleTabService) {
+  .controller('BottomPanelController', function ($scope, MySidebarService, MyAppDAGService, MyNodeConfigService, $timeout, MyConsoleTabService, MyBottomPanelService) {
 
     MyAppDAGService.registerEditPropertiesCallback(editProperties.bind(this));
     MyConsoleTabService.registerOnMessageUpdates(showConsoleTab.bind(this));
@@ -24,11 +24,42 @@ angular.module(PKG.name + '.feature.hydrator')
     // Expand and collapse of the sidebar resizes the main container natively.
     MySidebarService.registerIsExpandedCallback(isExpanded.bind(this));
 
+    $scope.flashDanger = function() {
+      $scope.dangerBg = true;
+      setTimeout(function() {
+        $scope.dangerBg = false;
+      }, 3000);
+    };
 
-    function showConsoleTab(errors) {
-      if (errors.canvas && errors.canvas.length) {
-        $scope.errorCount = errors.canvas.length;
-        errors.canvas.forEach(function(err) {
+    $scope.flashInfo = function() {
+      $scope.infoBg = true;
+      setTimeout(function() {
+        $scope.infoBg = false;
+      }, 3000);
+    };
+
+    $scope.flashSuccess = function() {
+      $scope.successBg = true;
+      setTimeout(function() {
+        $scope.successBg = false;
+      }, 3000);
+    };
+
+    function showConsoleTab(message) {
+      switch(message.type) {
+        case 'error':
+          $scope.flashDanger();
+          break;
+        case 'info':
+          $scope.flashInfo();
+          break;
+        case 'success':
+          $scope.flashSuccess();
+          break;
+      }
+      if (message.canvas && message.canvas.length) {
+        $scope.messageCount = message.canvas.length;
+        message.canvas.forEach(function(err) {
           MyConsoleTabService.addMessage({
             type: 'error',
             content: err
@@ -60,7 +91,19 @@ angular.module(PKG.name + '.feature.hydrator')
     $scope.collapseToggle = function() {
       $scope.isMaximized = false;
       $scope.isCollapsed = !$scope.isCollapsed;
+      MyBottomPanelService.setIsCollapsed($scope.isCollapsed);
     };
+
+    $scope.externalCollapseToggle = function(value) {
+      if($scope.isMaximized) {
+        return;
+      } else {
+        $scope.isMaximized = false;
+        $scope.isCollapsed = value;
+      }
+    };
+
+    MyBottomPanelService.registerIsCollapsedCallback($scope.externalCollapseToggle);
 
     $scope.isMaximized = false;
 

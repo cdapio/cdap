@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, HydratorErrorFactory) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, HydratorErrorFactory, MyBottomPanelService) {
     this.plugins = $scope.config || [];
     this.MyAppDAGService = MyAppDAGService;
     this.isDisabled = $scope.isDisabled;
@@ -96,6 +96,8 @@ angular.module(PKG.name + '.commons')
       MyNodeConfigService.removePlugin(nodeId);
     };
 
+    $scope.isCollapsed = true;
+
     // Need to move this to the controller that is using this directive.
     this.onPluginClick = function(plugin) {
       closeAllPopovers();
@@ -105,6 +107,7 @@ angular.module(PKG.name + '.commons')
 
       plugin.selected = true;
       MyAppDAGService.editPluginProperties($scope, plugin.id, plugin.type);
+      MyBottomPanelService.setIsCollapsed(false);
     };
 
     function errorNotification(errObj) {
