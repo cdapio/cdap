@@ -196,8 +196,9 @@ Installing CDAP
  
       **Ambari Dashboard:** Enabling *CDAP Explore*
 
-   For a complete explanation of these options, refer to the :ref:`CDAP documentation on cdap-site.xml`. After making
-   any configuration changes, click *Next*.
+   For a complete explanation of these options, refer to the :ref:`CDAP documentation on
+   cdap-site.xml <appendix-cdap-site.xml>`. After making any configuration changes, click
+   *Next*.
 
 #. Review the desired service layout and click *Deploy* to begin installing CDAP.
 
@@ -266,6 +267,6 @@ component High-availability support, select CDAP metrics, support for Kerberos-e
 clusters, and integration with the CDAP Authentication Server.
 
 The definition used to create the Ambari service is open source; contributions, issues,
-comments and suggestions are always welcome and encouraged, with the source code
-repository located at `https://github.com/caskdata/cdap-ambari-service`__.
+comments, and suggestions are always welcome and encouraged at the `source code
+repository <https://github.com/caskdata/cdap-ambari-service>`__.
 
