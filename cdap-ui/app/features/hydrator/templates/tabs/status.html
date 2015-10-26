@@ -15,38 +15,38 @@
 -->
 
 <div ng-controller="HydratorDetailStatusController">
-  <div class="row text-center status-view">
-    <div ng-class="{ 'col-xs-3': programType === 'WORKFLOWS', 'col-xs-4': programType !== 'WORKFLOWS' }">
-      <h4>Total Runs</h4>
-      <h2 class="status-value">{{ stats.numRuns }}</h2>
-    </div>
-
-    <div class="col-xs-3" ng-if="programType === 'WORKFLOWS'">
-      <h4>Average Run Time</h4>
-      <h2 class="status-value">
-        <span ng-if="stats.avgRunTime === 'N/A'"> &mdash; </span>
-        <span ng-if="stats.avgRunTime !== 'N/A'">{{ stats.avgRunTime * 1000 | amDurationFormat }}</span>
-      </h2>
-    </div>
-
-    <div ng-class="{ 'col-xs-3': programType === 'WORKFLOWS', 'col-xs-4': programType !== 'WORKFLOWS' }">
-      <h4>Last Run Time</h4>
-      <h2 class="status-value">
-        <span ng-if="stats.lastRunTime === 'N/A'"> &mdash; </span>
-        <span ng-if="stats.lastRunTime !== 'N/A'">{{ stats.lastRunTime | amDurationFormat }}</span>
-      </h2>
-    </div>
-
-    <div ng-class="{ 'col-xs-3': programType === 'WORKFLOWS', 'col-xs-4': programType !== 'WORKFLOWS' }">
-      <h4>Last Finished Run</h4>
-      <div ng-if="stats.lastFinished">
-        <h2 class="status-value">
-          <span ng-class="{ 'text-success': stats.lastFinished.status === 'COMPLETED', 'text-danger': stats.lastFinished.status === 'KILLED' || stats.lastFinished.status === 'FAILED' }">{{ stats.lastFinished.status }}</span>
-          <small>{{ stats.lastFinished.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}</small>
-        </h2>
-      </div>
-      <h2 class="status-value" ng-if="!stats.lastFinished"> &mdash; </h2>
-    </div>
+  <div class="table-responsive">
+    <table class="table borderless status-view">
+      <thead>
+        <tr>
+          <th>Total Runs</th>
+          <th ng-if="programType === 'WORKFLOWS'">Average Run Time</th>
+          <th>Last Run Time</th>
+          <th>Last Finished Run</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="status-value">
+            <span>{{ stats.numRuns }}</span>
+          </td>
+          <td class="status-value" ng-if="programType === 'WORKFLOWS'">
+            <span ng-if="stats.avgRunTime === 'N/A'"> &mdash; </span>
+            <span ng-if="stats.avgRunTime !== 'N/A'">{{ stats.avgRunTime * 1000 | amDurationFormat }}</span>
+          </td>
+          <td class="status-value">
+            <span ng-if="stats.lastRunTime === 'N/A'"> &mdash; </span>
+            <span ng-if="stats.lastRunTime !== 'N/A'">{{ stats.lastRunTime | amDurationFormat }}</span>
+          </td>
+          <td ng-if="stats.lastFinished">
+            <span ng-class="{ 'text-success': stats.lastFinished.status === 'COMPLETED', 'text-danger': stats.lastFinished.status === 'KILLED' || stats.lastFinished.status === 'FAILED' }">{{ stats.lastFinished.status }}</span>
+            <small class="center-block">{{ stats.lastFinished.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}</small>
+          </td>
+          <td class="status-value" ng-if="!stats.lastFinished">
+            <span> &mdash; </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
-
 </div>

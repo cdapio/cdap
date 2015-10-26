@@ -1,0 +1,16 @@
+{
+  "cdap": {
+    "cdap_site": {
+      "zookeeper.quorum": "{{ZK_QUORUM}}",
+      "kafka.log.dir": "/var/cdap/kafka-logs",
+      "explore.enabled": "{{EXPLORE_ENABLED}}"
+    },
+    "fs_superuser": "root",
+    "skip_prerequisites": "true",
+    "version": "{{CDAP_VERSION}}"
+  },
+  "hadoop": {
+    "distribution": "hdp",
+    "distribution_version": "{{HDP_VERSION}}"
+  }
+}

@@ -1,0 +1,5 @@
+
+Stopping and Removing the Application
+=====================================
+Once done, you can stop the application as described in :ref:`Stopping an Application 
+<cdap-building-running-stopping>`. Here is an example-specific description of the steps:

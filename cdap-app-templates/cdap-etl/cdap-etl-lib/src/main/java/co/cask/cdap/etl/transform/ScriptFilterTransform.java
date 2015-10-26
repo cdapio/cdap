@@ -49,14 +49,14 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
   private static final String SCRIPT_DESCRIPTION = "Javascript that must implement a function 'shouldFilter' that " +
     "takes a JSON object representation of the input record and a context object (which encapsulates CDAP metrics " +
     "and logger) and returns true if the input record should be filtered and false if not. " +
-    "For example: " +
-    "'function shouldFilter(input, context) {" +
-      "if (input.count < 0) {" +
-        "context.getLogger().info(\"Got input record with negative count\");" +
-        "context.getMetrics().count(\"negative.count\", 1);" +
-      "}" +
-      "return input.count > 100; " +
-    "}' " +
+    "For example:\n" +
+    "'function shouldFilter(input, context) {\n" +
+      "if (input.count < 0) {\n" +
+        "context.getLogger().info(\"Got input record with negative count\");\n" +
+        "context.getMetrics().count(\"negative.count\", 1);\n" +
+      "}\n" +
+      "return input.count > 100;\n" +
+    "}\n' " +
     "will filter out any records whose 'count' field is greater than 100.";
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())

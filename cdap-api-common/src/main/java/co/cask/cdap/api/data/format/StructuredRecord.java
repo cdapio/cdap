@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Instance of a record structured by a {@link Schema}. Fields are accessible by name.
@@ -187,5 +188,25 @@ public class StructuredRecord {
       }
       return field;
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    StructuredRecord that = (StructuredRecord) o;
+
+    return Objects.equals(schema, that.schema) && Objects.equals(fields, that.fields);
+
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(schema, fields);
   }
 }

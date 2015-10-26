@@ -20,9 +20,14 @@ the logs in a TimePartitionedFileSet.
 
 .. rubric:: Properties
 
-**fileSystemProperties:** A JSON string representing a map of properties needed for the
-distributed file system. For example, the property names needed for S3 are
-``'fs.s3n.awsSecretAccessKey'`` and ``'fs.s3n.awsAccessKeyId'``.
+**fileSystem:** Distributed file system to read in from.
+
+.. highlight:: xml
+
+**fileSystemProperties:** A JSON string representing a map of properties
+needed for the distributed file system.
+For example, the property names needed for S3 are \"fs.s3n.awsSecretAccessKey\"
+and \"fs.s3n.awsAccessKeyId\".
 
 **path:** Path to file(s) to be read. If a directory is specified,
 terminate the path name with a \'/\'.

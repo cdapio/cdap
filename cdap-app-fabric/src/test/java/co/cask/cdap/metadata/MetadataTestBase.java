@@ -166,6 +166,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
       getProperties(app);
       Assert.fail("Expected not to be able to get properties from invalid entity: " + app);
     } catch (NotFoundException expected) {
+      // expected
     }
   }
 
@@ -174,6 +175,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
       getProperties(program);
       Assert.fail("Expected not to be able to get properties from invalid entity: " + program);
     } catch (NotFoundException expected) {
+      // expected
     }
   }
 
@@ -182,6 +184,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
       getProperties(dataset);
       Assert.fail("Expected not to be able to get properties from invalid entity: " + dataset);
     } catch (NotFoundException expected) {
+      // expected
     }
   }
 
@@ -190,6 +193,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
       getProperties(stream);
       Assert.fail("Expected not to be able to get properties from invalid entity: " + stream);
     } catch (NotFoundException expected) {
+      // expected
     }
   }
 

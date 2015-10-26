@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,8 +39,6 @@ import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.regionserver.RegionScanner;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,7 +55,6 @@ import static org.junit.Assert.assertNotNull;
  */
 @Category(SlowTests.class)
 public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
-  private static final Logger LOG = LoggerFactory.getLogger(IncrementHandlerTest.class);
 
   @Override
   public void assertColumn(HTable table, byte[] row, byte[] col, long expected) throws Exception {
@@ -120,8 +117,8 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     tableDesc.addFamily(columnDesc);
     tableDesc.addCoprocessor(IncrementHandler.class.getName());
     HTableDescriptor htd = tableDesc.build();
-    testUtil.getHBaseAdmin().createTable(htd);
-    testUtil.waitUntilTableAvailable(htd.getName(), 5000);
+    TEST_HBASE.getHBaseAdmin().createTable(htd);
+    TEST_HBASE.waitUntilTableAvailable(htd.getName(), 5000);
     return tableUtil.createHTable(conf, tableId);
   }
 
@@ -133,7 +130,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
       columnDesc.setValue(prop.getKey(), prop.getValue());
     }
     return new HBase96RegionWrapper(
-        IncrementSummingScannerTest.createRegion(testUtil.getConfiguration(), cConf, tableId, columnDesc));
+        IncrementSummingScannerTest.createRegion(TEST_HBASE.getConfiguration(), cConf, tableId, columnDesc));
   }
 
   public static ColumnCell convertCell(Cell cell) {

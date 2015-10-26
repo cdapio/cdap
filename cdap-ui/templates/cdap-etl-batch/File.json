@@ -4,13 +4,8 @@
     "position": [ "group1" ],
     "group1": {
       "display" : "File Batch Source Properties",
-      "position" : [ "fileSystem", "fileSystemProperties", "path", "fileRegex", "timeTable", "inputFormatClass", "maxSplitSize" ],
+      "position" : [ "path", "fileRegex", "timeTable", "inputFormatClass", "maxSplitSize", "fileSystemProperties" ],
       "fields" : {
-        "fileSystemProperties" : {
-          "widget": "json-editor",
-          "label": "File System Properties"
-        },
-
         "path" : {
           "widget": "textbox",
           "label": "Path"
@@ -33,7 +28,12 @@
 
         "maxSplitSize" : {
           "widget": "textbox",
-          "label": "Max Split Size"
+          "label": "Maximum Split Size"
+        },
+
+        "fileSystemProperties" : {
+          "widget": "json-editor",
+          "label": "File System Properties"
         }
       }
     }

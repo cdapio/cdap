@@ -9,13 +9,13 @@
           "name" : {
              "widget": "dataset-selector",
              "label": "Name",
-             "description" : "Specifies the name of the table to which data will be written to"
+             "description" : "Specifies the name of the table to which data will be written to."
           },
 
           "schema.row.field" : {
              "widget": "textbox",
              "label" : "Row Field",
-             "description" : "Specify the field from the record above that should be used as key"
+             "description" : "Specify the field from the record schema that should be used as a key."
           }
        }
     }

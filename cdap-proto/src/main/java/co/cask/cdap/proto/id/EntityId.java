@@ -16,7 +16,7 @@
 package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.element.ElementType;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -29,7 +29,7 @@ import java.util.Objects;
  * Uniquely identifies a particular instance of an element.
  *
  * <p>
- *   When adding a new type of {@link ElementId}, the following must be done:
+ *   When adding a new type of {@link EntityId}, the following must be done:
  *   <ol>
  *     <li>
  *       Implement interfaces
@@ -41,8 +41,8 @@ import java.util.Objects;
  *     <li>
  *       Add methods
  *       <ol>
- *         <li>{@code equals()} and {@code hashCode()}, using the implementations in {@link ElementId}</li>
- *         <li>{@code fromString(String string)}, delegating to {@link ElementId#fromString(String, Class)}</li>
+ *         <li>{@code equals()} and {@code hashCode()}, using the implementations in {@link EntityId}</li>
+ *         <li>{@code fromString(String string)}, delegating to {@link EntityId#fromString(String, Class)}</li>
  *       </ol>
  *     </li>
  *     <li>
@@ -50,48 +50,48 @@ import java.util.Objects;
  *       (once {@link Id} is removed, this is no longer needed)
  *     </li>
  *     <li>
- *       Add a new entry to {@link ElementType}, associating the {@link ElementType}
- *       with both the new {@link ElementId} and old {@link Id}
+ *       Add a new entry to {@link EntityType}, associating the {@link EntityType}
+ *       with both the new {@link EntityId} and old {@link Id}
  *     </li>
  *   </ol>
  * </p>
  */
 @SuppressWarnings("unchecked")
-public abstract class ElementId implements IdCompatible {
+public abstract class EntityId implements IdCompatible {
 
   private static final String IDSTRING_TYPE_SEPARATOR = ":";
   private static final String IDSTRING_PART_SEPARATOR = ".";
 
-  private final ElementType elementType;
+  private final EntityType entity;
 
-  protected ElementId(ElementType elementType) {
-    this.elementType = elementType;
+  protected EntityId(EntityType entity) {
+    this.entity = entity;
   }
 
   protected abstract Iterable<String> toIdParts();
 
-  public final ElementType getElementType() {
-    return elementType;
+  public final EntityType getEntity() {
+    return entity;
   }
 
   public static <T extends Id> T fromStringOld(String string, Class<T> oldIdClass) {
-    ElementType type = ElementType.valueOfOldIdClass(oldIdClass);
-    ElementId id = fromString(string, type.getIdClass());
+    EntityType type = EntityType.valueOfOldIdClass(oldIdClass);
+    EntityId id = fromString(string, type.getIdClass());
     return (T) id.toId();
   }
 
-  protected static <T extends ElementId> T fromString(String string, Class<T> idClass) {
+  protected static <T extends EntityId> T fromString(String string, Class<T> idClass) {
     String[] typeAndId = string.split(IDSTRING_TYPE_SEPARATOR, 2);
     Preconditions.checkArgument(
       typeAndId.length == 2,
       "Expected type separator '%s' to be in the ID string: %s", IDSTRING_TYPE_SEPARATOR, string);
 
     String typeString = typeAndId[0];
-    ElementType type = ElementType.valueOf(typeString.toUpperCase());
+    EntityType type = EntityType.valueOf(typeString.toUpperCase());
     Preconditions.checkArgument(type != null, "Invalid element type: " + typeString);
     Preconditions.checkArgument(
       type.getIdClass().equals(idClass),
-      "Expected ElementId of class '%s' but got '%s'",
+      "Expected EntityId of class '%s' but got '%s'",
       idClass.getName(), type.getIdClass().getName());
 
     String idString = typeAndId[1];
@@ -106,7 +106,7 @@ public abstract class ElementId implements IdCompatible {
   @Override
   public final String toString() {
     StringBuilder result = new StringBuilder();
-    result.append(elementType.name().toLowerCase()).append(IDSTRING_TYPE_SEPARATOR);
+    result.append(entity.name().toLowerCase()).append(IDSTRING_TYPE_SEPARATOR);
     Iterable<String> idParts = toIdParts();
     for (String part : idParts) {
       result.append(part).append(IDSTRING_PART_SEPARATOR);
@@ -125,13 +125,13 @@ public abstract class ElementId implements IdCompatible {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ElementId elementId = (ElementId) o;
-    return Objects.equals(elementType, elementId.elementType);
+    EntityId entityId = (EntityId) o;
+    return Objects.equals(entity, entityId.entity);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(elementType);
+    return Objects.hash(entity);
   }
 
   protected static String next(Iterator<String> iterator, String fieldName) {

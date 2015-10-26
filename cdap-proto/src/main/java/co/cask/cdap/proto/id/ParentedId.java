@@ -17,10 +17,13 @@
 package co.cask.cdap.proto.id;
 
 /**
- * An {@link ElementId} which has a parent {@link ElementId}.
+ * An {@link EntityId} which has a parent {@link EntityId}.
  *
  * @param <T> the type of parent
  */
-public interface ParentedId<T extends ElementId> {
+public interface ParentedId<T extends EntityId> {
+  /**
+   * @return the parent {@link EntityId} of {@code this}
+   */
   T getParent();
 }

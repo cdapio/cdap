@@ -1,0 +1,22 @@
+
+**Suspending the Schedule**
+
+The only thing you need to do to stop the application is suspend the schedule.
+
+- Using the CDAP-UI, go to the |application-overview|:
+
+  - click |example-workflow-italic| to get to the workflow detail page, 
+  - click on the *More* button in the upper-right to display an additional menu, 
+  - click on the *Schedules* menu-item to show the schedule, and then 
+  - click the *Pause* button (**| |**) so that the status shows as *suspended*; or
+  
+..
+
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| cdap-cli.sh suspend schedule |example|.\ |example-schedule|
+      Successfully suspended schedule '|example-schedule|' in app '|example|'
+      

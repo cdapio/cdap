@@ -55,17 +55,25 @@
 
     <!-- IF ETL REALTIME -->
     <div class="pull-left"
-      ng-if="app.artifact.name === GLOBALS.etlRealtime && appStatus === 'SUSPENDED'">
+      ng-if="app.artifact.name === GLOBALS.etlRealtime && (appStatus === 'SUSPENDED' || appStatus === 'FAILED')">
       <div class="btn"
-        ng-click="do('Start')">
-        Start
+        ng-click="do('Start')"
+        ng-disabled="appStatus === 'STARTING'">
+        <span ng-if="appStatus !=='STARTING'">Start</span>
+        <span ng-if="appStatus === 'STARTING'">
+          <span class="fa fa-refresh fa-spin"></span>
+        </span>
       </div>
     </div>
     <div class="pull-left"
       ng-if="app.artifact.name === GLOBALS.etlRealtime && appStatus === 'RUNNING'">
       <div class="btn"
-        ng-click="do('Stop')">
-        Stop
+        ng-click="do('Stop')"
+        ng-disabled="appStatus === 'STOPPING'">
+        <span ng-if="appStatus !=='STOPPING'">Stop</span>
+        <span ng-if="appStatus === 'STOPPING'">
+          <span class="fa fa-refresh fa-spin"></span>
+        </span>
       </div>
     </div>
     <div class="pull-left"
@@ -79,15 +87,23 @@
     <div class="pull-left"
       ng-if="app.artifact.name === GLOBALS.etlBatch && scheduleStatus === 'SUSPENDED'">
       <div class="btn"
-        ng-click="do('Start')">
-        Start
+        ng-click="do('Start')"
+        ng-disabled="appStatus === 'STARTING'">
+        <span ng-if="appStatus !=='STARTING'">Start</span>
+        <span ng-if="appStatus === 'STARTING'">
+          <span class="fa fa-refresh fa-spin"></span>
+        </span>
       </div>
     </div>
     <div class="pull-left"
       ng-if="app.artifact.name === GLOBALS.etlBatch && scheduleStatus === 'SCHEDULED'">
       <div class="btn"
-        ng-click="do('Stop')">
-        Stop
+        ng-click="do('Stop')"
+        ng-disabled="appStatus === 'STOPPING'">
+        <span ng-if="appStatus !=='STOPPING'">Stop</span>
+        <span ng-if="appStatus === 'STOPPING'">
+          <span class="fa fa-refresh fa-spin"></span>
+        </span>
       </div>
     </div>
 
@@ -99,6 +115,7 @@
     </div>
     <div class="btn"
       ng-click="do('Run Once')"
+      ng-disabled="runOnceLoading"
       ng-if="app.artifact.name === GLOBALS.etlBatch">
       <span ng-if="!runOnceLoading">Run Once</span>
       <span ng-if="runOnceLoading"><span class="fa fa-refresh fa-spin"></span></span>
@@ -170,7 +187,8 @@
   <div class="console-type">
     <div ng-repeat="tab in tabs"
          ng-include="tab.template"
-         ng-show="activeTab.title === tab.title">
+         ng-show="activeTab.title === tab.title"
+         ng-class="{'p-10': tab.title !== 'Node Configuration'}">
       </div>
   </div>
 </div>

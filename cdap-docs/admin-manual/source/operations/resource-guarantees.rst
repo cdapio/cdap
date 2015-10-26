@@ -32,7 +32,7 @@ Configurations for submitting to non-default YARN queues can be specified in two
     </property>
 
     <property>
-      <name>app.scheduler.queue</name>
+      <name>apps.scheduler.queue</name>
       <value>app</value>
       <description>Scheduler queue for CDAP programs and Explore Queries</description>
     </property>

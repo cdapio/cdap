@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesController', function ($scope, myPipelineApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS, $rootScope) {
+  .controller('NamespaceTemplatesController', function ($scope, myPipelineApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS, $rootScope, myAlertOnValium) {
 
     var vm = this;
     var oldTemplateName;
@@ -152,8 +152,8 @@ angular.module(PKG.name + '.feature.admin')
 
     vm.save = function () {
 
-      if (!vm.pluginConfig.pluginTemplate) {
-        $alert({
+      if (!vm.pluginConfig || !vm.pluginConfig.pluginTemplate) {
+        myAlertOnValium.show({
           type: 'danger',
           title: 'Error!',
           content: GLOBALS.en.admin.templateNameMissingError
@@ -164,7 +164,7 @@ angular.module(PKG.name + '.feature.admin')
 
       var list = vm.pluginList.map(function (p) { return p.name; });
       if (list.indexOf(vm.pluginConfig.pluginTemplate) !== -1) {
-        $alert({
+        myAlertOnValium.show({
           type: 'danger',
           title: 'Error!',
           content: GLOBALS.en.admin.pluginSameNameError

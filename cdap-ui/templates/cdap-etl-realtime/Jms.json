@@ -9,7 +9,7 @@
           "jms.destination.name" : {
              "widget": "textbox",
              "label": "Destination Queue",
-             "description" : "Specifies the name of a JMS queue to retrieve the data from",
+             "description" : "Specifies the name of a JMS queue to retrieve the data from.",
              "properties": {
                "width": "medium"
              }
@@ -18,7 +18,7 @@
           "jms.messages.receive" : {
              "widget": "number",
              "label": "Message Count",
-             "description" : "Number of messages to be retrieved from the JMS queue. Default is set to 50",
+             "description" : "Number of messages to be retrieved from the JMS queue; default is set to 50.",
              "info": "",
              "properties": {
                "width": "extra-small",
@@ -61,7 +61,8 @@
 
          "jms.plugin.custom.properties": {
            "widget" : "json-editor",
-           "label": "JMS Provider Plugin Custom properties as JSON string"
+           "label": "JMS Provider Plugin Custom Properties"
+           "description" : "Custom properties as a JSON string.",
          }
        }
     }

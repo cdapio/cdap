@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('PreferencesController', function ($scope, $filter, $alert, $state, rSource, myPreferenceApi) {
+  .controller('PreferencesController', function ($scope, $filter, $state, rSource, myPreferenceApi, myAlertOnValium) {
     var filterFilter = $filter('filter');
 
     $scope.parentPreferences = [];
@@ -122,7 +122,7 @@ angular.module(PKG.name + '.feature.admin')
 
       setPreference(params, obj,
         function () {
-          $alert({
+          myAlertOnValium.show({
             content: 'Your preferences have been successfully saved',
             type: 'success'
           });

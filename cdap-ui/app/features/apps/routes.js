@@ -14,7 +14,7 @@
  * the License.
  */
 
-angular.module(PKG.name+'.feature.apps')
+angular.module(`${PKG.name}.feature.apps`)
   .config(function ($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
 
     /**

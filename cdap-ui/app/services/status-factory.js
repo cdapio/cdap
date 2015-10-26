@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.services')
-  .service('StatusFactory', function($http, EventPipe, myAuth, $rootScope, MYAUTH_EVENT, MY_CONFIG, $alert, $timeout) {
+  .service('StatusFactory', function($http, EventPipe, myAuth, $rootScope, MYAUTH_EVENT, MY_CONFIG, $timeout) {
 
     this.startPolling = function () {
       beginPolling.bind(this)();

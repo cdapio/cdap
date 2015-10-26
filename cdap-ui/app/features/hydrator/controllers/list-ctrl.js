@@ -14,9 +14,8 @@
  * the License.
  */
 
-var alertpromise;
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $alert, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyDataSource, myAppsApi) {
+  .controller('HydratorListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyDataSource, myAppsApi, $alert) {
 
     var dataSrc = new MyDataSource($scope);
 
@@ -208,31 +207,17 @@ angular.module(PKG.name + '.feature.hydrator')
         })
         .then(
           function success() {
-            var alertObj = {
+            $alert({
               type: 'success',
               content: 'Pipeline draft ' + draftName + ' deleted successfully'
-            }, e;
-            if (!alertpromise) {
-              alertpromise = $alert(alertObj);
-              e = $scope.$on('alert.hide', function() {
-                alertpromise = null;
-                e(); // un-register from listening to the hide event of a closed alert.
-              });
-            }
+            });
             $state.reload();
           },
           function error() {
-            var alertObj = {
+            $alert({
               type: 'danger',
               content: 'Pipeline draft ' + draftName + ' delete failed'
-            }, e;
-            if (!alertpromise) {
-              alertpromise = $alert(alertObj);
-              e = $scope.$on('alert.hide', function() {
-                alertpromise = null;
-                e();
-              });
-            }
+            });
             $state.reload();
           });
     };
@@ -247,30 +232,16 @@ angular.module(PKG.name + '.feature.hydrator')
       myAppsApi.delete(deleteParams)
         .$promise
         .then(function success () {
-          var alertObj = {
+          $alert({
             type: 'success',
             content: 'Pipeline ' + appId + ' deleted successfully'
-          }, e;
-          if (!alertpromise) {
-            alertpromise = $alert(alertObj);
-            e = $scope.$on('alert.hide', function() {
-              alertpromise = null;
-              e(); // un-register from listening to the hide event of a closed alert.
-            });
-          }
+          });
           $state.reload();
         }, function error () {
-          var alertObj = {
+          $alert({
             type: 'danger',
             content: 'Pipeline ' + appId + ' delete failed'
-          }, e;
-          if (!alertpromise) {
-            alertpromise = $alert(alertObj);
-            e = $scope.$on('alert.hide', function() {
-              alertpromise = null;
-              e();
-            });
-          }
+          });
           $state.reload();
         });
     };

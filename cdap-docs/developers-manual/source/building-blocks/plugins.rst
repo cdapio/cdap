@@ -92,7 +92,7 @@ to modify our no-op runnable to print a configurable message. We can do this by 
     }
   }
 
-Your extension to *PluginConfig* must contain only primitive or boxed primitive types.
+Your extension to *PluginConfig* must contain only primitive, boxed primitive, or ``String`` types.
 The *PluginConfig* passed in to the *Plugin* has its fields populated using the *PluginProperties*
 specified when the *Plugin* was registered. In this example, if we want the message to be "Hello CDAP!"::
 

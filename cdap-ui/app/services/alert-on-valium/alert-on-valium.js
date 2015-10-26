@@ -14,13 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.proto.id;
+angular.module(PKG.name + '.services')
+  .factory('myAlertOnValium', function($alert) {
+    var isAnAlertOpened = false,
+        alertObj;
+     function show(obj) {
+       if (!isAnAlertOpened) {
+         isAnAlertOpened = true;
+         alertObj = $alert(obj);
+         alertObj.$scope
+          .$on('alert.hide', function() {
+            isAnAlertOpened = false;
+          });
+       }
+     }
 
-import co.cask.cdap.proto.Id;
-
-/**
- * Compatibility from {@link Id} to {@link ElementId}.
- */
-public interface ElementIdCompatible {
-  ElementId toElementId();
-}
+     return {
+       show: show
+     };
+  });
