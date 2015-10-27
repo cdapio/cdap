@@ -104,7 +104,7 @@ Internet access on the CDAP service nodes until the issues `CDAP-3957
 .. rubric:: Optional Dependencies
 
 - **Hive:** used for data exploration using SQL queries via CDAP Explore system service
-- **Spark:** used for running Spark programs within CDAP applications
+- **Spark:** used for running Spark programs (on HDP 2.2+) within CDAP applications (CDAP 3.1 and later)
 
 Installing CDAP
 ===============
