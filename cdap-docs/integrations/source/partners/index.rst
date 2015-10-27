@@ -7,9 +7,9 @@
 
 .. _partners-index:
 
-==================================================
+========
 Partners
-==================================================
+========
 
 .. toctree::
    :maxdepth: 1
@@ -21,4 +21,3 @@ Partners
 .. _cloudera: cloudera/index.html
 
 - |cloudera|_ Integration of CDAP with Cloudera
-

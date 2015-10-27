@@ -61,4 +61,4 @@ is required.
 - |custom-dataset-exploration|_ Describes how you can make a **custom dataset** that is **explorable.**
 
 
-Further information on data exploration can be found in our :ref:`Integrations Manual <integrations-index>`.
+Further information on data exploration can be found in our :ref:`Integrations Manual <integrations>`.
