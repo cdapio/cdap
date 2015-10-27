@@ -298,7 +298,6 @@ public class MasterServiceMain extends DaemonMain {
       new IOModule(),
       new AuthModule(),
       new KafkaClientModule(),
-      new TwillModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
@@ -329,13 +328,14 @@ public class MasterServiceMain extends DaemonMain {
       public void leader() {
         LOG.info("Became leader for master services");
 
-        twillRunner = baseInjector.getInstance(TwillRunnerService.class);
-        twillRunner.startAndWait();
-
         final Injector injector = baseInjector.createChildInjector(
+          new TwillModule(),
           new AppFabricServiceRuntimeModule().getDistributedModules(),
           new ProgramRunnerRuntimeModule().getDistributedModules()
         );
+
+        twillRunner = injector.getInstance(TwillRunnerService.class);
+        twillRunner.startAndWait();
 
         // Schedule secure store update.
         if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
