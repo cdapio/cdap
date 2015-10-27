@@ -54,4 +54,4 @@ Queries can be run over Streams and certain types of Datasets.
 - |custom-dataset-exploration|_ Describes how you can make a **custom Dataset** that is **explorable.**
 
 
-Further information on Data Exploration can be found in our :ref:`Integrations Manual <integrations-index>`.
+Further information on data exploration can be found in our :ref:`Integrations Manual <integrations>`.
