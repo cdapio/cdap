@@ -127,7 +127,7 @@ public class MasterServiceMain extends DaemonMain {
   private final Configuration hConf;
   private final Injector baseInjector;
   private final ZKClientService zkClient;
-  private final TwillRunnerService twillRunner;
+  private TwillRunnerService twillRunner;
   private final KafkaClientService kafkaClient;
   private final MetricsCollectionService metricsCollectionService;
   private final ServiceStore serviceStore;
@@ -149,7 +149,6 @@ public class MasterServiceMain extends DaemonMain {
     Injector injector = createBaseInjector(cConf, hConf);
     this.baseInjector = injector;
     this.zkClient = injector.getInstance(ZKClientService.class);
-    this.twillRunner = injector.getInstance(TwillRunnerService.class);
     this.kafkaClient = injector.getInstance(KafkaClientService.class);
     this.metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     this.serviceStore = injector.getInstance(ServiceStore.class);
@@ -184,7 +183,7 @@ public class MasterServiceMain extends DaemonMain {
     // Tries to create the ZK root node (which can be namespaced through the zk connection string)
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
                                                   KeeperException.NodeExistsException.class, null));
-    twillRunner.startAndWait();
+
     kafkaClient.startAndWait();
     metricsCollectionService.startAndWait();
     serviceStore.startAndWait();
@@ -330,6 +329,9 @@ public class MasterServiceMain extends DaemonMain {
       public void leader() {
         LOG.info("Became leader for master services");
 
+        twillRunner = baseInjector.getInstance(TwillRunnerService.class);
+        twillRunner.startAndWait();
+
         final Injector injector = baseInjector.createChildInjector(
           new AppFabricServiceRuntimeModule().getDistributedModules(),
           new ProgramRunnerRuntimeModule().getDistributedModules()
@@ -389,6 +391,10 @@ public class MasterServiceMain extends DaemonMain {
           stopQuietly(service);
         }
         services.clear();
+
+        if (twillRunner != null) {
+          twillRunner.stopAndWait();
+        }
       }
     });
   }
