@@ -657,8 +657,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           new Function<ProgramController, BatchProgramResult>() {
             @Override
             public BatchProgramResult apply(ProgramController input) {
-              return new BatchProgramResult(
-                program, AppFabricServiceStatus.OK.getCode().getCode(), AppFabricServiceStatus.OK.getMessage());
+              return new BatchProgramResult(program, AppFabricServiceStatus.OK.getCode().getCode(), null);
             }
           });
         issuedStops.add(issuedStop);
@@ -680,9 +679,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         output.add(issuedStop.get());
       } catch (Throwable t) {
         LOG.warn(t.getMessage(), t);
-        output.add(new BatchProgramResult(programs.get(i),
-                                          AppFabricServiceStatus.INTERNAL_ERROR.getCode().getCode(),
-                                          AppFabricServiceStatus.INTERNAL_ERROR.getMessage()));
+        output.add(new BatchProgramResult(programs.get(i), AppFabricServiceStatus.INTERNAL_ERROR.getCode().getCode(),
+                                          t.getMessage()));
       }
       i++;
     }
