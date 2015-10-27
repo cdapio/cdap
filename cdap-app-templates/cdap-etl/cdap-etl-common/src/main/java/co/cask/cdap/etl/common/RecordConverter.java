@@ -34,7 +34,7 @@ import java.util.Map;
  */
 public abstract class RecordConverter<INPUT, OUTPUT> {
 
-  abstract OUTPUT transform(INPUT record) throws IOException;
+  public abstract OUTPUT transform(INPUT record) throws IOException;
 
   private Object convertUnion(Object value, List<Schema> schemas) {
     boolean isNullable = false;
