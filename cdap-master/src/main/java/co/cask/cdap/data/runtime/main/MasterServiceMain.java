@@ -100,7 +100,6 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileAttribute;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -131,7 +130,6 @@ public class MasterServiceMain extends DaemonMain {
   private final Configuration hConf;
   private final Injector baseInjector;
   private final ZKClientService zkClient;
-  private final TwillRunnerService twillRunner;
   private final KafkaClientService kafkaClient;
   private final MetricsCollectionService metricsCollectionService;
   private final ServiceStore serviceStore;
@@ -153,7 +151,6 @@ public class MasterServiceMain extends DaemonMain {
     Injector injector = createBaseInjector(cConf, hConf);
     this.baseInjector = injector;
     this.zkClient = injector.getInstance(ZKClientService.class);
-    this.twillRunner = injector.getInstance(TwillRunnerService.class);
     this.kafkaClient = injector.getInstance(KafkaClientService.class);
     this.metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     this.serviceStore = injector.getInstance(ServiceStore.class);
@@ -189,8 +186,6 @@ public class MasterServiceMain extends DaemonMain {
     Futures.getUnchecked(ZKOperations.ignoreError(zkClient.create("/", null, CreateMode.PERSISTENT),
                                                   KeeperException.NodeExistsException.class, null));
 
-    twillRunner.start();
-
     kafkaClient.startAndWait();
     metricsCollectionService.startAndWait();
     serviceStore.startAndWait();
@@ -206,7 +201,6 @@ public class MasterServiceMain extends DaemonMain {
     stopQuietly(serviceStore);
     stopQuietly(metricsCollectionService);
     stopQuietly(kafkaClient);
-    stopQuietly(twillRunner);
     stopQuietly(zkClient);
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
@@ -315,7 +309,6 @@ public class MasterServiceMain extends DaemonMain {
       new LoggingModules().getDistributedModules(),
       new IOModule(),
       new KafkaClientModule(),
-      new TwillModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
@@ -341,15 +334,20 @@ public class MasterServiceMain extends DaemonMain {
       private Cancellable secureStoreUpdateCancellable;
       // Executor for re-running master twill app if it gets terminated.
       private ScheduledExecutorService executor;
+      private TwillRunnerService twillRunner;
 
       @Override
       public void leader() {
         LOG.info("Became leader for master services");
 
         final Injector injector = baseInjector.createChildInjector(
+          new TwillModule(),
           new AppFabricServiceRuntimeModule().getDistributedModules(),
           new ProgramRunnerRuntimeModule().getDistributedModules()
         );
+
+        twillRunner = injector.getInstance(TwillRunnerService.class);
+        twillRunner.start();
 
         // Schedule secure store update.
         if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
@@ -370,7 +368,7 @@ public class MasterServiceMain extends DaemonMain {
         executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("master-runner"));
 
         // Start monitoring twill application
-        monitorTwillApplication(executor, 0, controller);
+        monitorTwillApplication(executor, 0, controller, twillRunner);
 
         // Start app-fabric and dataset services
         for (Service service : services) {
@@ -405,6 +403,10 @@ public class MasterServiceMain extends DaemonMain {
           stopQuietly(service);
         }
         services.clear();
+
+        if (twillRunner != null) {
+          stopQuietly(twillRunner);
+        }
       }
     });
   }
@@ -478,19 +480,20 @@ public class MasterServiceMain extends DaemonMain {
    * @param serviceController the reference to be updated with the active {@link TwillController}
    */
   private void monitorTwillApplication(final ScheduledExecutorService executor, final int failures,
-                                       final AtomicReference<TwillController> serviceController) {
+                                       final AtomicReference<TwillController> serviceController,
+                                       final TwillRunnerService twillRunner) {
     if (executor.isShutdown()) {
       return;
     }
 
     // Determines if the application is running. If not, starts a new one.
     final long startTime;
-    TwillController controller = getCurrentTwillController();
+    TwillController controller = getCurrentTwillController(twillRunner);
     if (controller != null) {
       startTime = 0L;
     } else {
       try {
-        controller = startTwillApplication();
+        controller = startTwillApplication(twillRunner);
       } catch (Exception e) {
         LOG.error("Failed to start master twill application", e);
         throw e;
@@ -516,7 +519,7 @@ public class MasterServiceMain extends DaemonMain {
           executor.execute(new Runnable() {
             @Override
             public void run() {
-              monitorTwillApplication(executor, 0, serviceController);
+              monitorTwillApplication(executor, 0, serviceController, twillRunner);
             }
           });
           return;
@@ -526,7 +529,7 @@ public class MasterServiceMain extends DaemonMain {
         executor.schedule(new Runnable() {
           @Override
           public void run() {
-            monitorTwillApplication(executor, failures + 1, serviceController);
+            monitorTwillApplication(executor, failures + 1, serviceController, twillRunner);
           }
         }, nextRunTime, TimeUnit.MILLISECONDS);
       }
@@ -537,7 +540,7 @@ public class MasterServiceMain extends DaemonMain {
    * Returns the {@link TwillController} for the current master service or {@code null} if none is running.
    */
   @Nullable
-  private TwillController getCurrentTwillController() {
+  private TwillController getCurrentTwillController(TwillRunnerService twillRunner) {
     int count = 100;
     long sleepMs = LOOKUP_ATTEMPT_TIMEOUT_MS / count;
 
@@ -574,7 +577,7 @@ public class MasterServiceMain extends DaemonMain {
    *
    * @return The {@link TwillController} for the application.
    */
-  private TwillController startTwillApplication() {
+  private TwillController startTwillApplication(TwillRunnerService twillRunner) {
     try {
       // Create a temp dir for the run to hold temporary files created to run the application
       Path tempPath = Files.createDirectories(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
