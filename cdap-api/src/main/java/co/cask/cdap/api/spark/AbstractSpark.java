@@ -71,7 +71,7 @@ public abstract class AbstractSpark extends AbstractPluginConfigurable<SparkConf
    *
    * @param mainClass the class containing the main method
    */
-  protected final void setMainClass(Class<?> mainClass) {
+  protected final void setMainClass(Class<? extends SparkProgram> mainClass) {
     setMainClassName(mainClass.getName());
   }
 
