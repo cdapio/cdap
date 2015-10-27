@@ -350,6 +350,7 @@ function version() {
   OIFS="${IFS}"
   local current_directory=`pwd`
   cd ${PROJECT_PATH}
+  source ${PROJECT_PATH}/${CDAP_DOCS}/vars
   PROJECT_VERSION=`grep "<version>" pom.xml`
   PROJECT_VERSION=${PROJECT_VERSION#*<version>}
   PROJECT_VERSION=${PROJECT_VERSION%%</version>*}
@@ -358,7 +359,9 @@ function version() {
   local full_branch=`git rev-parse --abbrev-ref HEAD`
   IFS=/ read -a branch <<< "${full_branch}"
   GIT_BRANCH="${branch[1]}"
-  GIT_BRANCH_PARENT="develop"
+  if [ "x${GIT_BRANCH_PARENT}" == "x" ]; then
+    GIT_BRANCH_PARENT="develop"
+  fi
   # Determine branch and branch type: one of develop, master, release, develop-feature, release-feature
   # If unable to determine type, uses develop-feature
   if [ "${full_branch}" == "develop" -o  "${full_branch}" == "master" ]; then
