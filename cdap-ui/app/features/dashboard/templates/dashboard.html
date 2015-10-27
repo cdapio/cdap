@@ -35,9 +35,13 @@
     <a role="tab"
         href=""
         ng-click="activeTabClick($event, $index)">
-        <span class="dtitle">
-        {{dashboard.title}}
+        <span class="dtitle"
+              tooltip="{{dashboard.title}}"
+              tooltip-placement="top"
+              tooltip-append-to-body="true"
+              tooltip-enable="dashboard.title.length > 21">{{dashboard.title | myEllipsis: 21}}
         </span>
+        <span class="fa fa-caret-down"></span>
     </a>
     <div is-open="dashboard.isopen"
           dropdown>

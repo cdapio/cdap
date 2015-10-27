@@ -145,20 +145,11 @@ body.state-dashboard {
           overflow: hidden;
           text-overflow: ellipsis;
           min-width: 80px;
-          max-width: 200px;
-
           // A
           color: @cdap-gray;
-
-          .dtitle::after {
-            display: inline-block;
-            width: 0;
-            height: 0;
-            vertical-align: middle;
-            border-top: 4px solid;
-            border-right: 4px solid transparent;
-            border-left: 4px solid transparent;
-            content: '';
+          span.fa {
+            position: relative;
+            z-index: 5;
           }
         }
       }
