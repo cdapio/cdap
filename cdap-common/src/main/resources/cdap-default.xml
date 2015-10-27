@@ -1587,4 +1587,52 @@
     </description>
   </property>
 
+  <!-- Dataset extensions -->
+  <property>
+    <name>dataset.extensions.dir</name>
+    <value>/opt/cdap/ext/lib</value>
+  </property>
+
+  <property>
+    <name>dataset.extensions.modules</name>
+    <value>name1:classname1,name2:classname2,...</value>
+  </property>
+
+  <!--
+  <property>
+    <name>dataset.extensions.distributed.mode.table</name>
+    <value>CustomTableModule</value>
+  </property>
+
+  <property>
+    <name>dataset.extensions.distributed.mode.metrics.table</name>
+    <value>CustomTableModule</value>
+  </property>
+
+  <property>
+    <name>dataset.extensions.distributed.mode.queue.table</name>
+    <value>CustomTableModule</value>
+  </property>
+
+  <property>
+    <name>dataset.extensions.standalone.mode.table</name>
+    <value>CustomTableModule</value>
+  </property>
+
+  <property>
+    <name>dataset.extensions.ignore.default.tables</name>
+    <value>classname1,classname2,...</value>
+  </property>
+
+  <property>
+    <name>extensions.server.address.port</name>
+    <value>server1:port1,server2:port2,server3:port3,....</value>
+  </property>
+
+  <property>
+    <name>stream.extension.consumer.factory</name>
+    <value></value>
+  </property>
+  -->
+
 </configuration>

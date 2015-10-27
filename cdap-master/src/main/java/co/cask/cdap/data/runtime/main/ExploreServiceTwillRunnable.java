@@ -87,7 +87,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
       new ExploreRuntimeModule().getDistributedModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules(),
+      new StreamAdminModules().getDistributedModules(cConf),
       new NotificationFeedClientModule(),
       new AbstractModule() {
         @Override

@@ -17,6 +17,8 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
@@ -79,8 +81,39 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
     };
   }
 
-  @Override
-  public Module getDistributedModules() {
+  private String getDistributedTableModuleName(CConfiguration cConf) {
+    String name = null;
+      if (cConf != null) {
+        name = cConf.get(Constants.Dataset.Extensions.EXT_DISTMODE_TABLE);
+        if (name != null) {
+          name = name.trim();
+        }
+      }
+      return name;
+  }
+
+  private DatasetModule getDistributedTableModule(CConfiguration cConf) {
+    String tableModuleName = getDistributedTableModuleName(cConf);
+    DatasetModule tableModule;
+
+    if (tableModuleName == null) {
+        return new HBaseTableModule();
+    } else {
+      Class tableModuleClass;
+
+      try {
+        tableModuleClass = Class.forName(tableModuleName);
+        tableModule = (DatasetModule) tableModuleClass.newInstance();
+      } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+    return tableModule;
+  }
+
+  public Module getDistributedModules(CConfiguration cConf) {
+    final DatasetModule tableModule = getDistributedTableModule(cConf);
+
     return new AbstractModule() {
       @Override
       protected void configure() {
@@ -88,12 +121,17 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
                                                                             Names.named("defaultDatasetModules"));
 
         // NOTE: order is important due to dependencies between modules
-        mapBinder.addBinding("orderedTable-hbase").toInstance(new HBaseTableModule());
+        mapBinder.addBinding("orderedTable-hbase").toInstance(tableModule);
         mapBinder.addBinding("metricsTable-hbase").toInstance(new HBaseMetricsTableModule());
         bindDefaultModules(mapBinder);
         mapBinder.addBinding("queueDataset").toInstance(new HBaseQueueDatasetModule());
       }
     };
+  }
+
+  @Override
+  public Module getDistributedModules() {
+    return this.getDistributedModules(null);
   }
 
   /**

@@ -16,6 +16,8 @@
 
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data.runtime.InMemoryStreamFileWriterFactory;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
@@ -72,8 +74,41 @@ public class StreamAdminModules extends RuntimeModule {
     };
   }
 
+  private String getStreamConsumerFactoryName(CConfiguration cConf) {
+    String name = null;
+
+    if (cConf != null) {
+      name = cConf.get(Constants.Dataset.Extensions.EXT_STREAM_CONSUMER_FACTORY);
+      if (name != null) {
+        name = name.trim();
+      }
+    }
+    return name;
+  }
+
+  private Class getStreamConsumerFactory(CConfiguration cConf) {
+    Class streamConsumerFactory = null;
+    String streamConsumerFactoryName = getStreamConsumerFactoryName(cConf);
+
+    if (streamConsumerFactoryName == null || streamConsumerFactoryName.length() == 0) {
+      streamConsumerFactory = HBaseStreamFileConsumerFactory.class;
+    } else {
+      try {
+        streamConsumerFactory = Class.forName(streamConsumerFactoryName);
+      } catch (ClassNotFoundException ex) {
+        throw new RuntimeException(ex);
+      }
+    }
+    return streamConsumerFactory;
+  }
+
   @Override
   public Module getDistributedModules() {
+    return getDistributedModules(null);
+  }
+
+  public Module getDistributedModules(CConfiguration cConf) {
+    final Class streamConsumerFactory = getStreamConsumerFactory(cConf);
     return new AbstractModule() {
       @Override
       protected void configure() {
@@ -81,7 +116,7 @@ public class StreamAdminModules extends RuntimeModule {
         bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
         bind(StreamConsumerStateStoreFactory.class).to(HBaseStreamConsumerStateStoreFactory.class).in(Singleton.class);
         bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
-        bind(StreamConsumerFactory.class).to(HBaseStreamFileConsumerFactory.class).in(Singleton.class);
+        bind(StreamConsumerFactory.class).to(streamConsumerFactory).in(Singleton.class);
         bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
       }
     };

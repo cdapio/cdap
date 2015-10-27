@@ -99,7 +99,7 @@ public class ContextManager {
       new DataSetsModules().getDistributedModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules(),
+      new StreamAdminModules().getDistributedModules(cConf),
       new NotificationFeedClientModule(),
       new AbstractModule() {
         @Override

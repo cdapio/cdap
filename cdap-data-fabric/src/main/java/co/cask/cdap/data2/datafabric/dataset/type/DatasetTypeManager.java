@@ -74,6 +74,8 @@ public class DatasetTypeManager extends AbstractIdleService {
   private final Map<String, DatasetModule> defaultModules;
   private final boolean allowDatasetUncheckedUpgrade;
 
+  private final Map<String, DatasetModule> extensionModules;
+
   @Inject
   public DatasetTypeManager(CConfiguration cConf, MDSDatasetsRegistry mdsDatasets,
                             LocationFactory locationFactory,
@@ -83,17 +85,41 @@ public class DatasetTypeManager extends AbstractIdleService {
     this.locationFactory = locationFactory;
     this.defaultModules = Maps.newLinkedHashMap(defaultModules);
     this.allowDatasetUncheckedUpgrade = cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+    this.extensionModules = getExtensionModules(this.cConf);
   }
 
   @Override
   protected void startUp() throws Exception {
     deleteSystemModules();
     deployDefaultModules();
+    if (extensionModules != null && extensionModules.size() > 0) {
+      deployExtensionModules();
+    }
   }
 
   @Override
   protected void shutDown() throws Exception {
     // do nothing
+  }
+
+  private Map<String, DatasetModule> getExtensionModules(CConfiguration cConf) {
+    Map<String, DatasetModule> modules = Maps.newLinkedHashMap();
+    String moduleStr = cConf.get(Constants.Dataset.Extensions.EXT_MODULES);
+    if (moduleStr != null) {
+      String[] moduleNames = moduleStr.split(",");
+      for (String name : moduleNames) {
+        name = name.trim();
+        // create DatasetModule object
+        try {
+          Class tableModuleClass = Class.forName(name);
+          DatasetModule module = (DatasetModule) tableModuleClass.newInstance();
+          modules.put(name, module);
+        } catch (ClassNotFoundException|InstantiationException|IllegalAccessException ex) {
+          LOG.error("Failed to add " + name + " extension module: " + ex.toString());
+        }
+      }
+    }
+    return modules;
   }
 
   /**
@@ -388,6 +414,24 @@ public class DatasetTypeManager extends AbstractIdleService {
         LOG.info("Not adding " + module.getKey() + " module: it already exists");
       } catch (Throwable th) {
         LOG.error("Failed to add {} module. Aborting.", module.getKey(), th);
+        throw Throwables.propagate(th);
+      }
+    }
+  }
+
+  private void deployExtensionModules() {
+    // adding any defined extension modules to be available in dataset manager service
+    for (Map.Entry<String, DatasetModule> module : extensionModules.entrySet()) {
+      try {
+        // NOTE: we assume extension modules are always in classpath, hence passing null for jar location
+        // NOTE: we add extension modules in the system namespace
+        Id.DatasetModule theModule = Id.DatasetModule.from(Id.Namespace.SYSTEM, module.getKey());
+        addModule(theModule, module.getValue().getClass().getName(), null);
+      } catch (DatasetModuleConflictException e) {
+        // perfectly fine: we need to add the modules only the very first time service is started
+        LOG.info("Not adding " + module.getKey() + " extension module: it already exists");
+      } catch (Throwable th) {
+        LOG.error("Failed to add {} extension module. Aborting.", module.getKey(), th);
         throw Throwables.propagate(th);
       }
     }

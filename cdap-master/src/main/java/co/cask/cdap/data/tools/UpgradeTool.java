@@ -167,14 +167,14 @@ public class UpgradeTool {
         }
       ),
       new ViewAdminModules().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules(),
+      new StreamAdminModules().getDistributedModules(cConf),
       new NotificationFeedClientModule(),
       new TwillModule(),
       new ExploreClientModule(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModules(),
-      new SystemDatasetRuntimeModule().getDistributedModules(),
+      new SystemDatasetRuntimeModule().getDistributedModules(cConf),
       // don't need real notifications for upgrade, so use the in-memory implementations
       new NotificationServiceRuntimeModule().getInMemoryModules(),
       new KafkaClientModule(),

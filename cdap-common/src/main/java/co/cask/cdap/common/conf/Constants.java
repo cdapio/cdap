@@ -276,6 +276,25 @@ public final class Constants {
 
       public static final String SERVICE_DESCRIPTION = "Service to perform dataset operations.";
     }
+
+    /**
+     * Dataset extensions.
+     */
+    public static final class Extensions {
+      public static final String EXT_DIR = "dataset.extensions.dir";
+
+      public static final String EXT_MODULES = "dataset.extensions.modules";
+
+      /** Over-rides for default table bindings- use with caution! **/
+      public static final String EXT_DISTMODE_TABLE = "dataset.extensions.distributed.mode.table";
+      public static final String EXT_STREAM_CONSUMER_FACTORY = "stream.extension.consumer.factory";
+      public static final String EXT_STNDALONE_TABLE = "dataset.extensions.standalone.mode.table";
+
+      public static final String EXTENSIONS_SERVER_ADDRESS_PORT = "extensions.server.address.port";
+
+      public static final String EXT_DISTMODE_METRICS_TABLE = "dataset.extensions.distributed.mode.metrics.table";
+      public static final String EXT_DISTMODE_QUEUE_TABLE = "dataset.extensions.distributed.mode.queue.table";
+    }
   }
 
   /**

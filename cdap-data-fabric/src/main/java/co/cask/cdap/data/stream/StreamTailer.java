@@ -61,7 +61,7 @@ public class StreamTailer {
                                              new LocationRuntimeModule().getDistributedModules(),
                                              new ExploreClientModule(),
                                              new ViewAdminModules().getDistributedModules(),
-                                             new StreamAdminModules().getDistributedModules(),
+                                             new StreamAdminModules().getDistributedModules(cConf),
                                              new NotificationFeedClientModule());
 
     StreamAdmin streamAdmin = injector.getInstance(StreamAdmin.class);
