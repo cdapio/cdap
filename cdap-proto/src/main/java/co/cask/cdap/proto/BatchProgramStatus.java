@@ -16,31 +16,18 @@
 
 package co.cask.cdap.proto;
 
-import com.google.common.base.Preconditions;
-
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
  * Describes the status of a program, as returned by the batch status endpoint POST /namespaces/{namespace}/status.
  */
-public class BatchProgramStatus extends BatchProgram {
-  private final int statusCode;
+public class BatchProgramStatus extends BatchProgramResult {
   private final String status;
-  private final String error;
 
-  public BatchProgramStatus(BatchProgram program, int statusCode, @Nullable String status, @Nullable String error) {
-    super(program.appId, program.programType, program.programId);
-    Preconditions.checkArgument(status != null || error != null, "'status' or 'error' must be specified.");
-    this.statusCode = statusCode;
+  public BatchProgramStatus(BatchProgram program, int statusCode, @Nullable String error, @Nullable String status) {
+    super(program, statusCode, error);
     this.status = status;
-    this.error = error;
-  }
-
-  /**
-   * @return the status code when getting the status of the program.
-   */
-  public int getStatusCode() {
-    return statusCode;
   }
 
   /**
@@ -51,11 +38,25 @@ public class BatchProgramStatus extends BatchProgram {
     return status;
   }
 
-  /**
-   * @return the error message if there was an error. Null if there was no error.
-   */
-  @Nullable
-  public String getError() {
-    return error;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+
+    BatchProgramStatus that = (BatchProgramStatus) o;
+
+    return Objects.equals(status, that.status);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), status);
   }
 }
