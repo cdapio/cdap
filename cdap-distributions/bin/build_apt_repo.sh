@@ -106,7 +106,7 @@ function write_gpg_passphrase() {
 function createrepo_in_repo_staging() {
   write_gpg_passphrase || return 1
   echo "Creating repository ${__maj_min} in staging directory"
-  freight-cache --conf=${STAGE_DIR}/freight.conf --gpg=${GPG_KEY_NAME} --passphrase-file=${STAGE_DIR}/gpgpass.tmp apt/precise
+  freight-cache --conf=${STAGE_DIR}/freight.conf --gpg=${GPG_KEY_NAME} --passphrase-file=${STAGE_DIR}/gpgpass.tmp apt/precise || return 1
   # Replace symlink
   rm -rf ${STAGE_DIR}/${__maj_min}/dists/precise{/.refs,} && mv ${STAGE_DIR}/${__maj_min}/dists/precise{-*,} || return 1
 }
