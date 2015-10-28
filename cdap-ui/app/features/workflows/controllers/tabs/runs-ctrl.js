@@ -114,9 +114,9 @@ class WorkflowsRunsController {
     this.myWorkFlowApi
      .stopRun(params, {})
      .$promise
-     .then(function() {
+     .then( () => {
        this.$state.go(this.$state.current, this.$state.params, {reload: true});
-     }.bind(this));
+     });
   }
 
   suspend() {
@@ -124,9 +124,9 @@ class WorkflowsRunsController {
     this.myWorkFlowApi
      .suspendRun(params, {})
      .$promise
-     .then(function() {
+     .then( () => {
        this.$state.go(this.$state.current, this.$state.params, {reload: true});
-     }.bind(this));
+     });
   }
 
   resume() {
@@ -134,9 +134,9 @@ class WorkflowsRunsController {
     this.myWorkFlowApi
      .resumeRun(params, {})
      .$promise
-     .then(function() {
+     .then( () => {
        this.$state.go(this.$state.current, this.$state.params, {reload: true});
-     }.bind(this));
+     });
   }
 
   openHistory() {
