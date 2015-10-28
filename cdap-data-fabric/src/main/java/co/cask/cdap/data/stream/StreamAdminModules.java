@@ -78,7 +78,7 @@ public class StreamAdminModules extends RuntimeModule {
     String name = null;
 
     if (cConf != null) {
-      name = cConf.get(Constants.Dataset.Extensions.EXT_STREAM_CONSUMER_FACTORY);
+      name = cConf.get(Constants.Dataset.Extensions.STREAM_CONSUMER_FACTORY);
       if (name != null) {
         name = name.trim();
       }

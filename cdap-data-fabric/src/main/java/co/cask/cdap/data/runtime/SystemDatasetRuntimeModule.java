@@ -84,7 +84,7 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
   private String getDistributedTableModuleName(CConfiguration cConf) {
     String name = null;
       if (cConf != null) {
-        name = cConf.get(Constants.Dataset.Extensions.EXT_DISTMODE_TABLE);
+        name = cConf.get(Constants.Dataset.Extensions.DISTMODE_TABLE);
         if (name != null) {
           name = name.trim();
         }
