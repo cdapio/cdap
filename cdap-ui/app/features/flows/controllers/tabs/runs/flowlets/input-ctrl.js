@@ -15,8 +15,8 @@
  */
 
  class FlowletDetailInputController{
-   constructor($state, $scope, MyDataSource, MyMetricsQueryHelper, MyChartHelpers, myFlowsApi) {
-    this.dataSrc = new MyDataSource($scope);
+   constructor($state, $scope, MyCDAPDataSource, MyMetricsQueryHelper, MyChartHelpers, myFlowsApi) {
+    this.dataSrc = new MyCDAPDataSource($scope);
     this.$state = $state;
     this.MyMetricsQueryHelper = MyMetricsQueryHelper;
     this.$scope = $scope;
@@ -131,7 +131,7 @@
   }
 }
 
-FlowletDetailInputController.$inject = ['$state', '$scope', 'MyDataSource', 'MyMetricsQueryHelper', 'MyChartHelpers', 'myFlowsApi'];
+FlowletDetailInputController.$inject = ['$state', '$scope', 'MyCDAPDataSource', 'MyMetricsQueryHelper', 'MyChartHelpers', 'myFlowsApi'];
 
 angular.module(`${PKG.name}.feature.flows`)
   .controller('FlowletDetailInputController', FlowletDetailInputController);

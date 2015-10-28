@@ -15,9 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyDataSource, myAppsApi, $alert) {
-
-    var dataSrc = new MyDataSource($scope);
+  .controller('HydratorListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $alert, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi) {
+    var dataSrc = new MyCDAPDataSource($scope);
 
     var vm = this;
 

@@ -15,8 +15,8 @@
  */
 
  class FlowsRunDetailStatusController {
-   constructor($state, $scope, MyDataSource, myHelpers, FlowDiagramData, $timeout, MyMetricsQueryHelper, myFlowsApi) {
-     this.dataSrc = new MyDataSource($scope);
+   constructor($state, $scope, MyCDAPDataSource, myHelpers, FlowDiagramData, $timeout, MyMetricsQueryHelper, myFlowsApi) {
+     this.dataSrc = new MyCDAPDataSource($scope);
      this.$state = $state;
      this.$scope = $scope;
      this.myHelpers = myHelpers;
@@ -114,7 +114,7 @@
 
 }
 
-FlowsRunDetailStatusController.$inject = ['$state', '$scope', 'MyDataSource', 'myHelpers', 'FlowDiagramData', '$timeout', 'MyMetricsQueryHelper', 'myFlowsApi'];
+FlowsRunDetailStatusController.$inject = ['$state', '$scope', 'MyCDAPDataSource', 'myHelpers', 'FlowDiagramData', '$timeout', 'MyMetricsQueryHelper', 'myFlowsApi'];
 
 angular.module(`${PKG.name}.feature.flows`)
   .controller('FlowsRunDetailStatusController', FlowsRunDetailStatusController);

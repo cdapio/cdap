@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailMetricsController', function($scope, HydratorDetail, MyDataSource, $filter, $state, MyMetricsQueryHelper) {
+  .controller('HydratorDetailMetricsController', function($scope, HydratorDetail, MyCDAPDataSource, $filter, $state, MyMetricsQueryHelper) {
 
     $scope.metrics = [];
     var metricsPolledId;
-    var dataSrc = new MyDataSource($scope);
+    var dataSrc = new MyCDAPDataSource($scope);
     var filter = $filter('filter');
     var logsParams = {};
     angular.copy(HydratorDetail.logsParams, logsParams);
