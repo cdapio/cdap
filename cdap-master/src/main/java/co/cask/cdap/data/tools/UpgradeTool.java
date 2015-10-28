@@ -38,6 +38,8 @@ import co.cask.cdap.data.runtime.DataFabricDistributedModule;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
+import co.cask.cdap.data2.datafabric.dataset.DatasetProvider;
+import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetProvider;
 import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -195,6 +197,7 @@ public class UpgradeTool {
           bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
           bind(MetricStore.class).to(DefaultMetricStore.class);
           bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+          bind(DatasetProvider.class).to(DefaultDatasetProvider.class);
         }
 
         @Provides

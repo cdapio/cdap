@@ -26,11 +26,13 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.http.NettyHttpService;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
@@ -85,13 +87,16 @@ public class DatasetService extends AbstractExecutionThreadService {
                         ExploreFacade exploreFacade,
                         Set<DatasetMetricsReporter> metricReporters,
                         StorageProviderNamespaceAdmin storageProviderNamespaceAdmin,
-                        UsageRegistry usageRegistry) throws Exception {
+                        TransactionExecutorFactory txFactory,
+                        DatasetDefinitionRegistryFactory registryFactory,
+                        DatasetTypeClassLoaderFactory typeLoader) throws Exception {
 
     this.typeManager = typeManager;
     DatasetTypeHandler datasetTypeHandler = new DatasetTypeHandler(typeManager, cConf, namespacedLocationFactory);
     DatasetInstanceHandler datasetInstanceHandler = new DatasetInstanceHandler(typeManager, instanceManager,
                                                                                opExecutorClient, exploreFacade, cConf,
-                                                                               usageRegistry);
+                                                                               txFactory, registryFactory,
+                                                                               typeLoader);
     UnderlyingSystemNamespaceHandler underlyingSystemNamespaceHandler =
       new UnderlyingSystemNamespaceHandler(storageProviderNamespaceAdmin);
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf);
