@@ -1,41 +1,41 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Frequently Asked Questions about the Cask Data Application Platform
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-:hide-nav: true
-:orphan:
+:titles_only-toc: true
 
-==================================
-FAQ
-==================================
+===========================
+CDAP FAQ: General Questions
+===========================
 
 .. contents::
+   :depth: 2
    :local:
+   :backlinks: entry
    :class: faq
-   :backlinks: none
 
 Cask Data Application Platform
 ==============================
 
-.. rubric:: What is the Cask Data Application Platform?
-
+What is the Cask Data Application Platform?
+-------------------------------------------
 Cask Data Application Platform (CDAP) is the industry’s first Big Data Application Server for Hadoop. It
 abstracts all the complexities and integrates the components of the Hadoop ecosystem (YARN, MapReduce, 
 ZooKeeper, HBase, etc.) enabling developers to build, test, deploy, and manage Big Data applications
 without having to worry about infrastructure, interoperability, or the complexities of distributed
 systems.
 
-.. rubric:: What is available in the CDAP SDK?
-
+What is available in the CDAP SDK?
+----------------------------------
 The CDAP SDK comes with:
 
 - Java and RESTful APIs to build CDAP applications;
 - Standalone CDAP to run the entire CDAP stack in a single Java virtual machine; and
 - Example CDAP applications.
 
-.. rubric:: Why should I use Cask Data Application Platform for developing Big Data Applications?
-
+Why should I use Cask Data Application Platform for developing Big Data Applications?
+-------------------------------------------------------------------------------------
 CDAP helps developers to quickly develop, test, debug and deploy Big Data applications. Developers can
 build and test Big Data applications on their laptop without need for any distributed environment to
 develop and test Big Data applications. Deploy it on the distributed cluster with a push of a button. The
@@ -69,49 +69,48 @@ advantages of using CDAP include:
 Platforms and Language
 ======================
 
-.. rubric:: What Platforms are Supported by the Cask Data Application Platform SDK?
-
+What Platforms are Supported by the Cask Data Application Platform SDK?
+-----------------------------------------------------------------------
 The CDAP SDK can be run on Mac OS X, Linux or Windows platforms.
 
-.. rubric:: What programming languages are supported by CDAP?
-
+What programming languages are supported by CDAP?
+-------------------------------------------------
 CDAP currently supports Java for developing applications.
 
-.. rubric:: What Version of Java SDK is Required by CDAP?
-
+What Version of Java SDK is Required by CDAP?
+---------------------------------------------
 The latest version of the JDK or JRE version 7 or version 8 must be installed
 in your environment; we recommend the Oracle JDK.
 
-.. rubric:: What Version of Node.JS is Required by CDAP?
-
+What Version of Node.JS is Required by CDAP?
+--------------------------------------------
 The version of Node.js must be from |node-js-version|; we recommend |recommended-node-js-version|.
 
 
 Hadoop
 ======
 
-.. rubric:: I have a Hadoop cluster in my data center, can I run CDAP that uses my Hadoop cluster?
-
+I have a Hadoop cluster in my data center, can I run CDAP that uses my Hadoop cluster?
+--------------------------------------------------------------------------------------
 Yes. You can install CDAP on your Hadoop cluster. See :ref:`install`.
 
-.. rubric:: What Hadoop distributions can CDAP run on?
-
+What Hadoop distributions can CDAP run on?
+------------------------------------------
 CDAP |version| has been tested on and supports CDH 5.0.0 through 5.4.x; HDP 2.0 through 2.3; 
 MapR 4.1 and 5.0, and Apache Bigtop 0.8.0. 
 
 
 .. _faq-cdap-user-groups:
 
-Issues, User Groups, Mailing Lists, and IRC Channel
-===================================================
+Issues, User Groups, Mailing Lists, IRC Channel
+===============================================
 
-.. rubric:: I've found a bug in CDAP. How do I file an issue?
-
+I've found a bug in CDAP. How do I file an issue?
+-------------------------------------------------
 We have a `JIRA for filing issues <https://issues.cask.co/browse/CDAP>`__.
 
-
-.. rubric:: What User Groups and Mailing Lists are available about CDAP?
-
+What User Groups and Mailing Lists are available about CDAP?
+------------------------------------------------------------
 - `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__
 
 The *cdap-user* mailing list is primarily for users using the product to develop
@@ -125,9 +124,8 @@ on the product, and should be used for all our design, architecture and technica
 discussions moving forward. This mailing list will also receive all JIRA and GitHub
 notifications.
 
-
-.. rubric:: Is CDAP on IRC?
-
+Is CDAP on IRC?
+---------------
 **CDAP IRC Channel:** #cdap on `irc.freenode.net <irc://irc.freenode.net:6667/cdap>`__.
 
 

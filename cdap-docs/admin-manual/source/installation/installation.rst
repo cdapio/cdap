@@ -211,6 +211,8 @@ Deployment Architectures
 
 ------------
 
+.. _deployment-architectures-ha:
+
 .. rubric:: CDAP High Availability and Highly Scalable Deployment
 
 **Note:** Each component in CDAP is horizontally scalable. This diagram presents the high

@@ -118,9 +118,9 @@ function usage() {
   echo
   echo "  Action (select one)"
   echo "    build                Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
-  echo "    build-github         Clean build and zip for placing on GitHub"
-  echo "    build-web            Clean build and zip for placing on docs.cask.co webserver"
-  echo "    build-docs           Clean build of docs"
+  echo "    build-github         Clean build and zip for placing on GitHub (no Javadocs)"
+  echo "    build-web            Clean build and zip for placing on docs.cask.co webserver (no Javadocs)"
+  echo "    build-docs           Clean build of docs (no Javadocs)"
   echo
   echo "    license-pdfs         Clean build of License Dependency PDFs"
   echo "    check-includes       Check if included files have changed from source"
@@ -468,6 +468,7 @@ function run_command() {
     build|build-github|build-web|build-docs)      "${1/-/_}";;
     check-includes|display-version)               "${1/-/_}";;
     license-pdfs)                                 "build_license_pdfs";;
-    *)                                           usage;;
+    docs)                                         "build_docs";;
+    *)                                            usage;;
   esac
 }

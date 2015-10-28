@@ -133,6 +133,7 @@ intersphinx_mapping = {
   'integrations': ('../../integrations/',         os.path.abspath(_intersphinx_mapping % 'integrations')),
   'examples':     ('../../examples-manual',       os.path.abspath(_intersphinx_mapping % 'examples-manual')),
   'reference':    ('../../reference-manual',      os.path.abspath(_intersphinx_mapping % 'reference-manual')),
+  'faq':          ('../../faq',                   os.path.abspath(_intersphinx_mapping % 'faq')),
 }
 
 extlinks = {
@@ -344,6 +345,7 @@ manuals_list = [
     ["integrations",          "Integrations",                    "",],
     ["examples-manual",       "Examples, Guides, and Tutorials", "",],
     ["reference-manual",      "Reference Manual",                "",],
+    ["faq",                   "FAQ",                             "",],
 ]
 manuals_dict = {}
 manual_titles_list = []
