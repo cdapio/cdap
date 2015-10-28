@@ -15,11 +15,23 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('CanvasController', function (MyAppDAGService, $scope, $modalStack, MyBottomPanelService) {
+  .service('MyBottomPanelService', function() {
 
     this.isCollapsed = true;
-    MyBottomPanelService.registerIsCollapsedCallback(function(isCollapsed) {
-      $scope.isCanvasScrollable = !isCollapsed;
-    });
+    this.isCollapsedCallbacks = [];
+
+    this.registerIsCollapsedCallback = function(callback) {
+      this.isCollapsedCallbacks.push(callback);
+    };
+    this.setIsCollapsed = function(value) {
+      this.isCollapsed = value;
+      this.callRegisteredCallbacks();
+    };
+
+    this.callRegisteredCallbacks = function() {
+      this.isCollapsedCallbacks.forEach(function(callback) {
+        callback(this.isCollapsed);
+      }.bind(this));
+    };
 
   });

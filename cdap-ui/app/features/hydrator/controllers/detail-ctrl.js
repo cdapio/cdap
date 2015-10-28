@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailController', function($scope, rPipelineDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, HydratorDetail, $timeout, MyNodeConfigService, $alert) {
+  .controller('HydratorDetailController', function($scope, rPipelineDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, HydratorDetail, $timeout, MyNodeConfigService, $alert, MyBottomPanelService) {
     $scope.GLOBALS = GLOBALS;
     $scope.template = rPipelineDetail.template;
     $scope.description = rPipelineDetail.description;
@@ -97,6 +97,16 @@ angular.module(PKG.name + '.feature.hydrator')
         MyNodeConfigService.setPlugin(plugin);
       }, 100);
     }
+    $scope.isMaximized = false;
+    $scope.externalCollapseToggle = function(value) {
+      if($scope.isMaximized) {
+        return;
+      } else {
+        $scope.isMaximized = false;
+        $scope.isCollapsed = value;
+      }
+    };
+    MyBottomPanelService.registerIsCollapsedCallback($scope.externalCollapseToggle);
     var params = {
       namespace: $state.params.namespace,
       appId: rPipelineDetail.name,
@@ -233,7 +243,6 @@ angular.module(PKG.name + '.feature.hydrator')
       }
     };
 
-
     $scope.nodes = [];
 
     function initializeDAG() {
@@ -286,5 +295,34 @@ angular.module(PKG.name + '.feature.hydrator')
         stream.type = 'Stream';
         return stream;
       }));
+
+    $scope.isCollapsed = false;
+
+    $scope.collapseToggle = function() {
+      $scope.isMaximized = false;
+      $scope.isCollapsed = !$scope.isCollapsed;
+    };
+
+    $scope.externalCollapseToggle = function(value) {
+      if($scope.isMaximized) {
+        return;
+      } else {
+        $scope.isMaximized = false;
+        $scope.isCollapsed = value;
+      }
+    };
+
+    $scope.isMaximized = false;
+
+    $scope.fullScreenToggle = function() {
+      $scope.isCollapsed = false;
+      $scope.isMaximized = !$scope.isMaximized;
+    };
+
+    $scope.collapsedTabClick = function() {
+      if($scope.isCollapsed) {
+        $scope.isCollapsed = false;
+      }
+    };
 
   });
