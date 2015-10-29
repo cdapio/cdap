@@ -15,8 +15,12 @@ CDAP FAQ: Applications
    :local:
    :backlinks: entry
    :class: faq
-   
- Analytics Pipeline with Hive, Spark, and CDAP
+
+
+General
+=======
+
+Analytics Pipeline with Hive, Spark, and CDAP
 ---------------------------------------------
 We are planning to build an anlytics pipeline with these stages:
 
@@ -55,6 +59,9 @@ for an example of database-to-CDAP Table. You will need to change the JDBC prope
 provided on that page. Alternatively, you can provide all of this information in the
 CDAP-UI. 
 
+
+Spark
+=====
 
 Spark Running in Distributed Mode
 ---------------------------------
