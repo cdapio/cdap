@@ -65,10 +65,10 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   private final MetricsContext programMetrics;
 
-  private final DynamicDatasetCache datasetCache;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final PluginInstantiator pluginInstantiator;
   private final PluginContext pluginContext;
+  protected final DynamicDatasetCache datasetCache;
 
   /**
    * Constructs a context without application template adapter support.
