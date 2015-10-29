@@ -121,7 +121,6 @@ body.theme-cdap.state-hydrator {
     min-height: ~"-webkit-calc(40vh - 113px)";
     min-height: ~"calc(40vh - 113px)";
     .transition(height 0.2s ease);
-    .transition(width 0.2s ease);
 
     @media (min-height: 800px) {
       min-height: ~"-moz-calc(60vh - 113px)";
@@ -157,7 +156,6 @@ body.theme-cdap.state-hydrator {
       overflow-y: scroll;
       overflow-x: hidden;
       z-index: 9999;
-
       div.console-tabs {
         border-top: 0;
       }
@@ -174,6 +172,7 @@ body.theme-cdap.state-hydrator {
       width: ~"-moz-calc(100vw - 130px)";
       width: ~"-webkit-calc(100vw - 130px)";
       width: ~"calc(100vw - 130px)";
+      .transition(width 0.1s ease);
     }
     &.expanded + .right-wrapper div.console:not(.maximized) {
       width: ~"-moz-calc(100vw - 290px)";
