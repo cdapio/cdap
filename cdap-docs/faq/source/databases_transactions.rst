@@ -2,11 +2,22 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+:titles-only-toc: true
+
 .. _faq-databases-transactions:
 
 ====================================
 CDAP FAQ: Databases and Transactions
 ====================================
+
+.. contents::
+   :depth: 2
+   :local:
+   :backlinks: entry
+   :class: faq
+
+Databases
+=========
 
 Understand the BufferingTable Undo API 
 --------------------------------------
@@ -45,6 +56,9 @@ state::
   a: 1
   b: 2
 
+
+Transactions
+============
 
 Transaction...is not in progress during HelloWorld
 --------------------------------------------------

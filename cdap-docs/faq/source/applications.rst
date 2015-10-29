@@ -2,13 +2,21 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+:titles-only-toc: true
+
 .. _faq-applications:
 
 ======================
 CDAP FAQ: Applications
 ======================
 
-Analytics Pipeline with Hive, Spark, and CDAP
+.. contents::
+   :depth: 2
+   :local:
+   :backlinks: entry
+   :class: faq
+   
+ Analytics Pipeline with Hive, Spark, and CDAP
 ---------------------------------------------
 We are planning to build an anlytics pipeline with these stages:
 

@@ -2,11 +2,19 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
+:titles-only-toc: true
+
 .. _faq-user-interface:
 
 ========================
 CDAP FAQ: User Interface
 ========================
+
+.. contents::
+   :depth: 2
+   :local:
+   :backlinks: entry
+   :class: faq
 
 Does CDAP support CORS?
 -----------------------

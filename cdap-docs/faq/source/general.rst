@@ -5,6 +5,8 @@
 
 :titles-only-toc: true
 
+.. _faq-general-questions:
+
 ===========================
 CDAP FAQ: General Questions
 ===========================
@@ -14,6 +16,7 @@ CDAP FAQ: General Questions
    :local:
    :backlinks: entry
    :class: faq
+
 
 Cask Data Application Platform
 ==============================

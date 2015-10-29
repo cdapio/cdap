@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-:titles_only-toc: true
+:titles-only-toc: true
 
 .. _faq-installation-startup:
 
@@ -15,6 +15,7 @@ CDAP FAQ: Installation and Startup
    :local:
    :backlinks: entry
    :class: faq
+
 
 Installation
 ============
