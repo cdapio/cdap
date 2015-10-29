@@ -198,7 +198,11 @@ final class ProgramResources {
 
       if (include) {
         result.add(resultTransform.apply(classInfo));
-        resourcesBaseURLs.add(getClassPathURL(classInfo.getResourceName(), classInfo.url()));
+        URL url = classInfo.url();
+        // URL shouldn't be null for ".class" file. Since url() is @Nullable, hence the check
+        if (url != null) {
+          resourcesBaseURLs.add(getClassPathURL(classInfo.getResourceName(), url));
+        }
       }
     }
 
@@ -210,7 +214,11 @@ final class ProgramResources {
       }
       // See if the resource base URL is already accepted through class filtering.
       // If it does, adds the resource name to the collection as well.
-      if (resourcesBaseURLs.contains(getClassPathURL(resourceInfo.getResourceName(), resourceInfo.url()))) {
+      URL url = resourceInfo.url();
+      // The url returned might be null under Java8. Apparently some resources that are inside lib/ext jars
+      // are not loadable through the underlying ClassLoader (ExtClassLoader).
+      // Since those resources won't be loadable anyway, hence it's ok to be ignored from the include list.
+      if (url != null && resourcesBaseURLs.contains(getClassPathURL(resourceInfo.getResourceName(), url))) {
         result.add(resultTransform.apply(resourceInfo));
       }
     }
