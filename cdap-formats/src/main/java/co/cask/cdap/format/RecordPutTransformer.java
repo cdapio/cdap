@@ -14,13 +14,12 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package co.cask.cdap.format;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Put;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import java.nio.ByteBuffer;
@@ -28,19 +27,29 @@ import javax.annotation.Nullable;
 
 /**
  * Transforms records into Puts.
- * @deprecated use co.cask.cdap.format.RecordPutTransformer instead.
  */
-@Deprecated
 public class RecordPutTransformer {
   private final String rowField;
   private final Schema outputSchema;
-
-  @VisibleForTesting
-  RecordPutTransformer(String rowField) {
-    this(rowField, null);
-  }
-
+  
   public RecordPutTransformer(String rowField, Schema outputSchema) {
+    if (outputSchema.getType() != Schema.Type.RECORD) {
+      throw new IllegalArgumentException("Schema must be a record instead of ''.");
+    }
+    Schema.Field schemaRowField = outputSchema.getField(rowField);
+    if (schemaRowField == null) {
+      throw new IllegalArgumentException("Row field must be present in the schema");
+    }
+    if (!schemaRowField.getSchema().isSimpleOrNullableSimple()) {
+      throw new IllegalArgumentException("Row field must be a simple type");
+    }
+
+    for (Schema.Field field : outputSchema.getFields()) {
+      if (!field.getSchema().isSimpleOrNullableSimple()) {
+        throw new IllegalArgumentException(
+          "Schema must only contain simple fields (boolean, int, long, float, double, bytes, string)");
+      }
+    }
     this.rowField = rowField;
     this.outputSchema = outputSchema;
   }

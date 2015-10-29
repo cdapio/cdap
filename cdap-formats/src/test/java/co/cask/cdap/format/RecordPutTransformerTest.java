@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package co.cask.cdap.format;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -32,9 +32,8 @@ public class RecordPutTransformerTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testNullRowkeyThrowsException() throws Exception {
-    RecordPutTransformer transformer = new RecordPutTransformer("key");
-
     Schema schema = Schema.recordOf("record", Schema.Field.of("key", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    RecordPutTransformer transformer = new RecordPutTransformer("key", schema);
 
     StructuredRecord record = StructuredRecord.builder(schema).build();
     transformer.toPut(record);
@@ -42,13 +41,13 @@ public class RecordPutTransformerTest {
 
   @Test
   public void testNullableFields() throws Exception {
-    RecordPutTransformer transformer = new RecordPutTransformer("key");
     Schema schema = Schema.recordOf(
       "record",
       Schema.Field.of("key", Schema.of(Schema.Type.INT)),
       Schema.Field.of("nullable", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
       Schema.Field.of("non_nullable", Schema.of(Schema.Type.STRING))
     );
+    RecordPutTransformer transformer = new RecordPutTransformer("key", schema);
 
     // valid record
     StructuredRecord record = StructuredRecord.builder(schema)
@@ -67,8 +66,6 @@ public class RecordPutTransformerTest {
 
   @Test
   public void testTransform() throws Exception {
-    RecordPutTransformer transformer = new RecordPutTransformer("stringField");
-
     Schema schema = Schema.recordOf(
       "record",
       Schema.Field.of("boolField", Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN))),
@@ -79,6 +76,7 @@ public class RecordPutTransformerTest {
       Schema.Field.of("bytesField", Schema.nullableOf(Schema.of(Schema.Type.BYTES))),
       Schema.Field.of("stringField", Schema.of(Schema.Type.STRING))
     );
+    RecordPutTransformer transformer = new RecordPutTransformer("stringField", schema);
 
     StructuredRecord record = StructuredRecord.builder(schema)
       .set("boolField", true)
@@ -104,10 +102,10 @@ public class RecordPutTransformerTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testRowKeyNotPresent() {
-    RecordPutTransformer transformer = new RecordPutTransformer("key", null);
     Schema schema = Schema.recordOf("record",
                                     Schema.Field.of("KEY", Schema.of(Schema.Type.STRING)),
                                     Schema.Field.of("Key", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));
+    RecordPutTransformer transformer = new RecordPutTransformer("key", schema);
     StructuredRecord record = StructuredRecord.builder(schema).set("KEY", "someKey").set("Key", "someOtherKey").build();
     transformer.toPut(record);
   }
@@ -127,7 +125,7 @@ public class RecordPutTransformerTest {
     Put put = transformer.toPut(record);
     Assert.assertEquals(1, put.getValues().size());
 
-    transformer = new RecordPutTransformer("id", null);
+    transformer = new RecordPutTransformer("id", inputSchema);
     put = transformer.toPut(record);
     Assert.assertEquals(2, put.getValues().size());
   }

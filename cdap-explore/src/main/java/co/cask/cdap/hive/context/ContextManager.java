@@ -38,6 +38,8 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.hive.datasets.DatasetSerDe;
+import co.cask.cdap.hive.stream.StreamSerDe;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Objects;
@@ -54,18 +56,38 @@ import javax.annotation.Nullable;
 
 /**
  * Stores/creates context for Hive queries to run in MapReduce jobs.
+ *
+ * Behavior is strange because this is used to get a Context in two places.
+ *
+ * The first is in the explore service, which will call
+ * {@link #saveContext(DatasetFramework, StreamAdmin, SystemDatasetInstantiatorFactory)} when it starts up.
+ * After that, the explore service can call initialize on the {@link DatasetSerDe} or {@link StreamSerDe},
+ * which will use this class to get back the saved context.
+ *
+ * The second place is in mapreduce jobs launched by Hive. In those scenarios, a context is created from the
+ * serialized cdap CConfiguration stored in the job's Hadoop Configuration.
  */
 public class ContextManager {
   private static Context savedContext;
 
+  /**
+   * Create and save a context, so that any call to {@link #getContext(Configuration)} that is made in this jvm
+   * will return the context created from this call.
+   */
   public static void saveContext(DatasetFramework datasetFramework, StreamAdmin streamAdmin,
                                  SystemDatasetInstantiatorFactory datasetInstantiatorFactory) {
     savedContext = new Context(datasetFramework, streamAdmin, datasetInstantiatorFactory);
   }
 
   /**
-   * Get the context of this JVM. If it has already been saved, return it, otherwise create one
-   * using the {@code conf} param, which contains serialized {@link co.cask.cdap.common.conf.CConfiguration} and
+   * If a context was saved using {@link #saveContext(DatasetFramework, StreamAdmin, SystemDatasetInstantiatorFactory)},
+   * returns the saved context. This is what happens in the Explore service.
+   * If no context was saved and the conf is not null, creates a context and returns it. The context must be closed by
+   * the caller. The context created will not be saved, meaning the time this method is called,
+   * a new context will be created. This is what happens in map reduce jobs launched by Hive.
+   * If no context was saved and the conf is null, null is returned.
+   *
+   * The {@code conf} param is expected to contain serialized {@link co.cask.cdap.common.conf.CConfiguration} and
    * {@link org.apache.hadoop.conf.Configuration} objects, as well as transaction information.
    *
    * @param conf configuration used to create a context, if necessary. If it is null, return the saved context, which
@@ -79,11 +101,12 @@ public class ContextManager {
       // by the DatasetSerDe.initialize method, which needs to access the context when it wants to write to a
       // dataset, so it can cache its name. In that case, conf will be null, and it won't be possible to create a
       // context.
-      savedContext = createContext(conf);
+      return createContext(conf);
     }
     return savedContext;
   }
 
+  // this method is called by the mappers/reducers of jobs launched by Hive.
   private static Context createContext(Configuration conf) throws IOException {
     // Create context needs to happen only when running in as a MapReduce job.
     // In other cases, ContextManager will be initialized using saveContext method.
@@ -175,6 +198,8 @@ public class ContextManager {
 
     @Override
     public void close() {
+      // zkClientService is null if used by the Explore service, since Explore manages the lifecycle of the zk service.
+      // it is not null if used by a mapreduce job launched by Hive.
       if (zkClientService != null) {
         zkClientService.stopAndWait();
       }

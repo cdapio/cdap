@@ -21,13 +21,14 @@ import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.service.datasets.EmailTableDefinition;
-import co.cask.cdap.explore.service.datasets.StructuredWritableDefinition;
 import co.cask.cdap.explore.service.datasets.TableWrapperDefinition;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import com.google.common.collect.Lists;
@@ -76,28 +77,12 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
 
     datasetFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "TableWrapper"),
                                new TableWrapperDefinition.Module());
-    datasetFramework.addModule(Id.DatasetModule.from(NAMESPACE_ID, "StructuredWritable"),
-                               new StructuredWritableDefinition.Module());
   }
 
   @AfterClass
   public static void stop() throws Exception {
     datasetFramework.deleteInstance(MY_TABLE);
     datasetFramework.deleteModule(Id.DatasetModule.from(NAMESPACE_ID, "TableWrapper"));
-    datasetFramework.deleteModule(Id.DatasetModule.from(NAMESPACE_ID, "StructuredWritable"));
-  }
-
-  @Test(expected = UnsupportedTypeException.class)
-  public void testStructuredRecordWritableFails() throws Exception {
-    Id.DatasetInstance instanceId = Id.DatasetInstance.from(NAMESPACE_ID, "badtable");
-    datasetFramework.addInstance("StructuredWritable", instanceId, DatasetProperties.EMPTY);
-
-    DatasetSpecification spec = datasetFramework.getDatasetSpec(instanceId);
-    try {
-      exploreTableManager.enableDataset(instanceId, spec);
-    } finally {
-      datasetFramework.deleteInstance(instanceId);
-    }
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -187,5 +172,33 @@ public class HiveExploreStructuredRecordTestRun extends BaseHiveExploreServiceTe
                Lists.newArrayList(new ColumnDesc("sender", "STRING", 1, null)),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("sljackson@boss.com")))
     );
+  }
+
+  @Test
+  public void testInsert() throws Exception {
+    Id.DatasetInstance copyTable = Id.DatasetInstance.from(NAMESPACE_ID, "emailCopy");
+    datasetFramework.addInstance(Table.class.getName(), copyTable, DatasetProperties.builder()
+      .add(Table.PROPERTY_SCHEMA, EmailTableDefinition.SCHEMA.toString())
+      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
+      .build());
+    try {
+      String command = String.format("insert into %s select * from %s",
+        getDatasetHiveName(copyTable), MY_TABLE_NAME);
+      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, command).get();
+      Assert.assertEquals(QueryStatus.OpStatus.FINISHED, result.getStatus().getStatus());
+
+      command = String.format("select id, subject, body, sender from %s", getDatasetHiveName(copyTable));
+      runCommand(NAMESPACE_ID, command,
+        true,
+        Lists.newArrayList(new ColumnDesc("id", "STRING", 1, null),
+                           new ColumnDesc("subject", "STRING", 2, null),
+                           new ColumnDesc("body", "STRING", 3, null),
+                           new ColumnDesc("sender", "STRING", 4, null)),
+        Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(
+          "email1", "this is the subject", "this is the body", "sljackson@boss.com")))
+      );
+    } finally {
+      datasetFramework.deleteInstance(copyTable);
+    }
   }
 }

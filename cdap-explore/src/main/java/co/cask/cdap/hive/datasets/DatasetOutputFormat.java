@@ -17,6 +17,12 @@
 package co.cask.cdap.hive.datasets;
 
 import co.cask.cdap.api.data.batch.RecordWritable;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.tephra.TransactionAware;
 import com.google.gson.Gson;
 import org.apache.hadoop.fs.FileSystem;
@@ -67,11 +73,25 @@ public class DatasetOutputFormat implements OutputFormat<Void, Text> {
     private final DatasetAccessor datasetAccessor;
     private final RecordWritable recordWritable;
     private final Type recordType;
+    private Schema recordSchema;
 
     public DatasetRecordWriter(DatasetAccessor datasetAccessor) {
       this.datasetAccessor = datasetAccessor;
       this.recordWritable = datasetAccessor.getDataset();
       this.recordType = recordWritable.getRecordType();
+      if (recordType == StructuredRecord.class) {
+        try {
+          DatasetSpecification datasetSpec = datasetAccessor.getDatasetSpec();
+          String schemaStr = datasetSpec.getProperty(DatasetProperties.SCHEMA);
+          // should never happen, as this should have been checked at table creation
+          if (schemaStr == null) {
+            throw new IllegalStateException("Dataset does not have the schema property.");
+          }
+          recordSchema = Schema.parseJson(schemaStr);
+        } catch (IOException | DatasetManagementException e) {
+          throw new RuntimeException("Unable to look up schema for dataset.", e);
+        }
+      }
     }
 
     @Override
@@ -79,7 +99,11 @@ public class DatasetOutputFormat implements OutputFormat<Void, Text> {
       if (value == null) {
         throw new IOException("Writable value is null.");
       }
-      recordWritable.write(new Gson().fromJson(value.toString(), recordType));
+      if (recordType == StructuredRecord.class) {
+        recordWritable.write(StructuredRecordStringConverter.fromJsonString(value.toString(), recordSchema));
+      } else {
+        recordWritable.write(new Gson().fromJson(value.toString(), recordType));
+      }
     }
 
     @Override
