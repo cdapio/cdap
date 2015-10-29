@@ -39,7 +39,7 @@ CDAP FAQ
 - |databases_transactions|_
 
 
-.. rubric:: Other Resources
+.. rubric:: Additional Resources
 
 **Check our issues database for known issues**
 
@@ -50,4 +50,7 @@ and using the search box in the upper-right, you can look for issues that contai
 
 .. image:: _images/faq-quick-search.png
    :align: center
-   
+
+**Ask the CDAP Community for assistance**
+
+.. include:: cdap-user-googlegroups.txt

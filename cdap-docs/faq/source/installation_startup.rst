@@ -233,3 +233,10 @@ to a particular router, and if you have both UI and router running on each node,
 use ``'127.0.0.1'``.
 
 
+Additional Resources
+====================
+
+Ask the CDAP Community for assistance
+-------------------------------------
+
+.. include:: cdap-user-googlegroups.txt
