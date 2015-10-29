@@ -27,13 +27,13 @@ body.theme-cdap.state-hydrator {
     }
 
     div.console {
-      min-height: 60vh;
+      // min-height: 60vh;
       div.console-tabs ul.nav-tabs li {
         margin-bottom: -1px;
       }
       div.console-type {
-        height: inherit;
-        min-height: inherit;
+        // height: inherit;
+        // min-height: inherit;
         // Avoid unnecessary horizontal scroll
         overflow-x: hidden;
         padding: 0;
@@ -120,7 +120,8 @@ body.theme-cdap.state-hydrator {
     min-height: ~"-moz-calc(40vh - 113px)";
     min-height: ~"-webkit-calc(40vh - 113px)";
     min-height: ~"calc(40vh - 113px)";
-    .transition(all 0.2s ease);
+    .transition(height 0.2s ease);
+    .transition(width 0.2s ease);
 
     @media (min-height: 800px) {
       min-height: ~"-moz-calc(60vh - 113px)";
@@ -156,6 +157,15 @@ body.theme-cdap.state-hydrator {
       overflow-y: scroll;
       overflow-x: hidden;
       z-index: 9999;
+
+      div.console-tabs {
+        border-top: 0;
+      }
+    }
+  }
+  div.console-inner {
+    @media (min-width: @screen-lg-min) {
+      position: relative;
     }
   }
   // When bottom panel is in minimized state, set width based on left panel state
