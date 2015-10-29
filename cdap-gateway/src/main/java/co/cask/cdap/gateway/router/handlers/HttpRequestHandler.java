@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Handler that handles HTTP requests and forwards to appropriate services. The service discovery is
@@ -66,6 +67,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   private final Map<WrappedDiscoverable, MessageSender> discoveryLookup;
   private final List<ProxyRule> proxyRules;
 
+  private final AtomicInteger exceptionsHandled = new AtomicInteger(0);
   private MessageSender chunkSender;
   private volatile boolean channelClosed;
 
@@ -156,6 +158,22 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, ExceptionEvent e)  {
     Throwable cause = e.getCause();
+
+    // avoid handling exception more than once from a handler, to avoid a possible infinite recursion
+    switch (exceptionsHandled.incrementAndGet()) {
+      case 1:
+        // if this is the first error, break and handle the error normally (below)
+        break;
+      case 2:
+        // if its the second time, log and return
+        LOG.error("Not handling exception due to already having handled an exception in Request Handler {}",
+                  ctx.getChannel(), cause);
+        // fall through
+      default:
+        // if its the 3rd time or more, simply return. don't log, since even logging can result
+        // in an exception and cause recursion
+        return;
+    }
 
     LOG.error("Exception raised in Request Handler {}", ctx.getChannel(), cause);
     if (ctx.getChannel().isConnected() && !channelClosed) {
