@@ -18,4 +18,11 @@
 
 source ../_common/common-build.sh
 
+# check_build_rst
+CHECK_INCLUDES=${TRUE}
+
+function test_includes() { 
+   check_build_rst
+}
+
 run_command ${1}

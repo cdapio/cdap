@@ -218,15 +218,22 @@ function build_extras() {
 }
 
 function set_mvn_environment() {
+  check_build_rst
   cd ${PROJECT_PATH}
   if [[ "${OSTYPE}" == "darwin"* ]]; then
     # TODO: hard-coded Java version 1.7
     export JAVA_HOME=$(/usr/libexec/java_home -v 1.7)
   fi
+}
+
+function check_build_rst() {
+  local current_directory=$(pwd)
+  cd ${PROJECT_PATH}
   # check BUILD.rst for changes
   BUILD_RST_PATH="${PROJECT_PATH}${BUILD_RST}"
   test_an_include "${BUILD_RST_HASH}" "${BUILD_RST_PATH}"
   echo
+  cd ${current_directory}
 }
 
 function check_includes() {

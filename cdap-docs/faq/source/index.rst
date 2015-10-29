@@ -9,34 +9,34 @@ CDAP FAQ
 ========
 
 
-.. |general| replace:: **General Questions:**
+.. |general| replace:: **General Questions**
 .. _general: general.html
 
-- |general|_ General FAQ questions
+- |general|_
 
 
-.. |installation_startup| replace:: **Installation and Startup:**
+.. |installation_startup| replace:: **Installation and Startup**
 .. _installation_startup: installation_startup.html
 
-- |installation_startup|_ Problems we've seen and answered
+- |installation_startup|_
 
 
-.. |applications| replace:: **Applications:**
+.. |applications| replace:: **Applications**
 .. _applications: applications.html
 
-- |applications|_ Problems we've seen and answered
+- |applications|_ 
 
 
-.. |user_interface| replace:: **User Interface:**
+.. |user_interface| replace:: **User Interface**
 .. _user_interface: user_interface.html
 
-- |user_interface|_ Problems we've seen and answered
+- |user_interface|_ 
 
 
-.. |databases_transactions| replace:: **Databases and Transactions:**
+.. |databases_transactions| replace:: **Databases and Transactions**
 .. _databases_transactions: databases_transactions.html
 
-- |databases_transactions|_ Problems we've seen and answered
+- |databases_transactions|_
 
 
 .. rubric:: Other Resources
