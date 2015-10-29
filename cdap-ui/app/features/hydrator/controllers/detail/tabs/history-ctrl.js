@@ -15,21 +15,19 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailHistoryController', function() {
-    // var params = {};
-    // angular.copy(HydratorDetail.params, params);
-    // params.scope = $scope;
-    //
-    // $scope.historyParams = {
-    //   appId: params.appId,
-    //   programId: params.workflowId || params.workerId
-    // };
-    //
-    // $scope.programType = HydratorDetail.programType;
-    //
-    // HydratorDetail.api.pollRuns(params)
-    //   .$promise
-    //   .then(function (res) {
-    //     $scope.runsHistory = res;
-    //   });
+  .controller('HydratorDetailHistoryController', function(DetailRunsStore, GLOBALS) {
+    this.setState = function() {
+      this.history = DetailRunsStore.getHistory();
+      var appType = DetailRunsStore.getAppType();
+      if (appType === GLOBALS.etlBatch) {
+        this.programId = DetailRunsStore.getParams().workflowId;
+        this.programType = 'WORKFLOWS';
+      } else if (appType === GLOBALS.etlRealtime) {
+        this.programId = DetailRunsStore.getParams().workerId;
+        this.programType = 'WORKER';
+      }
+      this.appId = DetailRunsStore.getParams().appId;
+    };
+    this.setState();
+    DetailRunsStore.registerOnChangeListener(this.setState.bind(this));
   });

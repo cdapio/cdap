@@ -96,7 +96,7 @@
     <div class="pull-left"
       ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlBatch && TopPanelCtrl.scheduleStatus === 'SCHEDULED'">
       <div class="btn"
-        ng-click="TopPanelCtrl.do('Stop')"
+        ng-click="TopPanelCtrl.do('Stop Schedule')"
         ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
         <span ng-if="TopPanelCtrl.appStatus !=='STOPPING'">Stop</span>
         <span ng-if="TopPanelCtrl.appStatus === 'STOPPING'">

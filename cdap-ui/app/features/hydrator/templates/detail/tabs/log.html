@@ -14,8 +14,6 @@
   the License.
 -->
 
-<!-- <div ng-controller="HydratorDetailLogController">
-  <my-log-viewer data-params="logsGenericParams"></my-log-viewer>
-</div> -->
-
-<h1>Logs</h1>
+<div ng-controller="HydratorDetailLogController as LogsCtrl">
+  <my-log-viewer data-params="LogsCtrl.logsParams"></my-log-viewer>
+</div>

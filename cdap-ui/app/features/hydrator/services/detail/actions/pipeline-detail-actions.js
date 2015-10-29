@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- 
+
 angular.module(PKG.name + '.feature.hydrator')
   .service('PipelineDetailActionFactory', function(PipelineDetailDispatcher) {
     var dispatcher = PipelineDetailDispatcher.getDispatcher();
@@ -29,7 +29,7 @@ angular.module(PKG.name + '.feature.hydrator')
       api.doAction(angular.extend(params, { action: 'stop' }), {});
     };
     this.suspendSchedule = function(api, params) {
-      api.scheduleSuspend(params, {});
+      return api.scheduleSuspend(params, {}).$promise;
     };
 
     this.pollRuns = function(api, params) {

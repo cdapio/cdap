@@ -28,7 +28,7 @@ angular.module(PKG.name + '.feature.hydrator')
         },
         params: app.params || {},
         scheduleParams: app.scheduleParams || {},
-        logsParams: app.logParams || {},
+        logsParams: app.logsParams || {},
         configJson: app.configJson || {},
         api: app.api,
         type: app.type,
@@ -42,14 +42,13 @@ angular.module(PKG.name + '.feature.hydrator')
     this.changeListeners = [];
 
     this.getRuns = function() {
-      return this.state.runs;
+      return this.state.runs.list;
     };
     this.getLatestRun = function() {
-      return this.state.runs[0];
+      return this.state.runs.list[0];
     };
-    this.getHistory = function() {
-      return this.state.runs;
-    };
+    this.getHistory = this.getRuns;
+
     this.getStatus = function() {
       return myHelpers.objectQuery(this.state, 'runs', 'latest', 'status') || '';
     };
@@ -83,6 +82,9 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getStatistics = function() {
       return this.state.statistics;
     };
+    this.getAppType = function() {
+      return this.state.type;
+    };
     this.registerOnChangeListener = function(callback) {
       this.changeListeners.push(callback);
     };
@@ -102,7 +104,7 @@ angular.module(PKG.name + '.feature.hydrator')
         latest: runs[0],
         runsCount: runs.length
       };
-      this.state.logsParams.runid = this.state.runs.latest.runid;
+      this.state.logsParams.runId = this.state.runs.latest.properties.ETLMapReduce;
       this.emitChange();
     };
     this.setStatistics = function(statistics) {

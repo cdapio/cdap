@@ -15,22 +15,10 @@
  */
 
  angular.module(PKG.name + '.feature.hydrator')
-   .controller('HydratorDetailLogController', function() {
-     //
-    //  $scope.loadingNext = true;
-    //  var logsParams = {};
-    //  var runsParams = {};
-    //  $scope.logsGenericParams = {};
-    //  angular.copy(HydratorDetail.params, runsParams);
-    //  angular.copy(HydratorDetail.logsParams, logsParams);
-    //  angular.copy(HydratorDetail.logsGenericParams, $scope.logsGenericParams);
-    //  logsParams.scope = $scope;
-     //
-    //  HydratorDetail.logsApi.pollLatestRun(logsParams)
-    //    .$promise
-    //    .then(function (runs) {
-    //      if (runs.length === 0 || (runs.length && $scope.logsGenericParams.runId ===runs[0].runid)) { return; }
-    //      $scope.logsGenericParams.runId = runs[0].runid;
-    //    });
-
+   .controller('HydratorDetailLogController', function(DetailRunsStore) {
+     this.setState = function() {
+        this.logsParams = DetailRunsStore.getLogsParams();
+      };
+      this.setState();
+      DetailRunsStore.registerOnChangeListener(this.setState.bind(this));
    });

@@ -22,4 +22,5 @@ angular.module(PKG.name + '.feature.hydrator')
       return;
     }
     MyAppDAGService.setNodesAndConnectionsFromDraft(rPipelineDetail);
+    this.isScrollable = true;
   });

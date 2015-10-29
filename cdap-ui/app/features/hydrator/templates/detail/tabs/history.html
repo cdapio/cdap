@@ -14,13 +14,12 @@
   the License.
 -->
 
-<!-- <div ng-controller="HydratorDetailHistoryController">
-  <my-program-history
-    data-runs="runsHistory"
-    data-type="{{ programType }}"
-    data-app-id="historyParams.appId"
-    data-program-id="historyParams.programId"
-    class="history-table"></my-program-history>
-</div> -->
+<div ng-controller="HydratorDetailHistoryController as HistoryCtrl">
 
-<h1>History</h1>
+  <my-program-history
+    data-runs="HistoryCtrl.history"
+    data-type="{{ HistoryCtrl.programType }}"
+    data-app-id="HistoryCtrl.appId"
+    data-program-id="HistoryCtrl.programId"
+    class="history-table"></my-program-history>
+</div>

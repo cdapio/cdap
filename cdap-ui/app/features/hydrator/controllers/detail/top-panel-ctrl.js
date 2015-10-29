@@ -33,10 +33,54 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.setScheduleStatus = function() {
       this.scheduleStatus = DetailNonRunsStore.getScheduleStatus();
+      this.appStatus = this.scheduleStatus;
     };
     this.setAppStatus();
     this.setScheduleStatus();
-
+    this.do = function(action) {
+      switch(action) {
+        case 'Start':
+          this.appStatus = 'STARTING';
+          if (this.app.type === GLOBALS.etlBatch) {
+            PipelineDetailActionFactory.schedulePipeline(
+              DetailRunsStore.getApi(),
+              DetailRunsStore.getScheduleParams()
+            );
+          } else if (this.app.type === GLOBALS.etlRealtime) {
+            PipelineDetailActionFactory.start(
+              DetailRunsStore.getApi(),
+              DetailRunsStore.getParams()
+            );
+          }
+          break;
+        case 'Run Once':
+          this.appStatus = 'STARTING';
+          PipelineDetailActionFactory.startPipeline(
+            DetailRunsStore.getApi(),
+            DetailRunsStore.getParams()
+          );
+          break;
+        case 'Stop Schedule':
+          PipelineDetailActionFactory.suspendSchedule(
+            DetailRunsStore.getApi(),
+            DetailRunsStore.getScheduleParams()
+          )
+            .then(function() {
+              PipelineDetailActionFactory.fetchScheduleStatus(
+                DetailRunsStore.getApi(),
+                DetailRunsStore.getScheduleParams()
+              );
+            });
+          break;
+        case 'Stop':
+          this.appStatus = 'STOPPING';
+          PipelineDetailActionFactory.stopPipeline(
+            DetailRunsStore.getApi(),
+            DetailRunsStore.getParams()
+          );
+          break;
+      }
+    };
     DetailRunsStore.registerOnChangeListener(this.setAppStatus.bind(this));
     DetailNonRunsStore.registerOnChangeListener(this.setScheduleStatus.bind(this));
   });
