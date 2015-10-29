@@ -32,10 +32,7 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
-import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
-import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.WorkerLoggingContext;
@@ -44,6 +41,7 @@ import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -69,7 +67,6 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
   private volatile int instanceCount;
   private final StreamWriter streamWriter;
   private final Map<String, Plugin> plugins;
-  private final DynamicDatasetCache datasetCache;
 
   public BasicWorkerContext(WorkerSpecification spec, Program program, RunId runId, int instanceId,
                             int instanceCount, Arguments runtimeArgs,
@@ -93,10 +90,6 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
     }
     this.streamWriter = streamWriterFactory.create(new Id.Run(program.getId(), runId.getId()), getOwners());
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
-    this.datasetCache = new MultiThreadDatasetCache(
-      new SystemDatasetInstantiator(datasetFramework, getProgram().getClassLoader(), getOwners()),
-      transactionSystemClient, Id.Namespace.from(program.getNamespaceId()),
-      runtimeArgs.asMap(), getProgramMetrics(), null);
   }
 
   private LoggingContext createLoggingContext(Id.Program programId, RunId runId) {
@@ -156,12 +149,6 @@ public class BasicWorkerContext extends AbstractContext implements WorkerContext
 
   public void setInstanceCount(int instanceCount) {
     this.instanceCount = instanceCount;
-  }
-
-  @Override
-  public void close() {
-    super.close();
-    datasetCache.close();
   }
 
   @Override
