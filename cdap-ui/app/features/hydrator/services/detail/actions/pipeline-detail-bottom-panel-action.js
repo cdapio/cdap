@@ -13,12 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+ 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailController', function(DetailRunsStore, rPipelineDetail, PipelineDetailActionFactory) {
-    DetailRunsStore.init(rPipelineDetail);
-    PipelineDetailActionFactory.pollRuns(
-      DetailRunsStore.getApi(),
-      DetailRunsStore.getParams()
-    );
+  .service('PipelineDetailBottomPanelActionFactory', function(PipelineDetailBottomPanelDispatcher) {
+    var dispatcher = PipelineDetailBottomPanelDispatcher.getDispatcher();
+    this.collapse = function() {
+      dispatcher.dispatch('onBottomPanelToggled', {state: 0});
+    };
+    this.expand = function() {
+      dispatcher.dispatch('onBottomPanelToggled', {state: 1});
+    };
+    this.maximize = function() {
+      dispatcher.dispatch('onBottomPanelToggled', {state: 2});
+    };
   });

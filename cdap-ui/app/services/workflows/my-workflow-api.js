@@ -36,6 +36,9 @@ angular.module(PKG.name + '.services')
       status: myHelpers.getConfig('GET', 'REQUEST', basepath + '/status'),
       start: myHelpers.getConfig('POST', 'REQUEST', basepath + '/start'),
       stop: myHelpers.getConfig('POST', 'REQUEST', basepath + '/stop'),
+      // Basically a utility/shorthand for the above three actions.
+      doAction: myHelpers.getConfig('POST', 'REQUEST', basepath + '/:action'),
+
       pollStatus: myHelpers.getConfig('GET', 'POLL', basepath + '/status'),
 
       runs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs', true),
@@ -61,7 +64,6 @@ angular.module(PKG.name + '.services')
       getUserNodeToken: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/nodes/:nodeId/token?scope=user'),
       getSystemNodeToken: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/nodes/:nodeId/token?scope=system'),
       getStatistics: myHelpers.getConfig('GET', 'REQUEST', basepath + '/statistics'),
-      pollStatistics: myHelpers.getConfig('GET', 'POLL', basepath + '/statistics'),
-      doAction: myHelpers.getConfig('POST', 'REQUEST', basepath + '/:action')
+      pollStatistics: myHelpers.getConfig('GET', 'POLL', basepath + '/statistics')
     });
   });

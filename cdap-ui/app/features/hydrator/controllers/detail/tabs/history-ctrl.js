@@ -15,21 +15,21 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailHistoryController', function($scope, HydratorDetail) {
-    var params = {};
-    angular.copy(HydratorDetail.params, params);
-    params.scope = $scope;
-
-    $scope.historyParams = {
-      appId: params.appId,
-      programId: params.workflowId || params.workerId
-    };
-
-    $scope.programType = HydratorDetail.programType;
-
-    HydratorDetail.api.pollRuns(params)
-      .$promise
-      .then(function (res) {
-        $scope.runsHistory = res;
-      });
+  .controller('HydratorDetailHistoryController', function() {
+    // var params = {};
+    // angular.copy(HydratorDetail.params, params);
+    // params.scope = $scope;
+    //
+    // $scope.historyParams = {
+    //   appId: params.appId,
+    //   programId: params.workflowId || params.workerId
+    // };
+    //
+    // $scope.programType = HydratorDetail.programType;
+    //
+    // HydratorDetail.api.pollRuns(params)
+    //   .$promise
+    //   .then(function (res) {
+    //     $scope.runsHistory = res;
+    //   });
   });
