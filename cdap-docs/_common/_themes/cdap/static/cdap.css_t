@@ -429,7 +429,7 @@ div.table-block-example.container table.docutils tr.row-odd {
   background-color: #E0E0E0;
 }
 
-/* Triple-table: Make even row with white border */
+/* -- Triple-table: Make even row with white border --------------------------- */
 
 div.table-block-example.container table.triple-table.docutils tr.row-even td {
   border-bottom: 1px solid white;
@@ -459,7 +459,36 @@ div.table-block-example.container table.triple-table.docutils tr:first-of-type t
   border-bottom: 1px solid #aaa;
 }
 
-/* -- Styles to hide navigation --- */
+/* -- FAQ --------------------------------------------------------------------- */
+
+table.faq-table.docutils tr.row-odd {
+  background-color: #F9FAFB;
+ }
+
+table.faq-table.docutils tr.row-odd th.stub {
+    padding-bottom: 5px;
+}
+
+table.faq-table.docutils tr.row-odd td {
+    padding-bottom: 5px;
+}
+
+table.faq-table.docutils tr.row-even th.stub {
+    padding-top: 5px;
+    border-bottom: 0px;
+}
+
+table.faq-table.docutils tr.row-even td {
+    padding-top: 5px;
+    border-bottom: 0px;
+}
+
+table.faq-table.docutils tr.row-odd div.highlight pre {
+    background-color: white;
+}
+
+
+/* -- Styles to hide navigation ----------------------------------------------- */
 
 div.documentwrapper-hidden {
     margin-top: 0px;
