@@ -58,6 +58,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
+import co.cask.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.schedule.DistributedSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
@@ -71,7 +72,7 @@ import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
-import co.cask.cdap.logging.run.AppFabricServiceManager;
+import co.cask.cdap.logging.run.InMemoryAppFabricServiceManager;
 import co.cask.cdap.logging.run.InMemoryDatasetExecutorServiceManager;
 import co.cask.cdap.logging.run.InMemoryExploreServiceManager;
 import co.cask.cdap.logging.run.InMemoryLogSaverServiceManager;
@@ -143,7 +144,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                mapBinder.addBinding(Constants.Service.METRICS)
                                         .to(InMemoryMetricsServiceManager.class);
                                mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
-                                        .to(AppFabricServiceManager.class);
+                                        .to(InMemoryAppFabricServiceManager.class);
                                mapBinder.addBinding(Constants.Service.STREAMS)
                                         .to(InMemoryStreamServiceManager.class);
                                mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
@@ -194,7 +195,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                mapBinder.addBinding(Constants.Service.METRICS)
                                         .to(InMemoryMetricsServiceManager.class);
                                mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
-                                        .to(AppFabricServiceManager.class);
+                                        .to(InMemoryAppFabricServiceManager.class);
                                mapBinder.addBinding(Constants.Service.STREAMS)
                                         .to(InMemoryStreamServiceManager.class);
                                mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
