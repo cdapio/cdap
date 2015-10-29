@@ -46,15 +46,15 @@ public interface Containers {
   public static final class ContainerInfo {
     private final String type;
     private final String name;
-    private final int instance;
+    private final Integer instance;
     private final String container;
     private final String host;
-    private final int memory;
-    private final int virtualCores;
+    private final Integer memory;
+    private final Integer virtualCores;
     private final Integer debugPort;
 
-    public ContainerInfo(ContainerType type, String name, int instance, String container,
-                  String host, int memory, int virtualCores, Integer debugPort) {
+    public ContainerInfo(ContainerType type, String name, Integer instance, String container,
+                  String host, Integer memory, Integer virtualCores, Integer debugPort) {
       this.type = type.name().toLowerCase();
       this.name = name;
       this.instance = instance;
@@ -88,7 +88,7 @@ public interface Containers {
       return name;
     }
 
-    public int getInstance() {
+    public Integer getInstance() {
       return instance;
     }
 
@@ -100,11 +100,11 @@ public interface Containers {
       return host;
     }
 
-    public int getMemory() {
+    public Integer getMemory() {
       return memory;
     }
 
-    public int getVirtualCores() {
+    public Integer getVirtualCores() {
       return virtualCores;
     }
 
