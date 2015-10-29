@@ -59,8 +59,8 @@ public class AppFabricServiceManager extends AbstractDistributedMasterServiceMan
     SystemServiceLiveInfo.Builder builder = SystemServiceLiveInfo.builder();
 
     Containers.ContainerInfo containerInfo = new Containers.ContainerInfo(Containers.ContainerType.SYSTEM_SERVICE,
-                                                                          serviceName, 0, "N/A", hostname.getHostName(),
-                                                                          0, 0, null);
+                                                                          serviceName, null, null,
+                                                                          hostname.getHostName(), null, null, null);
     builder.addContainer(containerInfo);
     return builder.build();
   }
