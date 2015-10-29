@@ -921,6 +921,11 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Verify both runs should be marked "KILLED".
     verifyProgramRuns(programId, "killed", 1);
 
+    Id.Program customActionId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.CUSTOM_ACTION, "SimpleAction");
+
+    // Verify the custom action runs are marked as "KILLED".
+    verifyProgramRuns(customActionId, "killed", 1);
+
     // Test the "COMPLETE" state of the Workflow.
     File instanceFile = new File(tmpFolder.newFolder() + "/instance.file");
     propertyMap = ImmutableMap.of("simple.action.file", instanceFile.getAbsolutePath(),
@@ -938,12 +943,18 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Verify that Workflow should move to "COMPLETED" state.
     verifyProgramRuns(programId, "completed");
 
+    // Verify that custom action is marked as "COMPLETED".
+    verifyProgramRuns(customActionId, "completed");
+
     // Test the "FAILED" state of the program.
     propertyMap = ImmutableMap.of("ThrowError", "true");
     startProgram(programId, propertyMap);
 
     // Verify that the Workflow should be marked as "FAILED".
     verifyProgramRuns(programId, "failed");
+
+    // Verify that custom action is marked as "FAILED".
+    verifyProgramRuns(customActionId, "failed");
   }
 
   private String createConditionInput(String folderName, int numGoodRecords, int numBadRecords) throws IOException {
@@ -1098,6 +1109,31 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(2, workflowHistoryRuns.size());
     Assert.assertEquals(2, recordVerifierRuns.size());
     Assert.assertEquals(1, wordCountRuns.size());
+
+    Id.Program customActionId = Id.Program.from(TEST_NAMESPACE2, conditionalWorkflowApp, ProgramType.CUSTOM_ACTION,
+                                                "iffork_one");
+    List<RunRecord> customActionHistoryRuns = getProgramRuns(customActionId, "completed");
+    Assert.assertEquals(1, customActionHistoryRuns.size());
+
+    customActionId = Id.Program.from(TEST_NAMESPACE2, conditionalWorkflowApp, ProgramType.CUSTOM_ACTION,
+                                     "iffork_another");
+    customActionHistoryRuns = getProgramRuns(customActionId, "completed");
+    Assert.assertEquals(1, customActionHistoryRuns.size());
+
+    customActionId = Id.Program.from(TEST_NAMESPACE2, conditionalWorkflowApp, ProgramType.CUSTOM_ACTION,
+                                     "elsefork_one");
+    customActionHistoryRuns = getProgramRuns(customActionId, "completed");
+    Assert.assertEquals(1, customActionHistoryRuns.size());
+
+    customActionId = Id.Program.from(TEST_NAMESPACE2, conditionalWorkflowApp, ProgramType.CUSTOM_ACTION,
+                                     "elsefork_another");
+    customActionHistoryRuns = getProgramRuns(customActionId, "completed");
+    Assert.assertEquals(1, customActionHistoryRuns.size());
+
+    customActionId = Id.Program.from(TEST_NAMESPACE2, conditionalWorkflowApp, ProgramType.CUSTOM_ACTION,
+                                     "elsefork_third");
+    customActionHistoryRuns = getProgramRuns(customActionId, "completed");
+    Assert.assertEquals(1, customActionHistoryRuns.size());
   }
 
   @Test

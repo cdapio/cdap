@@ -69,7 +69,7 @@ public class WorkflowAppWithErrorRuns extends AbstractApplication {
           TimeUnit.MILLISECONDS.sleep(50);
         }
       } catch (Exception e) {
-        // no-op
+        throw new RuntimeException(e);
       }
     }
   }

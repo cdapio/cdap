@@ -34,6 +34,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -54,6 +55,8 @@ import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramType;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
@@ -63,6 +66,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -218,8 +222,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     httpService.stopAndWait();
   }
 
-  private void executeAction(WorkflowActionNode node,
-                             InstantiatorFactory instantiator, final ClassLoader classLoader,
+  private void executeAction(WorkflowActionNode node, InstantiatorFactory instantiator, final ClassLoader classLoader,
                              WorkflowToken token) throws Exception {
 
     final SchedulableProgramType programType = node.getProgram().getProgramType();
@@ -381,13 +384,46 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     }
   }
 
+  private void executeCustomAction(WorkflowActionNode actionNode, InstantiatorFactory instantiator,
+                                   ClassLoader classLoader, WorkflowToken token) throws Exception {
+    String customActionName = actionNode.getProgram().getProgramName();
+    RunId customActionRunId = RunIds.generate();
+    long startTimeInSeconds = RunIds.getTime(customActionRunId, TimeUnit.SECONDS);
+    Id.Program customActionId = Id.Program.from(workflowId.getApplication(), ProgramType.CUSTOM_ACTION,
+                                                customActionName);
+
+    store.setWorkflowProgramStart(customActionId, customActionRunId.getId(), workflowId.getId(), runId.getId(),
+                                  actionNode.getNodeId(), startTimeInSeconds, null);
+
+    ProgramRunStatus runStatus = ProgramRunStatus.COMPLETED;
+
+    try {
+      executeAction(actionNode, instantiator, classLoader, token);
+    } catch (Throwable t) {
+      runStatus = ProgramRunStatus.FAILED;
+      if (Iterables.size(Iterables.filter(Throwables.getCausalChain(t), InterruptedException.class)) > 0) {
+        runStatus = ProgramRunStatus.KILLED;
+      }
+      Throwables.propagateIfPossible(t, Exception.class);
+      throw Throwables.propagate(t);
+    } finally {
+      store.setStop(customActionId, customActionRunId.getId(),
+                    TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()), runStatus);
+    }
+  }
+
   private void executeNode(ApplicationSpecification appSpec, WorkflowNode node, InstantiatorFactory instantiator,
                            ClassLoader classLoader, WorkflowToken token) throws Exception {
     WorkflowNodeType nodeType = node.getType();
     ((BasicWorkflowToken) token).setCurrentNode(node.getNodeId());
     switch (nodeType) {
       case ACTION:
-        executeAction((WorkflowActionNode) node, instantiator, classLoader, token);
+        WorkflowActionNode actionNode = (WorkflowActionNode) node;
+        if (actionNode.getProgram().getProgramType() == SchedulableProgramType.CUSTOM_ACTION) {
+          executeCustomAction(actionNode, instantiator, classLoader, token);
+        } else {
+          executeAction((WorkflowActionNode) node, instantiator, classLoader, token);
+        }
         break;
       case FORK:
         executeFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader, token);
