@@ -74,8 +74,12 @@ body.state-dashboard {
         }
       }
     }
+
     .cdap-subnav-end + ul.slanted-tabs {
       li.active {
+        > a, > a:hover, > a:focus {
+          cursor: pointer;
+        }
         .dropdown-menu {
           background-color: transparent;
           border: 0;
@@ -145,10 +149,17 @@ body.state-dashboard {
           overflow: hidden;
           text-overflow: ellipsis;
           min-width: 80px;
+          text-align: center;
+
           // A
           color: @cdap-gray;
-          span.fa {
+          span.dtitle {
             position: relative;
+          }
+          span.fa {
+            position: absolute;
+            top: 1px;
+            left: -10px;
             z-index: 5;
           }
         }

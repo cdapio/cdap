@@ -24,7 +24,6 @@
 </aside>
 
 <div class="cdap-subnav-end"></div>
-
 <ul class="nav nav-tabs slanted-tabs" role="tablist">
   <li role="presentation" ng-class="{'active': dashboards.activeIndex == 'system'}">
     <a href="" ng-click="activeTabClick($event, 'system')" role="tab" data-toggle="tab"> System </a>
@@ -40,8 +39,9 @@
               tooltip-placement="top"
               tooltip-append-to-body="true"
               tooltip-enable="dashboard.title.length > 21">{{dashboard.title | myEllipsis: 21}}
+          <span class="fa fa-caret-down"></span>
         </span>
-        <span class="fa fa-caret-down"></span>
+
     </a>
     <div is-open="dashboard.isopen"
           dropdown>
@@ -49,6 +49,5 @@
     </div>
   </li>
 </ul>
-
 
 <ui-view role="tabpanel"/>
