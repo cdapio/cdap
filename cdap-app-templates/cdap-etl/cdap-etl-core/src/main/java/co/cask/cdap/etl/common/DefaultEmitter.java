@@ -16,11 +16,11 @@
 
 package co.cask.cdap.etl.common;
 
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
-import com.google.common.collect.Lists;
+import co.cask.cdap.etl.api.StageMetrics;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -33,11 +33,11 @@ import java.util.List;
 public class DefaultEmitter<T> implements Emitter<T>, Iterable<T> {
   private final List<T> entryList;
   private final List<InvalidEntry<T>> errorList;
-  private final Metrics metrics;
+  private final StageMetrics metrics;
 
-  public DefaultEmitter(Metrics metrics) {
-    this.entryList = Lists.newArrayList();
-    this.errorList = Lists.newArrayList();
+  public DefaultEmitter(StageMetrics metrics) {
+    this.entryList = new ArrayList<>();
+    this.errorList = new ArrayList<>();
     this.metrics = metrics;
   }
 

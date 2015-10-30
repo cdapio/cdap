@@ -55,6 +55,7 @@ public class ValidatorTransformTest {
         "         isValid = false; errMsg = \"content length >1MB\"; errCode = 10;" +
         "      }" +
         "      context.getMetrics().count(\"total.processed\", 1);" +
+        "      context.getMetrics().pipelineCount(\"total.processed\", 1);" +
         "      context.getLogger().info(\"Test Log from Validator Transform\");" +
         "      return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
         "   };";
@@ -63,7 +64,7 @@ public class ValidatorTransformTest {
 
     ValidatorTransform transform = new ValidatorTransform(config);
     MockMetrics metrics = new MockMetrics();
-    transform.setUpInitialScript(new MockTransformContext(new HashMap<String, String>(), metrics),
+    transform.setUpInitialScript(new MockTransformContext(new HashMap<String, String>(), metrics, "validator.1."),
                                  ImmutableList.<Validator>of(new CoreValidator()));
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
 
@@ -99,5 +100,6 @@ public class ValidatorTransformTest {
     Assert.assertEquals(1, emitter.getEmitted().size());
     Assert.assertEquals(3, emitter.getErrors().size());
     Assert.assertEquals(4, metrics.getCount("total.processed"));
+    Assert.assertEquals(4, metrics.getCount("validator.1.total.processed"));
   }
 }

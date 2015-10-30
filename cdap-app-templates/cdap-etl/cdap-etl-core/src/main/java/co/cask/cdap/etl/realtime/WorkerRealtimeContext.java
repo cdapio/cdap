@@ -20,11 +20,12 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
+import co.cask.cdap.etl.common.AbstractTransformContext;
 
 /**
  * Implementation of {@link RealtimeContext} for {@link Worker} driver.
  */
-public class WorkerRealtimeContext extends RealtimeTransformContext implements RealtimeContext {
+public class WorkerRealtimeContext extends AbstractTransformContext implements RealtimeContext {
   private final WorkerContext context;
 
   public WorkerRealtimeContext(WorkerContext context, Metrics metrics, String pluginPrefix) {

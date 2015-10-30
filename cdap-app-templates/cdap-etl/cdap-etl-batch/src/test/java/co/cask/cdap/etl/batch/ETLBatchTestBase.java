@@ -77,7 +77,7 @@ import java.util.List;
 /**
  * Base test class that sets up plugins and the batch template.
  */
-public class BaseETLBatchTest extends TestBase {
+public class ETLBatchTestBase extends TestBase {
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
@@ -85,8 +85,14 @@ public class BaseETLBatchTest extends TestBase {
   protected static final Id.Artifact APP_ARTIFACT_ID = Id.Artifact.from(Id.Namespace.DEFAULT, "etlbatch", "3.2.0");
   protected static final ArtifactSummary ETLBATCH_ARTIFACT = new ArtifactSummary("etlbatch", "3.2.0");
 
+  private static int startCount;
+
   @BeforeClass
   public static void setupTest() throws Exception {
+    if (startCount++ > 0) {
+      return;
+    }
+
     // add the artifact for etl batch app
     addAppArtifact(APP_ARTIFACT_ID, ETLBatchApplication.class,
       BatchSource.class.getPackage().getName(),

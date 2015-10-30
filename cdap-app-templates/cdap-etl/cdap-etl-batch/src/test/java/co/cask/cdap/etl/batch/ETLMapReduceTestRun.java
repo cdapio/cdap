@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests for ETLBatch.
  */
-public class ETLMapReduceTest extends BaseETLBatchTest {
+public class ETLMapReduceTestRun extends ETLBatchTestBase {
 
   @Test
   public void testInvalidTransformConfigFailsToDeploy() {

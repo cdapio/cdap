@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test for {@link SnapshotFileBatchSink}.
  */
-public class ETLSnapshotTest extends BaseETLBatchTest {
+public class ETLSnapshotTestRun extends ETLBatchTestBase {
   private static final Schema SCHEMA = Schema.recordOf(
     "event",
     Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
@@ -65,7 +65,7 @@ public class ETLSnapshotTest extends BaseETLBatchTest {
   @Test
   @Category(SlowTests.class)
   public void testMultiSnapshotOutput() throws Exception {
-    String tableName = "inputTable";
+    String tableName = "SnapshotInputTable";
     ETLStage source = new ETLStage("Table", ImmutableMap.<String, String>builder()
       .put(Properties.Table.NAME, tableName)
       .put(Properties.Table.PROPERTY_SCHEMA, SCHEMA.toString())
