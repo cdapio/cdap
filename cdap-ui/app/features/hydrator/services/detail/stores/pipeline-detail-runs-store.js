@@ -32,6 +32,7 @@ angular.module(PKG.name + '.feature.hydrator')
         configJson: app.configJson || {},
         api: app.api,
         type: app.type,
+        metricProgramType: app.metricProgramType,
         statistics: '',
         name: app.name,
         description: app.description
@@ -85,6 +86,9 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getAppType = function() {
       return this.state.type;
     };
+    this.getMetricProgramType = function() {
+      return this.state.metricProgramType;
+    };
     this.registerOnChangeListener = function(callback) {
       this.changeListeners.push(callback);
     };
@@ -104,7 +108,11 @@ angular.module(PKG.name + '.feature.hydrator')
         latest: runs[0],
         runsCount: runs.length
       };
-      this.state.logsParams.runId = this.state.runs.latest.properties.ETLMapReduce;
+      if (this.state.type === GLOBALS.etlBatch) {
+        this.state.logsParams.runId = this.state.runs.latest.properties.ETLMapReduce;
+      } else {
+        this.state.logsParams.runId = this.state.runs.latest.runid;
+      }
       this.emitChange();
     };
     this.setStatistics = function(statistics) {
@@ -115,6 +123,7 @@ angular.module(PKG.name + '.feature.hydrator')
       var appConfig = {};
       var appLevelParams,
           logsLevelParams,
+          metricProgramType,
           api,
           programType;
 
@@ -140,6 +149,7 @@ angular.module(PKG.name + '.feature.hydrator')
           if (program.type === 'Workflow') {
             appLevelParams.workflowId = program.id;
           } else {
+            metricProgramType = 'mapreduce';
             logsLevelParams.programId = program.id;
             logsLevelParams.programType = program.type.toLowerCase();
           }
@@ -147,13 +157,17 @@ angular.module(PKG.name + '.feature.hydrator')
       } else {
         api = myWorkersApi;
         angular.forEach(app.programs, function (program) {
+          metricProgramType = 'worker';
           appLevelParams.workerId = program.id;
+          logsLevelParams.programId = program.id;
+          logsLevelParams.programType = program.type.toLowerCase() + 's';
         });
       }
 
       appConfig.logsParams = logsLevelParams;
       appConfig.params = appLevelParams;
       appConfig.api = api;
+      appConfig.metricProgramType = metricProgramType;
       appConfig.type = app.artifact.name;
       appConfig.scheduleParams = angular.extend({scheduleId: 'etlWorkflow'}, appLevelParams);
       this.setDefaults(appConfig);

@@ -53,7 +53,7 @@
 
     <!-- IF ETL REALTIME -->
     <div class="pull-left"
-      ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && (TopPanelCtrl.appStatus === 'SUSPENDED' || TopPanelCtrl.appStatus === 'FAILED')">
+      ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && (TopPanelCtrl.appStatus !== 'RUNNING')">
       <div class="btn"
         ng-click="TopPanelCtrl.do('Start')"
         ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
@@ -74,12 +74,12 @@
         </span>
       </div>
     </div>
-    <div class="pull-left"
+    <!-- <div class="pull-left"
       ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && ['STARTING', 'STOPPING'].indexOf(TopPanelCtrl.appStatus) !== -1">
       <div class="btn">
         <span class="fa fa-refresh fa-spin"></span>
       </div>
-    </div>
+    </div> -->
 
     <!-- IF ETL BATCH -->
     <div class="pull-left"

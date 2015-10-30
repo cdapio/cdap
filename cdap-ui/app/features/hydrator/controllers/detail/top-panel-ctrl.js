@@ -24,7 +24,8 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.setAppStatus = function() {
       this.appStatus = DetailRunsStore.getStatus();
-      if (this.appStatus !== 'RUNNING') {
+      var appType = DetailRunsStore.getAppType();
+      if (this.appStatus !== 'RUNNING' && appType === GLOBALS.etlBatch) {
         PipelineDetailActionFactory.fetchScheduleStatus(
           DetailRunsStore.getApi(),
           DetailRunsStore.getScheduleParams()
@@ -47,7 +48,7 @@ angular.module(PKG.name + '.feature.hydrator')
               DetailRunsStore.getScheduleParams()
             );
           } else if (this.app.type === GLOBALS.etlRealtime) {
-            PipelineDetailActionFactory.start(
+            PipelineDetailActionFactory.startPipeline(
               DetailRunsStore.getApi(),
               DetailRunsStore.getParams()
             );

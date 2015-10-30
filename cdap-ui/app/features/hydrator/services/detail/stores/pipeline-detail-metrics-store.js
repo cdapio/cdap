@@ -15,9 +15,9 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('MetricsStore', function(PipelineDetailDispatcher) {
+  .service('MetricsStore', function(PipelineDetailMetricslDispatcher) {
 
-    var dispatcher = PipelineDetailDispatcher.getDispatcher();
+    var dispatcher = PipelineDetailMetricslDispatcher.getDispatcher();
     this.changeListeners = [];
     this.setDefaults = function() {
       this.state = {

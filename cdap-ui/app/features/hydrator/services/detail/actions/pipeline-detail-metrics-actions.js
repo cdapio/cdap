@@ -3,6 +3,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     var dispatcher = PipelineDetailMetricslDispatcher.getDispatcher();
     var metricsPollId;
+    var metricValuesPollId;
     // FIXME: This is a memory leak. We need to fix this.
     var dataSrc = new MyCDAPDataSource();
     var filter = $filter('filter');
@@ -35,13 +36,16 @@ angular.module(PKG.name + '.feature.hydrator')
 
           if (metricQuery.length === 0) { return; }
 
-          dataSrc.request({
+          if (metricValuesPollId) {
+            dataSrc.stopPoll(metricValuesPollId);
+          }
+          metricValuesPollId = dataSrc.poll({
             method: 'POST',
             _cdapPath: '/metrics/query?' + metricParams + '&metric=' + metricQuery.join('&metric=')
-          })
-            .then(function(metrics) {
-              dispatcher.dispatch('onMetricsFetch', metrics);
-            });
+          }, function(metrics) {
+            dispatcher.dispatch('onMetricsFetch', metrics);
+          });
+          metricValuesPollId = metricValuesPollId.__pollId__;
         }
       });
 

@@ -36,10 +36,15 @@ angular.module(PKG.name + '.feature.hydrator')
     function startPollForLatestRunId() {
       var appParams = angular.copy(DetailRunsStore.getParams());
       var logsParams = angular.copy(DetailRunsStore.getLogsParams());
-      appParams.runId = DetailRunsStore.getLatestRun().runid;
-      appParams[logsParams.programType] = logsParams.programId;
-      if (appParams.runId) {
-        PipelineDetailMetricsActionFactory.pollForMetrics(appParams);
+      var metricParams = {
+        namespace: appParams.namespace,
+        app: appParams.appId,
+        run: DetailRunsStore.getLatestRun().runid
+      };
+      var programType = DetailRunsStore.getMetricProgramType();
+      metricParams[programType] = logsParams.programId;
+      if (metricParams.run) {
+        PipelineDetailMetricsActionFactory.pollForMetrics(metricParams);
       }
     }
 
