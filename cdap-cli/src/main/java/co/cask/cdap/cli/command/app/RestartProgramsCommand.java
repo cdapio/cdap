@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Starts one or more programs in an application.
+ * Restarts one or more programs in an application.
  */
 public class RestartProgramsCommand extends BaseBatchCommand<BatchProgram> {
   private final ProgramClient programClient;
