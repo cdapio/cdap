@@ -1,0 +1,8 @@
+{
+  "cdap": {
+    "version": "{{VERSION}}",
+    "sdk": {
+      "url": "{{URI}}"
+    }
+  }
+}
