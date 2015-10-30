@@ -35,6 +35,8 @@ angular.module(PKG.name + '.feature.hydrator')
         metricProgramType: app.metricProgramType,
         statistics: '',
         name: app.name,
+        datasets: app.datasets || [],
+        streams: app.streams || [],
         description: app.description
       };
     };
@@ -55,6 +57,12 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.getRunsCount = function() {
       return this.state.runs.count;
+    };
+    this.getDatasets = function() {
+      return this.state.datasets;
+    };
+    this.getStreams = function() {
+      return this.state.streams;
     };
     this.getApi = function() {
       return this.state.api;
@@ -164,6 +172,14 @@ angular.module(PKG.name + '.feature.hydrator')
         });
       }
 
+      appConfig.streams = app.streams.map(function (stream) {
+        stream.type = 'Stream';
+        return stream;
+      });
+      appConfig.datasets = app.datasets.map(function (dataset) {
+        dataset.type = 'Dataset';
+        return dataset;
+      });
       appConfig.logsParams = logsLevelParams;
       appConfig.params = appLevelParams;
       appConfig.api = api;

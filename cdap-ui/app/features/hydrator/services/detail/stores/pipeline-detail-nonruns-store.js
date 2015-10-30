@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- 
+
 angular.module(PKG.name + '.feature.hydrator')
   .service('DetailNonRunsStore', function(PipelineDetailDispatcher) {
     this.setDefaults = function() {
