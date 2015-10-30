@@ -23,26 +23,31 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 public abstract class DynamicDatasetCacheTest {
@@ -137,7 +142,7 @@ public abstract class DynamicDatasetCacheTest {
     String sysPropB = System.getProperty("testDataset.b.tx");
     Assert.assertNotNull(sysPropB);
 
-    // nd validate that they are in the same tx
+    // and validate that they are in the same tx
     Assert.assertNotEquals(0L, Long.parseLong(sysPropA));
     Assert.assertEquals(sysPropA, sysPropB);
 
@@ -183,6 +188,57 @@ public abstract class DynamicDatasetCacheTest {
       datasetMap.put("a", a);
       datasetMap.put("b", b);
     }
+  }
+
+  @Test
+  public void testThatDatasetsStayInTransaction() throws TransactionFailureException {
+    final AtomicInteger hash = new AtomicInteger();
+    Transactions.execute(cache.newTransactionContext(), "foo", new Runnable() {
+      @Override
+      public void run() {
+        try {
+          // this writes the value "x" to row "key"
+          TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
+          ds.write();
+          // the dataset will go out of scope; remember the dataset's hashcode for later comparison
+          hash.set(ds.hashCode());
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+        // this would collect ds because it is out of scope. But we want to test that the cache maintains a
+        // strong reference to it while the transaction is going on
+        System.gc();
+        try {
+          // get the same dataset again. It should be the same object
+          TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
+          Assert.assertEquals(hash.get(), ds.hashCode());
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+    });
+
+    // this should collect the dataset instance because it really is out of scope
+    System.gc();
+
+    // now validate that the dataset did participate in the commit of the tx
+    Transactions.execute(cache.newTransactionContext(), "foo", new Runnable() {
+      @Override
+      public void run() {
+        try {
+          TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
+          Assert.assertEquals("x", ds.read());
+          // validate that we now have a different instance because the old one was collected
+          Assert.assertNotEquals(hash.get(), ds.hashCode());
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+        // validate that only the new instance of the dataset remained active
+        Assert.assertEquals(1,
+                            Iterables.size(cache.getTransactionAwares())
+                              - Iterables.size(cache.getStaticTransactionAwares()));
+      }
+    });
   }
 
   private List<TestDataset> getTxAwares() {

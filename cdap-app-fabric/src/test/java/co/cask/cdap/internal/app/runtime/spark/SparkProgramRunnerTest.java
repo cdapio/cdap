@@ -44,6 +44,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
@@ -92,6 +93,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -175,23 +177,31 @@ public class SparkProgramRunnerTest {
     checkOutputData();
 
     // validate that the table emitted metrics
-    Collection<MetricTimeSeries> metrics =
-      metricStore.query(new MetricDataQuery(
-        0,
-        System.currentTimeMillis() / 1000L,
-        60,
-        "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
-        AggregationFunction.SUM,
-        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
-                        Constants.Metrics.Tag.APP, SparkAppUsingObjectStore.APP_NAME,
-                        Constants.Metrics.Tag.SPARK, SparkAppUsingObjectStore.SPARK_NAME,
-                        Constants.Metrics.Tag.DATASET, "totals"),
-        Collections.<String>emptyList()));
-    Assert.assertEquals(1, metrics.size());
-    MetricTimeSeries ts = metrics.iterator().next();
-    Assert.assertEquals(1, ts.getTimeValues().size());
-    // 1 read + one write in beforeSubmit(), increment (= read + write) in main -> 4
-    Assert.assertEquals(4, ts.getTimeValues().get(0).getValue());
+    // one read + one write in beforeSubmit(), increment (= read + write) in main -> 4
+    Tasks.waitFor(4L, new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        Collection<MetricTimeSeries> metrics =
+          metricStore.query(new MetricDataQuery(
+            0,
+            System.currentTimeMillis() / 1000L,
+            60,
+            "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
+            AggregationFunction.SUM,
+            ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
+                            Constants.Metrics.Tag.APP, SparkAppUsingObjectStore.APP_NAME,
+                            Constants.Metrics.Tag.SPARK, SparkAppUsingObjectStore.SPARK_NAME,
+                            Constants.Metrics.Tag.DATASET, "totals"),
+            Collections.<String>emptyList()));
+        if (metrics.isEmpty()) {
+          return 0L;
+        }
+        Assert.assertEquals(1, metrics.size());
+        MetricTimeSeries ts = metrics.iterator().next();
+        Assert.assertEquals(1, ts.getTimeValues().size());
+        return ts.getTimeValues().get(0).getValue();
+      }
+    }, 5L, TimeUnit.SECONDS, 50L, TimeUnit.MILLISECONDS);
   }
 
   @Test
