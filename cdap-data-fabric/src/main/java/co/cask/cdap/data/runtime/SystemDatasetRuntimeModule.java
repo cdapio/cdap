@@ -38,7 +38,9 @@ import co.cask.cdap.data2.metadata.lineage.LineageDatasetModule;
 import co.cask.cdap.data2.registry.UsageDatasetModule;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueDatasetModule;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
 
@@ -81,39 +83,33 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
     };
   }
 
-  private String getDistributedTableModuleName(CConfiguration cConf) {
-    String name = null;
-      if (cConf != null) {
-        name = cConf.get(Constants.Dataset.Extensions.DISTMODE_TABLE);
-        if (name != null) {
-          name = name.trim();
+  private static final class OrderedTableModuleProvider implements Provider<DatasetModule> {
+    private final CConfiguration cConf;
+
+    @Inject
+    private OrderedTableModuleProvider(CConfiguration cConf) {
+      this.cConf = cConf;
+    }
+
+    @Override
+    public DatasetModule get() {
+      String moduleName = cConf.get(Constants.Dataset.Extensions.DISTMODE_TABLE);
+
+      if (moduleName != null) {
+        try {
+          return (DatasetModule) Class.forName(moduleName.trim()).newInstance();
+        } catch (ClassCastException|ClassNotFoundException|InstantiationException|IllegalAccessException ex) {
+          // Guice frowns on throwing exceptions from Providers, but if necesary use RuntimeException
+          throw new RuntimeException("Unable to obtain distributed table module extension class", ex);
         }
-      }
-      return name;
-  }
-
-  private DatasetModule getDistributedTableModule(CConfiguration cConf) {
-    String tableModuleName = getDistributedTableModuleName(cConf);
-    DatasetModule tableModule;
-
-    if (tableModuleName == null) {
+      } else {
         return new HBaseTableModule();
-    } else {
-      Class tableModuleClass;
-
-      try {
-        tableModuleClass = Class.forName(tableModuleName);
-        tableModule = (DatasetModule) tableModuleClass.newInstance();
-      } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
-        throw new RuntimeException(ex);
       }
     }
-    return tableModule;
   }
 
-  public Module getDistributedModules(CConfiguration cConf) {
-    final DatasetModule tableModule = getDistributedTableModule(cConf);
-
+  @Override
+  public Module getDistributedModules() {
     return new AbstractModule() {
       @Override
       protected void configure() {
@@ -121,17 +117,12 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
                                                                             Names.named("defaultDatasetModules"));
 
         // NOTE: order is important due to dependencies between modules
-        mapBinder.addBinding("orderedTable-hbase").toInstance(tableModule);
+        mapBinder.addBinding("orderedTable-hbase").toProvider(OrderedTableModuleProvider.class);
         mapBinder.addBinding("metricsTable-hbase").toInstance(new HBaseMetricsTableModule());
         bindDefaultModules(mapBinder);
         mapBinder.addBinding("queueDataset").toInstance(new HBaseQueueDatasetModule());
       }
     };
-  }
-
-  @Override
-  public Module getDistributedModules() {
-    return this.getDistributedModules(null);
   }
 
   /**

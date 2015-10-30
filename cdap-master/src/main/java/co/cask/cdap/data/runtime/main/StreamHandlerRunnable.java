@@ -91,7 +91,7 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         new ExploreClientModule(),
         new StreamServiceRuntimeModule().getDistributedModules(),
         new ViewAdminModules().getDistributedModules(),
-        new StreamAdminModules().getDistributedModules(cConf),
+        new StreamAdminModules().getDistributedModules(),
         new NotificationFeedClientModule(),
         new NotificationServiceRuntimeModule().getDistributedModules(),
         new NamespaceClientRuntimeModule().getDistributedModules()

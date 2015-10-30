@@ -42,8 +42,6 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -56,6 +54,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -85,7 +84,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     this.cConf = cConf;
     this.mdsDatasets = mdsDatasets;
     this.locationFactory = locationFactory;
-    this.defaultModules = new LinkedHashMap(defaultModules);
+    this.defaultModules = new LinkedHashMap<String, DatasetModule>(defaultModules);
     this.allowDatasetUncheckedUpgrade = cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
     this.extensionModules = getExtensionModules(this.cConf);
   }
@@ -105,7 +104,7 @@ public class DatasetTypeManager extends AbstractIdleService {
   }
 
   private Map<String, DatasetModule> getExtensionModules(CConfiguration cConf) {
-    Map<String, DatasetModule> modules = new LinkedHashMap();
+    Map<String, DatasetModule> modules = new LinkedHashMap<String, DatasetModule>();
     String moduleStr = cConf.get(Constants.Dataset.Extensions.MODULES);
     if (moduleStr != null) {
       for (String moduleName : Splitter.on(',').omitEmptyStrings().split(moduleStr)) {
@@ -162,14 +161,9 @@ public class DatasetTypeManager extends AbstractIdleService {
             reg = new DependencyTrackingRegistry(datasetModuleId.getNamespace(), datasets);
             module.register(reg);
           } catch (Exception e) {
-            StringBuilder msg = new StringBuilder();
-            msg.append("Could not instantiate instance of dataset module class ")
-               .append(className)
-               .append(" for module ")
-               .append(datasetModuleId)
-               .append(" using jarLocation ")
-               .append(jarLocation);
-            throw new RuntimeException(msg.toString(), e);
+            LOG.error("Could not instantiate instance of dataset module class {} for module {} using jarLocation {}",
+                      className, datasetModuleId, jarLocation);
+            throw Throwables.propagate(e);
           } finally {
             try {
               DirUtils.deleteDirectoryContents(unpackedLocation);
@@ -179,7 +173,7 @@ public class DatasetTypeManager extends AbstractIdleService {
           }
           // NOTE: we use set to avoid duplicated dependencies
           // NOTE: we use LinkedHashSet to preserve order in which dependencies must be loaded
-          Set<String> moduleDependencies = new LinkedHashSet();
+          Set<String> moduleDependencies = new LinkedHashSet<String>();
           for (Id.DatasetType usedType : reg.getUsedTypes()) {
             DatasetModuleMeta usedModule = datasets.getTypeMDS().getModuleByType(usedType);
             Preconditions.checkState(usedModule != null,
@@ -216,7 +210,8 @@ public class DatasetTypeManager extends AbstractIdleService {
       }
       throw Throwables.propagate(e);
     } catch (Exception e) {
-      throw new RuntimeException("Operation failed", e);
+      LOG.error("Operation failed", e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -346,7 +341,8 @@ public class DatasetTypeManager extends AbstractIdleService {
       }
       throw Throwables.propagate(e);
     } catch (Exception e) {
-      throw new RuntimeException("Operation failed", e);
+      LOG.error("Operation failed", e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -364,7 +360,7 @@ public class DatasetTypeManager extends AbstractIdleService {
       mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
         @Override
         public Void call(MDSDatasets datasets) throws DatasetModuleConflictException, IOException {
-          Set<String> typesToDelete = Sets.newHashSet();
+          Set<String> typesToDelete = new HashSet<String>();
           List<Location> moduleLocations = Lists.newArrayList();
           for (DatasetModuleMeta module : datasets.getTypeMDS().getModules(namespaceId)) {
             typesToDelete.addAll(module.getTypes());
@@ -395,10 +391,11 @@ public class DatasetTypeManager extends AbstractIdleService {
       if (e.getCause() != null && e.getCause() instanceof DatasetModuleConflictException) {
         throw (DatasetModuleConflictException) e.getCause();
       }
-      String msg = String.format("Failed to delete all modules from namespace %s", namespaceId);
-      throw new RuntimeException(msg, e);
+      LOG.error("Failed to delete all modules from namespace {}", namespaceId);
+      throw Throwables.propagate(e);
     } catch (Exception e) {
-      throw new RuntimeException("Operation failed", e);
+      LOG.error("Operation failed", e);
+      throw Throwables.propagate(e);
     }
   }
 
@@ -414,8 +411,8 @@ public class DatasetTypeManager extends AbstractIdleService {
         // perfectly fine: we need to add default modules only the very first time service is started
         LOG.info("Not adding {} module: it already exists", module.getKey());
       } catch (Throwable th) {
-        String msg = String.format("Failed to add %s module. Aborting.", module.getKey());
-        throw new RuntimeException(msg, th);
+        LOG.error("Failed to add {} module. Aborting.", module.getKey(), th);
+        throw Throwables.propagate(th);
       }
     }
   }
@@ -432,8 +429,8 @@ public class DatasetTypeManager extends AbstractIdleService {
         // perfectly fine: we need to add the modules only the very first time service is started
         LOG.info("Not adding {} extension module: it already exists", module.getKey());
       } catch (Throwable th) {
-        String msg = String.format("Failed to add %s extension module. Aborting.", module.getKey());
-        throw new RuntimeException(msg, th);
+        LOG.error("Failed to add {} extension module. Aborting.", module.getKey(), th);
+        throw Throwables.propagate(th);
       }
     }
   }
@@ -465,7 +462,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     private final Id.Namespace namespaceId;
 
     private final List<String> types = Lists.newArrayList();
-    private final LinkedHashSet<Id.DatasetType> usedTypes = new LinkedHashSet();
+    private final LinkedHashSet<Id.DatasetType> usedTypes = new LinkedHashSet<Id.DatasetType>();
 
     public DependencyTrackingRegistry(Id.Namespace namespaceId, MDSDatasets datasets) {
       this.namespaceId = namespaceId;

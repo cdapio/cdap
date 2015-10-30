@@ -322,7 +322,7 @@ public class MasterServiceMain extends DaemonMain {
       new KafkaClientModule(),
       new TwillModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
-      new DataSetServiceModules().getDistributedModules(cConf),
+      new DataSetServiceModules().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
       new DataSetsModules().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
@@ -331,7 +331,7 @@ public class MasterServiceMain extends DaemonMain {
       new NotificationFeedServiceRuntimeModule().getDistributedModules(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
       new ViewAdminModules().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules(cConf),
+      new StreamAdminModules().getDistributedModules(),
       new NamespaceClientRuntimeModule().getDistributedModules()
     );
   }

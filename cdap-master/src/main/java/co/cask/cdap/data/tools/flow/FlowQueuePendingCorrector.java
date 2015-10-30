@@ -323,15 +323,14 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
   }
 
   public static FlowQueuePendingCorrector createCorrector() {
-    final CConfiguration cConf = CConfiguration.create();
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf, HBaseConfiguration.create()),
+      new ConfigModule(CConfiguration.create(), HBaseConfiguration.create()),
       new IOModule(),
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
       new ViewAdminModules().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules(cConf),
+      new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new TwillModule(),
       new ExploreClientModule(),
@@ -340,7 +339,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
       new DataSetsModules().getDistributedModules(),
       new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
-      new SystemDatasetRuntimeModule().getDistributedModules(cConf),
+      new SystemDatasetRuntimeModule().getDistributedModules(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new KafkaClientModule(),

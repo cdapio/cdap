@@ -134,14 +134,10 @@ public class DataSetServiceModules extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    return getDistributedModules(null);
-  }
-
-  public Module getDistributedModules(final CConfiguration cConf) {
     return new PrivateModule() {
       @Override
       protected void configure() {
-        install(new SystemDatasetRuntimeModule().getDistributedModules(cConf));
+        install(new SystemDatasetRuntimeModule().getDistributedModules());
         install(new FactoryModuleBuilder()
                   .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                   .build(DatasetDefinitionRegistryFactory.class));

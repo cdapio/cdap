@@ -396,7 +396,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       new DataSetsModules().getDistributedModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules(cConf),
+      new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new AbstractModule() {
         @Override

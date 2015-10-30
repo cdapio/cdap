@@ -206,7 +206,7 @@ public final class SparkContextProvider {
       new LoggingModules().getDistributedModules(),
       new ExploreClientModule(),
       new ViewAdminModules().getDistributedModules(),
-      new StreamAdminModules().getDistributedModules(cConf),
+      new StreamAdminModules().getDistributedModules(),
       new NotificationFeedServiceRuntimeModule().getDistributedModules()
     );
   }
