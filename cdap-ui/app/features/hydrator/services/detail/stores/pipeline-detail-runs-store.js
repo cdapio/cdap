@@ -107,6 +107,9 @@ angular.module(PKG.name + '.feature.hydrator')
     };
 
     this.setRunsState = function(runs) {
+      if (!runs.length) {
+        return;
+      }
       if (runs[0].runid === myHelpers.objectQuery(this.state, 'runs', 'latest', 'runid')) {
         return;
       }
@@ -191,4 +194,5 @@ angular.module(PKG.name + '.feature.hydrator')
 
     dispatcher.register('onRunsChange', this.setRunsState.bind(this));
     dispatcher.register('onStatisticsFetch', this.setStatistics.bind(this));
+    dispatcher.register('onReset', this.setDefaults.bind(this, {}));
   });

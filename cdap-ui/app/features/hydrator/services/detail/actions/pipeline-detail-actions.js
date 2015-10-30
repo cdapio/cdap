@@ -17,7 +17,6 @@
 angular.module(PKG.name + '.feature.hydrator')
   .service('PipelineDetailActionFactory', function(PipelineDetailDispatcher) {
     var dispatcher = PipelineDetailDispatcher.getDispatcher();
-
     this.startPipeline = function (api, params) {
       api.doAction(angular.extend(params, { action: 'start' }), {});
     };
@@ -53,4 +52,5 @@ angular.module(PKG.name + '.feature.hydrator')
             dispatcher.dispatch('onStatisticsFetch', res);
           });
     };
+
   });

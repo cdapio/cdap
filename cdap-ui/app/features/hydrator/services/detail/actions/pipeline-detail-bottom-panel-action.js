@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- 
+
 angular.module(PKG.name + '.feature.hydrator')
   .service('PipelineDetailBottomPanelActionFactory', function(PipelineDetailBottomPanelDispatcher) {
     var dispatcher = PipelineDetailBottomPanelDispatcher.getDispatcher();
@@ -25,5 +25,8 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.maximize = function() {
       dispatcher.dispatch('onBottomPanelToggled', {state: 2});
+    };
+    this.reset = function() {
+      dispatcher.dispatch('onReset');
     };
   });

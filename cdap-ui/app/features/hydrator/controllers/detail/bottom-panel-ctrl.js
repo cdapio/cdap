@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailBottomPanelController', function(BottomPanelStore, PipelineDetailBottomPanelActionFactory, NodeConfigStore) {
+  .controller('HydratorDetailBottomPanelController', function(BottomPanelStore, PipelineDetailBottomPanelActionFactory, NodeConfigStore, $scope) {
     this.tabs = [
       {
         title: 'Status',
@@ -77,4 +77,7 @@ angular.module(PKG.name + '.feature.hydrator')
       this.selectTab(6);
     }.bind(this));
 
+    $scope.$on('$destroy', function() {
+      PipelineDetailBottomPanelActionFactory.reset();
+    });
   });

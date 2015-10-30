@@ -15,10 +15,20 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailController', function(DetailRunsStore, rPipelineDetail, PipelineDetailActionFactory) {
+  .controller('HydratorDetailController', function(DetailRunsStore, rPipelineDetail, PipelineDetailActionFactory, $scope) {
     DetailRunsStore.init(rPipelineDetail);
+    var params = angular.copy(DetailRunsStore.getParams());
+    params.scope = $scope;
     PipelineDetailActionFactory.pollRuns(
       DetailRunsStore.getApi(),
-      DetailRunsStore.getParams()
+      params
     );
+
+    $scope.$on('$destory', function() {
+      PipelineDetailActionFactory.reset(
+        DetailRunsStore.getApi(),
+        params
+      );
+    });
+
   });

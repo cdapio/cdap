@@ -15,31 +15,39 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailMetricsController', function(DetailRunsStore, MetricsStore, PipelineDetailMetricsActionFactory) {
+  .controller('HydratorDetailMetricsController', function(DetailRunsStore, MetricsStore, PipelineDetailMetricsActionFactory, $scope) {
 
+    var currentRunId;
     this.setState = function() {
       this.state = {
-        runId: DetailRunsStore.getLatestRun().runId,
+        runId: (DetailRunsStore.getLatestRun() && DetailRunsStore.getLatestRun().runId) || null,
         metrics: MetricsStore.getMetrics()
       };
     };
 
     this.setState();
-    startPollForLatestRunId();
 
     MetricsStore.registerOnChangeListener(this.setState.bind(this));
     DetailRunsStore.registerOnChangeListener(function() {
-      startPollForLatestRunId();
+      if (!DetailRunsStore.getRunsCount()) {
+        return;
+      }
+      startPollMetricsForLatestRunId();
       this.setState();
     }.bind(this));
 
-    function startPollForLatestRunId() {
+    function startPollMetricsForLatestRunId() {
+      var latestRunId = DetailRunsStore.getLatestRun().runid;
+      if (latestRunId === currentRunId) {
+        return;
+      }
+      currentRunId = latestRunId;
       var appParams = angular.copy(DetailRunsStore.getParams());
       var logsParams = angular.copy(DetailRunsStore.getLogsParams());
       var metricParams = {
         namespace: appParams.namespace,
         app: appParams.appId,
-        run: DetailRunsStore.getLatestRun().runid
+        run: latestRunId
       };
       var programType = DetailRunsStore.getMetricProgramType();
       metricParams[programType] = logsParams.programId;
@@ -47,4 +55,8 @@ angular.module(PKG.name + '.feature.hydrator')
         PipelineDetailMetricsActionFactory.pollForMetrics(metricParams);
       }
     }
+
+    $scope.$on('$destroy', function() {
+      PipelineDetailMetricsActionFactory.reset();
+    });
   });

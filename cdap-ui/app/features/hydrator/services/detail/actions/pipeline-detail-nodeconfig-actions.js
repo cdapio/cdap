@@ -24,4 +24,7 @@ angular.module(PKG.name + '.feature.hydrator')
     this.removePlugin = function() {
       dispatcher.dispatch('onPluginRemove');
     };
+    this.reset = function() {
+      dispatcher.dispatch('onReset');
+    };
   });

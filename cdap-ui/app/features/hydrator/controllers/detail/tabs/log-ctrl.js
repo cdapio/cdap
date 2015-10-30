@@ -15,10 +15,10 @@
  */
 
  angular.module(PKG.name + '.feature.hydrator')
-   .controller('HydratorDetailLogController', function(DetailRunsStore) {
-     this.setState = function() {
-        this.logsParams = DetailRunsStore.getLogsParams();
-      };
-      this.setState();
-      DetailRunsStore.registerOnChangeListener(this.setState.bind(this));
-   });
+  .controller('HydratorDetailLogController', function(DetailRunsStore) {
+    this.setState = function() {
+      this.logsParams =  DetailRunsStore.getLogsParams();
+    };
+    this.setState();
+    DetailRunsStore.registerOnChangeListener(this.setState.bind(this));
+  });

@@ -44,6 +44,7 @@ angular.module(PKG.name + '.services')
       runs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs', true),
       runDetail: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId'),
       pollRuns: myHelpers.getConfig('GET', 'POLL', basepath + '/runs', true),
+      stopPollRuns: myHelpers.getConfig('GET', 'POLL-STOP', basepath + '/runs', true),
       pollRunDetail: myHelpers.getConfig('GET', 'POLL', basepath + '/runs/:runId', false),
       pollRunDetailOften: myHelpers.getConfig('GET', 'POLL', basepath + '/runs/:runId', false, { interval: 1000 }),
       stopPollRunDetail: myHelpers.getConfig('GET', 'POLL-STOP', basepath + '/runs/:runId'),

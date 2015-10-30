@@ -45,4 +45,5 @@ angular.module(PKG.name + '.feature.hydrator')
       });
     };
     dispatcher.register('onBottomPanelToggled', this.setState.bind(this));
+    dispatcher.register('onReset', this.setDefaults.bind(this));
   });

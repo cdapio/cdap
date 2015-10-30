@@ -8,8 +8,8 @@ angular.module(PKG.name + '.feature.hydrator')
     var dataSrc = new MyCDAPDataSource();
     var filter = $filter('filter');
     this.pollForMetrics = function(params) {
-      this.stopPoll();
-      doPollMetrics(params);
+      this.stopMetricsPoll();
+      doPollMetrics.call(this, params);
     };
 
     function doPollMetrics(params) {
@@ -35,10 +35,8 @@ angular.module(PKG.name + '.feature.hydrator')
           });
 
           if (metricQuery.length === 0) { return; }
+          this.stopMetricValuesPoll();
 
-          if (metricValuesPollId) {
-            dataSrc.stopPoll(metricValuesPollId);
-          }
           metricValuesPollId = dataSrc.poll({
             method: 'POST',
             _cdapPath: '/metrics/query?' + metricParams + '&metric=' + metricQuery.join('&metric=')
@@ -47,15 +45,29 @@ angular.module(PKG.name + '.feature.hydrator')
           });
           metricValuesPollId = metricValuesPollId.__pollId__;
         }
-      });
+      }.bind(this));
 
       metricsPollId = metricsPollId.__pollId__;
     }
 
-    this.stopPoll = function() {
+    this.stopMetricsPoll = function() {
       if (metricsPollId) {
         dataSrc.stopPoll(metricsPollId);
+        metricsPollId = null;
       }
+    };
+
+    this.stopMetricValuesPoll = function() {
+      if (metricValuesPollId) {
+        dataSrc.stopPoll(metricValuesPollId);
+        metricValuesPollId = null;
+      }
+    };
+
+    this.reset = function() {
+      this.stopMetricsPoll();
+      this.stopMetricValuesPoll();
+      dispatcher.dispatch('onReset');
     };
 
   });

@@ -49,6 +49,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     dispatcher.register('onPluginChange', this.setState.bind(this));
     dispatcher.register('onPluginRemove', this.setDefaults.bind(this));
+    dispatcher.register('onReset', this.setDefaults.bind(this));
 
     function onPluginChange(plugin) {
       if (plugin && this.state.plugin && plugin.id === this.state.plugin.id) {

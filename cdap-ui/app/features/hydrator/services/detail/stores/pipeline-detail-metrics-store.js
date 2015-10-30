@@ -69,5 +69,5 @@ angular.module(PKG.name + '.feature.hydrator')
       this.emitChange();
     };
     dispatcher.register('onMetricsFetch', this.setState.bind(this));
-
+    dispatcher.register('onReset', this.setDefaults.bind(this));
   });
