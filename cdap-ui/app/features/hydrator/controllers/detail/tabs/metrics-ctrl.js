@@ -15,7 +15,34 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailMetricsController', function() {
+  .controller('HydratorDetailMetricsController', function(DetailRunsStore, MetricsStore, PipelineDetailMetricsActionFactory) {
+
+    this.setState = function() {
+      this.state = {
+        runId: DetailRunsStore.getLatestRun().runId,
+        metrics: MetricsStore.getMetrics()
+      };
+    };
+
+    this.setState();
+    startPollForLatestRunId();
+
+    MetricsStore.registerOnChangeListener(this.setState.bind(this));
+    DetailRunsStore.registerOnChangeListener(function() {
+      startPollForLatestRunId();
+      this.setState();
+    }.bind(this));
+
+    function startPollForLatestRunId() {
+      var appParams = angular.copy(DetailRunsStore.getParams());
+      var logsParams = angular.copy(DetailRunsStore.getLogsParams());
+      appParams.runId = DetailRunsStore.getLatestRun().runid;
+      appParams[logsParams.programType] = logsParams.programId;
+      if (appParams.runId) {
+        PipelineDetailMetricsActionFactory.pollForMetrics(appParams);
+      }
+    }
+
     //
     // $scope.metrics = [];
     // var metricsPolledId;

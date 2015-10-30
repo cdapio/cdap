@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('PipelineDetailDispatcher', function(CaskAngularDispatcher) {
+  .service('PipelineDetailMetricslDispatcher', function(CaskAngularDispatcher) {
     this.__dispatcher__ = null;
     this.destroyDispatcher = function() {
       delete this.__dispatcher__;
@@ -28,4 +28,3 @@ angular.module(PKG.name + '.feature.hydrator')
       return this.__dispatcher__;
     };
   });
-  
