@@ -23,7 +23,7 @@
   </div>
 
   <h4>
-    <span ng-if="!isSink">Ouput Schema</span>
+    <span ng-if="!isSink">Output Schema</span>
     <span ng-if="isSink">Schema</span>
 
     <span class="fa fa-asterisk ng-scope" ng-if="PluginEditController.isOutputSchemaRequired"></span>
@@ -37,12 +37,23 @@
   </h4>
 
   <fieldset class="clearfix" ng-disabled="isDisabled">
-    <my-schema-editor
-      ng-model="plugin.outputSchema"
-      data-disabled="plugin.implicitSchema || isDisabled"
-      plugin-properties="plugin.properties"
-      config="PluginEditController.schemaProperties">
-    </my-schema-editor>
+    <div ng-if="isDisabled">
+      <my-schema-editor
+        ng-model="plugin.outputSchema"
+        ng-if="plugin.outputSchema"
+        data-disabled="plugin.implicitSchema || isDisabled"
+        plugin-properties="plugin.properties"
+        config="PluginEditController.schemaProperties">
+      </my-schema-editor>
+    </div>
+    <div ng-if="!isDisabled">
+      <my-schema-editor
+        ng-model="plugin.outputSchema"
+        data-disabled="plugin.implicitSchema || isDisabled"
+        plugin-properties="plugin.properties"
+        config="PluginEditController.schemaProperties">
+      </my-schema-editor>
+    </div>
   </fieldset>
 
   <div ng-if="!plugin.outputSchema && isDisabled && plugin.properties.format !== 'clf' && plugin.properties.format !== 'syslog'">

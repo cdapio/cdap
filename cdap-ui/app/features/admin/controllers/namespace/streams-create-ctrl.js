@@ -23,7 +23,11 @@ angular.module(PKG.name + '.feature.admin')
     $scope.streamId = '';
 
     $scope.createStream = function() {
+      if ($scope.isSaving) {
+        return;
+      }
       $scope.isSaving = true;
+
       var params = {
         namespace: $stateParams.nsadmin,
         streamId: $scope.streamId,

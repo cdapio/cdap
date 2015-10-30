@@ -17,7 +17,7 @@ package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.element.ElementType;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Iterator;
@@ -26,12 +26,12 @@ import java.util.Objects;
 /**
  * Uniquely identifies an application.
  */
-public class ApplicationId extends ElementId implements NamespacedId, ParentedId<NamespaceId> {
+public class ApplicationId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
   private final String namespace;
   private final String application;
 
   public ApplicationId(String namespace, String application) {
-    super(ElementType.APPLICATION);
+    super(EntityType.APPLICATION);
     this.namespace = namespace;
     this.application = application;
   }
@@ -51,6 +51,30 @@ public class ApplicationId extends ElementId implements NamespacedId, ParentedId
 
   public ProgramId program(ProgramType type, String program) {
     return new ProgramId(namespace, application, type, program);
+  }
+
+  public ProgramId flow(String program) {
+    return new ProgramId(namespace, application, ProgramType.FLOW, program);
+  }
+
+  public ProgramId workflow(String program) {
+    return new ProgramId(namespace, application, ProgramType.WORKFLOW, program);
+  }
+
+  public ProgramId mr(String program) {
+    return new ProgramId(namespace, application, ProgramType.MAPREDUCE, program);
+  }
+
+  public ProgramId spark(String program) {
+    return new ProgramId(namespace, application, ProgramType.SPARK, program);
+  }
+
+  public ProgramId worker(String program) {
+    return new ProgramId(namespace, application, ProgramType.WORKER, program);
+  }
+
+  public ProgramId service(String program) {
+    return new ProgramId(namespace, application, ProgramType.SERVICE, program);
   }
 
   @Override
@@ -85,6 +109,6 @@ public class ApplicationId extends ElementId implements NamespacedId, ParentedId
   }
 
   public static ApplicationId fromString(String string) {
-    return ElementId.fromString(string, ApplicationId.class);
+    return EntityId.fromString(string, ApplicationId.class);
   }
 }

@@ -26,9 +26,9 @@ my-dag {
 
     &.disabled {
       background-image: none;
-      border: 1px solid #dddddd;
-      background-color: #f6f6f6;
-      border-radius: 4px;
+      border: 0;
+      background-color: @table-bg;
+      .border-radius(4px);
       .box {
         cursor: pointer;
       }
@@ -116,11 +116,11 @@ my-dag {
         font-weight: 500;
         text-overflow: ellipsis;
         margin-top: 5px;
-        overflow-y: hidden;
+        overflow: hidden;
       }
 
       .label-as-badge {
-        border-radius: 50%;
+        .border-radius(50%);
       }
 
       .error-node-notification {
@@ -151,7 +151,7 @@ my-dag {
 
       &.well {
         background-color: @brand-danger;
-        border-radius: 8px;
+        .border-radius(8px);
         color: white;
       }
     }
@@ -192,7 +192,6 @@ my-dag {
       height: 14px;
       width: 14px;
       text-align: center;
-      border-radius: 1px;
       background-color: white;
       line-height: 14px;
       font-size: 10px;
@@ -207,8 +206,6 @@ my-dag {
       i.icon-SchemaEdge {
         font-size: 9px;
       }
-    }
-    &.selected div.label-container {
     }
   }
 

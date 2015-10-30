@@ -29,7 +29,7 @@ var baseDirective = {
   controller: 'myFlowController'
 };
 
-module.directive('myFlowGraph', function ($filter, $state, $alert, myStreamService, $location, FlowFactories) {
+module.directive('myFlowGraph', function ($filter, $state, myStreamService, $location, FlowFactories) {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.render = FlowFactories.genericRender.bind(null, scope, $filter, $location, tip);

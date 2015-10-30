@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.services')
-  .controller('StatusMakeRequestController', function($scope, $state, MyDataSource) {
+  .controller('StatusMakeRequestController', function($scope, $state, MyCDAPDataSource) {
     var vm = this;
 
     vm.programId = $state.params.programId;
@@ -27,7 +27,7 @@ angular.module(PKG.name + '.feature.services')
     vm.postBody = {};
 
     var pattern = /\{([\w\-]+)\}/g,
-        dataSrc = new MyDataSource($scope);
+        dataSrc = new MyCDAPDataSource($scope);
 
     vm.requestUrl.split('?')
       .forEach(function(item, index) {

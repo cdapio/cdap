@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailController', function($scope, rPipelineDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, HydratorDetail, $timeout, MyNodeConfigService) {
+  .controller('HydratorDetailController', function($scope, rPipelineDetail, GLOBALS, MyAppDAGService, CanvasFactory, $state, myWorkFlowApi, myWorkersApi, myAppsApi, HydratorDetail, $timeout, MyNodeConfigService, $alert, MyBottomPanelService) {
     $scope.GLOBALS = GLOBALS;
     $scope.template = rPipelineDetail.template;
     $scope.description = rPipelineDetail.description;
@@ -97,6 +97,16 @@ angular.module(PKG.name + '.feature.hydrator')
         MyNodeConfigService.setPlugin(plugin);
       }, 100);
     }
+    $scope.isMaximized = false;
+    $scope.externalCollapseToggle = function(value) {
+      if($scope.isMaximized) {
+        return;
+      } else {
+        $scope.isMaximized = false;
+        $scope.isCollapsed = value;
+      }
+    };
+    MyBottomPanelService.registerIsCollapsedCallback($scope.externalCollapseToggle);
     var params = {
       namespace: $state.params.namespace,
       appId: rPipelineDetail.name,
@@ -170,7 +180,11 @@ angular.module(PKG.name + '.feature.hydrator')
               .$promise
               .then(function () {
                 $scope.appStatus = 'RUNNING';
-              }, function () {
+              }, function (err) {
+                $alert({
+                  type: 'danger',
+                  content: err.data
+                });
                 $scope.appStatus = 'FAILED';
               });
           }
@@ -196,17 +210,17 @@ angular.module(PKG.name + '.feature.hydrator')
 
           break;
         case 'Run Once':
+          $scope.runOnceLoading = true;
           myWorkFlowApi.doAction(angular.extend(params, { action: 'start' }), {})
             .$promise
             .then(function () {
-              $scope.runOnceLoading = true;
               $scope.appStatus = 'RUNNING';
-
-              $timeout(function () {
-                $scope.runOnceLoading = false;
-              }, 1500);
-
-            }, function error () {
+              $scope.runOnceLoading = false;
+            }, function error (err) {
+              $alert({
+                type: 'danger',
+                content: err.data
+              });
               $scope.runOnceLoading = false;
             });
 
@@ -228,7 +242,6 @@ angular.module(PKG.name + '.feature.hydrator')
           break;
       }
     };
-
 
     $scope.nodes = [];
 
@@ -282,5 +295,34 @@ angular.module(PKG.name + '.feature.hydrator')
         stream.type = 'Stream';
         return stream;
       }));
+
+    $scope.isCollapsed = false;
+
+    $scope.collapseToggle = function() {
+      $scope.isMaximized = false;
+      $scope.isCollapsed = !$scope.isCollapsed;
+    };
+
+    $scope.externalCollapseToggle = function(value) {
+      if($scope.isMaximized) {
+        return;
+      } else {
+        $scope.isMaximized = false;
+        $scope.isCollapsed = value;
+      }
+    };
+
+    $scope.isMaximized = false;
+
+    $scope.fullScreenToggle = function() {
+      $scope.isCollapsed = false;
+      $scope.isMaximized = !$scope.isMaximized;
+    };
+
+    $scope.collapsedTabClick = function() {
+      if($scope.isCollapsed) {
+        $scope.isCollapsed = false;
+      }
+    };
 
   });

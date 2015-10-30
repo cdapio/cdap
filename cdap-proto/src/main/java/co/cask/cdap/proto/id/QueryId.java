@@ -16,7 +16,7 @@
 package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.element.ElementType;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Iterator;
@@ -25,12 +25,12 @@ import java.util.Objects;
 /**
  * Uniquely identifies a query handle.
  */
-public class QueryId extends ElementId {
+public class QueryId extends EntityId {
 
   private final String handle;
 
   public QueryId(String handle) {
-    super(ElementType.QUERY);
+    super(EntityType.QUERY);
     this.handle = handle;
   }
 
@@ -69,6 +69,6 @@ public class QueryId extends ElementId {
   }
 
   public static QueryId fromString(String string) {
-    return ElementId.fromString(string, QueryId.class);
+    return EntityId.fromString(string, QueryId.class);
   }
 }

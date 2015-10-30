@@ -58,7 +58,10 @@ project for the plugin from the archetype:
     |$| mvn archetype:generate \\
           -DarchetypeGroupId=co.cask.cdap \\
           -DarchetypeArtifactId=cdap-etl-batch-source-archetype \\
-          -DarchetypeVersion=\ |release|
+          -DarchetypeVersion=\ |release| \\
+          -DgroupId=org.example.plugin
+
+You can replace the groupId with your own organization, but it must not be ``co.cask.cdap``.
 
 In order to implement a Batch Source (to be used in the ETL Batch artifact), you extend
 the ``BatchSource`` class. You need to define the types of the KEY and VALUE that the Batch
@@ -106,7 +109,10 @@ A batch sink plugin can be created from this Maven archetype:
     |$| mvn archetype:generate \\
           -DarchetypeGroupId=co.cask.cdap \\
           -DarchetypeArtifactId=cdap-etl-batch-sink-archetype \\
-          -DarchetypeVersion=\ |release|
+          -DarchetypeVersion=\ |release| \\
+          -DgroupId=org.example.plugin
+
+You can replace the groupId with your own organization, but it must not be ``co.cask.cdap``.
 
 In order to implement a Batch Sink (to be used in the ETL Batch artifact), you extend the
 ``BatchSink`` class. Similar to a Batch Source, you need to define the types of the KEY and
@@ -156,7 +162,10 @@ A real-time source plugin can be created from this Maven archetype:
     |$| mvn archetype:generate \\
           -DarchetypeGroupId=co.cask.cdap \\
           -DarchetypeArtifactId=cdap-etl-realtime-source-archetype \\
-          -DarchetypeVersion=\ |release|
+          -DarchetypeVersion=\ |release| \\
+          -DgroupId=org.example.plugin
+
+You can replace the groupId with your own organization, but it must not be ``co.cask.cdap``.
 
 The only method that needs to be implemented is:
 
@@ -245,7 +254,10 @@ A real-time sink plugin can be created from this Maven archetype:
     |$| mvn archetype:generate \\
           -DarchetypeGroupId=co.cask.cdap \\
           -DarchetypeArtifactId=cdap-etl-realtime-sink-archetype \\
-          -DarchetypeVersion=\ |release|
+          -DarchetypeVersion=\ |release| \\
+          -DgroupId=org.example.plugin
+
+You can replace the groupId with your own organization, but it must not be ``co.cask.cdap``.
 
 The only method that needs to be implemented is:
 
@@ -295,8 +307,10 @@ using this Maven archetype:
     |$| mvn archetype:generate \\
           -DarchetypeGroupId=co.cask.cdap \\
           -DarchetypeArtifactId=cdap-etl-transform-archetype \\
-          -DarchetypeVersion=\ |release|
+          -DarchetypeVersion=\ |release| \\
+          -DgroupId=org.example.plugin
 
+You can replace the groupId with your own organization, but it must not be ``co.cask.cdap``.
 
 The only method that needs to be implemented is:
 

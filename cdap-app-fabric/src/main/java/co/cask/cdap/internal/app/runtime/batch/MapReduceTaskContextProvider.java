@@ -195,14 +195,12 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
         Set<String> staticDatasets = getDatasets(program, contextConfig);
 
-        BasicMapReduceTaskContext context = new BasicMapReduceTaskContext(
+        return new BasicMapReduceTaskContext(
           program, taskType, contextConfig.getRunId(), key.getTaskAttemptID().getTaskID().toString(),
           contextConfig.getArguments(), staticDatasets, spec, contextConfig.getLogicalStartTime(),
           contextConfig.getWorkflowToken(), discoveryServiceClient, metricsCollectionService, txClient,
           contextConfig.getTx(), datasetFramework, classLoader.getPluginInstantiator()
         );
-
-        return context;
       }
     };
   }

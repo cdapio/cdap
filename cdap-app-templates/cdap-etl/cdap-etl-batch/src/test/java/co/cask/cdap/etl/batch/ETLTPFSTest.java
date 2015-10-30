@@ -30,6 +30,7 @@ import co.cask.cdap.test.WorkflowManager;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionManager;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.avro.file.DataFileWriter;
@@ -39,14 +40,77 @@ import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.fs.FSDataOutputStream;
+import org.apache.hadoop.fs.Path;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
+import parquet.avro.AvroParquetInputFormat;
+import parquet.avro.AvroParquetOutputFormat;
+import parquet.avro.AvroParquetWriter;
+import parquet.hadoop.ParquetWriter;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class ETLTPFSTest extends BaseETLBatchTest {
+
+  @Test
+  public void testParquet() throws Exception {
+    Schema recordSchema = Schema.recordOf("record",
+      Schema.Field.of("i", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("l", Schema.of(Schema.Type.LONG))
+    );
+
+    ETLStage source = new ETLStage("TPFSParquet",
+      ImmutableMap.of(
+        Properties.TimePartitionedFileSetDataset.SCHEMA, recordSchema.toString(),
+        Properties.TimePartitionedFileSetDataset.TPFS_NAME, "inputParquet",
+        Properties.TimePartitionedFileSetDataset.DELAY, "0d",
+        Properties.TimePartitionedFileSetDataset.DURATION, "1h"));
+    ETLStage sink = new ETLStage("TPFSParquet",
+      ImmutableMap.of(
+        Properties.TimePartitionedFileSetDataset.SCHEMA, recordSchema.toString(),
+        Properties.TimePartitionedFileSetDataset.TPFS_NAME, "outputParquet"));
+
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, ImmutableList.<ETLStage>of());
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "parquetTest");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // write input to read
+    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(recordSchema.toString());
+    GenericRecord record = new GenericRecordBuilder(avroSchema)
+      .set("i", Integer.MAX_VALUE)
+      .set("l", Long.MAX_VALUE)
+      .build();
+    DataSetManager<TimePartitionedFileSet> inputManager = getDataset("inputParquet");
+
+    long timeInMillis = System.currentTimeMillis();
+    inputManager.get().addPartition(timeInMillis, "directory");
+    inputManager.flush();
+    Location location = inputManager.get().getPartitionByTime(timeInMillis).getLocation();
+    location = location.append("file.parquet");
+    ParquetWriter<GenericRecord> parquetWriter =
+      new AvroParquetWriter<>(new Path(location.toURI().toString()), avroSchema);
+    parquetWriter.write(record);
+    parquetWriter.close();
+    inputManager.flush();
+
+    // run the pipeline
+    WorkflowManager workflowManager = appManager.getWorkflowManager(ETLWorkflow.NAME);
+    // add a minute to the end time to make sure the newly added partition is included in the run.
+    workflowManager.start(ImmutableMap.of("runtime", String.valueOf(timeInMillis + 60 * 1000)));
+    workflowManager.waitForFinish(4, TimeUnit.MINUTES);
+
+    DataSetManager<TimePartitionedFileSet> outputManager = getDataset("outputParquet");
+    TimePartitionedFileSet newFileSet = outputManager.get();
+
+    List<GenericRecord> newRecords = readOutput(newFileSet, recordSchema);
+    Assert.assertEquals(1, newRecords.size());
+    Assert.assertEquals(Integer.MAX_VALUE, newRecords.get(0).get("i"));
+    Assert.assertEquals(Long.MAX_VALUE, newRecords.get(0).get("l"));
+  }
 
   @Test
   public void testAvroSourceConversionToAvroSink() throws Exception {

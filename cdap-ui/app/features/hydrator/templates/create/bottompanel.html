@@ -19,12 +19,12 @@
     <ul class="nav nav-tabs pull-left" role="tablist">
       <li ng-repeat="tab in tabs"
           ng-click="selectTab(tab, true); collapsedTabClick()"
-          ng-class="{'active': tab.title == activeTab.title}"
+          ng-class="{'active': tab.title == activeTab.title, 'bg-danger': dangerBg && tab.title === 'Console', 'bg-primary': infoBg && tab.title === 'Console', 'bg-success': successBg && tab.title === 'Console'}"
           role="presentation"
           data-toggle="tab">
           {{ tab.title }}
-          <span ng-if="tab.title === 'Console' && errorCount">
-            <span class="badge">{{errorCount}}</span>
+          <span ng-show="tab.title === 'Console' && messageCount">
+            <span class="badge">{{messageCount}}</span>
           </span>
       </li>
     </ul>

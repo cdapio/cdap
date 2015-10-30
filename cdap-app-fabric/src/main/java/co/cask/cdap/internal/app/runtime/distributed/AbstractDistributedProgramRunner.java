@@ -23,6 +23,7 @@ import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.FileContextLocationFactory;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
@@ -48,8 +49,12 @@ import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.security.Credentials;
+import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.TwillApplication;
@@ -58,6 +63,9 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.HDFSLocationFactory;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.yarn.YarnUtils;
 import org.apache.twill.yarn.YarnSecureStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,6 +79,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
@@ -88,6 +97,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     .create();
 
   private final TwillRunner twillRunner;
+  private final LocationFactory locationFactory;
   protected final Configuration hConf;
   protected final CConfiguration cConf;
   protected final EventHandler eventHandler;
@@ -135,8 +145,10 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     public abstract TwillController launch(TwillApplication twillApplication, Iterable<String> extraClassPaths);
   }
 
-  protected AbstractDistributedProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
+  protected AbstractDistributedProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
+                                             Configuration hConf, CConfiguration cConf) {
     this.twillRunner = twillRunner;
+    this.locationFactory = locationFactory;
     this.hConf = hConf;
     this.cConf = cConf;
     this.eventHandler = createEventHandler(cConf);
@@ -158,8 +170,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       }
 
       Map<String, LocalizeResource> localizeResources = new HashMap<>();
-      final ProgramOptions options = program.getApplicationSpecification().getPlugins().isEmpty() ?
-        oldOptions : addArtifactPluginFiles(oldOptions, localizeResources, DirUtils.createTempDir(tempDir));
+      final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
+                                                            DirUtils.createTempDir(tempDir));
 
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
@@ -197,10 +209,9 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
           String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
                                            Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-          TwillController twillController = twillPreparer
+          TwillController twillController = addSecureStore(twillPreparer, locationFactory)
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
             .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
-            .addSecureStore(YarnSecureStore.create(HBaseTokenUtils.obtainToken(hConf, new Credentials())))
             .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
                               .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
             .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
@@ -220,15 +231,23 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
   private ProgramOptions addArtifactPluginFiles(ProgramOptions options, Map<String, LocalizeResource> localizeResources,
                                                 File tempDir) throws IOException {
-    File localDir = new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR));
-    File archiveFile = new File(tempDir, Constants.Plugin.DIRECTORY);
-    BundleJarUtil.packDirFiles(localDir, Locations.toLocation(archiveFile), tempDir);
-    localizeResources.put(Constants.Plugin.DIRECTORY, new LocalizeResource(archiveFile, true));
-    LOG.debug("Localizing Resource {} here {}", localDir, archiveFile);
+    Arguments systemArgs = options.getArguments();
+    if (!systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
+      return options;
+    }
 
-    Map<String, String> systemArgs = Maps.newHashMap(options.getArguments().asMap());
-    systemArgs.put(ProgramOptionConstants.PLUGIN_DIR, Constants.Plugin.DIRECTORY);
-    return new SimpleProgramOptions(options.getName(), new BasicArguments(systemArgs),
+    File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
+    File archiveFile = new File(tempDir, "artifacts.jar");
+    BundleJarUtil.createJar(localDir, archiveFile);
+
+    // Localize plugins to two files, one expanded into a directory, one not.
+    localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
+    localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
+
+    Map<String, String> newSystemArgs = Maps.newHashMap(((Arguments) systemArgs).asMap());
+    newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
+    newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");
+    return new SimpleProgramOptions(options.getName(), new BasicArguments(newSystemArgs),
                                     options.getUserArguments(), options.isDebug());
   }
 
@@ -326,5 +345,41 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     controller.onRunning(cleanup, Threads.SAME_THREAD_EXECUTOR);
     controller.onTerminated(cleanup, Threads.SAME_THREAD_EXECUTOR);
     return controller;
+  }
+
+  /**
+   * Add secure tokens to the {@link TwillPreparer}.
+   */
+  private TwillPreparer addSecureStore(TwillPreparer preparer, LocationFactory locationFactory) {
+    Credentials credentials = new Credentials();
+    if (User.isHBaseSecurityEnabled(hConf)) {
+      HBaseTokenUtils.obtainToken(hConf, credentials);
+    }
+
+    // Perform different logic to get delegation tokens based on the location factory type.
+    // This method is needed because Twill is not able to deal with {@link FileContextLocationFactory} yet.
+    // Remove after (CDAP-3498)
+    try {
+      if (UserGroupInformation.isSecurityEnabled()) {
+        if (locationFactory instanceof HDFSLocationFactory) {
+          YarnUtils.addDelegationTokens(hConf, locationFactory, credentials);
+        } else if (locationFactory instanceof FileContextLocationFactory) {
+          List<Token<?>> tokens = ((FileContextLocationFactory) locationFactory).getFileContext().getDelegationTokens(
+            new Path(locationFactory.getHomeLocation().toURI()), YarnUtils.getYarnTokenRenewer(hConf)
+          );
+          for (Token<?> token : tokens) {
+            credentials.addToken(token.getService(), token);
+          }
+        }
+      }
+    } catch (IOException e) {
+      throw Throwables.propagate(e);
+    }
+
+    if (!credentials.getAllTokens().isEmpty()) {
+      preparer.addSecureStore(YarnSecureStore.create(credentials));
+    }
+
+    return preparer;
   }
 }

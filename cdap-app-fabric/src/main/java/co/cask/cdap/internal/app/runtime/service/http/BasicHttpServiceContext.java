@@ -31,7 +31,6 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -113,12 +112,6 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   @Override
   public void dismissTransactionContext() {
     getDatasetCache().dismissTransactionContext();
-  }
-
-  @Override
-  public void close() {
-    super.close();
-    Closeables.closeQuietly(getPluginInstantiator());
   }
 
   @Override

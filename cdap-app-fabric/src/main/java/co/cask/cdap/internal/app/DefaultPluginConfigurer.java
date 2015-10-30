@@ -32,10 +32,10 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -46,17 +46,17 @@ import javax.annotation.Nullable;
  */
 public class DefaultPluginConfigurer extends DefaultDatasetConfigurer implements PluginConfigurer {
 
+  private final Id.Artifact artifactId;
   private final ArtifactRepository artifactRepository;
   private final PluginInstantiator pluginInstantiator;
-  private final Id.Artifact artifactId;
   private final Map<String, Plugin> plugins;
 
-  public DefaultPluginConfigurer(ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator,
-                                 Id.Artifact artifactId) {
+  public DefaultPluginConfigurer(Id.Artifact artifactId,
+                                 ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+    this.artifactId = artifactId;
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;
-    this.artifactId = artifactId;
-    this.plugins = Maps.newHashMap();
+    this.plugins = new HashMap<>();
   }
 
   public Map<String, Plugin> getPlugins() {

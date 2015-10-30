@@ -20,7 +20,6 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.common.MockMetrics;
-import co.cask.cdap.etl.common.NoopMetrics;
 import com.google.common.collect.Maps;
 
 import java.util.Map;

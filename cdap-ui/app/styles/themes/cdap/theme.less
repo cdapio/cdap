@@ -137,7 +137,10 @@ body.theme-cdap {
         &:not(.btn-success) {
           color: @cdap-bluegray;
         }
-        &:hover, &:focus { text-decoration: none; }
+        &:hover, &:focus {
+          cursor: pointer;
+          text-decoration: none;
+        }
         &.btn-danger { .cask-btn(@background: transparent, @border: 0, @border-radius: 0, @color: @brand-danger, @padding: 0); }
       }
     }
@@ -486,6 +489,7 @@ body.theme-cdap {
     }
     textarea.form-control {
       min-height: 100px;
+      resize: none;
     }
     button.form-control:focus {
       outline: none;

@@ -27,11 +27,13 @@ import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.io.File;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -43,22 +45,27 @@ public final class ClientSparkContext extends AbstractSparkContext {
 
   private final TransactionContext transactionContext;
   private final DynamicDatasetCache datasetCache;
+  private final File pluginArchive;
 
   public ClientSparkContext(Program program, RunId runId, long logicalStartTime, Map<String, String> runtimeArguments,
                             TransactionSystemClient txClient, DatasetFramework datasetFramework,
                             DiscoveryServiceClient discoveryServiceClient,
-                            MetricsCollectionService metricsCollectionService, @Nullable WorkflowToken workflowToken) {
+                            MetricsCollectionService metricsCollectionService,
+                            @Nullable File pluginArchive,
+                            @Nullable PluginInstantiator pluginInstantiator,
+                            @Nullable WorkflowToken workflowToken) {
     super(program.getApplicationSpecification(),
           program.getApplicationSpecification().getSpark().get(program.getName()),
           program.getId(), runId, program.getClassLoader(), logicalStartTime,
           runtimeArguments, discoveryServiceClient,
           createMetricsContext(metricsCollectionService, program.getId(), runId),
-          createLoggingContext(program.getId(), runId), workflowToken);
+          createLoggingContext(program.getId(), runId), pluginInstantiator, workflowToken);
 
     this.datasetCache = new SingleThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework, program.getClassLoader(), getOwners()),
       txClient, program.getId().getNamespace(), runtimeArguments, getMetricsContext(), null);
     this.transactionContext = datasetCache.newTransactionContext();
+    this.pluginArchive = pluginArchive;
   }
 
   @Override
@@ -98,5 +105,10 @@ public final class ClientSparkContext extends AbstractSparkContext {
    */
   public TransactionContext getTransactionContext() {
     return transactionContext;
+  }
+
+  @Nullable
+  public File getPluginArchive() {
+    return pluginArchive;
   }
 }

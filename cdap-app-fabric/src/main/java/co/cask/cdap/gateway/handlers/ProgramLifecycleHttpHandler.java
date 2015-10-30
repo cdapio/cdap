@@ -36,6 +36,7 @@ import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -48,6 +49,12 @@ import co.cask.cdap.internal.app.runtime.schedule.SchedulerException;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.PropertiesResolver;
 import co.cask.cdap.internal.app.store.RunRecordMeta;
+import co.cask.cdap.proto.BatchProgram;
+import co.cask.cdap.proto.BatchProgramResult;
+import co.cask.cdap.proto.BatchProgramStart;
+import co.cask.cdap.proto.BatchProgramStatus;
+import co.cask.cdap.proto.BatchRunnable;
+import co.cask.cdap.proto.BatchRunnableInstances;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
@@ -65,6 +72,8 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -74,7 +83,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
-import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -84,8 +92,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -107,6 +117,9 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(ProgramLifecycleHttpHandler.class);
+  private static final Type BATCH_PROGRAMS_TYPE = new TypeToken<List<BatchProgram>>() { }.getType();
+  private static final Type BATCH_RUNNABLES_TYPE = new TypeToken<List<BatchRunnable>>() { }.getType();
+  private static final Type BATCH_STARTS_TYPE = new TypeToken<List<BatchProgramStart>>() { }.getType();
 
   /**
    * App fabric output directory.
@@ -156,9 +169,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Json serializer.
+   * Json serializer/deserializer.
    */
-  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
+  private static final Gson GSON = ApplicationSpecificationAdapter
+    .addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
+    .create();
 
   private static final Function<RunRecordMeta, RunRecord> CONVERT_TO_RUN_RECORD =
     new Function<RunRecordMeta, RunRecord>() {
@@ -575,32 +591,155 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/status")
   public void getStatuses(HttpRequest request, HttpResponder responder,
-                          @PathParam("namespace-id") String namespaceId) throws IOException {
+                          @PathParam("namespace-id") String namespaceId) throws IOException, BadRequestException {
 
-      List<BatchEndpointStatus> args = statusFromBatchArgs(decodeArrayArguments(request, responder));
-      // if args is null, then there was an error in decoding args and response was already sent
-      if (args == null) {
-        return;
+    List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+
+    List<BatchProgramStatus> statuses = new ArrayList<>(programs.size());
+    for (BatchProgram program : programs) {
+      Id.Program progId = Id.Program.from(namespaceId, program.getAppId(),
+                                          program.getProgramType(), program.getProgramId());
+      try {
+        StatusMap statusMap = getStatus(progId);
+        statuses.add(new BatchProgramStatus(
+          program, HttpResponseStatus.OK.getCode(), null, statusMap.getStatus()));
+      } catch (BadRequestException e) {
+        statuses.add(new BatchProgramStatus(
+          program, HttpResponseStatus.BAD_REQUEST.getCode(), e.getMessage(), null));
+      } catch (NotFoundException e) {
+        statuses.add(new BatchProgramStatus(
+          program, HttpResponseStatus.NOT_FOUND.getCode(), e.getMessage(), null));
       }
-      for (BatchEndpointStatus requestedObj : args) {
-        ProgramType programType = ProgramType.valueOfPrettyName(requestedObj.getProgramType());
-        Id.Program progId = Id.Program.from(namespaceId, requestedObj.getAppId(), programType,
-                                            requestedObj.getProgramId());
-        try {
-          StatusMap statusMap = getStatus(progId);
-          requestedObj.setStatusCode(HttpResponseStatus.OK.getCode());
-          requestedObj.setStatus(statusMap.getStatus());
-        } catch (BadRequestException e) {
-          requestedObj.setStatusCode(HttpResponseStatus.BAD_REQUEST.getCode());
-          requestedObj.setError(e.getMessage());
-        } catch (NotFoundException e) {
-          requestedObj.setStatusCode(HttpResponseStatus.NOT_FOUND.getCode());
-          requestedObj.setError(e.getMessage());
+    }
+    responder.sendJson(HttpResponseStatus.OK, statuses);
+  }
+
+  /**
+   * Stops all programs that are passed into the data. The data is an array of JSON objects
+   * where each object must contain the following three elements: appId, programType, and programId
+   * (flow name, service name, etc.).
+   * <p>
+   * Example input:
+   * <pre><code>
+   * [{"appId": "App1", "programType": "Service", "programId": "Service1"},
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "MapReduce2"},
+   * {"appId": "App2", "programType": "Flow", "programId": "Flow1"}]
+   * </code></pre>
+   * </p><p>
+   * The response will be an array of JsonObjects each of which will contain the three input parameters
+   * as well as a "statusCode" field which maps to the status code for the data in that JsonObjects.
+   * </p><p>
+   * If an error occurs in the input (for the example above, App2 does not exist), then all JsonObjects for which the
+   * parameters have a valid status will have the status field but all JsonObjects for which the parameters do not have
+   * a valid status will have an error message and statusCode.
+   * </p><p>
+   * For example, if there is no App2 in the data above, then the response would be 200 OK with following possible data:
+   * </p>
+   * <pre><code>
+   * [{"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200},
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200},
+   * {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
+   * </code></pre>
+   */
+  @POST
+  @Path("/stop")
+  public void stopPrograms(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespaceId) throws BadRequestException, IOException {
+
+    List<BatchProgram> programs = validateAndGetBatchInput(request, BATCH_PROGRAMS_TYPE);
+
+    List<ListenableFuture<BatchProgramResult>> issuedStops = new ArrayList<>(programs.size());
+    for (final BatchProgram program : programs) {
+      Id.Program programId = Id.Program.from(namespaceId, program.getAppId(),
+                                             program.getProgramType(), program.getProgramId());
+      try {
+        ListenableFuture<BatchProgramResult> issuedStop = Futures.transform(issueStop(programId, null),
+          new Function<ProgramController, BatchProgramResult>() {
+            @Override
+            public BatchProgramResult apply(ProgramController input) {
+              return new BatchProgramResult(program, AppFabricServiceStatus.OK.getCode().getCode(), null);
+            }
+          });
+        issuedStops.add(issuedStop);
+      } catch (NotFoundException e) {
+        issuedStops.add(Futures.immediateFuture(
+          new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.getCode(), e.getMessage())));
+      } catch (BadRequestException e) {
+        issuedStops.add(Futures.immediateFuture(
+          new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.getCode(), e.getMessage())));
+      }
+    }
+
+    List<BatchProgramResult> output = new ArrayList<>(programs.size());
+    // need to keep this index in case there is an exception getting the future, since we won't have the program
+    // information in that scenario
+    int i = 0;
+    for (ListenableFuture<BatchProgramResult> issuedStop : issuedStops) {
+      try {
+        output.add(issuedStop.get());
+      } catch (Throwable t) {
+        LOG.warn(t.getMessage(), t);
+        output.add(new BatchProgramResult(programs.get(i), AppFabricServiceStatus.INTERNAL_ERROR.getCode().getCode(),
+                                          t.getMessage()));
+      }
+      i++;
+    }
+    responder.sendJson(HttpResponseStatus.OK, output);
+  }
+
+  /**
+   * Starts all programs that are passed into the data. The data is an array of JSON objects
+   * where each object must contain the following three elements: appId, programType, and programId
+   * (flow name, service name, etc.). In additional, each object can contain an optional runtimeargs element,
+   * which is a map of arguments to start the program with.
+   * <p>
+   * Example input:
+   * <pre><code>
+   * [{"appId": "App1", "programType": "Service", "programId": "Service1"},
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "MapReduce2", "runtimeargs":{"arg1":"val1"}},
+   * {"appId": "App2", "programType": "Flow", "programId": "Flow1"}]
+   * </code></pre>
+   * </p><p>
+   * The response will be an array of JsonObjects each of which will contain the three input parameters
+   * as well as a "statusCode" field which maps to the status code for the data in that JsonObjects.
+   * </p><p>
+   * If an error occurs in the input (for the example above, App2 does not exist), then all JsonObjects for which the
+   * parameters have a valid status will have the status field but all JsonObjects for which the parameters do not have
+   * a valid status will have an error message and statusCode.
+   * </p><p>
+   * For example, if there is no App2 in the data above, then the response would be 200 OK with following possible data:
+   * </p>
+   * <pre><code>
+   * [{"appId": "App1", "programType": "Service", "programId": "Service1", "statusCode": 200},
+   * {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200},
+   * {"appId":"App2", "programType":"Flow", "programId":"Flow1", "statusCode":404, "error": "App: App2 not found"}]
+   * </code></pre>
+   */
+  @POST
+  @Path("/start")
+  public void startPrograms(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId) throws BadRequestException, IOException {
+
+    List<BatchProgramStart> programs = validateAndGetBatchInput(request, BATCH_STARTS_TYPE);
+
+    List<BatchProgramResult> output = new ArrayList<>(programs.size());
+    for (BatchProgramStart program : programs) {
+      Id.Program programId = Id.Program.from(namespaceId, program.getAppId(),
+        program.getProgramType(), program.getProgramId());
+      try {
+        AppFabricServiceStatus status = start(programId, program.getRuntimeargs(), false);
+        if (status.getCode() != AppFabricServiceStatus.OK.getCode()) {
+          output.add(new BatchProgramResult(program, status.getCode().getCode(), status.getMessage()));
+        } else {
+          output.add(new BatchProgramResult(program, status.getCode().getCode(), null));
         }
-        // set the program type to the pretty name in case the request originally didn't have pretty name
-        requestedObj.setProgramType(programType.getPrettyName());
+      } catch (NotFoundException e) {
+        output.add(new BatchProgramResult(program, HttpResponseStatus.NOT_FOUND.getCode(), e.getMessage()));
+      } catch (BadRequestException e) {
+        output.add(new BatchProgramResult(program, HttpResponseStatus.BAD_REQUEST.getCode(), e.getMessage()));
       }
-      responder.sendJson(HttpResponseStatus.OK, args);
+    }
+    responder.sendJson(HttpResponseStatus.OK, output);
   }
 
   /**
@@ -634,8 +773,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * <pre><code>
    * [{"appId": "App1", "programType": "Service", "programId": "Service1", "runnableId": "Runnable1",
    *   "statusCode": 200, "provisioned": 2, "requested": 2},
-   *  {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 200, "provisioned": 1,
-   *   "requested": 3},
+   *  {"appId": "App1", "programType": "Mapreduce", "programId": "Mapreduce2", "statusCode": 400,
+   *   "error": "Program type 'Mapreduce' is not a valid program type to get instances"},
    *  {"appId": "App2", "programType": "Flow", "programId": "Flow1", "runnableId": "Flowlet1", "statusCode": 404,
    *   "error": "Program": Flowlet1 not found"}]
    * </code></pre>
@@ -643,38 +782,41 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/instances")
   public void getInstances(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespaceId) throws IOException {
-    try {
-      List<BatchEndpointInstances> args = instancesFromBatchArgs(decodeArrayArguments(request, responder));
-      // if args is null then the response has already been sent
-      if (args == null) {
-        return;
-      }
-      for (BatchEndpointInstances requestedObj : args) {
-        Id.Application appId = Id.Application.from(namespaceId, requestedObj.getAppId());
-        ApplicationSpecification spec = store.getApplication(appId);
-        if (spec == null) {
-          addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "App: " + appId + " not found");
-          continue;
-        }
+                           @PathParam("namespace-id") String namespaceId) throws IOException, BadRequestException {
 
-        ProgramType programType = ProgramType.valueOfPrettyName(requestedObj.getProgramType());
-        // cant get instances for things that are not flows or services
-        if (!canHaveInstances(programType)) {
-          addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                       "Program type: " + programType + " is not a valid program type to get instances");
-          continue;
-        }
+    List<BatchRunnable> runnables = validateAndGetBatchInput(request, BATCH_RUNNABLES_TYPE);
 
-        Id.Program programId = Id.Program.from(appId, programType, requestedObj.getProgramId());
-        populateProgramInstances(requestedObj, spec, programId);
+    // cache app specs to perform fewer store lookups
+    Map<Id.Application, ApplicationSpecification> appSpecs = new HashMap<>();
+
+    List<BatchRunnableInstances> output = new ArrayList<>(runnables.size());
+    for (BatchRunnable runnable : runnables) {
+      // cant get instances for things that are not flows, services, or workers
+      if (!canHaveInstances(runnable.getProgramType())) {
+        output.add(new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.getCode(),
+                   String.format("Program type '%s' is not a valid program type to get instances",
+                     runnable.getProgramType().getPrettyName())));
+        continue;
       }
-      responder.sendJson(HttpResponseStatus.OK, args);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (JsonSyntaxException e) {
-      responder.sendStatus(HttpResponseStatus.BAD_REQUEST);
+
+      Id.Application appId = Id.Application.from(namespaceId, runnable.getAppId());
+
+      // populate spec cache if this is the first time we've seen the appid.
+      if (!appSpecs.containsKey(appId)) {
+        appSpecs.put(appId, store.getApplication(appId));
+      }
+
+      ApplicationSpecification spec = appSpecs.get(appId);
+      if (spec == null) {
+        output.add(new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.getCode(),
+          String.format("App: %s not found", appId)));
+        continue;
+      }
+
+      Id.Program programId = Id.Program.from(appId, runnable.getProgramType(), runnable.getProgramId());
+      output.add(getProgramInstances(runnable, spec, programId));
     }
+    responder.sendJson(HttpResponseStatus.OK, output);
   }
 
   /*
@@ -1056,64 +1198,56 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Populates requested and provisioned instances for a program type.
+   * Get requested and provisioned instances for a program type.
    * The program type passed here should be one that can have instances (flows, services, ...)
    * Requires caller to do this validation.
    */
-  private void populateProgramInstances(BatchEndpointInstances requestedObj, ApplicationSpecification spec,
-                                        Id.Program programId) {
+  private BatchRunnableInstances getProgramInstances(BatchRunnable runnable, ApplicationSpecification spec,
+                                                     Id.Program programId) {
     int requested;
     String programName = programId.getId();
     String runnableId = programName;
     ProgramType programType = programId.getType();
     if (programType == ProgramType.WORKER) {
       if (!spec.getWorkers().containsKey(programName)) {
-        addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                     "Worker: " + programName + " not found");
-        return;
+        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.getCode(),
+                                          "Worker: " + programName + " not found");
       }
       requested = spec.getWorkers().get(programName).getInstances();
 
     } else if (programType == ProgramType.SERVICE) {
       if (!spec.getServices().containsKey(programName)) {
-        addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                     "Service: " + programName + " not found");
-        return;
+        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.getCode(),
+                                          "Service: " + programName + " not found");
       }
       requested = spec.getServices().get(programName).getInstances();
 
     } else if (programType == ProgramType.FLOW) {
       // flows must have runnable id
-      if (requestedObj.getRunnableId() == null) {
-        addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                     "Must provide the flowlet id as the runnableId for flows");
-        return;
+      runnableId = runnable.getRunnableId();
+      if (runnableId == null) {
+        return new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.getCode(),
+                                          "Must provide the flowlet id as the runnableId for flows");
       }
-      runnableId = requestedObj.getRunnableId();
       FlowSpecification flowSpec = spec.getFlows().get(programName);
       if (flowSpec == null) {
-        addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(), "Flow: " + programName + " not found");
-        return;
+        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.getCode(),
+                                          "Flow: " + programName + " not found");
       }
       FlowletDefinition flowletDefinition = flowSpec.getFlowlets().get(runnableId);
       if (flowletDefinition == null) {
-        addCodeError(requestedObj, HttpResponseStatus.NOT_FOUND.getCode(),
-                     "Flowlet: " + runnableId + " not found");
-        return;
+        return new BatchRunnableInstances(runnable, HttpResponseStatus.NOT_FOUND.getCode(),
+                                          "Flowlet: " + runnableId + " not found");
       }
       requested = flowletDefinition.getInstances();
 
     } else {
-      addCodeError(requestedObj, HttpResponseStatus.BAD_REQUEST.getCode(),
-                   "Instances not supported for program type + " + programType);
-      return;
+      return new BatchRunnableInstances(runnable, HttpResponseStatus.BAD_REQUEST.getCode(),
+                                        "Instances not supported for program type + " + programType);
     }
     int provisioned = getInstanceCount(programId, runnableId);
     // use the pretty name of program types to be consistent
-    requestedObj.setProgramType(programType.getPrettyName());
-    requestedObj.setStatusCode(HttpResponseStatus.OK.getCode());
-    requestedObj.setRequested(requested);
-    requestedObj.setProvisioned(provisioned);
+    return new BatchRunnableInstances(runnable, HttpResponseStatus.OK.getCode(), provisioned, requested);
   }
 
   /**
@@ -1315,6 +1449,22 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private AppFabricServiceStatus stop(Id.Program identifier, @Nullable String runId)
     throws NotFoundException, BadRequestException {
 
+    ListenableFuture<ProgramController> issuedStop = issueStop(identifier, runId);
+    try {
+      issuedStop.get();
+      return AppFabricServiceStatus.OK;
+    } catch (Throwable throwable) {
+      LOG.warn(throwable.getMessage(), throwable);
+      return AppFabricServiceStatus.INTERNAL_ERROR;
+    }
+  }
+
+  /**
+   * Make sure the program can be stopped, then issue a stop command. Returns a future for the stop command.
+   */
+  private ListenableFuture<ProgramController> issueStop(Id.Program identifier, @Nullable String runId)
+    throws NotFoundException, BadRequestException {
+
     ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(identifier, runId);
     if (runtimeInfo == null) {
       if (!store.applicationExists(identifier.getApplication())) {
@@ -1337,14 +1487,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new BadRequestException(String.format("Program '%s' is not running.", identifier));
     }
 
-    try {
-      ProgramController controller = runtimeInfo.getController();
-      controller.stop().get();
-      return AppFabricServiceStatus.OK;
-    } catch (Throwable throwable) {
-      LOG.warn(throwable.getMessage(), throwable);
-      return AppFabricServiceStatus.INTERNAL_ERROR;
-    }
+    return runtimeInfo.getController().stop();
   }
 
   private void getRuns(HttpResponder responder, Id.Program programId, String status,
@@ -1363,192 +1506,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
     }
-  }
-
-  /**
-   * Deserializes and parses the HttpRequest data into a list of JsonObjects. Checks the HttpRequest data to see that
-   * the input has valid fields corresponding to the /instances and /status endpoints. If the input data is empty or
-   * the data is not of the form of an array of json objects, it sends an appropriate response through the responder
-   * and returns null.
-   *
-   * @param request The HttpRequest to parse
-   * @param responder The HttpResponder used to send responses in case of errors
-   * @return List of JsonObjects from the request data
-   * @throws java.io.IOException Thrown in case of Exceptions when reading the http request data
-   */
-  @Nullable
-  private List<BatchEndpointArgs> decodeArrayArguments(HttpRequest request, HttpResponder responder)
-    throws IOException {
-    ChannelBuffer content = request.getContent();
-    if (!content.readable()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, "Cannot read request");
-      return null;
-    }
-    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
-      List<BatchEndpointArgs> input = GSON.fromJson(reader, new TypeToken<List<BatchEndpointArgs>>() { }.getType());
-      for (BatchEndpointArgs requestedObj : input) {
-        // make sure the following args exist
-        if (requestedObj.getAppId() == null || requestedObj.getProgramId() == null ||
-          requestedObj.getProgramType() == null) {
-          responder.sendJson(HttpResponseStatus.BAD_REQUEST,
-                             "Must provide appId, programType, and programId as strings for each object");
-          return null;
-        }
-        // invalid type
-        try {
-          if (ProgramType.valueOfPrettyName(requestedObj.getProgramType()) == null) {
-            responder.sendJson(HttpResponseStatus.BAD_REQUEST,
-                               "Invalid program type provided: " + requestedObj.getProgramType());
-            return null;
-          }
-        } catch (IllegalArgumentException e) {
-          responder.sendJson(HttpResponseStatus.BAD_REQUEST,
-                             "Invalid program type provided: " + requestedObj.getProgramType());
-          return null;
-        }
-
-      }
-      return input;
-    } catch (JsonSyntaxException e) {
-      responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Invalid Json object provided");
-      return null;
-    }
-  }
-
-  /**
-   * Convenience class for representing the necessary components in the batch endpoint.
-   */
-  private class BatchEndpointArgs {
-    private String appId;
-    private String programType;
-    private String programId;
-    private String runnableId;
-    private String error;
-    private Integer statusCode;
-
-    private BatchEndpointArgs(String appId, String programType, String programId, String runnableId, String error,
-                              Integer statusCode) {
-      this.appId = appId;
-      this.programType = programType;
-      this.programId = programId;
-      this.runnableId = runnableId;
-      this.error = error;
-      this.statusCode = statusCode;
-    }
-
-    public BatchEndpointArgs(BatchEndpointArgs arg) {
-      this(arg.appId, arg.programType, arg.programId, arg.runnableId, arg.error, arg.statusCode);
-    }
-
-    public String getRunnableId() {
-      return runnableId;
-    }
-
-    public void setError(String error) {
-      this.error = error;
-    }
-
-    public void setStatusCode(Integer statusCode) {
-      this.statusCode = statusCode;
-    }
-
-    public int getStatusCode() {
-      return statusCode;
-    }
-
-    public String getError() {
-      return error;
-    }
-
-    public String getProgramId() {
-      return programId;
-    }
-
-    public String getProgramType() {
-      return programType;
-    }
-
-    public String getAppId() {
-      return appId;
-    }
-
-    public void setProgramType(String programType) {
-      this.programType = programType;
-    }
-  }
-
-  private class BatchEndpointInstances extends BatchEndpointArgs {
-
-    @SuppressWarnings("unused") // not used in this class but we need it in the JSON object
-    private Integer provisioned = null;
-    private Integer requested = null;
-
-    public BatchEndpointInstances(BatchEndpointArgs arg) {
-      super(arg);
-    }
-
-    public void setProvisioned(Integer provisioned) {
-      this.provisioned = provisioned;
-    }
-
-    public Integer getRequested() {
-      return requested;
-    }
-
-    public void setRequested(Integer requested) {
-      this.requested = requested;
-    }
-  }
-
-  private class BatchEndpointStatus extends BatchEndpointArgs {
-    private String status = null;
-
-    public BatchEndpointStatus(BatchEndpointArgs arg) {
-      super(arg);
-    }
-
-    public String getStatus() {
-      return status;
-    }
-
-    public void setStatus(String status) {
-      this.status = status;
-    }
-  }
-
-  private List<BatchEndpointInstances> instancesFromBatchArgs(List<BatchEndpointArgs> args) {
-    if (args == null) {
-      return null;
-    }
-    List<BatchEndpointInstances> retVal = new ArrayList<>(args.size());
-    for (BatchEndpointArgs arg: args) {
-      retVal.add(new BatchEndpointInstances(arg));
-    }
-    return retVal;
-  }
-
-  private List<BatchEndpointStatus> statusFromBatchArgs(List<BatchEndpointArgs> args) {
-    if (args == null) {
-      return null;
-    }
-    List<BatchEndpointStatus> retVal = new ArrayList<>(args.size());
-    for (BatchEndpointArgs arg: args) {
-      retVal.add(new BatchEndpointStatus(arg));
-    }
-    return retVal;
-  }
-
-  /**
-   * Adds the status code and error to the JsonObject. The JsonObject will have 2 new properties:
-   * 'statusCode': code, 'error': error
-   *
-   * @param object The JsonObject to add the code and error to
-   * @param code The status code to add
-   * @param error The error message to add
-   */
-  private void addCodeError(BatchEndpointArgs object, int code, String error) {
-    object.setStatusCode(code);
-    object.setError(error);
   }
 
   /**
@@ -1595,5 +1552,32 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private boolean canHaveInstances(ProgramType programType) {
     return EnumSet.of(ProgramType.FLOW, ProgramType.SERVICE, ProgramType.WORKER).contains(programType);
+  }
+
+  private <T extends BatchProgram> List<T> validateAndGetBatchInput(HttpRequest request, Type type)
+    throws BadRequestException, IOException {
+
+    List<T> programs;
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+      try {
+        programs = GSON.fromJson(reader, type);
+        if (programs == null) {
+          throw new BadRequestException("Request body is invalid json, please check that it is a json array.");
+        }
+      } catch (JsonSyntaxException e) {
+        throw new BadRequestException("Request body is invalid json: " + e.getMessage());
+      }
+    }
+
+    // validate input
+    for (BatchProgram program : programs) {
+      try {
+        program.validate();
+      } catch (IllegalArgumentException e) {
+        throw new BadRequestException(
+          "Must provide valid appId, programType, and programId for each object: " + e.getMessage());
+      }
+    }
+    return programs;
   }
 }

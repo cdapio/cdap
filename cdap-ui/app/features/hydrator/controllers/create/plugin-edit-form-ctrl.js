@@ -175,12 +175,15 @@ angular.module(PKG.name + '.feature.hydrator')
             if (res.outputschema) {
               outputSchemaProperty = Object.keys(res.outputschema);
               if (!res.outputschema.implicit) {
-                this.schemaProperties = res.outputschema[outputSchemaProperty[0]];
                 this.isOuputSchemaExists = (propertiesFromBackend.indexOf(outputSchemaProperty[0]) !== -1);
-                this.isOutputSchemaRequired = $scope.plugin._backendProperties[outputSchemaProperty[0]].required;
-                index = propertiesFromBackend.indexOf(outputSchemaProperty[0]);
-                if (index !== -1) {
-                  propertiesFromBackend.splice(index, 1);
+                if (this.isOuputSchemaExists) {
+                  this.schemaProperties = res.outputschema[outputSchemaProperty[0]];
+                  this.isOutputSchemaRequired = $scope.plugin._backendProperties[outputSchemaProperty[0]].required;
+                  index = propertiesFromBackend.indexOf(outputSchemaProperty[0]);
+
+                  if (index !== -1) {
+                    propertiesFromBackend.splice(index, 1);
+                  }
                 }
               }
             } else {
@@ -232,6 +235,11 @@ angular.module(PKG.name + '.feature.hydrator')
               if ($scope.plugin.properties[outputSchemaProperty[0]] !== $scope.plugin.outputSchema) {
                 $scope.plugin.properties[outputSchemaProperty[0]] = $scope.plugin.outputSchema;
               }
+              $scope.$watch('plugin.outputSchema', function() {
+                if(validateSchema()) {
+                  $scope.plugin.properties[outputSchemaProperty[0]] = $scope.plugin.outputSchema;
+                }
+              });
             }
 
             // Mark the configfetched to show that configurations have been received.
@@ -240,10 +248,21 @@ angular.module(PKG.name + '.feature.hydrator')
             this.noconfig = false;
 
           }.bind(this),
-          function error() {
+          function error(err) {
             // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
             $timeout(function() {
               // Didn't receive a configuration from the backend. Fallback to all textboxes.
+              switch(err) {
+                case 'NO_JSON_FOUND':
+                  this.noConfigMessage = GLOBALS.en.hydrator.studio.noConfigMessage;
+                  break;
+                case 'CONFIG_SYNTAX_JSON_ERROR':
+                  this.noConfigMessage = GLOBALS.en.hydrator.studio.syntaxConfigJsonError;
+                  break;
+                case 'CONFIG_SEMANTICS_JSON_ERROR':
+                  this.noConfigMessage = GLOBALS.en.hydrator.studio.semanticConfigJsonError;
+                  break;
+              }
               this.noconfig = true;
               this.configfetched = true;
             }.bind(this), 1000);
@@ -253,7 +272,6 @@ angular.module(PKG.name + '.feature.hydrator')
       this.configfetched = true;
     }
 
-    $scope.$watch('plugin.outputSchema', validateSchema);
     $scope.$watchCollection('plugin.properties', function() {
       MyNodeConfigService.notifyPluginSaveListeners($scope.plugin.id);
     });

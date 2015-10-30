@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.AppUsingNamespace;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.common.Bytes;
@@ -26,6 +27,8 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricDataQuery;
@@ -49,6 +52,7 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
+import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
@@ -214,6 +218,20 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   }
 
   @Test
+  public void testNamespaceAvailableAtRuntime() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, AppUsingNamespace.class);
+    ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingNamespace.SERVICE_NAME);
+    serviceManager.start();
+    serviceManager.waitForStatus(true, 1, 10);
+
+    URL serviceURL = serviceManager.getServiceURL(10, TimeUnit.SECONDS);
+    Assert.assertEquals(testSpace.getId(), callServiceGet(serviceURL, "ns"));
+
+    serviceManager.stop();
+    serviceManager.waitForStatus(false, 1, 10);
+  }
+
+  @Test
   public void testAppConfigWithNull() throws Exception {
     testAppConfig(ConfigTestApp.NAME, deployApplication(ConfigTestApp.class), null);
   }
@@ -237,6 +255,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
 
     ApplicationManager appManager = deployApplication(appId, createRequest);
+
     WorkerManager workerManager = appManager.getWorkerManager(AppWithPlugin.WORKER);
     workerManager.start();
     workerManager.waitForStatus(false, 5, 1);
@@ -258,6 +277,34 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     mrManager.waitForFinish(10, TimeUnit.MINUTES);
     List<RunRecord> runRecords = mrManager.getHistory();
     Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
+
+    // Testing Spark Plugins. First send some data to stream for the Spark program to process
+    StreamManager streamManager = getStreamManager(AppWithPlugin.SPARK_STREAM);
+    for (int i = 0; i < 5; i++) {
+      streamManager.send("Message " + i);
+    }
+
+    SparkManager sparkManager = appManager.getSparkManager(AppWithPlugin.SPARK).start();
+    sparkManager.waitForFinish(2, TimeUnit.MINUTES);
+
+    // Verify the Spark result.
+    DataSetManager<Table> dataSetManager = getDataset(AppWithPlugin.SPARK_TABLE);
+    Table table = dataSetManager.get();
+    Scanner scanner = table.scan(null, null);
+    try {
+      for (int i = 0; i < 5; i++) {
+        Row row = scanner.next();
+        Assert.assertNotNull(row);
+        String expected = "Message " + i + " " + AppWithPlugin.TEST;
+        Assert.assertEquals(expected, Bytes.toString(row.getRow()));
+        Assert.assertEquals(expected, Bytes.toString(row.get(expected)));
+      }
+      // There shouldn't be any more rows in the table.
+      Assert.assertNull(scanner.next());
+
+    } finally {
+      scanner.close();
+    }
   }
 
   @Test

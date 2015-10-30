@@ -1,0 +1,36 @@
+
+.. To use this include, define these replacements:
+.. example-service1
+.. example-service1-italic
+.. example-service2
+.. example-service2-italic
+.. example-service3
+.. example-service3-italic
+
+Starting the Services
+---------------------
+
+- Using the CDAP-UI, go to the |application-overview|,
+  click |example-service1-italic| to get to the service detail page, then click the *Start* button,
+  and then do the same for the |example-service2-italic| and |example-service3-italic| services; or
+  
+- From the Standalone CDAP SDK directory, use the Command Line Interface:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| cdap-cli.sh start service |example|.\ |example-service1|
+      |$| cdap-cli.sh start service |example|.\ |example-service2|
+      |$| cdap-cli.sh start service |example|.\ |example-service3|
+      Successfully started service '|example-service1|' of application '|example|' with stored runtime arguments '{}'
+      Successfully started service '|example-service2|' of application '|example|' with stored runtime arguments '{}'
+      Successfully started service '|example-service3|' of application '|example|' with stored runtime arguments '{}'
+
+- Or, you can send ``curl`` requests to CDAP:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| curl -w'\\n' -v -X POST '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service1|/start'
+      |$| curl -w'\\n' -v -X POST '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service2|/start'
+      |$| curl -w'\\n' -v -X POST '\http://localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service3|/start'

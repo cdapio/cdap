@@ -15,20 +15,12 @@
  */
 
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamDetailStatusController', function($scope, $state, myHelpers, MyDataSource, myStreamApi) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('StreamDetailStatusController', function($scope, $state, myHelpers, MyCDAPDataSource, rStreamData) {
+    var dataSrc = new MyCDAPDataSource($scope);
     this.storage = null;
     this.events = null;
-    var params = {
-      namespace: $state.params.namespace,
-      streamId: $state.params.streamId,
-      scope: $scope
-    };
-    myStreamApi.get(params)
-      .$promise
-      .then(function (res) {
-        this.schema = res.format.schema.fields;
-      }.bind(this));
+
+    this.schema = rStreamData.format.schema.fields;
 
     [
       {

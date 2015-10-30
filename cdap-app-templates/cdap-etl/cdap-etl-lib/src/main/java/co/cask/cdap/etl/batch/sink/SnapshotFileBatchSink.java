@@ -16,83 +16,75 @@
 
 package co.cask.cdap.etl.batch.sink;
 
-import co.cask.cdap.api.annotation.Description;
-import co.cask.cdap.api.annotation.Name;
-import co.cask.cdap.api.dataset.lib.FileSet;
-import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.etl.common.Properties;
-import org.apache.twill.filesystem.Location;
+import co.cask.cdap.etl.common.SnapshotFileSetConfig;
+import co.cask.cdap.etl.dataset.SnapshotFileSet;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Collections;
+import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
- * {@link FileBatchSink} that stores the data of the latest run of an adapter in HDFS.
+ * Sink that stores snapshots on HDFS, and keeps track of which snapshot is the latest snapshot.
+ *
  * @param <KEY_OUT> the type of key the sink outputs
  * @param <VAL_OUT> the type of value the sink outputs
  */
-public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends FileBatchSink<KEY_OUT, VAL_OUT> {
-  private static final String PATH_EXTENSION_DESCRIPTION = "The extension where the snapshot will be stored. " +
-    "The snapshot will be stored at <basePath>/<extension>.";
+public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
+  private static final Logger LOG = LoggerFactory.getLogger(SnapshotFileBatchSink.class);
+  private static final Gson GSON = new Gson();
+  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  private final SnapshotFileConfig config;
-  protected Map<String, String> sinkArgs;
+  private final SnapshotFileSetConfig config;
+  private SnapshotFileSet snapshotFileSet;
 
-  public SnapshotFileBatchSink(SnapshotFileConfig config) {
-    super(config);
+  public SnapshotFileBatchSink(SnapshotFileSetConfig config) {
     this.config = config;
   }
 
   @Override
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    FileSetProperties.Builder fileProperties = SnapshotFileSet.getBaseProperties(config);
+    addFileProperties(fileProperties);
+    pipelineConfigurer.createDataset(config.getName(), PartitionedFileSet.class, fileProperties.build());
+  }
+
+  @Override
   public void prepareRun(BatchSinkContext context) {
-    sinkArgs = getAdditionalFileSetArguments();
-    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
-    FileSetArguments.setOutputPath(sinkArgs, format.format(context.getLogicalStartTime()));
-    context.addOutput(config.name, sinkArgs);
+    PartitionedFileSet files = context.getDataset(config.getName());
+    snapshotFileSet = new SnapshotFileSet(files);
+
+    Map<String, String> arguments = new HashMap<>();
+
+    if (config.getFileProperties() != null) {
+      arguments = GSON.fromJson(config.getFileProperties(), MAP_TYPE);
+    }
+    context.addOutput(config.getName(), snapshotFileSet.getOutputArguments(context.getLogicalStartTime(), arguments));
   }
 
   @Override
   public void onRunFinish(boolean succeeded, BatchSinkContext context) {
-    FileSet fileSet = context.getDataset(config.name, sinkArgs);
-    Location curLocation = fileSet.getOutputLocation();
-    try {
-      Location targetLocation = fileSet.getBaseLocation().append(config.pathExtension);
-      if (!targetLocation.exists()) {
-        targetLocation.mkdirs();
+    super.onRunFinish(succeeded, context);
+    if (succeeded) {
+      try {
+        snapshotFileSet.onSuccess(context.getLogicalStartTime());
+      } catch (Exception e) {
+        LOG.error("Exception updating state file with value of latest snapshot, ", e);
       }
-      Location temp = fileSet.getBaseLocation().getTempFile(".tmp");
-      targetLocation.renameTo(temp);
-      curLocation.renameTo(targetLocation);
-      temp.delete(true);
-    } catch (IOException e) {
-      //necessary because onRunFinish doesn't throw exceptions
-      throw new RuntimeException(e);
     }
   }
 
   /**
-   * This base class will set the output path argument. Any additional arguments should be returned by this method.
+   * add all fileset properties specific to the type of sink, such as schema and output format.
    */
-  protected Map<String, String> getAdditionalFileSetArguments() {
-    //no-op
-    return Collections.emptyMap();
-  }
-
-  /**
-   * Config for snapshot file sets
-   */
-  public static class SnapshotFileConfig extends FileSetSinkConfig {
-    @Name(Properties.SnapshotFileSet.PATH_EXTENSION)
-    @Description(PATH_EXTENSION_DESCRIPTION)
-    protected String pathExtension;
-
-    public SnapshotFileConfig(String name, @Nullable String basePath, String pathExtension) {
-      super(name, basePath);
-      this.pathExtension = pathExtension;
-    }
-  }
+  protected abstract void addFileProperties(FileSetProperties.Builder propertiesBuilder);
 }

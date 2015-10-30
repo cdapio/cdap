@@ -16,7 +16,7 @@
 package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.element.ElementType;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Iterator;
@@ -25,12 +25,12 @@ import java.util.Objects;
 /**
  * Uniquely identifies a dataset.
  */
-public class DatasetId extends ElementId implements NamespacedId, ParentedId<NamespaceId> {
+public class DatasetId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
   private final String namespace;
   private final String dataset;
 
   public DatasetId(String namespace, String dataset) {
-    super(ElementType.DATASET);
+    super(EntityType.DATASET);
     this.namespace = namespace;
     this.dataset = dataset;
   }
@@ -80,6 +80,6 @@ public class DatasetId extends ElementId implements NamespacedId, ParentedId<Nam
   }
 
   public static DatasetId fromString(String string) {
-    return ElementId.fromString(string, DatasetId.class);
+    return EntityId.fromString(string, DatasetId.class);
   }
 }

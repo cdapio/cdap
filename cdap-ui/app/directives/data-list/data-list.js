@@ -24,7 +24,7 @@ angular.module(PKG.name+'.commons')
       isHydrator: '='
     },
     templateUrl: 'data-list/data-list.html',
-    controller: function($scope, MyDataSource, $state, myPipelineApi) {
+    controller: function($scope, MyCDAPDataSource, $state, myPipelineApi) {
 
       $scope.dataList = [];
 
@@ -57,7 +57,7 @@ angular.module(PKG.name+'.commons')
 
 
       function nonHydrator() {
-        var dataSrc = new MyDataSource($scope);
+        var dataSrc = new MyCDAPDataSource($scope);
 
         var path = '/apps/' + $state.params.appId;
 

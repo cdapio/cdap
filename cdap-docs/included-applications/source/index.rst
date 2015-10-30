@@ -27,6 +27,8 @@ extensible: users can write their own artifacts if they so chose, and can
 manage the lifecycle of their custom applications using CDAP.
 
 
+.. _included-apps-intro-hydrator:
+
 .. rubric:: Cask Hydrator and ETL Pipelines
 
 ETL is **Extract**, **Transform** and **Load** of data, a common first-step in any data

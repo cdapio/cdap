@@ -19,8 +19,8 @@ out records that have null values for an important field.
 
 .. rubric:: Properties
 
-**script:** Javascript that must implement a function ``'shouldFilter'``, that takes a
-JSON object representation of the input record and a context object (which encapsulates CDAP metrics and logger),
+**script:** Javascript that must implement a function ``'shouldFilter'``, takes a
+JSON object (representing the input record) and a context object (which encapsulates CDAP metrics and logger),
 and returns true if the input record should be filtered and false if not.
 
 .. rubric:: Example

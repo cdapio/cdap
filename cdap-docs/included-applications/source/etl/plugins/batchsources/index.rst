@@ -15,6 +15,9 @@ Batch Sources
     File <file>
     KVTable <kvtable>
     S3 <s3>
+    SnapshotAvro <snapshotavro>
+    SnapshotParquet <snapshotparquet>
     Stream <stream>
     Table <table>
     TPFSAvro <tpfsavro>
+    TPFSParquet <tpfsparquet>

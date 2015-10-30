@@ -23,17 +23,10 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
-import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
-import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.AvroToStructuredTransformer;
-import co.cask.cdap.etl.common.ETLUtils;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
@@ -42,9 +35,6 @@ import org.apache.avro.mapreduce.AvroKeyOutputFormat;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 
-import java.util.Map;
-import javax.annotation.Nullable;
-
 /**
  * A {@link BatchSource} to read Avro record from {@link TimePartitionedFileSet}
  */
@@ -52,97 +42,50 @@ import javax.annotation.Nullable;
 @Name("TPFSAvro")
 @Description("Reads from a TimePartitionedFileSet whose data is in Avro format.")
 public class TimePartitionedFileSetDatasetAvroSource extends
-  BatchSource<AvroKey<GenericRecord>, NullWritable, StructuredRecord> {
-
-  private static final String SCHEMA_DESC = "The Avro schema of the record being read from the source as a JSON " +
-    "Object.";
-  private static final String TPFS_NAME_DESC = "Name of the TimePartitionedFileSet to read.";
-  private static final String BASE_PATH_DESC = "Base path for the TimePartitionedFileSet. Defaults to the " +
-    "name of the dataset.";
-  private static final String DURATION_DESC = "Size of the time window to read with each run of the pipeline. " +
-    "The format is expected to be a number followed by an 's', 'm', 'h', or 'd' specifying the time unit, with 's' " +
-    "for seconds, 'm' for minutes, 'h' for hours, and 'd' for days. For example, a value of '5m' means each run of " +
-    "the pipeline will read 5 minutes of events from the TPFS source.";
-  private static final String DELAY_DESC = "Optional delay for reading from TPFS source. The value must be " +
-    "of the same format as the duration value. For example, a duration of '5m' and a delay of '10m' means each run " +
-    "of the pipeline will read 5 minutes of data from 15 minutes before its logical start time to 10 minutes " +
-    "before its logical start time. The default value is 0.";
+  TimePartitionedFileSetSource<AvroKey<GenericRecord>, NullWritable> {
+  private final TPFSAvroConfig tpfsAvroConfig;
 
   private final AvroToStructuredTransformer recordTransformer = new AvroToStructuredTransformer();
 
   /**
    * Config for TimePartitionedFileSetDatasetAvroSource
    */
-  public static class TPFSAvroSourceConfig extends PluginConfig {
-    @Description(TPFS_NAME_DESC)
-    private String name;
+  public static class TPFSAvroConfig extends TPFSConfig {
 
-    @Description(SCHEMA_DESC)
+    @Description("The Avro schema of the record being read from the source as a JSON Object.")
     private String schema;
 
-    @Description(BASE_PATH_DESC)
-    @Nullable
-    private String basePath;
-
-    @Description(DURATION_DESC)
-    private String duration;
-
-    @Description(DELAY_DESC)
-    @Nullable
-    private String delay;
-
-    private void validate() {
-      // check duration and delay
-      long durationInMs = ETLUtils.parseDuration(duration);
-      Preconditions.checkArgument(durationInMs > 0, "Duration must be greater than 0");
-      if (!Strings.isNullOrEmpty(delay)) {
-        ETLUtils.parseDuration(delay);
+    @Override
+    protected void validate() {
+      super.validate();
+      try {
+        new org.apache.avro.Schema.Parser().parse(schema);
+      } catch (Exception e) {
+        throw new IllegalArgumentException("Unable to parse schema with error: " + e.getMessage(), e);
       }
     }
   }
 
-  private final TPFSAvroSourceConfig tpfsAvroSourceConfig;
-
-  public TimePartitionedFileSetDatasetAvroSource(TPFSAvroSourceConfig tpfsAvroSourceConfig) {
-    this.tpfsAvroSourceConfig = tpfsAvroSourceConfig;
+  public TimePartitionedFileSetDatasetAvroSource(TPFSAvroConfig tpfsAvroConfig) {
+    super(tpfsAvroConfig);
+    this.tpfsAvroConfig = tpfsAvroConfig;
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    String tpfsName = tpfsAvroSourceConfig.name;
-    String basePath = tpfsAvroSourceConfig.basePath == null ? tpfsName : tpfsAvroSourceConfig.basePath;
-    tpfsAvroSourceConfig.validate();
-    pipelineConfigurer.createDataset(tpfsName, TimePartitionedFileSet.class.getName(), FileSetProperties.builder()
-      .setBasePath(basePath)
-      .setInputFormat(AvroKeyInputFormat.class)
+  protected void addFileSetProperties(FileSetProperties.Builder properties) {
+    properties.setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
       .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-      .setTableProperty("avro.schema.literal", (tpfsAvroSourceConfig.schema))
-      .build());
+      .setTableProperty("avro.schema.literal", (tpfsAvroConfig.schema));
   }
 
   @Override
   public void prepareRun(BatchSourceContext context) {
-    Map<String, String> runtimeArgs = context.getRuntimeArguments();
-    long runtime = context.getLogicalStartTime();
-    if (runtimeArgs.containsKey("runtime")) {
-      runtime = Long.parseLong(runtimeArgs.get("runtime"));
-    }
-
-    long duration = ETLUtils.parseDuration(tpfsAvroSourceConfig.duration);
-    long delay = Strings.isNullOrEmpty(tpfsAvroSourceConfig.delay) ? 0 :
-      ETLUtils.parseDuration(tpfsAvroSourceConfig.delay);
-    long endTime = runtime - delay;
-    long startTime = endTime - duration;
-    Map<String, String> sourceArgs = Maps.newHashMap();
-    TimePartitionedFileSetArguments.setInputStartTime(sourceArgs, startTime);
-    TimePartitionedFileSetArguments.setInputEndTime(sourceArgs, endTime);
-    TimePartitionedFileSet source = context.getDataset(tpfsAvroSourceConfig.name, sourceArgs);
-    context.setInput(tpfsAvroSourceConfig.name, source);
-    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(tpfsAvroSourceConfig.schema);
+    setInput(context);
+    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(tpfsAvroConfig.schema);
     Job job = context.getHadoopJob();
     AvroJob.setInputKeySchema(job, avroSchema);
   }

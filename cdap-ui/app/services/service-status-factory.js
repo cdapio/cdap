@@ -15,12 +15,12 @@
  */
 
 angular.module(PKG.name + '.services')
-  .service('ServiceStatusFactory', function(MyDataSource, $alert, $timeout, EventPipe, $state, myAuth) {
+  .service('ServiceStatusFactory', function(MyCDAPDataSource, $timeout, EventPipe, $state, myAuth) {
     this.systemStatus = 'green';
 
     // Apart from invalid token there should be no scenario
     // when we should stop this poll.
-    var dataSrc = new MyDataSource();
+    var dataSrc = new MyCDAPDataSource();
     dataSrc.poll({
       _cdapPath: '/system/services/status',
       interval: 10000

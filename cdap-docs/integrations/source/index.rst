@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _integrations-index:
+.. _integrations:
 
-==================================================
+============
 Integrations
-==================================================
+============
 
 
 .. rubric:: Cloudera
@@ -39,6 +39,14 @@ Integrations
 .. _cloudera-faq: partners/cloudera/faq.html
 
 .. - |cloudera-faq|_ for Cloudera and Impala
+
+
+.. rubric:: Ambari
+
+.. |ambari| replace:: **Configuring and Installing:**
+.. _ambari: ambari/index.html
+
+- |ambari|_ Configuring and installing CDAP using **Ambari**
 
 
 .. rubric:: BI Tools: Accessing CDAP Datasets through Business Intelligence Tools

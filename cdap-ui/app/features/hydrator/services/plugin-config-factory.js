@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('PluginConfigFactory', function(MyDataSource, $q) {
+  .service('PluginConfigFactory', function(MyCDAPDataSource, $q) {
     this.plugins = {};
 
     this.fetch = function(scope, templateid, pluginid) {
-      var dataSrc = new MyDataSource(scope);
+      var dataSrc = new MyCDAPDataSource(scope);
       var defer = $q.defer();
 
 

@@ -15,9 +15,9 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .directive('myMetricPicker', function (MyDataSource, $stateParams, $log, MyMetricsQueryHelper) {
+  .directive('myMetricPicker', function (MyCDAPDataSource, $stateParams, $log, MyMetricsQueryHelper) {
 
-    var dSrc = new MyDataSource();
+    var dSrc = new MyCDAPDataSource();
 
     function MetricPickerCtrl ($scope) {
 

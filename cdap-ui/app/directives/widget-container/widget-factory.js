@@ -77,6 +77,16 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model',
           'config': 'myconfig',
+          'mode': 'javascript',
+          placeholder: '{{myconfig.properties.default || ""}}'
+        }
+      },
+      'python-editor': {
+        element: '<div my-ace-editor></div>',
+        attributes: {
+          'ng-model': 'model',
+          'config': 'myconfig',
+          'mode': 'python',
           placeholder: '{{myconfig.properties.default || ""}}'
         }
       },

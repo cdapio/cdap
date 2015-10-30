@@ -16,7 +16,7 @@
 package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.element.ElementType;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Iterator;
@@ -25,12 +25,12 @@ import java.util.Objects;
 /**
  * Uniquely identifies a stream.
  */
-public class StreamId extends ElementId implements NamespacedId, ParentedId<NamespaceId> {
+public class StreamId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
   private final String namespace;
   private final String stream;
 
   public StreamId(String namespace, String stream) {
-    super(ElementType.STREAM);
+    super(EntityType.STREAM);
     this.namespace = namespace;
     this.stream = stream;
   }
@@ -80,6 +80,6 @@ public class StreamId extends ElementId implements NamespacedId, ParentedId<Name
   }
 
   public static StreamId fromString(String string) {
-    return ElementId.fromString(string, StreamId.class);
+    return EntityId.fromString(string, StreamId.class);
   }
 }

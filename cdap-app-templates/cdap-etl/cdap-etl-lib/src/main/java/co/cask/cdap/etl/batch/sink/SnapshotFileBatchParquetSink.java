@@ -22,22 +22,18 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.Emitter;
-import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
-import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.etl.common.SchemaConverter;
+import co.cask.cdap.etl.common.SnapshotFileSetConfig;
 import co.cask.cdap.etl.common.StructuredToAvroTransformer;
 import org.apache.avro.generic.GenericRecord;
 import parquet.avro.AvroParquetInputFormat;
 import parquet.avro.AvroParquetOutputFormat;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 
@@ -48,38 +44,13 @@ import javax.annotation.Nullable;
 @Name("SnapshotParquet")
 @Description("Sink for a SnapshotFileSet that writes data in Parquet format.")
 public class SnapshotFileBatchParquetSink extends SnapshotFileBatchSink<Void, GenericRecord> {
-  private static final String SCHEMA_DESC = "The Parquet schema of the record being written to the Sink as a JSON " +
-    "Object.";
-
-  private final SnapshotParquetSinkConfig config;
+  private final SnapshotParquetConfig config;
 
   private StructuredToAvroTransformer recordTransformer;
 
-  public SnapshotFileBatchParquetSink(SnapshotParquetSinkConfig config) {
+  public SnapshotFileBatchParquetSink(SnapshotParquetConfig config) {
     super(config);
     this.config = config;
-  }
-
-  @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    super.configurePipeline(pipelineConfigurer);
-    String basePath = config.basePath == null ? config.name : config.basePath;
-    // parse to make sure it's valid
-    new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
-    String hiveSchema;
-    try {
-      hiveSchema = SchemaConverter.toHiveSchema(Schema.parseJson(config.schema.toLowerCase()));
-    } catch (UnsupportedTypeException | IOException e) {
-      throw new RuntimeException("Error: Schema is not valid ", e);
-    }
-    pipelineConfigurer.createDataset(config.name, FileSet.class.getName(), FileSetProperties.builder()
-      .setBasePath(basePath)
-      .setInputFormat(AvroParquetInputFormat.class)
-      .setOutputFormat(AvroParquetOutputFormat.class)
-      .setEnableExploreOnCreate(true)
-      .setExploreFormat("parquet")
-      .setExploreSchema(hiveSchema.substring(1, hiveSchema.length() - 1))
-      .build());
   }
 
   @Override
@@ -95,23 +66,34 @@ public class SnapshotFileBatchParquetSink extends SnapshotFileBatchSink<Void, Ge
   }
 
   @Override
-  protected Map<String, String> getAdditionalFileSetArguments() {
-    Map<String, String> args = new HashMap<>();
-    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "parquet.avro.schema", config.schema.toLowerCase());
-    return args;
+  protected void addFileProperties(FileSetProperties.Builder propertiesBuilder) {
+    // parse to make sure it's valid
+    new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
+    String hiveSchema;
+    try {
+      hiveSchema = SchemaConverter.toHiveSchema(Schema.parseJson(config.schema.toLowerCase()));
+    } catch (UnsupportedTypeException | IOException e) {
+      throw new RuntimeException("Error: Schema is not valid ", e);
+    }
+
+    propertiesBuilder
+      .setInputFormat(AvroParquetInputFormat.class)
+      .setOutputFormat(AvroParquetOutputFormat.class)
+      .setEnableExploreOnCreate(true)
+      .setExploreFormat("parquet")
+      .setExploreSchema(hiveSchema.substring(1, hiveSchema.length() - 1))
+      .setOutputProperty("parquet.avro.schema", config.schema.toLowerCase());
   }
 
   /**
-   * Config for SnapshotFileBatchAvroSink
+   * Config for SnapshotFileBatchParquetSink.
    */
-  public static class SnapshotParquetSinkConfig extends SnapshotFileConfig {
-
-    @Name(Properties.SnapshotFileSet.SCHEMA)
-    @Description(SCHEMA_DESC)
+  public static class SnapshotParquetConfig extends SnapshotFileSetConfig {
+    @Description("The Parquet schema of the record being written to the Sink as a JSON Object.")
     private String schema;
 
-    public SnapshotParquetSinkConfig(String name, @Nullable String basePath, String pathExtension, String schema) {
-      super(name, basePath, pathExtension);
+    public SnapshotParquetConfig(String name, @Nullable String basePath, String schema) {
+      super(name, basePath, null);
       this.schema = schema;
     }
   }
