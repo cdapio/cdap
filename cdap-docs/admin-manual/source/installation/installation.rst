@@ -13,7 +13,7 @@ Installation
 Introduction
 ------------
 
-This manual is to help you install and configure Cask Data Application Platform (CDAP). It provides the
+This manual is to help you install the Cask Data Application Platform (CDAP). It provides the
 `system <#system-requirements>`__, 
 `network <#network-requirements>`__, and
 `software requirements <#software-prerequisites>`__,
@@ -25,6 +25,8 @@ the CDAP components so they work with your existing Hadoop cluster.
 There are specific instructions for :ref:`upgrading existing CDAP installations <configuration-upgrade>`.
 
 Once installed, another page :ref:`covers configuration <configuration>` of the CDAP installation.
+
+Use these instructions if you aren't using :ref:`Cloudera <cloudera-configuring>` or :ref:`Ambari <ambari-configuring>`.
 
 These are the CDAP components:
 

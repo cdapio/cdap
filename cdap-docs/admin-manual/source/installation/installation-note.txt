@@ -1,0 +1,12 @@
+**Note:** There are three ways to install CDAP on distributed systems:
+
+- On CDH (Cloudera), you can follow :ref:`these instructions using Cloudera Manager <cloudera-configuring>`.
+
+- On HDP (Hortonworks), you can follow :ref:`these instructions using Apache Ambari <ambari-configuring>`.
+
+- On other Apache Hadoop distributions, you can follow a manual method, using either our
+  :ref:`quick start installation instructions <installation-quick-start>` or by following 
+  our :ref:`general installation instructions <install>` if you have either an unusual
+  situation |---| such as HA (high availability) |---| or would like more details on the steps and
+  the available options.
+  
