@@ -63,16 +63,9 @@ CDAP-UI.
 Spark
 =====
 
-Spark Running in Distributed Mode
----------------------------------
-We're trying to execute a data analysis pipeline (MapReduce and Spark) on an HDP cluster using CDAP.
-We are able to execute MapReduce jobs successfully.
-However, Spark jobs are getting submitted but failing with following exception:
-
-   Container exited with a non-zero exit code 1
-   ...
-   
-There are a number of ways to solve problems such as these:
+How do I debug Spark jobs running in CDAP Distributed Mode?
+-----------------------------------------------------------
+There are a number of ways to solve problems with Spark:
 
 1. First, can you run a simple Spark job on YARN directly? Specifically, submit a Spark
    job using ``spark-submit —master yarn``. The shell script used to launch Spark containers on
@@ -102,3 +95,12 @@ There are a number of ways to solve problems such as these:
    application to act as the client for submitting the actual Spark job. You can look at the 
    log files from that client container; usually the container-id ends with ``00002``,
    since ``00001`` is the YARN application.
+
+
+Additional Resources
+====================
+
+Ask the CDAP Community for assistance
+-------------------------------------
+
+.. include:: cdap-user-googlegroups.txt

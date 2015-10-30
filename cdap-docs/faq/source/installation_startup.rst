@@ -44,8 +44,8 @@ To build an SDK (suitable for Macintosh OS X, Windows, or Linux), use:
 Installation
 ============
 
-How do I install CDAP on CDH?
------------------------------
+How do I install CDAP on CDH using Cloudera Manager?
+----------------------------------------------------
 We have a  :ref:`tutorial <step-by-step-cloudera-add-service>` with instructions on how to
 install CDAP on CDH (Cloudera). 
 
@@ -72,7 +72,8 @@ Instructions on installing CDAP on HDP using Apache Ambari :ref:`are available <
 
 How do I install CDAP on MapR?
 ------------------------------
-TBC.
+Follow the normal install
+One configuration:
 
 
 How do I install CDAP on Apache Hadoop?
@@ -98,14 +99,15 @@ If you have followed :ref:`the installation instructions <install>`, and CDAP ei
     java.lang.NoSuchMethodError: 
     co.cask.cdap.UserInterfaceService.getServiceName()Ljava/lang/String
 
-  then you have probably downloaded the standalone version of CDAP, which is not intended to be run on
-  Hadoop clusters. Download an appropriate version from http://cask.co/downloads.
+  then you have probably downloaded the standalone version of CDAP, which is not intended
+  to be run on Hadoop clusters. Download the appropriate distributed packages (RPM or
+  Debian version) from http://cask.co/downloads.
          
 - Check permissions of directories and network configuration errors
 - Check :ref:`configuration troubleshooting <configuration-troubleshooting>` suggestions
     
-The CDAP UI shows a blank screen
---------------------------------
+CDAP UI shows a blank screen
+----------------------------
 TBC.
 
 

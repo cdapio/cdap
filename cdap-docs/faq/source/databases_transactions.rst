@@ -60,9 +60,9 @@ state::
 Transactions
 ============
 
-Transaction...is not in progress during HelloWorld
+What does the "transaction...is not in progress" message mean?
 --------------------------------------------------
-I've modified the HelloWorld example, and now I am seeing transaction related errors::
+If you are seeing transaction related errors::
 
   [warn 2015/08/10 22:50:53.299 IST <DatasetTypeManager STARTING> tid=0x24] Transaction 1231000000 is not in progress.
   co.cask.tephra.TransactionNotInProgressException: canCommit() is called for transaction 1231000000 
@@ -79,12 +79,21 @@ You can either start a long-running transaction [link] or increase the transacti
 
 Is the @RoundRobin annotation appropriate for stream events? 
 -------------------------------------------------------------
-The documentation only talks about partitioning when consuming from queues, not streams.
-Do the same partitioning strategies |---| FIFO, round-robin, and hash-based |---| also
-apply to streams?
+Though the documentation only talks about partitioning when consuming from queues, not
+streams, the same partitioning strategies |---| FIFO, round-robin, and hash-based |---|
+also apply when used with stream events.
 
-The @RoundRobin annotation is a property of the flowlet and it is applicable irrespective of
-who (either a stream or another flowlet) is emitting the data to the flowlet. When a
-stream is connected to a flowlet, the stream acts as a source which is basically a file-backed
-queue. Based on the partitioning strategy specified for the flowlet, an appropriate instance
-of the flowlet consumes the event from the queue.
+The ``@RoundRobin`` annotation is a property of the **flowlet** and it is applicable
+irrespective of who (either a stream or another flowlet) is emitting the data to the
+flowlet. When a stream is connected to a flowlet, the stream acts as a source which is
+basically a file-backed queue. Based on the partitioning strategy specified for the
+flowlet, an appropriate instance of the flowlet consumes the event from the queue.
+
+
+Additional Resources
+====================
+
+Ask the CDAP Community for assistance
+-------------------------------------
+
+.. include:: cdap-user-googlegroups.txt

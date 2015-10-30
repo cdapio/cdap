@@ -72,22 +72,22 @@ advantages of using CDAP include:
 Platforms and Language
 ======================
 
-What Platforms are Supported by the Cask Data Application Platform SDK?
+What platforms are supported by the Cask Data Application Platform SDK?
 -----------------------------------------------------------------------
-The CDAP SDK can be run on Mac OS X, Linux or Windows platforms.
+The CDAP SDK can be run on Mac OS X, Linux, or Windows platforms.
 
 What programming languages are supported by CDAP?
 -------------------------------------------------
 CDAP currently supports Java for developing applications.
 
-What Version of Java SDK is Required by CDAP?
+What version of Java SDK is required by CDAP?
 ---------------------------------------------
 The latest version of the JDK or JRE version 7 or version 8 must be installed
 in your environment; we recommend the Oracle JDK.
 
-What Version of Node.JS is Required by CDAP?
+What version of Node.js is required by CDAP?
 --------------------------------------------
-The version of Node.js must be from |node-js-version|; we recommend |recommended-node-js-version|.
+The version of `Node.js <https://nodejs.org/>`__ must be from |node-js-version|; we recommend |recommended-node-js-version|.
 
 
 Hadoop
