@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, HydratorErrorFactory, MyBottomPanelService) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, HydratorErrorFactory, PipelineNodeConfigActionFactory) {
     this.plugins = $scope.config || [];
     this.MyAppDAGService = MyAppDAGService;
     this.isDisabled = $scope.isDisabled;
@@ -106,8 +106,7 @@ angular.module(PKG.name + '.commons')
       });
 
       plugin.selected = true;
-      MyAppDAGService.editPluginProperties($scope, plugin.id, plugin.type);
-      MyBottomPanelService.setIsCollapsed(false);
+      PipelineNodeConfigActionFactory.choosePlugin(plugin);
     };
 
     function errorNotification(errObj) {

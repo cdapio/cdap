@@ -14,16 +14,17 @@
  * the License.
  */
 
-
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('NodeConfigController', function(NodeConfigStore, $scope) {
-    this.setState = function() {
-      var nodeState = NodeConfigStore.getState();
-      $scope.plugin = nodeState.plugin;
-      $scope.isSource = nodeState.isSource;
-      $scope.isSink = nodeState.isSink;
-      $scope.isTransform = nodeState.isTransform;
-      $scope.isValidPlugin = nodeState.isValidPlugin;
+  .service('PipelineNodeConfigDispatcher', function(CaskAngularDispatcher) {
+    this.__dispatcher__ = null;
+    this.destroyDispatcher = function() {
+      delete this.__dispatcher__;
     };
-    NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
+
+    this.getDispatcher = function() {
+      if (!this.__dispatcher__) {
+         this.__dispatcher__ = new CaskAngularDispatcher();
+      }
+      return this.__dispatcher__;
+    };
   });

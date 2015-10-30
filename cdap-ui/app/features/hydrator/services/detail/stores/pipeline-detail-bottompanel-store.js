@@ -13,18 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- 
+
 angular.module(PKG.name + '.feature.hydrator')
-  .service('BottomPanelStore', function(PipelineDetailDispatcher, $state, PipelineDetailBottomPanelDispatcher) {
+  .service('BottomPanelStore', function(PipelineDetailBottomPanelDispatcher) {
 
     var dispatcher = PipelineDetailBottomPanelDispatcher.getDispatcher();
     this.changeListeners = [];
-    this.setDetaults = function() {
+    this.setDefaults = function() {
       this.state = {
-        panelState: 0
+        panelState: 1
       };
     };
-    this.setDetaults();
+    this.setDefaults();
 
     this.getPanelState = function() {
       return this.state.panelState;
