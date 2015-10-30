@@ -26,7 +26,9 @@ There are specific instructions for :ref:`upgrading existing CDAP installations 
 
 Once installed, another page :ref:`covers configuration <configuration>` of the CDAP installation.
 
-Use these instructions if you aren't using :ref:`Cloudera <cloudera-configuring>` or :ref:`Ambari <ambari-configuring>`.
+Use these instructions if you aren't using a distribution such as :ref:`Cloudera <cloudera-configuring>`, 
+:ref:`Ambari <ambari-configuring>`, or the :ref:`standalone SDK <standalone-index>`. For the
+`MapR distribution <https://www.mapr.com>`__, we have :ref:`additional instructions <mapr-configuring>` to start with.
 
 These are the CDAP components:
 
@@ -90,6 +92,7 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 | **CDAP Authentication Server**        | RAM                | 1 GB minimum, 2 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
 
+.. _install-network-requirements:
 
 Network Requirements
 ....................
@@ -97,6 +100,8 @@ CDAP components communicate over your network with *HBase*, *HDFS*, and *YARN*.
 For the best performance, CDAP components should be located on the same LAN,
 ideally running at 1 Gbps or faster. A good rule of thumb is to treat CDAP
 components as you would *Hadoop DataNodes*.  
+
+.. _install-software-requirements:
 
 Software Prerequisites
 ......................

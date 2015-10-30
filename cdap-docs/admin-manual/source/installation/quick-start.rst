@@ -10,7 +10,9 @@ Installation Quick Start
 
 These instructions will take you from determining your deployment architecture, installing
 CDAP on a Hadoop cluster, through the running of a verification application in CDAP.
-Use these instructions if you aren't using :ref:`Cloudera <cloudera-configuring>` or :ref:`Ambari <ambari-configuring>`.
+Use these instructions if you aren't using a distribution such as :ref:`Cloudera <cloudera-configuring>`, 
+:ref:`Ambari <ambari-configuring>`, or the :ref:`standalone SDK <standalone-index>`. For the
+`MapR distribution <https://www.mapr.com>`__, we have :ref:`additional instructions <mapr-configuring>` to start with.
 
 .. highlight:: console
 

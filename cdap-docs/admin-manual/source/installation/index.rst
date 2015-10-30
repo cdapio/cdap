@@ -20,12 +20,11 @@ Installation
     Appendix: cdap-site.xml <cdap-site>
     Appendix: cdap-security.xml <cdap-security>
 
-
-.. include:: installation-note.txt  
   
+.. include:: installation-note.txt  
+
 Covers **putting CDAP into production, with installation, configuration, and security setup.**
 Appendices cover the XML files used to configure the CDAP installation and security configurations.
- 
 
 .. |quickstart| replace:: **Quick Start:**
 .. _quickstart: quick-start.html
