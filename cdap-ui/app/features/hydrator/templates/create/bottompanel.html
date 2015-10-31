@@ -14,30 +14,30 @@
   the License.
 -->
 
-<div class="console" ng-class="{'minimized': isCollapsed, 'maximized': isMaximized}">
+<div class="console" ng-class="{'minimized': BottomPanelController.bottomPanelState === 0, 'maximized': BottomPanelController.bottomPanelState === 2}">
   <div class="console-tabs clearfix">
     <ul class="nav nav-tabs pull-left" role="tablist">
-      <li ng-repeat="tab in tabs"
-          ng-click="selectTab(tab, true); collapsedTabClick()"
-          ng-class="{'active': tab.title == activeTab.title, 'bg-danger': dangerBg && tab.title === 'Console', 'bg-primary': infoBg && tab.title === 'Console', 'bg-success': successBg && tab.title === 'Console'}"
+      <li ng-repeat="tab in BottomPanelController.tabs"
+          ng-click="BottomPanelController.selectTab($index, true);"
+          ng-class="{'active': tab.title == BottomPanelController.activeTab.title, 'bg-danger': BottomPanelController.dangerBg && tab.title === 'Console', 'bg-primary': BottomPanelController.infoBg && tab.title === 'Console', 'bg-success': BottomPanelController.successBg && tab.title === 'Console'}"
           role="presentation"
           data-toggle="tab">
           {{ tab.title }}
-          <span ng-show="tab.title === 'Console' && messageCount">
-            <span class="badge">{{messageCount}}</span>
+          <span ng-show="tab.title === 'Console' && BottomPanelController.messageCount">
+            <span class="badge">{{BottomPanelController.messageCount}}</span>
           </span>
       </li>
     </ul>
     <div class="btn-group pull-right">
-      <a ng-click="collapseToggle()">
-        <span ng-if="!isCollapsed"
+      <a ng-click="BottomPanelController.toggleCollapse(BottomPanelController.bottomPanelState)">
+        <span ng-if="BottomPanelController.bottomPanelState !== 0"
               class="fa fa-minus"
               tooltip="Minimize"
               tooltip-class="tooltip-pane"
               tooltip-placement="top"
               tooltip-append-to-body="true">
         </span>
-        <span ng-if="isCollapsed"
+        <span ng-if="BottomPanelController.bottomPanelState === 0"
               class="fa fa-expand"
               tooltip="Grow"
               tooltip-class="tooltip-pane"
@@ -45,15 +45,15 @@
               tooltip-append-to-body="true">
         </span>
       </a>
-      <a ng-click="fullScreenToggle()">
-        <span ng-if="!isMaximized"
+      <a ng-click="BottomPanelController.toggleMaximized(BottomPanelController.bottomPanelState)">
+        <span ng-if="BottomPanelController.bottomPanelState !== 2"
               class="fa fa-arrows-alt"
               tooltip="Maximize"
               tooltip-class="tooltip-pane"
               tooltip-placement="top"
               tooltip-append-to-body="true">
         </span>
-        <span ng-if="isMaximized"
+        <span ng-if="BottomPanelController.bottomPanelState === 2"
               class="fa fa-compress"
               tooltip="Shrink"
               tooltip-class="tooltip-pane"
@@ -65,9 +65,9 @@
 
   </div>
   <div class="console-type">
-    <div ng-repeat="tab in tabs"
+    <div ng-repeat="tab in BottomPanelController.tabs"
          ng-include="tab.template"
-         ng-show="activeTab.title === tab.title">
+         ng-show="BottomPanelController.activeTab.title === tab.title">
       </div>
   </div>
 </div>

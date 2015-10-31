@@ -92,8 +92,8 @@ angular.module(PKG.name + '.feature.hydrator')
               },
               'canvas@hydrator.create.studio': {
                 templateUrl: '/assets/features/hydrator/templates/create/canvas.html',
-                controller: 'CanvasController',
-                controllerAs: 'CanvasController'
+                controller: 'HydratorCreateCanvasController',
+                controllerAs: 'CanvasCtrl'
               },
               'leftpanel@hydrator.create.studio': {
                 templateUrl: '/assets/features/hydrator/templates/create/leftpanel.html',

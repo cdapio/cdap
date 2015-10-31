@@ -93,7 +93,7 @@ angular.module(PKG.name + '.commons')
       this.plugins.splice(index, 1);
       MyAppDAGService.removeNode(nodeId);
       MyAppDAGService.setConnections(this.instance.getConnections());
-      MyNodeConfigService.removePlugin(nodeId);
+      PipelineNodeConfigActionFactory.removePlugin();
     };
 
     $scope.isCollapsed = true;
@@ -303,6 +303,7 @@ angular.module(PKG.name + '.commons')
 
     $scope.$on('$destroy', function() {
       MyNodeConfigService.unRegisterPluginSaveCallback($scope.$id);
+      PipelineNodeConfigActionFactory.reset();
       closeAllPopovers();
       angular.forEach(popoverScopes, function (s) {
         s.$destroy();

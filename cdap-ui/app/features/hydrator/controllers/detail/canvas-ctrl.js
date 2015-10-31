@@ -14,13 +14,16 @@
  * the License.
  */
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailCanvasController', function(rPipelineDetail, MyAppDAGService) {
+  .controller('HydratorDetailCanvasController', function(rPipelineDetail, MyAppDAGService, BottomPanelStore) {
     try{
       rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
     } catch(e) {
       console.log('ERROR in configuration from backend: ', e);
       return;
     }
+    this.setState = function() {
+      this.setScroll = (BottomPanelStore.getPanelState() !== 0 ? false: true);
+    };
+    BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
     MyAppDAGService.setNodesAndConnectionsFromDraft(rPipelineDetail);
-    this.isScrollable = true;
   });

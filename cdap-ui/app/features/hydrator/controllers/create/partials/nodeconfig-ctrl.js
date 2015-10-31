@@ -16,14 +16,18 @@
 
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('NodeConfigController', function(NodeConfigStore, $scope) {
+  .controller('NodeConfigController', function(NodeConfigStore, $scope, $timeout, $state) {
     this.setState = function() {
-      var nodeState = NodeConfigStore.getState();
-      $scope.plugin = nodeState.plugin;
-      $scope.isSource = nodeState.isSource;
-      $scope.isSink = nodeState.isSink;
-      $scope.isTransform = nodeState.isTransform;
-      $scope.isValidPlugin = nodeState.isValidPlugin;
+      $scope.isValidPlugin = false;
+      $timeout(function() {
+        var nodeState = NodeConfigStore.getState();
+        $scope.plugin = nodeState.plugin;
+        $scope.isSource = nodeState.isSource;
+        $scope.isSink = nodeState.isSink;
+        $scope.isTransform = nodeState.isTransform;
+        $scope.isValidPlugin = nodeState.isValidPlugin;
+        $scope.type = $state.params.type;
+      });
     };
     NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
   });

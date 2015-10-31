@@ -15,31 +15,10 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('BottomPanelController', function (BottomPanelStore, NodeConfigStore, PipelineDetailBottomPanelActionFactory) {
+  .controller('BottomPanelController', function (BottomPanelStore, NodeConfigStore, PipelineDetailBottomPanelActionFactory, MyConsoleTabService, MyAppDAGService) {
     this.setIsCollapsed = function() {
       this.bottomPanelState = BottomPanelStore.getPanelState();
     };
-
-    this.selectTab = function(tab) {
-      this.activeTab = this.tabs[tab];
-    };
-    this.selectTab(0);
-
-    this.toggleCollapse = function(expanded) {
-      if(expanded) {
-        PipelineDetailBottomPanelActionFactory.collapse();
-      } else {
-        PipelineDetailBottomPanelActionFactory.expand();
-      }
-    };
-    this.toggleMaximized = function(maximized) {
-      if (maximized !== 2) {
-        PipelineDetailBottomPanelActionFactory.maximize();
-      } else {
-        PipelineDetailBottomPanelActionFactory.expand();
-      }
-    };
-    BottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
 
     this.tabs = [
       {
@@ -60,9 +39,80 @@ angular.module(PKG.name + '.feature.hydrator')
       }
     ];
 
+    this.selectTab = function(tab) {
+      this.activeTab = this.tabs[tab];
+    };
+    this.selectTab(0);
+    this.setIsCollapsed();
+
+    this.toggleCollapse = function(expanded) {
+      if(expanded) {
+        PipelineDetailBottomPanelActionFactory.collapse();
+      } else {
+        PipelineDetailBottomPanelActionFactory.expand();
+      }
+    };
+    this.toggleMaximized = function(maximized) {
+      if (maximized !== 2) {
+        PipelineDetailBottomPanelActionFactory.maximize();
+      } else {
+        PipelineDetailBottomPanelActionFactory.expand();
+      }
+    };
+    BottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
+
     NodeConfigStore.registerOnChangeListener(function() {
       this.selectTab(2);
     }.bind(this));
 
+    this.flashDanger = function() {
+      this.dangerBg = true;
+      setTimeout(function() {
+        this.dangerBg = false;
+      }.bind(this), 3000);
+    };
+
+    this.flashInfo = function() {
+      this.infoBg = true;
+      setTimeout(function() {
+        this.infoBg = false;
+      }.bind(this), 3000);
+    };
+
+    this.flashSuccess = function() {
+      this.successBg = true;
+      setTimeout(function() {
+        this.successBg = false;
+      }.bind(this), 3000);
+    };
+
+    function showConsoleTab(message) {
+      switch(message.type) {
+        case 'error':
+          this.flashDanger();
+          break;
+        case 'info':
+          this.flashInfo();
+          break;
+        case 'success':
+          this.flashSuccess();
+          break;
+      }
+      if (message.canvas && message.canvas.length) {
+        this.messageCount = message.canvas.length;
+        message.canvas.forEach(function(err) {
+          // Super f*&^k up. If I am correct this will cause recurrsion problems. Cause: Line 116
+          MyConsoleTabService.addMessage({
+            type: 'error',
+            content: err
+          });
+        });
+      }
+      PipelineDetailBottomPanelActionFactory.expand();
+      this.selectTab(0);
+    }
+
+    MyAppDAGService.errorCallback(showConsoleTab.bind(this));
+    MyConsoleTabService.registerOnMessageUpdates(showConsoleTab.bind(this));
 
   });

@@ -48,10 +48,9 @@ angular.module(PKG.name + '.feature.hydrator')
     ];
 
     this.setIsCollapsed = function() {
-      console.log(BottomPanelStore.getPanelState());
       this.bottomPanelState = BottomPanelStore.getPanelState();
     };
-
+    this.setIsCollapsed();
     this.selectTab = function(tab) {
       this.activeTab = this.tabs[tab];
     };
