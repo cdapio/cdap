@@ -52,7 +52,7 @@ public class FilterClassLoaderTest {
   @Test
   public void testBootstrapResourcesVisible() throws IOException {
     FilterClassLoader classLoader = FilterClassLoader.create(this.getClass().getClassLoader());
-    Assert.assertNotNull(classLoader.getResource("META-INF/services/" + ScriptEngineFactory.class.getName()));
+    Assert.assertNotNull(classLoader.getResource("java/lang/String.class"));
   }
 
   @Test

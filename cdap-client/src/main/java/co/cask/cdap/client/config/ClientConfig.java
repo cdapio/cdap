@@ -319,8 +319,8 @@ public class ClientConfig {
     public ClientConfig build() {
       return new ClientConfig(connectionConfig, verifySSLCert,
                               unavailableRetryLimit, apiVersion, accessToken,
-                              defaultConnectTimeout, defaultReadTimeout,
-                              uploadConnectTimeout, uploadReadTimeout);
+                              defaultReadTimeout, defaultConnectTimeout,
+                              uploadReadTimeout, uploadConnectTimeout);
     }
   }
 
