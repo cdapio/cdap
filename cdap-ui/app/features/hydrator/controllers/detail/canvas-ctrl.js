@@ -22,8 +22,9 @@ angular.module(PKG.name + '.feature.hydrator')
       return;
     }
     this.setState = function() {
-      this.setScroll = (BottomPanelStore.getPanelState() !== 0 ? false: true);
+      this.setScroll = (BottomPanelStore.getPanelState() === 0 ? false: true);
     };
+    this.setState();
     BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
     MyAppDAGService.setNodesAndConnectionsFromDraft(rPipelineDetail);
   });

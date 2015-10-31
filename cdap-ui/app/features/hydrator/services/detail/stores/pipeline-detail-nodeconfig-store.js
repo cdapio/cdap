@@ -43,14 +43,14 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.emitChange = function() {
       this.changeListeners.forEach(function(callback) {
-        callback(this.state);
+        callback();
       });
     };
 
     dispatcher.register('onPluginChange', this.setState.bind(this));
     dispatcher.register('onPluginRemove', function() {
       this.setDefaults();
-      this.emitChange();      
+      this.emitChange();
     }.bind(this));
     dispatcher.register('onReset', this.setDefaults.bind(this));
 
@@ -65,7 +65,8 @@ angular.module(PKG.name + '.feature.hydrator')
     }
 
     function switchPlugin(plugin) {
-      this.state.plugin = plugin;
+      // This is super wrong. While re-writing this in flux architecture this should go away.
+      this.state.plugin = MyAppDAGService.nodes[plugin.id];
       this.state.isValidPlugin = false;
       // // falsify the ng-if in the template for one tick so that the template gets reloaded
       // // there by reloading the controller.
