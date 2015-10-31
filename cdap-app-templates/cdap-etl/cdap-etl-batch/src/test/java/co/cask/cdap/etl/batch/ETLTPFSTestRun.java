@@ -44,15 +44,13 @@ import org.apache.hadoop.fs.Path;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
 import org.junit.Test;
-import parquet.avro.AvroParquetInputFormat;
-import parquet.avro.AvroParquetOutputFormat;
 import parquet.avro.AvroParquetWriter;
 import parquet.hadoop.ParquetWriter;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class ETLTPFSTest extends BaseETLBatchTest {
+public class ETLTPFSTestRun extends ETLBatchTestBase {
 
   @Test
   public void testParquet() throws Exception {

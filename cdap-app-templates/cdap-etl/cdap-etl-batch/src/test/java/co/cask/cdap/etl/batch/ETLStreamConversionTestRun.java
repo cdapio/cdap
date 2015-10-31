@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
  * Tests for {@link ETLBatchApplication} for Stream conversion from stream to avro format for writing to
  * {@link TimePartitionedFileSet}
  */
-public class ETLStreamConversionTest extends BaseETLBatchTest {
+public class ETLStreamConversionTestRun extends ETLBatchTestBase {
 
   private static final Schema BODY_SCHEMA = Schema.recordOf(
     "event",

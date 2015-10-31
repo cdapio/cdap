@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 /**
  *
  */
-public class BatchCubeSinkTest extends BaseETLBatchTest {
+public class BatchCubeSinkTestRun extends ETLBatchTestBase {
   @Test
   public void test() throws Exception {
 
@@ -60,7 +60,7 @@ public class BatchCubeSinkTest extends BaseETLBatchTest {
 
     ETLStage source = new ETLStage("Table",
       ImmutableMap.of(
-        Properties.BatchReadableWritable.NAME, "inputTable",
+        Properties.BatchReadableWritable.NAME, "CubeSinkInputTable",
         Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey",
         Properties.Table.PROPERTY_SCHEMA, schema.toString()));
 
@@ -83,7 +83,7 @@ public class BatchCubeSinkTest extends BaseETLBatchTest {
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // add some data to the input table
-    DataSetManager<Table> inputManager = getDataset("inputTable");
+    DataSetManager<Table> inputManager = getDataset("CubeSinkInputTable");
     Table inputTable = inputManager.get();
     Put put = new Put(Bytes.toBytes("row1"));
     put.add("user", "samuel");

@@ -21,10 +21,10 @@ import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.common.StructuredRecordSerializer;
@@ -63,7 +63,7 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   private Invocable invocable;
   private Schema schema;
   private final Config config;
-  private Metrics metrics;
+  private StageMetrics metrics;
   private Logger logger;
 
   @Nullable

@@ -20,10 +20,10 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.common.StructuredRecordSerializer;
@@ -69,7 +69,7 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
 
   private ScriptEngine engine;
   private Invocable invocable;
-  private Metrics metrics;
+  private StageMetrics metrics;
   private Logger logger;
 
   public ScriptFilterTransform(ScriptFilterConfig scriptFilterConfig) {
@@ -100,6 +100,7 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
         emitter.emit(input);
       } else {
         metrics.count("filtered", 1);
+        metrics.pipelineCount("filtered", 1);
       }
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid filter condition.", e);

@@ -28,6 +28,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.InvalidEntry;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
@@ -41,9 +42,7 @@ import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.Pipeline;
 import co.cask.cdap.etl.common.PipelineRegisterer;
-import co.cask.cdap.etl.common.PluginID;
 import co.cask.cdap.etl.common.SinkInfo;
-import co.cask.cdap.etl.common.StageMetrics;
 import co.cask.cdap.etl.common.StructuredRecordStringConverter;
 import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
@@ -272,8 +271,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       BatchSource source = context.newPluginInstance(sourcePluginId);
       BatchRuntimeContext runtimeContext = new MapReduceRuntimeContext(context, mapperMetrics, sourcePluginId);
       source.initialize(runtimeContext);
-      pipeline.add(new TransformDetail(sourcePluginId, source,
-        new StageMetrics(mapperMetrics, PluginID.from(sourcePluginId))));
+      pipeline.add(new TransformDetail(sourcePluginId, source, runtimeContext.getMetrics()));
 
       transformErrorSinkMap = new HashMap<>();
       transformsWithoutErrorDataset = new HashSet<>();
@@ -300,9 +298,9 @@ public class ETLMapReduce extends AbstractMapReduce {
         runtimeContext = new MapReduceRuntimeContext(context, mapperMetrics, sinkPluginId);
         sink.initialize(runtimeContext);
         if (hasOneOutput) {
-          sinks.add(new SingleOutputSink<>(sinkPluginId, sink, context, mapperMetrics));
+          sinks.add(new SingleOutputSink<>(sink, context, runtimeContext.getMetrics()));
         } else {
-          sinks.add(new MultiOutputSink<>(sinkPluginId, sink, context, mapperMetrics, sinkOutputNames,
+          sinks.add(new MultiOutputSink<>(sink, context, runtimeContext.getMetrics(), sinkOutputNames,
                                           sinkOutput.getErrorDatasetName()));
         }
       }
@@ -340,8 +338,7 @@ public class ETLMapReduce extends AbstractMapReduce {
         BatchRuntimeContext transformContext = new MapReduceRuntimeContext(context, mapperMetrics, transformId);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
-        pipeline.add(new TransformDetail(transformId, transform,
-                                               new StageMetrics(mapperMetrics, PluginID.from(transformId))));
+        pipeline.add(new TransformDetail(transformId, transform, transformContext.getMetrics()));
         if (transformInfo.getErrorDatasetName() != null) {
           transformErrorSinkMap.put(transformId,
                                     new ErrorSink<>(context, transformInfo.getErrorDatasetName()));
@@ -418,12 +415,11 @@ public class ETLMapReduce extends AbstractMapReduce {
     protected final DefaultEmitter<KeyValue<KEY_OUT, VAL_OUT>> emitter;
     protected final MapReduceTaskContext<KEY_OUT, VAL_OUT> context;
 
-    protected WrappedSink(String sinkPluginId,
-                          BatchSink<IN, KEY_OUT, VAL_OUT> sink,
+    protected WrappedSink(BatchSink<IN, KEY_OUT, VAL_OUT> sink,
                           MapReduceTaskContext<KEY_OUT, VAL_OUT> context,
-                          Metrics metrics) {
+                          StageMetrics metrics) {
       this.sink = sink;
-      this.emitter = new DefaultEmitter<>(new StageMetrics(metrics, PluginID.from(sinkPluginId)));
+      this.emitter = new DefaultEmitter<>(metrics);
       this.context = context;
     }
 
@@ -434,9 +430,9 @@ public class ETLMapReduce extends AbstractMapReduce {
   // TODO: remove if the fix to CDAP-3628 allows us to write using the same method
   private static class SingleOutputSink<IN, KEY_OUT, VAL_OUT> extends WrappedSink<IN, KEY_OUT, VAL_OUT> {
 
-    protected SingleOutputSink(String sinkPluginId, BatchSink<IN, KEY_OUT, VAL_OUT> sink,
-                               MapReduceTaskContext<KEY_OUT, VAL_OUT> context, Metrics metrics) {
-      super(sinkPluginId, sink, context, metrics);
+    protected SingleOutputSink(BatchSink<IN, KEY_OUT, VAL_OUT> sink,
+                               MapReduceTaskContext<KEY_OUT, VAL_OUT> context, StageMetrics metrics) {
+      super(sink, context, metrics);
     }
 
     public void write(IN input) throws Exception {
@@ -453,13 +449,12 @@ public class ETLMapReduce extends AbstractMapReduce {
     private final Set<String> outputNames;
     private final String errorDatasetName;
 
-    private MultiOutputSink(String sinkPluginId,
-                            BatchSink<IN, KEY_OUT, VAL_OUT> sink,
+    private MultiOutputSink(BatchSink<IN, KEY_OUT, VAL_OUT> sink,
                             MapReduceTaskContext<KEY_OUT, VAL_OUT> context,
-                            Metrics metrics,
+                            StageMetrics metrics,
                             Set<String> outputNames,
                             @Nullable String errorDatasetName) {
-      super(sinkPluginId, sink, context, metrics);
+      super(sink, context, metrics);
       this.outputNames = outputNames;
       this.errorDatasetName = errorDatasetName;
     }
