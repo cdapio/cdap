@@ -17,6 +17,7 @@
 package co.cask.cdap.proto;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Containers define methods to get and add information about YARN containers.
@@ -53,8 +54,8 @@ public interface Containers {
     private final Integer virtualCores;
     private final Integer debugPort;
 
-    public ContainerInfo(ContainerType type, String name, Integer instance, String container,
-                  String host, Integer memory, Integer virtualCores, Integer debugPort) {
+    public ContainerInfo(ContainerType type, String name, @Nullable Integer instance, @Nullable String container,
+                  String host, @Nullable Integer memory, @Nullable Integer virtualCores, @Nullable Integer debugPort) {
       this.type = type.name().toLowerCase();
       this.name = name;
       this.instance = instance;
@@ -88,10 +89,12 @@ public interface Containers {
       return name;
     }
 
+    @Nullable
     public Integer getInstance() {
       return instance;
     }
 
+    @Nullable
     public String getContainer() {
       return container;
     }
@@ -100,14 +103,17 @@ public interface Containers {
       return host;
     }
 
+    @Nullable
     public Integer getMemory() {
       return memory;
     }
 
+    @Nullable
     public Integer getVirtualCores() {
       return virtualCores;
     }
 
+    @Nullable
     public Integer getDebugPort() {
       return debugPort;
     }
