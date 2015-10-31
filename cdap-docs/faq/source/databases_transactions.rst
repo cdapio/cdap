@@ -61,7 +61,7 @@ Transactions
 ============
 
 What does the "transaction...is not in progress" message mean?
---------------------------------------------------
+--------------------------------------------------------------
 If you are seeing transaction related errors::
 
   [warn 2015/08/10 22:50:53.299 IST <DatasetTypeManager STARTING> tid=0x24] Transaction 1231000000 is not in progress.

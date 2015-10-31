@@ -249,6 +249,8 @@ For instructions on enabling CDAP Security, see :doc:`CDAP Security <security>`;
 and in particular, see the instructions for 
 :ref:`configuring the properties of cdap-site.xml <enabling-security>`.
 
+.. _configuration-hdp:
+
 Configuring Hortonworks Data Platform
 .....................................
 Beginning with `Hortonworks Data Platform (HDP) 2.2 <http://hortonworks.com>`__, the
