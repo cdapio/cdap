@@ -168,8 +168,8 @@ public abstract class DynamicDatasetCacheTest {
 
     // attempt to run a GC, and make sure that static datasets were not collected
     // hash codes are based on object identity (TestDataset does not override hashcode)
-    int hashA = a.hashCode();
-    int hashB = b.hashCode();
+    int hashA = System.identityHashCode(a);
+    int hashB = System.identityHashCode(b);
     //noinspection UnusedAssignment
     a = a1 = a2 = null;
     //noinspection UnusedAssignment
@@ -181,8 +181,8 @@ public abstract class DynamicDatasetCacheTest {
     System.gc();
     a = cache.getDataset("a");
     b = cache.getDataset("b", ImmutableMap.of("value", "b"));
-    Assert.assertEquals(a.hashCode(), hashA);
-    Assert.assertEquals(b.hashCode(), hashB);
+    Assert.assertEquals(System.identityHashCode(a), hashA);
+    Assert.assertEquals(System.identityHashCode(b), hashB);
 
     if (datasetMap != null) {
       datasetMap.put("a", a);
@@ -201,7 +201,7 @@ public abstract class DynamicDatasetCacheTest {
           TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
           ds.write();
           // the dataset will go out of scope; remember the dataset's hashcode for later comparison
-          hash.set(ds.hashCode());
+          hash.set(System.identityHashCode(ds));
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -211,7 +211,7 @@ public abstract class DynamicDatasetCacheTest {
         try {
           // get the same dataset again. It should be the same object
           TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
-          Assert.assertEquals(hash.get(), ds.hashCode());
+          Assert.assertEquals(hash.get(), System.identityHashCode(ds));
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -229,7 +229,7 @@ public abstract class DynamicDatasetCacheTest {
           TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
           Assert.assertEquals("x", ds.read());
           // validate that we now have a different instance because the old one was collected
-          Assert.assertNotEquals(hash.get(), ds.hashCode());
+          Assert.assertNotEquals(hash.get(), System.identityHashCode(ds));
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }

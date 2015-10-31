@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
  *
  * The cache also maintains a transaction context and adds all acquired datasets to that
  * context, so that they participate in the transactions executed with that context. For
- * the duration of a transaction, this context maintains string references to all datasets
+ * the duration of a transaction, this context maintains strong references to all datasets
  * that participate, to ensure that none of them are garbage-collected before the transaction
  * is complete, and hence all datasets participate in the entire transaction. However, between
  * transactions, the cache and the context only hold weak references to the datasets, allowing
@@ -53,7 +53,7 @@ import javax.annotation.Nullable;
  * co.cask.cdap.data2.dataset2.tx.WeakReferencePromotingTransactionContext}).
  *
  * Optionally, this cache can have a set of static datasets that are added to every
- * transaction context created by the cache. Static datasets are held with string references,
+ * transaction context created by the cache. Static datasets are held with strong references,
  * so that they never get garbage-collected.
  *
  * Also, transaction-aware "datasets" that were not created by this DynamicDatasetCache,

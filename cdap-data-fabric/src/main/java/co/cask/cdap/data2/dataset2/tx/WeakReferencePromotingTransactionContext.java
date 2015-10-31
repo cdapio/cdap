@@ -76,7 +76,7 @@ public class WeakReferencePromotingTransactionContext extends TransactionContext
     if (!txAwares.add(txAware)) {
       return false; // it must already be in the actual tx-context
     }
-    if (txContext != null && !txContext.addTransactionAware(toAdd)) {
+    if (txContext != null && !txContext.addTransactionAware(toAdd) && toAdd != txAware) {
       // this must be a duplicate weak-reference to the same tx-aware, which should never happen
       LOG.warn("Attempt to add weak-referenced transaction-aware '{}' that was already added " +
                  "either directly or through a different weak reference");

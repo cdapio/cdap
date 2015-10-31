@@ -29,6 +29,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.base.Function;
+import com.google.common.base.Predicates;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -236,15 +238,15 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     if (txContext == null) {
       return NO_TX_AWARES;
     }
-    ArrayList<TransactionAware> result = new ArrayList<>(extraTxAwares.size() + activeTxAwares.size());
-    result.addAll(extraTxAwares);
-    for (WeakReferenceDelegatingTransactionAware reference : activeTxAwares.values()) {
-      TransactionAware txAware = reference.get();
-      if (txAware != null) {
-        result.add(txAware);
-      }
-    }
-    return result;
+    return Iterables.concat(extraTxAwares, Iterables.filter(
+      Iterables.transform(activeTxAwares.values(),
+                          new Function<WeakReferenceDelegatingTransactionAware, TransactionAware>() {
+                            @Nullable
+                            public TransactionAware apply(WeakReferenceDelegatingTransactionAware ref) {
+                              return ref.get();
+                            }
+                          }),
+                          Predicates.notNull()));
   }
 
   @Override
