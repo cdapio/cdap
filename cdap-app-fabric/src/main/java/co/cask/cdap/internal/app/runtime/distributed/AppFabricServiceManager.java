@@ -16,32 +16,25 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractDistributedMasterServiceManager;
+import co.cask.cdap.common.twill.MasterServiceManager;
 import co.cask.cdap.proto.Containers;
 import co.cask.cdap.proto.SystemServiceLiveInfo;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.twill.api.TwillRunnerService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.net.InetAddress;
 
 /**
  * App Fabric Service Management in Distributed Mode.
  */
-public class AppFabricServiceManager extends AbstractDistributedMasterServiceManager {
+public class AppFabricServiceManager implements MasterServiceManager {
 
   private final InetAddress hostname;
 
   @Inject
-  public AppFabricServiceManager(CConfiguration cConf, TwillRunnerService twillRunnerService,
-                                 @Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname,
-                                 DiscoveryServiceClient discoveryServiceClient) {
-    super(cConf, Constants.Service.APP_FABRIC_HTTP, twillRunnerService, discoveryServiceClient);
+  public AppFabricServiceManager(@Named(Constants.AppFabric.SERVER_ADDRESS) InetAddress hostname) {
     this.hostname = hostname;
-
   }
 
   @Override
@@ -59,7 +52,7 @@ public class AppFabricServiceManager extends AbstractDistributedMasterServiceMan
     SystemServiceLiveInfo.Builder builder = SystemServiceLiveInfo.builder();
 
     Containers.ContainerInfo containerInfo = new Containers.ContainerInfo(Containers.ContainerType.SYSTEM_SERVICE,
-                                                                          serviceName, null, null,
+                                                                          Constants.Service.APP_FABRIC_HTTP, null, null,
                                                                           hostname.getHostName(), null, null, null);
     builder.addContainer(containerInfo);
     return builder.build();
