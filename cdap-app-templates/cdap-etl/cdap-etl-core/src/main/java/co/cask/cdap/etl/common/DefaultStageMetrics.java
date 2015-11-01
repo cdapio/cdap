@@ -17,27 +17,39 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.StageMetrics;
 
 /**
  * Wrapper around the {@link Metrics} instance from CDAP that prefixes metric names with the ETL context the metric
  * was emitted from.
  */
-public class StageMetrics implements Metrics {
+public class DefaultStageMetrics implements StageMetrics {
+
   private final Metrics metrics;
   private final String prefix;
 
-  public StageMetrics(Metrics metrics, PluginID id) {
+  public DefaultStageMetrics(Metrics metrics, PluginID id) {
     this.metrics = metrics;
     this.prefix = id.getMetricsContext() + ".";
   }
 
   @Override
-  public void count(String s, int i) {
-    metrics.count(prefix + s, i);
+  public void count(String metricName, int delta) {
+    metrics.count(prefix + metricName, delta);
   }
 
   @Override
-  public void gauge(String s, long l) {
-    metrics.gauge(prefix + s, l);
+  public void gauge(String metricName, long value) {
+    metrics.gauge(prefix + metricName, value);
+  }
+
+  @Override
+  public void pipelineCount(String metricName, int delta) {
+    metrics.count(metricName, delta);
+  }
+
+  @Override
+  public void pipelineGauge(String metricName, long value) {
+    metrics.gauge(metricName, value);
   }
 }

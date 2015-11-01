@@ -20,12 +20,12 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.api.Validator;
@@ -96,7 +96,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   private static final String CONTEXT_NAME = "dont_name_your_context_this";
 
   private final ValidatorConfig config;
-  private Metrics metrics;
+  private StageMetrics metrics;
   private Invocable invocable;
   private ScriptEngine engine;
   private Logger logger;
@@ -156,6 +156,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
       } else {
         emitter.emitError(getErrorObject(result, input));
         metrics.count("invalid", 1);
+        metrics.pipelineCount("invalid", 1);
         LOG.trace("Error code : {} , Error Message {}", result.get("errorCode"), result.get("errorMsg"));
       }
     } catch (Exception e) {

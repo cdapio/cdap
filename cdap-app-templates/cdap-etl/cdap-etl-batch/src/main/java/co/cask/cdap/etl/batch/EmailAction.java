@@ -143,15 +143,16 @@ public class EmailAction extends AbstractWorkflowAction {
       msg.setText(properties.get(MESSAGE) + "\nUSER Workflow Tokens:\n" + token.getAll(WorkflowToken.Scope.USER)
                     + "\nSYSTEM Workflow Tokens:\n" + token.getAll(WorkflowToken.Scope.SYSTEM)
       );
-      Transport transport;
-      if (!Strings.isNullOrEmpty(properties.get(PROTOCOL))) {
-        transport = session.getTransport(properties.get(PROTOCOL));
-      } else {
-        transport = session.getTransport(DEFAULT_PROTOCOL);
-      }
+
+      String protocol = Strings.isNullOrEmpty(properties.get(PROTOCOL)) ? DEFAULT_PROTOCOL : properties.get(PROTOCOL);
+      Transport transport = session.getTransport(protocol);
       transport.connect(properties.get(HOST), Integer.parseInt(properties.get(PORT)),
                         properties.get(USERNAME), properties.get(PASSWORD));
-      transport.sendMessage(msg, msg.getAllRecipients());
+      try {
+        transport.sendMessage(msg, msg.getAllRecipients());
+      } finally {
+        transport.close();
+      }
     } catch (Exception e) {
       throw new RuntimeException("Error sending email: ", e);
     }
