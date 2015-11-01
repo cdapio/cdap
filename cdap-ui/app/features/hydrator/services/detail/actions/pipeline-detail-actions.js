@@ -18,14 +18,14 @@ angular.module(PKG.name + '.feature.hydrator')
   .service('PipelineDetailActionFactory', function(PipelineDetailDispatcher) {
     var dispatcher = PipelineDetailDispatcher.getDispatcher();
     this.startPipeline = function (api, params) {
-      api.doAction(angular.extend(params, { action: 'start' }), {});
+      return api.doAction(angular.extend(params, { action: 'start' }), {}).$promise;
     };
     this.schedulePipeline = function(api, scheduleParams) {
-      api.scheduleResume(scheduleParams, {});
+      return api.scheduleResume(scheduleParams, {}).$promise;
     };
 
     this.stopPipeline = function (api, params) {
-      api.doAction(angular.extend(params, { action: 'stop' }), {});
+      return api.doAction(angular.extend(params, { action: 'stop' }), {}).$promise;
     };
     this.suspendSchedule = function(api, params) {
       return api.scheduleSuspend(params, {}).$promise;

@@ -53,7 +53,7 @@
 
     <!-- IF ETL REALTIME -->
     <div class="pull-left"
-      ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && (TopPanelCtrl.appStatus !== 'RUNNING')">
+      ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && (['KILLED', 'STOPPED', 'COMPLETED', 'FAILED', 'STARTING'].indexOf(TopPanelCtrl.appStatus) !== -1)">
       <div class="btn"
         ng-click="TopPanelCtrl.do('Start')"
         ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
@@ -64,7 +64,7 @@
       </div>
     </div>
     <div class="pull-left"
-      ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && TopPanelCtrl.appStatus === 'RUNNING'">
+      ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && ['RUNNING', 'STOPPING'].indexOf(TopPanelCtrl.appStatus) !== -1">
       <div class="btn"
         ng-click="TopPanelCtrl.do('Stop')"
         ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
@@ -74,49 +74,51 @@
         </span>
       </div>
     </div>
-    <!-- <div class="pull-left"
-      ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && ['STARTING', 'STOPPING'].indexOf(TopPanelCtrl.appStatus) !== -1">
-      <div class="btn">
-        <span class="fa fa-refresh fa-spin"></span>
-      </div>
-    </div> -->
 
     <!-- IF ETL BATCH -->
     <div class="pull-left"
-      ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlBatch && TopPanelCtrl.scheduleStatus === 'SUSPENDED'">
-      <div class="btn"
-        ng-click="TopPanelCtrl.do('Start')"
-        ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
-        <span ng-if="TopPanelCtrl.appStatus !=='STARTING'">Start</span>
-        <span ng-if="TopPanelCtrl.appStatus === 'STARTING'">
-          <span class="fa fa-refresh fa-spin"></span>
-        </span>
+      ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlBatch">
+      <div ng-if="['SUSPENDED', 'SCHEDULING'].indexOf(TopPanelCtrl.scheduleStatus) !== -1">
+
+        <div class="btn"
+          ng-click="TopPanelCtrl.do('Schedule')"
+          ng-disabled="TopPanelCtrl.scheduleStatus === 'SCHEDULING'">
+          <span ng-if="TopPanelCtrl.scheduleStatus ==='SUSPENDED'">Schedule</span>
+          <span ng-if="TopPanelCtrl.scheduleStatus === 'SCHEDULING'">
+            <span class="fa fa-refresh fa-spin"></span>
+          </span>
+        </div>
       </div>
-    </div>
-    <div class="pull-left"
-      ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlBatch && TopPanelCtrl.scheduleStatus === 'SCHEDULED'">
-      <div class="btn"
-        ng-click="TopPanelCtrl.do('Stop Schedule')"
-        ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
-        <span ng-if="TopPanelCtrl.appStatus !=='STOPPING'">Stop</span>
-        <span ng-if="TopPanelCtrl.appStatus === 'STOPPING'">
-          <span class="fa fa-refresh fa-spin"></span>
-        </span>
+      <div ng-if="['SCHEDULED', 'SUSPENDING'].indexOf(TopPanelCtrl.scheduleStatus) !== -1">
+        <div class="btn"
+          ng-click="TopPanelCtrl.do('Suspend')"
+          ng-disabled="TopPanelCtrl.scheduleStatus === 'SUSPENDING'">
+          <span ng-if="TopPanelCtrl.scheduleStatus ==='SCHEDULED'">Suspend</span>
+          <span ng-if="TopPanelCtrl.scheduleStatus === 'SUSPENDING'">
+            <span class="fa fa-refresh fa-spin"></span>
+          </span>
+        </div>
       </div>
     </div>
 
     <div class="pull-left"
-      ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlBatch && ['SUSPENDING', 'SCHEDULING'].indexOf(TopPanelCtrl.scheduleStatus) !== -1">
-      <div class="btn">
-        <span class="fa fa-refresh fa-spin"></span>
-      </div>
-    </div>
-    <div class="btn"
-      ng-click="TopPanelCtrl.do('Run Once')"
-      ng-disabled="TopPanelCtrl.runOnceLoading"
       ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlBatch">
-      <span ng-if="!TopPanelCtrl.runOnceLoading">Run Once</span>
-      <span ng-if="TopPanelCtrl.runOnceLoading"><span class="fa fa-refresh fa-spin"></span></span>
+      <div ng-if="['STARTING', 'STOPPED', 'COMPLETED', 'FAILED', 'KILLED'].indexOf(TopPanelCtrl.appStatus) !== -1">
+        <div class="btn"
+          ng-click="TopPanelCtrl.do('Start')"
+          ng-disabled="TopPanelCtrl.appStatus === 'STARTING'">
+          <span ng-if="TopPanelCtrl.appStatus !== 'STARTING'">Run</span>
+          <span ng-if="TopPanelCtrl.appStatus === 'STARTING'"><span class="fa fa-refresh fa-spin"></span></span>
+        </div>
+      </div>
+      <div ng-if="['STOPPING', 'RUNNING'].indexOf(TopPanelCtrl.appStatus) !== -1">
+        <div class="btn"
+          ng-click="TopPanelCtrl.do('Stop')"
+          ng-disabled="TopPanelCtrl.appStatus === 'STOPPING'">
+          <span ng-if="TopPanelCtrl.appStatus !== 'STOPPING'">Stop</span>
+          <span ng-if="TopPanelCtrl.appStatus === 'STOPPING'"><span class="fa fa-refresh fa-spin"></span></span>
+        </div>
+      </div>
     </div>
 
     <div ui-sref="hydrator.create.studio({data: config, type: config.artifact.name})" class="btn">

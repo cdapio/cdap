@@ -24,44 +24,43 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.setAppStatus = function() {
       this.appStatus = DetailRunsStore.getStatus();
-      var appType = DetailRunsStore.getAppType();
-      if (this.appStatus !== 'RUNNING' && appType === GLOBALS.etlBatch) {
-        PipelineDetailActionFactory.fetchScheduleStatus(
-          DetailRunsStore.getApi(),
-          DetailRunsStore.getScheduleParams()
-        );
-      }
     };
     this.setScheduleStatus = function() {
       this.scheduleStatus = DetailNonRunsStore.getScheduleStatus();
-      this.appStatus = this.scheduleStatus;
     };
     this.setAppStatus();
-    this.setScheduleStatus();
+    var appType = DetailRunsStore.getAppType();
+
+    if (appType === GLOBALS.etlBatch) {
+      PipelineDetailActionFactory.fetchScheduleStatus(
+        DetailRunsStore.getApi(),
+        DetailRunsStore.getScheduleParams()
+      );
+    }
     this.do = function(action) {
       switch(action) {
         case 'Start':
-          this.appStatus = 'STARTING';
-          if (this.app.type === GLOBALS.etlBatch) {
-            PipelineDetailActionFactory.schedulePipeline(
-              DetailRunsStore.getApi(),
-              DetailRunsStore.getScheduleParams()
-            );
-          } else if (this.app.type === GLOBALS.etlRealtime) {
-            PipelineDetailActionFactory.startPipeline(
-              DetailRunsStore.getApi(),
-              DetailRunsStore.getParams()
-            );
-          }
-          break;
-        case 'Run Once':
           this.appStatus = 'STARTING';
           PipelineDetailActionFactory.startPipeline(
             DetailRunsStore.getApi(),
             DetailRunsStore.getParams()
           );
           break;
-        case 'Stop Schedule':
+        case 'Schedule':
+          this.scheduleStatus = 'SCHEDULING';
+          PipelineDetailActionFactory.schedulePipeline(
+            DetailRunsStore.getApi(),
+            DetailRunsStore.getScheduleParams()
+          )
+            .then(function() {
+              PipelineDetailActionFactory.fetchScheduleStatus(
+                DetailRunsStore.getApi(),
+                DetailRunsStore.getScheduleParams()
+              );
+            });
+          break;
+        case 'Suspend':
+          this.scheduleStatus = 'SUSPENDING';
           PipelineDetailActionFactory.suspendSchedule(
             DetailRunsStore.getApi(),
             DetailRunsStore.getScheduleParams()

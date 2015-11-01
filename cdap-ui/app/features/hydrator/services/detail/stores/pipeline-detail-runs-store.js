@@ -110,9 +110,6 @@ angular.module(PKG.name + '.feature.hydrator')
       if (!runs.length) {
         return;
       }
-      if (runs[0].runid === myHelpers.objectQuery(this.state, 'runs', 'latest', 'runid')) {
-        return;
-      }
       this.state.runs = {
         list: runs,
         count: runs.length,
