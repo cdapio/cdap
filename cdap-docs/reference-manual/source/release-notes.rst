@@ -27,8 +27,8 @@ Cask Data Application Platform Release Notes
 `Release 3.0.6 <http://docs.cask.co/cdap/3.0.6/index.html>`__
 =============================================================
 
-Bug Fix
--------
+Bug Fixes
+---------
 
 - Fixed a problem with the CDAP Master restarting the Twill app indefinitely in certain circumstances
   (`CDAP-1543 <https://issues.cask.co/browse/CDAP-1543>`__).
