@@ -45,10 +45,16 @@ of the application are tied together by the class ``WordCount``:
 
 Data Storage
 ------------
+The application uses these datasets by default:
+
 - ``wordStats`` stores the global statistics of total count of words and the total length of words received.
 - ``wordCounts`` stores the word and the corresponding count in a key value table.
 - ``uniqueCount`` is a custom dataset that stores the total count of unique words received so far.
 - ``wordAssocs`` is a custom dataset that stores the count for word associations.
+
+However, the names of these datasets can be configured to be different from their defaults by providing a
+configuration at application deployment time. All programs rely on this configuration to instantiate their
+datasets at runtime.
 
 .. _word-count-service-requests:
 

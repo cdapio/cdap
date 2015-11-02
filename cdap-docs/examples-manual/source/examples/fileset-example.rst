@@ -43,23 +43,20 @@ that file using MapReduce, and finally download the word counts from the *counts
 FileSetService
 --------------
 This service has two handler methods: one to upload and another to download a file.
-It declares the datasets that it needs to access using ``@UseDataSet`` annotations:
-
-.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
-    :language: java
-    :lines: 65-69
-    :dedent: 4
-
 Both methods of this service have two arguments: the name of the FileSet and the relative path within that FileSet.
 For example, the ``read`` method returns the contents of the requested file for a GET request:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 71-93
+    :lines: 64-86
     :dedent: 4
 
-It uses the ``getLocation()`` of the file set to obtain the location representing the requested file,
-and then opens an input stream for that location. ``Location`` is a file system abstraction from
+It first instantiates the dataset specified by the first path parameter through its ``HttpServiceContext``.
+Note that conceptually, this method is not limited to use only the two datasets of this application (*lines* and
+*counts*) |---| ``getDataset()`` can dynamically instantiate any existing dataset.
+
+The handler method then uses the ``getLocation()`` of the file set to obtain the location representing the requested
+file, and it opens an input stream for that location. ``Location`` is a file system abstraction from
 `Apache™ Twill® <http://twill.incubator.apache.org>`__; you can read more about its interface in the
 `Apache Twill Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
 
