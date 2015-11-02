@@ -19,7 +19,6 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Put;
@@ -84,25 +83,14 @@ public class AppWithMapReduceUsingRuntimeDatasets extends AbstractApplication {
       String outputName = runtimeArgs.get(OUTPUT_NAME);
       String outputPath = runtimeArgs.get(OUTPUT_PATH);
 
-      FileSet input;
-      FileSet output;
-      if (inputName.equals(outputName)) {
-        Map<String, String> args = Maps.newHashMap();
-        FileSetArguments.setInputPaths(args, inputPaths);
-        FileSetArguments.setOutputPath(args, outputPath);
-        input = context.getDataset(inputName, args);
-        output = input;
-      } else {
-        Map<String, String> inputArgs = Maps.newHashMap();
-        FileSetArguments.setInputPaths(inputArgs, inputPaths);
-        Map<String, String> outputArgs = Maps.newHashMap();
-        FileSetArguments.setOutputPath(outputArgs, outputPath);
-        input = context.getDataset(inputName, inputArgs);
-        output = context.getDataset(outputName, outputArgs);
-      }
+      // Setup input and output file sets
+      Map<String, String> args = Maps.newHashMap();
+      FileSetArguments.setInputPaths(args, inputPaths);
+      context.setInput(inputName, args);
 
-      context.setInput(inputName, input);
-      context.setOutput(outputName, output);
+      args.clear();
+      FileSetArguments.setOutputPath(args, outputPath);
+      context.addOutput(outputName, args);
 
       Table table = context.getDataset("rtt");
       table.put(new Put("a").add("b", "c"));

@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -161,7 +162,22 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
+  public void setInput(String datasetName, Map<String, String> arguments) {
+    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
   public void setInput(String datasetName, List<Split> splits) {
+    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
+  public void setInput(String datasetName, Map<String, String> arguments, List<Split> splits) {
+    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
+  public void setInput(InputFormatProvider inputFormatProvider) {
     LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
   }
 

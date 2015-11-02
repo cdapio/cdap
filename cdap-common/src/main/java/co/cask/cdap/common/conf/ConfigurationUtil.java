@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.hive.context;
+package co.cask.cdap.common.conf;
 
 import co.cask.cdap.common.io.Codec;
 import com.google.common.base.Charsets;
@@ -23,12 +23,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Has methods to set/get objects into Configuration object.
  */
-public class ConfigurationUtil {
+public final class ConfigurationUtil {
+
   private static final Logger LOG = LoggerFactory.getLogger(ConfigurationUtil.class);
 
   public static <T> void set(Configuration conf, String key, Codec<T> codec, T obj) throws IOException {
@@ -59,4 +61,30 @@ public class ConfigurationUtil {
     return codec.decode(value == null ? null : value.getBytes("ISO-8859-1"));
   }
 
+  /**
+   * Creates a new map containing all key-value pairs in the given {@link Configuration}.
+   */
+  public static Map<String, String> toMap(Configuration conf) {
+    Map<String, String> map = new HashMap<>();
+    for (Map.Entry<String, String> entry : conf) {
+      map.put(entry.getKey(), entry.getValue());
+    }
+    return map;
+  }
+
+  /**
+   * Sets all key-value pairs from the given {@link Map} into the given {@link Configuration}.
+   *
+   * @return the {@link Configuration} instance provided
+   */
+  public static Configuration setAll(Map<String, String> map, Configuration conf) {
+    for (Map.Entry<String, String> entry : map.entrySet()) {
+      conf.set(entry.getKey(), entry.getValue());
+    }
+    return conf;
+  }
+
+  private ConfigurationUtil() {
+    // no-op
+  }
 }
