@@ -482,7 +482,6 @@ angular.module(PKG.name + '.services')
       var nodes = angular.copy(this.nodes);
 
       function addPluginToConfig(plugin, id) {
-
         var pluginConfig =  {
           // Solely adding id and _backendProperties for validation.
           // Should be removed while saving it to backend.
@@ -490,7 +489,8 @@ angular.module(PKG.name + '.services')
           name: plugin.name,
           label: plugin.label,
           properties: plugin.properties,
-          _backendProperties: plugin._backendProperties
+          _backendProperties: plugin._backendProperties,
+          outputSchema: plugin.outputSchema
         };
 
         if (plugin.type === artifactTypeExtension.source) {
@@ -618,6 +618,7 @@ angular.module(PKG.name + '.services')
       if (!angular.isObject(errors)) {
         EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
         var data = this.getConfigForBackend();
+
         myPipelineApi.save(
           {
             namespace: $state.params.namespace,
