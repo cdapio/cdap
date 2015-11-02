@@ -54,10 +54,10 @@ Bug Fixes
 - Fixed an issue with the incorrect labelling, after failover, of programs that had been running prior to failover 
   (`CDAP-4119 <https://issues.cask.co/browse/CDAP-4119>`__).
 
-New Feature
------------
+New Features
+------------
 
-- Updated the version of `Tephra <http://tephra.io>` included in CDAP to v0.6.3
+- Updated the version of `Tephra <http://tephra.io>`__ included in CDAP to v0.6.3
   (`CDAP-3928 <https://issues.cask.co/browse/CDAP-3928>`__).
 
 - Provided a Nagios plugin for monitoring the health of CDAP System Services 
