@@ -30,9 +30,6 @@ Cask Data Application Platform Release Notes
 Bug Fixes
 ---------
 
-- Fixed a problem with the CDAP Master restarting the Twill app indefinitely in certain circumstances
-  (`CDAP-1543 <https://issues.cask.co/browse/CDAP-1543>`__).
-
 - Fixed a problem where a Hadoop filesystem object was being instantiated before the
   Kerberos keytab login was completed, leading to CDAP processes failing after the initial
   ticket expired (`CDAP-3660 <https://issues.cask.co/browse/CDAP-3660>`__).
@@ -40,8 +37,9 @@ Bug Fixes
 - Fixed a problem where not all dependent services were being stopped when a system service was stopped 
   (`CDAP-3861 <https://issues.cask.co/browse/CDAP-3861>`__).
 
-- Fixed a problem with the CDAP Router not have a configurable timeout for connections 
-  (`CDAP-3887 <https://issues.cask.co/browse/CDAP-3887>`__).
+- Fixed a problem with dataset performance degradation due to the making of 
+  multiple remote calls for each "get dataset" request 
+  (`CDAP-3890 <https://issues.cask.co/browse/CDAP-3890>`__).
 
 - Fixed a problem with not closing the socket connection to the transaction service correctly, 
   leading to a leakage of file descriptors 
