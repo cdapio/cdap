@@ -42,7 +42,6 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
-import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.gateway.auth.NoAuthenticator;
@@ -184,7 +183,9 @@ public abstract class DatasetServiceTestBase {
                                  new HashSet<DatasetMetricsReporter>(),
                                  new LocalStorageProviderNamespaceAdmin(cConf, namespacedLocationFactory,
                                                                         exploreFacade),
-                                 new UsageRegistry(txExecutorFactory, dsFramework));
+                                 txExecutorFactory,
+                                 registryFactory,
+                                 new LocalDatasetTypeClassLoaderFactory());
 
     // Start dataset service, wait for it to be discoverable
     service.start();

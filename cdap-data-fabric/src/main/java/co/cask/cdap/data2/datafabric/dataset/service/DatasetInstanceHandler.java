@@ -21,11 +21,16 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.exception.AlreadyExistsException;
 import co.cask.cdap.common.exception.HandlerException;
+import co.cask.cdap.common.exception.NotFoundException;
+import co.cask.cdap.data2.datafabric.dataset.AbstractDatasetProvider;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
+import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeClassLoaderFactory;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetTypeManager;
+import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
@@ -35,7 +40,9 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
+import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
@@ -88,13 +95,35 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Inject
   public DatasetInstanceHandler(DatasetTypeManager implManager, DatasetInstanceManager instanceManager,
                                 DatasetOpExecutor opExecutorClient, ExploreFacade exploreFacade, CConfiguration conf,
-                                UsageRegistry usageRegistry) {
+                                TransactionExecutorFactory txFactory,
+                                DatasetDefinitionRegistryFactory registryFactory,
+                                DatasetTypeClassLoaderFactory typeLoader) {
     this.opExecutorClient = opExecutorClient;
     this.implManager = implManager;
     this.instanceManager = instanceManager;
     this.exploreFacade = exploreFacade;
-    this.usageRegistry = usageRegistry;
+    this.usageRegistry = new UsageRegistry(txFactory, new AbstractDatasetProvider(registryFactory, typeLoader) {
+       @Override
+      public DatasetMeta getMeta(Id.DatasetInstance instance) throws Exception {
+        return DatasetInstanceHandler.this.doGetInfo(instance, ImmutableList.<String>of());
+        }
+
+        @Override
+      public void createIfNotExists(Id.DatasetInstance instance, String type,
+                                    DatasetProperties creationProps) throws Exception {
+          DatasetInstanceHandler.this.createIfNotExists(
+            instance, new DatasetInstanceConfiguration(type, creationProps.getProperties()));
+        }
+    });
     this.allowDatasetUncheckedUpgrade = conf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+  }
+
+  private void createIfNotExists(Id.DatasetInstance instance, DatasetInstanceConfiguration props) throws Exception {
+    try {
+      doCreate(instance, props);
+    } catch (AlreadyExistsException e) {
+      // ignore
+    }
   }
 
   @GET
@@ -112,40 +141,44 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void getInfo(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("name") String name,
-                      @QueryParam("owner") List<String> owners) {
+                      @QueryParam("owner") List<String> owners) throws NotFoundException {
 
-    Id.DatasetInstance datasetId = Id.DatasetInstance.from(namespaceId, name);
-    DatasetSpecification spec = instanceManager.get(datasetId);
+    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
+    DatasetMeta info = doGetInfo(instance, owners);
+    responder.sendJson(HttpResponseStatus.OK, info, DatasetMeta.class, GSON);
+  }
+
+  private DatasetMeta doGetInfo(Id.DatasetInstance instance, List<String> owners) throws NotFoundException {
+    DatasetSpecification spec = instanceManager.get(instance);
     if (spec == null) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } else {
-      // try finding type info in the dataset's namespace first, then the system namespace
-      DatasetTypeMeta typeMeta = getTypeInfo(Id.Namespace.from(namespaceId), spec.getType());
-      if (typeMeta == null) {
-        // Dataset type not found in the instance's namespace or the system namespace. Bail out.
-        responder.sendString(HttpResponseStatus.NOT_FOUND,
-                             String.format("Dataset type %s used by dataset %s not found", spec.getType(), name));
-        return;
-      }
-      // typeMeta is guaranteed to be non-null now.
-      DatasetMeta info = new DatasetMeta(spec, typeMeta, null);
-      for (String owner : owners) {
-        String[] parts = owner.split("::", 2);
-        Preconditions.checkArgument(parts.length == 2);
-        String ownerType = parts[0];
-        String ownerId = parts[1];
-        try {
-          if (ownerType.equals(Id.getType(Id.Program.class))) {
-            usageRegistry.register(Id.Program.fromStrings(ownerId.split("/")), datasetId);
-          } else if (ownerType.equals(Id.getType(Id.Adapter.class))) {
-            usageRegistry.register(Id.Adapter.fromStrings(ownerId.split("/")), datasetId);
-          }
-        } catch (Exception e) {
-          LOG.warn("Failed to register usage of {} -> {}", ownerId, datasetId);
-        }
-      }
-      responder.sendJson(HttpResponseStatus.OK, info, DatasetMeta.class, GSON);
+      throw new NotFoundException(instance);
     }
+
+    // try finding type info in the dataset's namespace first, then the system namespace
+    DatasetTypeMeta typeMeta = getTypeInfo(instance.getNamespace(), spec.getType());
+    if (typeMeta == null) {
+      // Dataset type not found in the instance's namespace or the system namespace. Bail out.
+      throw new NotFoundException(Id.DatasetType.from(instance.getNamespace(), spec.getType()));
+    }
+
+    // typeMeta is guaranteed to be non-null now.
+    DatasetMeta info = new DatasetMeta(spec, typeMeta, null);
+    for (String owner : owners) {
+      String[] parts = owner.split("::", 2);
+      Preconditions.checkArgument(parts.length == 2);
+      String ownerType = parts[0];
+      String ownerId = parts[1];
+      try {
+        if (ownerType.equals(Id.getType(Id.Program.class))) {
+          usageRegistry.register(Id.Program.fromStrings(ownerId.split("/")), instance);
+        } else if (ownerType.equals(Id.getType(Id.Adapter.class))) {
+          usageRegistry.register(Id.Adapter.fromStrings(ownerId.split("/")), instance);
+        }
+      } catch (Exception e) {
+        LOG.warn("Failed to register usage of {} -> {}", ownerId, instance);
+      }
+    }
+    return info;
   }
 
   /**
@@ -154,34 +187,33 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @PUT
   @Path("/data/datasets/{name}")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                     @PathParam("name") String name) {
+                     @PathParam("name") String name) throws Exception {
+
+    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
     DatasetInstanceConfiguration creationProperties = getInstanceConfiguration(request);
+    doCreate(instance, creationProperties);
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  private void doCreate(Id.DatasetInstance instance,
+                        DatasetInstanceConfiguration config) throws Exception {
 
     LOG.info("Creating dataset {}.{}, type name: {}, typeAndProps: {}",
-             namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
+             instance.getNamespaceId(), instance.getId(), config.getTypeName(), config.getProperties());
 
-    DatasetSpecification existing = instanceManager.get(Id.DatasetInstance.from(namespaceId, name));
+    DatasetSpecification existing = instanceManager.get(instance);
     if (existing != null && !allowDatasetUncheckedUpgrade) {
-      String message = String.format("Cannot create dataset %s.%s: instance with same name already exists %s",
-                                     namespaceId, name, existing);
-      LOG.info(message);
-      responder.sendString(HttpResponseStatus.CONFLICT, message);
-      return;
+      throw new AlreadyExistsException(instance);
     }
 
-    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, name);
     // Disable explore if the table already existed
     if (existing != null) {
-      disableExplore(datasetInstance);
+      disableExplore(instance);
     }
 
-    if (!createDatasetInstance(creationProperties, namespaceId, name, responder, "create")) {
-      return;
-    }
+    createDatasetInstance(config, instance.getNamespaceId(), instance.getId(), "create");
 
-    enableExplore(datasetInstance, creationProperties);
-
-    responder.sendStatus(HttpResponseStatus.OK);
+    enableExplore(instance, config);
   }
 
   /**
@@ -191,7 +223,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @PUT
   @Path("/data/datasets/{name}/properties")
   public void update(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
-                     @PathParam("name") String name) {
+                     @PathParam("name") String name) throws Exception {
     DatasetInstanceConfiguration creationProperties = getInstanceConfiguration(request);
 
     LOG.info("Update dataset {}, type name: {}, typeAndProps: {}",
@@ -216,9 +248,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, name);
     disableExplore(datasetInstance);
 
-    if (!createDatasetInstance(creationProperties, namespaceId, name, responder, "update")) {
-      return;
-    }
+    createDatasetInstance(creationProperties, namespaceId, name, "update");
 
     enableExplore(datasetInstance, creationProperties);
 
@@ -237,18 +267,13 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     return  creationProperties;
   }
 
-  private boolean createDatasetInstance(DatasetInstanceConfiguration creationProperties, String namespaceId,
-                                        String name, HttpResponder responder, String operation) {
+  private void createDatasetInstance(DatasetInstanceConfiguration creationProperties, String namespaceId,
+                                        String name, String operation) throws Exception {
     String typeName = creationProperties.getTypeName();
     Id.Namespace namespace = Id.Namespace.from(namespaceId);
     DatasetTypeMeta typeMeta = getTypeInfo(namespace, typeName);
     if (typeMeta == null) {
-      // Type not found in the instance's namespace and the system namespace. Bail out.
-      String message = String.format("Cannot %s dataset %s.%s: unknown type %s",
-                                     operation, namespaceId, name, creationProperties.getTypeName());
-      LOG.warn(message);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, message);
-      return false;
+      throw new NotFoundException(Id.DatasetType.from(namespaceId, creationProperties.getTypeName()));
     }
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
     DatasetSpecification spec;
@@ -262,7 +287,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       throw new RuntimeException(msg, e);
     }
     instanceManager.add(namespace, spec);
-    return true;
   }
 
   @DELETE
