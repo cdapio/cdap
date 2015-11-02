@@ -57,6 +57,9 @@ Bug Fixes
 New Feature
 -----------
 
+- Updated the version of `Tephra <http://tephra.io>` included in CDAP to v0.6.3
+  (`CDAP-3928 <https://issues.cask.co/browse/CDAP-3928>`__).
+
 - Provided a Nagios plugin for monitoring the health of CDAP System Services 
   (`CDAP-3967 <https://issues.cask.co/browse/CDAP-3967>`__).
 
