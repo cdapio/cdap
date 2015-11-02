@@ -41,6 +41,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Module;
 import com.google.inject.Provider;
+import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
 
@@ -117,7 +118,7 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
                                                                             Names.named("defaultDatasetModules"));
 
         // NOTE: order is important due to dependencies between modules
-        mapBinder.addBinding("orderedTable-hbase").toProvider(OrderedTableModuleProvider.class);
+        mapBinder.addBinding("orderedTable-hbase").toProvider(OrderedTableModuleProvider.class).in(Singleton.class);
         mapBinder.addBinding("metricsTable-hbase").toInstance(new HBaseMetricsTableModule());
         bindDefaultModules(mapBinder);
         mapBinder.addBinding("queueDataset").toInstance(new HBaseQueueDatasetModule());
