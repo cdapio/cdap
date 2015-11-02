@@ -60,6 +60,7 @@ public enum ArgumentName {
   DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),
   QUERY("query"),
   APP("app-id"),
+  PROGRAM_TYPES("program-types"),
   VIEW("view-id"),
   HTTP_METHOD("http-method"),
   ENDPOINT("endpoint"),

@@ -1310,6 +1310,7 @@
             </systemPropertyVariables>
             <includes>
               <include>**/*TestsSuite.java</include>
+              <include>**/*TestSuite.java</include>
               <include>**/Test*.java</include>
               <include>**/*Test.java</include>
               <include>**/*TestCase.java</include>

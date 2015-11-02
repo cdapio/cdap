@@ -15,9 +15,9 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceSettingsController', function ($scope, MyDataSource, $state, $alert, $timeout, myNamespace, EventPipe) {
+  .controller('NamespaceSettingsController', function ($scope, MyCDAPDataSource, $state, $alert, $timeout, myNamespace, EventPipe) {
 
-    var dataSrc = new MyDataSource($scope);
+    var dataSrc = new MyCDAPDataSource($scope);
     $scope.loading = false;
 
     dataSrc.request({

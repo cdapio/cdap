@@ -3,5 +3,6 @@
     "version": "{{VERSION}}",
     "sdk": {
       "url": "{{URI}}"
+    }
   }
 }

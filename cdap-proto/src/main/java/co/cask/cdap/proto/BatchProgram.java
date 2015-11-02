@@ -18,6 +18,8 @@ package co.cask.cdap.proto;
 
 import com.google.common.base.Joiner;
 
+import java.util.Objects;
+
 /**
  * Array components of the batch status request to POST /namespaces/{namespace}/status.
  */
@@ -63,5 +65,26 @@ public class BatchProgram {
     if (programId == null || programId.isEmpty()) {
       throw new IllegalArgumentException("'programId' must be specified.");
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    BatchProgram that = (BatchProgram) o;
+
+    return Objects.equals(appId, that.appId) &&
+      Objects.equals(programType, that.programType) &&
+      Objects.equals(programId, that.programId);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(appId, programType, programId);
   }
 }

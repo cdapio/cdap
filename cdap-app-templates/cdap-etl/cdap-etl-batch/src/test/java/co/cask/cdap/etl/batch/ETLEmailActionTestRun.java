@@ -41,7 +41,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Test for {@link EmailAction}
  */
-public class ETLEmailActionTest extends BaseETLBatchTest {
+public class ETLEmailActionTestRun extends ETLBatchTestBase {
 
   private SimpleSmtpServer server;
   private int port;

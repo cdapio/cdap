@@ -366,6 +366,10 @@ public class UpgradeTool {
     LOG.info("Upgrading QueueAdmin ...");
     QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
     queueAdmin.upgrade();
+
+    LOG.info("Upgrading Dataset Specification...");
+    DatasetSpecificationUpgrader dsUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
+    dsUpgrader.upgrade();
   }
 
   public static void main(String[] args) {

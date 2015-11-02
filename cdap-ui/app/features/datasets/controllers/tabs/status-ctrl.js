@@ -16,7 +16,7 @@
 
 angular.module(PKG.name + '.feature.datasets')
   .controller('DatasetDetailStatusController',
-    function($scope, MyDataSource, $state, myHelpers, MyMetricsQueryHelper, myExploreApi, explorableDatasets) {
+    function($scope, MyCDAPDataSource, $state, myHelpers, MyMetricsQueryHelper, myExploreApi, explorableDatasets) {
       this.writes = 0;
       this.reads = 0;
       this.storage = 0;
@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.datasets')
         return;
       }
       var query = myHelpers.objectQuery;
-      var dataSrc = new MyDataSource($scope),
+      var dataSrc = new MyCDAPDataSource($scope),
           currentDataset = $state.params.datasetId,
           datasetTags = {
             namespace: $state.params.namespace,

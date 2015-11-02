@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
@@ -34,6 +35,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkUserMetrics;
 import co.cask.cdap.logging.context.SparkLoggingContext;
 import co.cask.cdap.proto.Id;
@@ -69,6 +71,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final MetricsContext metricsContext;
   private final LoggingContext loggingContext;
+  private final PluginInstantiator pluginInstantiator;
   private final WorkflowToken workflowToken;
 
   private Resources executorResources;
@@ -79,6 +82,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
                                  ClassLoader programClassLoader, long logicalStartTime,
                                  Map<String, String> runtimeArguments, DiscoveryServiceClient discoveryServiceClient,
                                  MetricsContext metricsContext, LoggingContext loggingContext,
+                                 @Nullable PluginInstantiator pluginInstantiator,
                                  @Nullable WorkflowToken workflowToken) {
     this.applicationSpecification = applicationSpecification;
     this.specification = specification;
@@ -92,6 +96,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.loggingContext = loggingContext;
     this.executorResources = Objects.firstNonNull(specification.getExecutorResources(), new Resources());
     this.sparkConf = new SparkConf();
+    this.pluginInstantiator = pluginInstantiator;
     this.workflowToken = workflowToken;
   }
 
@@ -128,6 +133,11 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   @Override
   public Metrics getMetrics() {
     return new SparkUserMetrics(metricsContext);
+  }
+
+  @Override
+  public PluginContext getPluginContext() {
+    return new SparkPluginContext(pluginInstantiator, programId, applicationSpecification.getPlugins());
   }
 
   @Override
@@ -215,6 +225,14 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
    */
   public MetricsContext getMetricsContext() {
     return metricsContext;
+  }
+
+  /**
+   * Returns the {@link PluginInstantiator} for this context.
+   */
+  @Nullable
+  public PluginInstantiator getPluginInstantiator() {
+    return pluginInstantiator;
   }
 
   /**

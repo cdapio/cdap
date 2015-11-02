@@ -14,34 +14,24 @@
  * the License.
  */
 
-angular.module(PKG.name + '.services')
-  .service('EventPipe', function() {
-    var events = {};
+angular.module(PKG.name + '.feature.hydrator')
+  .service('MyBottomPanelService', function() {
 
-    this.on = function(event, cb) {
-      if (!events[event]) {
-        events[event] = [cb];
-      } else {
-        events[event].push(cb);
-      }
+    this.isCollapsed = true;
+    this.isCollapsedCallbacks = [];
+
+    this.registerIsCollapsedCallback = function(callback) {
+      this.isCollapsedCallbacks.push(callback);
+    };
+    this.setIsCollapsed = function(value) {
+      this.isCollapsed = value;
+      this.callRegisteredCallbacks();
     };
 
-    this.emit =  function(event) {
-      var args = Array.prototype.slice.call(arguments, 1);
-      if (!events[event]) {
-        return;
-      }
-      for (var i = 0; i < events[event].length; i++) {
-        events[event][i].apply(this, args);
-      }
+    this.callRegisteredCallbacks = function() {
+      this.isCollapsedCallbacks.forEach(function(callback) {
+        callback(this.isCollapsed);
+      }.bind(this));
     };
-
-    this.cancelEvent = function(event) {
-      if (events[event]) {
-        delete events[event];
-      }
-    };
-
-
 
   });

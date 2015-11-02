@@ -15,7 +15,7 @@
  */
 
  class AppListController {
-   constructor($scope, MyDataSource, myAppUploader, MyOrderings, GLOBALS, myHydratorFactory) {
+   constructor($scope, MyCDAPDataSource, myAppUploader, MyOrderings, GLOBALS, myHydratorFactory) {
      this.MyOrderings = MyOrderings;
      this.apps = [];
      this.currentPage = 1;
@@ -23,7 +23,7 @@
      this.GLOBALS = GLOBALS;
      this.myHydratorFactory = myHydratorFactory;
 
-     var data = new MyDataSource($scope);
+     var data = new MyCDAPDataSource($scope);
 
      data.request({
        _cdapNsPath: '/apps/'
@@ -36,7 +36,7 @@
    }
  }
 
- AppListController.$inject = ['$scope', 'MyDataSource', 'myAppUploader', 'MyOrderings', 'GLOBALS', 'myHydratorFactory'];
+ AppListController.$inject = ['$scope', 'MyCDAPDataSource', 'myAppUploader', 'MyOrderings', 'GLOBALS', 'myHydratorFactory'];
 
 angular.module(PKG.name + '.feature.apps')
   .controller('AppListController', AppListController);

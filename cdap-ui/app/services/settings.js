@@ -20,9 +20,9 @@ angular.module(PKG.name + '.services')
     return new MyPersistentStorage('user');
   })
 
-  .factory('MyPersistentStorage', function MyPersistentStorageFactory($q, MyDataSource, myHelpers) {
+  .factory('MyPersistentStorage', function MyPersistentStorageFactory($q, MyCDAPDataSource, myHelpers) {
 
-    var data = new MyDataSource();
+    var data = new MyCDAPDataSource();
 
     function MyPersistentStorage (type) {
       this.endpoint = '/configuration/'+type;

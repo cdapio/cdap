@@ -15,8 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.overview')
-  .controller('AppsSectionCtrl', function(myAppUploader, myStreamApi, myDatasetApi, MyDataSource, MyOrderings, $scope, $state, GLOBALS, myHydratorFactory) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('AppsSectionCtrl', function(myAppUploader, myStreamApi, myDatasetApi, MyCDAPDataSource, MyOrderings, $scope, $state, GLOBALS, myHydratorFactory) {
+    var dataSrc = new MyCDAPDataSource($scope);
     this.MyOrderings = MyOrderings;
     this.apps = [];
     this.GLOBALS = GLOBALS;

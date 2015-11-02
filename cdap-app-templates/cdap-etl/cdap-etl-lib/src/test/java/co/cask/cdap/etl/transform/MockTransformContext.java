@@ -18,10 +18,11 @@ package co.cask.cdap.etl.transform;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.TransformContext;
-import co.cask.cdap.etl.common.MockMetrics;
-import com.google.common.collect.Maps;
+import co.cask.cdap.etl.common.NoopMetrics;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -29,19 +30,40 @@ import java.util.Map;
  */
 public class MockTransformContext implements TransformContext {
   private final PluginProperties pluginProperties;
-  private final Metrics metrics;
-
-  public MockTransformContext(Map<String, String> args) {
-    this(args, new MockMetrics());
-  }
-
-  public MockTransformContext(Map<String, String> args, Metrics metrics) {
-    this.pluginProperties = PluginProperties.builder().addAll(args).build();
-    this.metrics = metrics;
-  }
+  private final StageMetrics metrics;
 
   public MockTransformContext() {
-    this(Maps.<String, String>newHashMap());
+    this(new HashMap<String, String>());
+  }
+
+  public MockTransformContext(Map<String, String> args) {
+    this(args, NoopMetrics.INSTANCE, "");
+  }
+
+  public MockTransformContext(Map<String, String> args, final Metrics metrics, final String stageMetricPrefix) {
+    this.pluginProperties = PluginProperties.builder().addAll(args).build();
+    // TODO:
+    this.metrics = new StageMetrics() {
+      @Override
+      public void count(String metricName, int delta) {
+        metrics.count(stageMetricPrefix + metricName, delta);
+      }
+
+      @Override
+      public void gauge(String metricName, long value) {
+        metrics.gauge(stageMetricPrefix + metricName, value);
+      }
+
+      @Override
+      public void pipelineCount(String metricName, int delta) {
+        metrics.count(metricName, delta);
+      }
+
+      @Override
+      public void pipelineGauge(String metricName, long value) {
+        metrics.gauge(metricName, value);
+      }
+    };
   }
 
   @Override
@@ -55,7 +77,7 @@ public class MockTransformContext implements TransformContext {
   }
 
   @Override
-  public Metrics getMetrics() {
+  public StageMetrics getMetrics() {
     return metrics;
   }
 

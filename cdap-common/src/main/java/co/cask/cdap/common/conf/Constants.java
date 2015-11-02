@@ -162,7 +162,10 @@ public final class Constants {
    * Plugin Artifacts constants.
    */
   public static final class Plugin {
-    public static final String DIRECTORY = "artifacts.jar";
+    public static final String DIRECTORY = "artifacts";
+
+    // Key to be used in hConf to store location of the plugin artifact jar
+    public static final String ARCHIVE = "cdap.program.plugin.archive";
   }
 
   /**

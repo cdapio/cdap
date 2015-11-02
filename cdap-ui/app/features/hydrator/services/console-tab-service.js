@@ -19,9 +19,11 @@ angular.module(PKG.name + '.feature.hydrator')
     this.messages = [];
     this.resetMessages = function() {
       this.messages = [];
+      this.notifyOnResetMessageListeners();
     };
 
     this.onMessageUpdateListeners = [];
+    this.onResetMessageListeners = [];
     this.addMessage = function(message) {
       message.date = new Date();
       this.messages.push(message);
@@ -35,6 +37,16 @@ angular.module(PKG.name + '.feature.hydrator')
     this.notifyMessageUpdateListeners = function(message) {
       this.onMessageUpdateListeners.forEach(function(callback) {
         callback(message);
+      });
+    };
+
+    this.registerOnResetMessages = function(callback) {
+      this.onResetMessageListeners.push(callback);
+    };
+
+    this.notifyOnResetMessageListeners = function() {
+      this.onResetMessageListeners.forEach(function (callback) {
+        callback();
       });
     };
 

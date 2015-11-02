@@ -26,27 +26,46 @@ angular.module(`${PKG.name}.feature.workflows`)
           highlightTab: 'development'
         },
         resolve : {
-          rRuns: function(MyDataSource, $stateParams, $q) {
+          rRuns: function(MyCDAPDataSource, $stateParams, $q, $state) {
             var defer = $q.defer();
-            var dataSrc = new MyDataSource();
+            var dataSrc = new MyCDAPDataSource();
             // Using _cdapPath here as $state.params is not updated with
             // runid param when the request goes out
             // (timing issue with re-direct from login state).
             dataSrc.request({
               _cdapPath: `/namespaces/${$stateParams.namespace}/apps/${$stateParams.appId}/workflows/${$stateParams.programId}/runs`
             })
-              .then(function(res) {
-                defer.resolve(res);
-              });
+              .then(
+                function success(res) {
+                  defer.resolve(res);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
             return defer.promise;
           },
-          rWorkflowDetail: function(myWorkFlowApi, $stateParams) {
+          rWorkflowDetail: function(myWorkFlowApi, $stateParams, $q, $state) {
             var params = {
               namespace: $stateParams.namespace,
               appId: $stateParams.appId,
               workflowId: $stateParams.programId
             };
-            return myWorkFlowApi.get(params).$promise;
+            var defer = $q.defer();
+            myWorkFlowApi
+              .get(params)
+              .$promise
+              .then(
+                function success(workflowDetail) {
+                  defer.resolve(workflowDetail);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
+            return defer.promise;
           }
         },
         template: '<ui-view/>'

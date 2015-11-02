@@ -19,10 +19,13 @@ package co.cask.cdap.internal.app.runtime.spark;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.ProgramClassLoader;
+import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.apache.spark.executor.ExecutorURLClassLoader;
 import org.apache.spark.util.MutableURLClassLoader;
+
+import java.util.List;
 
 /**
  * ClassLoader being used in Spark execution context. It is used in driver as well as in executor node.
@@ -62,7 +65,7 @@ public class SparkClassLoader extends CombineClassLoader {
    * Creates a new SparkClassLoader with the given {@link ExecutionSparkContext}.
    */
   public SparkClassLoader(ExecutionSparkContext context) {
-    super(null, ImmutableList.of(context.getProgramClassLoader(), SparkClassLoader.class.getClassLoader()));
+    super(null, createDelegateClassLoaders(context));
     this.programClassLoader = context.getProgramClassLoader();
     this.context = context;
   }
@@ -79,5 +82,17 @@ public class SparkClassLoader extends CombineClassLoader {
    */
   public ExecutionSparkContext getContext() {
     return context;
+  }
+
+  /**
+   * Creates the delegating list of ClassLoader. Used by constructor only.
+   */
+  private static List<ClassLoader> createDelegateClassLoaders(ExecutionSparkContext context) {
+    return ImmutableList.of(
+      context.getProgramClassLoader(),
+      PluginClassLoaders.createFilteredPluginsClassLoader(context.getApplicationSpecification().getPlugins(),
+                                                          context.getPluginInstantiator()),
+      SparkClassLoader.class.getClassLoader()
+    );
   }
 }

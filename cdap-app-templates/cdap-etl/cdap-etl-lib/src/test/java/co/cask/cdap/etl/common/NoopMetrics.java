@@ -16,13 +16,14 @@
 
 package co.cask.cdap.etl.common;
 
-import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.StageMetrics;
 
 /**
  * No op metrics implementation for tests.
  */
-public class NoopMetrics implements Metrics {
-  public static final Metrics INSTANCE = new NoopMetrics();
+public class NoopMetrics implements StageMetrics {
+
+  public static final StageMetrics INSTANCE = new NoopMetrics();
 
   @Override
   public void count(String s, int i) {
@@ -31,6 +32,16 @@ public class NoopMetrics implements Metrics {
 
   @Override
   public void gauge(String s, long l) {
+    // no-op
+  }
+
+  @Override
+  public void pipelineCount(String metricName, int delta) {
+    // no-op
+  }
+
+  @Override
+  public void pipelineGauge(String metricName, long value) {
     // no-op
   }
 }
