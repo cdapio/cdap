@@ -14,11 +14,16 @@ This section will assist you with installing CDAP on `MapR <https://www.mapr.com
 can be installed on a MapR cluster by following the :ref:`manual instructions for installing
 CDAP <install>`. These notes are an addition to those steps.
 
-Note that as described in the :ref:`Software Prerequisites <install-software-requirements>`, 
+As described in the :ref:`Software Prerequisites <install-software-requirements>`, 
 a configured Hadoop and HBase (plus an optional Hive client) needs to be configured
 on the node(s) where CDAP will run.
 
-- To configure a MapR Hadoop client, see the MapR documentation on `Setting Up the Client
+If colocating CDAP on cluster hosts with actual services, such as the MapR CLDB, Yarn
+ResourceManager, or HBase Master, then the client configurations will already be in place.
+Note that Gateways are redundant if colocating CDAP on cluster hosts with actual services,
+such as the HBase Master, Yarn Resourcemanager, or HDFS Namenode.
+
+- To configure a MapR client, see the MapR documentation on `Setting Up the Client
   <http://doc.mapr.com/display/MapR/Setting+Up+the+Client>`__.
 
 - To configure a MapR HBase client, see the MapR documentation on `Installing HBase on a Client
@@ -28,7 +33,7 @@ on the node(s) where CDAP will run.
   <http://doc.mapr.com/display/MapR/Installing+Hive>`__.
 
 A typical client node should have the ``mapr-client``, ``mapr-hbase``, and ``mapr-hive`` packages installed, and can
-be configured using the MapR `configure.sh <http://doc.mapr.com/display/MapR41/configure.sh>`__ utility.
+be configured using the MapR `configure.sh <http://doc.mapr.com/display/MapR/configure.sh>`__ utility.
 
 As in all installations, the ``kafka.log.dir`` may need to be created locally.
 

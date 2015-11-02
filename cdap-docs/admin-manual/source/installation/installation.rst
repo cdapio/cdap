@@ -26,9 +26,15 @@ There are specific instructions for :ref:`upgrading existing CDAP installations 
 
 Once installed, another page :ref:`covers configuration <configuration>` of the CDAP installation.
 
-Use these instructions if you aren't using a distribution such as :ref:`Cloudera <cloudera-configuring>`, 
-:ref:`Ambari <ambari-configuring>`, or the :ref:`standalone SDK <standalone-index>`. For the
-`MapR distribution <https://www.mapr.com>`__, we have :ref:`additional instructions <mapr-configuring>` to start with.
+.. _install-follow-these-instructions:
+
+Follow these instructions only if you aren't using a cluster manager such as :ref:`Cloudera
+Manager <cloudera-configuring>` or :ref:`Apache Ambari <ambari-configuring>`. For the Mapr
+distribution, we have :ref:`additional instructions <mapr-configuring>` to start with;
+please read those before continuing. These instructions *do not apply* to the
+:ref:`standalone SDK <standalone-index>`
+
+.. _install-these-are-the-cdap-components:
 
 These are the CDAP components:
 
