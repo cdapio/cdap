@@ -140,11 +140,9 @@ angular.module(PKG.name + '.feature.hydrator')
           if (!$scope.plugin.outputSchema && input) {
             $scope.plugin.outputSchema = JSON.stringify(input) || null;
           }
-
           if ($scope.plugin.type === artifactTypeExtension.source) {
             $scope.isSource = true;
           }
-
           if ($scope.plugin.type === artifactTypeExtension.sink) {
             $scope.isSink = true;
           }

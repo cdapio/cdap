@@ -253,7 +253,7 @@ angular.module(PKG.name + '.commons')
         if (targetOuputSchema) {
           targetNode.outputSchema = targetOuputSchema;
         } else {
-          targetNode.outputSchema = sourceNode.outputSchema;
+          targetNode.outputSchema = targetNode.outputSchema || sourceNode.outputSchema;
         }
       });
     }
