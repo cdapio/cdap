@@ -18,17 +18,17 @@ angular.module(PKG.name + '.feature.hydrator')
   .service('PipelineDetailActionFactory', function(PipelineDetailDispatcher, myPipelineApi) {
     var dispatcher = PipelineDetailDispatcher.getDispatcher();
     this.startPipeline = function (api, params) {
-      return api.doAction(angular.extend(params, { action: 'start' }), {}).$promise;
+      return api.start(params).$promise;
     };
     this.schedulePipeline = function(api, scheduleParams) {
-      return api.scheduleResume(scheduleParams, {}).$promise;
+      return api.schedule(scheduleParams).$promise;
     };
 
     this.stopPipeline = function (api, params) {
-      return api.doAction(angular.extend(params, { action: 'stop' }), {}).$promise;
+      return api.stop(params).$promise;
     };
     this.suspendSchedule = function(api, params) {
-      return api.scheduleSuspend(params, {}).$promise;
+      return api.suspend(params).$promise;
     };
 
     this.deletePipeline = function(params) {
@@ -42,7 +42,7 @@ angular.module(PKG.name + '.feature.hydrator')
         });
     };
     this.fetchScheduleStatus = function(api, params) {
-      api.getScheduleStatus(params)
+      api.scheduleStatus(params)
         .$promise
         .then(function(res) {
           dispatcher.dispatch('onScheduleStatusFetch', res);

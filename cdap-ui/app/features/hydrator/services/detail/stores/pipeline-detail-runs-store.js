@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('DetailRunsStore', function(PipelineDetailDispatcher, $state, myHelpers, GLOBALS, myWorkFlowApi, myWorkersApi) {
+  .service('DetailRunsStore', function(PipelineDetailDispatcher, $state, myHelpers, GLOBALS, myPipelineCommonApi) {
 
     var dispatcher = PipelineDetailDispatcher.getDispatcher();
     this.changeListeners = [];
@@ -81,7 +81,8 @@ angular.module(PKG.name + '.feature.hydrator')
       return this.state.scheduleParams;
     };
     this.getLogsParams = function() {
-      return this.state.logsParams;
+      var logsParams = angular.extend({runId: this.state.runs.latest.runid}, this.state.logsParams);
+      return logsParams;
     };
     this.getConfigJson = function() {
       return this.state.configJson;
@@ -142,7 +143,6 @@ angular.module(PKG.name + '.feature.hydrator')
       var appLevelParams,
           logsLevelParams,
           metricProgramType,
-          api,
           programType;
 
       angular.extend(appConfig, app);
@@ -155,28 +155,34 @@ angular.module(PKG.name + '.feature.hydrator')
       }
       appLevelParams = {
         namespace: $state.params.namespace,
+        app: app.name
+      };
+
+      logsLevelParams = {
+        namespace: $state.params.namespace,
         appId: app.name
       };
 
-      logsLevelParams = angular.copy(appLevelParams);
       programType = app.artifact.name === GLOBALS.etlBatch ? 'WORKFLOWS' : 'WORKER';
 
       if (programType === 'WORKFLOWS') {
-        api = myWorkFlowApi;
         angular.forEach(app.programs, function (program) {
           if (program.type === 'Workflow') {
-            appLevelParams.workflowId = program.id;
+            appLevelParams.programName = program.id;
+            appLevelParams.programType = program.type.toLowerCase() + 's';
           } else {
-            metricProgramType = 'mapreduce';
+            metricProgramType = program.type.toLowerCase();
+
             logsLevelParams.programId = program.id;
             logsLevelParams.programType = program.type.toLowerCase();
           }
         });
       } else {
-        api = myWorkersApi;
         angular.forEach(app.programs, function (program) {
-          metricProgramType = 'worker';
-          appLevelParams.workerId = program.id;
+          metricProgramType = program.type.toLowerCase();
+          appLevelParams.programName = program.id;
+          appLevelParams.programType = program.type.toLowerCase() + 's';
+
           logsLevelParams.programId = program.id;
           logsLevelParams.programType = program.type.toLowerCase() + 's';
         });
@@ -192,12 +198,12 @@ angular.module(PKG.name + '.feature.hydrator')
       });
       appConfig.logsParams = logsLevelParams;
       appConfig.params = appLevelParams;
-      appConfig.api = api;
+      appConfig.api = myPipelineCommonApi;
       appConfig.metricProgramType = metricProgramType;
       appConfig.type = app.artifact.name;
       appConfig.scheduleParams = {
-        appId: appLevelParams.appId,
-        scheduleId: 'etlWorkflow',
+        app: appLevelParams.app,
+        schedule: 'etlWorkflow',
         namespace: appLevelParams.namespace
       };
       appConfig.cloneConfig = {
