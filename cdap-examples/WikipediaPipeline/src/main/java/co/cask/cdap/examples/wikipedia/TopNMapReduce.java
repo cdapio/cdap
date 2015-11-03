@@ -52,7 +52,6 @@ public class TopNMapReduce extends AbstractMapReduce {
     setMapperResources(new Resources(512));
     setReducerResources(new Resources(512));
     setInputDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET);
-    setOutputDataset(WikipediaPipelineApp.MAPREDUCE_TOPN_OUTPUT);
   }
 
   @Override
@@ -74,6 +73,7 @@ public class TopNMapReduce extends AbstractMapReduce {
     job.setNumReduceTasks(numReduceTasks);
     job.setMapperClass(TokenizerMapper.class);
     job.setReducerClass(TopNReducer.class);
+    context.addOutput(WikipediaPipelineApp.MAPREDUCE_TOPN_OUTPUT);
   }
 
   @Override
