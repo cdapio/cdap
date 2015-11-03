@@ -124,6 +124,9 @@ There are two ways to use a dataset in a program:
   See the :ref:`Word Count <examples-word-count>` for an example of how this can be used to configure
   the datasets names used by an application.
 
+  Similarly to static datasets, if the program is multi-threaded, CDAP will make
+  sure that every thread has its own instance of the dataset.
+
 .. rubric::  Dataset Time-To-Live (TTL)
 
 Datasets, like :ref:`streams <streams>`, can have a Time-To-Live (TTL) property that
