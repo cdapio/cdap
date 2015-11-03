@@ -6,9 +6,9 @@
 
 .. _faq-installation-startup:
 
-==================================
-CDAP FAQ: Installation and Startup
-==================================
+======================
+CDAP FAQ: CDAP Startup
+======================
 
 .. contents::
    :depth: 2
@@ -17,37 +17,11 @@ CDAP FAQ: Installation and Startup
    :class: faq
 
 
-Building CDAP from Source
-=========================
+Startup
+=======
 
-How can I build CDAP from source?
----------------------------------
-Instructions for building CDAP from source are in the file ``BUILD.rst`` included in the
-distribution. For example, this command will build the files required for a distribution:
-
-.. literalinclude:: ../../../BUILD.rst
-   :start-after: distributions (rpm, deb, tgz)
-   :end-before: Cloudera Manager parcel
-   :dedent: 4
-      
-It creates multiple output files (``tar.gz``\ ), located in the ``target`` directory
-inside each of ``cdap-master``, ``cdap-kafka``, ``cdap-gateway``, and ``cdap-ui``. 
-The ``rpm`` and ``deb`` targets require that `fpm <https://github.com/jordansissel/fpm>`__ 
-be installed.
-
-To build an SDK (suitable for Macintosh OS X, Windows, or Linux), use:
-
-.. literalinclude:: ../../../BUILD.rst
-   :start-after: Standalone distribution ZIP
-   :end-before: the limited set of Javadocs used in distribution ZIP
-   :dedent: 4
-
-
-Installation
-============
-
-How do I install CDAP on CDH using Cloudera Manager?
-----------------------------------------------------
+My CDAP install on CDH using Cloudera Manager doesn't startup |---| what do I do?
+---------------------------------------------------------------------------------
 We have a :ref:`tutorial <step-by-step-cloudera-add-service>` with instructions on how to install CDAP on CDH 
 (`Cloudera Data Hub <http://www.cloudera.com/content/www/en-us/resources/datasheet/cdh-datasheet.html>`__) 
 using `Cloudera Manager <http://www.cloudera.com/content/www/en-us/products/cloudera-manager.html>`__. 
@@ -68,51 +42,8 @@ Start by clicking on the parcel icon (near the top-left corner of Cloudera Manag
 like a gift-wrapped box), and ensure that the CDAP parcel is listed as *Active*.
 
 
-How do I install CDAP on CDH without using Cloudera Manager?
-------------------------------------------------------------
-If you have a CDH cluster not managed by Cloudera Manager, you can install CDAP by
-following the :ref:`manual instructions <install>`. Note that following the :ref:`Software
-Prerequisites <install-software-requirements>`, a configured Hadoop and HBase (plus an
-optional Hive client) need to be configured on the node(s) where CDAP will run.
-
-
-How do I install CDAP on HDP using Ambari?
-------------------------------------------
-Instructions on installing CDAP on HDP (`Hortonworks Data Platform
-<http://hortonworks.com/hdp/>`__) using Apache Ambari
-:ref:`are available <ambari-configuring>`.
-
-
-How do I install CDAP on HDP without using Ambari?
---------------------------------------------------
-If you have an HDP cluster not managed by Ambari, you can install CDAP by following the
-:ref:`manual instructions <install>`. Note that following the :ref:`Software Prerequisites
-<install-software-requirements>`, a configured Hadoop and HBase (plus an optional Hive
-client) need to be configured on the node(s) where CDAP will run.
-
-Note that HDP version 2.2 and above require :ref:`additional configuration <configuration-hdp>` steps.
-
-
-How do I install CDAP on MapR?
-------------------------------
-Instructions on installing CDAP on `MapR <https://www.mapr.com>`__ :ref:`are available <mapr-configuring>`.
-
-
-How do I install CDAP on Apache Hadoop?
----------------------------------------
-You can follow a manual method, using either our :ref:`quick start installation
-instructions <installation-quick-start>` or by following our :ref:`general installation
-instructions <install>`. Use the general instructions if you have either an unusual
-situation |---| such as HA (high availability) |---| or would like more details on the
-steps and the available options.
-
-
-
-Startup
-=======
-
-CDAP does not startup
----------------------
+I've followed the install instructions, yet CDAP does not start and fails verification. What next?
+--------------------------------------------------------------------------------------------------
 If you have followed :ref:`the installation instructions <install>`, and CDAP either did not pass the 
 :ref:`verification step <configuration-verification>` or did not startup, check:
 
@@ -127,8 +58,13 @@ If you have followed :ref:`the installation instructions <install>`, and CDAP ei
   to be run on Hadoop clusters. Download the appropriate distributed packages (RPM or
   Debian version) from http://cask.co/downloads.
          
-- Check permissions of directories and network configuration errors
-- Check :ref:`configuration troubleshooting <configuration-troubleshooting>` suggestions
+- Check permissions of directories:
+
+  - The :ref:`CDAP HDFS User <configuration-options>` (by default, ``yarn``) owns the HDFS directory (by default,  ``/cdap``).
+  - The :ref:`Kafka Log directory <configuration-options>` (by default, ``/data/cdap/kafka-logs``), must be writable by the default CDAP user.
+  - The :ref:`temp directories <configuration-tmp-files>` (by default, ``/tmp`` and ``/tmp/kafka-logs``) utilized by CDAP must be writable by the default CDAP user.
+
+.. - Check :ref:`configuration troubleshooting <configuration-troubleshooting>` suggestions
    
     
 .. CDAP UI shows a blank screen
@@ -136,19 +72,18 @@ If you have followed :ref:`the installation instructions <install>`, and CDAP ei
 .. TBC.
 
 
+The CDAP UI is showing a message "namespace cannot be found".
+-------------------------------------------------------------
+This is indicative that the UI cannot connect to the CDAP system service containers running in YARN.
 
-CDAP UI shows a message "namespace cannot be found"
----------------------------------------------------
-This is indicative that the UI cannot connect to the CDAP system service containers running in
-YARN.
+- First, check if the CDAP Master service container shows as RUNNING in the YARN ResourceManager UI.
 
-First check if the CDAP Master service container shows as RUNNING in the YARN ResourceManager UI (link to entry below)
+- If this doesn't resolve the issue, then it means the CDAP system services were unable to launch.
+  Ensure :ref:`YARN has enough spare memory and vcore capacity <faq-installation-startup-memory-core-requirements>`.  
+  CDAP attempts to launch between 8 and 11 containers, depending on the configuration. Check
+  the master container (Application Master) logs to see if it was able to launch all containers.
 
-If this doesn't resolve the issue, then it means the CDAP system services are unable to launch.  Ensure YARN has enough
-spare memory and vcore capacity.  CDAP attempts to launch between 8 - 11 containers depending on configuration. Check
-the master container (Application Master) logs to see if it is able to launch all containers.
-
-If it is able to launch all containers, then you may need to further check the launched container logs for any errors.
+- If it was able to launch all containers, then you may need to further check the launched container logs for any errors.
 
 
 .. CDAP UI shows a session time out
@@ -156,14 +91,14 @@ If it is able to launch all containers, then you may need to further check the l
 .. TBC.
 
 
-I don't see the CDAP Master service on YARN
--------------------------------------------
+I don't see the CDAP Master service on YARN.
+--------------------------------------------
 - Ensure that the node where CDAP is running has a properly configured YARN client.
-- Ensure YARN has enough memory and vcore capacity.
+- Ensure :ref:`YARN has enough memory and vcore capacity <faq-installation-startup-memory-core-requirements>`.
 
 
-CDAP Master log shows permissions issues
-----------------------------------------
+My CDAP Master log shows permissions issues.
+--------------------------------------------
 Ensure that ``hdfs:///#{hdfs.namespace}`` and ``hdfs:///user/#{hdfs.user}`` exist and are owned by ``#{hdfs.user}``.
 
 In rare cases, until `CDAP-3817 <https://issues.cask.co/browse/CDAP-3817>`__ is resolved,
@@ -173,8 +108,8 @@ In any other case, the error should show which directory it is attempting to acc
 hesitate to ask for help at the `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__.
 
 
-CDAP Master log shows an error about the dataset service not found
-------------------------------------------------------------------
+My CDAP Master log shows an error about the dataset service not being found.
+----------------------------------------------------------------------------
 If you see an error such as::
 
     2015-05-15 12:15:53,028 - ERROR [heartbeats-scheduler:c.c.c.d.s.s.MDSStreamMetaStore$1@71] 
@@ -202,6 +137,8 @@ been installed::
 
   rpm -ql cdap-cli
   dpkg -L cdap-cli
+
+.. _faq-installation-startup-memory-core-requirements:
 
 What are the memory and core requirements for CDAP?
 ---------------------------------------------------
@@ -251,9 +188,10 @@ configuration.
 
 My Hive Server2 defaults to 10000; what should I do?
 ----------------------------------------------------
-If port 10000 is being used by another service, simply change ``router.bind.port`` in
-the ``cdap-site.xml`` to another available port. Since in the Hadoop ecosystem, Hive
-Server2 defaults to 10000, we are considering changing the router default port. 
+By default, CDAP uses port 10000. If port 10000 is being used by another service, simply
+change the ``router.bind.port`` in the ``cdap-site.xml`` to another available port. Since
+in the Hadoop ecosystem, Hive Server2 defaults to 10000, we are considering changing the
+router default port. 
        
 How do I set the CDAP properties for components running on multiple machines?
 -----------------------------------------------------------------------------

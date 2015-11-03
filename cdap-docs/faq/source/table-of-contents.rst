@@ -11,7 +11,7 @@ CDAP FAQ Table of Contents
 
     Overview <index>
     General Questions<general>
-    Installation and Startup <installation_startup>
+    CDAP Startup <cdap-startup>
     Applications <applications>
-    User Interface <user_interface>
-    Databases and Transactions <databases_transactions>
+    User Interface <user-interface>
+    Databases and Transactions <databases-transactions>

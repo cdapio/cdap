@@ -20,8 +20,8 @@ CDAP FAQ: Applications
 General
 =======
 
-Analytics Pipeline with Hive, Spark, and CDAP
----------------------------------------------
+How do I build an Analytics Pipeline with Hive, Spark, and CDAP?
+----------------------------------------------------------------
 We are planning to build an anlytics pipeline with these stages:
 
 - Data Ingestion

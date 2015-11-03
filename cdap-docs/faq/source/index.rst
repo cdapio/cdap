@@ -15,10 +15,10 @@ CDAP FAQ
 - |general|_
 
 
-.. |installation_startup| replace:: **Installation and Startup**
-.. _installation_startup: installation_startup.html
+.. |cdap-startup| replace:: **CDAP Startup**
+.. _cdap-startup: cdap-startup.html
 
-- |installation_startup|_
+- |cdap-startup|_
 
 
 .. |applications| replace:: **Applications**
