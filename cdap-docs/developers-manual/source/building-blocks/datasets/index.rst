@@ -98,7 +98,7 @@ There are two ways to use a dataset in a program:
   This dataset is instantiated at runtime, in this case every time the method ``process`` is invoked. To reduce the
   overhead of repeatedly instantiating the same dataset, the CDAP runtime system caches dynamic datasets internally.
   How long a dataset is cached before it expires (and the next ``getDataset()`` call needs to create a new instance)
-  varies from case to case, with the guarantee that as long as you keep a reference to an instance, it will not
+  varies from case to case, with the guarantee that as long as you keep a reference to this instance, it will not
   expire, and it will participate in all transactions initiated by the program.
 
   Contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes
