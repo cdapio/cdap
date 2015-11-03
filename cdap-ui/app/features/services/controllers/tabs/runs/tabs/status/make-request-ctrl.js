@@ -25,6 +25,7 @@ angular.module(PKG.name + '.feature.services')
     vm.queryParams = [];
     vm.response = null;
     vm.postBody = {};
+    vm.loading = false;
 
     var pattern = /\{([\w\-]+)\}/g,
         dataSrc = new MyCDAPDataSource($scope);
@@ -83,6 +84,7 @@ angular.module(PKG.name + '.feature.services')
       });
 
     vm.makeRequest = function() {
+      vm.loading = true;
       var compiledUrl = '/apps/' +
         $state.params.appId + '/services/' +
         $state.params.programId + '/methods';
@@ -108,8 +110,12 @@ angular.module(PKG.name + '.feature.services')
       }
 
       dataSrc.request(requestObj)
-        .then(function(res) {
+        .then(function success(res) {
           vm.response = res;
+          vm.loading = false;
+        }, function error(err) {
+          vm.response = 'Some error has occured: ' + err;
+          vm.loading = false;
         });
     };
 

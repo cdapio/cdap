@@ -97,10 +97,13 @@
 
           <div>
             <button type="submit"
-                    ng-disabled="makeRequestForm.$invalid"
+                    ng-disabled="makeRequestForm.$invalid || RequestController.loading"
                     class="btn"
                     ng-class="{'btn-success': !makeRequestForm.$invalid}">
-              Make Request
+              <span>Make Request</span>
+              <span ng-if="RequestController.loading">
+                <i class="fa fa-refresh fa-spin"></i>
+              </span>
             </button>
           </div>
 
