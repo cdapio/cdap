@@ -15,18 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailHistoryController', function(DetailRunsStore, GLOBALS) {
+  .controller('HydratorDetailHistoryController', function(DetailRunsStore) {
     this.setState = function() {
       this.history = DetailRunsStore.getHistory();
-      var appType = DetailRunsStore.getAppType();
-      if (appType === GLOBALS.etlBatch) {
-        this.programId = DetailRunsStore.getParams().workflowId;
-        this.programType = 'WORKFLOWS';
-      } else if (appType === GLOBALS.etlRealtime) {
-        this.programId = DetailRunsStore.getParams().workerId;
-        this.programType = 'WORKER';
-      }
-      this.appId = DetailRunsStore.getParams().appId;
+      var params = DetailRunsStore.getParams();
+      this.programType = params.programType.toUpperCase();
+      this.programId = params.programName;
+      this.appId = params.app;
     };
     this.setState();
     DetailRunsStore.registerOnChangeListener(this.setState.bind(this));

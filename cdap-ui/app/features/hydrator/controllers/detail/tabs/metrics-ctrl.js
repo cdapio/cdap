@@ -46,7 +46,7 @@ angular.module(PKG.name + '.feature.hydrator')
       var logsParams = angular.copy(DetailRunsStore.getLogsParams());
       var metricParams = {
         namespace: appParams.namespace,
-        app: appParams.appId,
+        app: appParams.app,
         run: latestRunId
       };
       var programType = DetailRunsStore.getMetricProgramType();

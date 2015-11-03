@@ -86,7 +86,7 @@ angular.module(PKG.name + '.feature.hydrator')
           var params = angular.copy(DetailRunsStore.getParams());
           params = {
             namespace: params.namespace,
-            pipeline: params.appId
+            pipeline: params.app
           };
           PipelineDetailActionFactory
             .deletePipeline(params)
