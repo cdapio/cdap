@@ -62,12 +62,6 @@
   </div>
 </div>
 
-<div ng-if="ListController.apps.length === 0">
-  <div class="well well-lg text-center">
-    <h3>You haven't deployed any apps.</h3>
-  </div>
-</div>
-
 <div class="table-responsive"  ng-if="ListController.apps.length > 0">
   <table class="table table-curved" cask-sortable>
     <thead>
@@ -118,11 +112,7 @@
         </td>
         <td>{{ ::app.version }}</td>
         <td>
-          <span tooltip="{{app.description}}"
-                tooltip-enable="app.description.length > 50"
-                tooltip-append-to-body="true">
-            {{ ::app.description | myEllipsis:50}}
-          </span>
+          <span>{{ ::app.description }}</span>
         </td>
       </tr>
     </tbody>
