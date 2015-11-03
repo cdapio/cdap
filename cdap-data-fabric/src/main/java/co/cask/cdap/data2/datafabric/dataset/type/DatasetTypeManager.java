@@ -38,11 +38,10 @@ import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -55,6 +54,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +75,8 @@ public class DatasetTypeManager extends AbstractIdleService {
   private final Map<String, DatasetModule> defaultModules;
   private final boolean allowDatasetUncheckedUpgrade;
 
+  private final Map<String, DatasetModule> extensionModules;
+
   @Inject
   public DatasetTypeManager(CConfiguration cConf, MDSDatasetsRegistry mdsDatasets,
                             LocationFactory locationFactory,
@@ -81,19 +84,41 @@ public class DatasetTypeManager extends AbstractIdleService {
     this.cConf = cConf;
     this.mdsDatasets = mdsDatasets;
     this.locationFactory = locationFactory;
-    this.defaultModules = Maps.newLinkedHashMap(defaultModules);
+    this.defaultModules = new LinkedHashMap<String, DatasetModule>(defaultModules);
     this.allowDatasetUncheckedUpgrade = cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
+    this.extensionModules = getExtensionModules(this.cConf);
   }
 
   @Override
   protected void startUp() throws Exception {
     deleteSystemModules();
     deployDefaultModules();
+    if (!extensionModules.isEmpty()) {
+      deployExtensionModules();
+    }
   }
 
   @Override
   protected void shutDown() throws Exception {
     // do nothing
+  }
+
+  private Map<String, DatasetModule> getExtensionModules(CConfiguration cConf) {
+    Map<String, DatasetModule> modules = new LinkedHashMap<String, DatasetModule>();
+    String moduleStr = cConf.get(Constants.Dataset.Extensions.MODULES);
+    if (moduleStr != null) {
+      for (String moduleName : Splitter.on(',').omitEmptyStrings().split(moduleStr)) {
+        // create DatasetModule object
+        try {
+          Class tableModuleClass = Class.forName(moduleName);
+          DatasetModule module = (DatasetModule) tableModuleClass.newInstance();
+          modules.put(moduleName, module);
+        } catch (ClassCastException|ClassNotFoundException|InstantiationException|IllegalAccessException ex) {
+          LOG.error("Failed to add {} extension module: {}", moduleName, ex.toString());
+        }
+      }
+    }
+    return modules;
   }
 
   /**
@@ -117,7 +142,6 @@ public class DatasetTypeManager extends AbstractIdleService {
           if (existing != null && !allowDatasetUncheckedUpgrade) {
             String msg = String.format("cannot add module %s, module with the same name already exists: %s",
                                        datasetModuleId, existing);
-            LOG.warn(msg);
             throw new DatasetModuleConflictException(msg);
           }
 
@@ -149,7 +173,7 @@ public class DatasetTypeManager extends AbstractIdleService {
           }
           // NOTE: we use set to avoid duplicated dependencies
           // NOTE: we use LinkedHashSet to preserve order in which dependencies must be loaded
-          Set<String> moduleDependencies = Sets.newLinkedHashSet();
+          Set<String> moduleDependencies = new LinkedHashSet<String>();
           for (Id.DatasetType usedType : reg.getUsedTypes()) {
             DatasetModuleMeta usedModule = datasets.getTypeMDS().getModuleByType(usedType);
             Preconditions.checkState(usedModule != null,
@@ -336,7 +360,7 @@ public class DatasetTypeManager extends AbstractIdleService {
       mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
         @Override
         public Void call(MDSDatasets datasets) throws DatasetModuleConflictException, IOException {
-          Set<String> typesToDelete = Sets.newHashSet();
+          Set<String> typesToDelete = new HashSet<String>();
           List<Location> moduleLocations = Lists.newArrayList();
           for (DatasetModuleMeta module : datasets.getTypeMDS().getModules(namespaceId)) {
             typesToDelete.addAll(module.getTypes());
@@ -385,9 +409,27 @@ public class DatasetTypeManager extends AbstractIdleService {
         addModule(defaultModule, module.getValue().getClass().getName(), null);
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add default modules only the very first time service is started
-        LOG.info("Not adding " + module.getKey() + " module: it already exists");
+        LOG.info("Not adding {} module: it already exists", module.getKey());
       } catch (Throwable th) {
         LOG.error("Failed to add {} module. Aborting.", module.getKey(), th);
+        throw Throwables.propagate(th);
+      }
+    }
+  }
+
+  private void deployExtensionModules() {
+    // adding any defined extension modules to be available in dataset manager service
+    for (Map.Entry<String, DatasetModule> module : extensionModules.entrySet()) {
+      try {
+        // NOTE: we assume extension modules are always in classpath, hence passing null for jar location
+        // NOTE: we add extension modules in the system namespace
+        Id.DatasetModule theModule = Id.DatasetModule.from(Id.Namespace.SYSTEM, module.getKey());
+        addModule(theModule, module.getValue().getClass().getName(), null);
+      } catch (DatasetModuleConflictException e) {
+        // perfectly fine: we need to add the modules only the very first time service is started
+        LOG.info("Not adding {} extension module: it already exists", module.getKey());
+      } catch (Throwable th) {
+        LOG.error("Failed to add {} extension module. Aborting.", module.getKey(), th);
         throw Throwables.propagate(th);
       }
     }
@@ -420,7 +462,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     private final Id.Namespace namespaceId;
 
     private final List<String> types = Lists.newArrayList();
-    private final LinkedHashSet<Id.DatasetType> usedTypes = Sets.newLinkedHashSet();
+    private final LinkedHashSet<Id.DatasetType> usedTypes = new LinkedHashSet<Id.DatasetType>();
 
     public DependencyTrackingRegistry(Id.Namespace namespaceId, MDSDatasets datasets) {
       this.namespaceId = namespaceId;
@@ -446,7 +488,6 @@ public class DatasetTypeManager extends AbstractIdleService {
       Id.DatasetType typeId = Id.DatasetType.from(namespaceId, typeName);
       if (datasets.getTypeMDS().getType(typeId) != null && !allowDatasetUncheckedUpgrade) {
         String msg = "Cannot add dataset type: it already exists: " + typeName;
-        LOG.error(msg);
         throw new TypeConflictException(msg);
       }
       types.add(typeName);

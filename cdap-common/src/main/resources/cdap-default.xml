@@ -1587,4 +1587,10 @@
     </description>
   </property>
 
+  <!-- Dataset extensions -->
+  <property>
+    <name>dataset.extensions.dir</name>
+    <value>/opt/cdap/ext/lib</value>
+  </property>
+
 </configuration>
