@@ -14,6 +14,9 @@ flows, MapReduce programs, workflows, workers, and custom services.
 
 .. highlight:: console
 
+Application Lifecycle
+=====================
+
 .. _http-restful-api-lifecycle-create-app:
 
 Create an Application
@@ -196,6 +199,8 @@ This does not delete the streams and datasets associated with the application
 because they belong to the namespace, not the application.
 Also, this does not delete the artifact used to create the application.
 
+Program Lifecycle
+=================
 
 .. _http-restful-api-lifecycle-start:
 
@@ -363,7 +368,7 @@ You can stop a specific run of a program by submitting an HTTP POST request::
      - Name of the *flow*, *MapReduce*, *schedule*, *Spark*, *workflow*, *worker*, or *custom service*
        being called
    * - ``<run-id>``
-     - Run id of the run
+     - Run id of the run being called
 
 For example::
 
@@ -524,7 +529,7 @@ will get the status of two programs. It will get a response like::
 .. _http-restful-api-lifecycle-container-information:
 
 Container Information
----------------------
+=====================
 
 To find out the address of an program's container host and the container’s debug port, you can query
 CDAP for a flow or service’s live info via an HTTP GET method::
@@ -557,7 +562,7 @@ The response is formatted in JSON; an example of this is shown in
 .. _http-restful-api-lifecycle-scale:
 
 Scaling
--------
+=======
 
 You can retrieve the instance count executing different components from various applications and
 different program types using an HTTP POST method::
@@ -634,7 +639,7 @@ The response will be the same JSON array with additional parameters for each of 
 .. _rest-scaling-flowlets:
 
 Scaling Flowlets
-................
+----------------
 You can query and set the number of instances executing a given flowlet
 by using the ``instances`` parameter with HTTP GET and PUT methods::
 
@@ -692,7 +697,7 @@ with the arguments as a JSON string in the body::
        application *HelloWorld* in the namespace *default*
 
 Scaling Services
-................
+----------------
 You can query or change the number of instances of a service
 by using the ``instances`` parameter with HTTP GET or PUT methods::
 
@@ -730,7 +735,7 @@ with the arguments as a JSON string in the body::
        *PurchaseHistory* in the namespace *default*
 
 Scaling Workers
-...............
+---------------
 You can query or change the number of instances of a worker by using the ``instances``
 parameter with HTTP GET or PUT methods::
 
@@ -772,7 +777,7 @@ Example
 .. _rest-program-runs:
 
 Run Records and Schedules
--------------------------
+=========================
 
 To see all the runs of a selected program (flows, MapReduce programs, Spark programs, workflows, and
 services), issue an HTTP GET to the program’s URL with the ``runs`` parameter.
@@ -844,7 +849,7 @@ Use that runid in subsequent calls to obtain additional information.
 
 
 Retrieving Specific Run Information
-...................................
+-----------------------------------
 
 To fetch the run record for a particular run of a program, use::
 
@@ -987,7 +992,7 @@ For workflows, you can retrieve:
 .. _http-restful-api-lifecycle-schedules-suspend-resume:
 
 Schedules: Suspend and Resume
-.............................
+-----------------------------
 
 For schedules, you can suspend and resume them using the RESTful API.
 
@@ -1044,7 +1049,7 @@ where:
 .. _http-restful-api-lifecycle-workflow-runs-suspend-resume:
 
 Workflow Runs: Suspend and Resume
-.................................
+---------------------------------
 
 For workflows, in addition to :ref:`starting <http-restful-api-lifecycle-start>` and
 :ref:`stopping <http-restful-api-lifecycle-stop>`, you can suspend and resume individual
