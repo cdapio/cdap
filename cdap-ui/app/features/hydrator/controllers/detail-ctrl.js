@@ -279,7 +279,6 @@ angular.module(PKG.name + '.feature.hydrator')
       $scope.nodes.forEach(function(node) {
         MyAppDAGService.addNodes(node, node.type);
       });
-
       MyAppDAGService.connections = CanvasFactory.getConnectionsBasedOnNodes($scope.nodes, rPipelineDetail.artifact.name);
     }
 

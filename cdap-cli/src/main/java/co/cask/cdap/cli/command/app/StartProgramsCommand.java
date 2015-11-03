@@ -53,12 +53,12 @@ public class StartProgramsCommand extends BaseBatchCommand<BatchProgramStart> {
     List<BatchProgramResult> results = programClient.start(args.appId.getNamespace(), args.programs);
 
     Table table = Table.builder()
-      .setHeader("name", "type", "statusCode", "error")
+      .setHeader("name", "type", "error")
       .setRows(results, new RowMaker<BatchProgramResult>() {
         @Override
         public List<?> makeRow(BatchProgramResult result) {
           return Lists.newArrayList(
-            result.getProgramId(), result.getProgramType(), result.getStatusCode(), result.getError());
+            result.getProgramId(), result.getProgramType(), result.getError());
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, printStream, table);

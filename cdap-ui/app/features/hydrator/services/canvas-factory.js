@@ -25,7 +25,8 @@ angular.module(PKG.name + '.feature.hydrator')
         name: config.source.name,
         label: config.source.label || config.source.name,
         type: GLOBALS.pluginTypes[type].source,
-        properties: config.source.properties
+        properties: config.source.properties,
+        outputSchema: config.source.outputSchema
       });
       config.transforms.forEach(function(transform) {
         nodes.push({
@@ -35,7 +36,8 @@ angular.module(PKG.name + '.feature.hydrator')
           type: 'transform',
           properties: transform.properties,
           errorDatasetName: transform.errorDatasetName,
-          validationFields: transform.validationFields
+          validationFields: transform.validationFields,
+          outputSchema: transform.outputSchema
         });
       });
       config.sinks.forEach(function(sink) {
@@ -44,7 +46,8 @@ angular.module(PKG.name + '.feature.hydrator')
           name: sink.name,
           label: sink.label || sink.name,
           type: GLOBALS.pluginTypes[type].sink,
-          properties: sink.properties
+          properties: sink.properties,
+          outputSchema: sink.outputSchema
         });
       });
       return nodes;
