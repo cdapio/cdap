@@ -57,13 +57,12 @@ public class StatusProgramsCommand extends BaseBatchCommand<BatchProgram> {
     List<BatchProgramStatus> results = programClient.getStatus(args.appId.getNamespace(), args.programs);
 
     Table table = Table.builder()
-      .setHeader("name", "type", "status", "statusCode", "error")
+      .setHeader("name", "type", "status", "error")
       .setRows(results, new RowMaker<BatchProgramStatus>() {
         @Override
         public List<?> makeRow(BatchProgramStatus result) {
           return Lists.newArrayList(
-            result.getProgramId(), result.getProgramType(), result.getStatus(),
-            result.getStatusCode(), result.getError());
+            result.getProgramId(), result.getProgramType(), result.getStatus(), result.getError());
         }
       }).build();
     cliConfig.getTableRenderer().render(cliConfig, printStream, table);
