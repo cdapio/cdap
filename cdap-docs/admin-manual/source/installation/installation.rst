@@ -13,7 +13,7 @@ Installation
 Introduction
 ------------
 
-This manual is to help you install and configure Cask Data Application Platform (CDAP). It provides the
+This manual is to help you install the Cask Data Application Platform (CDAP). It provides the
 `system <#system-requirements>`__, 
 `network <#network-requirements>`__, and
 `software requirements <#software-prerequisites>`__,
@@ -25,6 +25,16 @@ the CDAP components so they work with your existing Hadoop cluster.
 There are specific instructions for :ref:`upgrading existing CDAP installations <configuration-upgrade>`.
 
 Once installed, another page :ref:`covers configuration <configuration>` of the CDAP installation.
+
+.. _install-follow-these-instructions:
+
+Follow these instructions only if you aren't using a cluster manager such as :ref:`Cloudera
+Manager <cloudera-configuring>` or :ref:`Apache Ambari <ambari-configuring>`. For the Mapr
+distribution, we have :ref:`additional instructions <mapr-configuring>` to start with;
+please read those before continuing. These instructions *do not apply* to the
+:ref:`standalone SDK <standalone-index>`
+
+.. _install-these-are-the-cdap-components:
 
 These are the CDAP components:
 
@@ -88,6 +98,7 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 | **CDAP Authentication Server**        | RAM                | 1 GB minimum, 2 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
 
+.. _install-network-requirements:
 
 Network Requirements
 ....................
@@ -95,6 +106,8 @@ CDAP components communicate over your network with *HBase*, *HDFS*, and *YARN*.
 For the best performance, CDAP components should be located on the same LAN,
 ideally running at 1 Gbps or faster. A good rule of thumb is to treat CDAP
 components as you would *Hadoop DataNodes*.  
+
+.. _install-software-requirements:
 
 Software Prerequisites
 ......................

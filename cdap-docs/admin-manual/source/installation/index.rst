@@ -20,13 +20,19 @@ Installation
     Appendix: cdap-site.xml <cdap-site>
     Appendix: cdap-security.xml <cdap-security>
 
+  
+.. include:: installation-note.txt  
+
+Covers **putting CDAP into production, with installation, configuration, and security setup.**
+Appendices cover the XML files used to configure the CDAP installation and security configurations.
 
 .. |quickstart| replace:: **Quick Start:**
 .. _quickstart: quick-start.html
 
 - |quickstart|_ A quick start guide that covers the **most-common case of installing and 
   configuring CDAP.** Many people may find this sufficient; if your case isn't covered, the
-  :ref:`install` and :ref:`configuration` guides have additional details.
+  :ref:`install` and :ref:`configuration` guides have additional details. Use this if you aren't using 
+  :ref:`Cloudera Manager <cloudera-configuring>` or :ref:`Apache Ambari <ambari-configuring>`.
 
 
 .. |installation| replace:: **Installation:**
@@ -34,7 +40,9 @@ Installation
 
 - |installation|_ Covers **installing CDAP:** the system, network, and software
   requirements; packaging options; and the instructions for installation of the
-  CDAP components so they will work with your existing Hadoop cluster.
+  CDAP components so they will work with your existing Hadoop cluster. Use this if you aren't
+  using the :ref:`Quick Start guide <installation-quick-start>`, 
+  :ref:`Cloudera Manager <cloudera-configuring>`, or :ref:`Apache Ambari <ambari-configuring>`.
 
 
 .. |configuration| replace:: **Configuration:**

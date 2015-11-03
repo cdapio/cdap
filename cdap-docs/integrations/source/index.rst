@@ -49,6 +49,14 @@ Integrations
 - |ambari|_ Configuring and installing CDAP using **Ambari**
 
 
+.. rubric:: MapR
+
+.. |mapr| replace:: **Configuring and Installing:**
+.. _mapr: mapr/index.html
+
+- |mapr|_ Configuring and installing CDAP on **MapR**
+
+
 .. rubric:: BI Tools: Accessing CDAP Datasets through Business Intelligence Tools
 
 Most Business Intelligence tools can integrate with relational databases using JDBC
