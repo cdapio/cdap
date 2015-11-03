@@ -201,6 +201,7 @@ public class ScriptTransformTest {
       "  var val = power(pi.val, 3) + power(e.val, 2);\n" +
       "  print(pi); print(e);\n print(context);\n" +
       "  context.getMetrics().count(\"script.transform.count\", 1);\n" +
+      "  context.getMetrics().pipelineCount(\"script.transform.count\", 1);\n" +
       "  context.getLogger().info(\"Log test from Script Transform\");\n" +
       "  return { 'x':val };\n" +
       "}" +
@@ -214,7 +215,7 @@ public class ScriptTransformTest {
       outputSchema.toString());
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     MockMetrics mockMetrics = new MockMetrics();
-    transform.initialize(new MockTransformContext(new HashMap<String, String>(), mockMetrics));
+    transform.initialize(new MockTransformContext(new HashMap<String, String>(), mockMetrics, "transform.1."));
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
@@ -222,5 +223,6 @@ public class ScriptTransformTest {
     Assert.assertEquals(outputSchema, output.getSchema());
     Assert.assertTrue(Math.abs(2.71 * 2.71 + 3.14 * 3.14 * 3.14 - (Double) output.get("x")) < 0.000001);
     Assert.assertEquals(1, mockMetrics.getCount("script.transform.count"));
+    Assert.assertEquals(1, mockMetrics.getCount("transform.1.script.transform.count"));
   }
 }

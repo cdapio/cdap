@@ -68,6 +68,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.File;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
@@ -180,7 +181,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
                                   logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, datasetFramework,
-                                  pluginInstantiator);
+                                  getPluginArchive(options), pluginInstantiator);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),
@@ -287,5 +288,13 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     for (Closeable c : closeables) {
       Closeables.closeQuietly(c);
     }
+  }
+
+  @Nullable
+  private File getPluginArchive(ProgramOptions options) {
+    if (!options.getArguments().hasOption(ProgramOptionConstants.PLUGIN_ARCHIVE)) {
+      return null;
+    }
+    return new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_ARCHIVE));
   }
 }

@@ -23,6 +23,7 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
@@ -159,8 +160,11 @@ public class OpenCloseDataSetTest {
     Gson gson = new Gson();
     DiscoveryServiceClient discoveryServiceClient = AppFabricTestHelper.getInjector().
       getInstance(DiscoveryServiceClient.class);
-    Discoverable discoverable = discoveryServiceClient.discover(
-      String.format("service.%s.%s.%s", DefaultId.NAMESPACE.getId(), "dummy", "DummyService")).iterator().next();
+
+    Discoverable discoverable = new RandomEndpointStrategy(discoveryServiceClient.discover(
+      String.format("service.%s.%s.%s", DefaultId.NAMESPACE.getId(), "dummy", "DummyService")))
+      .pick(5, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
 
     HttpClient client = new DefaultHttpClient();
     HttpGet get = new HttpGet(String.format("http://%s:%d/v3/namespaces/default/apps/%s/services/%s/methods/%s",

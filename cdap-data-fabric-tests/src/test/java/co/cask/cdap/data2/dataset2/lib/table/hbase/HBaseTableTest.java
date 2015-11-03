@@ -134,7 +134,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
   public void testTTL() throws Exception {
     // for the purpose of this test it is fine not to configure ttl when creating table: we want to see if it
     // applies on reading
-    int ttl = 1000;
+    int ttl = 1;
     String ttlTable = "ttl";
     String noTtlTable = "nottl";
     DatasetProperties props = DatasetProperties.builder().add(Table.PROPERTY_TTL, String.valueOf(ttl)).build();
@@ -150,7 +150,7 @@ public class HBaseTableTest extends BufferingTableTest<BufferingTable> {
     table.put(b("row1"), b("col1"), b("val1"));
     table.commitTx();
 
-    TimeUnit.SECONDS.sleep(2);
+    TimeUnit.MILLISECONDS.sleep(1010);
 
     tx = txSystemClient.startShort();
     table.startTx(tx);

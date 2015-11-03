@@ -15,14 +15,14 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceCreateController', function ($scope, $alert, $modalInstance, MyDataSource, myNamespace, EventPipe) {
+  .controller('NamespaceCreateController', function ($scope, $alert, $modalInstance, MyCDAPDataSource, myNamespace, EventPipe) {
     $scope.model = {
       name: '',
       description: ''
     };
     $scope.isSaving = false;
 
-    var myDataSrc = new MyDataSource($scope);
+    var myDataSrc = new MyCDAPDataSource($scope);
     $scope.submitHandler = function() {
       if ($scope.isSaving) {
         return;

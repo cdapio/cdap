@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * Class which wraps around user's program class to integrate the spark program with CDAP.
  * The first command line argument to this class is the name of the user's Spark program class.
  */
-public class SparkProgramWrapper implements Runnable {
+public class SparkProgramWrapper {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramWrapper.class);
 
@@ -53,8 +53,7 @@ public class SparkProgramWrapper implements Runnable {
     this.userSparkProgram = loadUserSparkClass(args[0]).newInstance();
   }
 
-  @Override
-  public void run() {
+  public void run() throws Exception {
     ExecutionSparkContext context = setupSparkContext(userSparkProgram.getClass());
     LOG.debug("Launching user spark program {} from class {}", context, userSparkProgram.getClass().getName());
     userSparkProgram.run(context);

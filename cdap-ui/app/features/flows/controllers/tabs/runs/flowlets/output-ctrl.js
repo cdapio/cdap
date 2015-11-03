@@ -15,8 +15,8 @@
  */
 
  class FlowletDetailOutputController {
-   constructor($state, $scope, MyDataSource, MyMetricsQueryHelper, MyChartHelpers, myFlowsApi) {
-     let dataSrc = new MyDataSource($scope);
+   constructor($state, $scope, MyCDAPDataSource, MyMetricsQueryHelper, MyChartHelpers, myFlowsApi) {
+     let dataSrc = new MyCDAPDataSource($scope);
      let flowletid = $scope.FlowletsController.activeFlowlet.name;
      let runid = $scope.RunsController.runs.selected.runid;
      this.outputs = [];
@@ -112,6 +112,6 @@
        });
    }
  }
-FlowletDetailOutputController.$inject = ['$state', '$scope', 'MyDataSource', 'MyMetricsQueryHelper', 'MyChartHelpers', 'myFlowsApi'];
+FlowletDetailOutputController.$inject = ['$state', '$scope', 'MyCDAPDataSource', 'MyMetricsQueryHelper', 'MyChartHelpers', 'myFlowsApi'];
 angular.module(`${PKG.name}.feature.flows`)
   .controller('FlowletDetailOutputController', FlowletDetailOutputController);

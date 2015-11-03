@@ -17,7 +17,7 @@ package co.cask.cdap.proto.id;
 
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.element.ElementType;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Iterator;
@@ -27,13 +27,13 @@ import java.util.Objects;
  * Uniquely identifies a notification feed.
  */
 // TODO: toString() must be namespace.category.feed for backwards compatibility with Id.NotificationFeed
-public class NotificationFeedId extends ElementId implements NamespacedId, ParentedId<NamespaceId> {
+public class NotificationFeedId extends EntityId implements NamespacedId, ParentedId<NamespaceId> {
   private final String namespace;
   private final String category;
   private final String feed;
 
   public NotificationFeedId(String namespace, String category, String feed) {
-    super(ElementType.NOTIFICATION_FEED);
+    super(EntityType.NOTIFICATION_FEED);
     this.namespace = namespace;
     this.category = category;
     this.feed = feed;
@@ -91,6 +91,6 @@ public class NotificationFeedId extends ElementId implements NamespacedId, Paren
   }
 
   public static NotificationFeedId fromString(String string) {
-    return ElementId.fromString(string, NotificationFeedId.class);
+    return EntityId.fromString(string, NotificationFeedId.class);
   }
 }

@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.worker')
-  .controller('WorkersRunsDetailStatusController', function($state, $scope, MyDataSource, $filter) {
+  .controller('WorkersRunsDetailStatusController', function($state, $scope, MyCDAPDataSource, $filter) {
     var filterFilter = $filter('filter');
     
     if ($state.params.runid) {

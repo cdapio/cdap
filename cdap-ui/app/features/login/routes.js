@@ -23,10 +23,7 @@ angular.module(PKG.name+'.feature.login')
     $stateProvider
 
       .state('login', {
-        url: '/login?next',
-        params: {
-          nextParams: null
-        },
+        url: '/login?next&nextParams',
         templateUrl: '/assets/features/login/login.html',
         controller: 'LoginCtrl',
         onEnter: function(MY_CONFIG, myLoadingService, myAuth, $rootScope, MYAUTH_EVENT) {
@@ -75,7 +72,7 @@ angular.module(PKG.name+'.feature.login')
             if(next) {
               console.log('After login, will redirect to:', next);
 
-              $state.go(next, nextParams);
+              $state.go(next, JSON.parse(decodeURIComponent(nextParams)));
 
             } else {
               $state.go('overview');

@@ -26,10 +26,10 @@ angular.module(PKG.name + '.commons')
         runs: '='
       },
       templateUrl: 'program-status/program-status.html',
-      controller: function($scope, MyDataSource, $state) {
+      controller: function($scope, MyCDAPDataSource, $state) {
         // $scope.runs comes from parent controller
         if ($scope.runs.length !== 0) {
-          var dataSrc = new MyDataSource($scope),
+          var dataSrc = new MyCDAPDataSource($scope),
               path = '';
           var runCheck;
           var pollPromise;

@@ -48,7 +48,8 @@ public class ScriptFilterTransformTest {
       "function shouldFilter(input, context) { context.getMetrics.count(\"invalid\", 1); return 'foobar'; }";
     Transform transform = new ScriptFilterTransform(config);
     MockMetrics metrics = new MockMetrics();
-    TransformContext transformContext = new MockTransformContext(ImmutableMap.<String, String>of(), metrics);
+    TransformContext transformContext = new MockTransformContext(ImmutableMap.<String, String>of(),
+                                                                 metrics, "filter.1.");
     transform.initialize(transformContext);
 
     Schema schema = Schema.recordOf("number", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
@@ -56,6 +57,7 @@ public class ScriptFilterTransformTest {
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
     Assert.assertEquals(1, metrics.getCount("invalid"));
+    Assert.assertEquals(1, metrics.getCount("filter.1.invalid"));
   }
 
   @Test

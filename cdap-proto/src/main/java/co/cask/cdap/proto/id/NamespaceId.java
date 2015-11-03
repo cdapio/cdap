@@ -16,7 +16,7 @@
 package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.element.ElementType;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Iterator;
@@ -25,11 +25,11 @@ import java.util.Objects;
 /**
  * Uniquely identifies a namespace.
  */
-public class NamespaceId extends ElementId {
+public class NamespaceId extends EntityId {
   private final String namespace;
 
   public NamespaceId(String namespace) {
-    super(ElementType.NAMESPACE);
+    super(EntityType.NAMESPACE);
     this.namespace = namespace;
   }
 
@@ -92,6 +92,6 @@ public class NamespaceId extends ElementId {
   }
 
   public static NamespaceId fromString(String string) {
-    return ElementId.fromString(string, NamespaceId.class);
+    return EntityId.fromString(string, NamespaceId.class);
   }
 }

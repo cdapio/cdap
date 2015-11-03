@@ -15,12 +15,12 @@
  */
 
 class AppDetailProgramsController {
-  constructor($state, $scope, $stateParams, MyDataSource, rAppData) {
+  constructor($state, $scope, $stateParams, MyCDAPDataSource, rAppData) {
 
     this.$state = $state;
     this.$stateParams = $stateParams;
     this.programs = [];
-    this.datasrc = new MyDataSource($scope);
+    this.datasrc = new MyCDAPDataSource($scope);
 
     rAppData.programs.forEach( (prog)=> {
       prog.type_plural = prog.type +
@@ -50,7 +50,7 @@ class AppDetailProgramsController {
   }
 }
 
-AppDetailProgramsController.$inject = ['$state', '$scope', '$stateParams', 'MyDataSource', 'rAppData'];
+AppDetailProgramsController.$inject = ['$state', '$scope', '$stateParams', 'MyCDAPDataSource', 'rAppData'];
 
 angular.module(PKG.name + '.feature.apps')
   .controller('AppDetailProgramsController', AppDetailProgramsController);

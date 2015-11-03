@@ -17,7 +17,7 @@ package co.cask.cdap.proto.id;
 
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.element.ElementType;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Iterator;
@@ -26,7 +26,7 @@ import java.util.Objects;
 /**
  * Uniquely identifies a flowlet queue.
  */
-public class FlowletQueueId extends ElementId implements NamespacedId, ParentedId<FlowletId> {
+public class FlowletQueueId extends EntityId implements NamespacedId, ParentedId<FlowletId> {
   private final String namespace;
   private final String application;
   private final String flow;
@@ -34,7 +34,7 @@ public class FlowletQueueId extends ElementId implements NamespacedId, ParentedI
   private final String queue;
 
   public FlowletQueueId(String namespace, String application, String flow, String flowlet, String queue) {
-    super(ElementType.FLOWLET_QUEUE);
+    super(EntityType.FLOWLET_QUEUE);
     this.namespace = namespace;
     this.application = application;
     this.flow = flow;
@@ -107,6 +107,6 @@ public class FlowletQueueId extends ElementId implements NamespacedId, ParentedI
   }
 
   public static FlowletQueueId fromString(String string) {
-    return ElementId.fromString(string, FlowletQueueId.class);
+    return EntityId.fromString(string, FlowletQueueId.class);
   }
 }

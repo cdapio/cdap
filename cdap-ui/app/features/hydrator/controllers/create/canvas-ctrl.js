@@ -15,23 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('CanvasController', function (MyAppDAGService, $scope, $modalStack) {
+  .controller('CanvasController', function (MyAppDAGService, $scope, $modalStack, MyBottomPanelService) {
 
-    this.nodes = [];
-
-    function errorNotification(errors) {
-      angular.forEach(this.pluginTypes, function (type) {
-        delete type.error;
-        if (errors[type.name]) {
-          type.error = errors[type.name];
-        }
-      });
-    }
-
-    MyAppDAGService.errorCallback(errorNotification.bind(this));
-
-    $scope.$on('$destroy', function() {
-      $modalStack.dismissAll();
+    this.isCollapsed = true;
+    MyBottomPanelService.registerIsCollapsedCallback(function(isCollapsed) {
+      $scope.isCanvasScrollable = !isCollapsed;
     });
 
   });

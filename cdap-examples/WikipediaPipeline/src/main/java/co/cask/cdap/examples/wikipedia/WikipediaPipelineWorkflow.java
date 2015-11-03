@@ -34,6 +34,13 @@ public class WikipediaPipelineWorkflow extends AbstractWorkflow {
   static final String MODE_KEY = "mode";
   static final String ONLINE_MODE = "online";
 
+  private final String sparkProgramName;
+
+  @SuppressWarnings("ConstantConditions")
+  public WikipediaPipelineWorkflow(WikipediaPipelineApp.WikipediaAppConfig config) {
+    this.sparkProgramName = SparkWikipediaClustering.NAME + "-" + config.clusteringAlgorithm.toUpperCase();
+  }
+
   @Override
   protected void configure() {
     setName(NAME);
@@ -47,7 +54,7 @@ public class WikipediaPipelineWorkflow extends AbstractWorkflow {
       .end()
       .addMapReduce(WikiContentValidatorAndNormalizer.NAME)
       .fork()
-        .addSpark(SparkWikipediaAnalyzer.NAME)
+        .addSpark(sparkProgramName)
       .also()
         .addMapReduce(TopNMapReduce.NAME)
       .join()

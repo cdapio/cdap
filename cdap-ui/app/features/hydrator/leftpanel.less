@@ -36,8 +36,13 @@ body.theme-cdap.state-hydrator-create {
     background-image: url('@{img-path}/hydrator_bg_pattern.png'), linear-gradient(135deg, #c7c7c6 0%,#a0a0a0 100%);
     filter: progid:DXImageTransform.Microsoft.gradient(GradientType=1, startColorstr='#c7c7c6', endColorstr='#a0a0a0'), progid:DXImageTransform.Microsoft.AlphaImageLoader(src='@{img-path}/hydrator_bg_pattern.png', sizingMethod='crop');
     .transition(all 0.2s ease);
+    @media (max-width: @screen-xs-max) {
+      bottom: 75px;
+    }
     + .right-wrapper {
       margin-left: 130px;
+      height: 100%;
+      position: relative;
       .transition(all 0.2s ease);
     }
     &.expanded {

@@ -90,7 +90,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
 
   public DefaultAppConfigurer(Id.Artifact artifactId, Application app, String configuration,
                               ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(artifactRepository, pluginInstantiator, artifactId);
+    super(artifactId, artifactRepository, pluginInstantiator);
     this.name = app.getClass().getSimpleName();
     this.description = "";
     this.configuration = configuration;
@@ -146,12 +146,14 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   @Override
   public void addSpark(Spark spark) {
     Preconditions.checkArgument(spark != null, "Spark cannot be null.");
-    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark);
+    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark, artifactId, artifactRepository,
+                                                                   pluginInstantiator);
     spark.configure(configurer);
 
     addStreams(configurer.getStreams());
     addDatasetModules(configurer.getDatasetModules());
     addDatasetSpecs(configurer.getDatasetSpecs());
+    addPlugins(configurer.getPlugins());
     SparkSpecification spec = configurer.createSpecification();
     sparks.put(spec.getName(), spec);
   }

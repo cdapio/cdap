@@ -18,6 +18,7 @@ package co.cask.cdap.api.plugin;
 
 import co.cask.cdap.api.annotation.Beta;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,7 +27,9 @@ import java.util.Map;
  * Plugin instance properties.
  */
 @Beta
-public class PluginProperties {
+public class PluginProperties implements Serializable {
+
+  private static final long serialVersionUID = -7396484717511717753L;
 
   // Currently only support String->String map.
   private final Map<String, String> properties;

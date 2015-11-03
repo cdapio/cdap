@@ -91,7 +91,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    TransactionSystemClient txClient,
                                    Transaction transaction,
                                    DatasetFramework dsFramework,
-                                   PluginInstantiator pluginInstantiator) {
+                                   @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);

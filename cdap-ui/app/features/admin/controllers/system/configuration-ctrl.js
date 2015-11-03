@@ -15,8 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('SystemConfigurationController', function ($scope, MyDataSource) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('SystemConfigurationController', function ($scope, MyCDAPDataSource) {
+    var dataSrc = new MyCDAPDataSource($scope);
 
     $scope.config = [];
 

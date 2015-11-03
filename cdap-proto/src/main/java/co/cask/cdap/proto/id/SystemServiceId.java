@@ -16,7 +16,7 @@
 package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.element.ElementType;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.common.collect.ImmutableList;
 
 import java.util.Iterator;
@@ -25,12 +25,12 @@ import java.util.Objects;
 /**
  * Uniquely identifies a system service.
  */
-public class SystemServiceId extends ElementId {
+public class SystemServiceId extends EntityId {
 
   private final String service;
 
   public SystemServiceId(String service) {
-    super(ElementType.SYSTEM_SERVICE);
+    super(EntityType.SYSTEM_SERVICE);
     this.service = service;
   }
 
@@ -69,6 +69,6 @@ public class SystemServiceId extends ElementId {
   }
 
   public static SystemServiceId fromString(String string) {
-    return ElementId.fromString(string, SystemServiceId.class);
+    return EntityId.fromString(string, SystemServiceId.class);
   }
 }

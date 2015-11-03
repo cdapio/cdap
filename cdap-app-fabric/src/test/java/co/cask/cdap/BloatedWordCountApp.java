@@ -40,6 +40,8 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
+import co.cask.cdap.api.spark.JavaSparkProgram;
+import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Charsets;
@@ -256,15 +258,17 @@ public class BloatedWordCountApp extends AbstractApplication {
     }
   }
 
-  private static class SparklingNothing extends AbstractSpark {
+  private static class SparklingNothing extends AbstractSpark implements JavaSparkProgram {
     @Override
     protected void configure() {
       setDescription("Spark program that does nothing");
       setMainClass(this.getClass());
     }
-    public static void main(String[] args) {
-    }
 
+    @Override
+    public void run(SparkContext context) throws Exception {
+      // no-op
+    }
   }
 
   private static class LazyGuy extends AbstractWorker {

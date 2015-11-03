@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -177,6 +178,14 @@ public interface SparkContext extends RuntimeContext, DatasetContext {
    * @return {@link Serializable} {@link Metrics} for {@link Spark} programs
    */
   Metrics getMetrics();
+
+  /**
+   * Returns a {@link Serializable} {@link PluginContext} which can be used to request for plugins instances. The
+   * instance returned can also be used in Spark program's closures.
+   *
+   * @return A {@link Serializable} {@link PluginContext}.
+   */
+  PluginContext getPluginContext();
 
   /**
    * Override the resources, such as memory and virtual cores, to use for each executor process for the Spark program.

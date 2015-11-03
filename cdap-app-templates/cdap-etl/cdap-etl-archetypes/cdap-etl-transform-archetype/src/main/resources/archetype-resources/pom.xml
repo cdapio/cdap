@@ -85,7 +85,7 @@
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
               <!--Only @Plugin classes in the export packages will be included as plugin-->
-              <Export-Package>$package</Export-Package>
+              <_exportcontents>$package</_exportcontents>
             </instructions>
           </configuration>
           <executions>

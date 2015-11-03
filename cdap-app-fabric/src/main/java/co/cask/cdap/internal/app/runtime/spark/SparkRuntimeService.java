@@ -120,15 +120,20 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     this.cleanupTask = createCleanupTask(tempDir);
     try {
       SparkContextConfig contextConfig = new SparkContextConfig(hConf);
+      ClientSparkContext clientContext = sparkContextFactory.getClientContext();
 
       final File jobJar = generateJobJar(tempDir);
       File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties", tempDir));
       final List<LocalizeResource> localizeResources = new ArrayList<>();
+      File pluginJar = clientContext.getPluginArchive();
 
       if (!contextConfig.isLocal()) {
         localizeResources.add(new LocalizeResource(copyProgramJar(programJarLocation, tempDir), true));
         localizeResources.add(new LocalizeResource(buildDependencyJar(tempDir), true));
         localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
+        if (pluginJar != null) {
+          localizeResources.add(new LocalizeResource(pluginJar, true));
+        }
       }
 
       // Create a long running transaction
@@ -137,12 +142,18 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       // Create execution spark context
       final ExecutionSparkContext executionContext = sparkContextFactory.createExecutionContext(transaction);
 
+      // Add addition resources that needs to be localized to executor containers
       if (!contextConfig.isLocal()) {
-        localizeResources.add(new LocalizeResource(saveHConf(contextConfig.set(executionContext).getConfiguration(),
-                                                             tempDir)));
+        Configuration hConf = contextConfig.set(executionContext).getConfiguration();
+        if (pluginJar != null) {
+          hConf = new Configuration(hConf);
+          hConf.set(Constants.Plugin.ARCHIVE, pluginJar.getName());
+        }
+        localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
+
       }
 
-      final Map<String, String> configs = createSubmitConfigs(sparkContextFactory.getClientContext(),
+      final Map<String, String> configs = createSubmitConfigs(clientContext,
                                                               tempDir, metricsConf);
       submitSpark = new Callable<ExecutionFuture<RunId>>() {
         @Override
@@ -220,7 +231,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
       onFinish(success);
     } finally {
-      Closeables.closeQuietly(sparkContextFactory.getClientContext());
       cleanupTask.run();
       LOG.debug("Spark program completed: {}", sparkContextFactory.getClientContext());
     }
