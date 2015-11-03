@@ -253,11 +253,11 @@ Spark Accumulators and Workflow Tokens
 `Spark Accumulators <https://spark.apache.org/docs/latest/programming-guide.html#accumulators-a-nameaccumlinka>`__ 
 can be accessed through the SparkContext, and used with workflow tokens. This allows the 
 values in the accumulators to be accessed through workflow tokens. An example of this is in
-the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``ScalaSparkLDA.scala``:
+the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``ClusteringUtils.scala``:
 
-.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ScalaSparkLDA.scala
+.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ClusteringUtils.scala
    :language: scala
-   :lines: 79-85
+   :lines: 121-126
 
 
 Persisting the WorkflowToken
