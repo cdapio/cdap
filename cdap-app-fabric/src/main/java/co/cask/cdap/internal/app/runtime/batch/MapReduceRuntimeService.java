@@ -507,7 +507,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       public Void call() throws Exception {
         ClassLoader oldClassLoader = setContextCombinedClassLoader(context);
         try {
-          // TODO this should be done in the output committer, to make the M/R fail if addPartition fails
+          // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
+          // TODO (CDAP-1952): also, should failure of an output committer change the status of the program run?
           boolean success = succeeded;
           for (Map.Entry<String, Dataset> dsEntry : context.getOutputDatasets().entrySet()) {
             if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
