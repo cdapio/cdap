@@ -4,6 +4,8 @@
 
 :hide-relations: true
 
+:hide-global-toc: true
+
 ============================================
 CDAP Documentation Table of Contents
 ============================================
