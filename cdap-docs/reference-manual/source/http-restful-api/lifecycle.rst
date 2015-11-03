@@ -238,7 +238,7 @@ will start the *WhoFlow* flow in the *HelloWorld* application with two runtime a
 
 .. _http-restful-api-lifecycle-start-multiple:
 
-Start multiple Programs
+Start Multiple Programs
 -----------------------
 You can start multiple programs from different applications and program types
 by submitting an HTTP POST request::
@@ -373,7 +373,7 @@ will stop the specific run of the *PurchaseHistoryBuilder* mapreduce in the *Pur
 
 .. _http-restful-api-lifecycle-stop-multiple:
 
-Stop multiple Programs
+Stop Multiple Programs
 ----------------------
 You can stop multiple programs from different applications and program types
 by submitting an HTTP POST request::
