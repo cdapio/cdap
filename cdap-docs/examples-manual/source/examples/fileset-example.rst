@@ -52,7 +52,7 @@ For example, the ``read`` method returns the contents of the requested file for 
     :dedent: 4
 
 It first instantiates the dataset specified by the first path parameter through its ``HttpServiceContext``.
-Note that conceptually, this method is not limited to use only the two datasets of this application (*lines* and
+Note that, conceptually, this method is not limited to using only the two datasets of this application (*lines* and
 *counts*) |---| ``getDataset()`` can dynamically instantiate any existing dataset.
 
 The handler method then uses the ``getLocation()`` of the file set to obtain the location representing the requested

@@ -64,12 +64,11 @@ For example, to create a DataSet named *myCounters* of type
       createDataset("myCounters", KeyValueTable.class);
       ...
 
-
 .. rubric:: Using Datasets in Programs
 
 There are two ways to use a dataset in a program:
 
-- Static instantiation: You can instruct the CDAP runtime system to inject the dataset into a class member
+- **Static Instantiation:** You can instruct the CDAP runtime system to inject the dataset into a class member
   with the ``@UseDataSet`` annotation::
 
     class MyFlowlet extends AbstractFlowlet {
@@ -85,7 +84,7 @@ There are two ways to use a dataset in a program:
   executed by the program. If the program is multi-threaded (for example, an HTTP service handler), CDAP will make
   sure that every thread has its own instance of the dataset.
 
-- Dynamic instantiation: If you don't know the name of the dataset at compile time (and hence you cannot use it in
+- **Dynamic Instantiation:** If you don't know the name of the dataset at compile time (and hence you cannot use it in
   a ``UseDataSet`` annotation), or if you want to use a dataset only for a short time, you can dynamically
   request an instance of the dataset through the program context::
 
@@ -96,13 +95,13 @@ There are two ways to use a dataset in a program:
         counters.increment(key.getBytes(), 1L);
       }
 
-  This dataset is instantiated at runtime, in this case every time the process method is invoked. To reduce the
+  This dataset is instantiated at runtime, in this case every time the method ``process`` is invoked. To reduce the
   overhead of repeatedly instantiating the same dataset, the CDAP runtime system caches dynamic datasets internally.
   How long a dataset is cached before it expires (and the next ``getDataset()`` call needs to create a new instance)
-  varies from case to case, with the guarantee that as long as you keep a reference to this instance, it will not
+  varies from case to case, with the guarantee that as long as you keep a reference to an instance, it will not
   expire, and it will participate in all transactions initiated by the program.
 
-  Contrary to static datasets, dynamic datasets allow to release the resources held by their Java classes
+  Contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes
   after you are done using them. If you want to hold on to the dataset, because you know that you will be using
   it over and over again, you can indicate that in the ``configure()`` method of the program::
 
@@ -120,7 +119,7 @@ There are two ways to use a dataset in a program:
       }
 
   The ``useDatasets()`` call has the effect that the dataset is instantiated when the program
-  starts up, and it remains in the cache fot the lifetime of the program and hence never needs
+  starts up, and it remains in the cache for the lifetime of the program and hence never needs
   to be instantiated again. Note that you still need to call ``getDataset()`` every time you
   access it.
 
@@ -142,7 +141,7 @@ There are two ways to use a dataset in a program:
       }
 
   See the :ref:`Word Count <examples-word-count>` for an example of how this can be used to configure
-  the datasets names used by an application.
+  the dataset names used by an application.
 
   Similarly to static datasets, if the program is multi-threaded, CDAP will make
   sure that every thread has its own instance of the dataset.
