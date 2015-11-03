@@ -34,7 +34,7 @@ angular.module(PKG.name + '.feature.hydrator')
     this.emitChange = function() {
       this.changeListeners.forEach(function(listener) {
         listener(this.state);
-      });
+      }.bind(this));
     };
 
     this.setState = function(metrics) {

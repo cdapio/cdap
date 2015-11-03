@@ -35,7 +35,7 @@ angular.module(PKG.name + '.feature.hydrator')
     this.emitChange = function() {
       this.changeListeners.forEach(function(callback) {
         callback(this.state);
-      });
+      }.bind(this));
     };
     this.setState = function(schedule) {
       this.state.scheduleStatus = schedule.status;

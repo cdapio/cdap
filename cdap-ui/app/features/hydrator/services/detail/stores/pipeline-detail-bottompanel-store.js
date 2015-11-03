@@ -42,7 +42,7 @@ angular.module(PKG.name + '.feature.hydrator')
     this.emitChange = function() {
       this.changeListeners.forEach(function(callback) {
         callback(this.state);
-      });
+      }.bind(this));
     };
     dispatcher.register('onBottomPanelToggled', this.setState.bind(this));
     dispatcher.register('onReset', this.setDefaults.bind(this));

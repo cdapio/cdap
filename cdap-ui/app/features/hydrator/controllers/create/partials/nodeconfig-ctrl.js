@@ -16,9 +16,11 @@
 
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('NodeConfigController', function(NodeConfigStore, $scope, $timeout, $state) {
+  .controller('NodeConfigController', function(NodeConfigStore, $scope, $timeout, $state, DetailRunsStore) {
     this.setState = function() {
       $scope.isValidPlugin = false;
+      // This is a work around. when we fix the studio view to use flux architecture we should be able to remove this.
+      var appType = $state.params.type || DetailRunsStore.getAppType();
       $timeout(function() {
         var nodeState = NodeConfigStore.getState();
         $scope.plugin = nodeState.plugin;
@@ -26,7 +28,7 @@ angular.module(PKG.name + '.feature.hydrator')
         $scope.isSink = nodeState.isSink;
         $scope.isTransform = nodeState.isTransform;
         $scope.isValidPlugin = nodeState.isValidPlugin;
-        $scope.type = $state.params.type;
+        $scope.type = appType;
       });
     };
     NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
