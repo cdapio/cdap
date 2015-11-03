@@ -256,9 +256,9 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the application being called
    * - ``"programType"``
-     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow``, ``worker`` or ``service``
+     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow``, ``worker``, or ``service``
    * - ``"programId"``
-     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker* or *custom service*
+     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker*, or *custom service*
        being called
    * - ``"runtimeargs"``
      - Optional JSON object containing a string to string mapping of runtime arguments to start the program with
@@ -275,9 +275,9 @@ Each JSON object will contain these parameters:
    * - ``"appId"``
      - Name of the application being called
    * - ``"programType"``
-     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow``, ``worker`` or ``service``
+     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow``, ``worker``, or ``service``
    * - ``"programId"``
-     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker* or *custom service*
+     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker*, or *custom service*
        being called
    * - ``"statusCode"``
      - The status code from starting an individual JSON object.
@@ -391,9 +391,9 @@ with a JSON array in the request body consisting of multiple JSON objects with t
    * - ``"appId"``
      - Name of the application being called
    * - ``"programType"``
-     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow``, ``worker`` or ``service``
+     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow``, ``worker``, or ``service``
    * - ``"programId"``
-     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker* or *custom service*
+     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker*, or *custom service*
        being called
 
 The response will be a JSON array containing a JSON object corresponding to each object in the input.
@@ -408,9 +408,9 @@ Each JSON object will contain these parameters:
    * - ``"appId"``
      - Name of the application being called
    * - ``"programType"``
-     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow``, ``worker`` or ``service``
+     - One of ``flow``, ``mapreduce``, ``spark``, ``workflow``, ``worker``, or ``service``
    * - ``"programId"``
-     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker* or *custom service*
+     - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker*, or *custom service*
        being called
    * - ``"statusCode"``
      - The status code from stopping an individual JSON object.
