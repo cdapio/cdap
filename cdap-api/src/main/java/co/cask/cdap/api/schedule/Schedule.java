@@ -33,12 +33,15 @@ public class Schedule {
   // NOTE: the below attribute is left for backwards compatibility
   private final String cronEntry;
 
+  /**
+   * @deprecated use {@link Schedules} instead.
+   */
   @Deprecated
   public Schedule(String name, String description, String cronEntry) {
     this.name = name;
     this.description = description;
     this.cronEntry = cronEntry;
-    this.runRequirements = null;
+    this.runRequirements = RunRequirements.NONE;
   }
 
   protected Schedule(String name, String description, RunRequirements runRequirements) {
@@ -72,7 +75,8 @@ public class Schedule {
   }
 
   public RunRequirements getRunRequirements() {
-    return runRequirements;
+    // need this null check for backwards compatibility. Schedules saved prior to v3.3 will not have it.
+    return runRequirements == null ? RunRequirements.NONE : runRequirements;
   }
 
   @Override

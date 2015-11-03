@@ -49,8 +49,11 @@ public final class RunRequirementsChecker {
     Integer programThreshold = schedule.getRunRequirements().getConcurrentProgramRunsThreshold();
     if (programThreshold != null) {
       try {
+        // limit the number of run records we get to try and be a little more efficient.
+        // make sure we don't overflow by adding 1.
+        int max = programThreshold == Integer.MAX_VALUE ? Integer.MAX_VALUE : programThreshold + 1;
         List<RunRecordMeta> running =
-          store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, programThreshold + 1);
+          store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, max);
         if (running.size() > programThreshold) {
           LOG.info("Skipping run of program {} because there are over {} runs of the program in the RUNNING state.",
                    programId, programThreshold);

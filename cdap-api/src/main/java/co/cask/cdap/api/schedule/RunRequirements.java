@@ -46,15 +46,15 @@ public class RunRequirements {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) {
+  public boolean equals(Object other) {
+    if (this == other) {
       return true;
     }
-    if (o == null || getClass() != o.getClass()) {
+    if (other == null || getClass() != other.getClass()) {
       return false;
     }
 
-    RunRequirements that = (RunRequirements) o;
+    RunRequirements that = (RunRequirements) other;
     return Objects.equals(concurrentProgramRunsThreshold, that.concurrentProgramRunsThreshold);
   }
 
