@@ -27,11 +27,19 @@
 
   <modules>
     <module>CountRandom</module>
+    <module>CubeService</module>
+    <module>DataCleansing</module>
+    <module>FileSetExample</module>
     <module>HelloWorld</module>
     <module>Purchase</module>
     <module>SparkKMeans</module>
     <module>SparkPageRank</module>
+    <module>LogAnalysis</module>
+    <module>SportResults</module>
+    <module>StreamConversion</module>
+    <module>UserProfiles</module>
     <module>WebAnalytics</module>
+    <module>WikipediaPipeline</module>
     <module>WordCount</module>
   </modules>
 
@@ -172,6 +180,13 @@
         <groupId>co.cask.common</groupId>
         <artifactId>common-http</artifactId>
         <version>${cask.common.version}</version>
+        <!-- exclude this, otherwise an old version of asm will get pulled in -->
+        <exclusions>
+          <exclusion>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-all</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>co.cask.http</groupId>
