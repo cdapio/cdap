@@ -510,10 +510,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           // TODO this should be done in the output committer, to make the M/R fail if addPartition fails
           boolean success = succeeded;
           for (Map.Entry<String, Dataset> dsEntry : context.getOutputDatasets().entrySet()) {
-            success = success && commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue());
+            if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
+              success = false;
+            }
           }
           for (Map.Entry<String, OutputFormatProvider> dsEntry : context.getOutputFormatProviders().entrySet()) {
-            success = success && commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue());
+            if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
+              success = false;
+            }
           }
           mapReduce.onFinish(success, context);
           return null;
