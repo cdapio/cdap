@@ -14,8 +14,9 @@
  * the License.
  */
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, rPipelineDetail, GLOBALS) {
+  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, rPipelineDetail, GLOBALS, $state, $alert, myLoadingService, $timeout) {
     this.GLOBALS = GLOBALS;
+    this.config = DetailRunsStore.getCloneConfig();
     this.app = {
       name: rPipelineDetail.name,
       description: rPipelineDetail.description,
@@ -24,6 +25,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.setAppStatus = function() {
       this.appStatus = DetailRunsStore.getStatus();
+      this.config = DetailRunsStore.getCloneConfig();
     };
     this.setScheduleStatus = function() {
       this.scheduleStatus = DetailNonRunsStore.getScheduleStatus();
@@ -79,6 +81,31 @@ angular.module(PKG.name + '.feature.hydrator')
             DetailRunsStore.getParams()
           );
           break;
+        case 'Delete':
+          myLoadingService.showLoadingIcon();
+          var params = angular.copy(DetailRunsStore.getParams());
+          params = {
+            namespace: params.namespace,
+            pipeline: params.appId
+          };
+          PipelineDetailActionFactory
+            .deletePipeline(params)
+            .then(
+              function success() {
+                $state.go('^.list');
+                myLoadingService.hideLoadingIcon();
+              },
+              function error(err) {
+                myLoadingService.hideLoadingIcon();
+                $timeout(function() {
+                  $alert({
+                    type: 'danger',
+                    title: 'Unable to delete Pipeline',
+                    content: err.data
+                  });
+                });
+              }
+            );
       }
     };
     DetailRunsStore.registerOnChangeListener(this.setAppStatus.bind(this));

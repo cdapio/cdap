@@ -30,6 +30,7 @@ angular.module(PKG.name + '.feature.hydrator')
         scheduleParams: app.scheduleParams || {},
         logsParams: app.logsParams || {},
         configJson: app.configJson || {},
+        cloneConfig: app.cloneConfig || {},
         api: app.api,
         type: app.type,
         metricProgramType: app.metricProgramType,
@@ -53,7 +54,13 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getHistory = this.getRuns;
 
     this.getStatus = function() {
-      return myHelpers.objectQuery(this.state, 'runs', 'latest', 'status') || '';
+      var status;
+      if (this.state.runs.list.length === 0) {
+        status = 'STOPPED';
+      } else {
+        status = myHelpers.objectQuery(this.state, 'runs', 'latest', 'status') || '';
+      }
+      return status;
     };
     this.getRunsCount = function() {
       return this.state.runs.count;
@@ -78,6 +85,9 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.getConfigJson = function() {
       return this.state.configJson;
+    };
+    this.getCloneConfig = function() {
+      return this.state.cloneConfig;
     };
     this.getPipelineType = function() {
       return this.state.type;
@@ -185,7 +195,24 @@ angular.module(PKG.name + '.feature.hydrator')
       appConfig.api = api;
       appConfig.metricProgramType = metricProgramType;
       appConfig.type = app.artifact.name;
-      appConfig.scheduleParams = angular.extend({scheduleId: 'etlWorkflow'}, appLevelParams);
+      appConfig.scheduleParams = {
+        appId: appLevelParams.appId,
+        scheduleId: 'etlWorkflow',
+        namespace: appLevelParams.namespace
+      };
+      appConfig.cloneConfig = {
+        name: app.name,
+        artifact: app.artifact,
+        template: app.artifact.name,
+        description: app.description,
+        config: {
+          source: appConfig.configJson.source,
+          sinks: appConfig.configJson.sinks,
+          transforms: appConfig.configJson.transforms,
+          instances: app.instance,
+          schedule: appConfig.configJson.schedule
+        }
+      };
       this.setDefaults(appConfig);
     };
 

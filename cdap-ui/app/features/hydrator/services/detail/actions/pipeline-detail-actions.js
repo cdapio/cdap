@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('PipelineDetailActionFactory', function(PipelineDetailDispatcher) {
+  .service('PipelineDetailActionFactory', function(PipelineDetailDispatcher, myPipelineApi) {
     var dispatcher = PipelineDetailDispatcher.getDispatcher();
     this.startPipeline = function (api, params) {
       return api.doAction(angular.extend(params, { action: 'start' }), {}).$promise;
@@ -31,6 +31,9 @@ angular.module(PKG.name + '.feature.hydrator')
       return api.scheduleSuspend(params, {}).$promise;
     };
 
+    this.deletePipeline = function(params) {
+      return myPipelineApi.delete(params).$promise;
+    };
     this.pollRuns = function(api, params) {
       api.pollRuns(params)
         .$promise

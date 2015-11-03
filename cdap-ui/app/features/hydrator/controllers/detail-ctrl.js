@@ -24,11 +24,4 @@ angular.module(PKG.name + '.feature.hydrator')
       params
     );
 
-    $scope.$on('$destory', function() {
-      PipelineDetailActionFactory.reset(
-        DetailRunsStore.getApi(),
-        params
-      );
-    });
-
   });
