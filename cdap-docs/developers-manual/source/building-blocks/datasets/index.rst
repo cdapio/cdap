@@ -79,8 +79,8 @@ There are two ways to use a dataset in a program:
       void process(String key) {
         counters.increment(key.getBytes(), 1L);
       }
-
-  ..
+      
+..
   
   When starting the program, the runtime system reads the dataset specification from the metadata store and injects
   an instance of the dataset class into the application. This dataset will participate in every transaction that is
@@ -98,7 +98,7 @@ There are two ways to use a dataset in a program:
         counters.increment(key.getBytes(), 1L);
       }
 
-  ..
+..
   
   This dataset is instantiated at runtime, in this case every time the process method is invoked. To reduce the
   overhead of repeatedly instantiating the same dataset, the CDAP runtime system caches dynamic datasets internally.
@@ -123,6 +123,8 @@ There are two ways to use a dataset in a program:
         counters.increment(key.getBytes(), 1L);
       }
 
+..
+
   The ``useDatasets()`` call has the effect that the dataset is instantiated when the program
   starts up, and it remains in the cache fot the lifetime of the program and hence never needs
   to be instantiated again. Note that you still need to call ``getDataset()`` every time you
@@ -145,7 +147,7 @@ There are two ways to use a dataset in a program:
         counters.increment(key.getBytes(), 1L);
       }
 
-  ..
+..
   
   See the :ref:`Word Count <examples-word-count>` for an example of how this can be used to configure
   the datasets names used by an application.
