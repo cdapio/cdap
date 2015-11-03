@@ -132,10 +132,10 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 - |faq|_ Answers to questions you might have about CDAP
 
   - **General Questions** 
-  - **Installation and Startup** 
-  - **Applications** 
-  - **User Interfac:** 
-  - **Databases and Transactions** 
+  - **CDAP Startup** 
+..   - **Applications** 
+..   - **User Interface:** 
+..   - **Databases and Transactions** 
   - **Other Resources:** Additional resources for solving problems
 
 
