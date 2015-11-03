@@ -39,7 +39,7 @@ Bug Fixes
 
 - Fixed a problem with dataset performance degradation due to the making of 
   multiple remote calls for each "get dataset" request 
-  (`CDAP-3890 <https://issues.cask.co/browse/CDAP-3890>`__).
+  (`CDAP-3902 <https://issues.cask.co/browse/CDAP-3902>`__).
 
 - Fixed a problem with not closing the socket connection to the transaction service correctly, 
   leading to a leakage of file descriptors 
@@ -62,6 +62,9 @@ New Features
 
 - Provided a Nagios plugin for monitoring the health of CDAP System Services 
   (`CDAP-3967 <https://issues.cask.co/browse/CDAP-3967>`__).
+
+- Added the capability of retrieving live-info for the CDAP AppFabric system service 
+  (`CDAP-4133 <https://issues.cask.co/browse/CDAP-4133>`__).
 
 
 `Release 3.0.5 <http://docs.cask.co/cdap/3.0.5/index.html>`__
