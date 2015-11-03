@@ -24,19 +24,19 @@ CDAP FAQ
 .. |applications| replace:: **Applications**
 .. _applications: applications.html
 
-- |applications|_ 
+.. - |applications|_ 
 
 
 .. |user_interface| replace:: **User Interface**
 .. _user_interface: user_interface.html
 
-- |user_interface|_ 
+.. - |user_interface|_ 
 
 
 .. |databases_transactions| replace:: **Databases and Transactions**
 .. _databases_transactions: databases_transactions.html
 
-- |databases_transactions|_
+.. - |databases_transactions|_
 
 
 .. rubric:: Additional Resources
