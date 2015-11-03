@@ -1,0 +1,21 @@
+.. topic:: Different ways to install CDAP
+
+  There are different ways to install CDAP, depending if it is a distributed or standalone system, 
+  and on the underlying cluster setup:
+
+  - For a **CDH (Cloudera) cluster managed by Cloudera Manager**, you can follow :ref:`these instructions <cloudera-configuring>` using Cloudera Manager.
+
+  - For a **HDP (Hortonworks) cluster managed by Apache Ambari**, you can follow :ref:`these instructions <ambari-configuring>` using Apache Ambari.
+
+  - For **MapR**, you can follow :ref:`these notes <mapr-configuring>`.
+
+  - On **other Apache Hadoop distributions** (or with CDH clusters not managed with Cloudera Manager, 
+    or HDP clusters not managed with Ambari) you can follow the manual method referenced below on
+    this page, using either our :ref:`quick start installation instructions
+    <installation-quick-start>` or by following our :ref:`general installation
+    instructions <install>`. Use the general instructions if you have either an unusual
+    situation |---| such as HA (high availability) |---| or would like more details on the
+    steps and the available options.
+
+  - For installing **our SDK (standalone system)**, we have :ref:`separate instructions <standalone-index>`.
+  
