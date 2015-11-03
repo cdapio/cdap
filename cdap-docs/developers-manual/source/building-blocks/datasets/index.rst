@@ -104,8 +104,28 @@ There are two ways to use a dataset in a program:
 
   Contrary to static datasets, dynamic datasets allow to release the resources held by their Java classes
   after you are done using them. If you want to hold on to the dataset, because you know that you will be using
-  it over and over again, you can store a reference to the dataset in a member variable (similar to static
-  datasets, but assigned explicitly by you)::
+  it over and over again, you can indicate that in the ``configure()`` method of the program::
+
+    class MyFlowlet extends AbstractFlowlet {
+
+      @Override
+      public void configure(FlowletConfigurer configurer) {
+        super.configure(configurer);
+        useDatasets("myCounters");
+      }
+
+      void process(String key) {
+        KeyValueTable counters = getContext().getDataset("myCounters");
+        counters.increment(key.getBytes(), 1L);
+      }
+
+  The ``useDatasets()`` call has the effect that the dataset is instantiated when the program
+  starts up, and it remains in the cache fot the lifetime of the program and hence never needs
+  to be instantiated again. Note that you still need to call ``getDataset()`` every time you
+  access it.
+
+  Alternatively, you can store a reference to the dataset in a member variable (similar to static
+  datasets, but assigned explicitly by you). That reference will protect the dataset from expiry::
 
     class MyFlowlet extends AbstractFlowlet {
 
