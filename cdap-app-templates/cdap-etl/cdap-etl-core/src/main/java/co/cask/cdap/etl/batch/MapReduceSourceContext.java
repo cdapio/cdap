@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 
 import java.util.List;
@@ -30,8 +31,8 @@ import java.util.List;
  */
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
 
-  public MapReduceSourceContext(MapReduceContext context, Metrics metrics, String sourceId) {
-    super(context, metrics, sourceId);
+  public MapReduceSourceContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String sourceId) {
+    super(context, metrics, lookup, sourceId);
   }
 
   @Override

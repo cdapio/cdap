@@ -22,7 +22,10 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.etl.ScriptConstants;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.LookupConfig;
+import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transform;
@@ -32,6 +35,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,9 +97,14 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
     @Nullable
     private final String schema;
 
-    public Config(String script, String schema) {
+    @Description("Lookup tables to use during transform. Currently supports KeyValueTable.")
+    @Nullable
+    private final String lookup;
+
+    public Config(String script, String schema, LookupConfig lookup) {
       this.script = script;
       this.schema = schema;
+      this.lookup = GSON.toJson(lookup);
     }
   }
 
@@ -108,11 +117,14 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
     super.configurePipeline(pipelineConfigurer);
     // try evaluating the script to fail application creation if the script is invalid
-    init();
+    init(null);
+
+    // TODO: CDAP-4169 verify existence of configured lookup tables
   }
 
   @Override
-  public void initialize(TransformContext context) {
+  public void initialize(TransformContext context) throws Exception {
+    super.initialize(context);
     metrics = context.getMetrics();
     logger = LoggerFactory.getLogger(ScriptTransform.class.getName() + " - Stage:" + context.getStageId());
 
@@ -128,7 +140,7 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
       // Ignore -- we don't have Nashorn, so no need to handle Nashorn
     }
 
-    init();
+    init(context);
   }
 
   @Override
@@ -258,10 +270,28 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
     throw new RuntimeException("Unable decode union with schema " + schemas);
   }
 
-  private void init() {
+  private void init(LookupProvider lookup) {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
-    engine.put(CONTEXT_NAME, new ScriptContext(logger, metrics));
+    try {
+      engine.eval(ScriptConstants.HELPER_DEFINITION);
+    } catch (ScriptException e) {
+      // shouldn't happen
+      throw new IllegalStateException("Couldn't define helper functions", e);
+    }
+
+    JavaTypeConverters js = ((Invocable) engine).getInterface(
+      engine.get(ScriptConstants.HELPER_NAME), JavaTypeConverters.class);
+
+    LookupConfig lookupConfig;
+    try {
+      lookupConfig = GSON.fromJson(config.lookup, LookupConfig.class);
+    } catch (JsonSyntaxException e) {
+      throw new IllegalArgumentException("Invalid lookup config. Expected map of string to string", e);
+    }
+
+    engine.put(CONTEXT_NAME, new ScriptContext(
+      logger, metrics, lookup, lookupConfig, js));
 
     try {
       // this is pretty ugly, but doing this so that we can pass the 'input' json into the transform function.

@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 
@@ -31,10 +32,12 @@ import java.util.Map;
 public abstract class MapReduceBatchContext extends AbstractTransformContext implements BatchContext {
 
   protected final MapReduceContext mrContext;
+  protected final LookupProvider lookup;
 
-  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, String prefixId) {
-    super(context, metrics, prefixId);
+  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String prefixId) {
+    super(context, metrics, lookup, prefixId);
     this.mrContext = context;
+    this.lookup = lookup;
   }
 
   @Override
