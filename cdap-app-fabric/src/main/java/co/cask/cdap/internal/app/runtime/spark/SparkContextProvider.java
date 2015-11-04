@@ -44,9 +44,11 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
+import com.google.gson.Gson;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -57,7 +59,10 @@ import org.apache.twill.zookeeper.ZKClientService;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -69,9 +74,10 @@ public final class SparkContextProvider {
 
   // Constants defined for file names used for files localization done by the SparkRuntimeService.
   // They are needed for recreating the ExecutionSparkContext in this class.
-  public static final String CCONF_FILE_NAME = "cConf.xml";
-  public static final String HCONF_FILE_NAME = "hConf.xml";
-  public static final String PROGRAM_JAR_NAME = "program.jar";
+  static final String CCONF_FILE_NAME = "cConf.xml";
+  static final String HCONF_FILE_NAME = "hConf.xml";
+  static final String PROGRAM_JAR_NAME = "program.jar";
+  static final String LOCAL_RESOURCES = "local.resources";
 
   private static volatile ExecutionSparkContext sparkContext;
 
@@ -155,6 +161,7 @@ public final class SparkContextProvider {
       });
 
       PluginInstantiator pluginInstantiator = createPluginInstantiator(cConf, hConf, classLoader);
+      Map<String, File> localizedResources = createLocalResources(hConf);
       // Create the context object
       sparkContext = new ExecutionSparkContext(
         contextConfig.getApplicationSpecification(),
@@ -163,7 +170,8 @@ public final class SparkContextProvider {
         contextConfig.getTransaction(), injector.getInstance(DatasetFramework.class),
         injector.getInstance(TransactionSystemClient.class),
         injector.getInstance(DiscoveryServiceClient.class), metricsCollectionService, hConf,
-        injector.getInstance(StreamAdmin.class), pluginInstantiator, contextConfig.getWorkflowToken()
+        injector.getInstance(StreamAdmin.class), localizedResources,
+        pluginInstantiator, contextConfig.getWorkflowToken()
       );
       return sparkContext;
     } catch (Exception e) {
@@ -190,6 +198,17 @@ public final class SparkContextProvider {
       return null;
     }
     return new PluginInstantiator(cConf, parentClassLoader, new File(pluginArchive));
+  }
+
+  private static Map<String, File> createLocalResources(Configuration hConf) {
+    Map<String, File> localResources = new HashMap<>();
+    Set<String> resourceNames = new Gson().fromJson(hConf.get(LOCAL_RESOURCES),
+                                                    new TypeToken<Set<String>>() { }.getType());
+    for (String resourceName : resourceNames) {
+      // In distributed mode, the file location is the same as the resource name in the current directory
+      localResources.put(resourceName, new File(resourceName));
+    }
+    return localResources;
   }
 
   private static Injector createInjector(CConfiguration cConf, Configuration hConf) {

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.mapreduce;
 
+import co.cask.cdap.api.ClientLocalizationContext;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
@@ -37,7 +38,8 @@ import javax.annotation.Nullable;
 /**
  * MapReduce job execution context.
  */
-public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, PluginContext {
+public interface MapReduceContext
+  extends RuntimeContext, DatasetContext, ServiceDiscoverer, PluginContext, ClientLocalizationContext {
 
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.

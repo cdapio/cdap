@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,27 +16,28 @@
 
 package co.cask.cdap.api;
 
-import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.annotation.Beta;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Map;
 
 /**
- * This interface represents a context for a processor or elements of a processor.
+ * Localization context for Program Tasks.
  */
-public interface RuntimeContext {
+@Beta
+public interface TaskLocalizationContext {
 
   /**
-   * @return The application specification
+   * Returns a {@link File} representing the path to a localized file localized with the given name.
+   *
+   * @param name the local file's name
+   * @return a {@link File} for the localized file
    */
-  ApplicationSpecification getApplicationSpecification();
+  File getLocalFile(String name) throws FileNotFoundException;
 
   /**
-   * @return A map of argument key and value.
+   * @return a map of file name to {@link File} for files localized for this program
    */
-  Map<String, String> getRuntimeArguments();
-
-  /**
-   * @return The application namespace
-   */
-  String getNamespace();
+  Map<String, File> getAllLocalFiles();
 }

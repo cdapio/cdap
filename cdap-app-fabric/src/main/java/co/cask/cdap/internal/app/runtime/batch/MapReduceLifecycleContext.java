@@ -31,7 +31,11 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -199,5 +203,25 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public void setReducerResources(Resources resources) {
     LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
+  public void localize(String name, URI uri) {
+    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
+  public void localize(String name, URI uri, boolean archive) {
+    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
+  public File getLocalFile(String name) throws FileNotFoundException {
+    return delegate.getLocalFile(name);
+  }
+
+  @Override
+  public Map<String, File> getAllLocalFiles() {
+    return delegate.getAllLocalFiles();
   }
 }

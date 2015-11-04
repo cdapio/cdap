@@ -86,9 +86,11 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -109,7 +111,6 @@ public class SparkProgramRunnerTest {
 
   private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;
-
   private static TransactionManager txService;
   private static DatasetFramework dsFramework;
   private static DynamicDatasetCache datasetCache;
@@ -451,6 +452,48 @@ public class SparkProgramRunnerTest {
 
     KeyValueTable logStatsTable = datasetCache.getDataset("logStats");
     validateGetDatasetOutput(logStatsTable);
+  }
+
+  @Test
+  public void testJavaSparkWithLocalFiles() throws Exception {
+    testSparkWithLocalFiles(SparkAppUsingLocalFiles.class, SparkAppUsingLocalFiles.JavaSparkUsingLocalFiles.class,
+                            "java");
+  }
+
+  @Test
+  public void testScalaSparkWithLocalFiles() throws Exception {
+    testSparkWithLocalFiles(SparkAppUsingLocalFiles.class, SparkAppUsingLocalFiles.ScalaSparkUsingLocalFiles.class,
+                            "scala");
+  }
+
+  private void testSparkWithLocalFiles(Class<?> appClass, Class<?> programClass, String prefix) throws Exception {
+    ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
+    URI localFile = createLocalPropertiesFile(prefix);
+    runProgram(app, programClass,
+               ImmutableMap.of(SparkAppUsingLocalFiles.LOCAL_FILE_RUNTIME_ARG, localFile.toString()));
+    KeyValueTable kvTable = datasetCache.getDataset(SparkAppUsingLocalFiles.OUTPUT_DATASET_NAME);
+    Map<String, String> expected = ImmutableMap.of("a", "1", "b", "2", "c", "3");
+    CloseableIterator<KeyValue<byte[], byte[]>> scan = kvTable.scan(null, null);
+    try {
+      for (int i = 0; i < 3; i++) {
+        KeyValue<byte[], byte[]> next = scan.next();
+        Assert.assertEquals(expected.get(Bytes.toString(next.getKey())), Bytes.toString(next.getValue()));
+      }
+      Assert.assertFalse(scan.hasNext());
+    } finally {
+      scan.close();
+    }
+  }
+
+  private URI createLocalPropertiesFile(String filePrefix) throws IOException {
+    File file = TEMP_FOLDER.newFile(filePrefix + "-local.properties");
+    try (FileOutputStream fos = new FileOutputStream(file);
+         OutputStreamWriter out = new OutputStreamWriter(fos)) {
+      out.write("a=1\n");
+      out.write("b = 2\n");
+      out.write("c= 3");
+    }
+    return file.toURI();
   }
 
   private void validateGetDatasetOutput(KeyValueTable logStatsTable) {

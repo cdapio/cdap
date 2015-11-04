@@ -40,6 +40,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.deploy.SparkSubmit;
 import org.apache.twill.api.ClassAcceptor;
@@ -139,18 +140,23 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       // Create a long running transaction
       Transaction transaction = txClient.startLong();
 
-      // Create execution spark context
-      final ExecutionSparkContext executionContext = sparkContextFactory.createExecutionContext(transaction);
+      Map<String, File> localizedFiles = localizeUserResources(contextConfig, clientContext,
+                                                               localizeResources, tempDir);
 
-      // Add addition resources that needs to be localized to executor containers
+      // Create execution spark context
+      final ExecutionSparkContext executionContext =
+        sparkContextFactory.createExecutionContext(transaction, localizedFiles);
+
+      // Add additional resources that need to be localized to executor containers
       if (!contextConfig.isLocal()) {
         Configuration hConf = contextConfig.set(executionContext).getConfiguration();
         if (pluginJar != null) {
           hConf = new Configuration(hConf);
           hConf.set(Constants.Plugin.ARCHIVE, pluginJar.getName());
         }
+        // also serialize the local resource names, so they can be recreated later.
+        hConf.set(SparkContextProvider.LOCAL_RESOURCES, new Gson().toJson(localizedFiles.keySet()));
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
-
       }
 
       final Map<String, String> configs = createSubmitConfigs(clientContext,
@@ -245,6 +251,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected Executor executor() {
     // Always execute in new daemon thread.
+    //noinspection NullableProblems
     return new Executor() {
       @Override
       public void execute(final Runnable runnable) {
@@ -402,6 +409,39 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       hConf.writeXml(writer);
     }
     return file;
+  }
+
+  /**
+   * Localizes resources requested by users in the Spark Program's client (or beforeSubmit) phases.
+   * In Local mode, also copies resources to a temporary directory.
+   *
+   * @param contextConfig the {@link SparkContextConfig} for this Spark program
+   * @param clientContext the {@link ClientSparkContext} for this Spark program
+   * @param allLocalizedResources the list of all (user-requested + CDAP system) {@link LocalizeResource} to be
+   *                                 localized for this Spark program
+   * @param targetDir in local mode, a temporary directory to copy the resources to
+   * @return a {@link Map} of resource name to the {@link File} handle for the local file.
+   */
+  private Map<String, File> localizeUserResources(SparkContextConfig contextConfig,
+                                                  ClientSparkContext clientContext,
+                                                  List<LocalizeResource> allLocalizedResources,
+                                                  File targetDir) throws IOException {
+    Map<String, File> localizedResources = new HashMap<>();
+    Map<String, LocalizeResource> resourcesToLocalize = clientContext.getResourcesToLocalize();
+    for (final Map.Entry<String, LocalizeResource> entry : resourcesToLocalize.entrySet()) {
+      final File localizedFile;
+      if (contextConfig.isLocal()) {
+        // in local mode, also localize resources in a temporary directory
+        localizedFile = LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir);
+      } else {
+        // in distributed mode, file localization happens in the Spark Submitter, so merely add it to the
+        // allLocalizedResources list
+        allLocalizedResources.add(entry.getValue());
+        localizedFile = new File(entry.getKey());
+      }
+      localizedResources.put(entry.getKey(), localizedFile);
+    }
+    return localizedResources;
   }
 
   /**

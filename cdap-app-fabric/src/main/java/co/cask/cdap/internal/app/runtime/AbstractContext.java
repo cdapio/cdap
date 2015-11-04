@@ -62,9 +62,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final RunId runId;
   private final List<Id> owners;
   private final Map<String, String> runtimeArguments;
-
   private final MetricsContext programMetrics;
-
   private final DiscoveryServiceClient discoveryServiceClient;
   private final PluginInstantiator pluginInstantiator;
   private final PluginContext pluginContext;

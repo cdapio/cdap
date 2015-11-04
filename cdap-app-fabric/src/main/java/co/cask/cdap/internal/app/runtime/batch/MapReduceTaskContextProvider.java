@@ -199,7 +199,8 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           program, taskType, contextConfig.getRunId(), key.getTaskAttemptID().getTaskID().toString(),
           contextConfig.getArguments(), staticDatasets, spec, contextConfig.getLogicalStartTime(),
           contextConfig.getWorkflowToken(), discoveryServiceClient, metricsCollectionService, txClient,
-          contextConfig.getTx(), datasetFramework, classLoader.getPluginInstantiator()
+          contextConfig.getTx(), datasetFramework, classLoader.getPluginInstantiator(),
+          contextConfig.getLocalizedResources()
         );
       }
     };

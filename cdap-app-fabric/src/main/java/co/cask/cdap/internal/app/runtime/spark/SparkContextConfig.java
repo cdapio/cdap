@@ -180,7 +180,7 @@ public class SparkContextConfig {
     hConf.set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
   }
 
-  public void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
+  private void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
     hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, GSON.toJson(workflowToken));
   }
 }

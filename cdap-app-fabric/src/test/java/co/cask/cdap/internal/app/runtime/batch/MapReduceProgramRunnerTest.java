@@ -87,10 +87,13 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -117,9 +120,9 @@ public class MapReduceProgramRunnerTest {
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
-  private static final Supplier<java.io.File> TEMP_FOLDER_SUPPLIER = new Supplier<java.io.File>() {
+  private static final Supplier<File> TEMP_FOLDER_SUPPLIER = new Supplier<File>() {
     @Override
-    public java.io.File get() {
+    public File get() {
       try {
         return tmpFolder.newFolder();
       } catch (IOException e) {
@@ -519,6 +522,56 @@ public class MapReduceProgramRunnerTest {
     testFailure(true);
   }
 
+  @Test
+  public void testMapReduceWithLocalFiles() throws Exception {
+    ApplicationWithPrograms appWithPrograms =
+      AppFabricTestHelper.deployApplicationWithManager(AppWithLocalFiles.class, TEMP_FOLDER_SUPPLIER);
+    URI stopWordsFile = createStopWordsFile();
+
+    final KeyValueTable kvTable = datasetCache.getDataset(AppWithLocalFiles.MR_INPUT_DATASET);
+    Transactions.createTransactionExecutor(txExecutorFactory, kvTable).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          kvTable.write("2324", "a test record");
+          kvTable.write("43353", "the test table");
+          kvTable.write("34335", "an end record");
+        }
+      }
+    );
+    runProgram(appWithPrograms, AppWithLocalFiles.MapReduceWithLocalFiles.class,
+               new BasicArguments(ImmutableMap.of(
+                 AppWithLocalFiles.MR_INPUT_DATASET, "input",
+                 AppWithLocalFiles.MR_OUTPUT_DATASET, "output",
+                 AppWithLocalFiles.STOPWORDS_FILE_ARG, stopWordsFile.toString()
+               )));
+    final KeyValueTable outputKvTable = datasetCache.getDataset(AppWithLocalFiles.MR_OUTPUT_DATASET);
+    Transactions.createTransactionExecutor(txExecutorFactory, outputKvTable).execute(
+      new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() {
+          Assert.assertNull(outputKvTable.read("a"));
+          Assert.assertNull(outputKvTable.read("the"));
+          Assert.assertNull(outputKvTable.read("an"));
+          Assert.assertEquals(2, Bytes.toInt(outputKvTable.read("test")));
+          Assert.assertEquals(2, Bytes.toInt(outputKvTable.read("record")));
+          Assert.assertEquals(1, Bytes.toInt(outputKvTable.read("table")));
+          Assert.assertEquals(1, Bytes.toInt(outputKvTable.read("end")));
+        }
+      }
+    );
+  }
+
+  private URI createStopWordsFile() throws IOException {
+    File file = tmpFolder.newFile("stopWords.txt");
+    try (OutputStreamWriter out = new OutputStreamWriter(new FileOutputStream(file))) {
+      out.write("the\n");
+      out.write("a\n");
+      out.write("an");
+    }
+    return file.toURI();
+  }
+
   // TODO: this tests failure in Map tasks. We also need to test: failure in Reduce task, kill of a job by user.
   private void testFailure(boolean frequentFlushing) throws Exception {
     // We want to verify that when mapreduce job fails:
@@ -645,6 +698,7 @@ public class MapReduceProgramRunnerTest {
     throws ClassNotFoundException {
     ProgramRunnerFactory runnerFactory = injector.getInstance(ProgramRunnerFactory.class);
     final Program program = getProgram(app, programClass);
+    Assert.assertNotNull(program);
     ProgramRunner runner = runnerFactory.create(ProgramRunnerFactory.Type.valueOf(program.getType().name()));
     BasicArguments systemArgs = new BasicArguments(ImmutableMap.of(ProgramOptionConstants.RUN_ID,
                                                                    RunIds.generate().getId()));
@@ -661,9 +715,9 @@ public class MapReduceProgramRunnerTest {
   }
 
   private String createInput() throws IOException {
-    java.io.File inputDir = tmpFolder.newFolder();
+    File inputDir = tmpFolder.newFolder();
 
-    java.io.File inputFile = new java.io.File(inputDir.getPath() + "/words.txt");
+    File inputFile = new File(inputDir.getPath() + "/words.txt");
     inputFile.deleteOnExit();
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(inputFile))) {
       writer.write("this text has");

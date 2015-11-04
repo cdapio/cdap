@@ -54,6 +54,8 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
+import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import co.cask.cdap.internal.app.runtime.spark.LocalizationUtils;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.Transaction;
@@ -202,6 +204,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
       beforeSubmit(job);
 
+      // Localize additional resources that users have requested via BasicMapReduceContext.localize methods
+      Map<String, String> localizedUserResources = localizeUserResources(job, tempDir);
+
       // Override user-defined job name, since we set it and depend on the name.
       // https://issues.cask.co/browse/CDAP-2441
       String jobName = job.getJobName();
@@ -274,7 +279,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       try {
         // We remember tx, so that we can re-use it in mapreduce tasks
         CConfiguration cConfCopy = cConf;
-        contextConfig.set(context, cConfCopy, tx, programJar.toURI());
+        contextConfig.set(context, cConfCopy, tx, programJar.toURI(), localizedUserResources);
 
         LOG.info("Submitting MapReduce Job: {}", context);
         // submits job and returns immediately. Shouldn't need to set context ClassLoader.
@@ -1021,5 +1026,48 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private ClassLoader setContextCombinedClassLoader(BasicMapReduceContext context) {
     return ClassLoaders.setContextClassLoader(new CombineClassLoader(
       null, ImmutableList.of(context.getProgram().getClassLoader(), getClass().getClassLoader())));
+  }
+
+  /**
+   * Localizes resources requested by users in the MapReduce Program's beforeSubmit phase.
+   * In Local mode, also copies resources to a temporary directory.
+   *
+   * @param job the {@link Job} for this MapReduce program
+   * @param targetDir in local mode, a temporary directory to copy the resources to
+   * @return a {@link Map} of resource name to the resource path. The resource path will be absolute in local mode,
+   * while it will just contain the file name in distributed mode.
+   */
+  private Map<String, String> localizeUserResources(Job job, File targetDir) throws IOException {
+    Map<String, String> localizedResources = new HashMap<>();
+    Map<String, LocalizeResource> resourcesToLocalize = context.getResourcesToLocalize();
+    for (Map.Entry<String, LocalizeResource> entry : resourcesToLocalize.entrySet()) {
+      String localizedFilePath;
+      String name = entry.getKey();
+      Configuration mapredConf = job.getConfiguration();
+      if (MapReduceTaskContextProvider.isLocal(mapredConf)) {
+        // in local mode, also add localize resources in a temporary directory
+        localizedFilePath =
+          LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir).getAbsolutePath();
+      } else {
+        URI uri = entry.getValue().getURI();
+        // in distributed mode, use the MapReduce Job object to localize resources
+        URI actualURI;
+        try {
+          actualURI = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), name);
+        } catch (URISyntaxException e) {
+          // Most of the URI is constructed from the passed URI. So ideally, this should not happen.
+          // If it does though, there is nothing that clients can do to recover, so not propagating a checked exception.
+          throw Throwables.propagate(e);
+        }
+        if (entry.getValue().isArchive()) {
+          job.addCacheArchive(actualURI);
+        } else {
+          job.addCacheFile(actualURI);
+        }
+        localizedFilePath = name;
+      }
+      localizedResources.put(name, localizedFilePath);
+    }
+    return localizedResources;
   }
 }
