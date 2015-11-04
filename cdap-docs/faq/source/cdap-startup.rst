@@ -95,11 +95,14 @@ I don't see the CDAP Master service on YARN.
 --------------------------------------------
 - Ensure that the node where CDAP is running has a properly configured YARN client.
 - Ensure :ref:`YARN has enough memory and vcore capacity <faq-installation-startup-memory-core-requirements>`.
+- Is the router address properly configured in the :ref:`cdap-site.xml file <configuration-options>` and the boxes using it?
+- Check that the classpath used includes the YARN configuration in it.
 
 
 My CDAP Master log shows permissions issues.
 --------------------------------------------
 Ensure that ``hdfs:///#{hdfs.namespace}`` and ``hdfs:///user/#{hdfs.user}`` exist and are owned by ``#{hdfs.user}``.
+(``hdfs.namespace`` and ``hdfs.user`` are defined in your installations :ref:`cdap-site.xml file <configuration-options>`.)
 
 In rare cases, until `CDAP-3817 <https://issues.cask.co/browse/CDAP-3817>`__ is resolved,
 ensure ``hdfs:///#{hdfs.namespace}/tx.snapshot`` exists and is owned by ``#{hdfs.user}``. 
