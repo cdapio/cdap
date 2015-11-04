@@ -150,6 +150,10 @@ proxy instead.
 One item to check is that your system's network setting is configured to exclude both
 ``localhost`` and ``127.0.0.1`` from the proxy routing. If they aren't, the services will
 not be able to communicate with each other, and you'll see error messages such as these.
+You can set a system's network setting for a proxy by using::
+
+  export no_proxy="localhost,127.0.0.1"
+
 
 Where is the CDAP CLI (Command Line Interface)?
 -----------------------------------------------
