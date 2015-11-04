@@ -152,8 +152,8 @@ to installing a parcel:
 - **Distributing** the parcel to all the servers in the cluster
 - **Activating** the parcel
 
-Start by clicking on the parcel icon (near the top-left corner of Cloudera Manager; looks
-like a gift-wrapped box), and ensure that the CDAP parcel is listed as *Active*.
+Start by clicking on the parcel icon (near the top-left corner of Cloudera Manager and looks
+like a gift-wrapped box) and ensure that the CDAP parcel is listed as *Active*.
 
 
 I've followed the install instructions, yet CDAP does not start and fails verification. What next?

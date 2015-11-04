@@ -219,6 +219,10 @@ a.headerlink:hover {
     color: white;
 }
 
+a.toc-backref {
+    color: black;
+}
+
 h2>a.reference.external {
     color: #111;
 }
