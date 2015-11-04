@@ -26,6 +26,7 @@ angular.module(PKG.name + '.feature.services')
     vm.response = null;
     vm.postBody = {};
     vm.loading = false;
+    vm.requestStatus = null;
 
     var pattern = /\{([\w\-]+)\}/g,
         dataSrc = new MyCDAPDataSource($scope);
@@ -113,9 +114,11 @@ angular.module(PKG.name + '.feature.services')
         .then(function success(res) {
           vm.response = res;
           vm.loading = false;
+          vm.requestStatus = 'SUCCESS';
         }, function error(err) {
           vm.response = 'Some error has occured: ' + err;
           vm.loading = false;
+          vm.requestStatus = 'ERROR';
         });
     };
 

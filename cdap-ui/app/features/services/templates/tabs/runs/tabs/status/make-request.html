@@ -95,16 +95,22 @@
 
         <div class="modal-footer">
 
-          <div>
-            <button type="submit"
-                    ng-disabled="makeRequestForm.$invalid || RequestController.loading"
-                    class="btn"
-                    ng-class="{'btn-success': !makeRequestForm.$invalid}">
-              <span>Make Request</span>
-              <span ng-if="RequestController.loading">
-                <i class="fa fa-refresh fa-spin"></i>
-              </span>
-            </button>
+          <div class="row">
+            <div class="col-sm-4 col-sm-offset-2 text-left request-status">
+              <span class="text-success" ng-if="RequestController.requestStatus === 'SUCCESS'">Request Successful</span>
+              <span class="text-danger" ng-if="RequestController.requestStatus === 'ERROR'">Request Error</span>
+            </div>
+            <div class="col-sm-6">
+              <button type="submit"
+                      ng-disabled="makeRequestForm.$invalid || RequestController.loading"
+                      class="btn"
+                      ng-class="{'btn-success': !makeRequestForm.$invalid}">
+                <span>Make Request</span>
+                <span ng-if="RequestController.loading">
+                  <i class="fa fa-refresh fa-spin"></i>
+                </span>
+              </button>
+            </div>
           </div>
 
           <br/>
