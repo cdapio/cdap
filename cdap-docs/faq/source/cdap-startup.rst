@@ -30,7 +30,7 @@ If, when you try to start services, you receive an error in ``stderr`` such as::
        
   Error found before invoking supervisord: No parcel provided required tags: set([u'cdap'])
 
-The error message suggests that you have not completed the last step of installing a
+The error message shows that you have not completed the last step of installing a
 parcel, *Activation*. There are 4 steps to installing a parcel:
 
 - **Adding the repository** to the list of repositories searched by Cloudera Manager
@@ -47,14 +47,15 @@ I've followed the install instructions, yet CDAP does not start and fails verifi
 If you have followed :ref:`the installation instructions <install>`, and CDAP either did not pass the 
 :ref:`verification step <configuration-verification>` or did not startup, check:
 
-- Look in the CDAP logs for error messages (located in ``$CDAP_HOME/logs``)
+- Look in the CDAP logs for error messages (located either in ``/var/log/cdap`` for CDAP Distributed or 
+  ``$CDAP_HOME/logs`` for CDAP SDK Standalone)
 - If you see an error such as::
 
     ERROR [main:c.c.c.StandaloneMain@268] - Failed to start Standalone CDAP
     java.lang.NoSuchMethodError: 
     co.cask.cdap.UserInterfaceService.getServiceName()Ljava/lang/String
 
-  then you have probably downloaded the standalone version of CDAP, which is not intended
+  then you have downloaded the standalone version of CDAP, which is not intended
   to be run on Hadoop clusters. Download the appropriate distributed packages (RPM or
   Debian version) from http://cask.co/downloads.
          
@@ -62,7 +63,8 @@ If you have followed :ref:`the installation instructions <install>`, and CDAP ei
 
   - The :ref:`CDAP HDFS User <configuration-options>` (by default, ``yarn``) owns the HDFS directory (by default,  ``/cdap``).
   - The :ref:`Kafka Log directory <configuration-options>` (by default, ``/data/cdap/kafka-logs``), must be writable by the default CDAP user.
-  - The :ref:`temp directories <configuration-tmp-files>` (by default, ``/tmp`` and ``/tmp/kafka-logs``) utilized by CDAP must be writable by the default CDAP user.
+  - The :ref:`temp directories <configuration-tmp-files>` (by default, ``/var/tmp/cdap``, ``/tmp``, and ``/tmp/kafka-logs``) 
+    utilized by CDAP must be writable by the default CDAP user.
 
 .. - Check :ref:`configuration troubleshooting <configuration-troubleshooting>` suggestions
    
