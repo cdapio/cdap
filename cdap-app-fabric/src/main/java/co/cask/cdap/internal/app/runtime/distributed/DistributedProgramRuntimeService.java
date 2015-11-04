@@ -381,9 +381,8 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     private static final String RM_CLUSTER_METRICS_PATH = "/ws/v1/cluster/metrics";
     private final List<URL> rmUrls;
 
-    public ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf) {
-      super(metricsCollectionService.getCollector(
-        ImmutableMap.<String, String>of()));
+    ClusterResourceReporter(MetricsCollectionService metricsCollectionService, Configuration hConf) {
+      super(metricsCollectionService.getCollector(ImmutableMap.<String, String>of()));
 
       List<URL> rmUrls = Collections.emptyList();
       try {
