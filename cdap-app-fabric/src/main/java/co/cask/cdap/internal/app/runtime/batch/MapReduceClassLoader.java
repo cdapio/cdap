@@ -29,9 +29,9 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLau
 import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.ProgramType;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
@@ -67,6 +67,7 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
   // Supplier for MapReduceTaskContextProvider. Need to wrap it with a supplier to delay calling
   // MapReduceTaskContextProvider.start() since it shouldn't be called in constructor.
   private final Supplier<MapReduceTaskContextProvider> taskContextProviderSupplier;
+  private MapReduceTaskContextProvider taskContextProvider;
 
   /**
    * Finds the {@link MapReduceClassLoader} from the {@link ClassLoader} inside the given {@link Configuration}.
@@ -116,23 +117,23 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
   private MapReduceClassLoader(final Parameters parameters, final TaskContextProviderFactory contextProviderFactory) {
     super(null, createDelegates(parameters));
     this.parameters = parameters;
-    this.taskContextProviderSupplier = Suppliers.memoize(new Supplier<MapReduceTaskContextProvider>() {
+    this.taskContextProviderSupplier = new Supplier<MapReduceTaskContextProvider>() {
       @Override
       public MapReduceTaskContextProvider get() {
         return contextProviderFactory.create(parameters.getCConf(), parameters.getHConf());
       }
-    });
+    };
   }
 
   /**
    * Returns the {@link MapReduceTaskContextProvider} associated with this ClassLoader.
    */
   public MapReduceTaskContextProvider getTaskContextProvider() {
-    MapReduceTaskContextProvider provider = taskContextProviderSupplier.get();
-    // Start the provider. If it is already started, the call will return immediate
-    // It will only throw exception if the start failed.
-    provider.startAndWait();
-    return provider;
+    synchronized (this) {
+      taskContextProvider = Optional.fromNullable(taskContextProvider).or(taskContextProviderSupplier);
+    }
+    taskContextProvider.startAndWait();
+    return taskContextProvider;
   }
 
   /**
@@ -153,10 +154,15 @@ public class MapReduceClassLoader extends CombineClassLoader implements AutoClos
   @Override
   public void close() throws Exception {
     try {
-      MapReduceTaskContextProvider provider = taskContextProviderSupplier.get();
-      Service.State state = provider.state();
-      if (state == Service.State.STARTING || state == Service.State.RUNNING) {
-        provider.stopAndWait();
+      MapReduceTaskContextProvider provider;
+      synchronized (this) {
+        provider = taskContextProvider;
+      }
+      if (provider != null) {
+        Service.State state = provider.state();
+        if (state == Service.State.STARTING || state == Service.State.RUNNING) {
+          provider.stopAndWait();
+        }
       }
     } catch (Exception e) {
       // This is non-fatal, since the container is already done.

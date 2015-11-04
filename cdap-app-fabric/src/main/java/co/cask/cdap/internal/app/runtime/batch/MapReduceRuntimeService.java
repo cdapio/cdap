@@ -69,6 +69,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Injector;
@@ -223,7 +224,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // After calling beforeSubmit, we know what plugins are needed for the program, hence construct the proper
         // ClassLoader from here and use it for setting up the job
-        File pluginArchive = context.getPluginArchive();
+        Location pluginArchive = createPluginArchive(tempLocation);
         if (pluginArchive != null) {
           job.addCacheArchive(pluginArchive.toURI());
           mapredConf.set(Constants.Plugin.ARCHIVE, pluginArchive.getName());
@@ -921,6 +922,23 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
+   * Copies a plugin archive jar to the target location.
+   *
+   * @param targetDir directory where the archive jar should be created
+   * @return {@link Location} to the plugin archive or {@code null} if no plugin archive is available from the context.
+   */
+  @Nullable
+  private Location createPluginArchive(Location targetDir) throws IOException {
+    File pluginArchive = context.getPluginArchive();
+    if (pluginArchive == null) {
+      return null;
+    }
+    Location pluginLocation = targetDir.append(pluginArchive.getName()).getTempFile(".jar");
+    Files.copy(pluginArchive, Locations.newOutputSupplier(pluginLocation));
+    return pluginLocation;
+  }
+
+  /**
    * Creates a temp copy of the program jar.
    *
    * @return a new {@link Location} which contains the same content as the program jar
@@ -964,7 +982,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                 ((File) resource).delete();
               }
             } else if (resource instanceof Location) {
-              Locations.deleteQuietly((Location) resource);
+              Locations.deleteQuietly((Location) resource, true);
             } else if (resource instanceof AutoCloseable) {
               ((AutoCloseable) resource).close();
             } else if (resource instanceof Runnable) {
