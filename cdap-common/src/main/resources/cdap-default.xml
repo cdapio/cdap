@@ -484,6 +484,14 @@
   </property>
 
   <property>
+    <name>dataset.extensions.dir</name>
+    <value>/opt/cdap/ext/lib</value>
+    <description>
+      Directory where all dataset extensions are stored
+    </description>
+  </property>
+  
+  <property>
     <name>dataset.service.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -1585,12 +1593,6 @@
     <description>
       Router address to which CDAP UI connects
     </description>
-  </property>
-
-  <!-- Dataset extensions -->
-  <property>
-    <name>dataset.extensions.dir</name>
-    <value>/opt/cdap/ext/lib</value>
   </property>
 
 </configuration>
