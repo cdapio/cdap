@@ -15,21 +15,17 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailHistoryController', function($scope, HydratorDetail) {
-    var params = {};
-    angular.copy(HydratorDetail.params, params);
-    params.scope = $scope;
-
-    $scope.historyParams = {
-      appId: params.appId,
-      programId: params.workflowId || params.workerId
+  .controller('HydratorDetailCanvasController', function(rPipelineDetail, MyAppDAGService, BottomPanelStore) {
+    try{
+      rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
+    } catch(e) {
+      console.log('ERROR in configuration from backend: ', e);
+      return;
+    }
+    this.setState = function() {
+      this.setScroll = (BottomPanelStore.getPanelState() === 0 ? false: true);
     };
-
-    $scope.programType = HydratorDetail.programType;
-
-    HydratorDetail.api.pollRuns(params)
-      .$promise
-      .then(function (res) {
-        $scope.runsHistory = res;
-      });
+    this.setState();
+    BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
+    MyAppDAGService.setNodesAndConnectionsFromDraft(rPipelineDetail);
   });

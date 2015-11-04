@@ -14,14 +14,11 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailController', function(DetailRunsStore, rPipelineDetail, PipelineDetailActionFactory, $scope) {
-    DetailRunsStore.init(rPipelineDetail);
-    var params = angular.copy(DetailRunsStore.getParams());
-    params.scope = $scope;
-    PipelineDetailActionFactory.pollRuns(
-      DetailRunsStore.getApi(),
-      params
-    );
-
+ angular.module(PKG.name + '.feature.hydrator')
+  .controller('HydratorDetailLogController', function(DetailRunsStore) {
+    this.setState = function() {
+      this.logsParams =  DetailRunsStore.getLogsParams();
+    };
+    this.setState();
+    DetailRunsStore.registerOnChangeListener(this.setState.bind(this));
   });

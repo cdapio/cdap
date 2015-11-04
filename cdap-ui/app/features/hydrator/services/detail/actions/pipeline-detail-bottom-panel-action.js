@@ -15,13 +15,18 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailController', function(DetailRunsStore, rPipelineDetail, PipelineDetailActionFactory, $scope) {
-    DetailRunsStore.init(rPipelineDetail);
-    var params = angular.copy(DetailRunsStore.getParams());
-    params.scope = $scope;
-    PipelineDetailActionFactory.pollRuns(
-      DetailRunsStore.getApi(),
-      params
-    );
-
+  .service('PipelineDetailBottomPanelActionFactory', function(PipelineDetailBottomPanelDispatcher) {
+    var dispatcher = PipelineDetailBottomPanelDispatcher.getDispatcher();
+    this.collapse = function() {
+      dispatcher.dispatch('onBottomPanelToggled', {state: 0});
+    };
+    this.expand = function() {
+      dispatcher.dispatch('onBottomPanelToggled', {state: 1});
+    };
+    this.maximize = function() {
+      dispatcher.dispatch('onBottomPanelToggled', {state: 2});
+    };
+    this.reset = function() {
+      dispatcher.dispatch('onReset');
+    };
   });

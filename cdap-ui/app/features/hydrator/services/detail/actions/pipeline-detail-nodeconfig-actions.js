@@ -15,13 +15,16 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailController', function(DetailRunsStore, rPipelineDetail, PipelineDetailActionFactory, $scope) {
-    DetailRunsStore.init(rPipelineDetail);
-    var params = angular.copy(DetailRunsStore.getParams());
-    params.scope = $scope;
-    PipelineDetailActionFactory.pollRuns(
-      DetailRunsStore.getApi(),
-      params
-    );
-
+  .service('PipelineNodeConfigActionFactory', function(PipelineNodeConfigDispatcher, PipelineDetailBottomPanelActionFactory) {
+    var dispatcher = PipelineNodeConfigDispatcher.getDispatcher();
+    this.choosePlugin = function(plugin) {
+      dispatcher.dispatch('onPluginChange', plugin);
+      PipelineDetailBottomPanelActionFactory.expand();
+    };
+    this.removePlugin = function() {
+      dispatcher.dispatch('onPluginRemove');
+    };
+    this.reset = function() {
+      dispatcher.dispatch('onReset');
+    };
   });

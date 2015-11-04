@@ -128,16 +128,6 @@ angular.module(PKG.name + '.services')
       });
     };
 
-    this.registerEditPropertiesCallback = function(callback) {
-      this.editPropertiesCallback.push(callback);
-    };
-
-    this.notifyEditPropertiesCallback = function(plugin) {
-      this.editPropertiesCallback.forEach(function(callback) {
-        callback(plugin);
-      });
-    };
-
     this.addConnection = function(connection) {
       this.connections.push({
         source: connection.sourceId,
@@ -459,9 +449,6 @@ angular.module(PKG.name + '.services')
         });
     }
 
-    this.editPluginProperties = function (scope, pluginId) {
-      this.notifyEditPropertiesCallback(this.nodes[pluginId]);
-    };
 
     // Used for UI alone. Has _backendProperties and ids to plugins for
     // construction and validation of DAGs in UI.
