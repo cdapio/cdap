@@ -63,8 +63,7 @@ If you have followed :ref:`the installation instructions <install>`, and CDAP ei
 
   - The :ref:`CDAP HDFS User <configuration-options>` (by default, ``yarn``) owns the HDFS directory (by default,  ``/cdap``).
   - The :ref:`Kafka Log directory <configuration-options>` (by default, ``/data/cdap/kafka-logs``), must be writable by the default CDAP user.
-  - The :ref:`temp directories <configuration-tmp-files>` (by default, ``/var/tmp/cdap``, ``/tmp``, and ``/tmp/kafka-logs``) 
-    utilized by CDAP must be writable by the default CDAP user.
+  - The :ref:`temp directories <configuration-tmp-files>` utilized by CDAP must be writable by the default CDAP user.
 
 .. - Check :ref:`configuration troubleshooting <configuration-troubleshooting>` suggestions
    
@@ -79,6 +78,8 @@ The CDAP UI is showing a message "namespace cannot be found".
 This is indicative that the UI cannot connect to the CDAP system service containers running in YARN.
 
 - First, check if the CDAP Master service container shows as RUNNING in the YARN ResourceManager UI.
+  The CDAP Master, once it starts, starts the other CDAP system service containers, so if it isn't running,
+  the others won't be able to start or work correctly. It can take several minutes for everything to start up.
 
 - If this doesn't resolve the issue, then it means the CDAP system services were unable to launch.
   Ensure :ref:`YARN has enough spare memory and vcore capacity <faq-installation-startup-memory-core-requirements>`.  
@@ -153,7 +154,7 @@ found in the ``cdap-defaults.xml``, and are over-ridden in particular instances 
 from one to two cores.
 
 The YARN settings will over-ride these; for instance, the minimum YARN container size is
-determined by ``yarn.scheduler.minimum-allocation-mb``. The YARN default in ``HDP/Hadoop``
+determined by ``yarn.scheduler.minimum-allocation-mb``. The YARN default in Hadoop
 is 1024 MB, so containers will be allocated with 1024 MB, even if the CDAP settings are
 for 512 MB.
 
