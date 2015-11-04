@@ -116,7 +116,7 @@ angular.module(PKG.name + '.feature.services')
           vm.loading = false;
           vm.requestStatus = 'SUCCESS';
         }, function error(err) {
-          vm.response = 'Some error has occured: ' + err;
+          vm.response = 'Some error has occured: ' + err.data;
           vm.loading = false;
           vm.requestStatus = 'ERROR';
         });
