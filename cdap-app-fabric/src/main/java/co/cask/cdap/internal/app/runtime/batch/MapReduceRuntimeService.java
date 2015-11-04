@@ -474,6 +474,30 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
+   * Commit a single output after the MR has finished, if it is an OutputFormatCommitter.
+   * @param succeeded whether the run was successful
+   * @param datasetName the name of the dataset
+   * @param outputDataset the output dataset or output format provider to commit
+   * @return whether the action was successful (it did not throw an exception)
+   */
+  private boolean commitOutput(boolean succeeded, String datasetName, Object outputDataset) {
+    if (outputDataset instanceof DatasetOutputCommitter) {
+      try {
+        if (succeeded) {
+          ((DatasetOutputCommitter) outputDataset).onSuccess();
+        } else {
+          ((DatasetOutputCommitter) outputDataset).onFailure();
+        }
+      } catch (Throwable t) {
+        LOG.error(String.format("Error from %s method of output dataset %s.",
+                                succeeded ? "onSuccess" : "onFailure", datasetName), t);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * Calls the {@link MapReduce#onFinish(boolean, co.cask.cdap.api.mapreduce.MapReduceContext)} method.
    */
   private void onFinish(final boolean succeeded) throws TransactionFailureException {
@@ -483,24 +507,17 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       public Void call() throws Exception {
         ClassLoader oldClassLoader = setContextCombinedClassLoader(context);
         try {
-          // TODO this should be done in the output committer, to make the M/R fail if addPartition fails
+          // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
+          // TODO (CDAP-1952): also, should failure of an output committer change the status of the program run?
           boolean success = succeeded;
           for (Map.Entry<String, Dataset> dsEntry : context.getOutputDatasets().entrySet()) {
-            String datasetName = dsEntry.getKey();
-            Dataset outputDataset = dsEntry.getValue();
-
-            if (outputDataset instanceof DatasetOutputCommitter) {
-              try {
-                if (succeeded) {
-                  ((DatasetOutputCommitter) outputDataset).onSuccess();
-                } else {
-                  ((DatasetOutputCommitter) outputDataset).onFailure();
-                }
-              } catch (Throwable t) {
-                LOG.error(String.format("Error from %s method of output dataset %s.",
-                                        succeeded ? "onSuccess" : "onFailure", datasetName), t);
-                success = false;
-              }
+            if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
+              success = false;
+            }
+          }
+          for (Map.Entry<String, OutputFormatProvider> dsEntry : context.getOutputFormatProviders().entrySet()) {
+            if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
+              success = false;
             }
           }
           mapReduce.onFinish(success, context);

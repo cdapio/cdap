@@ -16,7 +16,6 @@
 
 package co.cask.cdap.api.data;
 
-import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Map;
@@ -52,7 +51,6 @@ public interface DatasetContext {
    *         cannot be opened (for example, one of the underlying tables in the DataFabric
    *         cannot be accessed).
    */
-  @Beta
   <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException;
 

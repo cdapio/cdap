@@ -14,11 +14,6 @@
   the License.
 -->
 
-<div ng-controller="HydratorDetailHistoryController">
-  <my-program-history
-    data-runs="runsHistory"
-    data-type="{{ programType }}"
-    data-app-id="historyParams.appId"
-    data-program-id="historyParams.programId"
-    class="history-table"></my-program-history>
-</div>
+<my-dag data-is-disabled="true"
+        ng-class="{'canvas-scroll': CanvasCtrl.setScroll}">
+</my-dag>

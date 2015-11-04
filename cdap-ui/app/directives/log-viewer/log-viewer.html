@@ -39,7 +39,7 @@
           <pre ng-bind="entry.log"></pre>
         </li>
       </ul>
-      <div ng-if="!activeFilter.entries.length && !loading">
+      <div ng-if="!activeFilter.entries.length && !(loadingNext || loadingPrev)">
         No logs to display
       </div>
       <div class="text-center" ng-if="loadingNext">
@@ -49,5 +49,3 @@
 
   </div>
 </div>
-
-

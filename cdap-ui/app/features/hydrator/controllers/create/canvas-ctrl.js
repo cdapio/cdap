@@ -13,13 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+ 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('CanvasController', function (MyAppDAGService, $scope, $modalStack, MyBottomPanelService) {
-
-    this.isCollapsed = true;
-    MyBottomPanelService.registerIsCollapsedCallback(function(isCollapsed) {
-      $scope.isCanvasScrollable = !isCollapsed;
-    });
-
+  .controller('HydratorCreateCanvasController', function(BottomPanelStore) {
+    this.setState = function() {
+      this.state = {
+        setScroll: (BottomPanelStore.getPanelState() === 0? false: true)
+      };
+    };
+    this.setState();
+    BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
   });
