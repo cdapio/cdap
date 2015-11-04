@@ -20,9 +20,9 @@ CDAP FAQ: CDAP Startup
 Startup
 =======
 
-My CDAP install on CDH using Cloudera Manager doesn't startup |---| what do I do?
----------------------------------------------------------------------------------
-We have a :ref:`tutorial <step-by-step-cloudera-add-service>` with instructions on how to install CDAP on CDH 
+CDAP installed on CDH using Cloudera Manager doesn't startup |---| what do I do?
+--------------------------------------------------------------------------------
+A :ref:`tutorial <step-by-step-cloudera-add-service>` is available with instructions on how to install CDAP on CDH 
 (`Cloudera Data Hub <http://www.cloudera.com/content/www/en-us/resources/datasheet/cdh-datasheet.html>`__) 
 using `Cloudera Manager <http://www.cloudera.com/content/www/en-us/products/cloudera-manager.html>`__. 
 
@@ -30,8 +30,9 @@ If, when you try to start services, you receive an error in ``stderr`` such as::
        
   Error found before invoking supervisord: No parcel provided required tags: set([u'cdap'])
 
-The error message shows that you have not completed the last step of installing a
-parcel, *Activation*. There are 4 steps to installing a parcel:
+The error message shows that that a required parcel isn't available, suggesting that you
+have not completed the last step of installing a parcel, *Activation*. There are 4 steps
+to installing a parcel:
 
 - **Adding the repository** to the list of repositories searched by Cloudera Manager
 - **Downloading** the parcel to the Cloudera Manager server
@@ -86,7 +87,8 @@ This is indicative that the UI cannot connect to the CDAP system service contain
   CDAP attempts to launch between 8 and 11 containers, depending on the configuration. Check
   the master container (Application Master) logs to see if it was able to launch all containers.
 
-- If it was able to launch all containers, then you may need to further check the launched container logs for any errors.
+- If it was able to launch all containers, then you may need to check the launched container logs for any errors.
+  The ``yarn-site.xml`` configuration file determines the container log directory.
 
 
 .. CDAP UI shows a session time out
@@ -102,19 +104,35 @@ I don't see the CDAP Master service on YARN.
 - Check that the classpath used includes the YARN configuration in it.
 
 
-My CDAP Master log shows permissions issues.
+The CDAP Master log shows permissions issues.
 --------------------------------------------
-Ensure that ``hdfs:///#{hdfs.namespace}`` and ``hdfs:///user/#{hdfs.user}`` exist and are owned by ``#{hdfs.user}``.
-(``hdfs.namespace`` and ``hdfs.user`` are defined in your installations :ref:`cdap-site.xml file <configuration-options>`.)
+Ensure that ``hdfs:///${hdfs.namespace}`` and ``hdfs:///user/${hdfs.user}`` exist and are owned by ``${hdfs.user}``.
+(``hdfs.namespace`` and ``hdfs.user`` are defined in your installation's :ref:`cdap-site.xml file <configuration-options>`.)
 
-In rare cases, until `CDAP-3817 <https://issues.cask.co/browse/CDAP-3817>`__ is resolved,
-ensure ``hdfs:///#{hdfs.namespace}/tx.snapshot`` exists and is owned by ``#{hdfs.user}``. 
+In rare cases, ensure ``hdfs:///${hdfs.namespace}/tx.snapshot`` exists and is owned by
+``${hdfs.user}``, until `CDAP-3817 <https://issues.cask.co/browse/CDAP-3817>`__ is
+resolved. 
 
-In any other case, the error should show which directory it is attempting to access. Don't
-hesitate to ask for help at the `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__.
+In any other case, the error should show which directory it is attempting to access, such as::
+
+  2015-10-30 22:14:27,528 - ERROR [ STARTING:...MasterServiceMain$2@452] - master.services failed with exception; restarting with back-off
+  java.lang.RuntimeException: java.io.IOException: failed to copy bundle from file:/tmp/appMaster.37a86cfd....jar5052.tmp
+  to hdfs://nameservice/cdap/twill/master.services/b4ce41a5e7e5.../appMaster.37a86cfd-1d88.jar
+	at com.google.common.base.Throwables.propagate(Throwables.java:160) ~[com.google.guava.guava-13.0.1.jar:na]
+	...
+  Caused by: org.apache.hadoop.ipc.RemoteException(org.apache.hadoop.security.AccessControlException): 
+  Permission denied: user=yarn, access=WRITE, inode="/":hdfs:supergroup:drwxr-xr-x
+  at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.checkFsPermission(FSPermissionChecker.java:271)
+  at org.apache.hadoop.hdfs.server.namenode.FSPermissionChecker.check(FSPermissionChecker.java:257)
+  
+or::
+
+  Deploy failed: Could not create temporary directory at: /var/tmp/cdap/data/namespaces/phoenix/tmp
+
+Don't hesitate to ask for help at the `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__.
 
 
-My CDAP Master log shows an error about the dataset service not being found.
+The CDAP Master log shows an error about the dataset service not being found.
 ----------------------------------------------------------------------------
 If you see an error such as::
 
@@ -135,8 +153,9 @@ not be able to communicate with each other, and you'll see error messages such a
 
 Where is the CDAP CLI (Command Line Interface)?
 -----------------------------------------------
-If you've installed the ``cdap-cli`` RPM or Deb, it's located under ``/opt/cdap/cli/bin``.
-You can add this location to your PATH to prevent the need for specifying the entire script every time.
+If you've installed the ``cdap-cli`` RPM or DEB, it's located under ``/opt/cdap/cli/bin``.
+If you have installed CDAP manually (without using Cloudera Manager or Apache Ambari),
+you can add this location to your PATH to prevent the need for specifying the entire script every time.
 
 **Note:** These commands will list the contents of the package ``cdap-cli``, once it has
 been installed::
@@ -148,18 +167,12 @@ been installed::
 
 What are the memory and core requirements for CDAP?
 ---------------------------------------------------
-The settings are governed by two sources: CDAP and YARN. The default setting for CDAP are
-found in the ``cdap-defaults.xml``, and are over-ridden in particular instances by the
-``cdap-site.xml`` file. These vary with each service and range from 512 to 1024 MB and
-from one to two cores.
-
-The YARN settings will over-ride these; for instance, the minimum YARN container size is
-determined by ``yarn.scheduler.minimum-allocation-mb``. The YARN default in Hadoop
-is 1024 MB, so containers will be allocated with 1024 MB, even if the CDAP settings are
-for 512 MB.
+The settings are governed by two sources: CDAP and YARN, and the requirements are
+:ref:`described here <install-hardware-memory-core-requirements>`.
 
 Can a current CDAP installation be upgraded more than one version?
 ------------------------------------------------------------------
+In general, no. (The exception is an upgrade from 2.8.x to 3.0.x.)
 This table lists the upgrade paths available for different CDAP versions:
 
 +---------+---------------------+
@@ -180,8 +193,8 @@ If you are doing a new installation, we recommend using the current version of C
 Configuring Distributed Mode
 ============================
 
-Are at least two machines really required?
-------------------------------------------
+Are at least two machines really required for CDAP services?
+------------------------------------------------------------
 The CDAP components are independently scalable, so you can install from 1 to *N* of each
 component on any combination of nodes.  The primary reasons for using at least two
 machines are for HA (high availability) and for ``cdap-router``'s data ingest capacity.
@@ -192,12 +205,16 @@ component on a separate machine (or more) if you choose. The :ref:`HA [High Avai
 Environment diagram <deployment-architectures-ha>` gives just one possible
 configuration.
 
-My Hive Server2 defaults to 10000; what should I do?
+The HiveServer2 defaults to 10000; what should I do?
 ----------------------------------------------------
 By default, CDAP uses port 10000. If port 10000 is being used by another service, simply
 change the ``router.bind.port`` in the ``cdap-site.xml`` to another available port. Since
-in the Hadoop ecosystem, Hive Server2 defaults to 10000, we are considering changing the
-router default port. 
+in the Hadoop ecosystem, HiveServer2 defaults to 10000, we are considering 
+`changing the router default port <https://issues.cask.co/browse/CDAP-1696>`__. 
+
+If you use Apache Ambari to install CDAP, it will detect this and run the CDAP Router on
+port 11015. Another solution is to simply run the CDAP Router on a different host than
+HiveServer2.
        
 How do I set the CDAP properties for components running on multiple machines?
 -----------------------------------------------------------------------------

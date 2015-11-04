@@ -129,7 +129,7 @@ notifications.
 
 Is CDAP on IRC?
 ---------------
-**CDAP IRC Channel:** #cdap on `irc.freenode.net <irc://irc.freenode.net:6667/cdap>`__.
+**CDAP IRC Channel:** #cdap on `chat.freenode.net <irc://chat.freenode.net:6667/cdap>`__.
 
 
 
