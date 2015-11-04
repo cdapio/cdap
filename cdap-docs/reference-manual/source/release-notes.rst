@@ -58,7 +58,6 @@ New Features
 ------------
 
 - Updated the version of `Tephra <http://tephra.io>`__ used in CDAP to v0.4.4.
-  As support for HBase-0.94 was dropped as of Tephra v0.5.0, this is the highest version that CDAP 3.0.6 can use.
 
 - Provided a Nagios plugin for monitoring the health of CDAP System Services 
   (`CDAP-3967 <https://issues.cask.co/browse/CDAP-3967>`__).
