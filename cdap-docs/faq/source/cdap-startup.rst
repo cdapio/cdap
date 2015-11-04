@@ -105,7 +105,7 @@ I don't see the CDAP Master service on YARN.
 
 
 The CDAP Master log shows permissions issues.
---------------------------------------------
+---------------------------------------------
 Ensure that ``hdfs:///${hdfs.namespace}`` and ``hdfs:///user/${hdfs.user}`` exist and are owned by ``${hdfs.user}``.
 (``hdfs.namespace`` and ``hdfs.user`` are defined in your installation's :ref:`cdap-site.xml file <configuration-options>`.)
 
@@ -133,7 +133,7 @@ Don't hesitate to ask for help at the `cdap-user@googlegroups.com <https://group
 
 
 The CDAP Master log shows an error about the dataset service not being found.
-----------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 If you see an error such as::
 
     2015-05-15 12:15:53,028 - ERROR [heartbeats-scheduler:c.c.c.d.s.s.MDSStreamMetaStore$1@71] 
