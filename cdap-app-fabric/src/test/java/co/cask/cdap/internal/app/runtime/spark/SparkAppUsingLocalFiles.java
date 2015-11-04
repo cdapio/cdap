@@ -27,6 +27,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import com.google.common.io.Files;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -96,7 +97,7 @@ public class SparkAppUsingLocalFiles extends AbstractApplication {
                                    LOCAL_ARCHIVE_ALIAS);
           boolean localFileFound = false;
           for (File localFile : localFiles.values()) {
-            if (localFilePath.equals(localFile.toString())) {
+            if (LOCAL_FILE_ALIAS.equals(localFile.getName())) {
               localFileFound = true;
               break;
             }
@@ -106,6 +107,8 @@ public class SparkAppUsingLocalFiles extends AbstractApplication {
           Preconditions.checkState(localFile.exists(), "Local file %s must exist.", localFile);
           File localArchive = taskLocalizationContext.getLocalFile(LOCAL_ARCHIVE_ALIAS);
           Preconditions.checkState(localArchive.exists(), "Local archive %s must exist.", LOCAL_ARCHIVE_ALIAS);
+          Preconditions.checkState(localArchive.isDirectory(), "Local archive %s should have been extracted to a " +
+            "directory.", LOCAL_ARCHIVE_ALIAS);
           Iterator<String> splitter = Splitter.on("=").omitEmptyStrings().trimResults().split(line).iterator();
           Preconditions.checkArgument(splitter.hasNext());
           String key = splitter.next();
@@ -136,14 +139,14 @@ public class SparkAppUsingLocalFiles extends AbstractApplication {
   }
 
   private static URI createTemporaryArchiveFile() throws IOException {
-    File tmpDir1 = com.google.common.io.Files.createTempDir();
+    File tmpDir1 = Files.createTempDir();
     List<File> files = new ArrayList<>();
     for (int i = 0; i < 3; i++) {
       File tmpFile = File.createTempFile("abcd" + i, "txt", tmpDir1);
       files.add(tmpFile);
     }
 
-    File tmpDir2 = com.google.common.io.Files.createTempDir();
+    File tmpDir2 = Files.createTempDir();
     File destArchive = new File(tmpDir2, "myBundle.jar");
     BundleJarUtil.createJar(tmpDir1, destArchive);
     for (File file : files) {
