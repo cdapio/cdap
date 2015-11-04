@@ -295,7 +295,7 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
           Row result = table.get(JOB_KEY);
           if (!result.isEmpty()) {
             for (byte[] bytes : result.getColumns().values()) {
-              JobDetail jobDetail =  (JobDetail) SerializationUtils.deserialize(bytes);
+              JobDetail jobDetail = (JobDetail) SerializationUtils.deserialize(bytes);
               LOG.debug("Schedule: Job with key {} found", jobDetail.getKey());
               jobs.add(jobDetail);
             }
@@ -350,24 +350,21 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
         @Override
         public void apply() throws Exception {
           Row result = table.get(TRIGGER_KEY);
-          if (!result.isEmpty()) {
-            boolean upgadedSchedules = false;
-            for (byte[] bytes : result.getColumns().values()) {
-              Object triggerObject = SerializationUtils.deserialize(bytes);
-              if (triggerObject instanceof TriggerStatus) {
-                TriggerStatus trigger = (TriggerStatus) triggerObject;
-                persistTrigger(table, trigger.trigger, trigger.state);
-                upgadedSchedules = true;
-                LOG.debug("Schedule: trigger with key {} upgraded", trigger.trigger.getKey());
-              }
+          if (result.isEmpty()) {
+            return;
+          }
+          boolean upgradedSchedules = false;
+          for (byte[] bytes : result.getColumns().values()) {
+            Object triggerObject = SerializationUtils.deserialize(bytes);
+            if (triggerObject instanceof TriggerStatus) {
+              TriggerStatus trigger = (TriggerStatus) triggerObject;
+              persistTrigger(table, trigger.trigger, trigger.state);
+              upgradedSchedules = true;
+              LOG.info("Trigger with key {} upgraded", trigger.trigger.getKey());
             }
-            if (upgadedSchedules) {
-              LOG.info("Schedule: Successfully upgraded required schedules.");
-            } else {
-              LOG.info("Schedule: No schedules needs to be upgraded.");
-            }
-          } else {
-            LOG.debug("Schedule: No schedules found in the store.");
+          }
+          if (!upgradedSchedules) {
+            LOG.info("No schedules needs to be upgraded.");
           }
         }
       });
@@ -408,6 +405,8 @@ public class DatasetBasedTimeScheduleStore extends RAMJobStore {
    * Trigger and state.
    * Legacy TriggerStatus class which was used till CDAP 3.2. Its needed to deserialize the existing triggers while
    * upgrading from 3.2 to 3.3. This class should be removed in the release next to 3.3
+   * TODO CDAP-4200: Improvise deserilization to make sure deserilization happen for all java version and is not
+   * dependent of compiler version.
    */
   private static class TriggerStatus implements Serializable {
     // This is the serial version UID with which triggers were serialized till CDAP 3.2.
