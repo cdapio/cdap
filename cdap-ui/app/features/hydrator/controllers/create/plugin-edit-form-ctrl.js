@@ -274,6 +274,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     $scope.$watchCollection('plugin.properties', function() {
       MyNodeConfigService.notifyPluginSaveListeners($scope.plugin.id);
+      // This should use NodeConfigActionsFactory.savePlugin.
     });
 
     function setGroups(propertiesFromBackend, res, group) {
