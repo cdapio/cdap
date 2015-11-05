@@ -23,6 +23,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionAware;
@@ -117,7 +118,15 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
     Map<String, String> dsArguments =
       RuntimeArguments.extractScope(Scope.DATASET, name, runtimeArguments);
     dsArguments.putAll(arguments);
-    return getDataset(new DatasetCacheKey(name, dsArguments), bypass);
+
+    // Need to switch the context classloader to the CDAP system since getting dataset instance is in CDAP context
+    // The internal of the dataset instantiate may switch the context class loader to a different one when necessary
+    ClassLoader currentClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
+    try {
+      return getDataset(new DatasetCacheKey(name, dsArguments), bypass);
+    } finally {
+      ClassLoaders.setContextClassLoader(currentClassLoader);
+    }
   }
 
   /**
