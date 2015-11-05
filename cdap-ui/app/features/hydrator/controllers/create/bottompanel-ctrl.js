@@ -14,36 +14,66 @@
  * the License.
  */
 
+class BottomPanelController {
+  constructor(PipelineDetailBottomPanelActionFactory, BottomPanelStore, NodeConfigStore) {
+    this.tabs = [
+      {
+        title: 'Console',
+        template: '/assets/features/hydrator/templates/partial/console.html'
+      },
+      {
+        title: 'Pipeline Configuration',
+        template: '/assets/features/hydrator/templates/partial/settings.html'
+      },
+      {
+        title: 'Node Configuration',
+        template: '/assets/features/hydrator/templates/partial/node-config.html'
+      },
+      {
+        title: 'Reference',
+        template: '/assets/features/hydrator/templates/partial/reference-tab.html'
+      }
+    ];
+    this.PipelineDetailBottomPanelActionFactory = PipelineDetailBottomPanelActionFactory;
+    this.NodeConfigStore = NodeConfigStore;
+    this.BottomPanelStore = BottomPanelStore;
+
+    this.BottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
+    NodeConfigStore.registerOnChangeListener( () => { this.selectTab(2); } );
+
+    this.selectTab(0);
+  }
+  selectTab(tab) {
+    this.activeTab = this.tabs[tab];
+  }
+  setIsCollapsed() {
+    this.bottomPanelState = this.BottomPanelStore.getPanelState();
+  }
+  toggleCollapse(expanded) {
+    if(expanded) {
+      this.PipelineDetailBottomPanelActionFactory.collapse();
+    } else {
+      this.PipelineDetailBottomPanelActionFactory.expand();
+    }
+  }
+  toggleMaximized(maximized) {
+    if (maximized !== 2) {
+      this.PipelineDetailBottomPanelActionFactory.maximize();
+    } else {
+      this.PipelineDetailBottomPanelActionFactory.expand();
+    }
+  }
+}
+
+BottomPanelController.$inject = ['PipelineDetailBottomPanelActionFactory', 'BottomPanelStore', 'NodeConfigStore'];
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('BottomPanelController', function(){
+  .controller('BottomPanelController', BottomPanelController);
+
   // .controller('BottomPanelController', function (BottomPanelStore, NodeConfigStore, PipelineDetailBottomPanelActionFactory, MyConsoleTabService, MyAppDAGService) {
     // this.setIsCollapsed = function() {
     //   this.bottomPanelState = BottomPanelStore.getPanelState();
     // };
     //
-    // this.tabs = [
-    //   {
-    //     title: 'Console',
-    //     template: '/assets/features/hydrator/templates/partial/console.html'
-    //   },
-    //   {
-    //     title: 'Pipeline Configuration',
-    //     template: '/assets/features/hydrator/templates/partial/settings.html'
-    //   },
-    //   {
-    //     title: 'Node Configuration',
-    //     template: '/assets/features/hydrator/templates/partial/node-config.html'
-    //   },
-    //   {
-    //     title: 'Reference',
-    //     template: '/assets/features/hydrator/templates/partial/reference-tab.html'
-    //   }
-    // ];
-    //
-    // this.selectTab = function(tab) {
-    //   this.activeTab = this.tabs[tab];
-    // };
-    // this.selectTab(0);
     // this.setIsCollapsed();
     //
     // this.toggleCollapse = function(expanded) {
@@ -116,4 +146,4 @@ angular.module(PKG.name + '.feature.hydrator')
     // MyAppDAGService.errorCallback(showConsoleTab.bind(this));
     // MyConsoleTabService.registerOnMessageUpdates(showConsoleTab.bind(this));
 
-  });
+  // });
