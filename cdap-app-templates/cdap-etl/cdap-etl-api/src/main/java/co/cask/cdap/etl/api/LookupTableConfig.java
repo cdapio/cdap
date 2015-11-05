@@ -15,10 +15,11 @@
  */
 package co.cask.cdap.etl.api;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Configuration for a particular {@link Lookup} table.
@@ -32,41 +33,20 @@ public class LookupTableConfig {
     DATASET
   }
 
-  /**
-   * When type is DATASET, {@link #properties} is interpreted as {@link DatasetProperties}.
-   */
   private final TableType type;
-  private final Map<String, Object> properties;
+  private final Map<String, String> datasetProperties;
 
-  public LookupTableConfig(TableType type, Map<String, Object> properties) {
+  public LookupTableConfig(TableType type, @Nullable Map<String, String> datasetProperties) {
     this.type = type;
-    this.properties = properties;
+    this.datasetProperties = datasetProperties;
   }
 
   public TableType getType() {
     return type;
   }
 
-  public Map<String, Object> getProperties() {
-    return properties;
-  }
-
-  public DatasetProperties getDatasetProperties() {
+  public Map<String, String> getDatasetProperties() {
     Preconditions.checkArgument(type == TableType.DATASET);
-
-    Object argumentsObj = properties.get("arguments");
-    if (argumentsObj == null) {
-      return DatasetProperties.EMPTY;
-    }
-
-    if (!(argumentsObj instanceof Map)) {
-      throw new IllegalArgumentException("Expected 'arguments' property to be a map of string to string");
-    }
-
-    @SuppressWarnings("unchecked")
-    Map<String, String> arguments = (Map<String, String>) argumentsObj;
-    return DatasetProperties.builder()
-      .addAll(arguments)
-      .build();
+    return datasetProperties == null ? ImmutableMap.<String, String>of() : datasetProperties;
   }
 }

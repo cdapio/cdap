@@ -80,7 +80,7 @@ operations with that lookup table in your script: ``context.getLookup('purchases
       "lookup": "{
         \"purchases\":{
           \"type\":\"DATASET\",
-          \"properties\":{
+          \"datasetProperties\":{
             \"dataset_argument1\":\"foo\",
             \"dataset_argument2\":\"bar\"
           }

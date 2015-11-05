@@ -176,7 +176,7 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
       "script", "function transform(x, ctx) { " +
         "x.name = x.name + '..hi..' + ctx.getLookup('lookupTable').lookup(x.name); return x; }",
       "lookup", GSON.toJson(new LookupConfig(ImmutableMap.of(
-        "lookupTable", new LookupTableConfig(LookupTableConfig.TableType.DATASET, ImmutableMap.<String, Object>of())
+        "lookupTable", new LookupTableConfig(LookupTableConfig.TableType.DATASET)
       )))
     ));
     ETLStage sink = new ETLStage("Table", ImmutableMap.of(Properties.Table.NAME, "testScriptLookup_table1",
