@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;

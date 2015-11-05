@@ -26,6 +26,7 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.cube.CubeDatasetDefinition;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.proto.Id;

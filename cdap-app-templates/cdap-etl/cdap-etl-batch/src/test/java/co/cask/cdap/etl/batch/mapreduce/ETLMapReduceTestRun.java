@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.common.Bytes;
@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.etl.batch.ETLBatchTestBase;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.source.FileBatchSource;
 import co.cask.cdap.etl.common.ETLStage;

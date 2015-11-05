@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch.source;
 
 import co.cask.cdap.api.annotation.Description;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
@@ -30,6 +31,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 
+import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -94,12 +96,8 @@ public abstract class TimePartitionedFileSetSource<KEY, VALUE> extends BatchSour
     pipelineConfigurer.createDataset(tpfsName, TimePartitionedFileSet.class.getName(), properties.build());
   }
 
-  /**
-   * Set file set specific properties, such as input/output format and explore properties.
-   */
-  protected abstract void addFileSetProperties(FileSetProperties.Builder properties);
-
-  protected void setInput(BatchSourceContext context) {
+  @Override
+  public final void prepareRun(BatchSourceContext context) {
     Map<String, String> runtimeArgs = context.getRuntimeArguments();
     long runtime = context.getLogicalStartTime();
     if (runtimeArgs.containsKey("runtime")) {
@@ -114,6 +112,19 @@ public abstract class TimePartitionedFileSetSource<KEY, VALUE> extends BatchSour
     TimePartitionedFileSetArguments.setInputStartTime(sourceArgs, startTime);
     TimePartitionedFileSetArguments.setInputEndTime(sourceArgs, endTime);
     TimePartitionedFileSet source = context.getDataset(config.name, sourceArgs);
-    context.setInput(config.name, source);
+
+    Map<String, String> config = new HashMap<>(source.getInputFormatConfiguration());
+    addInputFormatConfiguration(config);
+    context.setInput(new SourceInputFormatProvider(source.getInputFormatClassName(), config));
   }
+
+  /**
+   * Set file set specific properties, such as input/output format and explore properties.
+   */
+  protected abstract void addFileSetProperties(FileSetProperties.Builder properties);
+
+  /**
+   * Adds additional configuration for the {@link InputFormatProvider}.
+   */
+  protected abstract void addInputFormatConfiguration(Map<String, String> config);
 }

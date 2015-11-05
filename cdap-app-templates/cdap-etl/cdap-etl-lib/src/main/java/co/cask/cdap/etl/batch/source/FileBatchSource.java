@@ -125,8 +125,10 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     cal.set(Calendar.MILLISECOND, 0);
     prevHour = cal.getTime();
 
-    Job job = context.getHadoopJob();
+    Job job = Job.getInstance();
     Configuration conf = job.getConfiguration();
+    conf.clear();
+
     Map<String, String> properties = GSON.fromJson(config.fileSystemProperties, MAP_STRING_STRING_TYPE);
     //noinspection ConstantConditions
     for (Map.Entry<String, String> entry : properties.entrySet()) {
@@ -152,15 +154,12 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     }
 
     conf.set(CUTOFF_READ_TIME, dateFormat.format(prevHour));
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    @SuppressWarnings("unchecked")
-    Class<? extends FileInputFormat> classType =
-      (Class<? extends FileInputFormat>) classLoader.loadClass(config.inputFormatClass);
-    job.setInputFormatClass(classType);
     FileInputFormat.setInputPathFilter(job, BatchFileFilter.class);
     FileInputFormat.addInputPath(job, new Path(config.path));
-    //noinspection ConstantConditions
-    CombineTextInputFormat.setMaxInputSplitSize(job, config.maxSplitSize);
+    if (config.maxSplitSize != null) {
+      FileInputFormat.setMaxInputSplitSize(job, config.maxSplitSize);
+    }
+    context.setInput(new SourceInputFormatProvider(config.inputFormatClass, conf));
   }
 
   @Override

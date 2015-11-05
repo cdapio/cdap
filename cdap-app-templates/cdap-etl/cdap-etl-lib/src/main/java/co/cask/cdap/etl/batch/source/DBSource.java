@@ -34,6 +34,7 @@ import co.cask.cdap.etl.common.db.DBManager;
 import co.cask.cdap.etl.common.db.DBRecord;
 import co.cask.cdap.etl.common.db.DBUtils;
 import co.cask.cdap.etl.common.db.ETLDBInputFormat;
+import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -41,6 +42,7 @@ import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.sql.Driver;
 
 /**
@@ -77,14 +79,16 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
   }
 
   @Override
-  public void prepareRun(BatchSourceContext context) {
+  public void prepareRun(BatchSourceContext context) throws Exception {
     LOG.debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
                 "countQuery = {}",
               dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
               dbSourceConfig.connectionString, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
 
-    Job job = context.getHadoopJob();
+    Job job = Job.getInstance();
     Configuration hConf = job.getConfiguration();
+    hConf.clear();
+
     // Load the plugin class to make sure it is available.
     Class<? extends Driver> driverClass = context.loadPluginClass(getJDBCPluginId());
     if (dbSourceConfig.user == null && dbSourceConfig.password == null) {
@@ -94,7 +98,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
                                   dbSourceConfig.user, dbSourceConfig.password);
     }
     ETLDBInputFormat.setInput(job, DBRecord.class, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
-    job.setInputFormatClass(ETLDBInputFormat.class);
+    context.setInput(new SourceInputFormatProvider(ETLDBInputFormat.class, hConf));
   }
 
   @Override
