@@ -240,7 +240,6 @@ specified in :ref:`appendix-cdap-site.xml`):
 
 - ``app.temp.dir`` (default: ``/tmp``)
 - ``kafka.log.dir`` (default: ``/tmp/kafka-logs``)
-- ``/cdap/kafka-logs`` 
 - ``/var/cdap/run``
 - ``/var/log/cdap``
 - ``/var/run/cdap``
