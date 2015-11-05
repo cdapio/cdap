@@ -69,33 +69,6 @@ BottomPanelController.$inject = ['PipelineDetailBottomPanelActionFactory', 'Bott
 angular.module(PKG.name + '.feature.hydrator')
   .controller('BottomPanelController', BottomPanelController);
 
-  // .controller('BottomPanelController', function (BottomPanelStore, NodeConfigStore, PipelineDetailBottomPanelActionFactory, MyConsoleTabService, MyAppDAGService) {
-    // this.setIsCollapsed = function() {
-    //   this.bottomPanelState = BottomPanelStore.getPanelState();
-    // };
-    //
-    // this.setIsCollapsed();
-    //
-    // this.toggleCollapse = function(expanded) {
-    //   if(expanded) {
-    //     PipelineDetailBottomPanelActionFactory.collapse();
-    //   } else {
-    //     PipelineDetailBottomPanelActionFactory.expand();
-    //   }
-    // };
-    // this.toggleMaximized = function(maximized) {
-    //   if (maximized !== 2) {
-    //     PipelineDetailBottomPanelActionFactory.maximize();
-    //   } else {
-    //     PipelineDetailBottomPanelActionFactory.expand();
-    //   }
-    // };
-    // BottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
-    //
-    // NodeConfigStore.registerOnChangeListener(function() {
-    //   this.selectTab(2);
-    // }.bind(this));
-    //
     // this.flashDanger = function() {
     //   this.dangerBg = true;
     //   setTimeout(function() {
