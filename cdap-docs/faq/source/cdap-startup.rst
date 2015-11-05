@@ -1,8 +1,9 @@
 .. meta::
     :author: Cask Data, Inc.
+    :description: Frequently Asked Questions about starting the Cask Data Application Platform
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. :titles-only-toc: true
+:titles-only-toc: true
 
 .. _faq-installation-startup:
 
@@ -10,15 +11,6 @@
 FAQ: CDAP Startup
 =================
 
-.. contents::
-   :depth: 2
-   :local:
-   :backlinks: entry
-   :class: faq
-
-
-Startup
-=======
 
 CDAP installed on CDH using Cloudera Manager doesn't startup |---| what do I do?
 --------------------------------------------------------------------------------
@@ -210,9 +202,6 @@ This table lists the upgrade paths available for different CDAP versions:
 If you are doing a new installation, we recommend using the current version of CDAP.
 
 
-Configuring Distributed Mode
-============================
-
 Are at least two machines really required for CDAP services?
 ------------------------------------------------------------
 The CDAP components are independently scalable, so you can install from 1 to *N* of each
@@ -259,9 +248,6 @@ production would have a load balancer in front, which is what you would set
 to a particular router, and if you have both UI and router running on each node, you could
 use ``'127.0.0.1'``.
 
-
-Additional Resources
-====================
 
 Ask the CDAP Community for assistance
 -------------------------------------

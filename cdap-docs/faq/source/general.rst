@@ -3,7 +3,7 @@
     :description: Frequently Asked Questions about the Cask Data Application Platform
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-.. :titles-only-toc: true
+:titles-only-toc: true
 
 .. _faq-general-questions:
 
@@ -11,15 +11,6 @@
 FAQ: General Questions
 ======================
 
-.. contents::
-   :depth: 2
-   :local:
-   :backlinks: entry
-   :class: faq
-
-
-Cask Data Application Platform
-==============================
 
 What is the Cask Data Application Platform?
 -------------------------------------------
@@ -69,8 +60,6 @@ advantages of using CDAP include:
    lifecycle and scale of your application.
 
 
-Platforms and Language
-======================
 
 What platforms are supported by the Cask Data Application Platform SDK?
 -----------------------------------------------------------------------
@@ -90,9 +79,6 @@ What version of Node.js is required by CDAP?
 The version of `Node.js <https://nodejs.org/>`__ must be from |node-js-version|; we recommend |recommended-node-js-version|.
 
 
-Hadoop
-======
-
 I have a Hadoop cluster in my data center, can I run CDAP that uses my Hadoop cluster?
 --------------------------------------------------------------------------------------
 Yes. You can install CDAP on your Hadoop cluster. See :ref:`install`.
@@ -104,9 +90,6 @@ MapR 4.1 and 5.0, and Apache Bigtop 0.8.0.
 
 
 .. _faq-cdap-user-groups:
-
-Issues, User Groups, Mailing Lists, IRC Channel
-===============================================
 
 I've found a bug in CDAP. How do I file an issue?
 -------------------------------------------------
