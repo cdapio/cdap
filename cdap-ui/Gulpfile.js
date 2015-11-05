@@ -186,7 +186,8 @@ function getEs6Features(isNegate) {
   var es6features = [
     'workflows',
     'flows',
-    'apps'
+    'apps',
+    'hydrator'
   ];
   var returnVal = [];
   es6features.forEach(function(feature) {
