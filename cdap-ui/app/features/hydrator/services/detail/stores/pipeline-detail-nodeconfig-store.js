@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('NodeConfigStore', function(PipelineNodeConfigDispatcher, $q, MyAppDAGService, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope) {
+  .service('NodeConfigStore', function(PipelineNodeConfigDispatcher, $q, MyAppDAGService, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, ConfigStore, ConfigAcionsFactory) {
 
     var dispatcher = PipelineNodeConfigDispatcher.getDispatcher();
     this.changeListeners = [];
@@ -37,7 +37,17 @@ angular.module(PKG.name + '.feature.hydrator')
     this.setState = function(plugin) {
       onPluginChange.call(this, plugin);
     };
+    this.setPlugin = function(plugin) {
+      this.plugin = plugin;
+      var type = this.isSource ? 'source': false;
+      if (!type && this.isSink) {
+        type = 'sink';
+      } else {
+        type = 'transform';
+      }
 
+      ConfigAcionsFactory.savePlugin(plugin, type);
+    };
     this.registerOnChangeListener = function(callback) {
       this.changeListeners.push(callback);
     };
@@ -53,6 +63,7 @@ angular.module(PKG.name + '.feature.hydrator')
       this.emitChange();
     }.bind(this));
     dispatcher.register('onReset', this.setDefaults.bind(this));
+    dispatcher.register('onPluginSave', this.setPlugin.bind(this));
 
     function onPluginChange(plugin) {
       if (plugin && this.state.plugin && plugin.id === this.state.plugin.id) {

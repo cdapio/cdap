@@ -19,6 +19,10 @@ angular.module(PKG.name + '.feature.hydrator')
     this.plugins = {};
 
     this.fetch = function(scope, templateid, pluginid) {
+      if (this.plugins[templateid + pluginid]) {
+        return $q.when(this.plugins[templateid + pluginid]);
+      }
+      
       var dataSrc = new MyCDAPDataSource(scope);
       var defer = $q.defer();
 
