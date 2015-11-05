@@ -189,6 +189,7 @@ function getEs6Features(isNegate) {
     'apps',
     'search',
     'pins'
+    'hydrator'
   ];
   var returnVal = [];
   es6features.forEach(function(feature) {
