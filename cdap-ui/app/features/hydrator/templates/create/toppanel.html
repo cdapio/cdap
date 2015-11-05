@@ -22,26 +22,26 @@
 
         <div class="input-group pull-left">
           <input type="text"
-                 ng-model="TopPanelController.metadata['name']"
+                 ng-model="TopPanelController.state.metadata['name']"
                  my-maxlength="64"
                  placeholder="[Pipeline Name]"
                  ng-keyup="TopPanelController.onEnterOnMetadata($event)"
-                 tooltip="{{ TopPanelController.metadata.name }}"
+                 tooltip="{{ TopPanelController.state.metadata.name }}"
                  tooltip-placement="right"
-                 tooltip-enable="TopPanelController.metadata.name.length > 27"
+                 tooltip-enable="TopPanelController.state.metadata.name.length > 27"
                  tooltip-append-to-body="true" />
           <span class="fa fa-pencil input-group-addon"></span>
         </div>
 
-        <span ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlBatch"
+        <span ng-if="TopPanelController.state.artifact.name === TopPanelController.GLOBALS.etlBatch"
               class="icon-ETLBatch"> Type: Batch </span>
-        <span ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlRealtime"
+        <span ng-if="TopPanelController.state.artifact.name === TopPanelController.GLOBALS.etlRealtime"
               class="icon-ETLRealtime"> Type: Realtime </span>
       </div>
 
       <textarea type="text"
                 class="pull-left"
-                ng-model="TopPanelController.metadata['description']"
+                ng-model="TopPanelController.state.metadata['description']"
                 my-maxlength="144"
                 placeholder="Enter a description for your pipeline."
                 tooltip="{{ TopPanelController.metadata.description }}"
@@ -52,13 +52,13 @@
 
     <div class="btn-group pull-right">
       <button type="button" class="btn btn-default" ng-click="TopPanelController.resetMetadata()">Cancel</button>
-      <button type="button" class="btn btn-success" ng-click="TopPanelController.metadataExpanded = false;">Save</button>
+      <button type="button" class="btn btn-success" ng-click="TopPanelController.saveMetadata()">Save</button>
     </div>
   </div>
   <div class="btn-group pull-right clearfix">
     <div class="btn pull-left"
          ng-repeat="action in TopPanelController.canvasOperations"
-         ng-click="TopPanelController.onTopSideGroupItemClicked(action)"
+         ng-click="action.fn()"
          >
       {{action.name}}
     </div>

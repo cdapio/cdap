@@ -27,4 +27,7 @@ angular.module(PKG.name + '.feature.hydrator')
     this.reset = function() {
       dispatcher.dispatch('onReset');
     };
+    this.savePlugin = function(plugin) {
+      dispatcher.dispatch('onPluginSave', plugin);
+    };
   });

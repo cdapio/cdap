@@ -13,20 +13,13 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
+
 <div ng-controller="HydratorSettingsController as HydratorSettingsController" class="pipeline-schedule">
 
   <div class="bottompanel-header"
-       ng-if="HydratorSettingsController.metadata.template.type === HydratorSettingsController.GLOBALS.etlBatch">
+       ng-if="HydratorSettingsController.templateType === HydratorSettingsController.GLOBALS.etlBatch">
     <h3>
       <span>Pipeline Schedule</span>
-      <span class="pull-right">
-        <button class="btn btn-success"
-          ng-click="HydratorSettingsController.save()"
-          ng-disabled="HydratorSettingsController.saveDisabled">Save</button>
-        <button class="btn btn-default"
-          ng-click="HydratorSettingsController.reset()"
-          ng-disabled="HydratorSettingsController.saveDisabled">Reset</button>
-      </span>
     </h3>
 
     <ul class="nav nav-tabs slanted-tabs" role="tablist">
@@ -46,7 +39,7 @@
   </div>
 
   <div class="bottompanel-body">
-    <div ng-if="HydratorSettingsController.metadata.template.type === HydratorSettingsController.GLOBALS.etlBatch">
+    <div ng-if="HydratorSettingsController.templateType === HydratorSettingsController.GLOBALS.etlBatch">
       <div class="basic-cron" ng-if="HydratorSettingsController.isBasic">
         <cron-selection class="select-wrapper" output="HydratorSettingsController.cron"
           init="HydratorSettingsController.initialCron"></cron-selection>
@@ -64,11 +57,11 @@
       </div>
     </div>
 
-    <div class="form-group" ng-if="HydratorSettingsController.metadata.template.type === HydratorSettingsController.GLOBALS.etlRealtime">
+    <div class="form-group" ng-if="HydratorSettingsController.templateType === HydratorSettingsController.GLOBALS.etlRealtime">
       <label class="col-sm-2 control-label">Instances</label>
       <div class="col-sm-10">
         <input type="number"
-               ng-model="HydratorSettingsController.metadata.template.instance"
+               ng-model="HydratorSettingsController.instance"
                class="form-control"
                min="1">
       </div>

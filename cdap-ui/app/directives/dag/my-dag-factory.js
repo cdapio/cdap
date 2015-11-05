@@ -15,9 +15,9 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .factory('MyDAGFactory', function(CanvasFactory) {
+  .factory('MyDAGFactory', function() {
     var defaultSettings = {
-      Connector : [ 'Flowchart', {gap: 7} ],
+      Connector : [ 'Flowchart', {gap: 6, stub: [10, 15], alwaysRespectStubs: true} ],
       ConnectionsDetachable: true
     };
     var connectorStyle = {
@@ -84,6 +84,12 @@ angular.module(PKG.name + '.commons')
           sink: angular.extend(sinkSettings, connectorOverlays)
         };
       }
+
+      settings.transformSource = angular.copy(settings.source);
+      settings.transformSink = angular.copy(settings.sink);
+      settings.transformSource.anchor = [ 0.5, 1, 1, 0, 26, -43, 'transformAnchor'];
+      settings.transformSink.anchor = [ 0.5, 1, -1, 0, -26, -43, 'transformAnchor'];
+
       return settings;
     }
 
@@ -108,25 +114,49 @@ angular.module(PKG.name + '.commons')
       return icon;
     }
 
-    function generateStyles(name, nodes, xmargin, ymargin) {
-      var styles = {};
-      var nodeStylesFromDagre = nodes.filter(function(node) {
-        return node.label === name;
-      });
+    // function generateStyles(name, nodes, xmargin, ymargin) {
+    //   var styles = {};
+    //   var nodeStylesFromDagre = nodes.filter(function(node) {
+    //     return node.label === name;
+    //   });
 
-      if (nodeStylesFromDagre.length) {
-        styles = {
-          'top': (nodeStylesFromDagre[0].y + ymargin) + 'px',
-          'left': (nodeStylesFromDagre[0].x + xmargin) + 'px'
-        };
-      }
-      return styles;
-    }
+    //   if (nodeStylesFromDagre.length) {
+    //     styles = {
+    //       'top': (nodeStylesFromDagre[0].y + ymargin) + 'px',
+    //       'left': (nodeStylesFromDagre[0].x + xmargin) + 'px'
+    //     };
+    //   }
+    //   return styles;
+    // }
 
     // Using Dagre here to generate x and y co-ordinates for each node.
     // When we fork and branch and have complex connections this will be useful for us.
     // Right now this returns a pretty simple straight linear graph.
-     function getGraph(plugins, type) {
+    //  function getGraph(plugins, type) {
+    //   var graph = new dagre.graphlib.Graph();
+    //   graph.setGraph({
+    //     nodesep: 90,
+    //     ranksep: 100,
+    //     rankdir: 'LR',
+    //     marginx: 30,
+    //     marginy: 30
+    //   });
+
+    //   graph.setDefaultEdgeLabel(function() { return {}; });
+    //   plugins.forEach(function(plugin) {
+    //     graph.setNode(plugin.id, {label: plugin.id, width: 100, height: 100});
+    //   });
+
+    //   var connections = CanvasFactory.getConnectionsBasedOnNodes(plugins, type);
+    //   connections.forEach(function (connection) {
+    //     graph.setEdge(connection.source, connection.target);
+    //   });
+
+    //   dagre.layout(graph);
+    //   return graph;
+    // }
+
+    function getGraphLayout(nodes, connections) {
       var graph = new dagre.graphlib.Graph();
       graph.setGraph({
         nodesep: 90,
@@ -135,13 +165,12 @@ angular.module(PKG.name + '.commons')
         marginx: 30,
         marginy: 30
       });
-
       graph.setDefaultEdgeLabel(function() { return {}; });
-      plugins.forEach(function(plugin) {
-        graph.setNode(plugin.id, {label: plugin.id, width: 100, height: 100});
+
+      nodes.forEach(function (node) {
+        graph.setNode(node.id, { label: node.id, width: 100, height: 100 });
       });
 
-      var connections = CanvasFactory.getConnectionsBasedOnNodes(plugins, type);
       connections.forEach(function (connection) {
         graph.setEdge(connection.source, connection.target);
       });
@@ -153,8 +182,9 @@ angular.module(PKG.name + '.commons')
     return {
       getSettings: getSettings,
       getIcon: getIcon,
-      generateStyles: generateStyles,
-      getGraph: getGraph
+      // generateStyles: generateStyles,
+      // getGraph: getGraph,
+      getGraphLayout: getGraphLayout
     };
 
   });

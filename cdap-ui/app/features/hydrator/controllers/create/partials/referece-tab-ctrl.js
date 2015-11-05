@@ -15,13 +15,12 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('ReferenceTabController', function(MyNodeConfigService, MyAppDAGService, GLOBALS, $rootScope, $sce) {
-    if (MyAppDAGService.metadata.template.type === GLOBALS.etlBatch) {
-      this.infoPluginType = 'batch';
-    } else if (MyAppDAGService.metadata.template.type === GLOBALS.etlRealtime) {
-      this.infoPluginType = 'real-time';
-    }
-    var plugin = MyNodeConfigService.plugin;
+  .controller('ReferenceTabController', function(GLOBALS, $rootScope, $sce) {
+    // Determine the plugin type from configStore.
+    //   this.infoPluginType = 'batch';
+    
+    // Connect node config store's active node.
+    var plugin = '';
     if (!plugin) {
       return;
     }
