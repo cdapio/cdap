@@ -34,7 +34,8 @@ public class RecordPutTransformer {
   
   public RecordPutTransformer(String rowField, Schema outputSchema) {
     if (outputSchema.getType() != Schema.Type.RECORD) {
-      throw new IllegalArgumentException("Schema must be a record instead of ''.");
+      throw new IllegalArgumentException(
+        String.format("Schema must be a record instead of '%s'.", outputSchema.getType()));
     }
     Schema.Field schemaRowField = outputSchema.getField(rowField);
     if (schemaRowField == null) {
