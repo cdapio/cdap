@@ -180,7 +180,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       final BasicMapReduceContext context =
         new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
                                   logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
-                                  metricsCollectionService, txSystemClient, datasetFramework,
+                                  metricsCollectionService, txSystemClient, datasetFramework, streamAdmin,
                                   getPluginArchive(options), pluginInstantiator);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),

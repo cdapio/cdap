@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
-import co.cask.cdap.api.data.batch.SimpleSplit;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -24,8 +23,6 @@ import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.tephra.Transaction;
 import com.google.common.base.Charsets;
@@ -47,7 +44,6 @@ import java.io.StringWriter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.net.URI;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,8 +65,6 @@ public final class MapReduceContextConfig {
   private static final String HCONF_ATTR_ARGS = "hconf.program.args";
   private static final String HCONF_ATTR_PROGRAM_JAR_URI = "hconf.program.jar.uri";
   private static final String HCONF_ATTR_CCONF = "hconf.cconf";
-  private static final String HCONF_ATTR_INPUT_SPLIT_CLASS = "hconf.program.input.split.class";
-  private static final String HCONF_ATTR_INPUT_SPLITS = "hconf.program.input.splits";
   private static final String HCONF_ATTR_NEW_TX = "hconf.program.newtx.tx";
   private static final String HCONF_ATTR_LOCAL_FILES = "hconf.program.local.files";
 
@@ -104,7 +98,6 @@ public final class MapReduceContextConfig {
     setProgramJarURI(programJarURI);
     setConf(conf);
     setTx(tx);
-    setInputSelection(context.getInputDataSelection());
     setLocalizedResources(localizedUserResources);
   }
 
@@ -192,7 +185,8 @@ public final class MapReduceContextConfig {
     if (spec == null) {
       return ImmutableMap.of();
     }
-    return GSON.fromJson(spec, new TypeToken<Map<String, Plugin>>() { }.getType());
+    return GSON.fromJson(spec, new TypeToken<Map<String, Plugin>>() {
+    }.getType());
   }
 
   private void setProgramJarURI(URI programJarURI) {
@@ -211,53 +205,6 @@ public final class MapReduceContextConfig {
    */
   public String getProgramJarName() {
     return new Path(getProgramJarURI()).getName();
-  }
-
-  /**
-   * Returns the name of the Dataset that is used as input for the MapReduce program or {@code null} if
-   * Dataset is not used for input.
-   */
-  @Nullable
-  public String getInputDataSet() {
-    return hConf.get(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET);
-  }
-
-  private void setInputSelection(@Nullable List<Split> splits) {
-    if (splits == null) {
-      return;
-    }
-    // todo: this is ugly
-    Class<? extends Split> splitClass;
-    if (splits.size() > 0) {
-      splitClass = splits.get(0).getClass();
-    } else {
-      // assign any
-      splitClass = SimpleSplit.class;
-    }
-    hConf.set(HCONF_ATTR_INPUT_SPLIT_CLASS, splitClass.getName());
-    hConf.set(HCONF_ATTR_INPUT_SPLITS, GSON.toJson(splits));
-  }
-
-  /**
-   * Returns the list of {@link Split} objects for the MapReduce program.
-   */
-  public List<Split> getInputSelection() {
-    String splitClassName = hConf.get(HCONF_ATTR_INPUT_SPLIT_CLASS);
-    String splitsJson = hConf.get(HCONF_ATTR_INPUT_SPLITS);
-    if (splitClassName == null || splitsJson == null) {
-      return Collections.emptyList();
-    }
-
-    try {
-      // Yes, we know that it implements Split
-      @SuppressWarnings("unchecked")
-      Class<? extends Split> splitClass =
-        (Class<? extends Split>) hConf.getClassLoader().loadClass(splitClassName);
-      return GSON.fromJson(splitsJson, new ListSplitType(splitClass));
-    } catch (ClassNotFoundException e) {
-      //todo
-      throw Throwables.propagate(e);
-    }
   }
 
   private void setLocalizedResources(Map<String, String> localizedUserResources) {
@@ -297,15 +244,6 @@ public final class MapReduceContextConfig {
       // it is fine, as it is not inner class
       return null;
     }
-  }
-
-  /**
-   * Returns the name of the Dataset that is used as output for the MapReduce program or {@code null} if
-   * Dataset is not used for output.
-   */
-  @Nullable
-  public String getOutputDataSet() {
-    return hConf.get(DataSetOutputFormat.HCONF_ATTR_OUTPUT_DATASET);
   }
 
   private void setConf(CConfiguration conf) {

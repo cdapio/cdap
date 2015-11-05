@@ -68,7 +68,7 @@ public class ScoreCounter extends AbstractMapReduce {
     PartitionedFileSetArguments.setInputPartitionFilter(
       inputArgs, PartitionFilter.builder().addValueCondition("league", league).build());
     PartitionedFileSet input = context.getDataset("results", inputArgs);
-    context.setInput("results", input);
+    context.setInput(input);
 
     // Each run writes its output to a partition for the league
     Map<String, String> outputArgs = Maps.newHashMap();

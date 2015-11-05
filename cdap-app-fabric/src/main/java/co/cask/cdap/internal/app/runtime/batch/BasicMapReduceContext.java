@@ -34,10 +34,14 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.data.stream.StreamInputFormatProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
@@ -73,13 +77,13 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final Map<String, Dataset> outputDatasets;
   private final Map<String, OutputFormatProvider> outputFormatProviders;
   private final TransactionContext txContext;
+  private final StreamAdmin streamAdmin;
   private final File pluginArchive;
   private final Map<String, LocalizeResource> resourcesToLocalize;
 
-  private String inputDatasetName;
-  private List<Split> inputDataSelection;
+  private InputFormatProvider inputFormatProvider;
+
   private Job job;
-  private Dataset inputDataset;
   private Resources mapperResources;
   private Resources reducerResources;
 
@@ -94,6 +98,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
                                MetricsCollectionService metricsCollectionService,
                                TransactionSystemClient txClient,
                                DatasetFramework dsFramework,
+                               StreamAdmin streamAdmin,
                                @Nullable File pluginArchive,
                                @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArguments, Collections.<String>emptySet(),
@@ -112,8 +117,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.spec = spec;
     this.mapperResources = spec.getMapperResources();
     this.reducerResources = spec.getReducerResources();
-    // initialize input/output to what the spec says. These can be overwritten at runtime.
-    this.inputDatasetName = spec.getInputDataSet();
 
     // We need to keep track of the output format providers, so that the MR job can use them.
     // We still need to keep track of outputDatasets, so MapReduceRuntimeService#onFinish can call their
@@ -127,6 +130,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
     this.txContext = getDatasetCache().newTransactionContext();
+    this.streamAdmin = streamAdmin;
     this.pluginArchive = pluginArchive;
     this.resourcesToLocalize = new HashMap<>();
   }
@@ -189,28 +193,42 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   @Override
   public void setInput(StreamBatchReadable stream) {
-    setInput(stream.toURI().toString());
+    setInput(new StreamInputFormatProvider(getProgram().getId().getNamespace(), stream, streamAdmin));
   }
 
   @Override
   public void setInput(String datasetName) {
-    this.inputDatasetName = datasetName;
+    setInput(datasetName, ImmutableMap.<String, String>of());
+  }
+
+  public void setInput(String datasetName, Map<String, String> arguments) {
+    setInput(createInputFormatProvider(datasetName, arguments, null));
   }
 
   @Override
   public void setInput(String datasetName, List<Split> splits) {
-    this.inputDatasetName = datasetName;
-    this.inputDataSelection = splits;
+    setInput(datasetName, ImmutableMap.<String, String>of(), splits);
+  }
+
+  @Override
+  public void setInput(String datasetName, Map<String, String> arguments, List<Split> splits) {
+    setInput(createInputFormatProvider(datasetName, arguments, splits));
   }
 
   @Override
   public void setInput(String inputDatasetName, Dataset dataset) {
-    if (!(dataset instanceof BatchReadable) && !(dataset instanceof InputFormatProvider)) {
+    if (dataset instanceof BatchReadable) {
+      setInput(inputDatasetName, ((BatchReadable) dataset).getSplits());
+    } else if (dataset instanceof InputFormatProvider) {
+      setInput((InputFormatProvider) dataset);
+    } else {
       throw new IllegalArgumentException("Input dataset must be a BatchReadable or InputFormatProvider.");
     }
-    // splits will be set by the MapReduceRuntimeService if they are not directly set by the program.
-    this.inputDatasetName = inputDatasetName;
-    this.inputDataset = dataset;
+  }
+
+  @Override
+  public void setInput(InputFormatProvider inputFormatProvider) {
+    this.inputFormatProvider = inputFormatProvider;
   }
 
   @Override
@@ -318,28 +336,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     return outputFormatProviders;
   }
 
-  /**
-   * Get the input dataset for the job. If the dataset instance was set at runtime, that instance is returned.
-   * If the dataset name was set at runtime, an instance for that name is returned. If nothing was set at runtime, the
-   * input dataset from the program spec is used. If no input dataset was specified anywhere, a null is returned.
-   *
-   * @return Input dataset for the MapReduce job.
-   */
-  public Dataset getInputDataset() {
-    // use the dataset instance if it is set.
-    if (inputDataset != null) {
-      return inputDataset;
-    }
-
-    // otherwise, use the input dataset name to create one.
-    if (inputDatasetName != null) {
-      return getDataset(inputDatasetName);
-    }
-
-    // if we got here, a dataset is not the input.
-    return null;
-  }
-
   @Override
   public void setMapperResources(Resources resources) {
     this.mapperResources = resources;
@@ -373,12 +369,9 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   }
 
   @Nullable
-  public String getInputDatasetName() {
-    return inputDatasetName;
-  }
+  public InputFormatProvider getInputFormatProvider() {
 
-  public List<Split> getInputDataSelection() {
-    return inputDataSelection;
+    return inputFormatProvider;
   }
 
   public Resources getMapperResources() {
@@ -405,5 +398,17 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   Map<String, LocalizeResource> getResourcesToLocalize() {
     return resourcesToLocalize;
+  }
+
+  @Nullable
+  private InputFormatProvider createInputFormatProvider(String datasetName,
+                                                        Map<String, String> datasetArgs,
+                                                        @Nullable List<Split> splits) {
+    // TODO: It's a hack for stream. It was introduced in Reactor 2.2.0. Fix it when addressing CDAP-4158.
+    if (datasetName.startsWith(Constants.Stream.URL_PREFIX)) {
+      return new StreamInputFormatProvider(getProgram().getId().getNamespace(),
+                                           new StreamBatchReadable(URI.create(datasetName)), streamAdmin);
+    }
+    return new DatasetInputFormatProvider(datasetName, datasetArgs, splits, this);
   }
 }
