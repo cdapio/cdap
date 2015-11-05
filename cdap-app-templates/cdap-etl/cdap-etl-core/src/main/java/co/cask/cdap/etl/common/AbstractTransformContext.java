@@ -19,8 +19,12 @@ package co.cask.cdap.etl.common;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.etl.api.Lookup;
+import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.TransformContext;
+
+import java.util.Map;
 
 /**
  * Base implementation of {@link TransformContext} for common functionality.
@@ -32,10 +36,12 @@ public abstract class AbstractTransformContext implements TransformContext {
   private final PluginContext pluginContext;
   private final String stageId;
   private final StageMetrics metrics;
+  private final LookupProvider lookup;
 
-  public AbstractTransformContext(PluginContext pluginContext, Metrics metrics, String stageId) {
+  public AbstractTransformContext(PluginContext pluginContext, Metrics metrics, LookupProvider lookup, String stageId) {
     this.pluginContext = pluginContext;
     this.stageId = stageId;
+    this.lookup = lookup;
     this.metrics = new DefaultStageMetrics(metrics, PluginID.from(stageId));
   }
 
@@ -71,5 +77,10 @@ public abstract class AbstractTransformContext implements TransformContext {
 
   private String scopePluginId(String childPluginId) {
     return String.format("%s%s%s", stageId, Constants.ID_SEPARATOR, childPluginId);
+  }
+
+  @Override
+  public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
+    return lookup.provide(table, arguments);
   }
 }

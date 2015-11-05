@@ -54,6 +54,8 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
 import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGenerator;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
+import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
+import co.cask.cdap.internal.app.runtime.spark.LocalizationUtils;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.Transaction;
@@ -67,6 +69,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.inject.Injector;
@@ -202,6 +205,9 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
       beforeSubmit(job);
 
+      // Localize additional resources that users have requested via BasicMapReduceContext.localize methods
+      Map<String, String> localizedUserResources = localizeUserResources(job, tempDir);
+
       // Override user-defined job name, since we set it and depend on the name.
       // https://issues.cask.co/browse/CDAP-2441
       String jobName = job.getJobName();
@@ -218,7 +224,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // After calling beforeSubmit, we know what plugins are needed for the program, hence construct the proper
         // ClassLoader from here and use it for setting up the job
-        File pluginArchive = context.getPluginArchive();
+        Location pluginArchive = createPluginArchive(tempLocation);
         if (pluginArchive != null) {
           job.addCacheArchive(pluginArchive.toURI());
           mapredConf.set(Constants.Plugin.ARCHIVE, pluginArchive.getName());
@@ -274,7 +280,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       try {
         // We remember tx, so that we can re-use it in mapreduce tasks
         CConfiguration cConfCopy = cConf;
-        contextConfig.set(context, cConfCopy, tx, programJar.toURI());
+        contextConfig.set(context, cConfCopy, tx, programJar.toURI(), localizedUserResources);
 
         LOG.info("Submitting MapReduce Job: {}", context);
         // submits job and returns immediately. Shouldn't need to set context ClassLoader.
@@ -474,6 +480,30 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
+   * Commit a single output after the MR has finished, if it is an OutputFormatCommitter.
+   * @param succeeded whether the run was successful
+   * @param datasetName the name of the dataset
+   * @param outputDataset the output dataset or output format provider to commit
+   * @return whether the action was successful (it did not throw an exception)
+   */
+  private boolean commitOutput(boolean succeeded, String datasetName, Object outputDataset) {
+    if (outputDataset instanceof DatasetOutputCommitter) {
+      try {
+        if (succeeded) {
+          ((DatasetOutputCommitter) outputDataset).onSuccess();
+        } else {
+          ((DatasetOutputCommitter) outputDataset).onFailure();
+        }
+      } catch (Throwable t) {
+        LOG.error(String.format("Error from %s method of output dataset %s.",
+                                succeeded ? "onSuccess" : "onFailure", datasetName), t);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * Calls the {@link MapReduce#onFinish(boolean, co.cask.cdap.api.mapreduce.MapReduceContext)} method.
    */
   private void onFinish(final boolean succeeded) throws TransactionFailureException {
@@ -483,24 +513,17 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       public Void call() throws Exception {
         ClassLoader oldClassLoader = setContextCombinedClassLoader(context);
         try {
-          // TODO this should be done in the output committer, to make the M/R fail if addPartition fails
+          // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
+          // TODO (CDAP-1952): also, should failure of an output committer change the status of the program run?
           boolean success = succeeded;
           for (Map.Entry<String, Dataset> dsEntry : context.getOutputDatasets().entrySet()) {
-            String datasetName = dsEntry.getKey();
-            Dataset outputDataset = dsEntry.getValue();
-
-            if (outputDataset instanceof DatasetOutputCommitter) {
-              try {
-                if (succeeded) {
-                  ((DatasetOutputCommitter) outputDataset).onSuccess();
-                } else {
-                  ((DatasetOutputCommitter) outputDataset).onFailure();
-                }
-              } catch (Throwable t) {
-                LOG.error(String.format("Error from %s method of output dataset %s.",
-                                        succeeded ? "onSuccess" : "onFailure", datasetName), t);
-                success = false;
-              }
+            if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
+              success = false;
+            }
+          }
+          for (Map.Entry<String, OutputFormatProvider> dsEntry : context.getOutputFormatProviders().entrySet()) {
+            if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
+              success = false;
             }
           }
           mapReduce.onFinish(success, context);
@@ -899,6 +922,23 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   }
 
   /**
+   * Copies a plugin archive jar to the target location.
+   *
+   * @param targetDir directory where the archive jar should be created
+   * @return {@link Location} to the plugin archive or {@code null} if no plugin archive is available from the context.
+   */
+  @Nullable
+  private Location createPluginArchive(Location targetDir) throws IOException {
+    File pluginArchive = context.getPluginArchive();
+    if (pluginArchive == null) {
+      return null;
+    }
+    Location pluginLocation = targetDir.append(pluginArchive.getName()).getTempFile(".jar");
+    Files.copy(pluginArchive, Locations.newOutputSupplier(pluginLocation));
+    return pluginLocation;
+  }
+
+  /**
    * Creates a temp copy of the program jar.
    *
    * @return a new {@link Location} which contains the same content as the program jar
@@ -942,7 +982,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                 ((File) resource).delete();
               }
             } else if (resource instanceof Location) {
-              Locations.deleteQuietly((Location) resource);
+              Locations.deleteQuietly((Location) resource, true);
             } else if (resource instanceof AutoCloseable) {
               ((AutoCloseable) resource).close();
             } else if (resource instanceof Runnable) {
@@ -1004,5 +1044,48 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
   private ClassLoader setContextCombinedClassLoader(BasicMapReduceContext context) {
     return ClassLoaders.setContextClassLoader(new CombineClassLoader(
       null, ImmutableList.of(context.getProgram().getClassLoader(), getClass().getClassLoader())));
+  }
+
+  /**
+   * Localizes resources requested by users in the MapReduce Program's beforeSubmit phase.
+   * In Local mode, also copies resources to a temporary directory.
+   *
+   * @param job the {@link Job} for this MapReduce program
+   * @param targetDir in local mode, a temporary directory to copy the resources to
+   * @return a {@link Map} of resource name to the resource path. The resource path will be absolute in local mode,
+   * while it will just contain the file name in distributed mode.
+   */
+  private Map<String, String> localizeUserResources(Job job, File targetDir) throws IOException {
+    Map<String, String> localizedResources = new HashMap<>();
+    Map<String, LocalizeResource> resourcesToLocalize = context.getResourcesToLocalize();
+    for (Map.Entry<String, LocalizeResource> entry : resourcesToLocalize.entrySet()) {
+      String localizedFilePath;
+      String name = entry.getKey();
+      Configuration mapredConf = job.getConfiguration();
+      if (MapReduceTaskContextProvider.isLocal(mapredConf)) {
+        // in local mode, also add localize resources in a temporary directory
+        localizedFilePath =
+          LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir).getAbsolutePath();
+      } else {
+        URI uri = entry.getValue().getURI();
+        // in distributed mode, use the MapReduce Job object to localize resources
+        URI actualURI;
+        try {
+          actualURI = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), name);
+        } catch (URISyntaxException e) {
+          // Most of the URI is constructed from the passed URI. So ideally, this should not happen.
+          // If it does though, there is nothing that clients can do to recover, so not propagating a checked exception.
+          throw Throwables.propagate(e);
+        }
+        if (entry.getValue().isArchive()) {
+          job.addCacheArchive(actualURI);
+        } else {
+          job.addCacheFile(actualURI);
+        }
+        localizedFilePath = name;
+      }
+      localizedResources.put(name, localizedFilePath);
+    }
+    return localizedResources;
   }
 }

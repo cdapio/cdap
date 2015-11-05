@@ -46,6 +46,7 @@ import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
+import co.cask.cdap.etl.common.TxLookupProvider;
 import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -180,7 +181,8 @@ public class ETLWorker extends AbstractWorker {
   private void initializeSource(WorkerContext context) throws Exception {
     String sourcePluginId = context.getSpecification().getProperty(Constants.Source.PLUGINID);
     source = context.newPluginInstance(sourcePluginId);
-    WorkerRealtimeContext sourceContext = new WorkerRealtimeContext(context, metrics, sourcePluginId);
+    WorkerRealtimeContext sourceContext = new WorkerRealtimeContext(
+      context, metrics, new TxLookupProvider(context), sourcePluginId);
     LOG.debug("Source Class : {}", source.getClass().getName());
     source.initialize(sourceContext);
     sourceEmitter = new DefaultEmitter(sourceContext.getMetrics());
@@ -194,7 +196,8 @@ public class ETLWorker extends AbstractWorker {
 
     for (SinkInfo sinkInfo : sinkInfos) {
       RealtimeSink sink = context.newPluginInstance(sinkInfo.getSinkId());
-      WorkerRealtimeContext sinkContext = new WorkerRealtimeContext(context, metrics, sinkInfo.getSinkId());
+      WorkerRealtimeContext sinkContext = new WorkerRealtimeContext(
+        context, metrics, new TxLookupProvider(context), sinkInfo.getSinkId());
       LOG.debug("Sink Class : {}", sink.getClass().getName());
       sink.initialize(sinkContext);
       sink = new TrackedRealtimeSink(sink, sinkContext.getMetrics());
@@ -213,7 +216,8 @@ public class ETLWorker extends AbstractWorker {
       String transformId = transformInfo.getTransformId();
       try {
         Transform transform = context.newPluginInstance(transformId);
-        WorkerRealtimeContext transformContext = new WorkerRealtimeContext(context, metrics, transformId);
+        WorkerRealtimeContext transformContext = new WorkerRealtimeContext(
+          context, metrics, new TxLookupProvider(context), transformId);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
         transformDetailList.add(new TransformDetail(transformId, transform, transformContext.getMetrics()));

@@ -60,6 +60,7 @@ angular
       'cask-angular-eventpipe',
       'cask-angular-observable-promise',
       'cask-angular-socket-datasource',
+      'cask-angular-dispatcher',
 
       'mgcrea.ngStrap.datepicker',
       'mgcrea.ngStrap.timepicker',

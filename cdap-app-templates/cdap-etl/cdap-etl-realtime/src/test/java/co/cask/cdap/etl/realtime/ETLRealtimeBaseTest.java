@@ -28,7 +28,9 @@ import co.cask.cdap.etl.realtime.source.SqsSource;
 import co.cask.cdap.etl.realtime.source.TwitterSource;
 import co.cask.cdap.etl.transform.ProjectionTransform;
 import co.cask.cdap.etl.transform.ScriptFilterTransform;
+import co.cask.cdap.etl.transform.ScriptTransform;
 import co.cask.cdap.etl.transform.StructuredRecordToGenericRecordTransform;
+import co.cask.cdap.etl.transform.ValidatorTransform;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.test.TestBase;
@@ -54,7 +56,7 @@ public class ETLRealtimeBaseTest extends TestBase {
       RealtimeCubeSink.class, RealtimeTableSink.class,
       StreamSink.class);
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "transforms", "1.0.0"), APP_ARTIFACT_ID,
-      ProjectionTransform.class, ScriptFilterTransform.class,
+      ProjectionTransform.class, ScriptTransform.class, ScriptFilterTransform.class, ValidatorTransform.class,
       StructuredRecordToGenericRecordTransform.class);
   }
 }

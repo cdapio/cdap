@@ -19,6 +19,7 @@ package co.cask.cdap.etl.batch;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 
 import java.util.HashSet;
@@ -32,8 +33,8 @@ import java.util.Set;
 public class MapReduceSinkContext extends MapReduceBatchContext implements BatchSinkContext {
   private final Set<String> outputNames;
 
-  public MapReduceSinkContext(MapReduceContext context, Metrics metrics, String sinkId) {
-    super(context, metrics, sinkId);
+  public MapReduceSinkContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String sinkId) {
+    super(context, metrics, lookup, sinkId);
     this.outputNames = new HashSet<>();
   }
 

@@ -53,13 +53,12 @@ class SparkKMeansProgram extends ScalaSparkProgram {
   override def run(sc: SparkContext) {
 
     val arguments: String = sc.getRuntimeArguments.get("args")
-    var args : Array[String] = if (arguments == null) Array() else arguments.split("\\s")
+    val args: Array[String] = if (arguments == null) Array() else arguments.split("\\s")
 
     LOG.info("Running with arguments {}", args)
     // Amount of centers to calculate
     val K = if (args.length > 0) args(0).toInt else "2".toInt
     val convergeDist = if (args.length > 1) args(1).toDouble else "0.5".toDouble
-
 
     LOG.info("Processing points data")
 

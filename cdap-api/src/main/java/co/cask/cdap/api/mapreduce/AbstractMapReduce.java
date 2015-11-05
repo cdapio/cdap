@@ -151,7 +151,7 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
   /**
    * Sets the name of the Dataset used as output for the {@link MapReduce}.
    *
-   * Deprecated as of 3.2.0. Use {@link MapReduceContext#setOutput(String datasetName)}
+   * Deprecated as of 3.2.0. Use {@link MapReduceContext#addOutput(String datasetName)}
    * in {@link #beforeSubmit}, instead.
    */
   @Deprecated

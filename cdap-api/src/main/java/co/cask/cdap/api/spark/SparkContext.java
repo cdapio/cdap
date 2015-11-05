@@ -16,9 +16,11 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.ClientLocalizationContext;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.Stream;
@@ -46,7 +48,7 @@ import javax.annotation.Nullable;
  * method acts.
  */
 @Beta
-public interface SparkContext extends RuntimeContext, DatasetContext {
+public interface SparkContext extends RuntimeContext, DatasetContext, ClientLocalizationContext {
   /**
    * @return The specification used to configure this {@link Spark} job instance.
    */
@@ -211,4 +213,12 @@ public interface SparkContext extends RuntimeContext, DatasetContext {
    */
   @Nullable
   WorkflowToken getWorkflowToken();
+
+  /**
+   * Returns a {@link Serializable} {@link TaskLocalizationContext} which can be used to retrieve files localized to
+   * task containers. The instance returned can also be used in Spark program's closures.
+   *
+   * @return the {@link TaskLocalizationContext} for the {@link Spark} program
+   */
+  TaskLocalizationContext getTaskLocalizationContext();
 }

@@ -119,6 +119,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
     return plugins;
   }
 
+  @Nullable
   private static MetricsContext getMetricCollector(MetricsCollectionService service,
                                                      Program program, String handlerName,
                                                      String runId, int instanceId) {

@@ -112,19 +112,31 @@ class WorkflowsRunsController {
   stop() {
     this.runStatus = 'STOPPING';
     this.myWorkFlowApi
-     .stopRun(params, {});
+     .stopRun(params, {})
+     .$promise
+     .then( () => {
+       this.$state.go(this.$state.current, this.$state.params, {reload: true});
+     });
   }
 
   suspend() {
     this.runStatus = 'SUSPENDING';
     this.myWorkFlowApi
-     .suspendRun(params, {});
+     .suspendRun(params, {})
+     .$promise
+     .then( () => {
+       this.$state.go(this.$state.current, this.$state.params, {reload: true});
+     });
   }
 
   resume() {
     this.runStatus = 'RESUMING';
     this.myWorkFlowApi
-     .resumeRun(params, {});
+     .resumeRun(params, {})
+     .$promise
+     .then( () => {
+       this.$state.go(this.$state.current, this.$state.params, {reload: true});
+     });
   }
 
   openHistory() {

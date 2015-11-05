@@ -15,7 +15,7 @@
 -->
 
 <div class="input-schema">
-    <div class="schema-inner" ng-if="inputSchema">
+    <div class="schema-inner" ng-if="plugin.inputSchema">
       <h4>Input Schema</h4>
       <table class="table">
         <thead>
@@ -30,7 +30,7 @@
           </th>
         </thead>
         <tbody>
-          <tr ng-repeat="schema in inputSchema" ng-keypress="enter($event, $last)">
+          <tr ng-repeat="schema in plugin.inputSchema" ng-keypress="enter($event, $last)">
             <td class="name" ng-if="!schema.empty">
               <span tooltip="{{ schema.name }}"
                     tooltip-ellipsis="{{ schema.name }}"
@@ -51,7 +51,7 @@
         </tbody>
       </table>
     </div>
-    <div class="empty-container" ng-if="!inputSchema">
+    <div class="empty-container" ng-if="!plugin.inputSchema">
       <h4>Input Schema</h4>
       <p>There is no input schema</p>
     </div>

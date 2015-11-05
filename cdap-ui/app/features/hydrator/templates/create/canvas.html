@@ -14,7 +14,4 @@
   the License.
 -->
 
-<my-dag data-config="CanvasController.nodes"
-          data-errors="CanvasController.errors"
-          ng-class="{'canvas-scroll': isCanvasScrollable}">
-</my-dag>
+<my-dag ng-class="{'canvas-scroll': CanvasCtrl.state.setScroll}"> </my-dag>

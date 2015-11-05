@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
@@ -50,6 +51,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.Closeable;
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;

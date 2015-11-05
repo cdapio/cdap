@@ -25,7 +25,7 @@ import co.cask.cdap.api.plugin.PluginProperties;
  * Context passed to ETL stages.
  */
 @Beta
-public interface TransformContext extends PluginContext {
+public interface TransformContext extends PluginContext, LookupProvider {
 
   /**
    * Gets the {@link PluginProperties} associated with the stage.

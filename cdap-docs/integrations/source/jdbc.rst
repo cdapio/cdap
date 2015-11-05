@@ -13,10 +13,10 @@ Overview
 CDAP provides a JDBC driver to make integrations with external programs and third-party BI
 (business intelligence) tools easier.
 
-The JDBC driver is a JAR that is bundled with the CDAP SDK. You can find it in the ``lib``
+The JDBC driver is a JAR that is bundled with the CDAP SDK. You can find it in the ``libexec``
 directory of your SDK installation at::
 
-  lib/co.cask.cdap.cdap-explore-jdbc-<version>.jar
+  libexec/co.cask.cdap.cdap-explore-jdbc-<version>.jar
 
 If you don't have a CDAP SDK and only want to connect to an existing instance of CDAP, 
 you can download the CDAP JDBC driver from `this link 

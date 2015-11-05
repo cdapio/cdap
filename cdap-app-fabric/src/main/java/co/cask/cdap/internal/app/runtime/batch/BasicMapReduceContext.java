@@ -38,6 +38,7 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
+import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
 import co.cask.cdap.proto.Id;
@@ -50,6 +51,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.File;
+import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -72,6 +74,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final Map<String, OutputFormatProvider> outputFormatProviders;
   private final TransactionContext txContext;
   private final File pluginArchive;
+  private final Map<String, LocalizeResource> resourcesToLocalize;
 
   private String inputDatasetName;
   private List<Split> inputDataSelection;
@@ -125,6 +128,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
     this.txContext = getDatasetCache().newTransactionContext();
     this.pluginArchive = pluginArchive;
+    this.resourcesToLocalize = new HashMap<>();
   }
 
   public TransactionContext getTransactionContext() {
@@ -387,5 +391,19 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   public File getPluginArchive() {
     return pluginArchive;
+  }
+
+  @Override
+  public void localize(String name, URI uri) {
+    localize(name, uri, false);
+  }
+
+  @Override
+  public void localize(String name, URI uri, boolean archive) {
+    resourcesToLocalize.put(name, new LocalizeResource(uri, archive));
+  }
+
+  Map<String, LocalizeResource> getResourcesToLocalize() {
+    return resourcesToLocalize;
   }
 }

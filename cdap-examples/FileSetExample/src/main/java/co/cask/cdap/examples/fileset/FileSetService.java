@@ -17,7 +17,6 @@
 package co.cask.cdap.examples.fileset;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.service.AbstractService;
@@ -61,12 +60,6 @@ public class FileSetService extends AbstractService {
   public static class FileSetHandler extends AbstractHttpServiceHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileSetHandler.class);
-
-    @UseDataSet("lines")
-    private FileSet lines;
-
-    @UseDataSet("counts")
-    private FileSet counts;
 
     @GET
     @Path("{fileSet}")

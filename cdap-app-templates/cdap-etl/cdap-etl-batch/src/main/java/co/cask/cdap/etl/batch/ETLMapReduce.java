@@ -38,6 +38,7 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.common.Constants;
+import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.Pipeline;
@@ -154,7 +155,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     String sourcePluginId = properties.get(Constants.Source.PLUGINID);
 
     batchSource = context.newPluginInstance(sourcePluginId);
-    BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, sourcePluginId);
+    BatchSourceContext sourceContext = new MapReduceSourceContext(
+      context, mrMetrics, new DatasetContextLookupProvider(context), sourcePluginId);
     batchSource.prepareRun(sourceContext);
 
     String transformInfosStr = properties.get(Constants.Transform.PLUGINIDS);
@@ -178,7 +180,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     batchSinks = Lists.newArrayListWithCapacity(sinkInfos.size());
     for (SinkInfo sinkInfo : sinkInfos) {
       BatchConfigurable<BatchSinkContext> batchSink = context.newPluginInstance(sinkInfo.getSinkId());
-      MapReduceSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkInfo.getSinkId());
+      MapReduceSinkContext sinkContext = new MapReduceSinkContext(
+        context, mrMetrics, new DatasetContextLookupProvider(context), sinkInfo.getSinkId());
       batchSink.prepareRun(sinkContext);
       batchSinks.add(batchSink);
       sinkOutputs.add(new SinkOutput(sinkInfo.getSinkId(), sinkContext.getOutputNames(),
@@ -211,7 +214,8 @@ public class ETLMapReduce extends AbstractMapReduce {
 
   private void onRunFinishSource(MapReduceContext context, boolean succeeded) {
     String sourcePluginId = context.getSpecification().getProperty(Constants.Source.PLUGINID);
-    BatchSourceContext sourceContext = new MapReduceSourceContext(context, mrMetrics, sourcePluginId);
+    BatchSourceContext sourceContext = new MapReduceSourceContext(
+      context, mrMetrics, new DatasetContextLookupProvider(context), sourcePluginId);
     LOG.info("On RunFinish Source : {}", batchSource.getClass().getName());
     try {
       batchSource.onRunFinish(succeeded, sourceContext);
@@ -229,7 +233,8 @@ public class ETLMapReduce extends AbstractMapReduce {
     for (int i = 0; i < sinkInfos.size(); i++) {
       BatchConfigurable<BatchSinkContext> batchSink = batchSinks.get(i);
       String sinkPluginId = sinkInfos.get(i).getSinkId();
-      BatchSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics, sinkPluginId);
+      BatchSinkContext sinkContext = new MapReduceSinkContext(
+        context, mrMetrics, new DatasetContextLookupProvider(context), sinkPluginId);
       try {
         batchSink.onRunFinish(succeeded, sinkContext);
       } catch (Throwable t) {
@@ -269,7 +274,8 @@ public class ETLMapReduce extends AbstractMapReduce {
       List<TransformDetail> pipeline = Lists.newArrayListWithCapacity(transformInfos.size() + 2);
 
       BatchSource source = context.newPluginInstance(sourcePluginId);
-      BatchRuntimeContext runtimeContext = new MapReduceRuntimeContext(context, mapperMetrics, sourcePluginId);
+      BatchRuntimeContext runtimeContext = new MapReduceRuntimeContext(
+        context, mapperMetrics, new DatasetContextLookupProvider(context), sourcePluginId);
       source.initialize(runtimeContext);
       pipeline.add(new TransformDetail(sourcePluginId, source, runtimeContext.getMetrics()));
 
@@ -295,7 +301,8 @@ public class ETLMapReduce extends AbstractMapReduce {
         Set<String> sinkOutputNames = sinkOutput.getSinkOutputs();
 
         BatchSink<Object, Object, Object> sink = context.newPluginInstance(sinkPluginId);
-        runtimeContext = new MapReduceRuntimeContext(context, mapperMetrics, sinkPluginId);
+        runtimeContext = new MapReduceRuntimeContext(
+          context, mapperMetrics, new DatasetContextLookupProvider(context), sinkPluginId);
         sink.initialize(runtimeContext);
         if (hasOneOutput) {
           sinks.add(new SingleOutputSink<>(sink, context, runtimeContext.getMetrics()));
@@ -335,7 +342,8 @@ public class ETLMapReduce extends AbstractMapReduce {
       for (TransformInfo transformInfo : transformInfos) {
         String transformId = transformInfo.getTransformId();
         Transform transform = context.newPluginInstance(transformId);
-        BatchRuntimeContext transformContext = new MapReduceRuntimeContext(context, mapperMetrics, transformId);
+        BatchRuntimeContext transformContext = new MapReduceRuntimeContext(
+          context, mapperMetrics, new DatasetContextLookupProvider(context), transformId);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
         pipeline.add(new TransformDetail(transformId, transform, transformContext.getMetrics()));

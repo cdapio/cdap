@@ -44,16 +44,21 @@ import javax.annotation.Nullable;
  * removed from the cache only if no other object is holding a reference to it.
  *
  * The cache also maintains a transaction context and adds all acquired datasets to that
- * context, so that they participate in the transactions executed with that context. A side
- * effect of this is that the context holds a reference to the datasets, and the datasets
- * will not expire from the cache. To release these references, call either
- * (@link #dismissTransactionContext} or {@link #newTransactionContext}.
+ * context, so that they participate in the transactions executed with that context. For
+ * the duration of a transaction, this context maintains strong references to all datasets
+ * that participate, to ensure that none of them are garbage-collected before the transaction
+ * is complete, and hence all datasets participate in the entire transaction. However, between
+ * transactions, the cache and the context only hold weak references to the datasets, allowing
+ * for garbage collection to claim orphaned dataset instances (see {@link
+ * co.cask.cdap.data2.dataset2.tx.WeakReferencePromotingTransactionContext}).
  *
  * Optionally, this cache can have a set of static datasets that are added to every
- * transaction context created by the cache. Also, transaction-aware "datasets" that
- * were not created by this DynamicDatasetCache, can be added to the transaction context.
- * This is useful for transaction-aware's that do not implement a Dataset (such as queue
- * consumers etc.).
+ * transaction context created by the cache. Static datasets are held with strong references,
+ * so that they never get garbage-collected.
+ *
+ * Also, transaction-aware "datasets" that were not created by this DynamicDatasetCache,
+ * can be added to the transaction context. This is useful for transaction-aware's that
+ * do not implement a Dataset (such as queue consumers etc.).
  */
 public abstract class DynamicDatasetCache implements DatasetContext, Supplier<TransactionContext> {
 
@@ -125,9 +130,11 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
 
   /**
    * Return a new transaction context for the current thread. All transaction-aware static datasets and all
-   * extra transaction-awares are added to this transaction initially. Any transaction-aware datasets obtained via
-   * (@link #getDataset()) from the same thread will be added to this transaction context and thus participate
-   * in its transaction. These datasets can also be retrieved using {@link #getTransactionAwares()}.
+   * extra transaction-awares are added to this transaction initially. Also, any transaction-aware that was
+   * previously dynamically acquired, and that has not been garbage-collected, is added to the transaction.
+   * Any transaction-aware datasets that will subsequently be obtained via (@link #getDataset()) will then
+   * also be added to this transaction context and thus participate in its transaction. These datasets can
+   * also be retrieved using {@link #getTransactionAwares()}.
    *
    * @return a new transaction context
    */
