@@ -285,9 +285,9 @@ Each JSON object will contain these parameters:
      - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker*, or *custom service*
        being called
    * - ``"statusCode"``
-     - The status code from starting an individual JSON object.
+     - The status code from starting an individual JSON object
    * - ``"error"``
-     - If an error, a description of why the program could not be started (the specified program was not found, etc.)
+     - If an error, a description of why the program could not be started (for example, the specified program was not found)
 
 For example::
 
@@ -418,9 +418,9 @@ Each JSON object will contain these parameters:
      - Name of the *flow*, *MapReduce*, *Spark*, *workflow*, *worker*, or *custom service*
        being called
    * - ``"statusCode"``
-     - The status code from stopping an individual JSON object.
+     - The status code from stopping an individual JSON object
    * - ``"error"``
-     - If an error, a description of why the program could not be stopped (the specified program was not found, etc.)
+     - If an error, a description of why the program could not be stopped (for example, the specified program was not found)
 
 For example::
 
@@ -502,11 +502,11 @@ The response will be the same JSON array with additional parameters for each of 
      - Description
    * - ``"status"``
      - Maps to the status of an individual JSON object's queried program
-       if the query is valid and the program was found.
+       if the query is valid and the program was found
    * - ``"statusCode"``
-     - The status code from retrieving the status of an individual JSON object.
+     - The status code from retrieving the status of an individual JSON object
    * - ``"error"``
-     - If an error, a description of why the status was not retrieved (the specified program was not found, etc.)
+     - If an error, a description of why the status was not retrieved (for example, the specified program was not found)
 
 The ``status`` and ``error`` fields are mutually exclusive meaning if there is an error,
 then there will never be a status and vice versa.
@@ -608,10 +608,10 @@ The response will be the same JSON array with additional parameters for each of 
    * - ``"provisioned"``
      - Number of instances that are actually running for the program defined by the individual JSON object's parameters.
    * - ``"statusCode"``
-     - The status code from retrieving the instance count of an individual JSON object.
+     - The status code from retrieving the instance count of an individual JSON object
    * - ``"error"``
-     - If an error, a description of why the status was not retrieved (the specified program was not found,
-       the requested JSON object was missing a parameter, etc.)
+     - If an error, a description of why the status was not retrieved (for example, the specified program was not found, or
+       the requested JSON object was missing a parameter)
 
 **Note:** The ``requested`` and ``provisioned`` fields are mutually exclusive of the ``error`` field.
 
