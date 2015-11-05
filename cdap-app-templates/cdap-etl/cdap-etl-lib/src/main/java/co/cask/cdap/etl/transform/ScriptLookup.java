@@ -31,14 +31,13 @@ public class ScriptLookup {
   private final LookupTableConfig config;
 
   public ScriptLookup(Lookup<Object> delegate, LookupTableConfig config, JavaTypeConverters js) {
-    this.delegate = delegate;
     this.config = config;
     this.js = js;
+    this.delegate = config.isCacheEnabled() ? new CachingLookup<>(delegate, config.getCacheConfig()) : delegate;
   }
 
   public Object lookup(String key) {
     // TODO: CDAP-4171 handle ObjectMappedTable
-    // TODO: CDAP-4180 implement caching, configured by config
     return delegate.lookup(key);
   }
 

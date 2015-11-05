@@ -13,13 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.etl.api;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Configuration for a particular {@link Lookup} table.
@@ -34,11 +33,30 @@ public class LookupTableConfig {
   }
 
   private final TableType type;
-  private final Map<String, String> datasetProperties;
 
-  public LookupTableConfig(TableType type, @Nullable Map<String, String> datasetProperties) {
+  private final Map<String, String> datasetProperties;
+  private final CacheConfig cacheConfig;
+  private final boolean cacheEnabled;
+
+  /**
+   * @param type type of lookup table
+   * @param cacheConfig cache config
+   * @param datasetProperties runtime dataset properties
+   * @param cacheEnabled true if caching is desired
+   */
+  public LookupTableConfig(TableType type, CacheConfig cacheConfig,
+                           Map<String, String> datasetProperties, boolean cacheEnabled) {
     this.type = type;
+    this.cacheConfig = cacheConfig;
     this.datasetProperties = datasetProperties;
+    this.cacheEnabled = cacheEnabled;
+  }
+
+  /**
+   * @param type type of lookup table
+   */
+  public LookupTableConfig(TableType type) {
+    this(type, new CacheConfig(), ImmutableMap.<String, String>of(), false);
   }
 
   public TableType getType() {
@@ -46,7 +64,14 @@ public class LookupTableConfig {
   }
 
   public Map<String, String> getDatasetProperties() {
-    Preconditions.checkArgument(type == TableType.DATASET);
-    return datasetProperties == null ? ImmutableMap.<String, String>of() : datasetProperties;
+    return datasetProperties;
+  }
+
+  public boolean isCacheEnabled() {
+    return cacheEnabled;
+  }
+
+  public CacheConfig getCacheConfig() {
+    return cacheConfig;
   }
 }
