@@ -27,6 +27,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.PairFunction;
 import org.apache.spark.api.java.function.VoidFunction;
 import scala.Tuple2;
 
@@ -75,31 +76,21 @@ public class SparkAppTableToRDD extends AbstractApplication {
       }).collect();
 
       System.out.println(result);
-//      org.apache.spark.SparkContext sc = context.getOriginalSparkContext();
-
-
-      /*JavaPairRDD<byte[], Row> filtered = data.filter(new Function<Tuple2<byte[], Row>, Boolean>() {
+      JavaSparkContext sc = context.getOriginalSparkContext();
+      JavaRDD<Map<String, String>> javaRDD = sc.parallelize(result);
+      List<Map<String, String>> col3 = javaRDD.filter(new Function<Map<String, String>, Boolean>() {
         @Override
-        public Boolean call(Tuple2<byte[], Row> v1) throws Exception {
-          byte[] col3s = v1._2().get("col3");
-          return col3s != null && Bytes.toString(col3s).equals("val13");
+        public Boolean call(Map<String, String> v1) throws Exception {
+          return v1.containsKey("col3");
         }
-      });
-      JavaRDD<Tuple2<byte[], Row>> identity = data.map(new Function<Tuple2<byte[], Row>, Tuple2<byte[], Row>>() {
-        @Override
-        public Tuple2<byte[], Row> call(Tuple2<byte[], Row> v1) throws Exception {
-          return v1;
+      }).collect();
+      for (Map<String, String> stringStringMap : col3) {
+        System.out.println("=====================================");
+        for (Map.Entry<String, String> stringStringEntry : stringStringMap.entrySet()) {
+          System.out.println("col: " + stringStringEntry.getKey() + "; val: " + stringStringEntry.getValue());
         }
-      });
-      for (Tuple2<byte[], Row> rowTuple2 : identity.collect()) {
-        System.out.println(Bytes.toString(rowTuple2._1()));
-        System.out.println(Bytes.toString(rowTuple2._2().get("col1")));
-        System.out.println(Bytes.toString(rowTuple2._2().get("col2")));
-        System.out.println(Bytes.toString(rowTuple2._2().get("col3")));
-      }*/
-//      final List<Row> rows = new ArrayList<>();
-//      Map<byte[], Row> rowMap = filtered.collectAsMap();
-//      context.writeToDataset(data, OUTPUT_DATASET_NAME, byte[].class, byte[].class);
+        System.out.println("======================================");
+      }
     }
   }
 }
