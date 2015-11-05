@@ -20,7 +20,7 @@ be used in different applications.
 
 Schedules can be controlled by the :ref:`CDAP CLI <cli>` and the :ref:`Lifecycle HTTP
 RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a schedule
-<http-restful-api-lifecycle-start-stop-status>` can be retrieved, and individual schedules
+<http-restful-api-lifecycle-status>` can be retrieved, and individual schedules
 :ref:`resumed or suspended <http-restful-api-lifecycle-schedules-suspend-resume>`. 
 
 When a schedule is initially deployed, it is in a *suspended* state; a *resume* command needs to be
