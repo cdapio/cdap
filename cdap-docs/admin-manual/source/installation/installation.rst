@@ -112,8 +112,8 @@ The YARN settings will override these; for instance, the minimum YARN container 
 determined by ``yarn.scheduler.minimum-allocation-mb``. The YARN default in Hadoop is 1024
 MB, so containers will be allocated with 1024 MB, even if the CDAP settings are for 512 MB.
 
-With the default YARN settings, CDAP can require from 14 to 16 GB of memory, available to
-YARN, just to start.
+With the default YARN and CDAP settings of memory, having 14 to 16 CPU cores 
+(and a total of 14 to 16 GB of memory) available to YARN can be required just to start.
 
 .. _install-network-requirements:
 

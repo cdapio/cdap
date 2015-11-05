@@ -237,10 +237,9 @@ Writing to Temp Files
 .....................
 Temp directories, depending on the distribution, are utilized by CDAP (the first two
 specified in :ref:`appendix-cdap-site.xml`):
- 
+
 - ``app.temp.dir`` (default: ``/tmp``)
 - ``kafka.log.dir`` (default: ``/tmp/kafka-logs``)
-- ``/cdap/kafka-logs`` 
 - ``/var/cdap/run``
 - ``/var/log/cdap``
 - ``/var/run/cdap``

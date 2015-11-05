@@ -66,12 +66,32 @@ If you have followed :ref:`the installation instructions <install>`, and CDAP ei
   - The :ref:`Kafka Log directory <configuration-options>` (by default, ``/data/cdap/kafka-logs``), must be writable by the default CDAP user.
   - The :ref:`temp directories <configuration-tmp-files>` utilized by CDAP must be writable by the default CDAP user.
 
-.. - Check :ref:`configuration troubleshooting <configuration-troubleshooting>` suggestions
-   
+..
+
+- Check YARN using the YARN Resource Manager and see if the CDAP Master services are starting up.
+  Log into the cluster at ``http://<host>:8088/cluster/apps/RUNNING`` and access the YARN Resource Manager webapp. The
+  CDAP Master services should be listed under "RUNNING":
+  
+  .. image:: _images/yarn-rm-running.png
+     :align: center
+     :width: 8in
+  
+..
+
+- If CDAP Master has started, query the backend by using a command (substituting for ``<host>`` as appropriate)::
+
+    $ curl -w'\n' <host>:10000/v3/system/services/status
     
-.. CDAP UI shows a blank screen
-.. ----------------------------
-.. TBC.
+  The response should be something similar to::
+  
+    {"dataset.executor":"OK","metrics":"OK","transaction":"OK","appfabric":"OK","metadata.service":"OK",
+     "streams":"OK","explore.service":"OK","log.saver":"OK","metrics.processor":"OK"}
+
+..
+
+- Check that the CDAP UI can reach the CDAP Router (by default, the URL will be
+  ``http://<host>:9999`` where ``<host>`` is the IP address of one of the machines where you
+  installed the packages and started the services).
 
 
 The CDAP UI is showing a message "namespace cannot be found".
@@ -89,11 +109,6 @@ This is indicative that the UI cannot connect to the CDAP system service contain
 
 - If it was able to launch all containers, then you may need to check the launched container logs for any errors.
   The ``yarn-site.xml`` configuration file determines the container log directory.
-
-
-.. CDAP UI shows a session time out
-.. --------------------------------
-.. TBC.
 
 
 I don't see the CDAP Master service on YARN.
