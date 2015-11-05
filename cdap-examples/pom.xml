@@ -29,6 +29,10 @@
   <packaging>pom</packaging>
   <name>CDAP Examples</name>
 
+  <!--
+    NOTE: This pom is not the one bundled in the cdap sdk.
+    When adding a new module here, be sure to add it to deploy_pom.xml too.
+  -->
   <modules>
     <module>CountRandom</module>
     <module>CubeService</module>
