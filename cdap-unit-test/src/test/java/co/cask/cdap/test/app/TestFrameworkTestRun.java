@@ -39,6 +39,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
+import co.cask.cdap.internal.app.runtime.spark.SparkAppTableToRDD;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.RunRecord;
@@ -305,6 +306,24 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     } finally {
       scanner.close();
     }
+  }
+
+  @Test
+  public void testSparkTableToRDD() throws Exception {
+    ApplicationManager appManager = deployApplication(Id.Namespace.DEFAULT, SparkAppTableToRDD.class);
+    DataSetManager<Table> dataset = getDataset(Id.Namespace.DEFAULT, SparkAppTableToRDD.INPUT_DATASET_NAME);
+    Table table = dataset.get();
+    table.put(Bytes.toBytes("row1"), Bytes.toBytes("col1"), Bytes.toBytes("val11"));
+    table.put(Bytes.toBytes("row1"), Bytes.toBytes("col2"), Bytes.toBytes("val12"));
+    table.put(Bytes.toBytes("row1"), Bytes.toBytes("col3"), Bytes.toBytes("val13"));
+    table.put(Bytes.toBytes("row2"), Bytes.toBytes("col2"), Bytes.toBytes("val22"));
+    table.put(Bytes.toBytes("row2"), Bytes.toBytes("col3"), Bytes.toBytes("val23"));
+    table.put(Bytes.toBytes("row3"), Bytes.toBytes("col1"), Bytes.toBytes("val31"));
+    table.put(Bytes.toBytes("row3"), Bytes.toBytes("col2"), Bytes.toBytes("val32"));
+    dataset.flush();
+    SparkManager sparkManager = appManager.getSparkManager(SparkAppTableToRDD.JavaSparkTableToRDD.class.getSimpleName())
+      .start();
+    sparkManager.waitForFinish(1, TimeUnit.MINUTES);
   }
 
   @Test
