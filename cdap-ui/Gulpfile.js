@@ -446,12 +446,14 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   gulp.watch([
     './app/**/*.js',
     '!./app/features/workflows/**/*.js',
+    '!./app/features/hydrator/**/*.js',
     '!./app/features/apps/**/*.js',
     '!./app/features/flows/**/*.js',
     '!./app/**/*-test.js'
   ], ['jshint', 'watch:js:app']);
   gulp.watch([
     './app/features/workflows/**/*.js',
+    './app/features/hydrator/**/*.js',
     './app/features/apps/**/*.js',
     './app/features/flows/**/*.js'
   ], ['jshint', 'watch:js:app:babel']);
