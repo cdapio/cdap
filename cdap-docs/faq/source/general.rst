@@ -3,13 +3,13 @@
     :description: Frequently Asked Questions about the Cask Data Application Platform
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-:titles-only-toc: true
+.. :titles-only-toc: true
 
 .. _faq-general-questions:
 
-===========================
-CDAP FAQ: General Questions
-===========================
+======================
+FAQ: General Questions
+======================
 
 .. contents::
    :depth: 2

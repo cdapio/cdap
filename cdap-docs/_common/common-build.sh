@@ -121,6 +121,7 @@ function usage() {
   echo "    build-github         Clean build and zip for placing on GitHub (no Javadocs)"
   echo "    build-web            Clean build and zip for placing on docs.cask.co webserver (no Javadocs)"
   echo "    build-docs           Clean build of docs (no Javadocs)"
+  echo "    docs                 alias for 'build-docs'"
   echo
   echo "    license-pdfs         Clean build of License Dependency PDFs"
   echo "    check-includes       Check if included files have changed from source"

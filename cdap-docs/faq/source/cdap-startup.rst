@@ -2,13 +2,13 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-:titles-only-toc: true
+.. :titles-only-toc: true
 
 .. _faq-installation-startup:
 
-======================
-CDAP FAQ: CDAP Startup
-======================
+=================
+FAQ: CDAP Startup
+=================
 
 .. contents::
    :depth: 2
@@ -39,8 +39,8 @@ to installing a parcel:
 - **Distributing** the parcel to all the servers in the cluster
 - **Activating** the parcel
 
-Start by clicking on the parcel icon (near the top-left corner of Cloudera Manager; looks
-like a gift-wrapped box), and ensure that the CDAP parcel is listed as *Active*.
+Start by clicking on the parcel icon (near the top-left corner of Cloudera Manager and looks
+like a gift-wrapped box) and ensure that the CDAP parcel is listed as *Active*.
 
 
 I've followed the install instructions, yet CDAP does not start and fails verification. What next?
@@ -114,6 +114,7 @@ This is indicative that the UI cannot connect to the CDAP system service contain
 I don't see the CDAP Master service on YARN.
 --------------------------------------------
 - Ensure that the node where CDAP is running has a properly configured YARN client.
+  Can you log into the cluster at ``http://<host>:8088/cluster/cluster`` and access the YARN Resource Manager webapp?
 - Ensure :ref:`YARN has enough memory and vcore capacity <faq-installation-startup-memory-core-requirements>`.
 - Is the router address properly configured in the :ref:`cdap-site.xml file <configuration-options>` and the boxes using it?
 - Check that the classpath used includes the YARN configuration in it.

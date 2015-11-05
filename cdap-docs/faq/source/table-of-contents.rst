@@ -2,12 +2,12 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-============================================
-CDAP FAQ Table of Contents
-============================================
+=====================
+FAQ Table of Contents
+=====================
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
     Overview <index>
     General Questions<general>
