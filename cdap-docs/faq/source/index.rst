@@ -30,8 +30,9 @@ The `unresolved issues can be browsed
 <https://issues.cask.co/issues/?jql=project%3DCDAP%20AND%20resolution%3DUnresolved%20ORDER%20BY%20priority%20DESC>`__; 
 and using the search box in the upper-right, you can look for issues that contain a particular problem or keyword:
 
-.. image:: _images/faq-quick-search.png
+.. image:: _images/faq-cdap-issues.png
    :align: center
+   :width: 8in
 
 Ask the CDAP Community for assistance
 -------------------------------------
