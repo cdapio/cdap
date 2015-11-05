@@ -235,12 +235,17 @@ Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
 Writing to Temp Files
 .....................
-There are two temp directories utilized by CDAP (both specified in :ref:`appendix-cdap-site.xml`):
+Temp directories, depending on the distribution, are utilized by CDAP (the first two
+specified in :ref:`appendix-cdap-site.xml`):
 
 - ``app.temp.dir`` (default: ``/tmp``)
 - ``kafka.log.dir`` (default: ``/tmp/kafka-logs``)
-
-The CDAP user **must** be able to write to both of these directories, as they are used for
+- ``/var/cdap/run``
+- ``/var/log/cdap``
+- ``/var/run/cdap``
+- ``/var/tmp/cdap`` 
+ 
+The CDAP user **must** be able to write to these directories, as they are used for
 deploying applications and for operating CDAP.
 
 Configuring Security
@@ -248,6 +253,8 @@ Configuring Security
 For instructions on enabling CDAP Security, see :doc:`CDAP Security <security>`;
 and in particular, see the instructions for 
 :ref:`configuring the properties of cdap-site.xml <enabling-security>`.
+
+.. _configuration-hdp:
 
 Configuring Hortonworks Data Platform
 .....................................
