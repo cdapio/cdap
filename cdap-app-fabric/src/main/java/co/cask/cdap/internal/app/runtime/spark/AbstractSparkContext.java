@@ -18,11 +18,11 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
@@ -32,6 +32,7 @@ import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
+import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -51,7 +52,6 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.io.Closeable;
-import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -160,6 +160,17 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   @Override
   public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime) {
     return readFromStream(streamName, vClass, startTime, endTime, null);
+  }
+
+  @Override
+  public <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
+                              @Nullable Class<? extends StreamEventDecoder> decoderType) {
+
+    StreamBatchReadable stream = (decoderType == null)
+      ? new StreamBatchReadable(streamName, startTime, endTime)
+      : new StreamBatchReadable(streamName, startTime, endTime, decoderType);
+
+    return readFromStream(stream, vClass);
   }
 
   @Override
