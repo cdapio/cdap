@@ -20,29 +20,27 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Defines requirements that must be satisfied at runtime in order for the scheduler to launch a run.
+ * Defines constraints that must be met at runtime in order for the scheduler to launch a run.
  *
  * Currently only contains the maximum number of concurrent runs. In the future, other checks may be added,
  * such as the amount of available memory in the YARN cluster.
  */
-public class RunRequirements {
-  public static final RunRequirements NONE = new RunRequirements(null);
-  private final Integer concurrentProgramRunsThreshold;
+public class RunConstraints {
+  public static final RunConstraints NONE = new RunConstraints(null);
+  private final Integer maxConcurrentRuns;
 
-  RunRequirements(Integer concurrentProgramRunsThreshold) {
-    this.concurrentProgramRunsThreshold = concurrentProgramRunsThreshold;
+  RunConstraints(Integer maxConcurrentRuns) {
+    this.maxConcurrentRuns = maxConcurrentRuns;
   }
 
   /**
-   * @return the threshold for number of concurrent program runs.
-   *         The scheduler will skip the scheduled run if there are more than
-   *         the threshold number of program runs in the RUNNING state.
-   *         For example, if set to 0, the scheduled run will be skipped if that are any program runs
-   *         in the RUNNING state. Returns null if there is no limit.
+   * @return the maximum number of concurrent runs for a schedule.
+   *         When a schedule is triggered, the scheduler will look up all active runs for the scheduled program.
+   *         If that number is equal to or greater than the max, the run will be skipped.
    */
   @Nullable
-  public Integer getConcurrentProgramRunsThreshold() {
-    return concurrentProgramRunsThreshold;
+  public Integer getMaxConcurrentRuns() {
+    return maxConcurrentRuns;
   }
 
   @Override
@@ -54,12 +52,12 @@ public class RunRequirements {
       return false;
     }
 
-    RunRequirements that = (RunRequirements) other;
-    return Objects.equals(concurrentProgramRunsThreshold, that.concurrentProgramRunsThreshold);
+    RunConstraints that = (RunConstraints) other;
+    return Objects.equals(maxConcurrentRuns, that.maxConcurrentRuns);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(concurrentProgramRunsThreshold);
+    return Objects.hash(maxConcurrentRuns);
   }
 }

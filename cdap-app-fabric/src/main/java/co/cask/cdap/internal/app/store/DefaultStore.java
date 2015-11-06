@@ -105,7 +105,7 @@ public class DefaultStore implements Store {
   private static final Id.DatasetInstance WORKFLOW_STATS_INSTANCE_ID =
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, WORKFLOW_STATS_TABLE);
   private static final Gson GSON = new Gson();
-  private static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final LocationFactory locationFactory;
   private final NamespacedLocationFactory namespacedLocationFactory;
@@ -227,12 +227,17 @@ public class DefaultStore implements Store {
           long nowSecs = TimeUnit.MILLISECONDS.toSeconds(now);
           switch (updateStatus) {
             case RUNNING:
-              Map<String, String> args = GSON.fromJson(target.getProperties().get("runtimeArgs"),
-                                                       RUNTIME_ARGS_TYPE);
-              if (args == null) {
-                args = ImmutableMap.of();
+              Map<String, String> runtimeArgs = GSON.fromJson(target.getProperties().get("runtimeArgs"),
+                                                              STRING_MAP_TYPE);
+              Map<String, String> systemArgs = GSON.fromJson(target.getProperties().get("systemArgs"),
+                                                             STRING_MAP_TYPE);
+              if (runtimeArgs == null) {
+                runtimeArgs = ImmutableMap.of();
               }
-              mds.recordProgramStart(id, pid, nowSecs, target.getTwillRunId(), args);
+              if (systemArgs == null) {
+                systemArgs = ImmutableMap.of();
+              }
+              mds.recordProgramStart(id, pid, nowSecs, target.getTwillRunId(), runtimeArgs, systemArgs);
               break;
             case SUSPENDED:
               mds.recordProgramSuspend(id, pid);
@@ -253,11 +258,12 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStart(final Id.Program id, final String pid, final long startTime,
-                       final String twillRunId, final Map<String, String> runtimeArgs) {
+                       final String twillRunId, final Map<String, String> runtimeArgs,
+                       final Map<String, String> systemArgs) {
     appsTx.get().executeUnchecked(new TransactionExecutor.Function<AppMetadataStore, Void>() {
       @Override
       public Void apply(AppMetadataStore mds) throws Exception {
-        mds.recordProgramStart(id, pid, startTime, twillRunId, runtimeArgs);
+        mds.recordProgramStart(id, pid, startTime, twillRunId, runtimeArgs, systemArgs);
         return null;
       }
     }, apps.get());
@@ -265,7 +271,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStart(Id.Program id, String pid, long startTime) {
-    setStart(id, pid, startTime, null, ImmutableMap.<String, String>of());
+    setStart(id, pid, startTime, null, ImmutableMap.<String, String>of(), ImmutableMap.<String, String>of());
   }
 
   @Override
@@ -393,11 +399,18 @@ public class DefaultStore implements Store {
   @Override
   public List<RunRecordMeta> getRuns(final Id.Program id, final ProgramRunStatus status,
                                      final long startTime, final long endTime, final int limit) {
+    return getRuns(id, status, startTime, endTime, limit, null);
+  }
+
+  @Override
+  public List<RunRecordMeta> getRuns(final Id.Program id, final ProgramRunStatus status,
+                                     final long startTime, final long endTime, final int limit,
+                                     @Nullable final Predicate<RunRecordMeta> filter) {
     return appsTx.get().executeUnchecked(
       new TransactionExecutor.Function<AppMetadataStore, List<RunRecordMeta>>() {
         @Override
         public List<RunRecordMeta> apply(AppMetadataStore mds) throws Exception {
-          return mds.getRuns(id, status, startTime, endTime, limit);
+          return mds.getRuns(id, status, startTime, endTime, limit, filter);
         }
       }, apps.get());
   }
@@ -698,7 +711,7 @@ public class DefaultStore implements Store {
           RunRecordMeta runRecord = mds.getRun(runId.getProgram(), runId.getId());
           if (runRecord != null) {
             Map<String, String> properties = runRecord.getProperties();
-            Map<String, String> runtimeArgs = GSON.fromJson(properties.get("runtimeArgs"), RUNTIME_ARGS_TYPE);
+            Map<String, String> runtimeArgs = GSON.fromJson(properties.get("runtimeArgs"), STRING_MAP_TYPE);
             if (runtimeArgs != null) {
               return runtimeArgs;
             }

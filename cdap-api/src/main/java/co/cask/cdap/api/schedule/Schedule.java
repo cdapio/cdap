@@ -28,7 +28,7 @@ public class Schedule {
 
   private final String description;
 
-  private final RunRequirements runRequirements;
+  private final RunConstraints runConstraints;
 
   // NOTE: the below attribute is left for backwards compatibility
   private final String cronEntry;
@@ -41,14 +41,14 @@ public class Schedule {
     this.name = name;
     this.description = description;
     this.cronEntry = cronEntry;
-    this.runRequirements = RunRequirements.NONE;
+    this.runConstraints = RunConstraints.NONE;
   }
 
-  protected Schedule(String name, String description, RunRequirements runRequirements) {
+  protected Schedule(String name, String description, RunConstraints runConstraints) {
     this.name = name;
     this.description = description;
     this.cronEntry = null;
-    this.runRequirements = runRequirements;
+    this.runConstraints = runConstraints;
   }
 
   /**
@@ -74,9 +74,9 @@ public class Schedule {
     return cronEntry;
   }
 
-  public RunRequirements getRunRequirements() {
+  public RunConstraints getRunConstraints() {
     // need this null check for backwards compatibility. Schedules saved prior to v3.3 will not have it.
-    return runRequirements == null ? RunRequirements.NONE : runRequirements;
+    return runConstraints == null ? RunConstraints.NONE : runConstraints;
   }
 
   @Override
@@ -93,12 +93,12 @@ public class Schedule {
     return Objects.equals(name, that.name) &&
       Objects.equals(description, that.description) &&
       Objects.equals(cronEntry, that.cronEntry) &&
-      Objects.equals(runRequirements, that.runRequirements);
+      Objects.equals(runConstraints, that.runConstraints);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, cronEntry, runRequirements);
+    return Objects.hash(name, description, cronEntry, runConstraints);
   }
 
   @Override
@@ -107,7 +107,7 @@ public class Schedule {
     sb.append("name='").append(name).append('\'');
     sb.append(", description='").append(description).append('\'');
     sb.append(", cronEntry='").append(cronEntry).append('\'');
-    sb.append(", runRequirements='").append(runRequirements).append('\'');
+    sb.append(", runConstraints='").append(runConstraints).append('\'');
     sb.append('}');
     return sb.toString();
   }

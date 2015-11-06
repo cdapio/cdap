@@ -67,7 +67,7 @@ public class PurchaseApp extends AbstractApplication {
     // Schedule the workflow
     scheduleWorkflow(
       Schedules.builder("DailySchedule")
-        .skipIfConcurrentProgramRunsExceed(0)
+        .setMaxConcurrentRuns(1)
         .createTimeSchedule("0 4 * * *"),
       "PurchaseHistoryWorkflow");
 
@@ -75,7 +75,7 @@ public class PurchaseApp extends AbstractApplication {
     scheduleWorkflow(
       Schedules.builder("DataSchedule")
         .setDescription("Schedule execution when 1 MB or more of data is ingested in the purchaseStream")
-        .skipIfConcurrentProgramRunsExceed(0)
+        .setMaxConcurrentRuns(1)
         .createDataSchedule(Schedules.Source.STREAM, "purchaseStream", 1),
       "PurchaseHistoryWorkflow"
     );

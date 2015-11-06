@@ -51,7 +51,7 @@ public final class ScheduleTaskRunner {
   private final Store store;
   private final ListeningExecutorService executorService;
   private final PropertiesResolver propertiesResolver;
-  private final RunRequirementsChecker requirementsChecker;
+  private final RunConstraintsChecker requirementsChecker;
 
   public ScheduleTaskRunner(Store store, ProgramLifecycleService lifecycleService,
                             PropertiesResolver propertiesResolver, ListeningExecutorService taskExecutor) {
@@ -59,7 +59,7 @@ public final class ScheduleTaskRunner {
     this.lifecycleService = lifecycleService;
     this.propertiesResolver = propertiesResolver;
     this.executorService = taskExecutor;
-    this.requirementsChecker = new RunRequirementsChecker(store);
+    this.requirementsChecker = new RunConstraintsChecker(store);
   }
 
   /**

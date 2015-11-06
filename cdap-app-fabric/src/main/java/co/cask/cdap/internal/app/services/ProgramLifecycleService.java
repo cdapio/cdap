@@ -125,7 +125,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws IOException if there is an error starting the program
    * @throws ProgramNotFoundException if program is not found
    */
-  public ProgramRuntimeService.RuntimeInfo start(final Id.Program id, Map<String, String> systemArgs,
+  public ProgramRuntimeService.RuntimeInfo start(final Id.Program id, final Map<String, String> systemArgs,
                                                  final Map<String, String> userArgs, boolean debug)
     throws IOException, ProgramNotFoundException, ApplicationNotFoundException {
     Program program = getProgram(id);
@@ -149,7 +149,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             // If RunId is not time-based, use current time as start time
             startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
           }
-          store.setStart(id, runId, startTimeInSeconds, twillRunId, userArgs);
+          store.setStart(id, runId, startTimeInSeconds, twillRunId, userArgs, systemArgs);
           if (state == ProgramController.State.COMPLETED) {
             completed();
           }

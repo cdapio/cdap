@@ -181,7 +181,7 @@ public class SparkProgramRunner extends AbstractProgramRunnerWithPlugin {
    * Creates a service listener to reactor on state changes on {@link SparkRuntimeService}.
    */
   private Service.Listener createRuntimeServiceListener(final Id.Program programId, final RunId runId,
-                                                        Arguments arguments, final Arguments userArgs,
+                                                        final Arguments arguments, final Arguments userArgs,
                                                         final List<Closeable> closeables) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
@@ -200,7 +200,7 @@ public class SparkProgramRunner extends AbstractProgramRunnerWithPlugin {
         }
 
         if (workflowName == null) {
-          store.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap());
+          store.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap(), arguments.asMap());
         } else {
           // Program started by Workflow
           store.setWorkflowProgramStart(programId, runId.getId(), workflowName, workflowRunId, workflowNodeId,
