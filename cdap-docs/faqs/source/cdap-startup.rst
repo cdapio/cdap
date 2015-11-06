@@ -22,7 +22,7 @@ If, when you try to start services, you receive an error in ``stderr`` such as::
        
   Error found before invoking supervisord: No parcel provided required tags: set([u'cdap'])
 
-The error message shows that that a required parcel isn't available, suggesting that you
+The error message shows that a required parcel isn't available, suggesting that you
 have not completed the last step of installing a parcel, *Activation*. There are 4 steps
 to installing a parcel:
 
@@ -55,14 +55,16 @@ If you have followed :ref:`the installation instructions <install>`, and CDAP ei
 - Check permissions of directories:
 
   - The :ref:`CDAP HDFS User <configuration-options>` (by default, ``yarn``) owns the HDFS directory (by default,  ``/cdap``).
-  - The :ref:`Kafka Log directory <configuration-options>` (by default, ``/data/cdap/kafka-logs``), must be writable by the default CDAP user.
-  - The :ref:`temp directories <configuration-tmp-files>` utilized by CDAP must be writable by the default CDAP user.
+  - The :ref:`Kafka Log directory <configuration-options>` (by default, ``/data/cdap/kafka-logs``), 
+    must be writable by the user running the CDAP processes.
+  - The :ref:`temp directories <configuration-tmp-files>` utilized by CDAP must be writable by the user 
+    running the CDAP processes.
 
 ..
 
-- Check YARN using the YARN Resource Manager and see if the CDAP Master services are starting up.
-  Log into the cluster at ``http://<host>:8088/cluster/apps/RUNNING`` and access the YARN Resource Manager webapp. The
-  CDAP Master services should be listed under "RUNNING":
+- Check YARN using the YARN Resource Manager UI and see if the CDAP Master services are starting up.
+  Log into the cluster at ``http://<host>:8088/cluster/apps/RUNNING``. The CDAP Master
+  services should be listed under "RUNNING":
   
   .. image:: _images/yarn-rm-running.png
      :align: center
@@ -81,7 +83,7 @@ If you have followed :ref:`the installation instructions <install>`, and CDAP ei
 
 ..
 
-- Check that the CDAP UI can reach the CDAP Router (by default, the URL will be
+- Check that the CDAP UI is accessible (by default, the URL will be
   ``http://<host>:9999`` where ``<host>`` is the IP address of one of the machines where you
   installed the packages and started the services).
 
@@ -101,14 +103,18 @@ This is indicative that the UI cannot connect to the CDAP system service contain
 
 - If it was able to launch all containers, then you may need to check the launched container logs for any errors.
   The ``yarn-site.xml`` configuration file determines the container log directory.
+  
+- Ensure that the CDAP UI can connect to the CDAP Router. Check that the configured ``router.server.address`` and 
+  ``router.server.port`` (default 10000) in :ref:`cdap-site.xml file <configuration-options>` corresponds with where the CDAP Router is listening.
 
 
 I don't see the CDAP Master service on YARN.
 --------------------------------------------
 - Ensure that the node where CDAP is running has a properly configured YARN client.
-  Can you log into the cluster at ``http://<host>:8088/cluster/cluster`` and access the YARN Resource Manager webapp?
+  Can you log into the cluster at ``http://<host>:8088`` and access the YARN Resource Manager webapp?
 - Ensure :ref:`YARN has enough memory and vcore capacity <faq-installation-startup-memory-core-requirements>`.
-- Is the router address properly configured in the :ref:`cdap-site.xml file <configuration-options>` and the boxes using it?
+- Is the router address properly configured (``router.server.address`` and ``router.server.port`` 
+  (default 10000) in :ref:`cdap-site.xml file <configuration-options>`) and the boxes using it?
 - Check that the classpath used includes the YARN configuration in it.
 
 
@@ -179,11 +185,11 @@ been installed::
 
 What are the memory and core requirements for CDAP?
 ---------------------------------------------------
-The settings are governed by two sources: CDAP and YARN, and the requirements are
+The requirements are governed by two sources: CDAP and YARN, and the requirements are
 :ref:`described here <install-hardware-memory-core-requirements>`.
 
-Can a current CDAP installation be upgraded more than one version?
-------------------------------------------------------------------
+Can a CDAP installation be upgraded more than one version?
+----------------------------------------------------------
 In general, no. (The exception is an upgrade from 2.8.x to 3.0.x.)
 This table lists the upgrade paths available for different CDAP versions:
 
@@ -214,14 +220,15 @@ component on a separate machine (or more) if you choose. The :ref:`HA [High Avai
 Environment diagram <deployment-architectures-ha>` gives just one possible
 configuration.
 
-The HiveServer2 defaults to 10000; what should I do?
-----------------------------------------------------
+The HiveServer2 already listens on port 10000; what should I do?
+----------------------------------------------------------------
 By default, CDAP uses port 10000. If port 10000 is being used by another service, simply
 change the ``router.bind.port`` in the ``cdap-site.xml`` to another available port. Since
 in the Hadoop ecosystem, HiveServer2 defaults to 10000, we are considering 
 `changing the router default port <https://issues.cask.co/browse/CDAP-1696>`__. 
 
-If you use Apache Ambari to install CDAP, it will detect this and run the CDAP Router on
+If you use the Cloudera Manager CSD to install CDAP, the default ``router.bind.port`` is 11015.
+If you use Apache Ambari to install CDAP, it will detect this conflict and run the CDAP Router on
 port 11015. Another solution is to simply run the CDAP Router on a different host than
 HiveServer2.
        

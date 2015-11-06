@@ -245,8 +245,9 @@ specified in :ref:`appendix-cdap-site.xml`):
 - ``/var/run/cdap``
 - ``/var/tmp/cdap`` 
  
-The CDAP user **must** be able to write to these directories, as they are used for
-deploying applications and for operating CDAP.
+The CDAP user (the operating system user running the CDAP processes) **must** be able to
+write to these directories, as they are used for deploying applications and for operating
+CDAP.
 
 Configuring Security
 ....................
