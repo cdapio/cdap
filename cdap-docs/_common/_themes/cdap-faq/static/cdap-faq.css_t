@@ -21,24 +21,28 @@ div.toctree-wrapper.compound li.toctree-l1 a.reference.internal {
 }
 
 div.toctree-wrapper.compound li.toctree-l1 + li {
-	padding-top: 10px;
+  padding-top: 10px;
 }
 
 div.toctree-wrapper.compound li.toctree-l1 {
-	list-style-type: none;
+  list-style-type: none;
 }
 
 div.toctree-wrapper.compound li.toctree-l1 ul {
-	padding-left: 30px;
+  padding-left: 30px;
 }
 
 div.toctree-wrapper.compound li.toctree-l2 {
-	font-style: italic;
-	list-style-type: decimal;
-	color: #ff6600;
+  font-style: italic;
+  list-style-type: decimal;
+  color: #ff6600;
 }
 
 div.toctree-wrapper.compound li.toctree-l2 a.reference.internal {
   font-weight: normal;
-	color: #ff6600;
+  color: #ff6600;
+}
+
+div.toctree-wrapper.compound li.toctree-l2 a.reference.internal:hover {
+  color: #005B81;
 }
