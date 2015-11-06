@@ -77,7 +77,7 @@ public final class SparkContextProvider {
   static final String CCONF_FILE_NAME = "cConf.xml";
   static final String HCONF_FILE_NAME = "hConf.xml";
   static final String PROGRAM_JAR_NAME = "program.jar";
-  static final String LOCAL_RESOURCES = "local.resources";
+  static final String LOCAL_RESOURCES = "cdap.spark.local.resources";
 
   private static volatile ExecutionSparkContext sparkContext;
 
