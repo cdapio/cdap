@@ -119,8 +119,8 @@ for /f "tokens=* delims= " %%f in ('node -v') do @(
 )
 set line=%line:v=!!%
 
-for /F "delims=. tokens=1,2,3" %%a in ('echo %line%') do (
-  if  NOT %%b GEQ 10 (
+for /F "delims=.,v tokens=1,2,3" %%a in ('echo %line%') do (
+  if %%a LEQ 1 if %%b LEQ 10 (
     echo Node.js version is not supported. The minimum version suported is v0.10.0.
     GOTO :FINALLY
   )
