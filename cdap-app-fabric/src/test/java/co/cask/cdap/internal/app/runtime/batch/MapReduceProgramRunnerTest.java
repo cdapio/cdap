@@ -29,6 +29,7 @@ import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
@@ -368,6 +369,14 @@ public class MapReduceProgramRunnerTest {
     }
   }
 
+  @Test
+  public void testMapReduceDriverResources() throws Exception {
+    final ApplicationWithPrograms app =
+      AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class, TEMP_FOLDER_SUPPLIER);
+    MapReduceSpecification mrSpec =
+      app.getSpecification().getMapReduce().get(AppWithMapReduce.ClassicWordCount.class.getSimpleName());
+    Assert.assertEquals(AppWithMapReduce.ClassicWordCount.MEMORY_MB, mrSpec.getDriverResources().getMemoryMB());
+  }
 
   @Test
   public void testMapreduceWithObjectStore() throws Exception {
