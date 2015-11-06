@@ -91,6 +91,14 @@ public class SparkAppTableToRDD extends AbstractApplication {
         }
         System.out.println("======================================");
       }
+      /*JavaRDD<Map<String, String>> rdd = sc.parallelize(col3);
+      JavaPairRDD<byte[], Row> output = rdd.mapToPair(new PairFunction<Map<String, String>, byte[], Row>() {
+        @Override
+        public Tuple2<byte[], Row> call(Map<String, String> stringStringMap) throws Exception {
+          return null;
+        }
+      });
+      context.writeToDataset(output, OUTPUT_DATASET_NAME, byte[].class, Row.class);*/
     }
   }
 }

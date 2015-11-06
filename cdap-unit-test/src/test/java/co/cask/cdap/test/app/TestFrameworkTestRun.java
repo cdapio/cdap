@@ -99,6 +99,7 @@ import java.sql.ResultSet;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -324,6 +325,81 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     SparkManager sparkManager = appManager.getSparkManager(SparkAppTableToRDD.JavaSparkTableToRDD.class.getSimpleName())
       .start();
     sparkManager.waitForFinish(1, TimeUnit.MINUTES);
+  }
+
+  @Test
+  public void testSparkSql() throws Exception {
+    ApplicationManager appManager = deployApplication(Id.Namespace.DEFAULT, SparkSqlApp.class);
+    prepareSQLInputData();
+    Map<String, String> trainHistorySchema = ImmutableMap.<String, String>builder()
+      .put("id", "string")
+      .put("chain", "string")
+      .put("offer", "string")
+      .put("market", "string")
+      .put("repeattrips", "string")
+      .put("repeater", "string")
+      .put("offerdate", "string")
+      .build();
+    Map<String, String> offerSchema = ImmutableMap.<String, String>builder()
+      .put("offerId", "string")
+      .put("category", "string")
+      .put("quantity", "string")
+      .put("company", "string")
+      .put("value", "string")
+      .put("brand", "string")
+      .build();
+    Map<String, Map<String, String>> datasetSchemas = ImmutableMap.of(
+      SparkSqlApp.TRAIN_HISTORY_DS, trainHistorySchema,
+      SparkSqlApp.OFFER_DS, offerSchema
+    );
+    String sql = String.format("SELECT t.id, t.chain, t.offer, t.market, t.repeattrips, t.repeater, t.offerdate, " +
+                                 "o.offerId, o.category, o.quantity, o.company, o.value, o.brand FROM %s t " +
+                                 "JOIN %s o ON t.id = o.offerId",
+                               SparkSqlApp.TRAIN_HISTORY_DS, SparkSqlApp.OFFER_DS);
+    sql = String.format("SELECT * from %s", SparkSqlApp.TRAIN_HISTORY_DS);
+    sql = "SELECT TrainHistory.id, TrainHistory.chain, Offer.category FROM TrainHistory JOIN Offer ON " +
+      "TrainHistory.id = Offer.offerId LIMIT 10";
+    sql = "SELECT TrainHistory.id, TrainHistory.chain FROM TrainHistory JOIN Offer ON " +
+      "TrainHistory.id = Offer.offerId LIMIT 10";
+    sql = "SELECT * FROM TrainHistory INNER JOIN Offer ON TrainHistory.id = Offer.offerId";
+    SparkManager sparkManager = appManager.getSparkManager(SparkSqlApp.SparkSqlProgram.class.getSimpleName()).start(
+      ImmutableMap.of(
+        SparkSqlApp.DATASET_SCHEMA_ARG, new Gson().toJson(datasetSchemas),
+        SparkSqlApp.SQL_ARG, sql
+      )
+    );
+    sparkManager.waitForFinish(5, TimeUnit.MINUTES);
+  }
+
+  private void prepareSQLInputData() throws Exception {
+    DataSetManager<Table> thDataset = getDataset(Id.Namespace.DEFAULT, SparkSqlApp.TRAIN_HISTORY_DS);
+    Table trainHistory = thDataset.get();
+    for (int i = 0; i < 10; i++) {
+      Put put = new Put("row" + i);
+      put.add("id", "" + i);
+      put.add("chain", "205" + i);
+      put.add("offer", "1208251" + i);
+      put.add("market", "34" + i);
+      put.add("repeattrips", "" + i);
+      put.add("repeater", "r" + i);
+      put.add("offerdate", "2013-04-1" + i);
+      trainHistory.put(put);
+    }
+    thDataset.flush();
+
+    DataSetManager<Table> offerDataset = getDataset(Id.Namespace.DEFAULT, SparkSqlApp.OFFER_DS);
+    Table offer = offerDataset.get();
+    for (int i = 0; i < 10; i++) {
+      Put put = new Put("row" + i);
+      put.add("offerId", "" + i);
+      put.add("category", "cat" + i);
+      put.add("quantity", "100" + i);
+      put.add("company", "company" + i);
+      put.add("value", "100.435387" + i);
+      put.add("brand", "brand" + i);
+      offer.put(put);
+    }
+    offerDataset.flush();
   }
 
   @Test
