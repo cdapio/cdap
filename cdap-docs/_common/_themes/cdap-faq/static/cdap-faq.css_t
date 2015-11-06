@@ -1,0 +1,44 @@
+/*
+ * cdap.css_t
+ * ~~~~~~~~~~~~~~~~~
+ *
+ * Sphinx stylesheet -- cdap theme.
+ *
+ * :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
+ * :license: BSD, see LICENSE for details.
+ *
+ */
+
+@import url("cdap.css");
+
+div.toctree-wrapper.compound ul {
+  padding-left: 0px;
+}
+
+div.toctree-wrapper.compound li.toctree-l1 a.reference.internal {
+  font-weight: bold;
+  color: black;
+}
+
+div.toctree-wrapper.compound li.toctree-l1 + li {
+	padding-top: 10px;
+}
+
+div.toctree-wrapper.compound li.toctree-l1 {
+	list-style-type: none;
+}
+
+div.toctree-wrapper.compound li.toctree-l1 ul {
+	padding-left: 30px;
+}
+
+div.toctree-wrapper.compound li.toctree-l2 {
+	font-style: italic;
+	list-style-type: decimal;
+	color: #ff6600;
+}
+
+div.toctree-wrapper.compound li.toctree-l2 a.reference.internal {
+  font-weight: normal;
+	color: #ff6600;
+}

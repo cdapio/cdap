@@ -10,15 +10,14 @@
 FAQ
 ===
 
-Table of Contents
-====================
+Questions
+=========
 
 .. toctree::
    :maxdepth: 2
 
     General Questions<general>
     CDAP Startup <cdap-startup>
-
 
 Additional Resources
 ====================
