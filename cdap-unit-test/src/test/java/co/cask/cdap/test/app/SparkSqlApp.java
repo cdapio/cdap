@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
+import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -30,6 +31,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.DataFrame;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
@@ -94,18 +96,17 @@ public class SparkSqlApp extends AbstractApplication {
         JavaPairRDD<byte[], co.cask.cdap.api.dataset.table.Row> rdd =
           context.readFromDataset(dataset, byte[].class, co.cask.cdap.api.dataset.table.Row.class);
         JavaRDD<Row> table = rdd.values().map(new Function<co.cask.cdap.api.dataset.table.Row, Row>() {
-          private static final long serialVersionUID = 2079989362702311903L;
-
           @Override
           public Row call(co.cask.cdap.api.dataset.table.Row row) throws Exception {
-            List<Object> colValues = new ArrayList<>();
-            List<String> stringValues = new ArrayList<>();
             Map<byte[], byte[]> columns = row.getColumns();
-            for (Map.Entry<byte[], byte[]> colValEntry : columns.entrySet()) {
-              colValues.add(convert(colValEntry.getKey(), colValEntry.getValue(), dataTypes));
-              stringValues.add(Bytes.toString(colValEntry.getValue()));
+            Object[] colValues = new Object[columns.size()];
+            int i = 0;
+            for (Map.Entry<String, String> dataTypeEntry : dataTypes.entrySet()) {
+              String name = dataTypeEntry.getKey();
+              String dataType = dataTypeEntry.getValue();
+              byte[] value = columns.get(Bytes.toBytes(name));
+              colValues[i++] = convert(name, value, dataType);
             }
-            System.out.println("stringvalues = " + stringValues);
             return RowFactory.create(colValues);
           }
         });
@@ -114,32 +115,39 @@ public class SparkSqlApp extends AbstractApplication {
         dataFrame.registerTempTable(dataset);
       }
 
-      for (String s : sqlContext.tableNames()) {
-        System.out.println("tablename = " + s);
-      }
-      for (Row row : sqlContext.sql("SELECT id from TrainHistory").collect()) {
-        System.out.println("TrainHistory row = " + row);
-      }
-      for (Row row : sqlContext.sql("SELECT offerId from Offer").collect()) {
-        System.out.println("Offer row = " + row);
-      }
       DataFrame result = sqlContext.sql(context.getRuntimeArguments().get(SQL_ARG));
-      result.explain(true);
-      for (Row row : result.collect()) {
-        System.out.println("######################################## row = " + row);
+      int count = 0;
+      for (Row row : result.collectAsList()) {
+        System.out.println(row.toString());
+        count++;
       }
-      long count = result.count();
-      LOG.error("Result count: {}", count);
-      // not safe, but ok for this test
-      Row[] rows = result.head((int) count);
-      for (int i = 0; i < rows.length; i++) {
-        LOG.error("Row {}: {}", i, rows[i]);
-      }
+      System.out.println("Result count: " + count);
+
+      System.out.println("++++++++++++++++++++++++++ TrainHistory ++++++++++++++++++++++++++++++++++++++++");
+      DataFrame trainHistoryDf = sqlContext.table(TRAIN_HISTORY_DS);
+      trainHistoryDf.describe();
+      System.out.println("Showing trainhistory");
+      trainHistoryDf.show();
+      System.out.println("cols = " + Joiner.on(",").join(trainHistoryDf.columns()));
+      System.out.println("++++++++++++++++++++++++++ Offer +++++++++++++++++++++++++++++++++++++++++++++++");
+      DataFrame offerDf = sqlContext.table(OFFER_DS);
+      offerDf.describe();
+      System.out.println("Showing offer");
+      offerDf.show();
+      System.out.println("cols = " + Joiner.on(",").join(offerDf.columns()));
+      System.out.println("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+      Column idCol = trainHistoryDf.col("id");
+      Column offerIdCol = offerDf.col("id");
+      DataFrame join = trainHistoryDf.join(offerDf, idCol.equalTo(offerIdCol));
+      join.explain(true);
+      System.out.println("Showing join");
+      join.show();
+      join.describe();
+      System.out.println("Select and show join");
+      join.select().show();
     }
 
-    private Object convert(byte[] col, byte[] value, Map<String, String> dataTypes) {
-      String colName = Bytes.toString(col);
-      String dataType = dataTypes.get(colName);
+    private Object convert(String colName, byte[] value, String dataType) {
       Schema.Type type = Schema.Type.valueOf(dataType.toUpperCase());
       switch (type) {
         case BOOLEAN:

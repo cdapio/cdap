@@ -341,7 +341,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       .put("offerdate", "string")
       .build();
     Map<String, String> offerSchema = ImmutableMap.<String, String>builder()
-      .put("offerId", "string")
+      .put("id", "string")
       .put("category", "string")
       .put("quantity", "string")
       .put("company", "string")
@@ -352,20 +352,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       SparkSqlApp.TRAIN_HISTORY_DS, trainHistorySchema,
       SparkSqlApp.OFFER_DS, offerSchema
     );
-    String sql = String.format("SELECT t.id, t.chain, t.offer, t.market, t.repeattrips, t.repeater, t.offerdate, " +
-                                 "o.offerId, o.category, o.quantity, o.company, o.value, o.brand FROM %s t " +
-                                 "JOIN %s o ON t.id = o.offerId",
-                               SparkSqlApp.TRAIN_HISTORY_DS, SparkSqlApp.OFFER_DS);
-    sql = String.format("SELECT * from %s", SparkSqlApp.TRAIN_HISTORY_DS);
-    sql = "SELECT TrainHistory.id, TrainHistory.chain, Offer.category FROM TrainHistory JOIN Offer ON " +
-      "TrainHistory.id = Offer.offerId LIMIT 10";
-    sql = "SELECT TrainHistory.id, TrainHistory.chain FROM TrainHistory JOIN Offer ON " +
-      "TrainHistory.id = Offer.offerId LIMIT 10";
-    sql = "SELECT * FROM TrainHistory INNER JOIN Offer ON TrainHistory.id = Offer.offerId";
     SparkManager sparkManager = appManager.getSparkManager(SparkSqlApp.SparkSqlProgram.class.getSimpleName()).start(
       ImmutableMap.of(
         SparkSqlApp.DATASET_SCHEMA_ARG, new Gson().toJson(datasetSchemas),
-        SparkSqlApp.SQL_ARG, sql
+        SparkSqlApp.SQL_ARG, "SELECT * FROM " + SparkSqlApp.TRAIN_HISTORY_DS + " AS t, " + SparkSqlApp.OFFER_DS +
+          " AS o WHERE t.id = o.id"
       )
     );
     sparkManager.waitForFinish(5, TimeUnit.MINUTES);
@@ -391,7 +382,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Table offer = offerDataset.get();
     for (int i = 0; i < 10; i++) {
       Put put = new Put("row" + i);
-      put.add("offerId", "" + i);
+      put.add("id", "" + i);
       put.add("category", "cat" + i);
       put.add("quantity", "100" + i);
       put.add("company", "company" + i);
