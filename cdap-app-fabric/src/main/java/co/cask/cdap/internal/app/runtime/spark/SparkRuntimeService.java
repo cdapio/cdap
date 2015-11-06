@@ -35,6 +35,7 @@ import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicates;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Closeables;
@@ -56,6 +57,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -413,13 +416,12 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
 
   /**
    * Localizes resources requested by users in the Spark Program's client (or beforeSubmit) phases.
-   * In Local mode, also copies resources to a temporary directory.
    *
    * @param contextConfig the {@link SparkContextConfig} for this Spark program
    * @param clientContext the {@link ClientSparkContext} for this Spark program
    * @param allLocalizedResources the list of all (user-requested + CDAP system) {@link LocalizeResource} to be
    *                                 localized for this Spark program
-   * @param targetDir in local mode, a temporary directory to copy the resources to
+   * @param targetDir a temporary directory to copy the resources to
    * @return a {@link Map} of resource name to the {@link File} handle for the local file.
    */
   private Map<String, File> localizeUserResources(SparkContextConfig contextConfig,
@@ -429,15 +431,21 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     Map<String, File> localizedResources = new HashMap<>();
     Map<String, LocalizeResource> resourcesToLocalize = clientContext.getResourcesToLocalize();
     for (final Map.Entry<String, LocalizeResource> entry : resourcesToLocalize.entrySet()) {
-      final File localizedFile;
-      if (contextConfig.isLocal()) {
-        // in local mode, also localize resources in a temporary directory
-        localizedFile = LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir);
-      } else {
-        // in distributed mode, file localization happens in the Spark Submitter, so merely add it to the
+      // localize resources in a temporary directory
+      File localizedFile = LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir);
+
+      if (!contextConfig.isLocal()) {
+        // in distributed mode, file localization happens in the Spark Submitter, so add it to the
         // allLocalizedResources list
-        allLocalizedResources.add(entry.getValue());
-        localizedFile = new File(entry.getKey());
+        try {
+          URI uri = localizedFile.toURI();
+          URI actualURI = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), entry.getKey());
+          allLocalizedResources.add(new LocalizeResource(actualURI, entry.getValue().isArchive()));
+        } catch (URISyntaxException e) {
+          // Most of the URI is constructed from the passed URI. So ideally, this should not happen.
+          // If it does though, there is nothing that clients can do to recover, so not propagating a checked exception.
+          throw Throwables.propagate(e);
+        }
       }
       localizedResources.put(entry.getKey(), localizedFile);
     }
