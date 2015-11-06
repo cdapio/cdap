@@ -14,25 +14,36 @@
  * the License.
  */
 
+class HydratorCreateStudioController {
+  constructor(LeftPanelStore, LeftPanelActionsFactory, ConfigActionsFactory, $stateParams, rConfig, ConfigStore, $rootScope) {
+    // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
+    ConfigStore.setDefaults();
+    if ($stateParams.type) {
+      ConfigActionsFactory.setArtifact({
+        version: $rootScope.cdapVersion,
+        name: $stateParams.type,
+        scope: 'SYSTEM'
+      });
+    }
+    if (rConfig) {
+      ConfigActionsFactory.setArtifact(rConfig.artifact);
+      ConfigActionsFactory.setName(rConfig.name);
+      ConfigActionsFactory.setDescription(rConfig.description);
+    }
+  }
+}
+
+HydratorCreateStudioController.$inject = ['LeftPanelStore', 'LeftPanelActionsFactory', 'ConfigActionsFactory', '$stateParams', 'rConfig', 'ConfigStore', '$rootScope'];
 angular.module(PKG.name + '.feature.hydrator')
-  // .controller('HydratorCreateStudioController', function(MyAppDAGService, $scope, rConfig, $modalStack, EventPipe, $window, $timeout, MyConsoleTabService) {
-  .controller('HydratorCreateStudioController', function(LeftPanelStore, LeftPanelActionsFactory){
+  .controller('HydratorCreateStudioController', HydratorCreateStudioController);
 
-
-    this.setState = function() {
-      this.state = {
-        isExpanded: LeftPanelStore.getState()
-      };
-    };
-    this.setState();
-
-    this.toggleSidebar = function(isExpanded) {
-      if (isExpanded) {
-        LeftPanelActionsFactory.minize();
-      } else {
-        LeftPanelActionsFactory.expand();
-      }
-    };
+    // this.toggleSidebar = function(isExpanded) {
+    //   if (isExpanded) {
+    //     LeftPanelActionsFactory.minize();
+    //   } else {
+    //     LeftPanelActionsFactory.expand();
+    //   }
+    // };
 
     //
     // var confirmOnPageExit = function (e) {
@@ -76,4 +87,4 @@ angular.module(PKG.name + '.feature.hydrator')
     // this.toggleSidebar = function() {
     //   this.isExpanded = !this.isExpanded;
     // };
-  });
+  // });
