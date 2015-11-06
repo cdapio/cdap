@@ -48,6 +48,8 @@ STAGE_DIR=${TARGET_DIR}/yumrepo
 S3_BUCKET=${S3_BUCKET:-repository.cask.co}
 S3_REPO_PATH=${S3_REPO_PATH:-centos/6/x86_64/cdap} # No leading or trailing slashes
 VERSION=${VERSION:-$(basename ${TARGET_DIR}/cdap-*.rpm | cut -d- -f2)}
+GPG_KEY_NAME=${GPG_KEY_NAME:-${1}}
+GPG_PASSPHRASE=${GPG_PASSPHRASE:-${2}}
 __version=${VERSION/-SNAPSHOT/}
 __maj_min=$(echo ${__version} | cut -d. -f1,2)
 
