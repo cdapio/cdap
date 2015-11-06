@@ -39,12 +39,14 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
   private final Map<String, String> properties;
   private final String inputDataSet;
   private final String outputDataSet;
+  private final Resources driverResources;
   private final Resources mapperResources;
   private final Resources reducerResources;
 
   public MapReduceSpecification(String className, String name, String description, String inputDataSet,
                                 String outputDataSet, Set<String> dataSets, Map<String, String> properties,
-                                Resources mapperResources, Resources reducerResources) {
+                                @Nullable Resources driverResources,
+                                @Nullable Resources mapperResources, @Nullable Resources reducerResources) {
     this.className = className;
     this.name = name;
     this.description = description;
@@ -52,6 +54,7 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
     this.outputDataSet = outputDataSet;
     this.properties = Collections.unmodifiableMap(properties == null ? Collections.<String, String>emptyMap()
                                                     : new HashMap<>(properties));
+    this.driverResources = driverResources;
     this.mapperResources = mapperResources;
     this.reducerResources = reducerResources;
     this.dataSets = getAllDatasets(dataSets, inputDataSet, outputDataSet);
@@ -106,6 +109,14 @@ public class MapReduceSpecification implements ProgramSpecification, PropertyPro
   @Nullable
   public String getInputDataSet() {
     return inputDataSet;
+  }
+
+  /**
+   * @return Resources requirement for driver or {@code null} if not specified.
+   */
+  @Nullable
+  public Resources getDriverResources() {
+    return driverResources;
   }
 
   /**

@@ -17,6 +17,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
@@ -89,8 +90,10 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     // It the workflow has Spark, localize the spark-assembly jar
     List<String> extraClassPaths = new ArrayList<>();
 
-    // See if the Workflow has Spark in it
-    Resources resources = findSparkDriverResources(program.getApplicationSpecification().getSpark(), workflowSpec);
+    // See if the Workflow has Spark or MapReduce in it
+    Resources resources = findDriverResources(program.getApplicationSpecification().getSpark(),
+                                              program.getApplicationSpecification().getMapReduce(),
+                                              workflowSpec);
     if (resources != null) {
       // Has Spark
       File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
@@ -154,15 +157,18 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
   }
 
   /**
-   * Returns the {@link Resources} requirement for the workflow runnable due to spark driver resources requirement.
+   * Returns the {@link Resources} requirement for the workflow runnable due to spark or MapReduce driver resources
+   * requirement.
    * Returns {@code null} if there is no spark program in the workflow.
    */
   @Nullable
-  private Resources findSparkDriverResources(Map<String, SparkSpecification> sparkSpecs, WorkflowSpecification spec) {
+  private Resources findDriverResources(Map<String, SparkSpecification> sparkSpecs,
+                                        Map<String, MapReduceSpecification> mrSpecs,
+                                        WorkflowSpecification spec) {
     // Find the resource requirements from the workflow
-    // It is the largest memory and cores from all Spark program inside the workflow
+    // It is the largest memory and cores from all Spark and MapReduce programs inside the workflow
     Resources resources = new Resources();
-    boolean hasSpark = false;
+    boolean hasSparkOrMapReduce = false;
 
     // Search through all workflow nodes for spark program resource requirements.
     Queue<WorkflowNode> nodes = new LinkedList<>(spec.getNodes());
@@ -171,10 +177,16 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       switch (node.getType()) {
         case ACTION: {
           ScheduleProgramInfo programInfo = ((WorkflowActionNode) node).getProgram();
-          if (programInfo.getProgramType() == SchedulableProgramType.SPARK) {
-            hasSpark = true;
-            // The sparkSpec shouldn't be null, otherwise the Workflow is not valid
-            Resources driverResources = sparkSpecs.get(programInfo.getProgramName()).getDriverResources();
+          SchedulableProgramType programType = programInfo.getProgramType();
+          if (programType == SchedulableProgramType.SPARK || programType == SchedulableProgramType.MAPREDUCE) {
+            hasSparkOrMapReduce = true;
+            // The program spec shouldn't be null, otherwise the Workflow is not valid
+            Resources driverResources;
+            if (programType == SchedulableProgramType.SPARK) {
+              driverResources = sparkSpecs.get(programInfo.getProgramName()).getDriverResources();
+            }  else {
+              driverResources = mrSpecs.get(programInfo.getProgramName()).getDriverResources();
+            }
             if (driverResources != null) {
               resources = max(resources, driverResources);
             }
@@ -197,7 +209,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       }
     }
 
-    return hasSpark ? resources : null;
+    return hasSparkOrMapReduce ? resources : null;
   }
 
   /**
