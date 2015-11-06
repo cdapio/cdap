@@ -23,6 +23,7 @@ import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionCodec;
 import co.cask.tephra.TxConstants;
 import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.persist.TransactionVisibilityState;
 import co.cask.tephra.util.TxUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
@@ -66,7 +67,7 @@ public class ConsumerConfigCache {
 
   private final TableName queueConfigTableName;
   private final CConfigurationReader cConfReader;
-  private final Supplier<TransactionSnapshot> transactionSnapshotSupplier;
+  private final Supplier<TransactionVisibilityState> transactionSnapshotSupplier;
   private final InputSupplier<HTableInterface> hTableSupplier;
   private final TransactionCodec txCodec;
 
@@ -87,7 +88,7 @@ public class ConsumerConfigCache {
    * @param hTableSupplier A supplier for creating {@link HTableInterface}.
    */
   ConsumerConfigCache(TableName queueConfigTableName, CConfigurationReader cConfReader,
-                      Supplier<TransactionSnapshot> transactionSnapshotSupplier,
+                      Supplier<TransactionVisibilityState> transactionSnapshotSupplier,
                       InputSupplier<HTableInterface> hTableSupplier) {
     this.queueConfigTableName = queueConfigTableName;
     this.cConfReader = cConfReader;
@@ -141,7 +142,7 @@ public class ConsumerConfigCache {
   public synchronized void updateCache() throws IOException {
     Map<byte[], QueueConsumerConfig> newCache = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
     long now = System.currentTimeMillis();
-    TransactionSnapshot txSnapshot = transactionSnapshotSupplier.get();
+    TransactionVisibilityState txSnapshot = transactionSnapshotSupplier.get();
     if (txSnapshot == null) {
       LOG.debug("No transaction snapshot is available. Not updating the consumer config cache.");
       return;
@@ -252,7 +253,7 @@ public class ConsumerConfigCache {
 
   public static ConsumerConfigCache getInstance(TableName tableName,
                                                 CConfigurationReader cConfReader,
-                                                Supplier<TransactionSnapshot> txSnapshotSupplier,
+                                                Supplier<TransactionVisibilityState> txSnapshotSupplier,
                                                 InputSupplier<HTableInterface> hTableSupplier) {
     ConsumerConfigCache cache = INSTANCES.get(tableName);
     if (cache == null) {
