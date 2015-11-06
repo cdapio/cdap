@@ -30,6 +30,9 @@ Cask Data Application Platform Release Notes
 Bug Fixes
 ---------
 
+- Fixed a problem with faulty and unused metrics regarding CDAP file resource usage.
+  (`CDAP-3563 <https://issues.cask.co/browse/CDAP-3563>`__).
+
 - Fixed a problem where a Hadoop filesystem object was being instantiated before the
   Kerberos keytab login was completed, leading to CDAP processes failing after the initial
   ticket expired (`CDAP-3660 <https://issues.cask.co/browse/CDAP-3660>`__).
