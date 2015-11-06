@@ -28,7 +28,7 @@ import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfi
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HTable10NameConverter;
 import co.cask.tephra.coprocessor.TransactionStateCache;
-import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.persist.TransactionVisibilityState;
 import com.google.common.base.Supplier;
 import com.google.common.io.InputSupplier;
 import org.apache.commons.logging.Log;
@@ -68,7 +68,7 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
   private TableName configTableName;
   private CConfigurationReader cConfReader;
   TransactionStateCache txStateCache;
-  private Supplier<TransactionSnapshot> txSnapshotSupplier;
+  private Supplier<TransactionVisibilityState> txSnapshotSupplier;
   private ConsumerConfigCache configCache;
 
   private int prefixBytes;
@@ -103,9 +103,9 @@ public final class HBaseQueueRegionObserver extends BaseRegionObserver {
       TableId queueConfigTableId = HBaseQueueAdmin.getConfigTableId(namespaceId);
       final String sysConfigTablePrefix = nameConverter.getSysConfigTablePrefix(tableDesc);
       txStateCache = new DefaultTransactionStateCacheSupplier(sysConfigTablePrefix, conf).get();
-      txSnapshotSupplier = new Supplier<TransactionSnapshot>() {
+      txSnapshotSupplier = new Supplier<TransactionVisibilityState>() {
         @Override
-        public TransactionSnapshot get() {
+        public TransactionVisibilityState get() {
           return txStateCache.getLatestState();
         }
       };
