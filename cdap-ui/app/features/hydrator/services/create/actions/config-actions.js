@@ -1,4 +1,4 @@
-class ConfigAcionsFactory {
+class ConfigActionsFactory {
   constructor(ConfigDispatcher) {
     this.dispatcher = ConfigDispatcher.getDispatcher();
   }
@@ -19,6 +19,6 @@ class ConfigAcionsFactory {
   }
 }
 
-ConfigAcionsFactory.$inject = ['ConfigDispatcher'];
+ConfigActionsFactory.$inject = ['ConfigDispatcher'];
 angular.module(`${PKG.name}.feature.hydrator`)
-  .service('ConfigAcionsFactory', ConfigAcionsFactory);
+  .service('ConfigActionsFactory', ConfigActionsFactory);
