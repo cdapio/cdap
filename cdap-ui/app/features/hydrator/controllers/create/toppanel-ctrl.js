@@ -14,8 +14,49 @@
  * the License.
  */
 
+class TopPanelController{
+  constructor(GLOBALS, $stateParams, $alert, ConfigStore) {
+    this.GLOBALS = GLOBALS;
+    this.ConfigStore = ConfigStore;
+    this.canvasOperations = [
+      {
+        name: 'Export'
+      },
+      {
+        name: 'Save Draft'
+      },
+      {
+        name: 'Validate'
+      },
+      {
+        name: 'Publish'
+      }
+    ];
+    this.$stateParams = $stateParams;
+    this.setState();
+    ConfigStore.registerOnChangeListener(this.setState.bind(this));
+  }
+  setMetadata(metadata) {
+    this.state.metadata = metadata;
+  }
+  setArtifact(artifact) {
+    this.state.artifact = artifact;
+  }
+  setState() {
+    this.state = {
+      metadata: {
+        name: this.ConfigStore.getName(),
+        desciption: this.ConfigStore.getDescription()
+      },
+      artifact: this.ConfigStore.getArtifact()
+    };
+  }
+}
+
+TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore'];
+
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('TopPanelController', function(){
+  .controller('TopPanelController', TopPanelController);
   // .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, $alert, $state, $stateParams, GLOBALS, HydratorErrorFactory, MyConsoleTabService, MyBottomPanelService) {
     //
     // this.metadata = MyAppDAGService['metadata'];
@@ -198,4 +239,4 @@ angular.module(PKG.name + '.feature.hydrator')
     //     });
     //   }
     // };
-  });
+  // });

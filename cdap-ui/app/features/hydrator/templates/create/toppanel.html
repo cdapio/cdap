@@ -13,8 +13,7 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<h1>Top Panel</h1>
-<!--
+
 <div class="side-panel top text-center clearfix">
   <div class="hydrator-metadata pull-left"
        ng-class="{'expanded': TopPanelController.metadataExpanded}">
@@ -23,20 +22,20 @@
 
         <div class="input-group pull-left">
           <input type="text"
-                 ng-model="TopPanelController.metadata['name']"
+                 ng-model="TopPanelController.state.metadata['name']"
                  my-maxlength="64"
                  placeholder="[Pipeline Name]"
                  ng-keyup="TopPanelController.onEnterOnMetadata($event)"
-                 tooltip="{{ TopPanelController.metadata.name }}"
+                 tooltip="{{ TopPanelController.state.metadata.name }}"
                  tooltip-placement="right"
-                 tooltip-enable="TopPanelController.metadata.name.length > 27"
+                 tooltip-enable="TopPanelController.state.metadata.name.length > 27"
                  tooltip-append-to-body="true" />
           <span class="fa fa-pencil input-group-addon"></span>
         </div>
 
-        <span ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlBatch"
+        <span ng-if="TopPanelController.state.artifact.name === TopPanelController.GLOBALS.etlBatch"
               class="icon-ETLBatch"> Type: Batch </span>
-        <span ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlRealtime"
+        <span ng-if="TopPanelController.state.artifact.name === TopPanelController.GLOBALS.etlRealtime"
               class="icon-ETLRealtime"> Type: Realtime </span>
       </div>
 
@@ -65,4 +64,4 @@
     </div>
   </div>
 
-</div> -->
+</div>
