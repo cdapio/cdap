@@ -35,7 +35,6 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.options.UnsupportedOptionTypeException;
@@ -102,6 +101,9 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   private boolean stopped;
   private SparkFacade sparkFacade;
 
+  /**
+   * This constructor is to create instance to be used in Spark executor.
+   */
   public ExecutionSparkContext(ApplicationSpecification appSpec,
                                SparkSpecification specification, Id.Program programId, RunId runId,
                                ClassLoader programClassLoader, long logicalStartTime,
@@ -121,6 +123,9 @@ public class ExecutionSparkContext extends AbstractSparkContext {
          workflowToken);
   }
 
+  /**
+   * This constructor is to create instance to be used in the Spark driver.
+   */
   public ExecutionSparkContext(ApplicationSpecification appSpec,
                                SparkSpecification specification, Id.Program programId, RunId runId,
                                ClassLoader programClassLoader, long logicalStartTime,
@@ -256,20 +261,14 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   }
 
   @Override
-  public <T> T readFromStream(String streamName, Class<?> vClass,
-                              long startTime, long endTime, Class<? extends StreamEventDecoder> decoderType) {
-
-    StreamBatchReadable stream = (decoderType == null)
-      ? new StreamBatchReadable(streamName, startTime, endTime)
-      : new StreamBatchReadable(streamName, startTime, endTime, decoderType);
-
+  public <T> T readFromStream(StreamBatchReadable stream, Class<?> vClass) {
     try {
       // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
       Configuration configuration = configureStreamInput(new Configuration(hConf), stream, vClass);
       T streamRDD = getSparkFacade().createRDD(StreamInputFormat.class, LongWritable.class, vClass, configuration);
 
       // Register for stream usage for the Spark program
-      Id.Stream streamId = Id.Stream.from(getProgramId().getNamespace(), streamName);
+      Id.Stream streamId = Id.Stream.from(getProgramId().getNamespace(), stream.getStreamName());
       try {
         streamAdmin.register(getOwners(), streamId);
         streamAdmin.addAccess(new Id.Run(getProgramId(), getRunId().getId()), streamId, AccessType.READ);

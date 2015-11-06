@@ -24,6 +24,7 @@ import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -152,6 +153,15 @@ public interface SparkContext extends RuntimeContext, DatasetContext, ClientLoca
    */
   <T> T readFromStream(String streamName, Class<?> vClass, long startTime, long endTime,
                        Class<? extends StreamEventDecoder> decoderType);
+
+  /**
+   * Create a Spark RDD that uses {@link Stream} as input source according to the given {@link StreamBatchReadable}.
+   *
+   * @param stream a {@link StreamBatchReadable} containing information on the stream to read from
+   * @param vClass the value class
+   * @return the RDD created from {@link Stream}
+   */
+   <T> T readFromStream(StreamBatchReadable stream, Class<?> vClass);
 
   /**
    * Returns

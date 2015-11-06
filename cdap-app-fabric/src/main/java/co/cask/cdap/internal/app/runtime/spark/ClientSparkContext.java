@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.spark;
 
 import co.cask.cdap.api.TaskLocalizationContext;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.spark.Spark;
@@ -88,8 +89,7 @@ public final class ClientSparkContext extends AbstractSparkContext {
   }
 
   @Override
-  public <T> T readFromStream(String streamName, Class<?> vClass,
-                              long startTime, long endTime, Class<? extends StreamEventDecoder> decoderType) {
+  public <T> T readFromStream(StreamBatchReadable stream, Class<?> vClass) {
     throw new UnsupportedOperationException("Only supported in SparkProgram.run() execution context");
   }
 
