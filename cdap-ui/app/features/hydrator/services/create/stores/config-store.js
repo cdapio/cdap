@@ -61,6 +61,7 @@ class ConfigStore {
     this.state.artifact.version = artifact.version;
   }
 }
-ConfigStore.$inject = ['MetadataDispatcher', 'NodeConfigDispatcher', 'DAGEventDispatcher'];
+ConfigStore.$inject = [];
+// ConfigStore.$inject = ['MetadataDispatcher', 'NodeConfigDispatcher', 'DAGEventDispatcher'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);
