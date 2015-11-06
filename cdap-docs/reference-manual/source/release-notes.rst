@@ -24,6 +24,52 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 3.0.6 <http://docs.cask.co/cdap/3.0.6/index.html>`__
+=============================================================
+
+Bug Fixes
+---------
+
+- Fixed a problem with faulty and unused metrics regarding CDAP file resource usage.
+  (`CDAP-3563 <https://issues.cask.co/browse/CDAP-3563>`__).
+
+- Fixed a problem where a Hadoop filesystem object was being instantiated before the
+  Kerberos keytab login was completed, leading to CDAP processes failing after the initial
+  ticket expired (`CDAP-3660 <https://issues.cask.co/browse/CDAP-3660>`__).
+
+- Fixed a problem where not all dependent services were being stopped when a system service was stopped 
+  (`CDAP-3861 <https://issues.cask.co/browse/CDAP-3861>`__).
+
+- Fixed a problem with dataset performance degradation due to the making of 
+  multiple remote calls for each "get dataset" request 
+  (`CDAP-3902 <https://issues.cask.co/browse/CDAP-3902>`__).
+
+- Fixed a problem with not closing the socket connection to the transaction service correctly, 
+  leading to a leakage of file descriptors 
+  (`CDAP-4067 <https://issues.cask.co/browse/CDAP-4067>`__).
+
+- Fixed a problem with the CDAP Router being tied up in an infinite recursion 
+  (`CDAP-4092 <https://issues.cask.co/browse/CDAP-4092>`__).
+
+- Fixed problems with the installation documentation 
+  (`CDAP-4093 <https://issues.cask.co/browse/CDAP-4093>`__).
+
+- Fixed an issue with the incorrect labelling, after failover, of programs that had been running prior to failover 
+  (`CDAP-4119 <https://issues.cask.co/browse/CDAP-4119>`__).
+
+New Features
+------------
+
+- Updated the version of `Tephra <http://tephra.io>`__ used in CDAP to v0.4.4
+  (`CDAP-4181 <https://issues.cask.co/browse/CDAP-4181>`__).
+
+- Provided a Nagios plugin for monitoring the health of CDAP System Services 
+  (`CDAP-3967 <https://issues.cask.co/browse/CDAP-3967>`__).
+
+- Added the capability of retrieving live-info for the CDAP AppFabric system service 
+  (`CDAP-4133 <https://issues.cask.co/browse/CDAP-4133>`__).
+
+
 `Release 3.0.5 <http://docs.cask.co/cdap/3.0.5/index.html>`__
 =============================================================
 
