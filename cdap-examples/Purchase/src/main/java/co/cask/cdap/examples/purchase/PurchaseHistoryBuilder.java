@@ -49,6 +49,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   public void configure() {
     setDescription("Purchase History Builder");
     setInputDataset("purchases");
+    setDriverResources(new Resources(1024));
     setMapperResources(new Resources(1024));
     setReducerResources(new Resources(1024));
   }
