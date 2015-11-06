@@ -1,8 +1,8 @@
 /*
- * cdap.css_t
+ * cdap-faqs.css_t
  * ~~~~~~~~~~~~~~~~~
  *
- * Sphinx stylesheet -- cdap theme.
+ * Sphinx stylesheet -- CDAP theme for FAQs manual.
  *
  * :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
  * :license: BSD, see LICENSE for details.
@@ -13,15 +13,22 @@
 
 div.toctree-wrapper.compound ul {
   padding-left: 0px;
+  padding-top: 0px;
 }
 
 div.toctree-wrapper.compound li.toctree-l1 a.reference.internal {
+  background-color: #E0E0E0;
+  color: #111;
+  display: block;
+  font-size: 150%;
   font-weight: bold;
-  color: black;
+  margin: 15px 0px 10px -15px;
+  padding: 5px 0px 5px 15px;
+  text-shadow: 0px 1px 0px white;
 }
 
 div.toctree-wrapper.compound li.toctree-l1 + li {
-  padding-top: 10px;
+  padding-top: 0;
 }
 
 div.toctree-wrapper.compound li.toctree-l1 {
@@ -33,16 +40,21 @@ div.toctree-wrapper.compound li.toctree-l1 ul {
 }
 
 div.toctree-wrapper.compound li.toctree-l2 {
+  color: #ff6600;
   font-style: italic;
   list-style-type: decimal;
-  color: #ff6600;
 }
 
 div.toctree-wrapper.compound li.toctree-l2 a.reference.internal {
-  font-weight: normal;
+  background-color: white;
   color: #ff6600;
+  font-size: 100%;
+  font-weight: normal;
+  margin: 0px;
+  padding: 0px;
 }
 
 div.toctree-wrapper.compound li.toctree-l2 a.reference.internal:hover {
   color: #005B81;
+  font-weight: bold;
 }

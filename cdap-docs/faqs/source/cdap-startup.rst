@@ -7,9 +7,9 @@
 
 .. _faq-installation-startup:
 
-=================
-FAQ: CDAP Startup
-=================
+==================
+FAQs: CDAP Startup
+==================
 
 
 CDAP installed on CDH using Cloudera Manager doesn't startup |---| what do I do?
@@ -249,7 +249,6 @@ to a particular router, and if you have both UI and router running on each node,
 use ``'127.0.0.1'``.
 
 
-Ask the CDAP Community for assistance
--------------------------------------
+.. rubric:: Ask the CDAP Community for assistance
 
 .. include:: cdap-user-googlegroups.txt

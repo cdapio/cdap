@@ -5,11 +5,11 @@
 
 :titles-only-toc: true
 
-.. _faq-general-questions:
+.. _faqs-general-questions:
 
-======================
-FAQ: General Questions
-======================
+=======================
+FAQs: General Questions
+=======================
 
 
 What is the Cask Data Application Platform?

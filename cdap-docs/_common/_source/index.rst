@@ -126,17 +126,18 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Trademarks, Licenses, and Dependencies:** Trademark and License information for CDAP and lists of CDAP dependent packages
 
 
-.. |faq| replace:: **FAQ:**
-.. _faq: faq/index.html
+.. |faqs| replace:: **FAQs:**
+.. _faqs: faqs/index.html
 
-- |faq|_ Answers to questions you might have about CDAP
+- |faqs|_ Answers to questions you might have about CDAP
 
   - **General Questions** 
   - **CDAP Startup** 
+  - **Other Resources:** Additional resources for solving problems
+  
 ..   - **Applications** 
 ..   - **User Interface** 
 ..   - **Databases and Transactions** 
-  - **Other Resources:** Additional resources for solving problems
 
 
 .. |release-notes| replace:: **Release Notes:**

@@ -2,9 +2,9 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-=====================
-FAQ Table of Contents
-=====================
+======================
+FAQs Table of Contents
+======================
 
 .. toctree::
    :maxdepth: 2

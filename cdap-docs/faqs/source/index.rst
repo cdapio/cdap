@@ -4,19 +4,16 @@
 
 .. :titles-only-toc: true
 
-.. _faq:
+.. _faqs:
  
-===
-FAQ
-===
-
-Questions
-=========
+====
+FAQs
+====
 
 .. toctree::
    :maxdepth: 2
 
-    General Questions<general>
+    General Questions <general>
     CDAP Startup <cdap-startup>
 
 Additional Resources
@@ -29,7 +26,7 @@ The `unresolved issues can be browsed
 <https://issues.cask.co/issues/?jql=project%3DCDAP%20AND%20resolution%3DUnresolved%20ORDER%20BY%20priority%20DESC>`__; 
 and using the search box in the upper-right, you can look for issues that contain a particular problem or keyword:
 
-.. image:: _images/faq-cdap-issues.png
+.. image:: _images/faqs-cdap-issues.png
    :align: center
    :width: 8in
 

@@ -20,5 +20,5 @@ CDAP Documentation Table of Contents
     Integrations </integrations/index>
     Examples, Guides, and Tutorials </examples-manual/index>
     Reference Manual </reference-manual/index>
-    FAQ </faq/index>
+    FAQs </faqs/index>
     

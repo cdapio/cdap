@@ -12,12 +12,12 @@ from common_conf import *
 
 # Override the common config
 
-html_short_title_toc = manuals_dict["faq"]
+html_short_title_toc = manuals_dict["faqs"]
 html_short_title = u'CDAP %s' % html_short_title_toc
 
 html_context = {"html_short_title_toc":html_short_title_toc}
 
 # Remove this guide from the mapping as it will fail as it has been deleted by clean
-intersphinx_mapping.pop("faq", None)
+intersphinx_mapping.pop("faqs", None)
 
-html_theme = 'cdap-faq'
+html_theme = 'cdap-faqs'
