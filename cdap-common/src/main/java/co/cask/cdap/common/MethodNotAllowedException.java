@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,23 @@
 
 package co.cask.cdap.common;
 
+import org.jboss.netty.handler.codec.http.HttpMethod;
+
 /**
  * Thrown when some method is not allowed.
  */
-public class MethodNotAllowed extends Exception {
+public class MethodNotAllowedException extends Exception {
 
-  public MethodNotAllowed(String message) {
+  private HttpMethod method;
+  private String apiPath;
+
+  public MethodNotAllowedException(String message) {
     super(message);
+  }
+
+  public MethodNotAllowedException(HttpMethod method, String apiPath) {
+    super(String.format("Method %s is not allowed on path %s.", method, apiPath));
+    this.method = method;
+    this.apiPath = apiPath;
   }
 }

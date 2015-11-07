@@ -16,9 +16,6 @@
 
 package co.cask.cdap.test.internal;
 
-import co.cask.cdap.common.BadRequestException;
-import co.cask.cdap.common.MethodNotAllowed;
-import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.internal.AppFabricClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
