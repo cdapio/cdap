@@ -21,6 +21,8 @@ import javax.annotation.Nullable;
 
 /**
  * Defines constraints that must be met at runtime in order for the scheduler to launch a run.
+ * If a constraints is not met, the run will be skipped.
+ * The run is not deferred until the constraints are met, it is skipped.
  *
  * Currently only contains the maximum number of concurrent runs. In the future, other checks may be added,
  * such as the amount of available memory in the YARN cluster.
@@ -29,7 +31,14 @@ public class RunConstraints {
   public static final RunConstraints NONE = new RunConstraints(null);
   private final Integer maxConcurrentRuns;
 
-  RunConstraints(Integer maxConcurrentRuns) {
+  /**
+   * Create run constraints for a {@link Schedule}. When a schedule is triggered, the constraints will be checked
+   * before launching a run.
+   *
+   * @param maxConcurrentRuns the maximum number of concurrent active runs for a schedule.
+   *                          If null, no limit is enforced.
+   */
+  RunConstraints(@Nullable Integer maxConcurrentRuns) {
     this.maxConcurrentRuns = maxConcurrentRuns;
   }
 

@@ -47,7 +47,7 @@ public class RunConstraintsCheckerTest {
   }
 
   @Test
-  public void testConcurrentProgramRunsThreshold() {
+  public void testMaxConcurrentRuns() {
     Schedule schedule = Schedules.builder("abc")
       .setMaxConcurrentRuns(2)
       .createTimeSchedule("* * * * *");

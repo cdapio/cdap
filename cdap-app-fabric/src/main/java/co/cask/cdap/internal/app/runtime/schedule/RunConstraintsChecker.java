@@ -49,27 +49,30 @@ class RunConstraintsChecker {
    * @return whether all run requirements are satisfied
    */
   public boolean checkSatisfied(Id.Program programId, Schedule schedule) {
-    String scheduleName = schedule.getName();
     Integer maxRuns = schedule.getRunConstraints().getMaxConcurrentRuns();
-    Predicate<RunRecordMeta> scheduleFilter = getScheduleFilter(scheduleName);
     if (maxRuns != null) {
+      String scheduleName = schedule.getName();
+      Predicate<RunRecordMeta> scheduleFilter = getScheduleFilter(scheduleName);
       try {
-        int numActive = 0;
-        List<RunRecordMeta> runs = store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, maxRuns,
-                                                 scheduleFilter);
-        numActive += runs.size();
-        runs = store.getRuns(programId, ProgramRunStatus.SUSPENDED, 0, Long.MAX_VALUE, maxRuns,
-                             scheduleFilter);
-        numActive += runs.size();
+        int numRunning = store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, maxRuns,
+                                       scheduleFilter).size();
+        if (numRunning >= maxRuns) {
+          LOG.info("Skipping run of program {} from schedule {} because there are at least {} running runs.",
+                   programId, scheduleName, maxRuns);
+          return false;
+        }
 
-        if (numActive >= maxRuns) {
-          LOG.info("Skipping run of program {} because there are already {} active runs of schedule {}.",
-                   programId, maxRuns, schedule.getName());
+        int numSuspended = store.getRuns(programId, ProgramRunStatus.SUSPENDED, 0, Long.MAX_VALUE, maxRuns,
+                                         scheduleFilter).size();
+        if (numRunning + numSuspended >= maxRuns) {
+          LOG.info("Skipping run of program {} from schedule {} because there are " +
+                   "{} running runs and at least {} suspended runs.",
+                   programId, scheduleName, numRunning, numSuspended);
           return false;
         }
       } catch (Exception e) {
         LOG.error("Exception looking up active runs of program {}. Skipping scheduled run.",
-          programId, e);
+                  programId, e);
         // if we couldn't look up from the store, something bad is happening so we probably shouldn't launch a run.
         return false;
       }

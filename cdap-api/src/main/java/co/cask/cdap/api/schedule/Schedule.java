@@ -93,12 +93,12 @@ public class Schedule {
     return Objects.equals(name, that.name) &&
       Objects.equals(description, that.description) &&
       Objects.equals(cronEntry, that.cronEntry) &&
-      Objects.equals(runConstraints, that.runConstraints);
+      Objects.equals(getRunConstraints(), that.getRunConstraints());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, cronEntry, runConstraints);
+    return Objects.hash(name, description, cronEntry, getRunConstraints());
   }
 
   @Override
@@ -107,7 +107,7 @@ public class Schedule {
     sb.append("name='").append(name).append('\'');
     sb.append(", description='").append(description).append('\'');
     sb.append(", cronEntry='").append(cronEntry).append('\'');
-    sb.append(", runConstraints='").append(runConstraints).append('\'');
+    sb.append(", runConstraints='").append(getRunConstraints()).append('\'');
     sb.append('}');
     return sb.toString();
   }

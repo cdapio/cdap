@@ -105,6 +105,7 @@ public class DefaultStore implements Store {
   private static final Id.DatasetInstance WORKFLOW_STATS_INSTANCE_ID =
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, WORKFLOW_STATS_TABLE);
   private static final Gson GSON = new Gson();
+  private static final Map<String, String> EMPTY_STRING_MAP = ImmutableMap.of();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final LocationFactory locationFactory;
@@ -232,10 +233,10 @@ public class DefaultStore implements Store {
               Map<String, String> systemArgs = GSON.fromJson(target.getProperties().get("systemArgs"),
                                                              STRING_MAP_TYPE);
               if (runtimeArgs == null) {
-                runtimeArgs = ImmutableMap.of();
+                runtimeArgs = EMPTY_STRING_MAP;
               }
               if (systemArgs == null) {
-                systemArgs = ImmutableMap.of();
+                systemArgs = EMPTY_STRING_MAP;
               }
               mds.recordProgramStart(id, pid, nowSecs, target.getTwillRunId(), runtimeArgs, systemArgs);
               break;
@@ -271,7 +272,7 @@ public class DefaultStore implements Store {
 
   @Override
   public void setStart(Id.Program id, String pid, long startTime) {
-    setStart(id, pid, startTime, null, ImmutableMap.<String, String>of(), ImmutableMap.<String, String>of());
+    setStart(id, pid, startTime, null, EMPTY_STRING_MAP, EMPTY_STRING_MAP);
   }
 
   @Override
@@ -492,7 +493,7 @@ public class DefaultStore implements Store {
                                                                       .putAll(appSpec.getFlows())
                                                                       .putAll(appSpec.getServices())
                                                                       .putAll(appSpec.getWorkers())
-        .build();
+                                                                      .build();
 
 
       MapDifference<String, ProgramSpecification> mapDiff = Maps.difference(existingSpec, newSpec);
@@ -718,7 +719,7 @@ public class DefaultStore implements Store {
             LOG.debug("Runtime arguments for program {}, run {} not found. Returning empty.",
                       runId.getProgram(), runId.getId());
           }
-          return ImmutableMap.of();
+          return EMPTY_STRING_MAP;
         }
       }, apps.get());
   }

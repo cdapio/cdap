@@ -104,9 +104,10 @@ public final class Schedules {
      * the scheduler will check how many active runs of the scheduled program exist.
      * An active run is one that is not completed, failed, or killed. This includes suspended runs.
      * If that number is greater than or equal to the max, the scheduler will not run the program.
-     * This number does not include runs of the program that were started outside of this schedule.
+     * Program runs started manually or by another schedule are not included in this number.
      * For example, if the threshold is set to 1, the scheduler will
-     * only run the program if there are no current runs.
+     * only run the program if there are no active runs started by this schedule. If another schedule started
+     * the same program, it would not be factored into the decision to start a new run.
      *
      * If no threshold is set, there will be no limit on the number of concurrent runs.
      *
