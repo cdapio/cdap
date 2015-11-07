@@ -215,42 +215,40 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
    * @param scanner the scanner on the partitions table from which to read partitions
    * @param partitions list to add the qualifying partitions to
    * @param filter partition filter to apply before adding to the partitions list
-   * @param limit limit, which once reached, partitions committed by other transactions will not be added
+   * @param limit limit, which once reached, partitions committed by other transactions will not be added.
+   *              The limit is checked after adding consuming all partitions of a transaction, so
+   *              the total number of consumed partitions may be greater than this limit.
    * @return Transaction ID of the partition that we reached in the scanner, but did not add to the list. This value
    *         can be useful in future scans.
    */
   @Nullable
   private Long scannerToPartitions(Scanner scanner, List<Partition> partitions, PartitionFilter filter, int limit) {
     Long prevTxId = null;
-    try {
-      Row row;
-      while ((row = scanner.next()) != null) {
-        PartitionKey key = parseRowKey(row.getRow(), partitioning);
-        if (!filter.match(key)) {
-          continue;
-        }
-
-        String relativePath = Bytes.toString(row.get(RELATIVE_PATH));
-        Long txId = Bytes.toLong(row.get(WRITE_PTR_COL));
-
-        // if we are on a partition written by a different transaction, check if we are over the limit
-        // we don't want to do a check on every partition because we want to either add all partitions written
-        // by a transaction or none, since we keep our marker based upon transaction id.
-        if (prevTxId != null && !prevTxId.equals(txId)) {
-          if (partitions.size() >= limit) {
-            return txId;
-          }
-        }
-        prevTxId = txId;
-
-        BasicPartitionDetail partitionDetail =
-          new BasicPartitionDetail(PartitionedFileSetDataset.this, relativePath, key, metadataFromRow(row));
-        partitions.add(partitionDetail);
+    Row row;
+    while ((row = scanner.next()) != null) {
+      PartitionKey key = parseRowKey(row.getRow(), partitioning);
+      if (!filter.match(key)) {
+        continue;
       }
-      return null;
-    } finally {
-      scanner.close();
+
+      String relativePath = Bytes.toString(row.get(RELATIVE_PATH));
+      Long txId = Bytes.toLong(row.get(WRITE_PTR_COL));
+
+      // if we are on a partition written by a different transaction, check if we are over the limit
+      // we don't want to do a check on every partition because we want to either add all partitions written
+      // by a transaction or none, since we keep our marker based upon transaction id.
+      if (prevTxId != null && !prevTxId.equals(txId)) {
+        if (partitions.size() >= limit) {
+          return txId;
+        }
+      }
+      prevTxId = txId;
+
+      BasicPartitionDetail partitionDetail =
+        new BasicPartitionDetail(PartitionedFileSetDataset.this, relativePath, key, metadataFromRow(row));
+      partitions.add(partitionDetail);
     }
+    return null;
   }
 
   // PartitionConsumerState consists of two things:
@@ -273,7 +271,11 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
         break;
       }
       Scanner scanner = partitionsTable.readByIndex(WRITE_PTR_COL, Bytes.toBytes(txId));
-      scannerToPartitions(scanner, partitions, filter, limit);
+      try {
+        scannerToPartitions(scanner, partitions, filter, limit);
+      } finally {
+        scanner.close();
+      }
       // remove the txIds as they are added to the partitions list already
       // if they're not removed, they will be persisted in the state for the next scan
       noLongerInProgress.remove(txId);
@@ -282,12 +284,17 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     // exclusive scan end, to be used as the start for a next call to consumePartitions
     long scanUpTo;
     if (partitions.size() < limit) {
-      scanUpTo = Math.min(tx.getWritePointer(), tx.getReadPointer() + 1);
       // no read your own writes (partitions)
+      scanUpTo = Math.min(tx.getWritePointer(), tx.getReadPointer() + 1);
       Scanner scanner = partitionsTable.scanByIndex(WRITE_PTR_COL,
                                                     Bytes.toBytes(partitionConsumerState.getStartVersion()),
                                                     Bytes.toBytes(scanUpTo));
-      Long endTxId = scannerToPartitions(scanner, partitions, filter, limit);
+      Long endTxId;
+      try {
+        endTxId = scannerToPartitions(scanner, partitions, filter, limit);
+      } finally {
+        scanner.close();
+      }
       if (endTxId != null) {
         // nonnull means that the scanner was not exhausted
         scanUpTo = endTxId;

@@ -105,7 +105,9 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    *
    * @param partitionConsumerState the state from which to start consuming from
    * @param partitionFilter a filter which must match the partitions to be consumed
-   * @param limit the maximum number of partitions to consume
+   * @param limit number of partitions, which once reached, will not add add more partitions committed by other
+   *              transactions; the limit is checked after adding consuming all partitions of a transaction, so
+   *              the total number of consumed partitions may be greater than this limit
    * @return {@link PartitionConsumerResult} which holds the state of consumption as well as an iterator to the consumed
    * {@link Partition}s
    */
