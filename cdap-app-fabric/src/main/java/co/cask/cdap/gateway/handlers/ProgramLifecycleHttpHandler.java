@@ -85,7 +85,6 @@ import com.google.inject.Singleton;
 import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
-import org.jboss.netty.handler.codec.http.HttpMethod;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -441,10 +440,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
                              @QueryParam("limit") @DefaultValue("100") final int resultLimit) throws
-                                                                                BadRequestException, MethodNotAllowedException {
+    BadRequestException, NotFoundException {
     ProgramType type = getProgramType(programType);
     if (type == null || type == ProgramType.WEBAPP) {
-      throw new MethodNotAllowedException(request.getMethod(), request.getUri());
+      throw new NotFoundException(String.format("Program history is not supported for program type '%s'.",
+                                                programType));
     }
     long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
@@ -461,10 +461,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-id") String appId,
                              @PathParam("program-type") String programType,
                              @PathParam("program-id") String programId,
-                             @PathParam("run-id") String runid) throws NotFoundException, MethodNotAllowedException {
+                             @PathParam("run-id") String runid) throws NotFoundException {
     ProgramType type = getProgramType(programType);
     if (type == null || type == ProgramType.WEBAPP) {
-      throw new MethodNotAllowedException(request.getMethod(), request.getUri());
+      throw new NotFoundException(String.format("Program run record is not supported for program type '%s'.",
+                                                programType));
     }
     Id.Program progId = Id.Program.from(namespaceId, appId, type, programId);
     RunRecordMeta runRecordMeta = store.getRun(progId, runid);
@@ -487,11 +488,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("app-id") String appId,
                                     @PathParam("program-type") String programType,
                                     @PathParam("program-id") String programId) throws BadRequestException,
-    NotImplementedException, NotFoundException, MethodNotAllowedException {
+    NotImplementedException, NotFoundException {
     ProgramType type = getProgramType(programType);
     if (type == null || type == ProgramType.WEBAPP) {
-      HttpMethod method = request.getMethod();
-      throw new MethodNotAllowedException(request.getMethod(), request.getUri());
+      throw new NotFoundException(String.format("Getting program runtime arguments is not supported for program " +
+                                                  "type '%s'.", programType));
     }
 
     Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
@@ -514,10 +515,11 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("app-id") String appId,
                                      @PathParam("program-type") String programType,
                                      @PathParam("program-id") String programId) throws BadRequestException,
-                                                          NotImplementedException, NotFoundException, MethodNotAllowedException {
+                                                          NotImplementedException, NotFoundException {
     ProgramType type = getProgramType(programType);
     if (type == null || type == ProgramType.WEBAPP) {
-      throw new MethodNotAllowedException(request.getMethod(), request.getUri());
+      throw new NotFoundException(String.format("Saving program runtime arguments is not supported for program " +
+                                                  "type '%s'.", programType));
     }
 
     Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
