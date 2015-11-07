@@ -14,6 +14,7 @@ Earlier versions:
 - `Version 3.1.2 <http://docs.cdap.io/cdap/3.1.2>`__
 - `Version 3.1.1 <http://docs.cdap.io/cdap/3.1.1>`__
 - `Version 3.1.0 <http://docs.cdap.io/cdap/3.1.0>`__
+- `Version 3.0.6 <http://docs.cdap.io/cdap/3.0.6>`__
 - `Version 3.0.5 <http://docs.cdap.io/cdap/3.0.5>`__
 - `Version 3.0.4 <http://docs.cdap.io/cdap/3.0.4>`__
 - `Version 3.0.3 <http://docs.cdap.io/cdap/3.0.3>`__
