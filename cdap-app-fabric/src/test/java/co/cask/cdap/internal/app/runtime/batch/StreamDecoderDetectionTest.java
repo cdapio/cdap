@@ -44,20 +44,20 @@ public class StreamDecoderDetectionTest {
       CConfiguration.create(), hConf, null, null, null, null, null, null, null, null);
 
     hConf.setClass(Job.MAP_CLASS_ATTR, IdentityMapper.class, Mapper.class);
-    runtimeService.setStreamEventDecoder(hConf);
+    StreamInputFormat.inferDecoderClass(hConf, runtimeService.getInputValueType(hConf, Void.class));
     Assert.assertSame(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(hConf));
 
     hConf.setClass(Job.MAP_CLASS_ATTR, NoTypeMapper.class, Mapper.class);
-    runtimeService.setStreamEventDecoder(hConf);
+    StreamInputFormat.inferDecoderClass(hConf, runtimeService.getInputValueType(hConf, StreamEvent.class));
     Assert.assertSame(IdentityStreamEventDecoder.class, StreamInputFormat.getDecoderClass(hConf));
 
     hConf.setClass(Job.MAP_CLASS_ATTR, TextMapper.class, Mapper.class);
-    runtimeService.setStreamEventDecoder(hConf);
+    StreamInputFormat.inferDecoderClass(hConf, runtimeService.getInputValueType(hConf, Void.class));
     Assert.assertSame(TextStreamEventDecoder.class, StreamInputFormat.getDecoderClass(hConf));
 
     try {
       hConf.setClass(Job.MAP_CLASS_ATTR, InvalidTypeMapper.class, Mapper.class);
-      runtimeService.setStreamEventDecoder(hConf);
+      StreamInputFormat.inferDecoderClass(hConf, runtimeService.getInputValueType(hConf, Void.class));
       Assert.fail("Expected Exception");
     } catch (IllegalArgumentException e) {
       // Expected

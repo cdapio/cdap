@@ -29,6 +29,7 @@ import co.cask.cdap.api.dataset.lib.TimeseriesTable;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
@@ -40,6 +41,7 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
@@ -55,6 +57,7 @@ import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -132,7 +135,7 @@ public class MapReduceProgramRunnerTest {
   };
 
   @BeforeClass
-  public static void beforeClass() throws IOException {
+  public static void beforeClass() throws Exception {
     // we are only gonna do long-running transactions here. Set the tx timeout to a ridiculously low value.
     // that will test that the long-running transactions actually bypass that timeout.
     CConfiguration conf = CConfiguration.create();
@@ -152,6 +155,9 @@ public class MapReduceProgramRunnerTest {
 
     // this seems to be needed to be able to use custom datasets (that get deployed to that dir).
     injector.getInstance(LocationFactory.class).create("default").mkdirs();
+
+    // Make sure default namespace is created
+    injector.getInstance(NamespaceAdmin.class).create(NamespaceMeta.DEFAULT);
   }
 
   @AfterClass
@@ -363,6 +369,14 @@ public class MapReduceProgramRunnerTest {
     }
   }
 
+  @Test
+  public void testMapReduceDriverResources() throws Exception {
+    final ApplicationWithPrograms app =
+      AppFabricTestHelper.deployApplicationWithManager(AppWithMapReduce.class, TEMP_FOLDER_SUPPLIER);
+    MapReduceSpecification mrSpec =
+      app.getSpecification().getMapReduce().get(AppWithMapReduce.ClassicWordCount.class.getSimpleName());
+    Assert.assertEquals(AppWithMapReduce.ClassicWordCount.MEMORY_MB, mrSpec.getDriverResources().getMemoryMB());
+  }
 
   @Test
   public void testMapreduceWithObjectStore() throws Exception {

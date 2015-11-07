@@ -42,6 +42,7 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
   private Set<String> datasets;
   private String inputDataset;
   private String outputDataset;
+  private Resources driverResources;
   private Resources mapperResources;
   private Resources reducerResources;
 
@@ -85,6 +86,11 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
   }
 
   @Override
+  public void setDriverResources(Resources resources) {
+    this.driverResources = resources;
+  }
+
+  @Override
   public void setMapperResources(Resources resources) {
     this.mapperResources = resources;
   }
@@ -96,6 +102,6 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
 
   public MapReduceSpecification createSpecification() {
     return new MapReduceSpecification(className, name, description, inputDataset, outputDataset, datasets,
-                                      properties, mapperResources, reducerResources);
+                                      properties, driverResources, mapperResources, reducerResources);
   }
 }

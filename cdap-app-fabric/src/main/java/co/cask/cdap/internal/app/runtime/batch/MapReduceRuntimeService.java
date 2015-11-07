@@ -16,13 +16,9 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.data.batch.Split;
-import co.cask.cdap.api.data.format.FormatSpecification;
-import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -31,6 +27,7 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
@@ -40,14 +37,12 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.stream.StreamInputFormat;
-import co.cask.cdap.data.stream.StreamUtils;
+import co.cask.cdap.data.stream.StreamInputFormatProvider;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetInputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputsMainOutputWrapper;
 import co.cask.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
@@ -535,47 +530,37 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     });
   }
 
-  @SuppressWarnings("unchecked")
   private void setInputDatasetIfNeeded(Job job) throws IOException {
-    String inputDatasetName = context.getInputDatasetName();
+    InputFormatProvider provider = context.getInputFormatProvider();
 
-    // TODO: It's a hack for stream
-    if (inputDatasetName != null && inputDatasetName.startsWith(Constants.Stream.URL_PREFIX)) {
-      StreamBatchReadable stream = new StreamBatchReadable(URI.create(inputDatasetName));
-      configureStreamInput(job, stream);
-      return;
+    // If input format is not set during beforeSubmit, use the one from the spec if it exists.
+    if (provider == null && specification.getInputDataSet() != null) {
+      context.setInput(specification.getInputDataSet());
+      provider = context.getInputFormatProvider();
     }
 
-    Dataset dataset = context.getInputDataset();
-    if (dataset == null) {
-      return;
-    }
+    if (provider != null) {
+      Configuration jobConf = job.getConfiguration();
+      jobConf.set(Job.INPUT_FORMAT_CLASS_ATTR, provider.getInputFormatClassName());
+      ConfigurationUtil.setAll(provider.getInputFormatConfiguration(), jobConf);
 
-    LOG.debug("Using Dataset {} as input for MapReduce Job", inputDatasetName);
-    // We checked on validation phase that it implements BatchReadable or InputFormatProvider
-    if (dataset instanceof BatchReadable) {
-      BatchReadable inputDataset = (BatchReadable) dataset;
-      List<Split> inputSplits = context.getInputDataSelection();
-      if (inputSplits == null) {
-        inputSplits = inputDataset.getSplits();
-      }
-      context.setInput(inputDatasetName, inputSplits);
-      DataSetInputFormat.setInput(job, inputDatasetName);
-      return;
-    }
+      // A bit hacky for stream.
+      // For stream, we need to do two extra steps.
+      // 1. stream usage registration since it only happens on client side.
+      // 2. Infer the stream event decoder from Mapper/Reducer
+      if (provider instanceof StreamInputFormatProvider) {
+        StreamInputFormatProvider streamProvider = (StreamInputFormatProvider) provider;
+        Type inputValueType = getInputValueType(jobConf, StreamEvent.class);
+        ConfigurationUtil.setAll(streamProvider.setDecoderType(new HashMap<String, String>(), inputValueType), jobConf);
 
-    // must be input format provider
-    InputFormatProvider inputDataset = (InputFormatProvider) dataset;
-    String inputFormatClassName = inputDataset.getInputFormatClassName();
-    if (inputFormatClassName == null) {
-      throw new DataSetException("Input dataset '" + inputDatasetName + "' provided null as the input format");
-    }
-    job.getConfiguration().set(Job.INPUT_FORMAT_CLASS_ATTR, inputFormatClassName);
-
-    Map<String, String> inputConfig = inputDataset.getInputFormatConfiguration();
-    if (inputConfig != null) {
-      for (Map.Entry<String, String> entry : inputConfig.entrySet()) {
-        job.getConfiguration().set(entry.getKey(), entry.getValue());
+        Id.Stream streamId = streamProvider.getStreamId();
+        try {
+          usageRegistry.register(context.getProgram().getId(), streamId);
+          streamAdmin.addAccess(new Id.Run(context.getProgram().getId(), context.getRunId().getId()),
+                                streamId, AccessType.READ);
+        } catch (Exception e) {
+          LOG.warn("Failed to register usage {} -> {}", context.getProgram().getId(), streamId, e);
+        }
       }
     }
   }
@@ -622,99 +607,37 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     }
   }
 
-  private void configureStreamInput(Job job, StreamBatchReadable stream) throws IOException {
-    Id.Stream streamId = Id.Stream.from(context.getNamespaceId(), stream.getStreamName());
-    StreamConfig streamConfig = streamAdmin.getConfig(streamId);
-    Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
-                                                               StreamUtils.getGeneration(streamConfig));
-    StreamInputFormat.setTTL(job, streamConfig.getTTL());
-    StreamInputFormat.setStreamPath(job, streamPath.toURI());
-    StreamInputFormat.setTimeRange(job, stream.getStartTime(), stream.getEndTime());
-
-    FormatSpecification formatSpecification = stream.getFormatSpecification();
-    if (formatSpecification != null) {
-      // this will set the decoder to the correct type. so no need to set it.
-      // TODO: allow type projection if the mapper type is compatible (CDAP-1149)
-      StreamInputFormat.setBodyFormatSpecification(job, formatSpecification);
-    } else {
-      String decoderType = stream.getDecoderType();
-      if (decoderType == null) {
-        // If the user don't specify the decoder, detect the type from Mapper/Reducer
-        setStreamEventDecoder(job.getConfiguration());
-      } else {
-        StreamInputFormat.setDecoderClassName(job, decoderType);
-      }
-    }
-
-    job.setInputFormatClass(StreamInputFormat.class);
-
-    try {
-      usageRegistry.register(context.getProgram().getId(), streamId);
-      streamAdmin.addAccess(new Id.Run(context.getProgram().getId(), context.getRunId().getId()),
-                            streamId, AccessType.READ);
-    } catch (Exception e) {
-      LOG.warn("Failed to register usage {} -> {}", context.getProgram().getId(), streamId, e);
-    }
-
-    LOG.info("Using Stream as input from {}", streamPath.toURI());
-  }
-
   /**
-   * Detects what {@link StreamEventDecoder} to use based on the job Mapper/Reducer type. It does so by
-   * inspecting the Mapper/Reducer type parameters to figure out what the input type is, and pick the appropriate
-   * {@link StreamEventDecoder}.
-   *
-   * @param hConf The job configuration
-   * @throws IOException If fails to detect what decoder to use for decoding StreamEvent.
+   * Returns the input value type of the MR job based on the job Mapper/Reducer type.
+   * It does so by inspecting the Mapper/Reducer type parameters to figure out what the input type is.
+   * If the job has Mapper, then it's the Mapper IN_VALUE type, otherwise it would be the Reducer IN_VALUE type.
+   * If the cannot determine the input value type, then return the given default type.
    */
   @VisibleForTesting
-  void setStreamEventDecoder(Configuration hConf) throws IOException {
-    // Try to set from mapper
-    TypeToken<Mapper> mapperType = resolveClass(hConf, MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
-    if (mapperType != null) {
-      setStreamEventDecoder(hConf, mapperType);
-      return;
+  Type getInputValueType(Configuration hConf, Type defaultType) {
+    // Try to see if there is mapper
+    TypeToken<?> type = resolveClass(hConf, MRJobConfig.MAP_CLASS_ATTR, Mapper.class);
+    if (type == null) {
+      // If there is no Mapper, it's a Reducer only job, hence get the value type from Reducer class
+      type = resolveClass(hConf, MRJobConfig.REDUCE_CLASS_ATTR, Reducer.class);
+    }
+    Preconditions.checkArgument(type != null, "No Mapper and Reducer for the MapReduce job.");
+
+    if (!(type.getType() instanceof ParameterizedType)) {
+      return defaultType;
     }
 
-    // If there is no Mapper, it's a Reducer only job, hence get the decoder type from Reducer class
-    TypeToken<Reducer> reducerType = resolveClass(hConf, MRJobConfig.REDUCE_CLASS_ATTR, Reducer.class);
-    setStreamEventDecoder(hConf, reducerType);
-  }
+    // The super type Mapper/Reducer must be a parametrized type with <IN_KEY, IN_VALUE, OUT_KEY, OUT_VALUE>
+    Type inputValueType = ((ParameterizedType) type.getType()).getActualTypeArguments()[1];
 
-  /**
-   * Optionally sets the {@link StreamEventDecoder}.
-   *
-   * @throws IOException If the type is an instance of {@link ParameterizedType} and is not able to determine
-   * what {@link StreamEventDecoder} class should use.
-   *
-   * @param <V> type of the super class
-   */
-  private <V> void setStreamEventDecoder(Configuration hConf, TypeToken<V> type) throws IOException {
-    // The super type must be a parametrized type with <IN_KEY, IN_VALUE, OUT_KEY, OUT_VALUE>
-    Type valueType = StreamEvent.class;
-    if ((type.getType() instanceof ParameterizedType)) {
-      // Try to determine the decoder to use from the first input types
-      // The first argument must be LongWritable for it to consumer stream event, as it carries the event timestamp
-      Type inputValueType = ((ParameterizedType) type.getType()).getActualTypeArguments()[1];
-
-      // If the Mapper/Reducer class is not parameterized (meaning not extends with parameters),
-      // then assume StreamEvent as the input value type.
-      // We need to check if the TypeVariable is the same as the one in the parent type.
-      // This avoid the case where a subclass that has "class InvalidMapper<I, O> extends Mapper<I, O>"
-      if (inputValueType instanceof TypeVariable && inputValueType.equals(type.getRawType().getTypeParameters()[1])) {
-        inputValueType = StreamEvent.class;
-      }
-      // Only Class type is support for inferring stream decoder class
-      if (!(inputValueType instanceof Class)) {
-        throw new IllegalArgumentException("Input value type not supported for stream input: " + type);
-      }
-      valueType = inputValueType;
+    // If the concrete Mapper/Reducer class is not parameterized (meaning not extends with parameters),
+    // then assume use the default type.
+    // We need to check if the TypeVariable is the same as the one in the parent type.
+    // This avoid the case where a subclass that has "class InvalidMapper<I, O> extends Mapper<I, O>"
+    if (inputValueType instanceof TypeVariable && inputValueType.equals(type.getRawType().getTypeParameters()[1])) {
+      inputValueType = defaultType;
     }
-    try {
-      StreamInputFormat.inferDecoderClass(hConf, valueType);
-    } catch (IllegalArgumentException e) {
-      throw new IOException("Type not support for consuming StreamEvent from " + type, e);
-    }
+    return inputValueType;
   }
 
   private String getJobName(BasicMapReduceContext context) {
@@ -724,7 +647,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
                          context.getRunId().getId(), ProgramType.MAPREDUCE.name().toLowerCase(),
                          programId.getNamespaceId(), programId.getApplicationId(), programId.getId());
   }
-
 
   /**
    * Creates a jar that contains everything that are needed for running the MapReduce program by Hadoop.

@@ -79,6 +79,13 @@ public abstract class AbstractMapReduce extends AbstractPluginConfigurable<MapRe
   }
 
   /**
+   * Sets the resources requirement for the driver of the {@link MapReduce}.
+   */
+  protected final void setDriverResources(Resources resources) {
+    configurer.setDriverResources(resources);
+  }
+
+  /**
    * Sets the resources requirement for Mapper task of the {@link MapReduce}.
    */
   protected final void setMapperResources(Resources resources) {

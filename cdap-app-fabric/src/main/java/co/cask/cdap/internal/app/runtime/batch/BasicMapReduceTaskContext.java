@@ -42,6 +42,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
@@ -87,7 +88,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    @Nullable MapReduceMetrics.TaskType type,
                                    RunId runId, String taskId,
                                    Arguments runtimeArguments,
-                                   Set<String> datasets,
                                    MapReduceSpecification spec,
                                    long logicalStartTime,
                                    @Nullable WorkflowToken workflowToken,
@@ -98,7 +98,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    DatasetFramework dsFramework,
                                    @Nullable PluginInstantiator pluginInstantiator,
                                    Map<String, File> localizedResources) {
-    super(program, runId, runtimeArguments, datasets,
+    super(program, runId, runtimeArguments, ImmutableSet.<String>of(),
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;

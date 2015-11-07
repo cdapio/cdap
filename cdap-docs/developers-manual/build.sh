@@ -82,7 +82,7 @@ function download_includes() {
   download_readme_file_and_test ${includes_dir} ${ingest_url} 5fc88ec3a658062775403f5be30afbe9 cdap-stream-clients/ruby
 
   echo_red_bold "Check included example files for changes"
-  test_an_include 0ac56fdcdcad585d5678e319767d2fd5 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
+  test_an_include b53dd493c4e9c2cb89b593baa4139087 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
   test_an_include 29fe1471372678115e643b0ad431b28d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
   test_an_include ece6cfbb50e30d9681372788f97a82d7 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java

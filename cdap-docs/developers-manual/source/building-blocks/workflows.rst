@@ -33,8 +33,9 @@ either a simple series of nodes or a more complicated :ref:`parallel workflow <w
 
 Workflows can be controlled by the :ref:`CDAP CLI <cli>` and the :ref:`Lifecycle HTTP
 RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a workflow
-<http-restful-api-lifecycle-start-stop-status>` can be retrieved, workflows
-:ref:`started or stopped <http-restful-api-lifecycle-start-stop-status>`, and
+<http-restful-api-lifecycle-status>` can be retrieved, workflows
+:ref:`started <http-restful-api-lifecycle-start>` or
+:ref:`stopped <http-restful-api-lifecycle-stop>`, and
 individual runs of a workflow :ref:`suspended or resumed 
 <http-restful-api-lifecycle-workflow-runs-suspend-resume>`. 
 
