@@ -95,7 +95,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
       public Integer call() throws Exception {
         return runningProgramCount(program, runId);
       }
-    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 10, TimeUnit.SECONDS);
   }
 
   private Integer runningProgramCount(Id.Program program, String runId) throws Exception {
@@ -404,7 +404,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
         }
         return true;
       }
-    }, 180, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 180, TimeUnit.SECONDS);
   }
 
   @Test

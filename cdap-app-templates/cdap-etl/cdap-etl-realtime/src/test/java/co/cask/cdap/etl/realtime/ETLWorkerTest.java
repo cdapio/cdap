@@ -321,7 +321,7 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
         // need to wait for information to get to the table, not just for the row to be created
         return row.getColumns().size() != 0;
       }
-    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 10, TimeUnit.SECONDS);
   }
 
   public static void setUp() throws IOException {

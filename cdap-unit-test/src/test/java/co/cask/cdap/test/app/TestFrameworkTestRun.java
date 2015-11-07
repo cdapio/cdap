@@ -641,7 +641,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       public Integer call() throws Exception {
         return workerManager.getInstances();
       }
-    }, 15, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 15, TimeUnit.SECONDS);
   }
 
   @Category(SlowTests.class)

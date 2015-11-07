@@ -640,7 +640,7 @@ public abstract class AppFabricTestBase {
         }
         return status.get("status").getAsString();
       }
-    }, 60, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 60, TimeUnit.SECONDS);
   }
 
   private static void createNamespaces() throws Exception {
@@ -721,7 +721,7 @@ public abstract class AppFabricTestBase {
       public Boolean call() throws Exception {
         return getProgramRuns(program, status).size() > expected;
       }
-    }, 60, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 60, TimeUnit.SECONDS);
   }
 
   protected List<RunRecord> getProgramRuns(Id.Program program, String status) throws Exception {
