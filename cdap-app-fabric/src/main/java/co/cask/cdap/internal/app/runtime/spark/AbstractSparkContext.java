@@ -34,6 +34,7 @@ import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
