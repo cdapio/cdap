@@ -48,7 +48,7 @@ For example, the ``read`` method returns the contents of the requested file for 
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 64-86
+    :lines: 64-87
     :dedent: 4
 
 It first instantiates the dataset specified by the first path parameter through its ``HttpServiceContext``.
@@ -60,6 +60,14 @@ file, and it opens an input stream for that location. ``Location`` is a file sys
 `Apache™ Twill® <http://twill.incubator.apache.org>`__; you can read more about its interface in the
 `Apache Twill Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
 
+The ``write`` method uses an ``HttpContentConsumer`` to stream the body of the request to the location specified
+by the ``path`` query parameter. See the section on :ref:`Handling Large Requests<services-content-consumers>`
+and the :ref:`Sport Results Example <examples-sport-results>` for a more detailed explanation:
+
+.. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+     :language: java
+     :lines: 89-137
+     :dedent: 4
 
 MapReduce over Files
 ====================
@@ -98,19 +106,25 @@ First, we will upload a text file (``some.txt``) that we will use as input for t
 This is done by making a RESTful call to the *FileSetService*.
 A sample text file (``lines.txt``) is included in the ``resources`` directory of the example::
 
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/FileSetExample/services/FileSetService/methods/lines?path=some.txt \
-    -X PUT --data-binary @examples/FileSetExample/resources/lines.txt
+  $ cdap-cli.sh call service FileSetExample.FileSetService PUT "lines?path=some.txt" body:file examples/FileSetExample/resources/lines.txt
 
 Now, we start the MapReduce program and configure it to use the file ``some.txt`` as its input, and to write its output to
 ``counts.out``::
 
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/FileSetExample/mapreduce/WordCount/start \
-    -d '{ "dataset.lines.input.paths": "some.txt", "dataset.counts.output.path": "counts.out" }'
+  $ cdap-cli.sh start mapreduce FileSetExample.WordCount \"dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out\"
+  Successfully started MapReduce program 'WordCount' of application 'FileSetExample' with provided runtime arguments 'dataset.lines.input.paths=some.txt dataset.counts.output.path=counts.out'
 
-Wait for the MapReduce program to finish, and you can download the results of the computation::
+Check the status of the MapReduce program until it is completed::
 
-  $ curl -w'\n' localhost:10000/v3/namespaces/default/apps/FileSetExample/services/FileSetService/methods/counts?path=counts.out/part-r-00000
-  
+  $ cdap-cli.sh get mapreduce status FileSetExample.WordCount
+  STOPPED
+
+
+and you can download the results of the computation::
+
+  $ cdap-cli.sh call service FileSetExample.FileSetService GET "counts?path=counts.out/part-r-00000"
+  < 200 OK
+  < Content-Length: 60
   a:1
   five:1
   hello:4
