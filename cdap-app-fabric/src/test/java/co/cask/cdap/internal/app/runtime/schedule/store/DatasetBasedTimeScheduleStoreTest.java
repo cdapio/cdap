@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.scheduler;
+package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -31,8 +31,7 @@ import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.TempFolder;
-import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
-import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
+import co.cask.cdap.internal.app.scheduler.LogPrintingJob;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionExecutorFactory;
