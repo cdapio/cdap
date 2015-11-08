@@ -61,7 +61,7 @@ file, and it opens an input stream for that location. ``Location`` is a file sys
 `Apache Twill Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
 
 The ``write`` method uses an ``HttpContentConsumer`` to stream the body of the request to the location specified
-by the ``path`` query parameter. See the section on :ref:`Handling Large Requests<services-content-consumers>`
+by the ``path`` query parameter. See the section on :ref:`Handling Large Requests<services-content-consumer>`
 and the :ref:`Sport Results Example <examples-sport-results>` for a more detailed explanation:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
