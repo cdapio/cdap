@@ -255,7 +255,7 @@ public abstract class NotificationTest {
               txContext.finish();
             }
           }
-        }, 5, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+        }, 5, TimeUnit.SECONDS);
       } finally {
         cancellable.cancel();
       }

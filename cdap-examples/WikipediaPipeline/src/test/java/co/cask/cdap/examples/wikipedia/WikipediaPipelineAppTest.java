@@ -135,7 +135,7 @@ public class WikipediaPipelineAppTest extends TestBase {
         List<StreamEvent> streamEvents = streamManager.getEvents(0, Long.MAX_VALUE, Integer.MAX_VALUE);
         return streamEvents.size();
       }
-    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 10, TimeUnit.SECONDS);
   }
 
   private void testWorkflow(WorkflowManager workflowManager,
