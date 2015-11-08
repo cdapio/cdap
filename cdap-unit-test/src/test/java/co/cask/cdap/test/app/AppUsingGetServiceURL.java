@@ -245,7 +245,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
         public Boolean call() throws Exception {
           return getContext().getServiceURL(CENTRAL_SERVICE) != null;
         }
-      }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+      }, 10, TimeUnit.SECONDS);
     }
 
     private void waitForSuccessfulPing(final URL serviceUrl) throws InterruptedException, ExecutionException,
@@ -260,7 +260,7 @@ public class AppUsingGetServiceURL extends AbstractApplication {
             conn.disconnect();
           }
         }
-      }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+      }, 10, TimeUnit.SECONDS);
     }
   }
 

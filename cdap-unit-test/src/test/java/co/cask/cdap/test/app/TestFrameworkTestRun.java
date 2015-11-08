@@ -256,21 +256,29 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
     ApplicationManager appManager = deployApplication(appId, createRequest);
 
-    WorkerManager workerManager = appManager.getWorkerManager(AppWithPlugin.WORKER);
+    final WorkerManager workerManager = appManager.getWorkerManager(AppWithPlugin.WORKER);
     workerManager.start();
     workerManager.waitForStatus(false, 5, 1);
-    List<RunRecord> workerRun = workerManager.getHistory(ProgramRunStatus.COMPLETED);
-    Assert.assertFalse(workerRun.isEmpty());
+    Tasks.waitFor(false, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return workerManager.getHistory(ProgramRunStatus.COMPLETED).isEmpty();
+      }
+    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
-    ServiceManager serviceManager = appManager.getServiceManager(AppWithPlugin.SERVICE);
+    final ServiceManager serviceManager = appManager.getServiceManager(AppWithPlugin.SERVICE);
     serviceManager.start();
     serviceManager.waitForStatus(true, 1, 10);
     URL serviceURL = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
     callServiceGet(serviceURL, "dummy");
     serviceManager.stop();
     serviceManager.waitForStatus(false, 1, 10);
-    List<RunRecord> serviceRun = serviceManager.getHistory(ProgramRunStatus.KILLED);
-    Assert.assertFalse(serviceRun.isEmpty());
+    Tasks.waitFor(false, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return serviceManager.getHistory(ProgramRunStatus.KILLED).isEmpty();
+      }
+    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
     MapReduceManager mrManager = appManager.getMapReduceManager(AppWithPlugin.MAPREDUCE);
     mrManager.start();
@@ -633,7 +641,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       public Integer call() throws Exception {
         return workerManager.getInstances();
       }
-    }, 15, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 15, TimeUnit.SECONDS);
   }
 
   @Category(SlowTests.class)

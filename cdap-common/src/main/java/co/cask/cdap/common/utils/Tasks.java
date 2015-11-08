@@ -61,7 +61,25 @@ public final class Tasks {
       Thread.sleep(sleepDelayMs);
     }
     throw new TimeoutException();
+  }
 
+
+  /**
+   * Calls callable, waiting 50 milliseconds between each call,
+   * until it returns the desiredValue or the timeout has passed.
+   *
+   * @param desiredValue the desired value to get from callable
+   * @param callable the callable to check
+   * @param timeout time until we timeout
+   * @param timeoutUnit unit of time for timeout
+   * @param <T> type of desiredValue
+   * @throws TimeoutException if timeout has passed, but didn't get the desiredValue
+   * @throws InterruptedException if something interrupted this waiting operation
+   * @throws ExecutionException if there was an exception in calling the callable
+   */
+  public static <T> void waitFor(T desiredValue, Callable<T> callable, long timeout, TimeUnit timeoutUnit)
+    throws TimeoutException, InterruptedException, ExecutionException {
+    waitFor(desiredValue, callable, timeout, timeoutUnit, 50, TimeUnit.MILLISECONDS);
   }
 }
 

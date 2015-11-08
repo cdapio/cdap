@@ -171,7 +171,7 @@ public class WorkerProgramRunnerTest {
             }
           });
       }
-    }, 5, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 5, TimeUnit.SECONDS);
 
     stopProgram(controller);
 
@@ -240,7 +240,7 @@ public class WorkerProgramRunnerTest {
         }
         return controller.getState();
       }
-    }, 30, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 30, TimeUnit.SECONDS);
 
     return controller;
   }
