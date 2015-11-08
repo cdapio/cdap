@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.spark.metrics;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.internal.app.runtime.spark.ExecutionSparkContext;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextProvider;
 
@@ -34,24 +35,24 @@ import java.io.ObjectOutput;
  */
 public final class SparkUserMetrics implements Metrics, Externalizable {
 
-  private final MetricsContext metricsContext;
+  private final Metrics metrics;
 
   public SparkUserMetrics() {
     this(SparkContextProvider.getSparkContext().getMetricsContext());
   }
 
   public SparkUserMetrics(MetricsContext metricsContext) {
-    this.metricsContext = metricsContext;
+    this.metrics = new ProgramUserMetrics(metricsContext);
   }
 
   @Override
   public void count(String metricName, int delta) {
-    metricsContext.increment(metricName, delta);
+    metrics.count(metricName, delta);
   }
 
   @Override
   public void gauge(String metricName, long value) {
-    metricsContext.gauge(metricName, value);
+    metrics.gauge(metricName, value);
   }
 
   @Override
