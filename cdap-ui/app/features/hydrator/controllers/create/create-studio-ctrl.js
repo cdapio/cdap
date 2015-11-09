@@ -17,6 +17,9 @@
 class HydratorCreateStudioController {
   constructor(LeftPanelStore, LeftPanelActionsFactory, ConfigActionsFactory, $stateParams, rConfig, ConfigStore, $rootScope) {
     // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
+
+    this.LeftPanelActionsFactory = LeftPanelActionsFactory;
+
     ConfigStore.setDefaults();
     if ($stateParams.type) {
       ConfigActionsFactory.setArtifact({
@@ -30,6 +33,16 @@ class HydratorCreateStudioController {
       ConfigActionsFactory.setName(rConfig.name);
       ConfigActionsFactory.setDescription(rConfig.description);
     }
+
+    this.isExpanded = LeftPanelStore.getState();
+    LeftPanelStore.registerOnChangeListener( () => {
+      this.isExpanded = LeftPanelStore.getState();
+    });
+
+  }
+
+  toggleSidebar() {
+    this.LeftPanelActionsFactory.togglePanel();
   }
 }
 

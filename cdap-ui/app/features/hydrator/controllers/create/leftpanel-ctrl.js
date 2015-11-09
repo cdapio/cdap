@@ -14,8 +14,55 @@
  * the License.
  */
 
+class LeftPanelController {
+  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore) {
+    this.$scope = $scope;
+    this.$stateParams = $stateParams;
+    this.LeftPanelStore = LeftPanelStore;
+    this.LeftPanelActionsFactory = LeftPanelActionsFactory;
+    this.PluginActionsFactory = PluginActionsFactory;
+
+    this.pluginTypes = [
+      {
+        name: 'source',
+        expanded: false,
+        plugins: []
+      },
+      {
+        name: 'transform',
+        expanded: false,
+        plugins: []
+      },
+      {
+        name: 'sink',
+        expanded: false,
+        plugins: []
+      }
+    ];
+
+    this.LeftPanelStore.registerOnChangeListener(() => {
+      this.pluginTypes[0].plugins = this.LeftPanelStore.getSources();
+      this.pluginTypes[1].plugins = this.LeftPanelStore.getTransforms();
+      this.pluginTypes[2].plugins = this.LeftPanelStore.getSinks();
+    });
+
+    let params = {
+      namespace: this.$stateParams.namespace,
+      pipelineType: ConfigStore.getArtifact().name,
+      version: rVersion.version,
+      scope: this.$scope
+    };
+    this.PluginActionsFactory.fetchSources(params);
+    this.PluginActionsFactory.fetchTransforms(params);
+    this.PluginActionsFactory.fetchSinks(params);
+
+  }
+}
+
+LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore'];
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('LeftPanelController', function() {
+  .controller('LeftPanelController', LeftPanelController);
+  // .controller('LeftPanelController', function() {
   // .controller('LeftPanelController', function(myPipelineApi, MyAppDAGService, MyDAGFactory, mySettings, $state, MySidebarService, $scope, rVersion, $stateParams, GLOBALS) {
     // this.pluginTypes = [
     //   {
@@ -159,4 +206,4 @@ angular.module(PKG.name + '.feature.hydrator')
     //   return arr;
     // }
 
-  });
+  // });
