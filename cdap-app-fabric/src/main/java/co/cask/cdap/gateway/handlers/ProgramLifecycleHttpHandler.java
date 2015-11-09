@@ -30,6 +30,7 @@ import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.MethodNotAllowedException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.common.ProgramNotFoundException;
@@ -67,6 +68,7 @@ import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -438,11 +440,12 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("status") String status,
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
-                             @QueryParam("limit") @DefaultValue("100") final int resultLimit) {
-    ProgramType type = ProgramType.valueOfCategoryName(programType);
+                             @QueryParam("limit") @DefaultValue("100") final int resultLimit)
+    throws BadRequestException, NotFoundException {
+    ProgramType type = getProgramType(programType);
     if (type == null || type == ProgramType.WEBAPP) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
+      throw new NotFoundException(String.format("Program history is not supported for program type '%s'.",
+                                                programType));
     }
     long start = (startTs == null || startTs.isEmpty()) ? 0 : Long.parseLong(startTs);
     long end = (endTs == null || endTs.isEmpty()) ? Long.MAX_VALUE : Long.parseLong(endTs);
@@ -459,24 +462,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @PathParam("app-id") String appId,
                              @PathParam("program-type") String programType,
                              @PathParam("program-id") String programId,
-                             @PathParam("run-id") String runid) {
-    ProgramType type = ProgramType.valueOfCategoryName(programType);
+                             @PathParam("run-id") String runid) throws NotFoundException {
+    ProgramType type = getProgramType(programType);
     if (type == null || type == ProgramType.WEBAPP) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
+      throw new NotFoundException(String.format("Program run record is not supported for program type '%s'.",
+                                                programType));
+    }
+    Id.Program progId = Id.Program.from(namespaceId, appId, type, programId);
+    RunRecordMeta runRecordMeta = store.getRun(progId, runid);
+    if (runRecordMeta != null) {
+      RunRecord runRecord = CONVERT_TO_RUN_RECORD.apply(runRecordMeta);
+      responder.sendJson(HttpResponseStatus.OK, runRecord);
       return;
     }
-
-    try {
-      RunRecordMeta runRecordMeta = store.getRun(Id.Program.from(namespaceId, appId, type, programId), runid);
-      if (runRecordMeta != null) {
-        RunRecord runRecord = CONVERT_TO_RUN_RECORD.apply(runRecordMeta);
-        responder.sendJson(HttpResponseStatus.OK, runRecord);
-        return;
-      }
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    }
+    throw new NotFoundException(new ProgramRunId(namespaceId, appId, type, programId, runid));
   }
 
   /**
@@ -488,19 +487,19 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("app-id") String appId,
                                     @PathParam("program-type") String programType,
-                                    @PathParam("program-id") String programId) {
-    ProgramType type = ProgramType.valueOfCategoryName(programType);
+                                    @PathParam("program-id") String programId) throws BadRequestException,
+    NotImplementedException, NotFoundException {
+    ProgramType type = getProgramType(programType);
     if (type == null || type == ProgramType.WEBAPP) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
+      throw new NotFoundException(String.format("Getting program runtime arguments is not supported for program " +
+                                                  "type '%s'.", programType));
     }
 
     Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
-
     if (!store.programExists(id)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
-      return;
+      throw new NotFoundException(id);
     }
+
     Map<String, String> runtimeArgs = preferencesStore.getProperties(id.getNamespaceId(), appId,
                                                                      programType, programId);
     responder.sendJson(HttpResponseStatus.OK, runtimeArgs);
@@ -515,19 +514,20 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                      @PathParam("namespace-id") String namespaceId,
                                      @PathParam("app-id") String appId,
                                      @PathParam("program-type") String programType,
-                                     @PathParam("program-id") String programId) {
-    ProgramType type = ProgramType.valueOfCategoryName(programType);
+                                     @PathParam("program-id") String programId) throws BadRequestException,
+                                                          NotImplementedException, NotFoundException {
+    ProgramType type = getProgramType(programType);
     if (type == null || type == ProgramType.WEBAPP) {
-      responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      return;
+      throw new NotFoundException(String.format("Saving program runtime arguments is not supported for program " +
+                                                  "type '%s'.", programType));
     }
 
     Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
 
     if (!store.programExists(id)) {
-      responder.sendString(HttpResponseStatus.NOT_FOUND, "Program not found");
-      return;
+      throw new NotFoundException(id);
     }
+
     Map<String, String> args = decodeArguments(request);
     preferencesStore.setProperties(namespaceId, appId, programType, programId, args);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -538,26 +538,19 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void programSpecification(HttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespaceId, @PathParam("app-id") String appId,
                                    @PathParam("program-type") String programType,
-                                   @PathParam("program-id") String programId) {
-
+                                   @PathParam("program-id") String programId) throws NotFoundException,
+    MethodNotAllowedException, BadRequestException, NotImplementedException {
     ProgramType type = getProgramType(programType);
     if (type == null) {
-      responder.sendString(HttpResponseStatus.METHOD_NOT_ALLOWED,
-                           String.format("Program type '%s' not supported", programType));
-      return;
+      throw new MethodNotAllowedException(request.getMethod(), request.getUri());
     }
 
-    try {
-      Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
-      ProgramSpecification specification = getProgramSpecification(id);
-      if (specification == null) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else {
-        responder.sendJson(HttpResponseStatus.OK, specification);
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+    Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
+    ProgramSpecification specification = getProgramSpecification(id);
+    if (specification == null) {
+      throw new NotFoundException(programId);
     }
+    responder.sendJson(HttpResponseStatus.OK, specification);
   }
 
   /**
@@ -1491,20 +1484,16 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private void getRuns(HttpResponder responder, Id.Program programId, String status,
-                       long start, long end, int limit) {
+                       long start, long end, int limit) throws BadRequestException {
     try {
-      try {
-        ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
-          ProgramRunStatus.valueOf(status.toUpperCase());
-        List<RunRecord> records =
-          Lists.transform(store.getRuns(programId, runStatus, start, end, limit), CONVERT_TO_RUN_RECORD);
-        responder.sendJson(HttpResponseStatus.OK, records);
-      } catch (IllegalArgumentException e) {
-        responder.sendString(HttpResponseStatus.BAD_REQUEST,
-                             "Supported options for status of runs are running/completed/failed");
-      }
-    } catch (SecurityException e) {
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
+      ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
+        ProgramRunStatus.valueOf(status.toUpperCase());
+      List<RunRecord> records =
+        Lists.transform(store.getRuns(programId, runStatus, start, end, limit), CONVERT_TO_RUN_RECORD);
+      responder.sendJson(HttpResponseStatus.OK, records);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(String.format("Invalid status %s. Supported options for status of runs are " +
+                                                    "running/completed/failed", status));
     }
   }
 

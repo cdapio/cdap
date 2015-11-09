@@ -42,6 +42,7 @@ Example response::
 **lookup:** The configuration of the lookup tables to be used in your script.
 For example, if lookup table "purchases" is configured, then you will be able to perform
 operations with that lookup table in your script: ``context.getLookup('purchases').lookup('key')``
+Currently supports ``KeyValueTable``.
 
 .. rubric:: Examples
 

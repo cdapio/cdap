@@ -23,12 +23,15 @@ import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -45,25 +48,33 @@ import java.util.concurrent.TimeUnit;
 @Category(XSlowTests.class)
 public class SparkMetricsIntegrationTestRun extends TestFrameworkTestBase {
 
-  private static final String METRICS_KEY = "system.<driver>.BlockManager.memory.remainingMem_MB";
-
   @Test
   public void testSparkMetrics() throws Exception {
     ApplicationManager applicationManager = deployApplication(TestSparkMetricsIntegrationApp.class);
     SparkManager sparkManager =
       applicationManager.getSparkManager(TestSparkMetricsIntegrationApp.APP_SPARK_NAME).start();
     sparkManager.waitForFinish(120, TimeUnit.SECONDS);
+    List<RunRecord> history = sparkManager.getHistory(ProgramRunStatus.COMPLETED);
+    Assert.assertEquals(1, history.size());
 
     // Wait for the metrics to get updated
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
         return getSparkMetric(TestSparkMetricsIntegrationApp.APP_NAME,
-                              TestSparkMetricsIntegrationApp.APP_SPARK_NAME, METRICS_KEY) > 0;
+                              TestSparkMetricsIntegrationApp.APP_SPARK_NAME,
+                              "system.<driver>.BlockManager.memory.remainingMem_MB") > 0;
       }
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
-    //TODO: Add test to check user metrics once the support is added: CDAP-765
+    Tasks.waitFor(2L, new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        return getSparkMetric(TestSparkMetricsIntegrationApp.APP_NAME,
+                              TestSparkMetricsIntegrationApp.APP_SPARK_NAME,
+                              "user.more.than.30");
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   private long getSparkMetric(String applicationId, String sparkId, String metricName) throws Exception {
