@@ -34,6 +34,7 @@ import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
@@ -71,6 +72,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
   private final long logicalStartTime;
   private final Map<String, String> runtimeArguments;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final Metrics userMetrics;
   private final MetricsContext metricsContext;
   private final LoggingContext loggingContext;
   private final PluginInstantiator pluginInstantiator;
@@ -94,6 +96,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
     this.logicalStartTime = logicalStartTime;
     this.runtimeArguments = ImmutableMap.copyOf(runtimeArguments);
     this.discoveryServiceClient = discoveryServiceClient;
+    this.userMetrics = new ProgramUserMetrics(metricsContext);
     this.metricsContext = metricsContext;
     this.loggingContext = loggingContext;
     this.executorResources = Objects.firstNonNull(specification.getExecutorResources(), new Resources());
@@ -134,7 +137,7 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
 
   @Override
   public Metrics getMetrics() {
-    return new SparkUserMetrics(metricsContext);
+    return new SparkUserMetrics(userMetrics);
   }
 
   @Override
@@ -231,6 +234,14 @@ public abstract class AbstractSparkContext implements SparkContext, Closeable {
    */
   public DiscoveryServiceClient getDiscoveryServiceClient() {
     return discoveryServiceClient;
+  }
+
+  /**
+   * Returns the underlying {@link Metrics} instance for emitting user metrics. The returned instance is
+   * not serializable and shouldn't be exposed to user program directly.
+   */
+  public Metrics getUserMetrics() {
+    return userMetrics;
   }
 
   /**

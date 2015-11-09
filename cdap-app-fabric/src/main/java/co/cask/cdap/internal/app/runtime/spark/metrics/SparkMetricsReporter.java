@@ -16,7 +16,6 @@
 
 package co.cask.cdap.internal.app.runtime.spark.metrics;
 
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextProvider;
 import com.codahale.metrics.Counter;
@@ -38,14 +37,14 @@ import java.util.concurrent.TimeUnit;
  */
 final class SparkMetricsReporter extends ScheduledReporter {
 
-  private final Metrics metrics;
+  private final MetricsContext metricsContext;
 
   SparkMetricsReporter(MetricRegistry registry,
                        TimeUnit rateUnit,
                        TimeUnit durationUnit,
                        MetricFilter filter) {
     super(registry, "spark-reporter", filter, rateUnit, durationUnit);
-    this.metrics = SparkContextProvider.getSparkContext().getMetrics();
+    this.metricsContext = SparkContextProvider.getSparkContext().getMetricsContext();
   }
 
   /**
@@ -76,7 +75,7 @@ final class SparkMetricsReporter extends ScheduledReporter {
         }
 
         long value = ((Number) entry.getValue().getValue()).longValue();
-        metrics.gauge(metricName, value);
+        metricsContext.gauge(metricName, value);
       }
     }
   }
