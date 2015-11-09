@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('NodeConfigStore', function(PipelineNodeConfigDispatcher, $q, MyAppDAGService, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, ConfigStore, ConfigAcionsFactory) {
+  .service('NodeConfigStore', function(PipelineNodeConfigDispatcher, $q, MyAppDAGService, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, ConfigStore, ConfigActionsFactory) {
 
     var dispatcher = PipelineNodeConfigDispatcher.getDispatcher();
     this.changeListeners = [];
@@ -46,7 +46,7 @@ angular.module(PKG.name + '.feature.hydrator')
         type = 'transform';
       }
 
-      ConfigAcionsFactory.savePlugin(plugin, type);
+      ConfigActionsFactory.savePlugin(plugin, type);
     };
     this.registerOnChangeListener = function(callback) {
       this.changeListeners.push(callback);
