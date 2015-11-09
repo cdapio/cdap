@@ -379,8 +379,8 @@
         <name>data.tx.client.count</name>
         <value>50</value>
         <description>
-            The number of pooled instances of the transaction client.
-            Increase this to increase transaction concurrency.
+            The number of pooled instances of the transaction client;
+            increase this to increase transaction concurrency
         </description>
     </property>
 
