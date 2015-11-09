@@ -70,6 +70,7 @@ public class FileSetService extends AbstractService {
       try {
         fileSet = getContext().getDataset(set);
       } catch (DatasetInstantiationException e) {
+        LOG.warn("Error instantiating file set {}", set, e);
         responder.sendError(400, String.format("Invalid file set name '%s'", set));
         return;
       }
@@ -95,6 +96,7 @@ public class FileSetService extends AbstractService {
       try {
         fileSet = getContext().getDataset(set);
       } catch (DatasetInstantiationException e) {
+        LOG.warn("Error instantiating file set {}", set, e);
         responder.sendError(400, String.format("Invalid file set name '%s'", set));
         return null;
       }

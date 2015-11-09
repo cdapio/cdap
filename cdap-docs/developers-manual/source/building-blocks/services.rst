@@ -103,6 +103,8 @@ An example of calling this endpoint with the HTTP RESTful API is shown in the :r
 :ref:`percent-encoding <http-restful-api-conventions-reserved-unsafe-characters>`.
 See the next section, :ref:`services-path-parameters`.
 
+.. _services-content-consumer:
+
 Handling a Large Request Body
 =============================
 Sometimes the request body for a ``PUT`` or ``POST`` request can be huge and it is not feasible to keep all
