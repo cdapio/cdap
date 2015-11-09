@@ -254,12 +254,16 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth) {
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyCDAPDataSource($scope);
     if (MY_CONFIG.securityEnabled) {
-      $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
+      if (myAuth.isAuthenticated()) {
+        getVersion();
+      } else {
+        $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
+      }
     } else {
       getVersion();
     }
