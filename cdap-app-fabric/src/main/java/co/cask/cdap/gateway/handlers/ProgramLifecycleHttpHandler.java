@@ -68,6 +68,7 @@ import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ServiceInstances;
+import co.cask.cdap.proto.id.ProgramRunId;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -439,8 +440,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @QueryParam("status") String status,
                              @QueryParam("start") String startTs,
                              @QueryParam("end") String endTs,
-                             @QueryParam("limit") @DefaultValue("100") final int resultLimit) throws
-    BadRequestException, NotFoundException {
+                             @QueryParam("limit") @DefaultValue("100") final int resultLimit)
+    throws BadRequestException, NotFoundException {
     ProgramType type = getProgramType(programType);
     if (type == null || type == ProgramType.WEBAPP) {
       throw new NotFoundException(String.format("Program history is not supported for program type '%s'.",
@@ -474,8 +475,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, runRecord);
       return;
     }
-    throw new NotFoundException(String.format("No run record information found for program %s with run id %s", progId,
-                                              runid));
+    throw new NotFoundException(new ProgramRunId(namespaceId, appId, type, programId, runid));
   }
 
   /**
@@ -548,7 +548,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Id.Program id = Id.Program.from(namespaceId, appId, type, programId);
     ProgramSpecification specification = getProgramSpecification(id);
     if (specification == null) {
-      throw new NotFoundException(String.format("Specification not found for program %s", programId));
+      throw new NotFoundException(programId);
     }
     responder.sendJson(HttpResponseStatus.OK, specification);
   }

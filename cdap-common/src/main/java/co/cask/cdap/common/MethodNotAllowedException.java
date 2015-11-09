@@ -23,16 +23,20 @@ import org.jboss.netty.handler.codec.http.HttpMethod;
  */
 public class MethodNotAllowedException extends Exception {
 
-  private HttpMethod method;
-  private String apiPath;
-
-  public MethodNotAllowedException(String message) {
-    super(message);
-  }
+  private final HttpMethod method;
+  private final String apiPath;
 
   public MethodNotAllowedException(HttpMethod method, String apiPath) {
     super(String.format("Method %s is not allowed on path %s.", method, apiPath));
     this.method = method;
     this.apiPath = apiPath;
+  }
+
+  public HttpMethod getMethod() {
+    return method;
+  }
+
+  public String getApiPath() {
+    return apiPath;
   }
 }
