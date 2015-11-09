@@ -42,12 +42,6 @@ body.theme-cdap.state-hydrator {
       div.bottompanel-body {
         width: 100%;
       }
-      div.terminal {
-        word-wrap: break-word;
-        pre {
-          white-space: normal;
-        }
-      }
       .history-table .table {
         border: 1px solid #ddd;
       }
@@ -158,11 +152,7 @@ body.theme-cdap.state-hydrator {
       }
     }
   }
-  div.console-inner {
-    @media (min-width: @screen-lg-min) {
-      position: relative;
-    }
-  }
+
   // When bottom panel is in minimized state, set width based on left panel state
   div.left-panel-wrapper {
     + .right-wrapper div.console:not(.maximized) {
@@ -401,38 +391,53 @@ body.theme-cdap.state-hydrator {
       padding: 20px 10px;
       overflow: hidden;
     }
-    @media (min-width: @screen-lg-min) {
-      [class*="divider"]:before, [class*="divider"]:after {
-        background-image: url('@{img-path}/divider.png');
-        content: '';
-        display: block;
-        position: absolute;
-        top: 111px;
-        bottom: 0;
-        width: 1px;
-      }
-      .one-divider {
-        &:before {
-          left: 67%;
+    .node-config .bottompanel-body {
+      @media (min-width: @screen-lg-min) {
+        padding: 0;
+        > p, .validator-plugin > div {
+          padding: 20px 10px;
         }
-        &:after {
-          display: none;
+        div.config-table {
+          display: table;
+          width: 100%;
+          > div {
+            display: table-cell;
+            padding: 20px 10px;
+          }
         }
-      }
-      .two-divider {
-        &:before {
-          left: 25%;
+        div.source-table {
+          > div {
+            &:first-child {
+              border-right: 1px solid @table-border-color;
+              width: 66.66666667%;
+            }
+            &:last-child {
+              width: 33.33333333%;
+            }
+          }
         }
-        &:after {
-          right: 25%;
+        div.transform-table {
+          > div {
+            &:first-child, &:last-child {
+              width: 25%;
+            }
+            &:nth-child(2) {
+              width: 50%;
+              border-right: 1px solid @table-border-color;
+              border-left: 1px solid @table-border-color;
+            }
+          }
         }
-      }
-      .sink-divider {
-        &:before {
-          left: 33%;
-        }
-        &:after {
-          display: none;
+        div.sink-table {
+          > div {
+            &:first-child {
+              border-right: 1px solid @table-border-color;
+              width: 33.33333333%;
+            }
+            &:last-child {
+              width: 66.66666667%;
+            }
+          }
         }
       }
     }
@@ -522,8 +527,6 @@ body.theme-cdap.state-hydrator {
       border: 0;
       display: inline;
       padding: 0;
-      word-break: normal;
-      white-space: pre-wrap;
       &:after {
         display: block;
         content: '';
