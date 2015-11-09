@@ -644,6 +644,26 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }, 15, TimeUnit.SECONDS);
   }
 
+  /**
+   * Checks to ensure that a particular key is present in a {@link KeyValueTable}
+   * @param namespace {@link Id.Namespace}
+   * @param datasetName name of the dataset
+   * @param expectedKey expected key byte array
+   *
+   * @throws Exception if the key is not found even after 15 seconds of timeout
+   */
+  private void kvTableKeyCheck(final Id.Namespace namespace, final String datasetName, final byte[] expectedKey)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        DataSetManager<KeyValueTable> datasetManager = getDataset(namespace, datasetName);
+        KeyValueTable kvTable = datasetManager.get();
+        return kvTable.read(expectedKey) != null;
+      }
+    }, 15, TimeUnit.SECONDS);
+  }
+
   @Category(SlowTests.class)
   @Test
   public void testWorkerInstances() throws Exception {
@@ -673,6 +693,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Set 5 instances for the LifecycleWorker
     lifecycleWorkerManager.setInstances(5);
     workerInstancesCheck(lifecycleWorkerManager, 5);
+
+    // Make sure all the keys have been written before stopping the worker
+    for (int i = 0; i < 5; i++) {
+      kvTableKeyCheck(testSpace, AppUsingGetServiceURL.WORKER_INSTANCES_DATASET,
+                      Bytes.toBytes(String.format("init.%d", i)));
+    }
 
     lifecycleWorkerManager.stop();
     lifecycleWorkerManager.waitForStatus(false);
