@@ -20,8 +20,10 @@ import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.common.ETLConfig;
 import co.cask.cdap.etl.common.ETLStage;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * ETL Batch Configuration.
@@ -29,34 +31,49 @@ import java.util.List;
 public final class ETLBatchConfig extends ETLConfig {
   private final String schedule;
   private final List<ETLStage> actions;
+  private final List<LocalizeResourceInfo> resourcesToLocalize;
 
   public ETLBatchConfig(String schedule, ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
-                        Resources resources, List<ETLStage> actions) {
+                        @Nullable Resources resources, @Nullable List<ETLStage> actions,
+                        @Nullable List<LocalizeResourceInfo> resourcesToLocalize) {
     super(source, sinks, transforms, resources);
     this.schedule = schedule;
     this.actions = actions;
+    this.resourcesToLocalize = resourcesToLocalize;
   }
 
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
-                        Resources resources, List<ETLStage> actions) {
+                        @Nullable Resources resources, @Nullable List<ETLStage> actions,
+                        @Nullable List<LocalizeResourceInfo> resourcesToLocalize) {
     super(source, sink, transforms, resources);
     this.schedule = schedule;
     this.actions = actions;
+    this.resourcesToLocalize = resourcesToLocalize;
+  }
+
+  public ETLBatchConfig(String schedule, ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
+                        @Nullable Resources resources, List<ETLStage> actions) {
+    this(schedule, source, sinks, transforms, resources, actions, null);
   }
 
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
-                        Resources resources) {
-    this(schedule, source, sink, transforms, resources, null);
+                        @Nullable Resources resources, List<ETLStage> actions) {
+    this(schedule, source, sink, transforms, resources, actions, null);
+  }
+
+  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
+                        @Nullable Resources resources) {
+    this(schedule, source, sink, transforms, resources, null, null);
   }
 
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink,
                         List<ETLStage> transforms, List<ETLStage> actions) {
-    this(schedule, source, sink, transforms, null, actions);
+    this(schedule, source, sink, transforms, null, actions, null);
   }
 
   @VisibleForTesting
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
-    this(schedule, source, sink, transforms, null, null);
+    this(schedule, source, sink, transforms, null, null, null);
   }
 
   @VisibleForTesting
@@ -70,5 +87,9 @@ public final class ETLBatchConfig extends ETLConfig {
 
   public List<ETLStage> getActions() {
     return actions;
+  }
+
+  public List<LocalizeResourceInfo> getResourcesToLocalize() {
+    return resourcesToLocalize;
   }
 }

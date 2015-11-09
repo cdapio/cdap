@@ -22,14 +22,14 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
-import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.common.ClientTransformContext;
 
 import java.util.Map;
 
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
  */
-public abstract class MapReduceBatchContext extends AbstractTransformContext implements BatchContext {
+public abstract class MapReduceBatchContext extends ClientTransformContext implements BatchContext {
 
   protected final MapReduceContext mrContext;
   protected final LookupProvider lookup;

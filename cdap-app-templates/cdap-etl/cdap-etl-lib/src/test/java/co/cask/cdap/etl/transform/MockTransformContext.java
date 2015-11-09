@@ -24,7 +24,10 @@ import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.common.MockLookupProvider;
 import co.cask.cdap.etl.common.NoopMetrics;
+import com.google.common.collect.ImmutableMap;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,21 +38,27 @@ public class MockTransformContext implements TransformContext {
   private final PluginProperties pluginProperties;
   private final StageMetrics metrics;
   private final LookupProvider lookup;
+  private final Map<String, File> localizedResources;
 
   public MockTransformContext() {
     this(new HashMap<String, String>());
   }
 
   public MockTransformContext(Map<String, String> args) {
-    this(args, NoopMetrics.INSTANCE, "", new MockLookupProvider(null));
+    this(args, NoopMetrics.INSTANCE, "", new MockLookupProvider(null), ImmutableMap.<String, File>of());
   }
 
   public MockTransformContext(Map<String, String> args, final Metrics metrics, final String stageMetricPrefix) {
-    this(args, metrics, stageMetricPrefix, new MockLookupProvider(null));
+    this(args, metrics, stageMetricPrefix, new MockLookupProvider(null), ImmutableMap.<String, File>of());
   }
 
   public MockTransformContext(Map<String, String> args, final Metrics metrics, final String stageMetricPrefix,
                               LookupProvider lookup) {
+    this(args, metrics, stageMetricPrefix, lookup, ImmutableMap.<String, File>of());
+  }
+
+  public MockTransformContext(Map<String, String> args, final Metrics metrics, final String stageMetricPrefix,
+                              LookupProvider lookup, Map<String, File> localizedResources) {
     this.pluginProperties = PluginProperties.builder().addAll(args).build();
     this.lookup = lookup;
     // TODO:
@@ -74,6 +83,7 @@ public class MockTransformContext implements TransformContext {
         metrics.gauge(metricName, value);
       }
     };
+    this.localizedResources = localizedResources;
   }
 
   @Override
@@ -109,5 +119,18 @@ public class MockTransformContext implements TransformContext {
   @Override
   public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
     return lookup.provide(table, arguments);
+  }
+
+  @Override
+  public File getLocalFile(String name) throws FileNotFoundException {
+    if (!localizedResources.containsKey(name)) {
+      throw new FileNotFoundException(String.format("Resource %s was not localized for this pipeline", name));
+    }
+    return localizedResources.get(name);
+  }
+
+  @Override
+  public Map<String, File> getAllLocalFiles() {
+    return localizedResources;
   }
 }

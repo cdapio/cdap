@@ -83,4 +83,11 @@ public final class Constants {
     public static final String TIMESTAMP = "errTimestamp";
     public static final String INVALIDENTRY = "invalidRecord";
   }
+
+  /**
+   * Constants related to the pipeline configuration
+   */
+  public static final class Pipeline {
+    public static final String LOCAL_RESOURCES = "localResources";
+  }
 }

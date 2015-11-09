@@ -22,6 +22,8 @@ import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import com.google.common.collect.Maps;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Map;
 
 /**
@@ -81,5 +83,15 @@ public class MockRealtimeContext implements RealtimeContext {
   @Override
   public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
     return null;
+  }
+
+  @Override
+  public File getLocalFile(String name) throws FileNotFoundException {
+    throw new UnsupportedOperationException("File localization is not supported in Realtime pipelines.");
+  }
+
+  @Override
+  public Map<String, File> getAllLocalFiles() {
+    throw new UnsupportedOperationException("File localization is not supported in Realtime pipelines.");
   }
 }

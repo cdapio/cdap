@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.api;
 
+import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -25,7 +26,7 @@ import co.cask.cdap.api.plugin.PluginProperties;
  * Context passed to ETL stages.
  */
 @Beta
-public interface TransformContext extends PluginContext, LookupProvider {
+public interface TransformContext extends PluginContext, LookupProvider, TaskLocalizationContext {
 
   /**
    * Gets the {@link PluginProperties} associated with the stage.
