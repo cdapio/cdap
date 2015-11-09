@@ -11,7 +11,7 @@ FAQs Table of Contents
 
     Overview <index>
     General Questions<general>
-    CDAP Startup <cdap-startup>
+    CDAP <cdap>
 ..     Applications <applications>
 ..     User Interface <user-interface>
 ..     Databases and Transactions <databases-transactions>

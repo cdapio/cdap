@@ -11,59 +11,21 @@
 FAQs: General Questions
 =======================
 
-
-What is the Cask Data Application Platform?
--------------------------------------------
-Cask Data Application Platform (CDAP) is the industry’s first Big Data Application Server for Hadoop. It
-abstracts all the complexities and integrates the components of the Hadoop ecosystem (YARN, MapReduce, 
-ZooKeeper, HBase, etc.) enabling developers to build, test, deploy, and manage Big Data applications
-without having to worry about infrastructure, interoperability, or the complexities of distributed
-systems.
-
 What is available in the CDAP SDK?
 ----------------------------------
-The CDAP SDK comes with:
+The CDAP SDK includes:
 
-- Java and RESTful APIs to build CDAP applications;
-- Standalone CDAP to run the entire CDAP stack in a single Java virtual machine; and
-- Example CDAP applications.
-
-Why should I use Cask Data Application Platform for developing Big Data Applications?
--------------------------------------------------------------------------------------
-CDAP helps developers to quickly develop, test, debug and deploy Big Data applications. Developers can
-build and test Big Data applications on their laptop without need for any distributed environment to
-develop and test Big Data applications. Deploy it on the distributed cluster with a push of a button. The
-advantages of using CDAP include:
-
-1. **Integrated Framework:**
-   CDAP provides an integrated platform that makes it easy to create all the functions of Big Data
-   applications: collecting, processing, storing, and querying data. Data can be collected and stored in
-   both structured and unstructured forms, processed in real time and in batch, and results can be made
-   available for retrieval, visualization, and further analysis.
-
-#. **Simple APIs:**
-   CDAP aims to reduce the time it takes to create and implement applications by hiding the
-   complexity of these distributed technologies with a set of powerful yet simple APIs. You don’t need to
-   be an expert on scalable, highly-available system architectures, nor do you need to worry about the low
-   level Hadoop and HBase APIs.
-
-#. **Full Development Lifecycle Support:**
-   CDAP supports developers through the entire application development lifecycle: development, debugging,
-   testing, continuous integration and production. Using familiar development tools like Eclipse and
-   IntelliJ, you can build, test and debug your application right on your laptop with a Standalone CDAP. Utilize
-   the application unit test framework for continuous integration.
-
-#. **Easy Application Operations:**
-   Once your Big Data application is in production, CDAP is designed specifically to monitor your
-   applications and scale with your data processing needs: increase capacity with a click of a button
-   without taking your application offline. Use the CDAP UI or RESTful APIs to monitor and manage the
-   lifecycle and scale of your application.
-
+- Local instance of the CDAP Server;
+- CDAP APIs for building applications;
+- CDAP UI and CDAP CLI for interacting with CDAP; and
+- Examples for getting started with CDAP.
 
 
 What platforms are supported by the Cask Data Application Platform SDK?
 -----------------------------------------------------------------------
-The CDAP SDK can be run on Mac OS X, Linux, or Windows platforms.
+The CDAP SDK has been extensively tested on Mac OS X and Linux. CDAP on Windows has not
+been extensively tested. If you have any issues with CDAP on Windows, help us by 
+`filling a ticket <https://issues.cask.co/browse/CDAP>`__.
 
 What programming languages are supported by CDAP?
 -------------------------------------------------
@@ -81,7 +43,7 @@ The version of `Node.js <https://nodejs.org/>`__ must be from |node-js-version|;
 
 I have a Hadoop cluster in my data center, can I run CDAP that uses my Hadoop cluster?
 --------------------------------------------------------------------------------------
-Yes. You can install CDAP on your Hadoop cluster. See :ref:`install`.
+Yes. You can install CDAP on your Hadoop cluster. See the :ref:`Installation procedure <install>`.
 
 What Hadoop distributions can CDAP run on?
 ------------------------------------------
@@ -93,7 +55,9 @@ MapR 4.1 and 5.0, and Apache Bigtop 1.0.
 
 I've found a bug in CDAP. How do I file an issue?
 -------------------------------------------------
-We have a `JIRA for filing issues <https://issues.cask.co/browse/CDAP>`__.
+You can use the `CDAP User GoogleGroup <https://groups.google.com/d/forum/cdap-user>`__ to
+report issues or file a ticket using the available `CDAP JIRA system
+<https://issues.cask.co/browse/CDAP>`__.
 
 What User Groups and Mailing Lists are available about CDAP?
 ------------------------------------------------------------

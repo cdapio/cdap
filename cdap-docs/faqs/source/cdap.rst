@@ -5,19 +5,15 @@
 
 :titles-only-toc: true
 
-.. _faq-installation-startup:
+.. _faqs-cdap:
 
-==================
-FAQs: CDAP Startup
-==================
+==========
+FAQs: CDAP
+==========
 
 
-CDAP installed on CDH using Cloudera Manager doesn't startup |---| what do I do?
---------------------------------------------------------------------------------
-A :ref:`tutorial <step-by-step-cloudera-add-service>` is available with instructions on how to install CDAP on CDH 
-(`Cloudera Data Hub <http://www.cloudera.com/content/www/en-us/resources/datasheet/cdh-datasheet.html>`__) 
-using `Cloudera Manager <http://www.cloudera.com/content/www/en-us/products/cloudera-manager.html>`__. 
-
+CDAP installed on CDH using Cloudera Manager gives a "No parcel" error |---| what do I do?
+------------------------------------------------------------------------------------------
 If, when you try to start services, you receive an error in ``stderr`` such as::
        
   Error found before invoking supervisord: No parcel provided required tags: set([u'cdap'])
@@ -33,6 +29,10 @@ to installing a parcel:
 
 Start by clicking on the parcel icon (near the top-left corner of Cloudera Manager and looks
 like a gift-wrapped box) and ensure that the CDAP parcel is listed as *Active*.
+
+A :ref:`tutorial <step-by-step-cloudera-add-service>` is available with instructions on how to install CDAP on CDH 
+(`Cloudera Data Hub <http://www.cloudera.com/content/www/en-us/resources/datasheet/cdh-datasheet.html>`__) 
+using `Cloudera Manager <http://www.cloudera.com/content/www/en-us/products/cloudera-manager.html>`__. 
 
 
 I've followed the install instructions, yet CDAP does not start and fails verification. What next?
@@ -168,8 +168,8 @@ You can set a system's network setting for a proxy by using::
   export no_proxy="localhost,127.0.0.1"
 
 
-Where is the CDAP CLI (Command Line Interface)?
------------------------------------------------
+Where is the CDAP CLI (Command Line Interface) in Distributed mode?
+-------------------------------------------------------------------
 If you've installed the ``cdap-cli`` RPM or DEB, it's located under ``/opt/cdap/cli/bin``.
 If you have installed CDAP manually (without using Cloudera Manager or Apache Ambari),
 you can add this location to your PATH to prevent the need for specifying the entire script every time.
@@ -207,30 +207,17 @@ This table lists the upgrade paths available for different CDAP versions:
 If you are doing a new installation, we recommend using the current version of CDAP.
 
 
-Are at least two machines really required for CDAP services?
-------------------------------------------------------------
-The CDAP components are independently scalable, so you can install from 1 to *N* of each
-component on any combination of nodes.  The primary reasons for using at least two
-machines are for HA (high availability) and for ``cdap-router``'s data ingest capacity.
-
-It is not necessary to install all components on both machines; you could install just the
-CDAP UI on a third machine with other components on the second node. You can install each
-component on a separate machine (or more) if you choose. The :ref:`HA [High Availability]
-Environment diagram <deployment-architectures-ha>` gives just one possible
-configuration.
-
 The HiveServer2 already listens on port 10000; what should I do?
 ----------------------------------------------------------------
 By default, CDAP uses port 10000. If port 10000 is being used by another service, simply
 change the ``router.bind.port`` in the ``cdap-site.xml`` to another available port. Since
-in the Hadoop ecosystem, HiveServer2 defaults to 10000, we are considering 
-`changing the router default port <https://issues.cask.co/browse/CDAP-1696>`__. 
+in the Hadoop ecosystem, HiveServer2 defaults to 10000, we are considering changing the
+router default port.
 
-If you use the Cloudera Manager CSD to install CDAP, the default ``router.bind.port`` is 11015.
-If you use Apache Ambari to install CDAP, it will detect this conflict and run the CDAP Router on
-port 11015. Another solution is to simply run the CDAP Router on a different host than
-HiveServer2.
-       
+If you use CDM or Apache Ambari to install CDAP, it will detect this and run the CDAP
+Router on port 11015. Another solution is to simply run the CDAP Router on a different
+host than HiveServer2.
+
 How do I set the CDAP properties for components running on multiple machines?
 -----------------------------------------------------------------------------
 In the configuration file ``cdap-site.xml``, there are numerous properties that specify an

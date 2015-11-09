@@ -14,7 +14,7 @@ FAQs
    :maxdepth: 2
 
     General Questions <general>
-    CDAP Startup <cdap-startup>
+    CDAP <cdap>
 
 Additional Resources
 ====================
