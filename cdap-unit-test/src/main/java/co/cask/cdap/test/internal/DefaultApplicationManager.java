@@ -161,6 +161,10 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
 
   @Override
   public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
-    return appFabricClient.getHistory(programId, status);
+    try {
+      return appFabricClient.getHistory(programId, status);
+    } catch (Exception e) {
+      throw Throwables.propagate(e);
+    }
   }
 }
