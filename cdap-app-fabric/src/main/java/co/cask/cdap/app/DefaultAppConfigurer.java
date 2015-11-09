@@ -207,10 +207,6 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     Preconditions.checkArgument(!schedules.containsKey(schedule.getName()), "Schedule with the name '" +
       schedule.getName()  + "' already exists.");
     Schedule realSchedule = schedule;
-    if (schedule.getClass().equals(Schedule.class)) {
-      realSchedule = Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(),
-                                                  schedule.getCronEntry());
-    }
     if (realSchedule instanceof StreamSizeSchedule) {
       Preconditions.checkArgument(((StreamSizeSchedule) schedule).getDataTriggerMB() > 0,
                                   "Schedule data trigger must be greater than 0.");

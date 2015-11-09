@@ -35,11 +35,9 @@ public final class TimeSchedule extends Schedule {
     this.cronExpression = cronExpression;
   }
 
-
   /**
    * @return Cron expression for the schedule, if this schedule is a time based schedule.
    */
-  @Override
   public String getCronEntry() {
     return cronExpression;
   }

@@ -31,7 +31,9 @@ public final class Schedules {
    * @param description description of the schedule
    * @param cronExpression cron expression for the schedule
    * @return a schedule based on the given {@code cronExpression}
+   * @deprecated As of version 3.3.0, replaced by {@link #builder(String)}.
    */
+  @Deprecated
   public static Schedule createTimeSchedule(String name, String description, String cronExpression) {
     return new TimeSchedule(name, description, cronExpression);
   }
@@ -45,7 +47,9 @@ public final class Schedules {
    * @param sourceName name of the source of data the schedule is based on
    * @param dataTriggerMB the size of data, in MB, that the source has to receive to trigger an execution
    * @return a schedule based on data availability in the given {@code dataSourceName}
+   * @deprecated As of version 3.3.0, replaced by {@link #builder(String)}.
    */
+  @Deprecated
   public static Schedule createDataSchedule(String name, String description, Source source, String sourceName,
                                             int dataTriggerMB) {
     switch (source) {

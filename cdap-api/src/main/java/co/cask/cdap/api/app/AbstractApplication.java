@@ -21,7 +21,6 @@ import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.BasicService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
@@ -161,37 +160,6 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
     scheduleWorkflow(schedule, workflowName, Collections.<String, String>emptyMap());
   }
 
-  /**
-   * Schedules the specified {@link Workflow} using a time-based schedule.
-   * @param scheduleName the name of the Schedule
-   * @param cronTab the crontab entry for the Schedule
-   * @param workflowName the name of the Workflow
-   * @deprecated As of version 2.8.0, replaced by {@link #scheduleWorkflow(Schedule, String)}
-   */
-  @Deprecated
-  protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName) {
-    String scheduleDescription = scheduleName + " with crontab " + cronTab;
-    scheduleWorkflow(Schedules.createTimeSchedule(scheduleName, scheduleDescription, cronTab),
-                     workflowName, Collections.<String, String>emptyMap());
-  }
-
-  /**
-   * Schedules the specified {@link Workflow} using a time-based schedule.
-   * @param scheduleName the name of the Schedule
-   * @param cronTab the crontab entry for the Schedule
-   * @param workflowName the name of the Workflow
-   * @param properties properties to be added for the Schedule
-   * @deprecated As of version 2.8.0, replaced by 
-   *            {@link #scheduleWorkflow(Schedule, String, Map) 
-   *             scheduleWorkflow(Schedule, String, Map&lt;String, String&gt;)}
-   */
-  @Deprecated
-  protected void scheduleWorkflow(String scheduleName, String cronTab, String workflowName,
-                                  Map<String, String> properties) {
-    String scheduleDescription = scheduleName + " with crontab " + cronTab;
-    scheduleWorkflow(Schedules.createTimeSchedule(scheduleName, scheduleDescription, cronTab),
-                     workflowName, properties);
-  }
 
   /**
    * Schedule the specified {@link Workflow}
