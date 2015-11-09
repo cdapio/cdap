@@ -1030,8 +1030,7 @@ public class StreamSizeScheduler implements Scheduler {
                                       @Override
                                       public void execute() throws Exception {
                                         LOG.info("About to start streamSizeSchedule {}", currentSchedule.getName());
-                                        taskRunner.run(programId, ProgramType.valueOf(programType.name()),
-                                                       argsBuilder.build());
+                                        taskRunner.run(programId, argsBuilder.build());
                                       }
                                     });
         lastRunSize = pollingInfo.getSize();
