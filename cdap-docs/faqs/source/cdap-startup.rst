@@ -56,9 +56,8 @@ If you have followed :ref:`the installation instructions <install>`, and CDAP ei
 
   - The :ref:`CDAP HDFS User <configuration-options>` (by default, ``yarn``) owns the HDFS directory (by default,  ``/cdap``).
   - The :ref:`Kafka Log directory <configuration-options>` (by default, ``/data/cdap/kafka-logs``), 
-    must be writable by the user running the CDAP processes.
-  - The :ref:`temp directories <configuration-tmp-files>` utilized by CDAP must be writable by the user 
-    running the CDAP processes.
+    must be writable by the CDAP UNIX user.
+  - The :ref:`temp directories <configuration-tmp-files>` utilized by CDAP must be writable by the CDAP UNIX user.
 
 ..
 
