@@ -164,6 +164,11 @@ public class ObjectMappedTableDataset<T> extends AbstractDataset implements Obje
   }
 
   @Override
+  public List<Split> getSplits(int numSplits, byte[] start, byte[] stop) {
+    return table.getSplits(numSplits, start, stop);
+  }
+
+  @Override
   public RecordScanner<StructuredRecord> createSplitRecordScanner(Split split) {
     return table.createSplitRecordScanner(split);
   }
