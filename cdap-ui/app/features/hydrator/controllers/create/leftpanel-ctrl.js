@@ -15,7 +15,7 @@
  */
 
 class LeftPanelController {
-  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory) {
+  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore) {
     this.$scope = $scope;
     this.$stateParams = $stateParams;
     this.LeftPanelStore = LeftPanelStore;
@@ -46,26 +46,20 @@ class LeftPanelController {
       this.pluginTypes[2].plugins = this.LeftPanelStore.getSinks();
     });
 
-
-    // TODO: fetch from ConfigStore
-    let templateType = 'cdap-etl-batch';
     let params = {
       namespace: this.$stateParams.namespace,
-      pipelineType: templateType,
+      pipelineType: ConfigStore.getArtifact().name,
       version: rVersion.version,
-      extensionType: GLOBALS.pluginTypes[templateType]['source'],
       scope: this.$scope
     };
     this.PluginActionsFactory.fetchSources(params);
-    params.extensionType = GLOBALS.pluginTypes[templateType]['transform'];
     this.PluginActionsFactory.fetchTransforms(params);
-    params.extensionType = GLOBALS.pluginTypes[templateType]['sink'];
     this.PluginActionsFactory.fetchSinks(params);
 
   }
 }
 
-LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory'];
+LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('LeftPanelController', LeftPanelController);
   // .controller('LeftPanelController', function() {
