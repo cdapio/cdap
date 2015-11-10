@@ -795,10 +795,15 @@ public class DefaultStoreTest {
   private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
                                                            AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
-  private static final Schedule schedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
-  private static final Schedule schedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");
-  private static final Schedule scheduleWithSameName = Schedules.createTimeSchedule("Schedule2", "Every minute",
-                                                                                    "* * * * ?");
+  private static final Schedule schedule1 = Schedules.builder("Schedule1")
+    .setDescription("Every minute")
+    .createTimeSchedule("* * * * ?");
+  private static final Schedule schedule2 = Schedules.builder("Schedule2")
+    .setDescription("Every Hour")
+    .createTimeSchedule("0 * * * ?");
+  private static final Schedule scheduleWithSameName = Schedules.builder("Schedule2")
+    .setDescription("Every minute")
+    .createTimeSchedule("* * * * ?");
   private static final Map<String, String> properties1 = ImmutableMap.of();
   private static final Map<String, String> properties2 = ImmutableMap.of();
   private static final ScheduleSpecification scheduleSpec1 =

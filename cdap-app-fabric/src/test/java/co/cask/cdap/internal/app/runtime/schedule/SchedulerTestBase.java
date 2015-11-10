@@ -62,8 +62,9 @@ public abstract class SchedulerTestBase {
   private static final String SCHEDULE_NAME_2 = "SampleSchedule2";
   private static final SchedulableProgramType PROGRAM_TYPE = SchedulableProgramType.WORKFLOW;
   private static final Id.Stream STREAM_ID = Id.Stream.from(Id.Namespace.DEFAULT, "stream");
-  private static final Schedule UPDATE_SCHEDULE_2 =
-    Schedules.createDataSchedule(SCHEDULE_NAME_2, "Every 1M", Schedules.Source.STREAM, STREAM_ID.getId(), 1);
+  private static final Schedule UPDATE_SCHEDULE_2 = Schedules.builder(SCHEDULE_NAME_2)
+    .setDescription("Every 1M")
+    .createDataSchedule(Schedules.Source.STREAM, STREAM_ID.getId(), 1);
 
   protected interface StreamMetricsPublisher {
     void increment(long size) throws Exception;

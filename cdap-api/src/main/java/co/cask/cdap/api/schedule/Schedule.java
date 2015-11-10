@@ -30,24 +30,9 @@ public class Schedule {
 
   private final RunConstraints runConstraints;
 
-  // NOTE: the below attribute is left for backwards compatibility
-  private final String cronEntry;
-
-  /**
-   * @deprecated use {@link Schedules} instead.
-   */
-  @Deprecated
-  public Schedule(String name, String description, String cronEntry) {
-    this.name = name;
-    this.description = description;
-    this.cronEntry = cronEntry;
-    this.runConstraints = RunConstraints.NONE;
-  }
-
   protected Schedule(String name, String description, RunConstraints runConstraints) {
     this.name = name;
     this.description = description;
-    this.cronEntry = null;
     this.runConstraints = runConstraints;
   }
 
@@ -63,15 +48,6 @@ public class Schedule {
    */
   public String getDescription() {
     return description;
-  }
-
-  /**
-   * @return Cron expression for the schedule.
-   * @deprecated As of version 2.8.0, do not use this method anymore
-   */
-  @Deprecated
-  public String getCronEntry() {
-    return cronEntry;
   }
 
   public RunConstraints getRunConstraints() {
@@ -92,13 +68,12 @@ public class Schedule {
 
     return Objects.equals(name, that.name) &&
       Objects.equals(description, that.description) &&
-      Objects.equals(cronEntry, that.cronEntry) &&
       Objects.equals(getRunConstraints(), that.getRunConstraints());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, cronEntry, getRunConstraints());
+    return Objects.hash(name, description, getRunConstraints());
   }
 
   @Override
@@ -106,7 +81,6 @@ public class Schedule {
     StringBuilder sb = new StringBuilder("Schedule{");
     sb.append("name='").append(name).append('\'');
     sb.append(", description='").append(description).append('\'');
-    sb.append(", cronEntry='").append(cronEntry).append('\'');
     sb.append(", runConstraints='").append(getRunConstraints()).append('\'');
     sb.append('}');
     return sb.toString();

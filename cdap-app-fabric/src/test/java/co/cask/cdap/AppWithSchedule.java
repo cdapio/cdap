@@ -50,8 +50,11 @@ public class AppWithSchedule extends AbstractApplication {
       scheduleProperties.put("anotherKey", "anotherValue");
       scheduleProperties.put("someKey", "someValue");
 
-      scheduleWorkflow(Schedules.createTimeSchedule("SampleSchedule", "Sample schedule", "0/1 * * * * ?"),
-                       "SampleWorkflow", scheduleProperties);
+      scheduleWorkflow(Schedules.builder("SampleSchedule")
+                         .setDescription("Sample schedule")
+                         .createTimeSchedule("0/1 * * * * ?"),
+                       "SampleWorkflow",
+                       scheduleProperties);
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);
     }

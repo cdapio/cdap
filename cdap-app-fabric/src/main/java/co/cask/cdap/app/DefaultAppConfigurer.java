@@ -29,7 +29,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.Spark;
@@ -206,18 +205,13 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     Preconditions.checkArgument(!programName.isEmpty(), "Program name cannot be empty.");
     Preconditions.checkArgument(!schedules.containsKey(schedule.getName()), "Schedule with the name '" +
       schedule.getName()  + "' already exists.");
-    Schedule realSchedule = schedule;
-    if (schedule.getClass().equals(Schedule.class)) {
-      realSchedule = Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(),
-                                                  schedule.getCronEntry());
-    }
-    if (realSchedule instanceof StreamSizeSchedule) {
+    if (schedule instanceof StreamSizeSchedule) {
       Preconditions.checkArgument(((StreamSizeSchedule) schedule).getDataTriggerMB() > 0,
                                   "Schedule data trigger must be greater than 0.");
     }
 
     ScheduleSpecification spec =
-      new ScheduleSpecification(realSchedule, new ScheduleProgramInfo(programType, programName), properties);
+      new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName), properties);
 
     schedules.put(schedule.getName(), spec);
   }
