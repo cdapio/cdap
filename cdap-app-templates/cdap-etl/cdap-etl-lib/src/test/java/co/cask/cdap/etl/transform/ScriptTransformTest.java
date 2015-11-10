@@ -179,7 +179,7 @@ public class ScriptTransformTest {
       ));
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     transform.initialize(new MockTransformContext(
-      Maps.<String, String>newHashMap(), new MockMetrics(), "", new MockLookupProvider(TEST_LOOKUP)));
+      new HashMap<String, String>(), new MockMetrics(), "", new MockLookupProvider(TEST_LOOKUP)));
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(STRING_RECORD, emitter);

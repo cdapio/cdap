@@ -37,6 +37,7 @@ import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.etl.batch.config.LocalizeResourceInfo;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import co.cask.cdap.etl.common.DefaultEmitter;
@@ -66,8 +67,10 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -144,6 +147,9 @@ public class ETLMapReduce extends AbstractMapReduce {
     properties.put(Constants.Source.PLUGINID, pipelineIds.getSource());
     properties.put(Constants.Sink.PLUGINIDS, GSON.toJson(pipelineIds.getSinks()));
     properties.put(Constants.Transform.PLUGINIDS, GSON.toJson(pipelineIds.getTransforms()));
+    if (config.getResourcesToLocalize() != null) {
+      properties.put(Constants.Pipeline.LOCAL_RESOURCES, GSON.toJson(config.getResourcesToLocalize()));
+    }
     setProperties(properties);
   }
 
@@ -153,6 +159,15 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     Map<String, String> properties = context.getSpecification().getProperties();
     String sourcePluginId = properties.get(Constants.Source.PLUGINID);
+
+    if (properties.containsKey(Constants.Pipeline.LOCAL_RESOURCES)) {
+      List<LocalizeResourceInfo> resourcesToLocalize =
+        GSON.fromJson(properties.get(Constants.Pipeline.LOCAL_RESOURCES),
+                      new TypeToken<List<LocalizeResourceInfo>>() { }.getType());
+      for (LocalizeResourceInfo resourceInfo : resourcesToLocalize) {
+        context.localize(resourceInfo.getName(), new URI(resourceInfo.getURI()), resourceInfo.isArchive());
+      }
+    }
 
     batchSource = context.newPluginInstance(sourcePluginId);
     BatchSourceContext sourceContext = new MapReduceSourceContext(
@@ -265,6 +280,7 @@ public class ETLMapReduce extends AbstractMapReduce {
       context.getSpecification().getProperties();
       Map<String, String> properties = context.getSpecification().getProperties();
 
+      Map<String, File> localizedResources = context.getAllLocalFiles();
       String sourcePluginId = properties.get(Constants.Source.PLUGINID);
       // should never happen
       String transformInfosStr = properties.get(Constants.Transform.PLUGINIDS);
@@ -275,7 +291,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
       BatchSource source = context.newPluginInstance(sourcePluginId);
       BatchRuntimeContext runtimeContext = new MapReduceRuntimeContext(
-        context, mapperMetrics, new DatasetContextLookupProvider(context), sourcePluginId);
+        context, mapperMetrics, new DatasetContextLookupProvider(context), sourcePluginId, context.getAllLocalFiles());
       source.initialize(runtimeContext);
       pipeline.add(new TransformDetail(sourcePluginId, source, runtimeContext.getMetrics()));
 
@@ -302,7 +318,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
         BatchSink<Object, Object, Object> sink = context.newPluginInstance(sinkPluginId);
         runtimeContext = new MapReduceRuntimeContext(
-          context, mapperMetrics, new DatasetContextLookupProvider(context), sinkPluginId);
+          context, mapperMetrics, new DatasetContextLookupProvider(context), sinkPluginId, context.getAllLocalFiles());
         sink.initialize(runtimeContext);
         if (hasOneOutput) {
           sinks.add(new SingleOutputSink<>(sink, context, runtimeContext.getMetrics()));
@@ -343,7 +359,7 @@ public class ETLMapReduce extends AbstractMapReduce {
         String transformId = transformInfo.getTransformId();
         Transform transform = context.newPluginInstance(transformId);
         BatchRuntimeContext transformContext = new MapReduceRuntimeContext(
-          context, mapperMetrics, new DatasetContextLookupProvider(context), transformId);
+          context, mapperMetrics, new DatasetContextLookupProvider(context), transformId, context.getAllLocalFiles());
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
         pipeline.add(new TransformDetail(transformId, transform, transformContext.getMetrics()));

@@ -22,21 +22,23 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
-import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.common.ExecutionTransformContext;
 
+import java.io.File;
 import java.util.Map;
 
 /**
  * Batch runtime context that delegates most operations to MapReduceTaskContext. It also extends
- * {@link AbstractTransformContext} in order to provide plugin isolation between pipeline plugins. This means sources,
+ * {@link ExecutionTransformContext} in order to provide plugin isolation between pipeline plugins. This means sources,
  * transforms, and sinks don't need to worry that plugins they use conflict with plugins other sources, transforms,
  * or sinks use.
  */
-public class MapReduceRuntimeContext extends AbstractTransformContext implements BatchRuntimeContext {
+public class MapReduceRuntimeContext extends ExecutionTransformContext implements BatchRuntimeContext {
   private final MapReduceTaskContext context;
 
-  public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics, LookupProvider lookup, String stageId) {
-    super(context, metrics, lookup, stageId);
+  public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics, LookupProvider lookup, String stageId,
+                                 Map<String, File> localizedResources) {
+    super(context, metrics, lookup, stageId, localizedResources);
     this.context = context;
   }
 

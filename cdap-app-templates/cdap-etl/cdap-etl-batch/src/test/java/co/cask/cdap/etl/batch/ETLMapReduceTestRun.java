@@ -25,18 +25,23 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.etl.batch.config.LocalizeResourceInfo;
 import co.cask.cdap.etl.batch.source.FileBatchSource;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.etl.test.sink.MetaKVTableSink;
 import co.cask.cdap.etl.test.source.MetaKVTableSource;
+import co.cask.cdap.etl.test.transform.RepeaterTransform;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
@@ -44,8 +49,11 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.s3native.S3NInMemoryFileSystem;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.ArrayList;
@@ -56,6 +64,9 @@ import java.util.concurrent.TimeUnit;
  * Tests for ETLBatch.
  */
 public class ETLMapReduceTestRun extends ETLBatchTestBase {
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   @Test
   public void testInvalidTransformConfigFailsToDeploy() {
@@ -306,8 +317,8 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
 
     ETLStage sink1 = new ETLStage("TPFSAvro",
                                   ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                    FileBatchSource.DEFAULT_SCHEMA.toString(),
-                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, "fileSink1"));
+                                                  FileBatchSource.DEFAULT_SCHEMA.toString(),
+                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME, "fileSink1"));
     ETLStage sink2 = new ETLStage("TPFSParquet",
                                   ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
                                     FileBatchSource.DEFAULT_SCHEMA.toString(),
@@ -334,6 +345,60 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
         Assert.assertEquals(1, records.size());
         Assert.assertEquals(testData, records.get(0).get("body").toString());
       }
+    }
+  }
+
+  @Test
+  public void testETLWithLocalizedFiles() throws Exception {
+    addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "test-transforms", "1.0.0"), APP_ARTIFACT_ID,
+                      RepeaterTransform.class);
+    File propsFile = TEMP_FOLDER.newFile("test.properties");
+    java.util.Properties properties = new java.util.Properties();
+    properties.setProperty("a", "1");
+    properties.setProperty("b", "2");
+    properties.setProperty("c", "3");
+    properties.setProperty("d", "4");
+    properties.setProperty("e", "5");
+    properties.store(Files.newOutputStreamSupplier(propsFile).getOutput(), "ETL Properties file.");
+
+    File inputDir = TEMP_FOLDER.newFolder("input");
+    File inputFile = new File(inputDir, "input.txt");
+    byte[] inputContents = Bytes.toBytes("a\nb\nc\nd\ne");
+    Assert.assertNotNull(inputContents);
+    ByteStreams.write(inputContents, Files.newOutputStreamSupplier(inputFile));
+
+    String propertiesFileName = "test.properties";
+    LocalizeResourceInfo localResource = new LocalizeResourceInfo(propertiesFileName, propsFile.toURI().toString());
+    ETLStage source = new ETLStage("File", ImmutableMap.of(Properties.S3.PATH, inputDir.getAbsolutePath()));
+    ETLStage transform = new ETLStage("Repeater", ImmutableMap.of("propertiesFile", propertiesFileName));
+    ETLStage sink = new ETLStage("TPFSAvro",
+                                 ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                 FileBatchSource.DEFAULT_SCHEMA.toString(),
+                                                 Properties.TimePartitionedFileSetDataset.TPFS_NAME, "TPFSRepeatSink"));
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink,
+                                                  ImmutableList.of(transform),
+                                                  new Resources(),
+                                                  ImmutableList.<ETLStage>of(),
+                                                  ImmutableList.of(localResource));
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "FileToTPFS");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
+    mrManager.start();
+    mrManager.waitForFinish(2, TimeUnit.MINUTES);
+
+    List<String> expected = ImmutableList.of("a", "bb", "ccc", "dddd", "eeeee");
+    DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("TPFSRepeatSink");
+    try (TimePartitionedFileSet fileSet = fileSetManager.get()) {
+      List<GenericRecord> records = readOutput(fileSet, FileBatchSource.DEFAULT_SCHEMA);
+      Assert.assertEquals(5, records.size());
+      List<String> actual = new ArrayList<>();
+      for (GenericRecord record : records) {
+        actual.add(record.get("body").toString());
+      }
+      Assert.assertTrue(actual.containsAll(expected));
     }
   }
 }
