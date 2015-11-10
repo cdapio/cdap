@@ -15,11 +15,12 @@
  */
 
 class TopPanelController{
-  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal) {
+  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory) {
     this.GLOBALS = GLOBALS;
     this.ConfigStore = ConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
     this.$bootstrapModal = $bootstrapModal;
+    this.ConsoleActionsFactory = ConsoleActionsFactory;
     this.canvasOperations = [
       {
         name: 'Export',
@@ -80,30 +81,13 @@ class TopPanelController{
     }
   }
 
-  onTopSideGroupItemClicked(action) {
-    switch (action.name) {
-      case 'Export':
-        this.onExport();
-        break;
-      case 'Save Draft':
-        this.onSaveDraft();
-        break;
-      case 'Validate':
-        this.onValidate();
-        break;
-      case 'Publish':
-        this.onPublish();
-        break;
-    }
-  }
-
   onExport() {
     let config = angular.copy(this.ConfigStore.getState());
     this.$bootstrapModal.open({
       templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
       size: 'lg',
       keyboard: true,
-      controller: ['$scope', 'config', 'CanvasFactory', 'MyAppDAGService', '$timeout', function($scope, config, CanvasFactory, MyAppDAGService, $timeout) {
+      controller: ['$scope', 'config', function($scope, config) {
         $scope.config = JSON.stringify(config);
 
         $scope.export = function () {
@@ -142,14 +126,17 @@ class TopPanelController{
 
   }
   onValidate() {
-
+    this.ConsoleActionsFactory.addMessage({
+      type: 'success',
+      content: 'This is a validate test'
+    });
   }
   onPublish() {
 
   }
 }
 
-TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal'];
+TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('TopPanelController', TopPanelController);
