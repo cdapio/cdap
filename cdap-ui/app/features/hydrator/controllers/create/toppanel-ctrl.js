@@ -15,9 +15,10 @@
  */
 
 class TopPanelController{
-  constructor(GLOBALS, $stateParams, $alert, ConfigStore) {
+  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory) {
     this.GLOBALS = GLOBALS;
     this.ConfigStore = ConfigStore;
+    this.ConfigActionsFactory = ConfigActionsFactory;
     this.canvasOperations = [
       {
         name: 'Export'
@@ -46,14 +47,26 @@ class TopPanelController{
     this.state = {
       metadata: {
         name: this.ConfigStore.getName(),
-        desciption: this.ConfigStore.getDescription()
+        description: this.ConfigStore.getDescription()
       },
       artifact: this.ConfigStore.getArtifact()
     };
   }
+
+  openMetadata() {
+    this.metadataExpanded = true;
+  }
+  resetMetadata() {
+    this.setState();
+    this.metadataExpanded = false;
+  }
+  saveMetadata() {
+    this.ConfigActionsFactory.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
+    this.metadataExpanded = false;
+  }
 }
 
-TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore'];
+TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('TopPanelController', TopPanelController);
