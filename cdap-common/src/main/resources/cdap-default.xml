@@ -305,15 +305,16 @@
 
   <property>
     <name>data.tx.client.count</name>
-    <value>5</value>
+    <value>50</value>
     <description>
-      Number of pooled instances of the transaction client
+      The number of pooled instances of the transaction client;
+      increase this to increase transaction concurrency
     </description>
   </property>
 
   <property>
     <name>data.tx.client.provider</name>
-    <value>thread-local</value>
+    <value>pool</value>
     <description>
       Provider strategy for transaction clients; valid values are "pool" and
       "thread-local"
