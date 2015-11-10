@@ -21,6 +21,7 @@ import co.cask.cdap.data2.util.hbase.HTableNameConverter;
 import co.cask.tephra.TxConstants;
 import co.cask.tephra.coprocessor.TransactionStateCache;
 import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.persist.TransactionVisibilityState;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Maps;
@@ -138,7 +139,7 @@ public class IncrementHandlerState {
    */
   public long getCompactionBound(byte[] columnFamily) {
     if (txnlFamilies.contains(columnFamily)) {
-      TransactionSnapshot snapshot = cache.getLatestState();
+      TransactionVisibilityState snapshot = cache.getLatestState();
       // if tx snapshot is not available, used "0" as upper bound to avoid trashing in-progress tx
       return snapshot != null ? snapshot.getVisibilityUpperBound() : 0;
     } else {
