@@ -112,6 +112,9 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow);
     flow.configure(configurer);
     FlowSpecification spec = configurer.createSpecification();
+    addStreams(configurer.getStreams());
+    addDatasetModules(configurer.getDatasetModules());
+    addDatasetSpecs(configurer.getDatasetSpecs());
     flows.put(spec.getName(), spec);
   }
 
