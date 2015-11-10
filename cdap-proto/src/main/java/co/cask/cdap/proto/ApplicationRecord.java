@@ -16,6 +16,10 @@
 
 package co.cask.cdap.proto;
 
+import co.cask.cdap.proto.artifact.ArtifactSummary;
+
+import java.util.Objects;
+
 /**
  * Represents item in the list from /apps
  */
@@ -25,7 +29,18 @@ public class ApplicationRecord {
   private final String name;
   private final String version;
   private final String description;
+  private final ArtifactSummary artifact;
 
+  public ApplicationRecord(ArtifactSummary artifact, String name, String description) {
+    this.type = "App";
+    this.artifact = artifact;
+    this.name = name;
+    this.description = description;
+    this.version = artifact.getVersion();
+    this.id = name;
+  }
+
+  @Deprecated
   public ApplicationRecord(String name, String version, String description) {
     this("App", name, name, version, description);
   }
@@ -37,8 +52,18 @@ public class ApplicationRecord {
     this.name = name;
     this.version = version;
     this.description = description;
+    this.artifact = null;
   }
 
+  public ArtifactSummary getArtifact() {
+    return artifact;
+  }
+
+  /**
+   * @deprecated use {@link #getArtifact()} instead
+   * @return the version of the artifact used to create the application
+   */
+  @Deprecated
   public String getVersion() {
     return version;
   }
@@ -58,5 +83,39 @@ public class ApplicationRecord {
 
   public String getDescription() {
     return description;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ApplicationRecord that = (ApplicationRecord) o;
+
+    return Objects.equals(type, that.type) &&
+      Objects.equals(name, that.name) &&
+      Objects.equals(version, that.version) &&
+      Objects.equals(description, that.description) &&
+      Objects.equals(artifact, that.artifact);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(type, name, version, description, artifact);
+  }
+
+  @Override
+  public String toString() {
+    return "ApplicationRecord{" +
+      "type='" + type + '\'' +
+      ", name='" + name + '\'' +
+      ", version='" + version + '\'' +
+      ", description='" + description + '\'' +
+      ", artifact=" + artifact +
+      '}';
   }
 }

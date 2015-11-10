@@ -1,0 +1,84 @@
+{
+  "id": "KafkaSource",
+  "groups" : {
+    "position": [ "group1", "group2"  ],
+    "group1": {
+       "display" : "Kafka Configuration",
+       "position" : [ "kafka.zookeeper", "kafka.brokers", "kafka.partitions", "kafka.topic", "kafka.initial.offset" ],
+       "fields" : {
+          "kafka.zookeeper" : {
+             "widget": "textbox",
+             "label": "ZooKeeper Quorum",
+             "description" : "Specify the ZooKeeper connection string. Example: host:2181,host2:2181,host3:2181. Either specify ZooKeeper quorum or broker list.",
+             "properties": {
+               "width": "large"
+             }
+          },
+
+          "kafka.brokers" : {
+             "widget": "csv",
+             "label": "Kafka Brokers",
+             "description" : "Server names on which Kafka server is running. Kafka is run as a cluster comprised of one or more servers, each of which is called a broker. Either specify ZooKeeper connection string or this configuration.",
+             "properties": {
+               "width": "medium",
+               "delimiter" : ","
+             }
+          },
+
+          "kafka.partitions" : {
+             "widget": "number",
+             "label": "Number of Partitions",
+             "description": "Specifies the number of partitions. Each partition is an ordered, immutable sequence of messages that is continually appended to a commit log. The messages in the partitions are each assigned a sequential ID number called the offset that uniquely identifies a message within the partition.",
+             "properties": {
+               "width": "extra-small",
+               "default": 1
+             },
+             "max": 999,
+             "min": 1
+          },
+
+          "kafka.topic" : {
+             "widget": "textbox",
+             "label": "Topic",
+             "description" : "Topic to be subscribed. Kafka maintains feeds of messages in categories called topics.",
+             "properties": {
+               "width": "medium"
+             }
+          },
+          "kafka.initial.offset" : {
+             "widget": "number",
+             "label": "Start Offset",
+             "description" : "Specifies the start offset for processing from the queue.",
+             "properties": {
+               "width": "extra-small",
+               "default" : 0
+             },
+             "min": -2
+          }
+       }
+    },
+
+    "group2" : {
+       "display" : "Format",
+       "position" : [ "format" ],
+       "fields" : {
+          "format" : {
+             "widget" : "select",
+             "label"  : "Format",
+             "properties" : {
+               "values" : [ "avro", "clf", "csv", "grok", "syslog", "text", "tsv" ],
+               "default" : "text"
+             }
+          }
+       }
+    }
+  },
+  "outputschema": {
+    "schema" : {
+      "widget": "schema",
+      "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string", "map<string, string>" ],
+      "schema-default-type" : "string",
+      "property-watch": "format"
+    }
+  }
+}

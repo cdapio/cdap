@@ -42,8 +42,11 @@ import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
 /**
- *
+ * This class is deprecated, use {@link FlowManager} or {@link ServiceManager} for flow/service related metrics and use
+ * {@link MetricsManager} for querying metrics for other program types and custom user metrics.
+ * TODO: remove in next release (CDAP-3.3)
  */
+@Deprecated
 public final class RuntimeStats {
 
   // ugly attempt to suport existing APIs
@@ -67,7 +70,7 @@ public final class RuntimeStats {
   }
 
   public static RuntimeMetrics getFlowletMetrics(String applicationId, String flowId, String flowletId) {
-    return getFlowletMetrics(Constants.DEFAULT_NAMESPACE, applicationId, flowId, flowletId);
+    return getFlowletMetrics(Id.Namespace.DEFAULT.getId(), applicationId, flowId, flowletId);
   }
 
   public static RuntimeMetrics getServiceMetrics(String namespace, String applicationId, String serviceId) {
@@ -89,11 +92,11 @@ public final class RuntimeStats {
 
 
   public static RuntimeMetrics getServiceMetrics(String applicationId, String serviceId) {
-    return getServiceMetrics(Constants.DEFAULT_NAMESPACE, applicationId, serviceId);
+    return getServiceMetrics(Id.Namespace.DEFAULT.getId(), applicationId, serviceId);
   }
 
   public static RuntimeMetrics getServiceHandlerMetrics(String applicationId, String serviceId, String handlerId) {
-    return getServiceHandlerMetrics(Constants.DEFAULT_NAMESPACE, applicationId, serviceId, handlerId);
+    return getServiceHandlerMetrics(Id.Namespace.DEFAULT.getId(), applicationId, serviceId, handlerId);
   }
 
   @Deprecated
@@ -101,7 +104,7 @@ public final class RuntimeStats {
     try {
       metricStore.delete(
         new MetricDeleteQuery(0, System.currentTimeMillis() / 1000,
-                              ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE,
+                              ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId(),
                                               Constants.Metrics.Tag.APP, applicationId)));
     } catch (Exception e) {
       // Should never happen in unit test
@@ -182,6 +185,10 @@ public final class RuntimeStats {
 
   private static long getTotalCounter(Map<String, String> context, String metricName) {
     MetricDataQuery query = getTotalCounterQuery(context, metricName);
+    return getSingleValueFromTotals(query);
+  }
+
+  private static long getSingleValueFromTotals(MetricDataQuery query) {
     try {
       Collection<MetricTimeSeries> result = metricStore.query(query);
       if (result.isEmpty()) {

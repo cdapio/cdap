@@ -19,13 +19,12 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricValues;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.apache.twill.common.Threads;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.concurrent.Executors;
@@ -39,10 +38,8 @@ import java.util.concurrent.TimeUnit;
 @Singleton
 public final class LocalMetricsCollectionService extends AggregatedMetricsCollectionService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(LocalMetricsCollectionService.class);
-
   public static final ImmutableMap<String, String> METRICS_PROCESSOR_CONTEXT =
-    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+    ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
                     Constants.Metrics.Tag.COMPONENT, Constants.Service.METRICS_PROCESSOR);
 
   private final CConfiguration cConf;

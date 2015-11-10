@@ -40,12 +40,12 @@ public class ConcurrentWorkflowApp extends AbstractApplication {
     // Schedule Workflow
     Map<String, String> schedule1Properties = Maps.newHashMap();
     schedule1Properties.put("schedule.name", "concurrentWorkflowSchedule1");
-    scheduleWorkflow(Schedules.createTimeSchedule("concurrentWorkflowSchedule1", "", "* * * * *"),
+    scheduleWorkflow(Schedules.builder("concurrentWorkflowSchedule1").createTimeSchedule("* * * * *"),
                      "ConcurrentWorkflow", schedule1Properties);
 
     Map<String, String> schedule2Properties = Maps.newHashMap();
     schedule2Properties.put("schedule.name", "concurrentWorkflowSchedule2");
-    scheduleWorkflow(Schedules.createTimeSchedule("concurrentWorkflowSchedule2", "", "* * * * *"),
+    scheduleWorkflow(Schedules.builder("concurrentWorkflowSchedule2").createTimeSchedule("* * * * *"),
                      "ConcurrentWorkflow", schedule2Properties);
   }
 

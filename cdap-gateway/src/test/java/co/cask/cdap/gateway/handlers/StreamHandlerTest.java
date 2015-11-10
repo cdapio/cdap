@@ -72,7 +72,7 @@ public class StreamHandlerTest extends GatewayTestBase {
 
 
   protected URL createURL(String path) throws URISyntaxException, MalformedURLException {
-    return createURL(Constants.DEFAULT_NAMESPACE, path);
+    return createURL(Id.Namespace.DEFAULT.getId(), path);
   }
 
   protected URL createStreamInfoURL(String streamName) throws URISyntaxException, MalformedURLException {
@@ -120,7 +120,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     urlConn = openURL(createURL("streams/non_existent_stream"), HttpMethod.POST);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), urlConn.getResponseCode());
     urlConn.disconnect();
-    
+
     // Now, create the new stream.
     urlConn = openURL(createURL("streams/test_stream1"), HttpMethod.PUT);
     Assert.assertEquals(HttpResponseStatus.OK.getCode(), urlConn.getResponseCode());
@@ -288,7 +288,7 @@ public class StreamHandlerTest extends GatewayTestBase {
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.getCode(), response.getResponseCode());
 
     // once the namespace exists, the same stream create works.
-    namespaceAdmin.createNamespace(new NamespaceMeta.Builder().setName(originallyNonExistentNamespace).build());
+    namespaceAdmin.create(new NamespaceMeta.Builder().setName(originallyNonExistentNamespace).build());
     createStream(streamId);
   }
 

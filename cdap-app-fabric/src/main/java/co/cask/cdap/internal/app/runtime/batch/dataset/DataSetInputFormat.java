@@ -19,21 +19,29 @@ package co.cask.cdap.internal.app.runtime.batch.dataset;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
-import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceContext;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceContextConfig;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceContextProvider;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
+import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
+import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.io.ByteArrayDataInput;
+import com.google.common.io.ByteArrayDataOutput;
+import com.google.common.io.ByteStreams;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * An {@link InputFormat} that reads from dataset.
@@ -42,47 +50,79 @@ import java.util.List;
  */
 public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
 
-  public static final String HCONF_ATTR_INPUT_DATASET = "input.dataset.name";
+  private static final Gson GSON = new Gson();
+  private static final Type DATASET_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
-  public static void setInput(Job job, String inputDatasetName) {
-    job.setInputFormatClass(DataSetInputFormat.class);
-    job.getConfiguration().set(DataSetInputFormat.HCONF_ATTR_INPUT_DATASET, inputDatasetName);
+  // Keys for storing values in Hadoop Configuration
+  private static final String DATASET_NAME = "input.datasetinputformat.dataset.name";
+  private static final String DATASET_ARGS = "input.datasetinputformat.dataset.args";
+  private static final String SPLITS = "input.datasetinputformat.splits";
+
+  /**
+   * Sets dataset and splits information into the given {@link Configuration}.
+   *
+   * @param hConf configuration to modify
+   * @param datasetName name of the dataset
+   * @param datasetArguments arguments for the dataset
+   * @param splits list of splits on the dataset
+   * @throws IOException
+   */
+  public static void setDatasetSplits(Configuration hConf,
+                                      String datasetName, Map<String, String> datasetArguments,
+                                      List<Split> splits) throws IOException {
+    hConf.set(DATASET_NAME, datasetName);
+    hConf.set(DATASET_ARGS, GSON.toJson(datasetArguments, DATASET_ARGS_TYPE));
+
+    // Encode the list of splits with size followed by that many of DataSetInputSplit objects.
+    ByteArrayDataOutput dataOutput = ByteStreams.newDataOutput();
+    dataOutput.writeInt(splits.size());
+    for (Split split : splits) {
+      new DataSetInputSplit(split).write(dataOutput);
+    }
+    hConf.set(SPLITS, Bytes.toStringBinary(dataOutput.toByteArray()));
   }
 
   @Override
   public List<InputSplit> getSplits(final JobContext context) throws IOException, InterruptedException {
-    MapReduceContextConfig mrContextConfig = new MapReduceContextConfig(context.getConfiguration());
-    List<Split> splits = mrContextConfig.getInputSelection();
-    List<InputSplit> list = new ArrayList<>();
-    for (Split split : splits) {
-      list.add(new DataSetInputSplit(split));
+    // Decode splits from Configuration
+    String splitsConf = context.getConfiguration().get(SPLITS);
+    if (splitsConf == null) {
+      throw new IOException("No input splits available from job configuration.");
     }
-    return list;
+    ByteArrayDataInput dataInput = ByteStreams.newDataInput(Bytes.toBytesBinary(splitsConf));
+    int size = dataInput.readInt();
+    List<InputSplit> splits = new ArrayList<>(size);
+    for (int i = 0; i < size; i++) {
+      DataSetInputSplit inputSplit = new DataSetInputSplit();
+      inputSplit.readFields(dataInput);
+      splits.add(inputSplit);
+    }
+    return splits;
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public RecordReader<KEY, VALUE> createRecordReader(final InputSplit split,
-                                                     final TaskAttemptContext context)
+  public RecordReader<KEY, VALUE> createRecordReader(InputSplit split,
+                                                     TaskAttemptContext context)
     throws IOException, InterruptedException {
 
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
 
     Configuration conf = context.getConfiguration();
-    // we don't currently allow datasets as the format between map and reduce stages, otherwise we'll have to
-    // pass in the stage here instead of hardcoding mapper.
-    MapReduceContextProvider contextProvider = new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Mapper);
-    BasicMapReduceContext mrContext = contextProvider.get();
-    mrContext.getMetricsCollectionService().startAndWait();
-    String dataSetName = getInputName(conf);
-    BatchReadable<KEY, VALUE> inputDataset = mrContext.getDataset(dataSetName);
-    SplitReader<KEY, VALUE> splitReader = inputDataset.createSplitReader(inputSplit.getSplit());
+    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(conf);
+    BasicMapReduceTaskContext taskContext = classLoader.getTaskContextProvider().get(context);
+
+    String datasetName = conf.get(DATASET_NAME);
+    Map<String, String> datasetArgs = GSON.fromJson(conf.get(DATASET_ARGS), DATASET_ARGS_TYPE);
+
+    Dataset dataset = taskContext.getDataset(datasetName, datasetArgs);
+    // Must be BatchReadable.
+    Preconditions.checkArgument(dataset instanceof BatchReadable, "Dataset '%s' is not a BatchReadable.", datasetName);
+
+    @SuppressWarnings("unchecked")
+    BatchReadable<KEY, VALUE> batchReadable = (BatchReadable<KEY, VALUE>) dataset;
+    SplitReader<KEY, VALUE> splitReader = batchReadable.createSplitReader(inputSplit.getSplit());
 
     // the record reader now owns the context and will close it
-    return new DataSetRecordReader<>(splitReader, contextProvider);
-  }
-
-  private String getInputName(Configuration conf) {
-    return conf.get(HCONF_ATTR_INPUT_DATASET);
+    return new DataSetRecordReader<>(splitReader, taskContext);
   }
 }

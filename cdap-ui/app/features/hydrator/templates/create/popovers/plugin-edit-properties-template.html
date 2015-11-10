@@ -1,0 +1,60 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<form plugin-property-edit-view>
+  <fieldset ng-disabled="isDisabled">
+      <h4>Configuration</h4>
+      <div class="form-group">
+        <label class="control-label">Label</label>
+        <input type="text" class="form-control" ng-model="plugin.label"/>
+      </div>
+      <div ng-repeat="group in PluginEditController.config.groups.position">
+        <div class="widget-group-container">
+          <h4>{{PluginEditController.config.groups[group].display}}</h4>
+          <div ng-repeat="field in PluginEditController.groups[group].position">
+            <div ng-if="field !== 'schema'">
+              <div class="form-group">
+                <label class="control-label"
+                        ng-init="title=PluginEditController.groups[group].fields[field].info;description=PluginEditController.groups[group].fields[field].description">
+                  <span>{{PluginEditController.groups[group].fields[field].label}}</span>
+                  <span class="fa fa-info-circle"
+                        tooltip="{{description}}"
+                        tooltip-placement="right"
+                        tooltip-append-to-body="true">
+                  </span>
+                  <span class="fa fa-asterisk" ng-if="plugin._backendProperties[field].required"></span>
+                </label>
+                <div>
+                  <div data-name="field"
+                       class="my-widget-container"
+                       data-info="{{plugin.myconfig.widget}}"
+                       ng-class="{'select-wrapper': PluginEditController.groups[group].fields[field].widget === 'select'}"
+                       data-model="plugin.properties[field]"
+                       data-myconfig="PluginEditController.groups[group].fields[field]"
+                       data-properties="plugin.properties"
+                       widget-disabled="plugin.pluginTemplate && plugin.lock[field]"
+                       widget-container>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+  </fieldset>
+
+</form>

@@ -17,8 +17,8 @@
 
 package $package;
 
-import co.cask.cdap.template.etl.api.Emitter;
-import co.cask.cdap.template.etl.api.Transform;
+import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.Transform;
 
 /**
  * ETL Transform.

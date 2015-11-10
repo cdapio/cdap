@@ -17,7 +17,6 @@
 package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -47,7 +46,7 @@ public class DefaultNamespacedLocationFactoryTest {
     // should not be any locations
     Assert.assertTrue(namespacedLocationFactory.list().isEmpty());
 
-    Location defaultLoc = namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID);
+    Location defaultLoc = namespacedLocationFactory.get(Id.Namespace.DEFAULT);
     Id.Namespace ns1 = Id.Namespace.from("ns1");
     Location ns1Loc = namespacedLocationFactory.get(ns1);
 
@@ -58,7 +57,7 @@ public class DefaultNamespacedLocationFactoryTest {
     defaultLoc.mkdirs();
     ns1Loc.mkdirs();
     Map<Id.Namespace, Location> expected = ImmutableMap.of(
-      Constants.DEFAULT_NAMESPACE_ID, defaultLoc,
+      Id.Namespace.DEFAULT, defaultLoc,
       ns1, ns1Loc
     );
     Assert.assertEquals(expected, namespacedLocationFactory.list());

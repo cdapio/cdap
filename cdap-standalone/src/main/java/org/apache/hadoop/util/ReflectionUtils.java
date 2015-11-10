@@ -16,7 +16,7 @@
 
 package org.apache.hadoop.util;
 
-import co.cask.cdap.internal.app.runtime.adapter.PluginClassLoader;
+import co.cask.cdap.internal.app.runtime.plugin.PluginClassLoader;
 import org.apache.commons.logging.Log;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;

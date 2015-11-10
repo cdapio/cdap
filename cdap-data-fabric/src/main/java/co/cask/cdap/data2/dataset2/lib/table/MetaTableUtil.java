@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -34,9 +33,6 @@ import java.io.IOException;
  */
 public abstract class MetaTableUtil {
 
-  // Namespace for meta tables is 'system'
-  protected static final Id.Namespace SYSTEM_NAMESPACE = Id.Namespace.from(Constants.SYSTEM_NAMESPACE);
-
   protected final DatasetFramework dsFramework;
 
   public MetaTableUtil(DatasetFramework framework, CConfiguration conf) {
@@ -44,13 +40,13 @@ public abstract class MetaTableUtil {
   }
 
   public Table getMetaTable() throws IOException, DatasetManagementException {
-    Id.DatasetInstance metaTableInstanceId = Id.DatasetInstance.from(SYSTEM_NAMESPACE, getMetaTableName());
+    Id.DatasetInstance metaTableInstanceId = Id.DatasetInstance.from(Id.Namespace.SYSTEM, getMetaTableName());
     return DatasetsUtil.getOrCreateDataset(dsFramework, metaTableInstanceId, Table.class.getName(),
                                            DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
   }
 
   public void upgrade() throws IOException, DatasetManagementException {
-    DatasetAdmin admin = dsFramework.getAdmin(Id.DatasetInstance.from(SYSTEM_NAMESPACE, getMetaTableName()), null);
+    DatasetAdmin admin = dsFramework.getAdmin(Id.DatasetInstance.from(Id.Namespace.SYSTEM, getMetaTableName()), null);
     if (admin != null) {
       admin.upgrade();
     }

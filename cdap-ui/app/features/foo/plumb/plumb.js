@@ -1,5 +1,21 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.feature.foo')
-  .controller('PlumbController', function(myAdapterApi, MyPlumbService) {
+  .controller('PlumbController', function(myPipelineApi, MyPlumbService) {
     function getIcon(plugin) {
       var iconMap = {
         'script': 'fa-code',
@@ -69,13 +85,13 @@ angular.module(PKG.name + '.feature.foo')
       var prom;
       switch(group.name) {
         case 'source':
-          prom = myAdapterApi.fetchSources({ adapterType: 'ETLRealtime' }).$promise;
+          prom = myPipelineApi.fetchSources({ pipelineType: 'ETLRealtime' }).$promise;
           break;
         case 'transform':
-          prom = myAdapterApi.fetchTransforms({ adapterType: 'ETLRealtime' }).$promise;
+          prom = myPipelineApi.fetchTransforms({ pipelineType: 'ETLRealtime' }).$promise;
           break;
         case 'sink':
-          prom = myAdapterApi.fetchSinks({ adapterType: 'ETLRealtime' }).$promise;
+          prom = myPipelineApi.fetchSinks({ pipelineType: 'ETLRealtime' }).$promise;
           break;
       }
       prom.then(function(res) {

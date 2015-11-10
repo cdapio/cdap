@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
@@ -83,14 +84,14 @@ class DatasetServiceClient {
   }
 
   @Nullable
-  public DatasetMeta getInstance(String instanceName,
-                                 @Nullable Iterable<? extends Id> owners) throws DatasetManagementException {
+  public DatasetMeta getInstance(String instanceName, @Nullable Iterable<? extends Id> owners)
+    throws DatasetManagementException {
 
     String query = "";
     if (owners != null) {
       Set<String> ownerParams = Sets.newHashSet();
       for (Id owner : owners) {
-        ownerParams.add("owner=" + owner.getIdType() + "::" + owner.getIdRep());
+        ownerParams.add("owner=" + owner.toString());
       }
       query = ownerParams.isEmpty() ? "" : "?" + Joiner.on("&").join(ownerParams);
     }
@@ -161,8 +162,7 @@ class DatasetServiceClient {
     }
   }
 
-  public void updateInstance(String datasetInstanceName, DatasetProperties props)
-    throws DatasetManagementException {
+  public void updateInstance(String datasetInstanceName, DatasetProperties props) throws DatasetManagementException {
 
     HttpResponse response = doPut("datasets/" + datasetInstanceName + "/properties",
                                   GSON.toJson(props.getProperties()));
@@ -189,8 +189,7 @@ class DatasetServiceClient {
     }
   }
 
-  public void addModule(String moduleName, String className, Location jarLocation)
-    throws DatasetManagementException {
+  public void addModule(String moduleName, String className, Location jarLocation) throws DatasetManagementException {
 
     HttpResponse response = doRequest(HttpMethod.PUT, "modules/" + moduleName,
                                       ImmutableMultimap.of("X-Class-Name", className),
@@ -249,8 +248,7 @@ class DatasetServiceClient {
     return doRequest(HttpMethod.GET, resource, headers, (InputSupplier<? extends InputStream>) null);
   }
 
-  private HttpResponse doPut(String resource, String body)
-    throws DatasetManagementException {
+  private HttpResponse doPut(String resource, String body) throws DatasetManagementException {
 
     return doRequest(HttpMethod.PUT, resource, null, body);
   }
@@ -312,9 +310,9 @@ class DatasetServiceClient {
   }
 
   private String resolve(String resource) throws DatasetManagementException {
-    Discoverable discoverable = endpointStrategySupplier.get().pick(1, TimeUnit.SECONDS);
+    Discoverable discoverable = endpointStrategySupplier.get().pick(3, TimeUnit.SECONDS);
     if (discoverable == null) {
-      throw new DatasetManagementException("Cannot discover dataset service");
+      throw new ServiceUnavailableException("DatasetService");
     }
     InetSocketAddress addr = discoverable.getSocketAddress();
     return String.format("http://%s:%s%s/namespaces/%s/data/%s", addr.getHostName(), addr.getPort(),

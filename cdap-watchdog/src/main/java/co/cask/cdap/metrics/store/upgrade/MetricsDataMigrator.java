@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricType;
 import co.cask.cdap.api.metrics.MetricValues;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.DefaultDatasetNamespace;
@@ -111,11 +112,11 @@ public class MetricsDataMigrator {
 
   private static final Map<String, Map<String, String>> mapOldSystemContextToNew =
     ImmutableMap.<String, Map<String, String>>of(
-      "transactions", ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+      "transactions", ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
                                       Constants.Metrics.Tag.COMPONENT, "transactions"),
-      "-", ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE),
+      "-", ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId()),
 
-      "gateway", ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Constants.SYSTEM_NAMESPACE,
+      "gateway", ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
                                  Constants.Metrics.Tag.COMPONENT, Constants.Gateway.METRICS_CONTEXT,
                                  Constants.Metrics.Tag.HANDLER, Constants.Gateway.STREAM_HANDLER_NAME)
     );
@@ -174,10 +175,8 @@ public class MetricsDataMigrator {
     // versions older than 2.7, has two metrics table, identified by system and user prefix
     String tableName26 = "system." + tableName27;
     DefaultDatasetNamespace defaultDatasetNamespace = new DefaultDatasetNamespace(cConf);
-    String metricsEntityTable26 = defaultDatasetNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE),
-                                                                    tableName26);
-    String metricsEntityTable27 = defaultDatasetNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE),
-                                                                    tableName27);
+    String metricsEntityTable26 = defaultDatasetNamespace.namespace(Id.Namespace.SYSTEM, tableName26);
+    String metricsEntityTable27 = defaultDatasetNamespace.namespace(Id.Namespace.SYSTEM, tableName27);
 
     Version version = null;
     try {
@@ -268,7 +267,7 @@ public class MetricsDataMigrator {
   }
   private String addNamespace(DatasetNamespace dsNamespace, String scope, String tableName) {
     tableName = scope == null ? tableName : scope + "." + tableName;
-    return dsNamespace.namespace(new Id.Namespace(Constants.SYSTEM_NAMESPACE), tableName);
+    return dsNamespace.namespace(Id.Namespace.SYSTEM, tableName);
   }
   private void addTableNamesToDelete(Set<String> tablesToDelete, CConfiguration cConf,
                                      String scope, List<Integer> resolutions) {
@@ -343,7 +342,7 @@ public class MetricsDataMigrator {
         } else {
           long value = Bytes.toLong(entry.getValue());
           Map<String, String> tagValues = Maps.newHashMap(tagMap);
-          tagValues.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+          tagValues.put(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId());
           tagValues.put(metricTagType, tagValue);
           addMetricValueToMetricStore(tagValues, metricName, 0, value, MetricType.COUNTER);
         }
@@ -390,7 +389,7 @@ public class MetricsDataMigrator {
 
   private void populateApplicationTags(Map<String, String> tagMap, List<String> contextParts,
                                        List<String> targetTagList, String context) {
-    tagMap.put(Constants.Metrics.Tag.NAMESPACE, Constants.DEFAULT_NAMESPACE);
+    tagMap.put(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.DEFAULT.getId());
     for (int i = 0; i < contextParts.size(); i++) {
       if (i == targetTagList.size()) {
         LOG.trace(" Context longer than targetTagList" + context);
@@ -415,13 +414,13 @@ public class MetricsDataMigrator {
     // for default namespace, we have to provide the complete table name.
     tableName = "system." + tableName;
     // metrics tables are in the system namespace
-    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Constants.DEFAULT_NAMESPACE, tableName);
+    Id.DatasetInstance metricsDatasetInstanceId = Id.DatasetInstance.from(Id.Namespace.DEFAULT, tableName);
     try {
       table = DatasetsUtil.getOrCreateDataset(dsFramework, metricsDatasetInstanceId,
                                               MetricsTable.class.getName(), empty, null, null);
-    } catch (DatasetManagementException e) {
-      String msg = String.format("Cannot access or create table %s.", tableName);
-      LOG.error(msg);
+    } catch (DatasetManagementException | ServiceUnavailableException e) {
+      String msg = String.format("Cannot access or create table %s.", tableName) + " " + e.getMessage();
+      LOG.warn(msg);
       throw new DataMigrationException(msg);
     } catch (IOException e) {
       String msg = String.format("Exception while creating table %s", tableName);
@@ -436,12 +435,11 @@ public class MetricsDataMigrator {
     String rootPrefix = cConf.get(Constants.Dataset.TABLE_PREFIX) + "_";
     String destEntityTableName =  cConf.get(Constants.Metrics.ENTITY_TABLE_NAME,
                                             Constants.Metrics.DEFAULT_ENTITY_TABLE_NAME);
-    destEntityTableName = getTableName(rootPrefix, Id.DatasetInstance.from(
-      Id.Namespace.from(Constants.SYSTEM_NAMESPACE), destEntityTableName));
+    destEntityTableName = getTableName(rootPrefix, Id.DatasetInstance.from(Id.Namespace.SYSTEM, destEntityTableName));
     String destMetricsTablePrefix =  cConf.get(Constants.Metrics.METRICS_TABLE_PREFIX,
                                                Constants.Metrics.DEFAULT_METRIC_TABLE_PREFIX);
     destMetricsTablePrefix = getTableName(rootPrefix, Id.DatasetInstance.from(
-      Id.Namespace.from(Constants.SYSTEM_NAMESPACE), destMetricsTablePrefix));
+      Id.Namespace.SYSTEM, destMetricsTablePrefix));
     try {
       HBaseAdmin hAdmin = new HBaseAdmin(hConf);
       for (HTableDescriptor desc : hAdmin.listTables()) {

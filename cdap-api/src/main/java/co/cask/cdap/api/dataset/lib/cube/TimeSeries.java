@@ -17,12 +17,12 @@
 package co.cask.cdap.api.dataset.lib.cube;
 
 import co.cask.cdap.api.annotation.Beta;
-import com.google.common.base.Objects;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents a single time series defined by a measure name and set of dimension values.
@@ -62,14 +62,14 @@ public final class TimeSeries {
 
     TimeSeries that = (TimeSeries) o;
 
-    return Objects.equal(measureName, that.measureName) &&
-      Objects.equal(dimensionValues, that.dimensionValues) &&
-      Objects.equal(timeValues, that.timeValues);
+    return Objects.equals(measureName, that.measureName) &&
+      Objects.equals(dimensionValues, that.dimensionValues) &&
+      Objects.equals(timeValues, that.timeValues);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(measureName, dimensionValues, timeValues);
+    return Objects.hash(measureName, dimensionValues, timeValues);
   }
 
   @Override

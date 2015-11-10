@@ -22,7 +22,6 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -361,7 +360,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     for (QueueConstants.QueueType queueType : queueTypes) {
       // Note: The trailing "." is crucial, since otherwise nsId could match nsId1, nsIdx etc
       // It's important to keep config table enabled while disabling and dropping  queue tables.
-      final String queueTableNamePrefix = String.format("%s.%s.", Constants.SYSTEM_NAMESPACE, queueType);
+      final String queueTableNamePrefix = String.format("%s.%s.", Id.Namespace.SYSTEM.getId(), queueType);
       final TableId configTableId = getConfigTableId(namespaceId.getId());
       tableUtil.deleteAllInNamespace(getHBaseAdmin(), namespaceId, new Predicate<TableId>() {
         @Override
@@ -400,7 +399,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
   }
 
   public TableId getDataTableId(Id.Flow flowId, QueueConstants.QueueType queueType) {
-    String tableName = String.format("%s.%s.%s.%s", Constants.SYSTEM_NAMESPACE, queueType, flowId.getApplicationId(),
+    String tableName = String.format("%s.%s.%s.%s", Id.Namespace.SYSTEM.getId(), queueType, flowId.getApplicationId(),
                                      flowId.getId());
     return TableId.from(flowId.getNamespaceId(), tableName);
   }
@@ -426,7 +425,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     Set<QueueConstants.QueueType> queueTypes = EnumSet.of(QueueConstants.QueueType.QUEUE,
                                                           QueueConstants.QueueType.SHARDED_QUEUE);
     for (QueueConstants.QueueType queueType : queueTypes) {
-      String prefix = Constants.SYSTEM_NAMESPACE + "." + queueType.toString();
+      String prefix = Id.Namespace.SYSTEM.getId() + "." + queueType.toString();
       if (tableName.startsWith(prefix)) {
         return true;
       }

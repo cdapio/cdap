@@ -120,7 +120,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
     try {
       action.run();
       // TODO: CDAP-2161 Ideally would be deleting the property. However it is not supported by PropertyStore right now.
-      propertyStore.set(streamId.toId(), null).get();
+      propertyStore.set(streamId.toString(), null).get();
       streamDeleted(streamId);
     } finally {
       lock.unlock();
@@ -128,8 +128,19 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
   }
 
   @Override
+  public <T> T exclusiveAction(Id.Stream streamId, Callable<T> action) throws Exception {
+    Lock lock = getLock(streamId);
+    lock.lock();
+    try {
+      return action.call();
+    } finally {
+      lock.unlock();
+    }
+  }
+
+  @Override
   public Cancellable addListener(Id.Stream streamId, StreamPropertyListener listener) {
-    return propertyStore.addChangeListener(streamId.toId(), new StreamPropertyChangeListener(listener));
+    return propertyStore.addChangeListener(streamId.toString(), new StreamPropertyChangeListener(listener));
   }
 
   @Override
@@ -175,7 +186,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
    */
   private ListenableFuture<CoordinatorStreamProperties> updateProperties(Id.Stream streamId,
                                                                          final CoordinatorStreamProperties properties) {
-    return propertyStore.update(streamId.toId(), new SyncPropertyUpdater<CoordinatorStreamProperties>() {
+    return propertyStore.update(streamId.toString(), new SyncPropertyUpdater<CoordinatorStreamProperties>() {
 
       @Override
       protected CoordinatorStreamProperties compute(@Nullable CoordinatorStreamProperties oldProperties) {
@@ -207,7 +218,7 @@ public abstract class AbstractStreamCoordinatorClient extends AbstractIdleServic
 
     @Override
     public void onChange(String name, CoordinatorStreamProperties properties) {
-      Id.Stream streamId = Id.Stream.fromId(name);
+      Id.Stream streamId = Id.Stream.fromString(name, Id.Stream.class);
       if (properties == null) {
         deleted(streamId);
         oldProperties = null;

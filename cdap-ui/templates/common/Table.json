@@ -4,38 +4,28 @@
     "position": [ "group1" ],
     "group1": {
        "display" : "General",
-       "position" : [ "name", "schema", "schema.row.field", "case.sensitive.row.field" ],
+       "position" : [ "name", "schema.row.field" ],
        "fields" : {
           "name" : {
-             "widget": "textbox",
+             "widget": "dataset-selector",
              "label": "Name",
-             "description" : "Specifies the name of the table to which data will be written to"
-          },
-
-          "schema" : {
-             "widget": "schema",
-             "label": "Schema",
-             "description" : "Specify the schema for the table",
-             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
-             "schema-default-type" : "string"
+             "description" : "Specifies the name of the table to which data will be written to."
           },
 
           "schema.row.field" : {
              "widget": "textbox",
              "label" : "Row Field",
-             "description" : "Specify the field from the record above that should be used as key"
-          },
-
-          "case.sensitive.row.field" : {
-            "widget": "select",
-            "label" : "Case-sensitive Row Field",
-            "properties" : {
-              "values" : [ "true", "false" ],
-              "default" : "true"
-            },
-            "description" : "Specify whether the row field specified in schema.row.field is case-sensitive"
+             "description" : "Specify the field from the record schema that should be used as a key."
           }
        }
+    }
+  },
+  "outputschema": {
+    "schema" : {
+      "widget": "schema",
+      "description" : "Specify the schema for the table",
+      "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string", "map<string, string>" ],
+      "schema-default-type" : "string"
     }
   }
 }

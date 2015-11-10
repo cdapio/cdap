@@ -22,7 +22,7 @@
 
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>3.2.0-SNAPSHOT</version>
+  <version>3.3.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -93,7 +93,7 @@
     <commons.codec.version>1.6</commons.codec.version>
     <commons.cli.version>1.2</commons.cli.version>
     <concurrent.trees.version>2.4.0</concurrent.trees.version>
-    <cask.common.cli.version>0.7.1</cask.common.cli.version>
+    <cask.common.cli.version>0.8.0</cask.common.cli.version>
     <cask.common.version>0.7.1</cask.common.version>
     <findbugs.jsr305.version>2.0.1</findbugs.jsr305.version>
     <flume.version>1.2.0</flume.version>
@@ -107,6 +107,7 @@
     <hbase98.version>0.98.6.1-hadoop2</hbase98.version>
     <hbase10cdh.version>1.0.0-cdh5.4.4</hbase10cdh.version>
     <hbase10.version>1.0.1.1</hbase10.version>
+    <hbase11.version>1.1.1</hbase11.version>
     <hive.version>1.1.0</hive.version>
     <hsql.version>2.2.4</hsql.version>
     <http.component.version>4.2.5</http.component.version>
@@ -114,13 +115,13 @@
     <jetty8.version>8.1.15.v20140411</jetty8.version>
     <jline.version>2.12</jline.version>
     <junit.version>4.11</junit.version>
-    <kafka.version>0.8.0</kafka.version>
+    <kafka.version>0.8.2.2</kafka.version>
     <leveldb.version>0.6</leveldb.version>
     <logback.version>1.0.9</logback.version>
     <mockito.version>1.9.5</mockito.version>
     <mysql.version>5.1.21</mysql.version>
     <netty.version>3.6.6.Final</netty.version>
-    <netty.http.version>0.11.0</netty.http.version>
+    <netty.http.version>0.13.0</netty.http.version>
     <rs-api.version>2.0</rs-api.version>
     <quartz.version>2.2.0</quartz.version>
     <resteasy.version>3.0.8.Final</resteasy.version>
@@ -128,7 +129,7 @@
     <snappy.version>1.1.1.7</snappy.version>
     <shiro.version>1.2.1</shiro.version>
     <slf4j.version>1.7.5</slf4j.version>
-    <tephra.version>0.6.0</tephra.version>
+    <tephra.version>0.6.3</tephra.version>
     <thrift.version>0.9.0</thrift.version>
     <twill.version>0.6.0-incubating</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
@@ -136,10 +137,8 @@
     <spark.version>1.3.1</spark.version>
     <cdap.client.version>1.2.0</cdap.client.version>
     <twitter4j.version>4.0.3</twitter4j.version>
-    <es.version>1.6.0</es.version>
-    <es-hadoop.version>2.1.0</es-hadoop.version>
-    <fastutil.version>6.6.1</fastutil.version>
-    <commons-httpclient.version>3.1</commons-httpclient.version>
+    <dumbster.version>1.6</dumbster.version>
+    <javamail.version>1.4.1</javamail.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
     <release.iteration>1</release.iteration>
@@ -230,6 +229,17 @@
       <dependency>
         <groupId>co.cask.tephra</groupId>
         <artifactId>tephra-hbase-compat-1.0</artifactId>
+        <version>${tephra.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>co.cask.tephra</groupId>
+        <artifactId>tephra-hbase-compat-1.1</artifactId>
         <version>${tephra.version}</version>
         <exclusions>
           <exclusion>
@@ -420,6 +430,10 @@
             <groupId>org.jboss.netty</groupId>
             <artifactId>netty</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>jline</groupId>
+            <artifactId>jline</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -459,6 +473,10 @@
             <groupId>com.sun.jmx</groupId>
             <artifactId>jmxri</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -470,6 +488,12 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>${http.component.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -552,6 +576,10 @@
           <exclusion>
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>jetty-util</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -652,8 +680,31 @@
         <version>${hadoop.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>asm</groupId>
+            <artifactId>asm</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hadoop</groupId>
+        <artifactId>hadoop-mapreduce-client-app</artifactId>
+        <version>${hadoop.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -662,6 +713,10 @@
         <artifactId>hadoop-mapreduce-client-core</artifactId>
         <version>${hadoop.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
@@ -698,6 +753,10 @@
         <version>${hadoop.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
@@ -711,12 +770,22 @@
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-common</artifactId>
         <version>${hbase98.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-client</artifactId>
         <version>${hbase98.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>io.netty</groupId>
             <artifactId>netty</artifactId>
@@ -731,12 +800,22 @@
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-protocol</artifactId>
         <version>${hbase98.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hbase</groupId>
         <artifactId>hbase-server</artifactId>
         <version>${hbase98.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>jetty</artifactId>
@@ -917,6 +996,10 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -924,6 +1007,10 @@
         <artifactId>hive-metastore</artifactId>
         <version>${hive.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-exec</artifactId>
@@ -975,6 +1062,10 @@
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -982,6 +1073,10 @@
         <artifactId>hive-exec</artifactId>
         <version>${hive.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
@@ -1035,6 +1130,10 @@
           <exclusion>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1142,6 +1241,10 @@
         <version>${hadoop.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
@@ -1158,19 +1261,25 @@
         <version>${twitter4j.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.elasticsearch</groupId>
-        <artifactId>elasticsearch</artifactId>
-        <version>${es.version}</version>
+        <groupId>dumbster</groupId>
+        <artifactId>dumbster</artifactId>
+        <version>${dumbster.version}</version>
+        <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.elasticsearch</groupId>
-        <artifactId>elasticsearch-hadoop-mr</artifactId>
-        <version>${es-hadoop.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>it.unimi.dsi</groupId>
-        <artifactId>fastutil</artifactId>
-        <version>${fastutil.version}</version>
+        <groupId>javax.mail</groupId>
+        <artifactId>mail</artifactId>
+        <version>${javamail.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -1201,6 +1310,7 @@
             </systemPropertyVariables>
             <includes>
               <include>**/*TestsSuite.java</include>
+              <include>**/*TestSuite.java</include>
               <include>**/Test*.java</include>
               <include>**/*Test.java</include>
               <include>**/*TestCase.java</include>
@@ -1259,8 +1369,6 @@
                   <exlcude>**/*.patch</exlcude>
                   <exclude>**/logrotate.d/**</exclude>
                   <exclude>**/limits.d/**</exclude>
-                  <!-- Disable cdap-ui from rat-check temproarily until integrated completely into cdap-->
-                  <exclude>cdap-ui/**</exclude>
                   <!-- Excludes AVRO schema files -->
                   <exclude>**/*.avsc</exclude>
                   <!-- Excludes examples by default, include it in the examples profile -->
@@ -1268,7 +1376,7 @@
                   <!-- Excludes app-templates by default, include it in the templates profile -->
                   <exclude>cdap-app-templates/**</exclude>
                   <exclude>**/*.json</exclude>
-                  <exclude>archetypes/**/resources/**/*.txt</exclude>
+                  <exclude>**/*.json.template</exclude>
                   <exclude>**/MANIFEST.MF</exclude>
                 </excludes>
               </configuration>
@@ -1957,8 +2065,8 @@
                       --name "cdap-${package.name}"
                       --vendor "Cask Data, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
-                      --description "Component of Cask DAP"
+                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
+                      --description "Cask DAP (CDAP) Component: ${package.name}"
                       --category misc
                       -s dir
                       -t rpm
@@ -1966,12 +2074,14 @@
                       --directories "/opt/cdap/${package.name}"
                       --version "${package.version}"
                       --architecture all
+                      --rpm-os linux
                       --url "http://cask.co"
                       --template-value "project=${package.name}"
                       --after-install "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postinst"
                       --before-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/prerm"
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/rpm/scripts/postrm"
                       --iteration "${release.iteration}"
+                      --depends libxml2
                       ${package.depends}
                       ${package.dirs}
                     </commandlineArgs>
@@ -2008,8 +2118,8 @@
                       --name "cdap-${package.name}"
                       --vendor "Cask Data, Inc."
                       --maintainer "support@cask.co"
-                      --license "Copyright ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
-                      --description "Component of Cask DAP"
+                      --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
+                      --description "Cask DAP (CDAP) Component: ${package.name}"
                       --category misc
                       -s dir
                       -t deb
@@ -2023,6 +2133,7 @@
                       --before-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/prerm"
                       --after-remove "${project.parent.basedir}/cdap-distributions/src/debian/scripts/postrm"
                       --iteration "${release.iteration}"
+                      --depends libxml2-utils
                       ${package.depends}
                       ${package.dirs}
                     </commandlineArgs>
@@ -2123,13 +2234,17 @@
 
       <modules>
         <module>cdap-common-unit-test</module>
+        <module>cdap-api-common</module>
+        <module>cdap-spi</module>
         <module>cdap-api</module>
         <module>cdap-formats</module>
         <module>cdap-hbase-compat-0.96</module>
         <module>cdap-hbase-compat-0.98</module>
         <module>cdap-hbase-compat-1.0-cdh</module>
         <module>cdap-hbase-compat-1.0</module>
+        <module>cdap-hbase-compat-1.1</module>
         <module>cdap-common</module>
+        <module>cdap-docs-gen</module>
         <module>cdap-watchdog-api</module>
         <module>cdap-kafka</module>
         <module>cdap-data-fabric</module>
@@ -2183,7 +2298,7 @@
             </group>
             <group>
               <title>Application Template Packages</title>
-              <packages>co.cask.cdap.template.*</packages>
+              <packages>co.cask.cdap.app.*</packages>
             </group>
           </groups>
         </configuration>

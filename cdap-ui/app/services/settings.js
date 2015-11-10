@@ -1,12 +1,28 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.services')
 
   .factory('mySettings', function (MyPersistentStorage) {
     return new MyPersistentStorage('user');
   })
 
-  .factory('MyPersistentStorage', function MyPersistentStorageFactory($q, MyDataSource, myHelpers) {
+  .factory('MyPersistentStorage', function MyPersistentStorageFactory($q, MyCDAPDataSource, myHelpers) {
 
-    var data = new MyDataSource();
+    var data = new MyCDAPDataSource();
 
     function MyPersistentStorage (type) {
       this.endpoint = '/configuration/'+type;
@@ -47,7 +63,7 @@ angular.module(PKG.name + '.services')
      */
     MyPersistentStorage.prototype.get = function (key, force) {
 
-      var val = myHelpers.deepGet(this.data, key);
+      var val = myHelpers.deepGet(this.data, key, true);
 
       if (!force && val) {
         return $q.when(val);
@@ -59,7 +75,7 @@ angular.module(PKG.name + '.services')
         var deferred = $q.defer();
         this.pending.promise.then(function () {
           deferred.resolve(
-            myHelpers.deepGet(self.data, key)
+            myHelpers.deepGet(self.data, key, true)
           );
         });
         return deferred.promise;
@@ -75,7 +91,7 @@ angular.module(PKG.name + '.services')
         function (res) {
           self.data = res.property;
           self.pending.resolve(
-            myHelpers.deepGet(self.data, key)
+            myHelpers.deepGet(self.data, key, true)
           );
         }
       );

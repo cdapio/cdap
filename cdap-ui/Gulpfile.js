@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 var gulp = require('gulp'),
     plug = require('gulp-load-plugins')(),
     pkg = require('./package.json'),
@@ -18,7 +34,8 @@ gulp.task('css:lib', ['fonts'], function() {
       './bower_components/font-awesome/css/font-awesome.min.css',
       './bower_components/ng-sortable/dist/ng-sortable.min.css',
       './bower_components/c3/c3.min.css',
-      './bower_components/angular-gridster/dist/angular-gridster.min.css'
+      './bower_components/angular-gridster/dist/angular-gridster.min.css',
+      './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.css',
     ].concat(mainBowerFiles({
       filter: /cask\-angular\-[^\/]+\/.*\.(css|less)$/
     })))
@@ -72,6 +89,7 @@ gulp.task('js:lib', function() {
 
       './bower_components/angular-ui-router/release/angular-ui-router.js',
 
+      './bower_components/angular-strap/dist/modules/compiler.js',
       './bower_components/angular-strap/dist/modules/dimensions.js',
       './bower_components/angular-strap/dist/modules/tooltip.js',
       './bower_components/angular-strap/dist/modules/tooltip.tpl.js',
@@ -126,7 +144,9 @@ gulp.task('js:lib', function() {
       './bower_components/ace-builds/src-min-noconflict/ace.js',
       './bower_components/angular-ui-ace/ui-ace.js',
       './bower_components/jsPlumb/dist/js/dom.jsPlumb-1.7.5-min.js',
-      './bower_components/angular-gridster/dist/angular-gridster.min.js'
+      './bower_components/angular-gridster/dist/angular-gridster.min.js',
+      './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.js',
+      './bower_components/angularjs-dropdown-multiselect/dist/angularjs-dropdown-multiselect.min.js'
 
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
@@ -164,7 +184,9 @@ function getEs6Features(isNegate) {
     with the package manager build step. The transition process is going to be painful but the end goal is better (hopefully :])
   */
   var es6features = [
-    'workflows'
+    'workflows',
+    'flows',
+    'apps'
   ];
   var returnVal = [];
   es6features.forEach(function(feature) {
@@ -195,6 +217,7 @@ gulp.task('watch:js:app', function() {
         '!./app/**/*-test.js'
       ].concat(getEs6Features(true))
     )
+    .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',
@@ -210,6 +233,7 @@ gulp.task('watch:js:app:babel', function() {
     v: pkg.version
   });
   return gulp.src(getEs6Features())
+    .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
@@ -234,6 +258,7 @@ gulp.task('js:app', function() {
     './app/**/*.js',
     '!./app/**/*-test.js'
   ])
+    .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
@@ -268,6 +293,7 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/directives/**/*.html'
     ])
+      .pipe(plug.minifyHtml({loose: true, quotes: true}))
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.commons'
       })),
@@ -275,6 +301,7 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/features/home/home.html'
     ])
+      .pipe(plug.minifyHtml({loose: true, quotes: true}))
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.features',
         base: __dirname + '/app',
@@ -293,15 +320,26 @@ gulp.task('tpl', function() {
  */
 gulp.task('html:partials', function() {
   return gulp.src('./app/features/**/*.html')
+      .pipe(plug.minifyHtml({loose: true, quotes: true}))
       .pipe(gulp.dest('./dist/assets/features'));
 });
 
 gulp.task('html:main', function() {
   return gulp.src('./app/*.html')
+      .pipe(plug.minifyHtml({loose: true, quotes: true}))
       .pipe(gulp.dest('./dist'));
 });
 
+gulp.task('html:main.dev', function () {
+  return gulp.src('./app/*.html')
+      .pipe(plug.replace('<!-- DEV DEPENDENCIES -->',
+        '<script type="text/javascript" src="/assets/bundle/app.es6.js"></script>' +
+        '<script src="http://localhost:35729/livereload.js"></script>'))
+      .pipe(gulp.dest('./dist'));
+    });
+
 gulp.task('html', ['html:main', 'html:partials']);
+gulp.task('html.dev', ['html:main.dev', 'html:partials'])
 
 
 
@@ -312,6 +350,7 @@ gulp.task('html', ['html:main', 'html:partials']);
  */
 gulp.task('lint', function() {
   return gulp.src(['./app/**/*.js', './server/*.js'])
+    .pipe(plug.plumber())
     .pipe(plug.jshint())
     .pipe(plug.jshint.reporter())
     .pipe(plug.jshint.reporter('fail'));
@@ -385,10 +424,10 @@ gulp.task('css', ['css:lib', 'css:app']);
 gulp.task('style', ['css']);
 
 
-gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html']);
+gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html.dev']);
 gulp.task('build', ['js', 'css', 'img', 'tpl', 'html']);
 
-gulp.task('distribute', ['build', 'rev:replace']);
+gulp.task('distribute', ['clean', 'build', 'rev:replace']);
 
 gulp.task('default', ['lint', 'build']);
 
@@ -397,19 +436,29 @@ gulp.task('default', ['lint', 'build']);
 /*
   watch
  */
-gulp.task('watch', ['watch:build'], function() {
+gulp.task('watch', ['jshint', 'watch:build'], function() {
   plug.livereload.listen();
 
   gulp.watch('./dist/**/*')
     .on('change', plug.livereload.changed);
 
-  gulp.watch(['./app/**/*.js', '!./app/features/workflows/**/*.js', '!./app/**/*-test.js'], ['watch:js:app']);
-  gulp.watch(['./app/features/workflows/**/*.js'], ['watch:js:app:babel']);
+  gulp.watch([
+    './app/**/*.js',
+    '!./app/features/workflows/**/*.js',
+    '!./app/features/apps/**/*.js',
+    '!./app/features/flows/**/*.js',
+    '!./app/**/*-test.js'
+  ], ['jshint', 'watch:js:app']);
+  gulp.watch([
+    './app/features/workflows/**/*.js',
+    './app/features/apps/**/*.js',
+    './app/features/flows/**/*.js'
+  ], ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
   gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);
   gulp.watch('./app/features/**/*.html', ['html:partials']);
   gulp.watch('./app/img/**/*', ['img']);
-  gulp.watch('./app/index.html', ['html:main']);
+  gulp.watch('./app/index.html', ['html:main.dev']);
 
 });

@@ -63,7 +63,7 @@ public abstract class AbstractStreamFileConsumerFactory implements StreamConsume
     this.cConf = cConf;
     this.streamAdmin = streamAdmin;
     this.stateStoreFactory = stateStoreFactory;
-    this.tablePrefix = String.format("%s.%s", Constants.SYSTEM_NAMESPACE, QueueConstants.QueueType.STREAM.toString());
+    this.tablePrefix = String.format("%s.%s", Id.Namespace.SYSTEM.getId(), QueueConstants.QueueType.STREAM.toString());
   }
 
   /**

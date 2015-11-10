@@ -13,19 +13,29 @@ can add a schedule to a workflow using the ``scheduleWorkflow`` method of the
 `AbstractApplication class <../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)>`__
 
 The `Schedules <../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.html>`__
-class contains static methods to create schedules based on time, or schedules based on data availability.
+class contains a builder to create schedules based on time, or schedules based on data availability.
 
 The name of a schedule must be unique in the application that it is in; the same name can
 be used in different applications.
+
+Schedules can be controlled by the :ref:`CDAP CLI <cli>` and the :ref:`Lifecycle HTTP
+RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a schedule
+<http-restful-api-lifecycle-status>` can be retrieved, and individual schedules
+:ref:`resumed or suspended <http-restful-api-lifecycle-schedules-suspend-resume>`. 
+
+When a schedule is initially deployed, it is in a *suspended* state; a *resume* command needs to be
+issued to change it to *scheduled* before it will begin.
 
 Time Schedules
 ==============
 
 **Time schedules** will execute based on a
-`crontab schedule <../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.html#createTimeSchedule(java.lang.String,%20java.lang.String,%20java.lang.String)>`__.
+`crontab schedule <../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.Builder.html#createTimeSchedule(java.lang.String)>`__.
 You can add such a schedule to a workflow::
 
-    scheduleWorkflow(Schedules.createTimeSchedule("FiveHourSchedule", "Schedule running every 5 hours", "0 */5 * * *"),
+    scheduleWorkflow(Schedules.builder("FiveHourSchedule")
+                       .setDescription("Schedule running every 5 hours")
+                       .createTimeSchedule("0 */5 * * *"),
                      "MyWorkflow");
 
 The ``MyWorkflow`` will then be executed every 5 hours.
@@ -37,7 +47,9 @@ Optionally, you can specify the properties for the schedule::
     scheduleProperties.put("myProperty", "10");
     scheduleProperties.put("anotherProperty", "anotherValue");
 
-    scheduleWorkflow(Schedules.createTimeSchedule("FiveHourSchedule", "Schedule running every 5 hours", "0 */5 * * *"),
+    scheduleWorkflow(Schedules.builder("FiveHourSchedule")
+                       .setDescription("Schedule running every 5 hours")
+                       .createTimeSchedule("0 */5 * * *"),
                      "MyWorkflow", scheduleProperties);
     ...
 
@@ -52,12 +64,13 @@ Stream-size Schedules
 .. rubric:: Definition and Usage
 
 **Stream-size schedules** will execute based on data ingested in :ref:`streams <streams>`, using the
-`createDataSchedule API <../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.html#createDataSchedule(java.lang.String,%20java.lang.String,%20co.cask.cdap.api.schedule.Source,%20java.lang.String,%20int)>`__.
+`createDataSchedule API <../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.Builder.html#createDataSchedule(co.cask.cdap.api.schedule.Schedules.Source,%20java.lang.String,%20int)>`__.
 Here is an example to add a stream-size schedule based on a stream named ``purchaseStream`` that triggers
 every time the stream has ingested 1MB of data::
 
-    scheduleWorkflow(Schedules.createDataSchedule("1MBStreamSchedule", "Schedule triggered every 1MB of ingested data",
-                                                  Schedules.Source.STREAM, "purchaseStream", 1),
+    scheduleWorkflow(Schedules.builder("1MBStreamSchedule")
+                       .setDescription("Schedule triggered every 1MB of ingested data")
+                       .createDataSchedule(Schedules.Source.STREAM, "purchaseStream", 1),
                      "MyWorkflow");
 
 The ``purchaseStream`` will either have to already exist in CDAP when deploying your application, or you will have to
@@ -72,8 +85,9 @@ You can optionally specify the properties for the schedule::
     scheduleProperties.put("myProperty", "10");
     scheduleProperties.put("anotherProperty", "anotherValue");
 
-    scheduleWorkflow(Schedules.createDataSchedule("1MBStreamSchedule", "Schedule triggered every 1MB of ingested data",
-                                                  Schedules.Source.STREAM, "purchaseStream", 1),
+    scheduleWorkflow(Schedules.builder("1MBStreamSchedule")
+                       .setDescription("Schedule triggered every 1MB of ingested data")
+                       .createDataSchedule(Schedules.Source.STREAM, "purchaseStream", 1),
                      "MyWorkflow", scheduleProperties);
     ...
 
@@ -90,10 +104,10 @@ information by querying the metric system, which is the canonical source of info
 
 A stream-size schedule will execute a workflow every time the stream it references ingests an increment of data,
 also defined in the
-`schedule <../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.html#createDataSchedule(java.lang.String,%20java.lang.String,%20co.cask.cdap.api.schedule.Source,%20java.lang.String,%20int)>`__.
+`schedule <../../reference-manual/javadocs/co/cask/cdap/api/schedule/Schedules.Builder.html#createDataSchedule(co.cask.cdap.api.schedule.Schedules.Source,%20java.lang.String,%20int)>`__.
 
 When a stream-size schedule is first created, during the deployment of an application, it will wait for the
-increment of data that it defined, starting from the current size of the Stream as given by the Metric system.
+increment of data that it defined, starting from the current size of the stream as given by the Metric system.
 
 These actions can be performed on a schedule:
 
@@ -112,7 +126,7 @@ These actions can be performed on a schedule:
 
 .. rubric:: Special Runtime Arguments
 
-When a stream-size schedule executes a workflow, it passes in its these runtime arguments:
+When a stream-size schedule executes a workflow, it passes in these runtime arguments:
 
 - ``logicalStartTime``: the timestamp, in milliseconds, at which the schedule received the information that the Stream
   had ingested enough data for the workflow to be executed;

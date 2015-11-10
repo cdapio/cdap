@@ -19,7 +19,6 @@ package co.cask.cdap.client.common;
 import co.cask.cdap.StandaloneTester;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.client.ProgramClient;
-import co.cask.cdap.client.app.DummyWorkerTemplate;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
 import co.cask.cdap.common.NotFoundException;
@@ -55,8 +54,7 @@ import java.util.concurrent.TimeoutException;
 public abstract class ClientTestBase {
 
   @ClassRule
-  public static final SingletonExternalResource STANDALONE =
-    new SingletonExternalResource(new StandaloneTester(DummyWorkerTemplate.class));
+  public static final SingletonExternalResource STANDALONE = new SingletonExternalResource(new StandaloneTester());
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
@@ -67,7 +65,9 @@ public abstract class ClientTestBase {
   public void setUp() throws Throwable {
     StandaloneTester standalone = STANDALONE.get();
     ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(standalone.getBaseURI().toString());
-    clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
+    clientConfig = new ClientConfig.Builder()
+      .setDefaultReadTimeout(60 * 1000)
+      .setConnectionConfig(connectionConfig).build();
   }
 
   protected ClientConfig getClientConfig() {
@@ -123,9 +123,14 @@ public abstract class ClientTestBase {
   }
 
   protected File createAppJarFile(Class<?> cls) throws IOException {
-    LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    return createAppJarFile(cls, cls.getSimpleName(), String.format("1.0.%d-SNAPSHOT", System.currentTimeMillis()));
+  }
+
+  protected File createAppJarFile(Class<?> cls, String name, String version) throws IOException {
+    File tmpJarFolder = TMP_FOLDER.newFolder();
+    LocationFactory locationFactory = new LocalLocationFactory(tmpJarFolder);
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
-    File appJarFile = TMP_FOLDER.newFile();
+    File appJarFile = new File(tmpJarFolder, String.format("%s-%s.jar", name, version));
     Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
     return appJarFile;
   }

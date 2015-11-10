@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.SettableFuture;
 import org.apache.hadoop.conf.Configuration;
@@ -82,9 +83,7 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
 
       UserGroupInformation.setConfiguration(hConf);
 
-      cConf = CConfiguration.create();
-      cConf.clear();
-      cConf.addResource(new File(configs.get("cConf")).toURI().toURL());
+      cConf = CConfiguration.create(new File(configs.get("cConf")));
 
       LOG.debug("{} cConf {}", name, cConf);
       LOG.debug("{} HBase conf {}", name, hConf);
@@ -111,7 +110,9 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
           Threads.SAME_THREAD_EXECUTOR);
     }
 
-    Services.chainStart(services.get(0), services.subList(1, services.size()).toArray(new Service[0]));
+    Futures.getUnchecked(
+      Services.chainStart(services.get(0), services.subList(1, services.size()).toArray(new Service[0])));
+
     LOG.info("Runnable started {}", name);
 
 
@@ -126,7 +127,8 @@ public abstract class AbstractMasterTwillRunnable extends AbstractTwillRunnable 
     }
 
     List<Service> reverse = Lists.reverse(services);
-    Services.chainStop(reverse.get(0), reverse.subList(1, reverse.size()).toArray(new Service[0]));
+    Futures.getUnchecked(
+      Services.chainStop(reverse.get(0), reverse.subList(1, reverse.size()).toArray(new Service[0])));
 
     LOG.info("Runnable stopped {}", name);
   }

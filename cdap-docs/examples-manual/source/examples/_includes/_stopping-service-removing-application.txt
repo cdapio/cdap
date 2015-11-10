@@ -1,0 +1,3 @@
+.. include:: _includes/_stopping-removing-application-title.txt
+.. include:: _includes/_stopping-service.txt
+.. include:: _includes/_removing-application.txt

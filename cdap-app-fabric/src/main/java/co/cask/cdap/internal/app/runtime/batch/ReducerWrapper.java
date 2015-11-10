@@ -18,7 +18,6 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.RuntimeContext;
-import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
@@ -26,7 +25,6 @@ import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.lang.Reflections;
 import com.google.common.base.Throwables;
-import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.MRJobConfig;
@@ -62,85 +60,76 @@ public class ReducerWrapper extends Reducer {
   @SuppressWarnings("unchecked")
   @Override
   public void run(Context context) throws IOException, InterruptedException {
-    MapReduceContextProvider mrContextProvider =
-      new MapReduceContextProvider(context, MapReduceMetrics.TaskType.Reducer);
-    final BasicMapReduceContext basicMapReduceContext = mrContextProvider.get();
+    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(context.getConfiguration());
+    BasicMapReduceTaskContext basicMapReduceContext = classLoader.getTaskContextProvider().get(context);
     LoggingContextAccessor.setLoggingContext(basicMapReduceContext.getLoggingContext());
-    basicMapReduceContext.getMetricsCollectionService().startAndWait();
 
+    // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
+    WrappedReducer.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
+    basicMapReduceContext.setHadoopContext(flushingContext);
+
+    String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
+    ClassLoader programClassLoader = classLoader.getProgramClassLoader();
+    Reducer delegate = createReducerInstance(programClassLoader, userReducer);
+
+    // injecting runtime components, like datasets, etc.
     try {
-      String userReducer = context.getConfiguration().get(ATTR_REDUCER_CLASS);
-      ClassLoader programClassLoader = MapReduceContextProvider.getProgramClassLoader(context.getConfiguration());
-      Reducer delegate = createReducerInstance(programClassLoader, userReducer);
+      Reflections.visit(delegate, delegate.getClass(),
+                        new PropertyFieldSetter(basicMapReduceContext.getSpecification().getProperties()),
+                        new MetricsFieldSetter(basicMapReduceContext.getMetrics()),
+                        new DataSetFieldSetter(basicMapReduceContext));
+    } catch (Throwable t) {
+      LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
+      throw Throwables.propagate(t);
+    }
 
-      // injecting runtime components, like datasets, etc.
-      try {
-        Reflections.visit(delegate, TypeToken.of(delegate.getClass()),
-                          new PropertyFieldSetter(basicMapReduceContext.getSpecification().getProperties()),
-                          new MetricsFieldSetter(basicMapReduceContext.getMetrics()),
-                          new DataSetFieldSetter(basicMapReduceContext));
-      } catch (Throwable t) {
-        LOG.error("Failed to inject fields to {}.", delegate.getClass(), t);
-        throw Throwables.propagate(t);
-      }
-
-      // this is a hook for periodic flushing of changes buffered by datasets (to avoid OOME)
-      WrappedReducer.Context flushingContext = createAutoFlushingContext(context, basicMapReduceContext);
-
-      ClassLoader oldClassLoader;
-      if (delegate instanceof ProgramLifecycle) {
-        oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
-        try {
-          ((ProgramLifecycle<BasicMapReduceContext>) delegate).initialize(basicMapReduceContext);
-        } catch (Exception e) {
-          LOG.error("Failed to initialize mapper with " + basicMapReduceContext.toString(), e);
-          throw Throwables.propagate(e);
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
-        }
-      }
-
+    ClassLoader oldClassLoader;
+    if (delegate instanceof ProgramLifecycle) {
       oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
       try {
-        delegate.run(flushingContext);
+        ((ProgramLifecycle) delegate).initialize(new MapReduceLifecycleContext(basicMapReduceContext));
+      } catch (Exception e) {
+        LOG.error("Failed to initialize mapper with {}", basicMapReduceContext, e);
+        throw Throwables.propagate(e);
       } finally {
         ClassLoaders.setContextClassLoader(oldClassLoader);
       }
+    }
 
-      // transaction is not finished, but we want all operations to be dispatched (some could be buffered in
-      // memory by tx agent
-      try {
-        basicMapReduceContext.flushOperations();
-      } catch (Exception e) {
-        LOG.error("Failed to flush operations at the end of reducer of " + basicMapReduceContext.toString(), e);
-        throw Throwables.propagate(e);
-      }
-
-
-      if (delegate instanceof ProgramLifecycle) {
-        oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
-        try {
-          ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
-        } catch (Exception e) {
-          LOG.error("Error during destroy of mapper", e);
-          // Do nothing, try to finish
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
-        }
-      }
-
+    oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
+    try {
+      delegate.run(flushingContext);
     } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
+
+    // transaction is not finished, but we want all operations to be dispatched (some could be buffered in
+    // memory by tx agent)
+    try {
+      basicMapReduceContext.flushOperations();
+    } catch (Exception e) {
+      LOG.error("Failed to flush operations at the end of reducer of " + basicMapReduceContext, e);
+      throw Throwables.propagate(e);
+    }
+
+    // Close all writers created by MultipleOutputs
+    basicMapReduceContext.closeMultiOutputs();
+
+    if (delegate instanceof ProgramLifecycle) {
+      oldClassLoader = ClassLoaders.setContextClassLoader(programClassLoader);
       try {
-        basicMapReduceContext.close(); // closes all datasets
+        ((ProgramLifecycle<? extends RuntimeContext>) delegate).destroy();
+      } catch (Exception e) {
+        LOG.error("Error during destroy of reducer {}", basicMapReduceContext, e);
+        // Do nothing, try to finish
       } finally {
-        mrContextProvider.stop();
+        ClassLoaders.setContextClassLoader(oldClassLoader);
       }
     }
   }
 
   private WrappedReducer.Context createAutoFlushingContext(final Context context,
-                                                          final BasicMapReduceContext basicMapReduceContext) {
-
+                                                           final BasicMapReduceTaskContext basicMapReduceContext) {
     // NOTE: we will change auto-flush to take into account size of buffered data, so no need to do/test a lot with
     //       current approach
     final int flushFreq = context.getConfiguration().getInt("c.reducer.flush.freq", 10000);

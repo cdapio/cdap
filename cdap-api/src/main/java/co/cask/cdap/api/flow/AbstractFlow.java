@@ -19,12 +19,12 @@ package co.cask.cdap.api.flow;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.flow.flowlet.Flowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
+import co.cask.cdap.internal.api.AbstractProgramDatasetConfigurable;
 
 /**
  * This abstract class provides a default implementation of {@link Flow} methods for easy extension.
  */
-public abstract class AbstractFlow implements Flow {
-
+public class AbstractFlow extends AbstractProgramDatasetConfigurable<FlowConfigurer> implements Flow {
   private FlowConfigurer configurer;
 
   @Override
@@ -53,6 +53,7 @@ public abstract class AbstractFlow implements Flow {
    *
    * @return {@link FlowConfigurer}
    */
+  @Override
   protected final FlowConfigurer getConfigurer() {
     return configurer;
   }

@@ -31,11 +31,13 @@ import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerTestBase;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
@@ -68,9 +70,10 @@ import java.io.IOException;
 public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+  @ClassRule
+  public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
 
-  private static HBaseTestBase testHBase;
   private static StreamConsumerFactory consumerFactory;
   private static StreamAdmin streamAdmin;
   private static TransactionSystemClient txClient;
@@ -84,16 +87,13 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
 
   @BeforeClass
   public static void init() throws Exception {
-    zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
+    zkServer = InMemoryZKServer.builder().setDataDir(TMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
 
-    testHBase = new HBaseTestFactory().get();
-    testHBase.startHBase();
-
-    Configuration hConf = testHBase.getConfiguration();
+    Configuration hConf = TEST_HBASE.getConfiguration();
 
     cConf.setInt(Constants.Stream.CONTAINER_INSTANCES, 1);
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 
     Injector injector = Guice.createInjector(
@@ -104,6 +104,8 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
       new TransactionMetricsModule(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new ExploreClientModule(),
+      new ViewAdminModules().getInMemoryModules(),
       Modules.override(new DataFabricDistributedModule(), new StreamAdminModules().getDistributedModules())
         .with(new AbstractModule() {
           @Override
@@ -128,9 +130,9 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
     txManager.startAndWait();
 
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), TEST_NAMESPACE);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), OTHER_NAMESPACE);
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), TEST_NAMESPACE);
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), OTHER_NAMESPACE);
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
   }
 
@@ -138,14 +140,13 @@ public class HBaseStreamConsumerTest extends StreamConsumerTestBase {
   public static void finish() throws Exception {
     deleteNamespace(OTHER_NAMESPACE);
     deleteNamespace(TEST_NAMESPACE);
-    deleteNamespace(Constants.SYSTEM_NAMESPACE_ID);
+    deleteNamespace(Id.Namespace.SYSTEM);
     txManager.stopAndWait();
-    testHBase.stopHBase();
   }
 
   private static void deleteNamespace(Id.Namespace namespace) throws IOException {
-    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), namespace);
-    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), namespace);
+    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), namespace);
+    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), namespace);
   }
 
   @Override

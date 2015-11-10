@@ -66,7 +66,7 @@ public class ReflectionRowReader<T> extends ReflectionReader<Row, T> {
         }
         FieldAccessor fieldAccessor = getFieldAccessor(type, sourceFieldName);
         fieldAccessor.set(record, read(row, sourceField.getSchema(),
-                                       targetField.getSchema(), fieldAccessor.getType()));
+                                       targetField.getSchema(), TypeToken.of(fieldAccessor.getType())));
       }
       return (T) record;
     } catch (Exception e) {

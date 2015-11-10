@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 /**
  * Operation 2.8
  */
@@ -109,9 +125,9 @@ angular.module(PKG.name+'.feature.dashboard')
   })
 
   .controller('OpsAppsCtrl',
-  function ($scope, $state, myHelpers, MyDataSource) {
+  function ($scope, $state, myHelpers, MyCDAPDataSource) {
 
-    var dataSrc = new MyDataSource($scope);
+    var dataSrc = new MyCDAPDataSource($scope);
 
     $scope.apps = [];
 
@@ -158,8 +174,8 @@ angular.module(PKG.name+'.feature.dashboard')
 
 /* ------------------------------------------------------ */
 
-  .factory('opshelper', function (Widget, MyDataSource, MyMetricsQueryHelper, MyChartHelpers) {
-    var dataSrc = new MyDataSource();
+  .factory('opshelper', function (Widget, MyCDAPDataSource, MyMetricsQueryHelper, MyChartHelpers) {
+    var dataSrc = new MyCDAPDataSource();
 
     function createWidget(title, context, metricNames, type) {
       return new Widget({

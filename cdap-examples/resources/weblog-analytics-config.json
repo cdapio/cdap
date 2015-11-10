@@ -1,0 +1,140 @@
+{
+    "artifact": {
+        "name": "cdap-etl-batch",
+        "scope": "SYSTEM",
+        "version": "3.2.1"
+    },
+    "config": {
+        "source": {
+            "name": "Stream",
+            "label": "Stream",
+            "properties": {
+                "duration": "1h",
+                "name": "logEventStream",
+                "format": "clf"
+            }
+        },
+        "sinks": [
+            {
+                "name": "Cube",
+                "label": "Cube",
+                "properties": {
+                    "dataset.cube.resolutions": "1",
+                    "cubeFact.measurements": "{\"cubeFact.measurement.count\":\"COUNTER\"}",
+                    "name": "logEventCube",
+                    "dataset.cube.properties": "{\"dataset.cube.aggregation.agg1.dimensions\":\"remote_host\",\"dataset.cube.aggregation.agg2.dimensions\":\"status\"}"
+                }
+            }
+        ],
+        "transforms": [
+            {
+                "name": "Script",
+                "label": "Script",
+                "properties": {
+                    "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ts\",\"type\":\"long\"},{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"remote_host\",\"type\":[\"string\",\"null\"]},{\"name\":\"remote_login\",\"type\":[\"string\",\"null\"]},{\"name\":\"auth_user\",\"type\":[\"string\",\"null\"]},{\"name\":\"date\",\"type\":[\"string\",\"null\"]},{\"name\":\"request\",\"type\":[\"string\",\"null\"]},{\"name\":\"status\",\"type\":[\"int\",\"null\"]},{\"name\":\"content_length\",\"type\":[\"int\",\"null\"]},{\"name\":\"referrer\",\"type\":[\"string\",\"null\"]},{\"name\":\"user_agent\",\"type\":[\"string\",\"null\"]},{\"name\":\"count\",\"type\":\"int\"}]}",
+                    "script": "function transform(input) {\n    \n var output = input\n output.count = 1\n return output;\n}"
+                }
+            }
+        ],
+        "schedule": "* * * * *"
+    },
+    "description": "Extract-Transform-Load (ETL) Batch Application",
+    "name": "weblog-analytics-app",
+    "ui": {
+        "nodes": {
+            "Stream-source-1": {
+                "id": "Stream-source-1",
+                "name": "Stream",
+                "label": "Stream",
+                "icon": "icon-plugin-stream",
+                "style": {
+                    "top": "130px",
+                    "left": "328.5454406738281px"
+                },
+                "description": "Batch source for a stream.",
+                "outputSchema": null,
+                "pluginTemplate": null,
+                "errorDatasetName": "",
+                "validationFields": null,
+                "lock": null,
+                "properties": {
+                    "duration": "1h",
+                    "name": "logEventStream",
+                    "format": "clf",
+                    "schema": "",
+                    "delay": ""
+                },
+                "type": "batchsource",
+                "requiredFieldCount": 0,
+                "error": false,
+                "warning": false,
+                "valid": true
+            },
+            "Script-transform-2": {
+                "id": "Script-transform-2",
+                "name": "Script",
+                "label": "Script",
+                "icon": "fa-code",
+                "style": {
+                    "top": "130px",
+                    "left": "528.5454406738281px"
+                },
+                "description": "Executes user-provided Javascript that transforms one record into another.",
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ts\",\"type\":\"long\"},{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"remote_host\",\"type\":[\"string\",\"null\"]},{\"name\":\"remote_login\",\"type\":[\"string\",\"null\"]},{\"name\":\"auth_user\",\"type\":[\"string\",\"null\"]},{\"name\":\"date\",\"type\":[\"string\",\"null\"]},{\"name\":\"request\",\"type\":[\"string\",\"null\"]},{\"name\":\"status\",\"type\":[\"int\",\"null\"]},{\"name\":\"content_length\",\"type\":[\"int\",\"null\"]},{\"name\":\"referrer\",\"type\":[\"string\",\"null\"]},{\"name\":\"user_agent\",\"type\":[\"string\",\"null\"]},{\"name\":\"count\",\"type\":\"int\"}]}",
+                "pluginTemplate": null,
+                "errorDatasetName": "",
+                "validationFields": null,
+                "lock": null,
+                "properties": {
+                    "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ts\",\"type\":\"long\"},{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"remote_host\",\"type\":[\"string\",\"null\"]},{\"name\":\"remote_login\",\"type\":[\"string\",\"null\"]},{\"name\":\"auth_user\",\"type\":[\"string\",\"null\"]},{\"name\":\"date\",\"type\":[\"string\",\"null\"]},{\"name\":\"request\",\"type\":[\"string\",\"null\"]},{\"name\":\"status\",\"type\":[\"int\",\"null\"]},{\"name\":\"content_length\",\"type\":[\"int\",\"null\"]},{\"name\":\"referrer\",\"type\":[\"string\",\"null\"]},{\"name\":\"user_agent\",\"type\":[\"string\",\"null\"]},{\"name\":\"count\",\"type\":\"int\"}]}",
+                    "script": "function transform(input) {\n    \n var output = input\n output.count = 1\n return output;\n}"
+                },
+                "type": "transform",
+                "requiredFieldCount": 0,
+                "error": false,
+                "warning": false,
+                "valid": true
+            },
+            "Cube-sink-3": {
+                "id": "Cube-sink-3",
+                "name": "Cube",
+                "label": "Cube",
+                "icon": "fa-cubes",
+                "style": {
+                    "top": "130px",
+                    "left": "728.5454406738281px"
+                },
+                "description": "CDAP Cube Dataset Batch Sink",
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"ts\",\"type\":\"long\"},{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"remote_host\",\"type\":[\"string\",\"null\"]},{\"name\":\"remote_login\",\"type\":[\"string\",\"null\"]},{\"name\":\"auth_user\",\"type\":[\"string\",\"null\"]},{\"name\":\"date\",\"type\":[\"string\",\"null\"]},{\"name\":\"request\",\"type\":[\"string\",\"null\"]},{\"name\":\"status\",\"type\":[\"int\",\"null\"]},{\"name\":\"content_length\",\"type\":[\"int\",\"null\"]},{\"name\":\"referrer\",\"type\":[\"string\",\"null\"]},{\"name\":\"user_agent\",\"type\":[\"string\",\"null\"]},{\"name\":\"count\",\"type\":\"int\"}]}",
+                "pluginTemplate": null,
+                "errorDatasetName": "",
+                "validationFields": null,
+                "lock": null,
+                "properties": {
+                    "dataset.cube.resolutions": "1",
+                    "cubeFact.measurements": "{\"cubeFact.measurement.count\":\"COUNTER\"}",
+                    "name": "logEventCube",
+                    "dataset.cube.properties": "{\"dataset.cube.aggregation.agg1.dimensions\":\"remote_host\",\"dataset.cube.aggregation.agg2.dimensions\":\"status\"}",
+                    "cubeFact.timestamp.format": "",
+                    "cubeFact.timestamp.field": ""
+                },
+                "type": "batchsink",
+                "valid": true,
+                "requiredFieldCount": 0,
+                "error": false,
+                "warning": false
+            }
+        },
+        "connections": [
+            {
+                "source": "Stream-source-1",
+                "target": "Script-transform-2"
+            },
+            {
+                "source": "Script-transform-2",
+                "target": "Cube-sink-3"
+            }
+        ]
+    }
+}
+

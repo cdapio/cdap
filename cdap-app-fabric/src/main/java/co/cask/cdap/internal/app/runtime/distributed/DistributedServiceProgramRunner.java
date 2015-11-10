@@ -16,8 +16,8 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -34,6 +34,7 @@ import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,8 +48,9 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
   private static final Logger LOG = LoggerFactory.getLogger(DistributedServiceProgramRunner.class);
 
   @Inject
-  DistributedServiceProgramRunner(TwillRunner twillRunner, Configuration hConfig, CConfiguration cConfig) {
-    super(twillRunner, hConfig, cConfig);
+  DistributedServiceProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
+                                  Configuration hConfig, CConfiguration cConfig) {
+    super(twillRunner, locationFactory, hConfig, cConfig);
   }
 
   @Override
@@ -75,7 +77,7 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
     DistributedServiceRunnableInstanceUpdater instanceUpdater = new DistributedServiceRunnableInstanceUpdater(
       program, controller);
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-    return new ServiceTwillProgramController(program.getName(), controller, instanceUpdater, runId).startListen();
+    return new ServiceTwillProgramController(program.getId(), controller, instanceUpdater, runId).startListen();
   }
 
   @Override

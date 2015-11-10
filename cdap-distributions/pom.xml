@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.2.0-SNAPSHOT</version>
+    <version>3.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-distributions</artifactId>
@@ -80,14 +80,15 @@
                     --name "cdap"
                     --vendor "Cask Data, Inc."
                     --maintainer "support@cask.co"
-                    --license "Copyright ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
-                    --description "Component of Cask CDAP"
+                    --license "Copyright © ${package.build.year} Cask Data, Inc. Licensed under the Apache License, Version 2.0."
+                    --description "Common setup and default configuration for CDAP"
                     --category misc
                     -s dir
                     -t rpm
                     -C "${stage.dir}"
                     --version "${package.version}"
                     --architecture all
+                    --rpm-os linux
                     --url "http://www.cask.co"
                     --template-value "project=cdap"
                     --after-install "${project.basedir}/src/rpm/scripts/common-postinst"
@@ -156,8 +157,8 @@
                     --name "cdap"
                     --vendor "Cask Data, Inc."
                     --maintainer "support@cask.co"
-                    --license "Copyright © 2014 Cask Data, Inc. All Rights Reserved."
-                    --description "Component of Cask CDAP"
+                    --license "Copyright © ${package.build.year} Cask Data, Inc. All Rights Reserved."
+                    --description "Common setup and default configuration for CDAP"
                     --category misc
                     -s dir
                     -t deb

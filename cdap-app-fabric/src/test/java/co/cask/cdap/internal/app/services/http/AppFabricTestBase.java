@@ -19,37 +19,37 @@ package co.cask.cdap.internal.app.services.http;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.templates.ApplicationTemplate;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.app.store.ServiceStore;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
-import co.cask.cdap.gateway.handlers.UsageHandler;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.internal.test.PluginJarHelper;
+import co.cask.cdap.metadata.MetadataService;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -84,7 +84,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
@@ -93,6 +92,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarEntry;
@@ -100,6 +100,7 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import javax.annotation.Nullable;
+import javax.ws.rs.core.MediaType;
 
 /**
  * AppFabric HttpHandler Test classes can extend this class, this will allow the HttpService be setup before
@@ -109,11 +110,12 @@ public abstract class AppFabricTestBase {
   protected static final Gson GSON = new Gson();
   private static final String API_KEY = "SampleTestApiKey";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
-  private static final String CLUSTER = "SampleTestClusterName";
 
   protected static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
   protected static final Type LIST_RUNRECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
+
+  protected static final String NONEXISTENT_NAMESPACE = "12jr0j90jf3foieoi33";
 
   protected static final String TEST_NAMESPACE1 = "testnamespace1";
   protected static final NamespaceMeta TEST_NAMESPACE_META1 = new NamespaceMeta.Builder()
@@ -142,9 +144,8 @@ public abstract class AppFabricTestBase {
   private static StreamService streamService;
   private static StreamAdmin streamAdmin;
   private static ServiceStore serviceStore;
-  private static UsageHandler usageHandler;
+  private static MetadataService metadataService;
   private static LocationFactory locationFactory;
-  private static File adapterDir;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -157,12 +158,7 @@ public abstract class AppFabricTestBase {
     conf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     conf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     conf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
-    conf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
-    conf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("templates").getAbsolutePath());
     conf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-
-    DirUtils.mkdirs(new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR)));
-    DirUtils.mkdirs(new File(conf.get(Constants.AppFabric.APP_TEMPLATE_PLUGIN_DIR)));
 
     injector = Guice.createInjector(new AppFabricTestModule(conf));
 
@@ -188,8 +184,9 @@ public abstract class AppFabricTestBase {
     serviceStore = injector.getInstance(ServiceStore.class);
     serviceStore.startAndWait();
     streamAdmin = injector.getInstance(StreamAdmin.class);
+    metadataService = injector.getInstance(MetadataService.class);
+    metadataService.startAndWait();
     locationFactory = getInjector().getInstance(LocationFactory.class);
-    adapterDir = new File(conf.get(Constants.AppFabric.APP_TEMPLATE_DIR));
     createNamespaces();
   }
 
@@ -203,6 +200,8 @@ public abstract class AppFabricTestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txManager.stopAndWait();
+    serviceStore.stopAndWait();
+    metadataService.stopAndWait();
   }
 
   protected static Injector getInjector() {
@@ -227,7 +226,7 @@ public abstract class AppFabricTestBase {
 
   protected static HttpResponse doGet(String resource, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpGet get = new HttpGet(AppFabricTestBase.getEndPoint(resource));
+    HttpGet get = new HttpGet(getEndPoint(resource));
 
     if (headers != null) {
       get.setHeaders(ObjectArrays.concat(AUTH_HEADER, headers));
@@ -244,13 +243,13 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpPost getPost(String resource) throws Exception {
-    HttpPost post = new HttpPost(AppFabricTestBase.getEndPoint(resource));
+    HttpPost post = new HttpPost(getEndPoint(resource));
     post.setHeader(AUTH_HEADER);
     return post;
   }
 
   protected static HttpPut getPut(String resource) throws Exception {
-    HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
+    HttpPut put = new HttpPut(getEndPoint(resource));
     put.setHeader(AUTH_HEADER);
     return put;
   }
@@ -265,7 +264,7 @@ public abstract class AppFabricTestBase {
 
   protected static HttpResponse doPost(String resource, String body, Header[] headers) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpPost post = new HttpPost(AppFabricTestBase.getEndPoint(resource));
+    HttpPost post = new HttpPost(getEndPoint(resource));
 
     if (body != null) {
       post.setEntity(new StringEntity(body));
@@ -286,15 +285,14 @@ public abstract class AppFabricTestBase {
   }
 
   protected static HttpResponse doPut(String resource) throws Exception {
-    DefaultHttpClient client = new DefaultHttpClient();
-    HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
+    HttpPut put = new HttpPut(getEndPoint(resource));
     put.setHeader(AUTH_HEADER);
     return doPut(resource, null);
   }
 
   protected static HttpResponse doPut(String resource, String body) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpPut put = new HttpPut(AppFabricTestBase.getEndPoint(resource));
+    HttpPut put = new HttpPut(getEndPoint(resource));
     if (body != null) {
       put.setEntity(new StringEntity(body));
     }
@@ -304,7 +302,7 @@ public abstract class AppFabricTestBase {
 
   protected static HttpResponse doDelete(String resource) throws Exception {
     DefaultHttpClient client = new DefaultHttpClient();
-    HttpDelete delete = new HttpDelete(AppFabricTestBase.getEndPoint(resource));
+    HttpDelete delete = new HttpDelete(getEndPoint(resource));
     delete.setHeader(AUTH_HEADER);
     return client.execute(delete);
   }
@@ -320,6 +318,48 @@ public abstract class AppFabricTestBase {
 
   protected static <T> T readResponse(HttpResponse response, Type type, Gson gson) throws IOException {
     return gson.fromJson(readResponse(response), type);
+  }
+
+  protected HttpResponse addAppArtifact(Id.Artifact artifactId, Class<?> cls) throws Exception {
+
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest());
+
+    try (InputStream artifactInputStream = appJar.getInputStream()) {
+      return addArtifact(artifactId, artifactInputStream, null);
+    } finally {
+      appJar.delete();
+    }
+  }
+
+  protected HttpResponse addPluginArtifact(Id.Artifact artifactId, Class<?> cls,
+                                           Manifest manifest,
+                                           Set<ArtifactRange> parents) throws Exception {
+
+    Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, cls);
+
+    try (InputStream artifactInputStream = appJar.getInputStream()) {
+      return addArtifact(artifactId, artifactInputStream, parents);
+    } finally {
+      appJar.delete();
+    }
+  }
+
+  // add an artifact and return the response code
+  protected HttpResponse addArtifact(Id.Artifact artifactId, InputStream artifactContents,
+                                     Set<ArtifactRange> parents) throws Exception {
+    String path = getVersionedAPIPath("artifacts/" + artifactId.getName(), artifactId.getNamespace().getId());
+    HttpEntityEnclosingRequestBase request = getPost(path);
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.setHeader("Artifact-Version", artifactId.getVersion().getVersion());
+    if (parents != null && !parents.isEmpty()) {
+      request.setHeader("Artifact-Extends", Joiner.on('/').join(parents));
+    }
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    ByteStreams.copy(artifactContents, bos);
+    bos.close();
+    request.setEntity(new ByteArrayEntity(bos.toByteArray()));
+    return execute(request);
   }
 
   /**
@@ -353,28 +393,37 @@ public abstract class AppFabricTestBase {
     return deploy(application, apiVersion, namespace, appName, appVersion, null);
   }
 
+  protected HttpResponse deploy(Id.Application appId,
+                                AppRequest<? extends Config> appRequest) throws Exception {
+    HttpEntityEnclosingRequestBase request;
+    String deployPath = getVersionedAPIPath("apps/" + appId.getId(), appId.getNamespaceId());
+    request = getPut(deployPath);
+    request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
+    request.setHeader(HttpHeaders.Names.CONTENT_TYPE, MediaType.APPLICATION_JSON);
+    request.setEntity(new StringEntity(GSON.toJson(appRequest)));
+    return execute(request);
+  }
+
   /**
    * Deploys an application with (optionally) a defined app name and app version
    */
   protected HttpResponse deploy(Class<?> application, @Nullable String apiVersion, @Nullable String namespace,
                                 @Nullable String appName, @Nullable String appVersion,
                                 @Nullable Config appConfig) throws Exception {
-    namespace = namespace == null ? Constants.DEFAULT_NAMESPACE : namespace;
+    namespace = namespace == null ? Id.Namespace.DEFAULT.getId() : namespace;
     apiVersion = apiVersion == null ? Constants.Gateway.API_VERSION_3_TOKEN : apiVersion;
+    appVersion = appVersion == null ? String.format("1.0.%d", System.currentTimeMillis()) : appVersion;
 
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, application.getName());
-    if (appVersion != null) {
-      manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, appVersion);
-    }
+    manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, appVersion);
 
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    final JarOutputStream jarOut = new JarOutputStream(bos, manifest);
     final String pkgName = application.getPackage().getName();
 
     // Grab every classes under the application class package.
-    try {
+    try (JarOutputStream jarOut = new JarOutputStream(bos, manifest)) {
       ClassLoader classLoader = application.getClassLoader();
       if (classLoader == null) {
         classLoader = ClassLoader.getSystemClassLoader();
@@ -385,11 +434,8 @@ public abstract class AppFabricTestBase {
           try {
             if (className.startsWith(pkgName)) {
               jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-              InputStream in = classUrl.openStream();
-              try {
+              try (InputStream in = classUrl.openStream()) {
                 ByteStreams.copy(in, jarOut);
-              } finally {
-                in.close();
               }
               return true;
             }
@@ -403,8 +449,6 @@ public abstract class AppFabricTestBase {
       // Add webapp
       jarOut.putNextEntry(new ZipEntry("webapp/default/netlens/src/1.txt"));
       ByteStreams.copy(new ByteArrayInputStream("dummy data".getBytes(Charsets.UTF_8)), jarOut);
-    } finally {
-      jarOut.close();
     }
 
     HttpEntityEnclosingRequestBase request;
@@ -415,7 +459,7 @@ public abstract class AppFabricTestBase {
       request = getPut(versionedApiPath + appName);
     }
     request.setHeader(Constants.Gateway.API_KEY, "api-key-example");
-    request.setHeader("X-Archive-Name", application.getSimpleName() + ".jar");
+    request.setHeader("X-Archive-Name", String.format("%s-%s.jar", application.getSimpleName(), appVersion));
     if (appConfig != null) {
       request.setHeader("X-App-Config", GSON.toJson(appConfig));
     }
@@ -471,13 +515,13 @@ public abstract class AppFabricTestBase {
       @Override
       public Boolean call() throws Exception {
         String statusURL = getVersionedAPIPath(String.format("apps/%s/schedules/%s/status",
-                                                             program.getApplicationId(), scheduleName),
-                                               Constants.Gateway.API_VERSION_3_TOKEN, program.getNamespaceId());
+            program.getApplicationId(), scheduleName),
+          Constants.Gateway.API_VERSION_3_TOKEN, program.getNamespaceId());
         HttpResponse response = doGet(statusURL);
         Preconditions.checkState(200 == response.getStatusLine().getStatusCode());
         Map<String, String> result = GSON.fromJson(EntityUtils.toString(response.getEntity()),
-                                                   MAP_STRING_STRING_TYPE);
-        return "SCHEDULED".equals(result.get("status"));
+          MAP_STRING_STRING_TYPE);
+        return result != null && "SCHEDULED".equals(result.get("status"));
       }
     }, timeout, timeoutUnit, 100, TimeUnit.MILLISECONDS);
   }
@@ -555,10 +599,15 @@ public abstract class AppFabricTestBase {
    * Tries to stop the given program and expect the call completed with the status.
    */
   protected void stopProgram(Id.Program program, int expectedStatusCode) throws Exception {
-    stopProgram(program, expectedStatusCode, null);
+    stopProgram(program, null, expectedStatusCode);
   }
 
-  protected void stopProgram(Id.Program program, int expectedStatusCode, String runId) throws Exception {
+  protected void stopProgram(Id.Program program, String runId, int expectedStatusCode) throws Exception {
+    stopProgram(program, runId, expectedStatusCode, null);
+  }
+
+  protected void stopProgram(Id.Program program, String runId, int expectedStatusCode, String expectedMessage)
+    throws Exception {
     String path;
     if (runId == null) {
       path = String.format("apps/%s/%s/%s/stop", program.getApplicationId(), program.getType().getCategoryName(),
@@ -569,6 +618,9 @@ public abstract class AppFabricTestBase {
     }
     HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()));
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
+    if (expectedMessage != null) {
+      Assert.assertEquals(expectedMessage, EntityUtils.toString(response.getEntity()));
+    }
   }
 
   /**
@@ -579,8 +631,8 @@ public abstract class AppFabricTestBase {
       @Override
       public String call() throws Exception {
         String path = String.format("apps/%s/%s/%s/status",
-                                    programId.getApplicationId(),
-                                    programId.getType().getCategoryName(), programId.getId());
+          programId.getApplicationId(),
+          programId.getType().getCategoryName(), programId.getId());
         HttpResponse response = doGet(getVersionedAPIPath(path, programId.getNamespaceId()));
         JsonObject status = GSON.fromJson(EntityUtils.toString(response.getEntity()), JsonObject.class);
         if (status == null || !status.has("status")) {
@@ -588,22 +640,17 @@ public abstract class AppFabricTestBase {
         }
         return status.get("status").getAsString();
       }
-    }, 60, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
-  }
-
-  protected static void resetNamespaces() throws Exception {
-    deleteNamespaces();
-    createNamespaces();
+    }, 60, TimeUnit.SECONDS);
   }
 
   private static void createNamespaces() throws Exception {
 
     HttpResponse response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1),
-                                  GSON.toJson(TEST_NAMESPACE_META1));
+      GSON.toJson(TEST_NAMESPACE_META1));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     response = doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2),
-                     GSON.toJson(TEST_NAMESPACE_META2));
+      GSON.toJson(TEST_NAMESPACE_META2));
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
   }
 
@@ -626,16 +673,10 @@ public abstract class AppFabricTestBase {
 
   protected HttpResponse programStatus(Id.Program program) throws Exception {
     String path = String.format("apps/%s/%s/%s/status",
-                                program.getApplicationId(),
-                                program.getType().getCategoryName(),
-                                program.getId());
+      program.getApplicationId(),
+      program.getType().getCategoryName(),
+      program.getId());
     return doGet(getVersionedAPIPath(path, program.getNamespaceId()));
-  }
-
-  protected String getAdapterStatus(Id.Adapter adapter) throws Exception {
-    String path = String.format("adapters/%s/status", adapter.getId());
-    HttpResponse response = doGet(getVersionedAPIPath(path, adapter.getNamespaceId()));
-    return getStatus(response);
   }
 
   private String getStatus(HttpResponse response) throws Exception {
@@ -648,7 +689,7 @@ public abstract class AppFabricTestBase {
   protected int suspendSchedule(String namespace, String appName, String schedule) throws Exception {
     String scheduleSuspend = String.format("apps/%s/schedules/%s/suspend", appName, schedule);
     String versionedScheduledSuspend = getVersionedAPIPath(scheduleSuspend, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                           namespace);
+      namespace);
     HttpResponse response = doPost(versionedScheduledSuspend);
     return response.getStatusLine().getStatusCode();
   }
@@ -656,7 +697,7 @@ public abstract class AppFabricTestBase {
   protected int resumeSchedule(String namespace, String appName, String schedule) throws Exception {
     String scheduleResume = String.format("apps/%s/schedules/%s/resume", appName, schedule);
     HttpResponse response = doPost(getVersionedAPIPath(scheduleResume, Constants.Gateway.API_VERSION_3_TOKEN,
-                                                       namespace));
+      namespace));
     return response.getStatusLine().getStatusCode();
   }
 
@@ -680,7 +721,7 @@ public abstract class AppFabricTestBase {
       public Boolean call() throws Exception {
         return getProgramRuns(program, status).size() > expected;
       }
-    }, 60, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 60, TimeUnit.SECONDS);
   }
 
   protected List<RunRecord> getProgramRuns(Id.Program program, String status) throws Exception {
@@ -700,12 +741,33 @@ public abstract class AppFabricTestBase {
     return streamAdmin.exists(streamID);
   }
 
-  protected static void setupAdapter(Class<? extends ApplicationTemplate> clz) throws IOException {
-    // Create a temp file to be included in the jar so that the jar is different every time even the same
-    // template class is given.
-    File randomFile = tmpFolder.newFile();
-    Location adapterJar = AppJarHelper.createDeploymentJar(locationFactory, clz, randomFile);
-    File destination =  new File(String.format("%s/%s.jar", adapterDir.getAbsolutePath(), clz.getSimpleName()));
-    Files.copy(Locations.newInputSupplier(adapterJar), destination);
+  protected HttpResponse createNamespace(String id) throws Exception {
+    return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id));
+  }
+
+  protected HttpResponse deleteNamespace(String name) throws Exception {
+    return doDelete(String.format("%s/unrecoverable/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  protected HttpResponse createNamespace(String metadata, String id) throws Exception {
+    return doPut(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, id), metadata);
+  }
+
+  protected HttpResponse listAllNamespaces() throws Exception {
+    return doGet(String.format("%s/namespaces", Constants.Gateway.API_VERSION_3));
+  }
+
+  protected HttpResponse getNamespace(String name) throws Exception {
+    Preconditions.checkArgument(name != null, "namespace name cannot be null");
+    return doGet(String.format("%s/namespaces/%s", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  protected HttpResponse deleteNamespaceData(String name) throws Exception {
+    return doDelete(String.format("%s/unrecoverable/namespaces/%s/datasets", Constants.Gateway.API_VERSION_3, name));
+  }
+
+  protected HttpResponse setProperties(String id, NamespaceMeta meta) throws Exception {
+    return doPut(String.format("%s/namespaces/%s/properties", Constants.Gateway.API_VERSION_3, id),
+                 GSON.toJson(meta));
   }
 }

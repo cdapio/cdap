@@ -1,10 +1,26 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 @import "../../styles/variables.less";
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import "../../styles/themes/cdap/mixins.less";
 body.state-dashboard {
 
   main {
-
+    margin-top: 140px;
     .row:first-child { margin-bottom: 25px; }
 
     aside {
@@ -45,8 +61,16 @@ body.state-dashboard {
         .btn.dropdown-toggle { margin: 0 10px; }
         .dropdown-menu { left: 10px; }
         .input-group {
-          .form-control { max-width: 100px; }
           &:first-child { margin-right: 10px; }
+          .form-control {
+            border: 1px solid #ccc;
+            border-right: 0;
+            max-width: 100px;
+          }
+          .input-group-addon {
+            border: 1px solid #ccc;
+            border-left: 0;
+          }
         }
       }
     }
@@ -140,22 +164,6 @@ body.state-dashboard {
       }
     }
   }
-
-  [as-sortable],
-  .as-sortable-item,
-  .as-sortable-placeholder { min-height: 100px; }
-
-  .as-sortable-placeholder {
-    border: 1px dashed @gray-light;
-    background-color: @gray-lighter;
-
-    // mimic a bootstrap panel
-    margin-bottom: @line-height-computed;
-    border-radius: @panel-border-radius;
-  }
-
-  .as-sortable-drag { opacity: .6; }
-
   .panel-heading {
     user-select: none;
 
@@ -176,6 +184,12 @@ body.state-dashboard {
       bacground: transparent;
   }
 
+  .modal {
+    .modal-body {
+      // This is needed for multi-select in ops add widget modal.
+      overflow: visible;
+    }
+  }
 }
 
 // @red: red;

@@ -17,40 +17,42 @@
 package co.cask.cdap.internal.app.runtime.worker;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.worker.Worker;
 import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
-import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.stream.StreamWriterFactory;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
+import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
-import co.cask.cdap.internal.app.runtime.adapter.PluginInstantiator;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.RunIds;
-
-import javax.annotation.Nullable;
+import org.apache.twill.internal.ServiceListenerAdapter;
 
 /**
  * A {@link ProgramRunner} that runs a {@link Worker}.
  */
-public class WorkerProgramRunner implements ProgramRunner {
+public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Gson GSON = new Gson();
 
-  private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -61,7 +63,7 @@ public class WorkerProgramRunner implements ProgramRunner {
   public WorkerProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory) {
-    this.cConf = cConf;
+    super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -71,9 +73,6 @@ public class WorkerProgramRunner implements ProgramRunner {
 
   @Override
   public ProgramController run(Program program, ProgramOptions options) {
-    String workerName = options.getName();
-    Preconditions.checkNotNull(workerName, "Missing worker name.");
-
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     Preconditions.checkNotNull(appSpec, "Missing application specification.");
 
@@ -104,45 +103,48 @@ public class WorkerProgramRunner implements ProgramRunner {
                                                                 workerSpec.getDatasets(), newResources,
                                                                 Integer.valueOf(instances));
 
-    AdapterDefinition adapterSpec = getAdapterSpecification(options.getArguments());
-
-    BasicWorkerContext context = new BasicWorkerContext(
-      newWorkerSpec, program, runId, instanceId, instanceCount,
-      options.getUserArguments(), cConf,
-      metricsCollectionService, datasetFramework,
-      txClient, discoveryServiceClient, streamWriterFactory,
-      adapterSpec, createPluginInstantiator(adapterSpec, program.getClassLoader()));
-    WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
-
-    ProgramControllerServiceAdapter controller = new WorkerControllerServiceAdapter(worker, workerName, runId);
-    worker.start();
-    return controller;
-  }
-
-  @Nullable
-  private AdapterDefinition getAdapterSpecification(Arguments arguments) {
-    // TODO: Refactor ProgramRunner class hierarchy to have common logic moved to a common parent.
-    if (!arguments.hasOption(ProgramOptionConstants.ADAPTER_SPEC)) {
-      return null;
+    // Setup dataset framework context, if required
+    if (datasetFramework instanceof ProgramContextAware) {
+      Id.Program programId = program.getId();
+      ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
     }
-    return GSON.fromJson(arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC), AdapterDefinition.class);
-  }
 
-  @Nullable
-  private PluginInstantiator createPluginInstantiator(@Nullable AdapterDefinition adapterSpec,
-                                                      ClassLoader programClassLoader) {
-    // TODO: Refactor ProgramRunner class hierarchy to have common logic moved to a common parent.
-    if (adapterSpec == null) {
-      return null;
+    final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+    try {
+      BasicWorkerContext context = new BasicWorkerContext(
+        newWorkerSpec, program, runId, instanceId, instanceCount,
+        options.getUserArguments(), metricsCollectionService, datasetFramework,
+        txClient, discoveryServiceClient, streamWriterFactory, pluginInstantiator);
+      WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
+
+      // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
+      worker.addListener(new ServiceListenerAdapter() {
+        @Override
+        public void terminated(Service.State from) {
+          Closeables.closeQuietly(pluginInstantiator);
+        }
+
+        @Override
+        public void failed(Service.State from, Throwable failure) {
+          Closeables.closeQuietly(pluginInstantiator);
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
+
+      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
+                                                                        workerSpec.getName() + "-" + instanceId);
+      worker.start();
+      return controller;
+    } catch (Throwable t) {
+      Closeables.closeQuietly(pluginInstantiator);
+      throw t;
     }
-    return new PluginInstantiator(cConf, adapterSpec.getTemplate(), programClassLoader);
   }
 
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {
     private final WorkerDriver workerDriver;
 
-    WorkerControllerServiceAdapter(WorkerDriver workerDriver, String programName, RunId runId) {
-      super(workerDriver, programName, runId);
+    WorkerControllerServiceAdapter(WorkerDriver workerDriver, Id.Program programId, RunId runId, String componentName) {
+      super(workerDriver, programId, runId, componentName);
       this.workerDriver = workerDriver;
     }
 

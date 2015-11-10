@@ -1,0 +1,41 @@
+{
+  "artifact": {
+    "name": "cdap-etl-realtime",
+    "scope": "SYSTEM",
+    "version": "3.3.0-SNAPSHOT"
+  },
+  "config": {
+    "source": {
+      "name": "Kafka",
+      "label": "Kafka",
+      "properties": {
+        "kafka.topic": "",
+        "kafka.partitions": 1
+      }
+    },
+    "sinks": [
+      {
+        "name": "Stream",
+        "label": "Stream",
+        "properties": {
+          "name": "",
+          "headers.field": "header",
+          "body.field": "body"
+        }
+      }
+    ],
+    "transforms": [
+      {
+        "name": "Script",
+        "label": "Transform to Stream",
+        "properties": {
+          "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"body\",\"type\":\"string\"}]}",
+          "script": "function transform(input) {\n    \n   // Specify all the input fields that you \n   // want to add to the stream. \n   var body = [ input.field1, input.field2, ... ]\n   \n   // Add headers to the event being written to\n   // Stream. \n   var headers = { key1 : value1, key2 : value2 };\n   \n   return {\n       headers : headers,\n       // Join all the fields separated by TAB.\n       body : body.join('\\t') \n   } \n}"
+        }
+      }
+    ],
+    "instances": 1
+  },
+  "description": "Streaming Twitter Tweets into Stream for downstream processing."
+}
+

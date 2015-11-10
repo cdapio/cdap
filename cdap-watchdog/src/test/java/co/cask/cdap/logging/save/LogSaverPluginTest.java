@@ -34,6 +34,7 @@ import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.SystemLoggingContext;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
@@ -49,6 +50,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -139,6 +141,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
                           new KafkaClientModule(),
                           new LocationRuntimeModule().getInMemoryModules(),
                           new TransactionModules().getInMemoryModules(),
+                          new TransactionExecutorModule(),
                           new DataSetsModules().getInMemoryModules(),
                           new SystemDatasetRuntimeModule().getInMemoryModules(),
                           new MetricsClientRuntimeModule().getNoopModules(),
@@ -232,7 +235,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
       if (processor instanceof  KafkaLogWriterPlugin) {
         KafkaLogWriterPlugin plugin = (KafkaLogWriterPlugin) processor;
         CheckpointManager manager = plugin.getCheckPointManager();
-        manager.saveCheckpoint(0, new Checkpoint(10, -1));
+        manager.saveCheckpoint(ImmutableMap.of(0, new Checkpoint(10, -1)));
         Set<Integer> partitions = Sets.newHashSet(0, 1);
         plugin.init(partitions);
       }

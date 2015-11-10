@@ -17,6 +17,7 @@
 package co.cask.cdap.cli.command;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.format.Formats;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
@@ -29,6 +30,7 @@ import co.cask.cdap.client.StreamClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
 import co.cask.common.cli.Arguments;
+import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Inject;
@@ -102,6 +104,8 @@ public class SetStreamFormatCommand extends AbstractAuthCommand {
     return new StringBuilder()
       .append("Sets the format of ")
       .append(Fragment.of(Article.A, ElementType.STREAM.getName()))
+      .append(". Valid <").append(ArgumentName.FORMAT).append(">s are ")
+      .append(Joiner.on(", ").join(Formats.ALL))
       .append(". <")
       .append(ArgumentName.SCHEMA)
       .append("> is a sql-like schema \"column_name data_type, ...\" or Avro-like JSON schema and <")

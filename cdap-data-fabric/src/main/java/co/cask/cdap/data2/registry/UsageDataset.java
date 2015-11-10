@@ -19,7 +19,6 @@ package co.cask.cdap.data2.registry;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
-import co.cask.cdap.data2.registry.internal.keymaker.AdapterKeyMaker;
 import co.cask.cdap.data2.registry.internal.keymaker.DatasetKeyMaker;
 import co.cask.cdap.data2.registry.internal.keymaker.ProgramKeyMaker;
 import co.cask.cdap.data2.registry.internal.keymaker.StreamKeyMaker;
@@ -36,9 +35,8 @@ import java.util.Set;
  * Store program/adapter -> dataset/stream usage information.
  */
 public class UsageDataset extends MetadataStoreDataset {
-  // The following constans are used as row key prefixes. Any changes to these will make existing data unusable.
+  // The following constants are used as row key prefixes. Any changes to these will make existing data unusable.
   private static final String PROGRAM = "p";
-  private static final String ADAPTER = "a";
   private static final String DATASET = "d";
   private static final String STREAM = "s";
 
@@ -50,7 +48,6 @@ public class UsageDataset extends MetadataStoreDataset {
     Map<String, KeyMaker<? extends Id>> keyMakers =
       ImmutableMap.<String, KeyMaker<? extends Id>>builder()
         .put(PROGRAM, new ProgramKeyMaker())
-        .put(ADAPTER, new AdapterKeyMaker())
         .put(DATASET, new DatasetKeyMaker())
         .put(STREAM, new StreamKeyMaker())
         .build();
@@ -68,16 +65,6 @@ public class UsageDataset extends MetadataStoreDataset {
   }
 
   /**
-   * Registers usage of a dataset by an adapter.
-   * @param adapterId adapter
-   * @param datasetInstanceId dataset
-   */
-  public void register(Id.Adapter adapterId, Id.DatasetInstance datasetInstanceId) {
-    write(orderedPairs.get(ADAPTER, DATASET).makeKey(adapterId, datasetInstanceId), true);
-    write(orderedPairs.get(DATASET, ADAPTER).makeKey(datasetInstanceId, adapterId), true);
-  }
-
-  /**
    * Registers usage of a stream by a program.
    * @param programId program
    * @param streamId stream
@@ -85,16 +72,6 @@ public class UsageDataset extends MetadataStoreDataset {
   public void register(Id.Program programId, Id.Stream streamId) {
     write(orderedPairs.get(PROGRAM, STREAM).makeKey(programId, streamId), true);
     write(orderedPairs.get(STREAM, PROGRAM).makeKey(streamId, programId), true);
-  }
-
-  /**
-   * Registers usage of a stream by an adapter.
-   * @param adapterId adapter
-   * @param streamId stream
-   */
-  public void register(Id.Adapter adapterId, Id.Stream streamId) {
-    write(orderedPairs.get(ADAPTER, STREAM).makeKey(adapterId, streamId), true);
-    write(orderedPairs.get(STREAM, ADAPTER).makeKey(streamId, adapterId), true);
   }
 
   /**
@@ -120,26 +97,6 @@ public class UsageDataset extends MetadataStoreDataset {
   }
 
   /**
-   * Unregisters all usage information of an adapter.
-   * @param adapterId adapter
-   */
-  public void unregister(Id.Adapter adapterId) {
-    // Delete datasets associated with adapterId
-    for (Id.DatasetInstance datasetInstanceId : getDatasets(adapterId)) {
-      deleteAll(orderedPairs.get(DATASET, ADAPTER).makeKey(datasetInstanceId, adapterId));
-    }
-
-    // Delete streams associated with adapterId
-    for (Id.Stream streamId : getStreams(adapterId)) {
-      deleteAll(orderedPairs.get(STREAM, ADAPTER).makeKey(streamId, adapterId));
-    }
-
-    // Delete all mappings for adapterId
-    deleteAll(orderedPairs.get(ADAPTER, DATASET).makeScanKey(adapterId));
-    deleteAll(orderedPairs.get(ADAPTER, STREAM).makeScanKey(adapterId));
-  }
-
-  /**
    * Returns datasets used by a program.
    * @param programId program
    * @return datasets used by programId
@@ -159,17 +116,6 @@ public class UsageDataset extends MetadataStoreDataset {
     Id.Program programId = ProgramKeyMaker.getProgramId(applicationId);
     OrderedPair<Id.Program, Id.DatasetInstance> orderedPair = orderedPairs.get(PROGRAM, DATASET);
     Map<MDSKey, Boolean> datasetKeys = listKV(orderedPair.makeScanKey(programId), Boolean.TYPE);
-    return orderedPair.getSecond(datasetKeys.keySet());
-  }
-
-  /**
-   * Returns datasets used by an adapter.
-   * @param adapterId adapter
-   * @return datasets used by adapterId
-   */
-  public Set<Id.DatasetInstance> getDatasets(Id.Adapter adapterId) {
-    OrderedPair<Id.Adapter, Id.DatasetInstance> orderedPair = orderedPairs.get(ADAPTER, DATASET);
-    Map<MDSKey, Boolean> datasetKeys = listKV(orderedPair.makeScanKey(adapterId), Boolean.TYPE);
     return orderedPair.getSecond(datasetKeys.keySet());
   }
 
@@ -197,17 +143,6 @@ public class UsageDataset extends MetadataStoreDataset {
   }
 
   /**
-   * Returns sterams used by an adapter.
-   * @param adapterId adapter
-   * @return streams used by adapterId
-   */
-  public Set<Id.Stream> getStreams(Id.Adapter adapterId) {
-    OrderedPair<Id.Adapter, Id.Stream> orderedPair = orderedPairs.get(ADAPTER, STREAM);
-    Map<MDSKey, Boolean> datasetKeys = listKV(orderedPair.makeScanKey(adapterId), Boolean.TYPE);
-    return orderedPair.getSecond(datasetKeys.keySet());
-  }
-
-  /**
    * Returns programs using dataset.
    * @param datasetInstanceId dataset
    * @return programs using datasetInstanceId
@@ -225,28 +160,6 @@ public class UsageDataset extends MetadataStoreDataset {
    */
   public Set<Id.Program> getPrograms(Id.Stream streamId) {
     OrderedPair<Id.Stream, Id.Program> orderedPair = orderedPairs.get(STREAM, PROGRAM);
-    Map<MDSKey, Boolean> programKeys = listKV(orderedPair.makeScanKey(streamId), Boolean.TYPE);
-    return orderedPair.getSecond(programKeys.keySet());
-  }
-
-  /**
-   * Returns adapters using dataset.
-   * @param datasetInstanceId dataset
-   * @return adapters using datasetInstanceId
-   */
-  public Set<Id.Adapter> getAdapters(Id.DatasetInstance datasetInstanceId) {
-    OrderedPair<Id.DatasetInstance, Id.Adapter> orderedPair = orderedPairs.get(DATASET, ADAPTER);
-    Map<MDSKey, Boolean> programKeys = listKV(orderedPair.makeScanKey(datasetInstanceId), Boolean.TYPE);
-    return orderedPair.getSecond(programKeys.keySet());
-  }
-
-  /**
-   * Returns adapters using stream.
-   * @param streamId stream
-   * @return adapters using streamId
-   */
-  public Set<Id.Adapter> getAdapters(Id.Stream streamId) {
-    OrderedPair<Id.Stream, Id.Adapter> orderedPair = orderedPairs.get(STREAM, ADAPTER);
     Map<MDSKey, Boolean> programKeys = listKV(orderedPair.makeScanKey(streamId), Boolean.TYPE);
     return orderedPair.getSecond(programKeys.keySet());
   }

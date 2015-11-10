@@ -21,10 +21,15 @@ data. :doc:`Services <services>` are used to serve data.
 
 **Data abstractions** include :doc:`Streams <streams>` and :doc:`Datasets <datasets/index>`.
 
-.. rubric:: Creating an Application with an Application Specification
+*Applications* are created using an :doc:`Artifact <artifacts>` and optional configuration.
+An *Artifact* is a JAR file that packages the Java Application class that defines how the
+*Programs*, *Services*, *Schedules*, *Streams*, and *Datasets* interact.
+It also packages any dependent classes and libraries needed to run the *Application*. 
 
-To create an application, implement the ``Application`` interface or subclass from
-``AbstractApplication`` class, specifying the application metadata and declaring and
+.. rubric:: Implementing an Application class
+
+To implement an application class, extend the ``AbstractApplication`` class,
+specifying the application metadata and declaring and
 configuring each of the application components::
 
   public class MyApp extends AbstractApplication {
@@ -51,9 +56,9 @@ name.
 Names used for streams and datasets need to be unique across the CDAP namespace, while
 names used for programs and services need to be unique only to the application.
 
-.. rubric:: A Typical CDAP Application
+.. rubric:: A Typical CDAP Application Class
 
-A typical design of a CDAP application consists of:
+A typical design of a CDAP application class consists of:
 
 - *Streams* to ingest data into CDAP;
 - *Flows*, consisting of *Flowlets* linked together, to process the ingested data
@@ -68,14 +73,14 @@ application could include a stream, a flow, a flowlet, and a dataset. It's possi
 stream is not needed, if other methods of bringing in data are used. In the next pages,
 we'll look at these components, and their interactions.
 
-.. rubric:: Deployment Configuration
+.. rubric:: Application Configuration
 
-Applications can use a ``Config`` class to receive a configuration during deployment time of the Application.
-For example, this can be used to specify |---| for application deployment time |---| a stream to be created or
+Application classes can use a ``Config`` class to receive a configuration when an Application is created.
+For example, configuration can be used to specify |---| at application creation time |---| a stream to be created or
 a dataset to be read, rather than having them hard-coded in the ``AbstractApplication``'s ``configure`` method.
 The configuration class needs to be the type parameter of the ``AbstractApplication`` class.
-It should also extend the ``Config`` class present in the CDAP API. The configuration is provided during
-application deployment time through a Header in the RESTful API. It is available during
+It should also extend the ``Config`` class present in the CDAP API. The configuration is provided as part of the
+request body to create an application. It is available during
 configuration time through the ``getConfig()`` method in ``AbstractApplication``.
 
 Information about the RESTful call is available in the :ref:`Lifecycle HTTP RESTful API documentation <http-restful-api-lifecycle>`.

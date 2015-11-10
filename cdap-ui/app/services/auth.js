@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 var module = angular.module(PKG.name+'.services');
 
 /*
@@ -24,7 +40,7 @@ module.constant('MYAUTH_ROLE', {
 
 module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH_ROLE) {
 
-  $rootScope.$on('$stateChangeStart', function (event, next) {
+  $rootScope.$on('$stateChangeStart', function (event, next, nextParams) {
 
     var authorizedRoles = next.data && next.data.authorizedRoles;
     if (!authorizedRoles) { return; } // no role required, anyone can access
@@ -38,16 +54,10 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
     // in all other cases, prevent going to this state
     event.preventDefault();
 
-    // FIXME: THIS IS FLAKY/WRONG. We need to change this.
-    // and go to login instead
-    // $state.go('login', {
-    //   next: angular.toJson({
-    //     path: $location.path(),
-    //     search: $location.search()
-    //   })
-    // });
-
-    $state.go('login');
+    $state.go('login', {
+      next: next.name,
+      nextParams: encodeURIComponent(JSON.stringify(nextParams))
+    });
 
     $rootScope.$broadcast(user ? MYAUTH_EVENT.notAuthorized : MYAUTH_EVENT.notAuthenticated);
   });
@@ -86,8 +96,9 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
       function loginSuccess(data) {
         var user = new MyAuthUser(data);
         persist(user);
-        $cookies['CDAP_Auth_Token'] = user.token;
-        $cookies['CDAP_Auth_User'] = user.username;
+
+        $cookies.put('CDAP_Auth_Token', user.token);
+        $cookies.put('CDAP_Auth_User', user.username);
         $localStorage.remember = cred.remember && user.storable();
         $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       },
@@ -103,8 +114,8 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
   this.logout = function () {
     if (this.currentUser){
       persist(null);
-      delete $cookies['CDAP_Auth_Token'];
-      delete $cookies['CDAP_Auth_User'];
+      $cookies.remove('CDAP_Auth_Token');
+      $cookies.remove('CDAP_Auth_User');
       $rootScope.$broadcast(MYAUTH_EVENT.logoutSuccess);
     }
   };
@@ -118,10 +129,10 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
       return !!this.currentUser;
     }
 
-    if ($cookies['CDAP_Auth_Token'] && $cookies['CDAP_Auth_User']) {
+    if ($cookies.get('CDAP_Auth_Token') && $cookies.get('CDAP_Auth_User')) {
       var user = new MyAuthUser({
-        access_token: $cookies['CDAP_Auth_Token'],
-        username: $cookies['CDAP_Auth_User']
+        access_token: $cookies.get('CDAP_Auth_Token'),
+        username: $cookies.get('CDAP_Auth_User')
       });
       persist(user);
       return !!this.currentUser;

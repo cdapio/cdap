@@ -47,10 +47,8 @@ Services are implemented by extending ``AbstractService``, which consists of
     }
   }
 
-
 Service Handlers
 ----------------
-
 ``ServiceHandler``\s are used to handle and serve HTTP requests.
 
 You add handlers to your service by calling the ``addHandler`` method in the service's
@@ -77,9 +75,9 @@ a single transaction.
     }
   }
 
+
 Path and Query Parameters
 =========================
-
 Handler endpoints can have Path and Query parameters. Path parameters are used to assist with path-mapping of requests,
 while Query parameters are used to easily parse the query string of a request.
 
@@ -105,6 +103,26 @@ An example of calling this endpoint with the HTTP RESTful API is shown in the :r
 :ref:`percent-encoding <http-restful-api-conventions-reserved-unsafe-characters>`.
 See the next section, :ref:`services-path-parameters`.
 
+.. _services-content-consumer:
+
+Handling a Large Request Body
+=============================
+Sometimes the request body for a ``PUT`` or ``POST`` request can be huge and it is not feasible to keep all
+of it in memory. You can have the handler method return an ``HttpContentConsumer`` instead of ``void``
+to process the request body in smaller pieces.
+
+For example, the ``SportResults`` application has an ``UploadService`` that exposes an endpoint for uploading files
+to ``PartitionedFileSets``. It returns an ``HttpContentConsumer`` so that it receives the request body in a series
+of small chunks::
+
+  @PUT
+  @Path("leagues/{league}/seasons/{season}")
+  public HttpContentConsumer write(HttpServiceRequest request, HttpServiceResponder responder,
+                                   @PathParam("league") String league, @PathParam("season") int season) {
+    // ...
+  }
+
+An example of how to implement ``HttpContentConsumer`` is shown in the :ref:`Sport Results Example <examples-sport-results>`.
 
 .. _services-path-parameters:
 
@@ -131,21 +149,19 @@ There are two ways to work around this:
 - Use a query parameter instead. This is a better solution because the "``/``" is not a reserved
   character in the query of a URI.
 
-
 Service Discovery
 -----------------
-
-Services announce the host and port they are running on so that they can be discovered—and
-accessed—by other programs.
+Services announce the host and port they are running on so that they can be discovered |---| and
+accessed |---| by other programs.
 
 Service are announced using the name passed in the ``configure`` method. The *application name*, *service id*, and
 *hostname* required for registering the service are automatically obtained.
 
-The service can then be discovered in a flow, MapReduce, Spark, or other service using
+The service can then be discovered in a flow, MapReduce, Spark, or another service using
 the appropriate program context. You may also access a service in a different application
 by specifying the application name in the ``getServiceURL`` call.
 
-For example, in Flows::
+For example, in flows::
 
   public class GeoFlowlet extends AbstractFlowlet {
 
@@ -175,6 +191,26 @@ For example, in Flows::
       }
     }
   }
+
+Services and Resources
+----------------------
+When a service is configured, the resource requirements for the server that runs all
+handlers of the service can be set, both in terms of the amount of memory (in megabytes)
+and the number of virtual cores assigned.
+
+For example, in the :ref:`Purchase <examples-purchase>` example, in the configuration of
+the ``PurchaseHistoryService``, the amount of memory is specified:
+
+.. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
+   :language: java
+   :lines: 40-46
+
+If both the memory and the number of cores needs to be set, this can be done using::
+
+    setResources(new Resources(1024, 2));
+
+An example of setting ``Resources`` using runtime arguments is shown in :ref:`Purchase
+<examples-purchase>` example's ``PurchaseHistoryBuilder.java``.
 
 .. rubric::  Examples of Using Services
 

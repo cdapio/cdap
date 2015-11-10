@@ -20,7 +20,6 @@ import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
-import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.StreamManager;
@@ -63,7 +62,7 @@ public class TestBundleJarApp extends TestBase {
     }
 
     // Check the flowlet metrics
-    RuntimeMetrics flowletMetrics = RuntimeStats.getFlowletMetrics("BundleJarApp", "SimpleFlow", "simpleFlowlet");
+    RuntimeMetrics flowletMetrics = flowManager.getFlowletMetrics("simpleFlowlet");
     flowletMetrics.waitForProcessed(5, 5, TimeUnit.SECONDS);
     Assert.assertEquals(0L, flowletMetrics.getException());
     flowManager.stop();

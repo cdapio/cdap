@@ -19,6 +19,7 @@ import co.cask.cdap.api.dataset.lib.cube.Interpolators;
 import co.cask.cdap.api.metrics.MetricDataQuery;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.Constants.Metrics.Tag;
+import co.cask.cdap.proto.Id;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -142,7 +143,7 @@ public class MetricQueryParserTest {
   public void testApps() throws MetricsPathException  {
     MetricDataQuery query = MetricQueryParser.parse(URI.create("/system/apps/app1/reads?aggregate=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1");
     assertMetricName("system.reads", query);
   }
@@ -152,7 +153,7 @@ public class MetricQueryParserTest {
     MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/process.bytes?count=60&start=1&end=61"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
@@ -161,7 +162,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/some.metric?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.FLOW, "flow1");
     assertMetricName("system.some.metric", query);
@@ -170,7 +171,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/runs/1234/some.metric?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.FLOW, "flow1");
     assertMetricName("system.some.metric", query);
@@ -180,7 +181,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/runs/1234/flowlets/flowlet1/some.metric?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
@@ -199,7 +200,7 @@ public class MetricQueryParserTest {
     MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.in?aggregate=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
@@ -209,7 +210,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.bytes.out?aggregate=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
@@ -219,7 +220,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.events.in?aggregate=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
@@ -229,7 +230,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/flows/flow1/flowlets/flowlet1/queues/queue1/process.events.out?aggregate=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
@@ -240,7 +241,7 @@ public class MetricQueryParserTest {
       URI.create("/system/apps/app1/flows/flow1/runs/run123/flowlets/flowlet1/queues/queue1/" +
                    "process.events.out?aggregate=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
@@ -254,7 +255,7 @@ public class MetricQueryParserTest {
     MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/mappers/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.MAPREDUCE, "mapred1",
                Tag.MR_TASK_TYPE, "m");
@@ -263,7 +264,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/reducers/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.MAPREDUCE, "mapred1",
                Tag.MR_TASK_TYPE, "r");
@@ -272,7 +273,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.MAPREDUCE, "mapred1");
     assertMetricName("system.reads", query);
@@ -280,7 +281,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/runs/run123/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.MAPREDUCE, "mapred1");
     assertMetricName("system.reads", query);
@@ -289,7 +290,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/mapreduce/mapred1/runs/run123/mappers/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.MAPREDUCE, "mapred1",
                Tag.MR_TASK_TYPE, "m");
@@ -302,7 +303,7 @@ public class MetricQueryParserTest {
     MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/services/serve1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.SERVICE, "serve1");
     assertMetricName("system.reads", query);
@@ -310,7 +311,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/services/serve1/handlers/handler1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.SERVICE, "serve1",
                Tag.HANDLER, "handler1");
@@ -319,7 +320,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/services/serve1/runs/runid123/handlers/handler1/reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.SERVICE, "serve1",
                Tag.HANDLER, "handler1");
@@ -332,7 +333,7 @@ public class MetricQueryParserTest {
     MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/spark/fakespark/sparkmetric?aggregate=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.SPARK, "fakespark");
     assertMetricName("system.sparkmetric", query);
@@ -340,7 +341,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/apps/app1/spark/fakespark/runs/runid123/sparkmetric?aggregate=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.SPARK, "fakespark");
     assertMetricName("system.sparkmetric", query);
@@ -364,7 +365,7 @@ public class MetricQueryParserTest {
       URI.create("/system/datasets/dataset1/apps/app1/flows/flow1/runs/run1/" +
                    "flowlets/flowlet1/store.reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.FLOW, "flow1",
                Tag.FLOWLET, "flowlet1");
@@ -375,7 +376,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/datasets/dataset1/apps/app1/flows/flow1/store.reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.FLOW, "flow1");
     assertMetricName("system.store.reads", query);
@@ -384,7 +385,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/datasets/dataset1/apps/app1/flows/flow1/runs/123/store.reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1",
                Tag.FLOW, "flow1");
     assertMetricName("system.store.reads", query);
@@ -394,7 +395,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/datasets/dataset1/apps/app1/store.reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1");
     assertMetricName("system.store.reads", query);
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
@@ -402,7 +403,7 @@ public class MetricQueryParserTest {
     query = MetricQueryParser.parse(
       URI.create("/system/datasets/dataset1/store.reads?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE);
+               Id.Namespace.DEFAULT.getId());
     assertMetricName("system.store.reads", query);
     Assert.assertEquals("dataset1", query.getSliceByTags().get(Tag.DATASET));
   }
@@ -412,7 +413,7 @@ public class MetricQueryParserTest {
     MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/system/streams/stream1/collect.events?summary=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE);
+               Id.Namespace.DEFAULT.getId());
     assertMetricName("system.collect.events", query);
     Assert.assertEquals("stream1", query.getSliceByTags().get(Tag.STREAM));
   }
@@ -489,14 +490,14 @@ public class MetricQueryParserTest {
     MetricDataQuery query = MetricQueryParser.parse(
       URI.create("/user/apps/app1/flows/" + encodedWeirdMetric + "?aggregate=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1");
     assertMetricName("user." + weirdMetric, query);
 
     query = MetricQueryParser.parse(
       URI.create("/user/apps/app1/" + encodedWeirdMetric + "?aggregate=true"));
     verifyTags(query.getSliceByTags(),
-               Constants.DEFAULT_NAMESPACE,
+               Id.Namespace.DEFAULT.getId(),
                Tag.APP, "app1");
     assertMetricName("user." + weirdMetric, query);
   }

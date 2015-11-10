@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.schedule;
 
 import co.cask.cdap.app.store.Store;
-import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
 import com.google.common.base.Supplier;
@@ -39,8 +38,8 @@ public final class DistributedSchedulerService extends AbstractSchedulerService 
 
   @Inject
   public DistributedSchedulerService(TimeScheduler timeScheduler, StreamSizeScheduler streamSizeScheduler,
-                                     CConfiguration cConf, Store store) {
-    super(timeScheduler, streamSizeScheduler, cConf, store);
+                                     Store store) {
+    super(timeScheduler, streamSizeScheduler, store);
     this.serviceDelegate = new RetryOnStartFailureService(new Supplier<Service>() {
       @Override
       public Service get() {

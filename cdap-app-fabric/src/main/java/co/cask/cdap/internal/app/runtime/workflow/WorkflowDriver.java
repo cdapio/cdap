@@ -16,11 +16,9 @@
 package co.cask.cdap.internal.app.runtime.workflow;
 
 import co.cask.cdap.api.Predicate;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
@@ -32,7 +30,6 @@ import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -47,18 +44,17 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
+import co.cask.cdap.internal.app.workflow.DefaultWorkflowActionConfigurer;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.workflow.DefaultWorkflowActionSpecification;
 import co.cask.cdap.internal.workflow.ProgramWorkflowAction;
 import co.cask.cdap.logging.context.WorkflowLoggingContext;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.http.NettyHttpService;
-import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -72,7 +68,6 @@ import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.gson.Gson;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -80,18 +75,20 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -103,7 +100,6 @@ import java.util.concurrent.locks.ReentrantLock;
 final class WorkflowDriver extends AbstractExecutionThreadService {
 
   private static final Logger LOG = LoggerFactory.getLogger(WorkflowDriver.class);
-  private static final Gson GSON = new Gson();
 
   private final Program program;
   private final InetAddress hostname;
@@ -144,14 +140,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                                          options);
     this.lock = new ReentrantLock();
     this.condition = lock.newCondition();
-    String adapterSpec = arguments.getOption(ProgramOptionConstants.ADAPTER_SPEC);
-    String adapterName = null;
-    if (adapterSpec != null) {
-      adapterName = GSON.fromJson(adapterSpec, AdapterDefinition.class).getName();
-    }
     this.loggingContext = new WorkflowLoggingContext(program.getNamespaceId(), program.getApplicationId(),
                                                      program.getName(),
-                                                     arguments.getOption(ProgramOptionConstants.RUN_ID), adapterName);
+                                                     arguments.getOption(ProgramOptionConstants.RUN_ID));
     this.runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -227,73 +218,61 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     httpService.stopAndWait();
   }
 
-  private void executeAction(ApplicationSpecification appSpec, WorkflowActionNode node,
+  private void executeAction(WorkflowActionNode node,
                              InstantiatorFactory instantiator, final ClassLoader classLoader,
                              WorkflowToken token) throws Exception {
 
     final SchedulableProgramType programType = node.getProgram().getProgramType();
-    final WorkflowActionSpecification actionSpec = getActionSpecification(appSpec, node, programType);
+    final WorkflowActionSpecification actionSpec = getActionSpecification(node, programType);
 
     status.put(node.getNodeId(), node);
 
     final BasicWorkflowContext workflowContext = createWorkflowContext(actionSpec, token, node.getNodeId());
     final WorkflowAction action = initialize(actionSpec, classLoader, instantiator, workflowContext);
 
-    ExecutorService executor = Executors.newSingleThreadExecutor(
-      new ThreadFactoryBuilder().setNameFormat("workflow-executor-%d").build());
+    CountDownLatch executorTerminateLatch = new CountDownLatch(1);
+    ExecutorService executorService = createExecutor(1, executorTerminateLatch, "action-" + node.getNodeId() + "-%d");
+
     try {
       // Run the action in new thread
-      Future<?> future = executor.submit(new Runnable() {
+      Future<?> future = executorService.submit(new Callable<Void>() {
         @Override
-        public void run() {
+        public Void call() throws Exception {
           setContextCombinedClassLoader(action);
           try {
             if (programType == SchedulableProgramType.CUSTOM_ACTION) {
-              try {
-                runInTransaction(action, workflowContext);
-              } catch (TransactionFailureException e) {
-                throw Throwables.propagate(e);
-              }
+              runInTransaction(action, workflowContext);
             } else {
               action.run();
             }
+            return null;
           } finally {
-            try {
-              destroyInTransaction(action, actionSpec, workflowContext);
-            } catch (TransactionFailureException e) {
-              throw Throwables.propagate(e);
-            }
+            destroyInTransaction(action, actionSpec, workflowContext);
           }
         }
       });
       future.get();
     } catch (Throwable t) {
-      LOG.error("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec);
+      LOG.error("Exception on WorkflowAction.run(), aborting Workflow. {}", actionSpec, t);
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
     } finally {
-      executor.shutdownNow();
+      executorService.shutdownNow();
+      executorTerminateLatch.await();
       status.remove(node.getNodeId());
     }
     store.updateWorkflowToken(workflowId, runId.getId(), token);
   }
 
-  private WorkflowActionSpecification getActionSpecification(ApplicationSpecification appSpec, WorkflowActionNode node,
+  private WorkflowActionSpecification getActionSpecification(WorkflowActionNode node,
                                                              SchedulableProgramType programType) {
     WorkflowActionSpecification actionSpec;
     ScheduleProgramInfo actionInfo = node.getProgram();
     switch (programType) {
       case MAPREDUCE:
-        MapReduceSpecification mapReduceSpec = appSpec.getMapReduce().get(actionInfo.getProgramName());
-        String mapReduce = mapReduceSpec.getName();
-        actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
-          mapReduce, mapReduce, SchedulableProgramType.MAPREDUCE));
-        break;
       case SPARK:
-        SparkSpecification sparkSpec = appSpec.getSpark().get(actionInfo.getProgramName());
-        String spark = sparkSpec.getName();
-        actionSpec = new DefaultWorkflowActionSpecification(new ProgramWorkflowAction(
-          spark, spark, SchedulableProgramType.SPARK));
+        actionSpec = DefaultWorkflowActionConfigurer.configureAction(
+          new ProgramWorkflowAction(actionInfo.getProgramName(), programType));
         break;
       case CUSTOM_ACTION:
         actionSpec = node.getActionSpecification();
@@ -306,18 +285,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     return actionSpec;
   }
 
-  private TransactionContext getTransactionContextFromContext(WorkflowContext context) {
-    TransactionContext transactionContext = new TransactionContext(txClient);
-    Collection<Dataset> datasets = ((BasicWorkflowContext) context).getDatasets().values();
-    for (Dataset ds : datasets) {
-      transactionContext.addTransactionAware((TransactionAware) ds);
-    }
-    return transactionContext;
-  }
-
   private void runInTransaction(WorkflowAction action,
-                                WorkflowContext workflowContext) throws TransactionFailureException {
-    TransactionContext transactionContext = getTransactionContextFromContext(workflowContext);
+                                BasicWorkflowContext workflowContext) throws TransactionFailureException {
+    TransactionContext transactionContext = workflowContext.getDatasetCache().newTransactionContext();
     transactionContext.start();
     try {
       action.run();
@@ -329,20 +299,25 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void destroyInTransaction(WorkflowAction action, WorkflowActionSpecification spec,
-                                    WorkflowContext workflowContext) throws TransactionFailureException {
-    TransactionContext transactionContext = getTransactionContextFromContext(workflowContext);
+                                    BasicWorkflowContext workflowContext) throws TransactionFailureException {
+    TransactionContext transactionContext = workflowContext.getDatasetCache().newTransactionContext();
     transactionContext.start();
     try {
-      destroy(spec, action);
-    } catch (Throwable e) {
-      LOG.error("Transaction failed to destroy: " + e.getMessage());
-      transactionContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", e));
+      try {
+        destroy(spec, action);
+      } catch (Throwable e) {
+        LOG.error("Transaction failed to destroy: " + e.getMessage());
+        transactionContext.abort(new TransactionFailureException("Transaction function failure for transaction. ", e));
+      }
+      transactionContext.finish();
+    } finally {
+      // after the action is destroyed, we can release its datasets; TODO: would it be better to hold on to them?
+      workflowContext.getDatasetCache().invalidate();
     }
-    transactionContext.finish();
   }
 
-  private void initializeInTransaction(WorkflowAction action, WorkflowContext workflowContext) throws Exception {
-    TransactionContext transactionContext = getTransactionContextFromContext(workflowContext);
+  private void initializeInTransaction(WorkflowAction action, BasicWorkflowContext workflowContext) throws Exception {
+    TransactionContext transactionContext = workflowContext.getDatasetCache().newTransactionContext();
     transactionContext.start();
     try {
       action.initialize(workflowContext);
@@ -356,9 +331,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private void executeFork(final ApplicationSpecification appSpec, WorkflowForkNode fork,
                            final InstantiatorFactory instantiator, final ClassLoader classLoader,
                            final WorkflowToken token) throws Exception {
-    ExecutorService executorService =
-      Executors.newFixedThreadPool(fork.getBranches().size(),
-                                   new ThreadFactoryBuilder().setNameFormat("workflow-fork-executor-%d").build());
+
+    CountDownLatch executorTerminateLatch = new CountDownLatch(1);
+    ExecutorService executorService = createExecutor(fork.getBranches().size(), executorTerminateLatch,
+                                                     "fork-" + fork.getNodeId() + "-%d");
     CompletionService<Map.Entry<String, WorkflowToken>> completionService =
       new ExecutorCompletionService<>(executorService);
 
@@ -376,8 +352,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
       for (int i = 0; i < fork.getBranches().size(); i++) {
         try {
-          Future<Map.Entry<String, WorkflowToken>> f = completionService.take();
-          Map.Entry<String, WorkflowToken> retValue = f.get();
+          Future<Map.Entry<String, WorkflowToken>> forkBranchResult = completionService.take();
+          Map.Entry<String, WorkflowToken> retValue = forkBranchResult.get();
           String branchInfo = retValue.getKey();
           WorkflowToken branchToken = retValue.getValue();
           ((BasicWorkflowToken) token).mergeToken((BasicWorkflowToken) branchToken);
@@ -385,22 +361,23 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
         } catch (Throwable t) {
           Throwable rootCause = Throwables.getRootCause(t);
           if (rootCause instanceof ExecutionException) {
-            LOG.error("Exception occurred in the execution of the fork node {}", fork);
-            throw (ExecutionException) t;
+            LOG.error("Exception occurred in the execution of the fork node {}.", fork, rootCause);
+            throw (ExecutionException) rootCause;
           }
           if (rootCause instanceof InterruptedException) {
-            LOG.error("Workflow execution aborted.");
+            LOG.error("Workflow execution aborted.", rootCause);
             break;
           }
-          Throwables.propagateIfPossible(t, Exception.class);
-          throw Throwables.propagate(t);
+          Throwables.propagateIfPossible(rootCause, Exception.class);
+          throw Throwables.propagate(rootCause);
         }
       }
     } finally {
       // Update the WorkflowToken after the execution of the FORK node completes.
       store.updateWorkflowToken(workflowId, runId.getId(), token);
       executorService.shutdownNow();
-      executorService.awaitTermination(Integer.MAX_VALUE, TimeUnit.NANOSECONDS);
+      // Wait for the executor termination
+      executorTerminateLatch.await();
     }
   }
 
@@ -410,7 +387,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     ((BasicWorkflowToken) token).setCurrentNode(node.getNodeId());
     switch (nodeType) {
       case ACTION:
-        executeAction(appSpec, (WorkflowActionNode) node, instantiator, classLoader, token);
+        executeAction((WorkflowActionNode) node, instantiator, classLoader, token);
         break;
       case FORK:
         executeFork(appSpec, (WorkflowForkNode) node, instantiator, classLoader, token);
@@ -431,9 +408,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     Predicate<WorkflowContext> predicate = instantiator.get(
       TypeToken.of((Class<? extends Predicate<WorkflowContext>>) clz)).create();
 
-    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, logicalStartTime, null, runtimeArgs, token,
+    WorkflowContext context = new BasicWorkflowContext(workflowSpec, null, logicalStartTime, null,
+                                                       new BasicArguments(runtimeArgs), token,
                                                        program, runId, metricsCollectionService,
-                                                       datasetFramework, discoveryServiceClient);
+                                                       datasetFramework, txClient, discoveryServiceClient);
     Iterator<WorkflowNode> iterator;
     if (predicate.apply(context)) {
       // execute the if branch
@@ -469,10 +447,10 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
       } catch (Throwable t) {
         Throwable rootCause = Throwables.getRootCause(t);
         if (rootCause instanceof InterruptedException) {
-          LOG.error("Workflow execution aborted.");
+          LOG.error("Workflow execution aborted.", rootCause);
           break;
         }
-        Throwables.propagate(t);
+        throw Throwables.propagate(rootCause);
       }
     }
   }
@@ -498,8 +476,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
                                                      WorkflowToken token, String nodeId) {
     return new BasicWorkflowContext(workflowSpec, actionSpec, logicalStartTime,
                                     workflowProgramRunnerFactory.getProgramWorkflowRunner(actionSpec, token, nodeId),
-                                    runtimeArgs, token, program, runId, metricsCollectionService,
-                                    datasetFramework, discoveryServiceClient);
+                                    new BasicArguments(runtimeArgs), token, program, runId, metricsCollectionService,
+                                    datasetFramework, txClient, discoveryServiceClient);
   }
 
   /**
@@ -515,7 +493,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
 
     ClassLoader oldClassLoader = setContextCombinedClassLoader(action);
     try {
-      Reflections.visit(action, TypeToken.of(action.getClass()),
+      Reflections.visit(action, action.getClass(),
                         new PropertyFieldSetter(actionSpec.getProperties()),
                         new DataSetFieldSetter(workflowContext),
                         new MetricsFieldSetter(workflowContext.getMetrics()));
@@ -548,11 +526,7 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private Map<String, String> createRuntimeArgs(Arguments args) {
-    ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
-    for (Map.Entry<String, String> entry : args) {
-      builder.put(entry);
-    }
-    return builder.build();
+    return ImmutableMap.<String, String>builder().putAll(args.asMap()).build();
   }
 
   private Supplier<List<WorkflowActionNode>> createStatusSupplier() {
@@ -571,5 +545,24 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   private ClassLoader setContextCombinedClassLoader(WorkflowAction action) {
     return ClassLoaders.setContextClassLoader(
       new CombineClassLoader(null, ImmutableList.of(action.getClass().getClassLoader(), getClass().getClassLoader())));
+  }
+
+  /**
+   * Creates an {@link ExecutorService} that has the given number of threads.
+   *
+   * @param threads number of core threads in the executor
+   * @param terminationLatch a {@link CountDownLatch} that will be counted down when the executor terminated
+   * @param threadNameFormat name format for the {@link ThreadFactory} provided to the executor
+   * @return a new {@link ExecutorService}.
+   */
+  private ExecutorService createExecutor(int threads, final CountDownLatch terminationLatch, String threadNameFormat) {
+    return new ThreadPoolExecutor(
+      threads, threads, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(),
+      new ThreadFactoryBuilder().setNameFormat(threadNameFormat).build()) {
+      @Override
+      protected void terminated() {
+        terminationLatch.countDown();
+      }
+    };
   }
 }

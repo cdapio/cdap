@@ -21,7 +21,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.pipeline.AbstractStage;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.reflect.TypeToken;
 
 /**
@@ -41,7 +40,7 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
   /**
    * Deploys dataset modules specified in the given adapter spec.
    *
-   * @param input An instance of {@link AdapterDefinition}
+   * @param input An instance of {@link ApplicationDeployable}
    */
   @Override
   public void process(ApplicationDeployable input) throws Exception {

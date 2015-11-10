@@ -23,9 +23,9 @@ import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import com.google.common.collect.Lists;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -60,6 +60,7 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
    * @return dataset to perform data operations
    * @throws IOException
    */
+  @SuppressWarnings("unchecked")
   protected final <T extends Dataset> T getDataset(DatasetContext datasetContext, String name, Class<T> type,
                                                    DatasetSpecification spec, Map<String, String> arguments,
                                                    ClassLoader classLoader) throws IOException {
@@ -67,6 +68,7 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
     return (T) delegates.get(name).getDataset(datasetContext, spec.getSpecification(name), arguments, classLoader);
   }
 
+  @SuppressWarnings("unchecked")
   protected final <T extends Dataset> T getDataset(DatasetContext datasetContext, String name,
                                                    DatasetSpecification spec, Map<String, String> arguments,
                                                    ClassLoader classLoader) throws IOException {
@@ -77,7 +79,7 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
 
   @Override
   public final DatasetSpecification configure(String instanceName, DatasetProperties properties) {
-    List<DatasetSpecification> specs = Lists.newArrayList();
+    List<DatasetSpecification> specs = new ArrayList<>();
     for (Map.Entry<String, ? extends DatasetDefinition> impl : this.delegates.entrySet()) {
       specs.add(impl.getValue().configure(impl.getKey(), properties));
     }
@@ -91,7 +93,7 @@ public abstract class CompositeDatasetDefinition<D extends Dataset>
   @Override
   public final DatasetAdmin getAdmin(DatasetContext datasetContext, DatasetSpecification spec,
                                      ClassLoader classLoader) throws IOException {
-    List<DatasetAdmin> admins = Lists.newArrayList();
+    List<DatasetAdmin> admins = new ArrayList<>();
     for (Map.Entry<String, ? extends DatasetDefinition> impl : this.delegates.entrySet()) {
       admins.add(impl.getValue().getAdmin(datasetContext, spec.getSpecification(impl.getKey()), classLoader));
     }

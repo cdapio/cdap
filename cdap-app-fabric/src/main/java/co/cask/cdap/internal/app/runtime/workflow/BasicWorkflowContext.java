@@ -18,15 +18,17 @@ package co.cask.cdap.internal.app.runtime.workflow;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.app.metrics.ProgramUserMetrics;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.BasicArguments;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.twill.api.RunId;
@@ -51,17 +53,19 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
 
   BasicWorkflowContext(WorkflowSpecification workflowSpec, @Nullable WorkflowActionSpecification spec,
                        long logicalStartTime, @Nullable ProgramWorkflowRunner programWorkflowRunner,
-                       Map<String, String> runtimeArgs, WorkflowToken token, Program program, RunId runId,
+                       Arguments arguments, WorkflowToken token, Program program, RunId runId,
                        MetricsCollectionService metricsCollectionService,
-                       DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient) {
-    super(program, runId, new BasicArguments(runtimeArgs), (spec == null) ? new HashSet<String>() : spec.getDatasets(),
+                       DatasetFramework datasetFramework, TransactionSystemClient txClient,
+                       DiscoveryServiceClient discoveryServiceClient) {
+    super(program, runId, arguments,
+          (spec == null) ? new HashSet<String>() : spec.getDatasets(),
           getMetricCollector(program, runId.getId(), metricsCollectionService),
-          datasetFramework, discoveryServiceClient, null, null);
+          datasetFramework, txClient, discoveryServiceClient, false);
     this.workflowSpec = workflowSpec;
     this.specification = spec;
     this.logicalStartTime = logicalStartTime;
     this.programWorkflowRunner = programWorkflowRunner;
-    this.runtimeArgs = ImmutableMap.copyOf(runtimeArgs);
+    this.runtimeArgs = ImmutableMap.copyOf(arguments.asMap());
     this.token = token;
     if (metricsCollectionService != null) {
       this.userMetrics = new ProgramUserMetrics(getProgramMetrics());
@@ -115,6 +119,11 @@ final class BasicWorkflowContext extends AbstractContext implements WorkflowCont
   @Override
   public Map<String, String> getRuntimeArguments() {
     return runtimeArgs;
+  }
+
+  @Override
+  public Map<String, Plugin> getPlugins() {
+    return null;
   }
 
   @Override

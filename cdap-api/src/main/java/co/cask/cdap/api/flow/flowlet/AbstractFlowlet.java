@@ -18,6 +18,7 @@ package co.cask.cdap.api.flow.flowlet;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.internal.api.AbstractProgramDatasetConfigurable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +29,8 @@ import javax.annotation.Nullable;
 /**
  * This abstract class provides a default implementation of {@link Flowlet} methods for easy extension.
  */
-public abstract class AbstractFlowlet implements Flowlet, Callback {
+public abstract class AbstractFlowlet extends AbstractProgramDatasetConfigurable<FlowletConfigurer>
+  implements Flowlet, Callback {
 
   private FlowletConfigurer configurer;
   private FlowletContext flowletContext;
@@ -46,6 +48,7 @@ public abstract class AbstractFlowlet implements Flowlet, Callback {
   /**
    * Returns the {@link FlowletConfigurer} used for configuration. Only available during configuration time.
    */
+  @Override
   protected final FlowletConfigurer getConfigurer() {
     return configurer;
   }

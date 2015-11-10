@@ -23,6 +23,7 @@ import co.cask.cdap.api.metrics.MetricDeleteQuery;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
@@ -40,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -55,16 +57,19 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
   private final StreamConsumerFactory streamConsumerFactory;
   private final QueueAdmin queueAdmin;
   private final MetricStore metricStore;
+  private final BusinessMetadataStore businessMetadataStore;
 
   public DeletedProgramHandlerStage(Store store, ProgramTerminator programTerminator,
                                     StreamConsumerFactory streamConsumerFactory,
-                                    QueueAdmin queueAdmin, MetricStore metricStore) {
+                                    QueueAdmin queueAdmin, MetricStore metricStore,
+                                    BusinessMetadataStore businessMetadataStore) {
     super(TypeToken.of(ApplicationDeployable.class));
     this.store = store;
     this.programTerminator = programTerminator;
     this.streamConsumerFactory = streamConsumerFactory;
     this.queueAdmin = queueAdmin;
     this.metricStore = metricStore;
+    this.businessMetadataStore = businessMetadataStore;
   }
 
   @Override
@@ -72,7 +77,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
     List<ProgramSpecification> deletedSpecs = store.getDeletedProgramSpecifications(appSpec.getId(),
                                                                                     appSpec.getSpecification());
 
-    // TODO: this should also delete logs and run records (or not?), and do it for all prohgram types [CDAP-2187]
+    // TODO: this should also delete logs and run records (or not?), and do it for all program types [CDAP-2187]
 
     List<String> deletedFlows = Lists.newArrayList();
     for (ProgramSpecification spec : deletedSpecs) {
@@ -104,6 +109,9 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
         queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getId()));
         deletedFlows.add(programId.getId());
       }
+
+      // Remove business metadata for the deleted program
+      businessMetadataStore.removeMetadata(programId);
     }
     if (!deletedFlows.isEmpty()) {
       deleteMetrics(appSpec.getId().getNamespaceId(), appSpec.getId().getId(), deletedFlows);
@@ -120,7 +128,7 @@ public class DeletedProgramHandlerStage extends AbstractStage<ApplicationDeploya
       tags.put(Constants.Metrics.Tag.NAMESPACE, namespace);
       tags.put(Constants.Metrics.Tag.APP, application);
       tags.put(Constants.Metrics.Tag.FLOW, flow);
-      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, null, tags);
+      MetricDeleteQuery deleteQuery = new MetricDeleteQuery(0, endTs, Collections.<String>emptyList(), tags);
       metricStore.delete(deleteQuery);
     }
   }

@@ -20,18 +20,17 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.KafkaConstants;
 import co.cask.cdap.common.guice.KafkaClientModule;
+import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.notifications.NotificationTest;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import com.google.common.base.Preconditions;
-import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.utils.Networks;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClient;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -40,6 +39,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -56,34 +57,21 @@ public class KafkaNotificationTest extends NotificationTest {
 
   @BeforeClass
   public static void start() throws Exception {
+    zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
+    zkServer.startAndWait();
+
     CConfiguration cConf = CConfiguration.create();
     cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+    cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
     cConf.set(Constants.Notification.TRANSPORT_SYSTEM, "kafka");
 
     Injector injector = createInjector(
       cConf,
+      new ZKClientModule(),
       new KafkaClientModule(),
       new NotificationServiceRuntimeModule().getDistributedModules(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          InMemoryZKServer zkServer = InMemoryZKServer.builder().build();
-          bind(InMemoryZKServer.class).toInstance(zkServer);
-          bind(ZKClient.class).to(ZKClientService.class);
-        }
-
-        @Provides
-        @Singleton
-        @SuppressWarnings("unused")
-        private ZKClientService providesZkClientService(InMemoryZKServer zkServer) {
-          zkServer.startAndWait();
-          ZKClientService clientService = ZKClientService.Builder.of(zkServer.getConnectionStr()).build();
-          return clientService;
-        }
-      }
+      new NotificationFeedServiceRuntimeModule().getDistributedModules()
     );
-
-    zkServer = injector.getInstance(InMemoryZKServer.class);
 
     zkClient = injector.getInstance(ZKClientService.class);
     zkClient.startAndWait();
@@ -101,8 +89,32 @@ public class KafkaNotificationTest extends NotificationTest {
     // TODO remove once Twill addLatest bug is fixed
     feedManager.createFeed(FEED1);
     feedManager.createFeed(FEED2);
-    getNotificationService().publish(FEED1, "test").get();
-    getNotificationService().publish(FEED2, "test").get();
+
+    // Try to publish to the feeds. Needs to retry multiple times due to race between Kafka server registers itself
+    // to ZK and the publisher be able to see the changes in the ZK to get the broker list
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        try {
+          getNotificationService().publish(FEED1, "test").get();
+          return true;
+        } catch (Throwable t) {
+          return false;
+        }
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        try {
+          getNotificationService().publish(FEED2, "test").get();
+          return true;
+        } catch (Throwable t) {
+          return false;
+        }
+      }
+    }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
     feedManager.deleteFeed(FEED1);
     feedManager.deleteFeed(FEED2);
   }
@@ -112,6 +124,7 @@ public class KafkaNotificationTest extends NotificationTest {
     stopServices();
     kafkaClient.stopAndWait();
     kafkaServer.stopAndWait();
+    zkClient.stopAndWait();
     zkServer.stopAndWait();
   }
 

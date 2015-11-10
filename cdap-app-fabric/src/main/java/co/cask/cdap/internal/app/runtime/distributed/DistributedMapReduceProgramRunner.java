@@ -15,8 +15,8 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -33,11 +33,11 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -49,8 +49,9 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
   private static final Logger LOG = LoggerFactory.getLogger(DistributedMapReduceProgramRunner.class);
 
   @Inject
-  public DistributedMapReduceProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
-    super(twillRunner, hConf, cConf);
+  public DistributedMapReduceProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
+                                           Configuration hConf, CConfiguration cConf) {
+    super(twillRunner, locationFactory, hConf, cConf);
   }
 
   @Override
@@ -78,8 +79,7 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
       tempDir.mkdirs();
       try {
         launcherFile = File.createTempFile("launcher", ".jar", tempDir);
-        List<String> paths = MapReduceContainerHelper.getMapReduceClassPath(hConf, new ArrayList<String>());
-        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, paths);
+        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, extraClassPaths);
         localizeResources.put("launcher.jar", new LocalizeResource(launcherFile));
       } catch (Exception e) {
         LOG.warn("Failed to create twill container launcher.jar for TWILL-144 hack. " +
@@ -110,6 +110,6 @@ public final class DistributedMapReduceProgramRunner extends AbstractDistributed
     // End Hack for TWILL-144
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-    return new MapReduceTwillProgramController(program.getName(), controller, runId).startListen();
+    return new MapReduceTwillProgramController(program.getId(), controller, runId).startListen();
   }
 }

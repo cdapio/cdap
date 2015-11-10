@@ -52,9 +52,7 @@ public class CheckPointWriter implements Flushable, Runnable {
 
   private void checkpoint() {
     try {
-      for (Map.Entry<Integer, Checkpoint> entry : partitionCheckpoints.entrySet()) {
-        checkpointManager.saveCheckpoint(entry.getKey(), entry.getValue());
-      }
+      checkpointManager.saveCheckpoint(partitionCheckpoints);
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

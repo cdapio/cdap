@@ -21,6 +21,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.io.FileContextLocationFactory;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
@@ -29,8 +30,12 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data.view.ViewAdminModules;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.NoOpBusinessMetadataStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
@@ -40,9 +45,7 @@ import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -63,11 +66,11 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
 
   @BeforeClass
   public static void init() throws IOException {
+
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, tmpFolder.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
-    FileSystem fileSystem = dfsCluster.getFileSystem();
-    final HDFSLocationFactory lf = new HDFSLocationFactory(fileSystem);
+    final LocationFactory lf = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
     final NamespacedLocationFactory nlf = new DefaultNamespacedLocationFactory(cConf, lf);
 
     Injector injector = Guice.createInjector(
@@ -83,7 +86,14 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
       new TransactionMetricsModule(),
       new DiscoveryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModules(),
+      Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(BusinessMetadataStore.class).to(NoOpBusinessMetadataStore.class);
+        }
+      }),
+      new ExploreClientModule(),
+      new ViewAdminModules().getInMemoryModules(),
       Modules.override(new StreamAdminModules().getDistributedModules()).with(new AbstractModule() {
 
         @Override

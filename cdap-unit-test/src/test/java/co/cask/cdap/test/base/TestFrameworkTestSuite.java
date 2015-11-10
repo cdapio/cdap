@@ -27,7 +27,6 @@ import co.cask.cdap.spark.stream.SparkStreamIntegrationTestRun;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.cdap.test.app.DummyBaseCloneTestRun;
 import co.cask.cdap.test.app.DummyBaseTestRun;
-import co.cask.cdap.test.app.TestAdapterFrameworkTestRun;
 import co.cask.cdap.test.app.TestFrameworkTestRun;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -49,8 +48,7 @@ import org.junit.runners.Suite;
   SparkMetricsIntegrationTestRun.class,
   SparkServiceIntegrationTestRun.class,
   SparkStreamIntegrationTestRun.class,
-  TestFrameworkTestRun.class,
-  TestAdapterFrameworkTestRun.class
+  TestFrameworkTestRun.class
 })
 public class TestFrameworkTestSuite extends TestFrameworkTestBase {
 }

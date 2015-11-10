@@ -21,7 +21,6 @@ import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
@@ -53,8 +52,6 @@ public class FilterAppWithNewFlowAPI extends AbstractApplication {
   public void configure() {
     setName("FilterApp");
     setDescription("Application for filtering numbers. Test runtimeargs.");
-    addStream(new Stream("input"));
-    createDataset("count", KeyValueTable.class);
     addFlow(new FilterFlow());
     addService(new BasicService("CountService", new CountHandler()));
   }
@@ -68,6 +65,7 @@ public class FilterAppWithNewFlowAPI extends AbstractApplication {
     public void configureFlow() {
       setName("FilterFlow");
       setDescription("Flow for counting words");
+      addStream("input");
       addFlowlet("pass", new PassFlowlet());
       addFlowlet("filter", new Filter());
       connectStream("input", "pass");
@@ -88,6 +86,7 @@ public class FilterAppWithNewFlowAPI extends AbstractApplication {
       setName("pass");
       setDescription("NoOp Flowlet that passes the event to the next flowlet");
       setFailurePolicy(FailurePolicy.IGNORE);
+      createDataset("count", KeyValueTable.class);
       useDatasets("count");
     }
 

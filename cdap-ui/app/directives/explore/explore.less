@@ -1,0 +1,77 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.less";
+my-explore {
+  .explore-container {
+    background-color: white;
+    padding: 15px;
+
+    button.execute {
+      padding-left: 25px;
+      padding-right: 25px;
+    }
+
+    h5 {
+      font-weight: bold;
+    }
+
+    textarea {
+      max-width: 100%;
+      min-height: 100px;
+      max-height: 250px;
+    }
+
+    table.table-explore-results {
+      background-color: white;
+      border-left: none;
+      border-right: none;
+
+      th {
+        font-size: 13px;
+      }
+
+      td {
+        vertical-align: middle;
+        font-size: 13px;
+
+        &.col-index {
+          width: 5%;
+        }
+
+        &.col-start-time {
+          width: 20%;
+        }
+
+        &.col-status {
+          width: 15%;
+        }
+
+        &.col-statement {
+          width: 40%;
+        }
+
+        &.col-actions {
+          width: 20%;
+
+          button.btn {
+            padding: 10px;
+          }
+        }
+      }
+    }
+  }
+}

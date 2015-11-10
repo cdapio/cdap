@@ -1,0 +1,43 @@
+{
+  "artifact": {
+    "name": "cdap-etl-realtime",
+    "scope": "SYSTEM",
+    "version": "3.3.0-SNAPSHOT"
+  },
+  "config": {
+    "source": {
+      "name": "Twitter",
+      "label": "Twitter",
+      "properties": {
+        "AccessToken": "",
+        "AccessTokenSecret": "",
+        "ConsumerSecret": "",
+        "ConsumerKey": ""
+      }
+    },
+    "sinks": [
+      {
+        "name": "Stream",
+        "label": "Stream",
+        "properties": {
+          "name": "",
+          "headers.field": "header",
+          "body.field": "body"
+        }
+      }
+    ],
+    "transforms": [
+      {
+        "name": "Script",
+        "label": "Transform to Stream",
+        "properties": {
+          "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"body\",\"type\":\"string\"}]}",
+          "script": "function transform(input) {\n   if (input.source !== null) {\n     input.source = 'No-Source';     \n   }\n   \n   var body = [ input.id, input.message, input.lang, input.favCount, input.rtCount, input.source]\n   \n   return {\n       headers : { id : input.id + '' , lang : input.lang},\n       body : body.join('\\t')\n   } \n}"
+        }
+      }
+    ],
+    "instances": 1
+  },
+  "description": "Streaming Twitter Tweets into Stream for downstream processing."
+}
+

@@ -18,17 +18,20 @@ package co.cask.cdap.internal.io;
 
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * This class uses Java Reflection to inspect fields in any Java class to generate RECORD schema.
@@ -47,32 +50,47 @@ import javax.annotation.Nonnull;
  */
 public final class ReflectionSchemaGenerator extends AbstractSchemaGenerator {
 
+  private final boolean isNullableByDefault;
+
+  public ReflectionSchemaGenerator(boolean isNullableByDefault) {
+    this.isNullableByDefault = isNullableByDefault;
+  }
+
+  public ReflectionSchemaGenerator() {
+    this(true);
+  }
+
   @Override
   protected Schema generateRecord(TypeToken<?> typeToken, Set<String> knowRecords, boolean acceptRecursion)
     throws UnsupportedTypeException {
     String recordName = typeToken.getRawType().getName();
     Map<String, TypeToken<?>> recordFieldTypes =
       typeToken.getRawType().isInterface() ?
-        collectByMethods(typeToken, Maps.<String, TypeToken<?>>newTreeMap()) :
-        collectByFields(typeToken, Maps.<String, TypeToken<?>>newTreeMap());
+        collectByMethods(typeToken, new TreeMap<String, TypeToken<?>>()) :
+        collectByFields(typeToken, new TreeMap<String, TypeToken<?>>());
 
     // Recursively generate field type schema.
-    ImmutableList.Builder<Schema.Field> builder = ImmutableList.builder();
+    List<Schema.Field> fields = new ArrayList<>();
     for (Map.Entry<String, TypeToken<?>> fieldType : recordFieldTypes.entrySet()) {
-      Schema fieldSchema = doGenerate(fieldType.getValue(),
-                                      ImmutableSet.<String>builder().addAll(knowRecords).add(recordName).build(),
-                                      acceptRecursion);
+      Set<String> records = new HashSet<>(knowRecords);
+      records.add(recordName);
+      Schema fieldSchema = doGenerate(fieldType.getValue(), records, acceptRecursion);
 
       if (!fieldType.getValue().getRawType().isPrimitive()) {
-        // For non-primitive, allows "null" value, unless the class is annotated with Nonnull
-        if (!typeToken.getRawType().isAnnotationPresent(Nonnull.class)) {
+        boolean isNotNull = typeToken.getRawType().isAnnotationPresent(Nonnull.class);
+        boolean isNull = typeToken.getRawType().isAnnotationPresent(Nullable.class);
+
+        // For non-primitive, allows "null" value
+        // i) if it is nullable by default and notnull annotation is not present
+        // ii) if it is not nullable by default and nullable annotation is present
+        if ((isNullableByDefault && !isNotNull) || (!isNullableByDefault && isNull)) {
           fieldSchema = Schema.unionOf(fieldSchema, Schema.of(Schema.Type.NULL));
         }
       }
-      builder.add(Schema.Field.of(fieldType.getKey(), fieldSchema));
+      fields.add(Schema.Field.of(fieldType.getKey(), fieldSchema));
     }
 
-    return Schema.recordOf(recordName, builder.build());
+    return Schema.recordOf(recordName, Collections.unmodifiableList(fields));
   }
 
   private Map<String, TypeToken<?>> collectByFields(TypeToken<?> typeToken, Map<String, TypeToken<?>> fieldTypes) {

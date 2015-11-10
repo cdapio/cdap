@@ -17,13 +17,14 @@
 package co.cask.cdap.data2.util.hbase;
 
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.hbase.HBaseTestBase;
 import co.cask.cdap.data.hbase.HBaseTestFactory;
 import co.cask.cdap.data2.util.TableId;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -37,31 +38,32 @@ import static org.junit.Assert.assertNotNull;
  */
 @Category(SlowTests.class)
 public class ConfigurationTableTest {
+
+  @ClassRule
+  public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
+
   private static HBaseTableUtil tableUtil;
-  private static HBaseTestBase testHBase = new HBaseTestFactory().get();
   private static CConfiguration cConf = CConfiguration.create();
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
-    testHBase.startHBase();
     tableUtil = new HBaseTableUtilFactory(cConf).get();
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
   }
 
   @AfterClass
   public static void teardownAfterClass() throws Exception {
-    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
-    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), Constants.SYSTEM_NAMESPACE_ID);
-    testHBase.stopHBase();
+    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
+    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
   }
 
   @Test
   public void testConfigurationSerialization() throws Exception {
-    ConfigurationTable configTable = new ConfigurationTable(testHBase.getConfiguration());
+    ConfigurationTable configTable = new ConfigurationTable(TEST_HBASE.getConfiguration());
     configTable.write(ConfigurationTable.Type.DEFAULT, cConf);
 
     String configTableQualifier = "configuration";
-    TableId configTableId = TableId.from(Constants.SYSTEM_NAMESPACE_ID, configTableQualifier);
+    TableId configTableId = TableId.from(Id.Namespace.SYSTEM, configTableQualifier);
     String configTableName = tableUtil.buildHTableDescriptor(configTableId).build().getNameAsString();
     // the config table name minus the qualifier ('configuration'). Example: 'cdap.system.'
     String configTablePrefix = configTableName.substring(0, configTableName.length()  - configTableQualifier.length());

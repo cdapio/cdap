@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.proto.Id;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.slf4j.Logger;
@@ -30,8 +31,8 @@ final class SparkTwillProgramController extends AbstractTwillProgramController {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkTwillProgramController.class);
 
-  SparkTwillProgramController(String programName, TwillController controller, RunId runId) {
-    super(programName, controller, runId);
+  SparkTwillProgramController(Id.Program programId, TwillController controller, RunId runId) {
+    super(programId, controller, runId);
   }
 
   @Override

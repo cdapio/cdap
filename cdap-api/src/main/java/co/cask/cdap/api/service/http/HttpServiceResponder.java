@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.Map;
 
 /**
  * Interface with methods for sending HTTP responses.
@@ -81,8 +82,28 @@ public interface HttpServiceResponder {
    *
    * @param status status of the HTTP response
    * @param headers headers to send
+   * @deprecated Use {@link #sendStatus(int, Map)} or {@link #sendStatus(int, Iterable)} instead. This method
+   *             will be removed in future release.
    */
+  @Deprecated
   void sendStatus(int status, Multimap<String, String> headers);
+
+  /**
+   * Sends a status code and headers back to client without any content.
+   *
+   * @param status status of the HTTP response
+   * @param headers headers to send
+   */
+  void sendStatus(int status, Map<String, String> headers);
+
+  /**
+   * Sends a status code and headers back to client without any content.
+   *
+   * @param status status of the HTTP response
+   * @param headers headers to send; each {@link Map.Entry} contains the header name and value to be sent, hence
+   *                multiple values for the same header name is allowed.
+   */
+  void sendStatus(int status, Iterable<? extends Map.Entry<String, String>> headers);
 
   /**
    * Sends an error message back to the client with the specified status code.
@@ -99,6 +120,30 @@ public interface HttpServiceResponder {
    * @param content content to be sent back
    * @param contentType type of content
    * @param headers headers to be sent back
+   * @deprecated Use {@link #send(int, ByteBuffer, String, Map)} or {@link #send(int, ByteBuffer, String, Iterable)}
+   *             instead. This method will be removed in future release.
    */
+  @Deprecated
   void send(int status, ByteBuffer content, String contentType, Multimap<String, String> headers);
+
+  /**
+   * Sends response back to client.
+   *
+   * @param status status of the response
+   * @param content content to be sent back
+   * @param contentType type of content
+   * @param headers headers to be sent back
+   */
+  void send(int status, ByteBuffer content, String contentType, Map<String, String> headers);
+
+  /**
+   * Sends response back to client.
+   *
+   * @param status status of the response
+   * @param content content to be sent back
+   * @param contentType type of content
+   * @param headers headers to send; each {@link Map.Entry} contains the header name and value to be sent, hence
+   *                multiple values for the same header name is allowed.
+   */
+  void send(int status, ByteBuffer content, String contentType, Iterable<? extends Map.Entry<String, String>> headers);
 }

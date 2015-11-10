@@ -17,6 +17,7 @@
 package co.cask.cdap.client;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.util.RESTClient;
@@ -24,6 +25,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramStatus;
+import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
@@ -58,44 +60,7 @@ public class ScheduleClient {
   }
 
   public ScheduleClient(ClientConfig config) {
-    this.config = config;
-    this.restClient = new RESTClient(config);
-  }
-
-  /**
-   * @deprecated As of 3.1, use {@link #list(Id.Workflow)} instead.
-   */
-  @Deprecated
-  public List<ScheduleSpecification> list(String appId, String workflowId)
-    throws IOException, UnauthorizedException, NotFoundException {
-
-    return list(Id.Workflow.from(config.getNamespace(), appId, workflowId));
-  }
-
-  /**
-   * @deprecated As of 3.1, use {@link #suspend(Id.Schedule)} instead.
-   */
-  @Deprecated
-  public void suspend(String appId, String scheduleId) throws IOException, UnauthorizedException, NotFoundException {
-    suspend(Id.Schedule.from(config.getNamespace(), appId, scheduleId));
-  }
-
-  /**
-   * @deprecated As of 3.1, use {@link #resume(Id.Schedule)} instead.
-   */
-  @Deprecated
-  public void resume(String appId, String scheduleId) throws IOException, UnauthorizedException, NotFoundException {
-    resume(Id.Schedule.from(config.getNamespace(), appId, scheduleId));
-  }
-
-  /**
-   * @deprecated As of 3.1, use {@link #getStatus(Id.Schedule)} instead.
-   */
-  @Deprecated
-  public String getStatus(String appId, String scheduleId)
-    throws IOException, UnauthorizedException, NotFoundException {
-
-    return getStatus(Id.Schedule.from(config.getNamespace(), appId, scheduleId));
+    this(config, new RESTClient(config));
   }
 
   public List<ScheduleSpecification> list(Id.Workflow workflow)
@@ -111,6 +76,31 @@ public class ScheduleClient {
 
     ObjectResponse<List<ScheduleSpecification>> objectResponse = ObjectResponse.fromJsonBody(
       response, new TypeToken<List<ScheduleSpecification>>() { }.getType(), GSON);
+    return objectResponse.getResponseObject();
+  }
+
+  /**
+   * Get the next scheduled run time of the program. A program may contain multiple schedules.
+   * This method returns the next scheduled runtimes for all the schedules. This method only takes
+   + into account {@link Schedule}s based on time. For schedules based on data, an empty list will
+   + be returned.
+   *
+   * @param workflow Id of the Workflow for which to fetch next run times.
+   * @return list of Scheduled runtimes for the Workflow. Empty list if there are no schedules.
+   */
+  public List<ScheduledRuntime> nextRuntimes(Id.Workflow workflow)
+    throws IOException, UnauthorizedException, NotFoundException {
+
+    String path = String.format("apps/%s/workflows/%s/nextruntime", workflow.getApplicationId(), workflow.getId());
+    URL url = config.resolveNamespacedURLV3(workflow.getNamespace(), path);
+    HttpResponse response = restClient.execute(HttpMethod.GET, url, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_NOT_FOUND);
+    if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
+      throw new NotFoundException(workflow);
+    }
+
+    ObjectResponse<List<ScheduledRuntime>> objectResponse = ObjectResponse.fromJsonBody(
+      response, new TypeToken<List<ScheduledRuntime>>() { }.getType(), GSON);
     return objectResponse.getResponseObject();
   }
 

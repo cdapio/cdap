@@ -20,17 +20,17 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
-import co.cask.cdap.template.etl.api.PipelineConfigurer;
-import co.cask.cdap.template.etl.api.realtime.DataWriter;
-import co.cask.cdap.template.etl.api.realtime.RealtimeContext;
-import co.cask.cdap.template.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.api.plugin.PluginConfig;
+import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.realtime.DataWriter;
+import co.cask.cdap.etl.api.realtime.RealtimeContext;
+import co.cask.cdap.etl.api.realtime.RealtimeSink;
 
 
 /**
  * Real-time sink.
  */
-@Plugin(type = "sink")
+@Plugin(type = "realtimesink")
 @Name("Sink")
 @Description("Real-time sink")
 public class Sink extends RealtimeSink<StructuredRecord> {

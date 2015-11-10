@@ -16,7 +16,8 @@
 
 package co.cask.cdap.app.program;
 
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -42,6 +43,7 @@ import javax.annotation.Nullable;
  */
 public final class DefaultProgram implements Program {
 
+  private final CConfiguration cConf;
   private final String mainClassName;
   private final ProgramType processorType;
 
@@ -63,9 +65,10 @@ public final class DefaultProgram implements Program {
    *                     the {@link #getClassLoader()} methods would throw exception.
    * @param parentClassLoader Parent classloader for the program class.
    */
-  DefaultProgram(Location programJarLocation,
-                 @Nullable File expandFolder, ClassLoader parentClassLoader) throws IOException {
+  DefaultProgram(Location programJarLocation, @Nullable CConfiguration cConf,
+                 @Nullable File expandFolder, @Nullable ClassLoader parentClassLoader) throws IOException {
     this.programJarLocation = programJarLocation;
+    this.cConf = cConf;
     this.expandFolder = expandFolder;
     this.parentClassLoader = parentClassLoader;
 
@@ -95,7 +98,7 @@ public final class DefaultProgram implements Program {
   }
 
   DefaultProgram(Location programJarLocation, ClassLoader classLoader) throws IOException {
-    this(programJarLocation, null, null);
+    this(programJarLocation, null, null, null);
     this.classLoader = classLoader;
   }
 
@@ -157,9 +160,12 @@ public final class DefaultProgram implements Program {
   @Override
   public synchronized ClassLoader getClassLoader() {
     if (classLoader == null) {
+      // The following precondition should always pass.
+      // cConf can only be null if a program class loader is already provided through the constructor.
+      Preconditions.checkNotNull(cConf, "CConfiguration cannot be null.");
       expandIfNeeded();
       try {
-        classLoader = ProgramClassLoader.create(expandFolder, parentClassLoader, processorType);
+        classLoader = ProgramClassLoader.create(cConf, expandFolder, parentClassLoader, processorType);
       } catch (IOException e) {
         throw Throwables.propagate(e);
       }

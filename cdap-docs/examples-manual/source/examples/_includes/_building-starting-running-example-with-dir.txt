@@ -1,0 +1,43 @@
+
+.. To use this include, define these replacements:
+.. example
+.. example-italic
+.. example-dir
+.. example-artifact
+
+.. |application-overview| replace:: |example-italic| |application-overview-page|
+
+Building and Starting
+=====================
+
+.. highlight:: console
+
+- You can either build the example (as described in :ref:`Building an Example Application 
+  <cdap-building-running-example>`) or use the pre-built JAR file included in the CDAP SDK
+  (as described in :ref:`Deploying an Application <cdap-building-running-deploying>`):
+  
+  .. parsed-literal::
+    examples/|example-dir|/target/|example-artifact|-|release|.jar
+  
+- Start CDAP (as described in :ref:`Starting and Stopping CDAP <start-stop-cdap>`). 
+
+- Deploy the application, as described in :ref:`Deploying an Application <cdap-building-running-deploying>`.
+  For example, from the Standalone CDAP SDK directory, use the :ref:`Command Line Interface (CLI) <cli>`:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+      |$| cdap-cli.sh load artifact examples/|example-dir|/target/|example-artifact|-|release|.jar
+      Successfully added artifact with name '|example-artifact|'
+
+      |$| cdap-cli.sh create app |example| |example-artifact| |release| user
+      Successfully created application
+  
+- Once the application has been deployed, you can start its components, as described in
+  :ref:`Starting an Application <cdap-building-running-starting-application>`, and detailed at the 
+  start of `running the example <#running-the-example>`__.
+  
+- Once all components are started, `run the example <#running-the-example>`__.
+
+- When finished, you can :ref:`stop <cdap-building-running-stopping>`
+  and :ref:`remove the application <cdap-building-running-removing>`.

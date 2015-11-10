@@ -1,2 +1,1 @@
-stop service CubeServiceApp.CubeService 
-stop adapter cubeAnalytics
+stop service CubeServiceApp.CubeService

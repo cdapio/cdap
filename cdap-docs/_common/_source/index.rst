@@ -68,16 +68,18 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Advanced Topics:** Best practices for CDAP development, adding a custom logback
 
 
-.. |application-templates| replace:: **Application Templates:**
-.. _application-templates: application-templates/index.html
+.. |included-applications| replace:: **Included Applications:**
+.. _included-applications: included-applications/index.html
 
-- |application-templates|_
+- |included-applications|_
 
   - **Big Data without Big Development:** How to use CDAP "out-of-the-box" to solve problems and use cases 
-  - **Introduction to Application Templates:** Applications that are reusable through configuration and
+  - **Introduction to Included Applications:** Applications that are reusable through configuration and
     extensible through plugins 
-  - **ETL:** Making performing ETL possible without writing code 
+  - **Cask Hydrator and ETL Pipelines:** Makes performing ETL possible without writing code 
   - **Creating Custom ETL Plugins:** For developers of custom ETL plugins 
+  - **Data Quality:** An extensible *Included Application* to assess the quality of data
+    using its out-of-the-box functionality and libraries
   
   
 .. |admin-manual| replace:: **Administration Manual:**
@@ -85,8 +87,8 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
 - |admin-manual|_ 
 
-  - **Installation:** Putting CDAP into production, with installation, configuration, security setup, and monitoring
-  - **Operations:** Logging, metrics, runtime arguments, scaling instances, resource
+  - **Installation:** Putting CDAP into production, with installation, configuration, and security setup
+  - **Operations:** Logging, metrics, monitoring, runtime arguments, scaling instances, resource
     guarantees, transaction service maintenance, troubleshooting and introduces the CDAP UI
 
 

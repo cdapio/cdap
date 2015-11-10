@@ -27,15 +27,17 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
 import co.cask.cdap.data2.dataset2.lib.partitioned.PartitionedFileSetModule;
 import co.cask.cdap.data2.dataset2.lib.table.CoreDatasetsModule;
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.DefaultTransactionExecutor;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -83,12 +85,13 @@ public abstract class AbstractDatasetFrameworkTest {
   private static final Id.DatasetType DOUBLE_KV_TYPE = Id.DatasetType.from(NAMESPACE_ID,
                                                                            DoubleWrappedKVTable.class.getName());
 
+  protected static final AbstractNamespaceClient NAMESPACE_CLIENT = new InMemoryNamespaceClient();
   protected static DatasetDefinitionRegistryFactory registryFactory;
   protected static CConfiguration cConf;
   protected static TransactionExecutorFactory txExecutorFactory;
 
   @BeforeClass
-  public static void setup() {
+  public static void setup() throws Exception {
     cConf = CConfiguration.create();
 
     final Injector injector = Guice.createInjector(
@@ -105,6 +108,7 @@ public abstract class AbstractDatasetFrameworkTest {
         return registry;
       }
     };
+    NAMESPACE_CLIENT.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
   }
 
   @Test
@@ -129,7 +133,7 @@ public abstract class AbstractDatasetFrameworkTest {
     // verify it got added to the right namespace
     Assert.assertTrue(framework.hasInstance(MY_TABLE));
     // and not to the system namespace
-    Assert.assertFalse(framework.hasInstance(Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, "my_table")));
+    Assert.assertFalse(framework.hasInstance(Id.DatasetInstance.from(Id.Namespace.SYSTEM, "my_table")));
 
     // Doing some admin and data ops
     DatasetAdmin admin = framework.getAdmin(MY_TABLE, null);
@@ -359,12 +363,15 @@ public abstract class AbstractDatasetFrameworkTest {
   }
 
   @Test
+  @SuppressWarnings("ConstantConditions")
   public void testNamespaceInstanceIsolation() throws Exception {
     DatasetFramework framework = getFramework();
 
     // create 2 namespaces
     Id.Namespace namespace1 = Id.Namespace.from("ns1");
     Id.Namespace namespace2 = Id.Namespace.from("ns2");
+    NAMESPACE_CLIENT.create(new NamespaceMeta.Builder().setName(namespace1).build());
+    NAMESPACE_CLIENT.create(new NamespaceMeta.Builder().setName(namespace2).build());
     framework.createNamespace(namespace1);
     framework.createNamespace(namespace2);
 
@@ -427,6 +434,8 @@ public abstract class AbstractDatasetFrameworkTest {
     // create 2 namespaces
     Id.Namespace namespace1 = Id.Namespace.from("ns1");
     Id.Namespace namespace2 = Id.Namespace.from("ns2");
+    NAMESPACE_CLIENT.create(new NamespaceMeta.Builder().setName(namespace1).build());
+    NAMESPACE_CLIENT.create(new NamespaceMeta.Builder().setName(namespace2).build());
     framework.createNamespace(namespace1);
     framework.createNamespace(namespace2);
 

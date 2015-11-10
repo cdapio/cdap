@@ -33,33 +33,33 @@ import java.util.Map;
  */
 public class LocalStreamWriter implements StreamWriter {
 
-  private final StreamWriterFactory streamWriterFactory;
+  private final StreamManagerFactory streamManagerFactory;
   private final Id.Namespace namespace;
 
   @Inject
-  public LocalStreamWriter(@Assisted("namespace") Id.Namespace namespace, StreamWriterFactory streamWriterFactory) {
-    this.namespace = namespace;
-    this.streamWriterFactory = streamWriterFactory;
+  public LocalStreamWriter(@Assisted("run") Id.Run run, StreamManagerFactory streamManagerFactory) {
+    this.namespace = run.getNamespace();
+    this.streamManagerFactory = streamManagerFactory;
   }
 
   @Override
   public void write(String stream, String data) throws IOException {
-    streamWriterFactory.create(Id.Stream.from(namespace, stream)).send(data);
+    streamManagerFactory.create(Id.Stream.from(namespace, stream)).send(data);
   }
 
   @Override
   public void write(String stream, String data, Map<String, String> headers) throws IOException {
-    streamWriterFactory.create(Id.Stream.from(namespace, stream)).send(headers, data);
+    streamManagerFactory.create(Id.Stream.from(namespace, stream)).send(headers, data);
   }
 
   @Override
   public void write(String stream, ByteBuffer data) throws IOException {
-    streamWriterFactory.create(Id.Stream.from(namespace, stream)).send(data);
+    streamManagerFactory.create(Id.Stream.from(namespace, stream)).send(data);
   }
 
   @Override
   public void write(String stream, StreamEventData data) throws IOException {
-    streamWriterFactory.create(Id.Stream.from(namespace, stream))
+    streamManagerFactory.create(Id.Stream.from(namespace, stream))
       .send(data.getHeaders(), data.getBody());
   }
 

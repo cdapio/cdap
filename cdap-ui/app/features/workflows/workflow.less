@@ -1,36 +1,42 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 @import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
 @border-color: #d0d0dd;
 
-body.state-workflows{
-  .panel-group {
-    .panel.panel-default {
-      > .panel-heading {
-        > a {
-          color: white;
-          &:hover { text-decoration: none; }
-        }
-      }
+body.state-workflows {
+  main.container {
+    // Override container styling to accommodate full width view
+    // TODO: come up with a way to apply the 3 lines below to all program detail views
+    width: 100%;
+    padding-right: 0;
+    padding-left: 0;
+
+    h2 {
+      font-weight: 500;
+      margin-top: 0;
+      margin-bottom: 5px;
     }
-  }
-
-  .col-sm-6 > div.btn-group { margin-top: 14px; }
-  .col-xs-12 > strong {
-    color: @cdap-header;
-    font-size: 14px;
-    padding-right: 5px;
-  }
-
-  .btn-group {
-    .btn-red {
-      span.fa {
-        color: @brand-danger;
-      }
+    h3 {
+      font-weight: 400;
     }
-
-    .btn-green {
-      span.fa {
-        color: @brand-success;
-      }
+    .btn-lg .fa-eject {
+      .rotate(90deg);
     }
   }
 
@@ -40,8 +46,7 @@ body.state-workflows{
     border-top-left-radius: @border-radius-base;
     border-top-right-radius: @border-radius-base;
     font-weight: 700;
-    padding-top: 20px;
-    height: 70px;
+    padding: 10px 0;
   }
 
   .schedule-content {
@@ -50,8 +55,8 @@ body.state-workflows{
         background-color: white;
         border: 1px solid @border-color;
         padding: 5px 0;
-        line-height: 50px;
         cursor: pointer;
+        height: 55px;
         &.active { background-color: #dcdce6; }
         p, i {
           vertical-align: middle;
@@ -65,14 +70,90 @@ body.state-workflows{
       background-color: #9d9fab;
       padding: 10px 0;
       .row {
-        line-height: 30px;
         p {
-          vertical-align: middle;
           margin-bottom: 0;
           color: white;
         }
       }
       table { width: inherit; }
+    }
+  }
+}
+
+my-pageslide {
+
+  div.left-column {
+    width: 5%;
+    float: left;
+    height: 100%;
+    background-color: @cdap-darkness;
+    padding-top: 5px;
+    cursor: pointer;
+
+    &.hidden {
+      width: 100%;
+    }
+
+
+    h3.vertical {
+      transform: rotate(90deg);
+      color: white;
+      white-space: nowrap;
+
+      .token-title {
+        margin-left: 5px;
+      }
+    }
+
+  }
+
+  div.right-column {
+    width: 95%;
+    float: right;
+
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    top: 0;
+    overflow-y: auto;
+
+    div.sidepanel {
+
+      .well {
+        border-radius: 0;
+      }
+
+      .sidepanel-heading {
+        .box-shadow( 0px 0px 5px 1px rgba(0,0,0,0.45));
+
+        h3 {
+          margin-top: 0;
+          margin-bottom: 0;
+          padding: 10px 15px;
+        }
+      }
+
+      .sidepanel-tabs {
+        padding: 0 10px;
+      }
+
+      div.btn-group.btn-group-justified {
+        margin-top: 10px;
+        a.btn {
+          border-radius: 0;
+        }
+      }
+
+      table.table {
+        margin-top: 0;
+        thead th {
+          font-size: 13px;
+        }
+
+        tr td {
+          font-size: 11px;
+        }
+      }
     }
   }
 }

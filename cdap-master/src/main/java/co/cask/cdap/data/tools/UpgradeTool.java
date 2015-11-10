@@ -32,8 +32,10 @@ import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.config.DefaultConfigStore;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.datafabric.dataset.instance.DatasetInstanceManager;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
@@ -42,9 +44,16 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
+import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.NoOpBusinessMetadataStore;
+import co.cask.cdap.data2.metadata.writer.LineageWriter;
+import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
@@ -55,7 +64,6 @@ import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.distributed.TransactionService;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -66,6 +74,7 @@ import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.google.inject.util.Modules;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -82,29 +91,26 @@ public class UpgradeTool {
 
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeTool.class);
 
-  @VisibleForTesting
-  final Injector injector;
-
+  private final Injector injector;
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final TransactionService txService;
   private final ZKClientService zkClientService;
   private final MDSDatasetsRegistry mdsDatasetsRegistry;
-
   private final DatasetFramework dsFramework;
 
   /**
    * Set of Action available in this tool.
    */
   private enum Action {
-    UPGRADE("Upgrades CDAP to 3.0\n" +
+    UPGRADE("Upgrades CDAP to " + ProjectInfo.getVersion() + "\n" +
               "  The upgrade tool upgrades the following: \n" +
-              "  1. User Datasets\n" +
-              "      - Upgrades the coprocessor jars for tables\n" +
-              "      - Migrates the metadata for PartitionedFileSets\n" +
-              "  2. System Datasets\n" +
-              "  3. UsageRegistry Dataset Type\n" +
+              "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
+              "  2. Upgrade Schedule Triggers\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
+    UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
+                    "system HBase tables to a version that is compatible with the new HBase \n" +
+                    "version. All tables must be disabled prior to this step."),
     HELP("Show this help.");
 
     private final String description;
@@ -146,6 +152,22 @@ public class UpgradeTool {
       new LocationRuntimeModule().getDistributedModules(),
       new ZKClientModule(),
       new DiscoveryRuntimeModule().getDistributedModules(),
+      Modules.override(new DataSetsModules().getDistributedModules()).with(
+        new AbstractModule() {
+          @Override
+          protected void configure() {
+            bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+            install(new FactoryModuleBuilder()
+                      .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
+                      .build(DatasetDefinitionRegistryFactory.class));
+            // Upgrade tool does not need to record lineage for now.
+            bind(LineageWriter.class).to(NoOpLineageWriter.class);
+            // No need to do anything with Metadata store for now.
+            bind(BusinessMetadataStore.class).to(NoOpBusinessMetadataStore.class);
+          }
+        }
+      ),
+      new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new TwillModule(),
@@ -154,7 +176,8 @@ public class UpgradeTool {
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
-      new NotificationServiceRuntimeModule().getDistributedModules(),
+      // don't need real notifications for upgrade, so use the in-memory implementations
+      new NotificationServiceRuntimeModule().getInMemoryModules(),
       new KafkaClientModule(),
       new AbstractModule() {
         @Override
@@ -163,18 +186,14 @@ public class UpgradeTool {
           // the DataFabricDistributedModule needs MetricsCollectionService binding and since Upgrade tool does not do
           // anything with Metrics we just bind it to NoOpMetricsCollectionService
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
-          install(new FactoryModuleBuilder()
-                    .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
-                    .build(DatasetDefinitionRegistryFactory.class));
-
           bind(MetricDatasetFactory.class).to(DefaultMetricDatasetFactory.class).in(Scopes.SINGLETON);
           bind(MetricStore.class).to(DefaultMetricStore.class);
-          bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
         }
 
         @Provides
         @Singleton
         @Named("mdsDatasetsRegistry")
+        @SuppressWarnings("unused")
         public MDSDatasetsRegistry getMDSDatasetsRegistry(TransactionSystemClient txClient,
                                                           @Named("datasetMDS") DatasetFramework framework) {
           return new MDSDatasetsRegistry(txClient, framework);
@@ -183,16 +202,18 @@ public class UpgradeTool {
         @Provides
         @Singleton
         @Named("datasetInstanceManager")
+        @SuppressWarnings("unused")
         public DatasetInstanceManager getDatasetInstanceManager(@Named("mdsDatasetsRegistry")
                                                                 MDSDatasetsRegistry mdsDatasetsRegistry) {
           return new DatasetInstanceManager(mdsDatasetsRegistry);
         }
 
-        // This is needed because the LocalAdapterManager, LocalApplicationManager, LocalApplicationTemplateManager
+        // This is needed because the LocalApplicationManager
         // expects a dsframework injection named datasetMDS
         @Provides
         @Singleton
         @Named("datasetMDS")
+        @SuppressWarnings("unused")
         public DatasetFramework getInDsFramework(DatasetFramework dsFramework) {
           return dsFramework;
         }
@@ -203,11 +224,11 @@ public class UpgradeTool {
   /**
    * Do the start up work
    */
-  private void startUp() throws Exception {
+  private void startUp(boolean includeNewDatasets) throws Exception {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
-    initializeDSFramework(cConf, dsFramework);
+    initializeDSFramework(cConf, dsFramework, includeNewDatasets);
     mdsDatasetsRegistry.startUp();
   }
 
@@ -250,14 +271,15 @@ public class UpgradeTool {
 
     try {
       switch (action) {
-        case UPGRADE:
+        case UPGRADE: {
           System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
           String response = getResponse(interactive);
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
             try {
-              startUp();
+              startUp(false);
               performUpgrade();
+              System.out.println("\nUpgrade completed successfully.\n");
             } finally {
               stop();
             }
@@ -265,6 +287,24 @@ public class UpgradeTool {
             System.out.println("Upgrade cancelled.");
           }
           break;
+        }
+        case UPGRADE_HBASE: {
+          System.out.println(String.format("%s - %s", action.name().toLowerCase(), action.getDescription()));
+          String response = getResponse(interactive);
+          if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
+            System.out.println("Starting upgrade ...");
+            try {
+              startUp(true);
+              performHBaseUpgrade();
+              System.out.println("\nUpgrade completed successfully.\n");
+            } finally {
+              stop();
+            }
+          } else {
+            System.out.println("Upgrade cancelled.");
+          }
+          break;
+        }
         case HELP:
           printHelp();
           break;
@@ -309,21 +349,31 @@ public class UpgradeTool {
   }
 
   private void performUpgrade() throws Exception {
-    LOG.info("Upgrading System and User Datasets ...");
+    performCoprocessorUpgrade();
+
+    LOG.info("Upgrading schedules...");
+    injector.getInstance(DatasetBasedTimeScheduleStore.class).upgrade();
+  }
+
+  private void performHBaseUpgrade() throws Exception {
+
+    System.setProperty(AbstractHBaseDataSetAdmin.SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE, Boolean.TRUE.toString());
+    performCoprocessorUpgrade();
+  }
+
+  private void performCoprocessorUpgrade() throws Exception {
+
+    LOG.info("Upgrading User and System HBase Tables ...");
     DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
-
-    LOG.info("Upgrading PartitionedFileSets ...");
-    PFSUpgrader pfsUpgrader = injector.getInstance(PFSUpgrader.class);
-    pfsUpgrader.upgrade();
 
     LOG.info("Upgrading QueueAdmin ...");
     QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
     queueAdmin.upgrade();
 
-    UsageRegistry usageRegistry = injector.getInstance(UsageRegistry.class);
-    usageRegistry.upgrade(injector.getInstance(Key.get(DatasetInstanceManager.class,
-                                                       Names.named("datasetInstanceManager"))));
+    LOG.info("Upgrading Dataset Specification...");
+    DatasetSpecificationUpgrader dsUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
+    dsUpgrader.upgrade();
   }
 
   public static void main(String[] args) {
@@ -338,10 +388,15 @@ public class UpgradeTool {
   /**
    * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
    */
-  private void initializeDSFramework(CConfiguration cConf, DatasetFramework datasetFramework) throws IOException,
-    DatasetManagementException {
+  private void initializeDSFramework(CConfiguration cConf,
+                                     DatasetFramework datasetFramework,
+                                     boolean includeNewDatasets) throws IOException, DatasetManagementException {
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
+    if (includeNewDatasets) {
+      // artifacts meta data was added in 3.2
+      ArtifactStore.setupDatasets(datasetFramework);
+    }
     // app metadata
     DefaultStore.setupDatasets(datasetFramework);
     // config store

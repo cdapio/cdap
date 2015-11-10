@@ -20,20 +20,19 @@ import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
-import co.cask.cdap.proto.AdapterConfig;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.Connection;
+import java.util.Set;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -66,23 +65,56 @@ public interface TestManager {
                                        @Nullable Config configObject, File... bundleEmbeddedJars);
 
   /**
-   * Deploys an {@link ApplicationTemplate}. Only supported in unit tests.
+   * Deploys an {@link Application}.
    *
-   * @param namespace The namespace to deploy to
-   * @param templateId The id of the template. Must match the name set in
-   *                   {@link ApplicationTemplate#configure(ApplicationConfigurer, ApplicationContext)}
-   * @param templateClz The template class
-   * @param exportPackages The list of packages that should be visible to template plugins. For example,
-   *                       if your plugins implement an interface com.company.api.myinterface that is in your template,
-   *                       you will want to include 'com.company.api' in the list of export pacakges.
+   * @param appId the id of the application to create
+   * @param appRequest the app create or update request that includes the artifact to create the app from and any config
+   *                   to pass to the application.
+   * @return An {@link ApplicationManager} to manage the deployed application.
    */
-  void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
-                      Class<? extends ApplicationTemplate> templateClz,
-                      String... exportPackages) throws IOException;
+  ApplicationManager deployApplication(Id.Application appId, AppRequest appRequest) throws Exception;
 
   /**
-   * Adds a plugins jar usable by the given template. Only supported in unit tests. Plugins added will not be visible
-   * until a call to {@link #deployTemplate(Id.Namespace, Id.ApplicationTemplate, Class, String...)} is made. The
+   * Add the specified artifact.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
+   * @throws Exception
+   */
+  void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception;
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @throws Exception
+   */
+  void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception;
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param exportPackages the packages to export and place in the manifest of the jar to build. This should include
+   *                       packages that contain classes that plugins for the application will implement.
+   * @throws Exception
+   */
+  void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, String... exportPackages) throws Exception;
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param manifest the manifest to use when building the jar
+   * @throws Exception
+   */
+  void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception;
+
+  /**
+   * Build an artifact from the specified plugin classes and then add it. The
    * jar created will include all classes in the same package as the give classes, plus any dependencies of the
    * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
    * classes, you must include both plugins. For example, suppose you have two plugins,
@@ -92,41 +124,88 @@ public interface TestManager {
    * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
    * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
    *
-   * @param templateId The id of the template to add the plugin for
-   * @param jarName The name to use for the plugin jar
-   * @param pluginClz A plugin class to add to the jar
-   * @param classes Additional plugin classes to add to the jar
-   * @throws IOException
+   * @param artifactId the id of the artifact to add
+   * @param parent the parent artifact it extends
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
    */
-  void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName, Class<?> pluginClz,
-                          Class<?>... classes) throws IOException;
+  void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
+                         Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
 
   /**
-   * Add a template plugin configuration file.
+   * Build an artifact from the specified plugin classes and then add it. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
    *
-   * @param templateId the id of the template to add the plugin config for
-   * @param fileName the name of the config file. The name should match the plugin jar file that it is for. For example,
-   *                 if you added a plugin named hsql-jdbc-1.0.0.jar, the config file must be named hsql-jdbc-1.0.0.json
-   * @param type the type of plugin
-   * @param name the name of the plugin
-   * @param description the description for the plugin
-   * @param className the class name of the plugin
-   * @param fields the fields the plugin uses
-   * @throws IOException
+   * @param artifactId the id of the artifact to add
+   * @param parents the parent artifacts it extends
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
    */
-  void addTemplatePluginJson(Id.ApplicationTemplate templateId, String fileName, String type, String name,
-                             String description, String className,
-                             PluginPropertyField... fields) throws IOException;
+  void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
+                         Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
+
 
   /**
-   * Creates an adapter.
+   * Build an artifact from the specified plugin classes and then add it. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
    *
-   * @param adapterId The id of the adapter to create
-   * @param config The configuration for the adapter
-   * @return An {@link AdapterManager} to manage the deployed adapter.
-   * @throws Exception if there was an exception deploying the adapter.
+   * @param artifactId the id of the artifact to add
+   * @param parent the parent artifact it extends
+   * @param additionalPlugins any plugin classes that need to be explicitly declared because they cannot be found
+   *                          by inspecting the jar. This is true for 3rd party plugins, such as jdbc drivers
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
    */
-  AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig config) throws Exception;
+  void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
+                         @Nullable Set<PluginClass> additionalPlugins,
+                         Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
+
+  /**
+   * Build an artifact from the specified plugin classes and then add it. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param parents the parent artifacts it extends
+   * @param additionalPlugins any plugin classes that need to be explicitly declared because they cannot be found
+   *                          by inspecting the jar. This is true for 3rd party plugins, such as jdbc drivers
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
+   */
+  void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parents,
+                         @Nullable Set<PluginClass> additionalPlugins,
+                         Class<?> pluginClass, Class<?>... pluginClasses) throws Exception;
+
+  /**
+   * Delete the specified artifact.
+   *
+   * @param artifactId the id of the artifact to delete
+   */
+  void deleteArtifact(Id.Artifact artifactId) throws Exception;
 
   /**
    * Clear the state of app fabric, by removing all deployed applications, Datasets and Streams.
@@ -206,6 +285,8 @@ public interface TestManager {
    */
   void deleteNamespace(Id.Namespace namespace) throws Exception;
 
-
+  /**
+   * Returns a {@link StreamManager} for the specified {@link Id.Stream}.
+   */
   StreamManager getStreamManager(Id.Stream streamId);
 }

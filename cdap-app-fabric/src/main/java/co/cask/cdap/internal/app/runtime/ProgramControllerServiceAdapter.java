@@ -17,12 +17,15 @@
 package co.cask.cdap.internal.app.runtime;
 
 import co.cask.cdap.app.runtime.ProgramController;
+import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.Service;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramController} implementation that control a guava Service.
@@ -33,8 +36,13 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
 
   private final Service service;
 
-  public ProgramControllerServiceAdapter(Service service, String programName, RunId runId) {
-    super(programName, runId);
+  public ProgramControllerServiceAdapter(Service service, Id.Program programId, RunId runId) {
+    this(service, programId, runId, null);
+  }
+
+  public ProgramControllerServiceAdapter(Service service, Id.Program programId,
+                                         RunId runId, @Nullable String componentName) {
+    super(programId, runId, componentName);
     this.service = service;
     listenToRuntimeState(service);
   }

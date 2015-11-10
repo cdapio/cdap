@@ -18,20 +18,15 @@ package co.cask.cdap.test;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.Application;
-import co.cask.cdap.api.app.ApplicationConfigurer;
-import co.cask.cdap.api.app.ApplicationContext;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
-import co.cask.cdap.api.templates.ApplicationTemplate;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
+import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
-import co.cask.cdap.common.NamespaceCannotBeDeletedException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -39,22 +34,27 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.LocalNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
+import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
+import co.cask.cdap.data.stream.StreamViewHttpHandler;
 import co.cask.cdap.data.stream.service.BasicStreamWriterSizeCollector;
 import co.cask.cdap.data.stream.service.LocalStreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamFileJanitorService;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamWriterSizeCollector;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
@@ -67,8 +67,6 @@ import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
-import co.cask.cdap.internal.LocalNamespaceClient;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -76,16 +74,15 @@ import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
-import co.cask.cdap.proto.AdapterConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.artifact.AppRequest;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultStreamManager;
-import co.cask.cdap.test.internal.DefaultStreamWriter;
 import co.cask.cdap.test.internal.LocalStreamWriter;
 import co.cask.cdap.test.internal.StreamManagerFactory;
-import co.cask.cdap.test.internal.StreamWriterFactory;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -96,8 +93,10 @@ import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
@@ -117,6 +116,8 @@ import java.net.URL;
 import java.sql.Connection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 
 /**
@@ -145,6 +146,7 @@ public class ConfigurableTestBase {
   private static DatasetService datasetService;
   private static TransactionManager txService;
   private static StreamCoordinatorClient streamCoordinatorClient;
+  private static MetricsManager metricsManager;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = Lists.newArrayList();
@@ -212,6 +214,7 @@ public class ConfigurableTestBase {
 
     Injector injector = Guice.createInjector(
       createDataFabricModule(),
+      new TransactionExecutorModule(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new ConfigModule(cConf, hConf),
@@ -226,10 +229,12 @@ public class ConfigurableTestBase {
         protected void configure() {
           bind(StreamHandler.class).in(Scopes.SINGLETON);
           bind(StreamFetchHandler.class).in(Scopes.SINGLETON);
+          bind(StreamViewHttpHandler.class).in(Scopes.SINGLETON);
           bind(AbstractNamespaceClient.class).to(LocalNamespaceClient.class).in(Scopes.SINGLETON);
           bind(StreamFileJanitorService.class).to(LocalStreamFileJanitorService.class).in(Scopes.SINGLETON);
           bind(StreamWriterSizeCollector.class).to(BasicStreamWriterSizeCollector.class).in(Scopes.SINGLETON);
           bind(StreamCoordinatorClient.class).to(InMemoryStreamCoordinatorClient.class).in(Scopes.SINGLETON);
+          bind(MetricsManager.class).toProvider(MetricsManagerProvider.class);
         }
       },
       // todo: do we need handler?
@@ -246,8 +251,6 @@ public class ConfigurableTestBase {
         protected void configure() {
           install(new FactoryModuleBuilder().implement(ApplicationManager.class, DefaultApplicationManager.class)
                     .build(ApplicationManagerFactory.class));
-          install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
-                    .build(StreamWriterFactory.class));
           install(new FactoryModuleBuilder().implement(StreamManager.class, DefaultStreamManager.class)
                     .build(StreamManagerFactory.class));
           bind(TemporaryFolder.class).toInstance(tmpFolder);
@@ -278,8 +281,24 @@ public class ConfigurableTestBase {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     // we use MetricStore directly, until RuntimeStats API changes
     RuntimeStats.metricStore = injector.getInstance(MetricStore.class);
+    metricsManager = injector.getInstance(MetricsManager.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(Constants.DEFAULT_NAMESPACE_META);
+    namespaceAdmin.create(NamespaceMeta.DEFAULT);
+  }
+
+  private static class MetricsManagerProvider implements Provider<MetricsManager> {
+    private final MetricStore metricStore;
+
+    @Inject
+    @SuppressWarnings("unused")
+    private MetricsManagerProvider(MetricStore metricStore) {
+      this.metricStore = metricStore;
+    }
+
+    @Override
+    public MetricsManager get() {
+      return new MetricsManager(metricStore);
+    }
   }
 
   private static CConfiguration createCConf(File localDataDir,
@@ -315,15 +334,14 @@ public class ConfigurableTestBase {
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
-    cConf.setBoolean(Constants.Scheduler.SCHEDULERS_LAZY_START, true);
-    cConf.set(Constants.Explore.LOCAL_DATA_DIR,
-              tmpFolder.newFolder("hive").getAbsolutePath());
-    cConf.set(Constants.AppFabric.APP_TEMPLATE_DIR, tmpFolder.newFolder("templates").getAbsolutePath());
+    cConf.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder("hive").getAbsolutePath());
     return cConf;
   }
 
   private static Module createDataFabricModule() {
-    return Modules.override(new DataFabricModules().getInMemoryModules(), new StreamAdminModules().getInMemoryModules())
+    return Modules.override(new DataFabricModules().getInMemoryModules(),
+                            new ViewAdminModules().getInMemoryModules(),
+                            new StreamAdminModules().getInMemoryModules())
       .with(new AbstractModule() {
 
         @Override
@@ -347,12 +365,12 @@ public class ConfigurableTestBase {
   }
 
   @AfterClass
-  public static void finish() throws NotFoundException, NamespaceCannotBeDeletedException {
+  public static void finish() throws Exception {
     if (--startCount != 0) {
       return;
     }
 
-    namespaceAdmin.deleteNamespace(Constants.DEFAULT_NAMESPACE_ID);
+    namespaceAdmin.delete(Id.Namespace.DEFAULT);
     streamCoordinatorClient.stopAndWait();
     metricsQueryService.stopAndWait();
     metricsCollectionService.startAndWait();
@@ -366,6 +384,10 @@ public class ConfigurableTestBase {
     datasetService.stopAndWait();
     dsOpService.stopAndWait();
     txService.stopAndWait();
+  }
+
+  protected MetricsManager getMetricsManager() {
+    return metricsManager;
   }
 
   /**
@@ -393,7 +415,7 @@ public class ConfigurableTestBase {
    * other programs defined in the application must be in the same or children package as the application.
    *
    * @param applicationClz The application class
-   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
+   * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Id.Namespace namespace,
                                                         Class<? extends Application> applicationClz,
@@ -415,91 +437,145 @@ public class ConfigurableTestBase {
    * other programs defined in the application must be in the same or children package as the application.
    *
    * @param applicationClz The application class
-   * @return An {@link co.cask.cdap.test.ApplicationManager} to manage the deployed application.
+   * @return An {@link ApplicationManager} to manage the deployed application.
    */
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz,
                                                         File... bundleEmbeddedJars) {
-    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, bundleEmbeddedJars);
+    return deployApplication(Id.Namespace.DEFAULT, applicationClz, bundleEmbeddedJars);
   }
 
   protected static ApplicationManager deployApplication(Class<? extends Application> applicationClz, Config appConfig,
                                                         File... bundleEmbeddedJars) {
-    return deployApplication(Constants.DEFAULT_NAMESPACE_ID, applicationClz, appConfig, bundleEmbeddedJars);
+    return deployApplication(Id.Namespace.DEFAULT, applicationClz, appConfig, bundleEmbeddedJars);
   }
 
   /**
-   * Creates an adapter.
+   * Deploys an {@link Application}. The application artifact must already exist.
    *
-   * @param adapterId The id of the adapter to create
-   * @param adapterConfig The configuration for the adapter
-   * @return An {@link AdapterManager} to manage the deployed adapter.
-   * @throws Exception if there was an exception deploying the adapter.
+   * @param appId the id of the application to create
+   * @param appRequest the application create or update request
+   * @return An {@link ApplicationManager} to manage the deployed application
    */
-  protected static AdapterManager createAdapter(Id.Adapter adapterId, AdapterConfig adapterConfig) throws Exception {
-    return getTestManager().createAdapter(adapterId, adapterConfig);
+  protected static ApplicationManager deployApplication(Id.Application appId,
+                                                        AppRequest appRequest) throws Exception {
+    return getTestManager().deployApplication(appId, appRequest);
   }
 
   /**
-   * Deploys an {@link ApplicationTemplate}.
+   * Add the specified artifact.
    *
-   * @param namespace The namespace to deploy to
-   * @param templateId The id of the template. Must match the name set in
-   *                   {@link ApplicationTemplate#configure(ApplicationConfigurer, ApplicationContext)}
-   * @param templateClz The template class
-   * @param exportPackages The list of packages that should be visible to template plugins. For example,
-   *                       if your plugins implement an interface com.company.api.myinterface that is in your template,
-   *                       you will want to include 'com.company.api' in the list of export pacakges.
+   * @param artifactId the id of the artifact to add
+   * @param artifactFile the contents of the artifact. Must be a valid jar file containing apps or plugins
+   * @throws Exception
    */
-  protected static void deployTemplate(Id.Namespace namespace, Id.ApplicationTemplate templateId,
-                                       Class<? extends ApplicationTemplate> templateClz,
-                                       String... exportPackages) throws IOException {
-    getTestManager().deployTemplate(namespace, templateId, templateClz, exportPackages);
+  protected static void addArtifact(Id.Artifact artifactId, File artifactFile) throws Exception {
+    getTestManager().addArtifact(artifactId, artifactFile);
   }
 
   /**
-   * Adds a plugins jar usable by the given template. Only supported in unit tests. Plugins added will not be visible
-   * until a call to {@link #deployTemplate(Id.Namespace, Id.ApplicationTemplate, Class, String...)} is made. The
-   * jar created will include all classes in the same package as the given plugin class, plus any dependencies of the
-   * that class and given additional classes.
-   * If another plugin in the same package as the given plugin requires a different set of dependent classes,
-   * you must include both plugins. For example, suppose you have two plugins,
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @throws Exception
+   */
+  protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass) throws Exception {
+    getTestManager().addAppArtifact(artifactId, appClass);
+  }
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param exportPackages the packages to export and place in the manifest of the jar to build. This should include
+   *                       packages that contain classes that plugins for the application will implement.
+   * @throws Exception
+   */
+  protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass,
+                                       String... exportPackages) throws Exception {
+    getTestManager().addAppArtifact(artifactId, appClass, exportPackages);
+  }
+
+  /**
+   * Build an application artifact from the specified class and then add it.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param appClass the application class to build the artifact from
+   * @param manifest the manifest to use when building the jar
+   * @throws Exception
+   */
+  protected static void addAppArtifact(Id.Artifact artifactId, Class<?> appClass, Manifest manifest) throws Exception {
+    getTestManager().addAppArtifact(artifactId, appClass, manifest);
+  }
+
+  /**
+   * Build an artifact from the specified plugin classes and then add it. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
    * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
    * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
    * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
    * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
-   * In this scenario, you must be certain to include functionY in the list of classes when specifying functionX as the
-   * plugin class.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
    *
-   * @param templateId The id of the template to add the plugin for
-   * @param jarName The name to use for the plugin jar
-   * @param pluginClz A plugin class to add to the jar. Any other class that shares the same package will be included
-   *                  in the jar.
-   * @param classes Additional plugin classes whose dependencies should be added to the jar.
-   * @throws IOException
+   * @param artifactId the id of the artifact to add
+   * @param parent the parent artifact it extends
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
    */
-  protected static void addTemplatePlugins(Id.ApplicationTemplate templateId, String jarName,
-                                           Class<?> pluginClz, Class<?>... classes) throws IOException {
-    getTestManager().addTemplatePlugins(templateId, jarName, pluginClz, classes);
+  protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
+                                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    getTestManager().addPluginArtifact(artifactId, parent, pluginClass, pluginClasses);
   }
 
   /**
-   * Add a template plugin configuration file.
+   * Build an artifact from the specified plugin classes and then add it. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
    *
-   * @param templateId the id of the template to add the plugin config for
-   * @param fileName the name of the config file. The name should match the plugin jar file that it is for. For example,
-   *                 if you added a plugin named hsql-jdbc-1.0.0.jar, the config file must be named hsql-jdbc-1.0.0.json
-   * @param type the type of plugin
-   * @param name the name of the plugin
-   * @param description the description for the plugin
-   * @param className the class name of the plugin
-   * @param fields the fields the plugin uses
-   * @throws IOException
+   * @param artifactId the id of the artifact to add
+   * @param parent the parent artifact it extends
+   * @param additionalPlugins any plugin classes that need to be explicitly declared because they cannot be found
+   *                          by inspecting the jar. This is true for 3rd party plugins, such as jdbc drivers
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
    */
-  protected static void addTemplatePluginJson(Id.ApplicationTemplate templateId, String fileName,
-                                              String type, String name,
-                                              String description, String className,
-                                              PluginPropertyField... fields) throws IOException {
-    getTestManager().addTemplatePluginJson(templateId, fileName, type, name, description, className, fields);
+  protected static void addPluginArtifact(Id.Artifact artifactId, Id.Artifact parent,
+                                          Set<PluginClass> additionalPlugins,
+                                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    getTestManager().addPluginArtifact(artifactId, parent, additionalPlugins, pluginClass, pluginClasses);
+  }
+
+  /**
+   * Build an artifact from the specified plugin classes and then add it. The
+   * jar created will include all classes in the same package as the give classes, plus any dependencies of the
+   * given classes. If another plugin in the same package as the given plugin requires a different set of dependent
+   * classes, you must include both plugins. For example, suppose you have two plugins,
+   * com.company.myapp.functions.functionX and com.company.myapp.function.functionY, with functionX having
+   * one set of dependencies and functionY having another set of dependencies. If you only add functionX, functionY
+   * will also be included in the created jar since it is in the same package. However, only functionX's dependencies
+   * will be traced and added to the jar, so you will run into issues when the platform tries to register functionY.
+   * In this scenario, you must be certain to include specify both functionX and functionY when calling this method.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param parentArtifacts the parent artifacts it extends
+   * @param pluginClass the plugin class to build the jar from
+   * @param pluginClasses any additional plugin classes that should be included in the jar
+   * @throws Exception
+   */
+  protected static void addPluginArtifact(Id.Artifact artifactId, Set<ArtifactRange> parentArtifacts,
+                                          Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
+    getTestManager().addPluginArtifact(artifactId, parentArtifacts, pluginClass, pluginClasses);
   }
 
   /**
@@ -537,7 +613,7 @@ public class ConfigurableTestBase {
    */
   protected static void deployDatasetModule(String moduleName,
                                             Class<? extends DatasetModule> datasetModule) throws Exception {
-    deployDatasetModule(Constants.DEFAULT_NAMESPACE_ID, moduleName, datasetModule);
+    deployDatasetModule(Id.Namespace.DEFAULT, moduleName, datasetModule);
   }
 
   /**
@@ -566,7 +642,7 @@ public class ConfigurableTestBase {
   protected static <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                  String datasetInstanceName,
                                                                  DatasetProperties props) throws Exception {
-    return addDatasetInstance(Constants.DEFAULT_NAMESPACE_ID, datasetTypeName, datasetInstanceName, props);
+    return addDatasetInstance(Id.Namespace.DEFAULT, datasetTypeName, datasetInstanceName, props);
   }
 
   /**
@@ -590,7 +666,7 @@ public class ConfigurableTestBase {
    */
   protected final <T extends DatasetAdmin> T addDatasetInstance(String datasetTypeName,
                                                                 String datasetInstanceName) throws Exception {
-    return addDatasetInstance(Constants.DEFAULT_NAMESPACE_ID, datasetTypeName, datasetInstanceName,
+    return addDatasetInstance(Id.Namespace.DEFAULT, datasetTypeName, datasetInstanceName,
                               DatasetProperties.EMPTY);
   }
 
@@ -614,7 +690,7 @@ public class ConfigurableTestBase {
    * @throws Exception
    */
   protected final <T> DataSetManager<T> getDataset(String datasetInstanceName) throws Exception {
-    return getDataset(Constants.DEFAULT_NAMESPACE_ID, datasetInstanceName);
+    return getDataset(Id.Namespace.DEFAULT, datasetInstanceName);
   }
 
   /**
@@ -631,7 +707,7 @@ public class ConfigurableTestBase {
    * Returns a JDBC connection that allows to run SQL queries over data sets.
    */
   protected final Connection getQueryClient() throws Exception {
-    return getQueryClient(Constants.DEFAULT_NAMESPACE_ID);
+    return getQueryClient(Id.Namespace.DEFAULT);
   }
 
   /**
@@ -641,7 +717,7 @@ public class ConfigurableTestBase {
    * @return {@link StreamManager} for the specified stream in the default namespace
    */
   protected final StreamManager getStreamManager(String streamName) {
-    return getStreamManager(Constants.DEFAULT_NAMESPACE_ID, streamName);
+    return getStreamManager(Id.Namespace.DEFAULT, streamName);
   }
 
   /**

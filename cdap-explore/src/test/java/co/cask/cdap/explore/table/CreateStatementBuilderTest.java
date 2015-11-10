@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.ProjectInfo;
+import co.cask.cdap.hive.stream.StreamStorageHandler;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
@@ -57,7 +58,7 @@ public class CreateStatementBuilderTest {
       .setLocation("hdfs://namenode/my/path")
       .setTableProperties(ImmutableMap.of("somekey", "someval"))
       .setTableComment("CDAP Stream")
-      .buildWithStorageHandler(Constants.Explore.STREAM_STORAGE_HANDLER_CLASS, serdeProperties);
+      .buildWithStorageHandler(StreamStorageHandler.class.getName(), serdeProperties);
     Assert.assertEquals(expected, actual);
   }
 

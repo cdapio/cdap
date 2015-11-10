@@ -17,7 +17,7 @@
 package co.cask.cdap.internal.app.deploy.pipeline;
 
 import co.cask.cdap.ToyApp;
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;

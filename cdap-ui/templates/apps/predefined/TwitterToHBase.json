@@ -1,0 +1,108 @@
+{
+    "artifact": {
+        "name": "cdap-etl-realtime",
+        "scope": "SYSTEM",
+        "version": "3.3.0-SNAPSHOT"
+    },
+    "config": {
+        "source": {
+            "name": "Twitter",
+            "label": "Twitter Stream",
+            "properties": {
+                "AccessToken": "",
+                "AccessTokenSecret": "",
+                "ConsumerSecret": "",
+                "ConsumerKey": ""
+            }
+        },
+        "sinks": [
+            {
+                "name": "Table",
+                "label": "HBase Table",
+                "properties": {
+                    "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"message\",\"type\":\"string\"},{\"name\":\"lang\",\"type\":\"string\"},{\"name\":\"time\",\"type\":\"long\"},{\"name\":\"favCount\",\"type\":\"int\"},{\"name\":\"rtCount\",\"type\":\"int\"},{\"name\":\"source\",\"type\":\"string\"},{\"name\":\"id\",\"type\":\"long\"}]}",
+                    "name": "",
+                    "schema.row.field": ""
+                }
+            }
+        ],
+        "transforms": [],
+        "instances": 1
+    },
+    "description": "Realtime stream Twitter data into a HBase Table.",
+    "name": "TwitterToHBase",
+    "ui": {
+        "nodes": {
+            "Twitter-source-1": {
+                "id": "Twitter-source-1",
+                "name": "Twitter",
+                "label": "Twitter Stream",
+                "icon": "fa-twitter",
+                "style": {
+                    "top": "149px",
+                    "left": "320px"
+                },
+                "description": "Samples tweets in real-time. Output records contain the fields id (long), message (string), lang (nullable string), time (nullable long), favCount (int), rtCount (int), source (nullable string), geoLat (nullable double), geoLong (nullable double), and isRetweet (boolean).",
+                "outputSchema": "{\"fields\":[{\"name\":\"id\",\"type\":\"long\"},{\"name\":\"message\",\"type\":\"string\"},{\"name\":\"lang\",\"type\":[\"string\",\"null\"]},{\"name\":\"time\",\"type\":[\"long\",\"null\"]},{\"name\":\"favCount\",\"type\":\"int\"},{\"name\":\"rtCount\",\"type\":\"int\"},{\"name\":\"source\",\"type\":[\"string\",\"null\"]},{\"name\":\"geoLat\",\"type\":[\"double\",\"null\"]},{\"name\":\"geoLong\",\"type\":[\"double\",\"null\"]},{\"name\":\"isRetweet\",\"type\":\"boolean\"}]}",
+                "pluginTemplate": null,
+                "errorDatasetName": "",
+                "validationFields": null,
+                "lock": null,
+                "properties": {
+                    "AccessToken": "",
+                    "AccessTokenSecret": "",
+                    "ConsumerSecret": "",
+                    "ConsumerKey": ""
+                },
+                "type": "realtimesource",
+                "valid": false,
+                "requiredFieldCount": 4,
+                "error": {
+                    "message": "Source is missing required fields",
+                    "requiredFieldCount": 4
+                },
+                "warning": false,
+                "selected": false,
+                "implicitSchema": true
+            },
+            "Table-sink-4": {
+                "id": "Table-sink-4",
+                "name": "Table",
+                "label": "HBase Table",
+                "icon": "fa-table",
+                "style": {
+                    "top": "149px",
+                    "left": "670px"
+                },
+                "description": "Real Time Sink for CDAP Table dataset",
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"message\",\"type\":\"string\"},{\"name\":\"lang\",\"type\":\"string\"},{\"name\":\"time\",\"type\":\"long\"},{\"name\":\"favCount\",\"type\":\"int\"},{\"name\":\"rtCount\",\"type\":\"int\"},{\"name\":\"source\",\"type\":\"string\"},{\"name\":\"id\",\"type\":\"long\"}]}",
+                "pluginTemplate": null,
+                "errorDatasetName": "",
+                "validationFields": null,
+                "lock": null,
+                "properties": {
+                    "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"message\",\"type\":\"string\"},{\"name\":\"lang\",\"type\":\"string\"},{\"name\":\"time\",\"type\":\"long\"},{\"name\":\"favCount\",\"type\":\"int\"},{\"name\":\"rtCount\",\"type\":\"int\"},{\"name\":\"source\",\"type\":\"string\"},{\"name\":\"id\",\"type\":\"long\"}]}",
+                    "case.sensitive.row.field": "true",
+                    "name": "",
+                    "schema.row.field": ""
+                },
+                "type": "realtimesink",
+                "valid": false,
+                "requiredFieldCount": 2,
+                "error": {
+                    "message": "Sink is missing required fields",
+                    "requiredFieldCount": 2
+                },
+                "warning": false,
+                "selected": true
+            }
+        },
+        "connections": [
+            {
+                "source": "Twitter-source-1",
+                "target": "Table-sink-4"
+            }
+        ]
+    }
+}
+

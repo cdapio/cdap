@@ -22,6 +22,7 @@ import co.cask.cdap.templates.AdapterDefinition;
 /**
  * Holds adapter metadata
  */
+@Deprecated
 public class AdapterMeta {
   private final AdapterDefinition spec;
   private final AdapterStatus status;

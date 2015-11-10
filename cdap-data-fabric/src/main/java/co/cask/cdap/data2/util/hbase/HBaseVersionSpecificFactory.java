@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,6 +47,9 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
         case HBASE_10_CDH:
           instance = createInstance(getHBase10CDHClassname());
           break;
+        case HBASE_11:
+          instance = createInstance(getHBase11Classname());
+          break;
         case UNKNOWN:
           throw new ProvisionException("Unknown HBase version: " + HBaseVersion.getVersionString());
       }
@@ -66,4 +69,5 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
   protected abstract String getHBase98Classname();
   protected abstract String getHBase10Classname();
   protected abstract String getHBase10CDHClassname();
+  protected abstract String getHBase11Classname();
 }

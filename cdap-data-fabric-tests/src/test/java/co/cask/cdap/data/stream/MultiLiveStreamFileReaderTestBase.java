@@ -16,7 +16,6 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
@@ -48,7 +47,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
   @Test
   public void testMultiFileReader() throws Exception {
     String streamName = "multiReader";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
     Location location = getLocationFactory().create(streamName);
     location.mkdirs();
 
@@ -129,7 +128,7 @@ public abstract class MultiLiveStreamFileReaderTestBase {
   @Test
   public void testOffsets() throws Exception {
     String streamName = "offsets";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
     Location location = getLocationFactory().create(streamName);
     location.mkdirs();
 

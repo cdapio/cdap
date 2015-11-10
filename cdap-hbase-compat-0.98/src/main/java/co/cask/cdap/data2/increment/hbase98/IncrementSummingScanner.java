@@ -139,7 +139,7 @@ class IncrementSummingScanner implements RegionScanner {
     long runningSum = 0;
     int addedCnt = 0;
     baseScanner.startNext();
-    Cell cell = null;
+    Cell cell;
     while ((cell = baseScanner.peekNextCell(limit)) != null && (limit <= 0 || addedCnt < limit)) {
       // we use the "peek" semantics so that only once cell is ever emitted per iteration
       // this makes is clearer and easier to enforce that the returned results are <= limit
@@ -148,6 +148,19 @@ class IncrementSummingScanner implements RegionScanner {
       }
       // any cells visible to in-progress transactions must be kept unchanged
       if (cell.getTimestamp() > compactionUpperBound) {
+        if (previousIncrement != null) {
+          // if previous increment is present, only emit the previous increment, reset it, and continue.
+          // the current cell will be consumed on the next iteration, if we have not yet reached the limit
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("Including increment: sum=" + runningSum + ", cell=" + previousIncrement);
+          }
+          cells.add(newCell(previousIncrement, runningSum));
+          addedCnt++;
+          previousIncrement = null;
+          runningSum = 0;
+
+          continue;
+        }
         if (LOG.isTraceEnabled()) {
           LOG.trace("Including cell visible to in-progress, cell=" + cell);
         }
@@ -221,14 +234,18 @@ class IncrementSummingScanner implements RegionScanner {
     // emit any left over increment, if we hit the end
     if (previousIncrement != null) {
       // in any situation where we exited due to limit, previousIncrement should already be null
-      Preconditions.checkState(limit <= 0 || addedCnt < limit);
+      Preconditions.checkState(limit <= 0 || addedCnt < limit, "addedCnt=%s, limit=%s", addedCnt, limit);
       if (LOG.isTraceEnabled()) {
         LOG.trace("Including leftover increment: sum=" + runningSum + ", cell=" + previousIncrement);
       }
       cells.add(newCell(previousIncrement, runningSum));
     }
 
-    return baseScanner.hasMore();
+    boolean hasMore = baseScanner.hasMore();
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("nextInternal done with limit=" + limit + " hasMore=" + hasMore);
+    }
+    return hasMore;
   }
 
   private boolean sameCell(Cell first, Cell second) {

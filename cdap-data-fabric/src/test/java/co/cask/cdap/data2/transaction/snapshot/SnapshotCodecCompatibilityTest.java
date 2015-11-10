@@ -29,6 +29,7 @@ import co.cask.tephra.runtime.ConfigModule;
 import co.cask.tephra.runtime.DiscoveryModules;
 import co.cask.tephra.runtime.TransactionModules;
 import co.cask.tephra.snapshot.SnapshotCodecProvider;
+import co.cask.tephra.snapshot.SnapshotCodecV3;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.collect.Lists;
@@ -202,6 +203,8 @@ public class SnapshotCodecCompatibilityTest {
 
     // start a new Tx manager to test fixup
     Configuration conf2 = new Configuration();
+    conf2.setStrings(TxConstants.Persist.CFG_TX_SNAPHOT_CODEC_CLASSES,
+                    SnapshotCodecV1.class.getName(), SnapshotCodecV2.class.getName(), SnapshotCodecV3.class.getName());
     // make sure we work with the default CDAP conf for snapshot codecs
     CConfiguration cconf = CConfiguration.create();
     CConfigurationUtil.copyTxProperties(cconf, conf2);

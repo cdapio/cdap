@@ -26,6 +26,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -48,6 +49,7 @@ import co.cask.cdap.logging.save.KafkaLogWriterPlugin;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.runtime.TransactionModules;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -106,6 +108,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
+      new TransactionExecutorModule(),
       new LoggingModules().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
@@ -315,7 +318,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
     CheckpointManager checkpointManager =
       checkpointManagerFactory.create(KafkaTopic.getTopic(), KafkaLogWriterPlugin.CHECKPOINT_ROW_KEY_PREFIX);
     long checkpointTime = logCallback.getEvents().get(numExpectedEvents - 1).getLoggingEvent().getTimeStamp();
-    checkpointManager.saveCheckpoint(stringPartitioner.partition(loggingContext.getLogPartition(), -1),
-                                     new Checkpoint(numExpectedEvents, checkpointTime));
+    checkpointManager.saveCheckpoint(ImmutableMap.of(stringPartitioner.partition(loggingContext.getLogPartition(), -1),
+                                                     new Checkpoint(numExpectedEvents, checkpointTime)));
   }
 }

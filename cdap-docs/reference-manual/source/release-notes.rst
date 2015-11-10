@@ -23,17 +23,677 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.2.1 <http://docs.cask.co/cdap/3.2.1/index.html>`__
+=============================================================
+
+New Features
+------------
+
+- `CDAP-3951 <https://issues.cask.co/browse/CDAP-3951>`__ -
+  Added the ability for S3 batch sources and sinks to set additional file system properties.
+  
+Improvements
+------------
+
+- `CDAP-3870 <https://issues.cask.co/browse/CDAP-3870>`__ -
+  Added logging and metrics support for *Script*, *ScriptFilter*, and *Validator* transforms.
+  
+- `CDAP-3939 <https://issues.cask.co/browse/CDAP-3939>`__ -
+  Improved artifact and application deployment failure handling.
+
+Bug Fixes
+---------
+
+- `CDAP-3342 <https://issues.cask.co/browse/CDAP-3342>`__ -
+  Fixed a problem with the CDAP SDK unable to start on certain Windows machines by updating
+  the Hadoop native library in CDAP with a version that does not have a dependency on a
+  debug version of the Microsoft ``msvcr100.dll``.
+  
+- `CDAP-3815 <https://issues.cask.co/browse/CDAP-3815>`__ -
+  Fixed an issue where the regex filter for S3 batch sources wasn't being applied correctly.
+  
+- `CDAP-3829 <https://issues.cask.co/browse/CDAP-3829>`__ -
+  Fixed snapshot sinks so that the data is explorable as a ``PartitionedFileSet``.
+  
+- `CDAP-3833 <https://issues.cask.co/browse/CDAP-3833>`__ -
+  Fixed snapshot sinks so that they can be read safely.
+  
+- `CDAP-3859 <https://issues.cask.co/browse/CDAP-3859>`__ -
+  Fixed a compilation error in the Maven application archetype.
+  
+- `CDAP-3860 <https://issues.cask.co/browse/CDAP-3860>`__ -
+  Fixed a bug where plugins, packaged in the same artifact as an application class, could not be used by that application class.
+  
+- `CDAP-3891 <https://issues.cask.co/browse/CDAP-3891>`__ -
+  Updated the documentation to remove references to application templates and adaptors that were removed as of CDAP 3.2.0.
+  
+- `CDAP-3949 <https://issues.cask.co/browse/CDAP-3949>`__ -
+  Fixed a problem with running certain examples on Linux systems by increasing the maximum
+  Java heap size of the Standalone SDK on Linux systems to 2048m.
+
+- `CDAP-3961 <https://issues.cask.co/browse/CDAP-3961>`__ -
+  Fixed a missing dependency on ``cdap-hbase-compat-1.1`` package in the CDAP Master package. 
+
+
+`Release 3.2.0 <http://docs.cask.co/cdap/3.2.0/index.html>`__
+=============================================================
+
+New Features
+------------
+  
+- `CDAP-2556 <https://issues.cask.co/browse/CDAP-2556>`__ -
+  Added support for HBase1.1.
+  
+- `CDAP-2666 <https://issues.cask.co/browse/CDAP-2666>`__ -
+  Added a new API for creating an application from an artifact.
+  
+- `CDAP-2756 <https://issues.cask.co/browse/CDAP-2756>`__ -
+  Added the ability to write to multiple outputs from a MapReduce job.
+  
+- `CDAP-2757 <https://issues.cask.co/browse/CDAP-2757>`__ -
+  Added the ability to dynamically write to multiple partitions of a PartitionedFileSet
+  dataset as the output of a MapReduce job.
+  
+- `CDAP-3253 <https://issues.cask.co/browse/CDAP-3253>`__ -
+  Added a Stream and Dataset Widget to the CDAP-UI.
+  
+- `CDAP-3390 <https://issues.cask.co/browse/CDAP-3390>`__ -
+  Added stream views, enabling reading from a single stream using various formats and
+  schemas.
+  
+- `CDAP-3476 <https://issues.cask.co/browse/CDAP-3476>`__ -
+  Added a Validator Transform that can be used to validate records based on a set of
+  available validators and configured to write invalid records to an error
+  dataset.
+  
+- `CDAP-3516 <https://issues.cask.co/browse/CDAP-3516>`__ -
+  Added a service to manage the metadata of CDAP entities.
+  
+- `CDAP-3518 <https://issues.cask.co/browse/CDAP-3518>`__ -
+  Added the publishing of metadata change notifications to Apache Kafka.
+  
+- `CDAP-3519 <https://issues.cask.co/browse/CDAP-3519>`__ -
+  Added the ability to compute lineage of a CDAP dataset or stream in a given time window.
+  
+- `CDAP-3520 <https://issues.cask.co/browse/CDAP-3520>`__ -
+  Added RESTful APIs for adding/retrieving/deleting of metadata for apps/programs/datasets/streams.
+  
+- `CDAP-3521 <https://issues.cask.co/browse/CDAP-3521>`__ -
+  Added the ability to record a dataset or stream access by a CDAP program.
+  
+- `CDAP-3522 <https://issues.cask.co/browse/CDAP-3522>`__ -
+  Added the capability to search CDAP entities based on their metadata.
+  
+- `CDAP-3523 <https://issues.cask.co/browse/CDAP-3523>`__ -
+  Added RESTful APIs for searching CDAP entities based on business metadata.
+  
+- `CDAP-3527 <https://issues.cask.co/browse/CDAP-3527>`__ -
+  Added a data store to manage business metadata of CDAP entities.
+
+- `CDAP-3549 <https://issues.cask.co/browse/CDAP-3549>`__ -
+  Added SSH port forwarding to the CDAP virtual machine.
+  
+- `CDAP-3556 <https://issues.cask.co/browse/CDAP-3556>`__ -
+  Added a data store for recording data accesses by CDAP programs and computing lineage.
+  
+- `CDAP-3590 <https://issues.cask.co/browse/CDAP-3590>`__ -
+  Added the ability to write to multiple sinks in ETL real-time and batch applications.
+  
+- `CDAP-3591 <https://issues.cask.co/browse/CDAP-3591>`__ -
+  Added the ability for real-time ETL pipelines to write to multiple sinks.
+  
+- `CDAP-3592 <https://issues.cask.co/browse/CDAP-3592>`__ -
+  Added the ability for batch ETL pipelines to write to multiple sinks.
+
+- `CDAP-3626 <https://issues.cask.co/browse/CDAP-3626>`__ -
+  For the CSV and TSV stream formats, a "mapping" setting can now be specified, mapping
+  stream event columns to schema columns.
+  
+- `CDAP-3693 <https://issues.cask.co/browse/CDAP-3693>`__ -
+  Added support for CDAP to work with HDP 2.3.
+
+
+Improvements
+------------
+
+- `CDAP-1914 <https://issues.cask.co/browse/CDAP-1914>`__ -
+  Added documentation of the RESTful endpoint to retrieve the properties of a stream.
+
+- `CDAP-2514 <https://issues.cask.co/browse/CDAP-2514>`__ -
+  Added an interface to load a file into a stream from the CDAP-UI.
+  
+- `CDAP-2809 <https://issues.cask.co/browse/CDAP-2809>`__ -
+  The CDAP-UI "Errors" pop-up in the main screen now displays the time and date for each
+  error.
+    
+- `CDAP-2872 <https://issues.cask.co/browse/CDAP-2872>`__ -
+  Updated the Cloudera Manager CSD to use support for logback.
+  
+- `CDAP-2950 <https://issues.cask.co/browse/CDAP-2950>`__ -
+  Cleaned up the messages shown in the errors dropdown in the CDAP-UI.
+
+- `CDAP-3147 <https://issues.cask.co/browse/CDAP-3147>`__ -
+  Added a  CDAP-CLI command to stop a workflow.
+  
+- `CDAP-3179 <https://issues.cask.co/browse/CDAP-3179>`__ -
+  Added support for upgrading the Hadoop distribution or the HBase version that CDAP is
+  running on.
+  
+- `CDAP-3257 <https://issues.cask.co/browse/CDAP-3257>`__ -
+  Revised the documentation of the file ``cdap-default.xml``, removed properties no longer
+  in use, and corrected discrepancies between the documentation and the shipped XML
+  file.
+
+- `CDAP-3270 <https://issues.cask.co/browse/CDAP-3270>`__ -
+  Improved the help provided in the CDAP-CLI for the setting of stream formats.
+  
+- `CDAP-3275 <https://issues.cask.co/browse/CDAP-3275>`__ -
+  Upgraded netty-http version to 0.12.0.
+  
+- `CDAP-3282 <https://issues.cask.co/browse/CDAP-3282>`__ -
+  Added a HTTP RESTful API to update the application configuration and artifact version.
+  
+- `CDAP-3332 <https://issues.cask.co/browse/CDAP-3332>`__ -
+  Added a "clear" button in the CDAP-UI for cases where a user decides to not used a
+  pre-populated schema.
+  
+- `CDAP-3351 <https://issues.cask.co/browse/CDAP-3351>`__ -
+  Defined a directory structure to be used for predefined applications.
+  
+- `CDAP-3357 <https://issues.cask.co/browse/CDAP-3357>`__ -
+  Added documentation in the source code on adding new commands and completers to the CDAP-CLI.
+
+- `CDAP-3393 <https://issues.cask.co/browse/CDAP-3393>`__ -
+  In the CDAP-UI, added visualization for Workflow tokens in Workflows.
+  
+- `CDAP-3419 <https://issues.cask.co/browse/CDAP-3419>`__ -
+  HBaseQueueDebugger now shows the minimum queue event transaction write pointer both for
+  each queue and for all queues.
+  
+- `CDAP-3443 <https://issues.cask.co/browse/CDAP-3443>`__ -
+  Added an example cdap-env.sh to the shipped packages.
+  
+- `CDAP-3464 <https://issues.cask.co/browse/CDAP-3464>`__ -
+  Added an example in the documentation explaining how to prune invalid transactions from
+  the transaction manager.
+
+- `CDAP-3490 <https://issues.cask.co/browse/CDAP-3490>`__ -
+  Modified the CDAP upgrade tool to delete all adapters and the ETLBatch and ETLRealtime
+  ApplicationTemplates.
+  
+- `CDAP-3495 <https://issues.cask.co/browse/CDAP-3495>`__ -
+  Added the ability to persist the runtime arguments with which a program was run.
+
+- `CDAP-3550 <https://issues.cask.co/browse/CDAP-3550>`__ -
+  Added support for writing to Amazon S3 in Avro and Parquet formats from batch ETL
+  applications.
+
+- `CDAP-3564 <https://issues.cask.co/browse/CDAP-3564>`__ -
+  Updated CDAP to use Tephra 0.6.2.
+
+- `CDAP-3610 <https://issues.cask.co/browse/CDAP-3610>`__ -
+  Updated the transaction debugger client to print checkpoint information.
+
+Bug Fixes
+---------
+
+- `CDAP-1697 <https://issues.cask.co/browse/CDAP-1697>`__ -
+  Fixed an issue where failed dataset operations via Explore queries did not invalidate
+  the associated transaction.
+  
+- `CDAP-1864 <https://issues.cask.co/browse/CDAP-1864>`__ -
+  Fixed a problem where users got an incorrect message while creating a dataset in a
+  non-existent namespace.
+  
+- `CDAP-1892 <https://issues.cask.co/browse/CDAP-1892>`__ -
+  Fixed a problem with services returning the same message for all failures.
+  
+- `CDAP-1984 <https://issues.cask.co/browse/CDAP-1984>`__ -
+  Fixed a problem where a dataset could be created in a non-existent namespace in
+  standalone mode.
+  
+- `CDAP-2428 <https://issues.cask.co/browse/CDAP-2428>`__ -
+  Fixed a problem with the CDAP-CLI creating file logs.
+  
+- `CDAP-2521 <https://issues.cask.co/browse/CDAP-2521>`__ -
+  Fixed a problem with the CDAP-CLI not auto-completing when setting a stream format.
+  
+- `CDAP-2785 <https://issues.cask.co/browse/CDAP-2785>`__ -
+  Fixed a problem with the CDAP-UI of buttons staying 'in focus' after clicking.
+  
+- `CDAP-2809 <https://issues.cask.co/browse/CDAP-2809>`__ -
+  The CDAP-UI "Errors" pop-up in the main screen now displays the time and date for each error.
+  
+- `CDAP-2892 <https://issues.cask.co/browse/CDAP-2892>`__ -
+  Fixed a problem with schedules not being deployed in suspended mode.
+  
+- `CDAP-3014 <https://issues.cask.co/browse/CDAP-3014>`__ -
+  Fixed a problem where failure of a spark node would cause a workflow to restart indefinitely.
+  
+- `CDAP-3073 <https://issues.cask.co/browse/CDAP-3073>`__ -
+  Fixed an issue with the CDAP standalone process periodically crashing with Out-of-Memory
+  errors when writing to an Oracle table.
+  
+- `CDAP-3101 <https://issues.cask.co/browse/CDAP-3101>`__ -
+  Fixed a problem with workflow runs not getting scheduled due to Quartz exceptions.
+  
+- `CDAP-3121 <https://issues.cask.co/browse/CDAP-3121>`__ -
+  Fixed a problem with discrepancies between the documentation and the defaults actually used by CDAP.
+  
+- `CDAP-3200 <https://issues.cask.co/browse/CDAP-3200>`__ -
+  Fixed a problem in the CDAP-UI with the clone button in an incorrect position when using Firefox.
+  
+- `CDAP-3201 <https://issues.cask.co/browse/CDAP-3201>`__ -
+  Fixed a problem in the CDAP-UI with an incorrect tabbing order when using Firefox.
+  
+- `CDAP-3219 <https://issues.cask.co/browse/CDAP-3219>`__ -
+  Fixed a problem when specifying the HBase version using the HBASE_VERSION environment variable.
+  
+- `CDAP-3233 <https://issues.cask.co/browse/CDAP-3233>`__ -
+  Fixed a problem in the CDAP-UI error pop-ups not having a default focus on a button.
+  
+- `CDAP-3243 <https://issues.cask.co/browse/CDAP-3243>`__ -
+  Fixed a problem in the CDAP-UI with the default schema shown for streams.
+  
+- `CDAP-3260 <https://issues.cask.co/browse/CDAP-3260>`__ -
+  Fixed a problem in the CDAP-UI with scrolling on the namespaces dropdown on certain pages.
+  
+- `CDAP-3261 <https://issues.cask.co/browse/CDAP-3261>`__ -
+  Fixed a problem on CDAP distributed mode with the serializing of the metadata artifact
+  causing a stack overflow.
+  
+- `CDAP-3305 <https://issues.cask.co/browse/CDAP-3305>`__ -
+  Fixed a problem in the CDAP-UI not warning users if they exit or close their browser without saving.
+  
+- `CDAP-3313 <https://issues.cask.co/browse/CDAP-3313>`__ -
+  Fixed a problem in the CDAP-UI with refreshing always returning to the overview page.
+  
+- `CDAP-3326 <https://issues.cask.co/browse/CDAP-3326>`__ -
+  Fixed a problem with the table batch source requiring a row key to be set.
+  
+- `CDAP-3343 <https://issues.cask.co/browse/CDAP-3343>`__ -
+  Fixed a problem with the application deployment for apps that contain Spark.
+  
+- `CDAP-3349 <https://issues.cask.co/browse/CDAP-3349>`__ -
+  Fixed a problem with the display of ETL application metrics in the CDAP-UI.
+  
+- `CDAP-3355 <https://issues.cask.co/browse/CDAP-3355>`__ -
+  Fixed a problem in the CDAP examples with the use of a runtime argument, ``min.pages.threshold``.
+  
+- `CDAP-3362 <https://issues.cask.co/browse/CDAP-3362>`__ -
+  Fixed a problem with the ``logback-container.xml`` not being copied into master services.
+  
+- `CDAP-3374 <https://issues.cask.co/browse/CDAP-3374>`__ -
+  Fixed a problem with warning messages in the logs indicating that programs were running
+  that actually were not running.
+  
+- `CDAP-3376 <https://issues.cask.co/browse/CDAP-3376>`__ -
+  Fixed a problem with being unable to deploy the SparkPageRank example application on a cluster.
+  
+- `CDAP-3386 <https://issues.cask.co/browse/CDAP-3386>`__ -
+  Fixed a problem with the Spark classes not being found when running a Spark program
+  through a Workflow in CDAP Distributed mode on HDP 2.2.
+  
+- `CDAP-3394 <https://issues.cask.co/browse/CDAP-3394>`__ -
+  Fixed a problem with the deployment of applications through the CDAP-UI.
+  
+- `CDAP-3399 <https://issues.cask.co/browse/CDAP-3399>`__ -
+  Fixed a problem with the SparkPageRankApp example spawning multiple containers in
+  distributed mode due to its number of services.
+  
+- `CDAP-3400 <https://issues.cask.co/browse/CDAP-3400>`__ -
+  Fixed an issue with warning messages about the notification system every time the CDAP
+  Standalone is restarted.
+  
+- `CDAP-3408 <https://issues.cask.co/browse/CDAP-3408>`__ -
+  Fixed a problem with running the CDAP Explore Service on CDH 5.[2,3].
+  
+- `CDAP-3432 <https://issues.cask.co/browse/CDAP-3432>`__ -
+  Fixed a bug where connecting with a certain namespace from the CLI would not immediately
+  display that namespace in the CLI prompt.
+  
+- `CDAP-3435 <https://issues.cask.co/browse/CDAP-3435>`__ -
+  Fixed an issue where the program status was shown as running even after it is stopped.
+  
+- `CDAP-3442 <https://issues.cask.co/browse/CDAP-3442>`__ -
+  Fixed a problem that caused application creation to fail if a config setting was given
+  to an application that does not use a config.
+  
+- `CDAP-3449 <https://issues.cask.co/browse/CDAP-3449>`__ -
+  Fixed a problem with the readless increment co-processor not handling multiple readless
+  increment columns in the same row.
+  
+- `CDAP-3452 <https://issues.cask.co/browse/CDAP-3452>`__ -
+  Fixed a problem that prevented explore service working on clusters with secure hive 0.14.
+  
+- `CDAP-3458 <https://issues.cask.co/browse/CDAP-3458>`__ -
+  Fixed a problem where streams events that had already been processed were re-processed in flows.
+  
+- `CDAP-3470 <https://issues.cask.co/browse/CDAP-3470>`__ -
+  Fixed an issue with error messages being logged during a master process restart.
+  
+- `CDAP-3472 <https://issues.cask.co/browse/CDAP-3472>`__ -
+  Fixed the error message returned when trying to stop a program started by a workflow.
+  
+- `CDAP-3473 <https://issues.cask.co/browse/CDAP-3473>`__ -
+  Fixed a problem with a workflow failure not updating a run record for the inner program.
+    
+- `CDAP-3530 <https://issues.cask.co/browse/CDAP-3530>`__ -
+  Fixed a problem with the CDAP-UI performance when rendering flow diagrams with a large number of nodes.
+  
+- `CDAP-3563 <https://issues.cask.co/browse/CDAP-3563>`__ -
+  Removed faulty and unused metrics around CDAP file resource usage.
+  
+- `CDAP-3574 <https://issues.cask.co/browse/CDAP-3574>`__ -
+  Fix an issue with Explore not working on HDP Hive 0.12.
+  
+- `CDAP-3603 <https://issues.cask.co/browse/CDAP-3603>`__ -
+  Fixed an issue with configuration properties for ETL Transforms being validated at
+  runtime instead of when an application is created.
+  
+- `CDAP-3618 <https://issues.cask.co/browse/CDAP-3618>`__ -
+  Fix a problem where suspended schedules were lost when CDAP master was restarted.
+  
+- `CDAP-3660 <https://issues.cask.co/browse/CDAP-3660>`__ -
+  Fixed and issue where the Hadoop filesystem object was getting instantiated before the
+  Kerberos keytab login was completed, leading to CDAP processes failing after the initial
+  ticket expired.
+  
+- `CDAP-3700 <https://issues.cask.co/browse/CDAP-3700>`__ -
+  Fixed an issue with the log saver having numerous open connections to HBase, causing it
+  to go Out-of-Memory.
+
+- `CDAP-3711 <https://issues.cask.co/browse/CDAP-3711>`__ -
+  Fixed an issue that prevented the downloading of Explore results on a secure cluster.
+  
+- `CDAP-3713 <https://issues.cask.co/browse/CDAP-3713>`__ -
+  Fixed an issue where certain RESTful APIs were not returning appropriate error messages
+  for internal server errors.
+  
+- `CDAP-3716 <https://issues.cask.co/browse/CDAP-3716>`__ -
+  Fixed a possible deadlock when CDAP master is restarted with an existing app running on a cluster.
+
+API Changes
+-----------
+
+- `CDAP-2763 <https://issues.cask.co/browse/CDAP-2763>`__ -
+  Added RESTful APIs for managing artifacts.
+  
+- `CDAP-2956 <https://issues.cask.co/browse/CDAP-2956>`__ -
+  Deprecated the existing API for configuring a workflow action, replacing it with a
+  simpler API.
+  
+- `CDAP-3063 <https://issues.cask.co/browse/CDAP-3063>`__ -
+  Added CLI commands for managing artifacts.
+  
+- `CDAP-3064 <https://issues.cask.co/browse/CDAP-3064>`__ -
+  Added an ArtifactClient to interact with Artifact HTTP RESTful APIs.
+  
+- `CDAP-3283 <https://issues.cask.co/browse/CDAP-3283>`__ -
+  Added artifact information to Application RESTful APIs and the means to filter
+  applications by artifact name and version.
+  
+- `CDAP-3324 <https://issues.cask.co/browse/CDAP-3324>`__ -
+  Added a RESTful API for creating an application from an artifact.
+  
+- `CDAP-3367 <https://issues.cask.co/browse/CDAP-3367>`__ -
+  Added the ability to delete an artifact.
+  
+- `CDAP-3488 <https://issues.cask.co/browse/CDAP-3488>`__ -
+  Changed the ETLBatchTemplate from an ApplicationTemplate to an Application.
+
+- `CDAP-3535 <https://issues.cask.co/browse/CDAP-3535>`__ -
+  Added an API for programs to retrieve their application specification at runtime.
+  
+- `CDAP-3554 <https://issues.cask.co/browse/CDAP-3554>`__ -
+  Changed the plugin types from 'source' to either 'batchsource' or 'realtimesource', and
+  from 'sink' to either 'batchsink' or 'realtimesink' to reflect that the plugins
+  implement different interfaces.
+
+- `CDAP-1554 <https://issues.cask.co/browse/CDAP-1554>`__ -
+  Moved constants for default and system namespaces from Common to Id.
+
+- `CDAP-3388 <https://issues.cask.co/browse/CDAP-3388>`__ -
+  Added interfaces to ``cdap-spi`` that abstract StreamEventRecordFormat (and dependent
+  interfaces) so users can extend the ``cdap-spi`` interfaces.
+
+- `CDAP-3583 <https://issues.cask.co/browse/CDAP-3583>`__ -
+  Added a RESTful API for retrieving the metadata associated with a particular run of a
+  CDAP program.
+  
+- `CDAP-3632 <https://issues.cask.co/browse/CDAP-3632>`__ -
+  Added a RESTful API for computing lineage of a CDAP dataset or stream.
+
+Deprecated and Removed Features
+-------------------------------
+
+- See the :ref:`CDAP 3.2.0 Javadocs <javadocs>` for a list of deprecated and removed APIs.
+
+- `CDAP-2667 <https://issues.cask.co/browse/CDAP-2667>`__ -
+  Removed application templates and adapters RESTful APIs, as these templates and adapters
+  have been replaced with applications that can be controlled with the 
+  :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
+
+- `CDAP-2951 <https://issues.cask.co/browse/CDAP-2951>`__ -
+  Removed deprecated methods in cdap-client.
+  
+- `CDAP-3596 <https://issues.cask.co/browse/CDAP-3596>`__ -
+  Replaced the ETL ApplicationTemplates with the new ETL Applications.
+
+.. _known-issues-320:
+
+Known Issues
+------------
+
+- `CDAP-3492 <https://issues.cask.co/browse/CDAP-3492>`__ -
+  In CDAP-CLI, executing 'select \*' from a dataset with many fields generates an error.
+  
+- `CDAP-3641 <https://issues.cask.co/browse/CDAP-3641>`__ -
+  WorkflowStatsSLAHttpHandler hangs if units not provided.
+  
+- `CDAP-3262 <https://issues.cask.co/browse/CDAP-3262>`__ -
+  There is a problem under Microsoft Windows and using the CDAP Standalone scripts when  
+  JAVA_HOME is defined as a path with spaces in it. A workaround is to use a definition of 
+  JAVA_HOME that does not include spaces.
+
+- `CDAP-3697 <https://issues.cask.co/browse/CDAP-3697>`__ -
+  CDAP Explore is broken on secure CDH 5.1.
+  
+- `CDAP-3698 <https://issues.cask.co/browse/CDAP-3698>`__ -
+  CDAP Explore is unable to get a delegation token while fetching next results on HDP2.0.
+  
+- `CDAP-3749 <https://issues.cask.co/browse/CDAP-3749>`__ -
+  The DBSource plugin does not allow a username with an empty password.
+  
+- `CDAP-3750 <https://issues.cask.co/browse/CDAP-3750>`__ -
+  If a table schema contains a field name that is a reserved word in Hive DDL, 'enable explore' fails.
+  
+- `CDAP-3819 <https://issues.cask.co/browse/CDAP-3819>`__ -
+  The Cassandra source does not handles spaces properly in column fields which require a comma-separated list.
+  
+- See also the *Known Issues* of `version 3.1.0 <#known-issues-310>`_\ .
+
+
 `Release 3.1.0 <http://docs.cask.co/cdap/3.1.0/index.html>`__
 =============================================================
 
 New Features
 ------------
 
-- `CDAP-332 <https://issues.cask.co/browse/CDAP-332>`__ -
-  Added a Restful end-point for deleting Streams.
+**MapR 4.1 Support, HDP 2.2 Support, CDH 5.4 Support**
+
+- `CDAP-1614 <https://issues.cask.co/browse/CDAP-1614>`__ -
+  Added HBase 1.0 support.
+
+- `CDAP-2318 <https://issues.cask.co/browse/CDAP-2318>`__ -
+  Made CDAP work on the HDP 2.2 distribution.
+
+- `CDAP-2786 <https://issues.cask.co/browse/CDAP-2786>`__ -
+  Added support to CDAP 3.1.0 for the MapR 4.1 distro.
+
+- `CDAP-2798 <https://issues.cask.co/browse/CDAP-2798>`__ -
+  Added Hive 0.14 support.
+
+- `CDAP-2801 <https://issues.cask.co/browse/CDAP-2801>`__ -
+  Added CDH 5.4 Hive 1.1 support.
+
+- `CDAP-2836 <https://issues.cask.co/browse/CDAP-2836>`__ -
+  Added support for restart of specific CDAP System Services Instances.
+
+- `CDAP-2853 <https://issues.cask.co/browse/CDAP-2853>`__ -
+  Completed certification process for MapR on CDAP.
+
+- `CDAP-2879 <https://issues.cask.co/browse/CDAP-2879>`__ -
+  Added Hive 1.0 in Standalone.
+
+- `CDAP-2881 <https://issues.cask.co/browse/CDAP-2881>`__ -
+  Added support for HDP 2.2.x.
+
+- `CDAP-2891 <https://issues.cask.co/browse/CDAP-2891>`__ -
+  Documented cdap-env.sh and settings OPTS for HDP 2.2.
+
+- `CDAP-2898 <https://issues.cask.co/browse/CDAP-2898>`__ -
+  Added Hive 1.1 in Standalone.
+
+- `CDAP-2953 <https://issues.cask.co/browse/CDAP-2953>`__ -
+  Added HiveServer2 support in a secure cluster.
+
+
+**Spark**
 
 - `CDAP-344 <https://issues.cask.co/browse/CDAP-344>`__ -
-  Users can now run Spark in Distributed mode.
+  Users can now run Spark in distributed mode.
+
+- `CDAP-1993 <https://issues.cask.co/browse/CDAP-1993>`__ -
+  Added ability to manipulate the SparkConf.
+
+- `CDAP-2700 <https://issues.cask.co/browse/CDAP-2700>`__ -
+  Added the ability to Spark programs of discovering CDAP services in distributed mode.
+
+- `CDAP-2701 <https://issues.cask.co/browse/CDAP-2701>`__ -
+  Spark programs are able to collect Metrics in distributed mode.
+
+- `CDAP-2703 <https://issues.cask.co/browse/CDAP-2703>`__ -
+  Users are able to collect/view logs from Spark programs in distributed mode.
+
+- `CDAP-2705 <https://issues.cask.co/browse/CDAP-2705>`__ -
+  Added examples, guides and documentation for Spark in distributed mode. LogAnalysis
+  application demonstrating parallel execution of the Spark and MapReduce programs using
+  Workflows.
+
+- `CDAP-2923 <https://issues.cask.co/browse/CDAP-2923>`__ -
+  Added support for the WorkflowToken in the Spark programs.
+
+- `CDAP-2936 <https://issues.cask.co/browse/CDAP-2936>`__ -
+  Spark program can now specify resources usage for driver and executor process in distributed mode.
+
+
+**Workflows**
+
+- `CDAP-1983 <https://issues.cask.co/browse/CDAP-1983>`__ -
+  Added example application for processing and analyzing Wikipedia data using Workflows.
+
+- `CDAP-2709 <https://issues.cask.co/browse/CDAP-2709>`__ -
+  Added ability to add generic keys to the WorkflowToken.
+
+- `CDAP-2712 <https://issues.cask.co/browse/CDAP-2712>`__ -
+  Added ability to update the WorkflowToken in MapReduce and Spark programs.
+
+- `CDAP-2713 <https://issues.cask.co/browse/CDAP-2713>`__ -
+  Added ability to persist the WorkflowToken per run of the Workflow.
+
+- `CDAP-2714 <https://issues.cask.co/browse/CDAP-2714>`__ -
+  Added ability to query the WorkflowToken for the past as well as currently running Workflow runs.
+
+- `CDAP-2752 <https://issues.cask.co/browse/CDAP-2752>`__ -
+  Added ability for custom actions to access the CDAP datasets and services.
+
+- `CDAP-2894 <https://issues.cask.co/browse/CDAP-2894>`__ -
+  Added an API to retreive the system properties (e.g. MapReduce counters in case of
+  MapReduce program) from the WorkflowToken.
+
+- `CDAP-2923 <https://issues.cask.co/browse/CDAP-2923>`__ -
+  Added support for the WorkflowToken in the Spark programs.
+
+- `CDAP-2982 <https://issues.cask.co/browse/CDAP-2982>`__ -
+  Added verification that the Workflow contains all programs/custom actions with a unique name.
+
+
+**Datasets**
+
+- `CDAP-347 <https://issues.cask.co/browse/CDAP-347>`__ -
+  User can use datasets in beforeSubmit and afterFinish.
+
+- `CDAP-585 <https://issues.cask.co/browse/CDAP-585>`__ -
+  Changes to Spark program runner to use File dataset in Spark.
+  Spark programs can now use file-based datasets.
+
+- `CDAP-2734 <https://issues.cask.co/browse/CDAP-2734>`__ -
+  Added PartitionedFileSet support to setting/getting properties at the Partition level.
+
+- `CDAP-2746 <https://issues.cask.co/browse/CDAP-2746>`__ -
+  PartitionedFileSets now record the creation time of each partition in the metadata.
+
+- `CDAP-2747 <https://issues.cask.co/browse/CDAP-2747>`__ -
+  PartitionedFileSets now index the creation time of partitions to allow selection of
+  partitions that were created after a given time. Introduced BatchPartitionConsumer as a
+  way to incrementally consume new data in a PartitionedFileSet.
+
+- `CDAP-2752 <https://issues.cask.co/browse/CDAP-2752>`__ -
+  Added ability for custom actions to access the CDAP datasets and services.
+
+- `CDAP-2758 <https://issues.cask.co/browse/CDAP-2758>`__ -
+  FileSet now support existing HDFS locations. 
+  
+  Treat base paths that start with "/" as absolute in the file system. An absolute base
+  path for a (Partitioned)FileSet was interpreted as relative to the namespace's data
+  directory. Newly created FileSets interpret absolute base paths as absolute in the file
+  system.
+  
+  Introduced a new property for (Partitioned)FileSets name "data.external". If true, the
+  base path of the FileSet is assumed to be managed by some external process. That is, the
+  FileSet will not attempt to create the directory, it will not delete any files when the
+  FileSet is dropped or truncated, and it will not allow adding or deleting files or
+  partitions. In other words, the FileSet is read-only. 
+  
+- `CDAP-2784 <https://issues.cask.co/browse/CDAP-2784>`__ -
+  Added support to write to PartitionedFileSet Partition metadata from MapReduce.
+
+- `CDAP-2822 <https://issues.cask.co/browse/CDAP-2822>`__ -
+  IndexedTable now supports scans on the indexed field.
+
+
+**Metrics**
+
+- `CDAP-2975 <https://issues.cask.co/browse/CDAP-2975>`__ -
+  Added pre-split FactTables.
+
+- `CDAP-2326 <https://issues.cask.co/browse/CDAP-2326>`__ -
+  Added better unit-test coverage for Cube dataset.
+
+- `CDAP-1853 <https://issues.cask.co/browse/CDAP-1853>`__ -
+  Metrics processor scaling no longer needs a master services restart.
+
+- `CDAP-2844 <https://issues.cask.co/browse/CDAP-2844>`__ -
+  MapReduce metrics collection no longer use counters, and instead report directly to Kafka.
+
+- `CDAP-2701 <https://issues.cask.co/browse/CDAP-2701>`__ -
+  Spark programs are able to collect Metrics in distributed mode.
+
+- `CDAP-2466 <https://issues.cask.co/browse/CDAP-2466>`__ -
+  Added CLI for metrics search and query.
+
+- `CDAP-2236 <https://issues.cask.co/browse/CDAP-2236>`__ -
+  New CDAP UI switched over to using newer search/query APIs.
+
+- `CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__ -
+  Removed deprecated Context - Query param in Metrics v3 API.
+
+
+**Miscellaneous New Features**
+
+- `CDAP-332 <https://issues.cask.co/browse/CDAP-332>`__ -
+  Added a Restful end-point for deleting Streams.
 
 - `CDAP-1483 <https://issues.cask.co/browse/CDAP-1483>`__ -
   QueueAdmin now uses Id.Namespace instead of simply String.
@@ -41,26 +701,8 @@ New Features
 - `CDAP-1584 <https://issues.cask.co/browse/CDAP-1584>`__ -
   CDAP CLI now shows the username in the CLI prompt.
 
-- `CDAP-1614 <https://issues.cask.co/browse/CDAP-1614>`__ -
-  Added HBase 1.0 support.
-
-- `CDAP-1982 <https://issues.cask.co/browse/CDAP-1982>`__ -
-  Added an example for Workflow fork and condition nodes.
-
-- `CDAP-1993 <https://issues.cask.co/browse/CDAP-1993>`__ -
-  Added ability to manipulate the SparkConf.
-
-- `CDAP-1998 <https://issues.cask.co/browse/CDAP-1998>`__ -
-  Removed deprecated Context - Query param in Metrics v3 API.
-
 - `CDAP-2139 <https://issues.cask.co/browse/CDAP-2139>`__ -
   Removed a duplicate Table of Contents on the Documentation Search page.
-
-- `CDAP-2318 <https://issues.cask.co/browse/CDAP-2318>`__ -
-  Made CDAP work on the HDP 2.2 distribution.
-
-- `CDAP-2466 <https://issues.cask.co/browse/CDAP-2466>`__ -
-  Added CLI for metrics search and query.
 
 - `CDAP-2515 <https://issues.cask.co/browse/CDAP-2515>`__ -
   Added a metrics client for search and query by tags.
@@ -83,104 +725,23 @@ New Features
 - `CDAP-2670 <https://issues.cask.co/browse/CDAP-2670>`__ -
   Added Parquet sink with time partitioned file dataset.
 
-- `CDAP-2700 <https://issues.cask.co/browse/CDAP-2700>`__ -
-  Added the ability to Spark programs of discovering CDAP services.
-
-- `CDAP-2701 <https://issues.cask.co/browse/CDAP-2701>`__ -
-  Spark programs are able to collect Metrics in distributed mode.
-
-- `CDAP-2703 <https://issues.cask.co/browse/CDAP-2703>`__ -
-  Users are able to collect/view logs from Spark programs in distributed mode.
-
-- `CDAP-2705 <https://issues.cask.co/browse/CDAP-2705>`__ -
-  Added examples, guides and documentation for Spark in distributed mode. LogAnalysis
-  application demonstrating parallel execution of the Spark and MapReduce programs using
-  Workflows.
-
-- `CDAP-2709 <https://issues.cask.co/browse/CDAP-2709>`__ -
-  Added ability to add generic keys to the WorkflowToken.
-
-- `CDAP-2712 <https://issues.cask.co/browse/CDAP-2712>`__ -
-  Added ability to update the WorkflowToken in MapReduce and Spark programs.
-
-- `CDAP-2713 <https://issues.cask.co/browse/CDAP-2713>`__ -
-  Added ability to persist the WorkflowToken per run of the Workflow.
-
-- `CDAP-2714 <https://issues.cask.co/browse/CDAP-2714>`__ -
-  Added ability to query the WorkflowToken for the past as well as currently running Workflow runs.
-
-- `CDAP-2734 <https://issues.cask.co/browse/CDAP-2734>`__ -
-  Added PartitionedFileSet support to setting/getting properties at the Partition level.
-
 - `CDAP-2739 <https://issues.cask.co/browse/CDAP-2739>`__ -
   Added S3 batch source for ETLbatch.
-
-- `CDAP-2752 <https://issues.cask.co/browse/CDAP-2752>`__ -
-  Added ability for custom actions to access the CDAP datasets and services.
-
-- `CDAP-2784 <https://issues.cask.co/browse/CDAP-2784>`__ -
-  Added support to write to PartitionedFileSet Partition metadata from MapReduce.
-
-- `CDAP-2786 <https://issues.cask.co/browse/CDAP-2786>`__ -
-  Added support to CDAP 3.1.0 for the MapR distro.
-
-- `CDAP-2798 <https://issues.cask.co/browse/CDAP-2798>`__ -
-  Added Hive 0.14 support.
-
-- `CDAP-2801 <https://issues.cask.co/browse/CDAP-2801>`__ -
-  Added CDH 5.4 Hive 1.1 support.
 
 - `CDAP-2802 <https://issues.cask.co/browse/CDAP-2802>`__ -
   Stopped using HiveConf.ConfVars.defaultValue, to support Hive >0.13.
 
-- `CDAP-2822 <https://issues.cask.co/browse/CDAP-2822>`__ -
-  IndexedTable now supports scans on the indexed field.
-
-- `CDAP-2836 <https://issues.cask.co/browse/CDAP-2836>`__ -
-  Added support for restart of specific CDAP System Services Instances.
-
 - `CDAP-2847 <https://issues.cask.co/browse/CDAP-2847>`__ -
   Added ability to add custom filters to FileBatchSource.
 
-- `CDAP-2853 <https://issues.cask.co/browse/CDAP-2853>`__ -
-  Completed certification process for MapR on CDAP.
-
-- `CDAP-2879 <https://issues.cask.co/browse/CDAP-2879>`__ -
-  Added Hive 1.0 in Standalone.
-
-- `CDAP-2881 <https://issues.cask.co/browse/CDAP-2881>`__ -
-  Added support for HDP 2.2.x.
-
-- `CDAP-2891 <https://issues.cask.co/browse/CDAP-2891>`__ -
-  Documented cdap-env.sh and settings OPTS for HDP 2.2.
-
 - `CDAP-2893 <https://issues.cask.co/browse/CDAP-2893>`__ -
   Custom Transform now parses log formats for ETL.
-
-- `CDAP-2894 <https://issues.cask.co/browse/CDAP-2894>`__ -
-  Added an API to retreive the system properties (e.g. MapReduce counters in case of
-  MapReduce program) from the WorkflowToken.
-
-- `CDAP-2898 <https://issues.cask.co/browse/CDAP-2898>`__ -
-  Added Hive 1.1 in Standalone.
 
 - `CDAP-2913 <https://issues.cask.co/browse/CDAP-2913>`__ -
   Provided installation method for EMR.
 
 - `CDAP-2915 <https://issues.cask.co/browse/CDAP-2915>`__ -
-  Added an SQS realtime plugin for ETL.
-
-- `CDAP-2923 <https://issues.cask.co/browse/CDAP-2923>`__ -
-  Added support for the WorkflowToken in the Spark programs.
-
-- `CDAP-2936 <https://issues.cask.co/browse/CDAP-2936>`__ -
-  Spark program can now specify resources usage for driver and executor process in distributed mode.
-
-- `CDAP-2953 <https://issues.cask.co/browse/CDAP-2953>`__ -
-  Added HiveServer2 support in a secure cluster.
-
-- `CDAP-2982 <https://issues.cask.co/browse/CDAP-2982>`__ -
-  Added verification that the Workflow contains all programs/custom actions with a unique name.
+  Added an SQS real-time plugin for ETL.
 
 - `CDAP-3022 <https://issues.cask.co/browse/CDAP-3022>`__ -
   Added Cloudfront format option to LogParserTransform.
@@ -188,31 +749,9 @@ New Features
 - `CDAP-3032 <https://issues.cask.co/browse/CDAP-3032>`__ -
   Documented TestConfiguration class usage in unit-test framework.
 
+
 Improvements
 ------------
-
-- `CDAP-10 <https://issues.cask.co/browse/CDAP-10>`__ -
-  Remove caching of class loaders in dataset accessor when the dataset framework does not
-  return conflicting classloaders for any dataset.
-
-- `CDAP-37 <https://issues.cask.co/browse/CDAP-37>`__ -
-  Inject hconf in AbstractSparkContext by guice module ConfigModule.
-
-- `CDAP-347 <https://issues.cask.co/browse/CDAP-347>`__ -
-  User can use datasets in beforeSubmit and afterFinish.
-
-- `CDAP-362 <https://issues.cask.co/browse/CDAP-362>`__ -
-  Enabled Spark job listing and job page in Distributed mode.
-
-- `CDAP-380 <https://issues.cask.co/browse/CDAP-380>`__ -
-  CDAP Flow to use configurer style API.
-
-- `CDAP-419 <https://issues.cask.co/browse/CDAP-419>`__ -
-  Added automation and restructuring of the building of documentation.
-
-- `CDAP-585 <https://issues.cask.co/browse/CDAP-585>`__ -
-  Changes to Spark program runner to use File dataset in Spark.
-  Spark programs can now use file-based datasets.
 
 - `CDAP-593 <https://issues.cask.co/browse/CDAP-593>`__ -
   Spark no longer determines the mode through MRConfig.FRAMEWORK_NAME.
@@ -229,15 +768,6 @@ Improvements
 - `CDAP-1132 <https://issues.cask.co/browse/CDAP-1132>`__ -
   Improved the CDAP Doc Search Result Sorting.
 
-- `CDAP-1141 <https://issues.cask.co/browse/CDAP-1141>`__ -
-  Automated running CDAP integration tests using cdap-integration-test.
-
-- `CDAP-1143 <https://issues.cask.co/browse/CDAP-1143>`__ -
-  Removed the AuthenticatedHttpHandler.
-
-- `CDAP-1175 <https://issues.cask.co/browse/CDAP-1175>`__ -
-  Resolved Spark classpath issues in distributed mode.
-
 - `CDAP-1416 <https://issues.cask.co/browse/CDAP-1416>`__ -
   Added links to upper level pages on Docs.
 
@@ -246,24 +776,6 @@ Improvements
 
 - `CDAP-1583 <https://issues.cask.co/browse/CDAP-1583>`__ -
   Refactored InMemoryWorkerRunner and ServiceProgramRunnner after ServiceWorkers were removed.
-
-- `CDAP-1615 <https://issues.cask.co/browse/CDAP-1615>`__ -
-  Create HBase 1.0 compatibility module.
-
-- `CDAP-1801 <https://issues.cask.co/browse/CDAP-1801>`__ -
-  Bumped the version of hbase in cdap-data-fabric to use hbase98.
-
-- `CDAP-1806 <https://issues.cask.co/browse/CDAP-1806>`__ -
-  Added Spark job completion status for empty dummy programs.
-
-- `CDAP-1853 <https://issues.cask.co/browse/CDAP-1853>`__ -
-  Metrics processor scaling no longer needs a master services restart.
-
-- `CDAP-1983 <https://issues.cask.co/browse/CDAP-1983>`__ -
-  Added example application for processing and analyzing Wikipedia data using Workflows.
-
-- `CDAP-1912 <https://issues.cask.co/browse/CDAP-1912>`__ -
-  Changed Examples (Purchase, SportResults) to use Writable instead of JSON as mapper output.
 
 - `CDAP-1918 <https://issues.cask.co/browse/CDAP-1918>`__ -
   Switched to using the Spark 1.3.0 release.
@@ -274,20 +786,8 @@ Improvements
 - `CDAP-2007 <https://issues.cask.co/browse/CDAP-2007>`__ -
   CLI output for "call service" is rendered in a copy-pastable manner.
 
-- `CDAP-2058 <https://issues.cask.co/browse/CDAP-2058>`__ -
-  For enabling multiple runs of a Program, instance change of Programs do not change the specification.
-
-- `CDAP-2236 <https://issues.cask.co/browse/CDAP-2236>`__ -
-  New CDAP UI switched over to using newer search/query APIs.
-
-- `CDAP-2288 <https://issues.cask.co/browse/CDAP-2288>`__ -
-  Tested CDAP with the YARN Fair Scheduler.
-
 - `CDAP-2310 <https://issues.cask.co/browse/CDAP-2310>`__ -
   Kafka Source now able to apply a Schema to the Payload received.
-
-- `CDAP-2326 <https://issues.cask.co/browse/CDAP-2326>`__ -
-  Added better unit-test coverage for Cube dataset.
 
 - `CDAP-2388 <https://issues.cask.co/browse/CDAP-2388>`__ -
   Added Java 8 support to CDAP.
@@ -295,35 +795,17 @@ Improvements
 - `CDAP-2422 <https://issues.cask.co/browse/CDAP-2422>`__ -
   Removed redundant catch blocks in AdapterHttpHandler.
 
-- `CDAP-2448 <https://issues.cask.co/browse/CDAP-2448>`__ -
-  Added unit test for `CDAP-2202 <https://issues.cask.co/browse/CDAP-2202>`__.
-
 - `CDAP-2455 <https://issues.cask.co/browse/CDAP-2455>`__ -
   Version in CDAP-UI footer is dynamic.
 
-- `CDAP-2472 <https://issues.cask.co/browse/CDAP-2472>`__ -
-  A check for empty strings in addition to null added in ETL Plugins.
-
-- `CDAP-2479 <https://issues.cask.co/browse/CDAP-2479>`__ -
-  Avoiding duplicate staging repo creation for release builds in nexus.
-
 - `CDAP-2482 <https://issues.cask.co/browse/CDAP-2482>`__ -
   Reduced excessive capitalisation in documentation.
-
-- `CDAP-2492 <https://issues.cask.co/browse/CDAP-2492>`__ -
-  Upgrade to twill 0.6.0-incubating release.
-
-- `CDAP-2527 <https://issues.cask.co/browse/CDAP-2527>`__ -
-  Removed @beta from Filesets.
 
 - `CDAP-2531 <https://issues.cask.co/browse/CDAP-2531>`__ -
   Adapter details made available through CDAP-UI.
 
 - `CDAP-2539 <https://issues.cask.co/browse/CDAP-2539>`__ -
   Added a build identifier (branch, commit) in header of Documentation HTML pages.
-
-- `CDAP-2548 <https://issues.cask.co/browse/CDAP-2548>`__ -
-  Added upgrade for dataset type change for "usage.registry".
 
 - `CDAP-2552 <https://issues.cask.co/browse/CDAP-2552>`__ -
   Documentation Build script now flags errors.
@@ -391,124 +873,20 @@ Improvements
 - `CDAP-2697 <https://issues.cask.co/browse/CDAP-2697>`__ -
   CDAP-UI: added tab names during adapter creation.
 
-- `CDAP-2704 <https://issues.cask.co/browse/CDAP-2704>`__ -
-  Support for Spark ML with CDAP in distributed mode.
-
 - `CDAP-2716 <https://issues.cask.co/browse/CDAP-2716>`__ -
   CDAP-UI: when creating an adapter, the tabbing order shows correctly.
 
 - `CDAP-2733 <https://issues.cask.co/browse/CDAP-2733>`__ -
   Implemented a TimeParitionedFileSet source.
 
-- `CDAP-2735 <https://issues.cask.co/browse/CDAP-2735>`__ -
-  As DBSource doesn't use Table Name, removed it from Plugin configuration.
-
-- `CDAP-2746 <https://issues.cask.co/browse/CDAP-2746>`__ -
-  PartitionedFileSets now record the creation time of each partition in the metadata.
-
-- `CDAP-2747 <https://issues.cask.co/browse/CDAP-2747>`__ -
-  PartitionedFileSets now index the creation time of partitions to allow selection of
-  partitions that were created after a given time. Introduced BatchPartitionConsumer as a
-  way to incrementally consume new data in a PartitionedFileSet.
-
-- `CDAP-2758 <https://issues.cask.co/browse/CDAP-2758>`__ -
-  FileSet now support existing HDFS locations.
-
-- `CDAP-2795 <https://issues.cask.co/browse/CDAP-2795>`__ -
-  Dropped support for Hbase-0.94.
-
-- `CDAP-2797 <https://issues.cask.co/browse/CDAP-2797>`__ -
-  Fixed starting KafkaServer after ZkClientService fails in MapR.
-
 - `CDAP-2811 <https://issues.cask.co/browse/CDAP-2811>`__ -
   Improved Hive version detection.
-
-- `CDAP-2835 <https://issues.cask.co/browse/CDAP-2835>`__ -
-  Upgraded Apache Twill dependencies to handle MapRFS.
-
-- `CDAP-2840 <https://issues.cask.co/browse/CDAP-2840>`__ -
-  Implemented upgrade for PartitionedFileSetDataset to 3.1.0.
-
-- `CDAP-2842 <https://issues.cask.co/browse/CDAP-2842>`__ -
-  Closed instances of ProgramClassLoader and PluginClassLoader.
-
-- `CDAP-2844 <https://issues.cask.co/browse/CDAP-2844>`__ -
-  MapReduce metrics collection no longer use counters, and instead report directly to Kafka.
-
-- `CDAP-2846 <https://issues.cask.co/browse/CDAP-2846>`__ -
-  Persisted artifact contents and metadata.
-
-- `CDAP-2852 <https://issues.cask.co/browse/CDAP-2852>`__ -
-  Fixed running MapReduce program throwing exception Cannot initialize Cluster.
-
-- `CDAP-2868 <https://issues.cask.co/browse/CDAP-2868>`__ -
-  Abstracted use of changed HBase client APIs to compat modules.
-
-- `CDAP-2873 <https://issues.cask.co/browse/CDAP-2873>`__ -
-  Added user stories and design for adding System Service instances restart.
-
-- `CDAP-2874 <https://issues.cask.co/browse/CDAP-2874>`__ -
-  Modified system/services REST endpoints to handle new requests for restart instances.
-
-- `CDAP-2875 <https://issues.cask.co/browse/CDAP-2875>`__ -
-  Added in-memory flow for restarting the system services instances.
-
-- `CDAP-2876 <https://issues.cask.co/browse/CDAP-2876>`__ -
-  Integrated with updated Apache Twill to add support for distributed mode.
-
-- `CDAP-2884 <https://issues.cask.co/browse/CDAP-2884>`__ -
-  Treat base paths that start with "/" as absolute in the file system. An absolute base
-  path for a (Partitioned)FileSet was interpreted as relative to the namespace's data
-  directory. Newly created FileSets interpret absolute base paths as absolute in the file
-  system.
-  
-- `CDAP-2885 <https://issues.cask.co/browse/CDAP-2885>`__ -
-  Introduced a new property for (Partitioned)FileSets name "data.external". If true, the
-  base path of the FileSet is assumed to be managed by some external process. That is, the
-  FileSet will not attempt to create the directory, it will not delete any files when the
-  FileSet is dropped or truncated, and it will not allow adding or deleting files or
-  partitions. In other words, the FileSet is read-only. 
-
-- `CDAP-2886 <https://issues.cask.co/browse/CDAP-2886>`__ -
-  Upgrade tool to fix the base path of existing file sets.
-
-- `CDAP-2887 <https://issues.cask.co/browse/CDAP-2887>`__ -
-  Documented new file set properties.
-
-- `CDAP-2907 <https://issues.cask.co/browse/CDAP-2907>`__ -
-  Support for CDH HBase 1.0.
-
-- `CDAP-2914 <https://issues.cask.co/browse/CDAP-2914>`__ -
-  Removed Apache snapshot repo from repository list after Twill release.
-
-- `CDAP-2918 <https://issues.cask.co/browse/CDAP-2918>`__ -
-  Tested and fixed Explore on insecure and secure clusters with Hive 0.12, 0.13, 0.14,
-  1.0, and 1.1.
 
 - `CDAP-2921 <https://issues.cask.co/browse/CDAP-2921>`__ -
   Removed backward-compatibility for pre-2.8 TPFS.
 
-- `CDAP-2931 <https://issues.cask.co/browse/CDAP-2931>`__ -
-  Modified cdap-master startup script to include Spark in classpath.
-
 - `CDAP-2938 <https://issues.cask.co/browse/CDAP-2938>`__ -
   Implemented new ETL application template creation.
-
-- `CDAP-2949 <https://issues.cask.co/browse/CDAP-2949>`__ -
-  Documented how Intellij fails to resolve methods that are imported implicitly while
-  writing Spark program in Scala.
-
-- `CDAP-2960 <https://issues.cask.co/browse/CDAP-2960>`__ -
-  Added CDAP integration test for explore.
-
-- `CDAP-2964 <https://issues.cask.co/browse/CDAP-2964>`__ -
-  Added CDAP integration test for Spark programs.
-
-- `CDAP-2968 <https://issues.cask.co/browse/CDAP-2968>`__ -
-  Extended TestBase to allow passing config when creating apps.
-
-- `CDAP-2975 <https://issues.cask.co/browse/CDAP-2975>`__ -
-  Added pre-split FactTables.
 
 - `CDAP-2983 <https://issues.cask.co/browse/CDAP-2983>`__ -
   Spark program runner now calls onFailure() of the DatasetOutputCommitter.
@@ -522,65 +900,17 @@ Improvements
 - `CDAP-2989 <https://issues.cask.co/browse/CDAP-2989>`__ -
   Added an example for Spark using FileSets.
 
-- `CDAP-2993 <https://issues.cask.co/browse/CDAP-2993>`__ -
-  Documented Dataset Improvements/features.
-
-- `CDAP-2994 <https://issues.cask.co/browse/CDAP-2994>`__ -
-  Added example app for PartitionFileSet Partition consumer.
-
-- `CDAP-3015 <https://issues.cask.co/browse/CDAP-3015>`__ -
-  Added documentation for Workflow Token.
-
-- `CDAP-3016 <https://issues.cask.co/browse/CDAP-3016>`__ -
-  Tweaked Hadoop and HBase configurations to reduce threads in unit tests.
-
 - `CDAP-3018 <https://issues.cask.co/browse/CDAP-3018>`__ -
   Updated workflow guides for workflow token.
 
 - `CDAP-3028 <https://issues.cask.co/browse/CDAP-3028>`__ -
   Improved the system service restart endpoint to handle illegal instance IDs and "service not available".
 
-- `CDAP-3033 <https://issues.cask.co/browse/CDAP-3033>`__ -
-  Fixed integration test failures.
-
 - `CDAP-3053 <https://issues.cask.co/browse/CDAP-3053>`__ -
   Added schema javadocs that explain how to write the schema to JSON.
 
-- `CDAP-3068 <https://issues.cask.co/browse/CDAP-3068>`__ -
-  CDAP-UI: reverted to old design & positioning of Namespaces dropdown.
-
-- `CDAP-3074 <https://issues.cask.co/browse/CDAP-3074>`__ -
-  Updated startup script Java version checks.
-
 - `CDAP-3077 <https://issues.cask.co/browse/CDAP-3077>`__ -
   Add the ability in TableSink to find schema.row.field case-insensitively.
-
-- `CDAP-3082 <https://issues.cask.co/browse/CDAP-3082>`__ -
-  Updated License Dependency Files.
-
-- `CDAP-3083 <https://issues.cask.co/browse/CDAP-3083>`__ -
-  Added details on Application Template Plugins.
-
-- `CDAP-3084 <https://issues.cask.co/browse/CDAP-3084>`__ -
-  Corrected an inconsistency in the documentation on TTL.
-
-- `CDAP-3093 <https://issues.cask.co/browse/CDAP-3093>`__ -
-  Added cdap-hbase-compat-1.0 dependency for packaging.
-
-- `CDAP-3094 <https://issues.cask.co/browse/CDAP-3094>`__ -
-  Updated Installation Guide for HBase 1.0.
-
-- `CDAP-3110 <https://issues.cask.co/browse/CDAP-3110>`__ -
-  Added functional test for Kafka realtime source plugin.
-
-- `CDAP-3115 <https://issues.cask.co/browse/CDAP-3115>`__ -
-  Detailed documentation for ETL plugins.
-
-- `CDAP-3134 <https://issues.cask.co/browse/CDAP-3134>`__ -
-  Updated documentation references to required Java versions.
-
-- `CDAP-3136 <https://issues.cask.co/browse/CDAP-3136>`__ -
-  Updated documentation for restart instance endpoints.
 
 - `CDAP-3144 <https://issues.cask.co/browse/CDAP-3144>`__ -
   Changed CLI command descriptions to use consistent element case.
@@ -588,36 +918,6 @@ Improvements
 - `CDAP-3152 <https://issues.cask.co/browse/CDAP-3152>`__ -
   Refactored ETLBatch sources and sinks.
   
-- `CDAP-3155 <https://issues.cask.co/browse/CDAP-3155>`__ -
-  Updated installation guide with the supported distros.
-
-- `CDAP-3156 <https://issues.cask.co/browse/CDAP-3156>`__ -
-  Added detail to File batch source docs.
-
-- `CDAP-3157 <https://issues.cask.co/browse/CDAP-3157>`__ -
-  Added detail to LogParser transform.
-
-- `CDAP-3158 <https://issues.cask.co/browse/CDAP-3158>`__ -
-  Added detail to Amazon SQS source docs.
-
-- `CDAP-3159 <https://issues.cask.co/browse/CDAP-3159>`__ -
-  Added detail to cube docs.
-
-- `CDAP-3162 <https://issues.cask.co/browse/CDAP-3162>`__ -
-  Documented how to run Explore in a secure cluster.
-
-- `CDAP-3164 <https://issues.cask.co/browse/CDAP-3164>`__ -
-  Added detail to jms and kafka source docs.
-
-- `CDAP-3165 <https://issues.cask.co/browse/CDAP-3165>`__ -
-  Added detail to database sink docs.
-
-- `CDAP-3166 <https://issues.cask.co/browse/CDAP-3166>`__ -
-  Added detail to tpfs sinks docs.
-
-- `CDAP-3167 <https://issues.cask.co/browse/CDAP-3167>`__ -
-  Added detail to stream sink docs.
-
 Bug Fixes
 ---------
 
@@ -1162,10 +1462,10 @@ Bug Fixes
 .. -----------
 
 
+Deprecated and Removed Features
+-------------------------------
 
-.. Deprecated and Removed Features
-.. -------------------------------
-
+- See the :ref:`CDAP 3.1.0 Javadocs <javadocs>` for a list of deprecated and removed APIs.
 
 
 .. _known-issues-310:
@@ -1335,7 +1635,7 @@ Bug Fixes
   `CDAP-2946 <https://issues.cask.co/browse/CDAP-2946>`__,
   `TEPHRA-101 <https://issues.cask.co/browse/TEPHRA-101>`__).
   
-- Fixed a problem with CDAP Master not being resilient in the handling of Zookeeper 
+- Fixed a problem with CDAP Master not being resilient in the handling of ZooKeeper 
   exceptions
   (`CDAP-2569 <https://issues.cask.co/browse/CDAP-2569>`__).
   
@@ -1548,8 +1848,8 @@ New Features
 - CDAP Tables are :ref:`now explorable <table-exploration>` (`CDAP-946
   <https://issues.cask.co/browse/CDAP-946>`__).
 
-- The :ref:`CDAP CLI <cli>` supports the new :ref:`application template and adapters APIs 
-  <apptemplates-index>`. (`CDAP-1773 <https://issues.cask.co/browse/CDAP-1773>`__).
+- The :ref:`CDAP CLI <cli>` supports the new `application template and adapters APIs 
+  <http://docs.cask.co/cdap/3.0.0/en/application-templates/index.html>`__. (`CDAP-1773 <https://issues.cask.co/browse/CDAP-1773>`__).
   
 - The :ref:`CDAP CLI <cli>` startup options have been changed to accommodate a new option
   of executing a file containing a series of CLI commands, line-by-line.
@@ -1813,7 +2113,9 @@ New Features
     
 - **Upgrade and Data Migration Tool**
 
-  - Added an :ref:`automated upgrade tool <install-upgrade>` which supports upgrading from
+  - Added an `automated upgrade tool 
+    <http://docs.cask.co/cdap/2.8.0/en/admin-manual/installation/installation.html#upgrading-an-existing-version>`__ 
+    which supports upgrading from
     2.6.x to 2.8.0. (**Note:** Apps need to be both recompiled and re-deployed.)
     Upgrade from 2.7.x to 2.8.0 is not currently supported. If you have a use case for it, 
     please reach out to us at `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__.
@@ -1843,9 +2145,9 @@ Known Issues
 
 - See also the *Known Issues* of `version 2.7.1 <#known-issues-271>`_\ .
 - If the Hive Metastore is restarted while the CDAP Explore Service is running, the 
-  Explore Service remains alive, but becomes unusable. To correct, :ref:`restart the CDAP Master
-  <install-starting-services>`, which will restart all services 
-  (`CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__).
+  Explore Service remains alive, but becomes unusable. To correct, `restart the CDAP Master
+  <http://docs.cask.co/cdap/2.8.0/en/admin-manual/installation/installation.html#starting-services>`__, 
+  which will restart all services (`CDAP-1007 <https://issues.cask.co/browse/CDAP-1007>`__).
 - User datasets with names starting with ``"system"`` can potentially cause conflicts
   (`CDAP-1587 <https://issues.cask.co/browse/CDAP-1587>`__).
 - Scaling the number of metrics processor instances doesn't automatically distribute the
@@ -2047,9 +2349,10 @@ CDAP Bug Fixes
 - Fixed a problem with applications, whose Spark or Scala user classes were not extended
   from either ``JavaSparkProgram`` or ``ScalaSparkProgram``, failing with a class loading error
   (`CDAP-599 <https://issues.cask.co/browse/CDAP-599>`__).
-- Fixed a problem with the :ref:`CDAP upgrade tool <install-upgrade>` not preserving |---| for 
-  tables with readless increments enabled |---| the coprocessor configuration during an upgrade
-  (`CDAP-1044 <https://issues.cask.co/browse/CDAP-1044>`__).
+- Fixed a problem with the `CDAP upgrade tool 
+  <http://docs.cask.co/cdap/2.6.0/en/admin-manual/installation/installation.html#upgrading-an-existing-version>`__ 
+  not preserving |---| for tables with readless increments enabled |---| the coprocessor
+  configuration during an upgrade (`CDAP-1044 <https://issues.cask.co/browse/CDAP-1044>`__).
 - Fixed a problem with the readless increment implementation dropping increment cells when 
   a region flush or compaction occurred (`CDAP-1062 <https://issues.cask.co/browse/CDAP-1062>`__).
 
@@ -2070,7 +2373,7 @@ Known Issues
 - Writing to datasets through Hive is not supported in CDH4.x
   (`CDAP-988 <https://issues.cask.co/browse/CDAP-988>`__).
 - A race condition resulting in a deadlock can occur when a TwillRunnable container
-  shutdowns while it still has Zookeeper events to process. This occasionally surfaces when
+  shutdowns while it still has ZooKeeper events to process. This occasionally surfaces when
   running with OpenJDK or JDK7, though not with Oracle JDK6. It is caused by a change in the
   ``ThreadPoolExecutor`` implementation between Oracle JDK6 and OpenJDK/JDK7. Until Twill is
   updated in a future version of CDAP, a work-around is to kill the errant process. The Yarn
@@ -2200,7 +2503,7 @@ Services
 Security
 .................
 - Added authorization logging
-- Added Kerberos authentication to Zookeeper secret keys
+- Added Kerberos authentication to ZooKeeper secret keys
 - Added support for SSL
 
 Spark Integration

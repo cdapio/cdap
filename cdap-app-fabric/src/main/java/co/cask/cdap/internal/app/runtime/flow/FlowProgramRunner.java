@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.flow;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.flow.FlowletDefinition;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -175,7 +175,7 @@ public final class FlowProgramRunner implements ProgramRunner {
 
     FlowProgramController(Table<String, Integer, ProgramController> flowlets, RunId runId,
                           Program program, FlowSpecification flowSpec, Multimap<String, QueueName> consumerQueues) {
-      super(program.getName(), runId);
+      super(program.getId(), runId);
       this.flowlets = flowlets;
       this.program = program;
       this.flowSpec = flowSpec;

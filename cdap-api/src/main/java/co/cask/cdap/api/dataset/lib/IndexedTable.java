@@ -30,21 +30,20 @@ import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scan;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.primitives.Longs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import javax.annotation.Nullable;
 
 /**
@@ -123,7 +122,7 @@ public class IndexedTable extends AbstractDataset implements Table {
     super(name, table, index);
     this.table = table;
     this.index = index;
-    this.indexedColumns = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
+    this.indexedColumns = new TreeSet<>(Bytes.BYTES_COMPARATOR);
     this.hasColumnWithDelimiter = hasDelimiterByte(columnsToIndex);
     Collections.addAll(this.indexedColumns, columnsToIndex);
   }
@@ -250,7 +249,7 @@ public class IndexedTable extends AbstractDataset implements Table {
     byte[] dataRow = put.getRow();
     // find which values need to be indexed
     Map<byte[], byte[]> putColumns = put.getValues();
-    Set<byte[]> colsToIndex = Sets.newTreeSet(Bytes.BYTES_COMPARATOR);
+    Set<byte[]> colsToIndex = new TreeSet<>(Bytes.BYTES_COMPARATOR);
     for (Map.Entry<byte[], byte[]> putEntry : putColumns.entrySet()) {
       if (indexedColumns.contains(putEntry.getKey())) {
         colsToIndex.add(putEntry.getKey());
@@ -429,11 +428,13 @@ public class IndexedTable extends AbstractDataset implements Table {
    */
   @Override
   public Row incrementAndGet(byte[] row, byte[][] columns, long[] amounts) {
-    Preconditions.checkArgument(columns.length == amounts.length, "Size of columns and amounts arguments must match");
+    if (columns.length != amounts.length) {
+      throw new IllegalArgumentException("Size of columns and amounts arguments must match");
+    }
 
     Row existingRow = table.get(row, columns);
     byte[][] updatedValues = new byte[columns.length][];
-    NavigableMap<byte[], byte[]> result = Maps.newTreeMap(Bytes.BYTES_COMPARATOR);
+    NavigableMap<byte[], byte[]> result = new TreeMap<>(Bytes.BYTES_COMPARATOR);
 
     for (int i = 0; i < columns.length; i++) {
       long existingValue = 0L;
@@ -471,9 +472,15 @@ public class IndexedTable extends AbstractDataset implements Table {
   @Override
   public Row incrementAndGet(Increment increment) {
     Map<byte[], Long> incrementValues = increment.getValues();
+    Collection<Long> values = incrementValues.values();
+    long[] longValues = new long[values.size()];
+    int i = 0;
+    for (long value : values) {
+      longValues[i++] = value;
+    }
     return incrementAndGet(increment.getRow(),
                            incrementValues.keySet().toArray(new byte[incrementValues.size()][]),
-                           Longs.toArray(incrementValues.values()));
+                           longValues);
   }
 
 

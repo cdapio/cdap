@@ -90,7 +90,7 @@ public class NotificationFeedHttpHandler extends AbstractHttpHandler {
       }
     } catch (NotificationFeedException e) {
       LOG.error("Could not create notification feed.", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     } catch (JsonSyntaxException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid json object provided in request body.");
     } catch (IOException e) {

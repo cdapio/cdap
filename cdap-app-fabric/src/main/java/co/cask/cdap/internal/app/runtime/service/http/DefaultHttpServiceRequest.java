@@ -17,8 +17,10 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.service.http.HttpServiceRequest;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 
@@ -83,6 +85,16 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
   @Override
   public Multimap<String, String> getHeaders() {
     return headers;
+  }
+
+  @Override
+  public Map<String, List<String>> getAllHeaders() {
+    return Maps.transformValues(headers.asMap(), new Function<Collection<String>, List<String>>() {
+      @Override
+      public List<String> apply(Collection<String> input) {
+        return ImmutableList.copyOf(input);
+      }
+    });
   }
 
   /**

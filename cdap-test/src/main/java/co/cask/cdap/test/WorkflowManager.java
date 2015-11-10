@@ -19,7 +19,6 @@ package co.cask.cdap.test;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.WorkflowTokenDetail;
 import co.cask.cdap.proto.WorkflowTokenNodeDetail;
 
@@ -43,12 +42,6 @@ public interface WorkflowManager extends ProgramManager<WorkflowManager> {
    * @return {@link ScheduleManager} instance to manage the schedule identified by scheduleId
    */
   ScheduleManager getSchedule(String scheduleId);
-
-  /**
-   * Get the history of the workflow
-   * @return list of {@link RunRecord} workflow history
-   */
-  List<RunRecord> getHistory();
 
   /**
    * Get the {@link WorkflowTokenDetail} for the specified workflow run.

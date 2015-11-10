@@ -1,0 +1,49 @@
+{
+  "id": "Stream",
+  "groups" : {
+    "position": [ "group1", "group2"],
+    "group1": {
+       "display" : "General",
+       "position" : [ "name", "duration", "delay"],
+       "fields" : {
+          "name" : {
+             "widget": "stream-selector",
+             "label": "Stream Name"
+          },
+
+          "duration" : {
+             "widget": "textbox",
+             "label": "Process Time Window"
+          },
+
+          "delay" : {
+             "widget": "textbox",
+             "label": "Process Delay"
+          }
+       }
+    },
+
+    "group2" : {
+       "display" : "Format",
+       "position" : [ "format" ],
+       "fields" : {
+          "format" : {
+             "widget" : "select",
+             "label"  : "Format",
+             "properties" : {
+               "values" : [ "avro", "clf", "csv", "grok", "syslog", "text", "tsv" ],
+               "default" : "text"
+             }
+          }
+       }
+    }
+  },
+  "outputschema": {
+    "schema" : {
+      "widget": "schema",
+      "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string", "map<string, string>" ],
+      "schema-default-type" : "string",
+      "property-watch": "format"
+    }
+  }
+}

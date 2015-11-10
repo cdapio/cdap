@@ -26,8 +26,8 @@ public final class Delegators {
    * that is assignable to the given type.
    */
   @SuppressWarnings("unchecked")
-  public static <T, V> T getDelegate(T object, Class<V> type) {
-    T result = object;
+  public static <T, V> V getDelegate(T object, Class<V> type) {
+    Object result = object;
 
     // Keep searching while the result is still instance of Delegator
     while (result != null && result instanceof Delegator) {
@@ -42,7 +42,7 @@ public final class Delegators {
     if (result == null || !type.isAssignableFrom(result.getClass())) {
       throw new IllegalArgumentException("No object in the delegation chain is of type " + type);
     }
-    return result;
+    return (V) result;
   }
 
   private Delegators() {

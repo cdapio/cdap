@@ -17,6 +17,7 @@
 package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -27,16 +28,26 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.twill.AbstractMasterTwillRunnable;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
+import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.metadata.MetadataService;
+import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.proto.Id;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -72,7 +83,17 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
     // Set the host name to the one provided by Twill
     cConf.set(Constants.Dataset.Executor.ADDRESS, context.getHost().getHostName());
 
-    injector = Guice.createInjector(
+    injector = createInjector(cConf, hConf);
+
+    injector.getInstance(LogAppenderInitializer.class).initialize();
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.DATASET_EXECUTOR));
+  }
+
+  @VisibleForTesting
+  static Injector createInjector(CConfiguration cConf, Configuration hConf) {
+    return Guice.createInjector(
       new ConfigModule(cConf, hConf),
       new IOModule(), new ZKClientModule(),
       new KafkaClientModule(),
@@ -80,15 +101,21 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
       new DiscoveryRuntimeModule().getDistributedModules(),
       new LocationRuntimeModule().getDistributedModules(),
       new DataFabricModules().getDistributedModules(),
-      new DataSetsModules().getDistributedModules(),
+      new DataSetsModules().getDistributedModules(true),
       new DataSetServiceModules().getDistributedModules(),
       new LoggingModules().getDistributedModules(),
-      new ExploreClientModule());
-
-    injector.getInstance(LogAppenderInitializer.class).initialize();
-    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Constants.SYSTEM_NAMESPACE,
-                                                                       Constants.Logging.COMPONENT_NAME,
-                                                                       Constants.Service.DATASET_EXECUTOR));
+      new ExploreClientModule(),
+      new NamespaceClientRuntimeModule().getDistributedModules(),
+      new MetadataServiceModule(),
+      new ViewAdminModules().getDistributedModules(),
+      new StreamAdminModules().getDistributedModules(),
+      new NotificationFeedClientModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(Store.class).to(DefaultStore.class);
+        }
+      });
   }
 
   @Override
@@ -97,5 +124,6 @@ public class DatasetOpExecutorServerTwillRunnable extends AbstractMasterTwillRun
     services.add(injector.getInstance(KafkaClientService.class));
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(DatasetOpExecutorService.class));
+    services.add(injector.getInstance(MetadataService.class));
   }
 }

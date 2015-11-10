@@ -3,23 +3,23 @@
   "groups" : {
     "position": [ "group1" ],
     "group1": {
-       "position" : ["script", "schema" ],
+       "position" : ["script"],
        "fields" : {
-          "schema" : {
-             "widget": "schema",
-             "label": "Schema",
-             "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string" ],
-             "schema-default-type" : "string"
-          },
-
           "script" : {
              "widget": "javascript-editor",
-             "label" : "Script",
+             "label": "Script",
              "properties" : {
-                "default" : "function transform(input) {\n  return input;\n}"
+                "default" : "function transform(input, context) {\n  return input;\n}"
              }
           }
        }
+    }
+  },
+  "outputschema": {
+    "schema" : {
+      "widget": "schema",
+      "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string", "map<string, string>" ],
+      "schema-default-type" : "string"
     }
   }
 }

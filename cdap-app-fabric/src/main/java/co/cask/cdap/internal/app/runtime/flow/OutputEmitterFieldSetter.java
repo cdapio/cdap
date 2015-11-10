@@ -24,6 +24,7 @@ import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 
 /**
  *
@@ -37,13 +38,15 @@ final class OutputEmitterFieldSetter extends FieldVisitor {
   }
 
   @Override
-  public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
     if (OutputEmitter.class.equals(field.getType())) {
-      TypeToken<?> emitterType = inspectType.resolveType(field.getGenericType());
+      TypeToken<?> inspectTypeToken = TypeToken.of(inspectType);
+
+      TypeToken<?> emitterType = inspectTypeToken.resolveType(field.getGenericType());
       Preconditions.checkArgument(emitterType.getType() instanceof ParameterizedType,
                                   "Only ParameterizeType is supported for OutputEmitter.");
 
-      TypeToken<?> outputType = inspectType.resolveType(((ParameterizedType) emitterType.getType())
+      TypeToken<?> outputType = inspectTypeToken.resolveType(((ParameterizedType) emitterType.getType())
                                                           .getActualTypeArguments()[0]);
 
       String outputName = field.isAnnotationPresent(Output.class) ?

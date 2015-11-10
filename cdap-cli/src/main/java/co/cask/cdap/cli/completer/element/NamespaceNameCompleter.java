@@ -18,13 +18,11 @@ package co.cask.cdap.cli.completer.element;
 
 import co.cask.cdap.cli.completer.StringsCompleter;
 import co.cask.cdap.client.NamespaceClient;
-import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.NamespaceMeta;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -44,9 +42,7 @@ public class NamespaceNameCompleter extends StringsCompleter {
           for (NamespaceMeta namespaceMeta : namespaceClient.list()) {
             namespaceIds.add(namespaceMeta.getName());
           }
-        } catch (IOException e) {
-          return Lists.newArrayList();
-        } catch (UnauthorizedException e) {
+        } catch (Exception e) {
           return Lists.newArrayList();
         }
         return namespaceIds;

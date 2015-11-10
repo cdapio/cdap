@@ -15,6 +15,7 @@ Operations
    
     Logging <logging>
     Metrics <metrics>
+    Monitoring <monitoring>
     Preferences and Runtime Arguments <preferences>
     Scaling Instances <scaling-instances>
     Resource Guarantees in YARN <resource-guarantees>
@@ -35,11 +36,18 @@ Operations
 - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
   
 
+.. |monitoring| replace:: **Monitoring:**
+.. _monitoring: monitoring.html
+
+- |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
+  This section provides links to the relevant APIs for accessing these logs and metrics,
+  and an overview of available monitoring utilities.
+
 .. |preferences| replace:: **Preferences and Runtime Arguments:**
 .. _preferences: preferences.html
 
 - |preferences|_ **Preferences** provide the ability to save configuration information. 
-  flows, MapReduce programs, services, workflows and workers can receive **runtime arguments.**
+  Flows, MapReduce and Spark programs, services, workflows, and workers can receive **runtime arguments.**
 
 
 .. |scaling-instances| replace:: **Scaling Instances:**
@@ -69,7 +77,7 @@ Operations
 .. |tx-maintenance| replace:: **Transaction Service Maintenance:**
 .. _tx-maintenance: tx-maintenance.html
 
-- |tx-maintenance|_ Periodic maintenance of **Transaction Service.**
+- |tx-maintenance|_ Periodic maintenance of the **Transaction Service.**
 
 
 .. |troubleshooting| replace:: **Troubleshooting:**

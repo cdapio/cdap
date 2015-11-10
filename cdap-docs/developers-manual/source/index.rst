@@ -30,8 +30,8 @@ CDAP Developers’ Manual
 
 - |building-blocks|_ This section covers **the two core abstractions in the Cask Data
   Application Platform: **Data** and **Applications**.** *Data* abstractions include *Streams* and
-  *Datasets*. *Application* abstraction is accomplished using *Flows*, *MapReduce*, *Spark*,
-  *Workflows*, and *Services*. Details are provided on working with these abstractions to
+  *Datasets*. *Application* abstraction is accomplished using *flows* and *flowlets*, *MapReduce*, *Spark*,
+  *workers*, *workflows*, *schedules*, and *services*. Details are provided on working with these abstractions to
   build Big Data applications.
 
 
@@ -68,6 +68,6 @@ CDAP Developers’ Manual
 .. _advanced: advanced/index.html
 
 - |advanced|_ Covers **advanced topics on CDAP** that will be of interest to
-  developers who want a deeper dive into CDAP, with presentations on suggested **best
-  practices for CDAP development,** and on **adding a custom logback** to a CDAP
-  application.
+  developers who want a deeper dive into CDAP, including **class loading in
+  CDAP**, suggested **best practices for CDAP development**, and on **adding a custom
+  logback** to a CDAP application.

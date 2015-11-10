@@ -1,0 +1,37 @@
+{
+  "artifact": {
+    "name": "cdap-etl-realtime",
+    "scope": "SYSTEM",
+    "version": "3.3.0-SNAPSHOT"
+  },
+  "config": {
+    "source": {
+      "name": "Kafka",
+      "label": "Kafka",
+      "properties": {
+        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"remote_host\",\"type\":\"string\"},{\"name\":\"status\",\"type\":\"int\"}]}",
+        "kafka.topic": "logs",
+        "kafka.initial.offset": 0,
+        "kafka.zookeeper": "localhost:2181",
+        "format": "text",
+        "kafka.partitions": "1"
+      }
+    },
+    "sinks": [
+      {
+        "name": "Cube",
+        "label": "OLAP Cube",
+        "properties": {
+          "dataset.cube.resolutions": "1",
+          "cubeFact.measurements": "{\"cubeFact.measurement.count\":\"COUNTER\"}",
+          "name": "logcube",
+          "dataset.cube.properties": "{\"dataset.cube.aggregation.agg1.dimensions\":\"remote_host\",\"dataset.cube.aggregation.agg2.dimensions\":\"status\"}"
+        }
+      }
+    ],
+    "transforms": [],
+    "instances": 1
+  },
+  "description": "Realtime OLA Cube Generation."
+}
+

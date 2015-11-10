@@ -19,7 +19,7 @@ package co.cask.cdap.internal.app.runtime.artifact.plugin;
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
-import co.cask.cdap.api.templates.plugins.PluginConfig;
+import co.cask.cdap.api.plugin.PluginConfig;
 
 /**
  * plugin doesn't actually do anything, just for tests

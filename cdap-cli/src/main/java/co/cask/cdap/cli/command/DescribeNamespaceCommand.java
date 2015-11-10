@@ -51,7 +51,7 @@ public class DescribeNamespaceCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     Id.Namespace namespace = Id.Namespace.from(arguments.get(ArgumentName.NAMESPACE_NAME.getName()));
-    NamespaceMeta namespaceMeta = namespaceClient.get(namespace.getId());
+    NamespaceMeta namespaceMeta = namespaceClient.get(namespace);
     Table table = Table.builder()
       .setHeader("name", "description")
       .setRows(Lists.newArrayList(namespaceMeta), new RowMaker<NamespaceMeta>() {

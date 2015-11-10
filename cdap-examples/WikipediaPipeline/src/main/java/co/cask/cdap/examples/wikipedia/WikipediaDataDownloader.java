@@ -48,7 +48,6 @@ public class WikipediaDataDownloader extends AbstractMapReduce {
     setDescription("A MapReduce program that downloads Wikipedia data and stores it into a dataset.");
     setMapperResources(new Resources(512));
     setInputDataset(WikipediaPipelineApp.PAGE_TITLES_DATASET);
-    setOutputDataset(WikipediaPipelineApp.RAW_WIKIPEDIA_DATASET);
   }
 
   @Override
@@ -56,6 +55,7 @@ public class WikipediaDataDownloader extends AbstractMapReduce {
     Job job = context.getHadoopJob();
     job.setMapperClass(WikipediaDataDownloaderMapper.class);
     job.setNumReduceTasks(0);
+    context.addOutput(WikipediaPipelineApp.RAW_WIKIPEDIA_DATASET);
   }
 
   @Override

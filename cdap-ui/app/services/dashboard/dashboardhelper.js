@@ -1,6 +1,22 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.services')
-  .factory('DashboardHelper', function (MyDataSource, MyChartHelpers, MyMetricsQueryHelper) {
-    var dataSrc = new MyDataSource();
+  .factory('DashboardHelper', function (MyCDAPDataSource, MyChartHelpers, MyMetricsQueryHelper) {
+    var dataSrc = new MyCDAPDataSource();
 
     function startPolling (widget) {
       widget.pollId = dataSrc.poll({
@@ -37,7 +53,22 @@ angular.module(PKG.name + '.services')
     }
 
     function fetchData (widget) {
-      dataSrc.request({
+      return dataSrc.request({
+        _cdapPath: '/metrics/query',
+        method: 'POST',
+        body: MyMetricsQueryHelper.constructQuery(
+          'qid',
+          MyMetricsQueryHelper.contextToTags(widget.metric.context),
+          widget.metric
+        )
+      })
+      .then(function (res) {
+        widget.formattedData = formatData(res, widget);
+      });
+    }
+
+    function pollData (widget) {
+      return dataSrc.poll({
         _cdapPath: '/metrics/query',
         method: 'POST',
         body: MyMetricsQueryHelper.constructQuery(
@@ -84,6 +115,7 @@ angular.module(PKG.name + '.services')
       startPollDashboard: startPollDashboard,
       stopPollDashboard: stopPollDashboard,
       fetchData: fetchData,
+      pollData: pollData,
       fetchDataDashboard: fetchDataDashboard
     };
 

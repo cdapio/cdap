@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.transaction.queue;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
@@ -31,7 +30,7 @@ public abstract class AbstractQueueAdmin implements QueueAdmin {
   public AbstractQueueAdmin(QueueConstants.QueueType type) {
     // todo: we have to do that because queues do not follow dataset semantic fully (yet)
     // system scoped
-    this.unqualifiedTableNamePrefix = Constants.SYSTEM_NAMESPACE + "." + type.toString();
+    this.unqualifiedTableNamePrefix = Id.Namespace.SYSTEM.getId() + "." + type.toString();
     this.type = type;
   }
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.2.0-SNAPSHOT</version>
+    <version>3.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-ui</artifactId>
@@ -47,18 +47,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.rat</groupId>
-        <artifactId>apache-rat-plugin</artifactId>
-        <version>0.10</version>
-        <executions>
-          <execution>
-            <!-- Disable rat check for the web-app module for now. Check with rohit on how to do it.  -->
-            <id>rat-check</id>
-            <phase>none</phase>
-          </execution>
-        </executions>
-      </plugin>
       <plugin>
         <artifactId>maven-clean-plugin</artifactId>
         <version>2.6.1</version>
@@ -109,6 +97,39 @@
         </executions>
       </plugin>
     </plugins>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.rat</groupId>
+          <artifactId>apache-rat-plugin</artifactId>
+          <version>0.10</version>
+          <executions>
+            <execution>
+              <id>rat-check</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+              <configuration>
+                <excludes>
+                  <exclude>**/*.editorconfig</exclude>
+                  <exclude>**/*.jshintignore</exclude>
+                  <exclude>**/*.jshintrc</exclude>
+                  <exclude>**/*.svg</exclude>
+                  <exclude>**/bower_components/**</exclude>
+                  <exclude>**/node_modules/**</exclude>
+                  <exclude>**/dist/**</exclude>
+                  <exclude>**/logs/**</exclude>
+                  <exclude>**/npm-debug.log</exclude>
+                  <exclude>**/node/**</exclude>
+                  <exclude>**/*.json</exclude>
+                </excludes>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
   </build>
 
   <profiles>
@@ -142,6 +163,15 @@
                 <!-- Optional configuration which provides for running any npm command -->
                 <configuration>
                   <arguments>install</arguments>
+                </configuration>
+              </execution>
+              <execution>
+                <id>bower-cache-clean</id>
+                <goals>
+                  <goal>bower</goal>
+                </goals>
+                <configuration>
+                  <arguments>cache clean --allow-root</arguments>
                 </configuration>
               </execution>
               <execution>

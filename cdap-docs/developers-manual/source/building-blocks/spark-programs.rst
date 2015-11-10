@@ -4,16 +4,14 @@
 
 .. _spark:
 
-=============================================
-Spark Programs *(Beta, Standalone CDAP only)*
-=============================================
+==============
+Spark Programs
+==============
 
 *Apache Spark* is used for in-memory cluster computing. It lets you load large sets of
 data into memory and query them repeatedly. This makes it suitable for both iterative and
 interactive programs. Similar to MapReduce, Spark can access **datasets** as both input
 and output. *Spark programs* in CDAP can be written in either Java or Scala.
-
-In the current release, Spark (version 1.0 or higher) is supported only in the Standalone CDAP. 
 
 To process data using Spark, specify ``addSpark()`` in your application specification::
 
@@ -63,6 +61,26 @@ implementation for this method that does nothing::
   public void onFinish(boolean succeeded, SparkContext context) throws Exception {
     // Do nothing by default
   }
+
+Spark and Resources
+----------------------
+
+When a Spark program is configured, the resource requirements for both the Spark driver
+processes and the Spark executor processes can be set, both in terms of the amount of
+memory (in megabytes) and the number of virtual cores assigned.
+
+For example, in the :ref:`Spark Page Rank <examples-spark-page-rank>` example, in the configuration of
+the ``PageRankSpark``, the amount of memory is specified:
+
+.. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+   :language: java
+   :lines: 116-126
+
+If both the memory and the number of cores needs to be set, this can be done using::
+
+    setExecutorResources(new Resources(1024, 2));
+    
+In this case, 1024 MB and two cores is assigned to each executor process.
 
 CDAP SparkContext
 -----------------

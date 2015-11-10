@@ -1,0 +1,34 @@
+{
+  "id": "Stream",
+  "groups" : {
+    "position": [ "group1" ],
+    "group1": {
+      "display" : "Stream Configuration",
+      "position" : ["body.field", "headers.field", "name"],
+      "fields": {
+        "body.field": {
+          "widget": "textbox",
+          "label" : "Data Field Name",
+          "properties": {
+            "width": "medium"
+          }
+        },
+        "headers.field": {
+          "widget": "textbox",
+          "label" : "Header Field Name",
+          "properties": {
+            "width": "medium"
+          }
+        },
+        "name": {
+          "widget": "stream-selector",
+          "label" : "Stream Name",
+          "description" : "Name of the stream to be written to. If the stream is present, data will be written to it. If it is not present, it will first be created.",
+          "properties": {
+            "width": "medium"
+          }
+        }
+      }
+    }
+  }
+}

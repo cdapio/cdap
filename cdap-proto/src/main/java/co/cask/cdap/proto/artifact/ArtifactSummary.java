@@ -17,6 +17,9 @@
 package co.cask.cdap.proto.artifact;
 
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.proto.Id;
 
 import java.util.Objects;
 
@@ -27,12 +30,26 @@ import java.util.Objects;
 public class ArtifactSummary {
   protected final String name;
   protected final String version;
-  protected final boolean isSystem;
+  protected final ArtifactScope scope;
 
-  public ArtifactSummary(String name, String version, boolean isSystem) {
+  public static ArtifactSummary from(Id.Artifact artifactId) {
+    ArtifactScope scope = Id.Namespace.SYSTEM.equals(artifactId.getNamespace()) ?
+      ArtifactScope.SYSTEM : ArtifactScope.USER;
+    return new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), scope);
+  }
+
+  public static ArtifactSummary from(ArtifactId artifactId) {
+    return new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion(), artifactId.getScope());
+  }
+
+  public ArtifactSummary(String name, String version) {
+    this(name, version, ArtifactScope.USER);
+  }
+
+  public ArtifactSummary(String name, String version, ArtifactScope scope) {
     this.name = name;
     this.version = version;
-    this.isSystem = isSystem;
+    this.scope = scope;
   }
 
   public String getName() {
@@ -43,8 +60,8 @@ public class ArtifactSummary {
     return version;
   }
 
-  public boolean isSystem() {
-    return isSystem;
+  public ArtifactScope getScope() {
+    return scope;
   }
 
   @Override
@@ -58,20 +75,18 @@ public class ArtifactSummary {
 
     ArtifactSummary that = (ArtifactSummary) o;
 
-    return Objects.equals(name, that.name) && Objects.equals(version, that.version) && isSystem == that.isSystem;
+    return Objects.equals(name, that.name) &&
+      Objects.equals(version, that.version) &&
+      Objects.equals(scope, that.scope);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, version, isSystem);
+    return Objects.hash(name, version, scope);
   }
 
   @Override
   public String toString() {
-    return "ArtifactSummary{" +
-      "name='" + name + '\'' +
-      ", version='" + version + '\'' +
-      ", isSystem=" + isSystem +
-      '}';
+    return String.valueOf(scope) + ":" + name + "-" + version;
   }
 }

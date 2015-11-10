@@ -24,13 +24,11 @@ import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.table.Table;
-import com.google.common.base.Function;
-import com.google.common.collect.Iterators;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import javax.annotation.Nullable;
+import java.util.NoSuchElementException;
 
 /**
  * Defines a Dataset implementation for managing time series data. This class offers simple ways to process read
@@ -142,11 +140,37 @@ public class TimeseriesTable extends TimeseriesDataset
    * @return an iterator over entries that satisfy provided conditions
    * @throws IllegalArgumentException when provided condition is incorrect
    */
-  public final Iterator<Entry> read(byte[] key, long startTime, long endTime, int offset, int limit, byte[]... tags) {
-    Iterator<Entry> iterator = read(key, startTime, endTime, tags);
-    iterator = Iterators.limit(iterator, limit + offset);
-    Iterators.advance(iterator, offset);
-    return iterator;
+  public final Iterator<Entry> read(byte[] key, long startTime, long endTime,
+                                    int offset, final int limit, byte[]... tags) {
+    final Iterator<Entry> iterator = read(key, startTime, endTime, tags);
+    int advance = offset;
+    while (advance > 0 && iterator.hasNext()) {
+      iterator.next();
+      advance--;
+    }
+
+    return new Iterator<Entry>() {
+      int count = 0;
+
+      @Override
+      public boolean hasNext() {
+        return count < limit && iterator.hasNext();
+      }
+
+      @Override
+      public Entry next() {
+        if (hasNext()) {
+          count++;
+          return iterator.next();
+        }
+        throw new NoSuchElementException();
+      }
+
+      @Override
+      public void remove() {
+        iterator.remove();
+      }
+    };
   }
 
   /**
@@ -163,15 +187,24 @@ public class TimeseriesTable extends TimeseriesDataset
    * @return an iterator over entries that satisfy provided conditions
    */
   public Iterator<Entry> read(byte[] key, long startTime, long endTime, byte[]... tags) {
-    return Iterators.transform(readInternal(key, startTime, endTime, tags),
-                               new Function<TimeseriesDataset.Entry, Entry>() {
-                                 @Nullable
-                                 @Override
-                                 public TimeseriesTable.Entry apply(@Nullable TimeseriesDataset.Entry input) {
-                                   return new Entry(input.getKey(), input.getValue(),
-                                                    input.getTimestamp(), input.getTags());
-                                 }
-                               });
+    final Iterator<TimeseriesDataset.Entry> internalIterator = readInternal(key, startTime, endTime, tags);
+    return new Iterator<Entry>() {
+      @Override
+      public boolean hasNext() {
+        return internalIterator.hasNext();
+      }
+
+      @Override
+      public Entry next() {
+        TimeseriesDataset.Entry entry = internalIterator.next();
+        return new Entry(entry.getKey(), entry.getValue(), entry.getTimestamp(), entry.getTags());
+      }
+
+      @Override
+      public void remove() {
+        internalIterator.remove();
+      }
+    };
   }
 
 

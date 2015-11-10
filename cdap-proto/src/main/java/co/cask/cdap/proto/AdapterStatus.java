@@ -16,12 +16,10 @@
 
 package co.cask.cdap.proto;
 
-import co.cask.cdap.api.annotation.Beta;
-
 /**
  * Possible status of an Adapter
  */
-@Beta
+@Deprecated
 public enum AdapterStatus {
   STARTED, STOPPED
 }

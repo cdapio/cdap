@@ -62,7 +62,7 @@ import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import co.cask.tephra.distributed.TransactionService;
-import co.cask.tephra.persist.TransactionSnapshot;
+import co.cask.tephra.persist.TransactionVisibilityState;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
@@ -111,28 +111,26 @@ public abstract class HBaseQueueTest extends QueueTest {
   private static final Logger LOG = LoggerFactory.getLogger(QueueTest.class);
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+  @ClassRule
+  public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
 
   private static TransactionService txService;
   private static CConfiguration cConf;
   private static Configuration hConf;
   private static Injector injector;
 
-  protected static HBaseTestBase testHBase;
   protected static HBaseTableUtil tableUtil;
   protected static HBaseAdmin hbaseAdmin;
   private static ZKClientService zkClientService;
 
   @BeforeClass
   public static void init() throws Exception {
-    // Start hbase
-    testHBase = new HBaseTestFactory().get();
-    testHBase.startHBase();
-    hConf = testHBase.getConfiguration();
+    hConf = TEST_HBASE.getConfiguration();
 
     // Customize test configuration
     cConf = CConfiguration.create();
-    cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
+    cConf.set(Constants.Zookeeper.QUORUM, TEST_HBASE.getZkConnectionString());
     cConf.set(TxConstants.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(Networks.getRandomPort()));
     cConf.set(Constants.Dataset.TABLE_PREFIX, "test");
@@ -163,9 +161,9 @@ public abstract class HBaseQueueTest extends QueueTest {
     );
 
     //create HBase namespace
-    hbaseAdmin = testHBase.getHBaseAdmin();
+    hbaseAdmin = TEST_HBASE.getHBaseAdmin();
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(hbaseAdmin, Constants.SYSTEM_NAMESPACE_ID);
+    tableUtil.createNamespaceIfNotExists(hbaseAdmin, Id.Namespace.SYSTEM);
     tableUtil.createNamespaceIfNotExists(hbaseAdmin, NAMESPACE_ID);
     tableUtil.createNamespaceIfNotExists(hbaseAdmin, NAMESPACE_ID1);
 
@@ -196,11 +194,11 @@ public abstract class HBaseQueueTest extends QueueTest {
   // TODO: CDAP-1177 Should move to QueueTest after making getApplicationName() etc instance methods in a base class
   @Test
   public void testQueueTableNameFormat() throws Exception {
-    QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "application1", "flow1", "flowlet1",
+    QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "application1", "flow1", "flowlet1",
                                                 "output1");
     HBaseQueueAdmin hbaseQueueAdmin = (HBaseQueueAdmin) queueAdmin;
     TableId tableId = hbaseQueueAdmin.getDataTableId(queueName);
-    Assert.assertEquals(Constants.DEFAULT_NAMESPACE_ID, tableId.getNamespace());
+    Assert.assertEquals(Id.Namespace.DEFAULT, tableId.getNamespace());
     Assert.assertEquals("system." + hbaseQueueAdmin.getType() + ".application1.flow1", tableId.getTableName());
     String tableName = tableUtil.buildHTableDescriptor(tableId).build().getNameAsString();
     Assert.assertEquals("application1", HBaseQueueAdmin.getApplicationName(tableName));
@@ -217,7 +215,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void testHTablePreSplitted() throws Exception {
-    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app",
+    testHTablePreSplitted((HBaseQueueAdmin) queueAdmin, QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app",
                                                                               "flow", "flowlet", "out"));
   }
 
@@ -226,7 +224,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     if (!admin.exists(queueName)) {
       admin.create(queueName);
     }
-    try (HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId)) {
+    try (HTable hTable = tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId)) {
       Assert.assertEquals("Failed for " + admin.getClass().getName(),
                           cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS),
                           hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
@@ -235,7 +233,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test
   public void configTest() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE,
+    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(),
                                                       "app", "flow", "flowlet", "configure");
     queueAdmin.create(queueName);
 
@@ -405,14 +403,15 @@ public abstract class HBaseQueueTest extends QueueTest {
         }
       });
     } finally {
-      queueAdmin.dropAllInNamespace(Constants.DEFAULT_NAMESPACE_ID);
+      queueAdmin.dropAllInNamespace(Id.Namespace.DEFAULT);
     }
   }
 
   // This test upgrade from old queue (salted base) to new queue (sharded base)
   @Test (timeout = 30000L)
   public void testQueueUpgrade() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE, "app", "flow", "flowlet", "upgrade");
+    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(), "app",
+                                                      "flow", "flowlet", "upgrade");
     HBaseQueueAdmin hbaseQueueAdmin = (HBaseQueueAdmin) queueAdmin;
     HBaseQueueClientFactory hBaseQueueClientFactory = (HBaseQueueClientFactory) queueClientFactory;
 
@@ -429,7 +428,7 @@ public abstract class HBaseQueueTest extends QueueTest {
       final HBaseQueueProducer oldProducer = hBaseQueueClientFactory.createProducer(
         oldQueueAdmin, queueName, QueueConstants.QueueType.QUEUE,
         QueueMetrics.NOOP_QUEUE_METRICS, new SaltedHBaseQueueStrategy(tableUtil, buckets),
-        new ArrayList<ConsumerGroupConfig>());
+        new ArrayList<ConsumerGroupConfig>())
     ) {
       // Enqueue 10 items to old queue table
       Transactions.createTransactionExecutor(executorFactory, oldProducer)
@@ -496,7 +495,7 @@ public abstract class HBaseQueueTest extends QueueTest {
 
   @Test (timeout = 30000L)
   public void testReconfigure() throws Exception {
-    final QueueName queueName = QueueName.fromFlowlet(Constants.DEFAULT_NAMESPACE,
+    final QueueName queueName = QueueName.fromFlowlet(Id.Namespace.DEFAULT.getId(),
                                                       "app", "flow", "flowlet", "changeinstances");
     ConsumerGroupConfig groupConfig = new ConsumerGroupConfig(0L, 2, DequeueStrategy.HASH, "key");
     configureGroups(queueName, ImmutableList.of(groupConfig));
@@ -643,9 +642,9 @@ public abstract class HBaseQueueTest extends QueueTest {
       HTableNameConverter nameConverter = new HTableNameConverterFactory().get();
       CConfigurationReader cConfReader = new CConfigurationReader(hConf, nameConverter.getSysConfigTablePrefix(htd));
       return ConsumerConfigCache.getInstance(configTableName,
-                                             cConfReader, new Supplier<TransactionSnapshot>() {
+                                             cConfReader, new Supplier<TransactionVisibilityState>() {
           @Override
-          public TransactionSnapshot get() {
+          public TransactionVisibilityState get() {
             try {
               return transactionManager.getSnapshot();
             } catch (IOException e) {
@@ -683,7 +682,6 @@ public abstract class HBaseQueueTest extends QueueTest {
 
     hbaseAdmin.close();
     txService.stop();
-    testHBase.stopHBase();
     zkClientService.stopAndWait();
   }
 
@@ -695,7 +693,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     // make sure consumer config cache is updated with the latest tx snapshot
     takeTxSnapshot();
     final Class coprocessorClass = tableUtil.getQueueRegionObserverClassForVersion();
-    testHBase.forEachRegion(tableName, new Function<HRegion, Object>() {
+    TEST_HBASE.forEachRegion(tableName, new Function<HRegion, Object>() {
       public Object apply(HRegion region) {
         try {
           Coprocessor cp = region.getCoprocessorHost().findCoprocessor(coprocessorClass.getName());
@@ -724,8 +722,8 @@ public abstract class HBaseQueueTest extends QueueTest {
     });
 
     // Force a table flush to trigger eviction
-    testHBase.forceRegionFlush(tableName);
-    testHBase.forceRegionCompact(tableName, true);
+    TEST_HBASE.forceRegionFlush(tableName);
+    TEST_HBASE.forceRegionCompact(tableName, true);
   }
 
   @Override

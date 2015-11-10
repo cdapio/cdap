@@ -18,7 +18,6 @@ package co.cask.cdap.api.dataset.table;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.Split;
-import com.google.common.base.Objects;
 
 /**
  * Table splits are simply a start and stop key.
@@ -41,9 +40,9 @@ public class TableSplit extends Split {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("start", Bytes.toString(start))
-      .add("stop", Bytes.toString(stop))
-      .toString();
+    return "TableSplit{" +
+      "start=" + Bytes.toStringBinary(start) +
+      ", stop=" + Bytes.toStringBinary(stop) +
+      '}';
   }
 }

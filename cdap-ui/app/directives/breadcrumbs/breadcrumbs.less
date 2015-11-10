@@ -1,0 +1,216 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+@import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
+body.theme-cdap {
+  my-breadcrumbs, my-breadcrumb {
+    @media (max-width: @screen-sm-max) {
+      display: none;
+    }
+    @media (min-width: @screen-md-min) {
+      background-color: white;
+      border-bottom: 1px solid @panel-default-border;
+      position: absolute;
+      top: 75px;
+      right: 0;
+      left: 0;
+      height: 40px;
+      line-height: 40px;
+      .box-shadow(5px 0 10px rgba(0,0,0,0.5));
+      .crumbs {
+        .flexbox();
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        height: 40px;
+
+        li.dropdown {
+          &.open {
+            a.ns-dropdown-toggle:focus {
+              border-color: transparent;
+            }
+          }
+        }
+      }
+      ul.nav {
+        margin: 0;
+        white-space: nowrap;
+        .order(1);
+        .open {
+          > a, > a:hover, > a:focus {
+            background-color: transparent;
+          }
+
+          ul.dropdown-menu {
+            max-width: 400px;
+            height: auto;
+            max-height: 290px;
+            min-width: 0;
+            background-color: white;
+            border-color: white;
+            padding: 10px 0;
+            margin-top: 1px;
+            .border-radius(4px);
+            .box-shadow(0 6px 12px rgba(0, 0, 0, 0.175));
+            overflow-x: hidden;
+            overflow-y: scroll;
+            @media (min-width: @screen-md-min) {
+              position: absolute;
+            }
+            > li {
+              background-color: white;
+              padding: 0;
+              &:focus {
+                outline: 0;
+              }
+              > a {
+                color: @cdap-header;
+                font-weight: 500;
+                background-color: white;
+                padding-right: 10px;
+                padding-left: 10px;
+                &:hover, &:focus {
+                  color: @cdap-orange;
+                }
+                &:focus {
+                  outline: 0;
+                }
+              }
+              i {
+                display: inline-block;
+                width: 13px;
+              }
+              .active {
+                color: #c4c4c4;
+                pointer-events: none;
+              }
+            }
+          }
+        }
+      }
+
+      a.ns-dropdown-toggle {
+        color: @cdap-gray;
+        cursor: pointer;
+        font-weight: 500;
+        padding: 1px 0 0;
+        position: relative;
+        top: -1px;
+        &:hover, &:focus {
+          background-color: transparent;
+        }
+        &:after {
+          content: url('@{img-path}/chevron_front.png');
+          overflow: hidden;
+          position: absolute;
+          top: 1px;
+          height: 40px;
+          z-index: 99;
+        }
+        > span {
+          line-height: 40px;
+          vertical-align: top;
+          &:first-child {
+            padding-right: 5px;
+          }
+          &:last-child {
+            margin-right: 7px;
+          }
+        }
+      }
+
+      .breadcrumb {
+        background-color: transparent;
+        font-weight: 500;
+        height: 40px;
+        .order(2);
+        white-space: nowrap;
+        > li {
+          display: inline-block;
+          height: 40px;
+          position: relative;
+          text-align: center;
+          &:after {
+            z-index: 99;
+          }
+          &:not(:last-child), &:not(:only-child) {
+            &:before {
+              content: none;
+            }
+            &:after {
+              content: url('@{img-path}/chevron_front.png');
+              height: 40px;
+              top: 0;
+              right: 0;
+              display: inline-block;
+              position: relative;
+            }
+          }
+          &:nth-last-child(2) {
+            &:after {
+              content: '';
+            }
+          }
+          &:last-child, &:only-child {
+            background-image: url('@{img-path}/gray_chevron_body.png');
+            &:before, &:after {
+              background-color: white;
+              height: 40px;
+              top: 0;
+            }
+            &:before {
+              content: url('@{img-path}/gray_chevron_back.png');
+              display: inline-block;
+              left: 0;
+              padding: 0;
+              position: relative;
+            }
+            &:after {
+              content: url('@{img-path}/gray_chevron_front.png');
+              right: 0;
+              position: absolute;
+              border-bottom: 1px solid #ddd;
+            }
+            span {
+              color: @cdap-header;
+              padding-right: 18px;
+            }
+          }
+          a, span {
+            display: inline-block;
+            vertical-align: top;
+          }
+          a {
+            color: @cdap-gray;
+            padding-left: 11px;
+            &:hover, &:focus {
+              text-decoration: none;
+            }
+          }
+          &:first-child {
+            a {
+              padding-left: 18px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

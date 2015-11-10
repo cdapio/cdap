@@ -18,4 +18,18 @@
 
 source ../_common/common-build.sh
 
+DEFAULT_XML="../../cdap-common/src/main/resources/cdap-default.xml"
+DEFAULT_TOOL="../tools/doc-cdap-default.py"
+DEFAULT_RST="cdap-default-table.rst"
+CHECK_INCLUDES=${TRUE}
+
+function download_includes() {
+  echo_red_bold "Check guarded files for changes"
+  test_an_include 59246a91e27091dd6d9a4263d37e5f38 "${DEFAULT_XML}"
+
+  echo "Building rst file from cdap-default.xml..."
+  local includes_dir=${1}
+  python "${DEFAULT_TOOL}" -g -t "${includes_dir}/${DEFAULT_RST}"
+}
+
 run_command ${1}

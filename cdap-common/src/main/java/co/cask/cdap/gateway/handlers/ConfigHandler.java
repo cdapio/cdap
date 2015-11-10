@@ -53,17 +53,12 @@ public class ConfigHandler extends AbstractHttpHandler {
   @Path("/config/cdap")
   @GET
   public void configCDAP(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                         @DefaultValue("json") @QueryParam("format") String format) {
+                         @DefaultValue("json") @QueryParam("format") String format) throws IOException {
     if ("json".equals(format)) {
       responder.sendJson(HttpResponseStatus.OK, configService.getCConf());
     } else if ("xml".equals(format)) {
-      try {
-        String xmlString = configService.getCConfXMLString();
-        responder.sendContent(HttpResponseStatus.OK, newChannelBuffer(xmlString), "application/xml", null);
-      } catch (IOException e) {
-        LOG.info("Failed to write cConf to XML", e);
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
+      String xmlString = configService.getCConfXMLString();
+      responder.sendContent(HttpResponseStatus.OK, newChannelBuffer(xmlString), "application/xml", null);
     } else {
 
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid format: " + format + ". Valid formats: json, xml");
@@ -73,17 +68,12 @@ public class ConfigHandler extends AbstractHttpHandler {
   @Path("/config/hadoop")
   @GET
   public void configHadoop(@SuppressWarnings("UnusedParameters") HttpRequest request, HttpResponder responder,
-                          @DefaultValue("json") @QueryParam("format") String format) {
+                          @DefaultValue("json") @QueryParam("format") String format) throws IOException {
     if ("json".equals(format)) {
       responder.sendJson(HttpResponseStatus.OK, configService.getHConf());
     } else if ("xml".equals(format)) {
-      try {
-        String xmlString = configService.getHConfXMLString();
-        responder.sendContent(HttpResponseStatus.OK, newChannelBuffer(xmlString), "application/xml", null);
-      } catch (IOException e) {
-        LOG.info("Failed to write hConf to XML", e);
-        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-      }
+      String xmlString = configService.getHConfXMLString();
+      responder.sendContent(HttpResponseStatus.OK, newChannelBuffer(xmlString), "application/xml", null);
     } else {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Invalid format: " + format + ". Valid formats: json, xml");
     }

@@ -26,10 +26,20 @@
 source ../_common/common-build.sh
 
 function build_extras() {
-  echo "Building Javadocs."
-  build_javadocs_sdk
+  echo_red_bold "Building extras."
+  local html_path="${TARGET_PATH}/${HTML}"
+
+  if [ "x${USING_JAVADOCS}" != "x" ]; then
+    echo "Copying Javadocs."
+    rm -rf ${html_path}/${JAVADOCS}
+    cp -r ${API_JAVADOCS} ${html_path}/.
+    mv -f ${html_path}/${APIDOCS} ${html_path}/${JAVADOCS}
+  else
+    echo "Not using Javadocs."
+  fi
+
   echo "Copying license PDFs."
-  copy_license_pdfs
+  cp ${SCRIPT_PATH}/${LICENSES_PDF}/*.pdf ${html_path}/${LICENSES}
 }
 
 run_command ${1}

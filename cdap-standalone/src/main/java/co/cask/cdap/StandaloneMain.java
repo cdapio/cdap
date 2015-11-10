@@ -28,6 +28,7 @@ import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.URLConnections;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -36,6 +37,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.executor.ExploreExecutorService;
@@ -47,6 +49,8 @@ import co.cask.cdap.gateway.router.RouterModules;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.metadata.MetadataService;
+import co.cask.cdap.metadata.MetadataServiceModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.metrics.guice.MetricsHandlerModule;
 import co.cask.cdap.metrics.query.MetricsQueryService;
@@ -88,9 +92,9 @@ public class StandaloneMain {
   private final ServiceStore serviceStore;
   private final StreamService streamService;
   private final MetricsCollectionService metricsCollectionService;
-
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
+  private final MetadataService metadataService;
   private final boolean securityEnabled;
   private final boolean sslEnabled;
   private final CConfiguration configuration;
@@ -135,6 +139,7 @@ public class StandaloneMain {
     }
 
     exploreClient = injector.getInstance(ExploreClient.class);
+    metadataService = injector.getInstance(MetadataService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -189,6 +194,7 @@ public class StandaloneMain {
     if (exploreExecutorService != null) {
       exploreExecutorService.startAndWait();
     }
+    metadataService.startAndWait();
 
     String protocol = sslEnabled ? "https" : "http";
     int dashboardPort = sslEnabled ?
@@ -230,6 +236,7 @@ public class StandaloneMain {
         externalAuthenticationServer.stopAndWait();
       }
       logAppenderInitializer.close();
+      metadataService.stopAndWait();
 
     } catch (Throwable e) {
       LOG.error("Exception during shutdown", e);
@@ -315,13 +322,21 @@ public class StandaloneMain {
   private static List<Module> createPersistentModules(CConfiguration configuration, Configuration hConf) {
     configuration.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, Constants.DEFAULT_DATA_LEVELDB_DIR);
 
-    String environment =
-      configuration.get(Constants.CFG_APPFABRIC_ENVIRONMENT, Constants.DEFAULT_APPFABRIC_ENVIRONMENT);
-    if (environment.equals("vpc")) {
-      System.err.println("Application Server Environment: " + environment);
-    }
-
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
+
+    // configure all services except for router to bind to 127.0.0.1
+    configuration.set(Constants.AppFabric.SERVER_ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Transaction.Container.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Dataset.Manager.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Dataset.Executor.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Stream.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Metrics.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Metrics.SERVER_ADDRESS, "127.0.0.1");
+    configuration.set(Constants.MetricsProcessor.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.LogSaver.ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Security.AUTH_SERVER_BIND_ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Explore.SERVER_ADDRESS, "127.0.0.1");
+    configuration.set(Constants.Metadata.SERVICE_BIND_ADDRESS, "127.0.0.1");
 
     return ImmutableList.of(
       new ConfigModule(configuration, hConf),
@@ -344,7 +359,10 @@ public class StandaloneMain {
       new ExploreClientModule(),
       new NotificationFeedServiceRuntimeModule().getStandaloneModules(),
       new NotificationServiceRuntimeModule().getStandaloneModules(),
-      new StreamAdminModules().getStandaloneModules()
+      new ViewAdminModules().getStandaloneModules(),
+      new StreamAdminModules().getStandaloneModules(),
+      new NamespaceClientRuntimeModule().getStandaloneModules(),
+      new MetadataServiceModule()
     );
   }
 }

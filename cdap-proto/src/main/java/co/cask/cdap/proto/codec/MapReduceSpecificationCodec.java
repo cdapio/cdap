@@ -18,7 +18,6 @@ package co.cask.cdap.proto.codec;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
-import co.cask.cdap.internal.batch.DefaultMapReduceSpecification;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -42,6 +41,9 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
     jsonObj.addProperty("name", src.getName());
     jsonObj.addProperty("description", src.getDescription());
 
+    if (src.getDriverResources() != null) {
+      jsonObj.add("driverResources", context.serialize(src.getDriverResources()));
+    }
     if (src.getMapperResources() != null) {
       jsonObj.add("mapperResources", context.serialize(src.getMapperResources()));
     }
@@ -68,6 +70,7 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
     String className = jsonObj.get("className").getAsString();
     String name = jsonObj.get("name").getAsString();
     String description = jsonObj.get("description").getAsString();
+    Resources driverResources = deserializeResources(jsonObj, "driver", context);
     Resources mapperResources = deserializeResources(jsonObj, "mapper", context);
     Resources reducerResources = deserializeResources(jsonObj, "reducer", context);
     JsonElement inputDataSetElem = jsonObj.get("inputDataSet");
@@ -77,9 +80,8 @@ public final class MapReduceSpecificationCodec extends AbstractSpecificationCode
 
     Set<String> dataSets = deserializeSet(jsonObj.get("datasets"), context, String.class);
     Map<String, String> properties = deserializeMap(jsonObj.get("properties"), context, String.class);
-
-    return new DefaultMapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
-                                             dataSets, properties, mapperResources, reducerResources);
+    return new MapReduceSpecification(className, name, description, inputDataSet, outputDataSet,
+                                      dataSets, properties, driverResources, mapperResources, reducerResources);
   }
 
   /**

@@ -22,6 +22,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.ServiceUnavailableException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -112,7 +113,7 @@ public class DatasetSerDe implements SerDe {
           schema = Schema.parseJson(schemaStr);
           return;
         }
-      } catch (DatasetManagementException e) {
+      } catch (DatasetManagementException | ServiceUnavailableException e) {
         throw new SerDeException("Could not instantiate dataset " + datasetId, e);
       } catch (IOException e) {
         throw new SerDeException("Exception getting schema for dataset " + datasetId, e);

@@ -59,14 +59,14 @@ public abstract class StreamFileJanitorTestBase {
   public void setup() throws IOException {
     // FileStreamAdmin expects namespace directory to exist.
     // Simulate namespace create
-    getNamespacedLocationFactory().get(Constants.DEFAULT_NAMESPACE_ID).mkdirs();
+    getNamespacedLocationFactory().get(Id.Namespace.DEFAULT).mkdirs();
   }
 
   @Test
   public void testCleanupGeneration() throws Exception {
     // Create a stream and performs couple truncate
     String streamName = "testCleanupGeneration";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
 
     StreamAdmin streamAdmin = getStreamAdmin();
     streamAdmin.create(streamId);
@@ -103,7 +103,7 @@ public abstract class StreamFileJanitorTestBase {
   public void testCleanupTTL() throws Exception {
     // Create a stream with 5 seconds TTL, partition duration of 2 seconds
     String streamName = "testCleanupTTL";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
 
     StreamAdmin streamAdmin = getStreamAdmin();
     StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(),
@@ -144,19 +144,16 @@ public abstract class StreamFileJanitorTestBase {
 
   @Test
   public void testCleanupDeletedStream() throws Exception {
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, "cleanupDelete");
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, "cleanupDelete");
     StreamAdmin streamAdmin = getStreamAdmin();
     StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), streamAdmin, getNamespacedLocationFactory());
     streamAdmin.create(streamId);
 
     // Write some data
-    FileWriter<StreamEvent> writer = createWriter(streamId);
-    try {
+    try (FileWriter<StreamEvent> writer = createWriter(streamId)) {
       for (int i = 0; i < 10; i++) {
         writer.append(StreamFileTestUtils.createEvent(i * 1000, "Testing " + i));
       }
-    } finally {
-      writer.close();
     }
 
     // Delete the stream

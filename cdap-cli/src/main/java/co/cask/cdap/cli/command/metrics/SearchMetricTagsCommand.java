@@ -17,17 +17,11 @@
 package co.cask.cdap.cli.command.metrics;
 
 import co.cask.cdap.cli.CLIConfig;
-import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.cli.util.ArgumentParser;
-import co.cask.cdap.cli.util.RowMaker;
-import co.cask.cdap.cli.util.table.Table;
-import co.cask.cdap.client.ApplicationTemplateClient;
 import co.cask.cdap.client.MetricsClient;
 import co.cask.cdap.proto.MetricTagValue;
-import co.cask.cdap.proto.template.ApplicationTemplateMeta;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;

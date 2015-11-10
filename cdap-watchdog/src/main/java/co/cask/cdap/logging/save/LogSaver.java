@@ -16,9 +16,13 @@
 
 package co.cask.cdap.logging.save;
 
+import co.cask.cdap.api.metrics.MetricsCollectionService;
+import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.logging.appender.kafka.KafkaTopic;
+import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -52,10 +56,13 @@ public final class LogSaver extends AbstractIdleService {
   private Map<Integer, CountDownLatch> kafkaCancelCallbackLatchMap;
   private Set<KafkaLogProcessor> messageProcessors;
 
+  private final MetricsContext metricsContext;
+
   @Inject
   public LogSaver(KafkaClientService kafkaClient,
                   @Named(Constants.LogSaver.MESSAGE_PROCESSORS) Set<KafkaLogProcessor> messageProcessors,
-                  @Assisted Set<Integer> partitions)
+                  @Assisted Set<Integer> partitions,
+                  MetricsCollectionService metricsCollectionService)
                   throws Exception {
     LOG.info("Initializing LogSaver...");
 
@@ -67,6 +74,11 @@ public final class LogSaver extends AbstractIdleService {
     this.kafkaCancelMap = new HashMap<>();
     this.kafkaCancelCallbackLatchMap = new HashMap<>();
     this.messageProcessors = messageProcessors;
+
+    // TODO: add instance id of the log saver as a tag, when CDAP-3265 is fixed
+    this.metricsContext = metricsCollectionService.getContext(
+      ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, Id.Namespace.SYSTEM.getId(),
+                      Constants.Metrics.Tag.COMPONENT, Constants.Service.LOGSAVER));
   }
 
   @Override
@@ -138,7 +150,7 @@ public final class LogSaver extends AbstractIdleService {
 
       kafkaCancelCallbackLatchMap.put(part, new CountDownLatch(1));
       kafkaCancelMap.put(part, preparer.consume(
-        new KafkaMessageCallback(kafkaCancelCallbackLatchMap.get(part), messageProcessors)));
+        new KafkaMessageCallback(kafkaCancelCallbackLatchMap.get(part), messageProcessors, metricsContext)));
     }
 
     LOG.info("Consumer created for topic {}, partitions {}", topic, partitionOffset);

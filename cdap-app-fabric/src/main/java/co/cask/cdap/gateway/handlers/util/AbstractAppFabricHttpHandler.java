@@ -17,12 +17,11 @@
 package co.cask.cdap.gateway.handlers.util;
 
 import co.cask.cdap.api.ProgramSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.internal.UserErrors;
 import co.cask.cdap.internal.UserMessages;
-import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
@@ -33,7 +32,6 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
@@ -48,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -105,9 +104,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
 
     public static final AppFabricServiceStatus INTERNAL_ERROR =
       new AppFabricServiceStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Internal server error");
-
-    public static final AppFabricServiceStatus ADAPTER_CONFLICT =
-      new AppFabricServiceStatus(HttpResponseStatus.FORBIDDEN, "An ApplicationTemplate exists with conflicting name.");
 
     private final HttpResponseStatus code;
     private final String message;
@@ -171,25 +167,8 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  protected final void getAppRecords(HttpResponder responder, Store store, String namespaceId) {
-    try {
-      Id.Namespace namespace = Id.Namespace.from(namespaceId);
-      List<ApplicationRecord> appRecords = Lists.newArrayList();
-      for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
-        appRecords.add(new ApplicationRecord(appSpec.getName(), appSpec.getVersion(), appSpec.getDescription()));
-      }
-
-      responder.sendJson(HttpResponseStatus.OK, appRecords);
-    } catch (SecurityException e) {
-      LOG.debug("Security Exception while retrieving app details: ", e);
-      responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception : ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-    }
-  }
-
-  protected final void programList(HttpResponder responder, String namespaceId, ProgramType type, Store store) {
+  protected final void programList(HttpResponder responder, String namespaceId, ProgramType type,
+                                   Store store) throws Exception {
     try {
       Id.Namespace namespace = Id.Namespace.from(namespaceId);
       List<ProgramRecord> programRecords = listPrograms(namespace, type, store);
@@ -201,9 +180,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
       }
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception: ", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -231,7 +207,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
 
   protected final List<ProgramRecord> listPrograms(Collection<ApplicationSpecification> appSpecs,
                                                    ProgramType type) throws Exception {
-    List<ProgramRecord> programRecords = Lists.newArrayList();
+    List<ProgramRecord> programRecords = new ArrayList<>();
     for (ApplicationSpecification appSpec : appSpecs) {
       switch (type) {
         case FLOW:
@@ -294,9 +270,6 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, runtimeService.getLiveInfo(programId));
     } catch (SecurityException e) {
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);
-    } catch (Throwable e) {
-      LOG.error("Got exception:", e);
-      responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
     }
   }
 

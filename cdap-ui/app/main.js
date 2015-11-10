@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 console.time(PKG.name);
 
 angular
@@ -13,7 +29,7 @@ angular
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
       PKG.name+'.feature.foo',
-      PKG.name+'.feature.adapters',
+      PKG.name+'.feature.hydrator',
       PKG.name+'.feature.explore'
     ]).name,
 
@@ -41,6 +57,10 @@ angular
       'cask-angular-confirmable',
       'cask-angular-promptable',
       'cask-angular-json-edit',
+      'cask-angular-eventpipe',
+      'cask-angular-observable-promise',
+      'cask-angular-socket-datasource',
+      'cask-angular-dispatcher',
 
       'mgcrea.ngStrap.datepicker',
       'mgcrea.ngStrap.timepicker',
@@ -62,7 +82,9 @@ angular
       'ncy-angular-breadcrumb',
       'angularMoment',
       'ui.ace',
-      'gridster'
+      'gridster',
+      'angular-cron-jobs',
+      'angularjs-dropdown-multiselect'
 
     ]).name,
 
@@ -81,14 +103,21 @@ angular
     window.$go = $state.go;
   })
 
+  .config(function (MyDataSourceProvider) {
+    MyDataSourceProvider.defaultInterval = 5;
+  })
 
   .config(function ($locationProvider) {
     $locationProvider.html5Mode(true);
   })
 
+  .run(function ($rootScope) {
+    $rootScope.defaultPollInterval = 10000;
+  })
+
   .config(function($provide) {
 
-    $provide.decorator('$http', function($delegate, MyDataSource) {
+    $provide.decorator('$http', function($delegate, MyCDAPDataSource) {
 
 
       function newHttp(config) {
@@ -98,12 +127,12 @@ angular
           // Can/Should make use of my<whatever>Api service in another service.
           // So in that case the service will not have a scope. Hence the check
           if (config.params && config.params.scope) {
-            myDataSrc = MyDataSource(config.params.scope);
+            myDataSrc = MyCDAPDataSource(config.params.scope);
             delete config.params.scope;
           } else {
-            myDataSrc = MyDataSource();
+            myDataSrc = MyCDAPDataSource();
           }
-          // We can use MyDataSource directly or through $resource'y way.
+          // We can use MyCDAPDataSource directly or through $resource'y way.
           // If we use $resource'y way then we need to make some changes to
           // the data we get for $resource.
           config.$isResource = true;
@@ -188,8 +217,8 @@ angular
     ]);
   })
 
-  .run(function ($rootScope, MYSOCKET_EVENT, myAlert) {
-    $rootScope.$on(MYSOCKET_EVENT.closed, function (angEvent, data) {
+  .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
+    EventPipe.on(MYSOCKET_EVENT.closed, function (angEvent, data) {
       myAlert({
         title: 'Error',
         content: data.reason || 'Unable to connect to CDAP',
@@ -197,7 +226,7 @@ angular
       });
     });
 
-    $rootScope.$on(MYSOCKET_EVENT.message, function (angEvent, data) {
+    EventPipe.on(MYSOCKET_EVENT.message, function (data) {
       if(data.statusCode > 399 && !data.resource.suppressErrors) {
         myAlert({
           title: data.statusCode.toString(),
@@ -225,12 +254,16 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyDataSource, MY_CONFIG, MYAUTH_EVENT) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth) {
 
     var activeThemeClass = caskTheme.getClassName();
-    var dataSource = new MyDataSource($scope);
+    var dataSource = new MyCDAPDataSource($scope);
     if (MY_CONFIG.securityEnabled) {
-      $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
+      if (myAuth.isAuthenticated()) {
+        getVersion();
+      } else {
+        $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
+      }
     } else {
       getVersion();
     }
@@ -273,7 +306,7 @@ angular
       $scope.bodyClass = classes.join(' ');
     });
 
-    $rootScope.$on(MYSOCKET_EVENT.reconnected, function () {
+    EventPipe.on(MYSOCKET_EVENT.reconnected, function () {
       $log.log('[DataSource] reconnected, reloading...');
 
       // https://github.com/angular-ui/ui-router/issues/582

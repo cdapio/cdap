@@ -1,0 +1,33 @@
+{
+  "artifact": {
+    "name": "cdap-etl-realtime",
+    "scope": "SYSTEM",
+    "version": "3.3.0-SNAPSHOT"
+  },
+  "config": {
+    "source": {
+      "name": "AmazonSQS",
+      "label": "Amazon SQS",
+      "properties": {
+        "region": "",
+        "accessKey": "",
+        "accessID": "",
+        "queueName": ""
+      }
+    },
+    "sinks": [
+      {
+        "name": "Table",
+        "label": "HBase",
+        "properties": {
+          "name": "",
+          "schema.row.field": ""
+        }
+      }
+    ],
+    "transforms": [],
+    "instances": 1
+  },
+  "description": "Realtime updates from Amazon Simple Queue Service to HBase."
+}
+

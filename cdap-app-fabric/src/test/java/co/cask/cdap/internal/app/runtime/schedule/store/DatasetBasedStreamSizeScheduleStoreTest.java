@@ -17,7 +17,6 @@
 package co.cask.cdap.internal.app.runtime.schedule.store;
 
 import co.cask.cdap.api.schedule.SchedulableProgramType;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.runtime.schedule.StreamSizeScheduleState;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
@@ -38,10 +37,9 @@ public class DatasetBasedStreamSizeScheduleStoreTest {
 
   public static DatasetBasedStreamSizeScheduleStore scheduleStore;
 
-  private static final Id.Namespace NAMESPACE = new Id.Namespace(Constants.DEFAULT_NAMESPACE);
-  private static final Id.Application APP_ID = new Id.Application(NAMESPACE, "AppWithStreamSizeSchedule");
+  private static final Id.Application APP_ID = new Id.Application(Id.Namespace.DEFAULT, "AppWithStreamSizeSchedule");
   private static final Id.Program PROGRAM_ID = new Id.Program(APP_ID, ProgramType.WORKFLOW, "SampleWorkflow");
-  private static final Id.Stream STREAM_ID = Id.Stream.from(NAMESPACE, "stream");
+  private static final Id.Stream STREAM_ID = Id.Stream.from(Id.Namespace.DEFAULT, "stream");
   private static final StreamSizeSchedule STREAM_SCHEDULE_1 = new StreamSizeSchedule("Schedule1", "Every 1M",
                                                                                      STREAM_ID.getId(), 1);
   private static final StreamSizeSchedule STREAM_SCHEDULE_2 = new StreamSizeSchedule("Schedule2", "Every 10M",

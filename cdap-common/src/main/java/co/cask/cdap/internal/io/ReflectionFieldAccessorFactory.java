@@ -24,6 +24,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Type;
 
 /**
  *
@@ -155,8 +156,8 @@ public final class ReflectionFieldAccessorFactory implements FieldAccessorFactor
           }
 
           @Override
-          public TypeToken<?> getType() {
-            return fieldType;
+          public Type getType() {
+            return fieldType.getType();
           }
         };
       }

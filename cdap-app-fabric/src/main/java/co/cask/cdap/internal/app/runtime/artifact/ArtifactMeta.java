@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.artifact;
 
 import co.cask.cdap.api.artifact.ArtifactClasses;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Objects;

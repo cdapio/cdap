@@ -59,7 +59,7 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
    * @param runId for which information will be returned.
    * @return a {@link MRJobInfo} containing information about a particular MapReduce program run.
    */
-  public MRJobInfo getMRJobInfo(Id.Run runId) throws Exception {
+  public MRJobInfo getMRJobInfo(Id.Run runId) {
     Preconditions.checkArgument(ProgramType.MAPREDUCE.equals(runId.getProgram().getType()));
 
     // baseTags has tag keys: ns.app.mr.runid
@@ -135,7 +135,7 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
 
 
   private MRJobInfo getJobCounters(Map<String, String> mapTags, Map<String, String> reduceTags,
-                                   List<MRTaskInfo> mapTaskInfos, List<MRTaskInfo> reduceTaskInfos) throws Exception {
+                                   List<MRTaskInfo> mapTaskInfos, List<MRTaskInfo> reduceTaskInfos) {
     HashMap<String, Long> metrics = Maps.newHashMap();
 
     Map<String, String> mapMetricsToCounters =
@@ -162,7 +162,7 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
   }
 
   private void getAggregates(Map<String, String> tags, Map<String, String> metricsToCounters,
-                             Map<String, Long> result) throws Exception {
+                             Map<String, Long> result) {
     Map<String, AggregationFunction> metrics = Maps.newHashMap();
     // all map-reduce metrics are gauges
     for (String metric : metricsToCounters.keySet()) {
@@ -184,7 +184,7 @@ public class LocalMRJobInfoFetcher implements MRJobInfoFetcher {
 
   // queries MetricStore for one metric across all tasks of a certain TaskType, using GroupBy InstanceId
   private void queryGroupedAggregates(Map<String, String> tags, Table<String, String, Long> allTaskMetrics,
-                                                   Map<String, String> metricsToCounters) throws Exception {
+                                                   Map<String, String> metricsToCounters)  {
     Map<String, AggregationFunction> metrics = Maps.newHashMap();
     // all map-reduce metrics are gauges
     for (String metric : metricsToCounters.keySet()) {

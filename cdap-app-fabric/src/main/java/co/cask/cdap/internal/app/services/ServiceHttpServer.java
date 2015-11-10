@@ -35,6 +35,7 @@ import co.cask.cdap.internal.app.runtime.DataFabricFacade;
 import co.cask.cdap.internal.app.runtime.DataFabricFacadeFactory;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 import co.cask.cdap.internal.app.runtime.service.http.DelegatorContext;
 import co.cask.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
@@ -72,6 +73,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
 
 /**
  * A guava Service which runs a {@link NettyHttpService} with a list of {@link HttpServiceHandler}s.
@@ -99,6 +101,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final TransactionSystemClient txClient;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final BasicHttpServiceContextFactory contextFactory;
+  private final PluginInstantiator pluginInstantiator;
 
   private NettyHttpService service;
   private Cancellable cancelDiscovery;
@@ -108,7 +111,8 @@ public class ServiceHttpServer extends AbstractIdleService {
                            int instanceId, int instanceCount, ServiceAnnouncer serviceAnnouncer,
                            MetricsCollectionService metricsCollectionService, DatasetFramework datasetFramework,
                            DataFabricFacadeFactory dataFabricFacadeFactory, TransactionSystemClient txClient,
-                           DiscoveryServiceClient discoveryServiceClient) {
+                           DiscoveryServiceClient discoveryServiceClient,
+                           @Nullable PluginInstantiator pluginInstantiator) {
     this.host = host;
     this.program = program;
     this.spec = spec;
@@ -122,6 +126,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
     this.txClient = txClient;
     this.discoveryServiceClient = discoveryServiceClient;
+    this.pluginInstantiator = pluginInstantiator;
 
     this.contextFactory = createHttpServiceContextFactory();
     this.handlerReferences = Maps.newConcurrentMap();
@@ -162,9 +167,9 @@ public class ServiceHttpServer extends AbstractIdleService {
     return new BasicHttpServiceContextFactory() {
       @Override
       public BasicHttpServiceContext create(HttpServiceHandlerSpecification spec) {
-        return new BasicHttpServiceContext(spec, program, runId, instanceId, instanceCount, runtimeArgs,
-                                           metricsCollectionService, datasetFramework,
-                                           discoveryServiceClient, txClient);
+        return new BasicHttpServiceContext(spec, program, runId, instanceId, instanceCount,
+                                           runtimeArgs, metricsCollectionService,
+                                           datasetFramework, discoveryServiceClient, txClient, pluginInstantiator);
       }
     };
   }
@@ -251,7 +256,7 @@ public class ServiceHttpServer extends AbstractIdleService {
   private void initHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
     ClassLoader classLoader = setContextCombinedClassLoader(handler);
     DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program,
-                                                                       serviceContext.getDatasetInstantiator());
+                                                                       serviceContext.getDatasetCache());
     try {
       dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
         @Override
@@ -269,8 +274,7 @@ public class ServiceHttpServer extends AbstractIdleService {
 
   private void destroyHandler(final HttpServiceHandler handler, final BasicHttpServiceContext serviceContext) {
     ClassLoader classLoader = setContextCombinedClassLoader(handler);
-    DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program,
-                                                                       serviceContext.getDatasetInstantiator());
+    DataFabricFacade dataFabricFacade = dataFabricFacadeFactory.create(program, serviceContext.getDatasetCache());
     try {
       dataFabricFacade.createTransactionExecutor().execute(new TransactionExecutor.Subroutine() {
         @Override
@@ -292,7 +296,7 @@ public class ServiceHttpServer extends AbstractIdleService {
    * @param host the host which the service will run on
    * @param pathPrefix a string prepended to the paths which the handlers in handlerContextPairs will bind to
    * @param delegatorContexts the list {@link HandlerDelegatorContext}
-   * @param metricsCollectionService
+   * @param metricsCollectionService a {@link MetricsCollectionService} for metrics collection
    * @return a NettyHttpService which delegates to the {@link HttpServiceHandler}s to handle the HTTP requests
    */
   private NettyHttpService createNettyHttpService(RunId runId, String host, String pathPrefix,
@@ -399,7 +403,7 @@ public class ServiceHttpServer extends AbstractIdleService {
       // Instantiate the user handler and injects Metrics and Dataset fields.
       HttpServiceHandler handler = instantiatorFactory.get(handlerType).create();
       BasicHttpServiceContext context = contextFactory.create(spec);
-      Reflections.visit(handler, handlerType,
+      Reflections.visit(handler, handlerType.getType(),
                         new MetricsFieldSetter(context.getMetrics()),
                         new DataSetFieldSetter(context),
                         new PropertyFieldSetter(spec.getProperties()));

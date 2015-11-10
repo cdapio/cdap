@@ -16,6 +16,8 @@
 package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
@@ -25,7 +27,6 @@ import co.cask.cdap.api.workflow.WorkflowConditionNode;
 import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -46,6 +47,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Threads;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,8 +67,9 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
   private static final Logger LOG = LoggerFactory.getLogger(DistributedWorkflowProgramRunner.class);
 
   @Inject
-  public DistributedWorkflowProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
-    super(twillRunner, createConfiguration(hConf), cConf);
+  public DistributedWorkflowProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
+                                          Configuration hConf, CConfiguration cConf) {
+    super(twillRunner, locationFactory, createConfiguration(hConf), cConf);
   }
 
   @Override
@@ -85,11 +88,12 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
     // It the workflow has Spark, localize the spark-assembly jar
-    List<String> extraClassPaths = new ArrayList<>(
-      MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
+    List<String> extraClassPaths = new ArrayList<>();
 
-    // See if the Workflow has Spark in it
-    Resources resources = findSparkDriverResources(program.getApplicationSpecification().getSpark(), workflowSpec);
+    // See if the Workflow has Spark or MapReduce in it
+    Resources resources = findDriverResources(program.getApplicationSpecification().getSpark(),
+                                              program.getApplicationSpecification().getMapReduce(),
+                                              workflowSpec);
     if (resources != null) {
       // Has Spark
       File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
@@ -99,6 +103,9 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       // No Spark
       resources = new Resources();
     }
+    
+    // Add classpaths for MR framework
+    extraClassPaths.addAll(MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
 
     // TODO(CDAP-3119): Hack for TWILL-144. Need to remove
     File launcherFile = null;
@@ -108,8 +115,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       tempDir.mkdirs();
       try {
         launcherFile = File.createTempFile("launcher", ".jar", tempDir);
-        List<String> paths = MapReduceContainerHelper.getMapReduceClassPath(hConf, new ArrayList<String>());
-        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, paths);
+        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, extraClassPaths);
         localizeResources.put("launcher.jar", new LocalizeResource(launcherFile));
       } catch (Exception e) {
         LOG.warn("Failed to create twill container launcher.jar for TWILL-144 hack. " +
@@ -141,25 +147,28 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     // End Hack for TWILL-144
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-    return new WorkflowTwillProgramController(program.getName(), controller, runId).startListen();
+    return new WorkflowTwillProgramController(program.getId(), controller, runId).startListen();
   }
 
   private static Configuration createConfiguration(Configuration hConf) {
     Configuration configuration = new Configuration(hConf);
-    configuration.set(SparkContextConfig.HCONF_ATTR_EXECUTION_MODE, SparkContextConfig.YARN_EXECUTION_MODE);
+    configuration.setBoolean(SparkContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
     return configuration;
   }
 
   /**
-   * Returns the {@link Resources} requirement for the workflow runnable due to spark driver resources requirement.
+   * Returns the {@link Resources} requirement for the workflow runnable due to spark or MapReduce driver resources
+   * requirement.
    * Returns {@code null} if there is no spark program in the workflow.
    */
   @Nullable
-  private Resources findSparkDriverResources(Map<String, SparkSpecification> sparkSpecs, WorkflowSpecification spec) {
+  private Resources findDriverResources(Map<String, SparkSpecification> sparkSpecs,
+                                        Map<String, MapReduceSpecification> mrSpecs,
+                                        WorkflowSpecification spec) {
     // Find the resource requirements from the workflow
-    // It is the largest memory and cores from all Spark program inside the workflow
+    // It is the largest memory and cores from all Spark and MapReduce programs inside the workflow
     Resources resources = new Resources();
-    boolean hasSpark = false;
+    boolean hasSparkOrMapReduce = false;
 
     // Search through all workflow nodes for spark program resource requirements.
     Queue<WorkflowNode> nodes = new LinkedList<>(spec.getNodes());
@@ -168,10 +177,16 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       switch (node.getType()) {
         case ACTION: {
           ScheduleProgramInfo programInfo = ((WorkflowActionNode) node).getProgram();
-          if (programInfo.getProgramType() == SchedulableProgramType.SPARK) {
-            hasSpark = true;
-            // The sparkSpec shouldn't be null, otherwise the Workflow is not valid
-            Resources driverResources = sparkSpecs.get(programInfo.getProgramName()).getDriverResources();
+          SchedulableProgramType programType = programInfo.getProgramType();
+          if (programType == SchedulableProgramType.SPARK || programType == SchedulableProgramType.MAPREDUCE) {
+            hasSparkOrMapReduce = true;
+            // The program spec shouldn't be null, otherwise the Workflow is not valid
+            Resources driverResources;
+            if (programType == SchedulableProgramType.SPARK) {
+              driverResources = sparkSpecs.get(programInfo.getProgramName()).getDriverResources();
+            }  else {
+              driverResources = mrSpecs.get(programInfo.getProgramName()).getDriverResources();
+            }
             if (driverResources != null) {
               resources = max(resources, driverResources);
             }
@@ -194,7 +209,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       }
     }
 
-    return hasSpark ? resources : null;
+    return hasSparkOrMapReduce ? resources : null;
   }
 
   /**

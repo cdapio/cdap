@@ -16,7 +16,6 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.file.FileReader;
 import co.cask.cdap.data.file.FileWriter;
@@ -680,7 +679,7 @@ public abstract class StreamDataFileTestBase {
   @Test
   public void testLiveStream() throws Exception {
     String streamName = "live";
-    Id.Stream streamId = Id.Stream.from(Constants.DEFAULT_NAMESPACE, streamName);
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, streamName);
     final String filePrefix = "prefix";
     long partitionDuration = 5000;    // 5 seconds
     Location location = getLocationFactory().create(streamName);

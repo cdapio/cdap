@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Decoder;
 import co.cask.cdap.common.io.Encoder;
 import co.cask.cdap.common.io.LocationStatus;
@@ -437,7 +436,7 @@ public final class StreamUtils {
    */
   public static TableId getStateStoreTableId(Id.Namespace namespace) {
     String tableName = String.format("%s.%s.state.store",
-                                     Constants.SYSTEM_NAMESPACE, QueueConstants.QueueType.STREAM.toString());
+                                     Id.Namespace.SYSTEM.getId(), QueueConstants.QueueType.STREAM.toString());
     return TableId.from(namespace.getId(), tableName);
   }
 

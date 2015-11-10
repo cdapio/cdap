@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 /*global require, module */
 
 var request = require('request'),
@@ -5,6 +21,7 @@ var request = require('request'),
     log4js = require('log4js');
 
 var log = log4js.getLogger('default');
+var hash = require('object-hash');
 
 /**
  * Default Poll Interval used by the backend.
@@ -50,16 +67,13 @@ function Aggregator (conn) {
  * first call and set the interval for the timeout.
  */
 Aggregator.prototype.startPolling = function (resource) {
-  // WARN: This assumes that the browser side ids are unique for a websocket session.
-  // This check is needed for Safari.
-  if(this.polledResources[resource.id]) {
-    return;
-  }
-
   resource.interval = resource.interval || POLL_INTERVAL;
-  log.debug('Scheduling (' + resource.id + ',' + resource.url + ',' + resource.interval + ')');
-  this.polledResources[resource.id] = resource;
-  doPoll.bind(this, resource)();
+  log.debug('[SCHEDULING]: (id: ' + resource.id + ', url: ' + resource.url + ', interval: ' + resource.interval + ')');
+  this.polledResources[resource.id] = {
+    resource: resource,
+    response: null
+  };
+  doPoll.bind(this, this.polledResources[resource.id].resource)();
 };
 
 /**
@@ -70,11 +84,7 @@ Aggregator.prototype.startPolling = function (resource) {
  * the interval timeout.
  */
 Aggregator.prototype.scheduleAnotherIteration = function (resource) {
-  if (resource.stop) {
-    // Don't reschedule another iteration if the resource has been stopped
-    return;
-  }
-  log.debug('Rescheduling (' + resource.id + ',' + resource.url + ',' + resource.interval + ')');
+  log.debug('[RESCHEDULING]: (id: ' + resource.id + ',' + resource.url + ', url: ' + resource.interval + ')');
   resource.timerId = setTimeout(doPoll.bind(this, resource), resource.interval);
 };
 
@@ -84,13 +94,12 @@ Aggregator.prototype.scheduleAnotherIteration = function (resource) {
  * is set to true.
  */
 Aggregator.prototype.stopPolling = function (resource) {
-  log.debug('Stopping (' + resource.id + ',' + resource.url + ')');
-  var thisResource = removeFromObj(this.polledResources, resource.id);
-  if (thisResource === undefined) {
+  if (!this.polledResources[resource.id]) {
     return;
   }
-  clearTimeout(thisResource.timerId);
-  thisResource.stop = true;
+  var timerId = this.polledResources[resource.id].timerId;
+  delete this.polledResources[resource.id];
+  clearTimeout(timerId);
 };
 
 /**
@@ -101,9 +110,9 @@ Aggregator.prototype.stopPollingAll = function() {
   var id, resource;
   for (id in this.polledResources) {
     if (this.polledResources.hasOwnProperty(id)) {
-      resource = this.polledResources[id];
+      resource = this.polledResources[id].resource;
+      log.debug('[POLL-STOP]: (id: ' + resource.id + ', url: ' + resource.url + ')');
       clearTimeout(resource.timerId);
-      resource.stop = true;
     }
   }
 };
@@ -116,25 +125,55 @@ Aggregator.prototype.stopPollingAll = function() {
 Aggregator.prototype.pushConfiguration = function(resource) {
   var templateid = resource.templateid;
   var pluginid = resource.pluginid;
+  var configString;
   var config = {};
   var statusCode = 404;
-  try {
-    // Check if the configuration is present within the plugin for a template
-    var file = __dirname + '/../templates/' + templateid + '/' + pluginid + '.json';
-    config = JSON.parse(fs.readFileSync(file, 'utf8'));
-    statusCode = 200;
-  } catch(e1) {
-   try {
-     // Some times there might a plugin that is common across multiple templates
-     // in which case, this is stored within the common directory. So, if the
-     // template specific plugin check fails, then attempt to get it from common.
-     var file = __dirname + '/../templates/common/' + pluginid + '.json';
-     config = JSON.parse(fs.readFileSync(file, 'utf8'));
-     statusCode = 200;
-   } catch (e2) {
-     log.debug('Unable to find template %s, plugin %s', templateid, pluginid);
-   }
+  var filePaths = [];
+  var isConfigSemanticsValid;
+  // Some times there might a plugin that is common across multiple templates
+  // in which case, this is stored within the common directory. So, if the
+  // template specific plugin check fails, then attempt to get it from common.
+  filePaths.push(
+    __dirname + '/../templates/' + templateid + '/' + pluginid + '.json',
+    __dirname + '/../templates/common/' + pluginid + '.json'
+  );
+  var i, paths = filePaths.length;
+  var fileFound = true;
+
+  // Check if the configuration is present within the plugin for a template
+  for (i=0; i<paths; i++) {
+    try {
+      configString = fs.readFileSync(filePaths[i], 'utf8');
+      statusCode = 200;
+      fileFound = true;
+      break;
+    } catch(e) {
+      if (e.code === 'ENOENT') {
+        fileFound = false;
+      }
+    }
   }
+  if (!fileFound) {
+    statusCode = 404;
+    config = 'NO_JSON_FOUND';
+  } else {
+    try {
+      config = JSON.parse(configString);
+      statusCode = 200;
+    } catch(e) {
+      statusCode = 500;
+      config = 'CONFIG_SYNTAX_JSON_ERROR';
+    }
+  }
+
+  if (statusCode === 200) {
+    isConfigSemanticsValid = validateSemanticsOfConfigJSON(config);
+    if (!isConfigSemanticsValid) {
+      statusCode = 500;
+      config = 'CONFIG_SEMANTICS_JSON_ERROR';
+    }
+  }
+
   this.connection.write(JSON.stringify({
     resource: resource,
     statusCode: statusCode,
@@ -142,21 +181,45 @@ Aggregator.prototype.pushConfiguration = function(resource) {
   }));
 };
 
-/**
- * Removes the resource id from the websocket connection local resource pool.
- */
-function removeFromObj(obj, key) {
-  var el = obj[key];
-  delete obj[key];
-  return el;
-}
+function validateSemanticsOfConfigJSON(config) {
+  var groups = config.groups.position;
+  var groupsMap = config.groups;
+  var i, j;
+  var isValid = true;
+  var fields, fieldsMap;
 
+  for (i=0; i<groups.length; i++) {
+    if (!groupsMap[groups[i]] || !isValid) {
+      isValid = false;
+      break;
+    }
+
+    fields = groupsMap[groups[i]].position;
+    fieldsMap = groupsMap[groups[i]].fields;
+
+    if (!fields || !fieldsMap) {
+      isValid = false;
+    } else {
+      for (j=0; j<fields.length; j++) {
+        if (!fieldsMap[fields[j]]) {
+          isValid = false;
+          break;
+        }
+      }
+    }
+  }
+
+  return isValid;
+}
 /**
  * 'doPoll' is the doer - it makes the resource request call to backend and
  * sends the response back once it receives it. Upon completion of the request
  * it schedulers the interval for next trigger.
  */
 function doPoll (resource) {
+    if (!this.polledResources[resource.id]) {
+      return;
+    }
     var that = this,
         callBack = this.scheduleAnotherIteration.bind(that, resource);
 
@@ -166,7 +229,6 @@ function doPoll (resource) {
         emitResponse.call(that, resource, error);
         return;
       }
-
       emitResponse.call(that, resource, false, response, body);
 
     }).on('response', callBack)
@@ -197,10 +259,11 @@ function stripResource(key, value) {
  */
 function emitResponse (resource, error, response, body) {
   var timeDiff = Date.now()  - resource.startTs;
+  var responseHash;
 
   if(error) {
-    log.debug('[' + timeDiff + 'ms] Error (' + resource.id + ',' + resource.url + ')');
-    log.trace('[' + timeDiff + 'ms] Error (' + resource.id + ',' + resource.url + ') body : (' + error.toString() + ')');
+    log.debug('[ERROR]: (id: ' + resource.id + ', url: ' + resource.url + ')');
+    log.trace('[ERROR]: (id: ' + resource.id + ',url: ' + resource.url + ') body : (' + error.toString() + ')');
     this.connection.write(JSON.stringify({
       resource: resource,
       error: error,
@@ -208,8 +271,19 @@ function emitResponse (resource, error, response, body) {
     }, stripResource));
 
   } else {
-    log.debug('[' + timeDiff + 'ms] Success (' + resource.id + ',' + resource.url + ')');
+    log.debug('[SUCCESS]: (id: ' + resource.id + ', url: ' + resource.url + ')');
     log.trace('[' + timeDiff + 'ms] Success (' + resource.id + ',' + resource.url + ') body : (' + JSON.stringify(body) + ')');
+
+    if (this.polledResources[resource.id]) {
+      responseHash = hash(body);
+      if (this.polledResources[resource.id].response === responseHash.toString()){
+        // No need to send this to the client as nothing changed.
+        return;
+      } else {
+        this.polledResources[resource.id].response = responseHash;
+      }
+    }
+    log.debug('[RESPONSE]: (id: ' + resource.id + ', url: ' + resource.url + ')' );
     this.connection.write(JSON.stringify({
       resource: resource,
       statusCode: response.statusCode,
@@ -233,16 +307,16 @@ function onSocketData (message) {
         this.pushConfiguration(r);
         break;
       case 'poll-start':
-        log.debug ('Poll start (' + r.method + ',' + r.id + ',' + r.url + ')');
+        log.debug ('[POLL-START]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
         this.startPolling(r);
         break;
       case 'request':
-        log.debug ('Single request (' + r.method + ',' + r.id + ',' + r.url + ')');
         r.startTs = Date.now();
+        log.debug ('[REQUEST]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
         request(r, emitResponse.bind(this, r));
         break;
       case 'poll-stop':
-        log.debug ('Poll stop (' + r.id + ',' + r.url + ')');
+        log.debug ('[POLL-STOP]: (id: ' + r.id + ', url: ' + r.url + ')');
         this.stopPolling(r);
         break;
     }

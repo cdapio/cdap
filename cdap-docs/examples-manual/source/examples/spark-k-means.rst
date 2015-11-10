@@ -11,9 +11,9 @@ Spark K-Means
 
 A Cask Data Application Platform (CDAP) example demonstrating Spark.
 
+
 Overview
 ========
-
 This example demonstrates a Spark application performing streaming analysis, computing the centers of points from an
 input stream using the K-Means Clustering method.
 
@@ -30,66 +30,51 @@ Let's look at some of these components, and then run the application and see the
 
 The SparkKMeans Application
 ---------------------------
-
 As in the other `examples <index.html>`__, the components
 of the application are tied together by the class ``SparkKMeansApp``:
 
 .. literalinclude:: /../../../cdap-examples/SparkKMeans/src/main/java/co/cask/cdap/examples/sparkkmeans/SparkKMeansApp.java
    :language: java
-   :lines: 49-82
+   :lines: 51-82
 
 The ``points`` and ``centers`` ObjectStore Data Storage
 -------------------------------------------------------
-
 The raw points data is stored in an ObjectStore dataset, *points*.
 The calculated centers data is stored in a second ObjectStore dataset, *centers*.
 
 The ``CentersService`` Service
 ------------------------------
-
 This service has a ``centers/{index}`` endpoint to obtain the center's coordinates of a given index.
 
 
+.. Building and Starting
+.. =====================
 .. |example| replace:: SparkKMeans
-.. include:: building-starting-running-cdap.txt
+.. |example-italic| replace:: *SparkKMeans*
+.. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <SparkKMeans>`
+
+.. include:: _includes/_building-starting-running.txt
 
 
 Running the Example
 ===================
 
-.. highlight:: console
+.. Starting the Flow
+.. -----------------
+.. |example-flow| replace:: PointsFlow
+.. |example-flow-italic| replace:: *PointsFlow*
 
-Starting the Flow
------------------
+.. include:: _includes/_starting-flow.txt
 
-Once the application is deployed:
+.. Starting the Service
+.. --------------------
+.. |example-service| replace:: CentersService
+.. |example-service-italic| replace:: *CentersService*
 
-- Go to the *SparkKMeans* `application overview page 
-  <http://localhost:9999/ns/default/apps/SparkKMeans/overview/status>`__,
-  click ``PointsFlow`` to get to the flow detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh start flow SparkKMeans.PointsFlow
-  
-    Successfully started flow 'PointsFlow' of application 'SparkKMeans' with stored runtime arguments '{}'
-
-Starting the Service
---------------------
-
-Once the application is deployed:
-
-- Go to the *SparkKMeans* `application overview page 
-  <http://localhost:9999/ns/default/apps/SparkKMeans/overview/status>`__,
-  click ``CentersService`` to get to the service detail page, then click the *Start* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh start service SparkKMeans.CentersService
-  
-    Successfully started service 'CentersService' of application 'SparkKMeans' with stored runtime arguments '{}'
+.. include:: _includes/_starting-service.txt
 
 Injecting Points Data
 ---------------------
-
 Inject a file of points data to the stream *pointsStream* by running this command from the
 Standalone CDAP SDK directory, using the Command Line Interface::
   
@@ -100,13 +85,13 @@ Running the Spark Program
 -------------------------
 There are three ways to start the Spark program:
 
-1. Go to the *SparkKMeans* `application overview page 
-   <http://localhost:9999/ns/default/apps/SparkKMeans/overview/status>`__,
+1. Go to the *SparkKMeans* `application overview page, programs tab 
+   <http://localhost:9999/ns/default/apps/SparkKMeans/overview/programs>`__,
    click ``CentersService`` to get to the service detail page, then click the *Start* button; or
    
 #. Send a query via an HTTP request using the ``curl`` command::
 
-    curl -w'\n' -v  -d '{args="3"}' \
+    $ curl -w'\n' -v  -d '{args="3"}' \
       http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/spark/SparkKMeansProgram/start
 
 #. Use the Command Line Interface::
@@ -115,12 +100,11 @@ There are three ways to start the Spark program:
 
 Querying the Results
 --------------------
-
 To query the *centers* ObjectStore using the ``CentersService``, you can:
 
 - Send a query via an HTTP request using the ``curl`` command. For example::
 
-    curl -w'\n' -v http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1
+    $ curl -w'\n' -v http://localhost:10000/v3/namespaces/default/apps/SparkKMeans/services/CentersService/methods/centers/1
 
 - You can use the Command Line Interface::
 
@@ -136,37 +120,6 @@ To query the *centers* ObjectStore using the ``CentersService``, you can:
     +======================================================================================================+
 
 
-Stopping and Removing the Application
-=====================================
-Once done, you can stop the application as described in :ref:`Stopping an Application 
-<cdap-building-running-stopping>`. Here is an example-specific description of the steps:
-
-**Stopping the Flow**
-
-- Go to the *SparkKMeans* `application overview page 
-  <http://localhost:9999/ns/default/apps/SparkKMeans/overview/status>`__,
-  click ``SparkKMeans`` to get to the flow detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh stop flow SparkKMeans.PointsFlow   
-
-**Stopping the Service**
-
-- Go to the *SparkKMeans* `application overview page 
-  <http://localhost:9999/ns/default/apps/SparkKMeans/overview/status>`__,
-  click ``CentersService`` to get to the service detail page, then click the *Stop* button; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh stop service SparkKMeans.CentersService
-
-**Removing the Application**
-
-You can now remove the application as described in :ref:`Removing an Application <cdap-building-running-removing>`, or:
-
-- Go to the *SparkKMeans* `application overview page 
-  <http://localhost:9999/ns/default/apps/SparkKMeans/overview/status>`__,
-  click the *Actions* menu on the right side and select *Manage* to go to the Management pane for the application,
-  then click the *Actions* menu on the right side and select *Delete* to delete the application; or
-- From the Standalone CDAP SDK directory, use the Command Line Interface::
-
-    $ cdap-cli.sh delete app SparkKMeans
+.. Stopping and Removing the Application
+.. =====================================
+.. include:: _includes/_stopping-flow-service-removing-application.txt

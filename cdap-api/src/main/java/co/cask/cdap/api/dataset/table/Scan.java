@@ -18,7 +18,6 @@ package co.cask.cdap.api.dataset.table;
 
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.common.Bytes;
-import com.google.common.base.Objects;
 
 import javax.annotation.Nullable;
 
@@ -72,10 +71,10 @@ public class Scan {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("startRow", Bytes.toStringBinary(startRow))
-      .add("stopRow", Bytes.toStringBinary(stopRow))
-      .add("filter", filter)
-      .toString();
+    return "Scan{" +
+      "startRow=" + Bytes.toStringBinary(startRow) +
+      ", stopRow=" + Bytes.toStringBinary(stopRow) +
+      ", filter=" + filter +
+      '}';
   }
 }

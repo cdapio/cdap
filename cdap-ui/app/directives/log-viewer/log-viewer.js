@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.commons')
   .directive('myLogViewer', function ($filter, $timeout, $state, $location) {
 
@@ -6,18 +22,13 @@ angular.module(PKG.name + '.commons')
 
     return {
       restrict: 'E',
-
       scope: {
-        model: '=',
-        next: '&',
-        prev: '&',
-        loadingNext: '=',
-        loadingPrev: '='
+        params: '='
       },
-
       templateUrl: 'log-viewer/log-viewer.html',
 
-      controller: function ($scope) {
+      controller: function ($scope, myLogsApi) {
+        $scope.model = [];
 
         $scope.filters = 'all,info,warn,error,debug,other'.split(',')
           .map(function (key) {
@@ -45,6 +56,66 @@ angular.module(PKG.name + '.commons')
             one.entries = filterFilter(newVal, one.predicate);
           });
         });
+
+        var params = {};
+
+        function initialize() {
+          angular.copy($scope.params, params);
+          params.max = 50;
+          params.scope = $scope;
+
+          if (!params.runId) { return; }
+
+          $scope.loadingNext = true;
+          myLogsApi.prevLogs(params)
+            .$promise
+            .then(function (res) {
+              $scope.model = res;
+              $scope.loadingNext = false;
+            });
+        }
+
+        initialize();
+
+        $scope.$watch('params.runId', initialize);
+
+        $scope.loadNextLogs = function () {
+          if ($scope.loadingNext) {
+            return;
+          }
+
+          $scope.loadingNext = true;
+          params.fromOffset = $scope.model[$scope.model.length-1].offset;
+
+          myLogsApi.nextLogs(params)
+            .$promise
+            .then(function (res) {
+              $scope.model = _.uniq($scope.model.concat(res));
+              $scope.loadingNext = false;
+            });
+        };
+
+        $scope.loadPrevLogs = function () {
+          if ($scope.loadingPrev) {
+            return;
+          }
+
+          $scope.loadingPrev = true;
+          params.fromOffset = $scope.model[0].offset;
+
+          myLogsApi.prevLogs(params)
+            .$promise
+            .then(function (res) {
+              $scope.model = _.uniq(res.concat($scope.model));
+              $scope.loadingPrev = false;
+
+              $timeout(function() {
+                var container = angular.element(document.querySelector('[infinite-scroll]'))[0];
+                var logItem = angular.element(document.getElementById(params.fromOffset))[0];
+                container.scrollTop = logItem.offsetTop;
+              });
+            });
+        };
 
       },
 

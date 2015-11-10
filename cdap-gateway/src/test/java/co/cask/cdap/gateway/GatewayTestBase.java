@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,8 @@ package co.cask.cdap.gateway;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.StreamFileWriterFactory;
@@ -34,7 +36,6 @@ import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateS
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import co.cask.cdap.gateway.handlers.log.MockLogReader;
 import co.cask.cdap.gateway.router.NettyRouter;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.guice.AppFabricTestModule;
 import co.cask.cdap.logging.read.LogReader;
@@ -45,7 +46,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.security.guice.InMemorySecurityModule;
 import co.cask.tephra.TransactionManager;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -70,8 +70,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -83,7 +81,6 @@ public abstract class GatewayTestBase {
   private static final Gson GSON = new Gson();
 
   private static final String API_KEY = "SampleTestApiKey";
-  private static final String CLUSTER = "SampleTestClusterName";
   private static final Header AUTH_HEADER = new BasicHeader(Constants.Gateway.API_KEY, API_KEY);
 
   private static final String hostname = "127.0.0.1";
@@ -139,8 +136,6 @@ public abstract class GatewayTestBase {
   }
 
   public static Injector startGateway(final CConfiguration conf) throws Exception {
-    final Map<String, List<String>> keysAndClusters = ImmutableMap.of(API_KEY, Collections.singletonList(CLUSTER));
-
     // Set up our Guice injections
     injector = Guice.createInjector(
       Modules.override(
@@ -149,6 +144,7 @@ public abstract class GatewayTestBase {
           protected void configure() {
           }
 
+          @SuppressWarnings("unused")
           @Provides
           @Named(Constants.Router.ADDRESS)
           public final InetAddress providesHostname(CConfiguration cConf) {
@@ -164,6 +160,7 @@ public abstract class GatewayTestBase {
         @Override
         protected void configure() {
           install(new StreamServiceRuntimeModule().getStandaloneModules());
+          install(new NamespaceClientRuntimeModule().getStandaloneModules());
 
           // It's a bit hacky to add it here. Need to refactor these
           // bindings out as it overlaps with
@@ -196,8 +193,8 @@ public abstract class GatewayTestBase {
     streamService.startAndWait();
 
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-    namespaceAdmin.createNamespace(TEST_NAMESPACE_META1);
-    namespaceAdmin.createNamespace(TEST_NAMESPACE_META2);
+    namespaceAdmin.create(TEST_NAMESPACE_META1);
+    namespaceAdmin.create(TEST_NAMESPACE_META2);
 
     // Restart handlers to check if they are resilient across restarts.
     router = injector.getInstance(NettyRouter.class);
@@ -212,9 +209,9 @@ public abstract class GatewayTestBase {
   }
 
   public static void stopGateway(CConfiguration conf) throws Exception {
-    namespaceAdmin.deleteNamespace(Id.Namespace.from(TEST_NAMESPACE1));
-    namespaceAdmin.deleteNamespace(Id.Namespace.from(TEST_NAMESPACE2));
-    namespaceAdmin.deleteNamespace(Constants.DEFAULT_NAMESPACE_ID);
+    namespaceAdmin.delete(Id.Namespace.from(TEST_NAMESPACE1));
+    namespaceAdmin.delete(Id.Namespace.from(TEST_NAMESPACE2));
+    namespaceAdmin.delete(Id.Namespace.DEFAULT);
     streamService.stopAndWait();
     notificationService.stopAndWait();
     appFabricServer.stopAndWait();

@@ -17,6 +17,10 @@ Glossary
       A collection of programs and services that read and write through the data
       abstraction layer in CDAP.
 
+   Artifact
+      A JAR file containing Java classes and resources required to create and run an
+      :term:`Application`. Multiple applications can be created from the same artifact.
+
    Stream
       The primary means of bringing data from external systems into CDAP in real time; an
       ordered, time-partitioned sequences of data, usable for real-time collection and
@@ -104,7 +108,7 @@ Glossary
       
    CDAP UI
       The CDAP UI is a web-based application used to deploy CDAP applications, create 
-      :term:`ETL adapters <ETL Adapter>`, and query and manage the Cask Data Application 
+      :term:`ETL applications <ETL Application>`, and query and manage the Cask Data Application 
       Platform instance.
 
    CDAP Console
@@ -121,7 +125,7 @@ Glossary
       data serialization system that provides rich data structures and a compact, fast, binary data format.
 
    Namespace
-      A namespace is a physical grouping of application, data and its metadata in CDAP.
+      A namespace is a logical grouping of application, data and its metadata in CDAP.
       Conceptually, namespaces can be thought of as a partitioning of a CDAP instance. Any
       application or data (referred to here as an “entity”) can exist independently in
       multiple namespaces at the same time. The data and metadata of an entity is stored
@@ -154,50 +158,45 @@ Glossary
       enable exploration, you must set several properties when creating the stream or
       dataset, and the files in a dataset must meet certain requirements.
 
-   .. ETL and Application Templates
+   Producer
+      A producer is an entity that emits events, such as a :term:`stream` or a
+      :term:`flowlet`. Flowlets can at the same time be both :term:`consumers <consumer>`
+      and producers.
+
+   Consumer
+      A consumer is an entity that is a recipient of events, typically a :term:`flowlet`.
+      A consumer flowlet is the recipient of a queue. The difference between the total of
+      a :term:`producer's <producer>` events and the consumed events is the pending events.
 
    Structured Record
       The data format used to exchange events between most of the pre-built CDAP ETL :term:`plugins <plugin>`.
       
-   Adapter Configuration
-      A JSON String that defines an :term:`adapter`.
-      
-   Application Template
-      An application that is reusable through configuration and extensible through plugins.
-  
-   Template
-      See :term:`application template`.
-
-   App Template
-      See :term:`application template`.
-
-   Adapter
-      An adapter is an instantiation of an :term:`application template` that has been created
-      from a specific configuration. Adapters combine :term:`plugins <plugin>` to access
-      CDAP programs and resources.
-   
    ETL
       Refers to the *Extract*, *Transform* and *Load* of data. 
     
-   ETL Application Template
-      Also referred to as an *ETL template.* A type of :term:`application template`,
-      designed to create an :term:`ETL adapter`. Two ETL templates are shipped with CDAP:
-      ``ETLBatch`` and ``ETLRealtime``, for the creation of either batch or real-time
-      :term:`ETL` pipelines.
+   ETL Application
+      A type of Application created from one of the two ETL system :term:`artifacts <artifact>` shipped with CDAP:
+      ``cdap-etl-batch`` and ``cdap-etl-realtime``. An ETL Application defines a source to read
+      from, zero or more transformations to perform on the data read from the source, and one or more
+      sinks to write the transformed data to.
   
-   ETL Template
-      See :term:`ETL application template`.
-
-   ETL Adapter
-      An ETL :term:`adapter` is an adapter created from an :term:`ETL template`,
-      specifically for creating :term:`ETL` applications.
-
    ETL Plugin
       A :term:`plugin` of type *BatchSource*, *RealtimeSource*, *BatchSink*, *RealtimeSink,* or
       *Transformation*, packaged in a JAR file format, for use as a :term:`plugin`
-      in an :term:`ETL adapter`.
+      in an :term:`ETL Application`.
 
    Plugin
-      A plugin extends an :term:`application template` by implementing an interface
-      expected by the template. One or more plugins are packaged in a specifically
-      constructed JAR file.
+      A plugin extends an :term:`application` by implementing an interface
+      expected by the :term:`application`. Plugins are packaged in an :term:`artifact`.
+      
+   View
+      A read-only view of a stream, with a specific read format. Read
+      formats consist of a :ref:`schema <stream-exploration-stream-schema>` and a :ref:`format
+      <stream-exploration-stream-format>` (such as CSV, TSV, or Avro, amongst others).
+      
+   Cask Hydrator
+      Cask Hydrator provides an easy method of configuring
+      pipelines using a visual editor. You drag and drop sources, transformations, and
+      sinks, configuring an :term:`ETL` pipeline within minutes. It provides an
+      operational view of the resulting ETL pipeline that allows for monitoring of
+      metrics, logs, and other run-time information.

@@ -15,7 +15,7 @@
  */
 package co.cask.cdap.internal.app.runtime.distributed;
 
-import co.cask.cdap.app.ApplicationSpecification;
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -29,6 +29,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,8 +43,9 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
   private static final Logger LOG = LoggerFactory.getLogger(DistributedWebappProgramRunner.class);
 
   @Inject
-  public DistributedWebappProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
-    super(twillRunner, hConf, cConf);
+  public DistributedWebappProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
+                                        Configuration hConf, CConfiguration cConf) {
+    super(twillRunner, locationFactory, hConf, cConf);
   }
 
   @Override
@@ -61,6 +63,6 @@ public final class DistributedWebappProgramRunner extends AbstractDistributedPro
     LOG.info("Launching distributed webapp: " + program.getName());
     TwillController controller = launcher.launch(new WebappTwillApplication(program, localizeResources, eventHandler));
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-    return new WebappTwillProgramController(program.getName(), controller, runId).startListen();
+    return new WebappTwillProgramController(program.getId(), controller, runId).startListen();
   }
 }

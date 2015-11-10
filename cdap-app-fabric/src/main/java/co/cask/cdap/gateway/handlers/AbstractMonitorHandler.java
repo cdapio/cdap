@@ -23,7 +23,6 @@ import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.SystemServiceMeta;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
@@ -49,7 +48,6 @@ public class AbstractMonitorHandler extends AbstractAppFabricHttpHandler {
   private static final String STATUSOK = Constants.Monitor.STATUS_OK;
   private static final String STATUSNOTOK = Constants.Monitor.STATUS_NOTOK;
   private static final String NOTAPPLICABLE = "NA";
-  private static final Gson GSON = new Gson();
   private final ServiceStore serviceStore;
 
   @Inject

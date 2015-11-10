@@ -207,7 +207,6 @@ public class CLIMainTest {
   @Test
   public void testStream() throws Exception {
     String streamId = PREFIX + "sdf123";
-    Id.Stream stream = Id.Stream.from(Id.Namespace.DEFAULT, streamId);
 
     testCommandOutputContains(cli, "create stream " + streamId, "Successfully created stream");
     testCommandOutputContains(cli, "list streams", streamId);
@@ -256,11 +255,11 @@ public class CLIMainTest {
   public void testSchedule() throws Exception {
     String scheduleId = FakeApp.NAME + "." + FakeApp.SCHEDULE_NAME;
     String workflowId = FakeApp.NAME + "." + FakeWorkflow.NAME;
-    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SCHEDULED");
-    testCommandOutputContains(cli, "suspend schedule " + scheduleId, "Successfully suspended");
     testCommandOutputContains(cli, "get schedule status " + scheduleId, "SUSPENDED");
     testCommandOutputContains(cli, "resume schedule " + scheduleId, "Successfully resumed");
     testCommandOutputContains(cli, "get schedule status " + scheduleId, "SCHEDULED");
+    testCommandOutputContains(cli, "suspend schedule " + scheduleId, "Successfully suspended");
+    testCommandOutputContains(cli, "get schedule status " + scheduleId, "SUSPENDED");
     testCommandOutputContains(cli, "get workflow schedules " + workflowId, FakeApp.SCHEDULE_NAME);
   }
 
@@ -523,12 +522,18 @@ public class CLIMainTest {
     testCommandOutputContains(
       cli, String.format("get workflow token %s %s at node %s scope user key %s", workflow, runId,
                          FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME, FakeWorkflow.FakeAction.TOKEN_KEY), fakeNodeValue);
+
+    // stop workflow
+    testCommandOutputContains(cli, "stop workflow " + workflow,
+                              String.format("400: Program '%s' is not running", fakeWorkflowId));
   }
 
   private static File createAppJarFile(Class<?> cls) throws IOException {
-    LocationFactory locationFactory = new LocalLocationFactory(TMP_FOLDER.newFolder());
+    File tmpFolder = TMP_FOLDER.newFolder();
+    LocationFactory locationFactory = new LocalLocationFactory(tmpFolder);
     Location deploymentJar = AppJarHelper.createDeploymentJar(locationFactory, cls);
-    File appJarFile = TMP_FOLDER.newFile();
+    File appJarFile =
+      new File(tmpFolder, String.format("%s-1.0.%d.jar", cls.getSimpleName(), System.currentTimeMillis()));
     Files.copy(Locations.newInputSupplier(deploymentJar), appJarFile);
     return appJarFile;
   }

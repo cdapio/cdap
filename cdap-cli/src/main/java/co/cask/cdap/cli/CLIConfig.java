@@ -129,7 +129,7 @@ public class CLIConfig implements TableRendererConfig {
 
   public Id.Namespace getCurrentNamespace() {
     if (connectionConfig == null || connectionConfig.getNamespace() == null) {
-      throw new DisconnectedException();
+      throw new DisconnectedException(connectionConfig);
     }
     return connectionConfig.getNamespace();
   }
@@ -144,9 +144,10 @@ public class CLIConfig implements TableRendererConfig {
     notifyConnectionChanged();
   }
 
-  public void tryConnect(CLIConnectionConfig connectionConfig,
+  public void tryConnect(CLIConnectionConfig connectionConfig, boolean verifySSLCert,
                          PrintStream output, boolean debug) throws Exception {
     try {
+      clientConfig.setVerifySSLCert(verifySSLCert);
       UserAccessToken userToken = acquireAccessToken(clientConfig, connectionConfig, output, debug);
       AccessToken accessToken = null;
       if (userToken != null) {
@@ -252,6 +253,7 @@ public class CLIConfig implements TableRendererConfig {
                                            connectionInfo.isSSLEnabled());
     return authenticationClient;
   }
+
   @Nullable
   private UserAccessToken getSavedAccessToken(String hostname) {
     File file = getAccessTokenFile(hostname);

@@ -8,6 +8,8 @@ Configuring and Installing CDAP using Cloudera Manager
 Overview
 =======================================
 
+.. highlight:: console
+
 You can use `Cloudera Manager
 <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__ 
 to integrate CDAP into a Hadoop cluster by downloading and installing a CDAP CSD (Custom
@@ -34,7 +36,7 @@ The CDAP CSD consists of four mandatory roles:
 
 and an optional role |---| Security Auth Service |---| plus a Gateway client configuration. 
 
-CDAP depends on HBase, YARN, HDFS, Zookeeper, and |---| optionally |---| Hive. It must also be placed on a cluster host with full
+CDAP depends on HBase, YARN, HDFS, ZooKeeper, and |---| optionally |---| Hive. It must also be placed on a cluster host with full
 client configurations for these dependent services. Therefore, CDAP roles must be colocated on a cluster host with at least
 an HDFS Gateway, Yarn Gateway, HBase Gateway, and |---| optionally |---| a Hive Gateway. Note that Gateways are redundant if colocating
 CDAP on cluster hosts with actual services, such as the HBase Master, Yarn Resourcemanager, or HDFS Namenode.
@@ -49,8 +51,8 @@ Prerequisites
    role instance will run. You can download the appropriate version of Node.js from `nodejs.org
    <http://nodejs.org/dist/>`__.
 
-#. Zookeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
-   (unlimited connections). As each YARN container launched by CDAP makes a connection to Zookeeper, 
+#. ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
+   (unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
    the number of connections required is a function of usage.
 
 #. For Kerberos-enabled Hadoop clusters:
@@ -58,7 +60,7 @@ Prerequisites
    - The 'cdap' user needs to be granted HBase permissions to create tables.
      In an HBase shell, enter::
      
-      grant 'cdap', 'ACRW'
+      > grant 'cdap', 'ACRW'
 
    - The 'cdap' user must be able to launch YARN containers, either by adding it to the YARN
      ``allowed.system.users`` or by adjusting ``min.user.id``.
@@ -111,33 +113,33 @@ Install, Setup, and Startup
 Run the Cloudera Manager Admin Console *Add Service* Wizard and select *CDAP*.
 When completing the Wizard, these notes may help:
 
-   - *Add Service* Wizard, Page 2: **Optional Hive dependency** is for the optional CDAP
-     "Explore" component which can be enabled later.
-     
-   - *Add Service* Wizard, Page 3: **Choosing Role Assignments**. Ensure CDAP roles are assigned to hosts colocated
-     with service or gateway roles for HBase, HDFS, Yarn, and optionally Hive.
+- *Add Service* Wizard, Page 2: **Optional Hive dependency** is for the optional CDAP
+  "Explore" component which can be enabled later.
+ 
+- *Add Service* Wizard, Page 3: **Choosing Role Assignments**. Ensure CDAP roles are assigned to hosts colocated
+  with service or gateway roles for HBase, HDFS, Yarn, and optionally Hive.
 
-   - *Add Service* Wizard, Page 3: CDAP **Security Auth** service is an optional service
-     for CDAP perimeter security; it can be configured and enabled post-wizard.
-     
-   - *Add Service* Wizard, Page 5: **Kerberos Auth Enabled** is needed if running against a
-     secure Hadoop cluster.
+- *Add Service* Wizard, Page 3: CDAP **Security Auth** service is an optional service
+  for CDAP perimeter security; it can be configured and enabled post-wizard.
+ 
+- *Add Service* Wizard, Pages 4 & 5: **Kerberos Auth Enabled** is needed if running against a
+  secure Hadoop cluster.
 
-   - *Add Service* Wizard, Page 5: **Router Server Port:** This should match the "Router Bind
-     Port"; it’s used by the CDAP UI to connect to the Router service.
+- *Add Service* Wizard, Pages 4 & 5: **Router Server Port:** This should match the "Router Bind
+  Port"; it’s used by the CDAP UI to connect to the Router service.
 
-   - *Add Service* Wizard, Page 5: **App Template Dir:** This should initially point to the bundled templates included in
-     the CDAP parcel directory. If you have modified ``${PARCELS_ROOT}``, please update this setting to match.  Advanced
-     users will want to customize this directory to a location outside of the CDAP Parcel.
+- *Add Service* Wizard, Page 4 & 5: **App Artifact Dir:** This should initially point to the bundled system artifacts included in
+  the CDAP parcel directory. If you have modified ``${PARCELS_ROOT}``, please update this setting to match.
+  Users will want to customize this directory to a location outside of the CDAP Parcel.
 
 Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to install CDAP
 :ref:`are available <step-by-step-cloudera-add-service>`.
 
 .. _cloudera-verification:
 
-.. include:: ../../../../admin-manual/source/installation/installation.rst
-   :start-after: .. _install-verification:
-   :end-before:  .. _install-upgrade:
+.. include:: ../../../../admin-manual/source/installation/configuration.rst
+   :start-after: .. _configuration-verification:
+   :end-before:  .. _configuration-upgrade:
 
 Upgrading an Existing Version
 =======================================
@@ -186,16 +188,65 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 .. _cloudera-release-specific-upgrade-notes:
 
-.. rubric:: Upgrading CDAP 3.0 to 3.1
+.. rubric:: Upgrading CDH 5.3 to 5.4
 
-**Note:** An app need to be both recompiled and re-deployed if it uses either a PartitionedFileSet or a TimePartitionedFileSet.
+**Background:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
+CDH 5.4 as of CDAP 3.1.0 - however, upgrading the underlying CDH version is only supported
+since CDAP 3.2.0. Therefore, before upgrading from CDH 5.3 to CDH 5.4, upgrade CDAP to version
+3.2.0 or greater, following the normal upgrade procedure. Start CDAP at least once to make sure
+it works properly, before you upgrade to CDH 5.4.
+
+**It is important to perform these steps as described, otherwise the coprocessors may not
+get upgraded correctly and HBase regionservers may crash.** In the case where something
+goes wrong, see these troubleshooting instructions for :ref:`problems while upgrading CDH
+<cloudera-troubleshooting-upgrade-cdh>`.
+
+**Upgrade Steps**
+
+1. If using Cloudera Manager, :ref:`stop all CDAP application and services
+   <configuration-upgrade>`, as Cloudera Manager will have auto-started CDAP
+#. Disable all CDAP tables; from an HBase shell, run this command::
+
+    > disable_all 'cdap.*'
+    
+#. Upgrade to CDH 5.4
+#. :ref:`Stop all CDAP services <configuration-upgrade>`, as CDH will have auto-started CDAP
+#. Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user)::
+
+    $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase
+    
+#. Check if the coprocessor JARs for all CDAP tables have been upgraded to CDH HBase 1.0,
+   by checking that the coprocessor classnames are using the ``hbase10cdh`` package |---|
+   for example, ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``
+  
+   Running this command in an HBase shell will give you table attributes::
+  
+    > describe 'cdap_system:app.meta'
+    
+   The resulting output will show the coprocessor classname::
+  
+    'cdap_system:app.meta', {TABLE_ATTRIBUTES => {coprocessor$1 =>
+    'hdfs://server.example.com/cdap/cdap/lib/
+    coprocessorb5cb1b69834de686a84d513dff009908.jar|co.cask.cdap.data2.transaction.
+    coprocessor.hbase10cdh.DefaultTransactionProcessor|1073741823|', METADATA =>
+    {'cdap.version' => '3.1.0...
+
+   Note that some CDAP tables do not have any coprocessors. You only need to verify tables
+   that have coprocessors.
+
+#. Enable all CDAP tables; from an HBase shell, run this command::
+
+    > enable_all 'cdap.*'
+    
+#. Start CDAP
+
 
 .. rubric:: Upgrading CDAP 2.8 to 3.0
 
 **Note:** Apps need to be both recompiled and re-deployed.
 
-When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI role.  After starting the 3.0 services 
-for the first time:
+When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI
+role.  After starting the 3.0 services for the first time:
 
    - From the CDAP Instances page, select "Add Role Instances", and choose a host for the CDAP-UI role.
 
@@ -215,16 +266,16 @@ query, try setting ``hive.exec.stagingdir`` in your Hive configuration to
 This can be done in Cloudera Manager using the *Hive Client
 Advanced Configuration Snippet (Safety Valve) for hive-site.xml* configuration field.
 
-.. rubric:: Missing Application Templates
+.. rubric:: Missing System Artifacts
 
-The bundled application templates are included in the CDAP parcel, located in a subdirectory
+The bundled system artifacts are included in the CDAP parcel, located in a subdirectory
 of Cloudera's ``${PARCELS_ROOT}`` directory, for example::
 
-  /opt/cloudera/parcels/CDAP/master/templates
+  /opt/cloudera/parcels/CDAP/master/artifacts
 
-Ensure that the ``App Template Dir`` configuration option points to this path on disk. Since this
-directory can change when CDAP parcels are upgraded, advanced users are encouraged to place
-these templates in a static directory outside the parcel root, and configure accordingly.
+Ensure that the ``App Artifact Dir`` configuration option points to this path on disk. Since this
+directory can change when CDAP parcels are upgraded, users are encouraged to place
+these artifacts in a static directory outside the parcel root, and configure accordingly.
 
 .. _cloudera-direct-parcel-access:
 
@@ -255,3 +306,29 @@ Previously released parcels can also be accessed from their version-specific URL
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-precise.parcel
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-trusty.parcel
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-wheezy.parcel
+  
+
+.. _cloudera-troubleshooting-upgrade-cdh:
+
+.. rubric:: Problems While Upgrading CDH
+
+If you miss a step in the upgrade process and something goes wrong, it's possible that the
+tables will get re-enabled before the coprocessors are upgraded. This could cause the
+regionservers to abort and may make it very difficult to get the cluster back to a stable
+state where the tables can be disabled again and complete the upgrade process.
+
+.. highlight:: xml
+
+In that case, set this configuration property in ``hbase-site.xml``::
+
+  <property>
+    <name>hbase.coprocessor.abortonerror</name>
+    <value>false</value>
+  </property>
+
+and restart the HBase regionservers. This will allow the regionservers to start up
+despite the coprocessor version mismatch. At this point, you should be able to run through
+the upgrade steps successfully. 
+
+At the end, remove the entry for ``hbase.coprocessor.abortonerror`` in order to ensure
+that data correctness is maintained.

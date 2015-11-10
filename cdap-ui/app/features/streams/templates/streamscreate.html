@@ -1,3 +1,19 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
 <div class="modal-header">
     <h3 class="modal-title">Create a Stream</h3>
 </div>
@@ -6,20 +22,17 @@
     <div class="text-center bg-danger" ng-show="CreateController.error">
       <p><i class="fa fa-exclamation-circle"></i>  {{CreateController.error}}</p>
     </div>
-
-    <div class="form-group">
-      <label class="col-sm-2 control-label">
-        <span>Stream ID</span>
-        <span class="fa fa-asterisk"></span>
-      </label>
-      <div class="col-sm-10">
-        <input type="text"
-               class="form-control"
-               ng-model="CreateController.streamId"
-               placeholder="Stream ID"
-               name="streamId"
-               cask-focus="streamId">
-      </div>
+    <label class="col-sm-2 control-label">
+      <span>Stream ID</span>
+      <span class="fa fa-asterisk"></span>
+    </label>
+    <div class="col-sm-10">
+      <input type="text"
+             class="form-control"
+             ng-model="CreateController.streamId"
+             placeholder="Stream ID"
+             name="streamId"
+             cask-focus="streamId">
     </div>
   </form>
 </div>
@@ -27,9 +40,9 @@
     <button class="btn btn-default" ng-click="CreateController.closeModal()">
       Cancel
     </button>
-    <button class="btn btn-primary"
+    <button class="btn"
             ng-click="CreateController.createStream()"
-            ng-class="{disabled: streamId.length === 0}">
+            ng-class="{'btn-success': streamId.length > 0}">
       Create
     </button>
 </div>

@@ -106,6 +106,9 @@ def get_git_hash_timestamp():
 
 # -- General configuration ------------------------------------------------
 
+# TO-DO: this is temp fix, as this is also specified in the build scripts
+target = 'target'
+
 # If your documentation needs a minimal Sphinx version, state it here.
 needs_sphinx = '1.3'
 
@@ -116,16 +119,27 @@ extensions = [
     'sphinxcontrib.googleanalytics',
     'sphinx.ext.ifconfig',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.extlinks',
 ]
 
+_intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
+
+# The Inter-Sphinx mapping keys must be alpha-numeric only
 intersphinx_mapping = {
-  'introduction': ('../../introduction/',         os.path.abspath('../../introduction/build/html/objects.inv')),
-  'developers':   ('../../developers-manual/',    os.path.abspath('../../developers-manual/build/html/objects.inv')),
-  'apptemplates': ('../../application-templates', os.path.abspath('../../application-templates/build/html/objects.inv')),
-  'admin':        ('../../admin-manual/',         os.path.abspath('../../admin-manual/build/html/objects.inv')),
-  'integrations': ('../../integrations/',         os.path.abspath('../../integrations/build/html/objects.inv')),
-  'examples':     ('../../examples-manual',       os.path.abspath('../../examples-manual/build/html/objects.inv')),
-  'reference':    ('../../reference-manual',      os.path.abspath('../../reference-manual/build/html/objects.inv')),
+  'introduction': ('../../introduction/',         os.path.abspath(_intersphinx_mapping % 'introduction')),
+  'developers':   ('../../developers-manual/',    os.path.abspath(_intersphinx_mapping % 'developers-manual')),
+  'includedapps': ('../../included-applications', os.path.abspath(_intersphinx_mapping % 'included-applications')),
+  'admin':        ('../../admin-manual/',         os.path.abspath(_intersphinx_mapping % 'admin-manual')),
+  'integrations': ('../../integrations/',         os.path.abspath(_intersphinx_mapping % 'integrations')),
+  'examples':     ('../../examples-manual',       os.path.abspath(_intersphinx_mapping % 'examples-manual')),
+  'reference':    ('../../reference-manual',      os.path.abspath(_intersphinx_mapping % 'reference-manual')),
+}
+
+extlinks = {
+    'cdap-ui-apps': ('http://localhost:9999/ns/default/apps/%s', None),
+    'cdap-ui-apps-programs': ('http://localhost:9999/ns/default/apps/%s/overview/programs', None),
+    'cdap-ui-datasets': ('http://localhost:9999/ns/default/datasets/%s', None),
+    'cdap-ui-datasets-explore': ('http://localhost:9999/ns/default/datasets/%s/overview/explore', None),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -166,6 +180,9 @@ locale_dirs = ['_locale/', '../../_common/_locale']
 rst_epilog = """
 .. role:: gp
 .. |$| replace:: :gp:`$`
+
+.. role:: gp
+.. |cdap >| replace:: :gp:`cdap >`
 
 .. |http:| replace:: http:
 .. |https:| replace:: https:
@@ -322,7 +339,7 @@ html_theme = 'cdap'
 manuals_list = [
     ["introduction",          "Introduction to CDAP",            "",],
     ["developers-manual",    u"Developers’ Manual",              "",],
-    ["application-templates", "Application Templates",           "",],
+    ["included-applications", "Included Applications",           "",],
     ["admin-manual",          "Administration Manual",           "",],
     ["integrations",          "Integrations",                    "",],
     ["examples-manual",       "Examples, Guides, and Tutorials", "",],

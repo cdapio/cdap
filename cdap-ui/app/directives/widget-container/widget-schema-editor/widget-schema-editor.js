@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.commons')
   .directive('mySchemaEditor', function() {
     return {
@@ -5,10 +21,13 @@ angular.module(PKG.name + '.commons')
       scope: {
         model: '=ngModel',
         config: '=',
+        pluginProperties: '=',
         disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
-      controller: function($scope, myHelpers, EventPipe) {
+      controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA) {
+        var modelCopy = angular.copy($scope.model);
+
         var typeMap = 'map<string, string>';
         var mapObj = {
           type: 'map',
@@ -18,32 +37,113 @@ angular.module(PKG.name + '.commons')
 
         var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string', 'map<string, string>' ];
         var defaultType = null;
+        var watchProperty = null;
+
+        $scope.fields = 'SHOW';
+
         if ($scope.config) {
+
           $scope.options = $scope.config['schema-types'];
           defaultType = $scope.config['schema-default-type'] || $scope.options[0];
+
+          if ($scope.config['property-watch']) {
+            watchProperty = $scope.config['property-watch'];
+
+            // changing the format when it is stream
+            EventPipe.on('dataset.selected', function (schema, format) {
+              $scope.pluginProperties[watchProperty] = format;
+            });
+
+            $scope.$watch(function () {
+              return $scope.pluginProperties[watchProperty];
+            }, changeFormat);
+          }
+
         } else {
           $scope.options = defaultOptions;
           defaultType = 'string';
         }
 
-        var modelCopy = angular.copy($scope.model);
+        var watcher;
+        function removeWatcher() {
+          if (watcher) {
+            // deregister watch
+            watcher();
+            watcher = null;
+          }
+        }
 
-        EventPipe.on('plugin.reset', function () {
-          $scope.model = angular.copy(modelCopy);
-          initialize();
-        });
+        function changeFormat() {
+          if (!$scope.pluginProperties) {
+            return;
+          }
+
+          // watch for changes
+          removeWatcher();
+
+          // do things based on format
+          if (['clf', 'syslog', ''].indexOf($scope.pluginProperties[watchProperty]) > -1) {
+            $scope.model = null;
+            $scope.disableEdit = true;
+            // $scope.fields = 'NOTHING';
+            if ($scope.pluginProperties[watchProperty] === 'clf') {
+              var clfSchema = IMPLICIT_SCHEMA.clf;
+
+              initialize(clfSchema);
+              $scope.fields = 'SHOW';
+            } else if ($scope.pluginProperties[watchProperty] === 'syslog') {
+              var syslogSchema = IMPLICIT_SCHEMA.syslog;
+
+              initialize(syslogSchema);
+              $scope.fields = 'SHOW';
+            } else {
+              $scope.fields = 'NOTHING';
+            }
+
+          } else if ($scope.pluginProperties[watchProperty] === 'avro'){
+            $scope.disableEdit = false;
+            $scope.fields = 'AVRO';
+            watcher = $scope.$watch('avro', formatAvro, true);
+
+            if ($scope.model) {
+              try {
+                $scope.avro.schema = JSON.parse($scope.model);
+              } catch (e) {
+                $scope.error = 'Invalid JSON string';
+              }
+
+            }
+          } else if ($scope.pluginProperties[watchProperty] === 'grok') {
+            $scope.disableEdit = false;
+            $scope.fields = 'GROK';
+            watcher = $scope.$watch('grok', function () {
+              $scope.model = $scope.grok.pattern;
+            }, true);
+          }
+
+          else {
+            $scope.disableEdit = false;
+            $scope.fields = 'SHOW';
+          }
+        }
+
 
         var filledCount;
 
         // Format model
-        function initialize() {
+        function initialize(jsonString) {
           filledCount = 0;
-
           var schema = {};
+          $scope.avro = {};
+          $scope.grok = {
+            pattern: $scope.model
+          };
+
           $scope.error = null;
-          if ($scope.model) {
+          if (jsonString) {
             try {
-              schema = JSON.parse($scope.model);
+              schema = JSON.parse(jsonString);
+              $scope.avro.schema = schema;
             } catch (e) {
               $scope.error = 'Invalid JSON string';
             }
@@ -104,18 +204,50 @@ angular.module(PKG.name + '.commons')
               empty: true
             });
           }
-
+          formatSchema();
 
         } // End of initialize
 
-        initialize();
+        if ($scope.config && $scope.config['property-watch']) {
+          changeFormat();
+        }
 
-        $scope.$watch('disabled', function () {
+        initialize($scope.model);
+
+        EventPipe.on('plugin.reset', function () {
+          $scope.model = angular.copy(modelCopy);
+          initialize($scope.model);
+        });
+
+        EventPipe.on('schema.clear', function () {
           initialize();
         });
 
+        EventPipe.on('dataset.selected', function (schema) {
+          initialize(schema);
+        });
 
-        function formatSchema() {
+
+        function formatAvro() {
+          if ($scope.pluginProperties[watchProperty] !== 'avro') {
+            return;
+          }
+
+          var avroJson = JSON.stringify($scope.avro.schema);
+          $scope.model = avroJson;
+        }
+
+
+        function formatSchema(newValue, oldValue) {
+
+          if (watchProperty && $scope.pluginProperties && ['clf', 'syslog'].indexOf($scope.pluginProperties[watchProperty]) !== -1) {
+            $scope.model = null;
+            return;
+          }
+
+          if (newValue === oldValue) {
+            return;
+          }
           // Format Schema
           var properties = [];
           angular.forEach($scope.properties, function(p) {
@@ -148,7 +280,6 @@ angular.module(PKG.name + '.commons')
           } else {
             $scope.model = null;
           }
-
         }
 
         // watch for changes
@@ -212,6 +343,11 @@ angular.module(PKG.name + '.commons')
           }
         };
 
+        $scope.$on('$destroy', function() {
+          EventPipe.cancelEvent('schema.clear');
+          EventPipe.cancelEvent('plugin.reset');
+          EventPipe.cancelEvent('dataset.selected');
+        });
       }
     };
   });

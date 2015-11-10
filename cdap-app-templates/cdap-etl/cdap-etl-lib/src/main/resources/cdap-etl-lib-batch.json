@@ -1,0 +1,3 @@
+{
+  "parents": [ "cdap-etl-batch[${project.version},${project.version}]" ]
+}

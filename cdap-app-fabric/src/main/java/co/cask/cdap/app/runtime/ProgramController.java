@@ -16,6 +16,7 @@
 
 package co.cask.cdap.app.runtime;
 
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.api.RunId;
@@ -103,7 +104,7 @@ public interface ProgramController {
 
     private final ProgramRunStatus runStatus;
 
-    private State(ProgramRunStatus runStatus) {
+    State(ProgramRunStatus runStatus) {
       this.runStatus = runStatus;
     }
 
@@ -116,7 +117,22 @@ public interface ProgramController {
     }
   }
 
+  /**
+   * Returns the program Id which this controller is controlling.
+   */
+  Id.Program getProgramId();
+
+  /**
+   * Returns the run Id which this controller is controlling.
+   */
   RunId getRunId();
+
+  /**
+   * Returns the component name within a given program which this controller is controlling
+   * or {@code null} if there is no component name for this controller.
+   */
+  @Nullable
+  String getComponentName();
 
   /**
    * Suspend the running {@link ProgramRunner}.
@@ -142,9 +158,9 @@ public interface ProgramController {
   /**
    * Adds a listener to watch for state changes. Adding the same listener again don't have any effect
    * and simply will get the same {@link Cancellable} back.
-   * @param listener
-   * @param executor
-   * @return
+   * @param listener listener for listening to state changes
+   * @param executor the executor used for making calls to the given listener
+   * @return a {@link Cancellable} to cancel the listening
    */
   Cancellable addListener(Listener listener, Executor executor);
 

@@ -18,7 +18,6 @@ package co.cask.cdap.common.io;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
-import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -38,7 +37,7 @@ public class DFSSeekableInputStreamTest extends SeekableInputStreamTestBase {
     Configuration hConf = new Configuration();
     hConf.set(MiniDFSCluster.HDFS_MINIDFS_BASEDIR, TMP_FOLDER.newFolder().getAbsolutePath());
     dfsCluster = new MiniDFSCluster.Builder(hConf).numDataNodes(1).build();
-    locationFactory = new HDFSLocationFactory(dfsCluster.getFileSystem());
+    locationFactory = new FileContextLocationFactory(dfsCluster.getFileSystem().getConf());
   }
 
   @AfterClass

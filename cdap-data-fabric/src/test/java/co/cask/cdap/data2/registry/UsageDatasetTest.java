@@ -45,9 +45,6 @@ public class UsageDatasetTest {
   private final Id.Stream stream1 = Id.Stream.from("ns1", "s1");
   private final Id.Stream stream2 = Id.Stream.from("ns2", "s1");
 
-  private final Id.Adapter adapter1 = Id.Adapter.from("ns1", "adapter1");
-  private final Id.Adapter adapter2 = Id.Adapter.from("ns2", "adapter1");
-
   @Test
   public void testOneMapping() throws Exception {
     UsageDataset usageDataset = getUsageDataset("testOneMapping");
@@ -121,29 +118,20 @@ public class UsageDatasetTest {
     usageDataset.register(flow11, datasetInstance1);
     usageDataset.register(service21, datasetInstance3);
 
-    usageDataset.register(adapter1, datasetInstance1);
-    usageDataset.register(adapter1, datasetInstance2);
-
     usageDataset.register(flow12, stream1);
-    usageDataset.register(adapter2, stream2);
 
     // Verify app/adapter mappings
     Assert.assertEquals(ImmutableSet.of(datasetInstance1), usageDataset.getDatasets(flow11));
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow12));
     Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
 
-    Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance2), usageDataset.getDatasets(adapter1));
-
     Assert.assertEquals(ImmutableSet.of(stream1), usageDataset.getStreams(flow12));
     Assert.assertEquals(ImmutableSet.<Id.Stream>of(), usageDataset.getStreams(flow22));
-    Assert.assertEquals(ImmutableSet.of(stream2), usageDataset.getStreams(adapter2));
 
     // Verify dataset/stream mappings
     Assert.assertEquals(ImmutableSet.of(flow11), usageDataset.getPrograms(datasetInstance1));
-    Assert.assertEquals(ImmutableSet.of(adapter1), usageDataset.getAdapters(datasetInstance1));
     Assert.assertEquals(ImmutableSet.of(flow12), usageDataset.getPrograms(stream1));
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream2));
-    Assert.assertEquals(ImmutableSet.of(adapter2), usageDataset.getAdapters(stream2));
 
     // --------- Delete app1 -----------
     usageDataset.unregister(flow11.getApplication());
@@ -153,60 +141,39 @@ public class UsageDatasetTest {
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow12));
     Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
 
-    Assert.assertEquals(ImmutableSet.of(datasetInstance1, datasetInstance2), usageDataset.getDatasets(adapter1));
-
     Assert.assertEquals(ImmutableSet.<Id.Stream>of(), usageDataset.getStreams(flow12));
     Assert.assertEquals(ImmutableSet.<Id.Stream>of(), usageDataset.getStreams(flow22));
-    Assert.assertEquals(ImmutableSet.of(stream2), usageDataset.getStreams(adapter2));
 
     // Verify dataset/stream mappings
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(datasetInstance1));
-    Assert.assertEquals(ImmutableSet.of(adapter1), usageDataset.getAdapters(datasetInstance1));
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream1));
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream2));
-    Assert.assertEquals(ImmutableSet.of(adapter2), usageDataset.getAdapters(stream2));
-
-    // --------- Delete adapter1 -----------
-    usageDataset.unregister(adapter1);
 
     // Verify app/adapter mappings
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow11));
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow12));
     Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
 
-    Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(adapter1));
-
     Assert.assertEquals(ImmutableSet.<Id.Stream>of(), usageDataset.getStreams(flow12));
     Assert.assertEquals(ImmutableSet.<Id.Stream>of(), usageDataset.getStreams(flow22));
-    Assert.assertEquals(ImmutableSet.of(stream2), usageDataset.getStreams(adapter2));
 
     // Verify dataset/stream mappings
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(datasetInstance1));
-    Assert.assertEquals(ImmutableSet.<Id.Adapter>of(), usageDataset.getAdapters(datasetInstance1));
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream1));
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream2));
-    Assert.assertEquals(ImmutableSet.of(adapter2), usageDataset.getAdapters(stream2));
-
-    // --------- Delete adapter2 -----------
-    usageDataset.unregister(adapter2);
 
     // Verify app/adapter mappings
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow11));
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow12));
     Assert.assertEquals(ImmutableSet.of(datasetInstance3), usageDataset.getDatasets(service21));
 
-    Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(adapter1));
-
     Assert.assertEquals(ImmutableSet.<Id.Stream>of(), usageDataset.getStreams(flow12));
     Assert.assertEquals(ImmutableSet.<Id.Stream>of(), usageDataset.getStreams(flow22));
-    Assert.assertEquals(ImmutableSet.<Id.Stream>of(), usageDataset.getStreams(adapter2));
 
     // Verify dataset/stream mappings
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(datasetInstance1));
-    Assert.assertEquals(ImmutableSet.<Id.Adapter>of(), usageDataset.getAdapters(datasetInstance1));
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream1));
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream2));
-    Assert.assertEquals(ImmutableSet.<Id.Adapter>of(), usageDataset.getAdapters(stream2));
 
     // --------- Delete app2 -----------
     usageDataset.unregister(flow21.getApplication());
@@ -215,18 +182,13 @@ public class UsageDatasetTest {
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(flow12));
     Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(service21));
 
-    Assert.assertEquals(ImmutableSet.<Id.DatasetInstance>of(), usageDataset.getDatasets(adapter1));
-
     Assert.assertEquals(ImmutableSet.<Id.Stream>of(), usageDataset.getStreams(flow12));
     Assert.assertEquals(ImmutableSet.<Id.Stream>of(), usageDataset.getStreams(flow22));
-    Assert.assertEquals(ImmutableSet.<Id.Stream>of(), usageDataset.getStreams(adapter2));
 
     // Verify dataset/stream mappings
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(datasetInstance1));
-    Assert.assertEquals(ImmutableSet.<Id.Adapter>of(), usageDataset.getAdapters(datasetInstance1));
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream1));
     Assert.assertEquals(ImmutableSet.<Id.Program>of(), usageDataset.getPrograms(stream2));
-    Assert.assertEquals(ImmutableSet.<Id.Adapter>of(), usageDataset.getAdapters(stream2));
   }
 
   private static UsageDataset getUsageDataset(String instanceId) throws Exception {

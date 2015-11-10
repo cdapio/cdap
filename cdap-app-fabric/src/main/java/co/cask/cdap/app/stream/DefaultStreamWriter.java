@@ -22,6 +22,8 @@ import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.data2.metadata.lineage.AccessType;
+import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpMethod;
@@ -66,14 +68,19 @@ public class DefaultStreamWriter implements StreamWriter {
    * The owners of this {@link StreamWriter}.
    */
   private final List<Id> owners;
+  private final Id.Run run;
+  private final LineageWriter lineageWriter;
 
   @Inject
-  public DefaultStreamWriter(@Assisted("namespace") Id.Namespace namespace,
+  public DefaultStreamWriter(@Assisted("run") Id.Run run,
                              @Assisted("owners") List<Id> owners,
                              UsageRegistry usageRegistry,
+                             LineageWriter lineageWriter,
                              DiscoveryServiceClient discoveryServiceClient) {
-    this.namespace = namespace;
+    this.run = run;
+    this.namespace = run.getNamespace();
     this.owners = owners;
+    this.lineageWriter = lineageWriter;
     this.endpointStrategy = new RandomEndpointStrategy(discoveryServiceClient.discover(Constants.Service.STREAMS));
     this.isStreamRegistered = Maps.newConcurrentMap();
     this.usageRegistry = usageRegistry;
@@ -105,11 +112,7 @@ public class DefaultStreamWriter implements StreamWriter {
       throw new IOException(String.format("Stream %s not found", stream));
     }
 
-    // prone being entered multiple times, but OK since usageRegistry.register is not an expensive operation
-    if (!isStreamRegistered.containsKey(stream)) {
-      usageRegistry.registerAll(owners, stream);
-      isStreamRegistered.put(stream, true);
-    }
+    registerStream(stream);
 
     if (responseCode < 200 || responseCode >= 300) {
       throw new IOException(String.format("Writing to Stream %s did not succeed. Stream Service ResponseCode : %d",
@@ -165,10 +168,23 @@ public class DefaultStreamWriter implements StreamWriter {
     connection.setChunkedStreamingMode(0);
     connection.connect();
     try {
-      return new DefaultStreamBatchWriter(connection, Id.Stream.from(namespace, stream));
+      Id.Stream streamId = Id.Stream.from(namespace, stream);
+      registerStream(streamId);
+      return new DefaultStreamBatchWriter(connection, streamId);
     } catch (IOException e) {
       connection.disconnect();
       throw e;
     }
+  }
+
+  private void registerStream(Id.Stream stream) {
+    // prone being entered multiple times, but OK since usageRegistry.register is not an expensive operation
+    if (!isStreamRegistered.containsKey(stream)) {
+      usageRegistry.registerAll(owners, stream);
+      isStreamRegistered.put(stream, true);
+    }
+
+    // Lineage writer handles duplicate accesses internally
+    lineageWriter.addAccess(run, stream, AccessType.WRITE);
   }
 }

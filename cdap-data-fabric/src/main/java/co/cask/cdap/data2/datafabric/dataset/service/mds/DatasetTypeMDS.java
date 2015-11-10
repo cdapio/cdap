@@ -19,7 +19,6 @@ package co.cask.cdap.data2.datafabric.dataset.service.mds;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import co.cask.cdap.proto.DatasetModuleMeta;
@@ -78,7 +77,7 @@ public class DatasetTypeMDS extends MetadataStoreDataset {
     DatasetModuleMeta moduleMeta = getModule(datasetModuleId);
     // if not found, try to load it from system namespace
     if (moduleMeta == null) {
-      moduleMeta = getModule(Id.DatasetModule.from(Constants.SYSTEM_NAMESPACE_ID, datasetModuleId.getId()));
+      moduleMeta = getModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, datasetModuleId.getId()));
     }
     return moduleMeta;
   }

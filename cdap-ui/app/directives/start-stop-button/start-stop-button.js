@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.commons')
   .directive('myStartStopButton', function() {
     return {
@@ -10,17 +26,14 @@ angular.module(PKG.name + '.commons')
         runtimeHandler: '&'
       },
       templateUrl: 'start-stop-button/start-stop-button.html',
-      controller: function($scope, $state, MyDataSource, myRuntimeService, myProgramPreferencesService) {
+      controller: function($scope, $state, MyCDAPDataSource, myRuntimeService, myProgramPreferencesService) {
         $scope.isStoppable = ($scope.isStoppable === 'true');
         $scope.isRestartable = ($scope.isRestartable === 'true');
 
         $scope.runtimeArgs = [];
         var path = '/apps/' + $state.params.appId +
                    '/' + $scope.type + '/' + $state.params.programId;
-        if ($scope.type === 'adapters') {
-          path = '/adapters/' + $state.params.adapterId;
-        }
-        var dataSrc = new MyDataSource($scope);
+        var dataSrc = new MyCDAPDataSource($scope);
 
         // Poll for status
         dataSrc.poll({

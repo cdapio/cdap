@@ -1,3 +1,19 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 @import (less) "./fonts.less"; // must be first to support external @import (css)
 @import (less) "./variables.less";
 @import (less) "../../bower_components/bootstrap/less/mixins.less";
@@ -22,8 +38,13 @@ body {
   div.progress { margin: 1px; /* by default they have just margin-bottom: 20px */ }
 
   main.container {
-    margin-top: 100px;
-    padding-top: 1em;
+    // Temporary
+    // TODO: Remove or adjust based on final/approved program detail layout
+    margin-top: 115px;
+    // padding-top: 1em;
+    @media (max-width: @screen-sm-max) {
+      margin-top: 75px;
+    }
     > div { margin-bottom: 80px; }
     .sidebar {
       ul li a {
@@ -37,8 +58,6 @@ body {
     }
   }
 }
-
-header.navbar { border-bottom-color: @body-bg; }
 
 .caret {
   border-width: 6px 6px 0 6px;
@@ -111,6 +130,7 @@ footer {
   font-size: 14px;
   position: absolute;
   bottom: 0;
+  z-index: 1400;
   width: 100%;
   > .container { padding-right: 15px; padding-left: 15px; }
   div.text-muted {
@@ -129,10 +149,8 @@ footer {
     width: 26px;
     margin-right: 8px;
   }
-  @media (min-width: @screen-md-max) {
-    p, ul { height: 32px; margin: 0; }
-    span, li { line-height: 32px; vertical-align: middle; }
-  }
+  p, ul { height: 32px; margin: 0; }
+  span, li { line-height: 32px; vertical-align: middle; }
 }
 
 .mapreduce-components {
@@ -174,7 +192,7 @@ footer {
 }
 
 [program-heading] {
-  margin-top: 10px;
+  margin-top: 20px;
   margin-bottom: 5px;
   .programTitle {
     vertical-align: middle;

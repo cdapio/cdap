@@ -69,19 +69,16 @@ public class MRJobClient implements MRJobInfoFetcher {
   public MRJobInfo getMRJobInfo(Id.Run runId) throws IOException, NotFoundException {
     Preconditions.checkArgument(ProgramType.MAPREDUCE.equals(runId.getProgram().getType()));
 
-    JobClient jobClient;
-    JobStatus[] jobs;
-    try {
-      jobClient = new JobClient(hConf);
-      jobs = jobClient.getAllJobs();
-    } catch (Exception e) {
-      LOG.warn("JobClient failed to get all jobs.", e);
-      throw new IOException(e);
-    }
+    JobClient jobClient = new JobClient(hConf);
+    JobStatus[] jobs = jobClient.getAllJobs();
 
     JobStatus thisJob = findJobForRunId(jobs, runId);
 
     RunningJob runningJob = jobClient.getJob(thisJob.getJobID());
+    if (runningJob == null) {
+      throw new IllegalStateException(String.format("JobClient returned null for RunId: '%s', JobId: '%s'",
+                                                    runId, thisJob.getJobID()));
+    }
     Counters counters = runningJob.getCounters();
 
     TaskReport[] mapTaskReports = jobClient.getMapTaskReports(thisJob.getJobID());

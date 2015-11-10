@@ -1,3 +1,19 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
 <div class="row">
   <div class="col-xs-6">
     <h2><a ui-sref="streams.detail.overview.status({namespace: $state.params.nsadmin, streamId: $state.params.streamId})">{{ $stateParams.streamId }}</a>: Properties</h2>
@@ -35,7 +51,7 @@
 
     <div class="row">
       <div class="text-center bg-danger" ng-show="error">
-        <p><i class="fa fa-exclamation-circle"></i>  <strong>{{error.statusCode}}</strong> {{error.response}}</p>
+        <p><i class="fa fa-exclamation-circle"></i> {{ error.data }}</p>
       </div>
 
       <form class="form-horizontal">
@@ -44,9 +60,11 @@
         <div class="form-group">
           <label class="col-sm-2 control-label">Format</label>
           <div class="col-sm-2">
-            <select ng-model="format" class="form-control">
-              <option ng-repeat="option in formatOptions" value="{{option}}">{{option}}</option>
-            </select>
+            <div class="select-wrapper">
+              <select ng-model="format" class="form-control">
+                <option ng-repeat="option in formatOptions" value="{{option}}">{{option}}</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -68,17 +86,17 @@
                   <input type="text" class="form-control" ng-model="property.name" placeholder="name"/ my-focus-watch="$last">
                 </div>
                 <div class="col-sm-4">
-
-                  <select ng-model="property.type" class="form-control">
-                    <option value="boolean">boolean</option>
-                    <option value="bytes">bytes</option>
-                    <option value="double">double</option>
-                    <option value="float">float</option>
-                    <option value="int">int</option>
-                    <option value="long">long</option>
-                    <option value="string">string</option>
-                  </select>
-
+                  <div class="select-wrapper">
+                    <select ng-model="property.type" class="form-control">
+                      <option value="boolean">boolean</option>
+                      <option value="bytes">bytes</option>
+                      <option value="double">double</option>
+                      <option value="float">float</option>
+                      <option value="int">int</option>
+                      <option value="long">long</option>
+                      <option value="string">string</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="col-sm-2 text-center null">
                   <input type="checkbox" ng-model="property.nullable">

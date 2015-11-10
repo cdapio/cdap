@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.tools.flow;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.lib.cube.TimeValue;
 import co.cask.cdap.api.flow.FlowSpecification;
@@ -24,7 +25,6 @@ import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricTimeSeries;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
@@ -42,6 +42,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.TwillModule;
 import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.runtime.DataFabricDistributedModule;
@@ -49,6 +50,7 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.tools.HBaseQueueDebugger;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.queue.QueueClientFactory;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
@@ -57,7 +59,6 @@ import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueClientFactory;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
 import co.cask.cdap.explore.guice.ExploreClientModule;
-import co.cask.cdap.internal.app.namespace.NamespaceAdmin;
 import co.cask.cdap.internal.app.queue.SimpleQueueSpecificationGenerator;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.internal.app.store.DefaultStore;
@@ -142,7 +143,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
    */
   public void run() throws Exception {
     System.out.println("Running queue.pending correction");
-    List<NamespaceMeta> namespaceMetas = namespaceAdmin.listNamespaces();
+    List<NamespaceMeta> namespaceMetas = namespaceAdmin.list();
     for (NamespaceMeta namespaceMeta : namespaceMetas) {
       run(Id.Namespace.from(namespaceMeta.getName()));
     }
@@ -328,6 +329,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
       new ZKClientModule(),
       new LocationRuntimeModule().getDistributedModules(),
       new DiscoveryRuntimeModule().getDistributedModules(),
+      new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
       new NotificationFeedClientModule(),
       new TwillModule(),
@@ -352,6 +354,7 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
         @Provides
         @Singleton
         @Named("defaultStore")
+        @SuppressWarnings("unused")
         public Store getStore(DatasetFramework dsFramework,
                               CConfiguration cConf, LocationFactory locationFactory,
                               NamespacedLocationFactory namespacedLocationFactory,
@@ -359,11 +362,12 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
           return new DefaultStore(cConf, locationFactory, namespacedLocationFactory, txExecutorFactory, dsFramework);
         }
 
-        // This is needed because the LocalAdapterManager, LocalApplicationManager, LocalApplicationTemplateManager
+        // This is needed because the LocalApplicationManager
         // expects a dsframework injection named datasetMDS
         @Provides
         @Singleton
         @Named("datasetMDS")
+        @SuppressWarnings("unused")
         public DatasetFramework getInDsFramework(DatasetFramework dsFramework) {
           return dsFramework;
         }

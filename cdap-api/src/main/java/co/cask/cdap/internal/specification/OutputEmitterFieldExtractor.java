@@ -20,13 +20,13 @@ import co.cask.cdap.api.flow.FlowletDefinition;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.internal.lang.FieldVisitor;
 import co.cask.cdap.internal.lang.Reflections;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,31 +42,38 @@ public final class OutputEmitterFieldExtractor extends FieldVisitor {
   }
 
   @Override
-  public void visit(Object instance, TypeToken<?> inspectType, TypeToken<?> declareType, Field field) throws Exception {
+  public void visit(Object instance, Type inspectType, Type declareType, Field field) throws Exception {
     if (!OutputEmitter.class.equals(field.getType())) {
       return;
     }
-    Type emitterType = inspectType.resolveType(field.getGenericType()).getType();
-    Preconditions.checkArgument(emitterType instanceof ParameterizedType,
-                                "Type info missing for OutputEmitter in %s.%s",
-                                inspectType.getRawType().getName(), field.getName());
+
+    TypeToken<?> inspectTypeToken = TypeToken.of(inspectType);
+    Type emitterType = inspectTypeToken.resolveType(field.getGenericType()).getType();
+    if (!(emitterType instanceof ParameterizedType)) {
+      throw new IllegalArgumentException(String.format("Type info missing for OutputEmitter in %s.%s",
+                                                       inspectTypeToken.getRawType().getName(), field.getName()));
+    }
 
     // Extract the Output type from the first type argument of OutputEmitter.
     Type outputType = ((ParameterizedType) emitterType).getActualTypeArguments()[0];
-    outputType = inspectType.resolveType(outputType).getType();
+    outputType = inspectTypeToken.resolveType(outputType).getType();
     String outputName = field.isAnnotationPresent(Output.class) ?
       field.getAnnotation(Output.class).value() : FlowletDefinition.DEFAULT_OUTPUT;
 
-    Preconditions.checkArgument(Reflections.isResolved(outputType),
-                                "Invalid type in %s.%s. Only Class or ParameterizedType are supported.",
-                                inspectType.getRawType().getName(), field.getName());
+    if (!Reflections.isResolved(outputType)) {
+      throw new IllegalArgumentException(
+        String.format("Invalid type in %s.%s. Only Class or ParameterizedType are supported.",
+                      inspectTypeToken.getRawType().getName(), field.getName()));
+    }
 
-    Preconditions.checkArgument(
-      !outputTypes.containsKey(outputName),
-      "Output with name '%s' already exists. Use @Output with different name; class: %s, field: %s",
-      outputName, inspectType.getRawType().toString(), field.getName()
-    );
+    if (outputTypes.containsKey(outputName)) {
+      throw new IllegalArgumentException(
+        String.format("Output with name '%s' already exists. Use @Output with different name; class: %s, field: %s",
+                      outputName, inspectTypeToken.getRawType().toString(), field.getName()));
+    }
 
-    outputTypes.put(outputName, ImmutableSet.of(outputType));
+    Set<Type> types = new HashSet<>();
+    types.add(outputType);
+    outputTypes.put(outputName, Collections.unmodifiableSet(types));
   }
 }

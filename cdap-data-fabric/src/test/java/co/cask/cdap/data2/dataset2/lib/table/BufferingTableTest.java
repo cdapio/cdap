@@ -342,7 +342,7 @@ public abstract class BufferingTableTest<T extends BufferingTable>
       Assert.assertEquals(1, counters.size());
       byte[] colFromInc = counters.keySet().iterator().next();
       Assert.assertArrayEquals(new byte[] {2}, colFromInc);
-      Assert.assertEquals(3, (long) Bytes.toLong(counters.get(colFromInc)));
+      Assert.assertEquals(3, Bytes.toLong(counters.get(colFromInc)));
       counters.remove(new byte[] {2});
       colFromInc[0]++;
 

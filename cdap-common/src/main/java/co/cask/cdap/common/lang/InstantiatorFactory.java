@@ -180,7 +180,7 @@ public final class InstantiatorFactory {
       public T create() {
         try {
           Object instance = UNSAFE.allocateInstance(type.getRawType());
-          Reflections.visit(instance, type, new FieldInitializer());
+          Reflections.visit(instance, type.getType(), new FieldInitializer());
           return (T) instance;
         } catch (InstantiationException e) {
           throw Throwables.propagate(e);

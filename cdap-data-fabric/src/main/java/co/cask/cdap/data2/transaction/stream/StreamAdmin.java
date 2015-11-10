@@ -16,10 +16,13 @@
 
 package co.cask.cdap.data2.transaction.stream;
 
+import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.proto.ViewSpecification;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import javax.annotation.Nullable;
@@ -79,17 +82,19 @@ public interface StreamAdmin {
   /**
    * Creates stream if doesn't exist. If stream exists does nothing.
    * @param streamId Id of the stream to create
+   * @return The {@link StreamConfig} associated with the new stream
    * @throws Exception if creation fails
    */
-  void create(Id.Stream streamId) throws Exception;
+  StreamConfig create(Id.Stream streamId) throws Exception;
 
   /**
    * Creates stream if doesn't exist. If stream exists, does nothing.
    * @param streamId Id of the stream to create
    * @param props additional properties
+   * @return The {@link StreamConfig} associated with the new stream
    * @throws Exception if creation fails
    */
-  void create(Id.Stream streamId, @Nullable Properties props) throws Exception;
+  StreamConfig create(Id.Stream streamId, @Nullable Properties props) throws Exception;
 
   /**
    * Wipes out stream data.
@@ -106,10 +111,51 @@ public interface StreamAdmin {
   void drop(Id.Stream streamId) throws Exception;
 
   /**
+   * Creates or updates a stream view.
+   *
+   * @param viewId the view
+   * @param spec specification for the view
+   * @return true if a stream view was created
+   */
+  boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception;
+
+  /**
+   * Deletes a stream view.
+   *
+   * @param viewId the view
+   */
+  void deleteView(Id.Stream.View viewId) throws Exception;
+
+  /**
+   * Lists views associated with a stream.
+   *
+   * @param streamId the stream
+   * @return the associated views
+   */
+  List<Id.Stream.View> listViews(Id.Stream streamId) throws Exception;
+
+  /**
+   * Gets the details of a stream view.
+   *
+   * @param viewId the view
+   * @return the details of the view
+   */
+  ViewSpecification getView(Id.Stream.View viewId) throws Exception;
+
+  /**
    * Register stream used by program.
    *
    * @param owners the ids that are using the stream
    * @param streamId the stream being used
    */
   void register(Iterable<? extends Id> owners, Id.Stream streamId);
+
+  /**
+   * Record access of stream by a program run for lineage computation.
+   *
+   * @param run program run
+   * @param streamId stream being accessed
+   * @param accessType type of access
+   */
+  void addAccess(Id.Run run, Id.Stream streamId, AccessType accessType);
 }

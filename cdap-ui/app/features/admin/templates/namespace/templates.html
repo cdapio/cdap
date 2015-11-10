@@ -1,0 +1,127 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div class="row">
+  <div class="col-xs-6">
+    <h2 ng-if="!TemplatesController.isEdit">Create Template</h2>
+    <h2 ng-if="TemplatesController.isEdit">Edit Template</h2>
+  </div>
+  <div class="col-xs-6 text-right">
+    <button class="btn btn-success" ng-click="TemplatesController.save()">Save</button>
+  </div>
+</div>
+<div ng-if="!TemplatesController.isEdit">
+  <label class="label-control">Choose Templates</label>
+  <div class="select-wrapper">
+    <select ng-model="TemplatesController.templateType"
+            data-ng-options="o for o in TemplatesController.templationoptions"
+            class="form-control">
+    </select>
+  </div>
+
+  <div ng-if="TemplatesController.templateType">
+    <label class="label-control">Choose Plugin Type</label>
+    <div ng-if="TemplatesController.templateType === TemplatesController.GLOBALS.etlBatch">
+      <div class="select-wrapper">
+        <select ng-model="TemplatesController.pluginType"
+                data-ng-options="o for o in TemplatesController.pluginoptionsBatch"
+                class="form-control">
+        </select>
+      </div>
+    </div>
+
+    <div ng-if="TemplatesController.templateType === TemplatesController.GLOBALS.etlRealtime">
+      <div class="select-wrapper">
+        <select ng-model="TemplatesController.pluginType"
+                data-ng-options="o for o in TemplatesController.pluginoptionsRealtime"
+                class="form-control">
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  <div ng-if="TemplatesController.pluginList.length > 0">
+    <label class="label-control">Choose Plugin</label>
+    <div class="select-wrapper">
+      <select ng-model="TemplatesController.pluginName" class="form-control">
+        <option ng-repeat="plugin in TemplatesController.pluginList" value="{{plugin.name}}">{{plugin.name}}</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+
+<div ng-if="TemplatesController.pluginName && TemplatesController.configFetched">
+  <h3>Plugin Properties</h3>
+
+  <label class="label-control">Template Name</label>
+  <input type="text" class="form-control" ng-model="TemplatesController.pluginConfig.pluginTemplate">
+
+  <label class="label-control">Template Description</label>
+  <textarea class="form-control" ng-model="TemplatesController.pluginDescription"></textarea>
+
+  <div ng-repeat="group in TemplatesController.groups.position">
+    <div class="widget-group-container">
+      <h4>{{TemplatesController.groups[group].display}}</h4>
+      <div ng-repeat="field in TemplatesController.groups[group].position">
+        <div ng-if="field !== 'schema'">
+          <div class="form-group">
+            <label class="control-label"
+                    ng-init="title=TemplatesController.groups[group].fields[field].info;description=TemplatesController.groups[group].fields[field].description">
+              <span>{{TemplatesController.groups[group].fields[field].label}}</span>
+              <span class="fa fa-info-circle"
+                    tooltip="{{description}}"
+                    tooltip-placement="right"
+                    tooltip-append-to-body="true">
+              </span>
+              <span class="fa fa-asterisk" ng-if="TemplatesController.pluginConfig._backendProperties[field].required"></span>
+            </label>
+            <div>
+              <div data-name="field"
+                   class="my-widget-container"
+                   data-model="TemplatesController.pluginConfig.properties[field]"
+                   data-myconfig="TemplatesController.groups[group].fields[field]"
+                   data-properties="TemplatesController.pluginConfig.properties"
+                   widget-container>
+              </div>
+
+              <label class="label-control">Lock change?</label>
+              <input type="checkbox" ng-model="TemplatesController.pluginConfig.lock[field]">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="output-schema">
+      <h4>Output Schema</h4>
+
+      <fieldset ng-disabled="TemplatesController.isDisabled">
+        <my-schema-editor
+          ng-model="TemplatesController.pluginConfig['outputSchema']"
+          data-disabled="TemplatesController.pluginConfig.implicitSchema"
+          plugin="TemplatesController.pluginConfig.properties"
+          config="TemplatesController.schemaProperties"
+          ></my-schema-editor>
+      </fieldset>
+
+    </div>
+  </div>
+
+</div>

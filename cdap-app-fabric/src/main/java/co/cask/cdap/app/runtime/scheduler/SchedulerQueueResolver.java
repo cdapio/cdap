@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceConfig;
 import co.cask.cdap.proto.NamespaceMeta;
+import com.google.common.base.Strings;
 
 import javax.annotation.Nullable;
 
@@ -37,7 +38,7 @@ public class SchedulerQueueResolver {
    * Construct SchedulerQueueResolver with CConfiguration and Store.
    */
   public SchedulerQueueResolver(CConfiguration cConf, Store store) {
-    this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+    this.defaultQueue = cConf.get(Constants.AppFabric.APP_SCHEDULER_QUEUE, "");
     this.store = store;
   }
 
@@ -59,7 +60,8 @@ public class SchedulerQueueResolver {
     NamespaceMeta meta = store.getNamespace(namespaceId);
     if (meta != null) {
       NamespaceConfig config = meta.getConfig();
-      return config.getSchedulerQueueName() != null ? config.getSchedulerQueueName() : getDefaultQueue();
+      String namespaceQueue = config.getSchedulerQueueName();
+      return Strings.isNullOrEmpty(namespaceQueue) ? getDefaultQueue() : namespaceQueue;
     } else {
       return getDefaultQueue();
     }

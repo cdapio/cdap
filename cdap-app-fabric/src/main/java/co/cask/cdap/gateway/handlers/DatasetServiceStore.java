@@ -26,7 +26,6 @@ import co.cask.cdap.data2.dataset2.lib.kv.NoTxKeyValueTable;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.RestartServiceInstancesStatus;
 import co.cask.cdap.proto.RestartServiceInstancesStatus.RestartStatus;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.DiscreteDomains;
 import com.google.common.collect.ImmutableSet;
@@ -66,7 +65,7 @@ public final class DatasetServiceStore extends AbstractIdleService implements Se
   @Override
   protected void startUp() throws Exception {
     Id.DatasetInstance serviceStoreDatasetInstanceId =
-      Id.DatasetInstance.from(Constants.SYSTEM_NAMESPACE, Constants.Service.SERVICE_INSTANCE_TABLE_NAME);
+      Id.DatasetInstance.from(Id.Namespace.SYSTEM, Constants.Service.SERVICE_INSTANCE_TABLE_NAME);
     table = DatasetsUtil.getOrCreateDataset(dsFramework, serviceStoreDatasetInstanceId,
                                             NoTxKeyValueTable.class.getName(),
                                             DatasetProperties.EMPTY, null, null);

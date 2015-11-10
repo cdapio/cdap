@@ -246,8 +246,7 @@ public class TransactionManagerDebuggerMain {
     if (tokenFile != null) {
       try {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(tokenFile));
-        String line = bufferedReader.readLine();
-        accessToken = line;
+        accessToken = bufferedReader.readLine();
       } catch (FileNotFoundException e) {
         System.out.println("Could not find access token file: " + tokenFile + "\nNo access token will be used");
       } catch (IOException e) {
@@ -356,6 +355,7 @@ public class TransactionManagerDebuggerMain {
         System.out.println("\tExpiring at: " + formatter.format(new Date(txInfo.getExpiration())));
       }
       System.out.println("\tVisibility upper bound: " + txIdToString(txInfo.getVisibilityUpperBound()));
+      System.out.println("\tCheckpoints: " + txInfo.getCheckpointWritePointers());
     }
 
     if (snapshot.getInvalid().contains(txId)) {
@@ -587,7 +587,9 @@ public class TransactionManagerDebuggerMain {
         System.out.println("Oldest long transaction:" +
                            "\n\tWritePtr " + txIdToString(oldestLong.getKey()) +
                            "\n\tVisibility upper bound: " +
-                           txIdToString(oldestLong.getValue().getVisibilityUpperBound()));
+                           txIdToString(oldestLong.getValue().getVisibilityUpperBound()) +
+                           "\n\tCheckpoints: " +
+                           oldestLong.getValue().getCheckpointWritePointers());
       }
       if (inProgress.size() - longTxCount > 0) {
         // Print some information about short transactions
@@ -599,7 +601,9 @@ public class TransactionManagerDebuggerMain {
                            "\n\tWritePtr " + txIdToString(oldestShort.getKey()) +
                            "\n\tExpiring at: " + formatter.format(new Date(oldestShort.getValue().getExpiration())) +
                            "\n\tVisibility upper bound: " +
-                           txIdToString(oldestShort.getValue().getVisibilityUpperBound()));
+                           txIdToString(oldestShort.getValue().getVisibilityUpperBound()) +
+                           "\n\tCheckpoints: " +
+                           oldestShort.getValue().getCheckpointWritePointers());
       }
     }
   }

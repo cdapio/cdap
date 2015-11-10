@@ -1,21 +1,32 @@
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 angular.module(PKG.name + '.feature.services')
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('services', {
-        url: '/services',
+        url: '/services/:programId',
         abstract: true,
         parent: 'programs',
         data: {
           authorizedRoles: MYAUTH_ROLE.all,
           highlightTab: 'development'
         },
-        template: '<ui-view/>'
-      })
-      .state('services.detail', {
-        url: '/:programId',
-        templateUrl: '/assets/features/services/templates/detail.html',
         resolve : {
-          rRuns: function($stateParams, $q, myServiceApi) {
+          rRuns: function($stateParams, $q, myServiceApi, $state) {
             var defer = $q.defer();
 
             var params = {
@@ -25,37 +36,63 @@ angular.module(PKG.name + '.feature.services')
             };
             myServiceApi.runs(params)
               .$promise
-              .then(function (res) {
-                defer.resolve(res);
-              });
+              .then(
+                function success(res) {
+                  defer.resolve(res);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
 
+            return defer.promise;
+          },
+          rServiceDetail: function($stateParams, myServiceApi, $q, $state) {
+            var params = {
+              namespace: $stateParams.namespace,
+              appId: $stateParams.appId,
+              serviceId: $stateParams.programId
+            };
+            var defer = $q.defer();
+            myServiceApi
+              .get(params)
+              .$promise
+              .then(
+                function success(serviceDetail) {
+                  defer.resolve(serviceDetail);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
             return defer.promise;
           }
         },
+        template: '<ui-view/>'
+      })
+      .state('services.detail', {
+        url: '/runs',
+        templateUrl: '/assets/features/services/templates/detail.html',
+        controller: 'ServicesRunsController',
+        controllerAs: 'RunsController',
         ncyBreadcrumb: {
-          parent: 'apps.detail.overview.status',
-          label: 'Services',
-          skip: true
+          parent: 'apps.detail.overview.programs',
+          label: '{{$state.params.programId}}'
         }
       })
-        .state('services.detail.runs', {
-          url: '/runs',
-          templateUrl: '/assets/features/services/templates/tabs/runs.html',
-          controller: 'ServicesRunsController',
-          controllerAs: 'RunsController',
+        .state('services.detail.run', {
+          url: '/:runid',
+          templateUrl: '/assets/features/services/templates/tabs/runs/run-detail.html',
+          controller: 'ServicesRunsDetailController',
+          controllerAs: 'RunsDetailController',
           ncyBreadcrumb: {
-            label: '{{$state.params.programId}}'
+            label: '{{$state.params.runid}}',
+            parent: 'services.detail'
           }
         })
-          .state('services.detail.runs.run', {
-            url: '/:runid',
-            templateUrl: '/assets/features/services/templates/tabs/runs/run-detail.html',
-            controller: 'ServicesRunDetailController',
-            ncyBreadcrumb: {
-              label: '{{$state.params.runid}}'
-            }
-          })
-          .state('services.detail.runs.makerequest', {
+          .state('services.detail.run.makerequest', {
             params: {
               requestUrl: null,
               requestMethod: null
@@ -68,25 +105,5 @@ angular.module(PKG.name + '.feature.services')
                 $state.go('^');
               });
             }
-          })
-
-
-        .state('services.detail.datasets', {
-          url: '/data',
-          templateUrl: '/assets/features/services/templates/tabs/data.html',
-          ncyBreadcrumb: {
-            parent: 'services.detail.runs',
-            label: 'Datasets'
-          }
-        })
-        .state('services.detail.history', {
-          url: '/history',
-          templateUrl: '/assets/features/services/templates/tabs/history.html',
-          controller: 'ServicesRunsController',
-          controllerAs: 'RunsController',
-          ncyBreadcrumb: {
-            parent: 'services.detail.runs',
-            label: 'History'
-          }
-        });
+          });
   });

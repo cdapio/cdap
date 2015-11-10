@@ -111,12 +111,12 @@
     </property>
 
     <!--
-        Template configuration
+        Artifact configuration
     -->
     <property>
-      <name>app.template.dir</name>
-      <value>templates</value>
-      <description>Directory where all archives for app templates are stored</description>
+        <name>app.artifact.dir</name>
+        <value>artifacts</value>
+        <description>Directory where system artifacts are stored</description>
     </property>
 
 </configuration>

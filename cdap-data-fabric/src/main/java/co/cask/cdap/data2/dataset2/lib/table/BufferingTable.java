@@ -639,7 +639,7 @@ public abstract class BufferingTable extends AbstractTable implements MeteredDat
       @Override
       public Split apply(@Nullable KeyRange input) {
         return new TableSplit(input == null ? null : input.getStart(),
-                                           input == null ? null : input.getStop());
+                              input == null ? null : input.getStop());
       }
     });
   }

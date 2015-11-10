@@ -1,3 +1,19 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
 <div class="modal-header clearfix">
     <h3 class="modal-title pull-left">Create a Stream</h3>
     <a class="btn pull-right" ng-click="closeModal()">
@@ -7,37 +23,41 @@
 </div>
 <div class="modal-body">
   <form class="form-horizontal">
-    <div class="form-group">
-      <label class="col-sm-2 control-label">
-        <span>Stream ID</span>
-        <span class="fa fa-asterisk"></span>
-      </label>
-      <div class="col-sm-10">
-        <input type="text" class="form-control" ng-model="streamId" placeholder="Stream ID" name="streamId" cask-focus="streamId">
-        <div class="alert alert-danger alert-dismissible"
-             ng-show="error"
-             role="alert">
-          <button type="button"
-                  class="close"
-                  ng-click="error=null"
-                  aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <p><i class="fa fa-exclamation-circle"></i>  {{error}}</p>
-        </div>
+    <label class="col-sm-2 control-label">
+      <span>Stream ID</span>
+      <span class="fa fa-asterisk"></span>
+    </label>
+    <div class="col-sm-10">
+      <input type="text"
+        class="form-control"
+        ng-model="streamId"
+        ng-keypress="enter($event)"
+        placeholder="Stream ID"
+        name="streamId"
+        cask-focus="streamId">
+      <div class="alert alert-danger alert-dismissible"
+           ng-show="error"
+           role="alert">
+        <button type="button"
+                class="close"
+                ng-click="error=null"
+                aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <p><i class="fa fa-exclamation-circle"></i>  {{error}}</p>
       </div>
     </div>
   </form>
 </div>
 <div class="modal-footer">
     <button class="btn btn-default" ng-click="closeModal()">Cancel</button>
-    <button class="btn btn-success"
-            ng-disabled="isSaving == true"
+    <button class="btn"
+            ng-disabled="isSaving == true || !streamId.length"
             ng-click="createStream()"
-            ng-class="{disabled: streamId.length === 0}">
-      <div ng-if="isSaving == true" >
+            ng-class="{'btn-success': streamId.length > 0}">
+      <span ng-if="isSaving == true" >
         <span class="fa fa-spin fa-refresh"></span>
-      </div>
+      </span>
       <span>Create</span>
     </button>
 </div>

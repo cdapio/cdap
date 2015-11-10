@@ -20,33 +20,29 @@ import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.api.artifact.ApplicationClass;
 import co.cask.cdap.api.artifact.ArtifactClasses;
+import co.cask.cdap.api.artifact.ArtifactScope;
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.data.schema.UnsupportedTypeException;
-import co.cask.cdap.api.templates.plugins.PluginPropertyField;
+import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.app.program.ManifestFields;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
-import co.cask.cdap.internal.app.plugins.test.TestPlugin;
-import co.cask.cdap.internal.app.runtime.artifact.ArtifactRange;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin2;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
-import co.cask.cdap.internal.artifact.ArtifactVersion;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.internal.test.AppJarHelper;
-import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
+import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import com.google.common.base.Charsets;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -64,7 +60,6 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
@@ -78,7 +73,7 @@ import javax.ws.rs.HttpMethod;
  * Tests for {@link ArtifactHttpHandler}
  */
 public class ArtifactHttpHandlerTest extends AppFabricTestBase {
-  private static final ReflectionSchemaGenerator schemaGenerator = new ReflectionSchemaGenerator();
+  private static final ReflectionSchemaGenerator schemaGenerator = new ReflectionSchemaGenerator(false);
   private static final Type ARTIFACTS_TYPE = new TypeToken<Set<ArtifactSummary>>() { }.getType();
   private static final Type PLUGIN_SUMMARIES_TYPE = new TypeToken<Set<PluginSummary>>() { }.getType();
   private static final Type PLUGIN_INFOS_TYPE = new TypeToken<Set<PluginInfo>>() { }.getType();
@@ -97,50 +92,54 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
 
   @After
   public void wipeData() throws IOException {
-    artifactRepository.clear(Constants.DEFAULT_NAMESPACE_ID);
-    artifactRepository.clear(Constants.SYSTEM_NAMESPACE_ID);
+    artifactRepository.clear(Id.Namespace.DEFAULT);
+    artifactRepository.clear(Id.Namespace.SYSTEM);
   }
 
   // test deploying an application artifact that has a non-application as its main class
   @Test
-  public void testAddBadApp() throws IOException, URISyntaxException {
-    Id.Artifact artifactId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "wordcount", "1.0.0");
-    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(), addAppArtifact(artifactId, ArtifactSummary.class));
+  public void testAddBadApp() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
+    Assert.assertEquals(HttpResponseStatus.BAD_REQUEST.getCode(),
+                        addAppArtifact(artifactId, ArtifactSummary.class).getStatusLine().getStatusCode());
   }
 
   @Test
   public void testNotFound() throws IOException, URISyntaxException {
-    Assert.assertTrue(getArtifacts(Constants.DEFAULT_NAMESPACE_ID).isEmpty());
-    Assert.assertNull(getArtifacts(Constants.DEFAULT_NAMESPACE_ID, "wordcount"));
-    Assert.assertNull(getArtifact(Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "wordcount", "1.0.0")));
+    Assert.assertTrue(getArtifacts(Id.Namespace.DEFAULT).isEmpty());
+    Assert.assertNull(getArtifacts(Id.Namespace.DEFAULT, "wordcount"));
+    Assert.assertNull(getArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0")));
   }
 
   @Test
-  public void testAddAndGet() throws IOException, URISyntaxException, UnsupportedTypeException {
+  public void testAddAndGet() throws Exception {
     // add 2 versions of the same app that doesn't use config
-    Id.Artifact wordcountId1 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "wordcount", "1.0.0");
-    Id.Artifact wordcountId2 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "wordcount", "2.0.0");
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), addAppArtifact(wordcountId1, WordCountApp.class));
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), addAppArtifact(wordcountId2, WordCountApp.class));
+    Id.Artifact wordcountId1 = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
+    Id.Artifact wordcountId2 = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "2.0.0");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addAppArtifact(wordcountId1, WordCountApp.class).getStatusLine().getStatusCode());
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addAppArtifact(wordcountId2, WordCountApp.class).getStatusLine().getStatusCode());
     // and 1 version of another app that uses a config
-    Id.Artifact configTestAppId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "cfgtest", "1.0.0");
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), addAppArtifact(configTestAppId, ConfigTestApp.class));
+    Id.Artifact configTestAppId = Id.Artifact.from(Id.Namespace.DEFAULT, "cfgtest", "1.0.0");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addAppArtifact(configTestAppId, ConfigTestApp.class).getStatusLine().getStatusCode());
 
     // test get /artifacts endpoint
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", false),
-      new ArtifactSummary("wordcount", "2.0.0", false),
-      new ArtifactSummary("cfgtest", "1.0.0", false)
+      new ArtifactSummary("wordcount", "1.0.0"),
+      new ArtifactSummary("wordcount", "2.0.0"),
+      new ArtifactSummary("cfgtest", "1.0.0")
     );
-    Set<ArtifactSummary> actualArtifacts = getArtifacts(Constants.DEFAULT_NAMESPACE_ID);
+    Set<ArtifactSummary> actualArtifacts = getArtifacts(Id.Namespace.DEFAULT);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
     // test get /artifacts/wordcount endpoint
     expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", false),
-      new ArtifactSummary("wordcount", "2.0.0", false)
+      new ArtifactSummary("wordcount", "1.0.0"),
+      new ArtifactSummary("wordcount", "2.0.0")
     );
-    actualArtifacts = getArtifacts(Constants.DEFAULT_NAMESPACE_ID, "wordcount");
+    actualArtifacts = getArtifacts(Id.Namespace.DEFAULT, "wordcount");
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
     // test get /artifacts/cfgtest/versions/1.0.0 endpoint
@@ -148,7 +147,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     ArtifactClasses classes = ArtifactClasses.builder()
       .addApp(new ApplicationClass(ConfigTestApp.class.getName(), "", appConfigSchema))
       .build();
-    ArtifactInfo expectedInfo = new ArtifactInfo("cfgtest", "1.0.0", false, classes);
+    ArtifactInfo expectedInfo = new ArtifactInfo("cfgtest", "1.0.0", ArtifactScope.USER, classes);
     ArtifactInfo actualInfo = getArtifact(configTestAppId);
     Assert.assertEquals(expectedInfo, actualInfo);
   }
@@ -156,82 +155,94 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   @Test
   public void testSystemArtifacts() throws Exception {
     // add the app in the default namespace
-    Id.Artifact defaultId = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "wordcount", "1.0.0");
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), addAppArtifact(defaultId, WordCountApp.class));
+    Id.Artifact defaultId = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addAppArtifact(defaultId, WordCountApp.class).getStatusLine().getStatusCode());
     // add a system artifact. currently can't do this through the rest api (by design)
     // so bypass it and use the repository directly
-    Id.Artifact systemId = Id.Artifact.from(Constants.SYSTEM_NAMESPACE_ID, "wordcount", "1.0.0");
+    Id.Artifact systemId = Id.Artifact.from(Id.Namespace.SYSTEM, "wordcount", "1.0.0");
     File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
     artifactRepository.addArtifact(systemId, systemArtifact, Sets.<ArtifactRange>newHashSet());
 
-    // test get /artifacts?includeSystem=true
+    // test get /artifacts
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", false),
-      new ArtifactSummary("wordcount", "1.0.0", true)
+      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.USER),
+      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.SYSTEM)
     );
-    Set<ArtifactSummary> actualArtifacts = getArtifacts(Constants.DEFAULT_NAMESPACE_ID, true);
+    Set<ArtifactSummary> actualArtifacts = getArtifacts(Id.Namespace.DEFAULT);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
-    // test get /artifacts?includeSystem=false
+    // test get /artifacts?scope=system
     expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", false)
+      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.SYSTEM)
     );
-    actualArtifacts = getArtifacts(Constants.DEFAULT_NAMESPACE_ID, false);
+    actualArtifacts = getArtifacts(Id.Namespace.DEFAULT, ArtifactScope.SYSTEM);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
-    // test get /artifacts/wordcount?isSystem=false
+    // test get /artifacts?scope=user
     expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", false)
+      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.USER)
     );
-    actualArtifacts = getArtifacts(Constants.DEFAULT_NAMESPACE_ID, "wordcount", false);
+    actualArtifacts = getArtifacts(Id.Namespace.DEFAULT, ArtifactScope.USER);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
-    // test get /artifacts/wordcount?isSystem=true
+    // test get /artifacts/wordcount?scope=user
     expectedArtifacts = Sets.newHashSet(
-      new ArtifactSummary("wordcount", "1.0.0", true)
+      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.USER)
     );
-    actualArtifacts = getArtifacts(Constants.DEFAULT_NAMESPACE_ID, "wordcount", true);
+    actualArtifacts = getArtifacts(Id.Namespace.DEFAULT, "wordcount", ArtifactScope.USER);
     Assert.assertEquals(expectedArtifacts, actualArtifacts);
 
-    // test get /artifacts/wordcount/versions/1.0.0?isSystem=false
+    // test get /artifacts/wordcount?scope=system
+    expectedArtifacts = Sets.newHashSet(
+      new ArtifactSummary("wordcount", "1.0.0", ArtifactScope.SYSTEM)
+    );
+    actualArtifacts = getArtifacts(Id.Namespace.DEFAULT, "wordcount", ArtifactScope.SYSTEM);
+    Assert.assertEquals(expectedArtifacts, actualArtifacts);
+
+    // test get /artifacts/wordcount/versions/1.0.0?scope=user
     ArtifactClasses classes = ArtifactClasses.builder()
       .addApp(new ApplicationClass(WordCountApp.class.getName(), "", null))
       .build();
-    ArtifactInfo expectedInfo = new ArtifactInfo("wordcount", "1.0.0", false, classes);
-    ArtifactInfo actualInfo = getArtifact(defaultId, false);
+    ArtifactInfo expectedInfo = new ArtifactInfo("wordcount", "1.0.0", ArtifactScope.USER, classes);
+    ArtifactInfo actualInfo = getArtifact(defaultId, ArtifactScope.USER);
     Assert.assertEquals(expectedInfo, actualInfo);
 
-    // test get /artifacts/wordcount/versions/1.0.0?isSystem=true
-    expectedInfo = new ArtifactInfo("wordcount", "1.0.0", true, classes);
-    actualInfo = getArtifact(defaultId, true);
+    // test get /artifacts/wordcount/versions/1.0.0?scope=system
+    expectedInfo = new ArtifactInfo("wordcount", "1.0.0", ArtifactScope.SYSTEM, classes);
+    actualInfo = getArtifact(defaultId, ArtifactScope.SYSTEM);
     Assert.assertEquals(expectedInfo, actualInfo);
   }
 
   @Test
-  public void testGetPlugins() throws IOException, URISyntaxException {
+  public void testGetPlugins() throws Exception {
     // add an app for plugins to extend
-    Id.Artifact wordCount1Id = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "wordcount", "1.0.0");
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), addAppArtifact(wordCount1Id, WordCountApp.class));
-    Id.Artifact wordCount2Id = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "wordcount", "2.0.0");
-    Assert.assertEquals(HttpResponseStatus.OK.getCode(), addAppArtifact(wordCount2Id, WordCountApp.class));
+    Id.Artifact wordCount1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addAppArtifact(wordCount1Id, WordCountApp.class).getStatusLine().getStatusCode());
+    Id.Artifact wordCount2Id = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "2.0.0");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addAppArtifact(wordCount2Id, WordCountApp.class).getStatusLine().getStatusCode());
 
     // add some plugins.
     // plugins-1.0.0 extends wordcount[1.0.0,2.0.0)
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
-    Id.Artifact pluginsId1 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "plugins", "1.0.0");
+    Id.Artifact pluginsId1 = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "1.0.0");
     Set<ArtifactRange> plugins1Parents = Sets.newHashSet(new ArtifactRange(
-      Constants.DEFAULT_NAMESPACE_ID, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
-    addPluginArtifact(pluginsId1, Plugin1.class, manifest, plugins1Parents);
+      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0")));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+      addPluginArtifact(pluginsId1, Plugin1.class, manifest, plugins1Parents).getStatusLine().getStatusCode());
 
     // plugin-2.0.0 extends wordcount[1.0.0,3.0.0)
-    Id.Artifact pluginsId2 = Id.Artifact.from(Constants.DEFAULT_NAMESPACE_ID, "plugins", "2.0.0");
+    Id.Artifact pluginsId2 = Id.Artifact.from(Id.Namespace.DEFAULT, "plugins", "2.0.0");
     Set<ArtifactRange> plugins2Parents = Sets.newHashSet(new ArtifactRange(
-      Constants.DEFAULT_NAMESPACE_ID, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("3.0.0")));
-    addPluginArtifact(pluginsId2, Plugin1.class, manifest, plugins2Parents);
+      Id.Namespace.DEFAULT, "wordcount", new ArtifactVersion("1.0.0"), new ArtifactVersion("3.0.0")));
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+      addPluginArtifact(pluginsId2, Plugin1.class, manifest, plugins2Parents).getStatusLine().getStatusCode());
 
-    ArtifactSummary plugins1Artifact = new ArtifactSummary("plugins", "1.0.0", false);
-    ArtifactSummary plugins2Artifact = new ArtifactSummary("plugins", "2.0.0", false);
+    ArtifactSummary plugins1Artifact = new ArtifactSummary("plugins", "1.0.0");
+    ArtifactSummary plugins2Artifact = new ArtifactSummary("plugins", "2.0.0");
 
     // get plugin types, should be the same for both
     Set<String> expectedTypes = Sets.newHashSet("dummy", "callable");
@@ -314,61 +325,20 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     return destination;
   }
 
-  private int addAppArtifact(Id.Artifact artifactId, Class cls) throws IOException, URISyntaxException {
-
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest());
-
-    try (InputStream artifactInputStream = appJar.getInputStream()) {
-      return addArtifact(artifactId, artifactInputStream, null);
-    } finally {
-      appJar.delete();
-    }
-  }
-
-  private int addPluginArtifact(Id.Artifact artifactId, Class cls, Manifest manifest,
-                                Set<ArtifactRange> parents) throws IOException, URISyntaxException {
-
-    Location appJar = PluginJarHelper.createPluginJar(locationFactory, manifest, cls);
-
-    try (InputStream artifactInputStream = appJar.getInputStream()) {
-      return addArtifact(artifactId, artifactInputStream, parents);
-    } finally {
-      appJar.delete();
-    }
-  }
-
-  // add an artifact and return the response code
-  private int addArtifact(Id.Artifact artifactId, InputStream artifactContents,
-                          Set<ArtifactRange> parents) throws IOException, URISyntaxException {
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s",
-      Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(), artifactId.getName())).toURL();
-
-    HttpURLConnection urlConn = (HttpURLConnection) endpoint.openConnection();
-    urlConn.setRequestMethod(HttpMethod.POST);
-    urlConn.setDoOutput(true);
-    urlConn.setRequestProperty("Artifact-Version", artifactId.getVersion().getVersion());
-    if (parents != null && !parents.isEmpty()) {
-      urlConn.setRequestProperty("Artifact-Extends", Joiner.on('/').join(parents));
-    }
-    ByteStreams.copy(artifactContents, urlConn.getOutputStream());
-
-    int responseCode = urlConn.getResponseCode();
-    urlConn.disconnect();
-
-    return responseCode;
-  }
-
   private Set<ArtifactSummary> getArtifacts(Id.Namespace namespace) throws URISyntaxException, IOException {
     URL endpoint = getEndPoint(String.format(
       "%s/namespaces/%s/artifacts", Constants.Gateway.API_VERSION_3, namespace.getId())).toURL();
     return getResults(endpoint, ARTIFACTS_TYPE);
   }
 
-  private Set<ArtifactSummary> getArtifacts(Id.Namespace namespace, boolean includeSystem)
+  private Set<ArtifactSummary> getArtifacts(Id.Namespace namespace, ArtifactScope scope)
     throws URISyntaxException, IOException {
 
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts?includeSystem=%s",
-      Constants.Gateway.API_VERSION_3, namespace.getId(), includeSystem)).toURL();
+    if (scope == null) {
+      return getArtifacts(namespace);
+    }
+    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts?scope=%s",
+      Constants.Gateway.API_VERSION_3, namespace.getId(), scope.name())).toURL();
     return getResults(endpoint, ARTIFACTS_TYPE);
   }
 
@@ -380,11 +350,11 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     return getResults(endpoint, ARTIFACTS_TYPE);
   }
 
-  private Set<ArtifactSummary> getArtifacts(Id.Namespace namespace, String name, boolean isSystem)
+  private Set<ArtifactSummary> getArtifacts(Id.Namespace namespace, String name, ArtifactScope scope)
     throws URISyntaxException, IOException {
 
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s?isSystem=%s",
-      Constants.Gateway.API_VERSION_3, namespace.getId(), name, isSystem)).toURL();
+    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s?scope=%s",
+      Constants.Gateway.API_VERSION_3, namespace.getId(), name, scope.name())).toURL();
     return getResults(endpoint, ARTIFACTS_TYPE);
   }
 
@@ -398,11 +368,11 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     return getResults(endpoint, ArtifactInfo.class);
   }
 
-  // get /artifacts/{name}/versions/{version}?isSystem={isSystem}
-  private ArtifactInfo getArtifact(Id.Artifact artifactId, boolean isSystem) throws URISyntaxException, IOException {
-    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s?isSystem=%s",
+  // get /artifacts/{name}/versions/{version}?scope={scope}
+  private ArtifactInfo getArtifact(Id.Artifact artifactId, ArtifactScope scope) throws URISyntaxException, IOException {
+    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s?scope=%s",
       Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
-      artifactId.getName(), artifactId.getVersion().getVersion(), isSystem))
+      artifactId.getName(), artifactId.getVersion().getVersion(), scope.name()))
       .toURL();
 
     return getResults(endpoint, ArtifactInfo.class);

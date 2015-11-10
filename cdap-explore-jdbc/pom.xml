@@ -24,7 +24,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.2.0-SNAPSHOT</version>
+    <version>3.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-explore-jdbc</artifactId>
@@ -125,6 +125,13 @@
     <dependency>
       <groupId>co.cask.http</groupId>
       <artifactId>netty-http</artifactId>
+    </dependency>
+    <dependency>
+      <!-- TODO: Remove this CDAP-4054 -->
+      <groupId>commons-logging</groupId>
+      <artifactId>commons-logging</artifactId>
+      <version>1.1.1</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

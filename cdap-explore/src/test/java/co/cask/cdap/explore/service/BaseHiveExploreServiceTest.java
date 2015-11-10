@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,18 +24,20 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
+import co.cask.cdap.data.stream.StreamViewHttpHandler;
 import co.cask.cdap.data.stream.service.StreamFetchHandler;
 import co.cask.cdap.data.stream.service.StreamHandler;
 import co.cask.cdap.data.stream.service.StreamHttpService;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
+import co.cask.cdap.data.view.ViewAdminModules;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutor;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -52,8 +54,10 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
@@ -129,13 +133,14 @@ public class BaseHiveExploreServiceTest {
   protected static DatasetService datasetService;
   protected static ExploreExecutorService exploreExecutorService;
   protected static ExploreService exploreService;
+  protected static NotificationService notificationService;
   protected static StreamHttpService streamHttpService;
   protected static StreamService streamService;
   protected static ExploreClient exploreClient;
-  protected static NamespacedLocationFactory namespacedLocationFactory;
   protected static ExploreTableManager exploreTableManager;
   private static StreamAdmin streamAdmin;
   private static StreamMetaStore streamMetaStore;
+  private static AbstractNamespaceClient namespaceClient;
 
   protected static Injector injector;
 
@@ -173,6 +178,10 @@ public class BaseHiveExploreServiceTest {
     exploreClient = injector.getInstance(ExploreClient.class);
     exploreService = injector.getInstance(ExploreService.class);
     Assert.assertTrue(exploreClient.isServiceAvailable());
+
+    notificationService = injector.getInstance(NotificationService.class);
+    notificationService.startAndWait();
+
     streamService = injector.getInstance(StreamService.class);
     streamService.startAndWait();
     streamHttpService = injector.getInstance(StreamHttpService.class);
@@ -180,16 +189,19 @@ public class BaseHiveExploreServiceTest {
 
     exploreTableManager = injector.getInstance(ExploreTableManager.class);
 
-    namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     streamMetaStore = injector.getInstance(StreamMetaStore.class);
+    namespaceClient = injector.getInstance(AbstractNamespaceClient.class);
 
-    // This usually happens during namespace create, but adding it here instead of explicitly creating a namespace
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(Constants.DEFAULT_NAMESPACE_ID));
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(NAMESPACE_ID));
-    Locations.mkdirsIfNotExists(namespacedLocationFactory.get(OTHER_NAMESPACE_ID));
-
-    waitForCompletionStatus(exploreService.createNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
+    // create namespaces
+    namespaceClient.create(new NamespaceMeta.Builder().setName(Id.Namespace.DEFAULT).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(NAMESPACE_ID).build());
+    namespaceClient.create(new NamespaceMeta.Builder().setName(OTHER_NAMESPACE_ID).build());
+    // This happens when you create a namespace via REST APIs. However, since we do not start AppFabricServer in
+    // Explore tests, simulating that scenario by explicitly calling DatasetFramework APIs.
+    datasetFramework.createNamespace(Id.Namespace.DEFAULT);
+    datasetFramework.createNamespace(NAMESPACE_ID);
+    datasetFramework.createNamespace(OTHER_NAMESPACE_ID);
   }
 
   @AfterClass
@@ -198,13 +210,16 @@ public class BaseHiveExploreServiceTest {
       return;
     }
 
-    // Delete namespace created earlier for testing
-    waitForCompletionStatus(exploreService.deleteNamespace(NAMESPACE_ID), 200, TimeUnit.MILLISECONDS, 200);
-
-    Locations.deleteQuietly(namespacedLocationFactory.get(NAMESPACE_ID), true);
-    Locations.deleteQuietly(namespacedLocationFactory.get(OTHER_NAMESPACE_ID), true);
+    // Delete namespaces
+    namespaceClient.delete(Id.Namespace.DEFAULT);
+    namespaceClient.delete(NAMESPACE_ID);
+    namespaceClient.delete(OTHER_NAMESPACE_ID);
+    datasetFramework.deleteNamespace(Id.Namespace.DEFAULT);
+    datasetFramework.deleteNamespace(NAMESPACE_ID);
+    datasetFramework.deleteNamespace(OTHER_NAMESPACE_ID);
     streamHttpService.stopAndWait();
     streamService.stopAndWait();
+    notificationService.stopAndWait();
     exploreClient.close();
     exploreExecutorService.stopAndWait();
     datasetService.stopAndWait();
@@ -350,8 +365,10 @@ public class BaseHiveExploreServiceTest {
       new ExploreRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getInMemoryModules(),
+      new ViewAdminModules().getInMemoryModules(),
       new StreamAdminModules().getInMemoryModules(),
       new NotificationServiceRuntimeModule().getInMemoryModules(),
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -361,6 +378,7 @@ public class BaseHiveExploreServiceTest {
             Multibinder.newSetBinder(binder(), HttpHandler.class, Names.named(Constants.Stream.STREAM_HANDLER));
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
+          handlerBinder.addBinding().to(StreamViewHttpHandler.class);
           CommonHandlers.add(handlerBinder);
           bind(Store.class).to(DefaultStore.class);
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
@@ -406,8 +424,10 @@ public class BaseHiveExploreServiceTest {
       new ExploreRuntimeModule().getStandaloneModules(),
       new ExploreClientModule(),
       new StreamServiceRuntimeModule().getStandaloneModules(),
+      new ViewAdminModules().getStandaloneModules(),
       new StreamAdminModules().getStandaloneModules(),
       new NotificationServiceRuntimeModule().getStandaloneModules(),
+      new NamespaceClientRuntimeModule().getInMemoryModules(),
       new AbstractModule() {
         @Override
         protected void configure() {

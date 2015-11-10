@@ -16,9 +16,9 @@
 
 package co.cask.cdap.internal.app.runtime.distributed;
 
+import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.spark.Spark;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.app.ApplicationSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
@@ -35,6 +35,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +52,9 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSparkProgramRunner.class);
 
   @Inject
-  public DistributedSparkProgramRunner(TwillRunner twillRunner, Configuration hConf, CConfiguration cConf) {
-    super(twillRunner, createConfiguration(hConf), cConf);
+  public DistributedSparkProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
+                                       Configuration hConf, CConfiguration cConf) {
+    super(twillRunner, locationFactory, createConfiguration(hConf), cConf);
   }
 
   @Override
@@ -82,12 +84,12 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
       sparkAssemblyJar.getName());
 
     RunId runId = RunIds.fromString(options.getArguments().getOption(ProgramOptionConstants.RUN_ID));
-    return new SparkTwillProgramController(program.getName(), controller, runId).startListen();
+    return new SparkTwillProgramController(program.getId(), controller, runId).startListen();
   }
 
   private static Configuration createConfiguration(Configuration hConf) {
     Configuration configuration = new Configuration(hConf);
-    configuration.set(SparkContextConfig.HCONF_ATTR_EXECUTION_MODE, SparkContextConfig.YARN_EXECUTION_MODE);
+    configuration.setBoolean(SparkContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
     return configuration;
   }
 }
