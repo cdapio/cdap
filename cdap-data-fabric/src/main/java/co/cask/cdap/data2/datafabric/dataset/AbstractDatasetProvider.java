@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceService;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
@@ -99,6 +100,9 @@ public abstract class AbstractDatasetProvider implements DatasetProvider {
 
     ConstantClassLoaderProvider classLoaderProvider = new ConstantClassLoaderProvider(classLoader);
     DatasetMeta meta = getMeta(instance);
+    if (meta == null) {
+      throw new NotFoundException(instance);
+    }
     DatasetType type = getType(meta.getType(), classLoader, classLoaderProvider);
     return (T) type.getDataset(
       DatasetContext.from(instance.getNamespaceId()), meta.getSpec(), arguments);
