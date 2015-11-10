@@ -16,10 +16,22 @@
 
 package co.cask.cdap.logging;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.conf.KafkaConstants;
+import co.cask.cdap.common.guice.ConfigModule;
+import co.cask.cdap.common.guice.ZKClientModule;
+import co.cask.cdap.common.utils.Tasks;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Iterables;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
+import org.apache.twill.internal.kafka.client.ZKBrokerService;
 import org.apache.twill.internal.utils.Networks;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
+import org.apache.twill.kafka.client.BrokerService;
+import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -29,6 +41,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Base test class that start up Kafka during at the beginning of the test, and stop Kafka when test is done.
@@ -44,7 +58,7 @@ public abstract class KafkaTestBase {
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
 
   @BeforeClass
-  public static void startKafka() throws IOException {
+  public static void startKafka() throws Exception {
     zkServer = InMemoryZKServer.builder().build();
     zkServer.startAndWait();
 
@@ -53,6 +67,8 @@ public abstract class KafkaTestBase {
     kafkaServer.startAndWait();
     kafkaPort = Integer.valueOf(kafkaConfig.getProperty("port"));
 
+    LOG.info("Waiting for Kafka server to startup...");
+    waitForKafkaStartup(zkServer.getConnectionStr());
     LOG.info("Started kafka server on port {}", kafkaPort);
   }
 
@@ -93,5 +109,34 @@ public abstract class KafkaTestBase {
     prop.setProperty("zookeeper.connection.timeout.ms", "1000000");
 
     return prop;
+  }
+
+  private static void waitForKafkaStartup(String zkConnectString) throws Exception {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    cConf.set(Constants.Zookeeper.QUORUM, zkConnectString);
+    cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
+
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf),
+      new ZKClientModule());
+
+    ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
+    zkClientService.startAndWait();
+
+    final BrokerService brokerService = new ZKBrokerService(zkClientService);
+    brokerService.startAndWait();
+
+    try {
+      Tasks.waitFor(true, new Callable<Boolean>() {
+        public Boolean call() throws Exception {
+          return Iterables.size(brokerService.getBrokers()) > 0;
+        }
+      }, 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+    } finally {
+      brokerService.stopAndWait();
+      zkClientService.stopAndWait();
+    }
   }
 }

@@ -170,9 +170,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
     LogSaverFactory factory = injector.getInstance(LogSaverFactory.class);
     logSaver = factory.create(ImmutableSet.of(0));
     logSaver.startAndWait();
-
-    // Sleep a while to let Kafka server fully initialized.
-    TimeUnit.SECONDS.sleep(5);
   }
 
   private void stopLogSaver() {
