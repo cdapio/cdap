@@ -67,7 +67,8 @@
   <div class="console-type">
     <div ng-repeat="tab in BottomPanelController.tabs"
          ng-include="tab.template"
-         ng-show="BottomPanelController.activeTab.title === tab.title">
+         ng-show="BottomPanelController.activeTab.title === tab.title"
+         ng-class="{'node-config': tab.title === 'Node Configuration'}">
       </div>
   </div>
 </div>

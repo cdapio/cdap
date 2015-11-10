@@ -27,13 +27,10 @@ body.theme-cdap.state-hydrator {
     }
 
     div.console {
-      min-height: 60vh;
       div.console-tabs ul.nav-tabs li {
         margin-bottom: -1px;
       }
       div.console-type {
-        height: inherit;
-        min-height: inherit;
         // Avoid unnecessary horizontal scroll
         overflow-x: hidden;
         padding: 0;
@@ -114,7 +111,7 @@ body.theme-cdap.state-hydrator {
     min-height: ~"-moz-calc(40vh - 113px)";
     min-height: ~"-webkit-calc(40vh - 113px)";
     min-height: ~"calc(40vh - 113px)";
-    .transition(all 0.2s ease);
+    .transition(height 0.2s ease);
 
     @media (min-height: 800px) {
       min-height: ~"-moz-calc(60vh - 113px)";
@@ -153,6 +150,13 @@ body.theme-cdap.state-hydrator {
       div.console-tabs {
         border-top: 0;
       }
+      .node-config .bottompanel-body {
+        div.config-table {
+          height: ~"-moz-calc(100vh - 284px)";
+          height: ~"-webkit-calc(100vh - 284px)";
+          height: ~"calc(100vh - 284px)";
+        }
+      }
     }
   }
 
@@ -162,6 +166,7 @@ body.theme-cdap.state-hydrator {
       width: ~"-moz-calc(100vw - 130px)";
       width: ~"-webkit-calc(100vw - 130px)";
       width: ~"calc(100vw - 130px)";
+      .transition(width 0.2s ease);
     }
     &.expanded + .right-wrapper div.console:not(.maximized) {
       width: ~"-moz-calc(100vw - 290px)";
