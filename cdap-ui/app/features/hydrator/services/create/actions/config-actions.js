@@ -18,6 +18,9 @@ class ConfigActionsFactory {
   constructor(ConfigDispatcher) {
     this.dispatcher = ConfigDispatcher.getDispatcher();
   }
+  setMetadataInfo(name, description) {
+    this.dispatcher.dispatch('onMetadataInfoSave', name, description);
+  }
   setDescription(description) {
     this.dispatcher.dispatch('onDescriptionSave', description);
   }
