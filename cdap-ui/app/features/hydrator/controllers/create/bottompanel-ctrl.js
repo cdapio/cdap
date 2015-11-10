@@ -15,7 +15,7 @@
  */
 
 class BottomPanelController {
-  constructor(PipelineDetailBottomPanelActionFactory, BottomPanelStore, NodeConfigStore) {
+  constructor(PipelineDetailBottomPanelActionFactory, BottomPanelStore, NodeConfigStore, ConsoleStore) {
     this.tabs = [
       {
         title: 'Console',
@@ -40,6 +40,7 @@ class BottomPanelController {
 
     this.BottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
     NodeConfigStore.registerOnChangeListener( () => { this.selectTab(2); } );
+    ConsoleStore.registerOnChangeListener( () => { this.selectTab(0); } );
 
     this.selectTab(0);
   }
@@ -65,7 +66,7 @@ class BottomPanelController {
   }
 }
 
-BottomPanelController.$inject = ['PipelineDetailBottomPanelActionFactory', 'BottomPanelStore', 'NodeConfigStore'];
+BottomPanelController.$inject = ['PipelineDetailBottomPanelActionFactory', 'BottomPanelStore', 'NodeConfigStore', 'ConsoleStore'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('BottomPanelController', BottomPanelController);
 

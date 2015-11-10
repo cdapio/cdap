@@ -13,18 +13,34 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+class ConsoleTabController {
+  constructor(ConsoleStore) {
+    this.ConsoleStore = ConsoleStore;
+
+    this.setMessages();
+    this.ConsoleStore.registerOnChangeListener( this.setMessages.bind(this) );
+  }
+
+  setMessages() {
+    this.messages = this.ConsoleStore.getMessages();
+  }
+}
+
+ConsoleTabController.$inject = ['ConsoleStore'];
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('ConsoleTabController', function(MyConsoleTabService) {
-    this.messages = [];
+  .controller('ConsoleTabController', ConsoleTabController);
+  // .controller('ConsoleTabController', function(MyConsoleTabService) {
+  //   this.messages = [];
 
-    this.onNewMessage = function(message) {
-      this.messages.push(message);
-    };
-    this.onResetMessage = function() {
-      this.messages = [];
-    };
+  //   this.onNewMessage = function(message) {
+  //     this.messages.push(message);
+  //   };
+  //   this.onResetMessage = function() {
+  //     this.messages = [];
+  //   };
 
-    MyConsoleTabService.registerOnMessageUpdates(this.onNewMessage.bind(this));
-    MyConsoleTabService.registerOnResetMessages(this.onResetMessage.bind(this));
+  //   MyConsoleTabService.registerOnMessageUpdates(this.onNewMessage.bind(this));
+  //   MyConsoleTabService.registerOnResetMessages(this.onResetMessage.bind(this));
 
-  });
+  // });
