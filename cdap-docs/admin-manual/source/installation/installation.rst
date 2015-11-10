@@ -98,6 +98,23 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 | **CDAP Authentication Server**        | RAM                | 1 GB minimum, 2 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
 
+.. _install-hardware-memory-core-requirements:
+
+Memory and Core Requirements
+............................
+Memory and core requirements are governed by two sources: CDAP and YARN. The default
+settings for CDAP are found in the :ref:`cdap-defaults.xml <appendix-cdap-default.xml>`,
+and are overridden in particular instances by the :ref:`cdap-site.xml
+<appendix-cdap-site.xml>` file. These vary with each service and range from 512 to 1024 MB
+and from one to two cores.
+
+The YARN settings will override these; for instance, the minimum YARN container size is
+determined by ``yarn.scheduler.minimum-allocation-mb``. The YARN default in Hadoop is 1024
+MB, so containers will be allocated with 1024 MB, even if the CDAP settings are for 512 MB.
+
+With the default YARN and CDAP settings of memory, having 14 to 16 CPU cores 
+(and a total of 14 to 16 GB of memory) available to YARN can be required just to start.
+
 .. _install-network-requirements:
 
 Network Requirements
@@ -144,7 +161,7 @@ Node.js Runtime
 +++++++++++++++
 You can download the appropriate version of Node.js from `nodejs.org <http://nodejs.org>`__:
 
-#. The version of Node.js must be from |node-js-version|; we recommend |recommended-node-js-version|.
+#. We recommend any version of `Node.js <https://nodejs.org/>`__ |node-js-version|.
 #. Download the appropriate binary ``.tar.gz`` from
    `nodejs.org/download/ <http://nodejs.org/dist/>`__.
 
@@ -223,6 +240,8 @@ Deployment Architectures
    :align: center
 
 ------------
+
+.. _deployment-architectures-ha:
 
 .. rubric:: CDAP High Availability and Highly Scalable Deployment
 
