@@ -58,7 +58,7 @@
   <div class="btn-group pull-right clearfix">
     <div class="btn pull-left"
          ng-repeat="action in TopPanelController.canvasOperations"
-         ng-click="TopPanelController.onTopSideGroupItemClicked(action)"
+         ng-click="action.fn()"
          >
       {{action.name}}
     </div>

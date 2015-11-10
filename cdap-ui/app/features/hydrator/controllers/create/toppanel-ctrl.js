@@ -15,22 +15,27 @@
  */
 
 class TopPanelController{
-  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory) {
+  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal) {
     this.GLOBALS = GLOBALS;
     this.ConfigStore = ConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
+    this.$bootstrapModal = $bootstrapModal;
     this.canvasOperations = [
       {
-        name: 'Export'
+        name: 'Export',
+        fn: this.onExport.bind(this)
       },
       {
-        name: 'Save Draft'
+        name: 'Save Draft',
+        fn: this.onSaveDraft.bind(this)
       },
       {
-        name: 'Validate'
+        name: 'Validate',
+        fn: this.onValidate.bind(this)
       },
       {
-        name: 'Publish'
+        name: 'Publish',
+        fn: this.onPublish.bind(this)
       }
     ];
     this.$stateParams = $stateParams;
@@ -64,9 +69,87 @@ class TopPanelController{
     this.ConfigActionsFactory.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
     this.metadataExpanded = false;
   }
+  onEnterOnMetadata(event) {
+    // Save when user hits ENTER key.
+    if (event.keyCode === 13) {
+      this.saveMetadata();
+      this.metadataExpanded = false;
+    } else if (event.keyCode === 27) {
+      // Reset if the user hits ESC key.
+      this.resetMetadata();
+    }
+  }
+
+  onTopSideGroupItemClicked(action) {
+    switch (action.name) {
+      case 'Export':
+        this.onExport();
+        break;
+      case 'Save Draft':
+        this.onSaveDraft();
+        break;
+      case 'Validate':
+        this.onValidate();
+        break;
+      case 'Publish':
+        this.onPublish();
+        break;
+    }
+  }
+
+  onExport() {
+    let config = angular.copy(this.ConfigStore.getState());
+    this.$bootstrapModal.open({
+      templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
+      size: 'lg',
+      keyboard: true,
+      controller: ['$scope', 'config', 'CanvasFactory', 'MyAppDAGService', '$timeout', function($scope, config, CanvasFactory, MyAppDAGService, $timeout) {
+        $scope.config = JSON.stringify(config);
+
+        $scope.export = function () {
+          // CanvasFactory
+          //   .exportPipeline(
+          //     MyAppDAGService.getConfigForBackend(),
+          //     MyAppDAGService.metadata.name,
+          //     MyAppDAGService.nodes,
+          //     MyAppDAGService.connections)
+          //   .then(
+          //     function success(result) {
+          //       $scope.exportFileName = result.name;
+          //       $scope.url = result.url;
+          //       $scope.$on('$destroy', function () {
+          //         URL.revokeObjectURL($scope.url);
+          //       });
+          //       // Clicking on the hidden download button. #hack.
+          //       $timeout(function() {
+          //         document.getElementById('pipeline-export-config-link').click();
+          //       });
+          //     }.bind(this),
+          //     function error() {
+          //       console.log('ERROR: Exporting ' + MyAppDAGService.metadata.name + ' failed.');
+          //     }
+          //   );
+        };
+      }],
+      resolve: {
+        config: function() {
+          return config;
+        }
+      }
+    });
+  }
+  onSaveDraft() {
+
+  }
+  onValidate() {
+
+  }
+  onPublish() {
+
+  }
 }
 
-TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory'];
+TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('TopPanelController', TopPanelController);
