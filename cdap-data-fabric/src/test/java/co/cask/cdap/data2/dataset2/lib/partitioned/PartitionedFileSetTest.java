@@ -284,9 +284,133 @@ public class PartitionedFileSetTest {
     });
   }
 
+
+  @Test
+  public void testPartitionConsumingWithFilterAndLimit() throws Exception {
+    final PartitionedFileSet dataset = dsFrameworkUtil.getInstance(pfsInstance);
+    final TransactionAware txAwareDataset = (TransactionAware) dataset;
+
+    final Set<PartitionKey> partitionKeys1 = Sets.newHashSet();
+    for (int i = 0; i < 10; i++) {
+      partitionKeys1.add(generateUniqueKey());
+    }
+
+    final Set<PartitionKey> partitionKeys2 = Sets.newHashSet();
+    for (int i = 0; i < 15; i++) {
+      partitionKeys2.add(generateUniqueKey());
+    }
+
+    final PartitionConsumer partitionConsumer = new PartitionConsumer(dataset);
+    // add each of partitionKeys1 in separate transaction, so limit can be applied at arbitrary values
+    // (consumption only happens at transaction borders)
+    for (final PartitionKey partitionKey : partitionKeys1) {
+      dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+        @Override
+        public void apply() throws Exception {
+            dataset.getPartitionOutput(partitionKey).addPartition();
+        }
+      });
+    }
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // Initial consumption results in the partitions corresponding to partitionKeys1 to be consumed because only
+        // those partitions are added to the dataset at this point
+        List<Partition> consumedPartitions = Lists.newArrayList();
+
+        // with limit = 1, the returned iterator is only size 1, even though there are more unconsumed partitions
+        Iterators.addAll(consumedPartitions, partitionConsumer.consumePartitions(PartitionFilter.ALWAYS_MATCH, 1));
+        Assert.assertEquals(1, consumedPartitions.size());
+
+        // ask for 5 more
+        Iterators.addAll(consumedPartitions, partitionConsumer.consumePartitions(PartitionFilter.ALWAYS_MATCH, 5));
+        Assert.assertEquals(6, consumedPartitions.size());
+
+        // ask for 5 more, but there are only 4 more unconsumed partitions (size of partitionKeys1 is 10).
+        Iterators.addAll(consumedPartitions, partitionConsumer.consumePartitions(PartitionFilter.ALWAYS_MATCH, 5));
+        Assert.assertEquals(10, consumedPartitions.size());
+
+        Set<PartitionKey> retrievedKeys = Sets.newHashSet();
+        for (Partition consumedPartition : consumedPartitions) {
+          retrievedKeys.add(consumedPartition.getPartitionKey());
+        }
+        Assert.assertEquals(partitionKeys1, retrievedKeys);
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        for (PartitionKey partitionKey : partitionKeys2) {
+          dataset.getPartitionOutput(partitionKey).addPartition();
+        }
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // using the same PartitionConsumer (which remembers the PartitionConsumerState) to consume additional
+        // partitions results in only the newly added partitions (corresponding to partitionKeys2) to be returned
+        List<Partition> consumedPartitions = Lists.newArrayList();
+        Iterators.addAll(consumedPartitions, partitionConsumer.consumePartitions(PartitionFilter.ALWAYS_MATCH, 1));
+
+        // even though we set limit to 1 in the previous call to consumePartitions, we get all the elements of
+        // partitionKeys2, because they were all added in the same transaction
+        Set<PartitionKey> retrievedKeys = Sets.newHashSet();
+        for (Partition consumedPartition : consumedPartitions) {
+          retrievedKeys.add(consumedPartition.getPartitionKey());
+        }
+        Assert.assertEquals(partitionKeys2, retrievedKeys);
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // consuming the partitions again, without adding any new partitions returns an empty iterator
+        Assert.assertFalse(partitionConsumer.consumePartitions().hasNext());
+      }
+    });
+
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
+      @Override
+      public void apply() throws Exception {
+        // creating a new PartitionConsumer resets the consumption state.
+        // test combination of filter and limit
+        PartitionConsumer newPartitionConsumer = new PartitionConsumer(dataset);
+        List<Partition> consumedPartitions = Lists.newArrayList();
+        // the partitionFilter will match partitionKeys [1, 7), of which there are 6
+        PartitionFilter partitionFilter = PartitionFilter.builder().addRangeCondition("i", 1, 7).build();
+
+        // apply the filter (narrows it down to 6 elements) and apply a limit of 4 results in 4 consumed partitions
+        Iterators.addAll(consumedPartitions, newPartitionConsumer.consumePartitions(partitionFilter, 4));
+        Assert.assertEquals(4, consumedPartitions.size());
+
+        // apply a limit of 3, using the same filter returns the remaining 2 elements that fit that filter
+        Iterators.addAll(consumedPartitions, newPartitionConsumer.consumePartitions(partitionFilter, 3));
+        Assert.assertEquals(6, consumedPartitions.size());
+
+        // assert that the partitions returned have partition keys, where the i values range from [1, 7]
+        Set<Integer> expectedIFields = new HashSet<>();
+        for (int i = 1; i < 7; i++) {
+          expectedIFields.add(i);
+        }
+        Set<Integer> actualIFields = new HashSet<>();
+        for (Partition consumedPartition : consumedPartitions) {
+          actualIFields.add((Integer) consumedPartition.getPartitionKey().getField("i"));
+        }
+        Assert.assertEquals(expectedIFields, actualIFields);
+      }
+    });
+  }
+
+  private int counter = 0;
+  // generates unique partition keys, where the 'i' field is incrementing from 0 upwards on each returned key
   private PartitionKey generateUniqueKey() {
     return PartitionKey.builder()
-      .addIntField("i", 1)
+      .addIntField("i", counter++)
       .addLongField("l", 17L)
       .addStringField("s", UUID.randomUUID().toString())
       .build();
