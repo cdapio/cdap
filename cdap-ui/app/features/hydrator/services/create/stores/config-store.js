@@ -21,6 +21,7 @@ class ConfigStore {
     this.setDefaults();
     this.configDispatcher = ConfigDispatcher.getDispatcher();
     this.configDispatcher.register('onArtifactSave', this.setArtifact.bind(this));
+    this.configDispatcher.register('onMetadataInfoSave', this.setMetadataInformation.bind(this));
   }
   registerOnChangeListener(callback) {
     this.changeListeners.push(callback);
@@ -69,6 +70,11 @@ class ConfigStore {
     this.emitChange();
   }
   setDescription(description) {
+    this.state.description = description;
+    this.emitChange();
+  }
+  setMetadataInformation(name, description) {
+    this.state.name = name;
     this.state.description = description;
     this.emitChange();
   }
