@@ -145,3 +145,28 @@ When a stream-size schedule executes a workflow, it passes in these runtime argu
   ``lastScheduledRunDataSize`` will be identical, except either during the first execution of the workflow by the
   schedule, or if the counting logic in the schedule is disrupted—for example, by the deletion of Stream metrics.
 
+.. _run-constraints:
+
+Run Constraints
+===============
+
+.. rubric:: Maximum Concurrent Runs
+
+Normally, there is no limit on the number of concurrent runs of a workflow.
+If you want to limit the number of concurrent workflows,
+you can do so when creating the schedule::
+
+    scheduleWorkflow(Schedules.builder("FiveHourSchedule")
+                       .setDescription("Schedule running every 5 hours")
+                       .setMaxConcurrentRuns(1)
+                       .createTimeSchedule("0 */5 * * *"),
+                     "MyWorkflow", scheduleProperties);
+
+In this example, we have set the maximum number of concurrent runs for this schedule
+to one. When the schedule is triggered, the scheduler will check how many active
+runs of the schedule exist. If there is at least one, the scheduled run will
+be skipped. An active run is any run that is not completed, failed, or killed.
+This includes suspended runs. This number also only includes runs of the program
+started by this schedule. In the example above, if ``MyWorkflow`` was started manually
+or by another schedule, those runs will not be counted.
+
