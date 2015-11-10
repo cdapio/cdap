@@ -24,6 +24,7 @@ import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Context of a Batch Source.
@@ -48,12 +49,39 @@ public interface BatchSourceContext extends BatchContext {
 
   /**
    * Overrides the input configuration of this Batch job to use
+   * the specified dataset by its name and arguments.
+   *
+   * @param datasetName the the name of the input dataset
+   * @param arguments the arguments to use when instantiating the dataset
+   */
+  void setInput(String datasetName, Map<String, String> arguments);
+
+  /**
+   * Overrides the input configuration of this Batch job to use
    * the specified dataset by its name and data selection splits.
    *
    * @param datasetName the name of the input dataset
    * @param splits the data selection splits
    */
   void setInput(String datasetName, List<Split> splits);
+
+  /**
+   * Overrides the input configuration of this Batch job to use
+   * the specified dataset by its name and arguments with the given data selection splits.
+   *
+   * @param datasetName the name of the input dataset
+   * @param arguments the arguments to use when instantiating the dataset
+   * @param splits the data selection splits
+   */
+  void setInput(String datasetName, Map<String, String> arguments, List<Split> splits);
+
+  /**
+   * Overrides the input configuration of this Batch job to the one provided by the given
+   * {@link InputFormatProvider}.
+   *
+   * @param inputFormatProvider provider for InputFormat and configurations to be used
+   */
+  void setInput(InputFormatProvider inputFormatProvider);
 
   /**
    * Overrides the input configuration of this MapReduce job to write to the specified dataset instance.
@@ -68,6 +96,9 @@ public interface BatchSourceContext extends BatchContext {
    *
    * @param datasetName the name of the input dataset
    * @param dataset the input dataset
+   * @deprecated Deprecated since 3.3.0.
+   *             Use {@link #setInput(String, Map)} or {@link #setInput(InputFormatProvider)} instead
    */
+  @Deprecated
   void setInput(String datasetName, Dataset dataset);
 }

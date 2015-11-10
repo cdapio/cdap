@@ -18,6 +18,7 @@ package co.cask.cdap.etl.batch.sink;
 
 import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
+import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.batch.BatchSink;
@@ -26,8 +27,6 @@ import co.cask.cdap.etl.common.Properties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.Job;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -63,16 +62,22 @@ public abstract class S3BatchSink<KEY_OUT, VAL_OUT> extends BatchSink<Structured
   }
 
   @Override
-  public void prepareRun(BatchSinkContext context) {
-    Job job = context.getHadoopJob();
-    Configuration conf = job.getConfiguration();
+  public final void prepareRun(BatchSinkContext context) {
+    OutputFormatProvider outputFormatProvider = createOutputFormatProvider(context);
+    Map<String, String> outputConfig = new HashMap<>(outputFormatProvider.getOutputFormatConfiguration());
+
     if (config.fileSystemProperties != null) {
       Map<String, String> properties = GSON.fromJson(config.fileSystemProperties, MAP_STRING_STRING_TYPE);
-      for (Map.Entry<String, String> entry : properties.entrySet()) {
-        conf.set(entry.getKey(), entry.getValue());
-      }
+      outputConfig.putAll(properties);
     }
+    context.addOutput(config.basePath, new SinkOutputFormatProvider(outputFormatProvider.getOutputFormatClassName(),
+                                                                    outputConfig));
   }
+
+  /**
+   * Returns a {@link OutputFormatProvider} to be used for output.
+   */
+  protected abstract OutputFormatProvider createOutputFormatProvider(BatchSinkContext context);
 
   private static String updateFileSystemProperties(@Nullable String fileSystemProperties, String accessID,
                                                    String accessKey) {

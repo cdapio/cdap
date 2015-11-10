@@ -14,8 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.etl.batch;
+package co.cask.cdap.etl.batch.mapreduce;
 
+import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
@@ -25,6 +26,7 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * MapReduce Source Context.
@@ -46,8 +48,23 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
   }
 
   @Override
+  public void setInput(String datasetName, Map<String, String> arguments) {
+    mrContext.setInput(datasetName, arguments);
+  }
+
+  @Override
   public void setInput(String datasetName, List<Split> splits) {
     mrContext.setInput(datasetName, splits);
+  }
+
+  @Override
+  public void setInput(String datasetName, Map<String, String> arguments, List<Split> splits) {
+    mrContext.setInput(datasetName, arguments, splits);
+  }
+
+  @Override
+  public void setInput(InputFormatProvider inputFormatProvider) {
+    mrContext.setInput(inputFormatProvider);
   }
 
   @Override

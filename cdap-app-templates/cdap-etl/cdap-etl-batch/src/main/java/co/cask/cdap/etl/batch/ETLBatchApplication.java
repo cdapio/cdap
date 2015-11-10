@@ -19,6 +19,7 @@ package co.cask.cdap.etl.batch;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 
 /**
  * ETL Batch Application.

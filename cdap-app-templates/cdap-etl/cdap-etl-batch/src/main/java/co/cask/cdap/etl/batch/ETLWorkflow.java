@@ -18,6 +18,7 @@ package co.cask.cdap.etl.batch;
 
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.ETLStage;
 
 /**
