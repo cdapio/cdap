@@ -76,10 +76,10 @@ see the :ref:`configuration-security` section.
      - Transaction bind port
    * - ``data.tx.client.count``
      - ``5``
-     - Number of pooled transaction instances
+     - Number of pooled transaction instances; increase this to increase transaction concurrency
    * - ``data.tx.client.provider``
-     - ``thread-local``
-     - Provider strategy for transaction clients
+     - ``pool``
+     - Provider strategy for transaction clients; valid values are "pool" and "thread-local"
    * - ``data.tx.command.port``
      - ``15175``
      - Transaction command port number
