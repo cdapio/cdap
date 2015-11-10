@@ -51,7 +51,7 @@ class ConfigStore {
   }
 
   getState() {
-
+    return this.state;
   }
   getArtifact() {
     return this.state.artifact;
