@@ -126,6 +126,7 @@ class TopPanelController{
 
   }
   onValidate() {
+    this.ConsoleActionsFactory.resetMessages();
     this.ConsoleActionsFactory.addMessage({
       type: 'success',
       content: 'This is a validate test'

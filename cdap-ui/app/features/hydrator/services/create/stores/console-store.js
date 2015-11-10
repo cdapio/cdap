@@ -49,7 +49,7 @@ class ConsoleStore {
   }
 
   resetMessages() {
-    this.state.message = [];
+    this.state.messages = [];
     this.emitChange();
   }
 
