@@ -15,12 +15,15 @@
  */
 
 class LeftPanelController {
-  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore) {
+  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore, ConfigActionsFactory, MyDAGFactory) {
     this.$scope = $scope;
     this.$stateParams = $stateParams;
     this.LeftPanelStore = LeftPanelStore;
     this.LeftPanelActionsFactory = LeftPanelActionsFactory;
     this.PluginActionsFactory = PluginActionsFactory;
+    this.ConfigActionsFactory = ConfigActionsFactory;
+    this.GLOBALS = GLOBALS;
+    this.MyDAGFactory = MyDAGFactory;
 
     this.pluginTypes = [
       {
@@ -57,9 +60,41 @@ class LeftPanelController {
     this.PluginActionsFactory.fetchSinks(params);
 
   }
+
+  onLeftSidePanelItemClicked(event, item) {
+    // TODO: Better UUID?
+    let id = item.name + '-' + item.type + '-' + Date.now();
+    event.stopPropagation();
+
+    let config;
+
+    if (item.pluginTemplate) {
+      config = {
+        id: id,
+        name: item.pluginName,
+        icon: this.MyDAGFactory.getIcon(item.pluginName),
+        type: item.pluginType,
+        properties: item.properties,
+        outputSchema: item.outputSchema,
+        pluginTemplate: item.pluginTemplate,
+        lock: item.lock
+      };
+    } else {
+      config = {
+        id: id,
+        name: item.name,
+        icon: item.icon,
+        description: item.description,
+        type: item.type
+      };
+    }
+
+    this.ConfigActionsFactory.addPlugin(config, this.GLOBALS.pluginConvert[config.type]);
+
+  }
 }
 
-LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore'];
+LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore', 'ConfigActionsFactory', 'MyDAGFactory'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('LeftPanelController', LeftPanelController);
   // .controller('LeftPanelController', function() {
