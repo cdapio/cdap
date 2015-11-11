@@ -328,13 +328,6 @@ function set_version() {
   else
     # We are on a feature branch: but from develop or release?
     # This is not easy to determine. This can fail very easily.
-    local git_branch_listing=$(git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1)
-    if [ "x${git_branch_listing}" == "x" ]; then 
-      echo_red_bold "Unable to determine parent branch as git_branch_listing empty"
-      echo_red_bold "Using default GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
-    else
-      GIT_BRANCH_PARENT=$(echo ${git_branch_listing} | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//')
-    fi
     if [ "${GIT_BRANCH_PARENT:0:7}" == "release" ]; then
       GIT_BRANCH_TYPE="release-feature"
     else
