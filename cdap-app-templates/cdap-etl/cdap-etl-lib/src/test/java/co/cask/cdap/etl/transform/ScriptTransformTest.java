@@ -175,7 +175,7 @@ public class ScriptTransformTest {
       null,
       new LookupConfig(
         ImmutableMap.of(
-          "purchases", new LookupTableConfig(LookupTableConfig.TableType.DATASET, ImmutableMap.<String, Object>of()))
+          "purchases", new LookupTableConfig(LookupTableConfig.TableType.DATASET))
       ));
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     transform.initialize(new MockTransformContext(

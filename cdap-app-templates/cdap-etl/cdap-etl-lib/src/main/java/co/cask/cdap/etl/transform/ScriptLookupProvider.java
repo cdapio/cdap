@@ -16,13 +16,9 @@
 package co.cask.cdap.etl.transform;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupConfig;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.LookupTableConfig;
-
-import java.util.Map;
-import java.util.Set;
 
 /**
  * {@link LookupProvider} implementation for {@link ScriptTransform}.
@@ -48,7 +44,7 @@ public class ScriptLookupProvider {
       throw new RuntimeException(String.format("Dataset %s not declared in configuration", table));
     }
 
-    DatasetProperties arguments = tableConfig.getDatasetProperties();
+    DatasetProperties arguments = DatasetProperties.builder().addAll(tableConfig.getDatasetProperties()).build();
     return new ScriptLookup(delegate.provide(table, arguments.getProperties()), tableConfig, converters);
   }
 }
