@@ -14,7 +14,7 @@ CDAP on a Hadoop cluster, through the running of a verification application in C
 .. "Follow these instructions"
 
 .. include:: installation.rst 
-   :start-after: .. _install-follow-these-instructions
+   :start-after: .. _install-follow-these-instructions:
    :end-before:  .. _install-these-are-the-cdap-components:
 
 .. highlight:: console
