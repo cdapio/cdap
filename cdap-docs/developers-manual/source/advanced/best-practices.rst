@@ -46,7 +46,7 @@ The flowlet constructor is called with the parameter when the flow is configured
   public static class WordCountFlow extends AbstractFlow {
 
     @Override
-    public void configureFlow() {
+    public void configure() {
       setName("WordCountFlow");
       setDescription("Flow for counting words");
       addFlowlet("Tokenizer", new Tokenizer());
