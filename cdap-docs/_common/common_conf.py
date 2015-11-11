@@ -704,21 +704,15 @@ pdf_fit_background_mode = 'scale'
 # -- Options for Manuals --------------------------------------------------
 
 def set_conf_for_manual():
-    manual_dir_name = os.path.basename(os.path.normpath(os.path.join(os.getcwd(), '..')))
-    print "set_conf_for_manual: %s" % manual_dir_name
+    m = os.path.basename(os.path.normpath(os.path.join(os.getcwd(), '..')))
+    print "set_conf_for_manual: %s" % m
 
-    global manual
-    manual = manual_dir_name
-    global html_theme_options
-    html_theme_options['manual'] = manual
-    global html_short_title_toc
-    html_short_title_toc = manuals_dict[manual]
-    global html_short_title
+    html_theme_options['manual'] = m
+    html_short_title_toc = manuals_dict[m]
     html_short_title = u'CDAP %s' % html_short_title_toc
-    global html_context
     html_context = {'html_short_title_toc': html_short_title_toc}
 
     # Remove this guide from the mapping as it will fail as it has been deleted by clean
-    global manual_intersphinx_mapping
-    global intersphinx_mapping
-    intersphinx_mapping.pop(manual_intersphinx_mapping[manual_dir_name], None)
+    intersphinx_mapping.pop(manual_intersphinx_mapping[m], None)
+
+    return html_short_title_toc, html_short_title, html_context

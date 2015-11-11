@@ -10,4 +10,5 @@ import os
 # Setup the config
 sys.path.insert(0, os.path.abspath('../../_common'))
 from common_conf import * 
-set_conf_for_manual()
+
+html_short_title_toc, html_short_title, html_context = set_conf_for_manual()
