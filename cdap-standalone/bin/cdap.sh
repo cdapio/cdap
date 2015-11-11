@@ -116,7 +116,7 @@ fi
 NODE_INSTALL_STATUS=$(program_is_installed node)
 if [ "x$NODE_INSTALL_STATUS" == "x1" ]; then
   die "Node.js is not installed
-Please install Node.js - the minimum version supported v0.10.0."
+Please install Node.js - we recommend any version of Node.js greater than v0.10.0."
 fi
 
 # Check Node.js version
