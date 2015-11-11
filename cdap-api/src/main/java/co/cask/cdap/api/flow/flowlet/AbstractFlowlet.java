@@ -41,6 +41,9 @@ public abstract class AbstractFlowlet extends AbstractProgramDatasetConfigurable
     configure();
   }
 
+  /**
+   * Configure the {@link Flowlet}
+   */
   protected void configure() {
 
   }

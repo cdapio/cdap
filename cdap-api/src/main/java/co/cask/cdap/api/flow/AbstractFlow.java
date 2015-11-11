@@ -37,13 +37,16 @@ public class AbstractFlow extends AbstractProgramDatasetConfigurable<FlowConfigu
   /**
    * Configure the flow.
    *
-   * @deprecated Use {@link AbstractFlow#configure()} instead.
+   * @deprecated (as of version 3.3.0) Use {@link AbstractFlow#configure()} instead.
    */
   @Deprecated
   protected void configureFlow() {
 
   }
 
+  /**
+   * Configure the {@link Flow}.
+   */
   protected void configure() {
 
   }
