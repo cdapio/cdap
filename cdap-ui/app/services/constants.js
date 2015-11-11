@@ -31,6 +31,13 @@ angular.module(PKG.name + '.services')
         'transform': 'transform'
       }
     },
+    pluginConvert: {
+      'batchsource': 'source',
+      'realtimesource': 'source',
+      'batchsink': 'sink',
+      'realtimesink': 'sink',
+      'transform': 'transform'
+    },
 
     'en': {
       hydrator: {
