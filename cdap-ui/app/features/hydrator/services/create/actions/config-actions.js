@@ -34,7 +34,7 @@ class ConfigActionsFactory {
     this.dispatcher.dispatch('onArtifactSave', artifact);
   }
   addPlugin (plugin, type) {
-    this.dispatcher.dispatch('onPluginAdd', {plugin: plugin, type: type});
+    this.dispatcher.dispatch('onPluginAdd', plugin, type);
   }
 }
 

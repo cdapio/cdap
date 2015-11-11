@@ -22,32 +22,35 @@ class PluginActionsFactory {
     this.GLOBALS = GLOBALS;
   }
   fetchSources(params) {
-    params.extensionType = this.GLOBALS.pluginTypes[params.pipelineType]['source'];
+    let type = this.GLOBALS.pluginTypes[params.pipelineType]['source'];
+    params.extensionType = type;
     this.api
         .fetchSources(params)
         .$promise
         .then(
-          res => this.dispatcher.dispatch('onSourcesFetch', res, params.extensionType),
+          res => this.dispatcher.dispatch('onSourcesFetch', res, type),
           err => this.dispatcher.dispatch('onSourcesFetch', {err: err})
         );
   }
   fetchSinks(params) {
-    params.extensionType = this.GLOBALS.pluginTypes[params.pipelineType]['sink'];
+    let type = this.GLOBALS.pluginTypes[params.pipelineType]['sink'];
+    params.extensionType = type;
     this.api
         .fetchSinks(params)
         .$promise
         .then(
-          res => this.dispatcher.dispatch('onSinksFetch', res, params.extensionType),
+          res => this.dispatcher.dispatch('onSinksFetch', res, type),
           err => this.dispatcher.dispatch('onSinksFetch', {err: err})
         );
   }
   fetchTransforms(params) {
-    params.extensionType = this.GLOBALS.pluginTypes[params.pipelineType]['transform'];
+    let type = this.GLOBALS.pluginTypes[params.pipelineType]['transform'];
+    params.extensionType = type;
     this.api
         .fetchTransforms(params)
         .$promise
         .then(
-          res => this.dispatcher.dispatch('onTransformsFetch', res, params.extensionType),
+          res => this.dispatcher.dispatch('onTransformsFetch', res, type),
           err => this.dispatcher.dispatch('onTransformsFetch', {err: err})
         );
   }
