@@ -18,11 +18,14 @@ package co.cask.cdap.etl.realtime;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.etl.api.LookupConfig;
+import co.cask.cdap.etl.api.LookupTableConfig;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
@@ -41,6 +44,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.gson.Gson;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
 import org.apache.twill.internal.utils.Networks;
@@ -71,6 +75,8 @@ import java.util.concurrent.TimeUnit;
  * Tests for {@link ETLRealtimeApplication}.
  */
 public class ETLWorkerTest extends ETLRealtimeBaseTest {
+
+  private static final Gson GSON = new Gson();
 
   private static ZKClientService zkClient;
   private static KafkaClientService kafkaClient;
@@ -146,6 +152,59 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
 
     workerManager.stop();
     Assert.assertTrue(succeeded);
+  }
+
+  @Test
+  public void testScriptLookup() throws Exception {
+    addDatasetInstance(KeyValueTable.class.getName(), "lookupTable");
+    DataSetManager<KeyValueTable> lookupTable = getDataset("lookupTable");
+    lookupTable.get().write("Bob".getBytes(Charsets.UTF_8), "123".getBytes(Charsets.UTF_8));
+    lookupTable.flush();
+
+    Schema.Field idField = Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.INT)));
+    Schema.Field nameField = Schema.Field.of("name", Schema.of(Schema.Type.STRING));
+    Schema.Field scoreField = Schema.Field.of("score", Schema.of(Schema.Type.DOUBLE));
+    Schema.Field graduatedField = Schema.Field.of("graduated", Schema.of(Schema.Type.BOOLEAN));
+    Schema.Field binaryNameField = Schema.Field.of("binary", Schema.of(Schema.Type.BYTES));
+    Schema.Field timeField = Schema.Field.of("time", Schema.of(Schema.Type.LONG));
+    Schema schema =  Schema.recordOf("tableRecord", idField, nameField, scoreField, graduatedField,
+                                     binaryNameField, timeField);
+
+    ETLStage source = new ETLStage("DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
+                                                                    DataGeneratorSource.TABLE_TYPE));
+    ETLStage transform = new ETLStage("Script", ImmutableMap.of(
+      "script", "function transform(x, ctx) { " +
+        "x.name = x.name + '..hi..' + ctx.getLookup('lookupTable').lookup(x.name); return x; }",
+      "lookup", GSON.toJson(new LookupConfig(ImmutableMap.of(
+        "lookupTable", new LookupTableConfig(LookupTableConfig.TableType.DATASET, ImmutableMap.<String, Object>of())
+      )))
+    ));
+    ETLStage sink = new ETLStage("Table", ImmutableMap.of(Properties.Table.NAME, "testScriptLookup_table1",
+                                                          Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary",
+                                                          Properties.Table.PROPERTY_SCHEMA, schema.toString()));
+    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.newArrayList(transform));
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testToStream");
+    AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    WorkerManager workerManager = appManager.getWorkerManager(ETLWorker.NAME);
+
+    workerManager.start();
+    DataSetManager<Table> tableManager = getDataset("testScriptLookup_table1");
+    waitForTableToBePopulated(tableManager);
+    workerManager.stop();
+
+    // verify
+    Table table = tableManager.get();
+    Row row = table.get("Bob".getBytes(Charsets.UTF_8));
+
+    Assert.assertEquals("Bob..hi..123", row.getString("name"));
+
+    Connection connection = getQueryClient();
+    ResultSet results = connection.prepareStatement("select name from dataset_testScriptLookup_table1").executeQuery();
+    Assert.assertTrue(results.next());
+    Assert.assertEquals("Bob..hi..123", results.getString(1));
   }
 
   @Test
@@ -262,7 +321,7 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
         // need to wait for information to get to the table, not just for the row to be created
         return row.getColumns().size() != 0;
       }
-    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 10, TimeUnit.SECONDS);
   }
 
   public static void setUp() throws IOException {

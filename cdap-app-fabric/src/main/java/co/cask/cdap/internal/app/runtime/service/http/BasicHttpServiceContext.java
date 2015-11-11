@@ -31,7 +31,6 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -116,16 +115,11 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   }
 
   @Override
-  public void close() {
-    super.close();
-    Closeables.closeQuietly(getPluginInstantiator());
-  }
-
-  @Override
   public Map<String, Plugin> getPlugins() {
     return plugins;
   }
 
+  @Nullable
   private static MetricsContext getMetricCollector(MetricsCollectionService service,
                                                      Program program, String handlerName,
                                                      String runId, int instanceId) {

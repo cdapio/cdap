@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
@@ -33,6 +34,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
+import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
@@ -40,12 +42,15 @@ import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
@@ -69,6 +74,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   private final Metrics userMetrics;
   private final Map<String, Plugin> plugins;
   private final Transaction transaction;
+  private final TaskLocalizationContext taskLocalizationContext;
 
   private MultipleOutputs multipleOutputs;
   private TaskInputOutputContext<?, ?, KEYOUT, VALUEOUT> context;
@@ -82,7 +88,6 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    @Nullable MapReduceMetrics.TaskType type,
                                    RunId runId, String taskId,
                                    Arguments runtimeArguments,
-                                   Set<String> datasets,
                                    MapReduceSpecification spec,
                                    long logicalStartTime,
                                    @Nullable WorkflowToken workflowToken,
@@ -91,8 +96,9 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                                    TransactionSystemClient txClient,
                                    Transaction transaction,
                                    DatasetFramework dsFramework,
-                                   PluginInstantiator pluginInstantiator) {
-    super(program, runId, runtimeArguments, datasets,
+                                   @Nullable PluginInstantiator pluginInstantiator,
+                                   Map<String, File> localizedResources) {
+    super(program, runId, runtimeArguments, ImmutableSet.<String>of(),
           getMetricCollector(program, runId.getId(), taskId, metricsCollectionService, type),
           dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.logicalStartTime = logicalStartTime;
@@ -107,6 +113,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     this.loggingContext = createLoggingContext(program.getId(), runId);
     this.spec = spec;
     this.plugins = Maps.newHashMap(program.getApplicationSpecification().getPlugins());
+    this.taskLocalizationContext = new DefaultTaskLocalizationContext(localizedResources);
 
     initializeTransactionAwares();
   }
@@ -245,5 +252,15 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     for (TransactionAware txAware : txAwares) {
       txAware.commitTx();
     }
+  }
+
+  @Override
+  public File getLocalFile(String name) throws FileNotFoundException {
+    return taskLocalizationContext.getLocalFile(name);
+  }
+
+  @Override
+  public Map<String, File> getAllLocalFiles() {
+    return taskLocalizationContext.getAllLocalFiles();
   }
 }

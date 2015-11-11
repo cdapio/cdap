@@ -24,37 +24,44 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Store the meta information about program runs in CDAP. Extends {@link RunRecord} with additional
- * information about Apache Twill run id.
+ * Store the meta information about program runs in CDAP.
+ * This class contains all information the system needs about a run, which
+ * includes information that should not be exposed to users. {@link RunRecord} contains fields that are exposed
+ * to users, so everything else like the Twill runid should go here.
  */
 public final class RunRecordMeta extends RunRecord {
   @SerializedName("twillrunid")
   private final String twillRunId;
 
+  @SerializedName("systemargs")
+  private final Map<String, String> systemArgs;
+
   public RunRecordMeta(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status,
-                       @Nullable Map<String, String> properties,
+                       @Nullable Map<String, String> properties, @Nullable Map<String, String> systemArgs,
                        @Nullable String twillRunId) {
     super(pid, startTs, stopTs, status, properties);
+    this.systemArgs = systemArgs;
     this.twillRunId = twillRunId;
-  }
-
-  public RunRecordMeta(String pid, long startTs, @Nullable Long stopTs, ProgramRunStatus status) {
-    this(pid, startTs, stopTs, status, null, null);
   }
 
   public RunRecordMeta(RunRecordMeta started, @Nullable Long stopTs, ProgramRunStatus status) {
     this(started.getPid(), started.getStartTs(), stopTs, status, started.getProperties(),
-         started.getTwillRunId());
+         started.getSystemArgs(), started.getTwillRunId());
   }
 
   public RunRecordMeta(RunRecordMeta existing, Map<String, String> updatedProperties) {
     this(existing.getPid(), existing.getStartTs(), existing.getStopTs(), existing.getStatus(),
-         updatedProperties, existing.getTwillRunId());
+         updatedProperties, existing.getSystemArgs(), existing.getTwillRunId());
   }
 
   @Nullable
   public String getTwillRunId() {
     return twillRunId;
+  }
+
+  @Nullable
+  public Map<String, String> getSystemArgs() {
+    return systemArgs;
   }
 
   @Override

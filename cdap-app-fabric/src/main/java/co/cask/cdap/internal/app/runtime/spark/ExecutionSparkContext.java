@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.app.runtime.spark;
 
+import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
@@ -34,9 +35,9 @@ import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.logging.LoggingContext;
+import co.cask.cdap.common.options.UnsupportedOptionTypeException;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -46,6 +47,7 @@ import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.spark.dataset.CloseableBatchWritable;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
 import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
@@ -69,7 +71,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,9 +96,14 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   private final Transaction transaction;
   private final StreamAdmin streamAdmin;
   private final DynamicDatasetCache datasetCache;
+  private final Map<String, File> localizedResources;
+
   private boolean stopped;
   private SparkFacade sparkFacade;
 
+  /**
+   * This constructor is to create instance to be used in Spark executor.
+   */
   public ExecutionSparkContext(ApplicationSpecification appSpec,
                                SparkSpecification specification, Id.Program programId, RunId runId,
                                ClassLoader programClassLoader, long logicalStartTime,
@@ -103,25 +112,35 @@ public class ExecutionSparkContext extends AbstractSparkContext {
                                TransactionSystemClient txClient,
                                DiscoveryServiceClient discoveryServiceClient,
                                MetricsCollectionService metricsCollectionService,
-                               Configuration hConf, StreamAdmin streamAdmin, @Nullable WorkflowToken workflowToken) {
+                               Configuration hConf, StreamAdmin streamAdmin,
+                               Map<String, File> localizedResources,
+                               @Nullable PluginInstantiator pluginInstantiator,
+                               @Nullable WorkflowToken workflowToken) {
     this(appSpec, specification, programId, runId, programClassLoader, logicalStartTime, runtimeArguments,
          transaction, datasetFramework, txClient, discoveryServiceClient,
          createMetricsContext(metricsCollectionService, programId, runId),
-         createLoggingContext(programId, runId), hConf, streamAdmin, workflowToken);
+         createLoggingContext(programId, runId), hConf, streamAdmin, localizedResources, pluginInstantiator,
+         workflowToken);
   }
 
+  /**
+   * This constructor is to create instance to be used in the Spark driver.
+   */
   public ExecutionSparkContext(ApplicationSpecification appSpec,
                                SparkSpecification specification, Id.Program programId, RunId runId,
                                ClassLoader programClassLoader, long logicalStartTime,
                                Map<String, String> runtimeArguments,
                                Transaction transaction, DatasetFramework datasetFramework,
                                TransactionSystemClient txClient,
-                               DiscoveryServiceClient discoveryServiceClient, MetricsContext metricsContext,
-                               LoggingContext loggingContext, Configuration hConf, StreamAdmin streamAdmin,
-                               WorkflowToken workflowToken) {
+                               DiscoveryServiceClient discoveryServiceClient,
+                               MetricsContext metricsContext, LoggingContext loggingContext,
+                               Configuration hConf, StreamAdmin streamAdmin,
+                               Map<String, File> localizedResources,
+                               @Nullable PluginInstantiator pluginInstantiator,
+                               @Nullable WorkflowToken workflowToken) {
     super(appSpec, specification, programId, runId, programClassLoader, logicalStartTime,
-          runtimeArguments, discoveryServiceClient, metricsContext, loggingContext, workflowToken);
-
+          runtimeArguments, discoveryServiceClient, metricsContext, loggingContext,
+          pluginInstantiator, workflowToken);
     this.datasets = new HashMap<>();
     this.hConf = hConf;
     this.transaction = transaction;
@@ -129,6 +148,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     this.datasetCache = new SingleThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework, programClassLoader, getOwners()),
       txClient, programId.getNamespace(), runtimeArguments, getMetricsContext(), null);
+    this.localizedResources = localizedResources;
   }
 
   @Override
@@ -241,20 +261,14 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   }
 
   @Override
-  public <T> T readFromStream(String streamName, Class<?> vClass,
-                              long startTime, long endTime, Class<? extends StreamEventDecoder> decoderType) {
-
-    StreamBatchReadable stream = (decoderType == null)
-      ? new StreamBatchReadable(streamName, startTime, endTime)
-      : new StreamBatchReadable(streamName, startTime, endTime, decoderType);
-
+  public <T> T readFromStream(StreamBatchReadable stream, Class<?> vClass) {
     try {
       // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
       Configuration configuration = configureStreamInput(new Configuration(hConf), stream, vClass);
       T streamRDD = getSparkFacade().createRDD(StreamInputFormat.class, LongWritable.class, vClass, configuration);
 
       // Register for stream usage for the Spark program
-      Id.Stream streamId = Id.Stream.from(getProgramId().getNamespace(), streamName);
+      Id.Stream streamId = Id.Stream.from(getProgramId().getNamespace(), stream.getStreamName());
       try {
         streamAdmin.register(getOwners(), streamId);
         streamAdmin.addAccess(new Id.Run(getProgramId(), getRunId().getId()), streamId, AccessType.READ);
@@ -292,12 +306,15 @@ public class ExecutionSparkContext extends AbstractSparkContext {
       return;
     }
     stopped = true;
-    if (sparkFacade != null) {
-      sparkFacade.stop();
-    }
-    // No need to flush datasets, just close them
-    for (Dataset dataset : datasets.values()) {
-      Closeables.closeQuietly(dataset);
+    try {
+      if (sparkFacade != null) {
+        sparkFacade.stop();
+      }
+    } finally {
+      // No need to flush datasets, just close them
+      for (Dataset dataset : datasets.values()) {
+        Closeables.closeQuietly(dataset);
+      }
     }
   }
 
@@ -490,5 +507,20 @@ public class ExecutionSparkContext extends AbstractSparkContext {
       ((TransactionAware) dataset).startTx(transaction);
     }
     return dataset;
+  }
+
+  @Override
+  public TaskLocalizationContext getTaskLocalizationContext() {
+    return new SparkLocalizationContext(localizedResources);
+  }
+
+  @Override
+  public void localize(String name, URI uri) {
+    throw new UnsupportedOptionTypeException("Resources cannot be localized in Spark closures.");
+  }
+
+  @Override
+  public void localize(String name, URI uri, boolean archive) {
+    throw new UnsupportedOptionTypeException("Resources cannot be localized in Spark closures.");
   }
 }

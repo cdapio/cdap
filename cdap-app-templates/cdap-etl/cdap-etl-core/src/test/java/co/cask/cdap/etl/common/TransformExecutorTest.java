@@ -48,16 +48,17 @@ public class TransformExecutorTest {
     List<TransformDetail> transforms = Lists.<TransformDetail>newArrayList();
     transforms.add(
       new TransformDetail("intToDoubleTransform", new IntToDouble(),
-                                new StageMetrics(mockMetrics, PluginID.from(Constants.Source.PLUGINTYPE, "first", 1))));
+                          new DefaultStageMetrics(mockMetrics,
+                                                  PluginID.from(Constants.Source.PLUGINTYPE, "first", 1))));
 
     transforms.add(
       new TransformDetail("filterTransform", new Filter(100d),
-                                new StageMetrics(mockMetrics,
-                                                 PluginID.from(Constants.Transform.PLUGINTYPE, "second", 2))));
+                          new DefaultStageMetrics(mockMetrics,
+                                                  PluginID.from(Constants.Transform.PLUGINTYPE, "second", 2))));
 
     transforms.add(
       new TransformDetail("doubleToStringTransform", new DoubleToString(),
-                                new StageMetrics(mockMetrics, PluginID.from(Constants.Sink.PLUGINTYPE, "third", 3))));
+                          new DefaultStageMetrics(mockMetrics, PluginID.from(Constants.Sink.PLUGINTYPE, "third", 3))));
 
     TransformExecutor<Integer, String> executor = new TransformExecutor<>(transforms);
 
@@ -114,7 +115,7 @@ public class TransformExecutorTest {
       if (input > threshold) {
         emitter.emit(input);
       } else {
-        emitter.emitError(new InvalidEntry<Double>(100, "less than threshold", input));
+        emitter.emitError(new InvalidEntry<>(100, "less than threshold", input));
       }
     }
   }

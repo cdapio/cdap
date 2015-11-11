@@ -44,6 +44,7 @@ import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
@@ -85,13 +86,16 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -107,7 +111,6 @@ public class SparkProgramRunnerTest {
 
   private static Injector injector;
   private static TransactionExecutorFactory txExecutorFactory;
-
   private static TransactionManager txService;
   private static DatasetFramework dsFramework;
   private static DynamicDatasetCache datasetCache;
@@ -175,23 +178,31 @@ public class SparkProgramRunnerTest {
     checkOutputData();
 
     // validate that the table emitted metrics
-    Collection<MetricTimeSeries> metrics =
-      metricStore.query(new MetricDataQuery(
-        0,
-        System.currentTimeMillis() / 1000L,
-        60,
-        "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
-        AggregationFunction.SUM,
-        ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
-                        Constants.Metrics.Tag.APP, SparkAppUsingObjectStore.APP_NAME,
-                        Constants.Metrics.Tag.SPARK, SparkAppUsingObjectStore.SPARK_NAME,
-                        Constants.Metrics.Tag.DATASET, "totals"),
-        Collections.<String>emptyList()));
-    Assert.assertEquals(1, metrics.size());
-    MetricTimeSeries ts = metrics.iterator().next();
-    Assert.assertEquals(1, ts.getTimeValues().size());
-    // 1 read + one write in beforeSubmit(), increment (= read + write) in main -> 4
-    Assert.assertEquals(4, ts.getTimeValues().get(0).getValue());
+    // one read + one write in beforeSubmit(), increment (= read + write) in main -> 4
+    Tasks.waitFor(4L, new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        Collection<MetricTimeSeries> metrics =
+          metricStore.query(new MetricDataQuery(
+            0,
+            System.currentTimeMillis() / 1000L,
+            60,
+            "system." + Constants.Metrics.Name.Dataset.OP_COUNT,
+            AggregationFunction.SUM,
+            ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, DefaultId.NAMESPACE.getId(),
+                            Constants.Metrics.Tag.APP, SparkAppUsingObjectStore.APP_NAME,
+                            Constants.Metrics.Tag.SPARK, SparkAppUsingObjectStore.SPARK_NAME,
+                            Constants.Metrics.Tag.DATASET, "totals"),
+            Collections.<String>emptyList()));
+        if (metrics.isEmpty()) {
+          return 0L;
+        }
+        Assert.assertEquals(1, metrics.size());
+        MetricTimeSeries ts = metrics.iterator().next();
+        Assert.assertEquals(1, ts.getTimeValues().size());
+        return ts.getTimeValues().get(0).getValue();
+      }
+    }, 5L, TimeUnit.SECONDS, 50L, TimeUnit.MILLISECONDS);
   }
 
   @Test
@@ -441,6 +452,48 @@ public class SparkProgramRunnerTest {
 
     KeyValueTable logStatsTable = datasetCache.getDataset("logStats");
     validateGetDatasetOutput(logStatsTable);
+  }
+
+  @Test
+  public void testJavaSparkWithLocalFiles() throws Exception {
+    testSparkWithLocalFiles(SparkAppUsingLocalFiles.class, SparkAppUsingLocalFiles.JavaSparkUsingLocalFiles.class,
+                            "java");
+  }
+
+  @Test
+  public void testScalaSparkWithLocalFiles() throws Exception {
+    testSparkWithLocalFiles(SparkAppUsingLocalFiles.class, SparkAppUsingLocalFiles.ScalaSparkUsingLocalFiles.class,
+                            "scala");
+  }
+
+  private void testSparkWithLocalFiles(Class<?> appClass, Class<?> programClass, String prefix) throws Exception {
+    ApplicationWithPrograms app = AppFabricTestHelper.deployApplicationWithManager(appClass, TEMP_FOLDER_SUPPLIER);
+    URI localFile = createLocalPropertiesFile(prefix);
+    runProgram(app, programClass,
+               ImmutableMap.of(SparkAppUsingLocalFiles.LOCAL_FILE_RUNTIME_ARG, localFile.toString()));
+    KeyValueTable kvTable = datasetCache.getDataset(SparkAppUsingLocalFiles.OUTPUT_DATASET_NAME);
+    Map<String, String> expected = ImmutableMap.of("a", "1", "b", "2", "c", "3");
+    CloseableIterator<KeyValue<byte[], byte[]>> scan = kvTable.scan(null, null);
+    try {
+      for (int i = 0; i < 3; i++) {
+        KeyValue<byte[], byte[]> next = scan.next();
+        Assert.assertEquals(expected.get(Bytes.toString(next.getKey())), Bytes.toString(next.getValue()));
+      }
+      Assert.assertFalse(scan.hasNext());
+    } finally {
+      scan.close();
+    }
+  }
+
+  private URI createLocalPropertiesFile(String filePrefix) throws IOException {
+    File file = TEMP_FOLDER.newFile(filePrefix + "-local.properties");
+    try (FileOutputStream fos = new FileOutputStream(file);
+         OutputStreamWriter out = new OutputStreamWriter(fos)) {
+      out.write("a=1\n");
+      out.write("b = 2\n");
+      out.write("c= 3");
+    }
+    return file.toURI();
   }
 
   private void validateGetDatasetOutput(KeyValueTable logStatsTable) {

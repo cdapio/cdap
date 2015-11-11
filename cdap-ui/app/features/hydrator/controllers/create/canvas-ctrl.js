@@ -13,25 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+ 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('CanvasController', function (MyAppDAGService, $scope, $modalStack) {
-
-    this.nodes = [];
-
-    function errorNotification(errors) {
-      angular.forEach(this.pluginTypes, function (type) {
-        delete type.error;
-        if (errors[type.name]) {
-          type.error = errors[type.name];
-        }
-      });
-    }
-
-    MyAppDAGService.errorCallback(errorNotification.bind(this));
-
-    $scope.$on('$destroy', function() {
-      $modalStack.dismissAll();
-    });
-
+  .controller('HydratorCreateCanvasController', function(BottomPanelStore) {
+    this.setState = function() {
+      this.state = {
+        setScroll: (BottomPanelStore.getPanelState() === 0? false: true)
+      };
+    };
+    this.setState();
+    BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
   });

@@ -71,12 +71,6 @@ public class FileUploadApp extends AbstractApplication {
 
   public static final class FileHandler extends AbstractHttpServiceHandler {
 
-    @Override
-    protected void configure() {
-      // TODO: No need to have this once (CDAP-961) is resolved
-      useDatasets(KV_TABLE_NAME);
-    }
-
     /**
      * Accepts file upload through the usage of {@link HttpContentConsumer}. It will store the file
      * under the given partition. It also verifies the upload content MD5.
@@ -96,8 +90,7 @@ public class FileUploadApp extends AbstractApplication {
       // Construct the partition and the partition location
       PartitionKey partitionKey = PartitionKey.builder().addLongField("time", partition).build();
       PartitionedFileSet pfs = getContext().getDataset(dataset);
-      final PartitionOutput partitionOutput = pfs.getPartitionOutput(
-        partitionKey);
+      final PartitionOutput partitionOutput = pfs.getPartitionOutput(partitionKey);
       final Location partitionDir = partitionOutput.getLocation();
       if (!partitionDir.mkdirs()) {
         responder.sendError(HttpURLConnection.HTTP_CONFLICT,

@@ -67,8 +67,7 @@ public abstract class SnapshotFileBatchSource<KEY, VALUE> extends BatchSource<KE
       arguments = GSON.fromJson(config.getFileProperties(), MAP_TYPE);
     }
 
-    PartitionedFileSet input = context.getDataset(config.getName(), snapshotFileSet.getInputArguments(arguments));
-    context.setInput(config.getName(), input);
+    context.setInput(config.getName(), snapshotFileSet.getInputArguments(arguments));
   }
 
   /**

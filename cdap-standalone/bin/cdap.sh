@@ -121,9 +121,10 @@ fi
 
 # Check Node.js version
 NODE_VERSION=`node -v 2>&1`
-NODE_VERSION_MAJOR=`echo $NODE_VERSION | awk -F '.' ' { print $2 } '`
-NODE_VERSION_MINOR=`echo $NODE_VERSION | awk -F '.' ' { print $3 } '`
-if [ $NODE_VERSION_MAJOR -lt 10 ]; then
+
+NODE_VERSION_MAJOR=`echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $2 } '`
+NODE_VERSION_MINOR=`echo $NODE_VERSION | awk -F'[\\\.v]*' ' { print $3 } '`
+if [ "$NODE_VERSION_MAJOR" -lt 1 ] && [ "$NODE_VERSION_MINOR" -lt 10 ] ; then
   die "ERROR: Node.js version is not supported
 The minimum version supported is v0.10.0."
 fi

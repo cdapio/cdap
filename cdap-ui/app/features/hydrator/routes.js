@@ -78,8 +78,8 @@ angular.module(PKG.name + '.feature.hydrator')
                 }
                 return defer.promise;
               },
-              rVersion: function($state, MyDataSource) {
-                var dataSource = new MyDataSource();
+              rVersion: function($state, MyCDAPDataSource) {
+                var dataSource = new MyCDAPDataSource();
                 return dataSource.request({
                   _cdapPath: '/version'
                 });
@@ -91,7 +91,9 @@ angular.module(PKG.name + '.feature.hydrator')
                 controller: 'HydratorCreateStudioController as HydratorCreateStudioController'
               },
               'canvas@hydrator.create.studio': {
-                templateUrl: '/assets/features/hydrator/templates/create/canvas.html'
+                templateUrl: '/assets/features/hydrator/templates/create/canvas.html',
+                controller: 'HydratorCreateCanvasController',
+                controllerAs: 'CanvasCtrl'
               },
               'leftpanel@hydrator.create.studio': {
                 templateUrl: '/assets/features/hydrator/templates/create/leftpanel.html',
@@ -128,8 +130,27 @@ angular.module(PKG.name + '.feature.hydrator')
             parent: 'apps.list',
             label: '{{$state.params.pipelineId}}'
           },
-          templateUrl: '/assets/features/hydrator/templates/detail.html',
-          controller: 'HydratorDetailController'
+          views: {
+            '': {
+              templateUrl: '/assets/features/hydrator/templates/detail.html',
+              controller: 'HydratorDetailController'
+            },
+            'toppanel@hydrator.detail': {
+              templateUrl: '/assets/features/hydrator/templates/detail/top-panel.html',
+              controller: 'HydratorDetailTopPanelController',
+              controllerAs: 'TopPanelCtrl'
+            },
+            'bottompanel@hydrator.detail': {
+              templateUrl: '/assets/features/hydrator/templates/detail/bottom-panel.html',
+              controller: 'HydratorDetailBottomPanelController',
+              controllerAs: 'BottomPanelCtrl'
+            },
+            'canvas@hydrator.detail': {
+              templateUrl: '/assets/features/hydrator/templates/detail/canvas.html',
+              controller: 'HydratorDetailCanvasController',
+              controllerAs: 'CanvasCtrl'
+            }
+          }
         });
 
   });

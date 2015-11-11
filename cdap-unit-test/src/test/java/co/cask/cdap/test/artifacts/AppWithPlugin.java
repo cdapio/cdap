@@ -21,6 +21,8 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.plugin.PluginProperties;
@@ -29,12 +31,21 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceContext;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.api.spark.AbstractSpark;
+import co.cask.cdap.api.spark.JavaSparkProgram;
+import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.worker.AbstractWorker;
+import com.google.common.base.Charsets;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.PairFunction;
 import org.junit.Assert;
+import scala.Tuple2;
 
 import java.io.IOException;
 import javax.ws.rs.GET;
@@ -45,17 +56,21 @@ import javax.ws.rs.Path;
  */
 public class AppWithPlugin extends AbstractApplication {
 
-  private static final String TEST = "this is a test string";
   private static final String KEY = "toString";
+  public static final String TEST = "this is a test string";
   public static final String WORKER = "testWorker";
   public static final String MAPREDUCE = "testMapReduce";
   public static final String SERVICE = "testService";
+  public static final String SPARK = "testSpark";
+  public static final String SPARK_STREAM = "sparkStream";
+  public static final String SPARK_TABLE = "sparkTable";
 
   @Override
   public void configure() {
     addWorker(new WorkerWithPlugin());
     addMapReduce(new MapReduceWithPlugin());
     addService(new ServiceWithPlugin());
+    addSpark(new SparkWithPlugin());
     usePlugin("t1", "n1", "mrid", PluginProperties.builder().add(KEY, TEST).build());
   }
 
@@ -151,6 +166,38 @@ public class AppWithPlugin extends AbstractApplication {
     protected void configure() {
       setName(WORKER);
       usePlugin("t1", "n1", "plug", PluginProperties.builder().add(KEY, TEST).build());
+    }
+  }
+
+  public static class SparkWithPlugin extends AbstractSpark implements JavaSparkProgram {
+
+    @Override
+    protected void configure() {
+      setName(SPARK);
+      setMainClass(getClass());
+      addStream(SPARK_STREAM);
+      createDataset(SPARK_TABLE, Table.class);
+      usePlugin("t1", "n1", "plugin", PluginProperties.builder().add(KEY, TEST).build());
+    }
+
+    @Override
+    public void run(SparkContext context) throws Exception {
+      JavaPairRDD<LongWritable, Text> rdd = context.readFromStream(SPARK_STREAM, Text.class);
+
+      final Object plugin = context.getPluginContext().newPluginInstance("plugin");
+      JavaPairRDD<byte[], Put> resultRDD = rdd.values().map(new Function<Text, String>() {
+        @Override
+        public String call(Text text) throws Exception {
+          return text.toString() + " " + plugin.toString();
+        }
+      }).mapToPair(new PairFunction<String, byte[], Put>() {
+        @Override
+        public Tuple2<byte[], Put> call(String str) throws Exception {
+          return new Tuple2<>(str.getBytes(Charsets.UTF_8), new Put(str, str, str));
+        }
+      });
+
+      context.writeToDataset(resultRDD, SPARK_TABLE, byte[].class, Put.class);
     }
   }
 }

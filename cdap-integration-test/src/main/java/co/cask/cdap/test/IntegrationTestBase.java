@@ -238,7 +238,7 @@ public abstract class IntegrationTestBase {
     builder.setDefaultConnectTimeout(120000);
     builder.setDefaultReadTimeout(120000);
     builder.setUploadConnectTimeout(0);
-    builder.setUploadConnectTimeout(0);
+    builder.setUploadReadTimeout(0);
 
     return builder.build();
   }

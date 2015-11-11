@@ -154,7 +154,7 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       PartitionedFileSet lines = batchPartitionConsumer.getConfiguredDataset(context, "lines");
-      context.setInput("lines", lines);
+      context.setInput(lines);
 
       Map<String, String> outputArgs = new HashMap<>();
       PartitionKey partitionKey = PartitionKey.builder().addLongField("time", context.getLogicalStartTime()).build();

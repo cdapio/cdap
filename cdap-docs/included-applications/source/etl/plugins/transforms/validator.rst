@@ -12,9 +12,9 @@ Transformations: Validator
 
 Validates a record, writing to an error dataset if the record is invalid.
 Otherwise it passes the record on to the next stage.
-  
-The transform validates records using a custom Javascript function based on a set of 
-:ref:`available validator functions <included-apps-etl-plugins-shared-core-validator>` in the 
+
+The transform validates records using a custom Javascript function based on a set of
+:ref:`available validator functions <included-apps-etl-plugins-shared-core-validator>` in the
 :ref:`CoreValidator <included-apps-etl-plugins-shared-core-validator>`.
 
 .. rubric:: Use Case
@@ -39,6 +39,11 @@ Example response::
     "errorMsg" : "Message indicating the error and why the record failed validation"
   }
 
+**lookup:** The configuration of the lookup tables to be used in your script.
+For example, if lookup table "purchases" is configured, then you will be able to perform
+operations with that lookup table in your script: ``context.getLookup('purchases').lookup('key')``
+Currently supports ``KeyValueTable``.
+
 .. rubric:: Examples
 
 ::
@@ -58,12 +63,37 @@ Example response::
                                 };"
         }
       }
-      
+
 This example sends an error code ``'10'`` for any records whose ``'body'`` field contains
 a value whose length is greater than 10. It has been "pretty-printed" for readability. It
 uses the :ref:`CoreValidator <included-apps-etl-plugins-shared-core-validator>` (included
 using ``"validators": "core"``) and references a function using its Javascript name
 (``coreValidator.maxLength``).
+
+::
+
+      {
+        "name": "Validator",
+        "properties": {
+          "lookup": "{
+            \"blacklist\":{
+              \"type\":\"DATASET\"
+            }
+          }"
+          "validationScript": "function isValid(input, context) {
+                                  if (context.getLookup('blacklist').lookup(input.body) !== null)
+                                    {
+                                      return {'isValid': false, 'errorCode': 10,
+                                              'errorMsg': \"input blacklisted\"};
+                                    }
+                                  return {'isValid' : true};
+                                };"
+        }
+      }
+
+This example uses the key-value dataset ``'blacklist'`` as a lookup table,
+and sends an error code ``'10'`` for any records whose ``'body'`` field exists in the ``'blacklist'`` dataset.
+It has been "pretty-printed" for readability.
 
 ::
 
@@ -81,7 +111,7 @@ using ``"validators": "core"``) and references a function using its Javascript n
                                   if (!coreValidator.isDate(input.date)) {
                                      isValid = false; errMsg = input.date + \"is invalid date\"; errCode = 5;
                                      metrics.count(\"invalid.date\", 1);
-                                  } else if (!coreValidator.isUrl(input.url)) { 
+                                  } else if (!coreValidator.isUrl(input.url)) {
                                      isValid = false; errMsg = \"invalid url\"; errCode = 7;
                                      metrics.count(\"invalid.url\", 1);
                                   } else if (!coreValidator.isInRange(input.content_length, 0, 1024 * 1024)) {

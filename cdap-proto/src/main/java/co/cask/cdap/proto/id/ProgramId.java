@@ -18,7 +18,7 @@ package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.cdap.proto.element.ElementType;
+import co.cask.cdap.proto.element.EntityType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
@@ -28,14 +28,14 @@ import java.util.Objects;
 /**
  * Uniquely identifies a program.
  */
-public class ProgramId extends ElementId implements NamespacedId, ParentedId<ApplicationId> {
+public class ProgramId extends EntityId implements NamespacedId, ParentedId<ApplicationId> {
   private final String namespace;
   private final String application;
   private final ProgramType type;
   private final String program;
 
   public ProgramId(String namespace, String application, ProgramType type, String program) {
-    super(ElementType.PROGRAM);
+    super(EntityType.PROGRAM);
     this.namespace = namespace;
     this.application = application;
     this.type = type;
@@ -109,6 +109,6 @@ public class ProgramId extends ElementId implements NamespacedId, ParentedId<App
   }
 
   public static ProgramId fromString(String string) {
-    return ElementId.fromString(string, ProgramId.class);
+    return EntityId.fromString(string, ProgramId.class);
   }
 }

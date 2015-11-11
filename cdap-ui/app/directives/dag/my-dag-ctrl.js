@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, HydratorErrorFactory) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, HydratorErrorFactory, PipelineNodeConfigActionFactory) {
     this.plugins = $scope.config || [];
     this.MyAppDAGService = MyAppDAGService;
     this.isDisabled = $scope.isDisabled;
@@ -93,8 +93,10 @@ angular.module(PKG.name + '.commons')
       this.plugins.splice(index, 1);
       MyAppDAGService.removeNode(nodeId);
       MyAppDAGService.setConnections(this.instance.getConnections());
-      MyNodeConfigService.removePlugin(nodeId);
+      PipelineNodeConfigActionFactory.removePlugin();
     };
+
+    $scope.isCollapsed = true;
 
     // Need to move this to the controller that is using this directive.
     this.onPluginClick = function(plugin) {
@@ -104,7 +106,7 @@ angular.module(PKG.name + '.commons')
       });
 
       plugin.selected = true;
-      MyAppDAGService.editPluginProperties($scope, plugin.id, plugin.type);
+      PipelineNodeConfigActionFactory.choosePlugin(plugin);
     };
 
     function errorNotification(errObj) {
@@ -250,7 +252,7 @@ angular.module(PKG.name + '.commons')
         if (targetOuputSchema) {
           targetNode.outputSchema = targetOuputSchema;
         } else {
-          targetNode.outputSchema = sourceNode.outputSchema;
+          targetNode.outputSchema = targetNode.outputSchema || sourceNode.outputSchema;
         }
       });
     }
@@ -301,6 +303,7 @@ angular.module(PKG.name + '.commons')
 
     $scope.$on('$destroy', function() {
       MyNodeConfigService.unRegisterPluginSaveCallback($scope.$id);
+      PipelineNodeConfigActionFactory.reset();
       closeAllPopovers();
       angular.forEach(popoverScopes, function (s) {
         s.$destroy();
@@ -367,7 +370,7 @@ angular.module(PKG.name + '.commons')
         $timeout(this.drawGraph.bind(this));
     }
 
-    if (this.plugins.length) {
+    if (MyAppDAGService.nodes) {
       resetComponent.call(this);
     }
 

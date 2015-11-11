@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetInstanceService;
 import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
@@ -62,6 +63,7 @@ public abstract class AbstractDatasetProvider implements DatasetProvider {
    * @param instance the dataset
    * @return the {@link DatasetMeta}
    */
+  @Nullable
   public abstract DatasetMeta getMeta(Id.DatasetInstance instance) throws Exception;
 
   /**
@@ -81,9 +83,10 @@ public abstract class AbstractDatasetProvider implements DatasetProvider {
     @Nullable ClassLoader classLoader,
     @Nullable Map<String, String> arguments) throws Exception {
 
-    T result = get(instance, classLoader, arguments);
-    if (result != null) {
-      return result;
+    try {
+      return get(instance, classLoader, arguments);
+    } catch (NotFoundException e) {
+      // fall-through to create
     }
 
     createIfNotExists(instance, type, creationProps);
@@ -99,6 +102,10 @@ public abstract class AbstractDatasetProvider implements DatasetProvider {
 
     ConstantClassLoaderProvider classLoaderProvider = new ConstantClassLoaderProvider(classLoader);
     DatasetMeta meta = getMeta(instance);
+    if (meta == null) {
+      throw new NotFoundException(instance);
+    }
+
     DatasetType type = getType(meta.getType(), classLoader, classLoaderProvider);
     return (T) type.getDataset(
       DatasetContext.from(instance.getNamespaceId()), meta.getSpec(), arguments);
@@ -133,10 +140,9 @@ public abstract class AbstractDatasetProvider implements DatasetProvider {
    * @param <T> the type of DatasetType
    * @return an instance of the DatasetType
    */
-  public <T extends DatasetType> T getType(
-    DatasetTypeMeta implementationInfo,
-    ClassLoader classLoader,
-    DatasetClassLoaderProvider classLoaderProvider) {
+  public <T extends DatasetType> T getType(DatasetTypeMeta implementationInfo,
+                                           ClassLoader classLoader,
+                                           DatasetClassLoaderProvider classLoaderProvider) {
 
     if (classLoader == null) {
       classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
@@ -158,15 +164,24 @@ public abstract class AbstractDatasetProvider implements DatasetProvider {
 
       // try program class loader then cdap class loader
       try {
-        moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
-      } catch (ClassNotFoundException e) {
+        ClassLoader currentClassLoader = ClassLoaders.setContextClassLoader(classLoader);
         try {
-          moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), null, this);
+          moduleClass = classLoader.loadClass(moduleMeta.getClassName());
+        } finally {
+          ClassLoaders.setContextClassLoader(currentClassLoader);
+        }
+      } catch (ClassNotFoundException e) {
+        // Load it with the CDAP system class loader
+        ClassLoader currentClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
+        try {
+          moduleClass = getClass().getClassLoader().loadClass(moduleMeta.getClassName());
         } catch (ClassNotFoundException e2) {
           e.addSuppressed(e2);
           LOG.error("Was not able to load dataset module class {} while trying to load type {}",
                     moduleMeta.getClassName(), implementationInfo, e);
           throw Throwables.propagate(e);
+        } finally {
+          ClassLoaders.setContextClassLoader(currentClassLoader);
         }
       }
 

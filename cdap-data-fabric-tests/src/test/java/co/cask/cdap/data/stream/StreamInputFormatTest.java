@@ -401,13 +401,13 @@ public class StreamInputFormatTest {
   private void runMR(File inputDir, File outputDir, long startTime, long endTime,
                      long splitSize, long ttl) throws Exception {
 
-    Configuration conf = new Configuration();
-    Job job = Job.getInstance(conf);
+    Job job = Job.getInstance();
+    Configuration conf = job.getConfiguration();
 
-    StreamInputFormat.setTTL(job, ttl);
-    StreamInputFormat.setStreamPath(job, inputDir.toURI());
-    StreamInputFormat.setTimeRange(job, startTime, endTime);
-    StreamInputFormat.setMaxSplitSize(job, splitSize);
+    StreamInputFormat.setTTL(conf, ttl);
+    StreamInputFormat.setStreamPath(conf, inputDir.toURI());
+    StreamInputFormat.setTimeRange(conf, startTime, endTime);
+    StreamInputFormat.setMaxSplitSize(conf, splitSize);
     job.setInputFormatClass(TestStreamInputFormat.class);
 
     TextOutputFormat.setOutputPath(job, new Path(outputDir.toURI()));

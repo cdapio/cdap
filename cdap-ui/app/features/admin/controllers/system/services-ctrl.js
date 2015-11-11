@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('SystemServicesController',
-function ($scope, MyDataSource) {
+function ($scope, MyCDAPDataSource) {
 
   $scope.services = [];
 
-  var myDataSrc = new MyDataSource($scope);
+  var myDataSrc = new MyCDAPDataSource($scope);
 
   myDataSrc.request({
     _cdapPath: '/system/services'

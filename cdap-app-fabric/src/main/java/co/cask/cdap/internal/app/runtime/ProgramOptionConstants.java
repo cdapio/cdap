@@ -59,5 +59,13 @@ public final class ProgramOptionConstants {
 
   public static final String RESOURCES = "resources";
 
+  /**
+   * Option to a local file path of a directory containing plugins artifacts.
+   */
   public static final String PLUGIN_DIR = "pluginDir";
+
+  /**
+   * Option to a local file path of a JAR file containing plugins artifacts.
+   */
+  public static final String PLUGIN_ARCHIVE = "pluginArchive";
 }

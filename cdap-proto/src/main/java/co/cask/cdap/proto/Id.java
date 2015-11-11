@@ -23,8 +23,8 @@ import co.cask.cdap.proto.id.ApplicationId;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.DatasetModuleId;
 import co.cask.cdap.proto.id.DatasetTypeId;
-import co.cask.cdap.proto.id.ElementId;
-import co.cask.cdap.proto.id.ElementIdCompatible;
+import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.EntityIdCompatible;
 import co.cask.cdap.proto.id.FlowletId;
 import co.cask.cdap.proto.id.FlowletQueueId;
 import co.cask.cdap.proto.id.NamespaceId;
@@ -43,8 +43,11 @@ import com.google.common.base.Preconditions;
 
 /**
  * Contains collection of classes representing different types of Ids.
+ *
+ * @deprecated As of 3.3.0, use {@link EntityId}.
  */
-public abstract class Id implements ElementIdCompatible {
+@Deprecated
+public abstract class Id implements EntityIdCompatible {
 
   public static String getType(Class<? extends Id> type) {
     return type.getSimpleName().toLowerCase();
@@ -80,13 +83,13 @@ public abstract class Id implements ElementIdCompatible {
   }
 
   public static <T extends Id> T fromString(String string, Class<T> idClass) {
-    return ElementId.fromStringOld(string, idClass);
+    return EntityId.fromStringOld(string, idClass);
   }
 
   @Override
   public final String toString() {
     if (toString == null) {
-      toString = toElementId().toString();
+      toString = toEntityId().toString();
     }
     return toString;
   }
@@ -101,13 +104,13 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     Id other = (Id) obj;
-    return this.toElementId().equals(other.toElementId());
+    return this.toEntityId().equals(other.toEntityId());
   }
 
   @Override
   public final int hashCode() {
     if (hashCode == -1) {
-      hashCode = toElementId().hashCode();
+      hashCode = toEntityId().hashCode();
     }
     return hashCode;
   }
@@ -116,14 +119,20 @@ public abstract class Id implements ElementIdCompatible {
 
   /**
    * Indicates that the ID belongs to a namespace.
+   *
+   * @deprecated As of 3.3.0, use {@link co.cask.cdap.proto.id.NamespacedId}.
    */
+  @Deprecated
   public abstract static class NamespacedId extends Id {
     public abstract Namespace getNamespace();
   }
 
   /**
    * Uniquely identifies a Query Handle.
+   *
+   * @deprecated As of 3.3.0, use {@link QueryId}.
    */
+  @Deprecated
   public static final class QueryHandle extends Id {
     private final String id;
 
@@ -141,14 +150,17 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new QueryId(id);
     }
   }
 
   /**
    * Uniquely identifies a System Service.
+   *
+   * @deprecated As of 3.3.0, use {@link SystemServiceId}.
    */
+  @Deprecated
   public static final class SystemService extends Id {
     private final String id;
 
@@ -167,14 +179,17 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new SystemServiceId(id);
     }
   }
 
   /**
    * Uniquely identifies a Namespace.
+   *
+   * @deprecated As of 3.3.0, use {@link NamespaceId}.
    */
+  @Deprecated
   public static final class Namespace extends Id {
     public static final Namespace DEFAULT = from("default");
     public static final Namespace SYSTEM = from("system");
@@ -198,14 +213,17 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new NamespaceId(id);
     }
   }
 
   /**
    * Uniquely identifies an Application.
+   *
+   * @deprecated As of 3.3.0, use {@link ApplicationId}.
    */
+  @Deprecated
   public static final class Application extends NamespacedId {
     private final Namespace namespace;
     private final String applicationId;
@@ -241,7 +259,7 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new ApplicationId(namespace.getId(), applicationId);
     }
   }
@@ -249,7 +267,10 @@ public abstract class Id implements ElementIdCompatible {
 
   /**
    * Uniquely identifies a Program run.
+   *
+   * @deprecated As of 3.3.0, use {@link ProgramRunId}.
    */
+  @Deprecated
   public static class Run extends NamespacedId {
 
     private final Program program;
@@ -275,7 +296,7 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new ProgramRunId(program.getNamespaceId(), program.getApplicationId(), program.getType(),
                               program.getId(), id);
     }
@@ -283,7 +304,10 @@ public abstract class Id implements ElementIdCompatible {
 
   /**
    * Uniquely identifies a Program.
+   *
+   * @deprecated As of 3.3.0, use {@link ProgramId}.
    */
+  @Deprecated
   public static class Program extends NamespacedId {
     private final Application application;
     private final ProgramType type;
@@ -336,14 +360,17 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new ProgramId(application.getNamespaceId(), application.getId(), type, id);
     }
   }
 
   /**
    * Uniquely identifies a Worker.
+   *
+   * @deprecated As of 3.3.0, use {@link ProgramId}.
    */
+  @Deprecated
   public static class Worker extends Program {
 
     private Worker(Application application, String id) {
@@ -361,7 +388,10 @@ public abstract class Id implements ElementIdCompatible {
 
   /**
    * Uniquely identifies a Service.
+   *
+   * @deprecated As of 3.3.0, use {@link ProgramId}.
    */
+  @Deprecated
   public static class Service extends Program {
 
     private Service(Application application, String id) {
@@ -379,7 +409,10 @@ public abstract class Id implements ElementIdCompatible {
 
   /**
    * Uniquely identifies a Workflow.
+   *
+   * @deprecated As of 3.3.0, use {@link ProgramId}.
    */
+  @Deprecated
   public static class Workflow extends Program {
 
     private Workflow(Application application, String id) {
@@ -397,7 +430,10 @@ public abstract class Id implements ElementIdCompatible {
 
   /**
    * Uniquely identifies a Flow.
+   *
+   * @deprecated As of 3.3.0, use {@link ProgramId}.
    */
+  @Deprecated
   public static class Flow extends Program {
 
     private Flow(Application application, String id) {
@@ -422,7 +458,10 @@ public abstract class Id implements ElementIdCompatible {
 
     /**
      * Uniquely identifies a Flowlet.
+     *
+     * @deprecated As of 3.3.0, use {@link FlowletId}.
      */
+    @Deprecated
     public static class Flowlet extends NamespacedId {
 
       private final Flow flow;
@@ -458,13 +497,16 @@ public abstract class Id implements ElementIdCompatible {
       }
 
       @Override
-      public ElementId toElementId() {
+      public EntityId toEntityId() {
         return new FlowletId(flow.getNamespaceId(), flow.getApplicationId(), flow.getId(), id);
       }
 
       /**
        * Uniquely identifies a Flowlet Queue.
+       *
+       * @deprecated As of 3.3.0, use {@link FlowletQueueId}.
        */
+      @Deprecated
       public static final class Queue extends NamespacedId {
 
         private final Flowlet producer;
@@ -489,7 +531,7 @@ public abstract class Id implements ElementIdCompatible {
         }
 
         @Override
-        public ElementId toElementId() {
+        public EntityId toEntityId() {
           return new FlowletQueueId(producer.getNamespace().getId(), producer.getFlow().getApplicationId(),
                                     producer.getFlow().getId(), producer.getId(), id);
         }
@@ -499,7 +541,10 @@ public abstract class Id implements ElementIdCompatible {
 
   /**
    * Represents ID of a Schedule.
+   *
+   * @deprecated As of 3.3.0, use {@link ScheduleId}.
    */
+  @Deprecated
   public static class Schedule extends NamespacedId {
 
     private final Application application;
@@ -535,14 +580,17 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new ScheduleId(application.getNamespaceId(), application.getId(), id);
     }
   }
 
   /**
    * Represents ID of a Notification feed.
+   *
+   * @deprecated As of 3.3.0, use {@link NotificationFeedId}.
    */
+  @Deprecated
   public static class NotificationFeed extends NamespacedId {
 
     private final Namespace namespace;
@@ -616,13 +664,14 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new NotificationFeedId(namespace.getId(), category, name);
     }
 
     /**
      * Builder used to build {@link NotificationFeed}.
      */
+    @Deprecated
     public static final class Builder {
       private String category;
       private String name;
@@ -672,7 +721,10 @@ public abstract class Id implements ElementIdCompatible {
 
   /**
    * Id.Stream uniquely identifies a stream.
+   *
+   * @deprecated As of 3.3.0, use {@link StreamId}.
    */
+  @Deprecated
   public static final class Stream extends NamespacedId {
     private final Namespace namespace;
     private final String streamName;
@@ -722,13 +774,16 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new StreamId(namespace.getId(), streamName);
     }
 
     /**
      * Uniquely identifies a stream view.
+     *
+     * @deprecated As of 3.3.0, use {@link StreamViewId}.
      */
+    @Deprecated
     public static final class View extends NamespacedId {
       private final Stream stream;
       private final String id;
@@ -776,7 +831,7 @@ public abstract class Id implements ElementIdCompatible {
       }
 
       @Override
-      public ElementId toElementId() {
+      public EntityId toEntityId() {
         return new StreamViewId(stream.getNamespaceId(), stream.getId(), id);
       }
     }
@@ -784,7 +839,10 @@ public abstract class Id implements ElementIdCompatible {
 
   /**
    * Dataset Type Id identifies a given dataset module.
+   *
+   * @deprecated As of 3.3.0, use {@link DatasetTypeId}.
    */
+  @Deprecated
   public static final class DatasetType extends NamespacedId {
     private final Namespace namespace;
     private final String typeName;
@@ -825,14 +883,17 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new DatasetTypeId(namespace.getId(), typeName);
     }
   }
 
   /**
    * Dataset Module Id identifies a given dataset module.
+   *
+   * @deprecated As of 3.3.0, use {@link DatasetModuleId}.
    */
+  @Deprecated
   public static final class DatasetModule extends NamespacedId {
     private final Namespace namespace;
     private final String moduleId;
@@ -868,14 +929,17 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new DatasetModuleId(namespace.getId(), moduleId);
     }
   }
 
   /**
    * Dataset Instance Id identifies a given dataset instance.
+   *
+   * @deprecated As of 3.3.0, use {@link DatasetId}.
    */
+  @Deprecated
   public static final class DatasetInstance extends NamespacedId {
     private final Namespace namespace;
     private final String instanceId;
@@ -911,14 +975,17 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new DatasetId(namespace.getId(), instanceId);
     }
   }
 
   /**
    * Artifact Id identifies an artifact by its namespace, name, and version.
+   *
+   * @deprecated As of 3.3.0, use {@link co.cask.cdap.api.artifact.ArtifactId}.
    */
+  @Deprecated
   public static class Artifact extends NamespacedId implements Comparable<Artifact> {
     private final Namespace namespace;
     private final String name;
@@ -953,8 +1020,8 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     public ArtifactId toArtifactId() {
-      return new ArtifactId(name, version,
-                            Namespace.SYSTEM.equals(namespace) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
+      return new ArtifactId(
+        name, version, Namespace.SYSTEM.equals(namespace) ? ArtifactScope.SYSTEM : ArtifactScope.USER);
     }
 
     public static Artifact from(Namespace namespace, String name, String version) {
@@ -965,7 +1032,7 @@ public abstract class Id implements ElementIdCompatible {
       return new Artifact(namespace, name, version);
     }
 
-    public static Artifact from(Id.Namespace namespace, ArtifactId id) {
+    public static Artifact from(Id.Namespace namespace, co.cask.cdap.api.artifact.ArtifactId id) {
       return new Artifact(ArtifactScope.SYSTEM.equals(id.getScope()) ? Namespace.SYSTEM : namespace,
                           id.getName(), id.getVersion());
     }
@@ -1020,7 +1087,7 @@ public abstract class Id implements ElementIdCompatible {
     }
 
     @Override
-    public ElementId toElementId() {
+    public EntityId toEntityId() {
       return new NamespacedArtifactId(namespace.getId(), name, version.getVersion());
     }
   }

@@ -183,7 +183,6 @@ public class SparkPageRankApp extends AbstractApplication {
     @Override
     public void configure() {
       setInputDataset("ranks");
-      setOutputDataset("rankscount");
     }
 
     @Override
@@ -192,6 +191,7 @@ public class SparkPageRankApp extends AbstractApplication {
       job.setMapperClass(Emitter.class);
       job.setReducerClass(Counter.class);
       job.setNumReduceTasks(1);
+      context.addOutput("rankscount");
     }
 
     /**

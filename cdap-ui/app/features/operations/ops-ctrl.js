@@ -125,9 +125,9 @@ angular.module(PKG.name+'.feature.dashboard')
   })
 
   .controller('OpsAppsCtrl',
-  function ($scope, $state, myHelpers, MyDataSource) {
+  function ($scope, $state, myHelpers, MyCDAPDataSource) {
 
-    var dataSrc = new MyDataSource($scope);
+    var dataSrc = new MyCDAPDataSource($scope);
 
     $scope.apps = [];
 
@@ -174,8 +174,8 @@ angular.module(PKG.name+'.feature.dashboard')
 
 /* ------------------------------------------------------ */
 
-  .factory('opshelper', function (Widget, MyDataSource, MyMetricsQueryHelper, MyChartHelpers) {
-    var dataSrc = new MyDataSource();
+  .factory('opshelper', function (Widget, MyCDAPDataSource, MyMetricsQueryHelper, MyChartHelpers) {
+    var dataSrc = new MyCDAPDataSource();
 
     function createWidget(title, context, metricNames, type) {
       return new Widget({

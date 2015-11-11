@@ -45,6 +45,9 @@ public interface BatchContext extends DatasetContext, TransformContext {
   Map<String, String> getRuntimeArguments();
 
   /**
+   * Returns the hadoop job.
+   * @deprecated this method will be removed.
    */
+  @Deprecated
   <T> T getHadoopJob();
 }

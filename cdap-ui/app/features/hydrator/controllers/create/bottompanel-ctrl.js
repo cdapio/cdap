@@ -15,45 +15,12 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('BottomPanelController', function ($scope, MySidebarService, MyAppDAGService, MyNodeConfigService, $timeout, MyConsoleTabService) {
+  .controller('BottomPanelController', function (BottomPanelStore, NodeConfigStore, PipelineDetailBottomPanelActionFactory, MyConsoleTabService, MyAppDAGService) {
+    this.setIsCollapsed = function() {
+      this.bottomPanelState = BottomPanelStore.getPanelState();
+    };
 
-    MyAppDAGService.registerEditPropertiesCallback(editProperties.bind(this));
-    MyConsoleTabService.registerOnMessageUpdates(showConsoleTab.bind(this));
-    MyAppDAGService.errorCallback(showConsoleTab.bind(this));
-    // FIXME: We should be able to remove this now.
-    // Expand and collapse of the sidebar resizes the main container natively.
-    MySidebarService.registerIsExpandedCallback(isExpanded.bind(this));
-
-    function showConsoleTab(errors) {
-      if (errors.canvas && errors.canvas.length) {
-        errors.canvas.forEach(function(err) {
-          MyConsoleTabService.addMessage({
-            type: 'error',
-            content: err
-          });
-        });
-      }
-      $scope.selectTab($scope.tabs[0]);
-    }
-
-    function editProperties(plugin) {
-      $scope.selectTab($scope.tabs[2], false);
-      // Giving 100ms to load the template and then set the plugin
-      // For this service to work the controller has to register a callback
-      // with the service. The callback will not be called if plugin assignment happens
-      // before controller initialization. Hence the 100ms delay.
-      $timeout(function() {
-        MyNodeConfigService.setPlugin(plugin);
-      }, 100);
-    }
-
-    $scope.isExpanded = false;
-
-    function isExpanded(value) {
-      $scope.isExpanded = !value;
-    }
-
-    $scope.tabs = [
+    this.tabs = [
       {
         title: 'Console',
         template: '/assets/features/hydrator/templates/partial/console.html'
@@ -72,9 +39,80 @@ angular.module(PKG.name + '.feature.hydrator')
       }
     ];
 
-    $scope.activeTab = $scope.tabs[0];
-
-    $scope.selectTab = function(tab) {
-      $scope.activeTab = tab;
+    this.selectTab = function(tab) {
+      this.activeTab = this.tabs[tab];
     };
-});
+    this.selectTab(0);
+    this.setIsCollapsed();
+
+    this.toggleCollapse = function(expanded) {
+      if(expanded) {
+        PipelineDetailBottomPanelActionFactory.collapse();
+      } else {
+        PipelineDetailBottomPanelActionFactory.expand();
+      }
+    };
+    this.toggleMaximized = function(maximized) {
+      if (maximized !== 2) {
+        PipelineDetailBottomPanelActionFactory.maximize();
+      } else {
+        PipelineDetailBottomPanelActionFactory.expand();
+      }
+    };
+    BottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
+
+    NodeConfigStore.registerOnChangeListener(function() {
+      this.selectTab(2);
+    }.bind(this));
+
+    this.flashDanger = function() {
+      this.dangerBg = true;
+      setTimeout(function() {
+        this.dangerBg = false;
+      }.bind(this), 3000);
+    };
+
+    this.flashInfo = function() {
+      this.infoBg = true;
+      setTimeout(function() {
+        this.infoBg = false;
+      }.bind(this), 3000);
+    };
+
+    this.flashSuccess = function() {
+      this.successBg = true;
+      setTimeout(function() {
+        this.successBg = false;
+      }.bind(this), 3000);
+    };
+
+    function showConsoleTab(message) {
+      switch(message.type) {
+        case 'error':
+          this.flashDanger();
+          break;
+        case 'info':
+          this.flashInfo();
+          break;
+        case 'success':
+          this.flashSuccess();
+          break;
+      }
+      if (message.canvas && message.canvas.length) {
+        this.messageCount = message.canvas.length;
+        message.canvas.forEach(function(err) {
+          // Super f*&^k up. If I am correct this will cause recurrsion problems. Cause: Line 116
+          MyConsoleTabService.addMessage({
+            type: 'error',
+            content: err
+          });
+        });
+      }
+      PipelineDetailBottomPanelActionFactory.expand();
+      this.selectTab(0);
+    }
+
+    MyAppDAGService.errorCallback(showConsoleTab.bind(this));
+    MyConsoleTabService.registerOnMessageUpdates(showConsoleTab.bind(this));
+
+  });

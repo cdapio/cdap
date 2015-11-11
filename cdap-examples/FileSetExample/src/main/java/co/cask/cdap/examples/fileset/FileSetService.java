@@ -17,7 +17,6 @@
 package co.cask.cdap.examples.fileset;
 
 import co.cask.cdap.api.Transactional;
-import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.service.AbstractService;
@@ -62,12 +61,6 @@ public class FileSetService extends AbstractService {
 
     private static final Logger LOG = LoggerFactory.getLogger(FileSetHandler.class);
 
-    @UseDataSet("lines")
-    private FileSet lines;
-
-    @UseDataSet("counts")
-    private FileSet counts;
-
     @GET
     @Path("{fileSet}")
     public void read(HttpServiceRequest request, HttpServiceResponder responder,
@@ -77,6 +70,7 @@ public class FileSetService extends AbstractService {
       try {
         fileSet = getContext().getDataset(set);
       } catch (DatasetInstantiationException e) {
+        LOG.warn("Error instantiating file set {}", set, e);
         responder.sendError(400, String.format("Invalid file set name '%s'", set));
         return;
       }
@@ -102,6 +96,7 @@ public class FileSetService extends AbstractService {
       try {
         fileSet = getContext().getDataset(set);
       } catch (DatasetInstantiationException e) {
+        LOG.warn("Error instantiating file set {}", set, e);
         responder.sendError(400, String.format("Invalid file set name '%s'", set));
         return null;
       }

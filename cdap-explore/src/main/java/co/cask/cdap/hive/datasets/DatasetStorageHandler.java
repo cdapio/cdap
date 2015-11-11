@@ -17,9 +17,9 @@
 package co.cask.cdap.hive.datasets;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.hive.context.CConfCodec;
-import co.cask.cdap.hive.context.ConfigurationUtil;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler;
 import org.apache.hadoop.hive.ql.plan.TableDesc;

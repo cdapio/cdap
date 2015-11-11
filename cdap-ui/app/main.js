@@ -57,6 +57,10 @@ angular
       'cask-angular-confirmable',
       'cask-angular-promptable',
       'cask-angular-json-edit',
+      'cask-angular-eventpipe',
+      'cask-angular-observable-promise',
+      'cask-angular-socket-datasource',
+      'cask-angular-dispatcher',
 
       'mgcrea.ngStrap.datepicker',
       'mgcrea.ngStrap.timepicker',
@@ -99,6 +103,9 @@ angular
     window.$go = $state.go;
   })
 
+  .config(function (MyDataSourceProvider) {
+    MyDataSourceProvider.defaultInterval = 5;
+  })
 
   .config(function ($locationProvider) {
     $locationProvider.html5Mode(true);
@@ -110,7 +117,7 @@ angular
 
   .config(function($provide) {
 
-    $provide.decorator('$http', function($delegate, MyDataSource) {
+    $provide.decorator('$http', function($delegate, MyCDAPDataSource) {
 
 
       function newHttp(config) {
@@ -120,12 +127,12 @@ angular
           // Can/Should make use of my<whatever>Api service in another service.
           // So in that case the service will not have a scope. Hence the check
           if (config.params && config.params.scope) {
-            myDataSrc = MyDataSource(config.params.scope);
+            myDataSrc = MyCDAPDataSource(config.params.scope);
             delete config.params.scope;
           } else {
-            myDataSrc = MyDataSource();
+            myDataSrc = MyCDAPDataSource();
           }
-          // We can use MyDataSource directly or through $resource'y way.
+          // We can use MyCDAPDataSource directly or through $resource'y way.
           // If we use $resource'y way then we need to make some changes to
           // the data we get for $resource.
           config.$isResource = true;
@@ -247,12 +254,16 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth) {
 
     var activeThemeClass = caskTheme.getClassName();
-    var dataSource = new MyDataSource($scope);
+    var dataSource = new MyCDAPDataSource($scope);
     if (MY_CONFIG.securityEnabled) {
-      $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
+      if (myAuth.isAuthenticated()) {
+        getVersion();
+      } else {
+        $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
+      }
     } else {
       getVersion();
     }

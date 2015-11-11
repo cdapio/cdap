@@ -43,7 +43,7 @@ public final class Tables {
    * Adds {@link Table} data set to be created at application deploy if not exists.
    * @param configurer application configurer
    * @param datasetName data set name
-   * @param ttl time to live for data written into a table, in ms. {@link #NO_TTL} means unlimited
+   * @param ttl time to live for data written into a table, in seconds. {@link #NO_TTL} means unlimited
    */
   public static void createTable(ApplicationConfigurer configurer, String datasetName, int ttl) {
     createTable(configurer, datasetName, ConflictDetection.ROW, ttl, DatasetProperties.EMPTY);
@@ -64,7 +64,7 @@ public final class Tables {
    * @param configurer application configurer
    * @param datasetName data set name
    * @param level level on which to detect conflicts in changes made by different transactions
-   * @param ttl time to live for data written into a table, in ms. {@link #NO_TTL} means unlimited
+   * @param ttl time to live for data written into a table, in seconds. {@link #NO_TTL} means unlimited
    */
   public static void createTable(ApplicationConfigurer configurer, String datasetName,
                                  ConflictDetection level, int ttl) {
@@ -76,7 +76,7 @@ public final class Tables {
    * @param configurer application configurer
    * @param datasetName data set name
    * @param level level on which to detect conflicts in changes made by different transactions
-   * @param ttl time to live for data written into a table, in ms. {@link #NO_TTL} means unlimited
+   * @param ttl time to live for data written into a table, in seconds. {@link #NO_TTL} means unlimited
    * @param props any additional data set properties
    */
   public static void createTable(ApplicationConfigurer configurer, String datasetName,
@@ -89,7 +89,7 @@ public final class Tables {
   /**
    * Creates properties for {@link Table} or {@link Table} data set instance.
    * @param level level on which to detect conflicts in changes made by different transactions
-   * @param ttl time to live for data written into a table, in ms. {@link #NO_TTL} means unlimited
+   * @param ttl time to live for data written into a table, in seconds. {@link #NO_TTL} means unlimited
    * @return {@link DatasetProperties} for the data set
    */
   public static DatasetProperties tableProperties(ConflictDetection level, int ttl, DatasetProperties props) {

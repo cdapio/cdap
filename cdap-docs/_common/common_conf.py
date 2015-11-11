@@ -28,11 +28,9 @@
 
 # Component versions used in replacements:
 
-cdap_apps_version = '0.4.0'
+cdap_apps_version = "0.4.0"
 
-node_js_version = 'v0.10.* through v0.12.*'
-
-recommended_node_js_version = 'v0.12.0'
+node_js_version = "greater than v0.10.0"
 
 import sys
 import os
@@ -52,15 +50,15 @@ def get_sdk_version():
 #         print "grep_version_cmd: %s" % grep_version_cmd
 #         full_version_temp = subprocess.check_output(grep_version_cmd, shell=True)
 # Python 2.6 commands
-        p1 = subprocess.Popen(['grep' , '<version>', '../../../pom.xml' ], stdout=subprocess.PIPE)
-        p2 = subprocess.Popen(['awk', 'NR==1;START{print $1}'], stdin=p1.stdout, stdout=subprocess.PIPE)
+        p1 = subprocess.Popen(["grep" , "<version>", "../../../pom.xml" ], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["awk", "NR==1;START{print $1}"], stdin=p1.stdout, stdout=subprocess.PIPE)
         full_version_temp = p2.communicate()[0]
 # Python 2.6 command end
-        full_version = full_version_temp.strip().replace('<version>', '').replace('</version>', '')
-        version = full_version.replace('-SNAPSHOT', '')
-        short_version = "%s.%s" % tuple(version.split('.')[0:2])
+        full_version = full_version_temp.strip().replace("<version>", "").replace("</version>", "")
+        version = full_version.replace("-SNAPSHOT", "")
+        short_version = '%s.%s' % tuple(version.split('.')[0:2])
         
-        v = full_version.replace('-', '.').split('.')
+        v = full_version.replace("-", ".").split('.')
         if len(v) > 3:
             s = "%s-" % v[3]
             v = v[0:3]
@@ -71,7 +69,7 @@ def get_sdk_version():
             v.append('')
         version_tuple = tuple(v)       
     except:
-        print "Unexpected error: %s" % sys.exc_info()[0]
+        print "Unexpected error:", sys.exc_info()[0]
         pass
     return version, short_version, full_version, version_tuple
 
@@ -90,12 +88,12 @@ def get_git_hash_timestamp():
     git_hash = None
     git_timestamp = None
     try:
-        p1 = subprocess.Popen(['git' , 'rev-parse', 'HEAD' ], stdout=subprocess.PIPE)
+        p1 = subprocess.Popen(["git" , "rev-parse", "HEAD" ], stdout=subprocess.PIPE)
         git_hash = p1.communicate()[0].strip()
-        p2 = subprocess.Popen(['git', 'show', '-s', '--format=%ci', git_hash], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(["git", "show", "-s", "--format=%ci", git_hash], stdout=subprocess.PIPE)
         git_timestamp = p2.communicate()[0].strip()
     except:
-        print "Unexpected error: %s" % sys.exc_info()[0]
+        print "Unexpected error:", sys.exc_info()[0]
         pass
     return git_hash, git_timestamp
 
@@ -133,6 +131,7 @@ intersphinx_mapping = {
   'integrations': ('../../integrations/',         os.path.abspath(_intersphinx_mapping % 'integrations')),
   'examples':     ('../../examples-manual',       os.path.abspath(_intersphinx_mapping % 'examples-manual')),
   'reference':    ('../../reference-manual',      os.path.abspath(_intersphinx_mapping % 'reference-manual')),
+  'faqs':         ('../../faqs',                  os.path.abspath(_intersphinx_mapping % 'faqs')),
 }
 
 extlinks = {
@@ -204,11 +203,6 @@ if node_js_version:
     rst_epilog = rst_epilog + """
 .. |node-js-version| replace:: %(node_js_version)s
 """ % {'node_js_version': node_js_version}
-
-if recommended_node_js_version:
-    rst_epilog = rst_epilog + """
-.. |recommended-node-js-version| replace:: %(recommended_node_js_version)s
-""" % {'recommended_node_js_version': recommended_node_js_version}
 
 if version:
     rst_epilog = rst_epilog + """
@@ -310,38 +304,6 @@ googleanalytics_id = 'UA-123-123-123'
 # Turned off so unless the code and flag are passed on the command line, tracking is off.
 googleanalytics_enabled = False
 
-# Jira Issues
-# Set the Doc Engineer who will have Issues assigned
-jira_doc_engineer = 'John'
-
-jira_versions = {
-    '4.0.0': '10910',
-    '3.8.0': '10909',
-    '3.7.0': '10908',
-    '3.6.0': '10907',
-    '3.5.0': '10906',
-    '3.4.0': '10905',
-    '3.3.0': '10904',
-    '3.0.6': '11113',
-    '3.1.3': '11112',
-    '2.8.3': '11114',
-    '2.6.4': '11117',
-}
-if jira_versions.has_key(version):
-    jira_version = jira_versions[version]
-else:
-    jira_version = ''
-    
-jira_issues_dict = {
-    'url': 'https://issues.cask.co',
-    'pid': '10200', # CDAP
-    'pid_title': 'CDAP',
-    'versions': jira_version,
-    'assignee': jira_doc_engineer,
-    'components': '10204', # Docs
-    }
-
-
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -358,72 +320,76 @@ html_theme = 'cdap'
 # html_theme_options = {"showtoc_include_showtocs":"false"}
 # manuals and manual_titles are lists of the manuals in the doc set
 #
-# json_versions_js points to the JSON file on the webservers
+# versions points to the JSON file on the webservers
 # versions_data is used to generate the JSONP file at http://docs.cask.co/cdap/json-versions.js
-# This is generated by a script in the documentation repo that is used to sync the webservers.
+# format is a dictionary, with "development" and "older" lists of lists, and "current" a list, 
+# the inner-lists being the directory, a label, and the release date in YYYY-MM-DD format.
+# The label is currently not used in output, but is there for a future possibility of using 
+# a label instead of the directory to identify a release.
 #
 # manual_list is an ordered list of the manuals
 # Fields: directory, manual name, icon 
 # icon: "" for none, "new-icon" for the ico_new.png
 manuals_list = [
-    ['introduction',          'Introduction to CDAP',            '',],
-    ['developers-manual',    u'Developers’ Manual',              '',],
-    ['included-applications', 'Included Applications',           '',],
-    ['admin-manual',          'Administration Manual',           '',],
-    ['integrations',          'Integrations',                    '',],
-    ['examples-manual',       'Examples, Guides, and Tutorials', '',],
-    ['reference-manual',      'Reference Manual',                '',],
+    ["introduction",          "Introduction to CDAP",            "",],
+    ["developers-manual",    u"Developers’ Manual",              "",],
+    ["included-applications", "Included Applications",           "",],
+    ["admin-manual",          "Administration Manual",           "",],
+    ["integrations",          "Integrations",                    "",],
+    ["examples-manual",       "Examples, Guides, and Tutorials", "",],
+    ["reference-manual",      "Reference Manual",                "",],
+    ["faqs",                  "FAQs",                            "",],
 ]
-
-manual_intersphinx_mapping = {
-  'introduction': 'introduction',
-  'developers-manual': 'developers',
-  'included-applications': 'includedapps',
-  'admin-manual': 'admin',
-  'integrations': 'integrations',
-  'examples-manual': 'examples',
-  'reference-manual': 'reference',
-}
-
 manuals_dict = {}
 manual_titles_list = []
 manual_dirs_list  = []
 manual_icons_list = []
-for m in manuals_list:
-    manuals_dict[m[0]]= m[1]
-    manual_dirs_list.append(m[0])
-    manual_titles_list.append(m[1])
-    manual_icons_list.append(m[2])
+for manual in manuals_list:
+    manuals_dict[manual[0]]= manual[1]
+    manual_dirs_list.append(manual[0])
+    manual_titles_list.append(manual[1])
+    manual_icons_list.append(manual[2])
 
 html_theme_options = {
-  'docs_url': 'http://docs.cask.co/cdap',
-  'issues': jira_issues_dict,
-  'language': 'en',
-  'manual': '',
-  'manuals': manual_dirs_list,
-  'manual_titles': manual_titles_list,
-  'manual_icons': manual_icons_list,
-  'meta_git': 
-    { 'git_hash': git_hash,
-      'git_timestamp': git_timestamp,
-      'git_release': release,
+  "manuals": manual_dirs_list,
+  "manual_titles": manual_titles_list,
+  "manual_icons": manual_icons_list,
+  "meta_git": 
+    { "git_hash": git_hash,
+      "git_timestamp": git_timestamp,
+      "git_release": release,
     },
-  'release': release,
-  'version': version,
-  'json_versions_js': 'http://docs.cask.co/cdap/json-versions.js',
+  "versions":"http://docs.cask.co/cdap/json-versions.js",
+  "versions_data":
+    { "development": [
+        ['3.1.0-SNAPSHOT', '3.1.0'], 
+        ], 
+      "current": ['3.0.0', '3.0.0', '2015-05-05'], 
+      "older": [ 
+        ['2.8.0', '2.8.0', '2015-03-23'], 
+        ['2.7.1', '2.7.1', '2015-02-05'], 
+        ['2.6.3', '2.6.3', '2015-05-15'], 
+        ['2.6.2', '2.6.2', '2015-03-23'], 
+        ['2.6.1', '2.6.1', '2015-01-29'], 
+        ['2.6.0', '2.6.0', '2015-01-10'], 
+        ['2.5.2', '2.5.2', '2014-11-14'], 
+        ['2.5.1', '2.5.1', '2014-10-15'], 
+        ['2.5.0', '2.5.0', '2014-09-26'],
+        ],
+    },
 }
 
 def get_manuals():
-    return html_theme_options['manuals']
+    return html_theme_options["manuals"]
 
 def get_manual_titles():
-    return html_theme_options['manual_titles']
+    return html_theme_options["manual_titles"]
 
 def get_manual_titles_bash():
-    PREFIX = 'declare -a MANUAL_TITLES=('
-    SUFFIX = ');'
+    PREFIX = "declare -a MANUAL_TITLES=("
+    SUFFIX = ");"
     manual_titles = PREFIX
-    for title in html_theme_options['manual_titles']:
+    for title in html_theme_options["manual_titles"]:
         manual_titles += "'%s'" % title
     manual_titles += SUFFIX
     return manual_titles
@@ -439,7 +405,7 @@ html_theme_path = ['_themes','../../_common/_themes']
 html_short_title = u"CDAP Documentation v%s" % version
 
 # A shorter title for the sidebar section, preceding the words "Table of Contents".
-html_short_title_toc = u'CDAP Documentation'
+html_short_title_toc = u"CDAP Documentation"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -475,7 +441,6 @@ html_sidebars = {'**': [
     'globaltoc.html', 
     'relations.html', 
     'downloads.html', 
-    'doc-issues.html', 
     'searchbox.html',
     'casksites.html',
      ],}
@@ -517,7 +482,7 @@ htmlhelp_basename = 'CDAPdoc'
 # This context needs to be created in each child conf.py. At a minimum, it needs to be 
 # html_context = {"html_short_title_toc":html_short_title_toc}
 # This is because it needs to be set as the last item.
-html_context = {'html_short_title_toc': html_short_title_toc}
+html_context = {"html_short_title_toc":html_short_title_toc}
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -638,11 +603,11 @@ pdf_style_path = ['.', '_templates', '_styles']
 pdf_font_path = ['/Library/fonts', '~/Library/Fonts']
 
 # Language to be used for hyphenation support
-pdf_language = 'en_US'
+pdf_language = "en_US"
 
 # Mode for literal blocks wider than the frame. Can be
 # overflow, shrink or truncate
-pdf_fit_mode = 'shrink'
+pdf_fit_mode = "shrink"
 
 # Section level that forces a break page.
 # For example: 1 means top-level sections start in a new page
@@ -700,19 +665,3 @@ pdf_use_numbered_links = False
 
 # Background images fitting mode
 pdf_fit_background_mode = 'scale'
-
-# -- Options for Manuals --------------------------------------------------
-
-def set_conf_for_manual():
-    m = os.path.basename(os.path.normpath(os.path.join(os.getcwd(), '..')))
-    print "set_conf_for_manual: %s" % m
-
-    html_theme_options['manual'] = m
-    html_short_title_toc = manuals_dict[m]
-    html_short_title = u'CDAP %s' % html_short_title_toc
-    html_context = {'html_short_title_toc': html_short_title_toc}
-
-    # Remove this guide from the mapping as it will fail as it has been deleted by clean
-    intersphinx_mapping.pop(manual_intersphinx_mapping[m], None)
-
-    return html_short_title_toc, html_short_title, html_context

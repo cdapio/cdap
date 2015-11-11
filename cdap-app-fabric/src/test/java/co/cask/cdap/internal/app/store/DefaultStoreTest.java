@@ -291,13 +291,13 @@ public class DefaultStoreTest {
 
     // Get run record for run5
     RunRecordMeta expectedRecord5 = new RunRecordMeta(run5.getId(), nowSecs - 8, nowSecs - 4,
-                                                      ProgramRunStatus.COMPLETED, noRuntimeArgsProps, null);
+                                                      ProgramRunStatus.COMPLETED, noRuntimeArgsProps, null, null);
     RunRecordMeta actualRecord5 = store.getRun(programId, run5.getId());
     Assert.assertEquals(expectedRecord5, actualRecord5);
 
     // Get run record for run6
     RunRecordMeta expectedRecord6 = new RunRecordMeta(run6.getId(), nowSecs - 2, null, ProgramRunStatus.RUNNING,
-                                                      noRuntimeArgsProps, null);
+                                                      noRuntimeArgsProps, null, null);
     RunRecordMeta actualRecord6 = store.getRun(programId, run6.getId());
     Assert.assertEquals(expectedRecord6, actualRecord6);
 
@@ -622,11 +622,12 @@ public class DefaultStoreTest {
     Id.Run mapreduceProgramRunId = new Id.Run(mapreduceProgramId, mapreduceRunId);
     Id.Run workflowProgramRunId = new Id.Run(workflowProgramId, workflowRunId);
 
-    store.setStart(flowProgramId, flowRunId, System.currentTimeMillis(), null, ImmutableMap.of("model", "click"));
+    store.setStart(flowProgramId, flowRunId, System.currentTimeMillis(), null,
+                   ImmutableMap.of("model", "click"), null);
     store.setStart(mapreduceProgramId, mapreduceRunId, System.currentTimeMillis(), null,
-                   ImmutableMap.of("path", "/data"));
+                   ImmutableMap.of("path", "/data"), null);
     store.setStart(workflowProgramId, workflowRunId, System.currentTimeMillis(), null,
-                   ImmutableMap.of("whitelist", "cask"));
+                   ImmutableMap.of("whitelist", "cask"), null);
 
     Map<String, String> args = store.getRuntimeArguments(flowProgramRunId);
     Assert.assertEquals(1, args.size());
@@ -794,10 +795,15 @@ public class DefaultStoreTest {
   private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
                                                            AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
-  private static final Schedule schedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
-  private static final Schedule schedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");
-  private static final Schedule scheduleWithSameName = Schedules.createTimeSchedule("Schedule2", "Every minute",
-                                                                                    "* * * * ?");
+  private static final Schedule schedule1 = Schedules.builder("Schedule1")
+    .setDescription("Every minute")
+    .createTimeSchedule("* * * * ?");
+  private static final Schedule schedule2 = Schedules.builder("Schedule2")
+    .setDescription("Every Hour")
+    .createTimeSchedule("0 * * * ?");
+  private static final Schedule scheduleWithSameName = Schedules.builder("Schedule2")
+    .setDescription("Every minute")
+    .createTimeSchedule("* * * * ?");
   private static final Map<String, String> properties1 = ImmutableMap.of();
   private static final Map<String, String> properties2 = ImmutableMap.of();
   private static final ScheduleSpecification scheduleSpec1 =

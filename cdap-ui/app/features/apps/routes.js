@@ -53,11 +53,22 @@ angular.module(`${PKG.name}.feature.apps`)
           url: '/overview',
           templateUrl: '/assets/features/apps/templates/detail.html',
           resolve: {
-            rAppData: function(MyDataSource, $stateParams) {
-              var datasrc = new MyDataSource();
-              return datasrc.request({
+            rAppData: function(MyCDAPDataSource, $stateParams, $q, $state) {
+              var datasrc = new MyCDAPDataSource();
+              var defer = $q.defer();
+              datasrc.request({
                 _cdapPath: '/namespaces/' + $stateParams.namespace + '/apps/' + $stateParams.appId
-              });
+              })
+                .then(
+                  function success(appDetail) {
+                    defer.resolve(appDetail);
+                  },
+                  function error() {
+                    defer.reject();
+                    $state.go('404');
+                  }
+                );
+              return defer.promise;
             }
           },
           controller: 'AppDetailController',
