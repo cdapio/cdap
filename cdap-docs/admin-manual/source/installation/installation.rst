@@ -626,7 +626,7 @@ you have a use case for it, please reach out to us at `cdap-user@googlegroups.co
 
      $ kinit -kt <keytab> <principle>
 
-#. Run the upgrade tool::
+#. Run the upgrade tool, as the user that runs CDAP Master (the CDAP user)::
 
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade
 
