@@ -1,0 +1,5 @@
+You can post a question at the `cdap-user@googlegroups.com <https://groups.google.com/d/forum/cdap-user>`__.
+
+The *cdap-user* mailing list is primarily for users using the product to develop
+applications. You can expect questions from users, release announcements, and any other
+discussions that we think will be helpful to the users.

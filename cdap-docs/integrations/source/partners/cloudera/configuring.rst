@@ -47,7 +47,7 @@ All services run as the 'cdap' user installed by the parcel.
 Prerequisites
 =======================================
 
-#. Node.js (from |node-js-version|; we recommend |recommended-node-js-version|) must be installed on the node(s) where the UI
+#. Node.js (we recommend any version of `Node.js <https://nodejs.org/>`__ |node-js-version|.) must be installed on the node(s) where the UI
    role instance will run. You can download the appropriate version of Node.js from `nodejs.org
    <http://nodejs.org/dist/>`__.
 

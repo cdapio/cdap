@@ -46,7 +46,6 @@ com.twitter.parquet-hadoop-1.6.0rc3.jar
 com.twitter.parquet-hadoop-bundle-1.6.0rc3.jar
 com.twitter.parquet-jackson-1.6.0rc3.jar
 com.typesafe.config-1.2.1.jar
-com.yammer.metrics.metrics-annotation-2.2.0.jar
 com.yammer.metrics.metrics-core-2.2.0.jar
 commons-beanutils.commons-beanutils-1.7.0.jar
 commons-beanutils.commons-beanutils-core-1.8.3.jar
@@ -60,7 +59,6 @@ commons-el.commons-el-1.0.jar
 commons-httpclient.commons-httpclient-3.1.jar
 commons-io.commons-io-2.4.jar
 commons-lang.commons-lang-2.5.jar
-commons-logging.commons-logging-1.1.1.jar
 commons-net.commons-net-2.2.jar
 commons-pool.commons-pool-1.5.4.jar
 eigenbase.eigenbase-properties-1.1.4.jar

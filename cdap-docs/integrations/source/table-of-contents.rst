@@ -12,6 +12,7 @@ CDAP Integrations Table of Contents
     Introduction <index>
     Cloudera <partners/cloudera/index>
     Ambari <ambari/index>
+    MapR <mapr/index>
     CDAP JDBC Driver <jdbc>
     Pentaho Data Integration <pentaho>
     SquirrelSQL <squirrel>

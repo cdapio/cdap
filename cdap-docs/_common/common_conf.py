@@ -30,9 +30,7 @@
 
 cdap_apps_version = "0.4.0"
 
-node_js_version = "v0.10.* through v0.12.*"
-
-recommended_node_js_version = "v0.12.0"
+node_js_version = "greater than v0.10.0"
 
 import sys
 import os
@@ -133,6 +131,7 @@ intersphinx_mapping = {
   'integrations': ('../../integrations/',         os.path.abspath(_intersphinx_mapping % 'integrations')),
   'examples':     ('../../examples-manual',       os.path.abspath(_intersphinx_mapping % 'examples-manual')),
   'reference':    ('../../reference-manual',      os.path.abspath(_intersphinx_mapping % 'reference-manual')),
+  'faqs':         ('../../faqs',                  os.path.abspath(_intersphinx_mapping % 'faqs')),
 }
 
 extlinks = {
@@ -204,11 +203,6 @@ if node_js_version:
     rst_epilog = rst_epilog + """
 .. |node-js-version| replace:: %(node_js_version)s
 """ % {'node_js_version': node_js_version}
-
-if recommended_node_js_version:
-    rst_epilog = rst_epilog + """
-.. |recommended-node-js-version| replace:: %(recommended_node_js_version)s
-""" % {'recommended_node_js_version': recommended_node_js_version}
 
 if version:
     rst_epilog = rst_epilog + """
@@ -344,6 +338,7 @@ manuals_list = [
     ["integrations",          "Integrations",                    "",],
     ["examples-manual",       "Examples, Guides, and Tutorials", "",],
     ["reference-manual",      "Reference Manual",                "",],
+    ["faqs",                  "FAQs",                            "",],
 ]
 manuals_dict = {}
 manual_titles_list = []

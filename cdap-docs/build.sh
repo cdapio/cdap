@@ -323,6 +323,7 @@ function build_docs_outer_level() {
   copy_source integrations          "Integrations"
   copy_source examples-manual       "Examples, Guides, and Tutorials"
   copy_source reference-manual      "Reference Manual"
+  copy_source faqs                  "FAQs"
 
   # Build outer-level docs
   cp ${SCRIPT_PATH}/${COMMON_HIGHLEVEL_PY}  ${TARGET_PATH}/${SOURCE}/conf.py

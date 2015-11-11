@@ -13,7 +13,7 @@ Installation
 Introduction
 ------------
 
-This manual is to help you install and configure Cask Data Application Platform (CDAP). It provides the
+This manual is to help you install the Cask Data Application Platform (CDAP). It provides the
 `system <#system-requirements>`__, 
 `network <#network-requirements>`__, and
 `software requirements <#software-prerequisites>`__,
@@ -25,6 +25,16 @@ the CDAP components so they work with your existing Hadoop cluster.
 There are specific instructions for :ref:`upgrading existing CDAP installations <configuration-upgrade>`.
 
 Once installed, another page :ref:`covers configuration <configuration>` of the CDAP installation.
+
+.. _install-follow-these-instructions:
+
+Follow these instructions only if you aren't using a cluster manager such as :ref:`Cloudera
+Manager <cloudera-configuring>` or :ref:`Apache Ambari <ambari-configuring>`. For the Mapr
+distribution, we have :ref:`additional instructions <mapr-configuring>` to start with;
+please read those before continuing. These instructions *do not apply* to the
+:ref:`standalone SDK <standalone-index>`
+
+.. _install-these-are-the-cdap-components:
 
 These are the CDAP components:
 
@@ -88,6 +98,24 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 | **CDAP Authentication Server**        | RAM                | 1 GB minimum, 2 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
 
+.. _install-hardware-memory-core-requirements:
+
+Memory and Core Requirements
+............................
+Memory and core requirements are governed by two sources: CDAP and YARN. The default
+settings for CDAP are found in the :ref:`cdap-defaults.xml <appendix-cdap-default.xml>`,
+and are overridden in particular instances by the :ref:`cdap-site.xml
+<appendix-cdap-site.xml>` file. These vary with each service and range from 512 to 1024 MB
+and from one to two cores.
+
+The YARN settings will override these; for instance, the minimum YARN container size is
+determined by ``yarn.scheduler.minimum-allocation-mb``. The YARN default in Hadoop is 1024
+MB, so containers will be allocated with 1024 MB, even if the CDAP settings are for 512 MB.
+
+With the default YARN and CDAP settings of memory, having 14 to 16 CPU cores 
+(and a total of 14 to 16 GB of memory) available to YARN can be required just to start.
+
+.. _install-network-requirements:
 
 Network Requirements
 ....................
@@ -95,6 +123,8 @@ CDAP components communicate over your network with *HBase*, *HDFS*, and *YARN*.
 For the best performance, CDAP components should be located on the same LAN,
 ideally running at 1 Gbps or faster. A good rule of thumb is to treat CDAP
 components as you would *Hadoop DataNodes*.  
+
+.. _install-software-requirements:
 
 Software Prerequisites
 ......................
@@ -131,7 +161,7 @@ Node.js Runtime
 +++++++++++++++
 You can download the appropriate version of Node.js from `nodejs.org <http://nodejs.org>`__:
 
-#. The version of Node.js must be from |node-js-version|; we recommend |recommended-node-js-version|.
+#. We recommend any version of `Node.js <https://nodejs.org/>`__ |node-js-version|.
 #. Download the appropriate binary ``.tar.gz`` from
    `nodejs.org/download/ <http://nodejs.org/dist/>`__.
 
@@ -210,6 +240,8 @@ Deployment Architectures
    :align: center
 
 ------------
+
+.. _deployment-architectures-ha:
 
 .. rubric:: CDAP High Availability and Highly Scalable Deployment
 
