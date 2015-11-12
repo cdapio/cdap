@@ -46,11 +46,10 @@ angular.module(PKG.name + '.commons')
         function isEllipsisActive(e) {
           return (e[0].offsetWidth > e[0].parentElement.offsetWidth - scope.offsetValue);
         }
-
+        // FIXME: Find more efficient approach
         scope.$watch(function () {
           return element[0].parentElement.offsetWidth;
         }, function () {
-          console.log('parent width: ', element[0].parentElement.offsetWidth - scope.offsetValue);
           if (isEllipsisActive(element)) {
             scope.ellipsis = true;
           } else {
