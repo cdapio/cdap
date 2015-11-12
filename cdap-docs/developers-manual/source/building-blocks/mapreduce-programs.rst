@@ -153,11 +153,11 @@ one of these options:
          ...
        }
 
-#. Acquire the dataset in the mapper's or reducer's initialize() method. As opposed
+#. Acquire the dataset in the mapper's or reducer's ``initialize()`` method. As opposed
    to the previous method, this does not require the dataset name to be constant; it
    only needs to be known at the time the task starts (for example, through configuration).
-   Note that this requires the mapper or reducer class to implement the ProgramLifecycle
-   interface, which includes the two methods initialize() and destroy()::
+   Note that this requires that the mapper or reducer class implements the ``ProgramLifecycle``
+   interface, which includes the two methods ``initialize()`` and ``destroy()``::
 
      public static class CatalogJoinMapper extends Mapper<byte[], Purchase, ...>
        implements ProgramLifecycle<MapReduceTaskContext> {
@@ -183,9 +183,9 @@ one of these options:
        }
 
 #. Dynamically acquire the dataset in the mapper every time it is accessed. This is useful if
-   the name of the dataset is not known at initialization time, for example, if it depends on
-   the data passed to each map() call. In this case you also implement the ProgramLifecycle
-   interface, to save the MapReduceTaskContext for use in the map() method. For example::
+   the name of the dataset is not known at initialization time; for example, if it depends on
+   the data passed to each ``map()`` call. In this case, you also implement the ``ProgramLifecycle``
+   interface, to save the ``MapReduceTaskContext`` for use in the ``map()`` method. For example::
 
      public static class CatalogJoinMapper extends Mapper<byte[], Purchase, ...>
        implements ProgramLifecycle<MapReduceTaskContext> {
