@@ -612,7 +612,7 @@
     <name>app.connection.backlog</name>
     <value>20000</value>
     <description>
-      Max connection backlog of CDAP-Master
+      Max connection backlog of CDAP Master
     </description>
   </property>
 
@@ -809,7 +809,7 @@
     <name>master.collect.containers.log</name>
     <value>true</value>
     <description>
-      Determines if container logs are streamed back to the cdap-master process log
+      Determines if container logs are streamed back to the CDAP Master process log
     </description>
   </property>
 
