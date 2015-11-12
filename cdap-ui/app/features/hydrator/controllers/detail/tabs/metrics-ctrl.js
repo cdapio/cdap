@@ -28,13 +28,15 @@ angular.module(PKG.name + '.feature.hydrator')
     this.setState();
 
     MetricsStore.registerOnChangeListener(this.setState.bind(this));
-    DetailRunsStore.registerOnChangeListener(function() {
-      if (!DetailRunsStore.getRunsCount()) {
-        return;
+    DetailRunsStore.registerOnChangeListener(checkAndPollForMetrics.bind(this));
+
+    function checkAndPollForMetrics() {
+      if (DetailRunsStore.getRunsCount()) {
+        startPollMetricsForLatestRunId();
+        this.setState();
       }
-      startPollMetricsForLatestRunId();
-      this.setState();
-    }.bind(this));
+    }
+    checkAndPollForMetrics.call(this);
 
     function startPollMetricsForLatestRunId() {
       var latestRunId = DetailRunsStore.getLatestRun().runid;
