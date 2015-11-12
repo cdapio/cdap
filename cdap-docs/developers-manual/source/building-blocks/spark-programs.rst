@@ -153,6 +153,9 @@ An ``ObjectStore`` dataset can be used, provided its classes are serializable.
 
     sparkContext.writeToDataset(purchaseRDD, "purchases", classOf[Array[Byte]], classOf[Purchase])
 
+You can also access a dataset directly by calling the ``getDataset()`` method of the SparkContext.
+See also the section on :ref:`Using Datasets in Programs <datasets-in-programs>`.
+
 Spark and Streams
 -----------------
 Spark programs in CDAP can directly access **streams** similar to the way a MapReduce can.

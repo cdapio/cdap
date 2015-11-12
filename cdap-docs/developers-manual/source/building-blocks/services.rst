@@ -55,10 +55,10 @@ You add handlers to your service by calling the ``addHandler`` method in the ser
 ``configure`` method, as shown above. Only handler classes that are declared public,
 with public methods for endpoints, will be exposed by the service.
 
-To use a dataset within a handler, specify the dataset by calling the ``useDataset``
-method in the service's ``configure`` method and include the ``@UseDataSet`` annotation in
-the handler to obtain an instance of the dataset. Each request to a method is committed as
-a single transaction.
+To use a dataset within a handler, either include the ``@UseDataSet`` annotation in
+the handler, or use the ``getDataset()`` method dynamicall in the handler to obtain
+an instance of the dataset (see also :ref:`Using Datasets in Programs <datasets-in-programs>`).
+Each request to a method is committed as a single transaction.
 
 ::
 
