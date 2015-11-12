@@ -306,7 +306,7 @@ the stream and extracts useful information from it. Here is its implementation:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/WiseFlow.java
    :language: java
-   :lines: 57-81   
+   :lines: 53-77   
    :dedent: 2
 
 A ``Flowlet`` class extends ``AbstractFlowlet``. The ``LogEventParserFlowlet`` class contains one
@@ -334,7 +334,7 @@ Its implementation is very brief:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/WiseFlow.java
    :language: java
-   :lines: 86-102   
+   :lines: 82-99   
    :dedent: 2
 
 Here’s what to note about the ``PageViewCounterFlowlet`` flowlet class:
@@ -363,7 +363,7 @@ The flowlets are defined in the ``WiseFlow`` flow, which is defined by this smal
 
 .. literalinclude:: /../target/_includes/tutorial-wise/WiseFlow.java
    :language: java
-   :lines: 38-51   
+   :lines: 37-47   
 
 In the ``configure()`` method of the ``WiseFlow`` flow, we define the flowlets, giving them names:
 
@@ -492,7 +492,7 @@ The ``WiseWorkflow`` can then be scheduled in the ``WiseApp``:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/WiseApp.java
    :language: java
-   :lines: 47-49   
+   :lines: 47-51   
    :prepend: . . . 
    :append: . . . 
    :dedent: 4

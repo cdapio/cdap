@@ -598,8 +598,12 @@ public class MasterServiceMain extends DaemonMain {
 
         TwillPreparer preparer = twillRunner.prepare(new MasterTwillApplication(cConf, cConfFile.toFile(),
                                                                                 hConfFile.toFile(),
-                                                                                getSystemServiceInstances()))
-          .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+                                                                                getSystemServiceInstances()));
+
+        if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
+          preparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+        }
+
         // Add logback xml
         if (Files.exists(logbackFile)) {
           preparer.withResources().withResources(logbackFile.toUri());

@@ -21,7 +21,6 @@ import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
@@ -48,7 +47,6 @@ import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
-import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
@@ -112,15 +110,8 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   public void addFlow(Flow flow) {
     Preconditions.checkArgument(flow != null, "Flow cannot be null.");
     DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow);
-    FlowSpecification spec = flow.configure();
-    if (spec == null && flow instanceof AbstractFlow) {
-      AbstractFlow abstractFlow = (AbstractFlow) flow;
-      abstractFlow.configure(configurer);
-      spec = configurer.createSpecification();
-    } else {
-      spec = new DefaultFlowSpecification(flow.getClass().getName(), spec);
-    }
-
+    flow.configure(configurer);
+    FlowSpecification spec = configurer.createSpecification();
     addStreams(configurer.getStreams());
     addDatasetModules(configurer.getDatasetModules());
     addDatasetSpecs(configurer.getDatasetSpecs());

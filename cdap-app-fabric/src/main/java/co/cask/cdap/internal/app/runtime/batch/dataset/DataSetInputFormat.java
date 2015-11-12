@@ -16,13 +16,13 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
 import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
@@ -30,7 +30,6 @@ import com.google.common.io.ByteStreams;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;

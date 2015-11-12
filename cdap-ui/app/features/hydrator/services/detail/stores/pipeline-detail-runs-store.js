@@ -51,6 +51,22 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getLatestRun = function() {
       return this.state.runs.list[0];
     };
+    this.getLatestMericRunId = function() {
+      var appType = this.getAppType();
+      var metricRunId;
+      if (!this.state.runs.count) {
+        return false;
+      }
+
+      if (appType === GLOBALS.etlBatch) {
+        // TODO: Make it generic so that we can choose between spark and mapreduce.
+        // We will get a flag from backend called 'engine'. This can be chosen based on that.
+        metricRunId = this.state.runs.list[0].properties.ETLMapReduce;
+      } else if (appType === GLOBALS.etlRealtime) {
+        metricRunId = this.state.runs.list[0].runid;
+      }
+      return metricRunId;
+    };
     this.getHistory = this.getRuns;
 
     this.getStatus = function() {

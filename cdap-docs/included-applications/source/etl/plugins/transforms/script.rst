@@ -81,7 +81,7 @@ Currently supports ``KeyValueTable``.
       "lookup": "{
         \"purchases\":{
           \"type\":\"DATASET\",
-          \"properties\":{
+          \"datasetProperties\":{
             \"dataset_argument1\":\"foo\",
             \"dataset_argument2\":\"bar\"
           }

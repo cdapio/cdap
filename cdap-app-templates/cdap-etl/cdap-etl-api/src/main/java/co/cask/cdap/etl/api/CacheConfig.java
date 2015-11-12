@@ -14,23 +14,35 @@
  * the License.
  */
 
-package co.cask.cdap.test;
-
-import co.cask.cdap.api.flow.AbstractFlow;
+package co.cask.cdap.etl.api;
 
 /**
- *
- */
-public final class TestFlow extends AbstractFlow {
+ * Cache configuration.
+  */
+public final class CacheConfig {
+  private final long expirySeconds;
+  private final int maxSize;
 
-  public static final String NAME = "SomeFlow";
-  public static final String INPUT_STREAM = "someStream";
+  public CacheConfig(long expirySeconds, int maxSize) {
+    this.expirySeconds = expirySeconds;
+    this.maxSize = maxSize;
+  }
 
-  @Override
-  protected void configureFlow() {
-    setName(NAME);
-    setDescription("SomeDescription");
-    addFlowlet("theFlowlet", new TestFlowlet());
-    connectStream(INPUT_STREAM, "theFlowlet");
+  public CacheConfig() {
+    this(0, 0);
+  }
+
+  /**
+   * @return expiry after write in seconds
+   */
+  public long getExpirySeconds() {
+    return expirySeconds;
+  }
+
+  /**
+   * @return maximum number of elements in the cache
+   */
+  public int getMaxSize() {
+    return maxSize;
   }
 }
