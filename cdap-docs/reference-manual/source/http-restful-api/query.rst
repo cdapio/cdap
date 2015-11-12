@@ -365,9 +365,9 @@ The results are returned as a JSON array, with each element containing informati
    * - Description
      - Retrieves all queries
 
-Count of Queries
-----------------
-To return the count of queries, use::
+Count of Active Queries
+-----------------------
+To return the count of active queries, use::
 
    GET <base-url>/namespaces/<namespace>/data/explore/queries/count
 
@@ -382,7 +382,7 @@ To return the count of queries, use::
 
 The results are returned in the body as a JSON string::
 
-  { "count":6}
+  { "count":6 }
 
 Download Query Results
 ----------------------
