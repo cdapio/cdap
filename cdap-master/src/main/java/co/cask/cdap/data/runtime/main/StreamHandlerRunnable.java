@@ -89,12 +89,12 @@ public class StreamHandlerRunnable extends AbstractMasterTwillRunnable {
         new DataSetsModules().getDistributedModules(),
         new LoggingModules().getDistributedModules(),
         new ExploreClientModule(),
+        new NamespaceClientRuntimeModule().getDistributedModules(),
         new StreamServiceRuntimeModule().getDistributedModules(),
         new ViewAdminModules().getDistributedModules(),
         new StreamAdminModules().getDistributedModules(),
         new NotificationFeedClientModule(),
-        new NotificationServiceRuntimeModule().getDistributedModules(),
-        new NamespaceClientRuntimeModule().getDistributedModules()
+        new NotificationServiceRuntimeModule().getDistributedModules()
       );
 
       injector.getInstance(LogAppenderInitializer.class).initialize();

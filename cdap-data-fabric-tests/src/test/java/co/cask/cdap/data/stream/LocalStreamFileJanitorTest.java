@@ -22,6 +22,9 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
+import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricLevelDBModule;
@@ -57,6 +60,7 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
   private static StreamAdmin streamAdmin;
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
+  private static AbstractNamespaceClient namespaceClient;
 
   @BeforeClass
   public static void init() throws IOException {
@@ -83,12 +87,14 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
         protected void configure() {
           // We don't need notification in this test, hence inject an no-op one
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
+          bind(AbstractNamespaceClient.class).to(InMemoryNamespaceClient.class);
         }
       }
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);
     namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
+    namespaceClient = injector.getInstance(AbstractNamespaceClient.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
@@ -113,6 +119,11 @@ public class LocalStreamFileJanitorTest extends StreamFileJanitorTestBase {
   @Override
   protected StreamAdmin getStreamAdmin() {
     return streamAdmin;
+  }
+
+  @Override
+  protected AbstractNamespaceClient getNamespaceClient() {
+    return namespaceClient;
   }
 
   @Override
