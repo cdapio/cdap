@@ -17,7 +17,7 @@ Overview
 This example demonstrates a Spark application performing streaming analysis, computing the centers of points from an
 input stream using the K-Means Clustering method.
 
-Data from a sample file is sent to CDAP by the external script *inject-data* to the *pointsStream*. This data is
+Data from a sample file is sent to CDAP by a CDAP CLI command to the *pointsStream*. This data is
 processed by the ``PointsFlow``, which stores the points coordinates event in its entirety in *points*, an ObjectStore dataset.
 
 As these entries are created, they are taken up by the *SparkKMeansProgram*, which
