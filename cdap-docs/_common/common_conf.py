@@ -304,37 +304,6 @@ googleanalytics_id = 'UA-123-123-123'
 # Turned off so unless the code and flag are passed on the command line, tracking is off.
 googleanalytics_enabled = False
 
-# Jira Issues
-# Set the Doc Engineer who will have Issues assigned
-jira_doc_engineer = 'John'
-
-jira_versions = {
-    '4.0.0': '10910',
-    '3.8.0': '10909',
-    '3.7.0': '10908',
-    '3.6.0': '10907',
-    '3.5.0': '10906',
-    '3.4.0': '10905',
-    '3.3.0': '10904',
-    '3.0.6': '11113',
-    '3.1.3': '11112',
-    '2.8.3': '11114',
-    '2.6.4': '11117',
-}
-if jira_versions.has_key(version):
-    jira_version = jira_versions[version]
-else:
-    jira_version = ''
-   
-jira_issues_dict = {
-    'url': 'https://issues.cask.co',
-    'pid': '10200', # CDAP
-    'pid_title': 'CDAP',
-    'versions': jira_version,
-    'assignee': jira_doc_engineer,
-    'components': '10204', # Docs
-    }
-
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -392,7 +361,6 @@ for m in manuals_list:
 
 html_theme_options = {
   'docs_url': 'http://docs.cask.co/cdap',
-  'issues': jira_issues_dict,
   'language': 'en',
   'manual': '',
   'manuals': manual_dirs_list,
