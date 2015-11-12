@@ -219,8 +219,12 @@ See also the section on :ref:`Using Datasets in Programs <datasets-in-programs>`
 
 .. rubric: Datasets as MapReduce Input or Output
 
-A MapReduce program can interact with a dataset by using it as an input or an output.
-The dataset needs to implement specific interfaces to support this.
+A MapReduce program can interact with a dataset by using it as 
+:ref:`an input <mapreduce-datasets-input>` or :ref:`an output <mapreduce-datasets-output>`.
+The dataset needs to implement specific interfaces to support this, as described in the
+following sections.
+
+.. _mapreduce-datasets-input:
 
 .. rubric:: A Dataset as the Input Source of a MapReduce Program
 
@@ -262,6 +266,7 @@ To read a range of keys and give a hint that you want 16 splits, write::
     context.setInput("myTable", kvTable.getSplits(16, startKey, stopKey));
   }
 
+.. _mapreduce-datasets-output:
 
 .. rubric:: A Dataset as the Output Destination of a MapReduce Program
 
