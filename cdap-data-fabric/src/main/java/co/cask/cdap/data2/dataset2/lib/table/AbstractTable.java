@@ -199,7 +199,7 @@ public abstract class AbstractTable implements Table, TransactionAware {
 
   @Override
   public void write(StructuredRecord structuredRecord) throws IOException {
-    if (tableSchema == null || rowFieldName == null) {
+    if (recordPutTransformer == null) {
       throw new IllegalStateException(String.format("Table must have both '%s' and '%s' properties set in " +
         "order to be used as a RecordWritable.", Table.PROPERTY_SCHEMA, Table.PROPERTY_SCHEMA_ROW_FIELD));
     }

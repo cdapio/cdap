@@ -72,6 +72,10 @@ public class DatasetAccessor implements Closeable {
     }
   }
 
+  public Id.DatasetInstance getDatasetId() {
+    return datasetId;
+  }
+
   public <T extends Dataset> T getDataset() {
     return (T) dataset;
   }
