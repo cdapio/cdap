@@ -25,6 +25,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.ETLStage;
+import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -207,7 +208,7 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
       "DECIMAL_COL, BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL FROM \"my_table\"" +
       "WHERE ID < 3";
     String countQuery = "SELECT COUNT(ID) from \"my_table\" WHERE id < 3";
-    ETLStage source = new ETLStage(
+    Plugin sourceConfig = new Plugin(
       "Database",
       ImmutableMap.<String, String>builder()
         .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
@@ -218,11 +219,13 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
         .build()
     );
 
-    ETLStage sink = new ETLStage("Table", ImmutableMap.of(
+    Plugin sinkConfig = new Plugin("Table", ImmutableMap.of(
       "name", "outputTable",
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
 
+    ETLStage source = new ETLStage("dbSource2", sourceConfig);
+    ETLStage sink = new ETLStage("tableSink2", sinkConfig);
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
@@ -306,7 +309,7 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
 
     String importQuery = "SELECT ID, NAME FROM \"my_table\" WHERE ID < 3";
     String countQuery = "SELECT COUNT(ID) from \"my_table\" WHERE id < 3";
-    ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
+    Plugin sourceConfig = new Plugin("Database", ImmutableMap.<String, String>builder()
       .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
       .put(Properties.DB.TABLE_NAME, "my_table")
       .put(Properties.DB.IMPORT_QUERY, importQuery)
@@ -316,12 +319,13 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
       .build()
     );
 
-    ETLStage sink = new ETLStage("Table", ImmutableMap.of(
+    ETLStage source = new ETLStage("dbSource1", sourceConfig);
+    Plugin sinkConfig = new Plugin("Table", ImmutableMap.of(
       "name", "outputTable1",
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
       // smaller case since we have set the db data's column case to be lower
       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "id"));
-
+    ETLStage sink = new ETLStage("tableSink1", sinkConfig);
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, new ArrayList<ETLStage>());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
@@ -364,7 +368,7 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
       "WHERE \"my_table\".ID < 3 and \"my_table\".ID = \"your_table\".ID";
     String countQuery = "SELECT COUNT(\"my_table\".ID) FROM \"my_table\", \"your_table\"" +
       "WHERE \"my_table\".ID < 3 and \"my_table\".ID = \"your_table\".ID";
-    ETLStage source = new ETLStage("Database", ImmutableMap.<String, String>builder()
+    Plugin sourceConfig = new Plugin("Database", ImmutableMap.<String, String>builder()
       .put(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl())
       .put(Properties.DB.TABLE_NAME, "my_table")
       .put(Properties.DB.IMPORT_QUERY, importQuery)
@@ -374,12 +378,14 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
       .build()
     );
 
-    ETLStage sink = new ETLStage("Table", ImmutableMap.of(
+    Plugin sinkConfig = new Plugin("Table", ImmutableMap.of(
       "name", "outputTable1",
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
       // smaller case since we have set the db data's column case to be lower
       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "id"));
 
+    ETLStage source = new ETLStage("dbSource3", sourceConfig);
+    ETLStage sink = new ETLStage("tableSink3", sinkConfig);
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
@@ -415,7 +421,7 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
     String importQuery = "SELECT * FROM \"my_table\"";
     String countQuery = "SELECT COUNT(*) from \"my_table\"";
 
-    ETLStage table = new ETLStage("Table", ImmutableMap.of(
+    Plugin tableConfig = new Plugin("Table", ImmutableMap.of(
       "name", "outputTable",
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
@@ -440,12 +446,14 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
 
     // null user name, null password. Should succeed.
     // as source
-    ETLStage database = new ETLStage("Database", baseSourceProps);
+    Plugin dbConfig = new Plugin("Database", baseSourceProps);
+    ETLStage table = new ETLStage("uniqueTableSink" , tableConfig);
+    ETLStage database = new ETLStage("databaseSource" , dbConfig);
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", database, table, transforms);
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     deployApplication(appId, appRequest);
     // as sink
-    database = new ETLStage("Database", baseSinkProps);
+    database = new ETLStage("databaseSink", new Plugin("Database", baseSinkProps));
     etlConfig = new ETLBatchConfig("* * * * *", table, database, transforms);
     appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     deployApplication(appId, appRequest);
@@ -454,14 +462,14 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
     // as source
     Map<String, String> noPassword = new HashMap<>(baseSourceProps);
     noPassword.put(Properties.DB.USER, "emptyPwdUser");
-    database = new ETLStage("Database", noPassword);
+    database = new ETLStage("databaseSource", new Plugin("Database", noPassword));
     etlConfig = new ETLBatchConfig("* * * * *", database, table, transforms);
     assertDeploymentFailure(
       appId, etlConfig, "Deploying DB Source with non-null username but null password should have failed.");
     // as sink
     noPassword = new HashMap<>(baseSinkProps);
     noPassword.put(Properties.DB.USER, "emptyPwdUser");
-    database = new ETLStage("Database", noPassword);
+    database = new ETLStage("databaseSink", new Plugin("Database", noPassword));
     etlConfig = new ETLBatchConfig("* * * * *", table, database, transforms);
     assertDeploymentFailure(
       appId, etlConfig, "Deploying DB Sink with non-null username but null password should have failed.");
@@ -470,14 +478,14 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
     // as source
     Map<String, String> noUser = new HashMap<>(baseSourceProps);
     noUser.put(Properties.DB.PASSWORD, "password");
-    database = new ETLStage("Database", noUser);
+    database = new ETLStage("databaseSource", new Plugin("Database", noUser));
     etlConfig = new ETLBatchConfig("* * * * *", database, table, transforms);
     assertDeploymentFailure(
       appId, etlConfig, "Deploying DB Source with null username but non-null password should have failed.");
     // as sink
     noUser = new HashMap<>(baseSinkProps);
     noUser.put(Properties.DB.PASSWORD, "password");
-    database = new ETLStage("Database", noUser);
+    database = new ETLStage("databaseSink", new Plugin("Database", noUser));
     etlConfig = new ETLBatchConfig("* * * * *", table, database, transforms);
     assertDeploymentFailure(
       appId, etlConfig, "Deploying DB Sink with null username but non-null password should have failed.");
@@ -487,7 +495,7 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
     Map<String, String> emptyPassword = new HashMap<>(baseSourceProps);
     emptyPassword.put(Properties.DB.USER, "emptyPwdUser");
     emptyPassword.put(Properties.DB.PASSWORD, "");
-    database = new ETLStage("Database", emptyPassword);
+    database = new ETLStage("databaseSource", new Plugin("Database", emptyPassword));
     etlConfig = new ETLBatchConfig("* * * * *", database, table, transforms);
     appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     deployApplication(appId, appRequest);
@@ -495,7 +503,7 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
     emptyPassword = new HashMap<>(baseSinkProps);
     emptyPassword.put(Properties.DB.USER, "emptyPwdUser");
     emptyPassword.put(Properties.DB.PASSWORD, "");
-    database = new ETLStage("Database", emptyPassword);
+    database = new ETLStage("databaseSink", new Plugin("Database", emptyPassword));
     etlConfig = new ETLBatchConfig("* * * * *", table, database, transforms);
     appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     deployApplication(appId, appRequest);
@@ -508,11 +516,11 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
     String importQuery = "SELECT ID, NAME FROM dummy WHERE ID < 3";
     String countQuery = "SELECT COUNT(ID) from dummy WHERE id < 3";
     //TODO: Also test for bad connection:
-    ETLStage table = new ETLStage("Table", ImmutableMap.of(
+    Plugin tableConfig = new Plugin("Table", ImmutableMap.of(
       Properties.BatchReadableWritable.NAME, "table",
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID"));
-    ETLStage sourceBadName = new ETLStage("Database", ImmutableMap.of(
+    Plugin sourceBadNameConfig = new Plugin("Database", ImmutableMap.of(
       Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
       Properties.DB.TABLE_NAME, "dummy",
       Properties.DB.IMPORT_QUERY, importQuery,
@@ -520,6 +528,9 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
       Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
     ));
     List<ETLStage> transforms = new ArrayList<>();
+    ETLStage table = new ETLStage("tableName", tableConfig);
+    ETLStage sourceBadName = new ETLStage("sourceBadName", sourceBadNameConfig);
+
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", sourceBadName, table, transforms);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "dbSourceTest");
     assertDeploymentFailure(appId, etlConfig, "ETL Application with DB Source should have failed because of a " +
@@ -527,35 +538,38 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
 
     // Bad connection
     String badConnection = String.format("jdbc:hsqldb:hsql://localhost/%sWRONG", hsqlDBServer.database);
-    ETLStage sourceBadConn = new ETLStage("Database", ImmutableMap.of(
+    Plugin sourceBadConnConfig = new Plugin("Database", ImmutableMap.of(
       Properties.DB.CONNECTION_STRING, badConnection,
       Properties.DB.IMPORT_QUERY, importQuery,
       Properties.DB.COUNT_QUERY, countQuery,
       Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
     ));
+    ETLStage sourceBadConn = new ETLStage("sourceBadConn", sourceBadConnConfig);
     etlConfig = new ETLBatchConfig("* * * * *", sourceBadConn, table, transforms);
     assertDeploymentFailure(appId, etlConfig, "ETL Application with DB Source should have failed because of a " +
       "non-existent source database.");
 
     // sink
-    ETLStage sinkBadName = new ETLStage("Database", ImmutableMap.of(
+    Plugin sinkBadNameConfig = new Plugin("Database", ImmutableMap.of(
       Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
       Properties.DB.TABLE_NAME, "dummy",
       Properties.DB.COLUMNS, "ID, NAME",
       Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
     ));
+    ETLStage sinkBadName = new ETLStage("sourceBadConn", sinkBadNameConfig);
     etlConfig = new ETLBatchConfig("* * * * *", table, sinkBadName, transforms);
     appId = Id.Application.from(Id.Namespace.DEFAULT, "dbSinkTestBadName");
     assertDeploymentFailure(appId, etlConfig, "ETL Application with DB Sink should have failed because of a " +
       "non-existent sink table.");
 
     // Bad connection
-    ETLStage sinkBadConn = new ETLStage("Database", ImmutableMap.of(
+    Plugin sinkBadConnConfig = new Plugin("Database", ImmutableMap.of(
       Properties.DB.CONNECTION_STRING, badConnection,
       Properties.DB.TABLE_NAME, "dummy",
       Properties.DB.COLUMNS, "ID, NAME",
       Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
     ));
+    ETLStage sinkBadConn = new ETLStage("sourceBadConn", sinkBadConnConfig);
     etlConfig = new ETLBatchConfig("* * * * *", table, sinkBadConn, transforms);
     assertDeploymentFailure(appId, etlConfig, "ETL Application with DB Sink should have failed because of a " +
       "non-existent sink database.");
@@ -569,18 +583,20 @@ public class BatchETLDBTestRun extends ETLBatchTestBase {
   public void testDBSink() throws Exception {
     String cols = "ID, NAME, SCORE, GRADUATED, TINY, SMALL, BIG, FLOAT_COL, REAL_COL, NUMERIC_COL, DECIMAL_COL, " +
       "BIT_COL, DATE_COL, TIME_COL, TIMESTAMP_COL, BINARY_COL, BLOB_COL, CLOB_COL";
-    ETLStage source = new ETLStage("Table",
+    Plugin sourceConfig = new Plugin("Table",
                                    ImmutableMap.of(
                                      Properties.BatchReadableWritable.NAME, "DBInputTable",
                                      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "ID",
                                      Properties.Table.PROPERTY_SCHEMA, schema.toString()));
-    ETLStage sink = new ETLStage("Database",
+    Plugin sinkConfig = new Plugin("Database",
                                  ImmutableMap.of(Properties.DB.CONNECTION_STRING, hsqlDBServer.getConnectionUrl(),
                                                  Properties.DB.TABLE_NAME, "my_dest_table",
                                                  Properties.DB.COLUMNS, cols,
                                                  Properties.DB.JDBC_PLUGIN_NAME, "hypersql"
                                  ));
     List<ETLStage> transforms = Lists.newArrayList();
+    ETLStage source = new ETLStage("source", sourceConfig);
+    ETLStage sink = new ETLStage("sink", sinkConfig);
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transforms);
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);

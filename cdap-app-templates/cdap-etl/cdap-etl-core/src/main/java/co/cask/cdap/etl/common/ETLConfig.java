@@ -47,6 +47,24 @@ public class ETLConfig extends Config {
     this.resources = resources;
   }
 
+  public ETLConfig getCompatibleConfig() {
+    int pluginNum = 1;
+    ETLStage sourceStage = source.getCompatibleStage("source." + source.getName() +  "." + pluginNum);
+    List<ETLStage> transformStages = new ArrayList<>();
+    if (transforms != null) {
+      for (ETLStage transform : transforms) {
+        pluginNum++;
+        transformStages.add(transform.getCompatibleStage("transform." + transform.getName() + "." + pluginNum));
+      }
+    }
+    List<ETLStage> sinkStages = new ArrayList<>();
+    for (ETLStage sink : sinks) {
+      pluginNum++;
+      sinkStages.add(sink.getCompatibleStage("sink." + sink.getName() + "." + pluginNum));
+    }
+    return new ETLConfig(sourceStage, sinkStages, transformStages, resources);
+  }
+
   public ETLStage getSource() {
     return source;
   }

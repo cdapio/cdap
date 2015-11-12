@@ -92,8 +92,8 @@ public class MockTransformContext implements TransformContext {
   }
 
   @Override
-  public int getStageId() {
-    return 1;
+  public String getStageName() {
+    return "singleStage";
   }
 
   @Override

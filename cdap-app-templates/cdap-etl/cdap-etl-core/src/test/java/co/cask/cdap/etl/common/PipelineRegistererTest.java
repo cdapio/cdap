@@ -19,11 +19,14 @@ package co.cask.cdap.etl.common;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchSink;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.ipc.trace.TimestampedEvent;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -118,6 +121,17 @@ public class PipelineRegistererTest {
     typeList.addAll(getBothParameters(ParamToListParam.class));
     typeList.add(getFirstTypeParameter(ParamToListParam.class));
     PipelineRegisterer.validateTypes(typeList);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testDuplicateStageName() throws Exception {
+    ETLStage source = new ETLStage("DBSource", new Plugin("db", ImmutableMap.<String, String>of()));
+    ETLStage transform1 = new ETLStage("TableValidation", new Plugin("validator", ImmutableMap.<String, String>of()));
+    //duplicate transform name
+    ETLStage transform2 = new ETLStage("TableValidation", new Plugin("script", ImmutableMap.<String, String>of()));
+    ETLStage sink = new ETLStage("AvroSink", new Plugin("tpfsAvro", ImmutableMap.<String, String>of()));
+    PipelineRegisterer.validateStageNames(source,
+                                          ImmutableList.of(transform1, transform2), ImmutableList.of(sink));
   }
 
   private static List<Type> getBothParameters(Class klass) {

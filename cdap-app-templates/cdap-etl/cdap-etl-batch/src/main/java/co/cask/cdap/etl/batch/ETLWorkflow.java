@@ -42,10 +42,10 @@ public class ETLWorkflow extends AbstractWorkflow {
     addMapReduce(ETLMapReduce.NAME);
     if (config.getActions() != null) {
       for (ETLStage action : config.getActions()) {
-        if (!action.getName().equals("Email")) {
+        if (!action.getPlugin().getName().equals("Email")) {
           throw new IllegalArgumentException(String.format("Only \'Email\' actions are supported. " +
                                                              "You cannot create an action of type %s.",
-                                                           action.getName()));
+                                                           action.getPlugin().getName()));
         }
         addAction(new EmailAction(action));
       }

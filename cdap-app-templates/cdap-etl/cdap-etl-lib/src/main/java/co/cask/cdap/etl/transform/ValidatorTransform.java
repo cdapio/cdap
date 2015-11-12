@@ -144,7 +144,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   @VisibleForTesting
   void setUpInitialScript(TransformContext context, List<Validator> validators) throws ScriptException {
     metrics = context.getMetrics();
-    logger = LoggerFactory.getLogger(ValidatorTransform.class.getName() + " - Stage:" + context.getStageId());
+    logger = LoggerFactory.getLogger(ValidatorTransform.class.getName() + " - Stage:" + context.getStageName());
     init(validators, context);
   }
 

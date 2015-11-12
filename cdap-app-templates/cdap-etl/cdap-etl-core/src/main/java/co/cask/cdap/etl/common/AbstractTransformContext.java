@@ -34,15 +34,16 @@ import java.util.Map;
 public abstract class AbstractTransformContext implements TransformContext {
 
   private final PluginContext pluginContext;
-  private final String stageId;
+  private final String stageName;
   private final StageMetrics metrics;
   private final LookupProvider lookup;
 
-  public AbstractTransformContext(PluginContext pluginContext, Metrics metrics, LookupProvider lookup, String stageId) {
+  public AbstractTransformContext(PluginContext pluginContext,
+                                  Metrics metrics, LookupProvider lookup, String stageName) {
     this.pluginContext = pluginContext;
-    this.stageId = stageId;
+    this.stageName = stageName;
     this.lookup = lookup;
-    this.metrics = new DefaultStageMetrics(metrics, PluginID.from(stageId));
+    this.metrics = new DefaultStageMetrics(metrics, stageName);
   }
 
   @Override
@@ -62,12 +63,12 @@ public abstract class AbstractTransformContext implements TransformContext {
 
   @Override
   public final PluginProperties getPluginProperties() {
-    return pluginContext.getPluginProperties(stageId);
+    return pluginContext.getPluginProperties(stageName);
   }
 
   @Override
-  public final int getStageId() {
-    return PluginID.from(stageId).getStage();
+  public final String getStageName() {
+    return stageName;
   }
 
   @Override
@@ -76,7 +77,7 @@ public abstract class AbstractTransformContext implements TransformContext {
   }
 
   private String scopePluginId(String childPluginId) {
-    return String.format("%s%s%s", stageId, Constants.ID_SEPARATOR, childPluginId);
+    return String.format("%s%s%s", stageName, Constants.ID_SEPARATOR, childPluginId);
   }
 
   @Override
