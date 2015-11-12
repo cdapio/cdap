@@ -31,14 +31,24 @@ angular.module(PKG.name + '.feature.hydrator')
     DetailRunsStore.registerOnChangeListener(checkAndPollForMetrics.bind(this));
 
     function checkAndPollForMetrics() {
+      var latestRun;
       if (DetailRunsStore.getRunsCount()) {
-        startPollMetricsForLatestRunId();
-        this.setState();
+        latestRun = DetailRunsStore.getLatestRun();
+        if (latestRun && latestRun.status !== 'RUNNING') {
+          PipelineDetailMetricsActionFactory.stopMetricsPoll();
+          PipelineDetailMetricsActionFactory.stopMetricValuesPoll();
+        } else {
+          getMetricsForLatestRunId(true);
+          this.setState();
+        }
       }
     }
+
+    // No matter what get the metrics for the current run (since its an aggregate).
+    getMetricsForLatestRunId(false);
     checkAndPollForMetrics.call(this);
 
-    function startPollMetricsForLatestRunId() {
+    function getMetricsForLatestRunId(isPoll) {
       var latestRunId = DetailRunsStore.getLatestRun().runid;
       if (latestRunId === currentRunId) {
         return;
@@ -54,7 +64,11 @@ angular.module(PKG.name + '.feature.hydrator')
       var programType = DetailRunsStore.getMetricProgramType();
       metricParams[programType] = logsParams.programId;
       if (metricParams.run) {
-        PipelineDetailMetricsActionFactory.pollForMetrics(metricParams);
+        if (isPoll) {
+          PipelineDetailMetricsActionFactory.pollForMetrics(metricParams);
+        } else {
+          PipelineDetailMetricsActionFactory.requestForMetrics(metricParams);
+        }
       }
     }
 
