@@ -38,7 +38,7 @@ public class ActivityFlow extends AbstractFlow {
   private static final Logger LOG = LoggerFactory.getLogger(ActivityFlow.class);
 
   @Override
-  protected void configureFlow() {
+  protected void configure() {
     setName("ActivityFlow");
     setDescription("Reads click events from a stream, counts clicks per URL, and records user activity.");
     addFlowlet("reader", new EventReader());

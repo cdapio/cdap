@@ -24,7 +24,7 @@ import co.cask.cdap.api.flow.AbstractFlow;
 public class CountRandomFlow extends AbstractFlow {
 
   @Override
-  protected void configureFlow() {
+  protected void configure() {
     setName("CountRandom");
     setDescription("CountRandom Flow");
     addFlowlet("source", new RandomSource());

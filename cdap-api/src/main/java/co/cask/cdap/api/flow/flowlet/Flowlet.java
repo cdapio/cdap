@@ -31,17 +31,10 @@ public interface Flowlet extends ProgramLifecycle<FlowletContext> {
    *   method is generally called in configuration phase of the flowlet
    *   which happens during application deployment.
    * </p>
-   * <p>
-   *   The {@link FlowletSpecification} returned from this method is available
-   *   at runtime through the {@link FlowletContext} which is given through
-   *   the {@link #initialize(FlowletContext)} method.
-   * </p>
    *
-   * @return An instance of {@link FlowletSpecification}
-   * @deprecated Use {@link AbstractFlowlet#configure} instead
+   * @param configurer {@link FlowletConfigurer}
    */
-  @Deprecated
-  FlowletSpecification configure();
+  void configure(FlowletConfigurer configurer);
 
   /**
    *  Initializes a Flowlet.
