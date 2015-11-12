@@ -470,7 +470,6 @@ html_sidebars = {'**': [
     'globaltoc.html',
     'relations.html',
     'downloads.html',
-    'doc-issues.html',
     'searchbox.html',
     'casksites.html',
      ],}
