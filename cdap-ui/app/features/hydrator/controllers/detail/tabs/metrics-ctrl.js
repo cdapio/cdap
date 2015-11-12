@@ -20,7 +20,6 @@ angular.module(PKG.name + '.feature.hydrator')
     var currentRunId;
     this.setState = function() {
       this.state = {
-        runId: (DetailRunsStore.getLatestRun() && DetailRunsStore.getLatestRun().runId) || null,
         metrics: MetricsStore.getMetrics()
       };
     };
@@ -67,11 +66,10 @@ angular.module(PKG.name + '.feature.hydrator')
     checkAndPollForMetrics.call(this);
 
     function getMetricsForLatestRunId(isPoll) {
-      var latestRunId = DetailRunsStore.getLatestRun();
+      var latestRunId = DetailRunsStore.getLatestMericRunId();
       if (!latestRunId) {
         return;
       }
-      latestRunId = latestRunId.runid;
       if (latestRunId === currentRunId) {
         return;
       }
