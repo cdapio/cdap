@@ -35,6 +35,24 @@ angular.module(PKG.name + '.feature.hydrator')
       if (DetailRunsStore.getRunsCount()) {
         latestRun = DetailRunsStore.getLatestRun();
         if (latestRun && latestRun.status !== 'RUNNING') {
+          currentRunId = null;
+          /*
+            TL;DR - This is to avoid the in-consistent value that appears in UI due to delay in stopping a poll.
+
+            Bigger version -
+            Say we started a poll and we are actively polling for metrics for a runid (poll interval is 10sec default).
+
+            t=1 -> made a new request for metrics
+            t=2,3,4,5,6,7,8 -> Do nothing
+            t=9 -> Stop the poll for metrics (meaning stop the run).
+
+            In the past 8 seconds the metrics could have changed (we don't know for sure).
+            So at the moment for a killed run we show a metric that is 8 seconds old.
+            But when the user refreshes the page he/she would see the latest metric value before it is stopped.
+
+            To avoid this in-consistency we make a final request before stopping the poll for a runid.
+          */
+          getMetricsForLatestRunId(false);
           PipelineDetailMetricsActionFactory.stopMetricsPoll();
           PipelineDetailMetricsActionFactory.stopMetricValuesPoll();
         } else {
@@ -49,7 +67,11 @@ angular.module(PKG.name + '.feature.hydrator')
     checkAndPollForMetrics.call(this);
 
     function getMetricsForLatestRunId(isPoll) {
-      var latestRunId = DetailRunsStore.getLatestRun().runid;
+      var latestRunId = DetailRunsStore.getLatestRun();
+      if (!latestRunId) {
+        return;
+      }
+      latestRunId = latestRunId.runid;
       if (latestRunId === currentRunId) {
         return;
       }
