@@ -84,7 +84,6 @@ cp /etc/welcome.txt ~cdap/Desktop
 for i in cdap-ui cdap-docs eclipse idea lxterminal ; do
   cp /usr/share/applications/${i}.desktop ~cdap/Desktop
 done
-echo '@xterm -e "cat /etc/welcome.txt; bash -l"' >> /etc/xdg/lxsession/LXDE/autostart
 
 # Customize look and feel
 sed -i \
