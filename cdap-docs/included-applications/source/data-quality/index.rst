@@ -150,9 +150,12 @@ In order to make queries, we need to start the service in the application::
 There are four RESTful endpoints of the service which we can use:
 
 * Retrieve all the fields for a given source and time range: ``/v1/sources/{sourceID}/fields``
-* Retrieve all the aggregations available for a given source, time range, and field : ``/v1/sources/{sourceID}/fields/{fieldName}/aggregations``
-* Retrieve the combined aggregation over a specified time interval for a given source, field, and aggregation type: ``/v1/sources/{sourceID}/fields/{fieldName}/aggregations/{aggregationType}/totals``
-* Retrieve the aggregation corresponding to each time stamp in a specified time range for a given source, field, and aggregation type: ``/v1/sources/{sourceID}/fields/{fieldName}/aggregations/{aggregationType}/timeseries``
+* Retrieve all the aggregations available for a given source, time range, and field: 
+  ``/v1/sources/{sourceID}/fields/{fieldName}/aggregations``
+* Retrieve the combined aggregation over a specified time interval for a given source, field, and aggregation type: 
+  ``/v1/sources/{sourceID}/fields/{fieldName}/aggregations/{aggregationType}/totals``
+* Retrieve the aggregation corresponding to each time stamp in a specified time range for a given source, field, and 
+  aggregation type: ``/v1/sources/{sourceID}/fields/{fieldName}/aggregations/{aggregationType}/timeseries``
 
 Suppose we want to query the aggregated data for the source ``logStream`` and the field ``status``. 
 We would make this request::
@@ -171,21 +174,27 @@ If you use the aforementioned sample Apache Access logs, your response should lo
 
 Built-in Library of Aggregation Functions
 =========================================
-* Discrete Values Histogram: Generates a histogram that maps various values of a field to corresponding frequencies. This is only for discrete data.  
-* Histogram With Bucketing: Generates a histogram that maps various values of a field to corresponding frequencies. This is only for numerical data. 
+* Discrete Values Histogram: Generates a histogram that maps various values of a field to corresponding frequencies. 
+  This is only for discrete data.  
+* Histogram With Bucketing: Generates a histogram that maps various values of a field to corresponding frequencies. 
+  This is only for numerical data. 
 * Unique Values: Generates the number of unique values seen for a given field. 
 * Mean: Generates the mean of all the values seen for a given field. This is only for numerical data.
-* Standard Deviation: Generates the standard deviation of all the values seen for a given field. This is only for numerical data. 
+* Standard Deviation: Generates the standard deviation of all the values seen for a given field. 
+  This is only for numerical data. 
 
 Extending the Application
 =========================
-In addition to the built-in aggregation functions with the Data Quality Application, 
-it's possible to write and use custom aggregation functions. Take a look at the ``BasicAggregationFunction.java``
-and ``CombinableAggregationFunction.java`` interfaces under the ``functions`` directory (``DQApp/src/main/java/data/quality/app/functions``).
+In addition to the built-in aggregation functions with the Data Quality Application, it's
+possible to write and use custom aggregation functions. Take a look at the
+``BasicAggregationFunction.java`` and ``CombinableAggregationFunction.java`` interfaces
+under the ``functions`` directory (``DQApp/src/main/java/data/quality/app/functions``).
 
-All aggregation functions need to implement the ``BasicAggregationFunction`` interface. 
-If a function produces aggregations that can be combined (for example, frequencies can be combined but standard
-deviations cannot), it should also implement the ``CombinableAggregationFunction`` interface. 
-This will let you combine existing aggregations over custom time ranges at query time.
+All aggregation functions need to implement the ``BasicAggregationFunction`` interface. If
+a function produces aggregations that can be combined (for example, frequencies can be
+combined but standard deviations cannot), it should also implement the
+``CombinableAggregationFunction`` interface. This will let you combine existing
+aggregations over custom time ranges at query time.
 
-In addition to the these interfaces, take a look at the aggregation functions that come with the application for reference.
+In addition to the these interfaces, take a look at the aggregation functions that come
+with the application for reference.
