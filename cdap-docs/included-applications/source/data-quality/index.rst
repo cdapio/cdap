@@ -172,8 +172,8 @@ If you use the aforementioned sample Apache Access logs, your response should lo
 Built-in Library of Aggregation Functions
 =========================================
 * Discrete Values Histogram: Generates a histogram that maps various values of a field to corresponding frequencies. This is only for discrete data.  
-* Histogram with Bucketing: Generates a histogram that maps various values of a field to corresponding frequencies. This is only for numerical data. 
-* Unique: Generates the number of unique values seen for a given field. 
+* Histogram With Bucketing: Generates a histogram that maps various values of a field to corresponding frequencies. This is only for numerical data. 
+* Unique Values: Generates the number of unique values seen for a given field. 
 * Mean: Generates the mean of all the values seen for a given field. This is only for numerical data.
 * Standard Deviation: Generates the standard deviation of all the values seen for a given field. This is only for numerical data. 
 
