@@ -806,6 +806,14 @@
   </property>
 
   <property>
+    <name>master.collect.containers.log</name>
+    <value>true</value>
+    <description>
+      Determines if container logs are streamed back to the cdap-master process log
+    </description>
+  </property>
+
+  <property>
     <name>master.service.max.instances</name>
     <value>5</value>
     <description>
@@ -828,7 +836,6 @@
       Number of cores for Master Service instance
     </description>
   </property>
-
 
   <!-- Metadata Configuration -->
 

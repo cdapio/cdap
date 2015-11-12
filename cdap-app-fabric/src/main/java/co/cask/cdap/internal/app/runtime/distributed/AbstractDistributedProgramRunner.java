@@ -207,13 +207,16 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             twillPreparer.withResources(logbackURI);
           }
 
+          if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
+            twillPreparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+          }
+
           String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
                                            Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
           TwillController twillController = addSecureStore(twillPreparer, locationFactory)
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
-            .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
             .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
-                              .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
+              .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
             .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
             .withBundlerClassAcceptor(new HadoopClassExcluder())
             .withApplicationArguments(
