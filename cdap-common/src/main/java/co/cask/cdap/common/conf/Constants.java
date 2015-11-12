@@ -674,6 +674,16 @@ public final class Constants {
     public static final String SSL_ENABLED = "ssl.enabled";
 
     /**
+     * Authorization.
+     */
+    public static final class Authorization {
+      /** Enables authorization */
+      public static final String ENABLED = "security.authorization.enabled";
+      /** AuthorizationPlugin class name */
+      public static final String HANDLER_CLASS = "security.authorization.pluginClassName";
+    }
+
+    /**
      * Headers for security.
      */
     public static final class Headers {
