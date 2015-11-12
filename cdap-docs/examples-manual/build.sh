@@ -106,9 +106,9 @@ function download_includes() {
   download_file $includes $project_main BounceCountsMapReduce.java 72f01be483fe6aa9a2d07bf2d324594f
   download_file $includes $project_main BounceCountStore.java      d476c15655c6a6c6cd7fe682dea4a8b7
   download_file $includes $project_main PageViewStore.java         7dc8d2fec04ce89fae4f0356db17e19d
-  download_file $includes $project_main WiseApp.java               1ee41e950a4b34b75fe0d2cd0ff94508
+  download_file $includes $project_main WiseApp.java               23371436b588c3262fec14ec5d7aa6df
   download_file $includes $project_test WiseAppTest.java           5145832dc315f4253fa6b2aac3ee9164
-  download_file $includes $project_main WiseFlow.java              2deba0633a0dcca14ef426929f543872
+  download_file $includes $project_main WiseFlow.java              94cb2ef13e10386d4c40c4252777d15e
   download_file $includes $project_main WiseWorkflow.java          d24a138d3a96bfb41e6d166866b72291
   download_file $includes $project_main WiseService.java           dccfeb2d5726a031b5aff9897ccf8257
 
