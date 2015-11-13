@@ -25,6 +25,7 @@ import co.cask.cdap.PauseResumeWorklowApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithFork;
 import co.cask.cdap.WorkflowAppWithScopedParameters;
+import co.cask.cdap.WorkflowFailureInForkApp;
 import co.cask.cdap.WorkflowTokenTestPutApp;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
@@ -58,6 +59,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -93,7 +95,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
       public Integer call() throws Exception {
         return runningProgramCount(program, runId);
       }
-    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 10, TimeUnit.SECONDS);
   }
 
   private Integer runningProgramCount(Id.Program program, String runId) throws Exception {
@@ -149,20 +151,6 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
   private HttpResponse getWorkflowCurrentStatus(Id.Program program, String runId) throws Exception {
     String currentUrl = String.format("apps/%s/workflows/%s/runs/%s/current", program.getApplicationId(),
-                                      program.getId(), runId);
-    String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN,
-                                              program.getNamespaceId());
-    return doGet(versionedUrl);
-  }
-
-  /**
-   * Tests deprecated workflow current API. For new tests, use {@link #getWorkflowCurrentStatus(Id.Program, String)}
-   * instead
-   * TODO: CDAP-2481: Remove in 3.2
-   */
-  @Deprecated
-  private HttpResponse getWorkflowCurrentStatusOld(Id.Program program, String runId) throws Exception {
-    String currentUrl = String.format("apps/%s/workflows/%s/%s/current", program.getApplicationId(),
                                       program.getId(), runId);
     String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                               program.getNamespaceId());
@@ -391,21 +379,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(1, nodes.size());
     Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
 
-    response = getWorkflowCurrentStatusOld(programId, historyRuns.get(0).getPid());
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
-    Assert.assertEquals(1, nodes.size());
-    Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
-
     response = getWorkflowCurrentStatus(programId, historyRuns.get(1).getPid());
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
-    Assert.assertEquals(1, nodes.size());
-    Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
-
-    response = getWorkflowCurrentStatusOld(programId, historyRuns.get(1).getPid());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
     nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
@@ -430,7 +404,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
         }
         return true;
       }
-    }, 180, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 180, TimeUnit.SECONDS);
   }
 
   @Test
@@ -1243,8 +1217,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    List<RunRecord> workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(1, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed");
 
     List<RunRecord> mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
     Assert.assertEquals(1, mapReduceProgramRuns.size());
@@ -1258,8 +1231,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(2, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed", 1);
 
     mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
     Assert.assertEquals(2, mapReduceProgramRuns.size());
@@ -1273,8 +1245,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(3, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed", 2);
 
     mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
     Assert.assertEquals(3, mapReduceProgramRuns.size());
@@ -1288,8 +1259,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(4, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed", 3);
 
     mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
     Assert.assertEquals(4, mapReduceProgramRuns.size());
@@ -1301,8 +1271,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(5, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed", 4);
 
     mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.COMPLETED.name());
     Assert.assertEquals(1, mapReduceProgramRuns.size());
@@ -1319,10 +1288,45 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     waitState(workflowId, ProgramRunStatus.RUNNING.name());
     waitState(workflowId, "STOPPED");
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
-    Assert.assertEquals(1, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "completed");
 
-    workflowProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.COMPLETED.name());
-    Assert.assertEquals(1, workflowProgramRuns.size());
+    sparkProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.COMPLETED.name());
+    Assert.assertEquals(1, sparkProgramRuns.size());
+  }
+
+  @Ignore
+  @Test
+  public void testWorkflowForkFailure() throws Exception {
+    // Deploy an application containing workflow with fork. Fork executes MapReduce programs
+    // 'FirstMapReduce' and 'SecondMapReduce' in parallel. Workflow is started with runtime argument
+    // "mapreduce.SecondMapReduce.throw.exception", so that the MapReduce program 'SecondMapReduce'
+    // fails. This causes the 'FirstMapReduce' program to get killed and Workflow is marked as failed.
+    Assert.assertEquals(200, deploy(WorkflowFailureInForkApp.class).getStatusLine().getStatusCode());
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, WorkflowFailureInForkApp.NAME);
+    Id.Workflow workflowId = Id.Workflow.from(appId, WorkflowFailureInForkApp.WorkflowWithFailureInFork.NAME);
+    Id.Program firstMRId = Id.Program.from(appId, ProgramType.MAPREDUCE,
+                                           WorkflowFailureInForkApp.FIRST_MAPREDUCE_NAME);
+    Id.Program secondMRId = Id.Program.from(appId, ProgramType.MAPREDUCE,
+                                            WorkflowFailureInForkApp.SECOND_MAPREDUCE_NAME);
+
+    String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    File fileToSync = new File(tmpFolder.newFolder() + "/sync.file");
+    File fileToWait = new File(tmpFolder.newFolder() + "/wait.file");
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInput("testWorkflowForkFailureInput"),
+                                             "outputPath", outputPath,
+                                             "sync.file", fileToSync.getAbsolutePath(),
+                                             "wait.file", fileToWait.getAbsolutePath(),
+                                             "mapreduce." + WorkflowFailureInForkApp.SECOND_MAPREDUCE_NAME
+                                               + ".throw.exception", "true"));
+    waitState(workflowId, ProgramRunStatus.RUNNING.name());
+    waitState(workflowId, "STOPPED");
+
+    verifyProgramRuns(workflowId, "failed");
+
+    List<RunRecord> mapReduceProgramRuns = getProgramRuns(firstMRId, ProgramRunStatus.KILLED.name());
+    Assert.assertEquals(1, mapReduceProgramRuns.size());
+
+    mapReduceProgramRuns = getProgramRuns(secondMRId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(1, mapReduceProgramRuns.size());
   }
 }

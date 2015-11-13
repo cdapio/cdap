@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.worker')
-  .controller('WorkersRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rWorkerDetail, myMetadataFactory) {
+  .controller('WorkersRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rWorkerDetail) {
   var fFilter = $filter('filter');
 
   this.runs = rRuns;
@@ -70,7 +70,6 @@ angular.module(PKG.name + '.feature.worker')
   this.openHistory = function() {
     this.$bootstrapModal.open({
       size: 'lg',
-      windowClass: 'center cdap-modal',
       templateUrl: '/assets/features/workers/templates/tabs/history.html',
       controller: ['runs', '$scope', function(runs, $scope) {
         $scope.runs = runs;
@@ -83,34 +82,12 @@ angular.module(PKG.name + '.feature.worker')
     });
   };
 
-  var metadataParams = {
+  this.metadataParams = {
     namespace: $state.params.namespace,
     appId: $state.params.appId,
     programType: 'workers',
     programId: $state.params.programId,
     scope: $scope
-  };
-  this.metadataAddOpen = false;
-  this.metadataTags = [];
-
-  myMetadataFactory.getProgramMetadata(metadataParams)
-    .then(function (res) {
-      this.metadataTags = res;
-    }.bind(this));
-
-  this.addMetadata = function () {
-    myMetadataFactory.addProgramMetadata(this.tag, metadataParams)
-      .then(function (res) {
-        this.metadataTags = res;
-        this.tag = '';
-      }.bind(this));
-  };
-
-  this.deleteMetadata = function (tag) {
-    myMetadataFactory.deleteProgramMetadata(tag, metadataParams)
-      .then(function (res) {
-        this.metadataTags = res;
-      }.bind(this));
   };
 
 });

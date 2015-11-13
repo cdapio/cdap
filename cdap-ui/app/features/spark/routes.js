@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.spark')
           highlightTab: 'development'
         },
         resolve : {
-          rRuns: function($stateParams, $q, mySparkApi) {
+          rRuns: function($stateParams, $q, mySparkApi, $state) {
             var defer = $q.defer();
 
             var params = {
@@ -36,19 +36,38 @@ angular.module(PKG.name + '.feature.spark')
             };
             mySparkApi.runs(params)
               .$promise
-              .then(function (res) {
-                defer.resolve(res);
-              });
+              .then(
+                function success(res) {
+                  defer.resolve(res);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
 
             return defer.promise;
           },
-          rSparkDetail: function($stateParams, mySparkApi) {
+          rSparkDetail: function($stateParams, mySparkApi, $q, $state) {
             var params = {
               namespace: $stateParams.namespace,
               appId: $stateParams.appId,
               sparkId: $stateParams.programId
             };
-            return mySparkApi.get(params).$promise;
+            var defer = $q.defer();
+            mySparkApi
+              .get(params)
+              .$promise
+              .then(
+                function success(sparkDetail) {
+                  defer.resolve(sparkDetail);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
+            return defer.promise;
           }
         },
         template: '<ui-view/>'

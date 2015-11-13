@@ -115,7 +115,6 @@ public class CLIMain {
     this.options = options;
     this.cliConfig = cliConfig;
 
-    cliConfig.getClientConfig().setVerifySSLCert(options.isVerifySSL());
     injector = Guice.createInjector(
       new AbstractModule() {
         @Override
@@ -182,7 +181,7 @@ public class CLIMain {
     InstanceURIParser instanceURIParser = injector.getInstance(InstanceURIParser.class);
     try {
       CLIConnectionConfig connection = instanceURIParser.parse(options.getUri());
-      cliConfig.tryConnect(connection, cliConfig.getOutput(), options.isDebug());
+      cliConfig.tryConnect(connection, options.isVerifySSL(), cliConfig.getOutput(), options.isDebug());
       return true;
     } catch (Exception e) {
       if (options.isDebug()) {
@@ -265,7 +264,10 @@ public class CLIMain {
       String[] commandArgs = cliMainArgs.getCommandTokens();
 
       try {
-        ClientConfig clientConfig = ClientConfig.builder().setConnectionConfig(null).build();
+        ClientConfig clientConfig = ClientConfig.builder()
+          .setConnectionConfig(null)
+          .setDefaultReadTimeout(60 * 1000)
+          .build();
         final CLIConfig cliConfig = new CLIConfig(clientConfig, output, new AltStyleTableRenderer());
         CLIMain cliMain = new CLIMain(launchOptions, cliConfig);
         CLI cli = cliMain.getCLI();

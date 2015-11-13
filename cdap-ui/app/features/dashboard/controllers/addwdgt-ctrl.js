@@ -41,35 +41,36 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
   ];
 
   $scope.$watch('model.metric.name', function (newVal) {
-    if(newVal) {
-      $scope.model.title = newVal;
-    }
+    $scope.model.title = newVal;
   });
 
-  $scope.doAddWidget = _.once(function () {
-
-    if ($scope.model.metric.addAll) {
-      var widgets = [];
-      // If the user chooses 'Add All' option, add all the metrics in the current context.
-      angular.forEach($scope.model.metric.allMetrics, function(value) {
-        widgets.push(
-          new Widget({
-            type: $scope.model.type,
-            title: $scope.model.metric.title,
-            metric: {
-              context: $scope.model.metric.context,
-              names: [value],
-              name: value
-            }
-          })
-        );
-      });
-      $scope.currentBoard.addWidget(widgets);
-    } else {
-      $scope.currentBoard.addWidget($scope.model);
-    }
+  $scope.addMetricsToIndividualWidgets = _.debounce(function() {
+    var widgets = [];
+    angular.forEach($scope.model.metric.names, function(value) {
+      widgets.push(
+        new Widget({
+          type: $scope.model.type,
+          title: $scope.model.title,
+          metric: {
+            context: $scope.model.metric.context,
+            names: [value],
+            name: value
+          }
+        })
+      );
+    });
+    $scope.currentBoard.addWidget(widgets);
     $scope.$close();
-  });
+  }, 1000);
+
+  $scope.addMetricsToWidget = _.debounce(function () {
+    var metrics = $scope.model.metric;
+    if (!metrics) {
+      return;
+    }
+    $scope.currentBoard.addWidget($scope.model);
+    $scope.$close();
+  }, 1000);
 
   $scope.closeModal = function() {
     $modalInstance.close();

@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.data2.datafabric.dataset.type.ConstantClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -45,6 +46,12 @@ public class SystemDatasetInstantiator implements Closeable {
   private final DatasetClassLoaderProvider classLoaderProvider;
   private final Iterable<? extends Id> owners;
   private final ClassLoader parentClassLoader;
+
+  public SystemDatasetInstantiator(DatasetFramework datasetFramework,
+                                   @Nullable ClassLoader classLoader,
+                                   @Nullable Iterable<? extends Id> owners) {
+    this(datasetFramework, classLoader, new ConstantClassLoaderProvider(classLoader), owners);
+  }
 
   SystemDatasetInstantiator(DatasetFramework datasetFramework,
                             @Nullable ClassLoader parentClassLoader,

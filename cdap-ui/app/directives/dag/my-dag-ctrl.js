@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, AdapterErrorFactory) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, HydratorErrorFactory, PipelineNodeConfigActionFactory) {
     this.plugins = $scope.config || [];
     this.MyAppDAGService = MyAppDAGService;
     this.isDisabled = $scope.isDisabled;
@@ -58,7 +58,7 @@ angular.module(PKG.name + '.commons')
         });
       }
 
-      AdapterErrorFactory.isValidPlugin(plugin);
+      HydratorErrorFactory.isValidPlugin(plugin);
 
       this.plugins.forEach(function(p) {
         if (!p._backendProperties) {
@@ -80,6 +80,7 @@ angular.module(PKG.name + '.commons')
             p.error.message = 'Missing required fields';
             p.warning = true;
           }
+          p.properties = plugin.properties;
         }
       });
     };
@@ -92,8 +93,10 @@ angular.module(PKG.name + '.commons')
       this.plugins.splice(index, 1);
       MyAppDAGService.removeNode(nodeId);
       MyAppDAGService.setConnections(this.instance.getConnections());
-      MyNodeConfigService.removePlugin(nodeId);
+      PipelineNodeConfigActionFactory.removePlugin();
     };
+
+    $scope.isCollapsed = true;
 
     // Need to move this to the controller that is using this directive.
     this.onPluginClick = function(plugin) {
@@ -103,7 +106,7 @@ angular.module(PKG.name + '.commons')
       });
 
       plugin.selected = true;
-      MyAppDAGService.editPluginProperties($scope, plugin.id, plugin.type);
+      PipelineNodeConfigActionFactory.choosePlugin(plugin);
     };
 
     function errorNotification(errObj) {
@@ -120,7 +123,7 @@ angular.module(PKG.name + '.commons')
           // The nodes could just lie there on the canvas without connected.
           // In such cases there might still be some required fields not set in those nodes.
           // we would still want to show them as a warning.
-          AdapterErrorFactory.isValidPlugin(plugin);
+          HydratorErrorFactory.isValidPlugin(plugin);
           if (plugin.valid) {
             delete plugin.error;
           } else {
@@ -249,7 +252,7 @@ angular.module(PKG.name + '.commons')
         if (targetOuputSchema) {
           targetNode.outputSchema = targetOuputSchema;
         } else {
-          targetNode.outputSchema = sourceNode.outputSchema;
+          targetNode.outputSchema = targetNode.outputSchema || sourceNode.outputSchema;
         }
       });
     }
@@ -285,7 +288,7 @@ angular.module(PKG.name + '.commons')
         trigger: 'manual',
         placement: 'auto',
         target: label,
-        template: '/assets/features/adapters/templates/partial/schema-popover.html',
+        template: '/assets/features/hydrator/templates/partial/schema-popover.html',
         container: 'main',
         scope: scope
       });
@@ -299,8 +302,8 @@ angular.module(PKG.name + '.commons')
     }
 
     $scope.$on('$destroy', function() {
-      MyNodeConfigService.unRegisterPluginResetCallback($scope.$id);
       MyNodeConfigService.unRegisterPluginSaveCallback($scope.$id);
+      PipelineNodeConfigActionFactory.reset();
       closeAllPopovers();
       angular.forEach(popoverScopes, function (s) {
         s.$destroy();
@@ -367,7 +370,7 @@ angular.module(PKG.name + '.commons')
         $timeout(this.drawGraph.bind(this));
     }
 
-    if (this.plugins.length) {
+    if (MyAppDAGService.nodes) {
       resetComponent.call(this);
     }
 

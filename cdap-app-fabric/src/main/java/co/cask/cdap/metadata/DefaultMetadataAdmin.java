@@ -129,8 +129,7 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
 
   @Override
   public Set<MetadataSearchResultRecord> searchMetadata(String namespaceId, String searchQuery,
-                                                        @Nullable final MetadataSearchTargetType type)
-    throws NotFoundException {
+                                                        @Nullable final MetadataSearchTargetType type) {
     Iterable<BusinessMetadataRecord> results;
     if (type == null) {
       results = businessMds.searchMetadata(namespaceId, searchQuery);

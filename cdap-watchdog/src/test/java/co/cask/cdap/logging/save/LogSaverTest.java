@@ -34,6 +34,7 @@ import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.SystemLoggingContext;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -134,6 +135,7 @@ public class LogSaverTest extends KafkaTestBase {
       new KafkaClientModule(),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
+      new TransactionExecutorModule(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),
       new MetricsClientRuntimeModule().getNoopModules(),
@@ -160,9 +162,6 @@ public class LogSaverTest extends KafkaTestBase {
     // {0, 1} - because we have 2 partitions as per configuration above (see LoggingConfiguration.NUM_PARTITIONS)
     LogSaver logSaver = factory.create(ImmutableSet.of(0, 1));
     logSaver.startAndWait();
-
-    // Sleep a while to let Kafka server fully initialized.
-    TimeUnit.SECONDS.sleep(5);
 
     publishLogs();
 

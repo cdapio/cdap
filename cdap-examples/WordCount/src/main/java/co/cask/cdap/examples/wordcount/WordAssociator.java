@@ -18,7 +18,6 @@ package co.cask.cdap.examples.wordcount;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 
 import java.util.Set;
@@ -35,12 +34,6 @@ public class WordAssociator extends AbstractFlowlet {
 
   public WordAssociator(String wordAssocTableName) {
     this.wordAssocTableName = wordAssocTableName;
-  }
-
-  @Override
-  public void configure(FlowletConfigurer configurer) {
-    super.configure(configurer);
-    useDatasets(wordAssocTableName);
   }
 
   @Override

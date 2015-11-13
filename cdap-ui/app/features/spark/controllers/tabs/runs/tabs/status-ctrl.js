@@ -15,8 +15,8 @@
  */
 
 angular.module(PKG.name + '.feature.spark')
-  .controller('SparkRunsDetailStatusController', function($state, $scope, MyDataSource, myHelpers) {
-    var dataSrc = new MyDataSource($scope);
+  .controller('SparkRunsDetailStatusController', function($state, $scope, MyCDAPDataSource, myHelpers) {
+    var dataSrc = new MyCDAPDataSource($scope);
     var vm = this;
 
     vm.data = {

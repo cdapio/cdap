@@ -15,9 +15,9 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('SystemServiceLogController',
-function ($scope, $state, MyDataSource, $timeout) {
+function ($scope, $state, MyCDAPDataSource, $timeout) {
 
-    var myDataSrc = new MyDataSource($scope);
+    var myDataSrc = new MyCDAPDataSource($scope);
 
     var path = '/system/services/' + encodeURIComponent($state.params.serviceName) + '/logs/';
 

@@ -42,6 +42,7 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
+import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.data.stream.InMemoryStreamCoordinatorClient;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.StreamCoordinatorClient;
@@ -80,10 +81,8 @@ import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.test.internal.ApplicationManagerFactory;
 import co.cask.cdap.test.internal.DefaultApplicationManager;
 import co.cask.cdap.test.internal.DefaultStreamManager;
-import co.cask.cdap.test.internal.DefaultStreamWriter;
 import co.cask.cdap.test.internal.LocalStreamWriter;
 import co.cask.cdap.test.internal.StreamManagerFactory;
-import co.cask.cdap.test.internal.StreamWriterFactory;
 import co.cask.tephra.TransactionManager;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -215,6 +214,7 @@ public class ConfigurableTestBase {
 
     Injector injector = Guice.createInjector(
       createDataFabricModule(),
+      new TransactionExecutorModule(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),
       new ConfigModule(cConf, hConf),
@@ -251,8 +251,6 @@ public class ConfigurableTestBase {
         protected void configure() {
           install(new FactoryModuleBuilder().implement(ApplicationManager.class, DefaultApplicationManager.class)
                     .build(ApplicationManagerFactory.class));
-          install(new FactoryModuleBuilder().implement(StreamWriter.class, DefaultStreamWriter.class)
-                    .build(StreamWriterFactory.class));
           install(new FactoryModuleBuilder().implement(StreamManager.class, DefaultStreamManager.class)
                     .build(StreamManagerFactory.class));
           bind(TemporaryFolder.class).toInstance(tmpFolder);
@@ -292,6 +290,7 @@ public class ConfigurableTestBase {
     private final MetricStore metricStore;
 
     @Inject
+    @SuppressWarnings("unused")
     private MetricsManagerProvider(MetricStore metricStore) {
       this.metricStore = metricStore;
     }

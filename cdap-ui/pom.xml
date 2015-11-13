@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.2.1</version>
+    <version>3.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-ui</artifactId>
@@ -118,6 +118,9 @@
                   <exclude>**/*.svg</exclude>
                   <exclude>**/bower_components/**</exclude>
                   <exclude>**/node_modules/**</exclude>
+                  <exclude>**/dist/**</exclude>
+                  <exclude>**/logs/**</exclude>
+                  <exclude>**/npm-debug.log</exclude>
                   <exclude>**/node/**</exclude>
                   <exclude>**/*.json</exclude>
                 </excludes>

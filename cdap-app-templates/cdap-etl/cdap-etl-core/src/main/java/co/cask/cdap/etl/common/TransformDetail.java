@@ -16,11 +16,12 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
 
 /**
  * Class that encapsulates {@link co.cask.cdap.etl.api.Transform} and transformId
- * and {@link co.cask.cdap.etl.common.StageMetrics}
+ * and {@link DefaultStageMetrics}
  */
 public class TransformDetail {
 

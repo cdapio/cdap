@@ -68,6 +68,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.io.File;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
@@ -176,11 +177,11 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         closeables.add(pluginInstantiator);
       }
 
-      final DynamicMapReduceContext context =
-        new DynamicMapReduceContext(program, runId, options.getUserArguments(), spec,
-                                    logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
-                                    metricsCollectionService, txSystemClient, datasetFramework,
-                                    pluginInstantiator);
+      final BasicMapReduceContext context =
+        new BasicMapReduceContext(program, runId, options.getUserArguments(), spec,
+                                  logicalStartTime, programNameInWorkflow, workflowToken, discoveryServiceClient,
+                                  metricsCollectionService, txSystemClient, datasetFramework, streamAdmin,
+                                  getPluginArchive(options), pluginInstantiator);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
                         new PropertyFieldSetter(context.getSpecification().getProperties()),
@@ -235,7 +236,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
    */
   private Service.Listener createRuntimeServiceListener(final Program program, final RunId runId,
                                                         final Iterable<Closeable> closeables,
-                                                        Arguments arguments, final Arguments userArgs) {
+                                                        final Arguments arguments, final Arguments userArgs) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
     final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
@@ -252,7 +253,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
         if (workflowName == null) {
-          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap());
+          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId,
+                         userArgs.asMap(), arguments.asMap());
         } else {
           // Program started by Workflow
           store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId, workflowNodeId,
@@ -287,5 +289,13 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
     for (Closeable c : closeables) {
       Closeables.closeQuietly(c);
     }
+  }
+
+  @Nullable
+  private File getPluginArchive(ProgramOptions options) {
+    if (!options.getArguments().hasOption(ProgramOptionConstants.PLUGIN_ARCHIVE)) {
+      return null;
+    }
+    return new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_ARCHIVE));
   }
 }

@@ -21,7 +21,6 @@ import co.cask.cdap.api.annotation.Property;
 import co.cask.cdap.api.dataset.table.Increment;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.FlowletConfigurer;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -45,12 +44,6 @@ public class WordSplitter extends AbstractFlowlet {
 
   public WordSplitter(String wordStatsTableName) {
     this.wordStatsTableName = wordStatsTableName;
-  }
-
-  @Override
-  public void configure(FlowletConfigurer configurer) {
-    super.configure(configurer);
-    useDatasets(wordStatsTableName);
   }
 
   @Override

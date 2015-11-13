@@ -400,12 +400,25 @@ public class BusinessMetadataDataset extends AbstractDataset {
   }
 
   // Helper method to execute IndexedTable search on target index column.
-  List<BusinessMetadataRecord> executeSearchOnColumns(String namespaceId, String column, String searchValue,
-                                                      MetadataSearchTargetType type) {
+  List<BusinessMetadataRecord> executeSearchOnColumns(final String namespaceId, final String column,
+                                                      final String searchValue, final MetadataSearchTargetType type) {
     List<BusinessMetadataRecord> results = new LinkedList<>();
 
     Scanner scanner;
     String namespacedSearchValue = namespaceId + KEYVALUE_SEPARATOR + searchValue.toLowerCase();
+
+    // Special case if the key is "tags:"
+    // Since the value is saved as comma separated Strings, we need to do String matching to filter the right keyword.
+    boolean modifiedTagsKVSearch = false;
+    final String unmodifiedTagKeyValue = searchValue.toLowerCase();
+    if (KEYVALUE_COLUMN.equals(column) && unmodifiedTagKeyValue.startsWith(TAGS_KEY + KEYVALUE_SEPARATOR)) {
+      // If it is search on "tags" but does not end with * then we need to add virtual one.
+      // Change the search to just search on namespace:tags: - we will do filter later.
+      namespacedSearchValue =
+        namespacedSearchValue.substring(0, namespacedSearchValue.lastIndexOf(KEYVALUE_SEPARATOR) + 1) + "*";
+      modifiedTagsKVSearch = true;
+    }
+
     if (namespacedSearchValue.endsWith("*")) {
       byte[] startKey = Bytes.toBytes(namespacedSearchValue.substring(0, namespacedSearchValue.lastIndexOf("*")));
       byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
@@ -428,6 +441,35 @@ public class BusinessMetadataDataset extends AbstractDataset {
         // Filter on target type if not ALL
         if ((type != MetadataSearchTargetType.ALL) && (!targetType.equals(type.getInternalName()))) {
           continue;
+        }
+
+        // Deal with special case for search on specific keyword for "tags:"
+        if (modifiedTagsKVSearch) {
+          boolean isMatch = false;
+          if ((TAGS_KEY + KEYVALUE_SEPARATOR + "*").equals(unmodifiedTagKeyValue)) {
+            isMatch = true;
+          } else {
+            Iterable<String> tagValues = Splitter.on(TAGS_SEPARATOR).omitEmptyStrings().trimResults().split(rowValue);
+            for (String tagValue : tagValues) {
+              // compare with tags:value
+              String prefixedTagValue = TAGS_KEY + KEYVALUE_SEPARATOR + tagValue;
+              if (!unmodifiedTagKeyValue.endsWith("*")) {
+                if (prefixedTagValue.equals(unmodifiedTagKeyValue)) {
+                  isMatch = true;
+                  break;
+                }
+              } else {
+                int endAsteriskIndex = unmodifiedTagKeyValue.lastIndexOf("*");
+                if (prefixedTagValue.startsWith(unmodifiedTagKeyValue.substring(0, endAsteriskIndex))) {
+                  isMatch = true;
+                  break;
+                }
+              }
+            }
+          }
+          if (!isMatch) {
+            continue;
+          }
         }
 
         Id.NamespacedId targetId = MdsValueKey.getNamespaceIdFromKey(targetType, new MDSKey(rowKey));

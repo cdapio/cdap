@@ -22,8 +22,7 @@ import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 
@@ -47,23 +46,19 @@ public final class MultiApp extends AbstractApplication {
   /**
    *
    */
-  public static final class MultiFlow implements Flow {
+  public static final class MultiFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("MultiFlow")
-        .setDescription("MultiFlow")
-        .withFlowlets()
-          .add("gen", new Generator())
-          .add("c1", new Consumer(), 2)
-          .add("c2", new Consumer(), 2)
-          .add("c3", new ConsumerStr(), 2)
-        .connect()
-          .from("gen").to("c1")
-          .from("gen").to("c2")
-          .from("gen").to("c3")
-        .build();
+    protected void configureFlow() {
+      setName("MultiFlow");
+      setDescription("MultiFlow");
+      addFlowlet("gen", new Generator());
+      addFlowlet("c1", new Consumer(), 2);
+      addFlowlet("c2", new Consumer(), 2);
+      addFlowlet("c3", new ConsumerStr(), 2);
+      connect("gen", "c1");
+      connect("gen", "c2");
+      connect("gen", "c3");
     }
   }
 

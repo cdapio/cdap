@@ -28,6 +28,7 @@ import co.cask.cdap.data2.transaction.queue.hbase.coprocessor.QueueConsumerConfi
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HTable96NameConverter;
 import co.cask.tephra.coprocessor.TransactionStateCache;
+import co.cask.tephra.persist.TransactionSnapshot;
 import co.cask.tephra.persist.TransactionVisibilityState;
 import com.google.common.base.Supplier;
 import com.google.common.io.InputSupplier;

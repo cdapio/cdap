@@ -152,7 +152,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
   }
 
   public void recordProgramStart(Id.Program program, String pid, long startTs, String twillRunId,
-                                 Map<String, String> runtimeArgs) {
+                                 Map<String, String> runtimeArgs, Map<String, String> systemArgs) {
     MDSKey key = new MDSKey.Builder()
       .add(TYPE_RUN_RECORD_STARTED)
       .add(program.getNamespaceId())
@@ -164,8 +164,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
 
 
     write(key, new RunRecordMeta(pid, startTs, null, ProgramRunStatus.RUNNING,
-      ImmutableMap.of("runtimeArgs",
-        GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE)), twillRunId));
+                                 ImmutableMap.of(
+                                   "runtimeArgs", GSON.toJson(runtimeArgs, MAP_STRING_STRING_TYPE)),
+                                 systemArgs,
+                                 twillRunId));
   }
 
   public void recordProgramSuspend(Id.Program program, String pid) {
@@ -284,11 +286,6 @@ public class AppMetadataStore extends MetadataStoreDataset {
     }
   }
 
-  public List<RunRecordMeta> getRuns(@Nullable Id.Program program, ProgramRunStatus status,
-                                     long startTime, long endTime, int limit) {
-    return getRuns(program, status, startTime, endTime, limit, null);
-  }
-
   // TODO: getRun is duplicated in cdap-watchdog AppMetadataStore class.
   // Any changes made here will have to be made over there too.
   // JIRA https://issues.cask.co/browse/CDAP-2172
@@ -379,8 +376,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return list(activeKey, null, RunRecordMeta.class, limit, andPredicate(new Predicate<RunRecordMeta>() {
                   @Override
                   public boolean apply(RunRecordMeta input) {
-                    boolean normalCheck = input.getStartTs() >= startTime && input.getStartTs() < endTime;
-                    return normalCheck;
+                    return input.getStartTs() >= startTime && input.getStartTs() < endTime;
                   }
                 }, filter));
   }
@@ -414,8 +410,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     return new Predicate<RunRecordMeta>() {
       @Override
       public boolean apply(RunRecordMeta record) {
-        boolean normalCheck = record.getStatus().equals(state.getRunStatus());
-        return normalCheck;
+        return record.getStatus().equals(state.getRunStatus());
       }
     };
   }
@@ -560,7 +555,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
     properties.put(workflowNodeId, programRunId);
 
     write(key, new RunRecordMeta(record.getPid(), record.getStartTs(), null, ProgramRunStatus.RUNNING,
-                                 properties, record.getTwillRunId()));
+                                 properties, record.getSystemArgs(), record.getTwillRunId()));
 
     // Record the program start
     key = new MDSKey.Builder()
@@ -573,7 +568,7 @@ public class AppMetadataStore extends MetadataStoreDataset {
       .build();
 
     write(key, new RunRecordMeta(programRunId, startTimeInSeconds, null, ProgramRunStatus.RUNNING,
-                                 ImmutableMap.of("workflowrunid", workflowRunId), twillRunId));
+                                 ImmutableMap.of("workflowrunid", workflowRunId), null, twillRunId));
   }
 
   public void updateWorkflowToken(Id.Workflow workflowId, String workflowRunId,

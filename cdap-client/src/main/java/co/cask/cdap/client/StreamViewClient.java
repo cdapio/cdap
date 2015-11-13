@@ -59,8 +59,7 @@ public class StreamViewClient {
   }
 
   public StreamViewClient(ClientConfig config) {
-    this.config = config;
-    this.restClient = new RESTClient(config);
+    this(config, new RESTClient(config));
   }
 
   /**

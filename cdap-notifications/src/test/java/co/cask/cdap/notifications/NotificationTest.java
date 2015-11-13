@@ -40,7 +40,6 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
-import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.service.NotificationContext;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
@@ -121,7 +120,6 @@ public abstract class NotificationTest {
                                     new ExploreClientModule(),
                                     new IOModule(),
                                     new DataFabricModules().getInMemoryModules(),
-                                    new NotificationFeedServiceRuntimeModule().getInMemoryModules(),
                                     new NamespaceClientRuntimeModule().getInMemoryModules()
                                   ),
                                   Arrays.asList(modules))
@@ -166,6 +164,39 @@ public abstract class NotificationTest {
         // No-op
       }
     });
+  }
+
+  @Test
+  public void testCreateGetAndListFeeds() throws Exception {
+    // no feeds at the beginning
+    Assert.assertEquals(0, feedManager.listFeeds(namespace).size());
+    // create feed 1
+    feedManager.createFeed(FEED1);
+    // check get and list feed
+    Assert.assertEquals(FEED1, feedManager.getFeed(FEED1));
+    Assert.assertEquals(ImmutableList.of(FEED1), feedManager.listFeeds(namespace));
+
+    // create feed 2
+    feedManager.createFeed(FEED2);
+    // check get and list feed
+    Assert.assertEquals(FEED2, feedManager.getFeed(FEED2));
+    Assert.assertTrue(checkFeedList(ImmutableSet.of(FEED1, FEED2), feedManager.listFeeds(namespace)));
+
+    // clear the feeds
+    feedManager.deleteFeed(FEED1);
+    feedManager.deleteFeed(FEED2);
+    namespaceClient.delete(namespace);
+    Assert.assertEquals(0, feedManager.listFeeds(namespace).size());
+  }
+
+  private boolean checkFeedList(ImmutableSet<Id.NotificationFeed> expected, List<Id.NotificationFeed> actual) {
+    Assert.assertEquals(expected.size(), actual.size());
+    for (Id.NotificationFeed feed : actual) {
+      if (!expected.contains(feed)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Test
@@ -224,7 +255,7 @@ public abstract class NotificationTest {
               txContext.finish();
             }
           }
-        }, 5, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+        }, 5, TimeUnit.SECONDS);
       } finally {
         cancellable.cancel();
       }

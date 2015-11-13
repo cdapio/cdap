@@ -17,9 +17,6 @@ package co.cask.cdap.internal.workflow;
 
 import co.cask.cdap.api.workflow.WorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionSpecification;
-import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.specification.DataSetFieldExtractor;
-import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 
 import java.util.Collections;
 import java.util.HashMap;

@@ -33,17 +33,13 @@ import java.io.IOException;
  * A MapReduce job which computes total number of hits for every unique url or path in apache access logs
  */
 public class HitCounterProgram extends AbstractMapReduce {
-  @Override
-  public void configure() {
-    setName(getClass().getSimpleName());
-    setOutputDataset(LogAnalysisApp.HIT_COUNT_STORE);
-  }
 
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
     Job job = context.getHadoopJob();
     job.setMapperClass(Emitter.class);
     job.setReducerClass(Counter.class);
+    context.addOutput(LogAnalysisApp.HIT_COUNT_STORE);
     StreamBatchReadable.useStreamInput(context, LogAnalysisApp.LOG_STREAM);
   }
 

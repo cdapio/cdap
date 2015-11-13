@@ -32,6 +32,7 @@ import co.cask.cdap.config.guice.ConfigStoreModule;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.stream.service.StreamServiceRuntimeModule;
 import co.cask.cdap.data.view.ViewAdminModules;
@@ -81,6 +82,7 @@ public final class AppFabricTestModule extends AbstractModule {
   protected void configure() {
     install(new DataFabricModules().getInMemoryModules());
     install(new DataSetsModules().getStandaloneModules());
+    install(new TransactionExecutorModule());
     install(new DataSetServiceModules().getInMemoryModules());
     install(new ConfigModule(cConf, hConf));
     install(new IOModule());

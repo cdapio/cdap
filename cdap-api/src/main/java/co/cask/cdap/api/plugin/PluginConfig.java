@@ -19,11 +19,15 @@ package co.cask.cdap.api.plugin;
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.annotation.Beta;
 
+import java.io.Serializable;
+
 /**
  * Base class for writing configuration class for template plugin.
  */
 @Beta
-public abstract class PluginConfig extends Config {
+public abstract class PluginConfig extends Config implements Serializable {
+
+  private static final long serialVersionUID = 125560021489909246L;
 
   private PluginProperties properties;
 

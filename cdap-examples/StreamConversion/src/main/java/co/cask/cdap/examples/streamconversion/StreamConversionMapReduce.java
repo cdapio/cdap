@@ -74,7 +74,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     // each run writes its output to a partition with the logical start time.
     TimePartitionedFileSetArguments.setOutputPartitionTime(dsArguments, logicalTime);
     TimePartitionedFileSet partitionedFileSet = context.getDataset("converted", dsArguments);
-    context.setOutput("converted", partitionedFileSet);
+    context.addOutput("converted", partitionedFileSet);
 
     LOG.info("Output location for new partition is: {}",
              partitionedFileSet.getEmbeddedFileSet().getOutputLocation().toURI().toString());

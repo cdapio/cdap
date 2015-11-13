@@ -109,11 +109,14 @@ public class ExploreDriverTest {
       ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
       connectionParams.getExtraInfos());
 
-    connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&auth.token=foo");
+    connectionParams =
+      driver.parseConnectionUrl(baseUrl + "?foo2=bar2&auth.token=foo&ssl.enabled=true&verify.ssl.cert=false");
     Assert.assertEquals("foobar", connectionParams.getHost());
     Assert.assertEquals(10000, connectionParams.getPort());
     Assert.assertEquals(
-      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo"),
+      ImmutableMultimap.of(ExploreDriver.ConnectionParams.Info.EXPLORE_AUTH_TOKEN, "foo",
+                           ExploreDriver.ConnectionParams.Info.SSL_ENABLED, "true",
+                           ExploreDriver.ConnectionParams.Info.VERIFY_SSL_CERT, "false"),
       connectionParams.getExtraInfos());
 
     connectionParams = driver.parseConnectionUrl(baseUrl + "?foo2=bar2&auth.token");
@@ -150,12 +153,23 @@ public class ExploreDriverTest {
     try {
       driver.connect(Constants.Explore.Jdbc.URL_PREFIX + "foo:10000", null);
       Assert.fail();
-    } catch (SQLException e) {
+    } catch (SQLException expected) {
       // Expected, host is not available (random host)
+    }
+
+    // Correct host, but ssl enabled, so the connection fails
+    try {
+      Assert.assertNotNull(driver.connect(exploreServiceUrl + "&ssl.enabled=true", null));
+      Assert.fail();
+    } catch (SQLException expected) {
+      // Expected - no connection available via ssl
     }
 
     // Correct host
     Assert.assertNotNull(driver.connect(exploreServiceUrl, null));
+
+    // Correct host
+    Assert.assertNotNull(driver.connect(exploreServiceUrl + "&ssl.enabled=false", null));
 
     // Correct host and extra parameter
     Assert.assertNotNull(driver.connect(exploreServiceUrl + "&auth.token=bar", null));
@@ -186,6 +200,7 @@ public class ExploreDriverTest {
     resultSet.close();
     try {
       resultSet.next();
+      Assert.fail();
     } catch (SQLException e) {
       // Expected exception: resultSet is closed
     }
@@ -207,6 +222,7 @@ public class ExploreDriverTest {
     resultSet.close();
     try {
       resultSet.next();
+      Assert.fail();
     } catch (SQLException e) {
       // Expected exception: resultSet is closed
     }
@@ -330,14 +346,9 @@ public class ExploreDriverTest {
       if (!content.readable()) {
         return ImmutableMap.of();
       }
-      Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
-      try {
+      try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
         Map<String, String> args = new Gson().fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
         return args == null ? ImmutableMap.<String, String>of() : args;
-      } catch (JsonSyntaxException e) {
-        throw e;
-      } finally {
-        reader.close();
       }
     }
   }

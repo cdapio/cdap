@@ -21,8 +21,7 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import com.google.common.base.Charsets;
@@ -46,18 +45,14 @@ public final class StreamApp extends AbstractApplication {
   /**
    *
    */
-  public static final class StreamFlow implements Flow {
+  public static final class StreamFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("StreamFlow")
-        .setDescription("StreamFlow")
-        .withFlowlets()
-          .add("reader", new StreamReader())
-        .connect()
-          .fromStream("stream").to("reader")
-        .build();
+    protected void configureFlow() {
+      setName("StreamFlow");
+      setDescription("StreamFlow");
+      addFlowlet("reader", new StreamReader());
+      connectStream("stream", "reader");
     }
   }
 

@@ -485,6 +485,14 @@
   </property>
 
   <property>
+    <name>dataset.extensions.dir</name>
+    <value>/opt/cdap/ext/lib</value>
+    <description>
+      Directory where all dataset extensions are stored
+    </description>
+  </property>
+  
+  <property>
     <name>dataset.service.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -604,7 +612,7 @@
     <name>app.connection.backlog</name>
     <value>20000</value>
     <description>
-      Max connection backlog of CDAP-Master
+      Max connection backlog of CDAP Master
     </description>
   </property>
 
@@ -798,6 +806,14 @@
   </property>
 
   <property>
+    <name>master.collect.containers.log</name>
+    <value>true</value>
+    <description>
+      Determines if container logs are streamed back to the CDAP Master process log
+    </description>
+  </property>
+
+  <property>
     <name>master.service.max.instances</name>
     <value>5</value>
     <description>
@@ -820,7 +836,6 @@
       Number of cores for Master Service instance
     </description>
   </property>
-
 
   <!-- Metadata Configuration -->
 

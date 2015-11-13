@@ -34,6 +34,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.templates.AdapterDefinition;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Predicate;
 import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
@@ -79,17 +80,20 @@ public interface Store {
    * @param startTime  start timestamp in seconds; if run id is time-based pass the time from the run id
    * @param twillRunId twill run id
    * @param runtimeArgs the runtime arguments for this program run
+   * @param systemArgs the system arguments for this program run
    */
   void setStart(Id.Program id, String pid, long startTime, @Nullable String twillRunId,
-                Map<String, String> runtimeArgs);
+                Map<String, String> runtimeArgs, Map<String, String> systemArgs);
 
   /**
-   * Logs start of program run.
+   * Logs start of program run. This is a convenience method for testing, actual run starts should be recorded using
+   * {@link #setStart(Id.Program, String, long, String, Map, Map)}.
    *
    * @param id        Info about program
    * @param pid       run id
    * @param startTime start timestamp in seconds; if run id is time-based pass the time from the run id
    */
+  @VisibleForTesting
   void setStart(Id.Program id, String pid, long startTime);
 
   /**
@@ -128,6 +132,21 @@ public interface Store {
    * @return          list of logged runs
    */
   List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit);
+
+  /**
+   * Fetches run records for particular program. Returns only finished runs.
+   * Returned ProgramRunRecords are sorted by their startTime.
+   *
+   * @param id        program id.
+   * @param status    status of the program running/completed/failed or all
+   * @param startTime fetch run history that has started after the startTime in seconds
+   * @param endTime   fetch run history that has started before the endTime in seconds
+   * @param limit     max number of entries to fetch for this history call
+   * @param filter    predicate to be passed to filter the records
+   * @return          list of logged runs
+   */
+  List<RunRecordMeta> getRuns(Id.Program id, ProgramRunStatus status, long startTime, long endTime, int limit,
+                              Predicate<RunRecordMeta> filter);
 
   /**
    * Fetches the run records for the particular status.

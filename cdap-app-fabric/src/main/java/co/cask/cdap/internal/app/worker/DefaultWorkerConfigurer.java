@@ -52,7 +52,7 @@ public class DefaultWorkerConfigurer extends DefaultPluginConfigurer implements 
 
   public DefaultWorkerConfigurer(Worker worker, Id.Artifact artifactId, ArtifactRepository artifactRepository,
                                  PluginInstantiator pluginInstantiator) {
-    super(artifactRepository, pluginInstantiator, artifactId);
+    super(artifactId, artifactRepository, pluginInstantiator);
     this.name = worker.getClass().getSimpleName();
     this.className = worker.getClass().getName();
     this.propertyFields = Maps.newHashMap();

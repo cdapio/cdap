@@ -15,14 +15,14 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppController',
-function ($scope, $state, myAppUploader, MyDataSource, myNamespace, myAdapterApi, $alert, GLOBALS, myAdapterFactory) {
+function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, $alert, GLOBALS, myHydratorFactory) {
 
   $scope.apps = [];
   $scope.GLOBALS = GLOBALS;
-  $scope.myAdapterFactory = myAdapterFactory;
+  $scope.myHydratorFactory = myHydratorFactory;
   $scope.nsname = myNamespace.getDisplayName($state.params.nsadmin);
 
-  var myDataSrc = new MyDataSource($scope);
+  var myDataSrc = new MyCDAPDataSource($scope);
   var path = '/namespaces/' + $state.params.nsadmin + '/apps';
   myDataSrc.request({
     _cdapPath: path

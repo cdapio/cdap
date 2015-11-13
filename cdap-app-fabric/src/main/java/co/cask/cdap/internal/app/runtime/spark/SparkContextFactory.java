@@ -21,7 +21,11 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.tephra.Transaction;
+import co.cask.tephra.TransactionSystemClient;
 import org.apache.hadoop.conf.Configuration;
+
+import java.io.File;
+import java.util.Map;
 
 /**
  * Factory for creating {@link ExecutionSparkContext} by referencing properties in {@link ClientSparkContext}.
@@ -31,13 +35,15 @@ final class SparkContextFactory {
   private final Configuration hConf;
   private final ClientSparkContext clientContext;
   private final DatasetFramework datasetFramework;
+  private final TransactionSystemClient txClient;
   private final StreamAdmin streamAdmin;
 
   SparkContextFactory(Configuration hConf, ClientSparkContext clientContext,
-                      DatasetFramework datasetFramework, StreamAdmin streamAdmin) {
+                      DatasetFramework datasetFramework, TransactionSystemClient txClient, StreamAdmin streamAdmin) {
     this.hConf = hConf;
     this.clientContext = clientContext;
     this.datasetFramework = datasetFramework;
+    this.txClient = txClient;
     this.streamAdmin = streamAdmin;
   }
 
@@ -51,17 +57,19 @@ final class SparkContextFactory {
   /**
    * Creates a new instance of {@link ExecutionSparkContext} based on the {@link ClientSparkContext} in this factory.
    *
-   * @param transaction the transaction for the spark execution.
+   * @param transaction the transaction for the spark execution
+   * @param localizedResources the resources localized for the spark program
    */
-  ExecutionSparkContext createExecutionContext(Transaction transaction) {
+  ExecutionSparkContext createExecutionContext(Transaction transaction, Map<String, File> localizedResources) {
     SparkSpecification spec = updateSpecExecutorResources(clientContext.getSpecification(),
                                                           clientContext.getExecutorResources());
     return new ExecutionSparkContext(clientContext.getApplicationSpecification(), spec, clientContext.getProgramId(),
                                      clientContext.getRunId(), clientContext.getProgramClassLoader(),
                                      clientContext.getLogicalStartTime(), clientContext.getRuntimeArguments(),
-                                     transaction, datasetFramework, clientContext.getDiscoveryServiceClient(),
+                                     transaction, datasetFramework, txClient, clientContext.getDiscoveryServiceClient(),
                                      clientContext.getMetricsContext(), clientContext.getLoggingContext(),
-                                     hConf, streamAdmin, clientContext.getWorkflowToken());
+                                     hConf, streamAdmin, localizedResources,
+                                     clientContext.getPluginInstantiator(), clientContext.getWorkflowToken());
   }
 
   private SparkSpecification updateSpecExecutorResources(SparkSpecification originalSpec, Resources executorResources) {

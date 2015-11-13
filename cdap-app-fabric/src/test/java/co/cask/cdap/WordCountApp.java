@@ -24,8 +24,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.Callback;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
@@ -111,19 +110,18 @@ public class WordCountApp extends AbstractApplication {
   /**
    *
    */
-  public static class WordCountFlow implements Flow {
+  public static class WordCountFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("WordCountFlow")
-        .setDescription("Flow for counting words")
-        .withFlowlets().add("StreamSource", new StreamSucker())
-                       .add(new Tokenizer())
-                       .add(new CountByField("word", "field"))
-        .connect().fromStream("text").to("StreamSource")
-                  .from("StreamSource").to("Tokenizer")
-                  .from("Tokenizer").to("CountByField")
-        .build();
+    protected void configureFlow() {
+      setName("WordCountFlow");
+      setDescription("Flow for counting words");
+      addFlowlet("StreamSource", new StreamSucker());
+      addFlowlet(new Tokenizer());
+      addFlowlet(new CountByField("word", "field"));
+      connectStream("text", "StreamSource");
+      connect("StreamSource", "Tokenizer");
+      connect("Tokenizer", "CountByField");
     }
   }
 
@@ -178,9 +176,6 @@ public class WordCountApp extends AbstractApplication {
    *
    */
   public static class CountByField extends AbstractFlowlet implements Callback {
-    @UseDataSet("mydataset")
-    private KeyValueTable counters;
-
     @Property
     private final String wordKey;
 
@@ -208,9 +203,10 @@ public class WordCountApp extends AbstractApplication {
         token = field + ":" + token;
       }
 
-      this.counters.increment(token.getBytes(Charsets.UTF_8), increment);
+      KeyValueTable counters = getContext().getDataset("mydataset");
+      counters.increment(token.getBytes(Charsets.UTF_8), increment);
 
-      byte[] bytes = this.counters.read(token.getBytes(Charsets.UTF_8));
+      byte[] bytes = counters.read(token.getBytes(Charsets.UTF_8));
       LOG.info(token + " " + Longs.fromByteArray(bytes));
     }
 

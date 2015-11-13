@@ -159,6 +159,45 @@ public class BusinessMetadataDatasetTest {
   }
 
   @Test
+  public void testSearchOnTags() throws Exception {
+    Assert.assertEquals(0, dataset.getTags(app1).size());
+    Assert.assertEquals(0, dataset.getTags(flow1).size());
+    Assert.assertEquals(0, dataset.getTags(dataset1).size());
+    Assert.assertEquals(0, dataset.getTags(stream1).size());
+    dataset.addTags(app1, "tag1", "tag2", "tag3");
+    dataset.addTags(flow1, "tag1");
+    dataset.addTags(dataset1, "tag3", "tag2", "tag12");
+    dataset.addTags(stream1, "tag2, tag4");
+
+    // Try to search on all tags
+    List<BusinessMetadataRecord> results =
+      dataset.findBusinessMetadataOnKeyValue("ns1", "tags:*", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(4, results.size());
+
+    // Try to search for tag1*
+    results = dataset.findBusinessMetadataOnKeyValue("ns1", "tags:tag1*", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(3, results.size());
+
+    // Try to search for tag1
+    results = dataset.findBusinessMetadataOnKeyValue("ns1", "tags:tag1", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(2, results.size());
+
+    // Try to search for tag4
+    results = dataset.findBusinessMetadataOnKeyValue("ns1", "tags:tag4", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(1, results.size());
+
+    // cleanup
+    dataset.removeTags(app1);
+    dataset.removeTags(flow1);
+    dataset.removeTags(dataset1);
+    dataset.removeTags(stream1);
+    Assert.assertEquals(0, dataset.getTags(app1).size());
+    Assert.assertEquals(0, dataset.getTags(flow1).size());
+    Assert.assertEquals(0, dataset.getTags(dataset1).size());
+    Assert.assertEquals(0, dataset.getTags(stream1).size());
+  }
+
+  @Test
   public void testSearchOnValue() throws Exception {
     // Create record
     BusinessMetadataRecord record = new BusinessMetadataRecord(flow1, "key1", "value1");

@@ -108,12 +108,10 @@ public class AppWithServices extends AbstractApplication {
 
     public static final class TransactionsHandler extends AbstractHttpServiceHandler {
 
-      @UseDataSet(TRANSACTIONS_DATASET_NAME)
-      KeyValueTable table;
-
       @Override
       public void initialize(HttpServiceContext context) throws Exception {
         super.initialize(context);
+        KeyValueTable table = getContext().getDataset(TRANSACTIONS_DATASET_NAME);
         table.write(INIT_KEY, VALUE);
       }
 
@@ -122,6 +120,7 @@ public class AppWithServices extends AbstractApplication {
       public void handler(HttpServiceRequest request, HttpServiceResponder responder,
                           @PathParam("key") String key, @PathParam("value") String value, @PathParam("sleep") int sleep)
         throws InterruptedException {
+        KeyValueTable table = getContext().getDataset(TRANSACTIONS_DATASET_NAME);
         //Check if data written in initialize method is persisted.
         Preconditions.checkArgument(Bytes.toString(table.read(INIT_KEY)).equals(VALUE));
         table.write(key, value);
@@ -133,6 +132,7 @@ public class AppWithServices extends AbstractApplication {
       @GET
       public void readHandler(HttpServiceRequest request, HttpServiceResponder responder,
                               @PathParam("key") String key) {
+        KeyValueTable table = getContext().getDataset(TRANSACTIONS_DATASET_NAME);
         String value = Bytes.toString(table.read(key));
         if (value == null) {
           responder.sendStatus(204);
@@ -144,6 +144,7 @@ public class AppWithServices extends AbstractApplication {
       @Override
       public void destroy() {
         super.destroy();
+        KeyValueTable table = getContext().getDataset(TRANSACTIONS_DATASET_NAME);
         table.write(DESTROY_KEY, VALUE);
       }
     }
@@ -210,7 +211,6 @@ public class AppWithServices extends AbstractApplication {
     @Property
     private long sleepMs = 1000;
 
-    private String dataset;
     private String valueToWriteOnRun;
     private String valueToWriteOnStop;
 

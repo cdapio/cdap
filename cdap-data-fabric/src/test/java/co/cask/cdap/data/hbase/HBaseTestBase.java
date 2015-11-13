@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.regionserver.HRegion;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.JVMClusterUtil;
+import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +53,7 @@ import java.util.concurrent.TimeUnit;
  *
  * Note:  This test is somewhat heavy-weight and takes 10-20 seconds to startup.
  */
-public abstract class HBaseTestBase {
+public abstract class HBaseTestBase extends ExternalResource {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTestBase.class);
 
@@ -68,11 +69,10 @@ public abstract class HBaseTestBase {
     return "localhost:" + getZKClientPort();
   }
 
-  public abstract int getZKClientPort();
+  protected abstract int getZKClientPort();
 
   // Test startup / teardown
-
-  public final void startHBase() throws Exception {
+  private void startHBase() throws Exception {
     // Tune down the connection thread pool size
     getConfiguration().setInt("hbase.hconnection.threads.core", 5);
     getConfiguration().setInt("hbase.hconnection.threads.max", 10);
@@ -88,9 +88,9 @@ public abstract class HBaseTestBase {
     doStartHBase();
   }
 
-  public abstract void doStartHBase() throws Exception;
+  protected abstract void doStartHBase() throws Exception;
 
-  public abstract void stopHBase() throws Exception;
+  protected abstract void stopHBase() throws Exception;
 
   // HRegion-level testing
 
@@ -182,7 +182,7 @@ public abstract class HBaseTestBase {
    * @param tableName The table whose regions should be processed.
    * @param function The function to apply on each region.
    * @param <T> The return type for the function.
-   * @return
+   * @return a map of region name to the result of applying the specified function.
    */
   public abstract <T> Map<byte[], T> forEachRegion(byte[] tableName, Function<HRegion, T> function);
 
@@ -215,8 +215,17 @@ public abstract class HBaseTestBase {
     }
   }
 
-  public static void main(String[] args) throws Exception {
-    HBaseTestBase tester = new HBaseTestFactory().get();
-    tester.startHBase();
+  @Override
+  protected void before() throws Throwable {
+    startHBase();
+  }
+
+  @Override
+  protected void after() {
+    try {
+      stopHBase();
+    } catch (Exception e) {
+      LOG.error("Error stopping HBase", e);
+    }
   }
 }

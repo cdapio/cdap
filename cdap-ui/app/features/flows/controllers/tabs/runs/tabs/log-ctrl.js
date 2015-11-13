@@ -14,67 +14,21 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.flows')
-  .controller('FlowsRunDetailLogController', function($scope, $state, myFlowsApi, $timeout) {
-
-    this.logs = [];
+class FlowsRunDetailLogController {
+  constructor($scope, $state) {
     if (!$scope.RunsController.runs.length) {
       return;
     }
 
-    var params = {
+    this.params = {
       namespace: $state.params.namespace,
       appId: $state.params.appId,
-      flowId: $state.params.programId,
+      programType: 'flows',
+      programId: $state.params.programId,
       runId: $scope.RunsController.runs.selected.runid,
-      max: 50,
-      scope: $scope
     };
-
-    this.loadingNext = true;
-    myFlowsApi.prevLogs(params)
-      .$promise
-      .then(function (res) {
-        this.logs = res;
-        this.loadingNext = false;
-      }.bind(this));
-
-    this.loadNextLogs = function () {
-      if (this.loadingNext) {
-        return;
-      }
-
-      this.loadingNext = true;
-      params.fromOffset = this.logs[this.logs.length-1].offset;
-
-      myFlowsApi.nextLogs(params)
-        .$promise
-        .then(function (res) {
-          this.logs = _.uniq(this.logs.concat(res));
-          this.loadingNext = false;
-        }.bind(this));
-    };
-
-    this.loadPrevLogs = function () {
-      if (this.loadingPrev) {
-        return;
-      }
-
-      this.loadingPrev = true;
-      params.fromOffset = this.logs[0].offset;
-
-      myFlowsApi.prevLogs(params)
-        .$promise
-        .then(function (res) {
-          this.logs = _.uniq(res.concat(this.logs));
-          this.loadingPrev = false;
-
-          $timeout(function() {
-            var container = angular.element(document.querySelector('[infinite-scroll]'))[0];
-            var logItem = angular.element(document.getElementById(params.fromOffset))[0];
-            container.scrollTop = logItem.offsetTop;
-          });
-        }.bind(this));
-    };
-
-  });
+  }
+}
+FlowsRunDetailLogController.$inject = ['$scope', '$state'];
+angular.module(`${PKG.name}.feature.flows`)
+  .controller('FlowsRunDetailLogController', FlowsRunDetailLogController);

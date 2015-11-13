@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.foo')
-  .controller('RuleDriverController', function($scope, myAdapterValidatorsApi) {
+  .controller('RuleDriverController', function($scope, myHydratorValidatorsApi) {
     this.inputFields = [
       {
         name: 'field1',
@@ -32,7 +32,7 @@ angular.module(PKG.name + '.feature.foo')
     ];
 
 
-    myAdapterValidatorsApi.get()
+    myHydratorValidatorsApi.get()
       .$promise
       .then(function (res) {
         console.log('res', res);

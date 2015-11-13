@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.spark')
-  .controller('SparkRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rSparkDetail, myMetadataFactory) {
+  .controller('SparkRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rSparkDetail) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
@@ -65,7 +65,6 @@ angular.module(PKG.name + '.feature.spark')
     this.openHistory = function() {
       this.$bootstrapModal.open({
         size: 'lg',
-        windowClass: 'center cdap-modal',
         templateUrl: '/assets/features/spark/templates/tabs/history.html',
         controller: ['runs', '$scope', function(runs, $scope) {
           $scope.runs = runs;
@@ -78,33 +77,12 @@ angular.module(PKG.name + '.feature.spark')
       });
     };
 
-    var metadataParams = {
+    this.metadataParams = {
       namespace: $state.params.namespace,
       appId: $state.params.appId,
       programType: 'spark',
       programId: $state.params.programId,
       scope: $scope
     };
-    this.metadataAddOpen = false;
-    this.metadataTags = [];
 
-    myMetadataFactory.getProgramMetadata(metadataParams)
-      .then(function (res) {
-        this.metadataTags = res;
-      }.bind(this));
-
-    this.addMetadata = function () {
-      myMetadataFactory.addProgramMetadata(this.tag, metadataParams)
-        .then(function (res) {
-          this.metadataTags = res;
-          this.tag = '';
-        }.bind(this));
-    };
-
-    this.deleteMetadata = function (tag) {
-      myMetadataFactory.deleteProgramMetadata(tag, metadataParams)
-        .then(function (res) {
-          this.metadataTags = res;
-        }.bind(this));
-    };
   });

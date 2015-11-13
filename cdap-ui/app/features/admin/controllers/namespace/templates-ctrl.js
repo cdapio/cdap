@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesController', function ($scope, myAdapterApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS, $rootScope) {
+  .controller('NamespaceTemplatesController', function ($scope, myPipelineApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS, $rootScope, myAlertOnValium) {
 
     var vm = this;
     var oldTemplateName;
@@ -50,13 +50,13 @@ angular.module(PKG.name + '.feature.admin')
       var fetchApi;
       switch (vm.pluginType) {
         case GLOBALS.pluginTypes[vm.templateType].source:
-          fetchApi = myAdapterApi.fetchSourceProperties;
+          fetchApi = myPipelineApi.fetchSourceProperties;
           break;
         case GLOBALS.pluginTypes[vm.templateType].transform:
-          fetchApi = myAdapterApi.fetchTransformProperties;
+          fetchApi = myPipelineApi.fetchTransformProperties;
           break;
         case GLOBALS.pluginTypes[vm.templateType].sink:
-          fetchApi = myAdapterApi.fetchSinkProperties;
+          fetchApi = myPipelineApi.fetchSinkProperties;
           break;
       }
 
@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.admin')
 
       var params = {
         namespace: $stateParams.nsadmin,
-        adapterType: vm.templateType,
+        pipelineType: vm.templateType,
         extensionType: vm.pluginType,
         pluginName: vm.pluginName,
         version: $rootScope.cdapVersion
@@ -94,22 +94,22 @@ angular.module(PKG.name + '.feature.admin')
 
         var prom;
         var params = {
-          adapterType: vm.templateType,
+          pipelineType: vm.templateType,
           namespace: $stateParams.nsadmin,
           version: $rootScope.cdapVersion
         };
         switch (vm.pluginType) {
           case GLOBALS.pluginTypes[vm.templateType].source:
             params.extensionType = GLOBALS.pluginTypes[vm.templateType].source;
-            prom = myAdapterApi.fetchSources(params).$promise;
+            prom = myPipelineApi.fetchSources(params).$promise;
             break;
           case GLOBALS.pluginTypes[vm.templateType].transform:
             params.extensionType = GLOBALS.pluginTypes[vm.templateType].transform;
-            prom = myAdapterApi.fetchTransforms(params).$promise;
+            prom = myPipelineApi.fetchTransforms(params).$promise;
             break;
           case GLOBALS.pluginTypes[vm.templateType].sink:
             params.extensionType = GLOBALS.pluginTypes[vm.templateType].sink;
-            prom = myAdapterApi.fetchSinks(params).$promise;
+            prom = myPipelineApi.fetchSinks(params).$promise;
             break;
         }
         prom.then(function (res) {
@@ -152,8 +152,8 @@ angular.module(PKG.name + '.feature.admin')
 
     vm.save = function () {
 
-      if (!vm.pluginConfig.pluginTemplate) {
-        $alert({
+      if (!vm.pluginConfig || !vm.pluginConfig.pluginTemplate) {
+        myAlertOnValium.show({
           type: 'danger',
           title: 'Error!',
           content: GLOBALS.en.admin.templateNameMissingError
@@ -164,7 +164,7 @@ angular.module(PKG.name + '.feature.admin')
 
       var list = vm.pluginList.map(function (p) { return p.name; });
       if (list.indexOf(vm.pluginConfig.pluginTemplate) !== -1) {
-        $alert({
+        myAlertOnValium.show({
           type: 'danger',
           title: 'Error!',
           content: GLOBALS.en.admin.pluginSameNameError

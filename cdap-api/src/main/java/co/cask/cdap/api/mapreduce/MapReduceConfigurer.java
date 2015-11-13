@@ -44,6 +44,11 @@ public interface MapReduceConfigurer extends DatasetConfigurer, ProgramConfigure
   void setOutputDataset(String dataset);
 
   /**
+   * Sets the resources requirement for the driver of the MapReduce.
+   */
+  void setDriverResources(Resources resources);
+
+  /**
    * Sets the resources requirement for Mapper task of the {@link MapReduce}.
    */
   void setMapperResources(Resources resources);

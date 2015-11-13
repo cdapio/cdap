@@ -16,18 +16,19 @@
 
 @import "../../variables.less";
 @import "../../../../bower_components/bootstrap/less/mixins.less";
+@import "mixins.less";
 
 body.theme-cdap {
 
   //
   // Full width for Dashboard
   // --------------------------------------------------
-  &.state-dashboard, &.state-adapters-create-studio {
+  &.state-dashboard, &.state-hydrator-create-studio {
     main.container {
       width: 100%;
     }
   }
-  &.state-adapters-create {
+  &.state-hydrator-create {
     main.container {
       padding: 0;
     }
@@ -61,6 +62,12 @@ body.theme-cdap {
   // --------------------------------------------------
   .text-success { color: @brand-success; }
   .text-danger { color: @brand-danger; }
+
+  //
+  // Status background-color
+  // --------------------------------------------------
+  .bg-success { background-color: @brand-success; }
+  .bg-danger { background-color: @brand-danger; }
 
   //
   // Progress bars
@@ -127,7 +134,9 @@ body.theme-cdap {
     tbody {
       color: @cdap-darkness;
       a {
-        color: @cdap-bluegray;
+        &:not(.btn-success) {
+          color: @cdap-bluegray;
+        }
         &:hover, &:focus {
           cursor: pointer;
           text-decoration: none;
@@ -331,231 +340,190 @@ body.theme-cdap {
   // Modals
   // --------------------------------------------------
   .modal {
-    // Styling for all modals
-    h3, h4 { color: white; }
-    h3 small {
-      color: white;
-      display: block;
-      padding-top: 5px;
-    }
-    .modal-header {
-      border-bottom: 0;
-      .btn, button {
-        .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @font-size: 18px, @padding: 5px 7px);
-        line-height: 1;
-        opacity: 1;
-      }
-    }
-    .modal-dialog { .border-radius(4px); }
-    .modal-content {
-      color: white;
-      background-color: fade(#343841, 85%);
-      button.form-control {
-        &:focus { outline: none; }
-      }
-      table > thead {
-        color: @text-color;
-      }
-    }
-    .modal-footer {
-      border-top: 0;
-      .btn-default { .cask-btn(@color: white, @background: @cdap-gray, @border: 0, @padding: 6px 12px); }
-      .btn-primary, .btn-success {
-        .cask-btn(@color: white, @background: @brand-success, @border: 0, @padding: 6px 12px);
-      }
-    }
-    .form-control {
-      border: 0;
-      .border-radius(4px);
-      .box-shadow(none);
-      text-align: left;
-      &:focus {
-        border-color: transparent;
-        .box-shadow(none);
-      }
-
-      // Metric picker specific styles.
-      &.mp-dropdown-toggle {
-        border-radius: 4px 0px 0px 4px;
-        border-right: 1px solid #ccc;
-      }
-
-      &.mp-input-group-input {
-        border-radius: 0px 4px 4px 0px;
-      }
-    }
-    .input-group-addon + .form-control {
-      border-left: 1px solid lightgray;
-      .border-radius(0);
-     }
-    textarea.form-control { min-height: 100px; }
-    select.form-control {
-      background-color: @cdap-darkness;
-      color: white;
-    }
-
-    .h4-margin {
-      margin-top: 9px;
-      margin-bottom: 9px;
-    }
-
-    // caskConfirm modal styling (no modal-lg or modal-sm class present)
+  // Modal layout styles (container elements)
     &.center {
-      .close { display: none; }
-      .modal-content, .modal-footer { text-align: center; }
-      .modal-content {
-        color: white;
-        border: 0;
-        .box-shadow(none);
-      }
-      .modal-footer {
-        .btn-primary { .cask-btn(@color: white, @background: @brand-danger, @border: 0, @padding: 6px 12px); }
-      }
-    }
-    .modal-dialog {
-      margin-top: 100px;
-      .modal-header {
-        .btn {
-          .cask-btn(@color: @cdap-header, @background: white, @border: 0, @border-radius: 16px, @padding: 5px 7px);
-          font-size: 18px;
-          line-height: 1;
-        }
-      }
-      // Small and large modal styling
-      &.modal-sm, &.modal-lg {
-        color: white;
-
-        .modal-footer {
-          .btn-primary, .btn-success {
-            .cask-btn(@color: white, @background: @brand-success, @border: 0, @padding: 6px 12px);
-          }
-        }
-      }
-      // Small modal styling
-      &.modal-sm {
-        text-align: center;
-        .modal-footer { text-align: center; }
-      }
-      // Large modal styling
-      &.modal-lg {
-        .modal-content {
-          .fa-plus { padding-top: 2px }
-          a.fa-times { .cask-btn(@color: @brand-danger, @background: @brand-danger, @border: 0, @padding: 15px 15px); }
-          .btn-danger {}
-        }
-        .modal-footer { text-align: right; }
-        .panel {
-          background-color: transparent;
-        }
-      }
-    }
-
-    &.cdap-modal {
-      &.center .modal-dialog {
+      .modal-dialog {
         max-width: 80%;
         @media (min-width: @screen-md-min) {
           width: 900px;
         }
       }
-      .modal-header {
-        background-color: @body-bg;
-        border-bottom: 1px solid @modal-table-border-color;
-        color: @cdap-header;
-        height: 60px;
-        margin-bottom: 5px;
-        padding: 0;
-        .border-radius(4px 4px 0 0);
-        .box-shadow(0 0 10px rgba(0, 0, 0, 0.5));
-        > div {
-          margin: 0;
-          padding-left: 15px;
-          @media (max-width: @screen-sm-max) {
-            max-width: 200px;
-          }
-          h3, p {
-            @media (max-width: @screen-sm-max) {
-              white-space: nowrap;
-              text-overflow: ellipsis;
-              overflow: hidden;
-            }
-          }
-          h3 {
-            padding-top: 5px;
-            &:only-child {
-              line-height: 60px;
-              padding-top: 0;
-            }
-          }
+      .modal-sm {
+        max-width: 630px;
+      }
+    }
+
+    .modal-dialog {
+      margin-top: 100px;
+      .border-radius(4px);
+    }
+    // Large modals
+    .modal-lg {
+      .panel {
+        background-color: transparent;
+      }
+      .fa-plus {
+        padding-top: 2px;
+      }
+      .modal-footer {
+        text-align: right;
+      }
+    }
+    // Small modals (ie, cask-confirmable, cask-promptable)
+    .modal-sm {
+      // max-width: 630px;
+      text-align: center;
+      .modal-footer {
+        text-align: center;
+      }
+    }
+    .modal-header {
+      background-color: @body-bg;
+      border-bottom: 1px solid @modal-table-border-color;
+      height: 60px;
+      margin-bottom: 5px;
+      padding: 0;
+      .border-radius(4px 4px 0 0);
+      .box-shadow(0 0 10px fade(black, 50%));
+      > div {
+        margin: 0;
+        padding-left: 15px;
+        @media (max-width: @screen-sm-max) {
+          max-width: 200px;
         }
-        > h3 {
-          padding-left: 15px;
+        h3, p {
           @media (max-width: @screen-sm-max) {
-            max-width: 200px;
             white-space: nowrap;
             text-overflow: ellipsis;
             overflow: hidden;
           }
         }
         h3 {
-          color: @cdap-header;
-          font-weight: 500;
-        }
-        p {
-          color: @cdap-lightgray;
-        }
-        > a.btn {
-          background-color: transparent;
-          border-left: 1px solid @modal-table-border-color;
-          width: 60px;
-          height: 60px;
-          line-height: 60px;
-          padding: 0;
-          .border-radius(0);
-          .transition(all 0.2 ease);
-          &:hover, &:focus {
-            background-color: @cdap-header;
-            color: white;
-            .border-radius(0 4px 0 0);
+          padding-top: 5px;
+          &:only-child {
+            line-height: 60px;
+            padding-top: 0;
           }
         }
       }
-      .modal-content {
-        background-color: white;
+      > h3 {
+        line-height: 60px;
+        padding-left: 15px;
+        @media (max-width: @screen-sm-max) {
+          max-width: 200px;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+        }
+      }
+      h3 {
         color: @cdap-header;
-        h4 {
-          color: @cdap-header;
-        }
-        .pagination {
-          margin: 0 0 10px;
-        }
-        .table {
-          background-color: white;
-          border: 1px solid @modal-table-border-color;
-          margin: 0;
-          thead th {
-            border-right: 1px solid @modal-table-border-color;
-            border-bottom-width: 1px;
-            color: @cdap-header;
-          }
-          tbody {
-            text-align: left;
-            td {
-              border-right: 1px solid @modal-table-border-color;
-              padding-right: 8px;
-              padding-left: 8px;
-            }
-          }
+        font-weight: 500;
+        margin: 0;
+        &:only-child {
+          line-height: 60px;
+          padding-top: 0;
         }
       }
-      .modal-body {
-        padding: 10px;
-        width: 100%;
-        .control-label {
-          font-weight: 400;
+      p {
+        color: @cdap-lightgray;
+        margin: 0;
+        max-width: 740px;
+      }
+      > a.btn {
+        .cask-btn(@background: transparent, @border: 1px solid transparent, @border-radius: 0, @color: @cdap-header, @font-size: 18px, @padding: 0);
+        border-left: 1px solid @modal-table-border-color;
+        width: 60px;
+        height: 60px;
+        line-height: 60px;
+        .transition(all 0.2s ease);
+        &:hover, &:focus {
+          background-color: @cdap-header;
+          border: 1px solid @cdap-header;
+          color: white;
+          .border-radius(0 4px 0 0);
         }
-        .form-control {
-          border: 1px solid @modal-table-border-color;
+      }
+    }
+    .modal-content {
+      color: @cdap-header;
+      background-color: white;
+    }
+    .modal-body {
+      padding: 10px;
+      width: 100%;
+    }
+    .modal-footer {
+      border-top: 0;
+    }
+
+  // Modal content styling (headings, forms, tables, etc.)
+    h3, h4 {
+      color: @cdap-header;
+    }
+    .control-label {
+      font-weight: 400;
+    }
+    .form-control {
+      .border-radius(4px);
+      .box-shadow(none);
+      text-align: left;
+      border: 1px solid @modal-table-border-color;
+      &:focus {
+        .box-shadow(none);
+      }
+
+      // Metric picker specific styles.
+      &.mp-dropdown-toggle {
+        .border-radius(4px 0 0 4px);
+        border-right: 1px solid #ccc;
+      }
+
+      &.mp-input-group-input {
+        .border-radius(0 4px 4px 0);
+      }
+    }
+    .input-group-addon + .form-control {
+      border-left: 1px solid lightgray;
+      .border-radius(0 4px 4px 0);
+    }
+    textarea.form-control {
+      min-height: 100px;
+      resize: none;
+    }
+    button.form-control:focus {
+      outline: none;
+    }
+    .btn[disabled] {
+      background-color: rgb(192, 192, 192);
+      color: @cdap-header;
+    }
+    .table {
+      background-color: white;
+      border: 1px solid @modal-table-border-color;
+      margin: 0;
+      thead th {
+        border-right: 1px solid @modal-table-border-color;
+        border-bottom-width: 1px;
+        color: @cdap-header;
+      }
+      tbody {
+        text-align: left;
+        td {
+          border-right: 1px solid @modal-table-border-color;
+          padding-right: 8px;
+          padding-left: 8px;
         }
+      }
+    }
+    .pagination {
+      margin: 0 0 10px;
+    }
+    .alert.alert-danger.alert-dismissible {
+      padding: 5px;
+      margin-bottom: 0;
+      .close {
+        right: 0;
       }
     }
   }

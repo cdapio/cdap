@@ -60,22 +60,30 @@ public class SchedulerServiceTest {
                                                            AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
   private static final Id.Stream STREAM_ID = Id.Stream.from(namespace, "stream");
-  private static final Schedule TIME_SCHEDULE_0 =
-    Schedules.createTimeSchedule("Schedule0", "Next 10 minutes", getCron(10, TimeUnit.MINUTES));
-  private static final Schedule TIME_SCHEDULE_1 =
-    Schedules.createTimeSchedule("Schedule1", "Next hour", getCron(1, TimeUnit.HOURS));
-  private static final Schedule TIME_SCHEDULE_2 =
-    Schedules.createTimeSchedule("Schedule2", "Next day", getCron(1, TimeUnit.DAYS));
-  private static final Schedule TIME_SCHEDULE_3 =
-    Schedules.createTimeSchedule("Schedule3", "Next Week", getCron(7, TimeUnit.DAYS));
-  private static final Schedule DATA_SCHEDULE_1 =
-    Schedules.createDataSchedule("Schedule3", "Every 1M", Schedules.Source.STREAM, STREAM_ID.getId(), 1);
-  private static final Schedule DATA_SCHEDULE_2 =
-    Schedules.createDataSchedule("Schedule4", "Every 10M", Schedules.Source.STREAM, STREAM_ID.getId(), 10);
-  private static final Schedule UPDATED_TIME_SCHEDULE_1 =
-    Schedules.createTimeSchedule("Schedule1", "Next 2 Hour", getCron(2, TimeUnit.HOURS));
-  private static final Schedule UPDATED_DATA_SCHEDULE_2 =
-    Schedules.createDataSchedule("Schedule4", "Every 5M", Schedules.Source.STREAM, STREAM_ID.getId(), 5);
+  private static final Schedule TIME_SCHEDULE_0 = Schedules.builder("Schedule0")
+    .setDescription("Next 10 minutes")
+    .createTimeSchedule(getCron(10, TimeUnit.MINUTES));
+  private static final Schedule TIME_SCHEDULE_1 = Schedules.builder("Schedule1")
+    .setDescription("Next hour")
+    .createTimeSchedule(getCron(1, TimeUnit.HOURS));
+  private static final Schedule TIME_SCHEDULE_2 = Schedules.builder("Schedule2")
+    .setDescription("Next day")
+    .createTimeSchedule(getCron(1, TimeUnit.DAYS));
+  private static final Schedule TIME_SCHEDULE_3 = Schedules.builder("Schedule3")
+    .setDescription("Next Week")
+    .createTimeSchedule(getCron(7, TimeUnit.DAYS));
+  private static final Schedule DATA_SCHEDULE_1 = Schedules.builder("Schedule3")
+    .setDescription("Every 1M")
+    .createDataSchedule(Schedules.Source.STREAM, STREAM_ID.getId(), 1);
+  private static final Schedule DATA_SCHEDULE_2 = Schedules.builder("Schedule4")
+    .setDescription("Every 10M")
+    .createDataSchedule(Schedules.Source.STREAM, STREAM_ID.getId(), 10);
+  private static final Schedule UPDATED_TIME_SCHEDULE_1 = Schedules.builder("Schedule1")
+    .setDescription("Next 2 Hour")
+    .createTimeSchedule(getCron(2, TimeUnit.HOURS));
+  private static final Schedule UPDATED_DATA_SCHEDULE_2 = Schedules.builder("Schedule4")
+   .setDescription("Every 5M")
+    .createDataSchedule(Schedules.Source.STREAM, STREAM_ID.getId(), 5);
   private ApplicationSpecification applicationSpecification;
 
   @Rule
