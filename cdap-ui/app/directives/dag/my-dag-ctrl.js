@@ -15,23 +15,40 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout) {
+
+    var vm = this;
 
     jsPlumb.ready(function() {
 
       jsPlumb.setContainer('dag-container');
-      this.instance = jsPlumb.getInstance();
+      vm.instance = jsPlumb.getInstance();
 
 
       $scope.$watchCollection('nodes', function () {
         console.log('ChangeNode', $scope.nodes);
+
+        $timeout(function () {
+          var nodes = document.querySelectorAll('.box');
+          vm.instance.draggable(nodes, {
+            containment: true
+          });
+
+          angular.forEach(vm.nodes, function (node) {
+            node.addEndpoint(node.id, {
+              anchor: 'RightMiddle',
+              type: 'dot'
+            });
+          });
+        });
+
       });
 
       $scope.$watchCollection('connections', function () {
         console.log('ChangeConnection', $scope.connections);
       });
 
-    }.bind(this));
+    });
 
 
   });
