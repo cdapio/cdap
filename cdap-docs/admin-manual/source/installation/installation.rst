@@ -32,7 +32,7 @@ Follow these instructions only if you aren't using a cluster manager such as :re
 Manager <cloudera-configuring>` or :ref:`Apache Ambari <ambari-configuring>`. For the Mapr
 distribution, we have :ref:`additional instructions <mapr-configuring>` to start with;
 please read those before continuing. These instructions *do not apply* to the
-:ref:`standalone SDK <standalone-index>`
+:ref:`standalone SDK <standalone-index>`.
 
 .. _install-these-are-the-cdap-components:
 
