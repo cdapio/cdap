@@ -15,7 +15,7 @@
  */
 
 class LeftPanelController {
-  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore, ConfigActionsFactory, MyDAGFactory) {
+  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore, ConfigActionsFactory, MyDAGFactory, NodesActionsFactory) {
     this.$scope = $scope;
     this.$stateParams = $stateParams;
     this.LeftPanelStore = LeftPanelStore;
@@ -24,6 +24,7 @@ class LeftPanelController {
     this.ConfigActionsFactory = ConfigActionsFactory;
     this.GLOBALS = GLOBALS;
     this.MyDAGFactory = MyDAGFactory;
+    this.NodesActionsFactory = NodesActionsFactory;
 
     this.pluginTypes = [
       {
@@ -71,6 +72,7 @@ class LeftPanelController {
     if (item.pluginTemplate) {
       config = {
         id: id,
+        label: id,
         name: item.pluginName,
         icon: this.MyDAGFactory.getIcon(item.pluginName),
         type: item.pluginType,
@@ -82,6 +84,7 @@ class LeftPanelController {
     } else {
       config = {
         id: id,
+        label: id,
         name: item.name,
         icon: item.icon,
         description: item.description,
@@ -89,12 +92,13 @@ class LeftPanelController {
       };
     }
 
-    this.ConfigActionsFactory.addPlugin(config, this.GLOBALS.pluginConvert[config.type]);
+    // this.ConfigActionsFactory.addPlugin(config, this.GLOBALS.pluginConvert[config.type]);
+    this.NodesActionsFactory.addNode(config);
 
   }
 }
 
-LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore', 'ConfigActionsFactory', 'MyDAGFactory'];
+LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore', 'ConfigActionsFactory', 'MyDAGFactory', 'NodesActionsFactory'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('LeftPanelController', LeftPanelController);
   // .controller('LeftPanelController', function() {
