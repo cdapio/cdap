@@ -253,10 +253,10 @@ with an extra method that allows specification of the number of splits and a ran
 
 To read a range of keys and give a hint that you want 16 splits, write::
 
-  @Override
   @UseDataSet("myTable")
   KeyValueTable kvTable;
   ...
+  @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
     ...
     context.setInput("myTable", kvTable.getSplits(16, startKey, stopKey));
