@@ -7,15 +7,8 @@ import os
 # Note that paths in the common config are interpreted as if they were 
 # in the location of this file
 
+# Setup the config
 sys.path.insert(0, os.path.abspath('../../_common'))
 from common_conf import * 
 
-# Override the common config
-
-html_short_title_toc = manuals_dict["introduction"]
-html_short_title = u'CDAP %s' % html_short_title_toc
-
-html_context = {"html_short_title_toc":html_short_title_toc}
-
-# Remove this guide from the mapping as it will fail as it has been deleted by clean
-intersphinx_mapping.pop("introduction", None)
+html_short_title_toc, html_short_title, html_context = set_conf_for_manual()
