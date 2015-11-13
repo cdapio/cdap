@@ -91,35 +91,6 @@ part of the data ingested by the stream has reach the TTL.
 
 Stream-size notifications are used by :ref:`stream-size schedules <stream-size-schedules>`.
 
-.. rubric:: Sending Events to a Stream from the Command Line
-
-You can send events to a stream on the command line by using a simple script that calls the ``curl`` command in a loop::
-
-  auth_token=
-  auth_file="$HOME/.cdap.accesstoken"
-
-  if [ -f $auth_file ]; then
-    auth_token=`cat $auth_file`
-  fi
-  
-  lines=`cat file.txt`
-  for line in $lines
-  do
-    status=`curl -qSfsw "%{http_code}\\n" -H "Authorization: Bearer $auth_token" \
-        -X POST -d "$line" http://$gateway:10000/v3/namespaces/default/streams/$stream`
-    if [ $status -ne 200 ]; then
-      echo "Failed to send data."
-      if [ $status == 401 ]; then
-        if [ "x$auth_token" == "x" ]; then
-          echo "No access token provided"
-        else
-          echo "Invalid access token"
-        fi
-      fi
-      echo "Exiting program; status code: " $status
-      exit 1;
-    fi
-  done
 
 .. rubric:: Examples of Using Streams
 
