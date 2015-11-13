@@ -37,7 +37,6 @@ class HydratorCreateCanvasController {
   updateNodesAndConnections() {
     this.nodes = this.NodesStore.getNodes();
     this.connections = this.NodesStore.getConnections();
-    console.log('nodes', this.nodes, this.connections);
   }
 }
 
