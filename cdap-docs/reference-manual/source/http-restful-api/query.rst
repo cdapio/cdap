@@ -365,6 +365,25 @@ The results are returned as a JSON array, with each element containing informati
    * - Description
      - Retrieves all queries
 
+Count of Active Queries
+-----------------------
+To return the count of active queries, use::
+
+   GET <base-url>/namespaces/<namespace>/data/explore/queries/count
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
+
+   * - Parameter
+     - Description
+   * - ``<namespace>``
+     - Namespace ID
+
+The results are returned in the body as a JSON string::
+
+  { "count":6 }
+
 Download Query Results
 ----------------------
 To download the results of a query, use::

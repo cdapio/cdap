@@ -22,8 +22,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.FlowletContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
@@ -48,19 +47,15 @@ public class DataSetInitApp extends AbstractApplication {
   /**
    * Flow with a data set.
    */
-  public static final class DataSetFlow implements Flow {
+  public static final class DataSetFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("DataSetFlow")
-        .setDescription("DataSetFlow")
-        .withFlowlets()
-          .add(new Generator())
-          .add(new Consumer())
-        .connect()
-          .from(new Generator()).to(new Consumer())
-        .build();
+    protected void configureFlow() {
+      setName("DataSetFlow");
+      setDescription("DataSetFlow");
+      addFlowlet(new Generator());
+      addFlowlet(new Consumer());
+      connect(new Generator(), new Consumer());
     }
   }
 

@@ -21,8 +21,7 @@ import co.cask.cdap.api.annotation.Output;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
@@ -47,21 +46,17 @@ public final class GenSinkApp2 extends AbstractApplication {
   /**
    *
    */
-  public static final class GenSinkFlow implements Flow {
+  public static final class GenSinkFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("GenSinkFlow")
-        .setDescription("GenSinkFlow desc")
-        .withFlowlets()
-        .add(new GenFlowlet())
-        .add(new SinkFlowlet())
-        .add(new BatchSinkFlowlet())
-        .connect()
-        .from(new GenFlowlet()).to(new SinkFlowlet())
-        .from(new GenFlowlet()).to(new BatchSinkFlowlet())
-        .build();
+    protected void configureFlow() {
+      setName("GenSinkFlow");
+      setDescription("GenSinkFlow desc");
+      addFlowlet(new GenFlowlet());
+      addFlowlet(new SinkFlowlet());
+      addFlowlet(new BatchSinkFlowlet());
+      connect(new GenFlowlet(), new SinkFlowlet());
+      connect(new GenFlowlet(), new BatchSinkFlowlet());
     }
   }
 

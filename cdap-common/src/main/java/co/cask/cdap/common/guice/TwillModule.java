@@ -62,7 +62,11 @@ public class TwillModule extends PrivateModule {
                                                                LocationFactories.namespace(locationFactory, "twill"));
 
     // Set JVM options based on configuration
-    runner.setJVMOptions(configuration.get(Constants.AppFabric.PROGRAM_JVM_OPTS));
+    String jvmOpts = configuration.get(Constants.AppFabric.PROGRAM_JVM_OPTS);
+    if (!configuration.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
+      jvmOpts += " -Dtwill.disable.kafka=true";
+    }
+    runner.setJVMOptions(jvmOpts);
 
     return runner;
   }

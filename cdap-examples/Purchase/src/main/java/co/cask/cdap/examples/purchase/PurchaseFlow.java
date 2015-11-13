@@ -25,7 +25,7 @@ import co.cask.cdap.api.flow.AbstractFlow;
 public class PurchaseFlow extends AbstractFlow {
 
   @Override
-  protected void configureFlow() {
+  protected void configure() {
     setName("PurchaseFlow");
     setDescription("Reads user and purchase information and stores in dataset");
     addFlowlet("reader", new PurchaseStreamReader());
