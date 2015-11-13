@@ -5,9 +5,9 @@
 
 .. _included-apps-index:
 
-==========================
-CDAP Included Applications 
-==========================
+=================
+CDAP Applications
+=================
 
 .. _included-apps-intro:
 

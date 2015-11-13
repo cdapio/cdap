@@ -68,10 +68,10 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Advanced Topics:** Best practices for CDAP development, adding a custom logback
 
 
-.. |included-applications| replace:: **Included Applications:**
-.. _included-applications: included-applications/index.html
+.. |cdap-applications| replace:: **CDAP Applications:**
+.. _cdap-applications: cdap-applications/index.html
 
-- |included-applications|_
+- |cdap-applications|_
 
   - **Big Data without Big Development:** How to use CDAP "out-of-the-box" to solve problems and use cases 
   - **Introduction to Included Applications:** Applications that are reusable through configuration and

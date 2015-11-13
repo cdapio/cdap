@@ -2,9 +2,9 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-============================================
-CDAP Included Applications Table of Contents
-============================================
+===================================
+CDAP Applications Table of Contents
+===================================
 
 .. toctree::
    :maxdepth: 4
