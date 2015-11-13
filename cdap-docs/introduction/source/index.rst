@@ -823,7 +823,7 @@ Advanced Data Exploration
 
 Transforming Your Data
 ======================
-- CDAP :ref:`Included Applications <included-apps-index>` are applications that are
+- CDAP :ref:`Included Applications <cdap-apps-index>` are applications that are
   reusable through the configuration of artifacts and can be used to create an application
   without writing any code at all
 - Built-in ETL (Extract, Transform, Load) and Data Quality applications

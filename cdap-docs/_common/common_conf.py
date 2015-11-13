@@ -126,7 +126,7 @@ _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
 intersphinx_mapping = {
   'introduction': ('../../introduction/',      os.path.abspath(_intersphinx_mapping % 'introduction')),
   'developers':   ('../../developers-manual/', os.path.abspath(_intersphinx_mapping % 'developers-manual')),
-  'cdapapps':     ('../../cdap-applications',  os.path.abspath(_intersphinx_mapping % 'cdap-applications')),
+  'cdapapps':     ('../../cdap-apps',          os.path.abspath(_intersphinx_mapping % 'cdap-apps')),
   'admin':        ('../../admin-manual/',      os.path.abspath(_intersphinx_mapping % 'admin-manual')),
   'integrations': ('../../integrations/',      os.path.abspath(_intersphinx_mapping % 'integrations')),
   'examples':     ('../../examples-manual',    os.path.abspath(_intersphinx_mapping % 'examples-manual')),
@@ -330,7 +330,7 @@ html_theme = 'cdap'
 manuals_list = [
     ['introduction',       'Introduction to CDAP',            '',],
     ['developers-manual', u'Developers’ Manual',              '',],
-    ['cdap-applications',  'CDAP Applications',               '',],
+    ['cdap-apps',          'CDAP Applications',               '',],
     ['admin-manual',       'Administration Manual',           '',],
     ['integrations',       'Integrations',                    '',],
     ['examples-manual',    'Examples, Guides, and Tutorials', '',],
@@ -341,7 +341,7 @@ manuals_list = [
 manual_intersphinx_mapping = {
   'introduction': 'introduction',
   'developers-manual': 'developers',
-  'cdap-applications': 'cdapapps',
+  'cdap-apps': 'cdapapps',
   'admin-manual': 'admin',
   'integrations': 'integrations',
   'examples-manual': 'examples',
