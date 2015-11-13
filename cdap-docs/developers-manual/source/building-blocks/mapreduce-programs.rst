@@ -153,11 +153,11 @@ one of these options:
          ...
        }
 
-#. Acquire the dataset in the mapper's or reducer's initialize() method. As opposed
+#. Acquire the dataset in the mapper's or reducer's ``initialize()`` method. As opposed
    to the previous method, this does not require the dataset name to be constant; it
    only needs to be known at the time the task starts (for example, through configuration).
-   Note that this requires the mapper or reducer class to implement the ProgramLifecycle
-   interface, which includes the two methods initialize() and destroy()::
+   Note that this requires that the mapper or reducer class implements the ``ProgramLifecycle``
+   interface, which includes the two methods ``initialize()`` and ``destroy()``::
 
      public static class CatalogJoinMapper extends Mapper<byte[], Purchase, ...>
        implements ProgramLifecycle<MapReduceTaskContext> {
@@ -183,9 +183,9 @@ one of these options:
        }
 
 #. Dynamically acquire the dataset in the mapper every time it is accessed. This is useful if
-   the name of the dataset is not known at initialization time, for example, if it depends on
-   the data passed to each map() call. In this case you also implement the ProgramLifecycle
-   interface, to save the MapReduceTaskContext for use in the map() method. For example::
+   the name of the dataset is not known at initialization time; for example, if it depends on
+   the data passed to each ``map()`` call. In this case, you also implement the ``ProgramLifecycle``
+   interface, to save the ``MapReduceTaskContext`` for use in the ``map()`` method. For example::
 
      public static class CatalogJoinMapper extends Mapper<byte[], Purchase, ...>
        implements ProgramLifecycle<MapReduceTaskContext> {
@@ -219,8 +219,12 @@ See also the section on :ref:`Using Datasets in Programs <datasets-in-programs>`
 
 .. rubric: Datasets as MapReduce Input or Output
 
-A MapReduce program can interact with a dataset by using it as an input or an output.
-The dataset needs to implement specific interfaces to support this.
+A MapReduce program can interact with a dataset by using it as 
+:ref:`an input <mapreduce-datasets-input>` or :ref:`an output <mapreduce-datasets-output>`.
+The dataset needs to implement specific interfaces to support this, as described in the
+following sections.
+
+.. _mapreduce-datasets-input:
 
 .. rubric:: A Dataset as the Input Source of a MapReduce Program
 
@@ -262,6 +266,7 @@ To read a range of keys and give a hint that you want 16 splits, write::
     context.setInput("myTable", kvTable.getSplits(16, startKey, stopKey));
   }
 
+.. _mapreduce-datasets-output:
 
 .. rubric:: A Dataset as the Output Destination of a MapReduce Program
 

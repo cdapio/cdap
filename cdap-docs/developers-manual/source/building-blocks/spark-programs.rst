@@ -10,8 +10,8 @@ Spark Programs
 
 *Apache Spark* is used for in-memory cluster computing. It lets you load large sets of
 data into memory and query them repeatedly. This makes it suitable for both iterative and
-interactive programs. Similar to MapReduce, Spark can access **datasets** as both input
-and output. *Spark programs* in CDAP can be written in either Java or Scala.
+interactive programs. Similar to MapReduce, Spark can access :ref:`datasets <spark-datasets>` 
+as both input and output. *Spark programs* in CDAP can be written in either Java or Scala.
 
 To process data using Spark, specify ``addSpark()`` in your application specification::
 
@@ -84,7 +84,7 @@ In this case, 1024 MB and two cores is assigned to each executor process.
 
 CDAP SparkContext
 -----------------
-CDAP provides its own ``SparkContext`` which is needed to access **datasets**.
+CDAP provides its own ``SparkContext``, which is needed to access :ref:`datasets <spark-datasets>`.
 
 CDAP Spark programs must implement either ``JavaSparkProgram`` or ``ScalaSparkProgram``,
 depending upon the language (Java or Scala) in which the program is written. You can also access the Spark's
@@ -109,6 +109,8 @@ depending upon the language (Java or Scala) in which the program is written. You
           ...
         }
     }
+
+.. _spark-datasets:
 
 Spark and Datasets
 ------------------
