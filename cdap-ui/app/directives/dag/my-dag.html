@@ -16,12 +16,11 @@
 
 <div class="my-js-dag" ng-class="{'disabled': MyDAGController.isDisabled}">
   <div id="dag-container">
-
     <!--
       The condition on ng-click is to prevent user from being able to click
       if the DAG is disabled. It will prevent the highlighting of nodes on select
     -->
-    <div ng-repeat="plugin in MyDAGController.plugins" class="box {{plugin.type}}" ng-style="plugin.style"
+    <div ng-repeat="plugin in nodes" class="box {{plugin.type}}" ng-style="plugin.style"
            data-type="{{plugin.type}}"
            id="{{plugin.id}}"
            ng-click="MyDAGController.onPluginClick(plugin)"
@@ -41,7 +40,7 @@
              ng-click="MyDAGController.removePlugin($index, plugin.id)"></div>
         <div class="icon fa {{plugin.icon}}"></div>
       </div>
-      <div class="plugin-name" ng-bind="MyDAGController.MyAppDAGService.nodes[plugin.id].label | myEllipsis: 25"></div>
+      <div class="plugin-name" ng-bind="plugin.label | myEllipsis: 25"></div>
     </div>
 
   </div>

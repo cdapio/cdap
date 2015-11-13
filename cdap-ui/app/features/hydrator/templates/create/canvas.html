@@ -13,5 +13,7 @@
   License for the specific language governing permissions and limitations under
   the License.
 -->
-<!-- <h1>Canvas</h1> -->
-<my-dag ng-class="{'canvas-scroll': CanvasCtrl.state.setScroll}"> </my-dag>
+
+<my-dag ng-class="{'canvas-scroll': CanvasCtrl.state.setScroll}"
+  nodes="CanvasCtrl.nodes"
+  connections="CanvasCtrl.connections"> </my-dag>

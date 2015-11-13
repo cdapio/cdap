@@ -23,8 +23,10 @@ commonModule.directive('myDag', function() {
   return {
     restrict: 'E',
     scope: {
-      config: '=',
-      isDisabled: '='
+      // config: '=',
+      isDisabled: '=',
+      nodes: '=',
+      connections: '='
     },
     link: function(scope, element) {
       scope.element = element;

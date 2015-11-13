@@ -22,6 +22,7 @@ class ConfigStore {
     this.configDispatcher = ConfigDispatcher.getDispatcher();
     this.configDispatcher.register('onArtifactSave', this.setArtifact.bind(this));
     this.configDispatcher.register('onMetadataInfoSave', this.setMetadataInformation.bind(this));
+    this.configDispatcher.register('onPluginAdd', this.setConfig.bind(this));
   }
   registerOnChangeListener(callback) {
     this.changeListeners.push(callback);
@@ -81,13 +82,13 @@ class ConfigStore {
   setConfig(config, type) {
     switch(type) {
       case 'source':
-        this.state.source = config;
+        this.state.config.source = config;
         break;
       case 'sink':
-        this.state.sinks.push(config);
+        this.state.config.sinks.push(config);
         break;
       case 'transform':
-        this.state.transforms.push(config);
+        this.state.config.transforms.push(config);
         break;
     }
     this.emitChange();
