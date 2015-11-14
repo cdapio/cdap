@@ -15,39 +15,75 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS) {
 
     var vm = this;
+
+    var endpoints = [];
+    var sourceSettings = angular.copy(MyDAGFactory.getSettings(false).source);
+    var sinkSettings = angular.copy(MyDAGFactory.getSettings(false).sink);
+
+    function addEndpoints() {
+      angular.forEach($scope.nodes, function (node) {
+        if (endpoints.indexOf(node.id) !== -1) {
+          return;
+        }
+        endpoints.push(node.id);
+
+        var type = GLOBALS.pluginConvert[node.type];
+        switch(type) {
+          case 'source':
+            vm.instance.addEndpoint(node.id, sourceSettings, {uuid: node.id});
+            break;
+          case 'sink':
+            vm.instance.addEndpoint(node.id, sinkSettings, {uuid: node.id});
+            break;
+          case 'transform':
+            sourceSettings.anchor = [ 0.5, 1, 1, 0, 26, -43, 'transformAnchor'];
+            sinkSettings.anchor = [ 0.5, 1, -1, 0, -26, -43, 'transformAnchor'];
+            // Need to id each end point so that it can be used later to make connections.
+            vm.instance.addEndpoint(node.id, sourceSettings, {uuid: 'Left' + node.id});
+            vm.instance.addEndpoint(node.id, sinkSettings, {uuid: 'Right' + node.id});
+            break;
+        }
+      });
+    }
+
+    function formatConnections() {
+      var connections = [];
+
+      angular.forEach(vm.instance.getConnections(), function (conn) {
+        connections.push({
+          source: conn.sourceId,
+          target: conn.targetId
+        });
+      });
+
+      $scope.connections = connections;
+    }
+
 
     jsPlumb.ready(function() {
 
       jsPlumb.setContainer('dag-container');
-      vm.instance = jsPlumb.getInstance();
+      vm.instance = jsPlumb.getInstance(MyDAGFactory.getSettings().default);
 
+      vm.instance.bind('connection', formatConnections);
+      vm.instance.bind('connectionDetached', formatConnections);
 
       $scope.$watchCollection('nodes', function () {
-        console.log('ChangeNode', $scope.nodes);
-
         $timeout(function () {
           var nodes = document.querySelectorAll('.box');
           vm.instance.draggable(nodes, {
             containment: true
           });
-
-          angular.forEach(vm.nodes, function (node) {
-            node.addEndpoint(node.id, {
-              anchor: 'RightMiddle',
-              type: 'dot'
-            });
-          });
+          addEndpoints();
         });
-
       });
 
       $scope.$watchCollection('connections', function () {
         console.log('ChangeConnection', $scope.connections);
       });
-
     });
 
 
