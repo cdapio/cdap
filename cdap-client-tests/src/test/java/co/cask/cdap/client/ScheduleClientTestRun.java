@@ -31,6 +31,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +42,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Category(XSlowTests.class)
 public class ScheduleClientTestRun extends ClientTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(ScheduleClientTestRun.class);
 
   private final Id.Namespace namespace = Id.Namespace.DEFAULT;
   private final Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
@@ -59,7 +62,11 @@ public class ScheduleClientTestRun extends ClientTestBase {
 
   @After
   public void tearDown() throws Throwable {
-    appClient.delete(app);
+    try {
+      appClient.delete(app);
+    } catch (Exception e) {
+      LOG.error("Error deleting app {} during test cleanup.", e);
+    }
   }
 
   @Test
