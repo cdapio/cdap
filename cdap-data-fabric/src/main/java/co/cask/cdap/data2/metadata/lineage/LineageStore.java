@@ -18,9 +18,11 @@ package co.cask.cdap.data2.metadata.lineage;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionExecutor;
@@ -31,6 +33,7 @@ import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -226,5 +229,14 @@ public class LineageStore {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework}. Used by the upgrade tool to upgrade Lineage Dataset.
+   *
+   * @param framework framework to add types and datasets to
+   */
+  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
+    framework.addInstance(LineageDataset.class.getName(), LINEAGE_DATASET_ID, DatasetProperties.EMPTY);
   }
 }
