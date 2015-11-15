@@ -6,18 +6,6 @@ class SearchObjectWithTagsController {
     this.$stateParams = $stateParams;
     this.taggedObjects = [];
     this.myTagsApi = myTagsApi;
-    this.gridsterOpts = {
-      rowHeight: '40',
-      columns: 12,
-      minSizeX: 2,
-      swapping: false,
-      draggable: {
-        enabled: false
-      },
-      resizable: {
-        enabled: false
-      }
-    };
     caskFocusManager.select('searchObjectWithTags');
     this.fetchAssociatedObjects();
   }

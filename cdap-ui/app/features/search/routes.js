@@ -8,7 +8,7 @@ angular.module(`${PKG.name}.feature.search`)
         templateUrl: '/assets/features/search/templates/search.html'
       })
         .state('search.list', {
-          url: '',
+          url: '?searchTag',
           templateUrl: '/assets/features/search/templates/search-list-view.html',
           controller: 'SearchController',
           controllerAs: 'SearchController',

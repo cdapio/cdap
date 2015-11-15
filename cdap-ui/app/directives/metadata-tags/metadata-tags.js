@@ -28,7 +28,7 @@ angular.module(PKG.name + '.commons')
       templateUrl: 'metadata-tags/metadata-tags.html',
     };
   })
-  .controller('MetadataTagsController', function ($scope, myMetadataFactory, myTagsApi) {
+  .controller('MetadataTagsController', function ($scope, myMetadataFactory) {
     this.metadataAddOpen = false;
     this.metadataTags = [];
     var prom;

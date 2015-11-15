@@ -1,29 +1,27 @@
 
 
 class SearchController {
-  constructor(myTagsApi, myAppsApi, myDatasetApi, myStreamApi, $stateParams, $state, caskFocusManager) {
+  constructor(myTagsApi, myAppsApi, myDatasetApi, myStreamApi, $stateParams, $state, caskFocusManager, $scope) {
     this.myTagsApi = myTagsApi;
     this.myAppsApi = myAppsApi;
     this.myDatasetApi = myDatasetApi;
     this.myStreamApi = myStreamApi;
     this.$stateParams = $stateParams;
     this.$state = $state;
+    if ($stateParams.searchTag) {
+      this.searchTxt = $stateParams.searchTag;
+    }
+
+    $scope.$watch(
+      () => this.searchTxt ,
+      () => {
+        $stateParams.searchTag = this.searchTxt;
+        $state.transitionTo($state.current, $stateParams, {notify: false});
+      }
+    );
 
     this.tags = [];
     caskFocusManager.select('searchByTags');
-
-    this.gridsterOpts = {
-      rowHeight: '40',
-      columns: 12,
-      minSizeX: 2,
-      swapping: false,
-      draggable: {
-        enabled: false
-      },
-      resizable: {
-        enabled: false
-      }
-    };
 
     this.getAppsTags();
     this.getDatasetsTags();
@@ -172,7 +170,7 @@ class SearchController {
   }
 }
 
-SearchController.$inject = ['myTagsApi', 'myAppsApi', 'myDatasetApi', 'myStreamApi', '$stateParams', '$state', 'caskFocusManager'];
+SearchController.$inject = ['myTagsApi', 'myAppsApi', 'myDatasetApi', 'myStreamApi', '$stateParams', '$state', 'caskFocusManager', '$scope'];
 
 angular.module(`${PKG.name}.feature.search`)
   .controller('SearchController', SearchController);

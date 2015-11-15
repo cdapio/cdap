@@ -3,15 +3,10 @@
   <div class="col-xs-12">
     <div class="row">
       <div class="clearfix">
-        <div class="col-xs-6">
-          <h2 class="pull-left">
-            <span>Search</span>
-          </h2>
-        </div>
-        <div class="col-xs-4 h2 pull-right">
+        <div class="col-xs-4 h2">
           <div class="input-group">
             <div class="input-group-addon">
-              <span class="fa fa-search"></span>
+              <span class="fa fa-filter"></span>
             </div>
             <input type="text"
                 name="searchByTags"
@@ -25,16 +20,13 @@
   </div>
   <div class="main-search">
     <div class="col-xs-12">
-      <div gridster="SearchController.gridsterOpts">
         <a  class="btn btn-default "
-            gridster-item="tag"
             ng-repeat="tag in SearchController.filteredTags = (SearchController.tags | filter: SearchController.searchTxt ) track by $index "
             ui-sref="search.objectswithtags({tag: tag.value})"
         >
         <span class="fa fa-tag"></span>
-        <span ng-bind="tag.value | myEllipsis: 10" tooltip="{{tag.value}}" tooltip-enable="tag.value.length > 10"></span>
+        <span ng-bind="tag.value" tooltip="{{tag.value}}"></span>
       </a>
-      </div>
     </div>
   </div>
 

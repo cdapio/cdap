@@ -7,7 +7,7 @@ angular.module(PKG.name + '.commons')
       if (event.keyCode === 13) {
         switch(this.mode) {
           case 'SEARCH':
-            $state.go('search.list');
+            $state.go('search.list', {searchTag: this.searchTxt});
             break;
           case 'PIN':
             mySettings.get('user-pins', true)
