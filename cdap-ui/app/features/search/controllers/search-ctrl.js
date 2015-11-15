@@ -154,7 +154,7 @@ class SearchController {
     let params = {
       namespaceId: this.$stateParams.namespace,
       appId: appId,
-      programType: (programType !== 'mapreduce')? programType + 's': programType,
+      programType: (['mapreduce', 'spark'].indexOf(programType) === -1)? programType + 's': programType,
       programId: programId
     };
     this.myTagsApi

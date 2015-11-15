@@ -75,7 +75,7 @@
           </div>
           <div ng-if="tObject.programType === 'Service'">
             <a class="btn btn-default"
-                ui-sref="workflows.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
+                ui-sref="services.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
             >
               <span class="{{tObject.icon}}"></span>
               <span ng-bind="tObject.programId"></span>
