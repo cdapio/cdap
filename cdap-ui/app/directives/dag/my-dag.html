@@ -15,6 +15,18 @@
 -->
 
 <div class="my-js-dag" ng-class="{'disabled': MyDAGController.isDisabled}">
+  <!-- Control Buttons -->
+  <div class="btn-group btn-group-sm pull-right zoom-control">
+    <button class="btn btn-default"
+            ng-click="MyDAGController.zoomIn()">
+      <i class="fa fa-plus"></i>
+    </button>
+
+    <button class="btn btn-default"
+            ng-click="MyDAGController.zoomOut()">
+      <i class="fa fa-minus"></i>
+    </button>
+  </div>
   <div id="dag-container">
     <!--
       The condition on ng-click is to prevent user from being able to click

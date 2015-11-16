@@ -18,7 +18,8 @@ angular.module(PKG.name + '.commons')
   .factory('MyDAGFactory', function(CanvasFactory) {
     var defaultSettings = {
       Connector : [ 'Flowchart', {gap: 7} ],
-      ConnectionsDetachable: true
+      ConnectionsDetachable: true,
+      Container: 'dag-container'
     };
     var connectorStyle = {
       strokeStyle: '#666e82',

@@ -23,6 +23,52 @@ angular.module(PKG.name + '.commons')
     var sourceSettings = angular.copy(MyDAGFactory.getSettings(false).source);
     var sinkSettings = angular.copy(MyDAGFactory.getSettings(false).sink);
 
+    vm.scale = 1.0;
+
+
+    vm.zoomIn = function () {
+      vm.scale += 0.1;
+      // $timeout(function () {
+      //   vm.instance.repaintEverything();
+      // });
+      // setZoom(vm.scale, vm.plumb);
+      setZoom(vm.scale, vm.instance);
+    };
+
+    vm.zoomOut = function () {
+      vm.scale -= 0.1;
+      // $timeout(function () {
+      //   vm.instance.repaintEverything();
+      // });
+      // setZoom(vm.scale, vm.plumb);
+      setZoom(vm.scale, vm.instance);
+    };
+
+
+    /**
+     * Utily function from jsPlumb
+     * https://jsplumbtoolkit.com/community/doc/zooming.html
+     **/
+    function setZoom(zoom, instance, transformOrigin, el) {
+      transformOrigin = transformOrigin || [ 0.5, 0.5 ];
+      instance = instance || jsPlumb;
+      el = el || instance.getContainer();
+      var p = [ 'webkit', 'moz', 'ms', 'o' ],
+          s = 'scale(' + zoom + ')',
+          oString = (transformOrigin[0] * 100) + '% ' + (transformOrigin[1] * 100) + '%';
+
+      for (var i = 0; i < p.length; i++) {
+        el.style[p[i] + 'Transform'] = s;
+        el.style[p[i] + 'TransformOrigin'] = oString;
+      }
+
+      el.style['transform'] = s;
+      el.style['transformOrigin'] = oString;
+
+      instance.setZoom(zoom);
+    }
+
+
     function addEndpoints() {
       angular.forEach($scope.nodes, function (node) {
         if (endpoints.indexOf(node.id) !== -1) {
@@ -64,9 +110,11 @@ angular.module(PKG.name + '.commons')
 
 
     jsPlumb.ready(function() {
+      var dagSettings = MyDAGFactory.getSettings().default;
 
-      jsPlumb.setContainer('dag-container');
-      vm.instance = jsPlumb.getInstance(MyDAGFactory.getSettings().default);
+      vm.instance = jsPlumb.getInstance(dagSettings);
+      // vm.instance.setContainer('dag-container');
+
 
       vm.instance.bind('connection', formatConnections);
       vm.instance.bind('connectionDetached', formatConnections);
@@ -78,6 +126,7 @@ angular.module(PKG.name + '.commons')
             containment: true
           });
           addEndpoints();
+
         });
       });
 
