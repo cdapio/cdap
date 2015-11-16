@@ -113,9 +113,11 @@ public class LogSaverPluginTest extends KafkaTestBase {
   private static KafkaClientService kafkaClientService;
   private static LogSaver logSaver;
   private static String namespaceDir;
+  private static KafkaLogAppender appender;
+  private static CountingLogAppender countingLogAppender;
 
   @BeforeClass
-  public static void getInjector() throws IOException {
+  public static void initialize() throws IOException {
     final CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, temporaryFolder.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, getZkConnectString());
@@ -155,6 +157,10 @@ public class LogSaverPluginTest extends KafkaTestBase {
                           }
     );
     namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
+
+    appender = injector.getInstance(KafkaLogAppender.class);
+    countingLogAppender = new CountingLogAppender(appender);
+    new LogAppenderInitializer(countingLogAppender).initialize("LogSaverPluginTest");
   }
 
   public void startLogSaver() throws Exception {
@@ -241,6 +247,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
   @AfterClass
   public static void shutdown() {
+    appender.stop();
     txManager.stopAndWait();
   }
 
@@ -275,7 +282,9 @@ public class LogSaverPluginTest extends KafkaTestBase {
     List<LogEvent> allEvents = logCallback1.getEvents();
 
     for (int i = 0; i < 60; ++i) {
-      Assert.assertEquals(String.format("Test log message %d arg1 arg2", i),
+      Assert.assertEquals("Log append count for " + loggingContext.getLogPartition() + " = " +
+                            countingLogAppender.getCount(loggingContext.getLogPartition()),
+                          String.format("Test log message %d arg1 arg2", i),
                           allEvents.get(i).getLoggingEvent().getFormattedMessage());
       if (loggingContext instanceof ServiceLoggingContext) {
         Assert.assertEquals(
@@ -380,19 +389,16 @@ public class LogSaverPluginTest extends KafkaTestBase {
   }
 
   private void publishLogs() throws Exception {
-    KafkaLogAppender appender = injector.getInstance(KafkaLogAppender.class);
-    new LogAppenderInitializer(appender).initialize("LogSaverTest");
-
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     StatusPrinter.setPrintStream(new PrintStream(bos));
     StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
 
-    ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(3));
+    ListeningExecutorService executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
     List<ListenableFuture<?>> futures = Lists.newArrayList();
     futures.add(executor.submit(new LogPublisher(0, new FlowletLoggingContext("NS_1", "APP_1", "FLOW_1", "FLOWLET_1",
                                                                               "RUN1", "INSTANCE1"))));
     Futures.allAsList(futures).get();
-    appender.stop();
+    executor.shutdownNow();
   }
 
   private static class LogPublisher implements Runnable {
@@ -408,7 +414,7 @@ public class LogSaverPluginTest extends KafkaTestBase {
     public void run() {
       LoggingContextAccessor.setLoggingContext(loggingContext);
 
-      Logger logger = LoggerFactory.getLogger("LogSaverTest");
+      Logger logger = LoggerFactory.getLogger("LogSaverPluginTest");
       Exception e1 = new Exception("Test Exception1");
       Exception e2 = new Exception("Test Exception2", e1);
 
