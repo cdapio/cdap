@@ -28,19 +28,11 @@ angular.module(PKG.name + '.commons')
 
     vm.zoomIn = function () {
       vm.scale += 0.1;
-      // $timeout(function () {
-      //   vm.instance.repaintEverything();
-      // });
-      // setZoom(vm.scale, vm.plumb);
       setZoom(vm.scale, vm.instance);
     };
 
     vm.zoomOut = function () {
       vm.scale -= 0.1;
-      // $timeout(function () {
-      //   vm.instance.repaintEverything();
-      // });
-      // setZoom(vm.scale, vm.plumb);
       setZoom(vm.scale, vm.instance);
     };
 
@@ -112,9 +104,8 @@ angular.module(PKG.name + '.commons')
     jsPlumb.ready(function() {
       var dagSettings = MyDAGFactory.getSettings().default;
 
+      jsPlumb.setContainer('dag-container');
       vm.instance = jsPlumb.getInstance(dagSettings);
-      // vm.instance.setContainer('dag-container');
-
 
       vm.instance.bind('connection', formatConnections);
       vm.instance.bind('connectionDetached', formatConnections);
