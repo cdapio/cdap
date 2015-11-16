@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataRecord;
 import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
@@ -39,6 +40,7 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -443,5 +445,16 @@ public class DefaultBusinessMetadataStore implements BusinessMetadataStore {
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
+  }
+
+  /**
+   * Adds datasets and types to the given {@link DatasetFramework}. Used by the upgrade tool to upgrade Business
+   * Metadata Datasets
+   *
+   * @param framework Dataset framework to add types and datasets to
+   */
+  public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
+    framework.addInstance(BusinessMetadataDataset.class.getName(), BUSINESS_METADATA_INSTANCE_ID,
+                          DatasetProperties.EMPTY);
   }
 }
