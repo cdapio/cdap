@@ -1,4 +1,18 @@
-
+/*
+ * Copyright © 2015 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 
 class SearchController {
   constructor(myTagsApi, myAppsApi, myDatasetApi, myStreamApi, $stateParams, $state, caskFocusManager, $scope) {
@@ -7,6 +21,7 @@ class SearchController {
     this.myDatasetApi = myDatasetApi;
     this.myStreamApi = myStreamApi;
     this.$stateParams = $stateParams;
+    this.loadingData = true;
     this.$state = $state;
     if ($stateParams.searchTag) {
       this.searchTxt = $stateParams.searchTag;
@@ -26,18 +41,6 @@ class SearchController {
     this.getAppsTags();
     this.getDatasetsTags();
     this.getStreamsTags();
-  }
-
-  setDefaultsForGridster (tags) {
-    tags = tags.map( (tag) => {
-      var t = {value: tag};
-      t.sizeX = null;
-      t.sizeY = null;
-      t.row = null;
-      t.col = null;
-      return t;
-    });
-    return tags;
   }
 
   getAppsTags() {
@@ -67,7 +70,7 @@ class SearchController {
       .$promise
       .then(
         (appTags) => {
-          appTags = this.setDefaultsForGridster(appTags);
+          this.checkAndMarkLoading(appTags.length);
           this.tags = this.tags.concat(appTags);
         },
         () => { console.error('Error on fetching tags for app: ', appId); }
@@ -116,7 +119,7 @@ class SearchController {
       .$promise
       .then(
         (datasetTags) => {
-          datasetTags = this.setDefaultsForGridster(datasetTags);
+          this.checkAndMarkLoading(datasetTags.length);
           this.tags = this.tags.concat(datasetTags);
         },
         () => { console.error('Fetching tags for dataset failed: ', datasetId); }
@@ -144,7 +147,7 @@ class SearchController {
       .$promise
       .then(
         (streamTags) => {
-          streamTags = this.setDefaultsForGridster(streamTags);
+          this.checkAndMarkLoading(streamTags.length);
           this.tags = this.tags.concat(streamTags);
         },
         () => { console.error('Fetching stream tags failed for: ', streamId); }
@@ -162,11 +165,16 @@ class SearchController {
       .$promise
       .then(
         (programTags) => {
-          programTags = this.setDefaultsForGridster(programTags);
+          this.checkAndMarkLoading(programTags.length);
           this.tags = this.tags.concat(programTags);
         },
         () => { console.error('Fetching tags'); }
       );
+  }
+  checkAndMarkLoading(tagsCount) {
+    if (tagsCount) {
+      this.loadingData = false;
+    }
   }
 }
 
