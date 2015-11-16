@@ -14,28 +14,6 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.foo')
-  .controller('RuleDriverController', function($scope, myHydratorValidatorsApi) {
-    this.inputFields = [
-      {
-        name: 'field1',
-        type: 'string'
-      },
-      {
-        name: 'field2',
-        type: 'number'
-      },
-      {
-        name: 'field3',
-        type: 'boolean'
-      }
-    ];
-
-
-    myHydratorValidatorsApi.get()
-      .$promise
-      .then(function (res) {
-        console.log('res', res);
-      });
-
-  });
+angular.module(`${PKG.name}.feature.experimental`, [
+  PKG.name+'.commons'
+]);
