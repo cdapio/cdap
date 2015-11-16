@@ -24,6 +24,11 @@ my-dag {
     width: inherit;
     height: inherit;
 
+    .zoom-control {
+      z-index: 2000;
+    }
+
+
     &.disabled {
       background-image: none;
       border: 0;
@@ -39,7 +44,7 @@ my-dag {
       text-align: center;
       cursor: move;
       left: 100px;
-      top: 250px;
+      top: 150px;
       padding: 0;
       height: 66px;
       width: 105px;
