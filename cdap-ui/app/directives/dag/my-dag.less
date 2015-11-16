@@ -19,15 +19,14 @@
 @import "../../styles/themes/cdap/mixins.less";
 
 my-dag {
+  .zoom-control {
+    z-index: 2000;
+  }
+
   .my-js-dag {
     position: relative;
     width: inherit;
     height: inherit;
-
-    .zoom-control {
-      z-index: 2000;
-    }
-
 
     &.disabled {
       background-image: none;
