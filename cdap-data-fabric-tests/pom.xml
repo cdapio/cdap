@@ -38,7 +38,7 @@
       <version>${project.version}</version>
       <exclusions>
         <exclusion>
-          <groupId>org.apache.hbase</groupId>
+          <groupId>co.cask.hbase</groupId>
           <artifactId>hbase</artifactId>
         </exclusion>
       </exclusions>

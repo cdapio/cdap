@@ -51,7 +51,7 @@
       <artifactId>hadoop-common</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.hbase</groupId>
+      <groupId>co.cask.hbase</groupId>
       <artifactId>hbase</artifactId>
     </dependency>
 
@@ -77,7 +77,7 @@
       <artifactId>hadoop-minicluster</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.hbase</groupId>
+      <groupId>co.cask.hbase</groupId>
       <artifactId>hbase</artifactId>
       <classifier>tests</classifier>
     </dependency>
