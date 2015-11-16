@@ -36,6 +36,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -46,6 +48,7 @@ import java.util.concurrent.ExecutionException;
  */
 @Category(XSlowTests.class)
 public class QueryClientTestRun extends ClientTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(QueryClientTestRun.class);
   private ApplicationClient appClient;
   private QueryClient queryClient;
   private NamespaceClient namespaceClient;
@@ -109,7 +112,12 @@ public class QueryClientTestRun extends ClientTestBase {
     } finally {
       programClient.stop(flow);
       assertProgramStopped(programClient, flow);
-      appClient.delete(app);
+
+      try {
+        appClient.delete(app);
+      } catch (Exception e) {
+        LOG.error("Error deleting app {} during test cleanup.", e);
+      }
     }
   }
 

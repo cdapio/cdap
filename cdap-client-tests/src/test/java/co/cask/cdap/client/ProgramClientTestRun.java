@@ -127,10 +127,14 @@ public class ProgramClientTestRun extends ClientTestBase {
       statusList = programClient.getStatus(namespace, programs);
       for (BatchProgramStatus status : statusList) {
         Assert.assertEquals(200, status.getStatusCode());
-        Assert.assertEquals("STOPPED", status.getStatus());
+        Assert.assertEquals("Program = " + status.getProgramId(), "STOPPED", status.getStatus());
       }
     } finally {
-      appClient.delete(appId);
+      try {
+        appClient.delete(appId);
+      } catch (Exception e) {
+        LOG.error("Error deleting app {} during test cleanup.", appId, e);
+      }
     }
   }
 
@@ -184,7 +188,11 @@ public class ProgramClientTestRun extends ClientTestBase {
       programClient.stop(flow);
       assertProgramStopped(programClient, flow);
     } finally {
-      appClient.delete(app);
+      try {
+        appClient.delete(app);
+      } catch (Exception e) {
+        LOG.error("Error deleting app {} during test cleanup.", app, e);
+      }
     }
   }
 
@@ -206,7 +214,7 @@ public class ProgramClientTestRun extends ClientTestBase {
       public Integer call() throws Exception {
         return programClient.getWorkflowCurrent(workflow.getApplication(), workflow.getId(), pid).size();
       }
-    }, 5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    }, 20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
     // Signal the FakeWorkflow that execution can be continued by creating temp file
     Assert.assertTrue(doneFile.createNewFile());
