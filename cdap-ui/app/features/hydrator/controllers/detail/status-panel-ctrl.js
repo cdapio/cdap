@@ -13,9 +13,16 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailStatusController', function(DetailRunsStore, GLOBALS, PipelineDetailActionFactory, $scope) {
+  .controller('HydratorDetailStatusPanelController', function(DetailRunsStore, GLOBALS, PipelineDetailActionFactory, $scope) {
+    this.config = DetailRunsStore.getCloneConfig();
+
+    this.setAppStatus = function() {
+      this.appStatus = DetailRunsStore.getStatus();
+      this.config = DetailRunsStore.getCloneConfig();
+    };
+    this.setAppStatus();
+
     var params;
     this.setState = function() {
       this.runsCount = DetailRunsStore.getRunsCount();
@@ -43,5 +50,7 @@ angular.module(PKG.name + '.feature.hydrator')
         params
       );
     }
+
+    DetailRunsStore.registerOnChangeListener(this.setAppStatus.bind(this));
     DetailRunsStore.registerOnChangeListener(this.setState.bind(this));
   });

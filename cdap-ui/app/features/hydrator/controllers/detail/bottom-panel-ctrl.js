@@ -18,10 +18,6 @@ angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorDetailBottomPanelController', function(BottomPanelStore, PipelineDetailBottomPanelActionFactory, NodeConfigStore, $scope) {
     this.tabs = [
       {
-        title: 'Status',
-        template: '/assets/features/hydrator/templates/detail/tabs/status.html'
-      },
-      {
         title: 'History',
         template: '/assets/features/hydrator/templates/detail/tabs/history.html'
       },

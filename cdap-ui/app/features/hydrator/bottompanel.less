@@ -27,6 +27,16 @@ body.theme-cdap.state-hydrator {
     }
 
     div.console {
+      &.maximized {
+        top: 180px;
+        .node-config .bottompanel-body {
+          div.config-table {
+            height: ~"-moz-calc(100vh - 344px)";
+            height: ~"-webkit-calc(100vh - 344px)";
+            height: ~"calc(100vh - 344px)";
+          }
+        }
+      }
       div.console-tabs ul.nav-tabs li {
         margin-bottom: -1px;
       }
@@ -74,36 +84,26 @@ body.theme-cdap.state-hydrator {
             }
           }
         }
-        // Status view
-        &.status-view {
-          th {
-            font-weight: 500;
-            font-size: 15px;
-          }
-          td {
-            vertical-align: top;
-            span {
-              font-weight: 500;
-              font-size: 24px;
-            }
-          }
-          td.status-value span {
-            color: @brand-primary;
-          }
-        }
-        &.borderless {
-          th, td {
-            border: 0;
-            text-align: center;
-          }
-        }
       }
       select.cron-select:hover {
         cursor: not-allowed;
       }
     }
   }
-
+  &.state-hydrator-studio {
+    div.console {
+      &.maximized {
+        top: 120px;
+        .node-config .bottompanel-body {
+          div.config-table {
+            height: ~"-moz-calc(100vh - 284px)";
+            height: ~"-webkit-calc(100vh - 284px)";
+            height: ~"calc(100vh - 284px)";
+          }
+        }
+      }
+    }
+  }
   div.console {
     background-color: white;
     position: relative;
@@ -140,7 +140,6 @@ body.theme-cdap.state-hydrator {
     // Styling for maximized bottom panel
     &.maximized {
       position: fixed;
-      top: 120px;
       right: 0;
       left: 0;
       bottom: 53px;
@@ -149,13 +148,6 @@ body.theme-cdap.state-hydrator {
       z-index: 9999;
       div.console-tabs {
         border-top: 0;
-      }
-      .node-config .bottompanel-body {
-        div.config-table {
-          height: ~"-moz-calc(100vh - 284px)";
-          height: ~"-webkit-calc(100vh - 284px)";
-          height: ~"calc(100vh - 284px)";
-        }
       }
     }
   }

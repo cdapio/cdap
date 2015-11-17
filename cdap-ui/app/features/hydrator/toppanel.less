@@ -59,28 +59,6 @@ body.theme-cdap.state-hydrator {
 
       }
 
-      &.btn-status {
-        width: 200px;
-        cursor: default;
-        &:hover, &:focus {
-          border-left: 1px solid #eee;
-          background-color: white;
-        }
-        &:active {
-          background-color: white;
-          color: inherit;
-          .box-shadow(none);
-        }
-        span {
-          display: inline-block;
-          width: 10px;
-          height: 10px;
-          margin-right: 5px;
-          .border-radius(25px);
-          &.status-green { background-color: @brand-success; }
-          &.status-red { background-color: @brand-danger; }
-        }
-      }
       @media (max-width: @screen-xs-max) {
         display: none;
       }

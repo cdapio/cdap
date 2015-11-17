@@ -1,0 +1,49 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+  http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+<!-- STATUS PANEL -->
+<div class="status-panel top">
+  <ul class="list-inline list-unstyled">
+    <li class="app-status">
+      <span class="status-value" ng-class="{'status-green': StatusPanelCtrl.appStatus === 'RUNNING' || StatusPanelCtrl.appStatus === 'SCHEDULED', 'status-red': StatusPanelCtrl.appStatus !== 'RUNNING' && StatusPanelCtrl.appStatus !== 'SCHEDULED' }"> </span>
+      <span>{{ StatusPanelCtrl.appStatus }}</span>
+    </li>
+    <li class="status-value">
+      <span>Total Runs</span>
+      <span>{{ StatusPanelCtrl.runsCount }}</span>
+    </li>
+    <li ng-if="StatusPanelCtrl.pipelineType === StatusPanelCtrl.GLOBALS.etlBatch">
+      <span>Average Run Time</span>
+      <span ng-if="StatusPanelCtrl.avgRunTime === 'N/A'"> &mdash; </span>
+      <span class="status-value" ng-if="StatusPanelCtrl.avgRunTime !== 'N/A'">{{ StatusPanelCtrl.avgRunTime * 1000 | amDurationFormat }}</span>
+    </li>
+    <li>
+      <span>Last Run Time</span>
+      <span ng-if="StatusPanelCtrl.lastRunTime === 'N/A'"> &mdash; </span>
+      <span class="status-value" ng-if="StatusPanelCtrl.lastRunTime !== 'N/A'">{{ StatusPanelCtrl.lastRunTime | amDurationFormat }}</span>
+    </li>
+    <li ng-if="StatusPanelCtrl.lastFinished">
+      <span>Last Finished Run</span>
+      <span ng-class="{ 'text-success': StatusPanelCtrl.lastFinished.status === 'COMPLETED', 'text-danger': StatusPanelCtrl.lastFinished.status === 'KILLED' || StatusPanelCtrl.lastFinished.status === 'FAILED' }">
+        {{ StatusPanelCtrl.lastFinished.status }}
+      </span>
+      <small class="center-block">
+        {{ StatusPanelCtrl.lastFinished.end * 1000 | amDateFormat: 'MM/DD/YY h:mm:ss A'}}
+      </small>
+    </li>
+    <li class="status-value" ng-if="!StatusPanelCtrl.lastFinished">
+      <span> &mdash; </span>
+    </li>
+  </ul>
+</div>
