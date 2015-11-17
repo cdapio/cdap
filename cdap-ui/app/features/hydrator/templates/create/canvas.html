@@ -16,4 +16,6 @@
 
 <my-dag ng-class="{'canvas-scroll': CanvasCtrl.state.setScroll}"
   nodes="CanvasCtrl.nodes"
-  connections="CanvasCtrl.connections"> </my-dag>
+  connections="CanvasCtrl.connections"
+  context="CanvasCtrl"
+  node-delete="CanvasCtrl.deleteNode"> </my-dag>
