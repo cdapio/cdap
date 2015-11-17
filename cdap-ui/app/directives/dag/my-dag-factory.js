@@ -17,7 +17,7 @@
 angular.module(PKG.name + '.commons')
   .factory('MyDAGFactory', function(CanvasFactory) {
     var defaultSettings = {
-      Connector : [ 'Flowchart', {gap: 7} ],
+      Connector : [ 'Flowchart', {gap: 6, stub: [10, 15], alwaysRespectStubs: true} ],
       ConnectionsDetachable: true
     };
     var connectorStyle = {
