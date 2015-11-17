@@ -127,6 +127,20 @@ angular.module(PKG.name + '.commons')
     });
 
 
+    vm.onNodeClick = function(node) {
+      $scope.nodeClick.call(this, node);
+      console.log('click', node);
+    };
+
+    vm.onNodeDelete = function (event, node) {
+      event.stopPropagation();
+      var fn = $scope.nodeDelete();
+
+      fn.call($scope.context, node);
+      console.log('delete', node);
+    };
+
+
   });
   // .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, HydratorErrorFactory, PipelineNodeConfigActionFactory) {
   //   this.plugins = $scope.config || [];
