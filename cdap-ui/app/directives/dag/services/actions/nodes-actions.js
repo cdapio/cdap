@@ -37,5 +37,5 @@ class NodesActionsFactory {
 
 }
 NodesActionsFactory.$inject = ['NodesDispatcher'];
-angular.module(`${PKG.name}.feature.hydrator`)
+angular.module(`${PKG.name}.commons`)
   .service('NodesActionsFactory', NodesActionsFactory);

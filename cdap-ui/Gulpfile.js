@@ -201,6 +201,14 @@ function getEs6Features(isNegate) {
   return returnVal;
 }
 
+function getEs6Directives(isNegate) {
+  var es6directives = [
+    (isNegate ? '!' : '') + './app/directives/dag/**/*.js'
+  ];
+
+  return es6directives;
+}
+
 
 /*
   application javascript
@@ -211,15 +219,17 @@ gulp.task('watch:js:app', function() {
     v: pkg.version
   });
 
-  return gulp.src(
-      [
-        './app/main.js',
-        '!./app/lib/c3.js',
-        './app/features/*/module.js',
-        './app/**/*.js',
-        '!./app/**/*-test.js'
-      ].concat(getEs6Features(true))
-    )
+  var source = [
+    './app/main.js',
+    '!./app/lib/c3.js',
+    './app/features/*/module.js',
+    './app/**/*.js',
+    '!./app/**/*-test.js'
+  ];
+  source = source.concat(getEs6Features(true));
+  source = source.concat(getEs6Directives(true));
+
+  return gulp.src(source)
     .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.wrapper({
@@ -235,7 +245,11 @@ gulp.task('watch:js:app:babel', function() {
     name: pkg.name,
     v: pkg.version
   });
-  return gulp.src(getEs6Features())
+
+  var source = getEs6Features();
+  source = source.concat(getEs6Directives());
+
+  return gulp.src(source)
     .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.sourcemaps.init())
@@ -453,6 +467,7 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     '!./app/features/search/**/*.js',
     '!./app/features/pins/**/*.js',
     '!./app/features/flows/**/*.js',
+    '!./app/directives/dag/**/*.js',
     '!./app/**/*-test.js'
   ], ['jshint', 'watch:js:app']);
   gulp.watch([
@@ -462,6 +477,8 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     './app/features/pins/**/*.js',
     './app/features/search/**/*.js',
     './app/features/flows/**/*.js'
+    './app/features/flows/**/*.js',
+    './app/directives/dag/**/*.js'
   ], ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);

@@ -25,7 +25,6 @@ class NodesStore {
     dispatcher.register('onRemoveNode', this.removeNode.bind(this));
     dispatcher.register('onConnect', this.addConnection.bind(this));
     dispatcher.register('onRemoveConnection', this.removeConnection.bind(this));
-
   }
 
   setDefaults() {
@@ -72,5 +71,5 @@ class NodesStore {
 }
 
 NodesStore.$inject = ['NodesDispatcher'];
-angular.module(`${PKG.name}.feature.hydrator`)
+angular.module(`${PKG.name}.commons`)
   .service('NodesStore', NodesStore);
