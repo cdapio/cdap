@@ -23,6 +23,11 @@ angular.module(PKG.name + '.commons')
     var sourceSettings = angular.copy(MyDAGFactory.getSettings(false).source);
     var sinkSettings = angular.copy(MyDAGFactory.getSettings(false).sink);
 
+    var transformSourceSettings = angular.copy(sourceSettings);
+    var transformSinkSettings = angular.copy(sinkSettings);
+    transformSourceSettings.anchor = [ 0.5, 1, 1, 0, 26, -43, 'transformAnchor'];
+    transformSinkSettings.anchor = [ 0.5, 1, -1, 0, -26, -43, 'transformAnchor'];
+
     vm.scale = 1.0;
 
 
@@ -77,11 +82,9 @@ angular.module(PKG.name + '.commons')
             vm.instance.addEndpoint(node.id, sinkSettings, {uuid: node.id});
             break;
           case 'transform':
-            sourceSettings.anchor = [ 0.5, 1, 1, 0, 26, -43, 'transformAnchor'];
-            sinkSettings.anchor = [ 0.5, 1, -1, 0, -26, -43, 'transformAnchor'];
             // Need to id each end point so that it can be used later to make connections.
-            vm.instance.addEndpoint(node.id, sourceSettings, {uuid: 'Left' + node.id});
-            vm.instance.addEndpoint(node.id, sinkSettings, {uuid: 'Right' + node.id});
+            vm.instance.addEndpoint(node.id, transformSourceSettings, {uuid: 'Left' + node.id});
+            vm.instance.addEndpoint(node.id, transformSinkSettings, {uuid: 'Right' + node.id});
             break;
         }
       });
