@@ -15,8 +15,9 @@
  */
 
 class HydratorCreateCanvasController {
-  constructor(BottomPanelStore, NodesStore) {
+  constructor(BottomPanelStore, NodesStore, NodesActionsFactory) {
     this.NodesStore = NodesStore;
+    this.NodesActionsFactory = NodesActionsFactory;
 
     this.setState = () => {
       this.state = {
@@ -38,10 +39,14 @@ class HydratorCreateCanvasController {
     this.nodes = this.NodesStore.getNodes();
     this.connections = this.NodesStore.getConnections();
   }
+
+  deleteNode(node) {
+    this.NodesActionsFactory.removeNode(node);
+  }
 }
 
 
-HydratorCreateCanvasController.$inject = ['BottomPanelStore', 'NodesStore'];
+HydratorCreateCanvasController.$inject = ['BottomPanelStore', 'NodesStore', 'NodesActionsFactory'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorCreateCanvasController', HydratorCreateCanvasController);
   // .controller('HydratorCreateCanvasController', function(BottomPanelStore, NodesStore) {

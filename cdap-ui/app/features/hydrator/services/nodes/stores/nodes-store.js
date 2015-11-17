@@ -47,8 +47,9 @@ class NodesStore {
     this.state.nodes.push(config);
     this.emitChange();
   }
-  removeNode(nodeId) {
-    delete this.state.nodes[nodeId];
+  removeNode(node) {
+    let index = this.state.nodes.indexOf(node);
+    this.state.nodes.splice(index, 1);
     this.emitChange();
   }
   getNodes() {

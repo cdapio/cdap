@@ -15,23 +15,130 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS) {
+
+    var vm = this;
+
+    var endpoints = [];
+    var sourceSettings = angular.copy(MyDAGFactory.getSettings(false).source);
+    var sinkSettings = angular.copy(MyDAGFactory.getSettings(false).sink);
+    var transformSourceSettings = angular.copy(MyDAGFactory.getSettings(false).transformSource);
+    var transformSinkSettings = angular.copy(MyDAGFactory.getSettings(false).transformSink);
+
+    vm.scale = 1.0;
+
+
+    vm.zoomIn = function () {
+      vm.scale += 0.1;
+      setZoom(vm.scale, vm.instance);
+    };
+
+    vm.zoomOut = function () {
+      vm.scale -= 0.1;
+      setZoom(vm.scale, vm.instance);
+    };
+
+
+    /**
+     * Utily function from jsPlumb
+     * https://jsplumbtoolkit.com/community/doc/zooming.html
+     **/
+    function setZoom(zoom, instance, transformOrigin, el) {
+      transformOrigin = transformOrigin || [ 0.5, 0.5 ];
+      instance = instance || jsPlumb;
+      el = el || instance.getContainer();
+      var p = [ 'webkit', 'moz', 'ms', 'o' ],
+          s = 'scale(' + zoom + ')',
+          oString = (transformOrigin[0] * 100) + '% ' + (transformOrigin[1] * 100) + '%';
+
+      for (var i = 0; i < p.length; i++) {
+        el.style[p[i] + 'Transform'] = s;
+        el.style[p[i] + 'TransformOrigin'] = oString;
+      }
+
+      el.style['transform'] = s;
+      el.style['transformOrigin'] = oString;
+
+      instance.setZoom(zoom);
+    }
+
+
+    function addEndpoints() {
+      angular.forEach($scope.nodes, function (node) {
+        if (endpoints.indexOf(node.id) !== -1) {
+          return;
+        }
+        endpoints.push(node.id);
+
+        var type = GLOBALS.pluginConvert[node.type];
+
+
+        switch(type) {
+          case 'source':
+            vm.instance.addEndpoint(node.id, sourceSettings, {uuid: node.id});
+            break;
+          case 'sink':
+            vm.instance.addEndpoint(node.id, sinkSettings, {uuid: node.id});
+            break;
+          case 'transform':
+            // Need to id each end point so that it can be used later to make connections.
+            vm.instance.addEndpoint(node.id, transformSourceSettings, {uuid: 'Left' + node.id});
+            vm.instance.addEndpoint(node.id, transformSinkSettings, {uuid: 'Right' + node.id});
+            break;
+        }
+      });
+    }
+
+    function formatConnections() {
+      var connections = [];
+
+      angular.forEach(vm.instance.getConnections(), function (conn) {
+        connections.push({
+          source: conn.sourceId,
+          target: conn.targetId
+        });
+      });
+
+      $scope.connections = connections;
+    }
+
 
     jsPlumb.ready(function() {
+      var dagSettings = MyDAGFactory.getSettings().default;
 
       jsPlumb.setContainer('dag-container');
-      this.instance = jsPlumb.getInstance();
+      vm.instance = jsPlumb.getInstance(dagSettings);
 
+      vm.instance.bind('connection', formatConnections);
+      vm.instance.bind('connectionDetached', formatConnections);
 
       $scope.$watchCollection('nodes', function () {
-        console.log('ChangeNode', $scope.nodes);
+        $timeout(function () {
+          var nodes = document.querySelectorAll('.box');
+          vm.instance.draggable(nodes, {
+            containment: true
+          });
+          addEndpoints();
+
+        });
       });
 
       $scope.$watchCollection('connections', function () {
         console.log('ChangeConnection', $scope.connections);
       });
+    });
 
-    }.bind(this));
+
+    vm.onNodeClick = function(node) {
+      $scope.nodeClick.call($scope.context, node);
+    };
+
+    vm.onNodeDelete = function (event, node) {
+      event.stopPropagation();
+      var fn = $scope.nodeDelete();
+
+      fn.call($scope.context, node);
+    };
 
 
   });
