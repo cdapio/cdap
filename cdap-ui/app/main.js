@@ -28,7 +28,7 @@ angular
       PKG.name+'.feature.data',
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
-      PKG.name+'.feature.foo',
+      PKG.name+'.feature.experimental',
       PKG.name+'.feature.hydrator',
       PKG.name+'.feature.explore',
       PKG.name +'.feature.search',
