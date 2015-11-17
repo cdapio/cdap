@@ -30,5 +30,5 @@ class NodesDispatcher {
   }
 }
 NodesDispatcher.$inject = ['CaskAngularDispatcher'];
-angular.module(`${PKG.name}.feature.hydrator`)
+angular.module(`${PKG.name}.commons`)
   .service('NodesDispatcher', NodesDispatcher);
