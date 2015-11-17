@@ -23,8 +23,8 @@ class NodesActionsFactory {
     this.nodesDispatcher.dispatch('onNodeAdd', config);
   }
 
-  removeNode(nodeId) {
-    this.nodesDispatcher.dispatch('onRemoveNode', nodeId);
+  removeNode(node) {
+    this.nodesDispatcher.dispatch('onRemoveNode', node);
   }
 
   addConnection(connection) {
