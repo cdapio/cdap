@@ -128,8 +128,7 @@ angular.module(PKG.name + '.commons')
 
 
     vm.onNodeClick = function(node) {
-      $scope.nodeClick.call(this, node);
-      console.log('click', node);
+      $scope.nodeClick.call($scope.context, node);
     };
 
     vm.onNodeDelete = function (event, node) {
@@ -137,7 +136,6 @@ angular.module(PKG.name + '.commons')
       var fn = $scope.nodeDelete();
 
       fn.call($scope.context, node);
-      console.log('delete', node);
     };
 
 
