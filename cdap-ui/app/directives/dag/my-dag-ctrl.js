@@ -22,11 +22,8 @@ angular.module(PKG.name + '.commons')
     var endpoints = [];
     var sourceSettings = angular.copy(MyDAGFactory.getSettings(false).source);
     var sinkSettings = angular.copy(MyDAGFactory.getSettings(false).sink);
-
-    var transformSourceSettings = angular.copy(sourceSettings);
-    var transformSinkSettings = angular.copy(sinkSettings);
-    transformSourceSettings.anchor = [ 0.5, 1, 1, 0, 26, -43, 'transformAnchor'];
-    transformSinkSettings.anchor = [ 0.5, 1, -1, 0, -26, -43, 'transformAnchor'];
+    var transformSourceSettings = angular.copy(MyDAGFactory.getSettings(false).transformSource);
+    var transformSinkSettings = angular.copy(MyDAGFactory.getSettings(false).transformSink);
 
     vm.scale = 1.0;
 
@@ -74,6 +71,8 @@ angular.module(PKG.name + '.commons')
         endpoints.push(node.id);
 
         var type = GLOBALS.pluginConvert[node.type];
+
+
         switch(type) {
           case 'source':
             vm.instance.addEndpoint(node.id, sourceSettings, {uuid: node.id});
