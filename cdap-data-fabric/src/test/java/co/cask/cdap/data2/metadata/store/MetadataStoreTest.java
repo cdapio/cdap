@@ -18,11 +18,12 @@ package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.publisher.MetadataKafkaTestBase;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -38,9 +39,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Tests for {@link BusinessMetadataStore}
+ * Tests for {@link MetadataStore}
  */
-public class BusinessMetadataStoreTest extends MetadataKafkaTestBase {
+public class MetadataStoreTest extends MetadataKafkaTestBase {
 
   private final Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, "app");
   private final Id.Program flow = Id.Program.from(app, ProgramType.FLOW, "flow");
@@ -147,14 +148,14 @@ public class BusinessMetadataStoreTest extends MetadataKafkaTestBase {
   private int kafkaOffset = 0;
 
   private static TransactionManager txManager;
-  private static BusinessMetadataStore store;
+  private static MetadataStore store;
 
   @BeforeClass
   public static void setup() throws IOException {
     MetadataKafkaTestBase.setup();
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
-    store = injector.getInstance(BusinessMetadataStore.class);
+    store = injector.getInstance(MetadataStore.class);
   }
 
   @Test
@@ -195,16 +196,16 @@ public class BusinessMetadataStoreTest extends MetadataKafkaTestBase {
   }
 
   private void generateMetadataUpdates() {
-    store.addTags(dataset, datasetTags.iterator().next());
-    store.setProperties(app, appProperties);
-    store.addTags(app, appTags.iterator().next());
-    store.setProperties(stream, streamProperties);
-    store.setProperties(stream, streamProperties);
-    store.setProperties(stream, updatedStreamProperties);
-    store.addTags(flow, flowTags.iterator().next());
-    store.removeTags(flow);
-    store.removeTags(dataset, datasetTags.iterator().next());
-    store.removeProperties(stream);
-    store.removeMetadata(app);
+    store.addTags(MetadataScope.USER, dataset, datasetTags.iterator().next());
+    store.setProperties(MetadataScope.USER, app, appProperties);
+    store.addTags(MetadataScope.USER, app, appTags.iterator().next());
+    store.setProperties(MetadataScope.USER, stream, streamProperties);
+    store.setProperties(MetadataScope.USER, stream, streamProperties);
+    store.setProperties(MetadataScope.USER, stream, updatedStreamProperties);
+    store.addTags(MetadataScope.USER, flow, flowTags.iterator().next());
+    store.removeTags(MetadataScope.USER, flow);
+    store.removeTags(MetadataScope.USER, dataset, datasetTags.iterator().next());
+    store.removeProperties(MetadataScope.USER, stream);
+    store.removeMetadata(MetadataScope.USER, app);
   }
 }

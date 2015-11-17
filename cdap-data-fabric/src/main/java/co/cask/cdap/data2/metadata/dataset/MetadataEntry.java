@@ -21,20 +21,21 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
- * Represent Busineess Metadata for CDAP.
+ * Represents a single Metadata entry for a CDAP Entity.
  */
-public class BusinessMetadataRecord {
+public class MetadataEntry {
   private final Id.NamespacedId targetId;
   private final String key;
   private final String value;
   private final String schema;
 
-  public BusinessMetadataRecord(Id.NamespacedId targetId, String key, String value) {
+  public MetadataEntry(Id.NamespacedId targetId, String key, String value) {
     this(targetId, key, value, null);
   }
 
-  public BusinessMetadataRecord(Id.NamespacedId targetId, String key, String value,
-                                @Nullable String schema) {
+  //TODO: Remove this constructor when it is finalized that schema need not be stored separately
+  public MetadataEntry(Id.NamespacedId targetId, String key, String value,
+                       @Nullable String schema) {
     this.targetId = targetId;
     this.key = key;
     this.value = value;
@@ -66,7 +67,7 @@ public class BusinessMetadataRecord {
       return false;
     }
 
-    BusinessMetadataRecord that = (BusinessMetadataRecord) o;
+    MetadataEntry that = (MetadataEntry) o;
 
     return Objects.equals(targetId, that.targetId) &&
       Objects.equals(key, that.key) &&

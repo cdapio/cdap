@@ -38,9 +38,9 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test class for {@link BusinessMetadataDataset} class.
+ * Test class for {@link MetadataDataset} class.
  */
-public class BusinessMetadataDatasetTest {
+public class MetadataDatasetTest {
 
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
@@ -48,10 +48,10 @@ public class BusinessMetadataDatasetTest {
   private static final Id.DatasetInstance datasetInstance =
     Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "meta");
 
-  private BusinessMetadataDataset dataset;
+  private MetadataDataset dataset;
 
   private final Id.Application app1 = Id.Application.from("ns1", "app1");
-  // Have to use Id.Program for comparison here because the BusinessMetadataDataset APIs return Id.Program.
+  // Have to use Id.Program for comparison here because the MetadataDataset APIs return Id.Program.
   private final Id.Program flow1 = Id.Program.from("ns1", "app1", ProgramType.FLOW, "flow1");
   private final Id.DatasetInstance dataset1 = Id.DatasetInstance.from("ns1", "ds1");
   private final Id.Stream stream1 = Id.Stream.from("ns1", "s1");
@@ -92,8 +92,8 @@ public class BusinessMetadataDatasetTest {
     Assert.assertEquals(ImmutableMap.of("akey1", "avalue1"), properties);
     dataset.removeProperties(app1, "akey1");
     Assert.assertNull(dataset.getProperty(app1, "akey1"));
-    BusinessMetadataRecord result = dataset.getProperty(flow1, "fkey1");
-    BusinessMetadataRecord expected = new BusinessMetadataRecord(flow1, "fkey1", "fvalue1");
+    MetadataEntry result = dataset.getProperty(flow1, "fkey1");
+    MetadataEntry expected = new MetadataEntry(flow1, "fkey1", "fvalue1");
     Assert.assertEquals(expected, result);
     Assert.assertEquals(ImmutableMap.of("fkey1", "fvalue1", "fK", "fV"), dataset.getProperties(flow1));
     dataset.removeProperties(flow1, "fkey1");
@@ -102,18 +102,18 @@ public class BusinessMetadataDatasetTest {
     Assert.assertEquals("fV", properties.get("fK"));
     dataset.removeProperties(flow1);
     Assert.assertEquals(0, dataset.getProperties(flow1).size());
-    expected = new BusinessMetadataRecord(dataset1, "dkey1", "dvalue1");
+    expected = new MetadataEntry(dataset1, "dkey1", "dvalue1");
     Assert.assertEquals(expected, dataset.getProperty(dataset1, "dkey1"));
     Assert.assertEquals(ImmutableMap.of("skey1", "svalue1", "skey2", "svalue2"), dataset.getProperties(stream1));
     properties = dataset.getProperties(artifact1);
     Assert.assertEquals(ImmutableMap.of("rkey1", "rvalue1", "rkey2", "rvalue2"), properties);
     result = dataset.getProperty(artifact1, "rkey2");
-    expected = new BusinessMetadataRecord(artifact1, "rkey2", "rvalue2");
+    expected = new MetadataEntry(artifact1, "rkey2", "rvalue2");
     Assert.assertEquals(expected, result);
     properties = dataset.getProperties(view1);
     Assert.assertEquals(ImmutableMap.of("vkey1", "vvalue1", "vkey2", "vvalue2"), properties);
     result = dataset.getProperty(view1, "vkey2");
-    expected = new BusinessMetadataRecord(view1, "vkey2", "vvalue2");
+    expected = new MetadataEntry(view1, "vkey2", "vvalue2");
     Assert.assertEquals(expected, result);
     // reset a property
     dataset.setProperty(stream1, "skey1", "sv1");
@@ -206,20 +206,20 @@ public class BusinessMetadataDatasetTest {
     dataset.addTags(stream1, "tag2, tag4");
 
     // Try to search on all tags
-    List<BusinessMetadataRecord> results =
-      dataset.findBusinessMetadataOnKeyValue("ns1", "tags:*", MetadataSearchTargetType.ALL);
+    List<MetadataEntry> results =
+      dataset.searchByKeyValue("ns1", "tags:*", MetadataSearchTargetType.ALL);
     Assert.assertEquals(4, results.size());
 
     // Try to search for tag1*
-    results = dataset.findBusinessMetadataOnKeyValue("ns1", "tags:tag1*", MetadataSearchTargetType.ALL);
+    results = dataset.searchByKeyValue("ns1", "tags:tag1*", MetadataSearchTargetType.ALL);
     Assert.assertEquals(3, results.size());
 
     // Try to search for tag1
-    results = dataset.findBusinessMetadataOnKeyValue("ns1", "tags:tag1", MetadataSearchTargetType.ALL);
+    results = dataset.searchByKeyValue("ns1", "tags:tag1", MetadataSearchTargetType.ALL);
     Assert.assertEquals(2, results.size());
 
     // Try to search for tag4
-    results = dataset.findBusinessMetadataOnKeyValue("ns1", "tags:tag4", MetadataSearchTargetType.ALL);
+    results = dataset.searchByKeyValue("ns1", "tags:tag4", MetadataSearchTargetType.ALL);
     Assert.assertEquals(1, results.size());
 
     // cleanup
@@ -236,7 +236,7 @@ public class BusinessMetadataDatasetTest {
   @Test
   public void testSearchOnValue() throws Exception {
     // Create record
-    BusinessMetadataRecord record = new BusinessMetadataRecord(flow1, "key1", "value1");
+    MetadataEntry record = new MetadataEntry(flow1, "key1", "value1");
     // Save it
     dataset.setProperty(flow1, "key1", "value1");
 
@@ -244,17 +244,17 @@ public class BusinessMetadataDatasetTest {
     dataset.setProperty(flow1, "key2", "value2");
 
     // Search for it based on value
-    List<BusinessMetadataRecord> results =
-      dataset.findBusinessMetadataOnValue("ns1", "value1", MetadataSearchTargetType.PROGRAM);
+    List<MetadataEntry> results =
+      dataset.searchByValue("ns1", "value1", MetadataSearchTargetType.PROGRAM);
 
     // Assert check
     Assert.assertEquals(1, results.size());
 
-    BusinessMetadataRecord result = results.get(0);
+    MetadataEntry result = results.get(0);
     Assert.assertEquals(record, result);
 
     // Case insensitive
-    results = dataset.findBusinessMetadataOnValue("ns1", "ValUe1", MetadataSearchTargetType.PROGRAM);
+    results = dataset.searchByValue("ns1", "ValUe1", MetadataSearchTargetType.PROGRAM);
 
     // Assert check
     Assert.assertEquals(1, results.size());
@@ -266,13 +266,13 @@ public class BusinessMetadataDatasetTest {
     dataset.setProperty(flow1, "key3", "value1");
 
     // Search for it based on value
-    List<BusinessMetadataRecord> results2 =
-      dataset.findBusinessMetadataOnValue("ns1", "value1", MetadataSearchTargetType.PROGRAM);
+    List<MetadataEntry> results2 =
+      dataset.searchByValue("ns1", "value1", MetadataSearchTargetType.PROGRAM);
 
     // Assert check
     Assert.assertEquals(2, results2.size());
 
-    for (BusinessMetadataRecord result2 : results2) {
+    for (MetadataEntry result2 : results2) {
       Assert.assertEquals("value1", result2.getValue());
     }
 
@@ -280,18 +280,18 @@ public class BusinessMetadataDatasetTest {
     dataset.setProperty(stream1, "key21", "value21");
 
     // Search for it based on value asterix
-    List<BusinessMetadataRecord> results3 = dataset.findBusinessMetadataOnValue("ns1", "value2*",
-                                                                                MetadataSearchTargetType.ALL);
+    List<MetadataEntry> results3 = dataset.searchByValue("ns1", "value2*",
+                                                         MetadataSearchTargetType.ALL);
 
     // Assert check
     Assert.assertEquals(2, results3.size());
-    for (BusinessMetadataRecord result3 : results3) {
+    for (MetadataEntry result3 : results3) {
       Assert.assertTrue(result3.getValue().startsWith("value2"));
     }
 
     // Search for it based on value asterix
-    List<BusinessMetadataRecord> results4 = dataset.findBusinessMetadataOnValue("ns12", "value2*",
-                                                                                MetadataSearchTargetType.ALL);
+    List<MetadataEntry> results4 = dataset.searchByValue("ns12", "value2*",
+                                                         MetadataSearchTargetType.ALL);
 
     // Assert check
     Assert.assertEquals(0, results4.size());
@@ -299,8 +299,8 @@ public class BusinessMetadataDatasetTest {
 
   @Test
   public void testSearchOnKeyValue() throws Exception {
-    // Create record
-    BusinessMetadataRecord record = new BusinessMetadataRecord(flow1, "key1", "value1");
+    // Create entry
+    MetadataEntry entry = new MetadataEntry(flow1, "key1", "value1");
     // Save it
     dataset.setProperty(flow1, "key1", "value1");
 
@@ -308,27 +308,27 @@ public class BusinessMetadataDatasetTest {
     dataset.setProperty(flow1, "key2", "value2");
 
     // Search for it based on value
-    List<BusinessMetadataRecord> results =
-      dataset.findBusinessMetadataOnKeyValue("ns1", "key1" + BusinessMetadataDataset.KEYVALUE_SEPARATOR + "value1",
-                                             MetadataSearchTargetType.PROGRAM);
+    List<MetadataEntry> results =
+      dataset.searchByKeyValue("ns1", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
+                               MetadataSearchTargetType.PROGRAM);
 
     // Assert check
     Assert.assertEquals(1, results.size());
 
-    BusinessMetadataRecord result = results.get(0);
-    Assert.assertEquals(record, result);
+    MetadataEntry result = results.get(0);
+    Assert.assertEquals(entry, result);
 
     // Test wrong ns
-    List<BusinessMetadataRecord> results2  =
-      dataset.findBusinessMetadataOnKeyValue("ns12", "key1" + BusinessMetadataDataset.KEYVALUE_SEPARATOR + "value1",
-                                             MetadataSearchTargetType.PROGRAM);
+    List<MetadataEntry> results2  =
+      dataset.searchByKeyValue("ns12", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
+                               MetadataSearchTargetType.PROGRAM);
     // Assert check
     Assert.assertEquals(0, results2.size());
   }
 
   @Test
   public void testHistory() throws Exception {
-    BusinessMetadataDataset dataset =
+    MetadataDataset dataset =
       getDataset(Id.DatasetInstance.from(DatasetFrameworkTestUtil.NAMESPACE_ID, "testHistory"));
 
     doTestHistory(dataset, flow1, "f_");
@@ -337,7 +337,7 @@ public class BusinessMetadataDatasetTest {
     doTestHistory(dataset, stream1, "s_");
   }
 
-  private void doTestHistory(BusinessMetadataDataset dataset, Id.NamespacedId targetId, String prefix)
+  private void doTestHistory(MetadataDataset dataset, Id.NamespacedId targetId, String prefix)
     throws Exception {
     // Metadata change history keyed by time in millis the change was made
     Map<Long, MetadataRecord> expected = new HashMap<>();
@@ -477,7 +477,7 @@ public class BusinessMetadataDatasetTest {
                         new MetadataRecord(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
   }
 
-  private void addMetadataRecord(BusinessMetadataDataset dataset, MetadataRecord record) {
+  private void addMetadataRecord(MetadataDataset dataset, MetadataRecord record) {
     for (Map.Entry<String, String> entry : record.getProperties().entrySet()) {
       dataset.setProperty(record.getEntityId(), entry.getKey(), entry.getValue());
     }
@@ -510,9 +510,9 @@ public class BusinessMetadataDatasetTest {
     return iterable.iterator().next();
   }
 
-  private static BusinessMetadataDataset getDataset(Id.DatasetInstance instance) throws Exception {
+  private static MetadataDataset getDataset(Id.DatasetInstance instance) throws Exception {
     return DatasetsUtil.getOrCreateDataset(dsFrameworkUtil.getFramework(), instance,
-                                           BusinessMetadataDataset.class.getName(),
+                                           MetadataDataset.class.getName(),
                                            DatasetProperties.EMPTY, null, null);
   }
 }

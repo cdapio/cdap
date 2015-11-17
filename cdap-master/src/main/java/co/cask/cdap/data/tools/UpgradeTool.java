@@ -46,9 +46,9 @@ import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
-import co.cask.cdap.data2.metadata.service.DefaultBusinessMetadataStore;
-import co.cask.cdap.data2.metadata.service.NoOpBusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.DefaultMetadataStore;
+import co.cask.cdap.data2.metadata.service.MetadataStore;
+import co.cask.cdap.data2.metadata.service.NoOpMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -165,7 +165,7 @@ public class UpgradeTool {
             // Upgrade tool does not need to record lineage for now.
             bind(LineageWriter.class).to(NoOpLineageWriter.class);
             // No need to do anything with Metadata store for now.
-            bind(BusinessMetadataStore.class).to(NoOpBusinessMetadataStore.class);
+            bind(MetadataStore.class).to(NoOpMetadataStore.class);
           }
         }
       ),
@@ -398,7 +398,7 @@ public class UpgradeTool {
     if (includeNewDatasets) {
       // artifact and metadata datasets were added in 3.2
       ArtifactStore.setupDatasets(datasetFramework);
-      DefaultBusinessMetadataStore.setupDatasets(datasetFramework);
+      DefaultMetadataStore.setupDatasets(datasetFramework);
       LineageStore.setupDatasets(datasetFramework);
     }
     // app metadata

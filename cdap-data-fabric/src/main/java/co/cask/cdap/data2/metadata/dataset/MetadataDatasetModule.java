@@ -22,15 +22,15 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 
 /**
- * {@link co.cask.cdap.api.dataset.module.DatasetModule} for {@link BusinessMetadataDataset}.
+ * {@link DatasetModule} for {@link MetadataDataset}.
  */
-public class BusinessMetadataDatasetModule implements DatasetModule {
+public class MetadataDatasetModule implements DatasetModule {
 
   @Override
   public void register(DatasetDefinitionRegistry registry) {
     DatasetDefinition<IndexedTable, ? extends DatasetAdmin> indexedTableDef =
       registry.get(IndexedTable.class.getName());
-    registry.add(new BusinessMetadataDefinition("businessMetadataDataset", indexedTableDef));
-    registry.add(new BusinessMetadataDefinition(BusinessMetadataDataset.class.getName(), indexedTableDef));
+    registry.add(new MetadataDatasetDefinition("metadataDataset", indexedTableDef));
+    registry.add(new MetadataDatasetDefinition(MetadataDataset.class.getName(), indexedTableDef));
   }
 }
