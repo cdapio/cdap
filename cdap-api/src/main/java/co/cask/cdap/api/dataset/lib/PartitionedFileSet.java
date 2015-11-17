@@ -59,27 +59,27 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * Adds a new metadata entry for a particular partition.
    * Note that existing entries cannot be updated.
    * 
-   * @throws DataSetException when an attempt is made to either update an existing entry or add an entry for a
-   *         partition that does not exist
+   * @throws DataSetException when an attempt is made to either update an existing entry
+   *         PartitionNotFoundException when a partition for the given key is not found
    */
   void addMetadata(PartitionKey key, String metadataKey, String metadataValue);
 
   /**
    * Adds a set of new metadata entries for a particular partition.
    * Note that existing entries cannot be updated.
-   * 
-   * @throws DataSetException when an attempt is made to either update existing entries or add entries for a
-   *         partition that does not exist
+   *
+   * @throws DataSetException when an attempt is made to either update existing entries
+   *         PartitionNotFoundException when a partition for the given key is not found
    */
   void addMetadata(PartitionKey key, Map<String, String> metadata);
 
   /**
-   * Remove a partition for a given partition key.
+   * Remove a partition for a given partition key, silently ignoring if the key is not found.
    */
   void dropPartition(PartitionKey key);
 
   /**
-   * Return the partition for a specific partition key.
+   * Return the partition for a specific partition key, or null if key is not found.
    */
   @Nullable
   PartitionDetail getPartition(PartitionKey key);
