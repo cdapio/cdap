@@ -17,8 +17,8 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.etl.api.Destroyable;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
-import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +27,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 /**
  * Executes Transforms one iteration at a time, tracking how many records were input into and output from
@@ -37,73 +38,150 @@ import java.util.Map;
  */
 public class TransformExecutor<IN, OUT> implements Destroyable {
 
-
   private static final Logger LOG = LoggerFactory.getLogger(TransformExecutor.class);
 
-  private final List<TransformDetail> transforms;
-  private final List<DefaultEmitter> emitters;
+  private final Map<String, List<TransformInformation>> transformInfos;
+  private final String start;
 
 
-  public TransformExecutor(List<TransformDetail> transformDetailList) {
-    int numTransforms = transformDetailList.size();
-    this.transforms = new ArrayList<>(numTransforms);
-    this.emitters = Lists.newArrayListWithCapacity(numTransforms);
+  class TransformInformation {
+    TransformDetail transformDetail;
+    DefaultEmitter emitter;
+    private boolean destroyed;
 
-    for (TransformDetail transformDetail : transformDetailList) {
-      this.transforms.add(new TransformDetail(transformDetail,
-                                              new TrackedTransform(transformDetail.getTransformation(),
-                                                                   transformDetail.getMetrics())));
-      this.emitters.add(new DefaultEmitter(transformDetail.getMetrics()));
+    TransformInformation(TransformDetail transformDetail, DefaultEmitter emitter) {
+      this.transformDetail = transformDetail;
+      this.emitter = emitter;
+      this.destroyed = false;
+    }
+
+    TransformDetail getTransformDetail() {
+      return transformDetail;
+    }
+
+    DefaultEmitter getEmitter() {
+      return emitter;
+    }
+
+    void reset() {
+      emitter.reset();
+    }
+
+    void destroy() {
+      if (!destroyed) {
+        Transformation transformation = transformDetail.getTransformation();
+        if (transformation instanceof Destroyable) {
+          Destroyables.destroyQuietly((Destroyable) transformation);
+        }
+        destroyed = true;
+      }
     }
   }
 
-  public TransformResponse<OUT> runOneIteration(IN input) throws Exception {
+  public TransformExecutor(Map<String, List<TransformDetail>> transformDetailList, String start) {
+    this.transformInfos = new HashMap<>();
+    this.start = start;
+    Map<String, TransformInformation> transformInformationMap = new HashMap<>();
 
-    Map<String, Collection<OUT>> errorRecordsMap = new HashMap<>(transforms.size());
+    for (Map.Entry<String, List<TransformDetail>> transformEntry : transformDetailList.entrySet()) {
+      transformInfos.put(transformEntry.getKey(), new ArrayList<TransformInformation>());
 
-    if (transforms.isEmpty()) {
-      return new TransformResponse<>(Lists.newArrayList((OUT) input).iterator(), errorRecordsMap);
-    }
+      for (TransformDetail transformDetail : transformEntry.getValue()) {
+        if (!transformInformationMap.containsKey(transformDetail.getTransformId())) {
+          transformInformationMap.put(
+            transformDetail.getTransformId(),
+            new TransformInformation(
+              new TransformDetail(transformDetail,
+                                  new TrackedTransform(transformDetail.getTransformation(),
+                                                       transformDetail.getMetrics())),
+              new DefaultEmitter(transformDetail.getMetrics())
+            ));
 
-    TransformDetail transformDetail = transforms.get(0);
-    DefaultEmitter currentEmitter = emitters.get(0);
-    currentEmitter.reset();
-    Transformation transform = transformDetail.getTransformation();
-    transform.transform(input, currentEmitter);
+        }
 
-    if (!currentEmitter.getErrors().isEmpty()) {
-      errorRecordsMap.put(transformDetail.getTransformId(), currentEmitter.getErrors());
-    }
-
-    DefaultEmitter previousEmitter = currentEmitter;
-    for (int i = 1; i < transforms.size(); i++) {
-      transformDetail = transforms.get(i);
-      transform = transformDetail.getTransformation();
-      currentEmitter = emitters.get(i);
-      for (Object transformedVal : previousEmitter) {
-        transform.transform(transformedVal, currentEmitter);
+        transformInfos.get(transformEntry.getKey()).add(transformInformationMap.get(transformDetail.getTransformId()));
       }
-      if (!currentEmitter.getErrors().isEmpty()) {
-        errorRecordsMap.put(transformDetail.getTransformId(), currentEmitter.getErrors());
-      }
-      previousEmitter = currentEmitter;
+    }
+  }
+
+  public TransformResponse runOneIteration(IN input) throws Exception {
+    if (transformInfos.isEmpty()) {
+      // Note: this should not happen
+      throw new IllegalArgumentException("No Connections found to either transform or sink..");
     }
 
-    return new TransformResponse<>(previousEmitter.iterator(), errorRecordsMap);
+    // just add the input to an emitter..
+    DefaultEmitter sourceEmitter = new DefaultEmitter<>(new StageMetrics() {
+      @Override
+      public void count(String metricName, int delta) {
+
+      }
+
+      @Override
+      public void gauge(String metricName, long value) {
+
+      }
+
+      @Override
+      public void pipelineCount(String metricName, int delta) {
+
+      }
+
+      @Override
+      public void pipelineGauge(String metricName, long value) {
+
+      }
+    });
+    sourceEmitter.emit(input);
+
+    Map<String, DefaultEmitter> sinksOutput = new HashMap<>();
+    Map<String, Collection> transformErrors = new HashMap<>();
+    transformGraph(sinksOutput, sourceEmitter, transformErrors, start);
+    return new TransformResponse(sinksOutput, transformErrors);
+  }
+
+  private void transformGraph(Map<String, DefaultEmitter> sinksOutput,
+                      DefaultEmitter previousEmitter, Map<String, Collection> transformErrors,
+                      String stageName) throws Exception {
+
+    for (TransformInformation transformInformation : transformInfos.get(stageName)) {
+      TransformDetail transformDetail = transformInformation.getTransformDetail();
+      if (!transformDetail.isSink()) {
+        transformInformation.getEmitter().reset();
+        for (Object transformedVal : previousEmitter) {
+          transformDetail.getTransformation().transform(transformedVal, transformInformation.getEmitter());
+        }
+        if (!transformInformation.getEmitter().getErrors().isEmpty()) {
+          transformErrors.put(transformDetail.getTransformId(), transformInformation.getEmitter().getErrors());
+        }
+        transformGraph(sinksOutput, transformInformation.getEmitter(),
+                       transformErrors, transformDetail.getTransformId());
+      } else {
+        // if its a sink, add the previous emitter entries to the sink output list
+        if (!sinksOutput.containsKey(transformDetail.getTransformId())) {
+          sinksOutput.put(transformDetail.getTransformId(), transformInformation.getEmitter());
+        }
+        DefaultEmitter emitter = sinksOutput.get(transformDetail.getTransformId());
+        for (Object previousValue : previousEmitter) {
+          emitter.emit(previousValue);
+        }
+      }
+    }
   }
 
   public void resetEmitters() {
-    for (DefaultEmitter<OUT> emitter : emitters) {
-      emitter.reset();
+    for (List<TransformInformation> transformInformationList : transformInfos.values()) {
+      for (TransformInformation transformInformation : transformInformationList) {
+        transformInformation.reset();
+      }
     }
   }
 
   @Override
   public void destroy() {
-    for (TransformDetail transformDetail : transforms) {
-      Transformation transformation = transformDetail.getTransformation();
-      if (transformation instanceof Destroyable) {
-        Destroyables.destroyQuietly((Destroyable) transformation);
+    for (List<TransformInformation> transformInformationList : transformInfos.values()) {
+      for (TransformInformation transformInformation : transformInformationList) {
+        transformInformation.destroy();
       }
     }
   }

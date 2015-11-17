@@ -16,39 +16,23 @@
 
 package co.cask.cdap.etl.common;
 
-import java.util.List;
-import java.util.Map;
-
 /**
- * Keeps track of the plugin ids for the source, transforms, and sink of a pipeline
+ *  Represent a connection between two {@link ETLStage}
  */
-public class Pipeline {
+public class Connection {
   private final String source;
-  private final List<SinkInfo> sinks;
-  private final List<TransformInfo> transforms;
-  private final Map<String, List<ETLStage>> connections;
+  private final String destination;
 
-  public Pipeline(String source, List<SinkInfo> sinks, List<TransformInfo> transforms,
-                  Map<String, List<ETLStage>> connections) {
+  public Connection(String source, String destination) {
     this.source = source;
-    this.sinks = sinks;
-    this.transforms = transforms;
-    this.connections = connections;
+    this.destination = destination;
   }
 
   public String getSource() {
     return source;
   }
 
-  public List<SinkInfo> getSinks() {
-    return sinks;
-  }
-
-  public List<TransformInfo> getTransforms() {
-    return transforms;
-  }
-
-  public Map<String, List<ETLStage>> getConnections() {
-    return connections;
+  public String getDestination() {
+    return destination;
   }
 }

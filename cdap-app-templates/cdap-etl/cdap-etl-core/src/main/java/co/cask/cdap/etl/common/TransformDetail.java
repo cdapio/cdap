@@ -21,28 +21,43 @@ import co.cask.cdap.etl.api.Transformation;
 
 /**
  * Class that encapsulates {@link co.cask.cdap.etl.api.Transform} and transformId
- * and {@link DefaultStageMetrics}
+ * and {@link DefaultStageMetrics} and boolean to indicate if the transform is sink.
  */
 public class TransformDetail {
 
   private final String transformId;
   private final Transformation transformation;
   private final StageMetrics metrics;
+  private final boolean isSink;
 
-  public TransformDetail(String transformId, Transformation transform, StageMetrics metrics) {
+  public TransformDetail(String transformId, Transformation transform, StageMetrics metrics, boolean isSink) {
     this.transformation = transform;
     this.transformId = transformId;
     this.metrics = metrics;
+    this.isSink = isSink;
+  }
+
+  public TransformDetail(String transformId, StageMetrics metrics, boolean isSink) {
+    this(transformId, null, metrics, isSink);
+  }
+
+  public TransformDetail(String transformId, Transformation transform, StageMetrics metrics) {
+    this(transformId, transform, metrics, false);
   }
 
   public TransformDetail(TransformDetail transformDetail, Transformation transformation) {
     this.transformation = transformation;
     this.transformId = transformDetail.getTransformId();
     this.metrics = transformDetail.getMetrics();
+    this.isSink = transformDetail.isSink();
   }
 
   public Transformation getTransformation() {
     return transformation;
+  }
+
+  public boolean isSink() {
+    return isSink;
   }
 
   public String getTransformId() {

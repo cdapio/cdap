@@ -28,6 +28,7 @@ import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.common.guice.TypeResolver;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 
@@ -35,8 +36,10 @@ import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -70,18 +73,18 @@ public class PipelineRegisterer {
     ETLStage sourceConfig = config.getSource();
     List<ETLStage> transformConfigs = config.getTransforms();
     List<ETLStage> sinkConfigs = config.getSinks();
-    if (sinkConfigs == null) {
+    if (sinkConfigs == null || sinkConfigs.isEmpty()) {
       throw new IllegalArgumentException("At least one sink must be specified.");
     }
     if (sourceConfig == null) {
       throw new IllegalArgumentException("A source must be specified.");
     }
-    if (sinkConfigs.isEmpty()) {
-      throw new IllegalArgumentException("At least one sink must be specified.");
-    }
+
     // validate that the stage names are unique
     validateStageNames(sourceConfig, config.getTransforms(), config.getSinks());
 
+    // validate connections, there are no-cycles, all sinks are reachable, etc.
+    Map<String, List<ETLStage>> connectionsMap = validateConnections(config);
     String sourcePluginId = sourceConfig.getName();
 
     // instantiate source
@@ -137,11 +140,14 @@ public class PipelineRegisterer {
 
       // try to instantiate the sink
       PipelineConfigurable sink = configurer.usePlugin(sinkPluginType, sinkConfig.getPlugin().getName(),
-        sinkPluginId, getPluginProperties(sinkConfig));
+                                                       sinkPluginId, getPluginProperties(sinkConfig));
       if (sink == null) {
-        throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found. " +
-            "Please check that an artifact containing the plugin exists, and that it extends the etl application.",
-          Constants.Sink.PLUGINTYPE, sinkConfig.getPlugin().getName()));
+        throw new IllegalArgumentException(
+          String.format(
+            "No Plugin of type '%s' named '%s' was found" +
+              "Please check that an artifact containing the plugin exists, " +
+              "and that it extends the etl application.",
+            Constants.Sink.PLUGINTYPE, sinkConfig.getPlugin().getName()));
       }
       // run configure pipeline on sink to let it add datasets, etc.
       PipelineConfigurer sinkConfigurer = new DefaultPipelineConfigurer(configurer, sinkPluginId);
@@ -156,7 +162,95 @@ public class PipelineRegisterer {
       throw new RuntimeException(e);
     }
 
-    return new Pipeline(sourcePluginId, sinksInfo, transformInfos);
+    return new Pipeline(sourcePluginId, sinksInfo, transformInfos, connectionsMap);
+  }
+
+  @VisibleForTesting
+  static Map<String, List<ETLStage>> validateConnections(ETLConfig config) {
+    Map<String, List<ETLStage>> mapSourceToNextStages = new HashMap<>();
+    if (config.getConnections().isEmpty()) {
+      // connections list is empty, default pipeline, source->transforms(serial)-> sinks
+      String previous = config.getSource().getName();
+      for (ETLStage stage : config.getTransforms()) {
+        mapSourceToNextStages.put(previous, ImmutableList.of(stage));
+        previous = stage.getName();
+      }
+      mapSourceToNextStages.put(previous, ImmutableList.copyOf(config.getSinks()));
+    } else {
+      // there are connections provided perform validation
+      // 1) basic validation, # of connections >= (source + #transform + sink - 1)
+      if (config.getConnections().size() < (config.getTransforms().size() + config.getSinks().size())) {
+        throw new IllegalArgumentException(
+          "Number of edges connecting the pipeline is less than the number of vertices, please check the connections");
+      }
+      // 2) connections end up in a sink and all sinks are covered also check there are no cycles.
+
+      Map<String, ETLStage> mapStringToETLStage = new HashMap<>();
+      for (ETLStage stage : config.getTransforms()) {
+        mapStringToETLStage.put(stage.getName(), stage);
+      }
+      for (ETLStage stage : config.getSinks()) {
+        mapStringToETLStage.put(stage.getName(), stage);
+      }
+
+      for (Connection connection : config.getConnections()) {
+        if (mapSourceToNextStages.containsKey(connection.getSource())) {
+          mapSourceToNextStages.get(connection.getSource()).add(mapStringToETLStage.get(connection.getDestination()));
+        } else {
+          List<ETLStage> destinations = new ArrayList<>();
+          destinations.add(mapStringToETLStage.get(connection.getDestination()));
+          mapSourceToNextStages.put(connection.getSource(), destinations);
+        }
+      }
+
+      Set<String> visited = new HashSet<>();
+      visited.add(config.getSource().getName());
+      Set<String> sinksFromConfig = new HashSet<>();
+      for (ETLStage sink : config.getSinks()) {
+        sinksFromConfig.add(sink.getName());
+      }
+      connectionsReachabilityValidation(mapSourceToNextStages, config,
+                                        config.getSource(), visited, new HashSet<String>(), sinksFromConfig);
+    }
+    return mapSourceToNextStages;
+  }
+
+  private static void connectionsReachabilityValidation(
+    Map<String, List<ETLStage>> mapStageToConnections, ETLConfig config,
+    ETLStage stage, Set<String> visited, Set<String> sinksVisited, Set<String> sinksFromConfig) {
+
+    if (mapStageToConnections.get(stage.getName()) == null) {
+      // check if this stage is a sink, if its not a sink, throw an exception.
+      if (!sinksFromConfig.contains(stage.getName())) {
+        throw new IllegalArgumentException(
+          String.format(
+            "Stage : %s is not connected to any transform or sink, please check the config", stage.getName()));
+      }
+      // this is a sink, add it to sinks visited set
+      sinksVisited.add(stage.getName());
+      return;
+    }
+
+    for (ETLStage nextConnection : mapStageToConnections.get(stage.getName())) {
+      if (visited.contains(nextConnection.getName())) {
+        // already been visited, cycle exists, throw exception
+        throw new IllegalArgumentException("Cycle exists in the graph connections");
+      }
+      HashSet<String> nextVisited = new HashSet<>(visited);
+      nextVisited.add(nextConnection.getName());
+      connectionsReachabilityValidation(mapStageToConnections, config, nextConnection, nextVisited,
+                                        sinksVisited, sinksFromConfig);
+    }
+    // check if we have visited all the sinks, check this only when we are at source iteration level
+    if (config.getSource().getName().equals(stage.getName())) {
+      for (ETLStage sink : config.getSinks()) {
+        if (!sinksVisited.contains(sink.getName())) {
+          // if the sink hasn't been visited, throw exception
+          throw new IllegalArgumentException(
+            String.format("Sink %s is not connected, please check the connections", sink.getName()));
+        }
+      }
+    }
   }
 
   @VisibleForTesting

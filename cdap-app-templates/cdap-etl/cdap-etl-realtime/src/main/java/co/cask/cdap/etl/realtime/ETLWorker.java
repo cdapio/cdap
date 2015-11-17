@@ -38,6 +38,7 @@ import co.cask.cdap.etl.api.realtime.SourceState;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.Destroyables;
+import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Pipeline;
 import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.common.SinkInfo;
@@ -50,7 +51,6 @@ import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -62,6 +62,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,6 +85,7 @@ public class ETLWorker extends AbstractWorker {
     Schema.Field.of(Constants.ErrorDataset.ERRMSG, Schema.unionOf(Schema.of(Schema.Type.STRING),
                                                                   Schema.of(Schema.Type.NULL))),
     Schema.Field.of(Constants.ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING)));
+  private static final Type CONNECTIONSDETAILS_MAP_TYPE = new TypeToken<Map<String, List<ETLStage>>>() { }.getType();
 
   // only visible at configure time
   private final ETLRealtimeConfig config;
@@ -92,7 +94,7 @@ public class ETLWorker extends AbstractWorker {
   private Metrics metrics;
 
   private RealtimeSource source;
-  private List<RealtimeSink> sinks;
+  private Map<String, RealtimeSink> sinks;
   private TransformExecutor transformExecutor;
   private DefaultEmitter sourceEmitter;
   private String stateStoreKey;
@@ -128,6 +130,7 @@ public class ETLWorker extends AbstractWorker {
     properties.put(Constants.Source.PLUGINID, pluginIDs.getSource());
     properties.put(Constants.Sink.PLUGINIDS, GSON.toJson(pluginIDs.getSinks()));
     properties.put(Constants.Transform.PLUGINIDS, GSON.toJson(pluginIDs.getTransforms()));
+    properties.put(Constants.Connections.PLUGINID, GSON.toJson(pluginIDs.getConnections()));
     // Generate unique id for this app creation.
     properties.put(Constants.Realtime.UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
     setProperties(properties);
@@ -142,6 +145,7 @@ public class ETLWorker extends AbstractWorker {
     Preconditions.checkArgument(properties.containsKey(Constants.Sink.PLUGINIDS));
     Preconditions.checkArgument(properties.containsKey(Constants.Transform.PLUGINIDS));
     Preconditions.checkArgument(properties.containsKey(Constants.Realtime.UNIQUE_ID));
+    Preconditions.checkArgument(properties.containsKey(Constants.Connections.PLUGINID));
 
     String uniqueId = properties.get(Constants.Realtime.UNIQUE_ID);
 
@@ -172,10 +176,14 @@ public class ETLWorker extends AbstractWorker {
     });
 
     initializeSource(context);
-    List<TransformDetail> transformationDetailList = initializeTransforms(context);
-    initializeSinks(context);
+    Map<String, List<ETLStage>> connectionsMap =
+      GSON.fromJson(properties.get(Constants.Connections.PLUGINID), CONNECTIONSDETAILS_MAP_TYPE);
+    Map<String, TransformDetail> transformDetailMap = new HashMap<>();
+    initializeTransforms(context, transformDetailMap);
+    initializeSinks(context, transformDetailMap);
 
-    transformExecutor = new TransformExecutor(transformationDetailList);
+    transformExecutor = new TransformExecutor(transformConnectionsMap(connectionsMap, transformDetailMap),
+                                              context.getSpecification().getProperty(Constants.Source.PLUGINID));
   }
 
   private void initializeSource(WorkerContext context) throws Exception {
@@ -189,11 +197,11 @@ public class ETLWorker extends AbstractWorker {
   }
 
   @SuppressWarnings("unchecked")
-  private void initializeSinks(WorkerContext context) throws Exception {
+  private Map<String, TransformDetail> initializeSinks(
+    WorkerContext context, Map<String, TransformDetail> sinkToTransformDetailMap) throws Exception {
     List<SinkInfo> sinkInfos = GSON.fromJson(context.getSpecification().getProperty(Constants.Sink.PLUGINIDS),
-                                                 SINK_INFO_TYPE);
-    sinks = Lists.newArrayListWithCapacity(sinkInfos.size());
-
+                                             SINK_INFO_TYPE);
+    sinks = new HashMap<>(sinkInfos.size());
     for (SinkInfo sinkInfo : sinkInfos) {
       RealtimeSink sink = context.newPluginInstance(sinkInfo.getSinkId());
       WorkerRealtimeContext sinkContext = new WorkerRealtimeContext(
@@ -201,15 +209,32 @@ public class ETLWorker extends AbstractWorker {
       LOG.debug("Sink Class : {}", sink.getClass().getName());
       sink.initialize(sinkContext);
       sink = new TrackedRealtimeSink(sink, sinkContext.getMetrics());
-      sinks.add(sink);
+      sinks.put(sinkInfo.getSinkId(), sink);
+      sinkToTransformDetailMap.put(sinkInfo.getSinkId(),
+                                   new TransformDetail(sinkInfo.getSinkId(), sinkContext.getMetrics(), true));
     }
+    return sinkToTransformDetailMap;
   }
 
-  private List<TransformDetail> initializeTransforms(WorkerContext context) throws Exception {
+  private Map<String, List<TransformDetail>> transformConnectionsMap(
+    Map<String, List<ETLStage>> connectionsMap, Map<String, TransformDetail> transformDetailMap) throws Exception {
+    Map<String, List<TransformDetail>> transformConnectionsMap = new HashMap<>();
+    for (Map.Entry<String, List<ETLStage>> connections : connectionsMap.entrySet()) {
+      List<TransformDetail> transformDetailsList = new ArrayList<>();
+      for (ETLStage stage : connections.getValue()) {
+        transformDetailsList.add(transformDetailMap.get(stage.getName()));
+      }
+      transformConnectionsMap.put(connections.getKey(), transformDetailsList);
+    }
+
+    return transformConnectionsMap;
+  }
+
+  private Map<String, TransformDetail> initializeTransforms(
+    WorkerContext context, Map<String, TransformDetail> transformDetailMap) throws Exception {
     List<TransformInfo> transformInfos =
       GSON.fromJson(context.getSpecification().getProperty(Constants.Transform.PLUGINIDS), TRANSFORMDETAILS_LIST_TYPE);
     Preconditions.checkArgument(transformInfos != null);
-    List<TransformDetail> transformDetailList = new ArrayList<>(transformInfos.size());
     tranformIdToDatasetName = new HashMap<>(transformInfos.size());
 
     for (TransformInfo transformInfo : transformInfos) {
@@ -220,7 +245,8 @@ public class ETLWorker extends AbstractWorker {
           context, metrics, new TxLookupProvider(context), transformId);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
-        transformDetailList.add(new TransformDetail(transformId, transform, transformContext.getMetrics()));
+        transformDetailMap.put(transformId,
+                               new TransformDetail(transformId, transform, transformContext.getMetrics(), false));
         if (transformInfo.getErrorDatasetName() != null) {
           tranformIdToDatasetName.put(transformId, transformInfo.getErrorDatasetName());
         }
@@ -229,14 +255,16 @@ public class ETLWorker extends AbstractWorker {
         Throwables.propagate(e);
       }
     }
-    return transformDetailList;
+
+    return transformDetailMap;
   }
 
   @Override
   public void run() {
     final SourceState currentState = new SourceState();
     final SourceState nextState = new SourceState();
-    final List<Object> dataToSink = Lists.newArrayList();
+    final Map<String, List<Object>> dataToSink = new HashMap<>();
+    boolean hasData = false;
     final Map<String, List<InvalidEntry>> transformIdToErrorRecords = intializeTransformIdToErrorsList();
     Set<String> transformErrorsWithoutDataset = Sets.newHashSet();
     // Fetch SourceState from State Table.
@@ -272,22 +300,38 @@ public class ETLWorker extends AbstractWorker {
       for (Object sourceData : sourceEmitter) {
         try {
           TransformResponse transformResponse = transformExecutor.runOneIteration(sourceData);
-          while (transformResponse.getEmittedRecords().hasNext()) {
-            dataToSink.add(transformResponse.getEmittedRecords().next());
+
+          for (Map.Entry<String, DefaultEmitter> transformedValues : transformResponse.getSinksResults().entrySet()) {
+            dataToSink.put(transformedValues.getKey(), new ArrayList<>());
+            Iterator emitterIterator = transformedValues.getValue().iterator();
+            while (emitterIterator.hasNext()) {
+              if (!hasData) {
+                hasData = true;
+              }
+              dataToSink.get(transformedValues.getKey()).add(emitterIterator.next());
+            }
           }
 
-          Map<String, Collection<InvalidEntry>> entryMap = transformResponse.getMapTransformIdToErrorEmitter();
+          for (Map.Entry<String, Collection> transformErrorsEntry :
+            transformResponse.getMapTransformIdToErrorEmitter().entrySet()) {
 
-          for (Map.Entry<String, Collection<InvalidEntry>> entry : entryMap.entrySet()) {
-            String transformId = entry.getKey();
-            if (!tranformIdToDatasetName.containsKey(transformId)) {
-              if (!transformErrorsWithoutDataset.contains(transformId)) {
+            if (!transformErrorsWithoutDataset.contains(transformErrorsEntry.getKey())) {
+
+              if (!tranformIdToDatasetName.containsKey(transformErrorsEntry.getKey())
+                && !transformErrorsEntry.getValue().isEmpty()) {
+                transformErrorsWithoutDataset.add(transformErrorsEntry.getKey());
                 LOG.warn("Error records were emitted in transform {}, " +
-                           "but error dataset is not configured for this transform", transformId);
+                           "but error dataset is not configured for this transform", transformErrorsEntry.getKey());
               }
-              continue;
+              if (tranformIdToDatasetName.containsKey(transformErrorsEntry.getKey())
+                && !transformErrorsEntry.getValue().isEmpty()) {
+                // add the errors
+                if (!hasData && transformErrorsEntry.getValue().size() > 0) {
+                  hasData = true;
+                }
+                transformIdToErrorRecords.get(transformErrorsEntry.getKey()).addAll(transformErrorsEntry.getValue());
+              }
             }
-            transformIdToErrorRecords.get(transformId).addAll(entry.getValue());
           }
         } catch (Exception e) {
           LOG.warn("Exception thrown while processing data {}", sourceData, e);
@@ -297,7 +341,7 @@ public class ETLWorker extends AbstractWorker {
 
       // Start a Transaction if there is data to persist or if the Source state has changed.
       try {
-        if ((!dataToSink.isEmpty()) || (!nextState.equals(currentState))) {
+        if (hasData || (!nextState.equals(currentState))) {
           getContext().execute(new TxRunnable() {
             @Override
             public void run(DatasetContext context) throws Exception {
@@ -305,8 +349,8 @@ public class ETLWorker extends AbstractWorker {
               // Invoke the sink's write method if there is any object to be written.
               if (!dataToSink.isEmpty()) {
                 DefaultDataWriter defaultDataWriter = new DefaultDataWriter(getContext(), context);
-                for (RealtimeSink sink : sinks) {
-                  sink.write(dataToSink, defaultDataWriter);
+                for (Map.Entry<String, List<Object>> sinkEntry : dataToSink.entrySet()) {
+                  sinks.get(sinkEntry.getKey()).write(sinkEntry.getValue(), defaultDataWriter);
                 }
               }
 
@@ -345,6 +389,7 @@ public class ETLWorker extends AbstractWorker {
         LOG.warn("Exception thrown during persisting of data", e);
       } finally {
         // Clear the persisted sink data (in case transaction failure occurred, we will poll the source with old state)
+        hasData = false;
         dataToSink.clear();
         for (List<InvalidEntry> invalidEntryList : transformIdToErrorRecords.values()) {
           invalidEntryList.clear();
@@ -388,7 +433,7 @@ public class ETLWorker extends AbstractWorker {
   public void destroy() {
     Destroyables.destroyQuietly(source);
     Destroyables.destroyQuietly(transformExecutor);
-    for (RealtimeSink sink : sinks) {
+    for (RealtimeSink sink : sinks.values()) {
       Destroyables.destroyQuietly(sink);
     }
   }

@@ -64,6 +64,14 @@ public final class Constants {
   }
 
   /**
+   * Constants related to Connections
+   */
+  public static final class Connections {
+    public static final String PLUGINID = "connections";
+    public static final String SOURCEID = "source";
+  }
+
+  /**
    * Constants related to Realtime Adapter.
    */
   public static final class Realtime {

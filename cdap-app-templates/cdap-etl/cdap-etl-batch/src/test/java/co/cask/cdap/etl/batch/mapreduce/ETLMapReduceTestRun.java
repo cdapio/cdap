@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.batch.ETLBatchTestBase;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.source.FileBatchSource;
+import co.cask.cdap.etl.common.Connection;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.etl.common.Properties;
@@ -37,6 +38,7 @@ import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.MapReduceManager;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.avro.generic.GenericRecord;
@@ -53,6 +55,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Resource;
 
 /**
  * Tests for ETLBatch.
@@ -114,6 +117,98 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
       for (int i = 0; i < 10000; i++) {
         Assert.assertEquals("world" + i, Bytes.toString(outputTable.read("hello" + i)));
       }
+    }
+  }
+
+  @Test
+  public void testDAG() throws Exception {
+
+    Schema schema = Schema.recordOf(
+      "userNames",
+      Schema.Field.of("rowkey", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("userid", Schema.of(Schema.Type.STRING))
+    );
+    Plugin sourceConfig = new Plugin("Table",
+                                     ImmutableMap.of(
+                                       Properties.BatchReadableWritable.NAME, "dagInputTable",
+                                       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey",
+                                       Properties.Table.PROPERTY_SCHEMA, schema.toString()));
+
+    Plugin sinkConfig1 = new Plugin("Table",
+                             ImmutableMap.of(
+                               Properties.BatchReadableWritable.NAME, "dagOutputTable1",
+                               Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey"));
+    Plugin sinkConfig2 = new Plugin("Table",
+                                    ImmutableMap.of(
+                                      Properties.BatchReadableWritable.NAME, "dagOutputTable2",
+                                      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey"));
+
+    String validationScript = "function isValid(input, context) {  " +
+      "var errCode = 0; var errMsg = 'none'; var isValid = true;" +
+      "if (!coreValidator.maxLength(input.userid, 4)) " +
+      "{ errCode = 10; errMsg = 'user name greater than 6 characters'; isValid = false; }; " +
+      "return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
+      "};";
+    Plugin transformConfig = new Plugin("Validator",
+                                        ImmutableMap.of("validators", "core",
+                                                        "validationScript", validationScript));
+
+    List<ETLStage> transformList = Lists.newArrayList(new ETLStage("transform", transformConfig));
+
+    List<ETLStage> sinks = ImmutableList.of(new ETLStage("sink1", sinkConfig1), new ETLStage("sink2", sinkConfig2));
+
+    List<Connection> connections = new ArrayList<>();
+    connections.add(new Connection("source", "sink1"));
+    connections.add(new Connection("source", "transform"));
+    connections.add(new Connection("transform", "sink2"));
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", new ETLStage("source", sourceConfig),
+                                                  sinks, transformList, connections, null, null);
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DagApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // add some data to the input table
+    DataSetManager<Table> inputManager = getDataset("dagInputTable");
+    Table inputTable = inputManager.get();
+
+    for (int i = 0; i < 10; i++) {
+      Put put = new Put(Bytes.toBytes("row" + i));
+      // valid record, user name "sam[0-9]" is 4 chars long for validator transform
+      put.add("userid", "sam" + i);
+      inputTable.put(put);
+      inputManager.flush();
+
+      Put put2 = new Put(Bytes.toBytes("row" + (i + 10)));
+      // invalid record, user name "sam[10-19]" is 5 chars long and invalid according to validator transform
+      put2.add("userid", "sam" + (i + 10));
+      inputTable.put(put2);
+      inputManager.flush();
+    }
+
+
+    MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
+    mrManager.start();
+    mrManager.waitForFinish(5, TimeUnit.MINUTES);
+
+    // all records are passed to this table (validation not performed)
+    DataSetManager<Table> outputManager1 = getDataset("dagOutputTable1");
+    Table outputTable1 = outputManager1.get();
+    for (int i = 0; i < 20; i++) {
+      Row row = outputTable1.get(Bytes.toBytes("row" + i));
+      Assert.assertEquals("sam" + i, row.getString("userid"));
+    }
+
+    // only 10 records are passed to this table (validation performed)
+    DataSetManager<Table> outputManager2 = getDataset("dagOutputTable2");
+    Table outputTable2 = outputManager2.get();
+    for (int i = 0; i < 10; i++) {
+      Row row = outputTable2.get(Bytes.toBytes("row" + i));
+      Assert.assertEquals("sam" + i, row.getString("userid"));
+    }
+    for (int i = 10; i < 20; i++) {
+      Row row = outputTable2.get(Bytes.toBytes("row" + i));
+      Assert.assertNull(row.getString("userid"));
     }
   }
 
@@ -340,6 +435,7 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
                                                   source,
                                                   Lists.newArrayList(sink1, sink2),
                                                   Lists.<ETLStage>newArrayList(),
+                                                  new ArrayList<Connection>(),
                                                   new Resources(),
                                                   Lists.<ETLStage>newArrayList());
 
@@ -389,6 +485,7 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
                                                   source,
                                                   Lists.newArrayList(sink1, sink2),
                                                   Lists.<ETLStage>newArrayList(),
+                                                  new ArrayList<Connection>(),
                                                   new Resources(),
                                                   Lists.<ETLStage>newArrayList());
 

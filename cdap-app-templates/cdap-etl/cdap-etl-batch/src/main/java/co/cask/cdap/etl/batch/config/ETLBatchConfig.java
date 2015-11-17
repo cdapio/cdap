@@ -17,11 +17,14 @@
 package co.cask.cdap.etl.batch.config;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.etl.common.Connection;
 import co.cask.cdap.etl.common.ETLConfig;
 import co.cask.cdap.etl.common.ETLStage;
 import com.google.common.annotations.VisibleForTesting;
 
+import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * ETL Batch Configuration.
@@ -30,33 +33,44 @@ public final class ETLBatchConfig extends ETLConfig {
   private final String schedule;
   private final List<ETLStage> actions;
 
+  // TODO consider using builder
   public ETLBatchConfig(String schedule, ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
-                        Resources resources, List<ETLStage> actions) {
-    super(source, sinks, transforms, resources);
+                        List<Connection> connections, @Nullable Resources resources, @Nullable List<ETLStage> actions) {
+    super(source, sinks, transforms, connections, resources);
     this.schedule = schedule;
     this.actions = actions;
   }
 
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
-                        Resources resources, List<ETLStage> actions) {
-    super(source, sink, transforms, resources);
+                        List<Connection> connections, @Nullable Resources resources, @Nullable List<ETLStage> actions) {
+    super(source, sink, transforms, connections, resources);
     this.schedule = schedule;
     this.actions = actions;
   }
 
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
                         Resources resources) {
-    this(schedule, source, sink, transforms, resources, null);
+    this(schedule, source, sink, transforms, new ArrayList<Connection>(), resources, null);
   }
 
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink,
                         List<ETLStage> transforms, List<ETLStage> actions) {
-    this(schedule, source, sink, transforms, null, actions);
+    this(schedule, source, sink, transforms, new ArrayList<Connection>(), null, actions);
+  }
+
+  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink,
+                        List<ETLStage> transforms, List<Connection> connections, List<ETLStage> actions) {
+    this(schedule, source, sink, transforms, connections, null, actions);
+  }
+
+  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
+                        List<Connection> connections, Resources resources) {
+    this(schedule, source, sink, transforms, connections, resources, null);
   }
 
   @VisibleForTesting
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
-    this(schedule, source, sink, transforms, null, null);
+    this(schedule, source, sink, transforms, new ArrayList<Connection>(), null, null);
   }
 
   @VisibleForTesting

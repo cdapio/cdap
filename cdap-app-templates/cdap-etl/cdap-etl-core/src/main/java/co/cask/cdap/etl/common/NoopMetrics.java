@@ -16,44 +16,32 @@
 
 package co.cask.cdap.etl.common;
 
-import co.cask.cdap.api.metrics.Metrics;
-import com.google.common.collect.Maps;
-
-import java.util.Map;
+import co.cask.cdap.etl.api.StageMetrics;
 
 /**
- * Mock metrics for unit tests.
+ * No op metrics implementation for tests.
  */
-public class MockMetrics implements Metrics {
-  private final Map<String, Long> gauges = Maps.newHashMap();
-  private final Map<String, Integer> counts = Maps.newHashMap();
+public class NoopMetrics implements StageMetrics {
+
+  public static final StageMetrics INSTANCE = new NoopMetrics();
 
   @Override
   public void count(String s, int i) {
-    if (counts.containsKey(s)) {
-      counts.put(s, counts.get(s) + i);
-    } else {
-      counts.put(s, i);
-    }
+    // no-op
   }
 
   @Override
   public void gauge(String s, long l) {
-    gauges.put(s, l);
+    // no-op
   }
 
-  public int getCount(String metric) {
-    Integer count = counts.get(metric);
-    return count == null ? 0 : count;
+  @Override
+  public void pipelineCount(String metricName, int delta) {
+    // no-op
   }
 
-  public long getGauge(String metric) {
-    Long val = gauges.get(metric);
-    return val == null ? 0 : val;
-  }
-
-  public void clearMetrics() {
-    counts.clear();
-    gauges.clear();
+  @Override
+  public void pipelineGauge(String metricName, long value) {
+    // no-op
   }
 }
