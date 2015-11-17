@@ -38,6 +38,6 @@ angular.module(PKG.name+'.feature.experimental')
             label: 'UI Templates',
             parent: 'experimental.home'
           }
-        })
+        });
 
   });
