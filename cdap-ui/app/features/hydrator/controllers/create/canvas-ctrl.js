@@ -41,7 +41,6 @@ class HydratorCreateCanvasController {
   }
 
   deleteNode(node) {
-    console.log('node', node);
     this.NodesActionsFactory.removeNode(node);
   }
 }
