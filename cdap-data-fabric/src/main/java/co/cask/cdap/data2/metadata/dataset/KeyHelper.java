@@ -54,6 +54,14 @@ public class KeyHelper {
       String instanceId = stream.getId();
       builder.add(namespaceId);
       builder.add(instanceId);
+    } else if (type.equals(Id.Artifact.class.getSimpleName())) {
+      Id.Artifact artifactId = (Id.Artifact) namespacedId;
+      String namespaceId = artifactId.getNamespace().getId();
+      String name = artifactId.getName();
+      String version = artifactId.getVersion().getVersion();
+      builder.add(namespaceId);
+      builder.add(name);
+      builder.add(version);
     } else {
       throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
     }

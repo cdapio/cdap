@@ -16,17 +16,13 @@
 
 package co.cask.cdap.metadata;
 
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.InvalidMetadataException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
-import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.BusinessMetadataRecord;
 import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
-import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
@@ -55,12 +51,10 @@ public class DefaultMetadataAdmin implements MetadataAdmin {
   private final EntityValidator entityValidator;
 
   @Inject
-  DefaultMetadataAdmin(AbstractNamespaceClient namespaceClient, BusinessMetadataStore businessMds,
-                       CConfiguration cConf, Store store, DatasetFramework datasetFramework,
-                       StreamAdmin streamAdmin) {
+  DefaultMetadataAdmin(BusinessMetadataStore businessMds, CConfiguration cConf, EntityValidator entityValidator) {
     this.businessMds = businessMds;
     this.cConf = cConf;
-    this.entityValidator = new EntityValidator(namespaceClient, store, datasetFramework, streamAdmin);
+    this.entityValidator = entityValidator;
   }
 
   @Override

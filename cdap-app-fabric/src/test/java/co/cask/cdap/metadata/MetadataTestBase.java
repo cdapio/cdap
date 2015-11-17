@@ -82,6 +82,21 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     }, expectedExceptionClass);
   }
 
+  protected void addProperties(Id.Artifact artifact, @Nullable Map<String, String> properties) throws Exception {
+    metadataClient.addProperties(artifact, properties);
+  }
+
+  protected void addProperties(final Id.Artifact artifact, @Nullable final Map<String, String> properties,
+                               Class<? extends Exception> expectedExceptionClass) throws IOException {
+    expectException(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        addProperties(artifact, properties);
+        return null;
+      }
+    }, expectedExceptionClass);
+  }
+
   protected void addProperties(Id.Program program, @Nullable Map<String, String> properties) throws Exception {
     metadataClient.addProperties(program, properties);
   }
@@ -132,6 +147,10 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return metadataClient.getMetadata(app);
   }
 
+  protected Set<MetadataRecord> getMetadata(Id.Artifact artifact) throws Exception {
+    return metadataClient.getMetadata(artifact);
+  }
+
   protected Set<MetadataRecord> getMetadata(Id.Program program) throws Exception {
     return metadataClient.getMetadata(program);
   }
@@ -147,6 +166,10 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
   // Currently, getMetadata(entity) returns a single-element set, so we can get the properties from there
   protected Map<String, String> getProperties(Id.Application app) throws Exception {
     return Iterators.getOnlyElement(getMetadata(app).iterator()).getProperties();
+  }
+
+  protected Map<String, String> getProperties(Id.Artifact artifact) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(artifact).iterator()).getProperties();
   }
 
   protected Map<String, String> getProperties(Id.Program program) throws Exception {
@@ -221,6 +244,14 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     metadataClient.removeProperty(app, propertyToRemove);
   }
 
+  protected void removeProperties(Id.Artifact artifact) throws Exception {
+    metadataClient.removeProperties(artifact);
+  }
+
+  private void removeProperty(Id.Artifact artifact, String propertyToRemove) throws Exception {
+    metadataClient.removeProperty(artifact, propertyToRemove);
+  }
+
   protected void removeProperties(Id.Program program) throws Exception {
     metadataClient.removeProperties(program);
   }
@@ -255,6 +286,21 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
       @Override
       public Void call() throws Exception {
         addTags(app, tags);
+        return null;
+      }
+    }, expectedExceptionClass);
+  }
+
+  protected void addTags(Id.Artifact artifact, @Nullable Set<String> tags) throws Exception {
+    metadataClient.addTags(artifact, tags);
+  }
+
+  protected void addTags(final Id.Artifact artifact, @Nullable final Set<String> tags,
+                         Class<? extends Exception> expectedExceptionClass) throws IOException {
+    expectException(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        addTags(artifact, tags);
         return null;
       }
     }, expectedExceptionClass);
@@ -316,6 +362,10 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return Iterators.getOnlyElement(getMetadata(app).iterator()).getTags();
   }
 
+  protected Set<String> getTags(Id.Artifact artifact) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(artifact).iterator()).getTags();
+  }
+
   protected Set<String> getTags(Id.Program program) throws Exception {
     return Iterators.getOnlyElement(getMetadata(program).iterator()).getTags();
   }
@@ -334,6 +384,14 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
 
   protected void removeTag(Id.Application app, String tagToRemove) throws Exception {
     metadataClient.removeTag(app, tagToRemove);
+  }
+
+  protected void removeTags(Id.Artifact artifact) throws Exception {
+    metadataClient.removeTags(artifact);
+  }
+
+  protected void removeTag(Id.Artifact artifact, String tagToRemove) throws Exception {
+    metadataClient.removeTag(artifact, tagToRemove);
   }
 
   protected void removeTags(Id.Program program) throws Exception {

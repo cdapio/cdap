@@ -525,7 +525,7 @@ public class LineageAdminTest extends MetadataTestBase {
     public NoOpEntityValidator() {
       // This entity validator does not do any validation.
       // Hence it is okay to pass in null as constructor arguments.
-      super(null, null, null, null);
+      super(null, null, null, null, null);
     }
 
     @Override

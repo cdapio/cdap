@@ -99,6 +99,15 @@ public class MetadataClient {
   }
 
   /**
+   * @param artifactId the artifact for which to retrieve metadata
+   * @return The metadata for the artifact.
+   */
+  public Set<MetadataRecord> getMetadata(Id.Artifact artifactId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getMetadata(artifactId, constructPath(artifactId));
+  }
+
+  /**
    * @param datasetInstance the dataset for which to retrieve metadata
    * @return The metadata for the dataset.
    */
@@ -153,6 +162,17 @@ public class MetadataClient {
   }
 
   /**
+   * Adds tags to an artifact.
+   *
+   * @param artifactId artifact to add tags to
+   * @param tags tags to be added
+   */
+  public void addTags(Id.Artifact artifactId, Set<String> tags)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    addTags(artifactId, constructPath(artifactId), tags);
+  }
+
+  /**
    * Adds tags to a dataset.
    *
    * @param datasetInstance dataset to add tags to
@@ -194,8 +214,8 @@ public class MetadataClient {
   /**
    * Adds properties to an application.
    *
-   * @param appId app to add tags to
-   * @param properties tags to be added
+   * @param appId app to add properties to
+   * @param properties properties to be added
    */
   public void addProperties(Id.Application appId, Map<String, String> properties)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
@@ -203,10 +223,21 @@ public class MetadataClient {
   }
 
   /**
+   * Adds properties to an artifact.
+   *
+   * @param artifactId artifact to add properties to
+   * @param properties properties to be added
+   */
+  public void addProperties(Id.Artifact artifactId, Map<String, String> properties)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    addProperties(artifactId, constructPath(artifactId), properties);
+  }
+
+  /**
    * Adds properties to a dataset.
    *
-   * @param datasetInstance dataset to add tags to
-   * @param properties tags to be added
+   * @param datasetInstance dataset to add properties to
+   * @param properties properties to be added
    */
   public void addProperties(Id.DatasetInstance datasetInstance, Map<String, String> properties)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
@@ -216,8 +247,8 @@ public class MetadataClient {
   /**
    * Adds properties to a stream.
    *
-   * @param streamId stream to add tags to
-   * @param properties tags to be added
+   * @param streamId stream to add properties to
+   * @param properties properties to be added
    */
   public void addProperties(Id.Stream streamId, Map<String, String> properties)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
@@ -227,8 +258,8 @@ public class MetadataClient {
   /**
    * Adds properties to a program.
    *
-   * @param programId program to add tags to
-   * @param properties tags to be added
+   * @param programId program to add properties to
+   * @param properties properties to be added
    */
   public void addProperties(Id.Program programId, Map<String, String> properties)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
@@ -250,6 +281,17 @@ public class MetadataClient {
   public void removeProperty(Id.Application appId, String propertyToRemove)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     removeProperty(appId, constructPath(appId), propertyToRemove);
+  }
+
+  /**
+   * Removes a property from an artifact.
+   *
+   * @param artifactId artifact to remove property from
+   * @param propertyToRemove property to be removed
+   */
+  public void removeProperty(Id.Artifact artifactId, String propertyToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeProperty(artifactId, constructPath(artifactId), propertyToRemove);
   }
 
   /**
@@ -303,6 +345,16 @@ public class MetadataClient {
   }
 
   /**
+   * Removes all properties from an artifact.
+   *
+   * @param artifactId artifact to remove properties from
+   */
+  public void removeProperties(Id.Artifact artifactId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeProperties(artifactId, constructPath(artifactId));
+  }
+
+  /**
    * Removes all properties from a dataset.
    *
    * @param datasetInstance dataset to remove properties from
@@ -348,6 +400,18 @@ public class MetadataClient {
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     removeTag(appId, constructPath(appId), tagToRemove);
   }
+
+  /**
+   * Removes a tag from an artifact.
+   *
+   * @param artifactId artifact to remove tag from
+   * @param tagToRemove tag to be removed
+   */
+  public void removeTag(Id.Artifact artifactId, String tagToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeTag(artifactId, constructPath(artifactId), tagToRemove);
+  }
+
 
   /**
    * Removes a tag from a dataset.
@@ -399,6 +463,16 @@ public class MetadataClient {
   }
 
   /**
+   * Removes all tags from an artifact.
+   *
+   * @param artifactId artifact to remove tags from
+   */
+  public void removeTags(Id.Artifact artifactId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeTags(artifactId, constructPath(artifactId));
+  }
+
+  /**
    * Removes all tags from a dataset.
    *
    * @param datasetInstance dataset to remove tags from
@@ -442,6 +516,16 @@ public class MetadataClient {
   public void removeMetadata(Id.Application appId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     removeMetadata(appId, constructPath(appId));
+  }
+
+  /**
+   * Removes metadata from an artifact.
+   *
+   * @param artifactId artifact to remove metadata from
+   */
+  public void removeMetadata(Id.Artifact artifactId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeMetadata(artifactId, constructPath(artifactId));
   }
 
   /**
@@ -509,6 +593,10 @@ public class MetadataClient {
 
   private String constructPath(Id.Application appId) {
     return String.format("apps/%s", appId.getId());
+  }
+
+  private String constructPath(Id.Artifact artifactId) {
+    return String.format("artifacts/%s/versions/%s", artifactId.getName(), artifactId.getVersion().getVersion());
   }
 
   private String constructPath(Id.Program programId) {
