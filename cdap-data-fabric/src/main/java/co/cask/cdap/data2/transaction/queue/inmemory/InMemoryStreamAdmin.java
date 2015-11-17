@@ -153,6 +153,12 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   }
 
   @Override
+  public boolean viewExists(Id.Stream.View viewId) throws Exception {
+    Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+    return viewAdmin.exists(viewId);
+  }
+
+  @Override
   public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
     usageRegistry.registerAll(owners, streamId);
   }
