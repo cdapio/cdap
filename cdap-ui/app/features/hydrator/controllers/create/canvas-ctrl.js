@@ -15,8 +15,10 @@
  */
 
 class HydratorCreateCanvasController {
-  constructor(BottomPanelStore, NodesStore, NodesActionsFactory) {
+  constructor(BottomPanelStore, NodesStore, NodesActionsFactory, ConfigStore, PipelineNodeConfigActionFactory) {
     this.NodesStore = NodesStore;
+    this.ConfigStore = ConfigStore;
+    this.PipelineNodeConfigActionFactory = PipelineNodeConfigActionFactory;
     this.NodesActionsFactory = NodesActionsFactory;
 
     this.setState = () => {
@@ -27,7 +29,7 @@ class HydratorCreateCanvasController {
     this.setState();
     BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
 
-    this.nodes = {};
+    this.nodes = [];
     this.connections = [];
 
     this.updateNodesAndConnections();
@@ -35,46 +37,47 @@ class HydratorCreateCanvasController {
 
   }
 
-  updateNodesAndConnections() {
+  setStateAndUpdateConfigStore() {
     this.nodes = this.NodesStore.getNodes();
     this.connections = this.NodesStore.getConnections();
-    this.setActiveNode();
+    this.ConfigStore.setNodes(this.nodes);
+    this.ConfigStore.setConnections(this.connections);
+  }
+
+  updateNodesAndConnections() {
+    this.setStateAndUpdateConfigStore();
+    var activeNode = this.NodesStore.getActiveNodeId();
+    if (!activeNode) {
+      this.deleteNode();
+    } else {
+      this.setActiveNode();
+    }
   }
 
   setActiveNode() {
-    this.PipelineNodeConfigActionFactory.choosePlugin(this.NodesStore.getActiveNode());
+    var nodeId = this.NodesStore.getActiveNodeId();
+    if (!nodeId) {
+      return;
+    }
+    var plugin;
+    var nodeFromNodesStore;
+    var nodeFromConfigStore = this.ConfigStore.getNodes().filter( node => node.id === nodeId );
+    if (nodeFromConfigStore.length) {
+      plugin = nodeFromConfigStore[0];
+    } else {
+      nodeFromNodesStore = this.NodesStore.getNodes().filter(node => node.id === nodeId);
+      plugin = nodeFromNodesStore[0];
+    }
+    this.PipelineNodeConfigActionFactory.choosePlugin(plugin);
   }
 
-  deleteNode(node) {
-    this.NodesActionsFactory.removeNode(node);
+  deleteNode() {
+    this.setStateAndUpdateConfigStore();
+    this.PipelineNodeConfigActionFactory.removePlugin();
   }
 }
 
 
-HydratorCreateCanvasController.$inject = ['BottomPanelStore', 'NodesStore', 'NodesActionsFactory'];
+HydratorCreateCanvasController.$inject = ['BottomPanelStore', 'NodesStore', 'NodesActionsFactory', 'ConfigStore', 'PipelineNodeConfigActionFactory'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorCreateCanvasController', HydratorCreateCanvasController);
-  // .controller('HydratorCreateCanvasController', function(BottomPanelStore, NodesStore) {
-  //   this.setState = function() {
-  //     this.state = {
-  //       setScroll: (BottomPanelStore.getPanelState() === 0? false: true)
-  //     };
-  //   };
-  //   this.setState();
-  //   BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
-
-  //   this.nodes = {};
-  //   this.connections = [];
-
-  //   function updateNodesAndConnections () {
-  //     this.nodes = NodesStore.getNodes();
-  //     this.connections = NodesStore.getConnections();
-
-  //     console.log('nodes', this.nodes, this.connections);
-  //   }
-
-  //   updateNodesAndConnections();
-
-  //   NodesStore.registerOnChangeListener(updateNodesAndConnections.bind(this));
-
-  // });
