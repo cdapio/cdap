@@ -21,6 +21,7 @@ import co.cask.cdap.api.artifact.ArtifactClasses;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
 
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -29,18 +30,25 @@ import java.util.Objects;
 @Beta
 public class ArtifactInfo extends ArtifactSummary {
   private final ArtifactClasses classes;
+  private final Map<String, String> properties;
 
-  public ArtifactInfo(ArtifactId id, ArtifactClasses classes) {
-    this(id.getName(), id.getVersion().getVersion(), id.getScope(), classes);
+  public ArtifactInfo(ArtifactId id, ArtifactClasses classes, Map<String, String> properties) {
+    this(id.getName(), id.getVersion().getVersion(), id.getScope(), classes, properties);
   }
 
-  public ArtifactInfo(String name, String version, ArtifactScope scope, ArtifactClasses classes) {
+  public ArtifactInfo(String name, String version, ArtifactScope scope,
+                      ArtifactClasses classes, Map<String, String> properties) {
     super(name, version, scope);
     this.classes = classes;
+    this.properties = properties;
   }
 
   public ArtifactClasses getClasses() {
     return classes;
+  }
+
+  public Map<String, String> getProperties() {
+    return properties;
   }
 
   @Override
@@ -55,12 +63,13 @@ public class ArtifactInfo extends ArtifactSummary {
     ArtifactInfo that = (ArtifactInfo) o;
 
     return super.equals(that) &&
-      Objects.equals(classes, that.classes);
+      Objects.equals(classes, that.classes) &&
+      Objects.equals(properties, that.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), classes);
+    return Objects.hash(super.hashCode(), classes, properties);
   }
 
   @Override
@@ -70,6 +79,7 @@ public class ArtifactInfo extends ArtifactSummary {
       ", version='" + version + '\'' +
       ", scope=" + scope +
       ", classes=" + classes +
+      ", properties=" + properties +
       '}';
   }
 }

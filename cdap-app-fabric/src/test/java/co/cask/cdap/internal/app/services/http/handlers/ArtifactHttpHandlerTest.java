@@ -147,7 +147,8 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     ArtifactClasses classes = ArtifactClasses.builder()
       .addApp(new ApplicationClass(ConfigTestApp.class.getName(), "", appConfigSchema))
       .build();
-    ArtifactInfo expectedInfo = new ArtifactInfo("cfgtest", "1.0.0", ArtifactScope.USER, classes);
+    ArtifactInfo expectedInfo = new ArtifactInfo("cfgtest", "1.0.0", ArtifactScope.USER,
+                                                 classes, ImmutableMap.<String, String>of());
     ArtifactInfo actualInfo = getArtifact(configTestAppId);
     Assert.assertEquals(expectedInfo, actualInfo);
   }
@@ -204,12 +205,14 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     ArtifactClasses classes = ArtifactClasses.builder()
       .addApp(new ApplicationClass(WordCountApp.class.getName(), "", null))
       .build();
-    ArtifactInfo expectedInfo = new ArtifactInfo("wordcount", "1.0.0", ArtifactScope.USER, classes);
+    ArtifactInfo expectedInfo = new ArtifactInfo("wordcount", "1.0.0", ArtifactScope.USER,
+                                                 classes, ImmutableMap.<String, String>of());
     ArtifactInfo actualInfo = getArtifact(defaultId, ArtifactScope.USER);
     Assert.assertEquals(expectedInfo, actualInfo);
 
     // test get /artifacts/wordcount/versions/1.0.0?scope=system
-    expectedInfo = new ArtifactInfo("wordcount", "1.0.0", ArtifactScope.SYSTEM, classes);
+    expectedInfo = new ArtifactInfo("wordcount", "1.0.0", ArtifactScope.SYSTEM,
+                                    classes, ImmutableMap.<String, String>of());
     actualInfo = getArtifact(defaultId, ArtifactScope.SYSTEM);
     Assert.assertEquals(expectedInfo, actualInfo);
   }

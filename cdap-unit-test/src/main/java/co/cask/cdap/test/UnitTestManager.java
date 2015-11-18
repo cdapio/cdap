@@ -231,7 +231,7 @@ public class UnitTestManager implements TestManager {
                                 @Nullable Set<PluginClass> additionalPlugins,
                                 Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
-    artifactRepository.addArtifact(artifactId, pluginJar, parents, additionalPlugins);
+    artifactRepository.addArtifact(artifactId, pluginJar, parents, additionalPlugins, null);
     pluginJar.delete();
   }
 
