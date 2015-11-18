@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailCanvasController', function(rPipelineDetail, MyAppDAGService, BottomPanelStore) {
+  .controller('HydratorDetailCanvasController', function(rPipelineDetail, MyAppDAGService, BottomPanelStore, NodesActionsFactory, NodesStore) {
     try{
       rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
     } catch(e) {
@@ -27,5 +27,9 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.setState();
     BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
-    MyAppDAGService.setNodesAndConnectionsFromDraft(rPipelineDetail);
+    // MyAppDAGService.setNodesAndConnectionsFromDraft(rPipelineDetail);
+
+    NodesStore.init();
+    NodesActionsFactory.createGraphFromConfig(rPipelineDetail);
+
   });
