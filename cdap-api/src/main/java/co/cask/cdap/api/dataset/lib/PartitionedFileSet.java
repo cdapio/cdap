@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.PartitionNotFoundException;
 
 import java.util.Map;
 import java.util.Set;
@@ -60,7 +61,7 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * Note that existing entries cannot be updated.
    * 
    * @throws DataSetException when an attempt is made to either update an existing entry
-   *         PartitionNotFoundException when a partition for the given key is not found
+   * @throws PartitionNotFoundException when a partition for the given key is not found
    */
   void addMetadata(PartitionKey key, String metadataKey, String metadataValue);
 
@@ -69,7 +70,7 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * Note that existing entries cannot be updated.
    *
    * @throws DataSetException when an attempt is made to either update existing entries
-   *         PartitionNotFoundException when a partition for the given key is not found
+   * @throws PartitionNotFoundException when a partition for the given key is not found
    */
   void addMetadata(PartitionKey key, Map<String, String> metadata);
 
@@ -98,7 +99,7 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    *
    * @param partitionConsumerState the state from which to start consuming from
    * @return {@link PartitionConsumerResult} which holds the state of consumption as well as an iterator to the consumed
-   * {@link Partition}s
+   *         {@link Partition}s
    */
   PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState);
 
@@ -113,7 +114,7 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    *              transactions; the limit is checked after adding consuming all partitions of a transaction, so
    *              the total number of consumed partitions may be greater than this limit
    * @return {@link PartitionConsumerResult} which holds the state of consumption as well as an iterator to the consumed
-   * {@link Partition}s
+   *         {@link Partition}s
    */
   PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState,
                                             PartitionFilter partitionFilter, int limit);

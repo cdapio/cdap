@@ -153,9 +153,9 @@ public class PartitionedFileSetTest {
       // didn't add any partitions to the dataset, so any partition key should throw a PartitionNotFoundException
       pfs.addMetadata(key, "metaKey", "metaValue");
       Assert.fail("Expected not to find key: " + key);
-    } catch (PartitionNotFoundException expected) {
-      Assert.assertEquals(pfsInstance.getId(), expected.getPartitionedFileSetName());
-      Assert.assertEquals(key, expected.getPartitionKey());
+    } catch (PartitionNotFoundException e) {
+      Assert.assertEquals(pfsInstance.getId(), e.getPartitionedFileSetName());
+      Assert.assertEquals(key, e.getPartitionKey());
     }
   }
 
