@@ -672,6 +672,14 @@
   </property>
 
   <property>
+    <name>kafka.seed.brokers</name>
+    <value>127.0.0.1:9092</value>
+    <description>
+      List of Kafka brokers (comma separated)
+    </description>
+  </property>
+
+  <property>
     <name>kafka.zookeeper.namespace</name>
     <value>kafka</value>
     <description>
@@ -681,14 +689,6 @@
 
 
   <!-- Logging Configuration -->
-
-  <property>
-    <name>kafka.seed.brokers</name>
-    <value>127.0.0.1:9092</value>
-    <description>
-      List of Kafka brokers (comma separated)
-    </description>
-  </property>
 
   <property>
     <name>log.base.dir</name>
