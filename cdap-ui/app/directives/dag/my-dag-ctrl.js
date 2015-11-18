@@ -131,16 +131,19 @@ angular.module(PKG.name + '.commons')
 
 
     vm.onNodeClick = function(node) {
+      angular.forEach($scope.nodes, function(n) {
+        if (n.id === node.id) {
+          n.selected = true;
+        } else {
+          n.selected = false;
+        }
+      });
       NodesActionsFactory.selectNode(node.id);
     };
 
     vm.onNodeDelete = function (event, node) {
       event.stopPropagation();
-      var fn = $scope.nodeDelete();
-
-      vm.instance.remove(node.id);
-
-      fn.call($scope.context, node);
+      NodesActionsFactory.removeNode(node.id);
     };
 
 
