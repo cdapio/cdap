@@ -26,14 +26,14 @@ class NodesStore {
     dispatcher.register('onConnect', this.addConnection.bind(this));
     dispatcher.register('onRemoveConnection', this.removeConnection.bind(this));
     dispatcher.register('onReset', this.setDefaults.bind(this));
-    dispatcher.register('onNodeSelect', this.setActiveNode.bind(this));
+    dispatcher.register('onNodeSelect', this.setActiveNodeId.bind(this));
   }
 
   setDefaults() {
     this.state = {
       nodes: [],
       connections: [],
-      activeNode: null
+      activeNodeId: null
     };
     this.changeListeners = [];
   }
@@ -46,13 +46,13 @@ class NodesStore {
   }
 
   addNode(config) {
-    // this.state.nodes[config.id] = config;
     this.state.nodes.push(config);
     this.emitChange();
   }
   removeNode(node) {
-    let index = this.state.nodes.indexOf(node);
-    this.state.nodes.splice(index, 1);
+    let match = this.state.nodes.filter(n => n.id === node);
+    this.state.nodes.splice(this.state.nodes.indexOf(match[0]), 1);
+    this.state.activeNodeId = null;
     this.emitChange();
   }
   getNodes() {
@@ -71,12 +71,12 @@ class NodesStore {
   getConnections() {
     return this.state.getConnections;
   }
-  getActiveNode() {
-    return this.state.activeNode;
+  getActiveNodeId() {
+    return this.state.activeNodeId;
   }
 
-  setActiveNode(nodeId) {
-    this.state.activeNode = nodeId;
+  setActiveNodeId(nodeId) {
+    this.state.activeNodeId = nodeId;
     this.emitChange();
   }
 }
