@@ -17,6 +17,7 @@ package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -397,7 +398,9 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public boolean viewExists(Id.Stream.View viewId) throws Exception {
-    Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+    if (!exists(viewId.getStream())) {
+      throw new NotFoundException(viewId.getStreamId());
+    }
     return viewAdmin.exists(viewId);
   }
 
