@@ -15,10 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('NodeConfigStore', function(PipelineNodeConfigDispatcher, $q, MyAppDAGService, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, ConfigStore, ConfigActionsFactory) {
+  .service('NodeConfigStore', function(PipelineNodeConfigDispatcher, $q, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, ConfigStore, ConfigActionsFactory) {
 
     var dispatcher = PipelineNodeConfigDispatcher.getDispatcher();
     this.changeListeners = [];
+    this.ConfigStore = ConfigStore;
     this.setDefaults = function() {
       this.state = {
         plugin: {},
@@ -77,7 +78,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
     function switchPlugin(plugin) {
       // This is super wrong. While re-writing this in flux architecture this should go away.
-      this.state.plugin = MyAppDAGService.nodes[plugin.id];
+      this.state.plugin = plugin;
       this.state.isValidPlugin = false;
       // // falsify the ng-if in the template for one tick so that the template gets reloaded
       // // there by reloading the controller.
@@ -101,9 +102,30 @@ angular.module(PKG.name + '.feature.hydrator')
     function configurePluginInfo() {
       var defer = $q.defer();
 
+      if (this.state.plugin._backendProperties) {
+        setSchemaForPlugin.call(this);
+        defer.resolve(true);
+      } else {
+        fetchBackendProperties
+          .call(this, this.state.plugin)
+          .then(
+            () => {
+              setSchemaForPlugin.call(this);
+              defer.resolve(true);
+            },
+            function error() {
+              defer.reject(false);
+            }
+          );
+      }
+
+      return defer.promise;
+    }
+
+    function setSchemaForPlugin() {
       var pluginId = this.state.plugin.id;
       var input;
-      var sourceConn = $filter('filter')(MyAppDAGService.connections, { target: pluginId });
+      var sourceConn = $filter('filter')(this.ConfigStore.getConnections(), { target: pluginId });
       var sourceSchema = null;
       var isStreamSource = false;
 
@@ -112,8 +134,8 @@ angular.module(PKG.name + '.feature.hydrator')
       var syslogSchema = IMPLICIT_SCHEMA.syslog;
 
       var source;
-      if (sourceConn.length) {
-        source = MyAppDAGService.nodes[sourceConn[0].source];
+      if (sourceConn && sourceConn.length) {
+        source = this.ConfigStore.getNode([sourceConn[0].source]);
         sourceSchema = source.outputSchema;
 
         if (source.name === 'Stream') {
@@ -127,81 +149,69 @@ angular.module(PKG.name + '.feature.hydrator')
         }
 
       } else {
-        sourceSchema = MyAppDAGService.nodes[pluginId].properties.schema || '';
+        sourceSchema = '';
       }
 
-      fetchBackendProperties
-        .call(this, this.state.plugin)
-        .then(
-        function success() {
-          var artifactTypeExtension = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type];
-          try {
-            input = JSON.parse(sourceSchema);
-          } catch (e) {
-            input = null;
-          }
+      var artifactTypeExtension = GLOBALS.pluginTypes[this.ConfigStore.getAppType()];
+      try {
+        input = JSON.parse(sourceSchema);
+      } catch (e) {
+        input = null;
+      }
 
-          if (isStreamSource) {
-            // Must be in this order!!
-            if (!input) {
-              input = {
-                fields: [{ name: 'body', type: 'string' }]
-              };
-            }
-
-            input.fields.unshift({
-              name: 'headers',
-              type: {
-                type: 'map',
-                keys: 'string',
-                values: 'string'
-              }
-            });
-
-            input.fields.unshift({
-              name: 'ts',
-              type: 'long'
-            });
-          }
-
-          this.state.plugin.inputSchema = input ? input.fields : null;
-          angular.forEach(this.state.plugin.inputSchema, function (field) {
-            if (angular.isArray(field.type)) {
-              field.type = field.type[0];
-              field.nullable = true;
-            } else {
-              field.nullable = false;
-            }
-          });
-
-          if (!this.state.plugin.outputSchema && input) {
-            this.state.plugin.outputSchema = JSON.stringify(input) || null;
-          }
-
-          if (this.state.plugin.type === artifactTypeExtension.source) {
-            this.state.isSource = true;
-          }
-
-          if (this.state.plugin.type === artifactTypeExtension.sink) {
-            this.state.isSink = true;
-          }
-          if (this.state.plugin.type === 'transform') {
-            this.state.isTransform = true;
-          }
-          defer.resolve(true);
-        }.bind(this),
-        function error() {
-          defer.reject(false);
+      if (isStreamSource) {
+        // Must be in this order!!
+        if (!input) {
+          input = {
+            fields: [{ name: 'body', type: 'string' }]
+          };
         }
-      );
 
-      return defer.promise;
+        input.fields.unshift({
+          name: 'headers',
+          type: {
+            type: 'map',
+            keys: 'string',
+            values: 'string'
+          }
+        });
+
+        input.fields.unshift({
+          name: 'ts',
+          type: 'long'
+        });
+      }
+
+      this.state.plugin.inputSchema = input ? input.fields : null;
+      angular.forEach(this.state.plugin.inputSchema, function (field) {
+        if (angular.isArray(field.type)) {
+          field.type = field.type[0];
+          field.nullable = true;
+        } else {
+          field.nullable = false;
+        }
+      });
+
+      if (!this.state.plugin.outputSchema && input) {
+        this.state.plugin.outputSchema = JSON.stringify(input) || null;
+      }
+
+      if (this.state.plugin.type === artifactTypeExtension.source) {
+        this.state.isSource = true;
+      }
+
+      if (this.state.plugin.type === artifactTypeExtension.sink) {
+        this.state.isSink = true;
+      }
+      if (this.state.plugin.type === 'transform') {
+        this.state.isTransform = true;
+      }
     }
 
     function fetchBackendProperties(plugin) {
       var defer = $q.defer();
-      var sourceType = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type].source,
-          sinkType = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type].sink;
+      var sourceType = GLOBALS.pluginTypes[this.ConfigStore.getAppType()].source,
+          sinkType = GLOBALS.pluginTypes[this.ConfigStore.getAppType()].sink;
 
       var propertiesApiMap = {
         'transform': myPipelineApi.fetchTransformProperties
@@ -213,7 +223,7 @@ angular.module(PKG.name + '.feature.hydrator')
       // happening
       var params = {
         namespace: $state.params.namespace,
-        pipelineType: MyAppDAGService.metadata.template.type,
+        pipelineType: this.ConfigStore.getAppType(),
         version: $rootScope.cdapVersion,
         extensionType: plugin.type,
         pluginName: plugin.name
