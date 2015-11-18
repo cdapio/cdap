@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory) {
 
     var vm = this;
 
@@ -137,8 +137,15 @@ angular.module(PKG.name + '.commons')
       event.stopPropagation();
       var fn = $scope.nodeDelete();
 
+      vm.instance.remove(node.id);
+
       fn.call($scope.context, node);
     };
+
+
+    $scope.$on('$destroy', function () {
+      NodesActionsFactory.resetNodesAndConnections();
+    });
 
 
   });
