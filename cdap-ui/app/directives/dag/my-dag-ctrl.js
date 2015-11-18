@@ -131,7 +131,7 @@ angular.module(PKG.name + '.commons')
 
 
     vm.onNodeClick = function(node) {
-      $scope.nodeClick.call($scope.context, node);
+      NodesActionsFactory.selectNode(node.id);
     };
 
     vm.onNodeDelete = function (event, node) {

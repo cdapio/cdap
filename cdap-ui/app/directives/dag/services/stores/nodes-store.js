@@ -26,12 +26,14 @@ class NodesStore {
     dispatcher.register('onConnect', this.addConnection.bind(this));
     dispatcher.register('onRemoveConnection', this.removeConnection.bind(this));
     dispatcher.register('onReset', this.setDefaults.bind(this));
+    dispatcher.register('onNodeSelect', this.setActiveNode.bind(this));
   }
 
   setDefaults() {
     this.state = {
       nodes: [],
-      connections: []
+      connections: [],
+      activeNode: null
     };
     this.changeListeners = [];
   }
@@ -69,7 +71,14 @@ class NodesStore {
   getConnections() {
     return this.state.getConnections;
   }
+  getActiveNode() {
+    return this.state.activeNode;
+  }
 
+  setActiveNode(nodeId) {
+    this.state.activeNode = nodeId;
+    this.emitChange();
+  }
 }
 
 NodesStore.$inject = ['NodesDispatcher'];

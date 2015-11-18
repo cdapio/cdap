@@ -38,6 +38,11 @@ class HydratorCreateCanvasController {
   updateNodesAndConnections() {
     this.nodes = this.NodesStore.getNodes();
     this.connections = this.NodesStore.getConnections();
+    this.setActiveNode();
+  }
+
+  setActiveNode() {
+    this.PipelineNodeConfigActionFactory.choosePlugin(this.NodesStore.getActiveNode());
   }
 
   deleteNode(node) {
