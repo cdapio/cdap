@@ -542,6 +542,12 @@ public abstract class AppFabricTestBase {
     }, timeout, timeoutUnit, 100, TimeUnit.MILLISECONDS);
   }
 
+  protected void deleteArtifact(Id.Artifact artifact, int expectedResponseCode) throws Exception {
+    String path = String.format("artifacts/%s/versions/%s", artifact.getName(), artifact.getVersion().getVersion());
+    HttpResponse response = doDelete(getVersionedAPIPath(path, artifact.getNamespace().getId()));
+    Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
+  }
+
   /**
    * Starts the given program.
    */
