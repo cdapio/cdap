@@ -33,6 +33,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
@@ -555,6 +556,11 @@ public class IndexedTable extends AbstractDataset implements Table {
   @Override
   public Type getRecordType() {
     return table.getRecordType();
+  }
+
+  @Override
+  public void write(StructuredRecord structuredRecord) throws IOException {
+    table.write(structuredRecord);
   }
 
   @Override

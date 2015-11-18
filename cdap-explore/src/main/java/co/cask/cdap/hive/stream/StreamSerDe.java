@@ -93,10 +93,15 @@ public class StreamSerDe implements SerDe {
 
     Id.Stream streamId = Id.Stream.from(streamNamespace, streamName);
     try (ContextManager.Context context = ContextManager.getContext(conf)) {
-      // Get the stream format from the stream config.
-      FormatSpecification formatSpec = getFormatSpec(properties, streamId, context);
-      this.streamFormat = (AbstractStreamEventRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
-      Schema schema = formatSpec.getSchema();
+      Schema schema = null;
+      // apparently the conf can be null in some versions of Hive?
+      // Because it calls initialize just to get the object inspector
+      if (context != null) {
+        // Get the stream format from the stream config.
+        FormatSpecification formatSpec = getFormatSpec(properties, streamId, context);
+        this.streamFormat = (AbstractStreamEventRecordFormat) RecordFormats.createInitializedFormat(formatSpec);
+        schema = formatSpec.getSchema();
+      }
       this.deserializer = new ObjectDeserializer(properties, schema, BODY_OFFSET);
       this.inspector = deserializer.getInspector();
     } catch (UnsupportedTypeException e) {

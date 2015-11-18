@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.etl.common;
+package co.cask.cdap.format;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
@@ -45,9 +45,7 @@ import javax.annotation.Nullable;
 
 /**
  * Utility class for converting {@link StructuredRecord} to and from json.
- * @deprecated use co.cask.cdap.format.StructuredRecordStringConverter instead.
  */
-@Deprecated
 public final class StructuredRecordStringConverter {
 
   // Known Java type to schema type mapping
