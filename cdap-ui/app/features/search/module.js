@@ -13,23 +13,5 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-angular.module(PKG.name + '.services')
-  .factory('myAppsApi', function(myCdapUrl, $resource, myAuth, myHelpers) {
-
-    var url = myCdapUrl.constructUrl,
-        basePath = '/namespaces/:namespace/apps',
-        listPath = basePath,
-        detailPath = basePath + '/:appId';
-
-    return $resource(
-      url({ _cdapPath: basePath }),
-    {
-      appId: '@appId'
-    },
-    {
-      delete: myHelpers.getConfig('DELETE', 'REQUEST', detailPath),
-      list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),
-      get: myHelpers.getConfig('GET', 'REQUEST', detailPath)
-    });
-  });
+ 
+angular.module(`${PKG.name}.feature.search`, []);

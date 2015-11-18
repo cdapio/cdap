@@ -14,22 +14,28 @@
  * the License.
  */
 
-angular.module(PKG.name + '.services')
-  .factory('myAppsApi', function(myCdapUrl, $resource, myAuth, myHelpers) {
+my-search{
+  .search-box {
+    .input-group {
+      .input-group-btn {
+        &.dropdown-right {
+          border: 1px solid #eee;
+          border-radius: 0;
+          border-left: 0;
 
-    var url = myCdapUrl.constructUrl,
-        basePath = '/namespaces/:namespace/apps',
-        listPath = basePath,
-        detailPath = basePath + '/:appId';
+          &:last-child{
+            > .btn {
+              margin-left: 0;
+            }
+            &:focus, &:active, &:hover {
 
-    return $resource(
-      url({ _cdapPath: basePath }),
-    {
-      appId: '@appId'
-    },
-    {
-      delete: myHelpers.getConfig('DELETE', 'REQUEST', detailPath),
-      list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),
-      get: myHelpers.getConfig('GET', 'REQUEST', detailPath)
-    });
-  });
+            }
+          }
+        }
+      }
+      .form-control {
+        border-right: 0;
+      }
+    }
+  }
+}
