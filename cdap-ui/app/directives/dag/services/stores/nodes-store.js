@@ -28,6 +28,11 @@ class NodesStore {
     dispatcher.register('onRemoveConnection', this.removeConnection.bind(this));
     dispatcher.register('onReset', this.setDefaults.bind(this));
     dispatcher.register('onNodeSelect', this.setActiveNodeId.bind(this));
+    dispatcher.register('onCreateGraphFromConfig', this.setNodesAndConnections.bind(this));
+  }
+
+  init() {
+    this.setDefaults();
   }
 
   setDefaults() {
@@ -37,6 +42,8 @@ class NodesStore {
       activeNodeId: null
     };
     this.changeListeners = [];
+    this.readyCallback = null;
+    this.isStateLoaded = false;
   }
 
   registerOnChangeListener(callback) {
@@ -44,6 +51,14 @@ class NodesStore {
   }
   emitChange() {
     this.changeListeners.forEach( callback => callback() );
+  }
+
+  registerReadyCallback(fn) {
+    this.readyCallback = fn;
+
+    if (this.isStateLoaded) {
+      this.readyCallback();
+    }
   }
 
   addNode(config) {
@@ -58,6 +73,9 @@ class NodesStore {
   }
   getNodes() {
     return this.state.nodes;
+  }
+  setNodes(nodes) {
+    this.state.nodes = nodes;
   }
 
   addConnection(connection) {
@@ -78,6 +96,19 @@ class NodesStore {
   }
   getActiveNodeId() {
     return this.state.activeNodeId;
+  }
+  setConnections(connections) {
+    this.state.connections = connections;
+  }
+
+  setNodesAndConnections(nodes, connections) {
+    this.setNodes(nodes);
+    this.setConnections(connections);
+    this.isStateLoaded = true;
+
+    if (this.readyCallback) {
+      this.readyCallback();
+    }
   }
 
   setActiveNodeId(nodeId) {

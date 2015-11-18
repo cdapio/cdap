@@ -15,7 +15,10 @@
  */
 
 class NodesActionsFactory {
-  constructor(NodesDispatcher) {
+  constructor(NodesDispatcher, GLOBALS, MyDAGFactory) {
+    this.GLOBALS = GLOBALS;
+    this.MyDAGFactory = MyDAGFactory;
+
     this.nodesDispatcher = NodesDispatcher.getDispatcher();
   }
 
@@ -25,6 +28,10 @@ class NodesActionsFactory {
 
   removeNode(node) {
     this.nodesDispatcher.dispatch('onRemoveNode', node);
+  }
+
+  setNodes(nodes) {
+    this.nodesDispatcher.dispatch('onSetNodes', nodes);
   }
 
   addConnection(connection) {
@@ -43,9 +50,73 @@ class NodesActionsFactory {
 
   selectNode(nodeId) {
     this.nodesDispatcher.dispatch('onNodeSelect', nodeId);
+
+  }
+  createGraphFromConfig(pipeline) {
+    let nodes = [];
+    let connections = [];
+
+    let artifact = this.GLOBALS.pluginTypes[pipeline.artifact.name];
+
+    let source = angular.copy(pipeline.config.source);
+    let transforms = angular.copy(pipeline.config.transforms)
+      .map( node => {
+        node.type = artifact.transform;
+        node.id = node.name + '-' + node.type + '-' + Date.now();
+        node.icon = this.MyDAGFactory.getIcon(node.name);
+        return node;
+      });
+    let sinks = angular.copy(pipeline.config.sinks)
+      .map( node => {
+        node.type = artifact.sink;
+        node.id = node.name + '-' + node.type + '-' + Date.now();
+        node.icon = this.MyDAGFactory.getIcon(node.name);
+        return node;
+      });
+
+    source.type = artifact.source;
+    source.icon = this.MyDAGFactory.getIcon(source.name);
+
+    // replace with backend id
+    source.id = source.name + '-' + source.type + '-' + Date.now();
+    nodes.push(source);
+    nodes = nodes.concat(transforms);
+    nodes = nodes.concat(sinks);
+
+
+    let prevId;
+
+    if (transforms.length === 0) {
+      prevId = source.id;
+    } else {
+      prevId = transforms[0].id;
+      // Set Connections
+      connections.push({
+        source: source.id,
+        target: transforms[0].id
+      });
+    }
+
+    for (let i = 1; i < transforms.length; i++) {
+      connections.push({
+        source: prevId,
+        target: transforms[i].id
+      });
+      prevId = transforms[i].id;
+    }
+
+    for (let i = 0; i < sinks.length; i++) {
+      connections.push({
+        source: prevId,
+        target: sinks[i].id
+      });
+    }
+
+    this.nodesDispatcher.dispatch('onCreateGraphFromConfig', nodes, connections);
+
   }
 
 }
-NodesActionsFactory.$inject = ['NodesDispatcher'];
+NodesActionsFactory.$inject = ['NodesDispatcher', 'GLOBALS', 'MyDAGFactory'];
 angular.module(`${PKG.name}.commons`)
   .service('NodesActionsFactory', NodesActionsFactory);
