@@ -39,6 +39,10 @@ class NodesActionsFactory {
     this.nodesDispatcher.dispatch('onReset');
   }
 
+  selectNode(nodeId) {
+    this.nodesDispatcher.dispatch('onNodeSelect', nodeId);
+  }
+
 }
 NodesActionsFactory.$inject = ['NodesDispatcher'];
 angular.module(`${PKG.name}.commons`)
