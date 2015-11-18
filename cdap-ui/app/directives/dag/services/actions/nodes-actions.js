@@ -35,6 +35,10 @@ class NodesActionsFactory {
     this.nodesDispatcher.dispatch('onRemoveConnection', connection);
   }
 
+  resetNodesAndConnections() {
+    this.nodesDispatcher.dispatch('onReset');
+  }
+
 }
 NodesActionsFactory.$inject = ['NodesDispatcher'];
 angular.module(`${PKG.name}.commons`)

@@ -25,6 +25,7 @@ class NodesStore {
     dispatcher.register('onRemoveNode', this.removeNode.bind(this));
     dispatcher.register('onConnect', this.addConnection.bind(this));
     dispatcher.register('onRemoveConnection', this.removeConnection.bind(this));
+    dispatcher.register('onReset', this.setDefaults.bind(this));
   }
 
   setDefaults() {
@@ -32,6 +33,7 @@ class NodesStore {
       nodes: [],
       connections: []
     };
+    this.changeListeners = [];
   }
 
   registerOnChangeListener(callback) {
