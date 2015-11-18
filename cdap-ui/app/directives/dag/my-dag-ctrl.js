@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window) {
 
     var vm = this;
 
@@ -71,8 +71,6 @@ angular.module(PKG.name + '.commons')
         endpoints.push(node.id);
 
         var type = GLOBALS.pluginConvert[node.type];
-
-
         switch(type) {
           case 'source':
             vm.instance.addEndpoint(node.id, sourceSettings, {uuid: node.id});
@@ -91,14 +89,12 @@ angular.module(PKG.name + '.commons')
 
     function formatConnections() {
       var connections = [];
-
       angular.forEach(vm.instance.getConnections(), function (conn) {
         connections.push({
           source: conn.sourceId,
           target: conn.targetId
         });
       });
-
       $scope.connections = connections;
     }
 
@@ -125,6 +121,11 @@ angular.module(PKG.name + '.commons')
 
       $scope.$watchCollection('connections', function () {
         console.log('ChangeConnection', $scope.connections);
+      });
+
+      // This is needed to redraw connections and endpoints on browser resize
+      angular.element($window).on('resize', function() {
+        vm.instance.repaintEverything();
       });
     });
 
