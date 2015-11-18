@@ -75,7 +75,7 @@ public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedI
       default:
         throw new UnsupportedOperationException(
           String.format("Unsupported object of type %s found. Deserialization of only %s, %s, %s, %s, %s, %s, %s, " +
-                          "%s, %s, %s is supported.",
+                          "%s, %s, %s, %s is supported.",
                         type,
                         Id.Application.class.getSimpleName(),
                         Id.Program.class.getSimpleName(),
@@ -86,7 +86,8 @@ public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedI
                         Id.Worker.class.getSimpleName(),
                         Id.Workflow.class.getSimpleName(),
                         Id.DatasetInstance.class.getSimpleName(),
-                        Id.Stream.class.getSimpleName()
+                        Id.Stream.class.getSimpleName(),
+                        Id.Artifact.class.getSimpleName()
           )
         );
     }
