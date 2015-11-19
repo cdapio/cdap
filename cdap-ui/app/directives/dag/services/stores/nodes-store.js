@@ -29,6 +29,7 @@ class NodesStore {
     dispatcher.register('onReset', this.setDefaults.bind(this));
     dispatcher.register('onNodeSelect', this.setActiveNodeId.bind(this));
     dispatcher.register('onCreateGraphFromConfig', this.setNodesAndConnections.bind(this));
+    dispatcher.register('onNodeSelectReset', this.resetActiveNode.bind(this));
   }
 
   setDefaults() {
@@ -101,6 +102,10 @@ class NodesStore {
 
   setActiveNodeId(nodeId) {
     this.state.activeNodeId = nodeId;
+    this.emitChange();
+  }
+  resetActiveNode() {
+    this.state.activeNodeId = null;
     this.emitChange();
   }
 }
