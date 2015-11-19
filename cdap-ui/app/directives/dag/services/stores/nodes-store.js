@@ -24,6 +24,7 @@ class NodesStore {
     dispatcher.register('onNodeAdd', this.addNode.bind(this));
     dispatcher.register('onRemoveNode', this.removeNode.bind(this));
     dispatcher.register('onConnect', this.addConnection.bind(this));
+    dispatcher.register('onConnectionsUpdate', this.updateConnections.bind(this));
     dispatcher.register('onRemoveConnection', this.removeConnection.bind(this));
     dispatcher.register('onReset', this.setDefaults.bind(this));
     dispatcher.register('onNodeSelect', this.setActiveNodeId.bind(this));
@@ -63,13 +64,17 @@ class NodesStore {
     this.state.connections.push(connection);
     this.emitChange();
   }
+  updateConnections(connections) {
+    this.state.connections = connections;
+    this.emitChange();
+  }
   removeConnection(connection) {
     let index = this.state.connections.indexOf(connection);
     this.state.connections.splice(index, 1);
     this.emitChange();
   }
   getConnections() {
-    return this.state.getConnections;
+    return this.state.connections;
   }
   getActiveNodeId() {
     return this.state.activeNodeId;
