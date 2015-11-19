@@ -169,11 +169,11 @@ packages, you would edit the bundler plugin in your pom.xml:
   </plugin>
 
 
-.. _plugins-deployment-system:
+.. _plugins-deployment-artifact:
 
 Deploying Artifacts
 -------------------
-A plugins can be deployed as either a :ref:`system <plugins-deployment-system>` or 
+A plugin can be deployed as either a :ref:`system <plugins-deployment-system>` or 
 :ref:`user <plugins-deployment-user>` artifact. System artifacts are available 
 across all namespaces, while user artifacts are local to one namespace.
 
