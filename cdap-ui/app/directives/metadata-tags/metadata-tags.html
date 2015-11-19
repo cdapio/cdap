@@ -31,7 +31,7 @@
       </span>
     </div>
   </div>
-  <div class="tag-container">
+  <div class="tag-container" ng-if="MetadataController.metadataTags.length">
     <div class="tag" ng-repeat="tag in MetadataController.metadataTags">
       <a class="btn">
         {{tag}}
