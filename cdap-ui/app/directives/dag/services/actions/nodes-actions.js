@@ -52,6 +52,9 @@ class NodesActionsFactory {
   selectNode(nodeId) {
     this.nodesDispatcher.dispatch('onNodeSelect', nodeId);
   }
+  resetSelectedNode() {
+    this.nodesDispatcher.dispatch('onNodeSelectReset');
+  }
 
   createGraphFromConfig(nodes, connections) {
     this.NodesStore.setDefaults();

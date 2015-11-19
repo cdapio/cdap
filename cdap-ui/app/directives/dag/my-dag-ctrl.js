@@ -183,6 +183,8 @@ angular.module(PKG.name + '.commons')
 
       if ((event.ctrlKey || event.metaKey)) {
         node.selected = !node.selected;
+        NodesActionsFactory.resetSelectedNode();
+
         if (node.selected) {
           checkSelection();
         } else {
@@ -191,10 +193,10 @@ angular.module(PKG.name + '.commons')
       } else {
         vm.clearNodeSelection();
         node.selected = true;
+        NodesActionsFactory.selectNode(node.id);
       }
 
-      NodesActionsFactory.selectNode(node.id);
-      $scope.nodeClick.call($scope.context, node);
+      // $scope.nodeClick.call($scope.context, node);
     };
 
     vm.onNodeDelete = function (event, node) {
