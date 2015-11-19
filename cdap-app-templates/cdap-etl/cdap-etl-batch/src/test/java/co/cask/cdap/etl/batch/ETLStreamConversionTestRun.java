@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.ETLStage;
+import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -96,7 +97,7 @@ public class ETLStreamConversionTestRun extends ETLBatchTestBase {
   }
 
   private ETLBatchConfig constructETLBatchConfig(String fileSetName, String sinkType) {
-    ETLStage source = new ETLStage("Stream", ImmutableMap.<String, String>builder()
+    Plugin sourceConfig = new Plugin("Stream", ImmutableMap.<String, String>builder()
       .put(Properties.Stream.NAME, "myStream")
       .put(Properties.Stream.DURATION, "10m")
       .put(Properties.Stream.DELAY, "0d")
@@ -104,11 +105,14 @@ public class ETLStreamConversionTestRun extends ETLBatchTestBase {
       .put(Properties.Stream.SCHEMA, BODY_SCHEMA.toString())
       .put("format.setting.delimiter", "|")
       .build());
-    ETLStage sink = new ETLStage(sinkType,
-                                 ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                                 EVENT_SCHEMA.toString(),
-                                                 Properties.TimePartitionedFileSetDataset.TPFS_NAME, fileSetName));
-    ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
+    ETLStage source  = new ETLStage("source", sourceConfig);
+    Plugin sinkConfig = new Plugin(sinkType,
+                                   ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                   EVENT_SCHEMA.toString(),
+                                                   Properties.TimePartitionedFileSetDataset.TPFS_NAME, fileSetName));
+    ETLStage sink = new ETLStage("sink", sinkConfig);
+    Plugin transformConfig = new Plugin("Projection", ImmutableMap.<String, String>of());
+    ETLStage transform = new ETLStage("transforms", transformConfig);
     return new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
   }
 }
