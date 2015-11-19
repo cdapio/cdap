@@ -112,6 +112,15 @@ class NodesActionsFactory {
       });
     }
 
+    // Obtaining layout of graph with Dagre
+    var graph = this.MyDAGFactory.getGraphLayout(nodes, connections);
+    angular.forEach(nodes, function (node) {
+      node._uiPosition = {
+        'top': graph._nodes[node.id].y + 'px' ,
+        'left': graph._nodes[node.id].x + 'px'
+      };
+    });
+
     this.nodesDispatcher.dispatch('onCreateGraphFromConfig', nodes, connections);
 
   }

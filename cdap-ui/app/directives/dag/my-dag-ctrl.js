@@ -27,20 +27,10 @@ angular.module(PKG.name + '.commons')
 
     vm.scale = 1.0;
 
-    /**
-     * This function is only used to create graph from a set config
-     **/
+
     function init() {
       $scope.nodes = NodesStore.getNodes();
       $scope.connections = NodesStore.getConnections();
-      var graph = MyDAGFactory.getGraphLayout($scope.nodes, $scope.connections);
-
-      angular.forEach($scope.nodes, function (node) {
-        node._uiPosition = {
-          'top': graph._nodes[node.id].y + 'px' ,
-          'left': graph._nodes[node.id].x + 'px'
-        };
-      });
 
       $timeout(function () {
         addEndpoints();
@@ -132,6 +122,8 @@ angular.module(PKG.name + '.commons')
       jsPlumb.setContainer('dag-container');
       vm.instance = jsPlumb.getInstance(dagSettings);
 
+      init();
+
       vm.instance.bind('connection', formatConnections);
       vm.instance.bind('connectionDetached', formatConnections);
 
@@ -149,9 +141,6 @@ angular.module(PKG.name + '.commons')
       $scope.$watchCollection('connections', function () {
         console.log('ChangeConnection', $scope.connections);
       });
-
-
-      NodesStore.registerReadyCallback(init);
 
       // This is needed to redraw connections and endpoints on browser resize
       angular.element($window).on('resize', function() {
