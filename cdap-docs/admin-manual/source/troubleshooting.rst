@@ -2,13 +2,29 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014 Cask Data, Inc.
 
-============================================
-Troubleshooting CDAP
-============================================
+.. _admin-troubleshooting:
+
+===============================================
+Troubleshooting CDAP Installation and Operation
+===============================================
 
 Here are some selected examples of potential problems and possible resolutions.
 
 
+.. rubric:: Using YARN with the LinuxContainerExecutor 
+
+- If you have YARN configured to use LinuxContainerExecutor (see the setting for
+  ``yarn.nodemanager.container-executor.class``), the ``cdap`` user needs to be present on
+  all Hadoop nodes.
+
+- If you are using a LinuxContainerExecutor, and the UID for the ``cdap`` user is less than
+  500, you will need to add the ``cdap`` user to the allowed users configuration for the
+  LinuxContainerExecutor in YARN by editing the ``/etc/hadoop/conf/container-executor.cfg``
+  file. Change the line for ``allowed.system.users`` to::
+
+    allowed.system.users=cdap
+    
+    
 .. rubric:: Application Won't Start
 
 Check HDFS write permissions. It should show an obvious exception in the YARN logs.
@@ -26,11 +42,11 @@ errors such as these::
 
 Things to check as possible solutions:
 
-1. Check if the JDK being used is :ref:`supported by CDAP<install-java-runtime>`::
+1. Check if the JDK being used is :ref:`supported by CDAP <hadoop-install-java-runtime>`::
 
     java -version
 
-#. Check if the CDAP user is using a :ref:`correct version of the JDK <install-java-runtime>`::
+#. Check if the CDAP user is using a :ref:`correct version of the JDK <hadoop-install-java-runtime>`::
 
     sudo su - <cdap-user> 
     java -version
@@ -46,7 +62,7 @@ Things to check as possible solutions:
     /opt/cdap/master/conf/
     /opt/cdap/master/lib/*
 
-   If the classpath is incorrect, review the :ref:`installation instructions <install>` and correct.
+   If the classpath is incorrect, review the :ref:`installation instructions <installation-index>` and correct.
    
 
 .. rubric:: No Metrics or Logs

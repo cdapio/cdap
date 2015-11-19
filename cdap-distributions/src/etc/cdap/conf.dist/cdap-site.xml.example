@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -17,119 +17,152 @@
   -->
 <configuration>
 
-  <!--
-    Cluster configurations
-  -->
-
-  <property>
-    <name>root.namespace</name>
-    <value>cdap</value>
-    <description>Specifies the root namespace</description>
-  </property>
-
-  <!-- Substitute the zookeeper quorum for components here -->
-  <property>
-    <name>zookeeper.quorum</name>
-    <value>FQDN1:2181,FQDN2:2181/${root.namespace}</value>
-    <description>Specifies the zookeeper host:port</description>
-  </property>
+  <!-- General Configuration -->
 
   <property>
     <name>hdfs.namespace</name>
     <value>/${root.namespace}</value>
-    <description>Namespace for HDFS files</description>
+    <description>
+      Root directory for HDFS files written by CDAP
+    </description>
   </property>
-
+  
   <property>
     <name>hdfs.user</name>
     <value>yarn</value>
-    <description>User name for accessing HDFS</description>
+    <description>
+      User name for accessing HDFS
+    </description>
   </property>
 
-  <!--
-    Router configuration
-  -->
-  <!-- Substitue the IP to which Router service should bind to and listen on -->
+  <property>
+    <name>root.namespace</name>
+    <value>cdap</value>
+    <description>
+      Root for this CDAP instance; used as the parent (or root) node for
+      ZooKeeper, as the directory under which all CDAP data and metadata is
+      stored in HDFS, and as the prefix for all HBase tables created by
+      CDAP; must be composed of alphanumeric characters
+    </description>
+  </property>
+
+  <property>
+    <name>zookeeper.quorum</name>
+    <value>FQDN1:2181,FQDN2:2181/${root.namespace}</value>
+    <description>
+      ZooKeeper quorum string; specifies the ZooKeeper host:port; 
+      substitute the quorum for the components shown here (FQDN1:2181,FQDN2:2181)
+    </description>
+  </property>
+
+
+  <!-- Router Configuration -->
+
   <property>
     <name>router.bind.address</name>
-    <value>LOCAL-ROUTER-IP</value>
-    <description>Specifies the inet address on which the Router service will listen</description>
+    <value>0.0.0.0</value>
+    <description>
+      Router server address
+    </description>
   </property>
-
-  <!--
-    App Fabric configuration
-  -->
-  <!-- Substitute the IP to which App-Fabric service should bind to and listen on -->
+  
   <property>
-    <name>app.bind.address</name>
-    <value>LOCAL-APP-FABRIC-IP</value>
-    <description>Specifies the inet address on which the app fabric service will listen</description>
-  </property>
-
-  <!--
-    Data Fabric configuration
-  -->
-  <!-- Substitute the IP to which Data-Fabric tx service should bind to and listen on -->
-  <property>
-    <name>data.tx.bind.address</name>
-    <value>LOCAL-DATA-FABRIC-IP</value>
-    <description>Specifies the inet address on which the transaction service will listen</description>
-  </property>
-
-  <!-- 
-    Kafka Configuration
-  -->
-  <property>
-    <name>kafka.log.dir</name>
-    <value>/data/cdap/kafka-logs</value>
-    <description>Directory to store Kafka logs</description>
-  </property>
-
-  <!-- Substitute with a list of all machines which will run the Kafka component -->
-  <property>
-    <name>kafka.seed.brokers</name>
-    <value>FQDN1:9092,FQDN2:9092</value>
-    <description>List of Kafka brokers (comma separated)</description>
-  </property>
-
-  <!-- Must be <= the number of kafka.seed.brokers configured above.  For HA this should be at least 2. -->
-  <property>
-    <name>kafka.default.replication.factor</name>
-    <value>1</value>
-    <description>Kafka replication factor</description>
-  </property>
-
-  <!--
-    Watchdog Configuration
-  -->
-  <!-- Substitute the IP to which metrics-query service should bind to and listen on -->
-  <property>
-    <name>metrics.query.bind.address</name>
-    <value>LOCAL-WATCHDOG-IP</value>
-    <description>Specifies the inet address on which the metrics-query service will listen</description>
-  </property>
-
-  <!--
-    Web-App Configuration
-  -->
-  <property>
-    <name>dashboard.bind.port</name>
-    <value>9999</value>
-    <description>Specifies the port on which dashboard listens</description>
-  </property>
-
-  <!-- Substitute the IP of the Router service to which the UI should connect -->
-  <property>
-    <name>router.server.address</name>
-    <value>ROUTER-HOST-IP</value>
-    <description>Specifies the destination IP where Router service is running</description>
+    <name>router.bind.port</name>
+    <value>10000</value>
+    <description>
+      Port number that the CDAP router should bind to for HTTP connections
+    </description>
   </property>
 
   <property>
     <name>router.server.port</name>
-    <value>10000</value>
-    <description>Specifies the destination Port where Router service is listening</description>
+    <value>${router.bind.port}</value>
+    <description>
+      Router port to which CDAP UI connects
+    </description>
+  </property>
+
+
+  <!-- Applications Configuration -->
+
+  <property>
+    <name>app.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      Host address on which the app fabric server is started
+    </description>
+  </property>
+
+
+  <!-- Datasets Configuration -->
+
+  <property>
+    <name>data.tx.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      Transaction service inet address
+    </description>
+  </property>
+
+
+  <!-- Kafka Server Configuration -->
+
+  <property>
+    <name>kafka.default.replication.factor</name>
+    <value>1</value>
+    <description>
+      Kafka replication factor; used to replicate Kafka messages across
+      multiple machines to prevent data loss in the event of a hardware
+      failure. The recommended setting is to run at least two Kafka servers.
+      If you are running two Kafka servers, set this value to 2; otherwise,
+      set it to the number of Kafka servers.
+    </description>
+  </property>
+  
+  <property>
+    <name>kafka.log.dir</name>
+    <value>/tmp/kafka-logs</value>
+    <description>
+      Kafka log storage directory
+    </description>
+  </property>
+
+  <property>
+    <name>kafka.seed.brokers</name>
+    <value>127.0.0.1:9092</value>
+    <description>
+      List of Kafka brokers (comma separated)
+    </description>
+  </property>
+
+
+  <!-- Metrics Configuration -->
+  
+  <property>
+    <name>metrics.query.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      Metrics query server host address
+    </description>
+  </property>
+
+
+  <!-- UI Configuration -->
+  
+  <property>
+    <name>dashboard.bind.port</name>
+    <value>9999</value>
+    <description>
+      CDAP UI bind port
+    </description>
+  </property>
+
+  <property>
+    <name>router.server.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      Router address to which CDAP UI connects
+    </description>
   </property>
 
 </configuration>
-

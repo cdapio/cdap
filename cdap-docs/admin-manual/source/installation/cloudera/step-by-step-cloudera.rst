@@ -4,25 +4,26 @@
 
 .. _step-by-step-cloudera-add-service:
 
-===========================================
-Cloudera *Add Service* Wizard, Step-by-Step
-===========================================
+============================================
+Cloudera: *Add Service* Wizard, Step-by-Step
+============================================
 
-As described in :ref:`cloudera-configuring`, you can use `Cloudera Manager
+As described in :ref:`cloudera-installation`, you can use `Cloudera Manager
 <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__ 
 to integrate CDAP into a Hadoop cluster by:
 
-- :ref:`downloading and installing a CDAP CSD (Custom Service Descriptor) <cloudera-configuring-download>`; and
-- :ref:`download and distributing the CDAP parcel <cloudera-configuring-csd-parcel>`.
+- :ref:`downloading and installing a CDAP CSD (Custom Service Descriptor) <cloudera-installation-csd>`; and
+- :ref:`download and distributing the CDAP parcel <cloudera-installation-download-distribute-parcel>`.
 
 Once you have done those two steps, these instructions show you how to use that CSD with
-the Cloudera Manager Admin Console *Add Service* Wizard to install CDAP.
+the Cloudera Manager Admin Console *Add Service* Wizard to install and start CDAP.
 
+.. _step-by-step-cloudera-add-a-service:
 
 Add A Service
 =============
 
-.. figure:: ../../_images/integration-cloudera/cloudera-csd-01.png
+.. figure:: ../../_images/cloudera/cloudera-csd-01.png
    :figwidth: 100%
    :height: 526px
    :width: 800px
@@ -31,11 +32,12 @@ Add A Service
 
    **Cloudera Manager:** Starting the *Add Service* Wizard.
 
+.. _step-by-step-cloudera-add-service-wizard:
 
 The "Add Service" Wizard
 ========================
 
-.. figure:: ../../_images/integration-cloudera/cloudera-csd-02.png
+.. figure:: ../../_images/cloudera/cloudera-csd-02.png
    :figwidth: 100%
    :height: 526px
    :width: 800px
@@ -45,7 +47,7 @@ The "Add Service" Wizard
    **Add Service Wizard, Page 1:** Selecting CDAP (Cask DAP) as the service to be added.
 
 
-.. figure:: ../../_images/integration-cloudera/cloudera-csd-03.png
+.. figure:: ../../_images/cloudera/cloudera-csd-03.png
    :figwidth: 100%
    :height: 526px
    :width: 800px
@@ -55,7 +57,7 @@ The "Add Service" Wizard
    **Add Service Wizard, Page 2:** Setting the dependencies (in this case, including Hive).
    
 
-.. figure:: ../../_images/integration-cloudera/cloudera-csd-04.png
+.. figure:: ../../_images/cloudera/cloudera-csd-04.png
    :figwidth: 100%
    :height: 526px
    :width: 800px
@@ -66,7 +68,7 @@ The "Add Service" Wizard
    Auth** service can be added later.
 
 
-.. figure:: ../../_images/integration-cloudera/cloudera-csd-06.png
+.. figure:: ../../_images/cloudera/cloudera-csd-06.png
    :figwidth: 100%
    :height: 526px
    :width: 800px
@@ -76,7 +78,7 @@ The "Add Service" Wizard
    **Add Service Wizard, Pages 4 & 5:** Reviewing configurations; as Hive was included, CDAP Explore can be enabled.
 
 
-.. figure:: ../../_images/integration-cloudera/cloudera-csd-07.png
+.. figure:: ../../_images/cloudera/cloudera-csd-07.png
    :figwidth: 100%
    :height: 526px
    :width: 800px
@@ -86,7 +88,7 @@ The "Add Service" Wizard
    **Add Service Wizard, Page 6:** Finishing first run of commands to install CDAP.
    
 
-.. figure:: ../../_images/integration-cloudera/cloudera-csd-08.png
+.. figure:: ../../_images/cloudera/cloudera-csd-08.png
    :figwidth: 100%
    :height: 526px
    :width: 800px
@@ -94,10 +96,11 @@ The "Add Service" Wizard
    :class: bordered-image
 
    **Add Service Wizard, Page 7:** Congratulations screen, though there is still work to be done.
-   
 
-Startup
-=======
+.. _step-by-step-cloudera-add-service-startup:
+
+Startup CDAP
+============
 After the Cloudera Manager Admin Console's *Add Service* Wizard completes, *Cask DAP* will
 show in the list for the cluster where you installed it. You can select it, and go to the
 *Cask DAP* page, with *Quick Links* and *Status Summary*. The lights of the *Status
@@ -106,7 +109,7 @@ Summary* should all turn green, showing completion of startup.
 The *Quick Links* includes a link to the **CDAP UI**, which by default is running on
 port ``9999`` of the host where the UI role instance is running.
 
-.. figure:: ../../_images/integration-cloudera/cloudera-csd-09.png
+.. figure:: ../../_images/cloudera/cloudera-csd-09.png
    :figwidth: 100%
    :height: 526px
    :width: 800px
@@ -116,7 +119,7 @@ port ``9999`` of the host where the UI role instance is running.
    **Cloudera Manager:** CDAP (Cask DAP) now added to the cluster.
    
 
-.. figure:: ../../_images/integration-cloudera/cloudera-csd-10.png
+.. figure:: ../../_images/cloudera/cloudera-csd-10.png
    :figwidth: 100%
    :height: 526px
    :width: 800px
@@ -125,6 +128,7 @@ port ``9999`` of the host where the UI role instance is running.
 
    **Cloudera Manager:** CDAP completed startup: all lights green!
    
+.. _step-by-step-cloudera-add-service-ui:
 
 CDAP UI
 =======
@@ -141,5 +145,4 @@ UI in the upper right will show the status of the CDAP services.
 
    **CDAP UI:** Showing started-up with applications deployed.
 
-Further instructions, including verifying your installation, are contained in :ref:`Configuring
-and Installing: Verification <cloudera-verification>`.
+Further instructions for verifying your installation are contained in :ref:`cloudera-verification`.

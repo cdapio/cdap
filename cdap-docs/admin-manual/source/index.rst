@@ -8,51 +8,53 @@
 CDAP Administration Manual
 ==================================================
 
+Covers putting CDAP into production, with **installation and configuration, security
+setup, operations,** and **troubleshooting.** Appendices describe the **XML files** used to configure
+the CDAP installation and its security configuration.
 
-.. rubric:: Installation
 
-.. include:: installation/installation-note.txt
+.. rubric:: Installation and Configuration
 
-.. |installation| replace:: **Installation:**
-.. _installation: installation/index.html
+**Distribution-specific** instructions are available, plus instructions for **generic Apache Hadoop** clusters:
 
-|installation|_ Covers **putting CDAP into production, with installation, configuration, and security setup.**
-Appendices cover the XML files used to configure the CDAP installation and security configurations.
+.. |ambari| replace:: **Apache Ambari (HDP):**
+.. _ambari: installation/ambari/index.html
 
-.. |quickstart| replace:: **Quick Start:**
-.. _quickstart: installation/quick-start.html
+- |ambari|_ Installing CDAP on `HDP (Hortonworks Data Platform) <http://hortonworks.com/>`__ clusters
+  managed with `Apache Ambari <https://ambari.apache.org/>`__.
 
-- |quickstart|_ A quick start guide that covers the **most-common case of installing and 
-  configuring CDAP.** Many people may find this sufficient; if your case isn't covered, the
-  :ref:`install` guide has additional details. Use this if you aren't using 
-  :ref:`Cloudera Manager <cloudera-configuring>` or :ref:`Apache Ambari <ambari-configuring>`.
+.. |cloudera| replace:: **Cloudera Manager (CDH):**
+.. _cloudera: installation/cloudera/index.html
 
-.. |installation-install| replace:: **Installation:**
-.. _installation-install: installation/installation.html
+- |cloudera|_ Installing CDAP on `CDH (Cloudera Data Hub) <http://www.cloudera.com/>`__ clusters
+  managed with `Cloudera Manager
+  <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__.
 
-- |installation-install|_ Covers **installing CDAP:** the system, network, and software
-  requirements; packaging options; and the instructions for installation of the CDAP
-  components so they will work with your existing Hadoop cluster. Use this if you aren't
-  using the :ref:`Quick Start guide <installation-quick-start>`, 
-  :ref:`Cloudera Manager <cloudera-configuring>`, or :ref:`Apache Ambari <ambari-configuring>`.
+.. |hadoop| replace:: **Hadoop:**
+.. _hadoop: installation/hadoop/index.html
 
-.. |configuration| replace:: **Configuration:**
-.. _configuration: installation/configuration.html
+- |hadoop|_ Installing CDAP on Hadoop systems, either **generic Apache Hadoop** distributions, 
+  CDH clusters *not* managed with Cloudera Manager, or HDP clusters *not* managed with Apache Ambari.
 
-- |configuration|_ Covers **configuring CDAP:** once CDAP :ref:`is installed <install>`,
-  covers the configuration and verification of the CDAP components.
+.. |mapr| replace:: **MapR:**
+.. _mapr: installation/mapr/index.html
+
+- |mapr|_ Installing CDAP on `MapR systems <https://www.mapr.com>`__.
+
+.. |sdk| replace:: **CDAP Standalone SDK:**
+.. _sdk: ../developers-manual/getting-started/standalone/index.html
+
+- |sdk|_ Installing the CDAP Standalone SDK on Linux, MacOS, and Windows systems. *(Developers' Manual)*
+
+
+.. rubric:: Security
 
 .. |security| replace:: **Security:**
 .. _security: installation/security.html
 
-- |security|_ CDAP supports **securing clusters using perimeter security.** This section
-  describes enabling security, configuring authentication and testing security.
-
-.. |appendices| replace:: **Appendices:**
-
-- |appendices| Two appendices cover the XML files used to configure the 
-  :ref:`CDAP installation <appendix-cdap-site.xml>` and the :ref:`security configuration.
-  <appendix-cdap-security.xml>`
+|security|_ CDAP supports **securing clusters using a perimeter security model.** This
+section describes enabling security, configuring authentication, testing security, and includes an
+example configuration file.
 
 
 .. rubric:: Operations
@@ -87,7 +89,7 @@ transaction service maintenance, troubleshooting, and introduces the CDAP UI.**
 .. |scaling-instances| replace:: **Scaling Instances:**
 .. _scaling-instances: operations/scaling-instances.html
 
-- |scaling-instances|_ Covers **querying and setting the number of instances of Flowlets.** 
+- |scaling-instances|_ Covers **querying and setting the number of instances of flowlets and services.** 
 
 .. |resource-guarantees| replace:: **Resource Guarantees:**
 .. _resource-guarantees: operations/resource-guarantees.html
@@ -99,12 +101,23 @@ transaction service maintenance, troubleshooting, and introduces the CDAP UI.**
 
 - |tx-maintenance|_ Periodic maintenance of the **Transaction Service.**
 
+.. |cdap-ui| replace:: **CDAP UI:**
+.. _cdap-ui: operations/cdap-ui.html
+
+- |cdap-ui|_ The CDAP UI is available for **deploying, querying, and managing CDAP.** 
+
+
+.. rubric:: Troubleshooting and Appendices
+
 .. |troubleshooting| replace:: **Troubleshooting:**
 .. _troubleshooting: operations/troubleshooting.html
 
 - |troubleshooting|_ Selected examples of potential **problems and possible resolutions.**
 
-.. |cdap-ui| replace:: **CDAP UI:**
-.. _cdap-ui: operations/cdap-ui.html
 
-- |cdap-ui|_ The CDAP UI is available for **deploying, querying and managing CDAP.** 
+.. |appendices| replace:: **Appendices:**
+.. _appendices: appendices/index.html
+
+- |appendices| Two appendices cover the XML files used to configure the 
+  :ref:`CDAP installation <appendix-cdap-site.xml>` and the :ref:`security configuration.
+  <appendix-cdap-security.xml>`
