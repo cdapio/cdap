@@ -53,7 +53,8 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class DefaultMetadataStore implements MetadataStore {
 
-  private static final Id.DatasetInstance BUSINESS_METADATA_INSTANCE_ID =
+  // TODO: CDAP-4311 Needed only for Upgrade Tool for 3.3. Make private in 3.4.
+  public static final Id.DatasetInstance BUSINESS_METADATA_INSTANCE_ID =
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, "business.metadata");
   private static final Id.DatasetInstance SYSTEM_METADATA_INSTANCE_ID =
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, "system.metadata");
