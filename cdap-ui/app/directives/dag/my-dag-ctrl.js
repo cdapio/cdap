@@ -25,6 +25,8 @@ angular.module(PKG.name + '.commons')
     var transformSourceSettings = angular.copy(MyDAGFactory.getSettings(false).transformSource);
     var transformSinkSettings = angular.copy(MyDAGFactory.getSettings(false).transformSink);
 
+    var dragged = false;
+
     vm.scale = 1.0;
 
 
@@ -115,7 +117,6 @@ angular.module(PKG.name + '.commons')
       NodesActionsFactory.setConnections(connections);
     }
 
-
     jsPlumb.ready(function() {
       var dagSettings = MyDAGFactory.getSettings().default;
 
@@ -131,7 +132,9 @@ angular.module(PKG.name + '.commons')
         $timeout(function () {
           var nodes = document.querySelectorAll('.box');
           vm.instance.draggable(nodes, {
-            containment: true
+            containment: true,
+            start: function () { dragged = true; },
+            stop: function () { $timeout(function () { vm.instance.repaintEverything(); }); }
           });
           addEndpoints();
 
@@ -148,16 +151,50 @@ angular.module(PKG.name + '.commons')
       });
     });
 
+    // var selectedNode = null;
 
-    vm.onNodeClick = function(node) {
-      angular.forEach($scope.nodes, function(n) {
-        if (n.id === node.id) {
-          n.selected = true;
-        } else {
-          n.selected = false;
+    vm.clearNodeSelection = function () {
+      vm.instance.clearDragSelection();
+      angular.forEach($scope.nodes, function (node) {
+        node.selected = false;
+      });
+    };
+
+    function checkSelection() {
+      vm.instance.clearDragSelection();
+
+      var selected = [];
+      angular.forEach($scope.nodes, function (node) {
+        if (node.selected) {
+          selected.push(node.id);
         }
       });
+
+      vm.instance.addToDragSelection(selected);
+    }
+
+    vm.onNodeClick = function(event, node) {
+      event.stopPropagation();
+
+      if (dragged) {
+        dragged = false;
+        return;
+      }
+
+      if ((event.ctrlKey || event.metaKey)) {
+        node.selected = !node.selected;
+        if (node.selected) {
+          checkSelection();
+        } else {
+          vm.instance.removeFromDragSelection(node.id);
+        }
+      } else {
+        vm.clearNodeSelection();
+        node.selected = true;
+      }
+
       NodesActionsFactory.selectNode(node.id);
+      $scope.nodeClick.call($scope.context, node);
     };
 
     vm.onNodeDelete = function (event, node) {

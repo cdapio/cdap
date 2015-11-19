@@ -27,7 +27,9 @@
   </button>
 </div>
 
-<div class="my-js-dag" ng-class="{'disabled': MyDAGController.isDisabled}">
+<div class="my-js-dag"
+    ng-class="{'disabled': MyDAGController.isDisabled}"
+    ng-click="MyDAGController.clearNodeSelection()">
   <div id="dag-container">
     <!--
       The condition on ng-click is to prevent user from being able to click
@@ -36,7 +38,7 @@
     <div ng-repeat="plugin in nodes" class="box {{plugin.type}}" ng-style="plugin._uiPosition"
            data-type="{{plugin.type}}"
            id="{{plugin.id}}"
-           ng-click="MyDAGController.onNodeClick(plugin)"
+           ng-click="MyDAGController.onNodeClick($event, plugin)"
            ng-class="{'selected': plugin.selected}">
       <div class="node">
         <div class="error-node-notification"
