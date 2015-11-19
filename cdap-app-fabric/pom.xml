@@ -130,6 +130,15 @@
       <artifactId>spark-core_2.10</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mockftpserver</groupId>
+      <artifactId>MockFtpServer</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

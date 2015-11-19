@@ -152,7 +152,7 @@ public class DatasetTypeManager extends AbstractIdleService {
             // NOTE: if jarLocation is null, we assume that this is a system module, ie. always present in classpath
             ClassLoader cl = getClass().getClassLoader();
             if (jarLocation != null) {
-              BundleJarUtil.unpackProgramJar(jarLocation, unpackedLocation);
+              BundleJarUtil.unJar(jarLocation, unpackedLocation);
               cl = ProgramClassLoader.create(cConf, unpackedLocation, getClass().getClassLoader());
             }
 

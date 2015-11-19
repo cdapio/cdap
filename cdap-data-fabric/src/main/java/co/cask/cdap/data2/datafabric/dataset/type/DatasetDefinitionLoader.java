@@ -85,7 +85,7 @@ class DatasetDefinitionLoader {
         temp.mkdir();
         // for default "system" modules it can be null, see getJarLocation() javadoc
         if (moduleMeta.getJarLocation() != null) {
-          BundleJarUtil.unpackProgramJar(locationFactory.create(moduleMeta.getJarLocation()), temp);
+          BundleJarUtil.unJar(locationFactory.create(moduleMeta.getJarLocation()), temp);
           classLoader = ProgramClassLoader.create(cConf, temp, getClass().getClassLoader());
         }
         Class<?> moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);

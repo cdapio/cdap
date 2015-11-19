@@ -133,7 +133,7 @@ public class DirectoryClassLoaderProvider implements DatasetClassLoaderProvider 
       }
       Location jarLocation = locationFactory.create(key.uri);
       File unpackedDir = DirUtils.createTempDir(tmpDir);
-      BundleJarUtil.unpackProgramJar(jarLocation, unpackedDir);
+      BundleJarUtil.unJar(jarLocation, unpackedDir);
       LOG.trace("unpacking dataset jar from {} to {}.", key.uri.toString(), unpackedDir.getAbsolutePath());
 
       return new DirectoryClassLoader(unpackedDir, key.parentClassLoader, "lib");

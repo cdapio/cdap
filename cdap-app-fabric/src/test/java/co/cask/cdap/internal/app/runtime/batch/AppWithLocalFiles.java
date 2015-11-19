@@ -125,8 +125,10 @@ public class AppWithLocalFiles extends AbstractApplication {
         // will throw FileNotFoundException if stopwords file does not exist
         File stopWordsFile = context.getLocalFile(STOPWORDS_FILE_ALIAS);
         Preconditions.checkState(stopWordsFile.exists(), "Stopwords file %s must exist", localFilePath);
-        Preconditions.checkState(context.getLocalFile(LOCAL_ARCHIVE_ALIAS).exists(),
-                                 "Local archive %s must exist", LOCAL_ARCHIVE_ALIAS);
+        File localArchive = context.getLocalFile(LOCAL_ARCHIVE_ALIAS);
+        Preconditions.checkState(localArchive.exists(), "Local archive %s must exist", LOCAL_ARCHIVE_ALIAS);
+        Preconditions.checkState(localArchive.isDirectory(), "Local archive %s must have been extracted to a " +
+          "directory", LOCAL_ARCHIVE_ALIAS);
         try (BufferedReader reader = Files.newBufferedReader(stopWordsFile.toPath(), Charsets.UTF_8)) {
           String line;
           while ((line = reader.readLine()) != null) {

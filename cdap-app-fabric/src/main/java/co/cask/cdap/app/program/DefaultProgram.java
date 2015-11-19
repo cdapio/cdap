@@ -193,7 +193,7 @@ public final class DefaultProgram implements Program {
     Preconditions.checkState(expandFolder != null, "Directory for jar expansion is not defined.");
 
     try {
-      BundleJarUtil.unpackProgramJar(programJarLocation, expandFolder);
+      BundleJarUtil.unJar(programJarLocation, expandFolder);
       expanded = true;
     } catch (IOException e) {
       throw Throwables.propagate(e);
