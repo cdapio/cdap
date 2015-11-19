@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore) {
 
     var vm = this;
 
@@ -27,6 +27,23 @@ angular.module(PKG.name + '.commons')
 
     vm.scale = 1.0;
 
+
+    function init() {
+      $scope.nodes = NodesStore.getNodes();
+      $scope.connections = NodesStore.getConnections();
+
+      $timeout(function () {
+        addEndpoints();
+
+        angular.forEach($scope.connections, function (conn) {
+          var sourceId = conn.source.indexOf('transform') !== -1 ? 'Left' + conn.source : conn.source;
+          var targetId = conn.target.indexOf('transform') !== -1 ? 'Right' + conn.target : conn.target;
+          vm.instance.connect({
+            uuids: [sourceId, targetId]
+          });
+        });
+      });
+    }
 
     vm.zoomIn = function () {
       vm.scale += 0.1;
@@ -104,6 +121,8 @@ angular.module(PKG.name + '.commons')
 
       jsPlumb.setContainer('dag-container');
       vm.instance = jsPlumb.getInstance(dagSettings);
+
+      init();
 
       vm.instance.bind('connection', formatConnections);
       vm.instance.bind('connectionDetached', formatConnections);

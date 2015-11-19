@@ -33,7 +33,7 @@
       The condition on ng-click is to prevent user from being able to click
       if the DAG is disabled. It will prevent the highlighting of nodes on select
     -->
-    <div ng-repeat="plugin in nodes" class="box {{plugin.type}}" ng-style="plugin.style"
+    <div ng-repeat="plugin in nodes" class="box {{plugin.type}}" ng-style="plugin._uiPosition"
            data-type="{{plugin.type}}"
            id="{{plugin.id}}"
            ng-click="MyDAGController.onNodeClick(plugin)"

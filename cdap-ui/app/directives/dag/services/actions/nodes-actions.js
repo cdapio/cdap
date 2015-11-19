@@ -15,7 +15,11 @@
  */
 
 class NodesActionsFactory {
-  constructor(NodesDispatcher) {
+  constructor(NodesDispatcher, GLOBALS, MyDAGFactory, NodesStore) {
+    this.GLOBALS = GLOBALS;
+    this.MyDAGFactory = MyDAGFactory;
+    this.NodesStore = NodesStore;
+
     this.nodesDispatcher = NodesDispatcher.getDispatcher();
   }
 
@@ -25,6 +29,10 @@ class NodesActionsFactory {
 
   removeNode(node) {
     this.nodesDispatcher.dispatch('onRemoveNode', node);
+  }
+
+  setNodes(nodes) {
+    this.nodesDispatcher.dispatch('onSetNodes', nodes);
   }
 
   addConnection(connection) {
@@ -45,7 +53,12 @@ class NodesActionsFactory {
     this.nodesDispatcher.dispatch('onNodeSelect', nodeId);
   }
 
+  createGraphFromConfig(nodes, connections) {
+    this.NodesStore.setDefaults();
+    this.nodesDispatcher.dispatch('onCreateGraphFromConfig', nodes, connections);
+  }
+
 }
-NodesActionsFactory.$inject = ['NodesDispatcher'];
+NodesActionsFactory.$inject = ['NodesDispatcher', 'GLOBALS', 'MyDAGFactory', 'NodesStore'];
 angular.module(`${PKG.name}.commons`)
   .service('NodesActionsFactory', NodesActionsFactory);
