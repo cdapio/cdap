@@ -171,6 +171,18 @@ packages, you would edit the bundler plugin in your pom.xml:
 
 .. _plugins-deployment-system:
 
+Deploying Artifacts
+-------------------
+A plugins can be deployed as either a :ref:`system <plugins-deployment-system>` or 
+:ref:`user <plugins-deployment-user>` artifact. System artifacts are available 
+across all namespaces, while user artifacts are local to one namespace.
+
+By design, deploying as a user artifact just requires acess to the :ref:`RESTful API 
+<http-restful-api-artifact-add>`, while deploying as a system artifact requires access to
+the filesystem of the CDAP Master. This then requires administrator access and permission.
+
+.. _plugins-deployment-system:
+
 Deploying a System Artifact
 ---------------------------
 To deploy the artifact as a system artifact, both the JAR file and a matching configuration file
