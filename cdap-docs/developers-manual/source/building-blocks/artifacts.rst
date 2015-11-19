@@ -11,34 +11,35 @@ Artifacts
 .. highlight:: java
 
 An *Artifact* is a JAR file that contains Java classes and resources required to create and run an *Application*.
+*Artifacts* are identified by a *name*, *version*, and *scope*.
 
-*Artifacts* are identified by a name, version, and scope.
-The artifact name must consist of only alphanumeric, '-', and '_' characters. For example,
-'my-application' is a valid artifact name, but 'my:application' is not.
+The **artifact name** must consist only of alphanumeric, ``'-'`` (hyphen), and ``'_'`` (underscore) characters.
+For example, ``'my-application'`` is a valid artifact name, but ``'my:application'`` is not.
 
-The artifact version is of the format '[major].[minor].[fix](-\|.)[suffix]'. Minor, fix, and suffix
+The **artifact version** is of the format ``'[major].[minor].[fix](-\|.)[suffix]'``. Minor, fix, and suffix
 portions of the version are optional, though it is suggested that you have them conform to
 standard versioning schemes. The major, minor, and fix portions of the version must be numeric.
-The suffix can be any of the acceptable characters. For example, '3.2.0-SNAPSHOT' is a valid artifact version,
-with a major version of 3, minor version of 2, fix version of 0, and suffix of SNAPSHOT. 
+The suffix can be any of the acceptable characters. For example, ``'3.2.0-SNAPSHOT'`` is a valid artifact version,
+with a major version of 3, minor version of 2, fix version of 0, and suffix of ``SNAPSHOT``. 
 
-The artifact scope is either 'user' or 'system'. An artifact in the 'user' scope was added by users
-through the CLI or RESTful API. A 'user' artifact belongs in a namespace and cannot be accessed in
-another namespace. A 'system' artifact is an artifact that is available across all namespaces. It
-is added by placing the artifact in a special directory on either the CDAP master node(s) or the
-CDAP Standalone. 
+The **artifact scope** is either ``'user'`` or ``'system'``. An artifact in the *'user'* scope is added by users
+through the CLI or RESTful API. A *'user'* artifact belongs in a namespace and cannot be accessed in
+another namespace. A *'system'* artifact is an artifact that is available across all namespaces. It
+is added by placing the artifact in a special directory on either the CDAP Master node(s) or the
+CDAP Standalone SDK. 
 
-Once added to CDAP, an *Artifact* cannot be modified unless it is a snapshot artifact.
-An *Artifact* is a snapshot artifact if the version suffix begins with SNAPSHOT. For example,
-'1.2.3.SNAPSHOT-test' is a snapshot version because it has a suffix of 'SNAPSHOT-test', which
-begins with SNAPSHOT. '1.2.3' is not a snapshot version because there is no suffix. '1.2.3-hadoop2'
-is also not a snapshot version because the suffix does not begin with SNAPSHOT.
+Once added to CDAP, an *Artifact* cannot be modified unless it is a **snapshot artifact.**
+An *Artifact* is a snapshot artifact if the version suffix begins with ``SNAPSHOT``. For example,
+``'1.2.3.SNAPSHOT-test'`` is a snapshot version because it has a suffix of ``'SNAPSHOT-test'``, which
+begins with ``SNAPSHOT``. ``'1.2.3'`` is not a snapshot version because there is no suffix. ``'1.2.3-hadoop2'``
+is also not a snapshot version because the suffix does not begin with ``SNAPSHOT``.
 
 Artifacts are managed using the :ref:`Artifact HTTP RESTful APIs <http-restful-api-artifact>`.
 
 Deploying an Artifact
 =====================
-An artifact is deployed through the RESTful API. If it contains an Application class, the artifact
+An artifact is deployed through the :ref:`RESTful API <http-restful-api-artifact-add>`. 
+If it contains an Application class, the artifact
 can then be used to create applications. Once an artifact is deployed, it cannot be changed, with
 the exception of snapshot versions of artifacts. Snapshot artifacts can be deployed multiple times,
 with each deployment overwriting the previous artifact. If a program is using a snapshot artifact,
@@ -64,22 +65,32 @@ If a program is already running, it will be unaffected. If that running program 
 be able to start again until the artifact is replaced, or the application is updated to use another
 artifact.
 
-System Artifacts
-================
-Normally an artifact is added to a specific namespace. Users in one namespace cannot see or use
-artifacts in another namespace. Sometimes there is a need to provide an artifact that can be used
-across namespaces. One example of this are the etl artifacts shipped with CDAP. In such scenarios,
-a system artifact can be used. System artifacts cannot be added through the RESTful API, but must be
-added by placing the artifact in a special directory. For distributed CDAP, this directory is defined
-by the ``app.artifact.dir`` setting in cdap-site.xml. It defaults to ``/opt/cdap/master/artifacts``.
-For CDAP standalone, the directory is set to the ``artifacts`` directory.
+User and System Artifacts
+=========================
+Normally, an artifact is added to a specific namespace. Users in one namespace cannot see or use
+artifacts in another namespace. These are referred to as :ref:`user artifacts <plugins-deployment-user>`.
 
-Any artifact in the directory will be added to CDAP when it starts up. In addition, a RESTful API
+Sometimes there is a need to provide an artifact that can be used across namespaces. One
+example of this are the :ref:`ETL artifacts <included-apps-etl-plugins>` shipped with 
+CDAP. In such scenarios, a :ref:`system artifact <plugins-deployment-system>` can be used. 
+
+System artifacts cannot be added through the RESTful API, but must be added by placing the
+artifact in a special directory. For Distributed CDAP, this directory is defined by the
+``app.artifact.dir`` setting in :ref:`cdap-site.xml <appendix-cdap-site.xml>`. It defaults to
+``/opt/cdap/master/artifacts``. For the CDAP Standalone SDK, the directory is set to the
+``artifacts`` directory.
+
+Any artifact in the directory will be added to CDAP when it starts up. In addition, a 
+:ref:`RESTful API <http-restful-api-artifact-system-load>`
 call can be made to scan the directory for any new artifacts that may have been added since CDAP
-started. If a system artifact contains plugins that extend another system artifact, a matching
+started. 
+
+If a system artifact contains plugins that extend another system artifact, a matching
 JSON config file must be provided to specify which artifacts it extends. In addition, if a system
 artifact is a third-party JAR, the plugins in the artifact can be explicitly listed in that same config
-file. For example, suppose you want to add ``mysql-connector-java-5.1.3.jar`` as a system artifact. The
+file. 
+
+For example, suppose you want to add ``mysql-connector-java-5.1.3.jar`` as a system artifact. The
 artifact is the MySQL JDBC driver, and is a third-party JAR that we want to use as a JDBC plugin for
 the ``cdap-etl-batch`` artifact. You would place the JAR file in the artifacts directory along with a
 matching config file named ``mysql-connector-java-5.1.3.json``. The config file would contain::
