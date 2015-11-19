@@ -82,7 +82,7 @@ class TopPanelController{
   }
 
   onExport() {
-    let config = angular.copy(this.ConfigStore.getState());
+    let config = angular.copy(this.ConfigStore.getDisplayConfig());
     this.$bootstrapModal.open({
       templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
       size: 'lg',

@@ -16,7 +16,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .factory('CanvasFactory', function(myHelpers, $q, $alert, GLOBALS) {
+  .factory('CanvasFactory', function(myHelpers, $q, $alert, GLOBALS, $filter) {
     function getNodes(config, type) {
       var nodes = [];
       var i =0;
@@ -183,12 +183,167 @@ angular.module(PKG.name + '.feature.hydrator')
       return defer.promise;
     }
 
+    /*
+      This is the inner utility function that is used once we have a source node to start our traversal.
+    */
+    function addConnectionsInOrder(node, finalConnections, originalConnections) {
+      if (node.visited) {
+        return finalConnections;
+      }
+
+      node.visited = true;
+      finalConnections.push(node);
+      var nextConnection = originalConnections.filter(function(conn) {
+        if (node.target === conn.source) {
+          return conn;
+        }
+      });
+      if (nextConnection.length) {
+        return addConnectionsInOrder(nextConnection[0], finalConnections, originalConnections);
+      }
+    }
+    /*
+      This function exists because if the user adds all tranforms and sinks but no source.
+      So now technically we can show the config as list of transforms and sinks but can't traverse
+      through the list of connections if we always want to start with a source.
+      This is for a use case where we want to start with a transform that doesn't has any input nodes (assuming that is where source will end up).
+
+      transform1 -> transform2 -> transform3 -- Sink1
+                                             |_ Sink2
+                                             |_ Sink3
+    */
+    function findTransformThatIsSource(originalConnections) {
+      var transformAsSource = {};
+      function isSource (c) {
+        if (c.target === connection.source) {
+          return c;
+        }
+      }
+      for (var i =0; i<originalConnections.length; i++) {
+        var connection = originalConnections[i];
+        var isSoureATarget = originalConnections.filter(isSource);
+        if (!isSoureATarget.length) {
+          transformAsSource = connection;
+          break;
+        }
+      }
+      return transformAsSource;
+    }
+    /*
+      Utility that will take list of connections in any order and will order it with source -> [transforms] -> [sinks].
+      This will help us to construct the config that we need to send to the backend.
+      Eventually this will be removed and the backend doesn't expect the config anymore.
+      All the backend requires is list of nodes and list of connections and this functionaity will be moved there.
+    */
+    function orderConnections(connections, appType, nodes) {
+      var originalConnections = angular.copy(connections);
+      if (!originalConnections.length) {
+        return originalConnections;
+      }
+      var finalConnections = [];
+      var parallelConnections = [];
+      var nodesMap = {};
+      nodes.forEach(function(n) {
+        nodesMap[n.id] = n;
+      });
+      var source = connections.filter(function(conn) {
+        if (nodesMap[conn.source].type === GLOBALS.pluginTypes[appType].source) {
+          return conn;
+        }
+      });
+
+      if (!source.length) {
+        source = [findTransformThatIsSource(originalConnections)];
+        addConnectionsInOrder(source, finalConnections, originalConnections);
+      }
+      
+      addConnectionsInOrder(source[0], finalConnections, originalConnections);
+      if (finalConnections.length < originalConnections.length) {
+        originalConnections.forEach(function(oConn) {
+          if ($filter('filter')(finalConnections, oConn).length === 0) {
+            parallelConnections.push(oConn);
+          }
+        });
+        finalConnections = finalConnections.concat(parallelConnections);
+      }
+      return finalConnections;
+    }
+
+    function pruneNonBackEndProperties(config) {
+      function propertiesIterator(properties, backendProperties) {
+        angular.forEach(properties, function(value, key) {
+          // If its a required field don't remove it.
+          var isRequiredField = backendProperties[key] && backendProperties[key].required;
+          var isErrorDatasetName = !backendProperties[key] && key !== 'errorDatasetName';
+          var isPropertyEmptyOrNull = properties[key] === '' || properties[key] === null;
+          var isPropertyNotAString = properties[key] && typeof properties[key] !== 'string';
+
+          if (!isRequiredField && (isErrorDatasetName || isPropertyEmptyOrNull)) {
+            delete properties[key];
+          }
+          // FIXME: Remove this once https://issues.cask.co/browse/CDAP-3614 is fixed.
+          if (isPropertyNotAString) {
+            properties[key] = properties[key].toString();
+          }
+
+        });
+        return properties;
+      }
+      if (myHelpers.objectQuery(config, 'source', 'properties') &&
+          Object.keys(config.source.properties).length > 0) {
+        config.source.properties = propertiesIterator(config.source.properties, config.source._backendProperties);
+      }
+
+      config.sinks.forEach(function(sink) {
+        if (myHelpers.objectQuery(sink, 'properties') &&
+            Object.keys(sink.properties).length > 0) {
+          sink.properties = propertiesIterator(sink.properties, sink._backendProperties);
+        }
+      });
+
+      config.transforms.forEach(function(transform) {
+        if (myHelpers.objectQuery(transform, 'properties') &&
+            Object.keys(transform.properties).length > 0) {
+          transform.properties = propertiesIterator(transform.properties, transform._backendProperties);
+        }
+      });
+    }
+
+    function pruneProperties(config) {
+
+      pruneNonBackEndProperties(config);
+
+      if (config.source && (config.source.id || config.source._backendProperties)) {
+        delete config.source._backendProperties;
+        delete config.source.id;
+        delete config.source.outputSchema;
+        delete config.source.inputSchema;
+      }
+
+      config.sinks.forEach(function(sink) {
+        delete sink._backendProperties;
+        delete sink.id;
+        delete sink.outputSchema;
+        delete sink.inputSchema;
+      });
+
+      config.transforms.forEach(function(t) {
+        delete t._backendProperties;
+        delete t.id;
+        delete t.outputSchema;
+        delete t.inputSchema;
+      });
+      return config;
+    }
+
     return {
       getNodes: getNodes,
       extractMetadataFromDraft: extractMetadataFromDraft,
       getConnectionsBasedOnNodes: getConnectionsBasedOnNodes,
       exportPipeline: exportPipeline,
       importPipeline: importPipeline,
-      parseImportedJson: parseImportedJson
+      parseImportedJson: parseImportedJson,
+      orderConnections: orderConnections,
+      pruneProperties: pruneProperties
     };
   });

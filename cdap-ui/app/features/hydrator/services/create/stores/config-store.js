@@ -15,8 +15,10 @@
  */
 
 class ConfigStore {
-  constructor(ConfigDispatcher){
+  constructor(ConfigDispatcher, CanvasFactory, GLOBALS){
     this.state = {};
+    this.CanvasFactory = CanvasFactory;
+    this.GLOBALS = GLOBALS;
     this.changeListeners = [];
     this.setDefaults();
     this.configDispatcher = ConfigDispatcher.getDispatcher();
@@ -48,6 +50,13 @@ class ConfigStore {
       name: ''
     };
   }
+  getDefaultConfig() {
+    return {
+      source: {},
+      sinks: [],
+      transforms: []
+    };
+  }
 
   setState(state) {
     this.state = state;
@@ -66,6 +75,62 @@ class ConfigStore {
   }
   getConfig() {
     return this.state.config;
+  }
+  getDisplayConfig() {
+    var config = this.getDefaultConfig();
+    var artifactTypeExtension = this.GLOBALS.pluginTypes[this.state.artifact.name];
+    var nodesMap = {};
+    this.state.nodes.forEach(function(n) {
+      nodesMap[n.id] = n;
+    });
+
+    function addPluginToConfig(plugin, id) {
+      var pluginConfig =  {
+        // Solely adding id and _backendProperties for validation.
+        // Should be removed while saving it to backend.
+        id: plugin.id,
+        name: plugin.name,
+        label: plugin.label,
+        properties: plugin.properties,
+        _backendProperties: plugin._backendProperties,
+        outputSchema: plugin.outputSchema
+      };
+
+      if (plugin.type === artifactTypeExtension.source) {
+        config['source'] = pluginConfig;
+      } else if (plugin.type === 'transform') {
+        if (plugin.errorDatasetName && plugin.errorDatasetName.length > 0) {
+          pluginConfig.errorDatasetName = plugin.errorDatasetName;
+        }
+        if (plugin.validationFields) {
+          pluginConfig.validationFields = plugin.validationFields;
+        }
+
+        config['transforms'].push(pluginConfig);
+      } else if (plugin.type === artifactTypeExtension.sink) {
+        config['sinks'].push(pluginConfig);
+      }
+      delete nodesMap[id];
+    }
+    var connections = this.CanvasFactory.orderConnections(
+      angular.copy(this.state.connections),
+      this.state.artifact.name,
+      this.state.nodes
+    );
+
+    connections.forEach( connection => {
+      if (nodesMap[connection.source]) {
+        addPluginToConfig(nodesMap[connection.source], connection.source);
+      }
+      if (nodesMap[connection.target]) {
+        addPluginToConfig(nodesMap[connection.target], connection.target);
+      }
+     });
+    this.CanvasFactory.pruneProperties(config);
+    this.state.config = angular.copy(config);
+    var stateCopy = angular.copy(this.state);
+    delete stateCopy.nodes;
+    return stateCopy;
   }
   getDescription() {
     return this.state.description;
@@ -130,6 +195,6 @@ class ConfigStore {
   }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher'];
+ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);
