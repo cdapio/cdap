@@ -31,17 +31,17 @@ class NodesStore {
     dispatcher.register('onCreateGraphFromConfig', this.setNodesAndConnections.bind(this));
   }
 
-  init() {
-    this.setDefaults();
-  }
-
   setDefaults() {
     this.state = {
       nodes: [],
       connections: [],
       activeNodeId: null
     };
+  }
+
+  reset() {
     this.changeListeners = [];
+    this.setDefaults();
   }
 
   registerOnChangeListener(callback) {
