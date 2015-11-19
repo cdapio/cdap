@@ -30,7 +30,9 @@ class NodesActionsFactory {
   addConnection(connection) {
     this.nodesDispatcher.dispatch('onConnect', connection);
   }
-
+  setConnections(connections) {
+    this.nodesDispatcher.dispatch('onConnectionsUpdate', connections);
+  }
   removeConnection(connection) {
     this.nodesDispatcher.dispatch('onRemoveConnection', connection);
   }

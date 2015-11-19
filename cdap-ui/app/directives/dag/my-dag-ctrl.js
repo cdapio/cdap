@@ -95,7 +95,7 @@ angular.module(PKG.name + '.commons')
           target: conn.targetId
         });
       });
-      $scope.connections = connections;
+      NodesActionsFactory.setConnections(connections);
     }
 
 
@@ -144,6 +144,7 @@ angular.module(PKG.name + '.commons')
     vm.onNodeDelete = function (event, node) {
       event.stopPropagation();
       NodesActionsFactory.removeNode(node.id);
+      vm.instance.remove(node.id);
     };
 
 
