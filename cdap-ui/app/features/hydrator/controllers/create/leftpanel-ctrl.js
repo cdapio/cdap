@@ -84,11 +84,12 @@ class LeftPanelController {
     } else {
       config = {
         id: id,
-        label: id,
+        label: item.name,
         name: item.name,
         icon: item.icon,
         description: item.description,
-        type: item.type
+        type: item.type,
+        properties: {}
       };
     }
 

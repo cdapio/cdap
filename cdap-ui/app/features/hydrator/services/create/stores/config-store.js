@@ -42,6 +42,8 @@ class ConfigStore {
         sinks: [],
         transforms: []
       },
+      nodes: [],
+      connections: [],
       description: '',
       name: ''
     };
@@ -50,12 +52,17 @@ class ConfigStore {
   setState(state) {
     this.state = state;
   }
-
   getState() {
     return this.state;
   }
   getArtifact() {
     return this.state.artifact;
+  }
+  getAppType() {
+    return this.state.artifact.name;
+  }
+  getConnections() {
+    return this.state.connections;
   }
   getConfig() {
     return this.state.config;
@@ -98,6 +105,28 @@ class ConfigStore {
     this.state.artifact.version = artifact.version;
     this.state.artifact.scope = artifact.scope;
     this.emitChange();
+  }
+  setNodes(nodes) {
+    this.state.nodes = nodes;
+  }
+  setConnections(connections) {
+    this.state.connections = connections;
+  }
+  addNode(node) {
+    this.state.nodes.push(node);
+  }
+  getNodes() {
+    return this.state.nodes;
+  }
+  getNode(nodeId) {
+    var nodes = this.state.nodes;
+    var match = nodes.filter( node => node.id === nodeId);
+    if (match.length) {
+      match = match[0];
+    } else {
+      match = null;
+    }
+    return match;
   }
 }
 
