@@ -21,8 +21,8 @@
     </a>
   </div>
   <div class="tag-input" ng-if="MetadataController.metadataAddOpen">
-    <div class="input-group" ng-keypress="$event.keyCode === 13 && MetadataController.addMetadata()">
-      <input type="text" class="form-control" ng-model="MetadataController.tag">
+    <div class="input-group" my-escape-close="MetadataController.escapeMetadata()" ng-keypress="$event.keyCode === 13 && MetadataController.addMetadata()">
+      <input type="text" class="form-control" ng-model="MetadataController.tag" cask-focus="metadataInput">
       <span class="input-group-btn">
         <button class="btn btn-default"
           ng-click="MetadataController.metadataAddOpen = false">
@@ -31,12 +31,14 @@
       </span>
     </div>
   </div>
-  <div class="tag" ng-repeat="tag in MetadataController.metadataTags">
-    <a class="btn">
-      {{tag}}
-      <span class="fa fa-times"
-        ng-click="MetadataController.deleteMetadata(tag)"
-      ></span>
-    </a>
+  <div class="tag-container">
+    <div class="tag" ng-repeat="tag in MetadataController.metadataTags">
+      <a class="btn">
+        {{tag}}
+        <span class="fa fa-times"
+          ng-click="MetadataController.deleteMetadata(tag)"
+        ></span>
+      </a>
+    </div>
   </div>
 </div>

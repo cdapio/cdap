@@ -28,7 +28,7 @@ angular.module(PKG.name + '.commons')
       templateUrl: 'metadata-tags/metadata-tags.html',
     };
   })
-  .controller('MetadataTagsController', function ($scope, myMetadataFactory) {
+  .controller('MetadataTagsController', function ($scope, myMetadataFactory, caskFocusManager) {
     this.metadataAddOpen = false;
     this.metadataTags = [];
     var prom;
@@ -93,5 +93,12 @@ angular.module(PKG.name + '.commons')
         this.metadataTags = res;
       }.bind(this));
     };
+
+    this.escapeMetadata = function () {
+      this.tag = '';
+      this.metadataAddOpen = false;
+    };
+
+    caskFocusManager.focus('metadataInput');
 
   });
