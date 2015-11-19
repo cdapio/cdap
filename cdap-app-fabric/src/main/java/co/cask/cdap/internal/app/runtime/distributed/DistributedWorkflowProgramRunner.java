@@ -23,9 +23,8 @@ import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.ScheduleProgramInfo;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
-import co.cask.cdap.api.workflow.WorkflowConditionNode;
-import co.cask.cdap.api.workflow.WorkflowForkNode;
 import co.cask.cdap.api.workflow.WorkflowNode;
+import co.cask.cdap.api.workflow.WorkflowNodeType;
 import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
@@ -40,7 +39,6 @@ import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
@@ -53,11 +51,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramRunner} to start a {@link Workflow} program in distributed mode.
@@ -91,17 +86,13 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     List<String> extraClassPaths = new ArrayList<>();
 
     // See if the Workflow has Spark or MapReduce in it
-    Resources resources = findDriverResources(program.getApplicationSpecification().getSpark(),
-                                              program.getApplicationSpecification().getMapReduce(),
-                                              workflowSpec);
-    if (resources != null) {
-      // Has Spark
+    DriverMeta driverMeta = findDriverResources(program.getApplicationSpecification().getSpark(),
+                                                program.getApplicationSpecification().getMapReduce(), workflowSpec);
+
+    if (driverMeta.hasSpark) {
       File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
       localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
       extraClassPaths.add(sparkAssemblyJar.getName());
-    } else {
-      // No Spark
-      resources = new Resources();
     }
     
     // Add classpaths for MR framework
@@ -126,7 +117,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
 
     LOG.info("Launching distributed workflow: " + program.getName() + ":" + workflowSpec.getName());
     TwillController controller = launcher.launch(
-      new WorkflowTwillApplication(program, workflowSpec, localizeResources, eventHandler, resources),
+      new WorkflowTwillApplication(program, workflowSpec, localizeResources, eventHandler, driverMeta.resources),
       extraClassPaths
     );
 
@@ -157,59 +148,38 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
   }
 
   /**
-   * Returns the {@link Resources} requirement for the workflow runnable due to spark or MapReduce driver resources
-   * requirement.
-   * Returns {@code null} if there is no spark program in the workflow.
+   * Returns the {@link DriverMeta} which includes the resource requirement for the workflow runnable due to spark
+   * or MapReduce driver resources requirement. {@link DriverMeta} also contain the information about
+   * whether the workflow contains spark.
    */
-  @Nullable
-  private Resources findDriverResources(Map<String, SparkSpecification> sparkSpecs,
+  private DriverMeta findDriverResources(Map<String, SparkSpecification> sparkSpecs,
                                         Map<String, MapReduceSpecification> mrSpecs,
                                         WorkflowSpecification spec) {
     // Find the resource requirements from the workflow
     // It is the largest memory and cores from all Spark and MapReduce programs inside the workflow
     Resources resources = new Resources();
-    boolean hasSparkOrMapReduce = false;
+    boolean hasSpark = false;
 
-    // Search through all workflow nodes for spark program resource requirements.
-    Queue<WorkflowNode> nodes = new LinkedList<>(spec.getNodes());
-    while (!nodes.isEmpty()) {
-      WorkflowNode node = nodes.poll();
-      switch (node.getType()) {
-        case ACTION: {
-          ScheduleProgramInfo programInfo = ((WorkflowActionNode) node).getProgram();
-          SchedulableProgramType programType = programInfo.getProgramType();
-          if (programType == SchedulableProgramType.SPARK || programType == SchedulableProgramType.MAPREDUCE) {
-            hasSparkOrMapReduce = true;
-            // The program spec shouldn't be null, otherwise the Workflow is not valid
-            Resources driverResources;
-            if (programType == SchedulableProgramType.SPARK) {
-              driverResources = sparkSpecs.get(programInfo.getProgramName()).getDriverResources();
-            }  else {
-              driverResources = mrSpecs.get(programInfo.getProgramName()).getDriverResources();
-            }
-            if (driverResources != null) {
-              resources = max(resources, driverResources);
-            }
+    for (WorkflowNode node : spec.getNodeIdMap().values()) {
+      if (WorkflowNodeType.ACTION == node.getType()) {
+        ScheduleProgramInfo programInfo = ((WorkflowActionNode) node).getProgram();
+        SchedulableProgramType programType = programInfo.getProgramType();
+        if (programType == SchedulableProgramType.SPARK || programType == SchedulableProgramType.MAPREDUCE) {
+          // The program spec shouldn't be null, otherwise the Workflow is not valid
+          Resources driverResources;
+          if (programType == SchedulableProgramType.SPARK) {
+            hasSpark = true;
+            driverResources = sparkSpecs.get(programInfo.getProgramName()).getDriverResources();
+          } else {
+            driverResources = mrSpecs.get(programInfo.getProgramName()).getDriverResources();
           }
-          break;
+          if (driverResources != null) {
+            resources = max(resources, driverResources);
+          }
         }
-        case FORK: {
-          WorkflowForkNode forkNode = (WorkflowForkNode) node;
-          Iterables.addAll(nodes, Iterables.concat(forkNode.getBranches()));
-          break;
-        }
-        case CONDITION: {
-          WorkflowConditionNode conditionNode = (WorkflowConditionNode) node;
-          nodes.addAll(conditionNode.getIfBranch());
-          nodes.addAll(conditionNode.getElseBranch());
-          break;
-        }
-        default:
-          LOG.warn("Unknown workflow node type {}", node.getType());
       }
     }
-
-    return hasSparkOrMapReduce ? resources : null;
+    return new DriverMeta(resources, hasSpark);
   }
 
   /**
@@ -229,5 +199,18 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     }
     return new Resources(Math.max(memory1, memory2),
                          Math.max(vcores1, vcores2));
+  }
+
+  /**
+   * Class representing the meta information for the driver.
+   */
+  private static class DriverMeta {
+    private final Resources resources;
+    private final boolean hasSpark;
+
+    DriverMeta(Resources resources, boolean hasSpark) {
+      this.resources = resources;
+      this.hasSpark = hasSpark;
+    }
   }
 }

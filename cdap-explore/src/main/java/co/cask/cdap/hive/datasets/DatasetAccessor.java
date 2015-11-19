@@ -17,6 +17,7 @@
 package co.cask.cdap.hive.datasets;
 
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
@@ -71,8 +72,16 @@ public class DatasetAccessor implements Closeable {
     }
   }
 
+  public Id.DatasetInstance getDatasetId() {
+    return datasetId;
+  }
+
   public <T extends Dataset> T getDataset() {
     return (T) dataset;
+  }
+
+  public DatasetSpecification getDatasetSpec() throws DatasetManagementException {
+    return context.getDatasetSpec(datasetId);
   }
 
   @Override

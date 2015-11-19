@@ -14,7 +14,6 @@ Datasets
     Table API <table>
     File Sets <fileset>
     System and Custom Datasets <system-custom>
-    Datasets and MapReduce <datasets-mapreduce>
     Cube Dataset <cube>
 
 
@@ -63,6 +62,8 @@ For example, to create a DataSet named *myCounters* of type
   public void configure() {
       createDataset("myCounters", KeyValueTable.class);
       ...
+
+.. _datasets-in-programs:
 
 .. rubric:: Using Datasets in Programs
 

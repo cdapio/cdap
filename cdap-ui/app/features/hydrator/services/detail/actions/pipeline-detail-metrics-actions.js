@@ -25,15 +25,24 @@ angular.module(PKG.name + '.feature.hydrator')
     var filter = $filter('filter');
     this.pollForMetrics = function(params) {
       this.stopMetricsPoll();
-      doPollMetrics.call(this, params);
+      getMetrics.call(this, params, true);
     };
 
-    function doPollMetrics(params) {
+    this.requestForMetrics = function (params) {
+      getMetrics.call(this, params, false);
+    };
+
+    function getMetrics(params, isPoll) {
       var metricParams = params;
+      var api;
       metricParams = MyMetricsQueryHelper.tagsToParams(metricParams);
       var metricBasePath = '/metrics/search?target=metric&' + metricParams;
-
-      metricsPollId = dataSrc.poll({
+      if (isPoll) {
+        api = dataSrc.poll.bind(dataSrc);
+      } else {
+        api = dataSrc.request.bind(dataSrc);
+      }
+      metricsPollId = api({
         method: 'POST',
         _cdapPath: metricBasePath
       }, function (res) {
@@ -53,12 +62,13 @@ angular.module(PKG.name + '.feature.hydrator')
           if (metricQuery.length === 0) { return; }
           this.stopMetricValuesPoll();
 
-          metricValuesPollId = dataSrc.poll({
+          metricValuesPollId = api({
             method: 'POST',
             _cdapPath: '/metrics/query?' + metricParams + '&metric=' + metricQuery.join('&metric=')
           }, function(metrics) {
             dispatcher.dispatch('onMetricsFetch', metrics);
           });
+
           metricValuesPollId = metricValuesPollId.__pollId__;
         }
       }.bind(this));

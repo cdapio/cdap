@@ -13,10 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.etl.api;
 
-import co.cask.cdap.api.dataset.DatasetProperties;
-import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 
@@ -32,41 +32,46 @@ public class LookupTableConfig {
     DATASET
   }
 
-  /**
-   * When type is DATASET, {@link #properties} is interpreted as {@link DatasetProperties}.
-   */
   private final TableType type;
-  private final Map<String, Object> properties;
 
-  public LookupTableConfig(TableType type, Map<String, Object> properties) {
+  private final Map<String, String> datasetProperties;
+  private final CacheConfig cacheConfig;
+  private final boolean cacheEnabled;
+
+  /**
+   * @param type type of lookup table
+   * @param cacheConfig cache config
+   * @param datasetProperties runtime dataset properties
+   * @param cacheEnabled true if caching is desired
+   */
+  public LookupTableConfig(TableType type, CacheConfig cacheConfig,
+                           Map<String, String> datasetProperties, boolean cacheEnabled) {
     this.type = type;
-    this.properties = properties;
+    this.cacheConfig = cacheConfig;
+    this.datasetProperties = datasetProperties;
+    this.cacheEnabled = cacheEnabled;
+  }
+
+  /**
+   * @param type type of lookup table
+   */
+  public LookupTableConfig(TableType type) {
+    this(type, new CacheConfig(), ImmutableMap.<String, String>of(), false);
   }
 
   public TableType getType() {
     return type;
   }
 
-  public Map<String, Object> getProperties() {
-    return properties;
+  public Map<String, String> getDatasetProperties() {
+    return datasetProperties;
   }
 
-  public DatasetProperties getDatasetProperties() {
-    Preconditions.checkArgument(type == TableType.DATASET);
+  public boolean isCacheEnabled() {
+    return cacheEnabled;
+  }
 
-    Object argumentsObj = properties.get("arguments");
-    if (argumentsObj == null) {
-      return DatasetProperties.EMPTY;
-    }
-
-    if (!(argumentsObj instanceof Map)) {
-      throw new IllegalArgumentException("Expected 'arguments' property to be a map of string to string");
-    }
-
-    @SuppressWarnings("unchecked")
-    Map<String, String> arguments = (Map<String, String>) argumentsObj;
-    return DatasetProperties.builder()
-      .addAll(arguments)
-      .build();
+  public CacheConfig getCacheConfig() {
+    return cacheConfig;
   }
 }

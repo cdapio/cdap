@@ -8,9 +8,12 @@
     :license: BSD, see LICENSE for details.
     
     Removes relations on specified pages.
-    To hide, set in a field list at the top as
+    To hide, set in a field list at the top as:
+    
 :hide-relations: true
+
 #}
+
 {%- set hiderel = '' %}
 {%- set hiderel_key = 'hide-relations' %}
 {%- if meta is defined %}
@@ -19,14 +22,17 @@
     {%- endif %}
 {%- endif %}
 {%- if not hiderel %}
-{%- if prev %}
-  <h4>{{ _('Previous topic') }}</h4>
-  <p class="topless"><a href="{{ prev.link|e }}"
-                        title="{{ _('previous chapter') }}">{{ prev.title }}</a></p>
-{%- endif %}
-{%- if next %}
-  <h4>{{ _('Next topic') }}</h4>
-  <p class="topless"><a href="{{ next.link|e }}"
-                        title="{{ _('next chapter') }}">{{ next.title }}</a></p>
+{%- if prev or next %}
+  <h4>{{ _('Topics') }}</h4>
+  <ul>
+  {%- if prev %}
+  <li class="topless"><i>{{ _('Previous:') }}</i> <a href="{{ prev.link|e }}"
+                        title="{{ _('Previous Topic') }}">{{ prev.title }}</a></li>
+  {%- endif %}
+  {%- if next %}
+  <li class="topless"><i>{{ _('Next:') }}</i> <a href="{{ next.link|e }}"
+                        title="{{ _('Next Topic') }}">{{ next.title }}</a></li>
+  {%- endif %}
+  </ul>
 {%- endif %}
 {%- endif %}

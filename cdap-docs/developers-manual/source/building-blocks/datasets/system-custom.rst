@@ -123,15 +123,12 @@ You can pass other properties, such as for
 
 Accessing a Dataset
 -------------------
-Application components can access a created dataset via the ``@UseDataSet`` annotation::
-
-  Class MyFlowlet extends AbstractFlowlet {
-    @UseDataSet("myCounters")
-    private UniqueCountTable counters;
-    ...
-  }
+Application components can access a custom dataset in the same way as all other datasets:
+via either the ``@UseDataSet`` annotation, or the ``getDataset()`` method of the program context.
+This is described in more detail in the section on
+:ref:`Using Datasets in Programs <datasets-in-programs>`.
 
 A complete application demonstrating the use of a custom dataset is included in our
-:ref:`Purchase Example. <examples-purchase>`
+:ref:`Purchase Example <examples-purchase>`.
 
 You can also create, drop, and truncate datasets using the :ref:`http-restful-api-dataset`.

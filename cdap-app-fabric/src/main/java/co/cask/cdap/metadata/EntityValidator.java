@@ -28,11 +28,13 @@ import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 
+import java.io.IOException;
 import java.util.Set;
 
 /**
@@ -43,14 +45,16 @@ public class EntityValidator {
   private final Store store;
   private final DatasetFramework datasetFramework;
   private final StreamAdmin streamAdmin;
+  private final ArtifactStore artifactStore;
 
   @Inject
   EntityValidator(AbstractNamespaceClient namespaceClient, Store store, DatasetFramework datasetFramework,
-                  StreamAdmin streamAdmin) {
+                  StreamAdmin streamAdmin, ArtifactStore artifactStore) {
     this.namespaceClient = namespaceClient;
     this.store = store;
     this.datasetFramework = datasetFramework;
     this.streamAdmin = streamAdmin;
+    this.artifactStore = artifactStore;
   }
 
   /**
@@ -98,6 +102,13 @@ public class EntityValidator {
         throw streamEx;
       } catch (Exception ex)  {
         throw new IllegalStateException(ex);
+      }
+    } else if (entityId instanceof Id.Artifact) {
+      Id.Artifact artifactId = (Id.Artifact) entityId;
+      try {
+        artifactStore.getArtifact(artifactId);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       }
     } else {
       throw new IllegalArgumentException("Invalid entity" + entityId);

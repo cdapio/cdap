@@ -37,7 +37,7 @@ import co.cask.cdap.dq.rowkey.AggregationsRowKey;
 import co.cask.cdap.dq.rowkey.ValuesRowKey;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
-import co.cask.cdap.etl.batch.MapReduceSourceContext;
+import co.cask.cdap.etl.batch.mapreduce.MapReduceSourceContext;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -129,9 +129,10 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
     addService(new DataQualityService(configObj.datasetName));
     addWorkflow(new DataQualityWorkflow());
     String schedule = "*/" + scheduleMinutes + " * * * *";
-    scheduleWorkflow(Schedules.createTimeSchedule("aggregatorSchedule",
-                                                  "Schedule execution every " + scheduleMinutes
-                                                    + " min", schedule), "DataQualityWorkflow");
+    scheduleWorkflow(Schedules.builder("aggregatorSchedule")
+                       .setDescription("Schedule execution every " + scheduleMinutes + " min")
+                      .createTimeSchedule(schedule),
+                     "DataQualityWorkflow");
   }
 
   /**

@@ -157,6 +157,29 @@ public class ArtifactVersionTest {
     assertInvalidVersion(new ArtifactVersion("xyz-v1.2.3"));
   }
 
+  @Test
+  public void testNumberInArtifactName() {
+    ArtifactVersion actual = new ArtifactVersion("test1-1.0-SNAPSHOT", true);
+    ArtifactVersion expected = new ArtifactVersion("1.0-SNAPSHOT");
+    Assert.assertEquals(expected, actual);
+
+    actual = new ArtifactVersion("1-test-1.0-SNAPSHOT", true);
+    expected = new ArtifactVersion("1.0-SNAPSHOT");
+    Assert.assertEquals(expected, actual);
+
+    actual = new ArtifactVersion("1-test123-1.0-SNAPSHOT", true);
+    expected = new ArtifactVersion("1.0-SNAPSHOT");
+    Assert.assertEquals(expected, actual);
+
+    actual = new ArtifactVersion("1-test123-1.0.0-1234567890", true);
+    expected = new ArtifactVersion("1.0.0-1234567890");
+    Assert.assertEquals(expected, actual);
+
+    actual = new ArtifactVersion("1-test123-1.0.0-5.4.3-1234567890", true);
+    expected = new ArtifactVersion("1.0.0-5.4.3-1234567890");
+    Assert.assertEquals(expected, actual);
+  }
+
   private void assertInvalidVersion(ArtifactVersion artifactVersion) {
     assertVersionEquals(null, null, null, null, null, artifactVersion);
   }

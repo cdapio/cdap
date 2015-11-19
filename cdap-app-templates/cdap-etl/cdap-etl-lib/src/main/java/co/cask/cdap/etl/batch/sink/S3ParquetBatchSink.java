@@ -61,9 +61,8 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
   }
 
   @Override
-  public void prepareRun(BatchSinkContext context) {
-    super.prepareRun(context);
-    context.addOutput(config.basePath, new S3ParquetOutputFormatProvider(config, context));
+  protected OutputFormatProvider createOutputFormatProvider(BatchSinkContext context) {
+    return new S3ParquetOutputFormatProvider(config, context);
   }
 
   @Override

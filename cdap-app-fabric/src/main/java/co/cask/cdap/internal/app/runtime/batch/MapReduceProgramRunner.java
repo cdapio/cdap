@@ -236,7 +236,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
    */
   private Service.Listener createRuntimeServiceListener(final Program program, final RunId runId,
                                                         final Iterable<Closeable> closeables,
-                                                        Arguments arguments, final Arguments userArgs) {
+                                                        final Arguments arguments, final Arguments userArgs) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
     final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
@@ -253,7 +253,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
           startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         }
         if (workflowName == null) {
-          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap());
+          store.setStart(program.getId(), runId.getId(), startTimeInSeconds, twillRunId,
+                         userArgs.asMap(), arguments.asMap());
         } else {
           // Program started by Workflow
           store.setWorkflowProgramStart(program.getId(), runId.getId(), workflowName, workflowRunId, workflowNodeId,

@@ -22,7 +22,8 @@ angular.module(PKG.name + '.commons')
       controller: 'MetadataTagsController',
       controllerAs: 'MetadataController',
       scope: {
-        params: '='
+        params: '=',
+        type: '@'
       },
       templateUrl: 'metadata-tags/metadata-tags.html',
     };
@@ -30,25 +31,67 @@ angular.module(PKG.name + '.commons')
   .controller('MetadataTagsController', function ($scope, myMetadataFactory) {
     this.metadataAddOpen = false;
     this.metadataTags = [];
+    var prom;
+    switch($scope.type) {
+      case 'datasets':
+        prom = myMetadataFactory.getDatasetsMetadata($scope.params);
+        break;
+      case 'apps':
+        prom = myMetadataFactory.getAppsMetadata($scope.params);
+        break;
+      case 'programs':
+        prom = myMetadataFactory.getProgramMetadata($scope.params);
+        break;
+      case 'streams':
+        prom = myMetadataFactory.getStreamsMetadata($scope.params);
+        break;
+    }
 
-    myMetadataFactory.getProgramMetadata($scope.params)
-      .then(function (res) {
-        this.metadataTags = res;
-      }.bind(this));
+    prom.then(function (res) {
+      this.metadataTags = res;
+    }.bind(this));
 
     this.addMetadata = function () {
-      myMetadataFactory.addProgramMetadata(this.tag, $scope.params)
-        .then(function (res) {
-          this.metadataTags = res;
-          this.tag = '';
-        }.bind(this));
+      var prom;
+      switch($scope.type) {
+        case 'datasets':
+          prom = myMetadataFactory.addDatasetsMetadata(this.tag, $scope.params);
+          break;
+        case 'apps':
+          prom = myMetadataFactory.addAppsMetadata(this.tag, $scope.params);
+          break;
+        case 'programs':
+          prom = myMetadataFactory.addProgramMetadata(this.tag, $scope.params);
+          break;
+        case 'streams':
+          prom = myMetadataFactory.addStreamsMetadata(this.tag, $scope.params);
+          break;
+      }
+      prom.then(function (res) {
+        this.metadataTags = res;
+        this.tag = '';
+      }.bind(this));
     };
 
     this.deleteMetadata = function (tag) {
-      myMetadataFactory.deleteProgramMetadata(tag, $scope.params)
-        .then(function (res) {
-          this.metadataTags = res;
-        }.bind(this));
+      var prom;
+      switch($scope.type) {
+        case 'datasets':
+          prom = myMetadataFactory.deleteDatasetsMetadata(tag, $scope.params);
+          break;
+        case 'apps':
+          prom = myMetadataFactory.deleteAppsMetadata(tag, $scope.params);
+          break;
+        case 'programs':
+          prom = myMetadataFactory.deleteProgramMetadata(tag, $scope.params);
+          break;
+        case 'streams':
+          prom = myMetadataFactory.deleteStreamsMetadata(tag, $scope.params);
+          break;
+      }
+      prom.then(function (res) {
+        this.metadataTags = res;
+      }.bind(this));
     };
 
   });

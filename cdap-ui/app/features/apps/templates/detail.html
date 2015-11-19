@@ -21,11 +21,11 @@
         <span ng-bind="$state.params.appId"></span>
       </h2>
       <div class="type-block">
-        <span ng-if="DetailController.myHydratorFactory.isCustomApp(app.artifact.name)">
+        <span ng-if="DetailController.myHydratorFactory.isCustomApp(DetailController.artifact.name)">
           <span class="icon-app"></span>
           <small> Type: App </small>
         </span>
-        <span ng-if="DetailController.myHydratorFactory.isETLApp(app.artifact.name)">
+        <span ng-if="DetailController.myHydratorFactory.isETLApp(DetailController.artifact.name)">
           <span ng-if="DetailController.artifact.name === DetailController.GLOBALS.etlBatch">
             <span class="icon-ETLBatch"></span>
             <small> Type: ETL Batch </small>
@@ -36,6 +36,7 @@
           </span>
         </span>
       </div>
+      <my-metadata-tags params="DetailController.metadataParams" type="apps"></my-metadata-tags>
     </div>
     <div class="col-sm-6 text-right">
 

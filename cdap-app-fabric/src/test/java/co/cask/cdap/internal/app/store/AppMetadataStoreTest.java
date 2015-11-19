@@ -75,7 +75,7 @@ public class AppMetadataStoreTest {
       expected.add(RunIds.getTime(runId, TimeUnit.MILLISECONDS));
       // Start the program and stop it
       metadataStoreDataset.recordProgramStart(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
-                                              null, null);
+                                              null, null, null);
       metadataStoreDataset.recordProgramStop(program, runId.getId(), RunIds.getTime(runId, TimeUnit.SECONDS),
                                              ProgramRunStatus.values()[i % ProgramRunStatus.values().length]);
     }

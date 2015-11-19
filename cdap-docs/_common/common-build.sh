@@ -118,9 +118,10 @@ function usage() {
   echo
   echo "  Action (select one)"
   echo "    build                Clean build of javadocs and HTML docs, copy javadocs and PDFs into place, zip results"
-  echo "    build-github         Clean build and zip for placing on GitHub"
-  echo "    build-web            Clean build and zip for placing on docs.cask.co webserver"
-  echo "    build-docs           Clean build of docs"
+  echo "    build-github         Clean build and zip for placing on GitHub (no Javadocs)"
+  echo "    build-web            Clean build and zip for placing on docs.cask.co webserver (no Javadocs)"
+  echo "    build-docs           Clean build of docs (no Javadocs)"
+  echo "    docs                 alias for 'build-docs'"
   echo
   echo "    license-pdfs         Clean build of License Dependency PDFs"
   echo "    check-includes       Check if included files have changed from source"
@@ -218,15 +219,22 @@ function build_extras() {
 }
 
 function set_mvn_environment() {
+  check_build_rst
   cd ${PROJECT_PATH}
   if [[ "${OSTYPE}" == "darwin"* ]]; then
     # TODO: hard-coded Java version 1.7
     export JAVA_HOME=$(/usr/libexec/java_home -v 1.7)
   fi
+}
+
+function check_build_rst() {
+  local current_directory=$(pwd)
+  cd ${PROJECT_PATH}
   # check BUILD.rst for changes
   BUILD_RST_PATH="${PROJECT_PATH}${BUILD_RST}"
   test_an_include "${BUILD_RST_HASH}" "${BUILD_RST_PATH}"
   echo
+  cd ${current_directory}
 }
 
 function check_includes() {
@@ -320,13 +328,6 @@ function set_version() {
   else
     # We are on a feature branch: but from develop or release?
     # This is not easy to determine. This can fail very easily.
-    local git_branch_listing=$(git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1)
-    if [ "x${git_branch_listing}" == "x" ]; then 
-      echo_red_bold "Unable to determine parent branch as git_branch_listing empty"
-      echo_red_bold "Using default GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
-    else
-      GIT_BRANCH_PARENT=$(echo ${git_branch_listing} | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//')
-    fi
     if [ "${GIT_BRANCH_PARENT:0:7}" == "release" ]; then
       GIT_BRANCH_TYPE="release-feature"
     else
@@ -468,6 +469,7 @@ function run_command() {
     build|build-github|build-web|build-docs)      "${1/-/_}";;
     check-includes|display-version)               "${1/-/_}";;
     license-pdfs)                                 "build_license_pdfs";;
-    *)                                           usage;;
+    docs)                                         "build_docs";;
+    *)                                            usage;;
   esac
 }

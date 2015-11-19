@@ -33,9 +33,9 @@ the MapR Distribution. CDAP provides these essential capabilities:
 - Higher degrees of operational control in production through enterprise best practices.
 
 CDAP exposes developer APIs (Application Programming Interfaces) for creating applications
-and accessing core CDAP services. CDAP defines and implements a diverse collection of services that land
-applications and data on existing Hadoop infrastructure such as HBase, HDFS, YARN, MapReduce,
-Hive, and Spark.
+and accessing core CDAP services. CDAP defines and implements a diverse collection of
+services that support applications and data on existing Hadoop infrastructure such as
+HBase, HDFS, YARN, MapReduce, Hive, and Spark.
 
 These documents are your complete reference to the Cask Data Application Platform: they help
 you get started and set up your development environment; explain how CDAP works; and teach
@@ -126,6 +126,20 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Trademarks, Licenses, and Dependencies:** Trademark and License information for CDAP and lists of CDAP dependent packages
 
 
+.. |faqs| replace:: **FAQs:**
+.. _faqs: faqs/index.html
+
+- |faqs|_ Answers to questions you might have about CDAP
+
+  - **General Questions** 
+  - **CDAP Startup** 
+  - **Other Resources:** Additional resources for solving problems
+  
+..   - **Applications** 
+..   - **User Interface** 
+..   - **Databases and Transactions** 
+
+
 .. |release-notes| replace:: **Release Notes:**
 .. _release-notes: reference-manual/release-notes.html
 
@@ -136,12 +150,6 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 .. _glossary: reference-manual/glossary.html
 
 - |glossary|_ Definitions of terms and phrases used in CDAP
-
-
-.. |faq| replace:: **FAQ:**
-.. _faq: reference-manual/faq.html
-
-- |faq|_ Answers to questions you might have about CDAP
 
 
 .. |search| replace:: **Search:**

@@ -305,15 +305,16 @@
 
   <property>
     <name>data.tx.client.count</name>
-    <value>5</value>
+    <value>50</value>
     <description>
-      Number of pooled instances of the transaction client
+      The number of pooled instances of the transaction client;
+      increase this to increase transaction concurrency
     </description>
   </property>
 
   <property>
     <name>data.tx.client.provider</name>
-    <value>thread-local</value>
+    <value>pool</value>
     <description>
       Provider strategy for transaction clients; valid values are "pool" and
       "thread-local"
@@ -611,7 +612,7 @@
     <name>app.connection.backlog</name>
     <value>20000</value>
     <description>
-      Max connection backlog of CDAP-Master
+      Max connection backlog of CDAP Master
     </description>
   </property>
 
@@ -805,6 +806,14 @@
   </property>
 
   <property>
+    <name>master.collect.containers.log</name>
+    <value>true</value>
+    <description>
+      Determines if container logs are streamed back to the CDAP Master process log
+    </description>
+  </property>
+
+  <property>
     <name>master.service.max.instances</name>
     <value>5</value>
     <description>
@@ -827,7 +836,6 @@
       Number of cores for Master Service instance
     </description>
   </property>
-
 
   <!-- Metadata Configuration -->
 

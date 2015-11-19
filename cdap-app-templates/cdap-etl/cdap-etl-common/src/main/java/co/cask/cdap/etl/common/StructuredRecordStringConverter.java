@@ -45,7 +45,9 @@ import javax.annotation.Nullable;
 
 /**
  * Utility class for converting {@link StructuredRecord} to and from json.
+ * @deprecated use co.cask.cdap.format.StructuredRecordStringConverter instead.
  */
+@Deprecated
 public final class StructuredRecordStringConverter {
 
   // Known Java type to schema type mapping

@@ -74,8 +74,12 @@ body.state-dashboard {
         }
       }
     }
+
     .cdap-subnav-end + ul.slanted-tabs {
       li.active {
+        > a, > a:hover, > a:focus {
+          cursor: pointer;
+        }
         .dropdown-menu {
           background-color: transparent;
           border: 0;
@@ -140,25 +144,27 @@ body.state-dashboard {
       display: flex;
 
       > li {
-        > a {
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          min-width: 80px;
-          max-width: 200px;
-
-          // A
-          color: @cdap-gray;
-
-          .dtitle::after {
-            display: inline-block;
-            width: 0;
-            height: 0;
-            vertical-align: middle;
-            border-top: 4px solid;
-            border-right: 4px solid transparent;
-            border-left: 4px solid transparent;
-            content: '';
+        // Exclude System tab
+        &:not(:first-child) {
+          > a {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 80px;
+            height: 42px;
+            // A
+            color: @cdap-gray;
+            span.dtitle {
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              position: relative;
+              z-index: 5;
+            }
+            span.fa {
+              line-height: 20px;
+              vertical-align: top;
+            }
           }
         }
       }

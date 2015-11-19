@@ -45,7 +45,9 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.DefaultBusinessMetadataStore;
 import co.cask.cdap.data2.metadata.service.NoOpBusinessMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
@@ -394,8 +396,10 @@ public class UpgradeTool {
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
     if (includeNewDatasets) {
-      // artifacts meta data was added in 3.2
+      // artifact and metadata datasets were added in 3.2
       ArtifactStore.setupDatasets(datasetFramework);
+      DefaultBusinessMetadataStore.setupDatasets(datasetFramework);
+      LineageStore.setupDatasets(datasetFramework);
     }
     // app metadata
     DefaultStore.setupDatasets(datasetFramework);

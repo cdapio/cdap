@@ -11,6 +11,12 @@ Installation Quick Start
 These instructions will take you from determining your deployment architecture, installing
 CDAP on a Hadoop cluster, through the running of a verification application in CDAP.
 
+.. "Follow these instructions"
+
+.. include:: installation.rst 
+   :start-after: .. _install-follow-these-instructions:
+   :end-before:  .. _install-these-are-the-cdap-components:
+
 .. highlight:: console
 
 Deployment

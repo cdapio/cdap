@@ -14,18 +14,26 @@
   the License.
 -->
 
-{#
-    Code to hide table-of-contents on pages, by setting in the field list at the top
+{# Code to control sidebar table-of-contents on pages by settings in the field list at the top of the page:
+
 :hide-global-toc: true
+:titles_only-toc: true
+
 #}
-{%- set hideglobaltoc = '' %}
-{%- set hideglobaltoc_key = 'hide-global-toc' %}
+
+{%- set hideglobal_toc = '' %}
+{%- set hideglobal_toc_key = 'hide-global-toc' %}
+{%- set titles_only_toc = false %}
+{%- set titles_only_toc_key = 'titles-only-toc' %}
 {%- if meta is defined %}
-    {%- if hideglobaltoc_key in meta %}
-      {%- set hideglobaltoc = meta[hideglobaltoc_key] %}
+    {%- if hideglobal_toc_key in meta %}
+      {%- set hideglobal_toc = meta[hideglobal_toc_key] %}
+    {%- endif %}
+    {%- if titles_only_toc_key in meta %}
+      {%- set titles_only_toc = meta[titles_only_toc_key] == 'true' %}
     {%- endif %}
 {%- endif %}
-{%- if not hideglobaltoc %}
+{%- if not hideglobal_toc %}
   {%- if html_short_title_toc|length == 0 %}
     {% set title_br = '' %}
   {%- elif html_short_title_toc|length >= 20 %}
@@ -35,6 +43,6 @@
   {%- endif %}
 <h3 class="pagenavtitle"><a href="{{ pathto(master_doc) }}">{{ html_short_title_toc }}{{ title_br }} Table&nbsp;of&nbsp;Contents</a></h3>
 <nav class="pagenav">
-{{ toctree() }}
+{{ toctree(titles_only=titles_only_toc) }} 
 </nav>
 {%- endif %}

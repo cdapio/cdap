@@ -41,9 +41,10 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.selectTab = function(tab) {
       this.activeTab = this.tabs[tab];
+      PipelineDetailBottomPanelActionFactory.expand();
     };
     this.selectTab(0);
-    this.setIsCollapsed();
+    PipelineDetailBottomPanelActionFactory.collapse();
 
     this.toggleCollapse = function(expanded) {
       if(expanded) {

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto.codec;
 
+import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.gson.JsonDeserializationContext;
@@ -28,9 +29,9 @@ import com.google.gson.JsonSerializationContext;
 import java.lang.reflect.Type;
 
 /**
- * Codec for {@link Id.NamespacedId}. Currently only supports {@link Id.Application}, {@link Id.Program},
- * {@link Id.DatasetInstance} and {@link Id.Stream}. Support for other {@link Id.NamespacedId} objects will be added
- * later.
+ * Codec for {@link Id.NamespacedId}. Currently only supports {@link Id.Application}, {@link Id.Artifact},
+ * {@link Id.Program}, {@link Id.DatasetInstance} and {@link Id.Stream}.
+ * Support for other {@link Id.NamespacedId} objects will be added later.
  */
 public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedId> {
   @Override
@@ -69,10 +70,12 @@ public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedI
         return deserializeDatasetInstanceId(id);
       case "stream":
         return deserializeStreamId(id);
+      case "artifact":
+        return deserializeArtifactId(id);
       default:
         throw new UnsupportedOperationException(
           String.format("Unsupported object of type %s found. Deserialization of only %s, %s, %s, %s, %s, %s, %s, " +
-                          "%s, %s, %s is supported.",
+                          "%s, %s, %s, %s is supported.",
                         type,
                         Id.Application.class.getSimpleName(),
                         Id.Program.class.getSimpleName(),
@@ -83,7 +86,8 @@ public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedI
                         Id.Worker.class.getSimpleName(),
                         Id.Workflow.class.getSimpleName(),
                         Id.DatasetInstance.class.getSimpleName(),
-                        Id.Stream.class.getSimpleName()
+                        Id.Stream.class.getSimpleName(),
+                        Id.Artifact.class.getSimpleName()
           )
         );
     }
@@ -93,6 +97,14 @@ public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedI
     Id.Namespace namespace = deserializeNamespace(id);
     String applicationId = id.get("applicationId").getAsString();
     return Id.Application.from(namespace, applicationId);
+  }
+
+  private Id.Artifact deserializeArtifactId(JsonObject id) {
+    Id.Namespace namespace = deserializeNamespace(id);
+    String artifactName = id.get("name").getAsString();
+    ArtifactVersion artifactVersion = new ArtifactVersion(
+      id.get("version").getAsJsonObject().get("version").getAsString());
+    return Id.Artifact.from(namespace, artifactName, artifactVersion);
   }
 
   private Id.Namespace deserializeNamespace(JsonObject id) {

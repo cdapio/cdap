@@ -3,7 +3,7 @@
     :copyright: Copyright © 2015 Cask Data, Inc.
 
 .. _integrations:
-
+ 
 ============
 Integrations
 ============
@@ -47,6 +47,14 @@ Integrations
 .. _ambari: ambari/index.html
 
 - |ambari|_ Configuring and installing CDAP using **Ambari**
+
+
+.. rubric:: MapR
+
+.. |mapr| replace:: **Configuring and Installing:**
+.. _mapr: mapr/index.html
+
+- |mapr|_ Configuring and installing CDAP on **MapR**
 
 
 .. rubric:: BI Tools: Accessing CDAP Datasets through Business Intelligence Tools

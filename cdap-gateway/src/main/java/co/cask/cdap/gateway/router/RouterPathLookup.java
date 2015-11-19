@@ -76,6 +76,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return Constants.Service.METRICS;
     } else if (matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata") ||
+      matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata", "properties") ||

@@ -49,6 +49,9 @@ public class HttpExceptionHandler extends ExceptionHandler {
     } else if (t instanceof NotImplementedException) {
       logWithTrace(request, t);
       responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED, t.getMessage());
+    } else if (t instanceof MethodNotAllowedException) {
+      logWithTrace(request, t);
+      responder.sendStatus(HttpResponseStatus.METHOD_NOT_ALLOWED);
     } else if (t instanceof UnauthorizedException) {
       logWithTrace(request, t);
       responder.sendStatus(HttpResponseStatus.UNAUTHORIZED);

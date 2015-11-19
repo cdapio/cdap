@@ -33,6 +33,11 @@ angular.module(PKG.name + '.feature.streams')
         });
     };
 
+    this.metadataParams = {
+      namespace: $state.params.namespace,
+      streamId: $state.params.streamId
+    };
+    
     this.sendEvents = function() {
       myStreamService.show($state.params.streamId);
     };

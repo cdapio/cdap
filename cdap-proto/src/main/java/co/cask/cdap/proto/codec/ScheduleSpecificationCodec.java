@@ -80,7 +80,6 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
     return jsonObj;
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public ScheduleSpecification deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
     throws JsonParseException {
@@ -97,8 +96,11 @@ public class ScheduleSpecificationCodec extends AbstractSpecificationCodec<Sched
 
     Schedule schedule = null;
     if (scheduleType == null) {
-      schedule = context.deserialize(jsonObj.get("schedule"), Schedule.class);
-      schedule = Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(), schedule.getCronEntry());
+      JsonObject scheduleObj = jsonObj.get("schedule").getAsJsonObject();
+      String name = context.deserialize(scheduleObj.get("name"), String.class);
+      String description = context.deserialize(scheduleObj.get("description"), String.class);
+      String cronEntry = context.deserialize(scheduleObj.get("cronEntry"), String.class);
+      schedule = Schedules.builder(name).setDescription(description).createTimeSchedule(cronEntry);
     } else {
       switch (scheduleType) {
         case TIME:

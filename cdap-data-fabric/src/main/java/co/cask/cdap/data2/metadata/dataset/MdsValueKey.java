@@ -52,6 +52,11 @@ public class MdsValueKey {
     } else if (type.equals(Id.Stream.class.getSimpleName())) {
       keySplitter.skipString();
       keySplitter.skipString();
+    } else if (type.equals(Id.Artifact.class.getSimpleName())) {
+      // skip namespace, name, version
+      keySplitter.skipString();
+      keySplitter.skipString();
+      keySplitter.skipString();
     } else {
       throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
     }

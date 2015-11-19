@@ -91,6 +91,7 @@ part of the data ingested by the stream has reach the TTL.
 
 Stream-size notifications are used by :ref:`stream-size schedules <stream-size-schedules>`.
 
+
 .. rubric:: Examples of Using Streams
 
 Streams are included in just about every CDAP :ref:`application <apps-and-packs>`,
@@ -99,8 +100,8 @@ Streams are included in just about every CDAP :ref:`application <apps-and-packs>
 - The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates **using a
   stream to ingest** a name into a dataset.
 
-- For an example of **pushing events to a stream from the Command Line,** see the :ref:`Purchase
-  example <examples-purchase>`, and its script ``inject-data`` that injects data to a stream.
+- For an example of **pushing events to a stream,** see the :ref:`Purchase
+  example <examples-purchase>` and its CDAP CLI command that injects data to a stream.
 
 - For an example of **reading events from a stream,** see the 
   :ref:`Purchase example <examples-purchase>`, where the class ``PurchaseStreamReader``

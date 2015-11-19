@@ -17,8 +17,7 @@ package co.cask.cdap;
 
 import co.cask.cdap.api.annotation.Tick;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import org.slf4j.Logger;
@@ -41,19 +40,15 @@ public class InvalidFlowOutputApp extends AbstractApplication {
   /**
    *
    */
-  public static final class InvalidFlow implements Flow {
+  public static final class InvalidFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("InvalidFlow")
-        .setDescription("Invalid flow")
-        .withFlowlets()
-          .add("gen", new InvalidGenerator())
-          .add("cons", new Consumer())
-        .connect()
-          .from("gen").to("cons")
-        .build();
+    protected void configureFlow() {
+      setName("InvalidFlow");
+      setDescription("Invalid flow");
+      addFlowlet("gen", new InvalidGenerator());
+      addFlowlet("cons", new Consumer());
+      connect("gen", "cons");
     }
   }
 

@@ -41,7 +41,9 @@ public class StreamConversionApp extends AbstractApplication {
     addStream(new Stream("events"));
     addMapReduce(new StreamConversionMapReduce());
     addWorkflow(new StreamConversionWorkflow());
-    scheduleWorkflow(Schedules.createTimeSchedule("every5min", "runs every 5 minutes", "*/5 * * * *"),
+    scheduleWorkflow(Schedules.builder("every5min")
+                       .setDescription("runs every 5 minutes")
+                       .createTimeSchedule("*/5 * * * *"),
                      "StreamConversionWorkflow");
 
     // create the time-partitioned file set, configure it to work with MapReduce and with Explore

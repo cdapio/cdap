@@ -34,11 +34,11 @@ public class AppWithMultipleScheduledWorkflows extends AbstractApplication {
     setDescription("Sample application with multiple Workflows");
     addWorkflow(new SomeWorkflow());
     addWorkflow(new AnotherWorkflow());
-    scheduleWorkflow(Schedules.createTimeSchedule("SomeSchedule1", "", "0 4 * * *"), "SomeWorkflow");
-    scheduleWorkflow(Schedules.createTimeSchedule("SomeSchedule2", "", "0 5 * * *"), "SomeWorkflow");
-    scheduleWorkflow(Schedules.createTimeSchedule("AnotherSchedule1", "", "0 6 * * *"), "AnotherWorkflow");
-    scheduleWorkflow(Schedules.createTimeSchedule("AnotherSchedule2", "", "0 7 * * *"), "AnotherWorkflow");
-    scheduleWorkflow(Schedules.createTimeSchedule("AnotherSchedule3", "", "0 8 * * *"), "AnotherWorkflow");
+    scheduleWorkflow(Schedules.builder("SomeSchedule1").createTimeSchedule("0 4 * * *"), "SomeWorkflow");
+    scheduleWorkflow(Schedules.builder("SomeSchedule2").createTimeSchedule("0 5 * * *"), "SomeWorkflow");
+    scheduleWorkflow(Schedules.builder("AnotherSchedule1").createTimeSchedule("0 6 * * *"), "AnotherWorkflow");
+    scheduleWorkflow(Schedules.builder("AnotherSchedule2").createTimeSchedule("0 7 * * *"), "AnotherWorkflow");
+    scheduleWorkflow(Schedules.builder("AnotherSchedule3").createTimeSchedule("0 8 * * *"), "AnotherWorkflow");
   }
 
   /**

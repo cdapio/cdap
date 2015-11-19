@@ -48,9 +48,8 @@ Executing MapReduce or Spark Programs
 -------------------------------------
 To execute MapReduce or Spark programs in a workflow, you will need to add them in your
 application along with the workflow. You can optionally add a :ref:`schedule <schedules>` 
-(such as a `crontab schedule 
-<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(java.lang.String,%20java.lang.String,%20java.lang.String)>`__)
-to the workflow::
+to the workflow using the `java api 
+<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)>`__::
 
   public void configure() {
     ...
@@ -58,9 +57,9 @@ to the workflow::
     addMapReduce(new AnotherMapReduce());
     addSpark(new MySpark());
     addWorkflow(new MyWorkflow());
-    scheduleWorkflow(Schedules.createTimeSchedule("FiveHourSchedule", 
-                                                  "Schedule running every 5 hours", 
-                                                  "0 */5 * * *"),
+    scheduleWorkflow(Schedules.builder("FiveHourSchedule")
+                       .setDescription("Schedule running every 5 hours")
+                       .createTimeSchedule("0 */5 * * *"),
                      "MyWorkflow");
     ...
   }

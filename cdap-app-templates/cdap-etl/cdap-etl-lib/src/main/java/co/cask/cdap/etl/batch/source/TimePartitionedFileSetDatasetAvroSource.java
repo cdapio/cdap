@@ -25,15 +25,20 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.AvroToStructuredTransformer;
+import com.google.common.base.Throwables;
+import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * A {@link BatchSource} to read Avro record from {@link TimePartitionedFileSet}
@@ -59,7 +64,7 @@ public class TimePartitionedFileSetDatasetAvroSource extends
     protected void validate() {
       super.validate();
       try {
-        new org.apache.avro.Schema.Parser().parse(schema);
+        new Schema.Parser().parse(schema);
       } catch (Exception e) {
         throw new IllegalArgumentException("Unable to parse schema with error: " + e.getMessage(), e);
       }
@@ -83,11 +88,21 @@ public class TimePartitionedFileSetDatasetAvroSource extends
   }
 
   @Override
-  public void prepareRun(BatchSourceContext context) {
-    setInput(context);
-    org.apache.avro.Schema avroSchema = new org.apache.avro.Schema.Parser().parse(tpfsAvroConfig.schema);
-    Job job = context.getHadoopJob();
-    AvroJob.setInputKeySchema(job, avroSchema);
+  protected void addInputFormatConfiguration(Map<String, String> config) {
+    try {
+      Job job = Job.getInstance();
+      Configuration hConf = job.getConfiguration();
+      hConf.clear();
+
+      Schema avroSchema = new Schema.Parser().parse(tpfsAvroConfig.schema);
+      AvroJob.setInputKeySchema(job, avroSchema);
+      for (Map.Entry<String, String> entry : hConf) {
+        config.put(entry.getKey(), entry.getValue());
+      }
+    } catch (IOException e) {
+      // Shouldn't happen
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

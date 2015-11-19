@@ -21,8 +21,7 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -123,24 +122,17 @@ public class WebCrawlApp extends AbstractApplication {
    * coming on the stream put there by a scheduler and being crawled
    * and the content is stored in KV Table.
    */
-  public static final class CrawlFlow implements Flow {
-    /**
-     * Configure the {@link co.cask.cdap.api.flow.Flow} by returning an
-     * {@link co.cask.cdap.api.flow.FlowSpecification}.
-     *
-     * @return An instance of {@link co.cask.cdap.api.flow.FlowSpecification}.
-     */
+  public static final class CrawlFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("CrawlFlow")
-        .setDescription("Flow for crawling pages")
-        .withFlowlets().add(new UrlSanitizer())
-        .add(new UrlCrawler())
-        .connect().from(new Stream("url")).to(new UrlSanitizer())
-        .from(new UrlSanitizer()).to(new UrlCrawler())
-        .build();
-      }
+    protected void configureFlow() {
+      setName("CrawlFlow");
+      setDescription("Flow for crawling pages");
+      addFlowlet(new UrlSanitizer());
+      addFlowlet(new UrlCrawler());
+      connectStream("url", new UrlSanitizer());
+      connect(new UrlSanitizer(), new UrlCrawler());
+    }
   }
 
   /**
@@ -149,14 +141,15 @@ public class WebCrawlApp extends AbstractApplication {
   public static final class UrlSanitizer extends AbstractFlowlet {
     private OutputEmitter<DocumentURL> output;
 
-    public UrlSanitizer() {
-      super("UrlSanitizer");
-    }
-
     @ProcessInput
     public void process(StreamEvent event) {
       // Does some-fancy sanitization of url.
       output.emit(new DocumentURLImpl(event.getHeaders().get("url")));
+    }
+
+    @Override
+    protected void configure() {
+      setName("UrlSanitizer");
     }
   }
 
@@ -167,17 +160,16 @@ public class WebCrawlApp extends AbstractApplication {
     @UseDataSet("crawled-pages")
     private KeyValueTable crawledPages;
 
-    public UrlCrawler() {
-      super("UrlCrawler");
-    }
-
     @ProcessInput
     public void process(DocumentURL url) throws UnsupportedEncodingException {
       // ... does some fancy crawling
       // Marks that the url has been crawled.
       crawledPages.write(url.getURL().getBytes("UTF8"), "crawled".getBytes("UTF8"));
     }
+
+    @Override
+    protected void configure() {
+      setName("UrlCrawler");
+    }
   }
-
-
 }

@@ -25,6 +25,7 @@ public final class Constants {
 
   public static final String ARCHIVE_DIR = "archive";
   public static final String ROOT_NAMESPACE = "root.namespace";
+  public static final String COLLECT_CONTAINER_LOGS = "master.collect.containers.log";
 
   /**
    * Global Service names.

@@ -16,7 +16,7 @@ Overview
 
 This example demonstrates Spark and MapReduce performing streaming log analysis, computing the page rank based on information about backlink URLs
 
-Data from a sample file is sent to CDAP by the external script *inject-data*
+Data from a sample file is sent to CDAP by a CDAP CLI command
 to the *backlinkURLStream*, which stores the URL pair event in its entirety.
 
 After these events are streamed, they are taken up by the *SparkPageRankProgram*, which

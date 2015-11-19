@@ -27,13 +27,10 @@ body.theme-cdap.state-hydrator {
     }
 
     div.console {
-      min-height: 60vh;
       div.console-tabs ul.nav-tabs li {
         margin-bottom: -1px;
       }
       div.console-type {
-        height: inherit;
-        min-height: inherit;
         // Avoid unnecessary horizontal scroll
         overflow-x: hidden;
         padding: 0;
@@ -114,7 +111,7 @@ body.theme-cdap.state-hydrator {
     min-height: ~"-moz-calc(40vh - 113px)";
     min-height: ~"-webkit-calc(40vh - 113px)";
     min-height: ~"calc(40vh - 113px)";
-    .transition(all 0.2s ease);
+    .transition(height 0.2s ease);
 
     @media (min-height: 800px) {
       min-height: ~"-moz-calc(60vh - 113px)";
@@ -150,14 +147,26 @@ body.theme-cdap.state-hydrator {
       overflow-y: scroll;
       overflow-x: hidden;
       z-index: 9999;
+      div.console-tabs {
+        border-top: 0;
+      }
+      .node-config .bottompanel-body {
+        div.config-table {
+          height: ~"-moz-calc(100vh - 284px)";
+          height: ~"-webkit-calc(100vh - 284px)";
+          height: ~"calc(100vh - 284px)";
+        }
+      }
     }
   }
+
   // When bottom panel is in minimized state, set width based on left panel state
   div.left-panel-wrapper {
     + .right-wrapper div.console:not(.maximized) {
       width: ~"-moz-calc(100vw - 130px)";
       width: ~"-webkit-calc(100vw - 130px)";
       width: ~"calc(100vw - 130px)";
+      .transition(width 0.2s ease);
     }
     &.expanded + .right-wrapper div.console:not(.maximized) {
       width: ~"-moz-calc(100vw - 290px)";
@@ -389,38 +398,53 @@ body.theme-cdap.state-hydrator {
       padding: 20px 10px;
       overflow: hidden;
     }
-    @media (min-width: @screen-lg-min) {
-      [class*="divider"]:before, [class*="divider"]:after {
-        background-image: url('@{img-path}/divider.png');
-        content: '';
-        display: block;
-        position: absolute;
-        top: 111px;
-        bottom: 0;
-        width: 1px;
-      }
-      .one-divider {
-        &:before {
-          left: 67%;
+    .node-config .bottompanel-body {
+      @media (min-width: @screen-lg-min) {
+        padding: 0;
+        > p, .validator-plugin > div {
+          padding: 20px 10px;
         }
-        &:after {
-          display: none;
+        div.config-table {
+          display: table;
+          width: 100%;
+          > div {
+            display: table-cell;
+            padding: 20px 10px;
+          }
         }
-      }
-      .two-divider {
-        &:before {
-          left: 25%;
+        div.source-table {
+          > div {
+            &:first-child {
+              border-right: 1px solid @table-border-color;
+              width: 66.66666667%;
+            }
+            &:last-child {
+              width: 33.33333333%;
+            }
+          }
         }
-        &:after {
-          right: 25%;
+        div.transform-table {
+          > div {
+            &:first-child, &:last-child {
+              width: 25%;
+            }
+            &:nth-child(2) {
+              width: 50%;
+              border-right: 1px solid @table-border-color;
+              border-left: 1px solid @table-border-color;
+            }
+          }
         }
-      }
-      .sink-divider {
-        &:before {
-          left: 33%;
-        }
-        &:after {
-          display: none;
+        div.sink-table {
+          > div {
+            &:first-child {
+              border-right: 1px solid @table-border-color;
+              width: 33.33333333%;
+            }
+            &:last-child {
+              width: 66.66666667%;
+            }
+          }
         }
       }
     }

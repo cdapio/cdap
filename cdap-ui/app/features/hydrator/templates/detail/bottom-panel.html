@@ -67,7 +67,7 @@
     <div ng-repeat="tab in BottomPanelCtrl.tabs"
          ng-include="tab.template"
          ng-show="BottomPanelCtrl.activeTab.title === tab.title"
-         ng-class="{'p-10': tab.title !== 'Node Configuration'}">
+         ng-class="{'p-10': tab.title !== 'Node Configuration', 'node-config': tab.title === 'Node Configuration'}">
       </div>
   </div>
 </div>

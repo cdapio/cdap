@@ -25,7 +25,7 @@ import co.cask.cdap.api.flow.AbstractFlow;
 public class WebAnalyticsFlow extends AbstractFlow {
 
   @Override
-  protected void configureFlow() {
+  protected void configure() {
     setName("WebAnalyticsFlow");
     setDescription("Web Analytics Flow");
     // Only one Flowlet in this Flow

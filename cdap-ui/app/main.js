@@ -28,9 +28,11 @@ angular
       PKG.name+'.feature.data',
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
-      PKG.name+'.feature.foo',
+      PKG.name+'.feature.experimental',
       PKG.name+'.feature.hydrator',
-      PKG.name+'.feature.explore'
+      PKG.name+'.feature.explore',
+      PKG.name +'.feature.search',
+      PKG.name +'.feature.pins'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -254,12 +256,16 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth) {
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyCDAPDataSource($scope);
     if (MY_CONFIG.securityEnabled) {
-      $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
+      if (myAuth.isAuthenticated()) {
+        getVersion();
+      } else {
+        $rootScope.$on(MYAUTH_EVENT.loginSuccess, getVersion);
+      }
     } else {
       getVersion();
     }
@@ -315,5 +321,13 @@ angular
       $state.go('login');
     });
 
+    $scope.onSearch = _.debounce(function(event) {
+      if (event.keyCode === 70 && event.target.nodeName === 'BODY') {
+        $state.go('search.list');
+      } else if (event.keyCode === 80 && event.target.nodeName === 'BODY') {
+        $state.go('pins.list');
+      }
+      console.info('pressed');
+    }, 500);
     console.timeEnd(PKG.name);
   });
