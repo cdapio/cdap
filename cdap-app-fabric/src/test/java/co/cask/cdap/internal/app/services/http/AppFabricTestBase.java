@@ -716,7 +716,16 @@ public abstract class AppFabricTestBase {
     return GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() { }.getType());
   }
 
-  protected void verifyProgramRuns(final Id.Program program, final String status) throws Exception {
+  protected void verifyNoRunWithStatus(final Id.Program program, final String status) throws Exception {
+    Tasks.waitFor(0, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(program, status).size();
+      }
+    }, 60, TimeUnit.SECONDS);
+  }
+
+  protected void verifyProgramRuns(Id.Program program, String status) throws Exception {
     verifyProgramRuns(program, status, 0);
   }
 
