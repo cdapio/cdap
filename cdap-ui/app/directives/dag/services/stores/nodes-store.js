@@ -66,6 +66,7 @@ class NodesStore {
   }
   setNodes(nodes) {
     this.state.nodes = nodes;
+    this.emitChange();
   }
 
   addConnection(connection) {
@@ -89,11 +90,13 @@ class NodesStore {
   }
   setConnections(connections) {
     this.state.connections = connections;
+    this.emitChange();
   }
 
   setNodesAndConnections(nodes, connections) {
-    this.setNodes(nodes);
-    this.setConnections(connections);
+    this.state.nodes = nodes;
+    this.state.connections = connections;
+    this.emitChange();
   }
 
   setActiveNodeId(nodeId) {
