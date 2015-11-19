@@ -42,8 +42,6 @@ class NodesStore {
       activeNodeId: null
     };
     this.changeListeners = [];
-    this.readyCallback = null;
-    this.isStateLoaded = false;
   }
 
   registerOnChangeListener(callback) {
@@ -51,14 +49,6 @@ class NodesStore {
   }
   emitChange() {
     this.changeListeners.forEach( callback => callback() );
-  }
-
-  registerReadyCallback(fn) {
-    this.readyCallback = fn;
-
-    if (this.isStateLoaded) {
-      this.readyCallback();
-    }
   }
 
   addNode(config) {
@@ -104,11 +94,6 @@ class NodesStore {
   setNodesAndConnections(nodes, connections) {
     this.setNodes(nodes);
     this.setConnections(connections);
-    this.isStateLoaded = true;
-
-    if (this.readyCallback) {
-      this.readyCallback();
-    }
   }
 
   setActiveNodeId(nodeId) {
