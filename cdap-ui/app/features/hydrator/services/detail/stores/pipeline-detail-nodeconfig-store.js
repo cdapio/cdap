@@ -135,7 +135,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
       var source;
       if (sourceConn && sourceConn.length) {
-        source = this.ConfigStore.getNode([sourceConn[0].source]);
+        source = this.ConfigStore.getNode(sourceConn[0].source);
         sourceSchema = source.outputSchema;
 
         if (source.name === 'Stream') {
