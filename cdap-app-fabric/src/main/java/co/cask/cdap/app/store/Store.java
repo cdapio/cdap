@@ -30,7 +30,6 @@ import co.cask.cdap.internal.app.store.RunRecordMeta;
 import co.cask.cdap.internal.app.store.WorkflowDataset;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.WorkflowStatistics;
 import co.cask.cdap.templates.AdapterDefinition;
@@ -342,51 +341,6 @@ public interface Store {
    * @return true if the program exists, false otherwise.
    */
   boolean programExists(Id.Program id);
-
-  /**
-   * Creates a new namespace.
-   *
-   * @param metadata {@link NamespaceMeta} representing the namespace metadata
-   * @return existing {@link NamespaceMeta} if a namespace with the specified name existed already, null if the
-   * a namespace with the specified name did not exist, and was created successfully
-   * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#putIfAbsent}
-   */
-  @Nullable
-  NamespaceMeta createNamespace(NamespaceMeta metadata);
-
-  /**
-   * Updates the namespace meta.
-   *
-   * @param metadata {@link NamespaceMeta} representing the namespace metadata
-   */
-  void updateNamespace(NamespaceMeta metadata);
-
-  /**
-   * Retrieves a namespace from the namespace metadata store.
-   *
-   * @param id {@link Id.Namespace} of the requested namespace
-   * @return {@link NamespaceMeta} of the requested namespace
-   */
-  @Nullable
-  NamespaceMeta getNamespace(Id.Namespace id);
-
-  /**
-   * Deletes a namespace from the namespace metadata store.
-   *
-   * @param id {@link Id.Namespace} of the namespace to delete
-   * @return {@link NamespaceMeta} of the namespace if it was found and deleted, null if the specified namespace did not
-   * exist
-   * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#remove}
-   */
-  @Nullable
-  NamespaceMeta deleteNamespace(Id.Namespace id);
-
-  /**
-   * Lists all registered namespaces.
-   *
-   * @return a list of all registered namespaces
-   */
-  List<NamespaceMeta> listNamespaces();
 
   /**
    * Adds adapter spec to the store, with status = {@link AdapterStatus#STARTED}. Will overwrite the existing spec.
