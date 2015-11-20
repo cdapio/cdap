@@ -24,6 +24,7 @@ import co.cask.cdap.common.NamespaceNotFoundException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
+import co.cask.cdap.common.ViewNotFoundException;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
@@ -100,7 +101,7 @@ public class EntityValidator {
         }
       } catch (StreamNotFoundException streamEx) {
         throw streamEx;
-      } catch (Exception ex)  {
+      } catch (Exception ex) {
         throw new IllegalStateException(ex);
       }
     } else if (entityId instanceof Id.Artifact) {
@@ -109,6 +110,17 @@ public class EntityValidator {
         artifactStore.getArtifact(artifactId);
       } catch (IOException e) {
         throw new RuntimeException(e);
+      }
+    } else if (entityId instanceof Id.Stream.View) {
+      Id.Stream.View viewId = (Id.Stream.View) entityId;
+      try {
+        if (!streamAdmin.viewExists(viewId)) {
+          throw new ViewNotFoundException(viewId);
+        }
+      } catch (ViewNotFoundException | StreamNotFoundException viewEx) {
+        throw viewEx;
+      } catch (Exception ex) {
+        throw new IllegalStateException(ex);
       }
     } else {
       throw new IllegalArgumentException("Invalid entity" + entityId);

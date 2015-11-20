@@ -55,6 +55,7 @@ public class BusinessMetadataDatasetTest {
   private final Id.Program flow1 = Id.Program.from("ns1", "app1", ProgramType.FLOW, "flow1");
   private final Id.DatasetInstance dataset1 = Id.DatasetInstance.from("ns1", "ds1");
   private final Id.Stream stream1 = Id.Stream.from("ns1", "s1");
+  private final Id.Stream.View view1 = Id.Stream.View.from(stream1, "v1");
   private final Id.Artifact artifact1 = Id.Artifact.from(Id.Namespace.from("ns1"), "a1", "1.0.0");
 
   @Before
@@ -73,6 +74,7 @@ public class BusinessMetadataDatasetTest {
     Assert.assertEquals(0, dataset.getProperties(flow1).size());
     Assert.assertEquals(0, dataset.getProperties(dataset1).size());
     Assert.assertEquals(0, dataset.getProperties(stream1).size());
+    Assert.assertEquals(0, dataset.getProperties(view1).size());
     Assert.assertEquals(0, dataset.getProperties(artifact1).size());
     // Set some properties
     dataset.setProperty(app1, "akey1", "avalue1");
@@ -81,6 +83,8 @@ public class BusinessMetadataDatasetTest {
     dataset.setProperty(dataset1, "dkey1", "dvalue1");
     dataset.setProperty(stream1, "skey1", "svalue1");
     dataset.setProperty(stream1, "skey2", "svalue2");
+    dataset.setProperty(view1, "vkey1", "vvalue1");
+    dataset.setProperty(view1, "vkey2", "vvalue2");
     dataset.setProperty(artifact1, "rkey1", "rvalue1");
     dataset.setProperty(artifact1, "rkey2", "rvalue2");
     // verify
@@ -106,6 +110,11 @@ public class BusinessMetadataDatasetTest {
     result = dataset.getProperty(artifact1, "rkey2");
     expected = new BusinessMetadataRecord(artifact1, "rkey2", "rvalue2");
     Assert.assertEquals(expected, result);
+    properties = dataset.getProperties(view1);
+    Assert.assertEquals(ImmutableMap.of("vkey1", "vvalue1", "vkey2", "vvalue2"), properties);
+    result = dataset.getProperty(view1, "vkey2");
+    expected = new BusinessMetadataRecord(view1, "vkey2", "vvalue2");
+    Assert.assertEquals(expected, result);
     // reset a property
     dataset.setProperty(stream1, "skey1", "sv1");
     Assert.assertEquals(ImmutableMap.of("skey1", "sv1", "skey2", "svalue2"), dataset.getProperties(stream1));
@@ -115,10 +124,12 @@ public class BusinessMetadataDatasetTest {
     dataset.removeProperties(dataset1);
     dataset.removeProperties(stream1);
     dataset.removeProperties(artifact1);
+    dataset.removeProperties(view1);
     Assert.assertEquals(0, dataset.getProperties(app1).size());
     Assert.assertEquals(0, dataset.getProperties(flow1).size());
     Assert.assertEquals(0, dataset.getProperties(dataset1).size());
     Assert.assertEquals(0, dataset.getProperties(stream1).size());
+    Assert.assertEquals(0, dataset.getProperties(view1).size());
     Assert.assertEquals(0, dataset.getProperties(artifact1).size());
   }
 
@@ -128,11 +139,13 @@ public class BusinessMetadataDatasetTest {
     Assert.assertEquals(0, dataset.getTags(flow1).size());
     Assert.assertEquals(0, dataset.getTags(dataset1).size());
     Assert.assertEquals(0, dataset.getTags(stream1).size());
+    Assert.assertEquals(0, dataset.getTags(view1).size());
     Assert.assertEquals(0, dataset.getTags(artifact1).size());
     dataset.addTags(app1, "tag1", "tag2", "tag3");
     dataset.addTags(flow1, "tag1");
     dataset.addTags(dataset1, "tag3", "tag2");
     dataset.addTags(stream1, "tag2");
+    dataset.addTags(view1, "tag4");
     dataset.addTags(artifact1, "tag3");
     Set<String> tags = dataset.getTags(app1);
     Assert.assertEquals(3, tags.size());
@@ -152,6 +165,9 @@ public class BusinessMetadataDatasetTest {
     tags = dataset.getTags(stream1);
     Assert.assertEquals(1, tags.size());
     Assert.assertTrue(tags.contains("tag2"));
+    tags = dataset.getTags(view1);
+    Assert.assertEquals(1, tags.size());
+    Assert.assertTrue(tags.contains("tag4"));
     dataset.removeTags(app1, "tag1", "tag2");
     tags = dataset.getTags(app1);
     Assert.assertEquals(1, tags.size());
@@ -168,11 +184,13 @@ public class BusinessMetadataDatasetTest {
     dataset.removeTags(flow1);
     dataset.removeTags(dataset1);
     dataset.removeTags(stream1);
+    dataset.removeTags(view1);
     dataset.removeTags(artifact1);
     Assert.assertEquals(0, dataset.getTags(app1).size());
     Assert.assertEquals(0, dataset.getTags(flow1).size());
     Assert.assertEquals(0, dataset.getTags(dataset1).size());
     Assert.assertEquals(0, dataset.getTags(stream1).size());
+    Assert.assertEquals(0, dataset.getTags(view1).size());
     Assert.assertEquals(0, dataset.getTags(artifact1).size());
   }
 
