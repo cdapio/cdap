@@ -86,6 +86,11 @@ public class KeyHelper {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
       return Id.Application.from(namespaceId, appId);
+    } else if (type.equals(Id.Artifact.class.getSimpleName())) {
+      String namespaceId = keySplitter.getString();
+      String name = keySplitter.getString();
+      String version = keySplitter.getString();
+      return Id.Artifact.from(Id.Namespace.from(namespaceId), name, version);
     } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();

@@ -20,6 +20,7 @@ package co.cask.cdap.proto.metadata;
  */
 public enum MetadataSearchTargetType {
   ALL("All"),
+  ARTIFACT("Artifact"),
   APP("Application"),
   PROGRAM("Program"),
   DATASET("DatasetInstance"),

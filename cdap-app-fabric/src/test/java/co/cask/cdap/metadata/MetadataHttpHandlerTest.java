@@ -135,6 +135,14 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     );
     Assert.assertEquals(expected, searchProperties);
 
+    // test search for artifact
+    searchProperties = searchMetadata(Id.Namespace.DEFAULT,
+                                      "rKey:rValue", MetadataSearchTargetType.ARTIFACT);
+    expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(artifactId)
+    );
+    Assert.assertEquals(expected, searchProperties);
+
     // test prefix search for service
     searchProperties = searchMetadata(Id.Namespace.DEFAULT, "sKey:s*", MetadataSearchTargetType.ALL);
     expected = ImmutableSet.of(
