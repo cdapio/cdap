@@ -190,7 +190,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testServiceManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterApp.class);
-    ServiceManager countService = applicationManager.getServiceManager("CountService");
+    final ServiceManager countService = applicationManager.getServiceManager("CountService");
     countService.setInstances(2);
     Assert.assertEquals(0, countService.getProvisionedInstances());
     Assert.assertEquals(2, countService.getRequestedInstances());
@@ -208,8 +208,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0, history.size());
 
     // requesting with either RUNNING or ALL will return one record
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return countService.getHistory(ProgramRunStatus.RUNNING).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+
     history = countService.getHistory(ProgramRunStatus.RUNNING);
-    Assert.assertEquals(1, history.size());
     Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
 
     history = countService.getHistory(ProgramRunStatus.ALL);
