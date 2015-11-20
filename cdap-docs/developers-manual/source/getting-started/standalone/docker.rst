@@ -3,15 +3,48 @@
     :description: CDAP Docker Image
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-============================================
+============
 Docker Image
-============================================
+============
 
 .. highlight:: console
 
 A Docker image with CDAP SDK pre-installed is available on the Docker Hub for download.
 
-To use the **Docker image**:
+To use the **Docker image**, you can either use Docker's :ref:`Kitematic
+<docker-kitematic>` (on Mac OS X and Windows), a graphical user interface for running
+Docker containers, or start the container from :ref:`a command line <docker-command-line>`.
+
+.. _docker-kitematic:
+
+Docker using Kitematic
+======================
+
+`Docker Kitematic <https://www.docker.com/docker-kitematic>`__ is available as part of the
+`Docker Toolbox <https://www.docker.com/docker-toolbox>`__ for either Mac OS X or Microsoft Windows.
+It is a graphical user interface for running Docker containers. Follow these steps to install 
+Kitematic and then download, start, and connect to an instance of CDAP.
+
+#. Download and install the `Docker Toolbox <https://www.docker.com/docker-toolbox>`__ for 
+   either Mac OS X or Microsoft Windows.
+
+#. Start Kitematic. On Mac OS X, it will be installed in ``/Applications/Docker/Kitematic``; on 
+   Windows, in ``??``.
+   
+#. Once Kitematic has started (you can either login to the Docker Hub or skip that step), search for 
+the CDAP image using the search box at the top of the window:
+
+   .. image:: ../_images/kitematic-1-start.png
+      :width: 5in
+      :align: center
+
+
+
+
+.. _docker-command-line:
+
+Docker from a Command Line
+==========================
 
 - Docker is available for a variety of platforms. Download and install Docker in your environment by
   following the `platform-specific installation instructions <https://docs.docker.com/installation>`__
