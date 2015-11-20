@@ -18,6 +18,7 @@ package co.cask.cdap.data2.transaction.queue.inmemory;
 
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdmin;
@@ -156,7 +157,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   @Override
   public boolean viewExists(Id.Stream.View viewId) throws Exception {
     if (!exists(viewId.getStream())) {
-      throw new NotFoundException(viewId.getStreamId());
+      throw new StreamNotFoundException(viewId.getStream());
     }
     return viewAdmin.exists(viewId);
   }

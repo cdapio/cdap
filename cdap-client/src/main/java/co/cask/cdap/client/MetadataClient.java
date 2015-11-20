@@ -126,6 +126,15 @@ public class MetadataClient {
   }
 
   /**
+   * @param viewId the view for which to retrieve metadata
+   * @return The metadata for the view.
+   */
+  public Set<MetadataRecord> getMetadata(Id.Stream.View viewId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getMetadata(viewId, constructPath(viewId));
+  }
+
+  /**
    * @param programId the program for which to retrieve metadata
    * @return The metadata for the program.
    */
@@ -195,6 +204,17 @@ public class MetadataClient {
   }
 
   /**
+   * Adds tags to a view.
+   *
+   * @param viewId view to add tags to
+   * @param tags tags to be added
+   */
+  public void addTags(Id.Stream.View viewId, Set<String> tags)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    addTags(viewId, constructPath(viewId), tags);
+  }
+
+  /**
    * Adds tags to a program.
    *
    * @param programId program to add tags to
@@ -253,6 +273,17 @@ public class MetadataClient {
   public void addProperties(Id.Stream streamId, Map<String, String> properties)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     addProperties(streamId, constructPath(streamId), properties);
+  }
+
+  /**
+   * Adds properties to a view.
+   *
+   * @param viewId view to add properties to
+   * @param properties properties to be added
+   */
+  public void addProperties(Id.Stream.View viewId, Map<String, String> properties)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    addProperties(viewId, constructPath(viewId), properties);
   }
 
   /**
@@ -317,6 +348,17 @@ public class MetadataClient {
   }
 
   /**
+   * Removes a property from a view.
+   *
+   * @param viewId view to remove property from
+   * @param propertyToRemove property to be removed
+   */
+  public void removeProperty(Id.Stream.View viewId, String propertyToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeProperty(viewId, constructPath(viewId), propertyToRemove);
+  }
+
+  /**
    * Removes a property from a program.
    *
    * @param programId program to remove property from
@@ -372,6 +414,16 @@ public class MetadataClient {
   public void removeProperties(Id.Stream streamId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     removeProperties(streamId, constructPath(streamId));
+  }
+
+  /**
+   * Removes all properties from a view.
+   *
+   * @param viewId view to remove properties from
+   */
+  public void removeProperties(Id.Stream.View viewId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeProperties(viewId, constructPath(viewId));
   }
 
   /**
@@ -436,6 +488,17 @@ public class MetadataClient {
   }
 
   /**
+   * Removes a tag from a view.
+   *
+   * @param viewId view to remove tag from
+   * @param tagToRemove tag to be removed
+   */
+  public void removeTag(Id.Stream.View viewId, String tagToRemove)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeTag(viewId, constructPath(viewId), tagToRemove);
+  }
+
+  /**
    * Removes a tag from a program.
    *
    * @param programId program to remove tag from
@@ -493,6 +556,16 @@ public class MetadataClient {
   }
 
   /**
+   * Removes all tags from a view.
+   *
+   * @param viewId view to remove tags from
+   */
+  public void removeTags(Id.Stream.View viewId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeTags(viewId, constructPath(viewId));
+  }
+
+  /**
    * Removes all tags from a program.
    *
    * @param programId program to remove tags from
@@ -546,6 +619,16 @@ public class MetadataClient {
   public void removeMetadata(Id.Stream streamId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     removeMetadata(streamId, constructPath(streamId));
+  }
+
+  /**
+   * Removes metadata from a view.
+   *
+   * @param viewId view to remove metadata from
+   */
+  public void removeMetadata(Id.Stream.View viewId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    removeMetadata(viewId, constructPath(viewId));
   }
 
   /**
@@ -617,5 +700,9 @@ public class MetadataClient {
 
   private String constructPath(Id.Stream streamId) {
     return String.format("streams/%s", streamId.getId());
+  }
+
+  private String constructPath(Id.Stream.View viewId) {
+    return String.format("streams/%s/views/%s", viewId.getStreamId(), viewId.getId());
   }
 }

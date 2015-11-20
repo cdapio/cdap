@@ -39,6 +39,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.tephra.TransactionManager;
@@ -745,6 +746,10 @@ public abstract class AppFabricTestBase {
 
   protected boolean streamExists(Id.Stream streamID) throws Exception {
     return streamAdmin.exists(streamID);
+  }
+
+  protected boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
+    return streamAdmin.createOrUpdateView(viewId, spec);
   }
 
   protected HttpResponse createNamespace(String id) throws Exception {

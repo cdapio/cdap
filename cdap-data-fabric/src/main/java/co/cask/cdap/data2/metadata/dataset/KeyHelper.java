@@ -54,6 +54,14 @@ public class KeyHelper {
       String instanceId = stream.getId();
       builder.add(namespaceId);
       builder.add(instanceId);
+    } else if (type.equals(Id.Stream.View.class.getSimpleName())) {
+      Id.Stream.View view = (Id.Stream.View) namespacedId;
+      String namespaceId = view.getNamespaceId();
+      String streamId = view.getStreamId();
+      String viewId = view.getId();
+      builder.add(namespaceId);
+      builder.add(streamId);
+      builder.add(viewId);
     } else if (type.equals(Id.Artifact.class.getSimpleName())) {
       Id.Artifact artifactId = (Id.Artifact) namespacedId;
       String namespaceId = artifactId.getNamespace().getId();
@@ -86,6 +94,11 @@ public class KeyHelper {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
       return Id.Stream.from(namespaceId, instanceId);
+    } else if (type.equals(Id.Stream.View.class.getSimpleName())) {
+      String namespaceId = keySplitter.getString();
+      String streamId  = keySplitter.getString();
+      String viewId = keySplitter.getString();
+      return Id.Stream.View.from(Id.Stream.from(namespaceId, streamId), viewId);
     }
     throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
   }
