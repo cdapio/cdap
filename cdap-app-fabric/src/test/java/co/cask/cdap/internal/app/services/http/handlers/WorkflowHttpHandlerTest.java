@@ -667,9 +667,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW, workflowName);
 
-    Map<String, String> runtimeArguments = Maps.newHashMap();
-    runtimeArguments.put("someKey", "someWorkflowValue");
-    runtimeArguments.put("workflowKey", "workflowValue");
+    Map<String, String> runtimeArguments = ImmutableMap.of("someKey", "someWorkflowValue",
+                                                           "workflowKey", "workflowValue");
 
     setAndTestRuntimeArgs(programId, runtimeArguments);
 
@@ -677,7 +676,6 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, appName, workflowName);
     Assert.assertEquals(1, schedules.size());
     String scheduleName = schedules.get(0).getSchedule().getName();
-    Assert.assertNotNull(scheduleName);
     Assert.assertFalse(scheduleName.isEmpty());
 
     // TODO [CDAP-2327] Sagar Investigate why following check fails sometimes. Mostly test case issue.
@@ -685,7 +683,12 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Assert.assertTrue(previousRuntimes.size() == 0);
 
     long current = System.currentTimeMillis();
+    // make the check for next runtime fool proof, by resuming 1 second after recording the current time.
+    TimeUnit.SECONDS.sleep(1);
+
     Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
+    //Check schedule status
+    assertSchedule(programId, scheduleName, true, 30, TimeUnit.SECONDS);
 
     List<ScheduledRuntime> runtimes = getScheduledRunTime(programId, true);
     String id = runtimes.get(0).getId();
@@ -696,34 +699,37 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                     nextRunTime, current),
                       nextRunTime > current);
 
-    verifyProgramRuns(programId, "completed");
-
-    List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, false);
-    Assert.assertEquals(1, previousRuntimes.size());
-
-    //Check schedule status
-    assertSchedule(programId, scheduleName, true, 30, TimeUnit.SECONDS);
-
+    // Sleep for 2 seconds, so we're guaranteed at least two runs, then suspend
+    TimeUnit.SECONDS.sleep(2);
     Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName));
-    //check paused state
+    // check paused state
     assertSchedule(programId, scheduleName, false, 30, TimeUnit.SECONDS);
 
+    // check that there were atleast 1 previous runs
+    List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, false);
+    int numRuns = previousRuntimes.size();
+    Assert.assertTrue(String.format("After sleeping for two seconds, the schedule should have atleast triggered " +
+                                      "once, but found %s runs", numRuns), numRuns >= 1);
+
     verifyNoRunWithStatus(programId, "running");
+    verifyProgramRuns(programId, "completed", 1);
 
+    // get number of completed runs after schedule is suspended
     int workflowRuns = getProgramRuns(programId, "completed").size();
-
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
-    TimeUnit.SECONDS.sleep(5);
-
+    TimeUnit.SECONDS.sleep(3);
     int workflowRunsAfterSuspend = getProgramRuns(programId, "completed").size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
+    // verify that resuming the suspended schedule again has expected behavior (spawns new runs)
     Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, scheduleName));
-
-    verifyProgramRuns(programId, "completed", workflowRunsAfterSuspend);
-
     //check scheduled state
     assertSchedule(programId, scheduleName, true, 30, TimeUnit.SECONDS);
+
+    verifyProgramRuns(programId, "completed", workflowRunsAfterSuspend);
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName));
+    //check paused state
+    assertSchedule(programId, scheduleName, false, 30, TimeUnit.SECONDS);
 
     //Check status of a non existing schedule
     try {
@@ -732,11 +738,6 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     } catch (Exception e) {
       // expected
     }
-
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName));
-
-    //check paused state
-    assertSchedule(programId, scheduleName, false, 30, TimeUnit.SECONDS);
 
     //Schedule operations using invalid namespace
     try {
@@ -749,7 +750,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, appName, scheduleName));
     Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, appName, scheduleName));
 
-    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+    verifyNoRunWithStatus(programId, "running");
+    deleteApp(Id.Application.from(TEST_NAMESPACE2, AppWithSchedule.class.getSimpleName()), 200);
   }
 
   @Test

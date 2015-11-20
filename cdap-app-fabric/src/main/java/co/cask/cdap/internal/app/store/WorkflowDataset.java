@@ -28,6 +28,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.PercentileInformation;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowStatistics;
+import com.google.common.base.Preconditions;
 import com.google.common.primitives.Longs;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -64,12 +65,15 @@ public class WorkflowDataset extends AbstractDataset {
   }
 
   void write(Id.Workflow id, RunRecordMeta runRecordMeta, List<ProgramRun> programRunList) {
-    long start = runRecordMeta.getStartTs();
+    long startTs = runRecordMeta.getStartTs();
 
     MDSKey mdsKey = new MDSKey.Builder().add(id.getApplication().getNamespaceId())
-      .add(id.getApplicationId()).add(id.getId()).add(start).build();
+      .add(id.getApplicationId()).add(id.getId()).add(startTs).build();
     byte[] rowKey = mdsKey.getKey();
-    long timeTaken = runRecordMeta.getStopTs() - start;
+    Long stopTs = runRecordMeta.getStopTs();
+    Preconditions.checkState(stopTs != null, "Workflow Stats are written when the workflow has completed. Hence, " +
+      "expected workflow stop time to be non-null. Workflow = %s, Run = %s, Stop time = %s", id, runRecordMeta, stopTs);
+    long timeTaken = stopTs - startTs;
 
     String value = GSON.toJson(programRunList, PROGRAM_RUNS_TYPE);
 
