@@ -273,7 +273,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (ArtifactNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
-      LOG.error("Exception updating properties for artifact {}.", artifactId, e);
+      LOG.error("Exception writing properties for artifact {}.", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error adding properties to artifact.");
     }
   }
@@ -292,6 +292,10 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     String value = request.getContent().toString(Charsets.UTF_8);
+    if (value == null) {
+      responder.sendStatus(HttpResponseStatus.OK);
+      return;
+    }
 
     try {
       artifactRepository.writeArtifactProperty(artifactId, key, value);
@@ -299,7 +303,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (ArtifactNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
-      LOG.error("Exception updating properties for artifact {}.", artifactId, e);
+      LOG.error("Exception writing properties for artifact {}.", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error writing property to artifact.");
     }
   }
@@ -323,7 +327,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (ArtifactNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
-      LOG.error("Exception updating properties for artifact {}.", artifactId, e);
+      LOG.error("Exception reading property for artifact {}.", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading properties for artifact.");
     }
   }
@@ -346,7 +350,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     } catch (ArtifactNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
-      LOG.error("Exception updating properties for artifact {}.", artifactId, e);
+      LOG.error("Exception deleting properties for artifact {}.", artifactId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error deleting properties for artifact.");
     }
   }
@@ -371,7 +375,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
       LOG.error("Exception updating properties for artifact {}.", artifactId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error deleting properties for artifact.");
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error deleting property for artifact.");
     }
   }
 
@@ -569,7 +573,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
             Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, version);
 
             // add the artifact to the repo
-            artifactRepository.addArtifact(artifactId, uploadedFile, parentArtifacts, additionalPluginClasses, null);
+            artifactRepository.addArtifact(artifactId, uploadedFile, parentArtifacts, additionalPluginClasses);
             responder.sendString(HttpResponseStatus.OK, "Artifact added successfully");
           } catch (ArtifactRangeNotFoundException e) {
             responder.sendString(HttpResponseStatus.NOT_FOUND, e.getMessage());

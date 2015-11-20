@@ -541,7 +541,7 @@ public class ArtifactClient {
   }
 
   /**
-   * Write artifact properties. Any existing properties will be overwritten.
+   * Write properties for an artifact. Any existing properties will be overwritten.
    *
    * @param artifactId the artifact to add properties to
    * @param properties the properties to add
@@ -571,7 +571,7 @@ public class ArtifactClient {
   }
 
   /**
-   * Delete all properties of an artifact. If no properties exist, this will be a no-op.
+   * Delete all properties for an artifact. If no properties exist, this will be a no-op.
    *
    * @param artifactId the artifact to delete properties from
    * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
@@ -600,7 +600,7 @@ public class ArtifactClient {
   }
 
   /**
-   * Write a property of an artifact. If the property already exists, it will be overwritten. If the property
+   * Write a property for an artifact. If the property already exists, it will be overwritten. If the property
    * does not exist, it will be added.
    *
    * @param artifactId the artifact to write the property to
@@ -633,7 +633,7 @@ public class ArtifactClient {
   }
 
   /**
-   * Delete a property of an artifact. If the property does not exist, this will be a no-op.
+   * Delete a property for an artifact. If the property does not exist, this will be a no-op.
    *
    * @param artifactId the artifact to delete a property from
    * @param key the property to delete

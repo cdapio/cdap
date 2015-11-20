@@ -561,7 +561,7 @@ public class ArtifactStore {
                                                       updateFunction.apply(old.meta.getProperties()));
           ArtifactData updatedData = new ArtifactData(locationFactory.create(old.locationURI), updatedMeta);
           // write artifact metadata
-          writeMeta(table, artifactId, updatedData);
+          table.put(artifactCell.rowkey, artifactCell.column, Bytes.toBytes(gson.toJson(updatedData)));
           return true;
         }
       });

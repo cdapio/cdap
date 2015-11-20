@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Loads an artifact into CDAP.
+ * Gets properties for an artifact.
  */
 public class GetArtifactPropertiesCommand extends AbstractAuthCommand {
   private final ArtifactClient artifactClient;

@@ -28,22 +28,19 @@ import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.proto.Id;
 import co.cask.common.cli.Arguments;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
 import java.io.Reader;
-import java.lang.reflect.Type;
 import java.util.Map;
 
 /**
- * Loads an artifact into CDAP.
+ * Sets properties for an artifact.
  */
 public class SetArtifactPropertiesCommand extends AbstractAuthCommand {
   private static final Gson GSON = new Gson();
-  private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private final ArtifactClient artifactClient;
   private final FilePathResolver resolver;
 
@@ -68,14 +65,15 @@ public class SetArtifactPropertiesCommand extends AbstractAuthCommand {
     String propertiesFilePath = arguments.get(ArgumentName.LOCAL_FILE_PATH.toString());
     File propertiesFile = resolver.resolvePathToFile(propertiesFilePath);
     try (Reader reader = new FileReader(propertiesFile)) {
-      Map<String, String> properties;
+      ArtifactProperties properties;
       try {
-        properties = GSON.fromJson(reader, MAP_TYPE);
+        properties = GSON.fromJson(reader, ArtifactProperties.class);
       } catch (Exception e) {
-        throw new RuntimeException("Error parsing file contents as a JSON Object. " +
-                                     "Please check that it is a valid JSON Object.", e);
+        throw new RuntimeException("Error parsing file contents. Please check that it is a valid JSON Object, " +
+                                     "and that it contains a 'properties' key whose value is a JSON Object of the " +
+                                     "artifact properties.", e);
       }
-      artifactClient.writeProperties(artifactId, properties);
+      artifactClient.writeProperties(artifactId, properties.properties);
     }
   }
 
@@ -90,9 +88,13 @@ public class SetArtifactPropertiesCommand extends AbstractAuthCommand {
   public String getDescription() {
     return String.format(
       "Sets properties of %s. " +
-        "If a file is specified, the file must contain a JSON Object of the properties for the artifact. " +
-        "If a directory is specified, every file in the directory is added as a property, with the filename " +
-        "as the property key and the file contents as the property value.",
+        "The properties file must contain a JSON Object with a 'properties' key whose value is a JSON Object " +
+        "of the properties for the artifact.",
       Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
+  }
+
+  // for deserialization
+  private static class ArtifactProperties {
+    Map<String, String> properties;
   }
 }

@@ -311,7 +311,31 @@ public class ArtifactRepository {
     throws IOException, ArtifactRangeNotFoundException, WriteConflictException,
     ArtifactAlreadyExistsException, InvalidArtifactException {
 
-    return addArtifact(artifactId, artifactFile, parentArtifacts, null, null);
+    return addArtifact(artifactId, artifactFile, parentArtifacts, null, Collections.<String, String>emptyMap());
+  }
+
+  /**
+   * Inspects and builds plugin and application information for the given artifact, adding an additional set of
+   * plugin classes to the plugins found through inspection. This method is used when all plugin classes
+   * cannot be derived by inspecting the artifact but need to be explicitly set. This is true for 3rd party plugins
+   * like jdbc drivers.
+   *
+   * @param artifactId the id of the artifact to inspect and store
+   * @param artifactFile the artifact to inspect and store
+   * @param parentArtifacts artifacts the given artifact extends.
+   *                        If null, the given artifact does not extend another artifact
+   * @param additionalPlugins the set of additional plugin classes to add to the plugins found through inspection.
+   *                          If null, no additional plugin classes will be added
+   * @throws IOException if there was an exception reading from the artifact store
+   * @throws ArtifactRangeNotFoundException if none of the parent artifacts could be found
+   */
+  public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
+                                    @Nullable Set<ArtifactRange> parentArtifacts,
+                                    @Nullable Set<PluginClass> additionalPlugins)
+    throws IOException, ArtifactAlreadyExistsException, WriteConflictException,
+    InvalidArtifactException, ArtifactRangeNotFoundException {
+    return addArtifact(artifactId, artifactFile, parentArtifacts,
+                       additionalPlugins, Collections.<String, String>emptyMap());
   }
 
   /**
@@ -333,7 +357,7 @@ public class ArtifactRepository {
   public ArtifactDetail addArtifact(Id.Artifact artifactId, File artifactFile,
                                     @Nullable Set<ArtifactRange> parentArtifacts,
                                     @Nullable Set<PluginClass> additionalPlugins,
-                                    @Nullable Map<String, String> properties)
+                                    Map<String, String> properties)
     throws IOException, ArtifactAlreadyExistsException, WriteConflictException,
     InvalidArtifactException, ArtifactRangeNotFoundException {
 
@@ -353,8 +377,7 @@ public class ArtifactRepository {
 
     try {
       ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, additionalPlugins, parentClassLoader);
-      Map<String, String> artifactProperties = properties == null ? Collections.<String, String>emptyMap() : properties;
-      ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts, artifactProperties);
+      ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts, properties);
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     } finally {
       parentClassLoader.close();
@@ -362,7 +385,7 @@ public class ArtifactRepository {
   }
 
   /**
-   * Writes properties of an artifact. Any existing properties will be overwritten
+   * Writes properties for an artifact. Any existing properties will be overwritten
    *
    * @param artifactId the id of the artifact to add properties to
    * @param properties the artifact properties to add
@@ -380,7 +403,7 @@ public class ArtifactRepository {
   }
 
   /**
-   * Writes a property to an artifact. If the property already exists, it will be overwritten. If it does not exist,
+   * Writes a property for an artifact. If the property already exists, it will be overwritten. If it does not exist,
    * it will be added.
    *
    * @param artifactId the id of the artifact to write a property to
@@ -403,7 +426,7 @@ public class ArtifactRepository {
   }
 
   /**
-   * Deletes a property from an artifact. If the property does not exist, this will be a no-op.
+   * Deletes a property for an artifact. If the property does not exist, this will be a no-op.
    *
    * @param artifactId the id of the artifact to delete a property from
    * @param key the property to delete
@@ -415,6 +438,9 @@ public class ArtifactRepository {
     artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
       @Override
       public Map<String, String> apply(Map<String, String> oldProperties) {
+        if (!oldProperties.containsKey(key)) {
+          return oldProperties;
+        }
         Map<String, String> updated = new HashMap<>();
         updated.putAll(oldProperties);
         updated.remove(key);
@@ -424,7 +450,7 @@ public class ArtifactRepository {
   }
 
   /**
-   * Deletes all properties from an artifact. If no properties exist, this will be a no-op.
+   * Deletes all properties for an artifact. If no properties exist, this will be a no-op.
    *
    * @param artifactId the id of the artifact to delete properties from
    * @throws IOException if there was an exception writing to the artifact store
