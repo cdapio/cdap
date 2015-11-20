@@ -4,9 +4,9 @@
 
 .. _cloudera-installation:
 
-==========================================
-Cloudera: Installation, Setup, and Startup
-==========================================
+====================================================
+Cloudera Manager: Installing the CDAP Custom Service
+====================================================
 
 .. _cloudera-installation-download:
 

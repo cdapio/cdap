@@ -4,9 +4,9 @@
 
 .. _cloudera-verification:
 
-===============================================
-Cloudera: Verification of the CDAP Installation
-===============================================
+=======================================================
+Cloudera Manager: Verification of the CDAP Installation
+=======================================================
 
 .. include:: ../../_includes/installation/starting-verification.txt
    :start-after: .. _distribution-verification-text:

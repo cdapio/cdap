@@ -12,8 +12,6 @@ optional Hive client) needs to be configured on the node(s) where CDAP will run.
 
 If colocating CDAP on cluster hosts with actual services, such as the MapR CLDB, Yarn
 ResourceManager, or HBase Master, then the client configurations will already be in place.
-Note that Gateways are redundant if colocating CDAP on cluster hosts with actual services,
-such as the HBase Master, Yarn Resourcemanager, or HDFS Namenode.
 
 - To configure a MapR client, see the MapR documentation on `Setting Up the Client
   <http://doc.mapr.com/display/MapR/Setting+Up+the+Client>`__.

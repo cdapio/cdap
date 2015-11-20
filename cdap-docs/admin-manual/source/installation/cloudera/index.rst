@@ -6,9 +6,9 @@
 
 .. _admin-cloudera-index:
 
-==============
-Cloudera (CDH)
-==============
+======================
+Cloudera Manager (CDH)
+======================
 
 .. toctree::
 
@@ -58,7 +58,7 @@ These instructions cover the steps to install CDAP using Cloudera Manager:
 - |installation-setup-startup|_ Installing the CSD, running the *Add Service* Wizard, and starting CDAP.
 - |service-wizard|_ Step-by-step instructions, if needed, for use with the wizard.
 - |verification|_ Confirming that CDAP was installed and configured successfully.
-- |troubleshooting|_ Particular situations that can occur with Cloudera.
+- |troubleshooting|_ Particular situations that can occur with Cloudera Manager.
 
 There are specific instructions available for `upgrading existing CDAP installations <upgrading.html>`__.
 

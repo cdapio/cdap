@@ -52,7 +52,8 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
              cdap-kafka cdap-master cdap-security cdap-ui
 
 #. If you are upgrading a secure Hadoop cluster, you should authenticate with ``kinit``
-   before the next step (running the upgrade tool)::
+   as the user that runs CDAP Master (the CDAP user)
+   before the next step (the running of the upgrade tool)::
 
      $ kinit -kt <keytab> <principal>
 

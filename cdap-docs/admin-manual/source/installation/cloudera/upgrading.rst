@@ -4,9 +4,9 @@
 
 .. _cloudera-upgrading:
 
-=================================================
-Cloudera: Upgrading an Existing CDAP Installation
-=================================================
+=========================================================
+Cloudera Manager: Upgrading an Existing CDAP Installation
+=========================================================
 
 Upgrading Patch Release versions
 --------------------------------

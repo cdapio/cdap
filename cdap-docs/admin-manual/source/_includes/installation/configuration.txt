@@ -5,7 +5,7 @@
 ====================================
 
 This page is to help you configure Cask Data Application Platform (CDAP). It provides the
-instructions for `configuration <#configuration>`__ the CDAP components so they work with
+instructions for `configuring <#configuration>`__ the CDAP components so they work with
 your existing |hadoop-distribution| cluster. 
 
 It's assumed that you have already followed the `installation <installation.html>`__ steps.
@@ -105,7 +105,7 @@ Configuration
          <description>Enable Explore functionality</description>
        </property>
  
-     This feature cannot be used unless the cluster has a correct version of Hive installed.
+     This feature cannot be used unless the cluster has a compatible version of Hive installed.
      See the section on `Hadoop/HBase Environment <installation.html#hadoop-hbase-environment>`__.
      To use this feature on secure Hadoop clusters, please see these instructions on
      `configuring secure Hadoop <configuration.html#secure-hadoop>`__.
@@ -137,8 +137,8 @@ authenticate with Hadoop, HBase, ZooKeeper, and (optionally) Hive.  In this case
 ``hdfs.user`` in ``cdap-site.xml`` will be ignored and the CDAP processes will be identified by the
 default authenticated Kerberos principal.
 
-**Note:** CDAP support for secure Hadoop clusters is limited to CDH 5.0.0 through CDH 5.4.5,
-and HDP 2.0 through 2.2.
+**Note:** CDAP support for secure Hadoop clusters is limited to the latest versions of CDH, HDP, and
+Apache BigTop; currently, MapR is not supported on secure Hadoop clusters.
 
 In order to configure **CDAP for Kerberos authentication:**
 

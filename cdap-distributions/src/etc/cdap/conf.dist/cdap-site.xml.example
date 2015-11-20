@@ -75,6 +75,14 @@
   </property>
 
   <property>
+    <name>router.server.address</name>
+    <value>{ROUTER-HOST-IP}</value>
+    <description>
+      Router address to which CDAP UI connects
+    </description>
+  </property>
+
+  <property>
     <name>router.server.port</name>
     <value>${router.bind.port}</value>
     <description>
@@ -129,9 +137,9 @@
 
   <property>
     <name>kafka.seed.brokers</name>
-    <value>127.0.0.1:9092</value>
+    <value>FQDN1:9092,FQDN2:9092</value>
     <description>
-      List of Kafka brokers (comma separated)
+      List of Kafka brokers (comma separated, replace with correct values)
     </description>
   </property>
 
@@ -154,14 +162,6 @@
     <value>9999</value>
     <description>
       CDAP UI bind port
-    </description>
-  </property>
-
-  <property>
-    <name>router.server.address</name>
-    <value>127.0.0.1</value>
-    <description>
-      Router address to which CDAP UI connects
     </description>
   </property>
 

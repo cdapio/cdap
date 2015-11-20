@@ -4,9 +4,9 @@
 
 .. _cloudera-configuring:
 
-================================================================
-Cloudera: Prerequisites to using Cloudera Manager
-================================================================
+====================================
+Cloudera Manager: CDAP Prerequisites
+====================================
 
 .. rubric:: Roles and Dependencies
 

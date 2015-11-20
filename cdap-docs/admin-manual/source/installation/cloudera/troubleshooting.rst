@@ -4,9 +4,9 @@
 
 .. _cloudera-troubleshooting:
 
-=========================
-Cloudera: Troubleshooting
-=========================
+=================================
+Cloudera Manager: Troubleshooting
+=================================
 
 
 .. rubric:: Permissions Errors
@@ -23,7 +23,7 @@ Advanced Configuration Snippet (Safety Valve) for hive-site.xml* configuration f
 .. rubric:: Missing System Artifacts
 
 The bundled system artifacts are included in the CDAP parcel, located in a subdirectory
-of Cloudera's ``${PARCELS_ROOT}`` directory, for example::
+of Cloudera Manager's ``${PARCELS_ROOT}`` directory, for example::
 
   /opt/cloudera/parcels/CDAP/master/artifacts
 

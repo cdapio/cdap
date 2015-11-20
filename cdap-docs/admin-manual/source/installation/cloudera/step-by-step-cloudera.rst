@@ -4,9 +4,9 @@
 
 .. _step-by-step-cloudera-add-service:
 
-============================================
-Cloudera: *Add Service* Wizard, Step-by-Step
-============================================
+====================================================
+Cloudera Manager: *Add Service* Wizard, Step-by-Step
+====================================================
 
 As described in :ref:`cloudera-installation`, you can use `Cloudera Manager
 <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__ 
