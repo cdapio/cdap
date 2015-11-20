@@ -188,7 +188,7 @@ function getEs6Features(isNegate) {
     'flows',
     'apps',
     'search',
-    'pins'
+    'pins',
     'hydrator'
   ];
   var returnVal = [];
@@ -476,7 +476,7 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
     './app/features/apps/**/*.js',
     './app/features/pins/**/*.js',
     './app/features/search/**/*.js',
-    './app/features/flows/**/*.js'
+    './app/features/flows/**/*.js',
     './app/features/flows/**/*.js',
     './app/directives/dag/**/*.js'
   ], ['jshint', 'watch:js:app:babel']);
