@@ -15,9 +15,10 @@
  */
 
 class HydratorService {
-  constructor(GLOBALS, MyDAGFactory) {
+  constructor(GLOBALS, MyDAGFactory, uuid) {
     this.GLOBALS = GLOBALS;
     this.MyDAGFactory = MyDAGFactory;
+    this.uuid = uuid;
   }
 
   getNodesAndConnectionsFromConfig(pipeline) {
@@ -30,14 +31,14 @@ class HydratorService {
     let transforms = angular.copy(pipeline.config.transforms)
       .map( node => {
         node.type = artifact.transform;
-        node.id = node.name + '-' + node.type + '-' + Date.now();
+        node.id = node.name + '-' + node.type + '-' + uuid.v4();
         node.icon = this.MyDAGFactory.getIcon(node.name);
         return node;
       });
     let sinks = angular.copy(pipeline.config.sinks)
       .map( node => {
         node.type = artifact.sink;
-        node.id = node.name + '-' + node.type + '-' + Date.now();
+        node.id = node.name + '-' + node.type + '-' + uuid.v4();
         node.icon = this.MyDAGFactory.getIcon(node.name);
         return node;
       });
@@ -46,7 +47,7 @@ class HydratorService {
     source.icon = this.MyDAGFactory.getIcon(source.name);
 
     // replace with backend id
-    source.id = source.name + '-' + source.type + '-' + Date.now();
+    source.id = source.name + '-' + source.type + '-' + uuid.v4();
     nodes.push(source);
     nodes = nodes.concat(transforms);
     nodes = nodes.concat(sinks);
@@ -89,12 +90,15 @@ class HydratorService {
       };
     });
 
+
+    console.info('connections', connections);
+
     return {
       nodes: nodes,
       connections: connections
     };
   }
 }
-HydratorService.$inject = ['GLOBALS', 'MyDAGFactory'];
+HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorService', HydratorService);
