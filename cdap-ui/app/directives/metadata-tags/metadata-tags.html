@@ -31,14 +31,12 @@
       </span>
     </div>
   </div>
-  <div class="tag-container" ng-if="MetadataController.metadataTags.length">
-    <div class="tag" ng-repeat="tag in MetadataController.metadataTags">
-      <a class="btn">
-        {{tag}}
-        <span class="fa fa-times"
-          ng-click="MetadataController.deleteMetadata(tag)"
-        ></span>
-      </a>
-    </div>
+  <div class="tag" ng-repeat="tag in MetadataController.metadataTags">
+    <a class="btn">
+      {{tag}}
+      <span class="fa fa-times"
+        ng-click="MetadataController.deleteMetadata(tag)"
+      ></span>
+    </a>
   </div>
 </div>
