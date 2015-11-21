@@ -23,7 +23,7 @@ import co.cask.cdap.common.queue.QueueName;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdmin;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.service.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -49,7 +49,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   private final StreamMetaStore streamMetaStore;
   private final UsageRegistry usageRegistry;
   private final LineageWriter lineageWriter;
-  private final BusinessMetadataStore businessMds;
+  private final MetadataStore metadataStore;
   private final ViewAdmin viewAdmin;
 
   @Inject
@@ -57,13 +57,13 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
                              UsageRegistry usageRegistry,
                              LineageWriter lineageWriter,
                              StreamMetaStore streamMetaStore,
-                             BusinessMetadataStore businessMds,
+                             MetadataStore metadataStore,
                              ViewAdmin viewAdmin) {
     super(queueService);
     this.usageRegistry = usageRegistry;
     this.streamMetaStore = streamMetaStore;
     this.lineageWriter = lineageWriter;
-    this.businessMds = businessMds;
+    this.metadataStore = metadataStore;
     this.viewAdmin = viewAdmin;
   }
 
@@ -72,7 +72,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
     queueService.resetStreamsWithPrefix(QueueName.prefixForNamedspacedStream(namespace.getId()));
     for (StreamSpecification spec : streamMetaStore.listStreams(namespace)) {
       // Remove metadata for the stream
-      businessMds.removeMetadata(Id.Stream.from(namespace, spec.getName()));
+      metadataStore.removeMetadata(Id.Stream.from(namespace, spec.getName()));
       streamMetaStore.removeStream(Id.Stream.from(namespace, spec.getName()));
     }
   }
@@ -125,7 +125,7 @@ public class InMemoryStreamAdmin extends InMemoryQueueAdmin implements StreamAdm
   public void drop(Id.Stream streamId) throws Exception {
     Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
     // Remove metadata for the stream
-    businessMds.removeMetadata(streamId);
+    metadataStore.removeMetadata(streamId);
     drop(QueueName.fromStream(streamId));
     streamMetaStore.removeStream(streamId);
   }

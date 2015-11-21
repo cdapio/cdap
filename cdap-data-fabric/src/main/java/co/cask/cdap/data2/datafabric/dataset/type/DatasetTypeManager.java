@@ -113,7 +113,7 @@ public class DatasetTypeManager extends AbstractIdleService {
           Class tableModuleClass = Class.forName(moduleName);
           DatasetModule module = (DatasetModule) tableModuleClass.newInstance();
           modules.put(moduleName, module);
-        } catch (ClassCastException|ClassNotFoundException|InstantiationException|IllegalAccessException ex) {
+        } catch (ClassCastException | ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
           LOG.error("Failed to add {} extension module: {}", moduleName, ex.toString());
         }
       }
@@ -464,7 +464,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     private final List<String> types = Lists.newArrayList();
     private final LinkedHashSet<Id.DatasetType> usedTypes = new LinkedHashSet<Id.DatasetType>();
 
-    public DependencyTrackingRegistry(Id.Namespace namespaceId, MDSDatasets datasets) {
+    private DependencyTrackingRegistry(Id.Namespace namespaceId, MDSDatasets datasets) {
       this.namespaceId = namespaceId;
       this.datasets = datasets;
       this.registry = new InMemoryDatasetDefinitionRegistry();
