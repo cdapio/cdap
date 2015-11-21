@@ -315,9 +315,13 @@ public class DefaultStore implements Store {
         ProgramType programType = ProgramType.valueOfSchedulableType(workflowNode.getProgram().getProgramType());
         Id.Program innerProgram = Id.Program.from(app.getNamespaceId(), app.getId(), programType, entry.getKey());
         RunRecordMeta innerProgramRun = getRun(innerProgram, entry.getValue());
-        if (innerProgramRun.getStatus().equals(ProgramRunStatus.COMPLETED)) {
+        if (innerProgramRun != null && innerProgramRun.getStatus().equals(ProgramRunStatus.COMPLETED)) {
+          Long stopTs = innerProgramRun.getStopTs();
+          // since the program is completed, the stop ts cannot be null
+          Preconditions.checkState(stopTs != null, "Since the program has completed, expected its stop time to not " +
+            "be null. Program = %s, Workflow = %s, Run = %s, Stop Ts = %s", innerProgram, id, run, stopTs);
           programRunsList.add(new WorkflowDataset.ProgramRun(
-            entry.getKey(), entry.getValue(), programType, innerProgramRun.getStopTs() - innerProgramRun.getStartTs()));
+            entry.getKey(), entry.getValue(), programType, stopTs - innerProgramRun.getStartTs()));
         } else {
           workFlowNodeFailed = true;
           break;

@@ -81,6 +81,7 @@ public class ConcurrentWorkflowApp extends AbstractApplication {
           Thread.currentThread().interrupt();
         }
       }
+      LOG.info("Found done file {}. Workflow completed.", doneFile);
     }
   }
 }
