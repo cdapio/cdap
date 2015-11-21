@@ -94,8 +94,8 @@ namespaces. It can only be done if all programs of the namespace have been stopp
 the ``cdap-site.xml`` parameter ``enable.unrecoverable.reset`` has been enabled.
 
 
-.. rubric::  Examples of Using Namespaces
-
+Namespace Examples
+==================
 - All examples, starting with :ref:`Hello World <examples-hello-world>`, demonstrate using
   namespaces when using the CDAP HTTP RESTful API.
   

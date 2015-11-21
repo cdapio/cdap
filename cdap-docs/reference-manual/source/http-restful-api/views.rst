@@ -14,7 +14,7 @@ Views HTTP RESTful API
 Views
 =====
 
-Views are a read-only source where data can be read from. They are similar to a
+Views are a read-only source from where data can be read. They are similar to a
 :ref:`stream <streams>` or :ref:`dataset <datasets-index>`.
 
 A view has a specific read format. Read formats consist of a :ref:`schema

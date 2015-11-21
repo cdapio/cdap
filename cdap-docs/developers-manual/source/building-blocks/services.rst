@@ -48,7 +48,7 @@ Services are implemented by extending ``AbstractService``, which consists of
   }
 
 Service Handlers
-----------------
+================
 ``ServiceHandler``\s are used to handle and serve HTTP requests.
 
 You add handlers to your service by calling the ``addHandler`` method in the service's
@@ -127,7 +127,7 @@ An example of how to implement ``HttpContentConsumer`` is shown in the :ref:`Spo
 .. _services-path-parameters:
 
 About Path Parameters
----------------------
+=====================
 The value of a path parameter cannot contain any `characters that have a special meaning
 <http://tools.ietf.org/html/rfc3986#section-2.2>`__ in URI syntax. If a request has a path
 parameter that contains such a character, it must be `URL-encoded
@@ -150,7 +150,7 @@ There are two ways to work around this:
   character in the query of a URI.
 
 Service Discovery
------------------
+=================
 Services announce the host and port they are running on so that they can be discovered |---| and
 accessed |---| by other programs.
 
@@ -193,7 +193,7 @@ For example, in flows::
   }
 
 Services and Resources
-----------------------
+======================
 When a service is configured, the resource requirements for the server that runs all
 handlers of the service can be set, both in terms of the amount of memory (in megabytes)
 and the number of virtual cores assigned.
@@ -212,8 +212,9 @@ If both the memory and the number of cores needs to be set, this can be done usi
 An example of setting ``Resources`` using runtime arguments is shown in :ref:`Purchase
 <examples-purchase>` example's ``PurchaseHistoryBuilder.java``.
 
-.. rubric::  Examples of Using Services
 
+Services Examples
+=================
 - The simplest example, :ref:`Hello World <examples-hello-world>`, demonstrates using a
   service to **retrieve a name from a dataset.**
   
