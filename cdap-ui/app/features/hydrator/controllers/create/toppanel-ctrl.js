@@ -87,38 +87,25 @@ class TopPanelController{
       templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
       size: 'lg',
       keyboard: true,
-      controller: ['$scope', 'config', function($scope, config) {
+      controller: ['$scope', 'config', '$timeout', 'exportConfig', function($scope, config, $timeout, exportConfig) {
         $scope.config = JSON.stringify(config);
-
+        var exportConf = exportConfig;
         $scope.export = function () {
-          // CanvasFactory
-          //   .exportPipeline(
-          //     MyAppDAGService.getConfigForBackend(),
-          //     MyAppDAGService.metadata.name,
-          //     MyAppDAGService.nodes,
-          //     MyAppDAGService.connections)
-          //   .then(
-          //     function success(result) {
-          //       $scope.exportFileName = result.name;
-          //       $scope.url = result.url;
-          //       $scope.$on('$destroy', function () {
-          //         URL.revokeObjectURL($scope.url);
-          //       });
-          //       // Clicking on the hidden download button. #hack.
-          //       $timeout(function() {
-          //         document.getElementById('pipeline-export-config-link').click();
-          //       });
-          //     }.bind(this),
-          //     function error() {
-          //       console.log('ERROR: Exporting ' + MyAppDAGService.metadata.name + ' failed.');
-          //     }
-          //   );
+          var content = exportConf;
+          var blob = new Blob([JSON.stringify(content, null, 4)], { type: 'application/json'});
+          $scope.url = URL.createObjectURL(blob);
+          $scope.exportFileName = (content.name? content.name: 'noname') + '-' + content.artifact.name;
+          $scope.$on('$destroy', function () {
+            URL.revokeObjectURL($scope.url);
+          });
+          $timeout(function() {
+            document.getElementById('pipeline-export-config-link').click();
+          });
         };
       }],
       resolve: {
-        config: function() {
-          return config;
-        }
+        config: () => config,
+        exportConfig: () => this.ConfigStore.getConfigForExport()
       }
     });
   }
