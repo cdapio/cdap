@@ -1,0 +1,165 @@
+{
+  "variables": {
+    "sdk_version": "2.8.3"
+  },
+  "builders": [
+    {
+      "type": "virtualbox-iso",
+      "guest_os_type": "Ubuntu_64",
+      "iso_url": "http://releases.ubuntu.com/12.04/ubuntu-12.04.5-server-amd64.iso",
+      "iso_checksum": "769474248a3897f4865817446f9a4a53",
+      "iso_checksum_type": "md5",
+      "ssh_username": "root",
+      "ssh_password": "cdap",
+      "ssh_wait_timeout": "30m",
+      "shutdown_command": "shutdown -P now",
+      "format": "ova",
+      "headless": true,
+      "guest_additions_mode": "upload",
+      "http_directory": "files",
+      "boot_command": [
+        "<esc><esc><enter><wait>",
+        "/install/vmlinuz noapic ",
+        "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg ",
+        "debian-installer=en_US auto locale=en_US kbd-chooser/method=us ",
+        "hostname={{ .Name }}.cask.co ",
+        "fb=false debconf/frontend=noninteractive ",
+        "keyboard-configuration/modelcode=SKIP keyboard-configuration/layout=USA ",
+        "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
+        "initrd=/install/initrd.gz -- <enter>"
+      ],
+      "vboxmanage": [
+        ["modifyvm", "{{ .Name }}", "--memory", "4096"]
+      ],
+      "vboxmanage_post": [
+        ["modifyvm", "{{ .Name }}", "--clipboard", "bidirectional"],
+        ["modifyvm", "{{ .Name }}", "--accelerate2dvideo", "on"],
+        ["modifyvm", "{{ .Name }}", "--accelerate3d", "on"],
+        ["modifyvm", "{{ .Name }}", "--natpf1", "guest_ssh,tcp,127.0.0.1,2222,,22" ]
+      ],
+      "vm_name": "cdap-standalone-vm-{{user `sdk_version`}}",
+      "name": "cdap-sdk-vm"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/apt-setup.sh",
+        "scripts/cookbook-dir.sh"
+      ],
+      "pause_before": "10s"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "reboot"
+      ],
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "chef-solo",
+      "remote_cookbook_paths": "/var/chef/cookbooks",
+      "pause_before": "10s"
+    },
+    {
+      "type": "shell",
+      "scripts": "scripts/cookbook-setup.sh"
+    },
+    {
+      "type": "shell",
+      "scripts": "scripts/eclipse-cookbook.sh",
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "chef-solo",
+      "remote_cookbook_paths": "/var/chef/cookbooks",
+      "run_list": "recipe[maven],recipe[hadoop::flume_agent],recipe[idea],recipe[eclipse]",
+      "prevent_sudo": true,
+      "skip_install": true,
+      "json": {
+        "eclipse": {
+          "version": "Luna",
+          "release_code": "SR2",
+          "plugins": [
+            { "http://download.eclipse.org/releases/luna": "org.eclipse.egit.feature.group" },
+            { "http://download.eclipse.org/technology/m2e/releases": "org.eclipse.m2e.feature.feature.group" }
+          ],
+          "url": "http://ftp.osuosl.org/pub/eclipse/technology/epp/downloads/release/luna/SR2/eclipse-jee-luna-SR2-linux-gtk-x86_64.tar.gz"
+        },
+        "idea": {
+          "setup_dir": "/opt",
+          "version": "14.1.4"
+        },
+        "hadoop": {
+          "distribution": "hdp",
+          "distribution_version": "2.1.7.0"
+        },
+        "java": {
+          "install_flavor": "oracle",
+          "jdk_version": 7,
+          "oracle": {
+            "accept_oracle_download_terms": true
+          }
+        }
+      },
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "file",
+      "source": "files/cdap-sdk.zip",
+      "destination": "/tmp/cdap-sdk.zip",
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "file",
+      "source": "files/mavenrepo.tar.bz2",
+      "destination": "/tmp/mavenrepo.tar.bz2",
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "chef-solo",
+      "remote_cookbook_paths": "/var/chef/cookbooks",
+      "run_list": "recipe[cdap::sdk]",
+      "prevent_sudo": true,
+      "skip_install": true,
+      "json": {
+        "cdap": {
+          "version": "2.8.3-1",
+          "sdk": {
+            "url": "file:///tmp/cdap-sdk.zip"
+          }
+        }
+      }
+    },
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/motd.sh",
+        "scripts/xorg.sh",
+        "scripts/slim.sh",
+        "scripts/fill-maven-cache.sh",
+        "scripts/lxde.sh",
+        "scripts/vbox-guest-additions.sh"
+      ],
+      "only": ["cdap-sdk-vm"]
+    },
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/remove-chef.sh",
+        "scripts/sdk-cleanup.sh",
+        "scripts/network-cleanup.sh",
+        "scripts/apt-cleanup.sh"
+      ]
+    },
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/random-root-password.sh",
+        "scripts/zero-disk.sh"
+      ],
+      "only": ["cdap-sdk-vm"]
+    }
+  ]
+}
