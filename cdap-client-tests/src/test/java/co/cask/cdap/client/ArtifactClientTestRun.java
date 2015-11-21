@@ -197,8 +197,15 @@ public class ArtifactClientTestRun extends ClientTestBase {
     };
     artifactClient.add(myapp1Id.getNamespace(), myapp1Id.getName(),
                        inputSupplier, myapp1Id.getVersion().getVersion());
+    // add some properties
+    Map<String, String> myapp1Properties = ImmutableMap.of("k1", "v1");
+    artifactClient.writeProperties(myapp1Id, myapp1Properties);
+
     // let it derive version from jar manifest, which has bundle-version at 2.0.0
     artifactClient.add(myapp2Id.getNamespace(), myapp2Id.getName(), inputSupplier, null, null);
+    // add some properties
+    Map<String, String> myapp2Properties = ImmutableMap.of("k1", "v1", "k2", "v2");
+    artifactClient.writeProperties(myapp2Id, myapp2Properties);
 
     // add an artifact that contains a plugin, but only extends myapp-2.0.0
     Id.Artifact pluginId = Id.Artifact.from(Id.Namespace.DEFAULT, "myapp-plugins", "2.0.0");
@@ -247,13 +254,31 @@ public class ArtifactClientTestRun extends ClientTestBase {
 
     // test get myapp-1.0.0
     ArtifactInfo myapp1Info =
-      new ArtifactInfo(myapp1Id.getName(), myapp1Id.getVersion().getVersion(), ArtifactScope.USER, myAppClasses);
+      new ArtifactInfo(myapp1Id.getName(), myapp1Id.getVersion().getVersion(), ArtifactScope.USER,
+                       myAppClasses, myapp1Properties);
     Assert.assertEquals(myapp1Info, artifactClient.getArtifactInfo(myapp1Id));
 
     // test get myapp-2.0.0
     ArtifactInfo myapp2Info =
-      new ArtifactInfo(myapp2Id.getName(), myapp2Id.getVersion().getVersion(), ArtifactScope.USER, myAppClasses);
+      new ArtifactInfo(myapp2Id.getName(), myapp2Id.getVersion().getVersion(), ArtifactScope.USER,
+                       myAppClasses, myapp2Properties);
     Assert.assertEquals(myapp2Info, artifactClient.getArtifactInfo(myapp2Id));
+    // test overwriting properties
+    myapp2Properties = ImmutableMap.of("k1", "v3", "k5", "v5");
+    artifactClient.writeProperties(myapp2Id, myapp2Properties);
+    Assert.assertEquals(myapp2Properties, artifactClient.getArtifactInfo(myapp2Id).getProperties());
+    // test deleting property
+    artifactClient.deleteProperty(myapp2Id, "k1");
+    Assert.assertEquals(ImmutableMap.of("k5", "v5"),
+                        artifactClient.getArtifactInfo(myapp2Id).getProperties());
+    // test writing property
+    artifactClient.writeProperty(myapp2Id, "k5", "v4");
+    Assert.assertEquals(ImmutableMap.of("k5", "v4"),
+                        artifactClient.getArtifactInfo(myapp2Id).getProperties());
+    // test deleting properties
+    artifactClient.deleteProperties(myapp2Id);
+    Assert.assertTrue(artifactClient.getArtifactInfo(myapp2Id).getProperties().isEmpty());
+
 
     // test get myapp-plugins-2.0.0
     Map<String, PluginPropertyField> props = ImmutableMap.of(
@@ -263,7 +288,8 @@ public class ArtifactClientTestRun extends ClientTestBase {
       .addPlugins(additionalPlugins)
       .build();
     ArtifactInfo pluginArtifactInfo =
-      new ArtifactInfo(pluginId.getName(), pluginId.getVersion().getVersion(), ArtifactScope.USER, pluginClasses);
+      new ArtifactInfo(pluginId.getName(), pluginId.getVersion().getVersion(), ArtifactScope.USER,
+                       pluginClasses, ImmutableMap.<String, String>of());
     Assert.assertEquals(pluginArtifactInfo, artifactClient.getArtifactInfo(pluginId));
 
     // test get all app classes in namespace

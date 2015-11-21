@@ -48,6 +48,7 @@ import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
+import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
@@ -56,9 +57,11 @@ import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -66,7 +69,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,6 +87,7 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -97,6 +104,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   private static final String PLUGINS_HEADER = "Artifact-Plugins";
   private static final Type APPCLASS_SUMMARIES_TYPE = new TypeToken<List<ApplicationClassSummary>>() { }.getType();
   private static final Type APPCLASS_INFOS_TYPE = new TypeToken<List<ApplicationClassInfo>>() { }.getType();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(PluginClass.class, new PluginClassDeserializer())
@@ -190,13 +198,184 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
       ArtifactDetail detail = artifactRepository.getArtifact(artifactId);
       ArtifactDescriptor descriptor = detail.getDescriptor();
       // info hides some fields that are available in detail, such as the location of the artifact
-      ArtifactInfo info = new ArtifactInfo(descriptor.getArtifactId(), detail.getMeta().getClasses());
+      ArtifactInfo info = new ArtifactInfo(descriptor.getArtifactId(),
+                                           detail.getMeta().getClasses(), detail.getMeta().getProperties());
       responder.sendJson(HttpResponseStatus.OK, info, ArtifactInfo.class, GSON);
     } catch (ArtifactNotFoundException e) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
     } catch (IOException e) {
       LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
+    }
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/properties")
+  public void getProperties(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("artifact-name") String artifactName,
+                            @PathParam("artifact-version") String artifactVersion,
+                            @QueryParam("scope") @DefaultValue("user") String scope,
+                            @QueryParam("keys") @Nullable String keys)
+    throws NamespaceNotFoundException, BadRequestException {
+
+    Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
+    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+
+    try {
+      ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
+      Map<String, String> properties = artifactDetail.getMeta().getProperties();
+      Map<String, String> result;
+
+      if (keys != null && !keys.isEmpty()) {
+        result = new HashMap<>();
+        for (String key : Splitter.on(',').trimResults().split(keys)) {
+          result.put(key, properties.get(key));
+        }
+      } else {
+        result = properties;
+      }
+      responder.sendJson(HttpResponseStatus.OK, result);
+    } catch (ArtifactNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
+    } catch (IOException e) {
+      LOG.error("Exception reading artifacts named {} for namespace {} from the store.", artifactName, namespaceId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Error reading artifact properties from the store.");
+    }
+  }
+
+  @PUT
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/properties")
+  public void writeProperties(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId,
+                              @PathParam("artifact-name") String artifactName,
+                              @PathParam("artifact-version") String artifactVersion)
+    throws NamespaceNotFoundException, BadRequestException {
+
+    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
+      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
+    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+
+    Map<String, String> properties;
+    try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8)) {
+      properties = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Json Syntax Error while parsing properties from request. " +
+                                      "Please check that the properties are a json map from string to string.", e);
+    } catch (IOException e) {
+      throw new BadRequestException("Unable to read properties from the request.", e);
+    }
+
+    try {
+      artifactRepository.writeArtifactProperties(artifactId, properties);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (ArtifactNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
+    } catch (IOException e) {
+      LOG.error("Exception writing properties for artifact {}.", artifactId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error adding properties to artifact.");
+    }
+  }
+
+  @PUT
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/properties/{property}")
+  public void writeProperty(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("artifact-name") String artifactName,
+                            @PathParam("artifact-version") String artifactVersion,
+                            @PathParam("property") String key)
+    throws NamespaceNotFoundException, BadRequestException {
+
+    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
+      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
+    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+
+    String value = request.getContent().toString(Charsets.UTF_8);
+    if (value == null) {
+      responder.sendStatus(HttpResponseStatus.OK);
+      return;
+    }
+
+    try {
+      artifactRepository.writeArtifactProperty(artifactId, key, value);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (ArtifactNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
+    } catch (IOException e) {
+      LOG.error("Exception writing properties for artifact {}.", artifactId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error writing property to artifact.");
+    }
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/properties/{property}")
+  public void getProperty(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("artifact-name") String artifactName,
+                          @PathParam("artifact-version") String artifactVersion,
+                          @PathParam("property") String key)
+    throws NamespaceNotFoundException, BadRequestException {
+
+    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
+      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
+    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+
+    try {
+      ArtifactDetail detail = artifactRepository.getArtifact(artifactId);
+      responder.sendString(HttpResponseStatus.OK, detail.getMeta().getProperties().get(key));
+    } catch (ArtifactNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
+    } catch (IOException e) {
+      LOG.error("Exception reading property for artifact {}.", artifactId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading properties for artifact.");
+    }
+  }
+
+  @DELETE
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/properties")
+  public void deleteProperties(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("artifact-name") String artifactName,
+                               @PathParam("artifact-version") String artifactVersion)
+    throws NamespaceNotFoundException, BadRequestException {
+
+    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
+      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
+    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+
+    try {
+      artifactRepository.deleteArtifactProperties(artifactId);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (ArtifactNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
+    } catch (IOException e) {
+      LOG.error("Exception deleting properties for artifact {}.", artifactId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error deleting properties for artifact.");
+    }
+  }
+
+  @DELETE
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}/properties/{property}")
+  public void deleteProperty(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("artifact-name") String artifactName,
+                             @PathParam("artifact-version") String artifactVersion,
+                             @PathParam("property") String key)
+    throws NamespaceNotFoundException, BadRequestException {
+
+    Id.Namespace namespace = Id.Namespace.SYSTEM.getId().equalsIgnoreCase(namespaceId) ?
+      Id.Namespace.SYSTEM : validateAndGetNamespace(namespaceId);
+    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+
+    try {
+      artifactRepository.deleteArtifactProperty(artifactId, key);
+      responder.sendStatus(HttpResponseStatus.OK);
+    } catch (ArtifactNotFoundException e) {
+      responder.sendString(HttpResponseStatus.NOT_FOUND, "Artifact " + artifactId + " not found.");
+    } catch (IOException e) {
+      LOG.error("Exception updating properties for artifact {}.", artifactId, e);
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error deleting property for artifact.");
     }
   }
 

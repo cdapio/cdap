@@ -23,28 +23,27 @@ import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.english.Article;
 import co.cask.cdap.cli.english.Fragment;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
+import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.common.cli.Arguments;
-import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Shows information about an artifact.
+ * Gets properties for an artifact.
  */
-public class DescribeArtifactCommand extends AbstractAuthCommand {
-
-  private static final Gson GSON = new Gson();
+public class GetArtifactPropertiesCommand extends AbstractAuthCommand {
   private final ArtifactClient artifactClient;
 
   @Inject
-  public DescribeArtifactCommand(ArtifactClient artifactClient, CLIConfig cliConfig) {
+  public GetArtifactPropertiesCommand(ArtifactClient artifactClient, CLIConfig cliConfig) {
     super(cliConfig);
     this.artifactClient = artifactClient;
   }
@@ -65,30 +64,32 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
       info = artifactClient.getArtifactInfo(artifactId, scope);
     }
 
+    List<Map.Entry<String, String>> rows = new ArrayList<>(info.getProperties().size());
+    rows.addAll(info.getProperties().entrySet());
     Table table = Table.builder()
-      .setHeader("name", "version", "scope", "app classes", "plugin classes", "properties")
-      .setRows(ImmutableList.of((List<String>) ImmutableList.of(
-        info.getName(),
-        info.getVersion(),
-        info.getScope().name(),
-        GSON.toJson(info.getClasses().getApps()),
-        GSON.toJson(info.getClasses().getPlugins()),
-        GSON.toJson(info.getProperties())))
-      )
+      .setHeader("key", "value")
+      .setRows(rows, new RowMaker<Map.Entry<String, String>>() {
+        @Override
+        public List<String> makeRow(Map.Entry<String, String> entry) {
+          List<String> columns = new ArrayList<>(2);
+          columns.add(entry.getKey());
+          columns.add(entry.getValue());
+          return columns;
+        }
+      })
       .build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
   public String getPattern() {
-    return String.format("describe artifact <%s> <%s> [<%s>]",
+    return String.format("get artifact properties <%s> <%s> [<%s>]",
                          ArgumentName.ARTIFACT_NAME, ArgumentName.ARTIFACT_VERSION, ArgumentName.SCOPE);
   }
 
   @Override
   public String getDescription() {
-    return String.format("Shows information about %s. If no scope is given, the user scope will be used. " +
-      "Includes information about application and plugin classes contained in the artifact.",
-      Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
+    return String.format("Gets properties of %s. If no scope is given, the user scope will be used. ",
+                         Fragment.of(Article.A, ElementType.ARTIFACT.getName()));
   }
 }
