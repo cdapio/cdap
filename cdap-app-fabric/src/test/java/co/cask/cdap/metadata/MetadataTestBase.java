@@ -132,12 +132,28 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     metadataClient.addProperties(stream, properties);
   }
 
+  protected void addProperties(Id.Stream.View view, @Nullable Map<String, String> properties)
+    throws Exception {
+    metadataClient.addProperties(view, properties);
+  }
+
   protected void addProperties(final Id.Stream stream, @Nullable final Map<String, String> properties,
                                Class<? extends Exception> expectedExceptionClass) throws IOException {
     expectException(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         addProperties(stream, properties);
+        return null;
+      }
+    }, expectedExceptionClass);
+  }
+
+  protected void addProperties(final Id.Stream.View view, @Nullable final Map<String, String> properties,
+                               Class<? extends Exception> expectedExceptionClass) throws IOException {
+    expectException(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        addProperties(view, properties);
         return null;
       }
     }, expectedExceptionClass);
@@ -163,6 +179,10 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return metadataClient.getMetadata(stream);
   }
 
+  protected Set<MetadataRecord> getMetadata(Id.Stream.View view) throws Exception {
+    return metadataClient.getMetadata(view);
+  }
+
   // Currently, getMetadata(entity) returns a single-element set, so we can get the properties from there
   protected Map<String, String> getProperties(Id.Application app) throws Exception {
     return Iterators.getOnlyElement(getMetadata(app).iterator()).getProperties();
@@ -182,6 +202,10 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
 
   protected Map<String, String> getProperties(Id.Stream stream) throws Exception {
     return Iterators.getOnlyElement(getMetadata(stream).iterator()).getProperties();
+  }
+
+  protected Map<String, String> getProperties(Id.Stream.View view) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(view).iterator()).getProperties();
   }
 
   protected void getPropertiesFromInvalidEntity(Id.Application app) throws Exception {
@@ -219,9 +243,21 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
       // expected
     }
   }
+  protected void getPropertiesFromInvalidEntity(Id.Stream.View view) throws Exception {
+    try {
+      getProperties(view);
+      Assert.fail("Expected not to be able to get properties from invalid entity: " + view);
+    } catch (NotFoundException expected) {
+      // expected
+    }
+  }
 
   protected void removeMetadata(Id.Application app) throws Exception {
     metadataClient.removeMetadata(app);
+  }
+
+  protected void removeMetadata(Id.Artifact artifact) throws Exception {
+    metadataClient.removeMetadata(artifact);
   }
 
   protected void removeMetadata(Id.Program program) throws Exception {
@@ -234,6 +270,10 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
 
   protected void removeMetadata(Id.Stream stream) throws Exception {
     metadataClient.removeMetadata(stream);
+  }
+
+  protected void removeMetadata(Id.Stream.View view) throws Exception {
+    metadataClient.removeMetadata(view);
   }
 
   protected void removeProperties(Id.Application app) throws Exception {
@@ -272,8 +312,16 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     metadataClient.removeProperties(stream);
   }
 
+  protected void removeProperties(Id.Stream.View view) throws Exception {
+    metadataClient.removeProperties(view);
+  }
+
   protected void removeProperty(Id.Stream stream, String propertyToRemove) throws Exception {
     metadataClient.removeProperty(stream, propertyToRemove);
+  }
+
+  protected void removeProperty(Id.Stream.View view, String propertyToRemove) throws Exception {
+    metadataClient.removeProperty(view, propertyToRemove);
   }
 
   protected void addTags(Id.Application app, @Nullable Set<String> tags) throws Exception {
@@ -341,12 +389,27 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     metadataClient.addTags(stream, tags);
   }
 
+  protected void addTags(Id.Stream.View view, @Nullable Set<String> tags) throws Exception {
+    metadataClient.addTags(view, tags);
+  }
+
   protected void addTags(final Id.Stream stream, @Nullable final Set<String> tags,
                          Class<? extends Exception> expectedExceptionClass) throws IOException {
     expectException(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         addTags(stream, tags);
+        return null;
+      }
+    }, expectedExceptionClass);
+  }
+
+  protected void addTags(final Id.Stream.View view, @Nullable final Set<String> tags,
+                         Class<? extends Exception> expectedExceptionClass) throws IOException {
+    expectException(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        addTags(view, tags);
         return null;
       }
     }, expectedExceptionClass);
@@ -376,6 +439,10 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
 
   protected Set<String> getTags(Id.Stream stream) throws Exception {
     return Iterators.getOnlyElement(getMetadata(stream).iterator()).getTags();
+  }
+
+  protected Set<String> getTags(Id.Stream.View view) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(view).iterator()).getTags();
   }
 
   protected void removeTags(Id.Application app) throws Exception {
@@ -414,8 +481,16 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     metadataClient.removeTags(stream);
   }
 
+  protected void removeTags(Id.Stream.View view) throws Exception {
+    metadataClient.removeTags(view);
+  }
+
   protected void removeTag(Id.Stream stream, String tagToRemove) throws Exception {
     metadataClient.removeTag(stream, tagToRemove);
+  }
+
+  protected void removeTag(Id.Stream.View view, String tagToRemove) throws Exception {
+    metadataClient.removeTag(view, tagToRemove);
   }
 
   // expect an exception during fetching of lineage

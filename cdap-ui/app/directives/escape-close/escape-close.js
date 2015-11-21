@@ -13,27 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.metadata;
 
-/**
- * Supported types for metadata search.
- */
-public enum MetadataSearchTargetType {
-  ALL("All"),
-  ARTIFACT("Artifact"),
-  APP("Application"),
-  PROGRAM("Program"),
-  DATASET("DatasetInstance"),
-  STREAM("Stream"),
-  VIEW("View");
+angular.module(PKG.name + '.commons')
+  .directive('myEscapeClose', function () {
+    return {
+      restrict: 'A',
+      link: function (scope, element, attr) {
+        var escExpr = attr.myEscapeClose;
 
-  private final String internalName;
-
-  private MetadataSearchTargetType(String internalName) {
-    this.internalName = internalName;
-  }
-
-  public String getInternalName() {
-    return internalName;
-  }
-}
+        element.bind('keyup', function (event) {
+          if (event.keyCode === 27) {
+            scope.$apply(function () {
+              scope.$eval(escExpr);
+            });
+            event.preventDefault();
+          }
+        });
+      }
+    };
+  });

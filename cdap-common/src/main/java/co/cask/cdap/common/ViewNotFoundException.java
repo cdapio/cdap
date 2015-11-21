@@ -13,27 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.proto.metadata;
+
+package co.cask.cdap.common;
+
+import co.cask.cdap.proto.Id;
 
 /**
- * Supported types for metadata search.
+ * Thrown when a view is not found
  */
-public enum MetadataSearchTargetType {
-  ALL("All"),
-  ARTIFACT("Artifact"),
-  APP("Application"),
-  PROGRAM("Program"),
-  DATASET("DatasetInstance"),
-  STREAM("Stream"),
-  VIEW("View");
+public class ViewNotFoundException extends NotFoundException {
 
-  private final String internalName;
+  private final Id.Stream.View id;
 
-  private MetadataSearchTargetType(String internalName) {
-    this.internalName = internalName;
+  public ViewNotFoundException(Id.Stream.View id) {
+    super(id);
+    this.id = id;
   }
 
-  public String getInternalName() {
-    return internalName;
+  public Id.Stream.View getId() {
+    return id;
   }
 }

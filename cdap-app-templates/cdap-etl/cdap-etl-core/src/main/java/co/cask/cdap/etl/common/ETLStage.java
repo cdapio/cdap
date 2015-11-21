@@ -41,17 +41,6 @@ public final class ETLStage {
     this.errorDatasetName = errorDatasetName;
   }
 
-  public ETLStage(String name, Map<String, String> properties, @Nullable String errorDatasetName) {
-    this.name = name;
-    this.properties = properties;
-    this.plugin = null;
-    this.errorDatasetName = errorDatasetName;
-  }
-
-  public ETLStage(String name, Map<String, String> properties) {
-    this(name, properties, null);
-  }
-
   public ETLStage(String name, Plugin plugin) {
     this(name, plugin, null);
   }

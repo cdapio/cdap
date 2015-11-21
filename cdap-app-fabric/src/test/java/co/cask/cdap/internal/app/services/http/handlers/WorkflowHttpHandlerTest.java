@@ -33,7 +33,6 @@ import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
@@ -228,7 +227,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Get runid for the running Workflow
     List<RunRecord> historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
+    Assert.assertEquals(1, historyRuns.size());
     String runId = historyRuns.get(0).getPid();
 
     while (!firstSimpleActionFile.exists()) {
@@ -324,15 +323,14 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testMultipleWorkflowInstances() throws Exception {
-    String appWithConcurrentWorkflow = "ConcurrentWorkflowApp";
-    String appWithConcurrentWorkflowSchedule1 = "concurrentWorkflowSchedule1";
-    String appWithConcurrentWorkflowSchedule2 = "concurrentWorkflowSchedule2";
-    String concurrentWorkflowName = "ConcurrentWorkflow";
+    String appWithConcurrentWorkflow = ConcurrentWorkflowApp.class.getSimpleName();
 
     // Files used to synchronize between this test and workflow execution
-    File schedule1File = new File(tmpFolder.newFolder() + "/concurrentWorkflowSchedule1.file");
-    File schedule2File = new File(tmpFolder.newFolder() + "/concurrentWorkflowSchedule2.file");
-    File simpleActionDoneFile = new File(tmpFolder.newFolder() + "/simpleaction.file.done");
+    File tempDir = tmpFolder.newFolder(appWithConcurrentWorkflow);
+    File run1File = new File(tempDir, "concurrentRun1.file");
+    File run2File = new File(tempDir, "concurrentRun2.file");
+    File run1DoneFile = new File(tempDir, "concurrentRun1.done");
+    File run2DoneFile = new File(tempDir, "concurrentRun2.done");
 
     // create app in default namespace so that v2 and v3 api can be tested in the same test
     String defaultNamespace = Id.Namespace.DEFAULT.getId();
@@ -341,55 +339,50 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     Id.Program programId = Id.Program.from(Id.Namespace.DEFAULT, appWithConcurrentWorkflow, ProgramType.WORKFLOW,
-                                           concurrentWorkflowName);
+                                           ConcurrentWorkflowApp.ConcurrentWorkflow.class.getSimpleName());
 
-    Map<String, String> propMap = ImmutableMap.of("concurrentWorkflowSchedule1.file", schedule1File.getAbsolutePath(),
-                                                  "concurrentWorkflowSchedule2.file", schedule2File.getAbsolutePath(),
-                                                  "done.file", simpleActionDoneFile.getAbsolutePath());
+    // start run 1
+    startProgram(programId, ImmutableMap.of(ConcurrentWorkflowApp.FILE_TO_CREATE_ARG, run1File.getAbsolutePath(),
+                                            ConcurrentWorkflowApp.DONE_FILE_ARG, run1DoneFile.getAbsolutePath()),
+                 200);
+    // start run 2
+    startProgram(programId, ImmutableMap.of(ConcurrentWorkflowApp.FILE_TO_CREATE_ARG, run2File.getAbsolutePath(),
+                                            ConcurrentWorkflowApp.DONE_FILE_ARG, run2DoneFile.getAbsolutePath()),
+                 200);
 
-    PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
-    store.setProperties(defaultNamespace, appWithConcurrentWorkflow, ProgramType.WORKFLOW.getCategoryName(),
-                        concurrentWorkflowName, propMap);
-
-    Assert.assertEquals(200, resumeSchedule(defaultNamespace, appWithConcurrentWorkflow,
-                                            appWithConcurrentWorkflowSchedule1));
-    Assert.assertEquals(200, resumeSchedule(defaultNamespace, appWithConcurrentWorkflow,
-                                            appWithConcurrentWorkflowSchedule2));
-
-    while (!(schedule1File.exists() && schedule2File.exists())) {
+    while (!(run1File.exists() && run2File.exists())) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
 
-    List<RunRecord> historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() >= 2);
+    verifyMultipleConcurrentRuns(programId);
 
-    // Suspend ConcurrentWorkflow schedules
-    List<ScheduleSpecification> schedules = getSchedules(defaultNamespace, appWithConcurrentWorkflow,
-                                                         concurrentWorkflowName);
+    Assert.assertTrue(run1DoneFile.createNewFile());
+    Assert.assertTrue(run2DoneFile.createNewFile());
 
-    for (ScheduleSpecification spec : schedules) {
-      Assert.assertEquals(200, suspendSchedule(defaultNamespace, appWithConcurrentWorkflow,
-                                               spec.getSchedule().getName()));
-    }
+    waitState(programId, "STOPPED");
+    // delete the application
+    deleteApp(programId.getApplication(), 200, 60, TimeUnit.SECONDS);
+  }
 
-    response = getWorkflowCurrentStatus(programId, historyRuns.get(0).getPid());
+  private void verifyMultipleConcurrentRuns(Id.Program workflowId) throws Exception {
+    List<RunRecord> historyRuns = getProgramRuns(workflowId, "running");
+    Assert.assertEquals(2, historyRuns.size());
+
+    HttpResponse response = getWorkflowCurrentStatus(workflowId, historyRuns.get(0).getPid());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
     List<WorkflowActionNode> nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
     Assert.assertEquals(1, nodes.size());
-    Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
+    Assert.assertEquals(ConcurrentWorkflowApp.SimpleAction.class.getSimpleName(),
+                        nodes.get(0).getProgram().getProgramName());
 
-    response = getWorkflowCurrentStatus(programId, historyRuns.get(1).getPid());
+    response = getWorkflowCurrentStatus(workflowId, historyRuns.get(1).getPid());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
     nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
     Assert.assertEquals(1, nodes.size());
-    Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
-
-    Assert.assertTrue(simpleActionDoneFile.createNewFile());
-
-    // delete the application
-    deleteApp(programId.getApplication(), 200, 60, TimeUnit.SECONDS);
+    Assert.assertEquals(ConcurrentWorkflowApp.SimpleAction.class.getSimpleName(),
+                        nodes.get(0).getProgram().getProgramName());
   }
 
   private void verifyFileExists(final List<File> fileList)
@@ -446,7 +439,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Get the currently running RunRecord for the Workflow
     List<RunRecord> historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
+    Assert.assertEquals(1, historyRuns.size());
     RunRecord record = historyRuns.get(0);
     String runId = record.getPid();
 
@@ -472,7 +465,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Get the currently running RunRecord for the Workflow
     historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
+    Assert.assertEquals(1, historyRuns.size());
     record = historyRuns.get(0);
     Assert.assertTrue(!runId.equals(record.getPid()));
 
@@ -520,7 +513,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Store the new RunRecord for the currently running run
     historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
+    Assert.assertEquals(1, historyRuns.size());
     runId = historyRuns.get(0).getPid();
 
     // Wait till first action in the Workflow starts executing
@@ -691,15 +684,17 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, scheduleName, "previousruntime");
     // Assert.assertTrue(previousRuntimes.size() == 0);
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
-
     long current = System.currentTimeMillis();
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
 
     List<ScheduledRuntime> runtimes = getScheduledRunTime(programId, true);
     String id = runtimes.get(0).getId();
-    Assert.assertTrue(id.contains(scheduleName));
+    Assert.assertTrue(String.format("Expected schedule id '%s' to contain schedule name '%s'", id, scheduleName),
+                      id.contains(scheduleName));
     Long nextRunTime = runtimes.get(0).getTime();
-    Assert.assertTrue(nextRunTime > current);
+    Assert.assertTrue(String.format("Expected nextRuntime '%s' to be greater than current runtime '%s'",
+                                    nextRunTime, current),
+                      nextRunTime > current);
 
     verifyProgramRuns(programId, "completed");
 
@@ -713,12 +708,12 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     //check paused state
     assertSchedule(programId, scheduleName, false, 30, TimeUnit.SECONDS);
 
-    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+    verifyNoRunWithStatus(programId, "running");
 
     int workflowRuns = getProgramRuns(programId, "completed").size();
 
     //Sleep for some time and verify there are no more scheduled jobs after the suspend.
-    TimeUnit.SECONDS.sleep(10);
+    TimeUnit.SECONDS.sleep(5);
 
     int workflowRunsAfterSuspend = getProgramRuns(programId, "completed").size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
@@ -910,7 +905,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Verify that there are two runs of the Workflow currently running.
     List<RunRecord> historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 2);
+    Assert.assertEquals(2, historyRuns.size());
 
     // Stop both Workflow runs.
     String runId = historyRuns.get(0).getPid();
@@ -931,7 +926,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     }
     // Verify that currently only one run of the Workflow should be running.
     historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
+    Assert.assertEquals(1, historyRuns.size());
 
     Assert.assertTrue(doneFile.createNewFile());
 
@@ -1027,7 +1022,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Get running program run
     List<RunRecord> historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
+    Assert.assertEquals(1, historyRuns.size());
     String runId = historyRuns.get(0).getPid();
 
     // Since the fork on the else branch of condition has 3 parallel branches
@@ -1078,7 +1073,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Get running program run
     historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
+    Assert.assertEquals(1, historyRuns.size());
     runId = historyRuns.get(0).getPid();
 
     // Since the fork on the if branch of the condition has 2 parallel branches

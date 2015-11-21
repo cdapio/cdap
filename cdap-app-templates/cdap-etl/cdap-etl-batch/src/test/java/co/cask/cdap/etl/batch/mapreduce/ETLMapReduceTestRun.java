@@ -151,40 +151,6 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
     }
   }
 
-  // TODO : remove this test after UI changes for unique name support in ETLStage is implemented.
-  @Test
-  public void testKVToKVMetaWithoutStageNames() throws Exception {
-    ETLBatchConfig etlConfig =
-      new ETLBatchConfig("* * * * *",
-                         new ETLStage("MetaKVTable",
-                                      ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable1"), null),
-                         new ETLStage("MetaKVTable",
-                                      ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable2"), null));
-
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
-    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "KVToKVMeta");
-    ApplicationManager appManager = deployApplication(appId, appRequest);
-
-    MapReduceManager mrManager = appManager.getMapReduceManager(ETLMapReduce.NAME);
-    mrManager.start();
-    mrManager.waitForFinish(5, TimeUnit.MINUTES);
-
-    DataSetManager<KeyValueTable> sourceMetaTable = getDataset(MetaKVTableSource.META_TABLE);
-    KeyValueTable sourceTable = sourceMetaTable.get();
-    Assert.assertEquals(MetaKVTableSource.PREPARE_RUN_KEY,
-                        Bytes.toString(sourceTable.read(MetaKVTableSource.PREPARE_RUN_KEY)));
-    Assert.assertEquals(MetaKVTableSource.FINISH_RUN_KEY,
-                        Bytes.toString(sourceTable.read(MetaKVTableSource.FINISH_RUN_KEY)));
-
-    DataSetManager<KeyValueTable> sinkMetaTable = getDataset(MetaKVTableSink.META_TABLE);
-    try (KeyValueTable sinkTable = sinkMetaTable.get()) {
-      Assert.assertEquals(MetaKVTableSink.PREPARE_RUN_KEY,
-                          Bytes.toString(sinkTable.read(MetaKVTableSink.PREPARE_RUN_KEY)));
-      Assert.assertEquals(MetaKVTableSink.FINISH_RUN_KEY,
-                          Bytes.toString(sinkTable.read(MetaKVTableSink.FINISH_RUN_KEY)));
-    }
-  }
-
   @SuppressWarnings("ConstantConditions")
   @Test
   public void testTableToTableWithValidations() throws Exception {
