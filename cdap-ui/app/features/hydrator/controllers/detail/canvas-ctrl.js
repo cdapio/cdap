@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailCanvasController', function(rPipelineDetail, MyAppDAGService, BottomPanelStore, NodesActionsFactory, HydratorService) {
+  .controller('HydratorDetailCanvasController', function(rPipelineDetail, BottomPanelStore, NodesActionsFactory, HydratorService) {
     try{
       rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
     } catch(e) {
