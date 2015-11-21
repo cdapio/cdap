@@ -37,6 +37,11 @@ and accessing core CDAP services. CDAP defines and implements a diverse collecti
 services that support applications and data on existing Hadoop infrastructure such as
 HBase, HDFS, YARN, MapReduce, Hive, and Spark.
 
+CDAP can be run in different modes: in-memory mode for unit testing, standalone CDAP for
+testing on a developer's laptop, and distributed CDAP for staging and production.
+Regardless of the runtime edition, CDAP is fully functional and the code you develop never
+changes.
+
 These documents are your complete reference to the Cask Data Application Platform: they help
 you get started and set up your development environment; explain how CDAP works; and teach
 how to develop and test CDAP applications.
@@ -90,8 +95,10 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Installation:** Putting CDAP into production, with installation, configuration, and security setup
   - **Operations:** Logging, metrics, monitoring, runtime arguments, scaling instances, resource
     guarantees, transaction service maintenance, troubleshooting and introduces the CDAP UI
-
-
+  - **Modes:** CDAP can be run in-memory for unit testing, standalone for testing on a developer's 
+    laptop, and distributed CDAP for production
+    
+  
 .. |integrations| replace:: **Integrations:**
 .. _integrations: integrations/index.html
 

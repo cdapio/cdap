@@ -67,6 +67,8 @@ Appendices cover the XML files used to configure the CDAP installation and secur
   <appendix-cdap-security.xml>`
 
 
+.. _modes-data-application-platform:
+
 .. rubric:: Putting CDAP into Production
 
 The Cask Data Application Platform (CDAP) can be run in different modes: in-memory mode
@@ -84,8 +86,11 @@ CDAPs.
 
 The in-memory CDAP allows you to easily run CDAP for use in unit tests. In this mode, the
 underlying Big Data infrastructure is emulated using in-memory data structures and there
-is no persistence. The CDAP UI is not available in this mode.
+is no persistence. The CDAP UI is not available in this mode. See :ref:`test-cdap` for
+information and examples on using this mode.
 
+
+.. _standalone-data-application-platform:
 
 .. rubric:: Standalone CDAP
 
@@ -101,6 +106,8 @@ See :ref:`Getting Started <getting-started-index>` and the *Cask Data Applicatio
 SDK* for information on how to start and manage your Standalone CDAP.
 
 
+.. _distributed-data-application-platform:
+
 .. rubric:: Distributed Data Application Platform
 
 The Distributed CDAP runs in fully distributed mode. In addition to the system components
@@ -110,4 +117,3 @@ CDAP.
 
 To learn more about getting your own Distributed CDAP, see `Cask Products
 <http://cask.co/products>`__.
-
