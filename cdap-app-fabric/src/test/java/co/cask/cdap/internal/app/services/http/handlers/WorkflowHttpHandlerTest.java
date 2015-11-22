@@ -709,14 +709,18 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, false);
     int numRuns = previousRuntimes.size();
     Assert.assertTrue(String.format("After sleeping for two seconds, the schedule should have atleast triggered " +
-                                      "once, but found %s runs", numRuns), numRuns >= 1);
+                                      "once, but found %s previous runs", numRuns), numRuns >= 1);
 
+    // Since this schedule starts a workflow every second, sleep for a second to make sure that all workflow runs
+    // that were started before the schedule was suspended are at least running (if not completed) and
+    // there are no race conditions in the following verifications.
+    TimeUnit.SECONDS.sleep(1);
     verifyNoRunWithStatus(programId, "running");
     verifyProgramRuns(programId, "completed", 1);
 
     // get number of completed runs after schedule is suspended
     int workflowRuns = getProgramRuns(programId, "completed").size();
-    //Sleep for some time and verify there are no more scheduled jobs after the suspend.
+    // Sleep for some time and verify there are no more scheduled jobs after the suspend.
     TimeUnit.SECONDS.sleep(3);
     int workflowRunsAfterSuspend = getProgramRuns(programId, "completed").size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
