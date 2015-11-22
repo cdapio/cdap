@@ -16,11 +16,18 @@
 
 package co.cask.cdap.metadata;
 
+import co.cask.cdap.AllProgramsApp;
 import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.WordCountMinusFlowApp;
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.data.batch.BatchReadable;
+import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.RecordScannable;
+import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.data.format.FormatSpecification;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
@@ -43,6 +50,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Tests for {@link MetadataHttpHandler}
@@ -106,17 +114,17 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Map<String, String> artifactProperties = ImmutableMap.of("rKey", "rValue", "rK", "rV");
     addProperties(artifactId, artifactProperties);
     // retrieve properties and verify
-    Map<String, String> properties = getProperties(application);
+    Map<String, String> properties = getProperties(application, MetadataScope.USER);
     Assert.assertEquals(appProperties, properties);
-    properties = getProperties(pingService);
+    properties = getProperties(pingService, MetadataScope.USER);
     Assert.assertEquals(serviceProperties, properties);
-    properties = getProperties(myds);
+    properties = getProperties(myds, MetadataScope.USER);
     Assert.assertEquals(datasetProperties, properties);
-    properties = getProperties(mystream);
+    properties = getProperties(mystream, MetadataScope.USER);
     Assert.assertEquals(streamProperties, properties);
-    properties = getProperties(myview);
+    properties = getProperties(myview, MetadataScope.USER);
     Assert.assertEquals(viewProperties, properties);
-    properties = getProperties(artifactId);
+    properties = getProperties(artifactId, MetadataScope.USER);
     Assert.assertEquals(artifactProperties, properties);
 
     // test search for stream
@@ -171,16 +179,16 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
     // test removal
     removeProperties(application);
-    Assert.assertTrue(getProperties(application).isEmpty());
+    Assert.assertTrue(getProperties(application, MetadataScope.USER).isEmpty());
     removeProperty(pingService, "sKey");
     removeProperty(pingService, "sK");
-    Assert.assertTrue(getProperties(pingService).isEmpty());
+    Assert.assertTrue(getProperties(pingService, MetadataScope.USER).isEmpty());
     removeProperty(myds, "dKey");
-    Assert.assertEquals(ImmutableMap.of("dK", "dV"), getProperties(myds));
+    Assert.assertEquals(ImmutableMap.of("dK", "dV"), getProperties(myds, MetadataScope.USER));
     removeProperty(mystream, "stK");
-    Assert.assertEquals(ImmutableMap.of("stKey", "stValue"), getProperties(mystream));
+    Assert.assertEquals(ImmutableMap.of("stKey", "stValue"), getProperties(mystream, MetadataScope.USER));
     removeProperty(myview, "viewK");
-    Assert.assertEquals(ImmutableMap.of("viewKey", "viewValue"), getProperties(myview));
+    Assert.assertEquals(ImmutableMap.of("viewKey", "viewValue"), getProperties(myview, MetadataScope.USER));
     // cleanup
     removeProperties(myview);
     removeProperties(application);
@@ -188,12 +196,12 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     removeProperties(myds);
     removeProperties(mystream);
     removeProperties(artifactId);
-    Assert.assertTrue(getProperties(application).isEmpty());
-    Assert.assertTrue(getProperties(pingService).isEmpty());
-    Assert.assertTrue(getProperties(myds).isEmpty());
-    Assert.assertTrue(getProperties(mystream).isEmpty());
-    Assert.assertTrue(getProperties(myview).isEmpty());
-    Assert.assertTrue(getProperties(artifactId).isEmpty());
+    Assert.assertTrue(getProperties(application, MetadataScope.USER).isEmpty());
+    Assert.assertTrue(getProperties(pingService, MetadataScope.USER).isEmpty());
+    Assert.assertTrue(getProperties(myds, MetadataScope.USER).isEmpty());
+    Assert.assertTrue(getProperties(mystream, MetadataScope.USER).isEmpty());
+    Assert.assertTrue(getProperties(myview, MetadataScope.USER).isEmpty());
+    Assert.assertTrue(getProperties(artifactId, MetadataScope.USER).isEmpty());
 
     // non-existing namespace
     addProperties(nonExistingApp, appProperties, NotFoundException.class);
@@ -226,22 +234,22 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Set<String> artifactTags = ImmutableSet.of("rTag", "rT");
     addTags(artifactId, artifactTags);
     // retrieve tags and verify
-    Set<String> tags = getTags(application);
+    Set<String> tags = getTags(application, MetadataScope.USER);
     Assert.assertTrue(tags.containsAll(appTags));
     Assert.assertTrue(appTags.containsAll(tags));
-    tags = getTags(pingService);
+    tags = getTags(pingService, MetadataScope.USER);
     Assert.assertTrue(tags.containsAll(serviceTags));
     Assert.assertTrue(serviceTags.containsAll(tags));
-    tags = getTags(myds);
+    tags = getTags(myds, MetadataScope.USER);
     Assert.assertTrue(tags.containsAll(datasetTags));
     Assert.assertTrue(datasetTags.containsAll(tags));
-    tags = getTags(mystream);
+    tags = getTags(mystream, MetadataScope.USER);
     Assert.assertTrue(tags.containsAll(streamTags));
     Assert.assertTrue(streamTags.containsAll(tags));
-    tags = getTags(myview);
+    tags = getTags(myview, MetadataScope.USER);
     Assert.assertTrue(tags.containsAll(viewTags));
     Assert.assertTrue(viewTags.containsAll(tags));
-    tags = getTags(artifactId);
+    tags = getTags(artifactId, MetadataScope.USER);
     Assert.assertTrue(tags.containsAll(artifactTags));
     Assert.assertTrue(artifactTags.containsAll(tags));
     // test search for stream
@@ -276,21 +284,21 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
     // test removal
     removeTag(application, "aTag");
-    Assert.assertEquals(ImmutableSet.of("aT"), getTags(application));
+    Assert.assertEquals(ImmutableSet.of("aT"), getTags(application, MetadataScope.USER));
     removeTags(pingService);
-    Assert.assertTrue(getTags(pingService).isEmpty());
+    Assert.assertTrue(getTags(pingService, MetadataScope.USER).isEmpty());
     removeTags(pingService);
-    Assert.assertTrue(getTags(pingService).isEmpty());
+    Assert.assertTrue(getTags(pingService, MetadataScope.USER).isEmpty());
     removeTag(myds, "dT");
-    Assert.assertEquals(ImmutableSet.of("dTag"), getTags(myds));
+    Assert.assertEquals(ImmutableSet.of("dTag"), getTags(myds, MetadataScope.USER));
     removeTag(mystream, "stT");
     removeTag(mystream, "stTag");
     removeTag(myview, "viewT");
     removeTag(myview, "viewTag");
-    Assert.assertTrue(getTags(mystream).isEmpty());
+    Assert.assertTrue(getTags(mystream, MetadataScope.USER).isEmpty());
     removeTag(artifactId, "rTag");
     removeTag(artifactId, "rT");
-    Assert.assertTrue(getTags(artifactId).isEmpty());
+    Assert.assertTrue(getTags(artifactId, MetadataScope.USER).isEmpty());
     // cleanup
     removeTags(application);
     removeTags(pingService);
@@ -298,11 +306,11 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     removeTags(mystream);
     removeTags(myview);
     removeTags(artifactId);
-    Assert.assertTrue(getTags(application).isEmpty());
-    Assert.assertTrue(getTags(pingService).isEmpty());
-    Assert.assertTrue(getTags(myds).isEmpty());
-    Assert.assertTrue(getTags(mystream).isEmpty());
-    Assert.assertTrue(getTags(artifactId).isEmpty());
+    Assert.assertTrue(getTags(application, MetadataScope.USER).isEmpty());
+    Assert.assertTrue(getTags(pingService, MetadataScope.USER).isEmpty());
+    Assert.assertTrue(getTags(myds, MetadataScope.USER).isEmpty());
+    Assert.assertTrue(getTags(mystream, MetadataScope.USER).isEmpty());
+    Assert.assertTrue(getTags(artifactId, MetadataScope.USER).isEmpty());
     // non-existing namespace
     addTags(nonExistingApp, appTags, NotFoundException.class);
     addTags(nonExistingService, serviceTags, NotFoundException.class);
@@ -314,10 +322,10 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
 
   @Test
   public void testMetadata() throws Exception {
-    assertCleanState();
+    assertCleanState(MetadataScope.USER);
     // Remove when nothing exists
     removeAllMetadata();
-    assertCleanState();
+    assertCleanState(MetadataScope.USER);
     // Add some properties and tags
     Map<String, String> appProperties = ImmutableMap.of("aKey", "aValue");
     Map<String, String> serviceProperties = ImmutableMap.of("sKey", "sValue");
@@ -344,7 +352,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     addTags(myview, viewTags);
     addTags(artifactId, artifactTags);
     // verify app
-    Set<MetadataRecord> metadataRecords = getMetadata(application);
+    Set<MetadataRecord> metadataRecords = getMetadata(application, MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
     MetadataRecord metadata = metadataRecords.iterator().next();
     Assert.assertEquals(MetadataScope.USER, metadata.getScope());
@@ -352,7 +360,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(appProperties, metadata.getProperties());
     Assert.assertEquals(appTags, metadata.getTags());
     // verify service
-    metadataRecords = getMetadata(pingService);
+    metadataRecords = getMetadata(pingService, MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
     metadata = metadataRecords.iterator().next();
     Assert.assertEquals(MetadataScope.USER, metadata.getScope());
@@ -360,7 +368,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(serviceProperties, metadata.getProperties());
     Assert.assertEquals(serviceTags, metadata.getTags());
     // verify dataset
-    metadataRecords = getMetadata(myds);
+    metadataRecords = getMetadata(myds, MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
     metadata = metadataRecords.iterator().next();
     Assert.assertEquals(MetadataScope.USER, metadata.getScope());
@@ -368,7 +376,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(datasetProperties, metadata.getProperties());
     Assert.assertEquals(datasetTags, metadata.getTags());
     // verify stream
-    metadataRecords = getMetadata(mystream);
+    metadataRecords = getMetadata(mystream, MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
     metadata = metadataRecords.iterator().next();
     Assert.assertEquals(MetadataScope.USER, metadata.getScope());
@@ -376,7 +384,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(streamProperties, metadata.getProperties());
     Assert.assertEquals(streamTags, metadata.getTags());
     // verify view
-    metadataRecords = getMetadata(myview);
+    metadataRecords = getMetadata(myview, MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
     metadata = metadataRecords.iterator().next();
     Assert.assertEquals(MetadataScope.USER, metadata.getScope());
@@ -384,7 +392,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(viewProperties, metadata.getProperties());
     Assert.assertEquals(viewTags, metadata.getTags());
     // verify artifact
-    metadataRecords = getMetadata(artifactId);
+    metadataRecords = getMetadata(artifactId, MetadataScope.USER);
     Assert.assertEquals(1, metadataRecords.size());
     metadata = metadataRecords.iterator().next();
     Assert.assertEquals(MetadataScope.USER, metadata.getScope());
@@ -393,7 +401,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(artifactTags, metadata.getTags());
     // cleanup
     removeAllMetadata();
-    assertCleanState();
+    assertCleanState(MetadataScope.USER);
   }
 
   @Test
@@ -406,7 +414,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     addProperties(program, flowProperties);
 
     // Get properties
-    Map<String, String> properties = getProperties(program);
+    Map<String, String> properties = getProperties(program, MetadataScope.USER);
     Assert.assertEquals(2, properties.size());
 
     //Delete the App after stopping the flow
@@ -487,7 +495,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     addProperties(program, flowProperties);
 
     // Get properties
-    Map<String, String> properties = getProperties(program);
+    Map<String, String> properties = getProperties(program, MetadataScope.USER);
     Assert.assertEquals(2, properties.size());
 
     // Deploy WordCount App without Flow program. No need to start/stop the flow.
@@ -501,6 +509,43 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     deleteApp(wordCountApp, 200);
   }
 
+  @Test
+  public void testSystemMetadata() throws Exception {
+    deploy(AllProgramsApp.class);
+    Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
+    Assert.assertTrue(getTags(streamId, MetadataScope.SYSTEM).isEmpty());
+    Map<String, String> streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
+    Assert.assertEquals(Schema.Type.STRING.toString(), streamSystemProperties.get("field\u0001body"));
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME);
+    Set<String> dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
+    Assert.assertEquals(4, dsSystemTags.size());
+    Assert.assertTrue(dsSystemTags.contains(BatchReadable.class.getSimpleName()));
+    Assert.assertTrue(dsSystemTags.contains(BatchWritable.class.getSimpleName()));
+    Assert.assertTrue(dsSystemTags.contains(RecordScannable.class.getSimpleName()));
+    Assert.assertTrue(dsSystemTags.contains(RecordWritable.class.getSimpleName()));
+    Map<String, String> dsSystemProperties = getProperties(datasetInstance, MetadataScope.SYSTEM);
+    Assert.assertEquals(KeyValueTable.class.getName(), dsSystemProperties.get("type"));
+    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, AllProgramsApp.NAME);
+    Set<String> appSystemTags = getTags(app, MetadataScope.SYSTEM);
+    Assert.assertEquals(AllProgramsApp.class.getSimpleName(), appSystemTags.iterator().next());
+    Assert.assertTrue(getProperties(app, MetadataScope.SYSTEM).isEmpty());
+    assertProgramSystemMetadata(Id.Program.from(app, ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME), "Real-time");
+    assertProgramSystemMetadata(Id.Program.from(app, ProgramType.WORKER, AllProgramsApp.NoOpWorker.NAME), "Real-time");
+    assertProgramSystemMetadata(Id.Program.from(app, ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME),
+                                "Real-time");
+    assertProgramSystemMetadata(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME), "Batch");
+    assertProgramSystemMetadata(Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME), "Batch");
+    assertProgramSystemMetadata(Id.Program.from(app, ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME), "Batch");
+  }
+
+  private void assertProgramSystemMetadata(Id.Program programId, String mode) throws Exception {
+    Assert.assertTrue(getProperties(programId, MetadataScope.SYSTEM).isEmpty());
+    Set<String> programSystemTags = getTags(programId, MetadataScope.SYSTEM);
+    Assert.assertEquals(2, programSystemTags.size());
+    Assert.assertTrue(programSystemTags.contains(programId.getType().getPrettyName()));
+    Assert.assertTrue(programSystemTags.contains(mode));
+  }
+
   private void removeAllMetadata() throws Exception {
     removeMetadata(application);
     removeMetadata(pingService);
@@ -510,43 +555,22 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     removeMetadata(artifactId);
   }
 
-  private void assertCleanState() throws Exception {
-    // Assert clean state
-    Set<MetadataRecord> appMetadatas = getMetadata(application);
-    // only user metadata right now.
-    Assert.assertEquals(1, appMetadatas.size());
-    MetadataRecord appMetadata = appMetadatas.iterator().next();
-    Assert.assertTrue(appMetadata.getProperties().isEmpty());
-    Assert.assertTrue(appMetadata.getTags().isEmpty());
-    Set<MetadataRecord> serviceMetadatas = getMetadata(pingService);
-    // only user metadata right now.
-    Assert.assertEquals(1, serviceMetadatas.size());
-    MetadataRecord serviceMetadata = serviceMetadatas.iterator().next();
-    Assert.assertTrue(serviceMetadata.getProperties().isEmpty());
-    Assert.assertTrue(serviceMetadata.getTags().isEmpty());
-    Set<MetadataRecord> datasetMetadatas = getMetadata(myds);
-    // only user metadata right now.
-    Assert.assertEquals(1, datasetMetadatas.size());
-    MetadataRecord datasetMetadata = datasetMetadatas.iterator().next();
-    Assert.assertTrue(datasetMetadata.getProperties().isEmpty());
-    Assert.assertTrue(datasetMetadata.getTags().isEmpty());
-    Set<MetadataRecord> streamMetadatas = getMetadata(mystream);
-    // only user metadata right now.
-    Assert.assertEquals(1, streamMetadatas.size());
-    MetadataRecord streamMetadata = streamMetadatas.iterator().next();
-    Assert.assertTrue(streamMetadata.getProperties().isEmpty());
-    Assert.assertTrue(streamMetadata.getTags().isEmpty());
-    Set<MetadataRecord> viewMetadatas = getMetadata(myview);
-    // only user metadata right now.
-    Assert.assertEquals(1, viewMetadatas.size());
-    MetadataRecord viewMetadata = viewMetadatas.iterator().next();
-    Assert.assertTrue(viewMetadata.getProperties().isEmpty());
-    Assert.assertTrue(viewMetadata.getTags().isEmpty());
-    Set<MetadataRecord> artifactMetadatas = getMetadata(artifactId);
-    // only user metadata right now.
-    Assert.assertEquals(1, artifactMetadatas.size());
-    MetadataRecord artifactMetadata = artifactMetadatas.iterator().next();
-    Assert.assertTrue(artifactMetadata.getProperties().isEmpty());
-    Assert.assertTrue(artifactMetadata.getTags().isEmpty());
+  private void assertCleanState(@Nullable MetadataScope scope) throws Exception {
+    assertEmptyMetadata(getMetadata(application, scope), scope);
+    assertEmptyMetadata(getMetadata(pingService, scope), scope);
+    assertEmptyMetadata(getMetadata(myds, scope), scope);
+    assertEmptyMetadata(getMetadata(mystream, scope), scope);
+    assertEmptyMetadata(getMetadata(myview, scope), scope);
+    assertEmptyMetadata(getMetadata(artifactId, scope), scope);
+  }
+
+  private void assertEmptyMetadata(Set<MetadataRecord> entityMetadata, @Nullable MetadataScope scope) {
+    // should have two metadata records - one for each scope, both should have empty properties and tags
+    int expectedRecords = (scope == null) ? 2 : 1;
+    Assert.assertEquals(expectedRecords, entityMetadata.size());
+    for (MetadataRecord metadataRecord : entityMetadata) {
+      Assert.assertTrue(metadataRecord.getProperties().isEmpty());
+      Assert.assertTrue(metadataRecord.getTags().isEmpty());
+    }
   }
 }

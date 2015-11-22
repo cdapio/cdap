@@ -237,13 +237,11 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
 
   private DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
-    DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
-    return creationProperties;
+    return GSON.fromJson(reader, DatasetInstanceConfiguration.class);
   }
 
   private Map<String, String> getProperties(HttpRequest request) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
-    Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
-    return properties;
+    return GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
   }
 }

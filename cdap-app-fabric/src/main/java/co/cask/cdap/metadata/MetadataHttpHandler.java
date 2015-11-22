@@ -45,6 +45,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -75,24 +76,24 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-id}/metadata")
   public void getAppMetadata(HttpRequest request, HttpResponder responder,
-                                @PathParam("namespace-id") String namespaceId,
-                                @PathParam("app-id") String appId) throws NotFoundException {
-    responder.sendJson(HttpResponseStatus.OK,
-                       metadataAdmin.getMetadata(MetadataScope.USER, Id.Application.from(namespaceId, appId)),
-                       SET_METADATA_RECORD_TYPE, GSON);
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-id") String appId,
+                             @QueryParam("scope") MetadataScope scope) throws NotFoundException {
+    Id.Application app = Id.Application.from(namespaceId, appId);
+    responder.sendJson(HttpResponseStatus.OK, getMetadata(app, scope), SET_METADATA_RECORD_TYPE, GSON);
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/metadata")
   public void getProgramMetadata(HttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespaceId,
-                                    @PathParam("app-id") String appId,
-                                    @PathParam("program-type") String programType,
-                                    @PathParam("program-id") String programId) throws NotFoundException {
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("app-id") String appId,
+                                 @PathParam("program-type") String programType,
+                                 @PathParam("program-id") String programId,
+                                 @QueryParam("scope") MetadataScope scope) throws NotFoundException {
     Id.Program program = Id.Program.from(Id.Application.from(namespaceId, appId),
                                          ProgramType.valueOfCategoryName(programType), programId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(MetadataScope.USER, program),
-                       SET_METADATA_RECORD_TYPE, GSON);
+    responder.sendJson(HttpResponseStatus.OK, getMetadata(program, scope), SET_METADATA_RECORD_TYPE, GSON);
   }
 
   @GET
@@ -100,50 +101,51 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getArtifactMetadata(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("artifact-name") String artifactName,
-                                  @PathParam("artifact-version") String artifactVersionStr) throws NotFoundException {
+                                  @PathParam("artifact-version") String artifactVersionStr,
+                                  @QueryParam("scope") MetadataScope scope) throws NotFoundException {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.from(namespaceId), artifactName, artifactVersionStr);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(MetadataScope.USER, artifactId),
-                       SET_METADATA_RECORD_TYPE, GSON);
+    responder.sendJson(HttpResponseStatus.OK, getMetadata(artifactId, scope), SET_METADATA_RECORD_TYPE, GSON);
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/metadata")
   public void getDatasetMetadata(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
-                                 @PathParam("dataset-id") String datasetId) throws NotFoundException {
-    responder.sendJson(HttpResponseStatus.OK,
-                       metadataAdmin.getMetadata(MetadataScope.USER, Id.DatasetInstance.from(namespaceId, datasetId)),
-                       SET_METADATA_RECORD_TYPE, GSON);
+                                 @PathParam("dataset-id") String datasetId,
+                                 @QueryParam("scope") MetadataScope scope) throws NotFoundException {
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, datasetId);
+    responder.sendJson(HttpResponseStatus.OK, getMetadata(datasetInstance, scope), SET_METADATA_RECORD_TYPE, GSON);
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/metadata")
   public void getStreamMetadata(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
-                                @PathParam("stream-id") String streamId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK,
-                       metadataAdmin.getMetadata(MetadataScope.USER, Id.Stream.from(namespaceId, streamId)),
-                       SET_METADATA_RECORD_TYPE, GSON);
+                                @PathParam("stream-id") String streamId,
+                                @QueryParam("scope") MetadataScope scope) throws Exception {
+    Id.Stream stream = Id.Stream.from(namespaceId, streamId);
+    responder.sendJson(HttpResponseStatus.OK, getMetadata(stream, scope), SET_METADATA_RECORD_TYPE, GSON);
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata")
   public void getViewMetadata(HttpRequest request, HttpResponder responder,
-                                @PathParam("namespace-id") String namespaceId,
-                                @PathParam("stream-id") String streamId,
-                                @PathParam("view-id") String viewId) throws NotFoundException {
+                              @PathParam("namespace-id") String namespaceId,
+                              @PathParam("stream-id") String streamId,
+                              @PathParam("view-id") String viewId,
+                              @QueryParam("scope") MetadataScope scope) throws NotFoundException {
     Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(MetadataScope.USER, view),
-                       SET_METADATA_RECORD_TYPE, GSON);
+    responder.sendJson(HttpResponseStatus.OK, getMetadata(view, scope), SET_METADATA_RECORD_TYPE, GSON);
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-id}/metadata/properties")
   public void getAppProperties(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("app-id") String appId) throws NotFoundException {
-    responder.sendJson(HttpResponseStatus.OK,
-                       metadataAdmin.getProperties(MetadataScope.USER, Id.Application.from(namespaceId, appId)));
+                               @PathParam("app-id") String appId,
+                               @QueryParam("scope") MetadataScope scope) throws NotFoundException {
+    Id.Application app = Id.Application.from(namespaceId, appId);
+    responder.sendJson(HttpResponseStatus.OK, getProperties(app, scope));
   }
 
   @GET
@@ -151,9 +153,10 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getArtifactProperties(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespaceId,
                                     @PathParam("artifact-name") String artifactName,
-                                    @PathParam("artifact-version") String artifactVersionStr) throws NotFoundException {
+                                    @PathParam("artifact-version") String artifactVersionStr,
+                                    @QueryParam("scope") MetadataScope scope) throws NotFoundException {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.from(namespaceId), artifactName, artifactVersionStr);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getProperties(MetadataScope.USER, artifactId));
+    responder.sendJson(HttpResponseStatus.OK, getProperties(artifactId, scope));
   }
 
   @GET
@@ -162,39 +165,42 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                    @PathParam("namespace-id") String namespaceId,
                                    @PathParam("app-id") String appId,
                                    @PathParam("program-type") String programType,
-                                   @PathParam("program-id") String programId) throws NotFoundException {
+                                   @PathParam("program-id") String programId,
+                                   @QueryParam("scope") MetadataScope scope) throws NotFoundException {
     Id.Program program = Id.Program.from(Id.Application.from(namespaceId, appId),
                                          ProgramType.valueOfCategoryName(programType), programId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getProperties(MetadataScope.USER, program));
+    responder.sendJson(HttpResponseStatus.OK, getProperties(program, scope));
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/metadata/properties")
   public void getDatasetProperties(HttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespaceId,
-                                   @PathParam("dataset-id") String datasetId) throws NotFoundException {
-    responder.sendJson(HttpResponseStatus.OK,
-                       metadataAdmin.getProperties(MetadataScope.USER,
-                                                   Id.DatasetInstance.from(namespaceId, datasetId)));
+                                   @PathParam("dataset-id") String datasetId,
+                                   @QueryParam("scope") MetadataScope scope) throws NotFoundException {
+    Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(namespaceId, datasetId);
+    responder.sendJson(HttpResponseStatus.OK, getProperties(datasetInstance, scope));
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/metadata/properties")
   public void getStreamProperties(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("stream-id") String streamId) throws NotFoundException {
-    responder.sendJson(HttpResponseStatus.OK,
-                       metadataAdmin.getProperties(MetadataScope.USER, Id.Stream.from(namespaceId, streamId)));
+                                  @PathParam("stream-id") String streamId,
+                                  @QueryParam("scope") MetadataScope scope) throws NotFoundException {
+    Id.Stream stream = Id.Stream.from(namespaceId, streamId);
+    responder.sendJson(HttpResponseStatus.OK, getProperties(stream, scope));
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata/properties")
   public void getViewProperties(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("stream-id") String streamId,
-                                  @PathParam("view-id") String viewId) throws NotFoundException {
+                                @PathParam("namespace-id") String namespaceId,
+                                @PathParam("stream-id") String streamId,
+                                @PathParam("view-id") String viewId,
+                                @QueryParam("scope") MetadataScope scope) throws NotFoundException {
     Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getProperties(MetadataScope.USER, view));
+    responder.sendJson(HttpResponseStatus.OK, getProperties(view, scope));
   }
 
   @POST
@@ -564,9 +570,10 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/apps/{app-id}/metadata/tags")
   public void getAppTags(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("app-id") String appId) throws NotFoundException {
+                         @PathParam("app-id") String appId,
+                         @QueryParam("scope") MetadataScope scope) throws NotFoundException {
     Id.Application app = Id.Application.from(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(MetadataScope.USER, app));
+    responder.sendJson(HttpResponseStatus.OK, getTags(app, scope));
   }
 
   @GET
@@ -574,10 +581,11 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getArtifactTags(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
                               @PathParam("artifact-name") String artifactName,
-                              @PathParam("artifact-version") String artifactVersionStr)
+                              @PathParam("artifact-version") String artifactVersionStr,
+                              @QueryParam("scope") MetadataScope scope)
     throws BadRequestException, NotFoundException {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.from(namespaceId), artifactName, artifactVersionStr);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(MetadataScope.USER, artifactId));
+    responder.sendJson(HttpResponseStatus.OK, getTags(artifactId, scope));
   }
 
   @GET
@@ -586,38 +594,42 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("app-id") String appId,
                              @PathParam("program-type") String programType,
-                             @PathParam("program-id") String programId) throws NotFoundException {
+                             @PathParam("program-id") String programId,
+                             @QueryParam("scope") MetadataScope scope) throws NotFoundException {
     Id.Program program = Id.Program.from(Id.Application.from(namespaceId, appId),
                                          ProgramType.valueOfCategoryName(programType), programId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(MetadataScope.USER, program));
+    responder.sendJson(HttpResponseStatus.OK, getTags(program, scope));
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/datasets/{dataset-id}/metadata/tags")
   public void getDatasetTags(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @PathParam("dataset-id") String datasetId) throws NotFoundException {
+                             @PathParam("dataset-id") String datasetId,
+                             @QueryParam("scope") MetadataScope scope) throws NotFoundException {
     Id.DatasetInstance dataset = Id.DatasetInstance.from(namespaceId, datasetId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(MetadataScope.USER, dataset));
+    responder.sendJson(HttpResponseStatus.OK, getTags(dataset, scope));
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/metadata/tags")
   public void getStreamTags(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("stream-id") String streamId) throws NotFoundException {
+                            @PathParam("stream-id") String streamId,
+                            @QueryParam("scope") MetadataScope scope) throws NotFoundException {
     Id.Stream stream = Id.Stream.from(namespaceId, streamId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(MetadataScope.USER, stream));
+    responder.sendJson(HttpResponseStatus.OK, getTags(stream, scope));
   }
 
   @GET
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata/tags")
   public void getViewTags(HttpRequest request, HttpResponder responder,
-                            @PathParam("namespace-id") String namespaceId,
-                            @PathParam("stream-id") String streamId,
-                            @PathParam("view-id") String viewId) throws NotFoundException {
+                          @PathParam("namespace-id") String namespaceId,
+                          @PathParam("stream-id") String streamId,
+                          @PathParam("view-id") String viewId,
+                          @QueryParam("scope") MetadataScope scope) throws NotFoundException {
     Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(MetadataScope.USER, view));
+    responder.sendJson(HttpResponseStatus.OK, getTags(view, scope));
   }
 
   @DELETE
@@ -824,5 +836,20 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                                                            metadataSearchTargetType);
 
     responder.sendJson(HttpResponseStatus.OK, results, SET_METADATA_SEARCH_RESULT_TYPE, GSON);
+  }
+
+  private Set<MetadataRecord> getMetadata(Id.NamespacedId entityId,
+                                          @Nullable MetadataScope scope) throws NotFoundException {
+    return  (scope == null) ? metadataAdmin.getMetadata(entityId) : metadataAdmin.getMetadata(scope, entityId);
+  }
+
+  private Map<String, String> getProperties(Id.NamespacedId entityId,
+                                            @Nullable MetadataScope scope) throws NotFoundException {
+    return  (scope == null) ? metadataAdmin.getProperties(entityId) : metadataAdmin.getProperties(scope, entityId);
+  }
+
+  private Set<String> getTags(Id.NamespacedId entityId,
+                              @Nullable MetadataScope scope) throws NotFoundException {
+    return  (scope == null) ? metadataAdmin.getTags(entityId) : metadataAdmin.getTags(scope, entityId);
   }
 }

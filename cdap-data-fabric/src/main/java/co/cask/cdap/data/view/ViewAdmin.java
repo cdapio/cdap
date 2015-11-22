@@ -17,6 +17,8 @@
 package co.cask.cdap.data.view;
 
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.ViewSystemMetadataWriter;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.explore.utils.ExploreTableNaming;
 import co.cask.cdap.proto.Id;
@@ -33,12 +35,15 @@ public class ViewAdmin {
   private final ViewStore store;
   private final ExploreFacade explore;
   private final ExploreTableNaming naming;
+  private final MetadataStore metadataStore;
 
   @Inject
-  public ViewAdmin(ViewStore store, ExploreFacade explore, ExploreTableNaming naming) {
+  public ViewAdmin(ViewStore store, ExploreFacade explore, ExploreTableNaming naming,
+                   MetadataStore metadataStore) {
     this.store = store;
     this.explore = explore;
     this.naming = naming;
+    this.metadataStore = metadataStore;
   }
 
   public boolean createOrUpdate(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
@@ -59,13 +64,17 @@ public class ViewAdmin {
       spec = new ViewSpecification(spec.getFormat(), naming.getTableName(viewId));
     }
     explore.enableExploreStream(viewId.getStream(), spec.getTableName(), spec.getFormat());
-    return store.createOrUpdate(viewId, spec);
+    boolean result = store.createOrUpdate(viewId, spec);
+    ViewSystemMetadataWriter systemMetadataWriter = new ViewSystemMetadataWriter(metadataStore, viewId, spec);
+    systemMetadataWriter.write();
+    return result;
   }
 
   public void delete(Id.Stream.View viewId) throws Exception {
     ViewSpecification spec = store.get(viewId);
     explore.disableExploreStream(viewId.getStream(), spec.getTableName());
     store.delete(viewId);
+    metadataStore.removeMetadata(viewId);
   }
 
   public List<Id.Stream.View> list(Id.Stream streamId) {
@@ -76,7 +85,7 @@ public class ViewAdmin {
     return store.get(viewId);
   }
 
-  public boolean exists (Id.Stream.View viewId) {
+  public boolean exists(Id.Stream.View viewId) {
     return store.exists(viewId);
   }
 }

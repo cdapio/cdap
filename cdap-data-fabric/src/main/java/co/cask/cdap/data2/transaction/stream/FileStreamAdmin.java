@@ -31,6 +31,8 @@ import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdmin;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.StreamSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -89,8 +91,9 @@ public class FileStreamAdmin implements StreamAdmin {
   private final StreamMetaStore streamMetaStore;
   private final ExploreTableNaming tableNaming;
   private final ViewAdmin viewAdmin;
-  private ExploreFacade exploreFacade;
   private final MetadataStore metadataStore;
+
+  private ExploreFacade exploreFacade;
 
   @Inject
   public FileStreamAdmin(NamespacedLocationFactory namespacedLocationFactory,
@@ -318,6 +321,9 @@ public class FileStreamAdmin implements StreamAdmin {
         createStreamFeeds(config);
         alterExploreStream(streamId, true, config.getFormat());
         streamMetaStore.addStream(streamId);
+        AbstractSystemMetadataWriter systemMetadataWriter = new StreamSystemMetadataWriter(metadataStore, streamId,
+                                                                                           config);
+        systemMetadataWriter.write();
         return config;
       }
     });
@@ -480,6 +486,7 @@ public class FileStreamAdmin implements StreamAdmin {
           Locations.mkdirsIfNotExists(deleted);
           streamLocation.renameTo(deleted.append(streamId.getId() + System.currentTimeMillis()));
           streamMetaStore.removeStream(streamId);
+          metadataStore.removeMetadata(streamId);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
