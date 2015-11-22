@@ -543,6 +543,13 @@ public abstract class AppFabricTestBase {
     }, timeout, timeoutUnit, 100, TimeUnit.MILLISECONDS);
   }
 
+  protected List<JsonObject> getArtifacts(String namespace) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath("artifacts", namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
+    return readResponse(response, typeToken);
+  }
+
   protected void deleteArtifact(Id.Artifact artifact, int expectedResponseCode) throws Exception {
     String path = String.format("artifacts/%s/versions/%s", artifact.getName(), artifact.getVersion().getVersion());
     HttpResponse response = doDelete(getVersionedAPIPath(path, artifact.getNamespace().getId()));
