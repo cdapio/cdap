@@ -26,12 +26,13 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -45,14 +46,14 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   private final DatasetFramework delegate;
   private final LineageWriter lineageWriter;
   private final ProgramContext programContext = new ProgramContext();
-  private final BusinessMetadataStore businessMds;
+  private final MetadataStore metadataStore;
 
   @Inject
   LineageWriterDatasetFramework(@Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
-                                LineageWriter lineageWriter, BusinessMetadataStore businessMds) {
+                                LineageWriter lineageWriter, MetadataStore metadataStore) {
     this.delegate = datasetFramework;
     this.lineageWriter = lineageWriter;
-    this.businessMds = businessMds;
+    this.metadataStore = metadataStore;
   }
 
   @Override
@@ -68,6 +69,12 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   @Override
   public void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException {
     delegate.addModule(moduleId, module);
+  }
+
+  @Override
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module,
+                        Location jarLocation) throws DatasetManagementException {
+    delegate.addModule(moduleId, module, jarLocation);
   }
 
   @Override
@@ -123,7 +130,7 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   @Override
   public void deleteInstance(Id.DatasetInstance datasetInstanceId) throws DatasetManagementException, IOException {
     // Remove metadata for the dataset (TODO: https://issues.cask.co/browse/CDAP-3670)
-    businessMds.removeMetadata(datasetInstanceId);
+    metadataStore.removeMetadata(datasetInstanceId);
     delegate.deleteInstance(datasetInstanceId);
   }
 
@@ -134,7 +141,7 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
       String dsName = dataset.getName();
       Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespaceId, dsName);
       // Remove metadata for the dataset (TODO: https://issues.cask.co/browse/CDAP-3670)
-      businessMds.removeMetadata(datasetInstanceId);
+      metadataStore.removeMetadata(datasetInstanceId);
     }
     delegate.deleteAllInstances(namespaceId);
   }

@@ -48,6 +48,7 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.base.Supplier;
@@ -204,7 +205,7 @@ public class ArtifactStore {
           addArtifactsToList(artifacts, row);
         }
         scanner.close();
-        
+
         return Collections.unmodifiableList(artifacts);
       }
     });
@@ -528,6 +529,49 @@ public class ArtifactStore {
       throw new PluginNotExistsException(parentArtifactId.getNamespace(), type, name);
     }
     return Collections.unmodifiableSortedMap(plugins);
+  }
+
+  /**
+   * Update artifact properties using an update function. Functions will receive an immutable map.
+   *
+   * @param artifactId the id of the artifact to add
+   * @param updateFunction the function used to update existing properties
+   * @throws ArtifactNotFoundException if the artifact does not exist
+   * @throws IOException if there was an exception writing the properties to the metastore
+   */
+  public void updateArtifactProperties(final Id.Artifact artifactId,
+                                       final Function<Map<String, String>, Map<String, String>> updateFunction)
+    throws ArtifactNotFoundException, IOException {
+    try {
+      boolean exists = metaTable.execute(new TransactionExecutor.Function<DatasetContext<Table>, Boolean>() {
+
+        @Override
+        public Boolean apply(DatasetContext<Table> context) throws Exception {
+          Table table = context.get();
+
+          ArtifactCell artifactCell = new ArtifactCell(artifactId);
+          byte[] existingMetaBytes = table.get(artifactCell.rowkey, artifactCell.column);
+          if (existingMetaBytes == null) {
+            return false;
+          }
+
+          ArtifactData old = gson.fromJson(Bytes.toString(existingMetaBytes), ArtifactData.class);
+
+          ArtifactMeta updatedMeta = new ArtifactMeta(old.meta.getClasses(), old.meta.getUsableBy(),
+                                                      updateFunction.apply(old.meta.getProperties()));
+          ArtifactData updatedData = new ArtifactData(locationFactory.create(old.locationURI), updatedMeta);
+          // write artifact metadata
+          table.put(artifactCell.rowkey, artifactCell.column, Bytes.toBytes(gson.toJson(updatedData)));
+          return true;
+        }
+      });
+
+      if (!exists) {
+        throw new ArtifactNotFoundException(artifactId);
+      }
+    } catch (TransactionFailureException | InterruptedException e) {
+      throw new IOException(e);
+    }
   }
 
   /**

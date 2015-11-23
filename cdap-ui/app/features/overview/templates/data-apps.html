@@ -89,7 +89,7 @@
               <span class="fa fa-list-ul"></span>
                <span>All Apps</span>
             </a>
-            <a ui-sref="adapters.list" class="btn btn-default">
+            <a ui-sref="hydrator.list" class="btn btn-default">
               <span class="icon-hydrator"></span>
                <span>Pipelines</span>
             </a>
@@ -106,7 +106,7 @@
                   </my-file-select>
                 </li>
                 <li>
-                  <a ui-sref="adapters.create" class="clearfix">
+                  <a ui-sref="hydrator.create" class="clearfix">
                     <span class="pull-left">{{AppsSectionCtrl.GLOBALS.en.hydrator.appLabel}}</span>
                   </a>
                 </li>
@@ -119,7 +119,7 @@
       <ul class="list-group">
         <li class="list-group-item" ng-repeat="app in AppsSectionCtrl.apps | orderBy:AppsSectionCtrl.MyOrderings.appOrdering | limitTo:5">
           <a ui-sref="apps.detail.overview.programs({appId: app.id})"
-              ng-if="AppsSectionCtrl.myAdapterFactory.isCustomApp(app.artifact.name)"
+              ng-if="AppsSectionCtrl.myHydratorFactory.isCustomApp(app.artifact.name)"
               ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
@@ -128,7 +128,7 @@
             </div>
           </a>
           <a ui-sref="apps.detail.overview.status({appId: app.id})"
-              ng-if="AppsSectionCtrl.myAdapterFactory.isETLApp(app.artifact.name)"
+              ng-if="AppsSectionCtrl.myHydratorFactory.isETLApp(app.artifact.name)"
               ng-click="AppsSectionCtrl.MyOrderings.appClicked(app.id)">
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
@@ -165,7 +165,7 @@
             </my-file-select>
           </li>
           <li>
-            <a ui-sref="adapters.create" class="clearfix">
+            <a ui-sref="hydrator.create" class="clearfix">
               <span class="pull-left">{{AppsSectionCtrl.GLOBALS.en.hydrator.appLabel}}</span>
             </a>
           </li>

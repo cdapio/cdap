@@ -28,7 +28,9 @@ import javax.annotation.Nullable;
 
 /**
  * Transforms records into Puts.
+ * @deprecated use co.cask.cdap.format.RecordPutTransformer instead.
  */
+@Deprecated
 public class RecordPutTransformer {
   private final String rowField;
   private final Schema outputSchema;

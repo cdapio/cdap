@@ -53,9 +53,9 @@ public class AppWithStreamSizeSchedule extends AbstractApplication {
       scheduleProperties.put("anotherKey", "anotherValue");
       scheduleProperties.put("someKey", "someValue");
 
-      scheduleWorkflow(Schedules.createDataSchedule("SampleSchedule1", "", Schedules.Source.STREAM, "stream", 1),
+      scheduleWorkflow(Schedules.builder("SampleSchedule1").createDataSchedule(Schedules.Source.STREAM, "stream", 1),
                        "SampleWorkflow", scheduleProperties);
-      scheduleWorkflow(Schedules.createDataSchedule("SampleSchedule2", "", Schedules.Source.STREAM, "stream", 2),
+      scheduleWorkflow(Schedules.builder("SampleSchedule2").createDataSchedule(Schedules.Source.STREAM, "stream", 2),
                        "SampleWorkflow", scheduleProperties);
     } catch (UnsupportedTypeException e) {
       throw Throwables.propagate(e);

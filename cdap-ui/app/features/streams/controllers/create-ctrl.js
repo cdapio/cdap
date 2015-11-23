@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.streams')
-  .controller('StreamsCreateController', function($scope, MyDataSource, $modalInstance, caskFocusManager) {
+  .controller('StreamsCreateController', function($scope, MyCDAPDataSource, $modalInstance, caskFocusManager) {
 
     caskFocusManager.focus('streamId');
 
-    var dataSrc = new MyDataSource($scope);
+    var dataSrc = new MyCDAPDataSource($scope);
 
     this.streamId = '';
 

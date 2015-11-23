@@ -76,7 +76,7 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
   protected Lock getLock(Id.Stream streamId) {
     // It's ok to create new locks every time as it's backed by ZK for distributed lock
     ZKClient lockZKClient = ZKClients.namespace(zkClient, "/" + Constants.Service.STREAMS + "/locks");
-    return new ReentrantDistributedLock(lockZKClient, streamId.toId());
+    return new ReentrantDistributedLock(lockZKClient, streamId.toString());
   }
 
   @Override
@@ -94,7 +94,7 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
             partitions = ImmutableSet.of();
           }
 
-          ResourceRequirement.Partition newPartition = new ResourceRequirement.Partition(streamId.toId(), 1);
+          ResourceRequirement.Partition newPartition = new ResourceRequirement.Partition(streamId.toString(), 1);
           if (partitions.contains(newPartition)) {
             return null;
           }
@@ -123,7 +123,7 @@ public final class DistributedStreamCoordinatorClient extends AbstractStreamCoor
         Set<ResourceRequirement.Partition> partitions = existingRequirement.getPartitions();
         ResourceRequirement.Builder builder = ResourceRequirement.builder(Constants.Service.STREAMS);
         for (ResourceRequirement.Partition partition : partitions) {
-          if (!partition.getName().equals(streamId.toId())) {
+          if (!partition.getName().equals(streamId.toString())) {
             builder.addPartition(partition);
           }
         }

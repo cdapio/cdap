@@ -52,6 +52,16 @@ public class MdsValueKey {
     } else if (type.equals(Id.Stream.class.getSimpleName())) {
       keySplitter.skipString();
       keySplitter.skipString();
+    } else if (type.equals(Id.Stream.View.class.getSimpleName())) {
+      // skip namespace, stream, view
+      keySplitter.skipString();
+      keySplitter.skipString();
+      keySplitter.skipString();
+    } else if (type.equals(Id.Artifact.class.getSimpleName())) {
+      // skip namespace, name, version
+      keySplitter.skipString();
+      keySplitter.skipString();
+      keySplitter.skipString();
     } else {
       throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
     }
@@ -69,7 +79,7 @@ public class MdsValueKey {
     return keySplitter.getString();
   }
 
-  public static MDSKey getMDSKey(Id.NamespacedId targetId, BusinessMetadataDataset.MetadataType type,
+  public static MDSKey getMDSKey(Id.NamespacedId targetId, MetadataDataset.MetadataType type,
                                  @Nullable String key) {
     String targetType = KeyHelper.getTargetType(targetId);
     MDSKey.Builder builder = new MDSKey.Builder();

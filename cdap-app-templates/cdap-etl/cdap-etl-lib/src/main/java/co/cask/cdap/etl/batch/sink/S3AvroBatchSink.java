@@ -64,9 +64,8 @@ public class S3AvroBatchSink extends S3BatchSink<AvroKey<GenericRecord>, NullWri
   }
 
   @Override
-  public void prepareRun(BatchSinkContext context) {
-    super.prepareRun(context);
-    context.addOutput(config.basePath, new S3AvroOutputFormatProvider(config, context));
+  protected OutputFormatProvider createOutputFormatProvider(BatchSinkContext context) {
+    return new S3AvroOutputFormatProvider(config, context);
   }
 
   @Override

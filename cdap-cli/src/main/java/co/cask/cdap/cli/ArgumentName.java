@@ -60,6 +60,7 @@ public enum ArgumentName {
   DATASET_MODULE_JAR_CLASSNAME("module-jar-classname"),
   QUERY("query"),
   APP("app-id"),
+  PROGRAM_TYPES("program-types"),
   VIEW("view-id"),
   HTTP_METHOD("http-method"),
   ENDPOINT("endpoint"),
@@ -94,7 +95,10 @@ public enum ArgumentName {
   ARTIFACT_CONFIG_FILE("artifact-config"),
   SCOPE("scope"),
   PLUGIN_TYPE("plugin-type"),
-  PLUGIN_NAME("plugin-name");
+  PLUGIN_NAME("plugin-name"),
+
+  INSTANCE_URI("cdap-instance-uri"),
+  VERIFY_SSL_CERT("verify-ssl-cert");
 
   private final String name;
 

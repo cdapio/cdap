@@ -19,28 +19,32 @@ my-validators {
     margin-top: 5px;
   }
 
-  .panel.panel-default .panel-body {
-    .row .rule-box {
-      .form-control {
-        height: 30px;
-      }
+  .panel.panel-default {
+    .panel-heading {
+      cursor: pointer;
     }
-
-    .panel.panel-default.panel-nested {
-      margin-bottom: 10px;
-
-      .panel-body, .panel-heading {
-        padding: 5px 15px;
+    .panel-body {
+      .row .rule-box {
+        .form-control {
+          height: 30px;
+        }
       }
 
-      .panel-title {
-        span, i {
-          line-height: 23px;
-          vertical-align: middle;
+      .panel.panel-default.panel-nested {
+        margin-bottom: 10px;
+
+        .panel-body, .panel-heading {
+          padding: 5px 15px;
+        }
+
+        .panel-title {
+          span, i {
+            line-height: 23px;
+            vertical-align: middle;
+          }
         }
       }
     }
-
   }
 
   .rule-box {

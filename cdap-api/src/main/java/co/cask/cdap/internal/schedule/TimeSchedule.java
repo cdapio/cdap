@@ -16,6 +16,7 @@
 
 package co.cask.cdap.internal.schedule;
 
+import co.cask.cdap.api.schedule.RunConstraints;
 import co.cask.cdap.api.schedule.Schedule;
 
 /**
@@ -26,14 +27,17 @@ public final class TimeSchedule extends Schedule {
   private final String cronExpression;
 
   public TimeSchedule(String name, String description, String cronExpression) {
-    super(name, description);
+    this(name, description, cronExpression, RunConstraints.NONE);
+  }
+
+  public TimeSchedule(String name, String description, String cronExpression, RunConstraints runConstraints) {
+    super(name, description, runConstraints);
     this.cronExpression = cronExpression;
   }
 
   /**
    * @return Cron expression for the schedule, if this schedule is a time based schedule.
    */
-  @Override
   public String getCronEntry() {
     return cronExpression;
   }

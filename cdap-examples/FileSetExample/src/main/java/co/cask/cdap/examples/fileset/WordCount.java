@@ -41,7 +41,6 @@ public class WordCount extends AbstractMapReduce {
   @Override
   public void configure() {
     setInputDataset("lines");
-    setOutputDataset("counts");
     setMapperResources(new Resources(1024));
     setReducerResources(new Resources(1024));
   }
@@ -52,6 +51,7 @@ public class WordCount extends AbstractMapReduce {
     job.setMapperClass(Tokenizer.class);
     job.setReducerClass(Counter.class);
     job.setNumReduceTasks(1);
+    context.addOutput("counts");
   }
 
   /**

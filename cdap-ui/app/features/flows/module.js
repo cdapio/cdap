@@ -14,4 +14,4 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.flows', []);
+angular.module(`${PKG.name}.feature.flows`, []);

@@ -67,8 +67,9 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  @ClassRule
+  public static HBaseTestBase testHBase = new HBaseTestFactory().get();
 
-  private static HBaseTestBase testHBase;
   private static StreamAdmin streamAdmin;
   private static TransactionManager txManager;
   private static StreamFileWriterFactory fileWriterFactory;
@@ -78,9 +79,6 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
   public static void init() throws Exception {
     InMemoryZKServer zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
     zkServer.startAndWait();
-
-    testHBase = new HBaseTestFactory().get();
-    testHBase.startHBase();
 
     Configuration hConf = testHBase.getConfiguration();
 
@@ -126,7 +124,6 @@ public class HBaseFileStreamAdminTest extends StreamAdminTest {
   public static void finish() throws Exception {
     streamCoordinatorClient.stopAndWait();
     txManager.stopAndWait();
-    testHBase.stopHBase();
   }
 
   @Override

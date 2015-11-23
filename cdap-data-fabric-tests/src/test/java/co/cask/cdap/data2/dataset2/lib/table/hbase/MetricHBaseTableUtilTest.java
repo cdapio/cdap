@@ -43,39 +43,37 @@ import org.junit.rules.TemporaryFolder;
  */
 public class MetricHBaseTableUtilTest {
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+  @ClassRule
+  public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
 
-  private static HBaseTestBase testHBase;
   private static HBaseTableUtil hBaseTableUtil;
   private static CConfiguration cConf;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
-    testHBase = new HBaseTestFactory().get();
-    testHBase.startHBase();
     cConf = CConfiguration.create();
     hBaseTableUtil = new HBaseTableUtilFactory(cConf).get();
-    hBaseTableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), Id.Namespace.SYSTEM);
+    hBaseTableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), Id.Namespace.SYSTEM);
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
-    testHBase.stopHBase();
   }
 
   @Test
   public void testGetVersion() throws Exception {
     // Verify new metric datasets are properly recognized as 2.8+ version from now on
     HBaseMetricsTableDefinition definition =
-      new HBaseMetricsTableDefinition("foo", testHBase.getConfiguration(), hBaseTableUtil,
-                                      new LocalLocationFactory(tmpFolder.newFolder()), cConf);
+      new HBaseMetricsTableDefinition("foo", TEST_HBASE.getConfiguration(), hBaseTableUtil,
+                                      new LocalLocationFactory(TMP_FOLDER.newFolder()), cConf);
     DatasetSpecification spec = definition.configure("metricV2.8", DatasetProperties.EMPTY);
 
     DatasetAdmin admin = definition.getAdmin(DatasetContext.from(Id.Namespace.SYSTEM.getId()), spec, null);
     admin.create();
 
     MetricHBaseTableUtil util = new MetricHBaseTableUtil(hBaseTableUtil);
-    HBaseAdmin hAdmin = testHBase.getHBaseAdmin();
+    HBaseAdmin hAdmin = TEST_HBASE.getHBaseAdmin();
     HTableDescriptor desc =
       hBaseTableUtil.getHTableDescriptor(hAdmin, TableId.from(Id.Namespace.SYSTEM.getId(), spec.getName()));
     Assert.assertEquals(MetricHBaseTableUtil.Version.VERSION_2_8_OR_HIGHER, util.getVersion(desc));

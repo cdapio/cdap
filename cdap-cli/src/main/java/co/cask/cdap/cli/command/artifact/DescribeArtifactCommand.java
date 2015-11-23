@@ -66,10 +66,14 @@ public class DescribeArtifactCommand extends AbstractAuthCommand {
     }
 
     Table table = Table.builder()
-      .setHeader("name", "version", "scope", "app classes", "plugin classes")
+      .setHeader("name", "version", "scope", "app classes", "plugin classes", "properties")
       .setRows(ImmutableList.of((List<String>) ImmutableList.of(
-        info.getName(), info.getVersion(), info.getScope().name(),
-        GSON.toJson(info.getClasses().getApps()), GSON.toJson(info.getClasses().getPlugins())))
+        info.getName(),
+        info.getVersion(),
+        info.getScope().name(),
+        GSON.toJson(info.getClasses().getApps()),
+        GSON.toJson(info.getClasses().getPlugins()),
+        GSON.toJson(info.getProperties())))
       )
       .build();
     cliConfig.getTableRenderer().render(cliConfig, output, table);

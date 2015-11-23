@@ -16,8 +16,9 @@
 
 package co.cask.cdap.etl.common;
 
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.etl.api.Lookup;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import com.google.common.collect.Maps;
 
@@ -43,13 +44,13 @@ public class MockRealtimeContext implements RealtimeContext {
   }
 
   @Override
-  public Metrics getMetrics() {
+  public StageMetrics getMetrics() {
     return NoopMetrics.INSTANCE;
   }
 
   @Override
-  public int getStageId() {
-    return 1;
+  public String getStageName() {
+    return "singleStage";
   }
 
   @Override
@@ -74,6 +75,11 @@ public class MockRealtimeContext implements RealtimeContext {
 
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
+    return null;
+  }
+
+  @Override
+  public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
     return null;
   }
 }

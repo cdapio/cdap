@@ -17,9 +17,9 @@
 package co.cask.cdap.hive;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.hive.context.CConfCodec;
-import co.cask.cdap.hive.context.ConfigurationUtil;
 import co.cask.cdap.hive.context.HConfCodec;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.conf.Configuration;

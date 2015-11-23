@@ -19,7 +19,10 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
+
+import java.util.List;
 
 /**
  * A dataset that stores objects of a particular class into a table.
@@ -86,4 +89,15 @@ public interface ObjectStore<T> extends Dataset, BatchReadable<byte[], T>, Batch
    * @param key key of the object to be deleted
    */
   void delete(byte[] key);
+
+  /**
+   * Returns splits for a range of keys in the table.
+   *
+   * @param numSplits Desired number of splits. If greater than zero, at most this many splits will be returned.
+   *                  If less than or equal to zero, any number of splits can be returned.
+   * @param start if non-null, the returned splits will only cover keys that are greater or equal
+   * @param stop if non-null, the returned splits will only cover keys that are less
+   * @return list of {@link Split}
+   */
+  List<Split> getSplits(int numSplits, byte[] start, byte[] stop);
 }

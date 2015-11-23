@@ -77,7 +77,7 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
     return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, Id.NotificationFeed>() {
       @Override
       public Id.NotificationFeed apply(NotificationFeedMds input) throws Exception {
-        MDSKey feedKey = getKey(feed.getFeedId());
+        MDSKey feedKey = getKey(TYPE_NOTIFICATION_FEED, feed.getNamespaceId(), feed.getCategory(), feed.getName());
         Id.NotificationFeed existing = input.feeds.getFirst(feedKey, Id.NotificationFeed.class);
         if (existing != null) {
           return existing;
@@ -89,23 +89,25 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
   }
 
   @Override
-  public Id.NotificationFeed getNotificationFeed(final String feedId) {
+  public Id.NotificationFeed getNotificationFeed(final Id.NotificationFeed feed) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, Id.NotificationFeed>() {
       @Override
       public Id.NotificationFeed apply(NotificationFeedMds input) throws Exception {
-        return input.feeds.getFirst(getKey(feedId), Id.NotificationFeed.class);
+        MDSKey feedKey = getKey(TYPE_NOTIFICATION_FEED, feed.getNamespaceId(), feed.getCategory(), feed.getName());
+        return input.feeds.getFirst(feedKey, Id.NotificationFeed.class);
       }
     });
   }
 
   @Override
-  public Id.NotificationFeed deleteNotificationFeed(final String feedId) {
+  public Id.NotificationFeed deleteNotificationFeed(final Id.NotificationFeed feed) {
     return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, Id.NotificationFeed>() {
       @Override
       public Id.NotificationFeed apply(NotificationFeedMds input) throws Exception {
-        Id.NotificationFeed existing = input.feeds.getFirst(getKey(feedId), Id.NotificationFeed.class);
+        MDSKey feedKey = getKey(TYPE_NOTIFICATION_FEED, feed.getNamespaceId(), feed.getCategory(), feed.getName());
+        Id.NotificationFeed existing = input.feeds.getFirst(feedKey, Id.NotificationFeed.class);
         if (existing != null) {
-          input.feeds.deleteAll(getKey(feedId));
+          input.feeds.deleteAll(feedKey);
         }
         return existing;
       }
@@ -117,13 +119,14 @@ public final class MDSNotificationFeedStore implements NotificationFeedStore {
     return txnl.executeUnchecked(new TransactionExecutor.Function<NotificationFeedMds, List<Id.NotificationFeed>>() {
       @Override
       public List<Id.NotificationFeed> apply(NotificationFeedMds input) throws Exception {
-        return input.feeds.list(getKey(namespace.getId()), Id.NotificationFeed.class);
+        MDSKey mdsKey = getKey(TYPE_NOTIFICATION_FEED, namespace.getId());
+        return input.feeds.list(mdsKey, Id.NotificationFeed.class);
       }
     });
   }
 
-  private MDSKey getKey(String id) {
-    return new MDSKey.Builder().add(TYPE_NOTIFICATION_FEED, id).build();
+  private MDSKey getKey(String... parts) {
+    return new MDSKey.Builder().add(parts).build();
   }
 
   private static final class NotificationFeedMds implements Iterable<MetadataStoreDataset> {

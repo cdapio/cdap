@@ -10,8 +10,8 @@ Spark Programs
 
 *Apache Spark* is used for in-memory cluster computing. It lets you load large sets of
 data into memory and query them repeatedly. This makes it suitable for both iterative and
-interactive programs. Similar to MapReduce, Spark can access **datasets** as both input
-and output. *Spark programs* in CDAP can be written in either Java or Scala.
+interactive programs. Similar to MapReduce, Spark can access :ref:`datasets <spark-datasets>` 
+as both input and output. *Spark programs* in CDAP can be written in either Java or Scala.
 
 To process data using Spark, specify ``addSpark()`` in your application specification::
 
@@ -74,7 +74,7 @@ the ``PageRankSpark``, the amount of memory is specified:
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
    :language: java
-   :lines: 107-116
+   :lines: 116-126
 
 If both the memory and the number of cores needs to be set, this can be done using::
 
@@ -84,7 +84,7 @@ In this case, 1024 MB and two cores is assigned to each executor process.
 
 CDAP SparkContext
 -----------------
-CDAP provides its own ``SparkContext`` which is needed to access **datasets**.
+CDAP provides its own ``SparkContext``, which is needed to access :ref:`datasets <spark-datasets>`.
 
 CDAP Spark programs must implement either ``JavaSparkProgram`` or ``ScalaSparkProgram``,
 depending upon the language (Java or Scala) in which the program is written. You can also access the Spark's
@@ -109,6 +109,8 @@ depending upon the language (Java or Scala) in which the program is written. You
           ...
         }
     }
+
+.. _spark-datasets:
 
 Spark and Datasets
 ------------------
@@ -152,6 +154,9 @@ An ``ObjectStore`` dataset can be used, provided its classes are serializable.
   ::
 
     sparkContext.writeToDataset(purchaseRDD, "purchases", classOf[Array[Byte]], classOf[Purchase])
+
+You can also access a dataset directly by calling the ``getDataset()`` method of the SparkContext.
+See also the section on :ref:`Using Datasets in Programs <datasets-in-programs>`.
 
 Spark and Streams
 -----------------

@@ -56,7 +56,7 @@ To install and use CDAP and its included examples, there are a few simple prereq
 1. JDK 7 (required to run CDAP; note that $JAVA_HOME should be set)
 #. `Node.js <https://nodejs.org/>`__ (required to run the CDAP UI; we recommend any version greater than v0.10.0)
 #. Apache Maven 3.0+ (required to build the example applications; 3.1+ to build CDAP itself)
-  
+
 Build
 -----
 
@@ -123,7 +123,7 @@ enhancing existing features, or fixing bugs, here's how to do it:
 4. Work on the code to your heart's content.
 5. Once you’re satisfied, create a pull request from your GitHub repo (it’s helpful if you fill in
    all of the description fields).
-6. After we review and accept your request, we’ll commit your code to the cask/cdap repository.
+6. After we review and accept your request, we’ll commit your code to the caskdata/cdap repository.
 
 Thanks for helping to improve CDAP!
 

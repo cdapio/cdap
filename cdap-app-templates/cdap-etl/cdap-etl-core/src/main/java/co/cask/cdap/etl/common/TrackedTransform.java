@@ -16,9 +16,9 @@
 
 package co.cask.cdap.etl.common;
 
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.Destroyable;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transformation;
 
 /**
@@ -30,9 +30,9 @@ import co.cask.cdap.etl.api.Transformation;
  */
 public class TrackedTransform<IN, OUT> implements Transformation<IN, OUT>, Destroyable {
   private final Transformation<IN, OUT> transform;
-  private final Metrics metrics;
+  private final StageMetrics metrics;
 
-  public TrackedTransform(Transformation<IN, OUT> transform, Metrics metrics) {
+  public TrackedTransform(Transformation<IN, OUT> transform, StageMetrics metrics) {
     this.transform = transform;
     this.metrics = metrics;
   }

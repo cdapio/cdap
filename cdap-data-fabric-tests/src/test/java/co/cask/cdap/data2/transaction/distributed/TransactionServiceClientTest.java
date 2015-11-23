@@ -25,8 +25,8 @@ import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.TransactionMetricsModule;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
-import co.cask.cdap.data2.metadata.service.NoOpBusinessMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TransactionSystemTest;
@@ -109,7 +109,7 @@ public class TransactionServiceClientTest extends TransactionSystemTest {
       Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
-          bind(BusinessMetadataStore.class).to(NoOpBusinessMetadataStore.class);
+          bind(MetadataStore.class).to(NoOpMetadataStore.class);
         }
       }));
 

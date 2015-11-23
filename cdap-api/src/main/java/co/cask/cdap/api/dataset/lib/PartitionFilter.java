@@ -25,6 +25,8 @@ import javax.annotation.Nullable;
  * Describes a filter over partition keys.
  */
 public class PartitionFilter {
+  public static final PartitionFilter ALWAYS_MATCH =
+    new PartitionFilter(new LinkedHashMap<String, Condition<? extends Comparable>>());
 
   private final Map<String, Condition<? extends Comparable>> conditions;
 

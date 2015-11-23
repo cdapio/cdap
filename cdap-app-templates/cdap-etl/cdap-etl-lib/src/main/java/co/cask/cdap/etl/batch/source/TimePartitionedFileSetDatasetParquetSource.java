@@ -26,15 +26,19 @@ import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.AvroToStructuredTransformer;
 import co.cask.cdap.etl.common.SchemaConverter;
+import com.google.common.base.Throwables;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import parquet.avro.AvroParquetInputFormat;
 import parquet.avro.AvroParquetOutputFormat;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * A {@link BatchSource} to read Avro record from {@link TimePartitionedFileSet}
@@ -90,11 +94,21 @@ public class TimePartitionedFileSetDatasetParquetSource extends
   }
 
   @Override
-  public void prepareRun(BatchSourceContext context) {
-    setInput(context);
-    Schema avroSchema = new Schema.Parser().parse(tpfsParquetConfig.schema.toLowerCase());
-    Job job = context.getHadoopJob();
-    AvroParquetInputFormat.setAvroReadSchema(job, avroSchema);
+  protected void addInputFormatConfiguration(Map<String, String> config) {
+    try {
+      Job job = Job.getInstance();
+      Configuration hConf = job.getConfiguration();
+      hConf.clear();
+
+      Schema avroSchema = new Schema.Parser().parse(tpfsParquetConfig.schema.toLowerCase());
+      AvroParquetInputFormat.setAvroReadSchema(job, avroSchema);
+      for (Map.Entry<String, String> entry : hConf) {
+        config.put(entry.getKey(), entry.getValue());
+      }
+    } catch (IOException e) {
+      // Shouldn't happen
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

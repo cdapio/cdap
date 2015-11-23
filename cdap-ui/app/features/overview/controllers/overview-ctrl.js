@@ -19,9 +19,9 @@
  */
 
 angular.module(PKG.name+'.feature.overview').controller('OverviewCtrl',
-function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelper, MyChartHelpers, MyDataSource, ServiceStatusFactory) {
+function ($scope, $state, myLocalStorage, MY_CONFIG, Widget, MyMetricsQueryHelper, MyChartHelpers, MyCDAPDataSource, ServiceStatusFactory) {
 
-  var dataSrc = new MyDataSource($scope);
+  var dataSrc = new MyCDAPDataSource($scope);
   if(!$state.params.namespace) {
     // the controller for "ns" state should handle the case of
     // an empty namespace. but this nested state controller will

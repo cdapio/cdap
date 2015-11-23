@@ -170,8 +170,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
       }
 
       Map<String, LocalizeResource> localizeResources = new HashMap<>();
-      final ProgramOptions options = program.getApplicationSpecification().getPlugins().isEmpty() ?
-        oldOptions : addArtifactPluginFiles(oldOptions, localizeResources, DirUtils.createTempDir(tempDir));
+      final ProgramOptions options = addArtifactPluginFiles(oldOptions, localizeResources,
+                                                            DirUtils.createTempDir(tempDir));
 
       // Copy config files and program jar to local temp, and ask Twill to localize it to container.
       // What Twill does is to save those files in HDFS and keep using them during the lifetime of application.
@@ -207,13 +207,16 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             twillPreparer.withResources(logbackURI);
           }
 
+          if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
+            twillPreparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+          }
+
           String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
                                            Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
           TwillController twillController = addSecureStore(twillPreparer, locationFactory)
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
-            .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)))
             .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
-                              .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
+              .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
             .withApplicationClassPaths(Splitter.on(",").trimResults().split(yarnAppClassPath))
             .withBundlerClassAcceptor(new HadoopClassExcluder())
             .withApplicationArguments(
@@ -231,15 +234,23 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
   private ProgramOptions addArtifactPluginFiles(ProgramOptions options, Map<String, LocalizeResource> localizeResources,
                                                 File tempDir) throws IOException {
-    File localDir = new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR));
-    File archiveFile = new File(tempDir, Constants.Plugin.DIRECTORY);
-    BundleJarUtil.packDirFiles(localDir, Locations.toLocation(archiveFile), tempDir);
-    localizeResources.put(Constants.Plugin.DIRECTORY, new LocalizeResource(archiveFile, true));
-    LOG.debug("Localizing Resource {} here {}", localDir, archiveFile);
+    Arguments systemArgs = options.getArguments();
+    if (!systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
+      return options;
+    }
 
-    Map<String, String> systemArgs = Maps.newHashMap(options.getArguments().asMap());
-    systemArgs.put(ProgramOptionConstants.PLUGIN_DIR, Constants.Plugin.DIRECTORY);
-    return new SimpleProgramOptions(options.getName(), new BasicArguments(systemArgs),
+    File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
+    File archiveFile = new File(tempDir, "artifacts.jar");
+    BundleJarUtil.createJar(localDir, archiveFile);
+
+    // Localize plugins to two files, one expanded into a directory, one not.
+    localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
+    localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
+
+    Map<String, String> newSystemArgs = Maps.newHashMap(systemArgs.asMap());
+    newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
+    newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");
+    return new SimpleProgramOptions(options.getName(), new BasicArguments(newSystemArgs),
                                     options.getUserArguments(), options.isDebug());
   }
 

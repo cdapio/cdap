@@ -25,7 +25,6 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.BatchPartitionConsumer;
@@ -155,7 +154,7 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
       PartitionedFileSet lines = batchPartitionConsumer.getConfiguredDataset(context, "lines");
-      context.setInput("lines", lines);
+      context.setInput(lines);
 
       Map<String, String> outputArgs = new HashMap<>();
       PartitionKey partitionKey = PartitionKey.builder().addLongField("time", context.getLogicalStartTime()).build();

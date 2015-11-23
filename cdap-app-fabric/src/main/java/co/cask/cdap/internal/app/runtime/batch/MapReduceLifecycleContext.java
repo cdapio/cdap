@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
@@ -31,7 +32,11 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -121,6 +126,11 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
+  public String getNamespace() {
+    return delegate.getNamespace();
+  }
+
+  @Override
   public URL getServiceURL(String applicationId, String serviceId) {
     return delegate.getServiceURL(applicationId, serviceId);
   }
@@ -152,7 +162,22 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
+  public void setInput(String datasetName, Map<String, String> arguments) {
+    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
   public void setInput(String datasetName, List<Split> splits) {
+    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
+  public void setInput(String datasetName, Map<String, String> arguments, List<Split> splits) {
+    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
+  public void setInput(InputFormatProvider inputFormatProvider) {
     LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
   }
 
@@ -194,5 +219,25 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public void setReducerResources(Resources resources) {
     LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
+  public void localize(String name, URI uri) {
+    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
+  public void localize(String name, URI uri, boolean archive) {
+    LOG.warn(UNSUPPORTED_OPERATION_MESSAGE);
+  }
+
+  @Override
+  public File getLocalFile(String name) throws FileNotFoundException {
+    return delegate.getLocalFile(name);
+  }
+
+  @Override
+  public Map<String, File> getAllLocalFiles() {
+    return delegate.getAllLocalFiles();
   }
 }

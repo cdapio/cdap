@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.services')
-  .controller('ServicesRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rServiceDetail, myMetadataFactory) {
+  .controller('ServicesRunsController', function($scope, $filter, $state, rRuns, $bootstrapModal, rServiceDetail) {
     var fFilter = $filter('filter');
     this.runs = rRuns;
     this.$bootstrapModal = $bootstrapModal;
@@ -72,7 +72,6 @@ angular.module(PKG.name + '.feature.services')
     this.openHistory = function() {
       this.$bootstrapModal.open({
         size: 'lg',
-        windowClass: 'center cdap-modal',
         templateUrl: '/assets/features/services/templates/tabs/history.html',
         controller: ['runs', '$scope', function(runs, $scope) {
           $scope.runs = runs;
@@ -85,35 +84,12 @@ angular.module(PKG.name + '.feature.services')
       });
     };
 
-
-    var metadataParams = {
+    this.metadataParams = {
       namespace: $state.params.namespace,
       appId: $state.params.appId,
       programType: 'services',
       programId: $state.params.programId,
       scope: $scope
-    };
-    this.metadataAddOpen = false;
-    this.metadataTags = [];
-
-    myMetadataFactory.getProgramMetadata(metadataParams)
-      .then(function (res) {
-        this.metadataTags = res;
-      }.bind(this));
-
-    this.addMetadata = function () {
-      myMetadataFactory.addProgramMetadata(this.tag, metadataParams)
-        .then(function (res) {
-          this.metadataTags = res;
-          this.tag = '';
-        }.bind(this));
-    };
-
-    this.deleteMetadata = function (tag) {
-      myMetadataFactory.deleteProgramMetadata(tag, metadataParams)
-        .then(function (res) {
-          this.metadataTags = res;
-        }.bind(this));
     };
 
   });

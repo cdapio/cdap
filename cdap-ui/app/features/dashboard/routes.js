@@ -72,13 +72,18 @@ angular.module(PKG.name+'.feature.dashboard')
 
       .state('dashboard.user.addwdgt', {
         url: '/widget/add',
-        onEnter: function ($state, $bootstrapModal, $rootScope, rDashboardsModel, tab) {
+        onEnter: function ($stateParams, $state, $bootstrapModal, $rootScope, rDashboardsModel, tab) {
           var scope = $rootScope.$new();
-          scope.currentBoard = rDashboardsModel.current();
+          var currentBoard = rDashboardsModel.data[$stateParams.tab];
+          scope.currentBoard = currentBoard;
+          scope.metricsLimit = currentBoard.WIDGET_LIMIT;
+          scope.metricsSlotsFilled = currentBoard.columns.length;
+
           $bootstrapModal.open({
             templateUrl: '/assets/features/dashboard/templates/partials/addwdgt.html',
-            size: 'md',
+            size: 'lg',
             backdrop: true,
+            windowClass: 'cdap-modal',
             keyboard: true,
             scope: scope,
             controller: 'DashboardAddWdgtCtrl'

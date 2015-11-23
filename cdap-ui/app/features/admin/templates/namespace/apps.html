@@ -32,7 +32,7 @@
               </my-file-select>
             </li>
             <li>
-              <a ui-sref="adapters.create" class="clearfix">
+              <a ui-sref="hydrator.create" class="clearfix">
                 <span class="pull-left">{{GLOBALS.en.hydrator.appLabel}}</span>
               </a>
             </li>
@@ -66,11 +66,11 @@
                     </td>
                     <td>{{ ::app.version }}</td>
                     <td>
-                      <span ng-if="myAdapterFactory.isCustomApp(app.artifact.name)">
+                      <span ng-if="myHydratorFactory.isCustomApp(app.artifact.name)">
                         <span class="icon-fist"></span>
                         <span>App</span>
                       </span>
-                      <span ng-if="myAdapterFactory.isETLApp(app.artifact.name)">
+                      <span ng-if="myHydratorFactory.isETLApp(app.artifact.name)">
                         <span ng-if="app.artifact.name === GLOBALS.etlBatch">
                           <span class="icon-ETLBatch"></span>
                           <span>ETL Batch</span>
@@ -117,7 +117,7 @@
           </my-file-select>
         </li>
         <li>
-          <a ui-sref="adapters.create" class="clearfix">
+          <a ui-sref="hydrator.create" class="clearfix">
             <span class="pull-left">{{GLOBALS.en.hydrator.appLabel}}</span>
           </a>
         </li>

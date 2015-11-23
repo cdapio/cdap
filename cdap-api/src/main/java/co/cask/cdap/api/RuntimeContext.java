@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,4 +34,9 @@ public interface RuntimeContext {
    * @return A map of argument key and value.
    */
   Map<String, String> getRuntimeArguments();
+
+  /**
+   * @return The application namespace
+   */
+  String getNamespace();
 }

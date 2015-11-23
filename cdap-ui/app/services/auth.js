@@ -56,7 +56,7 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
 
     $state.go('login', {
       next: next.name,
-      nextParams: nextParams
+      nextParams: encodeURIComponent(JSON.stringify(nextParams))
     });
 
     $rootScope.$broadcast(user ? MYAUTH_EVENT.notAuthorized : MYAUTH_EVENT.notAuthenticated);

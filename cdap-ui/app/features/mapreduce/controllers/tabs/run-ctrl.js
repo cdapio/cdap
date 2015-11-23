@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $bootstrapModal, rMapreduceDetail, myMetadataFactory) {
+  .controller('MapreduceRunsController', function($scope, $state, $rootScope, rRuns, $filter, $bootstrapModal, rMapreduceDetail) {
     var fFilter = $filter('filter'),
         match;
     this.runs = rRuns;
@@ -77,7 +77,6 @@ angular.module(PKG.name + '.feature.mapreduce')
     this.openHistory = function() {
       this.$bootstrapModal.open({
         size: 'lg',
-        windowClass: 'center cdap-modal',
         templateUrl: '/assets/features/mapreduce/templates/tabs/history.html',
         controller: ['runs', '$scope', function(runs, $scope) {
           $scope.runs = runs;
@@ -90,34 +89,12 @@ angular.module(PKG.name + '.feature.mapreduce')
       });
     };
 
-    var metadataParams = {
+    this.metadataParams = {
       namespace: $state.params.namespace,
       appId: $state.params.appId,
       programType: 'mapreduce',
       programId: $state.params.programId,
       scope: $scope
-    };
-    this.metadataAddOpen = false;
-    this.metadataTags = [];
-
-    myMetadataFactory.getProgramMetadata(metadataParams)
-      .then(function (res) {
-        this.metadataTags = res;
-      }.bind(this));
-
-    this.addMetadata = function () {
-      myMetadataFactory.addProgramMetadata(this.tag, metadataParams)
-        .then(function (res) {
-          this.metadataTags = res;
-          this.tag = '';
-        }.bind(this));
-    };
-
-    this.deleteMetadata = function (tag) {
-      myMetadataFactory.deleteProgramMetadata(tag, metadataParams)
-        .then(function (res) {
-          this.metadataTags = res;
-        }.bind(this));
     };
 
   });

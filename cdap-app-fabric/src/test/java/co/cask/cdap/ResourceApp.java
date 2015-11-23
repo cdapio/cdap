@@ -19,10 +19,8 @@ package co.cask.cdap;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
-import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 
@@ -43,19 +41,16 @@ public class ResourceApp extends AbstractApplication {
   /**
    * Some flow
    */
-  public static final class ResourceFlow implements Flow {
+  public static final class ResourceFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("ResourceFlow")
-        .setDescription("Simple Resource Flow")
-        .withFlowlets()
-          .add("A", new A())
-          .add("B", new B())
-        .connect()
-          .fromStream("X").to("A")
-          .fromStream("X").to("B")
-        .build();
+    protected void configureFlow() {
+      setName("ResourceFlow");
+      setDescription("Simple Resource Flow");
+      addFlowlet("A", new A());
+      addFlowlet("B", new B());
+      connectStream("X", "A");
+      connectStream("X", "B");
     }
   }
 
@@ -76,17 +71,11 @@ public class ResourceApp extends AbstractApplication {
    */
   public static final class A extends AbstractFlowlet {
 
-    public A() {
-      super("A");
-    }
-
     @Override
-    public FlowletSpecification configure() {
-      return FlowletSpecification.Builder.with()
-        .setName("A")
-        .setDescription("A flowlet")
-        .withResources(new Resources(1024, 2))
-        .build();
+    public void configure() {
+      setName("A");
+      setDescription("A flowlet");
+      setResources(new Resources(1024, 2));
     }
 
     public void process(StreamEvent event) {
@@ -98,17 +87,11 @@ public class ResourceApp extends AbstractApplication {
    */
   public static final class B extends AbstractFlowlet {
 
-    public B() {
-      super("B");
-    }
-
     @Override
-    public FlowletSpecification configure() {
-      return FlowletSpecification.Builder.with()
-        .setName("B")
-        .setDescription("B flowlet")
-        .withResources(new Resources(2048, 5))
-        .build();
+    public void configure() {
+      setName("B");
+      setDescription("B flowlet");
+      setResources(new Resources(2048, 5));
     }
 
     public void process(StreamEvent event) {

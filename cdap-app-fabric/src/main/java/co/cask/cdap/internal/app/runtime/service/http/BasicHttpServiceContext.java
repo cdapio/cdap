@@ -31,7 +31,6 @@ import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import org.apache.twill.api.RunId;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -46,7 +45,6 @@ import javax.annotation.Nullable;
 public class BasicHttpServiceContext extends AbstractContext implements TransactionalHttpServiceContext {
 
   private final HttpServiceHandlerSpecification spec;
-  private final TransactionContext txContext;
   private final Metrics userMetrics;
   private final int instanceId;
   private final AtomicInteger instanceCount;
@@ -73,11 +71,10 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
                                  TransactionSystemClient txClient, @Nullable PluginInstantiator pluginInstantiator) {
     super(program, runId, runtimeArgs, spec.getDatasets(),
           getMetricCollector(metricsCollectionService, program, spec.getName(), runId.getId(), instanceId),
-          dsFramework, discoveryServiceClient, pluginInstantiator);
+          dsFramework, txClient, discoveryServiceClient, false, pluginInstantiator);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
-    this.txContext = new TransactionContext(txClient, getDatasetInstantiator().getTransactionAware());
     this.userMetrics =
       new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                 spec.getName(), runId.getId(), instanceId));
@@ -108,9 +105,13 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
   }
 
   @Override
-  public void close() {
-    super.close();
-    Closeables.closeQuietly(getPluginInstantiator());
+  public TransactionContext newTransactionContext() {
+    return getDatasetCache().newTransactionContext();
+  }
+
+  @Override
+  public void dismissTransactionContext() {
+    getDatasetCache().dismissTransactionContext();
   }
 
   @Override
@@ -118,11 +119,7 @@ public class BasicHttpServiceContext extends AbstractContext implements Transact
     return plugins;
   }
 
-  @Override
-  public TransactionContext getTransactionContext() {
-    return txContext;
-  }
-
+  @Nullable
   private static MetricsContext getMetricCollector(MetricsCollectionService service,
                                                      Program program, String handlerName,
                                                      String runId, int instanceId) {

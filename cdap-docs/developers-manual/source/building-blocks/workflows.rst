@@ -33,8 +33,9 @@ either a simple series of nodes or a more complicated :ref:`parallel workflow <w
 
 Workflows can be controlled by the :ref:`CDAP CLI <cli>` and the :ref:`Lifecycle HTTP
 RESTful API <http-restful-api-lifecycle>`. The :ref:`status of a workflow
-<http-restful-api-lifecycle-start-stop-status>` can be retrieved, workflows
-:ref:`started or stopped <http-restful-api-lifecycle-start-stop-status>`, and
+<http-restful-api-lifecycle-status>` can be retrieved, workflows
+:ref:`started <http-restful-api-lifecycle-start>` or
+:ref:`stopped <http-restful-api-lifecycle-stop>`, and
 individual runs of a workflow :ref:`suspended or resumed 
 <http-restful-api-lifecycle-workflow-runs-suspend-resume>`. 
 
@@ -47,9 +48,8 @@ Executing MapReduce or Spark Programs
 -------------------------------------
 To execute MapReduce or Spark programs in a workflow, you will need to add them in your
 application along with the workflow. You can optionally add a :ref:`schedule <schedules>` 
-(such as a `crontab schedule 
-<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(java.lang.String,%20java.lang.String,%20java.lang.String)>`__)
-to the workflow::
+to the workflow using the `java api 
+<../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)>`__::
 
   public void configure() {
     ...
@@ -57,9 +57,9 @@ to the workflow::
     addMapReduce(new AnotherMapReduce());
     addSpark(new MySpark());
     addWorkflow(new MyWorkflow());
-    scheduleWorkflow(Schedules.createTimeSchedule("FiveHourSchedule", 
-                                                  "Schedule running every 5 hours", 
-                                                  "0 */5 * * *"),
+    scheduleWorkflow(Schedules.builder("FiveHourSchedule")
+                       .setDescription("Schedule running every 5 hours")
+                       .createTimeSchedule("0 */5 * * *"),
                      "MyWorkflow");
     ...
   }
@@ -253,12 +253,11 @@ Spark Accumulators and Workflow Tokens
 `Spark Accumulators <https://spark.apache.org/docs/latest/programming-guide.html#accumulators-a-nameaccumlinka>`__ 
 can be accessed through the SparkContext, and used with workflow tokens. This allows the 
 values in the accumulators to be accessed through workflow tokens. An example of this is in
-the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``ScalaSparkLDA.scala``:
+the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example's ``ClusteringUtils.scala``:
 
-.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ScalaSparkLDA.scala
+.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ClusteringUtils.scala
    :language: scala
-   :lines: 79-85
-
+   :lines: 121-126
 
 Persisting the WorkflowToken
 ----------------------------

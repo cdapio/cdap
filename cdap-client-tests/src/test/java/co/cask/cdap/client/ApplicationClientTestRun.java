@@ -169,14 +169,15 @@ public class ApplicationClientTestRun extends ClientTestBase {
     Id.Artifact artifactIdV1 = Id.Artifact.from(Id.Namespace.DEFAULT, artifactName, "1.0.0");
     Id.Artifact artifactIdV2 = Id.Artifact.from(Id.Namespace.DEFAULT, artifactName, "2.0.0");
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ProgramsApp");
-    try {
-      artifactClient.add(Id.Namespace.DEFAULT, artifactName,
-        Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp.class)),
-        "1.0.0");
-      artifactClient.add(Id.Namespace.DEFAULT, artifactName,
-        Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp2.class)),
-        "2.0.0");
 
+    artifactClient.add(Id.Namespace.DEFAULT, artifactName,
+      Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp.class)),
+      "1.0.0");
+    artifactClient.add(Id.Namespace.DEFAULT, artifactName,
+      Files.newInputStreamSupplier(createAppJarFile(ConfigurableProgramsApp2.class)),
+      "2.0.0");
+
+    try {
       // deploy the app with just the worker
       ConfigurableProgramsApp.Programs conf =
         new ConfigurableProgramsApp.Programs(null, "worker1", "stream1", "dataset1");

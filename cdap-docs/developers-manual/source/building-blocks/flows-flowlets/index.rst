@@ -51,12 +51,12 @@ The ``Flow`` interface allows you to specify the flow’s metadata, :doc:`flowle
 <flowlets>` :doc:`flowlet connections, <connecting-flowlets>` (either stream to flowlet,
 or flowlet to flowlet), and any :ref:`Datasets <datasets-index>` used in the flow.
 
-To create a flow, extend ``AbstractFlow`` and override the ``configureFlow`` method::
+To create a flow, extend ``AbstractFlow`` and override the ``configure`` method::
 
   public class MyExampleFlow extends AbstractFlow {
 
     @Override
-    public void configureFlow() {
+    public void configure() {
       setName("mySampleFlow");
       setDescription("Flow for showing examples");
       addFlowlet("flowlet1", new MyExampleFlowlet());

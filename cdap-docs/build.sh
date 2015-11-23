@@ -299,13 +299,6 @@ function build_docs_inner_level() {
   done
 }
 
-function copy_source() {
-  echo "Copying source for ${1} (${2}) ..."
-  mkdir -p ${TARGET_PATH}/${SOURCE}/${1}
-  rewrite ${SCRIPT_PATH}/${COMMON_PLACEHOLDER} ${TARGET_PATH}/${SOURCE}/${1}/index.rst "<placeholder>" ${2}
-  echo
-}
-
 function build_docs_outer_level() {
   local google_code=${1}
   echo "========================================================"
@@ -316,14 +309,12 @@ function build_docs_outer_level() {
   set_version
   
   # Copies placeholder file and renames it
-  copy_source introduction          "Introduction"
-  copy_source developers-manual     "Developers’ Manual"
-  copy_source included-applications "Included Applications"
-  copy_source admin-manual          "Administration Manual"
-  copy_source integrations          "Integrations"
-  copy_source examples-manual       "Examples, Guides, and Tutorials"
-  copy_source reference-manual      "Reference Manual"
-  copy_source faqs                  "FAQs"
+  for i in ${MANUALS}; do
+    echo "Copying source for ${i} ..."
+    mkdir -p ${TARGET_PATH}/${SOURCE}/${i}
+    rewrite ${SCRIPT_PATH}/${COMMON_PLACEHOLDER} ${TARGET_PATH}/${SOURCE}/${i}/index.rst "<placeholder>" ${i}
+    echo
+  done  
 
   # Build outer-level docs
   cp ${SCRIPT_PATH}/${COMMON_HIGHLEVEL_PY}  ${TARGET_PATH}/${SOURCE}/conf.py

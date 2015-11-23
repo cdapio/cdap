@@ -15,9 +15,8 @@
  */
 
 var params = {};
-var metadataParams = {};
 class WorkflowsRunsController {
-  constructor($scope, $state, $filter, rRuns, myWorkFlowApi, $bootstrapModal, rWorkflowDetail, myMetadataFactory) {
+  constructor($scope, $state, $filter, rRuns, myWorkFlowApi, $bootstrapModal, rWorkflowDetail) {
     let fFilter = $filter('filter');
     this.runs = rRuns;
     this.$scope = $scope;
@@ -25,7 +24,6 @@ class WorkflowsRunsController {
     this.myWorkFlowApi = myWorkFlowApi;
     this.runStatus = null;
     this.$bootstrapModal = $bootstrapModal;
-    this.myMetadataFactory = myMetadataFactory;
     this.description = rWorkflowDetail.description;
 
 
@@ -81,20 +79,13 @@ class WorkflowsRunsController {
     });
     this.activeTab = this.tabs[0];
 
-    metadataParams = {
+    this.metadataParams = {
       namespace: $state.params.namespace,
       appId: $state.params.appId,
       programType: 'workflows',
       programId: $state.params.programId,
       scope: $scope
     };
-    this.metadataAddOpen = false;
-    this.metadataTags = [];
-
-    this.myMetadataFactory.getProgramMetadata(metadataParams)
-      .then( res => {
-        this.metadataTags = res;
-      });
 
   }
 
@@ -121,25 +112,36 @@ class WorkflowsRunsController {
   stop() {
     this.runStatus = 'STOPPING';
     this.myWorkFlowApi
-     .stopRun(params, {});
+     .stopRun(params, {})
+     .$promise
+     .then( () => {
+       this.$state.go(this.$state.current, this.$state.params, {reload: true});
+     });
   }
 
   suspend() {
     this.runStatus = 'SUSPENDING';
     this.myWorkFlowApi
-     .suspendRun(params, {});
+     .suspendRun(params, {})
+     .$promise
+     .then( () => {
+       this.$state.go(this.$state.current, this.$state.params, {reload: true});
+     });
   }
 
   resume() {
     this.runStatus = 'RESUMING';
     this.myWorkFlowApi
-     .resumeRun(params, {});
+     .resumeRun(params, {})
+     .$promise
+     .then( () => {
+       this.$state.go(this.$state.current, this.$state.params, {reload: true});
+     });
   }
 
   openHistory() {
     this.$bootstrapModal.open({
       size: 'lg',
-      windowClass: 'center cdap-modal',
       templateUrl: '/assets/features/workflows/templates/tabs/history.html',
       controller: ['runs', '$scope', function(runs, $scope) {
         $scope.runs = runs;
@@ -153,30 +155,15 @@ class WorkflowsRunsController {
   openSchedules() {
     this.$bootstrapModal.open({
       size: 'lg',
-      windowClass: 'center cdap-modal',
       templateUrl: '/assets/features/workflows/templates/tabs/schedules.html',
       controller: 'WorkflowsSchedulesController',
       controllerAs: 'SchedulesController'
     });
   }
 
-  addMetadata() {
-    this.myMetadataFactory.addProgramMetadata(this.tag, metadataParams)
-      .then( res => {
-        this.metadataTags = res;
-        this.tag = '';
-      });
-  }
-
-  deleteMetadata(tag) {
-    this.myMetadataFactory.deleteProgramMetadata(tag, metadataParams)
-      .then( res => {
-        this.metadataTags = res;
-      });
-  }
 }
 
-WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns', 'myWorkFlowApi', '$bootstrapModal', 'rWorkflowDetail', 'myMetadataFactory'];
+WorkflowsRunsController.$inject = ['$scope', '$state', '$filter', 'rRuns', 'myWorkFlowApi', '$bootstrapModal', 'rWorkflowDetail'];
 
 angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkflowsRunsController', WorkflowsRunsController);

@@ -41,5 +41,6 @@ public class DataFabricInMemoryModule extends AbstractModule {
     // bind transactions
     bind(TxMetricsCollector.class).to(TransactionManagerMetricsCollector.class).in(Scopes.SINGLETON);
     install(new TransactionModules().getInMemoryModules());
+    install(new TransactionExecutorModule());
   }
 }

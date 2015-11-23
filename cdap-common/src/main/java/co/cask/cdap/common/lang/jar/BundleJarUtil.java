@@ -17,23 +17,27 @@
 package co.cask.cdap.common.lang.jar;
 
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.utils.DirUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
+import com.google.common.io.OutputSupplier;
 import org.apache.twill.filesystem.Location;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
@@ -146,32 +150,55 @@ public class BundleJarUtil {
   }
 
   /**
-   * Creates an Archive including all the files present in the given input. If the given input is a file, then it alone
-   * is included in the archive. Doesn't support recursive dirs.
+   * Creates an JAR including all the files present in the given input. Same as calling
+   * {@link #createJar(File, OutputSupplier) createJar(input, Files.newOutputStreamSupplier(output)}.
+   */
+  public static void createJar(File input, File output) throws IOException {
+    createJar(input, Files.newOutputStreamSupplier(output));
+  }
+
+  /**
+   * Creates an JAR including all the files present in the given input. If the given input is a file, then it alone
+   * is included in the archive.
    *
    * @param input input directory (or file) whose contents needs to be archived
-   * @param destArchive location to which the archive needs to be written to
-   * @param tempDir temporary directory to help with archive generation
+   * @param outputSupplier An {@link OutputSupplier} for the JAR content to write to.
    * @throws IOException if there is failure in the archive creation
    */
-  public static void packDirFiles(File input, Location destArchive, File tempDir) throws IOException {
-    File jarFile = File.createTempFile("temp", ".jar", tempDir);
-    try (JarOutputStream output = new JarOutputStream(new FileOutputStream(jarFile))) {
-      List<File> files = new ArrayList<>();
-      if (input.isDirectory()) {
-        files.addAll(DirUtils.listFiles(input));
-      } else {
-        files.add(input);
-      }
+  public static void createJar(File input, OutputSupplier<? extends OutputStream> outputSupplier) throws IOException {
+    final URI baseURI = input.toURI();
+    try (
+      OutputStream os = outputSupplier.getOutput();
+      JarOutputStream output = new JarOutputStream(os)
+    ) {
+      java.nio.file.Files.walkFileTree(input.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+                                       new SimpleFileVisitor<Path>() {
 
-      for (File file : files) {
-        if (file.isFile()) {
-          output.putNextEntry(new JarEntry(file.getName()));
-          Files.copy(file, output);
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+          URI uri = baseURI.relativize(dir.toUri());
+          if (!uri.getPath().isEmpty()) {
+            output.putNextEntry(new JarEntry(uri.getPath()));
+            output.closeEntry();
+          }
+          return FileVisitResult.CONTINUE;
         }
-      }
+
+        @Override
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+          URI uri = baseURI.relativize(file.toUri());
+          if (uri.getPath().isEmpty()) {
+            // Only happen if the given "input" is a file.
+            output.putNextEntry(new JarEntry(file.toFile().getName()));
+          } else {
+            output.putNextEntry(new JarEntry(uri.getPath()));
+          }
+          java.nio.file.Files.copy(file, output);
+          output.closeEntry();
+          return FileVisitResult.CONTINUE;
+        }
+      });
     }
-    Files.copy(jarFile, Locations.newOutputSupplier(destArchive));
   }
 
   /**
@@ -182,9 +209,9 @@ public class BundleJarUtil {
    * @return The {@code destinationFolder}
    * @throws IOException If failed to expand the jar
    */
-  public static File unpackProgramJar(Location jarLocation, File destinationFolder) throws IOException {
+  public static File unJar(Location jarLocation, File destinationFolder) throws IOException {
     Preconditions.checkArgument(jarLocation != null);
-    return unpackProgramJar(Locations.newInputSupplier(jarLocation), destinationFolder);
+    return unJar(Locations.newInputSupplier(jarLocation), destinationFolder);
   }
 
   /**
@@ -195,8 +222,8 @@ public class BundleJarUtil {
    * @return The {@code destinationFolder}
    * @throws IOException If failed to expand the jar
    */
-  public static File unpackProgramJar(InputSupplier<? extends InputStream> inputSupplier,
-                                      File destinationFolder) throws IOException {
+  public static File unJar(InputSupplier<? extends InputStream> inputSupplier,
+                           File destinationFolder) throws IOException {
     Preconditions.checkArgument(inputSupplier != null);
     Preconditions.checkArgument(destinationFolder != null);
     Preconditions.checkArgument(destinationFolder.canWrite());

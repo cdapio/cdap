@@ -14,7 +14,7 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.flows')
+angular.module(`${PKG.name}.feature.flows`)
   .config(function($stateProvider, $urlRouterProvider, MYAUTH_ROLE) {
     $stateProvider
       .state('flows', {
@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.flows')
           highlightTab: 'development'
         },
         resolve : {
-          rRuns: function($stateParams, $q, myFlowsApi) {
+          rRuns: function($stateParams, $q, myFlowsApi, $state) {
             var defer = $q.defer();
 
             // Using _cdapPath here as $state.params is not updated with
@@ -39,18 +39,37 @@ angular.module(PKG.name + '.feature.flows')
             };
             myFlowsApi.runs(params)
               .$promise
-              .then(function (res) {
-                defer.resolve(res);
-              });
+              .then(
+                function success(res) {
+                  defer.resolve(res);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
             return defer.promise;
           },
-          rFlowsDetail: function($stateParams, myFlowsApi) {
+          rFlowsDetail: function($stateParams, myFlowsApi, $q, $state) {
             var params = {
               namespace: $stateParams.namespace,
               appId: $stateParams.appId,
               flowId: $stateParams.programId
             };
-            return myFlowsApi.get(params).$promise;
+            var defer = $q.defer();
+            myFlowsApi
+              .get(params)
+              .$promise
+              .then(
+                function success(flowsDetail) {
+                  defer.resolve(flowsDetail);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
+            return defer.promise;
           }
         },
         template: '<ui-view/>'

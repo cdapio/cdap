@@ -21,7 +21,7 @@ import com.google.common.base.Supplier;
 import java.net.InetSocketAddress;
 
 /**
- * An Explore Client that uses the supplied host and port to talk to a server
+ * An Explore Client that uses the supplied parameters to talk to a server
  * implementing {@link co.cask.cdap.explore.service.Explore} over HTTP.
  */
 public class SuppliedAddressExploreClient extends AbstractExploreClient {
@@ -29,11 +29,16 @@ public class SuppliedAddressExploreClient extends AbstractExploreClient {
   private final Supplier<String> host;
   private final Supplier<Integer> port;
   private final Supplier<String> authToken;
+  private final Supplier<Boolean> sslEnabled;
+  private final Supplier<Boolean> verifySSLCert;
 
-  public SuppliedAddressExploreClient(Supplier<String> host, Supplier<Integer> port, Supplier<String> authToken) {
+  public SuppliedAddressExploreClient(Supplier<String> host, Supplier<Integer> port, Supplier<String> authToken,
+                                      Supplier<Boolean> sslEnabled, Supplier<Boolean> verifySSLCert) {
     this.host = host;
     this.port = port;
     this.authToken = authToken;
+    this.sslEnabled = sslEnabled;
+    this.verifySSLCert = verifySSLCert;
   }
 
   @Override
@@ -41,7 +46,17 @@ public class SuppliedAddressExploreClient extends AbstractExploreClient {
     return InetSocketAddress.createUnresolved(host.get(), port.get());
   }
 
-  protected String getAuthorizationToken() {
+  protected String getAuthToken() {
     return authToken.get();
+  }
+
+  @Override
+  protected boolean isSSLEnabled() {
+    return sslEnabled.get();
+  }
+
+  @Override
+  protected boolean verifySSLCert() {
+    return verifySSLCert.get();
   }
 }

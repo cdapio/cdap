@@ -154,7 +154,7 @@ public abstract class DatasetServiceTestBase {
 
     locationFactory = injector.getInstance(LocationFactory.class);
     NamespacedLocationFactory namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
-    dsFramework = new RemoteDatasetFramework(discoveryService, registryFactory);
+    dsFramework = new RemoteDatasetFramework(cConf, discoveryService, registryFactory);
     SystemDatasetInstantiatorFactory datasetInstantiatorFactory =
       new SystemDatasetInstantiatorFactory(locationFactory, dsFramework, cConf);
 
@@ -328,6 +328,6 @@ public abstract class DatasetServiceTestBase {
 
   protected void assertNamespaceNotFound(HttpResponse response, Id.Namespace namespaceId) {
     Assert.assertEquals(HttpStatus.SC_NOT_FOUND, response.getResponseCode());
-    Assert.assertTrue(response.getResponseBodyAsString().contains(namespaceId.getIdRep()));
+    Assert.assertTrue(response.getResponseBodyAsString().contains(namespaceId.toString()));
   }
 }

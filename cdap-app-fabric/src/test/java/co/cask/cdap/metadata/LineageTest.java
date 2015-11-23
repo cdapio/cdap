@@ -17,6 +17,8 @@
 package co.cask.cdap.metadata;
 
 import co.cask.cdap.AllProgramsApp;
+import co.cask.cdap.common.BadRequestException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
@@ -29,17 +31,13 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
-import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.cdap.test.SlowTests;
-import co.cask.common.http.HttpResponse;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
 import org.junit.Test;
@@ -62,9 +60,6 @@ import javax.annotation.Nullable;
 public class LineageTest extends MetadataTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LineageTest.class);
 
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
-    .create();
   private static final String STOPPED = "STOPPED";
 
   @Test
@@ -82,34 +77,34 @@ public class LineageTest extends MetadataTestBase {
 
       // Add metadata to applicaton
       ImmutableMap<String, String> appProperties = ImmutableMap.of("app-key1", "app-value1");
-      Assert.assertEquals(200, addProperties(app, appProperties).getResponseCode());
+      addProperties(app, appProperties);
       Assert.assertEquals(appProperties, getProperties(app));
       ImmutableSet<String> appTags = ImmutableSet.of("app-tag1");
-      Assert.assertEquals(200, addTags(app, appTags).getResponseCode());
+      addTags(app, appTags);
       Assert.assertEquals(appTags, getTags(app));
 
       // Add metadata to flow
       ImmutableMap<String, String> flowProperties = ImmutableMap.of("flow-key1", "flow-value1");
-      Assert.assertEquals(200, addProperties(flow, flowProperties).getResponseCode());
+      addProperties(flow, flowProperties);
       Assert.assertEquals(flowProperties, getProperties(flow));
       ImmutableSet<String> flowTags = ImmutableSet.of("flow-tag1", "flow-tag2");
-      Assert.assertEquals(200, addTags(flow, flowTags).getResponseCode());
+      addTags(flow, flowTags);
       Assert.assertEquals(flowTags, getTags(flow));
 
       // Add metadata to dataset
       ImmutableMap<String, String> dataProperties = ImmutableMap.of("data-key1", "data-value1");
-      Assert.assertEquals(200, addProperties(dataset, dataProperties).getResponseCode());
+      addProperties(dataset, dataProperties);
       Assert.assertEquals(dataProperties, getProperties(dataset));
       ImmutableSet<String> dataTags = ImmutableSet.of("data-tag1", "data-tag2");
-      Assert.assertEquals(200, addTags(dataset, dataTags).getResponseCode());
+      addTags(dataset, dataTags);
       Assert.assertEquals(dataTags, getTags(dataset));
 
       // Add metadata to stream
       ImmutableMap<String, String> streamProperties = ImmutableMap.of("stream-key1", "stream-value1");
-      Assert.assertEquals(200, addProperties(stream, streamProperties).getResponseCode());
+      addProperties(stream, streamProperties);
       Assert.assertEquals(streamProperties, getProperties(stream));
       ImmutableSet<String> streamTags = ImmutableSet.of("stream-tag1", "stream-tag2");
-      Assert.assertEquals(200, addTags(stream, streamTags).getResponseCode());
+      addTags(stream, streamTags);
       Assert.assertEquals(streamTags, getTags(stream));
 
       long startTime = TimeMathParser.nowInSeconds();
@@ -120,9 +115,7 @@ public class LineageTest extends MetadataTestBase {
       long stopTime = TimeMathParser.nowInSeconds();
 
       // Fetch dataset lineage
-      HttpResponse httpResponse = fetchLineage(dataset, startTime, stopTime, 10);
-      Assert.assertEquals(200, httpResponse.getResponseCode());
-      LineageRecord lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+      LineageRecord lineage = fetchLineage(dataset, startTime, stopTime, 10);
 
       LineageRecord expected =
         LineageSerializer.toLineageRecord(
@@ -139,22 +132,16 @@ public class LineageTest extends MetadataTestBase {
       Assert.assertEquals(expected, lineage);
 
       // Fetch dataset lineage with time strings
-      httpResponse = fetchLineage(dataset, "now-1h", "now+1h", 10);
-      Assert.assertEquals(200, httpResponse.getResponseCode());
-      lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+      lineage = fetchLineage(dataset, "now-1h", "now+1h", 10);
       Assert.assertEquals(expected.getRelations(), lineage.getRelations());
 
       // Fetch stream lineage
-      httpResponse = fetchLineage(stream, startTime, stopTime, 10);
-      Assert.assertEquals(200, httpResponse.getResponseCode());
-      lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+      lineage = fetchLineage(stream, startTime, stopTime, 10);
       // same as dataset's lineage
       Assert.assertEquals(expected, lineage);
 
       // Fetch stream lineage with time strings
-      httpResponse = fetchLineage(stream, "now-1h", "now+1h", 10);
-      Assert.assertEquals(200, httpResponse.getResponseCode());
-      lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+      lineage = fetchLineage(stream, "now-1h", "now+1h", 10);
       // same as dataset's lineage
       Assert.assertEquals(expected.getRelations(), lineage.getRelations());
 
@@ -171,9 +158,7 @@ public class LineageTest extends MetadataTestBase {
       long laterStartTime = stopTime + 1000;
       long laterEndTime = stopTime + 5000;
       // Fetch stream lineage
-      httpResponse = fetchLineage(stream, laterStartTime, laterEndTime, 10);
-      Assert.assertEquals(200, httpResponse.getResponseCode());
-      lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+      lineage = fetchLineage(stream, laterStartTime, laterEndTime, 10);
 
       Assert.assertEquals(
         LineageSerializer.toLineageRecord(laterStartTime, laterEndTime, new Lineage(ImmutableSet.<Relation>of())),
@@ -183,23 +168,18 @@ public class LineageTest extends MetadataTestBase {
       long earlierStartTime = startTime - 5000;
       long earlierEndTime = startTime - 1000;
       // Fetch stream lineage
-      httpResponse = fetchLineage(stream, earlierStartTime, earlierEndTime, 10);
-      Assert.assertEquals(200, httpResponse.getResponseCode());
-      lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+      lineage = fetchLineage(stream, earlierStartTime, earlierEndTime, 10);
 
       Assert.assertEquals(
         LineageSerializer.toLineageRecord(earlierStartTime, earlierEndTime, new Lineage(ImmutableSet.<Relation>of())),
         lineage);
 
       // Test bad time ranges
-      httpResponse = fetchLineage(dataset, "sometime", "sometime", 10);
-      Assert.assertEquals(400, httpResponse.getResponseCode());
-      httpResponse = fetchLineage(dataset, "now+1h", "now-1h", 10);
-      Assert.assertEquals(400, httpResponse.getResponseCode());
+      fetchLineage(dataset, "sometime", "sometime", 10, BadRequestException.class);
+      fetchLineage(dataset, "now+1h", "now-1h", 10, BadRequestException.class);
 
       // Test non-existent run
-      httpResponse = fetchRunMetadataResponse(new Id.Run(flow, RunIds.generate(1000).getId()));
-      Assert.assertEquals(404, httpResponse.getResponseCode());
+      assertRunMetadataNotFound(new Id.Run(flow, RunIds.generate(1000).getId()));
     } finally {
       try {
         deleteNamespace(namespace);
@@ -263,9 +243,7 @@ public class LineageTest extends MetadataTestBase {
       long oneHour = TimeUnit.HOURS.toSeconds(1);
 
       // Fetch dataset lineage
-      HttpResponse httpResponse = fetchLineage(dataset, now - oneHour, now + oneHour, 10);
-      Assert.assertEquals(200, httpResponse.getResponseCode());
-      LineageRecord lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+      LineageRecord lineage = fetchLineage(dataset, now - oneHour, now + oneHour, 10);
 
       // dataset is accessed by all programs
       LineageRecord expected =
@@ -293,9 +271,7 @@ public class LineageTest extends MetadataTestBase {
       Assert.assertEquals(expected, lineage);
 
       // Fetch stream lineage
-      httpResponse = fetchLineage(stream, now - oneHour, now + oneHour, 10);
-      Assert.assertEquals(200, httpResponse.getResponseCode());
-      lineage = GSON.fromJson(httpResponse.getResponseBodyAsString(), LineageRecord.class);
+      lineage = fetchLineage(stream, now - oneHour, now + oneHour, 10);
 
       // stream too is accessed by all programs
       Assert.assertEquals(expected, lineage);
@@ -341,24 +317,25 @@ public class LineageTest extends MetadataTestBase {
     Id.DatasetInstance dataset = Id.DatasetInstance.from(namespace, AllProgramsApp.DATASET_NAME);
     Id.Stream stream = Id.Stream.from(namespace, AllProgramsApp.STREAM_NAME);
 
-    HttpResponse httpResponse = fetchLineage(dataset, 0, 10000, 10);
-    Assert.assertEquals(404, httpResponse.getResponseCode());
+    fetchLineage(dataset, 0, 10000, 10, NotFoundException.class);
 
-    httpResponse = fetchLineage(stream, 0, 10000, 10);
-    Assert.assertEquals(404, httpResponse.getResponseCode());
+    try {
+      fetchLineage(stream, 0, 10000, 10);
+      Assert.fail("Expected not to be able to fetch lineage for nonexistent stream: " + stream);
+    } catch (NotFoundException expected) {
+    }
 
-    httpResponse = fetchRunMetadataResponse(new Id.Run(flow, RunIds.generate(1000).getId()));
-    Assert.assertEquals(404, httpResponse.getResponseCode());
+    assertRunMetadataNotFound(new Id.Run(flow, RunIds.generate(1000).getId()));
   }
 
   @Test
   public void testLineageForNonExistingEntity() throws Exception {
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from("default", "dummy");
-    Assert.assertEquals(404, fetchLineage(datasetInstance, 100, 200, 10).getResponseCode());
-    Assert.assertEquals(400, fetchLineage(datasetInstance, -100, 200, 10).getResponseCode());
-    Assert.assertEquals(400, fetchLineage(datasetInstance, 100, -200, 10).getResponseCode());
-    Assert.assertEquals(400, fetchLineage(datasetInstance, 200, 100, 10).getResponseCode());
-    Assert.assertEquals(400, fetchLineage(datasetInstance, 100, 200, -10).getResponseCode());
+    fetchLineage(datasetInstance, 100, 200, 10, NotFoundException.class);
+    fetchLineage(datasetInstance, -100, 200, 10, BadRequestException.class);
+    fetchLineage(datasetInstance, 100, -200, 10, BadRequestException.class);
+    fetchLineage(datasetInstance, 200, 100, 10, BadRequestException.class);
+    fetchLineage(datasetInstance, 100, 200, -10, BadRequestException.class);
   }
 
   private RunId runAndWait(Id.Program program) throws Exception {

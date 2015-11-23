@@ -41,6 +41,7 @@ import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequestConfig;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Charsets;
@@ -50,7 +51,6 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +84,11 @@ abstract class ExploreHttpClient implements Explore {
 
   protected abstract InetSocketAddress getExploreServiceAddress();
 
-  protected abstract String getAuthorizationToken();
+  protected abstract String getAuthToken();
+
+  protected abstract boolean isSSLEnabled();
+
+  protected abstract boolean verifySSLCert();
 
   protected boolean isAvailable() {
     try {
@@ -137,7 +141,7 @@ abstract class ExploreHttpClient implements Explore {
     Map<String, String> args = Maps.newHashMap();
     PartitionedFileSetArguments.setOutputPartitionKey(args, key);
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/deletePartition",
-                                                 datasetInstance.getNamespace(), datasetInstance.getId()),
+                                                 datasetInstance.getNamespaceId(), datasetInstance.getId()),
                                      GSON.toJson(args), null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
@@ -148,7 +152,8 @@ abstract class ExploreHttpClient implements Explore {
 
   protected QueryHandle doEnableExploreDataset(Id.DatasetInstance datasetInstance) throws ExploreException {
     HttpResponse response = doPost(String.format("namespaces/%s/data/explore/datasets/%s/enable",
-                                                 datasetInstance.getNamespace(), datasetInstance.getId()), null, null);
+                                                 datasetInstance.getNamespaceId(),
+                                                 datasetInstance.getId()), null, null);
     if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
       return QueryHandle.fromId(parseResponseAsMap(response, "handle"));
     }
@@ -400,12 +405,8 @@ abstract class ExploreHttpClient implements Explore {
     String responseString = response.getResponseBodyAsString();
     try {
       return GSON.fromJson(responseString, type);
-    } catch (JsonSyntaxException e) {
-      String message = String.format("Cannot parse server response: %s", responseString);
-      LOG.error(message, e);
-      throw new ExploreException(message, e);
     } catch (JsonParseException e) {
-      String message = String.format("Cannot parse server response as map: %s", responseString);
+      String message = String.format("Cannot parse server response: %s", responseString);
       LOG.error(message, e);
       throw new ExploreException(message, e);
     }
@@ -431,20 +432,18 @@ abstract class ExploreHttpClient implements Explore {
                                  @Nullable Map<String, String> headers,
                                  @Nullable String body) throws ExploreException {
     Map<String, String> newHeaders = headers;
-    if (getAuthorizationToken() != null && !getAuthorizationToken().isEmpty()) {
+    if (getAuthToken() != null && !getAuthToken().isEmpty()) {
       newHeaders = (headers != null) ? Maps.newHashMap(headers) : Maps.<String, String>newHashMap();
-      newHeaders.put("Authorization", "Bearer " + getAuthorizationToken());
+      newHeaders.put("Authorization", "Bearer " + getAuthToken());
     }
     String resolvedUrl = resolve(resource);
     try {
       URL url = new URL(resolvedUrl);
+      HttpRequest.Builder builder = HttpRequest.builder(HttpMethod.valueOf(requestMethod), url).addHeaders(newHeaders);
       if (body != null) {
-        return HttpRequests.execute(HttpRequest.builder(HttpMethod.valueOf(requestMethod), url)
-                                      .addHeaders(newHeaders).withBody(body).build());
-      } else {
-        return HttpRequests.execute(HttpRequest.builder(HttpMethod.valueOf(requestMethod), url)
-                                      .addHeaders(newHeaders).build());
+        builder.withBody(body);
       }
+      return HttpRequests.execute(builder.build(), createRequestConfig());
     } catch (IOException e) {
       throw new ExploreException(
         String.format("Error connecting to Explore Service at %s while doing %s with headers %s and body %s",
@@ -454,9 +453,16 @@ abstract class ExploreHttpClient implements Explore {
     }
   }
 
+  private HttpRequestConfig createRequestConfig() {
+    return new HttpRequestConfig(HttpRequestConfig.DEFAULT.getConnectTimeout(),
+                                 HttpRequestConfig.DEFAULT.getReadTimeout(),
+                                 verifySSLCert());
+  }
+
   private String resolve(String resource) {
     InetSocketAddress addr = getExploreServiceAddress();
-    String url = String.format("http://%s:%s%s/%s", addr.getHostName(), addr.getPort(),
+    String url = String.format("%s://%s:%s%s/%s", isSSLEnabled() ? "https" : "http",
+                               addr.getHostName(), addr.getPort(),
                                Constants.Gateway.API_VERSION_3, resource);
     LOG.trace("Explore URL = {}", url);
     return url;

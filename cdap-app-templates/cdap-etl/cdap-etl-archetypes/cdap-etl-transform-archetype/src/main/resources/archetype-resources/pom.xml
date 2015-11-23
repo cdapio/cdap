@@ -27,7 +27,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cdap.version>3.2.1</cdap.version>
+    <cdap.version>3.3.0-SNAPSHOT</cdap.version>
   </properties>
 
   <repositories>
@@ -85,7 +85,7 @@
               <Embed-Transitive>true</Embed-Transitive>
               <Embed-Directory>lib</Embed-Directory>
               <!--Only @Plugin classes in the export packages will be included as plugin-->
-              <Export-Package>$package</Export-Package>
+              <_exportcontents>$package</_exportcontents>
             </instructions>
           </configuration>
           <executions>

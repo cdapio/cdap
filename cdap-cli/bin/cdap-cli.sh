@@ -34,14 +34,17 @@ done
 bin=`dirname "${PRG}"`
 bin=`cd "$bin"; pwd`
 lib="$bin"/../lib
+libexec="$bin"/../libexec
 conf="$bin"/../conf
 CDAP_CONF=${CDAP_CONF:-/etc/cdap/conf}
 script=`basename $0`
 
+CLI_CP=${libexec}/co.cask.cdap.cdap-cli-@@project.version@@.jar:${lib}/co.cask.cdap.cdap-cli-@@project.version@@.jar
+
 if [ "$CLASSPATH" = "" ]; then
-  CLASSPATH=${lib}/co.cask.cdap.cdap-cli-@@project.version@@.jar
+  CLASSPATH=$CLI_CP
 else
-  CLASSPATH=$CLASSPATH:${lib}/co.cask.cdap.cdap-cli-@@project.version@@.jar
+  CLASSPATH=$CLASSPATH:$CLI_CP
 fi
 
 # Load the configuration too.

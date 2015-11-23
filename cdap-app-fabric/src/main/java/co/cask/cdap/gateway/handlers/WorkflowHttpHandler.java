@@ -28,7 +28,9 @@ import co.cask.cdap.app.mapreduce.MRJobInfoFetcher;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRuntimeService;
 import co.cask.cdap.app.store.Store;
+import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -142,16 +144,6 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
     responder.sendString(HttpResponseStatus.OK, "Program run resumed.");
   }
 
-  // TODO: CDAP-2481. Deprecated API. Remove in 3.2.
-  @GET
-  @Path("/apps/{app-id}/workflows/{workflow-name}/{run-id}/current")
-  public void getWorkflowStatusOld(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("app-id") String appId, @PathParam("workflow-name") String workflowName,
-                                  @PathParam("run-id") String runId) throws IOException {
-    getWorkflowStatus(request, responder, namespaceId, appId, workflowName, runId);
-  }
-
   @GET
   @Path("/apps/{app-id}/workflows/{workflow-name}/runs/{run-id}/current")
   public void getWorkflowStatus(HttpRequest request, final HttpResponder responder,
@@ -194,7 +186,8 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   public void getPreviousScheduledRunTime(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,
-                                  @PathParam("workflow-id") String workflowId) throws SchedulerException {
+                                  @PathParam("workflow-id") String workflowId)
+    throws SchedulerException, NotFoundException {
     getScheduledRuntime(responder, namespaceId, appId, workflowId, true);
   }
 
@@ -206,19 +199,28 @@ public class WorkflowHttpHandler extends ProgramLifecycleHttpHandler {
   public void getNextScheduledRunTime(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("app-id") String appId,
-                                  @PathParam("workflow-id") String workflowId) throws SchedulerException {
+                                  @PathParam("workflow-id") String workflowId)
+    throws SchedulerException, NotFoundException {
     getScheduledRuntime(responder, namespaceId, appId, workflowId, false);
   }
 
-  private void getScheduledRuntime(HttpResponder responder, String namespaceId, String appId, String workflowId,
-                                   boolean previousRuntimeRequested) throws SchedulerException {
+  private void getScheduledRuntime(HttpResponder responder, String namespaceId, String appName, String workflowName,
+                                   boolean previousRuntimeRequested) throws SchedulerException, NotFoundException {
     try {
-      Id.Program id = Id.Program.from(namespaceId, appId, ProgramType.WORKFLOW, workflowId);
+      Id.Application appId = Id.Application.from(namespaceId, appName);
+      Id.Program workflowId = Id.Program.from(appId, ProgramType.WORKFLOW, workflowName);
+      ApplicationSpecification appSpec = store.getApplication(appId);
+      if (appSpec == null) {
+        throw new ApplicationNotFoundException(appId);
+      }
+      if (appSpec.getWorkflows().get(workflowName) == null) {
+        throw new ProgramNotFoundException(workflowId);
+      }
       List<ScheduledRuntime> runtimes;
       if (previousRuntimeRequested) {
-        runtimes = scheduler.previousScheduledRuntime(id, SchedulableProgramType.WORKFLOW);
+        runtimes = scheduler.previousScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       } else {
-        runtimes = scheduler.nextScheduledRuntime(id, SchedulableProgramType.WORKFLOW);
+        runtimes = scheduler.nextScheduledRuntime(workflowId, SchedulableProgramType.WORKFLOW);
       }
       responder.sendJson(HttpResponseStatus.OK, runtimes);
     } catch (SecurityException e) {

@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.mapreduce')
           highlightTab: 'development'
         },
         resolve: {
-          rRuns: function($stateParams, $q, myMapreduceApi) {
+          rRuns: function($stateParams, $q, myMapreduceApi, $state) {
             var defer = $q.defer();
 
             var params = {
@@ -36,19 +36,38 @@ angular.module(PKG.name + '.feature.mapreduce')
             };
             myMapreduceApi.runs(params)
               .$promise
-              .then(function (res) {
-                defer.resolve(res);
-              });
+              .then(
+                function success(res) {
+                  defer.resolve(res);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
 
             return defer.promise;
           },
-          rMapreduceDetail: function($stateParams, myMapreduceApi) {
+          rMapreduceDetail: function($stateParams, myMapreduceApi, $q, $state) {
             var params = {
               namespace: $stateParams.namespace,
               appId: $stateParams.appId,
               mapreduceId: $stateParams.programId
             };
-            return myMapreduceApi.get(params).$promise;
+            var defer = $q.defer();
+            myMapreduceApi
+              .get(params)
+              .$promise
+              .then(
+                function success(mapreduceDetail) {
+                  defer.resolve(mapreduceDetail);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
+            return defer.promise;
           }
         },
         template: '<ui-view/>'

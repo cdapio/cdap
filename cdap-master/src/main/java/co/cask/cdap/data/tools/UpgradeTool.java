@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data.tools;
 
+import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.metrics.MetricStore;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
@@ -45,31 +46,31 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.hbase.AbstractHBaseDataSetAdmin;
+import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
-import co.cask.cdap.data2.metadata.service.DefaultBusinessMetadataStore;
-import co.cask.cdap.data2.metadata.service.NoOpBusinessMetadataStore;
+import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
-import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
-import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
+import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
 import co.cask.cdap.internal.app.runtime.schedule.store.ScheduleStoreTableUtil;
-import co.cask.cdap.internal.app.services.AdapterService;
-import co.cask.cdap.internal.app.services.ApplicationLifecycleService;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.logging.save.LogSaverTableUtil;
 import co.cask.cdap.metrics.store.DefaultMetricDatasetFactory;
 import co.cask.cdap.metrics.store.DefaultMetricStore;
 import co.cask.cdap.metrics.store.MetricDatasetFactory;
-import co.cask.cdap.notifications.feeds.NotificationFeedManager;
-import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
+import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.distributed.TransactionService;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -103,9 +104,6 @@ public class UpgradeTool {
   private final TransactionService txService;
   private final ZKClientService zkClientService;
   private final MDSDatasetsRegistry mdsDatasetsRegistry;
-  private final AdapterService adapterService;
-  private final SchedulerService schedulerService;
-
   private final DatasetFramework dsFramework;
 
   /**
@@ -115,12 +113,8 @@ public class UpgradeTool {
     UPGRADE("Upgrades CDAP to " + ProjectInfo.getVersion() + "\n" +
               "  The upgrade tool upgrades the following: \n" +
               "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
-              "  2. Application Specifications\n" +
-              "  3. Removes all Adapters\n" +
-              "  4. Application Specifications\n" +
-              "      - Adds artifacts for existing applications\n" +
-              "      - Updates each application's metadata to include the newly added artifact\n" +
-              "      - Deletes all ApplicationTemplates\n" +
+              "  2. Upgrade Schedule Triggers\n" +
+              "  3. Upgrade Business Metadata Dataset\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
                     "system HBase tables to a version that is compatible with the new HBase \n" +
@@ -147,8 +141,6 @@ public class UpgradeTool {
     this.dsFramework = injector.getInstance(DatasetFramework.class);
     this.mdsDatasetsRegistry = injector.getInstance(Key.get(MDSDatasetsRegistry.class,
                                                             Names.named("mdsDatasetsRegistry")));
-    this.adapterService = injector.getInstance(AdapterService.class);
-    this.schedulerService = injector.getInstance(SchedulerService.class);
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -179,32 +171,16 @@ public class UpgradeTool {
             // Upgrade tool does not need to record lineage for now.
             bind(LineageWriter.class).to(NoOpLineageWriter.class);
             // No need to do anything with Metadata store for now.
-            bind(BusinessMetadataStore.class).to(NoOpBusinessMetadataStore.class);
+            bind(MetadataStore.class).to(NoOpMetadataStore.class);
           }
         }
       ),
       new ViewAdminModules().getDistributedModules(),
       new StreamAdminModules().getDistributedModules(),
+      new NotificationFeedClientModule(),
       new TwillModule(),
       new ExploreClientModule(),
-      // overriding binding of SchedulerService to DistributedSchedulerService because
-      // the distributed implementation uses RetryOnStartFailureService, which is a service that can
-      // be in the running state even if the underlying service is not started. So we could start
-      // our scheduler, and the underlying time scheduler might not be started by the time it is used
-      // scheduler is only used by AdapterService.upgrade() and ApplicationLifecycleService.upgrade()
-      // when deleting adapters and etl applications.  This override can be removed once upgrade for those
-      // don't need to delete schedules
-      Modules
-        .override(new AppFabricServiceRuntimeModule().getDistributedModules())
-        .with(new AbstractModule() {
-          @Override
-          protected void configure() {
-            bind(SchedulerService.class).to(LocalSchedulerService.class).in(Scopes.SINGLETON);
-            // don't need real notifications for upgrade. This is required otherwise the
-            // StreamSizeScheduler in the AbstractSchedulerService won't start
-            bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class).in(Scopes.SINGLETON);
-          }
-        }),
+      new AppFabricServiceRuntimeModule().getDistributedModules(),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new ServiceStoreModules().getDistributedModules(),
       new SystemDatasetRuntimeModule().getDistributedModules(),
@@ -256,15 +232,12 @@ public class UpgradeTool {
   /**
    * Do the start up work
    */
-  private void startUp(boolean startScheduler, boolean includeNewDatasets) throws Exception {
+  private void startUp(boolean includeNewDatasets) throws Exception {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
     initializeDSFramework(cConf, dsFramework, includeNewDatasets);
     mdsDatasetsRegistry.startUp();
-    if (startScheduler) {
-      schedulerService.startAndWait();
-    }
   }
 
   /**
@@ -272,9 +245,6 @@ public class UpgradeTool {
    */
   private void stop() {
     try {
-      if (schedulerService.isRunning()) {
-        schedulerService.stopAndWait();
-      }
       txService.stopAndWait();
       zkClientService.stopAndWait();
       mdsDatasetsRegistry.shutDown();
@@ -315,7 +285,7 @@ public class UpgradeTool {
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
             try {
-              startUp(true, false);
+              startUp(false);
               performUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
@@ -332,7 +302,7 @@ public class UpgradeTool {
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
             try {
-              startUp(false, true);
+              startUp(true);
               performHBaseUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
@@ -387,19 +357,16 @@ public class UpgradeTool {
   }
 
   private void performUpgrade() throws Exception {
-
     performCoprocessorUpgrade();
 
-    LOG.info("Removing Adapters ...");
-    adapterService.upgrade();
+    LOG.info("Upgrading schedules...");
+    injector.getInstance(DatasetBasedTimeScheduleStore.class).upgrade();
 
-    LOG.info("Upgrading Apps ...");
-    ApplicationLifecycleService applicationLifecycleService = injector.getInstance(ApplicationLifecycleService.class);
-    applicationLifecycleService.upgrade(true);
+    LOG.info("Upgrading Business Metadata Dataset...");
+    upgradeBusinessMetadataDatasetSpec();
   }
 
   private void performHBaseUpgrade() throws Exception {
-
     System.setProperty(AbstractHBaseDataSetAdmin.SYSTEM_PROPERTY_FORCE_HBASE_UPGRADE, Boolean.TRUE.toString());
     performCoprocessorUpgrade();
   }
@@ -413,6 +380,10 @@ public class UpgradeTool {
     LOG.info("Upgrading QueueAdmin ...");
     QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
     queueAdmin.upgrade();
+
+    LOG.info("Upgrading Dataset Specification...");
+    DatasetSpecificationUpgrader dsUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
+    dsUpgrader.upgrade();
   }
 
   public static void main(String[] args) {
@@ -435,7 +406,7 @@ public class UpgradeTool {
     if (includeNewDatasets) {
       // artifact and metadata datasets were added in 3.2
       ArtifactStore.setupDatasets(datasetFramework);
-      DefaultBusinessMetadataStore.setupDatasets(datasetFramework);
+      DefaultMetadataStore.setupDatasets(datasetFramework);
       LineageStore.setupDatasets(datasetFramework);
     }
     // app metadata
@@ -453,5 +424,32 @@ public class UpgradeTool {
 
     // Usage registry
     UsageRegistry.setupDatasets(datasetFramework);
+  }
+
+  private void upgradeBusinessMetadataDatasetSpec() {
+    DatasetInstanceManager datasetInstanceManager =
+      injector.getInstance(Key.get(DatasetInstanceManager.class, Names.named("datasetInstanceManager")));
+    DatasetSpecification oldBusinessMetadataSpec =
+      datasetInstanceManager.get(DefaultMetadataStore.BUSINESS_METADATA_INSTANCE_ID);
+    if (oldBusinessMetadataSpec == null) {
+      LOG.info("Business Metadata Dataset not found. No upgrade necessary.");
+      return;
+    }
+    // Updating the type in the spec using Gson. Doing choosing this option over two others:
+    // 1. Build a new DatasetSpecification using the DatasetSpecification Builder: This seems clean, but because
+    // of the namespacing logic in the builder, you would need to change names of the embedded datasets first,
+    // leading to unnecessary complex logic for this temporary code.
+    // 2. Add a DatasetSpecification.changeType: This is probably the cleanest option, however, we would have to
+    // add a new public static method to an API class, again for this temporary use-case. Maybe we can do this
+    // later if we see this as a more frequent pattern.
+    // For now, update the type using Gson, and deserialize the updated JsonObject as a new DatasetSpecification.
+    Gson gson = new Gson();
+    JsonObject jsonObject = gson.toJsonTree(oldBusinessMetadataSpec, DatasetSpecification.class).getAsJsonObject();
+    jsonObject.addProperty("type", MetadataDataset.class.getName());
+    DatasetSpecification newBusinessMetadataSpec = gson.fromJson(jsonObject, DatasetSpecification.class);
+    datasetInstanceManager.delete(DefaultMetadataStore.BUSINESS_METADATA_INSTANCE_ID);
+    datasetInstanceManager.add(Id.Namespace.SYSTEM, newBusinessMetadataSpec);
+    LOG.info("Found old Business Metadata Dataset Spec {}. Upgraded it to new spec {}.",
+             oldBusinessMetadataSpec, newBusinessMetadataSpec);
   }
 }

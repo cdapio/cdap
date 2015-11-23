@@ -40,7 +40,7 @@
           </my-file-select>
         </li>
         <li>
-          <a ui-sref="adapters.create"  class="clearfix">
+          <a ui-sref="hydrator.create"  class="clearfix">
             <span class="pull-left">{{ListController.GLOBALS.en.hydrator.appLabel}}</span>
           </a>
         </li>
@@ -62,12 +62,6 @@
   </div>
 </div>
 
-<div ng-if="ListController.apps.length === 0">
-  <div class="well well-lg text-center">
-    <h3>You haven't deployed any apps.</h3>
-  </div>
-</div>
-
 <div class="table-responsive"  ng-if="ListController.apps.length > 0">
   <table class="table table-curved" cask-sortable>
     <thead>
@@ -82,7 +76,7 @@
       <tr ng-repeat="app in ListController.filtered = (ListController.apps | filter: ListController.searchText ) | myPaginate:ListController.currentPage | orderBy:sortable.predicate:sortable.reverse">
         <td >
           <a ui-sref="apps.detail.overview.programs({ appId: app.name })"
-              ng-if="ListController.myAdapterFactory.isCustomApp(app.artifact.name)"
+              ng-if="ListController.myHydratorFactory.isCustomApp(app.artifact.name)"
               ng-click="MyOrderings.appClicked(app.name)">
             <strong tooltip="{{app.name}}"
                     tooltip-enable="app.name.length > 35"
@@ -91,7 +85,7 @@
             </strong>
           </a>
           <a ui-sref="apps.detail.overview.status({ appId: app.name })"
-              ng-if="ListController.myAdapterFactory.isETLApp(app.artifact.name)"
+              ng-if="ListController.myHydratorFactory.isETLApp(app.artifact.name)"
               ng-click="MyOrderings.appClicked(app.name)">
             <strong tooltip="{{app.name}}"
                     tooltip-enable="app.name.length > 35"
@@ -101,11 +95,11 @@
           </a>
         </td>
         <td>
-          <span ng-if="ListController.myAdapterFactory.isCustomApp(app.artifact.name)">
+          <span ng-if="ListController.myHydratorFactory.isCustomApp(app.artifact.name)">
             <span class="icon-fist"></span>
             <span>App</span>
           </span>
-          <span ng-if="ListController.myAdapterFactory.isETLApp(app.artifact.name)">
+          <span ng-if="ListController.myHydratorFactory.isETLApp(app.artifact.name)">
             <span ng-if="app.artifact.name === ListController.GLOBALS.etlRealtime">
               <span class="icon-ETLRealtime"></span>
               <span> ETL Realtime</span>
@@ -118,11 +112,7 @@
         </td>
         <td>{{ ::app.version }}</td>
         <td>
-          <span tooltip="{{app.description}}"
-                tooltip-enable="app.description.length > 50"
-                tooltip-append-to-body="true">
-            {{ ::app.description | myEllipsis:50}}
-          </span>
+          <span>{{ ::app.description }}</span>
         </td>
       </tr>
     </tbody>

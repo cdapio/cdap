@@ -28,14 +28,14 @@
     <link rel="stylesheet" type="text/css" href="/assets/bundle/lib.css" />
     <link rel="stylesheet" type="text/css" href="/assets/bundle/app.css" />
 </head>
-<body ng-controller="BodyCtrl" ng-class="bodyClass">
+<body ng-controller="BodyCtrl" ng-class="bodyClass" ng-keyup="onSearch($event)">
     <header class="navbar navbar-inverse navbar-fixed-top navbar-cdap"
-            ng-if="!$state.includes('adapters.**') && !$state.includes('login')">
+            ng-if="!$state.includes('hydrator.**') && !$state.includes('login')">
       <div role="navigation" class="container" my-navbar></div>
     </header>
 
     <header class="navbar navbar-fixed-top navbar-hydrator"
-            ng-if="$state.includes('adapters.**')">
+            ng-if="$state.includes('hydrator.**')">
       <div role="navigation" my-navbar-hydrator></div>
     </header>
 
@@ -52,13 +52,13 @@
     <footer>
       <div class="container">
         <div class="row text-muted" ng-cloak>
-          <div class="col-xs-12 col-md-6 text-uppercase">
+          <div class="col-sm-6 text-uppercase">
             <p>
-              <img src="/assets/img/cask.png" alt="" />
+              <span class="cask-logo"></span>
               <span>Copyright &copy; 2015 Cask Data, Inc.</span>
             </p>
           </div>
-          <div class="col-xs-12 col-md-6">
+          <div class="col-sm-6">
             <ul class="list-inline">
               <li>
                 {{version}}

@@ -23,6 +23,7 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import org.apache.twill.filesystem.Location;
 
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -83,6 +84,13 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework implements 
 
   @Override
   public void addModule(Id.DatasetModule moduleId, DatasetModule module) {
+    throw new UnsupportedOperationException("Cannot change modules of "
+                                              + StaticDatasetFramework.class.getSimpleName());
+  }
+
+  @Override
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module,
+                        Location jarLocation) throws DatasetManagementException {
     throw new UnsupportedOperationException("Cannot change modules of "
                                               + StaticDatasetFramework.class.getSimpleName());
   }

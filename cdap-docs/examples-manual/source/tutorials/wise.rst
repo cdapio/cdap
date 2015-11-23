@@ -201,7 +201,7 @@ that it includes the use of a ``Table`` to store the data:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/PageViewStore.java
    :language: java
-   :lines: 41-51   
+   :lines: 42-51   
 
 This is the common way of defining a custom dataset. The next step is to define the API
 that this dataset exposes to store and access data. The API for storing data will be a
@@ -209,7 +209,7 @@ single method:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/PageViewStore.java
    :language: java
-   :lines: 57-59   
+   :lines: 58-60   
    :dedent: 2
 
 ``incrememtCount()`` takes a ``LogInfo`` object, which contains those three parts of a log that we
@@ -221,7 +221,7 @@ Let’s look at how to make the data available through our *pageViewStore* datas
   
 .. literalinclude:: /../target/_includes/tutorial-wise/PageViewStore.java
    :language: java
-   :lines: 79-89   
+   :lines: 80-90   
    :dedent: 2
 
 This method returns the total number of visits an IP address has made. To do so, it uses
@@ -306,7 +306,7 @@ the stream and extracts useful information from it. Here is its implementation:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/WiseFlow.java
    :language: java
-   :lines: 57-81   
+   :lines: 53-77   
    :dedent: 2
 
 A ``Flowlet`` class extends ``AbstractFlowlet``. The ``LogEventParserFlowlet`` class contains one
@@ -334,7 +334,7 @@ Its implementation is very brief:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/WiseFlow.java
    :language: java
-   :lines: 86-102   
+   :lines: 82-99   
    :dedent: 2
 
 Here’s what to note about the ``PageViewCounterFlowlet`` flowlet class:
@@ -363,7 +363,7 @@ The flowlets are defined in the ``WiseFlow`` flow, which is defined by this smal
 
 .. literalinclude:: /../target/_includes/tutorial-wise/WiseFlow.java
    :language: java
-   :lines: 38-51   
+   :lines: 37-47   
 
 In the ``configure()`` method of the ``WiseFlow`` flow, we define the flowlets, giving them names:
 
@@ -394,6 +394,7 @@ The ``configure()`` method is defined as:
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
    :lines: 41-48   
+   :append: . . . 
 
 It sets the ID (name) of the MapReduce program as *BounceCountsMapReduce*, and specifies any datasets
 that will be used in the program. 
@@ -405,7 +406,7 @@ done in the ``beforeSubmit()`` method of the ``BounceCountsMapReduce`` class:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 50-79   
+   :lines: 49-80   
    :dedent: 2
 
 As mentioned earlier, the input of the MapReduce is the *logEventStream*. This
@@ -428,12 +429,12 @@ interface:
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountStore.java
    :language: java
    :lines: 39-41
-   :append: . . . 
+   :append:   . . . 
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountStore.java
    :language: java
    :lines: 96-99   
-   :prepend: . . . 
+   :prepend:   . . . 
 
 This ``BatchWritable`` interface, defining a ``write()`` method, is intended to allow datasets to
 be the output of MapReduce programs. The two generic types that it takes as parameters must
@@ -455,14 +456,14 @@ Our Mapper and Reducer are standard Hadoop classes with these signatures:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 84   
+   :lines: 85   
    :prepend: . . . 
    :append: . . . 
    :dedent: 2
 
 .. literalinclude:: /../target/_includes/tutorial-wise/BounceCountsMapReduce.java
    :language: java
-   :lines: 105   
+   :lines: 106   
    :prepend: . . . 
    :append: . . . 
    :dedent: 2
@@ -485,13 +486,13 @@ To schedule the ``BounceCountsMapReduce`` to run every ten minutes, we define it
 
 .. literalinclude:: /../target/_includes/tutorial-wise/WiseWorkflow.java
    :language: java
-   :lines: 24-32   
+   :lines: 21-   
 
 The ``WiseWorkflow`` can then be scheduled in the ``WiseApp``:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/WiseApp.java
    :language: java
-   :lines: 44-45   
+   :lines: 47-51   
    :prepend: . . . 
    :append: . . . 
    :dedent: 4
@@ -509,7 +510,7 @@ Using the ``curl`` command and the CLI, example use of the service would be::
   $ curl -w'\n' -X GET http://localhost:10000/v3/namespaces/default/apps/Wise/services/WiseService/methods/ip/255.255.255.185/count
   21
   
-  $ ./bin/cdap-cli.sh call service Wise.WiseService GET ip/255.255.255.185/count  
+  $ cdap-cli.sh call service Wise.WiseService GET ip/255.255.255.185/count  
 
   +=======================================================================================================================+
   | status                      | headers                     | body size                   | body                        |
@@ -631,7 +632,7 @@ that extends ``AbstractApplication``:
 
 .. literalinclude:: /../target/_includes/tutorial-wise/WiseApp.java
    :language: java
-   :lines: 25-  
+   :lines: 28-  
 
 When the WISE application is deployed in CDAP, this class is read by the CDAP system. All
 the components it defines are then installed, and can reference one another.
@@ -655,50 +656,58 @@ With this object, we can:
 
 - Test log event injection:
 
+  .. :start-after: private void sendData() throws IOException {
+  .. :end-before: streamWriter.send("124.115.0.140 - - [12/Apr/2012:02:28:49 -0400] " +
   .. literalinclude:: /../target/_includes/tutorial-wise/WiseAppTest.java
      :language: java
-     :lines: 98-101
+     :lines: 91-95
      :prepend:     . . .  
-     :append:     . . . 
+     :append:     . . .  
      :dedent: 4
+     
 
 - Test the call to a service endpoint:
 
+  .. :start-after: private void checkPageViewService
+  .. :end-before:   }
   .. literalinclude:: /../target/_includes/tutorial-wise/WiseAppTest.java
      :language: java
-     :lines: 122-138
      :prepend:     . . .  
      :append:     . . .  
+     :lines: 115-128
      :dedent: 4
 
 - Start a MapReduce:
 
+  .. // Test the MapReduce program
   .. literalinclude:: /../target/_includes/tutorial-wise/WiseAppTest.java
      :language: java
-     :lines: 66-67
+     :lines: 61-63
      :prepend:     . . .  
      :append:     . . .  
      :dedent: 4
 
 - Test the output of the MapReduce:
 
+  .. // Check the data outputted from the MapReduce program
   .. literalinclude:: /../target/_includes/tutorial-wise/WiseAppTest.java
      :language: java
-     :lines: 70-73
+     :lines: 65-69
      :prepend:     . . .  
      :append:     . . .  
      :dedent: 4
 
 - Test a SQL query on datasets:
 
+  .. // Perform a SQL query on the bounceCounts dataset to retrieve the same results
   .. literalinclude:: /../target/_includes/tutorial-wise/WiseAppTest.java
      :language: java
-     :lines: 76-86
+     :lines: 71-82
      :prepend:     . . .  
      :append:     . . .  
      :dedent: 4
 
-A complete example of the test is included in the downloaded zip.
+A complete example of the test is included in the downloaded ZIP file.
 
 Next Up
 =======

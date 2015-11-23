@@ -21,11 +21,13 @@ import co.cask.cdap.cli.CommandCategory;
 import co.cask.cdap.cli.command.artifact.DeleteArtifactCommand;
 import co.cask.cdap.cli.command.artifact.DescribeArtifactCommand;
 import co.cask.cdap.cli.command.artifact.DescribeArtifactPluginCommand;
+import co.cask.cdap.cli.command.artifact.GetArtifactPropertiesCommand;
 import co.cask.cdap.cli.command.artifact.ListArtifactPluginTypesCommand;
 import co.cask.cdap.cli.command.artifact.ListArtifactPluginsCommand;
 import co.cask.cdap.cli.command.artifact.ListArtifactVersionsCommand;
 import co.cask.cdap.cli.command.artifact.ListArtifactsCommand;
 import co.cask.cdap.cli.command.artifact.LoadArtifactCommand;
+import co.cask.cdap.cli.command.artifact.SetArtifactPropertiesCommand;
 import co.cask.common.cli.Command;
 import co.cask.common.cli.CommandSet;
 import com.google.common.collect.ImmutableList;
@@ -41,14 +43,16 @@ public class ArtifactCommands extends CommandSet<Command> implements Categorized
   public ArtifactCommands(Injector injector) {
     super(
       ImmutableList.<Command>builder()
-        .add(injector.getInstance(ListArtifactsCommand.class))
-        .add(injector.getInstance(ListArtifactVersionsCommand.class))
+        .add(injector.getInstance(DeleteArtifactCommand.class))
         .add(injector.getInstance(DescribeArtifactCommand.class))
+        .add(injector.getInstance(DescribeArtifactPluginCommand.class))
+        .add(injector.getInstance(GetArtifactPropertiesCommand.class))
+        .add(injector.getInstance(ListArtifactsCommand.class))
         .add(injector.getInstance(ListArtifactPluginTypesCommand.class))
         .add(injector.getInstance(ListArtifactPluginsCommand.class))
-        .add(injector.getInstance(DescribeArtifactPluginCommand.class))
-        .add(injector.getInstance(DeleteArtifactCommand.class))
+        .add(injector.getInstance(ListArtifactVersionsCommand.class))
         .add(injector.getInstance(LoadArtifactCommand.class))
+        .add(injector.getInstance(SetArtifactPropertiesCommand.class))
         .build());
   }
 

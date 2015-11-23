@@ -23,6 +23,7 @@ import co.cask.cdap.common.guice.KafkaClientModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.notifications.NotificationTest;
+import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import com.google.common.base.Preconditions;
 import com.google.inject.Injector;
@@ -68,7 +69,8 @@ public class KafkaNotificationTest extends NotificationTest {
       cConf,
       new ZKClientModule(),
       new KafkaClientModule(),
-      new NotificationServiceRuntimeModule().getDistributedModules()
+      new NotificationServiceRuntimeModule().getDistributedModules(),
+      new NotificationFeedServiceRuntimeModule().getDistributedModules()
     );
 
     zkClient = injector.getInstance(ZKClientService.class);

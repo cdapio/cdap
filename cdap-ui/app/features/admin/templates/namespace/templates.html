@@ -25,34 +25,42 @@
 </div>
 <div ng-if="!TemplatesController.isEdit">
   <label class="label-control">Choose Templates</label>
-  <select ng-model="TemplatesController.templateType"
-          data-ng-options="o for o in TemplatesController.templationoptions"
-          class="form-control">
-  </select>
+  <div class="select-wrapper">
+    <select ng-model="TemplatesController.templateType"
+            data-ng-options="o for o in TemplatesController.templationoptions"
+            class="form-control">
+    </select>
+  </div>
 
   <div ng-if="TemplatesController.templateType">
     <label class="label-control">Choose Plugin Type</label>
     <div ng-if="TemplatesController.templateType === TemplatesController.GLOBALS.etlBatch">
-      <select ng-model="TemplatesController.pluginType"
-              data-ng-options="o for o in TemplatesController.pluginoptionsBatch"
-              class="form-control">
-      </select>
+      <div class="select-wrapper">
+        <select ng-model="TemplatesController.pluginType"
+                data-ng-options="o for o in TemplatesController.pluginoptionsBatch"
+                class="form-control">
+        </select>
+      </div>
     </div>
 
     <div ng-if="TemplatesController.templateType === TemplatesController.GLOBALS.etlRealtime">
-      <select ng-model="TemplatesController.pluginType"
-              data-ng-options="o for o in TemplatesController.pluginoptionsRealtime"
-              class="form-control">
-      </select>
+      <div class="select-wrapper">
+        <select ng-model="TemplatesController.pluginType"
+                data-ng-options="o for o in TemplatesController.pluginoptionsRealtime"
+                class="form-control">
+        </select>
+      </div>
     </div>
 
   </div>
 
   <div ng-if="TemplatesController.pluginList.length > 0">
     <label class="label-control">Choose Plugin</label>
-    <select ng-model="TemplatesController.pluginName" class="form-control">
-      <option ng-repeat="plugin in TemplatesController.pluginList" value="{{plugin.name}}">{{plugin.name}}</option>
-    </select>
+    <div class="select-wrapper">
+      <select ng-model="TemplatesController.pluginName" class="form-control">
+        <option ng-repeat="plugin in TemplatesController.pluginList" value="{{plugin.name}}">{{plugin.name}}</option>
+      </select>
+    </div>
   </div>
 </div>
 

@@ -38,10 +38,8 @@
             <a ui-sref="mapreduce.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'MAPREDUCE'">{{run.runid}}</a>
             <a ui-sref="workflows.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'WORKFLOWS'">{{run.runid}}</a>
             <a ui-sref="spark.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'SPARK'">{{run.runid}}</a>
-            <a ui-sref="worker.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'WORKER'">{{run.runid}}</a>
+            <a ui-sref="worker.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'WORKER' || type === 'WORKERS'">{{run.runid}}</a>
             <a ui-sref="services.detail.run({appId: appId, programId: programId, runid: run.runid})" ng-if="type === 'SERVICES'">{{run.runid}}</a>
-
-            <span ng-if="type === 'ADAPTERS'">{{run.runid}}</span>
           </td>
           <td> {{ (run.start * 1000) | date: 'medium'}}</td>
           <td>
@@ -64,5 +62,3 @@
      class="well well-lg text-center">
   <h4> No history so far.</h4>
 </div>
-
-

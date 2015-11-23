@@ -19,12 +19,11 @@ var runparams = {},
     params;
 
 class WorkflowsRunsStatusController {
-  constructor($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyDataSource, myMapreduceApi, mySparkApi) {
-    this.dataSrc = new MyDataSource($scope);
+  constructor($state, $scope, myWorkFlowApi, $filter, $alert, GraphHelpers, MyCDAPDataSource, myMapreduceApi, mySparkApi) {
+    this.dataSrc = new MyCDAPDataSource($scope);
     this.$state = $state;
     this.$scope = $scope;
     this.myWorkFlowApi = myWorkFlowApi;
-    this.$alert = $alert;
     this.GraphHelpers = GraphHelpers;
     this.myMapreduceApi = myMapreduceApi;
     this.mySparkApi = mySparkApi;
@@ -234,6 +233,6 @@ class WorkflowsRunsStatusController {
 
 }
 
-WorkflowsRunsStatusController.$inject = ['$state', '$scope', 'myWorkFlowApi', '$filter', '$alert', 'GraphHelpers', 'MyDataSource', 'myMapreduceApi', 'mySparkApi'];
+WorkflowsRunsStatusController.$inject = ['$state', '$scope', 'myWorkFlowApi', '$filter', '$alert', 'GraphHelpers', 'MyCDAPDataSource', 'myMapreduceApi', 'mySparkApi'];
 angular.module(`${PKG.name}.feature.workflows`)
   .controller('WorkflowsRunsStatusController', WorkflowsRunsStatusController);

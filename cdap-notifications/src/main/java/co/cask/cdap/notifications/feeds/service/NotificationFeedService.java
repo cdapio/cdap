@@ -47,14 +47,14 @@ public class NotificationFeedService implements NotificationFeedManager {
 
   @Override
   public void deleteFeed(Id.NotificationFeed feed) throws NotificationFeedNotFoundException {
-    if (store.deleteNotificationFeed(feed.getFeedId()) == null) {
+    if (store.deleteNotificationFeed(feed) == null) {
       throw new NotificationFeedNotFoundException(feed);
     }
   }
 
   @Override
   public Id.NotificationFeed getFeed(Id.NotificationFeed feed) throws NotificationFeedNotFoundException {
-    Id.NotificationFeed f = store.getNotificationFeed(feed.getFeedId());
+    Id.NotificationFeed f = store.getNotificationFeed(feed);
     if (f == null) {
       throw new NotificationFeedNotFoundException(feed);
     }

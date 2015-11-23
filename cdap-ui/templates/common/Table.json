@@ -20,10 +20,12 @@
        }
     }
   },
-  "schema" : {
-     "widget": "schema",
-     "description" : "Specify the schema for the table.",
-     "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string", "map<string, string>" ],
-     "schema-default-type" : "string"
+  "outputschema": {
+    "schema" : {
+      "widget": "schema",
+      "description" : "Specify the schema for the table",
+      "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string", "map<string, string>" ],
+      "schema-default-type" : "string"
+    }
   }
 }

@@ -60,9 +60,10 @@ public class FakeApp extends AbstractApplication {
     addFlow(new FakeFlow());
     addSpark(new FakeSpark());
     addWorkflow(new FakeWorkflow());
-    scheduleWorkflow(Schedules.createTimeSchedule(SCHEDULE_NAME, "", SCHEDULE_CRON), FakeWorkflow.NAME);
-    scheduleWorkflow(Schedules.createDataSchedule(STREAM_SCHEDULE_NAME, "", Schedules.Source.STREAM,
-                                                  STREAM_NAME, STREAM_TRIGGER_MB), FakeWorkflow.NAME);
+    scheduleWorkflow(Schedules.builder(SCHEDULE_NAME).createTimeSchedule(SCHEDULE_CRON), FakeWorkflow.NAME);
+    scheduleWorkflow(Schedules.builder(STREAM_SCHEDULE_NAME)
+                       .createDataSchedule(Schedules.Source.STREAM, STREAM_NAME, STREAM_TRIGGER_MB),
+                     FakeWorkflow.NAME);
     addService(PingService.NAME, new PingService());
     addService(PrefixedEchoHandler.NAME, new PrefixedEchoHandler());
   }

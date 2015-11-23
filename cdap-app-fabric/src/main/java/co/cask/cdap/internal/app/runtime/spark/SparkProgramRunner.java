@@ -25,7 +25,6 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.Arguments;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramOptions;
-import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
@@ -34,17 +33,19 @@ import co.cask.cdap.common.lang.PropertyFieldSetter;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.DataSetFieldSetter;
 import co.cask.cdap.internal.app.runtime.MetricsFieldSetter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import co.cask.cdap.internal.lang.Reflections;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
-import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.io.Closeables;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
@@ -57,12 +58,17 @@ import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  * Runs {@link Spark} programs
  */
-public class SparkProgramRunner implements ProgramRunner {
+public class SparkProgramRunner extends AbstractProgramRunnerWithPlugin {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkProgramRunner.class);
   private static final Gson GSON = new Gson();
@@ -80,6 +86,7 @@ public class SparkProgramRunner implements ProgramRunner {
   public SparkProgramRunner(CConfiguration cConf, Configuration hConf, TransactionSystemClient txSystemClient,
                             DatasetFramework datasetFramework, MetricsCollectionService metricsCollectionService,
                             DiscoveryServiceClient discoveryServiceClient, StreamAdmin streamAdmin, Store store) {
+    super(cConf);
     this.hConf = hConf;
     this.datasetFramework = datasetFramework;
     this.cConf = cConf;
@@ -122,48 +129,60 @@ public class SparkProgramRunner implements ProgramRunner {
       ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
     }
 
-    ClientSparkContext context = new ClientSparkContext(program, runId, logicalStartTime,
-                                                        options.getUserArguments().asMap(),
-                                                        new TransactionContext(txSystemClient), datasetFramework,
-                                                        discoveryServiceClient, metricsCollectionService,
-                                                        workflowToken);
-
-    Spark spark;
+    List<Closeable> closeables = new ArrayList<>();
     try {
-      spark = new InstantiatorFactory(false).get(TypeToken.of(program.<Spark>getMainClass())).create();
+      PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+      if (pluginInstantiator != null) {
+        closeables.add(pluginInstantiator);
+      }
 
-      // Fields injection
-      Reflections.visit(spark, spark.getClass(),
-                        new PropertyFieldSetter(spec.getProperties()),
-                        new DataSetFieldSetter(context),
-                        new MetricsFieldSetter(context.getMetrics()));
-    } catch (Exception e) {
-      LOG.error("Failed to instantiate Spark class for {}", spec.getClassName(), e);
-      throw Throwables.propagate(e);
+      ClientSparkContext context = new ClientSparkContext(program, runId, logicalStartTime,
+                                                          options.getUserArguments().asMap(),
+                                                          txSystemClient, datasetFramework,
+                                                          discoveryServiceClient, metricsCollectionService,
+                                                          getPluginArchive(options), pluginInstantiator, workflowToken);
+      closeables.add(context);
+      Spark spark;
+      try {
+        spark = new InstantiatorFactory(false).get(TypeToken.of(program.<Spark>getMainClass())).create();
+
+        // Fields injection
+        Reflections.visit(spark, spark.getClass(),
+                          new PropertyFieldSetter(spec.getProperties()),
+                          new DataSetFieldSetter(context),
+                          new MetricsFieldSetter(context.getMetrics()));
+      } catch (Exception e) {
+        LOG.error("Failed to instantiate Spark class for {}", spec.getClassName(), e);
+        throw Throwables.propagate(e);
+      }
+
+      SparkSubmitter submitter = new SparkContextConfig(hConf).isLocal() ? new LocalSparkSubmitter()
+        : new DistributedSparkSubmitter();
+      Service sparkRuntimeService = new SparkRuntimeService(
+        cConf, hConf, spark, new SparkContextFactory(hConf, context, datasetFramework, txSystemClient, streamAdmin),
+        submitter, program.getJarLocation(), txSystemClient
+      );
+
+      sparkRuntimeService.addListener(
+        createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments(), closeables),
+        Threads.SAME_THREAD_EXECUTOR);
+      ProgramController controller = new SparkProgramController(sparkRuntimeService, context);
+
+      LOG.info("Starting Spark Job: {}", context.toString());
+      sparkRuntimeService.start();
+      return controller;
+    } catch (Throwable t) {
+      closeAll(closeables);
+      throw t;
     }
-
-    SparkSubmitter submitter = new SparkContextConfig(hConf).isLocal() ? new LocalSparkSubmitter()
-                                                                       : new DistributedSparkSubmitter();
-    Service sparkRuntimeService = new SparkRuntimeService(
-      cConf, hConf, spark, new SparkContextFactory(hConf, context, datasetFramework, streamAdmin),
-      submitter, program.getJarLocation(), txSystemClient
-    );
-
-    sparkRuntimeService.addListener(
-      createRuntimeServiceListener(program.getId(), runId, arguments, options.getUserArguments()),
-      Threads.SAME_THREAD_EXECUTOR);
-    ProgramController controller = new SparkProgramController(sparkRuntimeService, context);
-
-    LOG.info("Starting Spark Job: {}", context.toString());
-    sparkRuntimeService.start();
-    return controller;
   }
 
   /**
    * Creates a service listener to reactor on state changes on {@link SparkRuntimeService}.
    */
   private Service.Listener createRuntimeServiceListener(final Id.Program programId, final RunId runId,
-                                                        Arguments arguments, final Arguments userArgs) {
+                                                        final Arguments arguments, final Arguments userArgs,
+                                                        final List<Closeable> closeables) {
 
     final String twillRunId = arguments.getOption(ProgramOptionConstants.TWILL_RUN_ID);
     final String workflowName = arguments.getOption(ProgramOptionConstants.WORKFLOW_NAME);
@@ -181,7 +200,7 @@ public class SparkProgramRunner implements ProgramRunner {
         }
 
         if (workflowName == null) {
-          store.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap());
+          store.setStart(programId, runId.getId(), startTimeInSeconds, twillRunId, userArgs.asMap(), arguments.asMap());
         } else {
           // Program started by Workflow
           store.setWorkflowProgramStart(programId, runId.getId(), workflowName, workflowRunId, workflowNodeId,
@@ -191,6 +210,7 @@ public class SparkProgramRunner implements ProgramRunner {
 
       @Override
       public void terminated(Service.State from) {
+        closeAll(closeables);
         if (from == Service.State.STOPPING) {
           // Service was killed
           store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
@@ -204,9 +224,24 @@ public class SparkProgramRunner implements ProgramRunner {
 
       @Override
       public void failed(Service.State from, Throwable failure) {
+        closeAll(closeables);
         store.setStop(programId, runId.getId(), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),
                       ProgramController.State.ERROR.getRunStatus());
       }
     };
+  }
+
+  private void closeAll(List<Closeable> closeables) {
+    for (Closeable closeable : closeables) {
+      Closeables.closeQuietly(closeable);
+    }
+  }
+
+  @Nullable
+  private File getPluginArchive(ProgramOptions options) {
+    if (!options.getArguments().hasOption(ProgramOptionConstants.PLUGIN_ARCHIVE)) {
+      return null;
+    }
+    return new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_ARCHIVE));
   }
 }

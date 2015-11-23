@@ -19,7 +19,6 @@ package $package;
 import co.cask.cdap.api.metrics.RuntimeMetrics;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.FlowManager;
-import co.cask.cdap.test.RuntimeStats;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestBase;
@@ -30,11 +29,9 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Test for {@link HelloWorld}.
@@ -45,12 +42,13 @@ public class HelloWorldTest extends TestBase {
   public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", false);
 
   @Test
-  public void test() throws TimeoutException, InterruptedException, IOException {
+  public void test() throws Exception {
     // Deploy the HelloWorld application
     ApplicationManager appManager = deployApplication(HelloWorld.class);
 
     // Start WhoFlow
     FlowManager flowManager = appManager.getFlowManager("WhoFlow").start();
+    Assert.assertTrue(flowManager.isRunning());
 
     // Send stream events to the "who" Stream
     StreamManager streamManager = getStreamManager("who");
@@ -62,15 +60,15 @@ public class HelloWorldTest extends TestBase {
 
     try {
       // Wait for the last Flowlet processing 5 events, or at most 5 seconds
-      RuntimeMetrics metrics = RuntimeStats.getFlowletMetrics("HelloWorld", "WhoFlow", "saver");
+      RuntimeMetrics metrics = flowManager.getFlowletMetrics("saver");
       metrics.waitForProcessed(5, 5, TimeUnit.SECONDS);
     } finally {
       flowManager.stop();
+      Assert.assertFalse(flowManager.isRunning());
     }
 
     // Start Greeting service and use it
-    ServiceManager serviceManager = appManager.getServiceManager(HelloWorld.Greeting.SERVICE_NAME);
-    serviceManager.start();
+    ServiceManager serviceManager = appManager.getServiceManager(HelloWorld.Greeting.SERVICE_NAME).start();
 
     // Wait service startup
     serviceManager.waitForStatus(true);
@@ -85,7 +83,5 @@ public class HelloWorldTest extends TestBase {
       connection.disconnect();
     }
     Assert.assertEquals("Hello 5!", response);
-
-    appManager.stopAll();
   }
 }

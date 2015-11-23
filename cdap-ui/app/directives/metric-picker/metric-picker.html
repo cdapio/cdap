@@ -1,32 +1,25 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 <div class="form-group">
   <div class="col-xs-12 col-sm-12">
     <div class="input-group">
-      <div class="input-group-btn">
-        <button type="button" class="btn btn-default form-control mp-dropdown-toggle"
-          ng-model="metric.type"
-          bs-options="t for t in available.types"
-          data-container="body"
-          bs-select>
-            <strong ng-bind="metric.type"></strong>
-            <span class="caret"></span>
-        </button>
-      </div>
+      <span class="input-group-addon">
+        <span ng-bind="metric.type"></span>
+      </span>
       <input type="text" class="form-control mp-input-group-input"
         placeholder="Context"
         ng-model="metric.context"
@@ -41,29 +34,21 @@
 </div>
 
 <div class="metrics-container">
-<div ng-repeat="name in metric.names" class="h6">
-  <div class="input-group">
-    <span class="input-group-addon">
-      <i class="fa fa-line-chart"></i>
-    </span>
-    <input type="text" class="form-control"
-      placeholder="Metric Name"
-      ng-model="name.name"
-      bs-options="m for m in available.names"
-      data-watch-options="1"
-      data-min-length="0"
-      data-limit="100"
-      data-container="body"
-      bs-typeahead />
-    <div class="input-group-addon" ng-click="deleteMetric($index)">
-      <span>
-        <i class="fa fa-fw fa-trash"></i>
-      </span>
+  <div class="control-label clearfix">
+    <label class="pull-left">
+      <span>Metric(s)</span>
+      <span class="fa fa-asterisk"></span>
+    </label>
+    <small class="pull-right">Max 12 per dashboard</small>
+  </div>
+  <div class="clearfix">
+    <div class="pull-left">
+      <div ng-dropdown-multiselect=""
+           options="available.names"
+           translation-texts="{dynamicButtonTextSuffix: 'Selected'}"
+           selected-model="metric.names"
+           extra-settings="metricsSettings">
+      </div>
     </div>
   </div>
 </div>
-</div>
-
-<button class="btn btn-primary" ng-click="addMetricName()" type="button" >
-  <span class="fa fa-fw fa-plus"></span>
-</button>

@@ -18,12 +18,16 @@ package co.cask.cdap.etl.realtime;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
+import co.cask.cdap.etl.api.LookupConfig;
+import co.cask.cdap.etl.api.LookupTableConfig;
 import co.cask.cdap.etl.common.ETLStage;
+import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.etl.realtime.source.DataGeneratorSource;
@@ -41,6 +45,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.gson.Gson;
 import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
 import org.apache.twill.internal.kafka.client.ZKKafkaClientService;
 import org.apache.twill.internal.utils.Networks;
@@ -72,6 +77,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class ETLWorkerTest extends ETLRealtimeBaseTest {
 
+  private static final Gson GSON = new Gson();
+
   private static ZKClientService zkClient;
   private static KafkaClientService kafkaClient;
 
@@ -90,8 +97,11 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
   @Test
   public void testEmptyProperties() throws Exception {
     // Set properties to null to test if ETLTemplate can handle it.
-    ETLStage source = new ETLStage("DataGenerator", null);
-    ETLStage sink = new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "testS"));
+    Plugin sourceConfig = new Plugin("DataGenerator", null);
+    Plugin sinkConfig =
+      new Plugin("Stream", ImmutableMap.of(Properties.Stream.NAME, "testS"));
+    ETLStage source = new ETLStage("source", sourceConfig);
+    ETLStage sink = new ETLStage("sink", sinkConfig);
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(2, source, sink, Lists.<ETLStage>newArrayList());
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testAdap");
@@ -109,13 +119,15 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
   @Test
   @Category(SlowTests.class)
   public void testStreamSinks() throws Exception {
-    ETLStage source = new ETLStage("DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
+    Plugin sourceConfig = new Plugin(
+      "DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
       DataGeneratorSource.STREAM_TYPE));
 
+    ETLStage source = new ETLStage("source", sourceConfig);
     List<ETLStage> sinks = Lists.newArrayList(
-      new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "streamA")),
-      new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "streamB")),
-      new ETLStage("Stream", ImmutableMap.of(Properties.Stream.NAME, "streamC"))
+      new ETLStage("sink1", new Plugin("Stream", ImmutableMap.of(Properties.Stream.NAME, "streamA"))),
+      new ETLStage("sink2", new Plugin("Stream", ImmutableMap.of(Properties.Stream.NAME, "streamB"))),
+      new ETLStage("sink3", new Plugin("Stream", ImmutableMap.of(Properties.Stream.NAME, "streamC")))
     );
     ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(1, source, sinks, null, null);
 
@@ -149,6 +161,63 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
   }
 
   @Test
+  public void testScriptLookup() throws Exception {
+    addDatasetInstance(KeyValueTable.class.getName(), "lookupTable");
+    DataSetManager<KeyValueTable> lookupTable = getDataset("lookupTable");
+    lookupTable.get().write("Bob".getBytes(Charsets.UTF_8), "123".getBytes(Charsets.UTF_8));
+    lookupTable.flush();
+
+    Schema.Field idField = Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.INT)));
+    Schema.Field nameField = Schema.Field.of("name", Schema.of(Schema.Type.STRING));
+    Schema.Field scoreField = Schema.Field.of("score", Schema.of(Schema.Type.DOUBLE));
+    Schema.Field graduatedField = Schema.Field.of("graduated", Schema.of(Schema.Type.BOOLEAN));
+    Schema.Field binaryNameField = Schema.Field.of("binary", Schema.of(Schema.Type.BYTES));
+    Schema.Field timeField = Schema.Field.of("time", Schema.of(Schema.Type.LONG));
+    Schema schema =  Schema.recordOf("tableRecord", idField, nameField, scoreField, graduatedField,
+                                     binaryNameField, timeField);
+
+    Plugin source = new Plugin("DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
+                                                                    DataGeneratorSource.TABLE_TYPE));
+    Plugin transform = new Plugin("Script", ImmutableMap.of(
+      "script", "function transform(x, ctx) { " +
+        "x.name = x.name + '..hi..' + ctx.getLookup('lookupTable').lookup(x.name); return x; }",
+      "lookup", GSON.toJson(new LookupConfig(ImmutableMap.of(
+        "lookupTable", new LookupTableConfig(LookupTableConfig.TableType.DATASET)
+      )))
+    ));
+    Plugin sink =
+      new Plugin("Table", ImmutableMap.of(Properties.Table.NAME, "testScriptLookup_table1",
+                                                       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary",
+                                                       Properties.Table.PROPERTY_SCHEMA, schema.toString()));
+
+    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(new ETLStage("source", source),
+                                                        new ETLStage("sink", sink),
+                                                        Lists.newArrayList(new ETLStage("transform", transform)));
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testToStream");
+    AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    WorkerManager workerManager = appManager.getWorkerManager(ETLWorker.NAME);
+
+    workerManager.start();
+    DataSetManager<Table> tableManager = getDataset("testScriptLookup_table1");
+    waitForTableToBePopulated(tableManager);
+    workerManager.stop();
+
+    // verify
+    Table table = tableManager.get();
+    Row row = table.get("Bob".getBytes(Charsets.UTF_8));
+
+    Assert.assertEquals("Bob..hi..123", row.getString("name"));
+
+    Connection connection = getQueryClient();
+    ResultSet results = connection.prepareStatement("select name from dataset_testScriptLookup_table1").executeQuery();
+    Assert.assertTrue(results.next());
+    Assert.assertEquals("Bob..hi..123", results.getString(1));
+  }
+
+  @Test
   @SuppressWarnings("ConstantConditions")
   public void testTableSink() throws Exception {
     Schema.Field idField = Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.INT)));
@@ -161,12 +230,13 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
     Schema schema =  Schema.recordOf("tableRecord", idField, nameField, scoreField, graduatedField,
                                      binaryNameField, timeField);
 
-    ETLStage source = new ETLStage("DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
+    Plugin source = new Plugin("DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
                                                            DataGeneratorSource.TABLE_TYPE));
-    ETLStage sink = new ETLStage("Table", ImmutableMap.of(Properties.Table.NAME, "table1",
+    Plugin sink = new Plugin("Table", ImmutableMap.of(Properties.Table.NAME, "table1",
                                                           Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary",
                                                           Properties.Table.PROPERTY_SCHEMA, schema.toString()));
-    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
+    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(new ETLStage("source", source),
+                                                        new ETLStage("sink", sink), Lists.<ETLStage>newArrayList());
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testToStream");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -206,7 +276,7 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
                                     Schema.Field.of("ID", Schema.of(Schema.Type.INT)),
                                     Schema.Field.of("AGE", Schema.of(Schema.Type.INT)));
     setUp();
-    ETLStage source = new ETLStage("Kafka", ImmutableMap.<String, String>builder()
+    Plugin source = new Plugin("Kafka", ImmutableMap.<String, String>builder()
       .put(KafkaSource.KAFKA_TOPIC, "MyTopic")
       .put(KafkaSource.KAFKA_ZOOKEEPER, zkServer.getConnectionStr())
       .put(KafkaSource.FORMAT, "csv")
@@ -215,7 +285,7 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
       .build()
     );
 
-    ETLStage sink = new ETLStage("Table", ImmutableMap.of(
+    Plugin sink = new Plugin("Table", ImmutableMap.of(
       "name", "outputTable",
       Properties.Table.PROPERTY_SCHEMA, schema.toString(),
       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "NAME"));
@@ -224,7 +294,7 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
     message.put("1", "Bob,1,3");
     sendMessage("MyTopic", message);
 
-    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink);
+    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(new ETLStage("source", source), new ETLStage("sink", sink));
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testToStream");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -262,7 +332,7 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
         // need to wait for information to get to the table, not just for the row to be created
         return row.getColumns().size() != 0;
       }
-    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 10, TimeUnit.SECONDS);
   }
 
   public static void setUp() throws IOException {

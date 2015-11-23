@@ -16,6 +16,7 @@
 
 package co.cask.cdap.explore.service;
 
+import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -28,6 +29,7 @@ import co.cask.cdap.proto.ColumnDesc;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
+import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -40,6 +42,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -172,5 +175,143 @@ public class HiveExploreTableTestRun extends BaseHiveExploreServiceTest {
                                   new ColumnDesc("double_field", "DOUBLE", 2, null)),
                Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(Integer.MAX_VALUE, 3.14)))
     );
+  }
+
+  @Test
+  public void testInsert() throws Exception {
+    Id.DatasetInstance otherTable = Id.DatasetInstance.from(NAMESPACE_ID, "othertable");
+
+    Schema schema = Schema.recordOf(
+      "record",
+      Schema.Field.of("value", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("id", Schema.of(Schema.Type.STRING))
+    );
+    datasetFramework.addInstance(Table.class.getName(), otherTable, DatasetProperties.builder()
+      .add(Table.PROPERTY_SCHEMA, schema.toString())
+      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
+      .build());
+    try {
+      String command = String.format("insert into %s select int_field, string_field from %s",
+                                     getDatasetHiveName(otherTable), MY_TABLE_NAME);
+      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, command).get();
+      Assert.assertEquals(QueryStatus.OpStatus.FINISHED, result.getStatus().getStatus());
+
+      command = String.format("select id, value from %s", getDatasetHiveName(otherTable));
+      runCommand(NAMESPACE_ID, command,
+        true,
+        Lists.newArrayList(new ColumnDesc("id", "STRING", 1, null),
+                           new ColumnDesc("value", "INT", 2, null)),
+        Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList("row1", Integer.MAX_VALUE)))
+      );
+    } finally {
+      datasetFramework.deleteInstance(otherTable);
+    }
+  }
+
+  @Test
+  public void testInsertFromJoin() throws Exception {
+    Id.DatasetInstance userTableID = Id.DatasetInstance.from(NAMESPACE_ID, "users");
+    Id.DatasetInstance purchaseTableID = Id.DatasetInstance.from(NAMESPACE_ID, "purchases");
+    Id.DatasetInstance expandedTableID = Id.DatasetInstance.from(NAMESPACE_ID, "expanded");
+
+    Schema userSchema = Schema.recordOf(
+      "user",
+      Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("email", Schema.of(Schema.Type.STRING))
+    );
+    Schema purchaseSchema = Schema.recordOf(
+      "purchase",
+      Schema.Field.of("purchaseid", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("itemid", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("userid", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("ct", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE))
+    );
+    Schema expandedSchema = Schema.recordOf(
+      "expandedPurchase",
+      Schema.Field.of("purchaseid", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("itemid", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("userid", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("ct", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("username", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("email", Schema.of(Schema.Type.STRING))
+    );
+
+    datasetFramework.addInstance(Table.class.getName(), userTableID, DatasetProperties.builder()
+      .add(Table.PROPERTY_SCHEMA, userSchema.toString())
+      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "id")
+      .build());
+    datasetFramework.addInstance(Table.class.getName(), purchaseTableID, DatasetProperties.builder()
+      .add(Table.PROPERTY_SCHEMA, purchaseSchema.toString())
+      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "purchaseid")
+      .build());
+    datasetFramework.addInstance(Table.class.getName(), expandedTableID, DatasetProperties.builder()
+      .add(Table.PROPERTY_SCHEMA, expandedSchema.toString())
+      .add(Table.PROPERTY_SCHEMA_ROW_FIELD, "purchaseid")
+      .build());
+
+    Table userTable = datasetFramework.getDataset(userTableID, DatasetDefinition.NO_ARGUMENTS, null);
+    Table purchaseTable = datasetFramework.getDataset(purchaseTableID, DatasetDefinition.NO_ARGUMENTS, null);
+
+    TransactionAware txUserTable = (TransactionAware) userTable;
+    TransactionAware txPurchaseTable = (TransactionAware) purchaseTable;
+    Transaction tx1 = transactionManager.startShort(100);
+
+    txUserTable.startTx(tx1);
+    txPurchaseTable.startTx(tx1);
+
+    Put put = new Put(Bytes.toBytes("samuel"));
+    put.add("name", "Samuel Jackson");
+    put.add("email", "sjackson@gmail.com");
+    userTable.put(put);
+
+    put = new Put(Bytes.toBytes(1L));
+    put.add("userid", "samuel");
+    put.add("itemid", "scotch");
+    put.add("ct", 1);
+    put.add("price", 56.99d);
+    purchaseTable.put(put);
+
+    txUserTable.commitTx();
+    txPurchaseTable.commitTx();
+
+    List<byte[]> changes = new ArrayList<>();
+    changes.addAll(txUserTable.getTxChanges());
+    changes.addAll(txPurchaseTable.getTxChanges());
+    transactionManager.canCommit(tx1, changes);
+    transactionManager.commit(tx1);
+
+    txUserTable.postTxCommit();
+    txPurchaseTable.postTxCommit();
+
+    try {
+      String command = String.format(
+        "insert into table %s select P.purchaseid, P.itemid, P.userid, P.ct, P.price, U.name, U.email from " +
+          "%s P join %s U on (P.userid = U.id)",
+        getDatasetHiveName(expandedTableID), getDatasetHiveName(purchaseTableID), getDatasetHiveName(userTableID));
+      ExploreExecutionResult result = exploreClient.submit(NAMESPACE_ID, command).get();
+      Assert.assertEquals(QueryStatus.OpStatus.FINISHED, result.getStatus().getStatus());
+
+      command = String.format("select purchaseid, itemid, userid, ct, price, username, email from %s",
+                              getDatasetHiveName(expandedTableID));
+      runCommand(NAMESPACE_ID, command,
+        true,
+        Lists.newArrayList(new ColumnDesc("purchaseid", "BIGINT", 1, null),
+                           new ColumnDesc("itemid", "STRING", 2, null),
+                           new ColumnDesc("userid", "STRING", 3, null),
+                           new ColumnDesc("ct", "INT", 4, null),
+                           new ColumnDesc("price", "DOUBLE", 5, null),
+                           new ColumnDesc("username", "STRING", 6, null),
+                           new ColumnDesc("email", "STRING", 7, null)),
+        Lists.newArrayList(new QueryResult(Lists.<Object>newArrayList(
+          1L, "scotch", "samuel", 1, 56.99d, "Samuel Jackson", "sjackson@gmail.com")))
+      );
+    } finally {
+      datasetFramework.deleteInstance(userTableID);
+      datasetFramework.deleteInstance(purchaseTableID);
+      datasetFramework.deleteInstance(expandedTableID);
+    }
   }
 }

@@ -69,7 +69,7 @@ function download_includes() {
   download_readme_file_and_test ${includes_dir} ${clients_url} f99720412e7085fdc3e350205ce21bcc cdap-authentication-clients/java
 #   download_readme_file_and_test ${includes_dir} ${clients_url} f075935545e48a132d014c6a8d32122a cdap-authentication-clients/javascript
   download_readme_file_and_test ${includes_dir} ${clients_url} 1f8330e0370b3895c38452f9af72506a cdap-authentication-clients/python
-#   download_readme_file_and_test ${includes_dir} ${clients_url} 33b06b7ca1e423e93f2bb2c6f7d00e21 cdap-authentication-clients/ruby
+#   download_readme_file_and_test ${includes_dir} ${clients_url} c16bf5ce7c1f0a2a4a680974a848cdd0 cdap-authentication-clients/ruby
   
 # cdap-ingest
 # https://raw.githubusercontent.com/caskdata/cdap-ingest/develop/cdap-file-drop-zone/README.rst
@@ -82,12 +82,12 @@ function download_includes() {
   download_readme_file_and_test ${includes_dir} ${ingest_url} 5fc88ec3a658062775403f5be30afbe9 cdap-stream-clients/ruby
 
   echo_red_bold "Check included example files for changes"
-  test_an_include f03add3234d3f30b7994506baf1de085 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
+  test_an_include b53dd493c4e9c2cb89b593baa4139087 ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
   test_an_include 80216a08a2b3d480e4a081722408222f ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryService.java
   test_an_include 29fe1471372678115e643b0ad431b28d ../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseStore.java
-  test_an_include 399a0027e63a25f9be0486583bff0896 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
-  test_an_include d90fd3f927380f7bc3d01fe0b0944364 ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
-  test_an_include b631776f793208a53a2a781a499a5a82 ../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ScalaSparkLDA.scala
+  test_an_include ece6cfbb50e30d9681372788f97a82d7 ../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
+  test_an_include b5aa09ede42a877e15df5e482607e256 ../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/TopNMapReduce.java
+  test_an_include 62144353b40314640d74d4b675432620 ../../cdap-examples/WikipediaPipeline/src/main/scala/co/cask/cdap/examples/wikipedia/ClusteringUtils.scala
 }
 
 function test_includes () {

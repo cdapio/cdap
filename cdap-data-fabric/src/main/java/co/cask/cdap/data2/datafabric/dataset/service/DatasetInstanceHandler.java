@@ -17,11 +17,9 @@
 package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
-import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
 import co.cask.cdap.data2.transaction.queue.QueueConstants;
@@ -33,9 +31,7 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -57,7 +53,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -74,9 +69,7 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetInstanceHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
-  private static final Gson GSON = new GsonBuilder()
-    .registerTypeAdapter(DatasetSpecification.class, new DatasetSpecificationAdapter())
-    .create();
+  private static final Gson GSON = new Gson();
 
   private final DatasetInstanceService instanceService;
 
@@ -99,7 +92,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
    * @param name name of the dataset instance
    * @param owners a list of owners of the dataset instance, in the form @{code <type>::<id>}
    *               (e.g. "program::namespace:default/application:PurchaseHistory/program:flow:PurchaseFlow")
-   * @throws NotFoundException if the dataset instance was not found
+   * @throws Exception if the dataset instance was not found
    */
   @GET
   @Path("/data/datasets/{name}")
@@ -223,15 +216,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
           return null;
         }
 
-        String[] parts = input.split("::", 2);
-        Preconditions.checkArgument(parts.length == 2);
-        String ownerType = parts[0];
-        String ownerId = parts[1];
-        if (ownerType.equals(Id.getType(Id.Program.class))) {
-          return Id.Program.fromStrings(ownerId.split("/"));
-        } else {
-          return null;
-        }
+        return Id.fromString(input, Id.Program.class);
       }
     });
   }
@@ -250,55 +235,15 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
     return datasetSummaries;
   }
 
-  private DatasetInstanceConfiguration  getInstanceConfiguration(HttpRequest request) {
+  private DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
     DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
-    fixProperties(creationProperties.getProperties());
     return creationProperties;
   }
 
   private Map<String, String> getProperties(HttpRequest request) {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
     Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
-    fixProperties(properties);
     return properties;
-  }
-
-  private void fixProperties(Map<String, String> properties) {
-    if (properties.containsKey(Table.PROPERTY_TTL)) {
-      long ttl = TimeUnit.SECONDS.toMillis(Long.parseLong(properties.get(Table.PROPERTY_TTL)));
-      properties.put(Table.PROPERTY_TTL, String.valueOf(ttl));
-    }
-  }
-
-  /**
-   * Adapter for {@link DatasetSpecification}
-   */
-  private static final class DatasetSpecificationAdapter implements JsonSerializer<DatasetSpecification> {
-
-    private static final Type MAP_STRING_STRING_TYPE = new TypeToken<SortedMap<String, String>>() { }.getType();
-    private static final Maps.EntryTransformer<String, String, String> TRANSFORM_DATASET_PROPERTIES =
-      new Maps.EntryTransformer<String, String, String>() {
-        @Override
-        public String transformEntry(String key, String value) {
-          if (key.equals(Table.PROPERTY_TTL)) {
-            return String.valueOf(TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(value)));
-          } else {
-            return value;
-          }
-        }
-      };
-
-    @Override
-    public JsonElement serialize(DatasetSpecification src, Type typeOfSrc, JsonSerializationContext context) {
-      JsonObject jsonObject = new JsonObject();
-      jsonObject.addProperty("name", src.getName());
-      jsonObject.addProperty("type", src.getType());
-      jsonObject.add("properties", context.serialize(Maps.transformEntries(src.getProperties(),
-                                                     TRANSFORM_DATASET_PROPERTIES), MAP_STRING_STRING_TYPE));
-      Type specsType = new TypeToken<SortedMap<String, DatasetSpecification>>() { }.getType();
-      jsonObject.add("datasetSpecs", context.serialize(src.getSpecifications(), specsType));
-      return jsonObject;
-    }
   }
 }

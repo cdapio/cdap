@@ -62,7 +62,7 @@ public class HelloWorld extends AbstractApplication {
   public static final class WhoFlow extends AbstractFlow {
 
     @Override
-    protected void configureFlow() {
+    protected void configure() {
       setName("WhoFlow");
       setDescription("A flow that collects names");
       addFlowlet("saver", new NameSaver());

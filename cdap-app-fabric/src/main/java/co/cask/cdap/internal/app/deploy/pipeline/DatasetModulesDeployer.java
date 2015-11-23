@@ -27,7 +27,6 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.ModuleConflictException;
 import co.cask.cdap.data2.dataset2.SingleTypeModule;
 import co.cask.cdap.proto.Id;
-import com.google.common.base.Throwables;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,13 +68,11 @@ public class DatasetModulesDeployer {
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     File unpackDir = DirUtils.createTempDir(tmpDir);
 
-    try {
-      ClassLoader classLoader = getClassLoader(jarLocation, unpackDir);
-
+    try (ProgramClassLoader classLoader = getClassLoader(cConf, jarLocation, unpackDir)) {
       for (Map.Entry<String, String> moduleEntry : modules.entrySet()) {
         // note: using app class loader to load module class
         @SuppressWarnings("unchecked")
-        Class<?> clazz = classLoader.loadClass(moduleEntry.getValue());
+        Class<Dataset> clazz = (Class<Dataset>) classLoader.loadClass(moduleEntry.getValue());
         String moduleName = moduleEntry.getKey();
         try {
           // note: we can deploy module or create module from Dataset class
@@ -83,14 +80,15 @@ public class DatasetModulesDeployer {
           //       isolated user's environment (e.g. separate yarn container)
           Id.DatasetModule moduleId = Id.DatasetModule.from(namespace, moduleName);
           if (DatasetModule.class.isAssignableFrom(clazz)) {
-            datasetFramework.addModule(moduleId, (DatasetModule) clazz.newInstance());
+            LOG.info("Adding module: {}", clazz.getName());
+            datasetFramework.addModule(moduleId, (DatasetModule) clazz.newInstance(), jarLocation);
           } else if (Dataset.class.isAssignableFrom(clazz)) {
             if (!systemDatasetFramework.hasSystemType(clazz.getName())) {
               // checking if type is in already or force upgrade is allowed
               Id.DatasetType typeId = Id.DatasetType.from(namespace, clazz.getName());
               if (!datasetFramework.hasType(typeId) || allowDatasetUncheckedUpgrade) {
                 LOG.info("Adding module: {}", clazz.getName());
-                datasetFramework.addModule(moduleId, new SingleTypeModule((Class<Dataset>) clazz));
+                datasetFramework.addModule(moduleId, new SingleTypeModule(clazz), jarLocation);
               }
             }
           } else {
@@ -104,24 +102,19 @@ public class DatasetModulesDeployer {
         }
       }
     } finally {
-      DirUtils.deleteDirectoryContents(unpackDir);
+      try {
+        DirUtils.deleteDirectoryContents(unpackDir);
+      } catch (IOException e) {
+        // OK to ignore. Just log a warn.
+        LOG.warn("Failed to delete directory {}", unpackDir, e);
+      }
     }
   }
 
-  private ClassLoader getClassLoader(Location jarLocation, File unpackDir) {
-    try {
-      BundleJarUtil.unpackProgramJar(jarLocation, unpackDir);
-
-      // Create a ProgramClassLoader with the CDAP system ClassLoader as filter parent
-      return ProgramClassLoader.create(cConf, unpackDir, ApplicationDeployable.class.getClassLoader());
-    } catch (Exception e) {
-      try {
-        DirUtils.deleteDirectoryContents(unpackDir);
-      } catch (IOException ioe) {
-        // OK to ignore. Just log a warn.
-        LOG.warn("Failed to delete directory {}", unpackDir, ioe);
-      }
-      throw Throwables.propagate(e);
-    }
+  private ProgramClassLoader getClassLoader(CConfiguration cConf,
+                                            Location jarLocation, File unpackDir) throws IOException {
+    BundleJarUtil.unJar(jarLocation, unpackDir);
+    // Create a ProgramClassLoader with the CDAP system ClassLoader as filter parent
+    return ProgramClassLoader.create(cConf, unpackDir, ApplicationDeployable.class.getClassLoader());
   }
 }

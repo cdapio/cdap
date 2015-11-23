@@ -16,11 +16,9 @@
 
 package co.cask.cdap.etl.realtime;
 
-import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.realtime.DataWriter;
 import co.cask.cdap.etl.api.realtime.RealtimeSink;
-import co.cask.cdap.etl.common.PluginID;
-import co.cask.cdap.etl.common.StageMetrics;
 
 /**
  * Realtime sink that tracks how many records it wrote by emitting metrics.
@@ -29,11 +27,11 @@ import co.cask.cdap.etl.common.StageMetrics;
  */
 public class TrackedRealtimeSink<T> extends RealtimeSink<T> {
   private final RealtimeSink<T> sink;
-  private final Metrics metrics;
+  private final StageMetrics metrics;
 
-  public TrackedRealtimeSink(RealtimeSink<T> sink, Metrics metrics, PluginID id) {
+  public TrackedRealtimeSink(RealtimeSink<T> sink, StageMetrics metrics) {
     this.sink = sink;
-    this.metrics = new StageMetrics(metrics, id);
+    this.metrics = metrics;
   }
 
   @Override

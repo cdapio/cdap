@@ -14,47 +14,43 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.apps')
-  .controller('AppDetailProgramsController', function($state, $scope, $stateParams, MyDataSource, rAppData) {
+class AppDetailProgramsController {
+  constructor($state, $scope, $stateParams, MyCDAPDataSource, rAppData) {
 
-    var basePath = '/apps/' + $stateParams.appId;
+    this.$state = $state;
+    this.$stateParams = $stateParams;
     this.programs = [];
-    var datasrc = new MyDataSource($scope);
+    this.datasrc = new MyCDAPDataSource($scope);
 
-    rAppData.programs.forEach(function(prog) {
+    rAppData.programs.forEach( (prog)=> {
       prog.type_plural = prog.type +
         ((['Mapreduce', 'Spark'].indexOf(prog.type) === -1) ? 's': '');
 
-      fetchStatus.bind(this)(prog.type_plural.toLowerCase(), prog.name);
-    }.bind(this));
+      this.fetchStatus(prog.type_plural.toLowerCase(), prog.name);
+    });
 
     this.programs = rAppData.programs;
+  }
+  fetchStatus(program, programId) {
+    var basePath = `/apps/${this.$stateParams.appId}`;
+    this.datasrc.poll({ _cdapNsPath: `${basePath}/${program}/${programId}/status` },
+      (res)=> {
+        var program = this.programs.filter( (item) => { return item.name === programId; });
+        program[0].status = res.status;
+      }
+    );
+  }
+  goToDetail(programType, program) {
+    this.$state.go(`${programType.toLowerCase()}.detail`, {
+      programId: program
+    });
+  }
+  goToList(programType) {
+    this.$state.go(`${programType.toLowerCase()}.list`);
+  }
+}
 
-    // FIXME: Not DRY. Almost same thing done in ProgramsListController
-    function fetchStatus(program, programId) {
-      datasrc.poll(
-        {
-          _cdapNsPath: basePath + '/' + program + '/' +
-                        programId + '/status'
-        },
-        function (res) {
-          var program = this.programs.filter(function(item) {
-            return item.name === programId;
-          }.bind(this));
-          program[0].status = res.status;
-        }.bind(this)
-      );
-    }
+AppDetailProgramsController.$inject = ['$state', '$scope', '$stateParams', 'MyCDAPDataSource', 'rAppData'];
 
-    this.goToDetail = function(programType, program) {
-      $state.go(programType.toLowerCase() + '.detail', {
-        programId: program
-      });
-    };
-
-    //ui-sref="programs.type({programType: (program.type_plural | lowercase)})"
-    this.goToList = function(programType) {
-      $state.go(programType.toLowerCase() + '.list');
-    };
-
-  });
+angular.module(PKG.name + '.feature.apps')
+  .controller('AppDetailProgramsController', AppDetailProgramsController);
