@@ -12,29 +12,6 @@ FAQs: CDAP
 ==========
 
 
-CDAP installed on CDH using Cloudera Manager gives a "No parcel" error |---| what do I do?
-------------------------------------------------------------------------------------------
-If, when you try to start services, you receive an error in ``stderr`` such as::
-       
-  Error found before invoking supervisord: No parcel provided required tags: set([u'cdap'])
-
-The error message shows that a required parcel isn't available, suggesting that you
-have not completed the last step of installing a parcel, *Activation*. There are 4 steps
-to installing a parcel:
-
-- **Adding the repository** to the list of repositories searched by Cloudera Manager
-- **Downloading** the parcel to the Cloudera Manager server
-- **Distributing** the parcel to all the servers in the cluster
-- **Activating** the parcel
-
-Start by clicking on the parcel icon (near the top-left corner of Cloudera Manager and looks
-like a gift-wrapped box) and ensure that the CDAP parcel is listed as *Active*.
-
-A :ref:`tutorial <step-by-step-cloudera-add-service>` is available with instructions on how to install CDAP on CDH 
-(`Cloudera Data Hub <http://www.cloudera.com/content/www/en-us/resources/datasheet/cdh-datasheet.html>`__) 
-using `Cloudera Manager <http://www.cloudera.com/content/www/en-us/products/cloudera-manager.html>`__. 
-
-
 I've followed the install instructions, yet CDAP does not start and fails verification. What next?
 --------------------------------------------------------------------------------------------------
 If you have followed :ref:`the installation instructions <installation-index>`, and CDAP either did not pass the 
@@ -85,6 +62,20 @@ If you have followed :ref:`the installation instructions <installation-index>`, 
 - Check that the CDAP UI is accessible (by default, the URL will be
   ``http://<host>:9999`` where ``<host>`` is the IP address of one of the machines where you
   installed the packages and started the services).
+
+
+Using YARN with the LinuxContainerExecutor.
+-------------------------------------------
+- If you have YARN configured to use LinuxContainerExecutor (see the setting for
+  ``yarn.nodemanager.container-executor.class``), the ``cdap`` user needs to be present on
+  all Hadoop nodes.
+
+- If you are using a LinuxContainerExecutor, and the UID for the ``cdap`` user is less than
+  500, you will need to add the ``cdap`` user to the allowed users configuration for the
+  LinuxContainerExecutor in YARN by editing the ``/etc/hadoop/conf/container-executor.cfg``
+  file. Change the line for ``allowed.system.users`` to::
+
+    allowed.system.users=cdap
 
 
 The CDAP UI is showing a message "namespace cannot be found".
@@ -240,6 +231,89 @@ production would have a load balancer in front, which is what you would set
 ``router.server.address`` to. Alternatively, you could configure each UI instance to point
 to a particular router, and if you have both UI and router running on each node, you could
 use ``'127.0.0.1'``.
+
+CDAP services on distributed CDAP aren't starting up due to ``java.lang.ClassNotFoundException``. What should I do?
+-------------------------------------------------------------------------------------------------------------------
+If the CDAP services on a distributed CDAP environment wouldn't start up, you will see errors
+in the logs. You will find in the logs for ``cdap-master`` under ``/var/log/cdap/master*.log``
+errors such as these::
+
+ "Exception in thread "main" java.lang.NoClassDefFoundError:
+   co.cask.cdap.data.runtime.main.MasterServiceMain
+     at gnu.java.lang.MainThread.run(libgcj.so.10)"
+
+Things to check as possible solutions:
+
+1. Check if the JDK being used is :ref:`supported by CDAP <hadoop-install-java-runtime>`::
+
+    java -version
+
+#. Check if the CDAP user is using a :ref:`correct version of the JDK <hadoop-install-java-runtime>`::
+
+    sudo su - <cdap-user> 
+    java -version
+   
+#. Run this command to see if all the CDAP classpaths are included::
+
+    /opt/cdap/master/bin/svc-master classpath | tr ':' '\n'
+   
+   Expect to see (where *<version>* is one of ``0.94``, ``0.96``, or ``0.98``)::
+
+    /etc/cdap/conf/
+    /opt/cdap/hbase-compat-<version>/lib/*
+    /opt/cdap/master/conf/
+    /opt/cdap/master/lib/*
+
+   If the classpath is incorrect, review the :ref:`installation instructions <installation-index>` and correct.
+
+
+We aren't seeing any Metrics or Logs. What should we do?
+--------------------------------------------------------
+Make sure the *Kafka* server is running, and make sure local the logs directory is created and accessible.
+On the initial startup, the number of available seed brokers must be greater than or equal to the
+*Kafka* default replication factor.
+
+In a two-box setup with a replication factor of two, if one box fails to startup,
+metrics will not show up though the application will still run::
+
+  [2013-10-10 20:48:46,160] ERROR [KafkaApi-1511941310]
+        Error while retrieving topic metadata (kafka.server.KafkaApis)
+        kafka.admin.AdministrationException:
+               replication factor: 2 larger than available brokers: 1
+
+
+Only the first flowlet of our CDAP application is showing activity.
+-------------------------------------------------------------------
+Check that YARN has the capacity to start any of the remaining containers.
+
+YARN Application shows ACCEPTED for some time but then fails.
+-------------------------------------------------------------
+It's possible that YARN can't extract the .JARs to the ``/tmp``,
+either due to a lack of disk space or permissions.
+
+Log Saver Process throws an Out-of-Memory Error; the CDAP UI shows service "Not OK"
+-----------------------------------------------------------------------------------
+The CDAP Log Saver uses an internal buffer that may overflow and result in Out-of-Memory
+Errors when applications create excessive amounts of logs. One symptom of this is that the CDAP
+UI *Services Explorer* shows the ``log.saver`` service as not *OK*, in addition to seeing error
+messages in the logs.
+
+By default, the Log Saver process is limited to 1GB of memory and the buffer keeps eight buckets of events
+in-memory. Each event bucket contains logs generated for one second. When it is expected that logs exceeding
+these settings will be produced—for example, greater than 1GB of logs generated in eight seconds—increase
+the memory allocated to the Log Saver or increase the number of Log Saver instances. If the cluster has
+limited memory or containers available, you can choose instead to decrease the number of in-memory event buckets.
+However, decreasing the number of in-memory buckets may lead to out-of-order log events.
+
+In the ``cdap-site.xml``, you can:
+
+- Increase the memory by adjusting ``log.saver.run.memory.megs``;
+- Increase the number of Log Saver instances using ``log.saver.num.instances``; and
+- Adjust the number of in-memory log buckets ``log.saver.event.max.inmemory.buckets``.
+
+See the ``log.saver`` parameter section of the :ref:`Appendix cdap-site.xml
+<appendix-cdap-site.xml>` for a list of these configuration parameters and their
+values that can be adjusted.
 
 
 .. rubric:: Ask the CDAP Community for assistance

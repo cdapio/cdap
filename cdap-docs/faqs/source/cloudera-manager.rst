@@ -1,16 +1,41 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :description: Frequently Asked Questions about the Cask Data Application Platform
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-.. _cloudera-troubleshooting:
+:titles-only-toc: true
 
-=================================
-Cloudera Manager: Troubleshooting
-=================================
+.. _faqs-cloudera-manager:
+
+======================
+FAQs: Cloudera Manager
+======================
+
+CDAP installed on CDH using Cloudera Manager gives a "No parcel" error |---| what do I do?
+------------------------------------------------------------------------------------------
+If, when you try to start services, you receive an error in ``stderr`` such as::
+       
+  Error found before invoking supervisord: No parcel provided required tags: set([u'cdap'])
+
+The error message shows that a required parcel isn't available, suggesting that you
+have not completed the last step of installing a parcel, *Activation*. There are 4 steps
+to installing a parcel:
+
+- **Adding the repository** to the list of repositories searched by Cloudera Manager
+- **Downloading** the parcel to the Cloudera Manager server
+- **Distributing** the parcel to all the servers in the cluster
+- **Activating** the parcel
+
+Start by clicking on the parcel icon (near the top-left corner of Cloudera Manager and looks
+like a gift-wrapped box) and ensure that the CDAP parcel is listed as *Active*.
+
+A :ref:`tutorial <step-by-step-cloudera-add-service>` is available with instructions on how to install CDAP on CDH 
+(`Cloudera Data Hub <http://www.cloudera.com/content/www/en-us/resources/datasheet/cdh-datasheet.html>`__) 
+using `Cloudera Manager <http://www.cloudera.com/content/www/en-us/products/cloudera-manager.html>`__. 
 
 
-.. rubric:: Permissions Errors
-
+When I run a query, I see "Permission Error" in the logs. What do I do?
+-----------------------------------------------------------------------
 Some versions of Hive may try to create a temporary staging directory at the table
 location when executing queries. If you are seeing permissions errors when running a
 query, try setting ``hive.exec.stagingdir`` in your Hive configuration to
@@ -20,8 +45,8 @@ This can be done in Cloudera Manager using the *Hive Client
 Advanced Configuration Snippet (Safety Valve) for hive-site.xml* configuration field.
 
 
-.. rubric:: Missing System Artifacts
-
+I'm getting a message about "Missing System Artifacts". How do I fix that?
+--------------------------------------------------------------------------
 The bundled system artifacts are included in the CDAP parcel, located in a subdirectory
 of Cloudera Manager's ``${PARCELS_ROOT}`` directory, for example::
 
@@ -32,10 +57,10 @@ directory can change when CDAP parcels are upgraded, users are encouraged to pla
 these artifacts in a static directory outside the parcel root, and configure accordingly.
 
 
-.. _cloudera-direct-parcel-access:
+.. _faqs-cloudera-direct-parcel-access:
 
-.. rubric:: Direct Parcel Access
-
+I'd like to directly access the parcels. How do I do that?
+----------------------------------------------------------
 If you need to download and install the parcels directly (perhaps for a cluster that does
 not have direct network access), the parcels are available by their full URLs. As they are
 stored in a directory that does not offer browsing, they are listed here:
@@ -63,10 +88,10 @@ Previously released parcels can also be accessed from their version-specific URL
   |http:|//repository.cask.co/parcels/cdap/2.8/CDAP-2.8.0-1-wheezy.parcel
   
 
-.. _cloudera-troubleshooting-upgrade-cdh:
+.. _faqs-cloudera-troubleshooting-upgrade-cdh:
 
-.. rubric:: Problems While Upgrading CDH
-
+I missed doing a step while upgrading; how do I fix my system?
+--------------------------------------------------------------
 If you miss a step in the upgrade process and something goes wrong, it's possible that the
 tables will get re-enabled before the coprocessors are upgraded. This could cause the
 regionservers to abort and may make it very difficult to get the cluster back to a stable
@@ -87,3 +112,7 @@ the upgrade steps successfully.
 
 At the end, remove the entry for ``hbase.coprocessor.abortonerror`` in order to ensure
 that data correctness is maintained.
+
+.. rubric:: Ask the CDAP Community for assistance
+
+.. include:: cdap-user-googlegroups.txt

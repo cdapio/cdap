@@ -16,7 +16,6 @@ Cloudera Manager (CDH)
     Installation <installation>
     Add Service Wizard <step-by-step-cloudera>
     Verification <verification>
-    Troubleshooting <troubleshooting>
     Upgrading CDAP <upgrading>
 
 This section is to help you install the Cask Data Application Platform (CDAP) on Hadoop
@@ -51,14 +50,10 @@ These instructions cover the steps to install CDAP using Cloudera Manager:
 .. |verification| replace:: **Verification:**
 .. _verification: verification.html
 
-.. |troubleshooting| replace:: **Troubleshooting:**
-.. _troubleshooting: troubleshooting.html
-
 - |prerequisites|_ Preparing your Hadoop cluster for CDAP.
 - |installation-setup-startup|_ Installing the CSD, running the *Add Service* Wizard, and starting CDAP.
 - |service-wizard|_ Step-by-step instructions, if needed, for use with the wizard.
 - |verification|_ Confirming that CDAP was installed and configured successfully.
-- |troubleshooting|_ Particular situations that can occur with Cloudera Manager.
 
 There are specific instructions available for `upgrading existing CDAP installations <upgrading.html>`__.
-
+See the 

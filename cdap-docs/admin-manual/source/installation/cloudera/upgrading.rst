@@ -63,7 +63,7 @@ it works properly, before you upgrade to CDH 5.4.
 **It is important to perform these steps as described, otherwise the coprocessors may not
 get upgraded correctly and HBase regionservers may crash.** In the case where something
 goes wrong, see these troubleshooting instructions for :ref:`problems while upgrading CDH
-<cloudera-troubleshooting-upgrade-cdh>`.
+<faqs-cloudera-troubleshooting-upgrade-cdh>`.
 
 **Upgrade Steps**
 

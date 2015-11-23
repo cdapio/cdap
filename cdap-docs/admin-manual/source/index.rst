@@ -107,13 +107,7 @@ transaction service maintenance, troubleshooting, and introduces the CDAP UI.**
 - |cdap-ui|_ The CDAP UI is available for **deploying, querying, and managing CDAP.** 
 
 
-.. rubric:: Troubleshooting and Appendices
-
-.. |troubleshooting| replace:: **Troubleshooting:**
-.. _troubleshooting: operations/troubleshooting.html
-
-- |troubleshooting|_ Selected examples of potential **problems and possible resolutions.**
-
+.. rubric:: Appendices
 
 .. |appendices| replace:: **Appendices:**
 .. _appendices: appendices/index.html

@@ -13,5 +13,4 @@ CDAP Administration Manual Table of Contents
     Installation <installation/index>
     Security <security>
     Operations <operations/index>
-    Troubleshooting <troubleshooting>
     Appendices <appendices/index>

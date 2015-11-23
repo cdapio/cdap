@@ -48,7 +48,7 @@ cm_ig_parcels.html>`__, but in summary these are the steps:
    the parcel.
 
 If the Cask parcel repo is inaccessible to your cluster, please see :ref:`these
-suggestions <cloudera-direct-parcel-access>`.
+suggestions <faqs-cloudera-direct-parcel-access>`.
 
 .. _cloudera-installation-setup-startup:
 
