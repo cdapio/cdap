@@ -71,23 +71,30 @@ Appendices cover the XML files used to configure the CDAP installation and secur
 
 .. rubric:: Putting CDAP into Production
 
-The Cask Data Application Platform (CDAP) can be run in different modes: in-memory mode
-for unit testing, Standalone CDAP for testing on a developer's laptop, and Distributed
-CDAP for staging and production.
+The Cask Data Application Platform (CDAP) can be run in different modes: **In-memory mode**
+for unit testing and continuous integration pipelines, **Standalone CDAP** for testing on a
+developer's laptop, and **Distributed CDAP** for staging and production.
 
-Regardless of the runtime edition, CDAP is fully functional and the code you develop never
+Regardless of the runtime mode, CDAP is fully-functional and the code you develop never
 changes. However, performance and scale are limited when using in-memory or standalone
-CDAPs.
+CDAPs. CDAP Applications are developed against the CDAP APIs, making the switch between
+these modes seamless. An application developed using a given mode can easily run in
+another mode.
 
 
 .. _in-memory-data-application-platform:
 
 .. rubric:: In-memory CDAP
 
-The in-memory CDAP allows you to easily run CDAP for use in unit tests. In this mode, the
-underlying Big Data infrastructure is emulated using in-memory data structures and there
-is no persistence. The CDAP UI is not available in this mode. See :ref:`test-cdap` for
-information and examples on using this mode.
+The in-memory CDAP allows you to easily run CDAP for use in unit tests and continuous
+integration (CI) pipelines. In this mode, the underlying Big Data infrastructure is
+emulated using in-memory data structures and there is no persistence. The CDAP UI is not
+available in this mode. See :ref:`test-cdap` for information and examples on using this
+mode.
+
+- Purpose-built for writing unit tests and CI pipelines
+- Mimics storage technologies as in-memory data structures; for example, Java NavigableMap
+- Uses Java Threads as the processing abstraction (via Apache Twill)
 
 
 .. _standalone-data-application-platform:
@@ -105,6 +112,9 @@ remote access by any outside process or application outside of the local machine
 See :ref:`Getting Started <getting-started-index>` and the *Cask Data Application Platform
 SDK* for information on how to start and manage your Standalone CDAP.
 
+- Designed to run in a standalone environment, for development and testing
+- Uses LevelDB/Local File System as the storage technology
+- Uses Java Threads as the processing abstraction (via Apache Twill)
 
 .. _distributed-data-application-platform:
 
@@ -115,5 +125,6 @@ of the CDAP, distributed and highly available deployments of the underlying Hado
 infrastructure are included. Production applications should always be run on a Distributed
 CDAP.
 
-To learn more about getting your own Distributed CDAP, see `Cask Products
-<http://cask.co/products>`__.
+- Production, Staging, and QA mode; runs in a distributed environment
+- Uses Apache HBase and HDFS as the storage technology (today)
+- Uses Apache Yarn Containers as the processing abstraction (via Apache Twill)
