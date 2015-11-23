@@ -73,7 +73,7 @@ Kitematic and then download, start, and connect to an instance of CDAP.
 
 #. This shows that the CDAP instance is listening on the internal port ``9999`` within the
    Docker instance, while the Docker instance exposes that port on the external IP address
-   and port ``192.168.99.1100:32769``. The text in blue is a link; clicking it will open it
+   and port ``192.168.99.100:32769``. The text in blue is a link; clicking it will open it
    in your system web browser and connect to the CDAP UI:
    
      .. image:: ../../_images/kitematic/kitematic-6-cdap-ui.png
