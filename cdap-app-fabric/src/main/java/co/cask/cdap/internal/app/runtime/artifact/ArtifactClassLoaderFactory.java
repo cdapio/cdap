@@ -59,7 +59,7 @@ public class ArtifactClassLoaderFactory {
    */
   public CloseableClassLoader createClassLoader(Location artifactLocation) throws IOException {
     final File unpackDir = DirUtils.createTempDir(baseUnpackDir);
-    BundleJarUtil.unpackProgramJar(artifactLocation, unpackDir);
+    BundleJarUtil.unJar(artifactLocation, unpackDir);
 
     // Always have spark classes visible for artifact class loading purpose since we don't know if
     // any classes inside the artifact is a Spark program

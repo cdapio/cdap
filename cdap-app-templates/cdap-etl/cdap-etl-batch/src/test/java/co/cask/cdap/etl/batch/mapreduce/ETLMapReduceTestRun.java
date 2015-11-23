@@ -28,6 +28,7 @@ import co.cask.cdap.etl.batch.ETLBatchTestBase;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.source.FileBatchSource;
 import co.cask.cdap.etl.common.ETLStage;
+import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.etl.test.sink.MetaKVTableSink;
 import co.cask.cdap.etl.test.source.MetaKVTableSource;
@@ -60,11 +61,15 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
 
   @Test
   public void testInvalidTransformConfigFailsToDeploy() {
-    ETLStage source = new ETLStage("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table1"));
-    ETLStage sink = new ETLStage("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table2"));
-    ETLStage transform = new ETLStage("Script", ImmutableMap.of("script", "return x;"));
-    List<ETLStage> transformList = Lists.newArrayList(transform);
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList);
+    Plugin sourceConfig =
+      new Plugin("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table1"));
+    Plugin sink =
+      new Plugin("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table2"));
+
+    Plugin transform = new Plugin("Script", ImmutableMap.of("script", "return x;"));
+    List<ETLStage> transformList = Lists.newArrayList(new ETLStage("transform", transform));
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", new ETLStage("source", sourceConfig),
+                                                  new ETLStage("sink", sink), transformList);
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "KVToKV");
@@ -79,11 +84,14 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
   @Test
   public void testKVToKV() throws Exception {
     // kv table to kv table pipeline
-    ETLStage source = new ETLStage("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table1"));
-    ETLStage sink = new ETLStage("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table2"));
-    ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
-    List<ETLStage> transformList = Lists.newArrayList(transform);
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList);
+    Plugin sourceConfig =
+      new Plugin("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table1"));
+    Plugin sinkConfig =
+      new Plugin("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table2"));
+    Plugin transformConfig = new Plugin("Projection", ImmutableMap.<String, String>of());
+    List<ETLStage> transformList = Lists.newArrayList(new ETLStage("transform", transformConfig));
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", new ETLStage("source", sourceConfig),
+                                                  new ETLStage("sink", sinkConfig), transformList);
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "KVToKV");
@@ -111,9 +119,13 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
 
   @Test
   public void testKVToKVMeta() throws Exception {
-    ETLStage source = new ETLStage("MetaKVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable1"));
-    ETLStage sink = new ETLStage("MetaKVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable2"));
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink);
+    Plugin sourceConfig =
+      new Plugin("MetaKVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable1"));
+    Plugin sinkConfig =
+      new Plugin("MetaKVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "mtable2"));
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *",
+                                                  new ETLStage("source", sourceConfig),
+                                                  new ETLStage("sink", sinkConfig));
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "KVToKVMeta");
@@ -152,11 +164,11 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
       Schema.Field.of("item", Schema.of(Schema.Type.STRING))
     );
 
-    ETLStage source = new ETLStage("Table",
-      ImmutableMap.of(
-        Properties.BatchReadableWritable.NAME, "inputTable",
-        Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey",
-        Properties.Table.PROPERTY_SCHEMA, schema.toString()));
+    Plugin sourceConfig = new Plugin("Table",
+                                     ImmutableMap.of(
+                                       Properties.BatchReadableWritable.NAME, "inputTable",
+                                       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey",
+                                       Properties.Table.PROPERTY_SCHEMA, schema.toString()));
 
     String validationScript = "function isValid(input) {  " +
       "var errCode = 0; var errMsg = 'none'; var isValid = true;" +
@@ -164,19 +176,21 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
       "{ errCode = 10; errMsg = 'user name greater than 6 characters'; isValid = false; }; " +
       "return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
       "};";
-    ETLStage transform = new ETLStage("Validator",
-                                      ImmutableMap.of("validators", "core",
-                                                      "validationScript", validationScript),
-                                      "keyErrors");
+    Plugin transformConfig = new Plugin("Validator",
+                                        ImmutableMap.of("validators", "core",
+                                                        "validationScript", validationScript));
+    ETLStage transform = new ETLStage("transform", transformConfig, "keyErrors");
     List<ETLStage> transformList = new ArrayList<>();
     transformList.add(transform);
 
-    ETLStage sink = new ETLStage("Table",
-      ImmutableMap.of(
-        Properties.BatchReadableWritable.NAME, "outputTable",
-        Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey"));
+    Plugin sink = new Plugin("Table",
+                             ImmutableMap.of(
+                               Properties.BatchReadableWritable.NAME, "outputTable",
+                               Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey"));
 
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList);
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *",
+                                                  new ETLStage("source", sourceConfig),
+                                                  new ETLStage("sink", sink), transformList);
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "TableToTable");
@@ -256,18 +270,20 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
                                                        URI.class, Configuration.class, FileSystem.class);
     method.setAccessible(true);
     method.invoke(FileSystem.class, URI.create("s3n://test/"), conf, fs);
-    ETLStage source = new ETLStage("S3", ImmutableMap.<String, String>builder()
+    Plugin sourceConfig = new Plugin("S3", ImmutableMap.<String, String>builder()
       .put(Properties.S3.ACCESS_KEY, "key")
       .put(Properties.S3.ACCESS_ID, "ID")
       .put(Properties.S3.PATH, testPath)
       .put(Properties.S3.FILE_REGEX, "abc.*")
       .build());
 
-    ETLStage sink = new ETLStage("TPFSAvro",
-                                 ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                   FileBatchSource.DEFAULT_SCHEMA.toString(),
-                                   Properties.TimePartitionedFileSetDataset.TPFS_NAME, "TPFSsink"));
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
+    Plugin sinkConfig = new Plugin("TPFSAvro",
+                                   ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                   FileBatchSource.DEFAULT_SCHEMA.toString(),
+                                                   Properties.TimePartitionedFileSetDataset.TPFS_NAME, "TPFSsink"));
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *",
+                                                  new ETLStage("source", sourceConfig),
+                                                  new ETLStage("sink", sinkConfig), Lists.<ETLStage>newArrayList());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "S3ToTPFS");
@@ -300,19 +316,24 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
     writeData.flush();
     writeData.close();
 
-    ETLStage source = new ETLStage("File", ImmutableMap.<String, String>builder()
+    Plugin sourceConfig = new Plugin("File", ImmutableMap.<String, String>builder()
       .put(Properties.File.FILESYSTEM, "Text")
       .put(Properties.File.PATH, filePath)
       .build());
 
-    ETLStage sink1 = new ETLStage("TPFSAvro",
-                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                    FileBatchSource.DEFAULT_SCHEMA.toString(),
-                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, "fileSink1"));
-    ETLStage sink2 = new ETLStage("TPFSParquet",
-                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
-                                    FileBatchSource.DEFAULT_SCHEMA.toString(),
-                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, "fileSink2"));
+    Plugin sink1Config = new Plugin("TPFSAvro",
+                                    ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                    FileBatchSource.DEFAULT_SCHEMA.toString(),
+                                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, "fileSink1"));
+    Plugin sink2Config = new Plugin("TPFSParquet",
+                                    ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                    FileBatchSource.DEFAULT_SCHEMA.toString(),
+                                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, "fileSink2"));
+
+    ETLStage source = new ETLStage("source", sourceConfig);
+    ETLStage sink1 = new ETLStage("sink1", sink1Config);
+    ETLStage sink2 = new ETLStage("sink2", sink2Config);
+
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *",
                                                   source,
                                                   Lists.newArrayList(sink1, sink2),
@@ -336,5 +357,43 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
         Assert.assertEquals(testData, records.get(0).get("body").toString());
       }
     }
+  }
+
+  @Test(expected = Exception.class)
+  public void testDuplicateStageNameInPipeline() throws Exception {
+    String filePath = "file:///tmp/test/text.txt";
+    String testData = "String for testing purposes.";
+
+    Plugin sourceConfig = new Plugin("File", ImmutableMap.<String, String>builder()
+      .put(Properties.File.FILESYSTEM, "Text")
+      .put(Properties.File.PATH, filePath)
+      .build());
+
+    Plugin sink1Config = new Plugin("TPFSAvro",
+                                    ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                    FileBatchSource.DEFAULT_SCHEMA.toString(),
+                                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, "fileSink1"));
+    Plugin sink2Config = new Plugin("TPFSParquet",
+                                    ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
+                                                    FileBatchSource.DEFAULT_SCHEMA.toString(),
+                                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, "fileSink2"));
+
+    ETLStage source = new ETLStage("source", sourceConfig);
+    ETLStage sink1 = new ETLStage("sink", sink1Config);
+    // duplicate name for 2nd sink, should throw exception
+    ETLStage sink2 = new ETLStage("sink", sink2Config);
+
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *",
+                                                  source,
+                                                  Lists.newArrayList(sink1, sink2),
+                                                  Lists.<ETLStage>newArrayList(),
+                                                  new Resources(),
+                                                  Lists.<ETLStage>newArrayList());
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "FileToTPFS");
+
+    // deploying would thrown an excpetion
+    deployApplication(appId, appRequest);
   }
 }

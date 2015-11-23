@@ -51,8 +51,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -538,4 +540,126 @@ public class ArtifactClient {
     }
   }
 
+  /**
+   * Write properties for an artifact. Any existing properties will be overwritten.
+   *
+   * @param artifactId the artifact to add properties to
+   * @param properties the properties to add
+   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws ArtifactNotFoundException if the artifact does not exist
+   * @throws IOException if a network error occurred
+   */
+  public void writeProperties(Id.Artifact artifactId, Map<String, String> properties)
+    throws IOException, UnauthorizedException, ArtifactNotFoundException, BadRequestException {
+    String path = String.format("artifacts/%s/versions/%s/properties",
+                                artifactId.getName(),
+                                artifactId.getVersion().getVersion());
+    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
+    HttpRequest.Builder requestBuilder = HttpRequest.put(url);
+    HttpRequest request = requestBuilder.withBody(GSON.toJson(properties)).build();
+
+    HttpResponse response = restClient.execute(request, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
+
+    int responseCode = response.getResponseCode();
+    if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ArtifactNotFoundException(artifactId);
+    } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(response.getResponseBodyAsString());
+    }
+  }
+
+  /**
+   * Delete all properties for an artifact. If no properties exist, this will be a no-op.
+   *
+   * @param artifactId the artifact to delete properties from
+   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws ArtifactNotFoundException if the artifact does not exist
+   * @throws IOException if a network error occurred
+   */
+  public void deleteProperties(Id.Artifact artifactId)
+    throws IOException, UnauthorizedException, ArtifactNotFoundException, BadRequestException {
+    String path = String.format("artifacts/%s/versions/%s/properties",
+                                artifactId.getName(),
+                                artifactId.getVersion().getVersion());
+    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
+    HttpRequest.Builder requestBuilder = HttpRequest.delete(url);
+    HttpRequest request = requestBuilder.build();
+
+    HttpResponse response = restClient.execute(request, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
+
+    int responseCode = response.getResponseCode();
+    if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ArtifactNotFoundException(artifactId);
+    } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(response.getResponseBodyAsString());
+    }
+  }
+
+  /**
+   * Write a property for an artifact. If the property already exists, it will be overwritten. If the property
+   * does not exist, it will be added.
+   *
+   * @param artifactId the artifact to write the property to
+   * @param key the property key to write
+   * @param value the property value to write
+   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws ArtifactNotFoundException if the artifact does not exist
+   * @throws IOException if a network error occurred
+   */
+  public void writeProperty(Id.Artifact artifactId, String key, String value)
+    throws IOException, UnauthorizedException, ArtifactNotFoundException, BadRequestException {
+    String path = String.format("artifacts/%s/versions/%s/properties/%s",
+                                artifactId.getName(),
+                                artifactId.getVersion().getVersion(),
+                                key);
+    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
+    HttpRequest.Builder requestBuilder = HttpRequest.put(url);
+    HttpRequest request = requestBuilder.withBody(value).build();
+
+    HttpResponse response = restClient.execute(request, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
+
+    int responseCode = response.getResponseCode();
+    if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ArtifactNotFoundException(artifactId);
+    } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(response.getResponseBodyAsString());
+    }
+  }
+
+  /**
+   * Delete a property for an artifact. If the property does not exist, this will be a no-op.
+   *
+   * @param artifactId the artifact to delete a property from
+   * @param key the property to delete
+   * @throws BadRequestException if the request is invalid. For example, if the artifact name or version is invalid
+   * @throws UnauthorizedException if the request is not authorized successfully in the gateway server
+   * @throws ArtifactNotFoundException if the artifact does not exist
+   * @throws IOException if a network error occurred
+   */
+  public void deleteProperty(Id.Artifact artifactId, String key)
+    throws IOException, UnauthorizedException, ArtifactNotFoundException, BadRequestException {
+    String path = String.format("artifacts/%s/versions/%s/properties/%s",
+                                artifactId.getName(),
+                                artifactId.getVersion().getVersion(),
+                                key);
+    URL url = config.resolveNamespacedURLV3(artifactId.getNamespace(), path);
+    HttpRequest.Builder requestBuilder = HttpRequest.delete(url);
+    HttpRequest request = requestBuilder.build();
+
+    HttpResponse response = restClient.execute(request, config.getAccessToken(),
+                                               HttpURLConnection.HTTP_BAD_REQUEST, HttpURLConnection.HTTP_NOT_FOUND);
+
+    int responseCode = response.getResponseCode();
+    if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ArtifactNotFoundException(artifactId);
+    } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(response.getResponseBodyAsString());
+    }
+  }
 }

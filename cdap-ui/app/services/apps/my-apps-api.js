@@ -18,14 +18,18 @@ angular.module(PKG.name + '.services')
   .factory('myAppsApi', function(myCdapUrl, $resource, myAuth, myHelpers) {
 
     var url = myCdapUrl.constructUrl,
-        basepath = '/namespaces/:namespace/apps/:appId';
+        basePath = '/namespaces/:namespace/apps',
+        listPath = basePath,
+        detailPath = basePath + '/:appId';
 
     return $resource(
-      url({ _cdapPath: basepath }),
+      url({ _cdapPath: basePath }),
     {
       appId: '@appId'
     },
     {
-      delete: myHelpers.getConfig('DELETE', 'REQUEST', basepath)
+      delete: myHelpers.getConfig('DELETE', 'REQUEST', detailPath),
+      list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),
+      get: myHelpers.getConfig('GET', 'REQUEST', detailPath)
     });
   });

@@ -107,6 +107,8 @@ public class LogSaverTest extends KafkaTestBase {
   private static Injector injector;
   private static TransactionManager txManager;
   private static String logBaseDir;
+  private static KafkaLogAppender appender;
+  private static CountingLogAppender countingLogAppender;
 
   @BeforeClass
   public static void startLogSaver() throws Exception {
@@ -152,6 +154,10 @@ public class LogSaverTest extends KafkaTestBase {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
+    appender = injector.getInstance(KafkaLogAppender.class);
+    countingLogAppender = new CountingLogAppender(appender);
+    new LogAppenderInitializer(countingLogAppender).initialize("LogSaverTest");
+
     ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
     zkClientService.startAndWait();
 
@@ -183,6 +189,7 @@ public class LogSaverTest extends KafkaTestBase {
 
   @AfterClass
   public static void cleanUp() throws Exception {
+    appender.stop();
     InMemoryTableService.reset();
     txManager.stopAndWait();
   }
@@ -266,7 +273,9 @@ public class LogSaverTest extends KafkaTestBase {
     List<LogEvent> allEvents = logCallback1.getEvents();
 
     for (int i = 0; i < 60; ++i) {
-      Assert.assertEquals(String.format("Test log message %d arg1 arg2", i),
+      Assert.assertEquals("Log append count for " + loggingContext.getLogPartition() + " = " +
+                            countingLogAppender.getCount(loggingContext.getLogPartition()),
+                          String.format("Test log message %d arg1 arg2", i),
                           allEvents.get(i).getLoggingEvent().getFormattedMessage());
       if (loggingContext instanceof ServiceLoggingContext) {
         Assert.assertEquals(
@@ -371,9 +380,6 @@ public class LogSaverTest extends KafkaTestBase {
   }
 
   private static void publishLogs() throws Exception {
-    KafkaLogAppender appender = injector.getInstance(KafkaLogAppender.class);
-    new LogAppenderInitializer(appender).initialize("LogSaverTest");
-
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     StatusPrinter.setPrintStream(new PrintStream(bos));
     StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
@@ -396,7 +402,7 @@ public class LogSaverTest extends KafkaTestBase {
 
     System.out.println(bos.toString());
 
-    appender.stop();
+    executor.shutdownNow();
   }
 
   private static class LogPublisher implements Runnable {

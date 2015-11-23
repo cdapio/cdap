@@ -17,6 +17,13 @@
 package co.cask.cdap.hive.datasets;
 
 import co.cask.cdap.api.data.batch.RecordWritable;
+import co.cask.cdap.api.data.format.StructuredRecord;
+import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.DatasetNotFoundException;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.format.StructuredRecordStringConverter;
 import co.cask.tephra.TransactionAware;
 import com.google.gson.Gson;
 import org.apache.hadoop.fs.FileSystem;
@@ -44,22 +51,34 @@ public class DatasetOutputFormat implements OutputFormat<Void, Text> {
     DatasetAccessor datasetAccessor = new DatasetAccessor(jobConf);
     try {
       datasetAccessor.initialize();
+      return new DatasetRecordWriter(datasetAccessor);
     } catch (Exception e) {
+      try {
+        datasetAccessor.close();
+      } catch (IOException e1) {
+        LOG.warn("Exception closing dataset accessor after failure to return a DatasetRecordWriter.", e1);
+      }
       throw new IOException("Could not get dataset.", e);
     }
-
-    return new DatasetRecordWriter(datasetAccessor);
   }
 
   @Override
   public void checkOutputSpecs(FileSystem ignored, JobConf jobConf) throws IOException {
     // This is called prior to returning a RecordWriter. We make sure here that the
     // dataset we want to write to is RecordWritable.
-    DatasetAccessor datasetAccessor = new DatasetAccessor(jobConf);
-    try {
-      datasetAccessor.initialize();
-    } catch (Exception e) {
-      throw new IOException("Could not get dataset.", e);
+    try (DatasetAccessor datasetAccessor = new DatasetAccessor(jobConf)) {
+      try {
+        datasetAccessor.initialize();
+      } catch (DatasetNotFoundException e) {
+        throw new IOException(String.format("Dataset '%s' does not exist",
+                                            datasetAccessor.getDatasetId()), e);
+      } catch (DatasetManagementException | ClassNotFoundException e) {
+        throw new IOException(String.format("Could not instantiate dataset '%s'", datasetAccessor.getDatasetId()), e);
+      }
+      if (!(datasetAccessor.getDataset() instanceof RecordWritable)) {
+        throw new IOException(String.format("Dataset '%s' is not RecordWritable.",
+                                            datasetAccessor.getDatasetId()));
+      }
     }
   }
 
@@ -67,11 +86,32 @@ public class DatasetOutputFormat implements OutputFormat<Void, Text> {
     private final DatasetAccessor datasetAccessor;
     private final RecordWritable recordWritable;
     private final Type recordType;
+    private Schema recordSchema;
 
     public DatasetRecordWriter(DatasetAccessor datasetAccessor) {
       this.datasetAccessor = datasetAccessor;
       this.recordWritable = datasetAccessor.getDataset();
       this.recordType = recordWritable.getRecordType();
+      if (recordType == StructuredRecord.class) {
+        try {
+          DatasetSpecification datasetSpec = datasetAccessor.getDatasetSpec();
+          String schemaStr = datasetSpec.getProperty(DatasetProperties.SCHEMA);
+          // should never happen, as this should have been checked at table creation
+          if (schemaStr == null) {
+            throw new IllegalStateException(
+              String.format("Dataset '%s' does not have the schema property.", datasetSpec.getName()));
+          }
+          recordSchema = Schema.parseJson(schemaStr);
+        } catch (IOException | DatasetManagementException e) {
+          try {
+            recordWritable.close();
+          } catch (IOException e1) {
+            LOG.warn("Exception closing dataset {} after failing to look up its schema.",
+                     datasetAccessor.getDatasetId(), e1);
+          }
+          throw new RuntimeException("Unable to look up schema for dataset.", e);
+        }
+      }
     }
 
     @Override
@@ -79,7 +119,11 @@ public class DatasetOutputFormat implements OutputFormat<Void, Text> {
       if (value == null) {
         throw new IOException("Writable value is null.");
       }
-      recordWritable.write(new Gson().fromJson(value.toString(), recordType));
+      if (recordType == StructuredRecord.class) {
+        recordWritable.write(StructuredRecordStringConverter.fromJsonString(value.toString(), recordSchema));
+      } else {
+        recordWritable.write(new Gson().fromJson(value.toString(), recordType));
+      }
     }
 
     @Override

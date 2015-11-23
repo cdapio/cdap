@@ -76,16 +76,19 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       return Constants.Service.METRICS;
     } else if (matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata") ||
+      matches(uriParts, "v3", "namespaces", null, "artifacts", null, "versions", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata", "properties") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata", "properties") ||
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata", "properties") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata", "properties") ||
+      matches(uriParts, "v3", "namespaces", null, "views", null, "metadata", "properties") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, "metadata", "tags") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "metadata", "tags") ||
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "metadata", "tags") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "metadata", "tags") ||
+      matches(uriParts, "v3", "namespaces", null, "views", null, "metadata", "tags") ||
       matches(uriParts, "v3", "namespaces", null, "metadata", "search") ||
       matches(uriParts, "v3", "namespaces", null, "datasets", null, "lineage") ||
       matches(uriParts, "v3", "namespaces", null, "streams", null, "lineage") ||

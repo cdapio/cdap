@@ -20,6 +20,7 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.common.ETLStage;
+import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -55,15 +56,22 @@ public class ETLEmailActionTestRun extends ETLBatchTestBase {
   @Test
   public void testEmailAction() throws Exception {
     // kv table to kv table pipeline
-    ETLStage source = new ETLStage("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table1"));
-    ETLStage sink = new ETLStage("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table2"));
-    ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
+    Plugin sourceConfig = new Plugin("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table1"));
+    Plugin sinkConfig = new Plugin("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table2"));
+    Plugin transformConfig = new Plugin("Projection", ImmutableMap.<String, String>of());
+
+    ETLStage source = new ETLStage("source", sourceConfig);
+    ETLStage sink = new ETLStage("sink", sinkConfig);
+    ETLStage transform = new ETLStage("transform", transformConfig);
     List<ETLStage> transformList = Lists.newArrayList(transform);
-    ETLStage action = new ETLStage("Email", ImmutableMap.of(EmailAction.RECIPIENT_EMAIL_ADDRESS, "to@test.com",
-                                                            EmailAction.FROM_ADDRESS, "from@test.com",
-                                                            EmailAction.MESSAGE, "testing body",
-                                                            EmailAction.SUBJECT, "Test",
-                                                            EmailAction.PORT, Integer.toString(port)));
+
+    Plugin actionConfig = new Plugin("Email", ImmutableMap.of(EmailAction.RECIPIENT_EMAIL_ADDRESS, "to@test.com",
+                                                              EmailAction.FROM_ADDRESS, "from@test.com",
+                                                              EmailAction.MESSAGE, "testing body",
+                                                              EmailAction.SUBJECT, "Test",
+                                                              EmailAction.PORT, Integer.toString(port)));
+
+    ETLStage action = new ETLStage("action", actionConfig);
     List<ETLStage> actionList = Lists.newArrayList(action);
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList, actionList);
 

@@ -28,7 +28,7 @@
     <link rel="stylesheet" type="text/css" href="/assets/bundle/lib.css" />
     <link rel="stylesheet" type="text/css" href="/assets/bundle/app.css" />
 </head>
-<body ng-controller="BodyCtrl" ng-class="bodyClass">
+<body ng-controller="BodyCtrl" ng-class="bodyClass" ng-keyup="onSearch($event)">
     <header class="navbar navbar-inverse navbar-fixed-top navbar-cdap"
             ng-if="!$state.includes('hydrator.**') && !$state.includes('login')">
       <div role="navigation" class="container" my-navbar></div>

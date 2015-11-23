@@ -226,7 +226,7 @@ public class PluginInstantiator implements Closeable {
     public ClassLoader load(ArtifactId artifactId) throws Exception {
       File unpackedDir = DirUtils.createTempDir(tmpDir);
       File artifact = new File(pluginDir, Artifacts.getFileName(artifactId));
-      BundleJarUtil.unpackProgramJar(Locations.toLocation(artifact), unpackedDir);
+      BundleJarUtil.unJar(Locations.toLocation(artifact), unpackedDir);
       return new PluginClassLoader(unpackedDir, parentClassLoader);
     }
   }

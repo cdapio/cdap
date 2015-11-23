@@ -43,6 +43,7 @@ import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputsMainOutputWrapper;
 import co.cask.cdap.internal.app.runtime.batch.dataset.UnsupportedOutputFormat;
@@ -50,7 +51,6 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.ContainerLauncherGene
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerLauncher;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
-import co.cask.cdap.internal.app.runtime.spark.LocalizationUtils;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.Transaction;

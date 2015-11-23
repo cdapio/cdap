@@ -33,8 +33,8 @@ import java.util.Set;
 public class MapReduceSinkContext extends MapReduceBatchContext implements BatchSinkContext {
   private final Set<String> outputNames;
 
-  public MapReduceSinkContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String sinkId) {
-    super(context, metrics, lookup, sinkId);
+  public MapReduceSinkContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String stageName) {
+    super(context, metrics, lookup, stageName);
     this.outputNames = new HashSet<>();
   }
 

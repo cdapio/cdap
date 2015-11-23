@@ -67,8 +67,8 @@ public class EmailAction extends AbstractWorkflowAction {
   private Authenticator authenticator;
 
   public EmailAction(ETLStage action) {
-    super(action.getName());
-    properties = action.getProperties();
+    super(action.getPlugin().getName());
+    properties = action.getPlugin().getProperties();
   }
 
   @Override

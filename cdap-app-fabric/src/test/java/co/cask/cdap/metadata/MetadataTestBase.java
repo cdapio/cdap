@@ -82,6 +82,21 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     }, expectedExceptionClass);
   }
 
+  protected void addProperties(Id.Artifact artifact, @Nullable Map<String, String> properties) throws Exception {
+    metadataClient.addProperties(artifact, properties);
+  }
+
+  protected void addProperties(final Id.Artifact artifact, @Nullable final Map<String, String> properties,
+                               Class<? extends Exception> expectedExceptionClass) throws IOException {
+    expectException(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        addProperties(artifact, properties);
+        return null;
+      }
+    }, expectedExceptionClass);
+  }
+
   protected void addProperties(Id.Program program, @Nullable Map<String, String> properties) throws Exception {
     metadataClient.addProperties(program, properties);
   }
@@ -117,6 +132,11 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     metadataClient.addProperties(stream, properties);
   }
 
+  protected void addProperties(Id.Stream.View view, @Nullable Map<String, String> properties)
+    throws Exception {
+    metadataClient.addProperties(view, properties);
+  }
+
   protected void addProperties(final Id.Stream stream, @Nullable final Map<String, String> properties,
                                Class<? extends Exception> expectedExceptionClass) throws IOException {
     expectException(new Callable<Void>() {
@@ -128,8 +148,23 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     }, expectedExceptionClass);
   }
 
+  protected void addProperties(final Id.Stream.View view, @Nullable final Map<String, String> properties,
+                               Class<? extends Exception> expectedExceptionClass) throws IOException {
+    expectException(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        addProperties(view, properties);
+        return null;
+      }
+    }, expectedExceptionClass);
+  }
+
   protected Set<MetadataRecord> getMetadata(Id.Application app) throws Exception {
     return metadataClient.getMetadata(app);
+  }
+
+  protected Set<MetadataRecord> getMetadata(Id.Artifact artifact) throws Exception {
+    return metadataClient.getMetadata(artifact);
   }
 
   protected Set<MetadataRecord> getMetadata(Id.Program program) throws Exception {
@@ -144,9 +179,17 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return metadataClient.getMetadata(stream);
   }
 
+  protected Set<MetadataRecord> getMetadata(Id.Stream.View view) throws Exception {
+    return metadataClient.getMetadata(view);
+  }
+
   // Currently, getMetadata(entity) returns a single-element set, so we can get the properties from there
   protected Map<String, String> getProperties(Id.Application app) throws Exception {
     return Iterators.getOnlyElement(getMetadata(app).iterator()).getProperties();
+  }
+
+  protected Map<String, String> getProperties(Id.Artifact artifact) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(artifact).iterator()).getProperties();
   }
 
   protected Map<String, String> getProperties(Id.Program program) throws Exception {
@@ -159,6 +202,10 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
 
   protected Map<String, String> getProperties(Id.Stream stream) throws Exception {
     return Iterators.getOnlyElement(getMetadata(stream).iterator()).getProperties();
+  }
+
+  protected Map<String, String> getProperties(Id.Stream.View view) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(view).iterator()).getProperties();
   }
 
   protected void getPropertiesFromInvalidEntity(Id.Application app) throws Exception {
@@ -196,9 +243,21 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
       // expected
     }
   }
+  protected void getPropertiesFromInvalidEntity(Id.Stream.View view) throws Exception {
+    try {
+      getProperties(view);
+      Assert.fail("Expected not to be able to get properties from invalid entity: " + view);
+    } catch (NotFoundException expected) {
+      // expected
+    }
+  }
 
   protected void removeMetadata(Id.Application app) throws Exception {
     metadataClient.removeMetadata(app);
+  }
+
+  protected void removeMetadata(Id.Artifact artifact) throws Exception {
+    metadataClient.removeMetadata(artifact);
   }
 
   protected void removeMetadata(Id.Program program) throws Exception {
@@ -213,12 +272,24 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     metadataClient.removeMetadata(stream);
   }
 
+  protected void removeMetadata(Id.Stream.View view) throws Exception {
+    metadataClient.removeMetadata(view);
+  }
+
   protected void removeProperties(Id.Application app) throws Exception {
     metadataClient.removeProperties(app);
   }
 
   private void removeProperty(Id.Application app, String propertyToRemove) throws Exception {
     metadataClient.removeProperty(app, propertyToRemove);
+  }
+
+  protected void removeProperties(Id.Artifact artifact) throws Exception {
+    metadataClient.removeProperties(artifact);
+  }
+
+  private void removeProperty(Id.Artifact artifact, String propertyToRemove) throws Exception {
+    metadataClient.removeProperty(artifact, propertyToRemove);
   }
 
   protected void removeProperties(Id.Program program) throws Exception {
@@ -241,8 +312,16 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     metadataClient.removeProperties(stream);
   }
 
+  protected void removeProperties(Id.Stream.View view) throws Exception {
+    metadataClient.removeProperties(view);
+  }
+
   protected void removeProperty(Id.Stream stream, String propertyToRemove) throws Exception {
     metadataClient.removeProperty(stream, propertyToRemove);
+  }
+
+  protected void removeProperty(Id.Stream.View view, String propertyToRemove) throws Exception {
+    metadataClient.removeProperty(view, propertyToRemove);
   }
 
   protected void addTags(Id.Application app, @Nullable Set<String> tags) throws Exception {
@@ -255,6 +334,21 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
       @Override
       public Void call() throws Exception {
         addTags(app, tags);
+        return null;
+      }
+    }, expectedExceptionClass);
+  }
+
+  protected void addTags(Id.Artifact artifact, @Nullable Set<String> tags) throws Exception {
+    metadataClient.addTags(artifact, tags);
+  }
+
+  protected void addTags(final Id.Artifact artifact, @Nullable final Set<String> tags,
+                         Class<? extends Exception> expectedExceptionClass) throws IOException {
+    expectException(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        addTags(artifact, tags);
         return null;
       }
     }, expectedExceptionClass);
@@ -295,12 +389,27 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     metadataClient.addTags(stream, tags);
   }
 
+  protected void addTags(Id.Stream.View view, @Nullable Set<String> tags) throws Exception {
+    metadataClient.addTags(view, tags);
+  }
+
   protected void addTags(final Id.Stream stream, @Nullable final Set<String> tags,
                          Class<? extends Exception> expectedExceptionClass) throws IOException {
     expectException(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         addTags(stream, tags);
+        return null;
+      }
+    }, expectedExceptionClass);
+  }
+
+  protected void addTags(final Id.Stream.View view, @Nullable final Set<String> tags,
+                         Class<? extends Exception> expectedExceptionClass) throws IOException {
+    expectException(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        addTags(view, tags);
         return null;
       }
     }, expectedExceptionClass);
@@ -316,6 +425,10 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return Iterators.getOnlyElement(getMetadata(app).iterator()).getTags();
   }
 
+  protected Set<String> getTags(Id.Artifact artifact) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(artifact).iterator()).getTags();
+  }
+
   protected Set<String> getTags(Id.Program program) throws Exception {
     return Iterators.getOnlyElement(getMetadata(program).iterator()).getTags();
   }
@@ -328,12 +441,24 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     return Iterators.getOnlyElement(getMetadata(stream).iterator()).getTags();
   }
 
+  protected Set<String> getTags(Id.Stream.View view) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(view).iterator()).getTags();
+  }
+
   protected void removeTags(Id.Application app) throws Exception {
     metadataClient.removeTags(app);
   }
 
   protected void removeTag(Id.Application app, String tagToRemove) throws Exception {
     metadataClient.removeTag(app, tagToRemove);
+  }
+
+  protected void removeTags(Id.Artifact artifact) throws Exception {
+    metadataClient.removeTags(artifact);
+  }
+
+  protected void removeTag(Id.Artifact artifact, String tagToRemove) throws Exception {
+    metadataClient.removeTag(artifact, tagToRemove);
   }
 
   protected void removeTags(Id.Program program) throws Exception {
@@ -356,8 +481,16 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     metadataClient.removeTags(stream);
   }
 
+  protected void removeTags(Id.Stream.View view) throws Exception {
+    metadataClient.removeTags(view);
+  }
+
   protected void removeTag(Id.Stream stream, String tagToRemove) throws Exception {
     metadataClient.removeTag(stream, tagToRemove);
+  }
+
+  protected void removeTag(Id.Stream.View view, String tagToRemove) throws Exception {
+    metadataClient.removeTag(view, tagToRemove);
   }
 
   // expect an exception during fetching of lineage

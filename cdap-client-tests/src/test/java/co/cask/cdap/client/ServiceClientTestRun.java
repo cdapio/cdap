@@ -31,6 +31,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -43,6 +45,7 @@ import static org.junit.Assert.assertEquals;
  */
 @Category(XSlowTests.class)
 public class ServiceClientTestRun extends ClientTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(ServiceClientTestRun.class);
 
   private final Id.Namespace namespace = Id.Namespace.DEFAULT;
   private final Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
@@ -69,7 +72,11 @@ public class ServiceClientTestRun extends ClientTestBase {
   public void tearDown() throws Throwable {
     programClient.stop(service);
     assertProgramStopped(programClient, service);
-    appClient.delete(app);
+    try {
+      appClient.delete(app);
+    } catch (Exception e) {
+      LOG.error("Error deleting app {} during test cleanup.", e);
+    }
   }
 
   @Test

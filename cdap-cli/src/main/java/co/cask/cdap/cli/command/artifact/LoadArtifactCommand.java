@@ -30,6 +30,7 @@ import com.google.inject.Inject;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.util.Map;
 
 /**
  * Loads an artifact into CDAP.
@@ -74,6 +75,11 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
       ArtifactConfig artifactConfig = configReader.read(artifactId.getNamespace(), configFile);
       artifactClient.add(artifactId.getNamespace(), artifactId.getName(), Files.newInputStreamSupplier(artifactFile),
         artifactId.getVersion().getVersion(), artifactConfig.getParents(), artifactConfig.getPlugins());
+
+      Map<String, String> properties = artifactConfig.getProperties();
+      if (properties != null && !properties.isEmpty()) {
+        artifactClient.writeProperties(artifactId, properties);
+      }
     }
 
     output.printf("Successfully added artifact with name '%s'\n", artifactId.getName());
@@ -103,10 +109,14 @@ public class LoadArtifactCommand extends AbstractAuthCommand {
       "          \"name\": \"mysql\",\n" +
       "          \"className\": \"com.mysql.jdbc.Driver\"\n" +
       "        }\n" +
-      "      ]\n" +
+      "      ],\n" +
+      "      \"properties\":{\n" +
+      "        \"prop1\": \"val1\"\n" +
+      "      }\n" +
       "    }\n" +
       "This config specifies that the artifact contains one JDBC third-party plugin that should be " +
       "available to the app1 artifact (versions 1.0.0 inclusive to 2.0.0 exclusive) and app2 artifact " +
-      "(versions 1.2.0 inclusive to 1.3.0 inclusive).";
+      "(versions 1.2.0 inclusive to 1.3.0 inclusive). The config may also include a 'properties' field specifying " +
+      "properties for the artifact.";
   }
 }

@@ -49,6 +49,7 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -72,7 +73,7 @@ public class ObjectSerializer {
     List<TypeInfo> info = structTypeInfo.getAllStructFieldTypeInfos();
     List<String> names = structTypeInfo.getAllStructFieldNames();
 
-    Map<String, Object> recordMap = Maps.newConcurrentMap();
+    Map<String, Object> recordMap = new HashMap<>();
     List<Object> recordObjects = ((StructObjectInspector) objectInspector).getStructFieldsDataAsList(o);
 
     for (int structIndex = 0; structIndex < info.size(); structIndex++) {

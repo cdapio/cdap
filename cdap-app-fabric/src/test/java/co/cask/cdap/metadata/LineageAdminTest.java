@@ -24,10 +24,11 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.Relation;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -81,8 +82,8 @@ public class LineageAdminTest extends MetadataTestBase {
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
                                                  Id.DatasetInstance.from("default", "testSimpleLineage"));
     Store store = getInjector().getInstance(Store.class);
-    BusinessMetadataStore businessMetadataStore = getInjector().getInstance(BusinessMetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, businessMetadataStore, new NoOpEntityValidator());
+    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
 
     // Define metadata
     MetadataRecord run1AppMeta = new MetadataRecord(program1.getApplication(), toMap("pk1", "pk1"), toSet("pt1"));
@@ -91,22 +92,22 @@ public class LineageAdminTest extends MetadataTestBase {
     MetadataRecord run1Data2Meta = new MetadataRecord(dataset2, toMap("dk2", "dk2"), toSet("dt2"));
 
     // Add metadata
-    businessMetadataStore.setProperties(program1.getApplication(), run1AppMeta.getProperties());
+    metadataStore.setProperties(MetadataScope.USER, program1.getApplication(), run1AppMeta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    businessMetadataStore.addTags(program1.getApplication(), run1AppMeta.getTags().toArray(new String[0]));
-    businessMetadataStore.setProperties(program1, run1ProgramMeta.getProperties());
+    metadataStore.addTags(MetadataScope.USER, program1.getApplication(), run1AppMeta.getTags().toArray(new String[0]));
+    metadataStore.setProperties(MetadataScope.USER, program1, run1ProgramMeta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    businessMetadataStore.addTags(program1, run1ProgramMeta.getTags().toArray(new String[0]));
-    businessMetadataStore.setProperties(dataset1, run1Data1Meta.getProperties());
+    metadataStore.addTags(MetadataScope.USER, program1, run1ProgramMeta.getTags().toArray(new String[0]));
+    metadataStore.setProperties(MetadataScope.USER, dataset1, run1Data1Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    businessMetadataStore.addTags(dataset1, run1Data1Meta.getTags().toArray(new String[0]));
-    businessMetadataStore.setProperties(dataset2, run1Data2Meta.getProperties());
+    metadataStore.addTags(MetadataScope.USER, dataset1, run1Data1Meta.getTags().toArray(new String[0]));
+    metadataStore.setProperties(MetadataScope.USER, dataset2, run1Data2Meta.getProperties());
     //noinspection ToArrayCallWithZeroLengthArrayArgument
-    businessMetadataStore.addTags(dataset2, run1Data2Meta.getTags().toArray(new String[0]));
+    metadataStore.addTags(MetadataScope.USER, dataset2, run1Data2Meta.getTags().toArray(new String[0]));
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Add accesses for D3 -> P2 -> D2 -> P1 -> D1
-    // We need to use current time here as business metadata store stores access time using current time
+    // We need to use current time here as metadata store stores access time using current time
     Id.Run run1 = new Id.Run(program1, RunIds.generate(System.currentTimeMillis()).getId());
     Id.Run run2 = new Id.Run(program2, RunIds.generate(System.currentTimeMillis()).getId());
     addRuns(store, run1, run2);
@@ -170,8 +171,8 @@ public class LineageAdminTest extends MetadataTestBase {
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
                                                  Id.DatasetInstance.from("default", "testSimpleLoopLineage"));
     Store store = getInjector().getInstance(Store.class);
-    BusinessMetadataStore businessMetadataStore = getInjector().getInstance(BusinessMetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, businessMetadataStore, new NoOpEntityValidator());
+    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
 
 
     // Add access
@@ -232,8 +233,8 @@ public class LineageAdminTest extends MetadataTestBase {
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
                                                  Id.DatasetInstance.from("default", "testDirectCycle"));
     Store store = getInjector().getInstance(Store.class);
-    BusinessMetadataStore businessMetadataStore = getInjector().getInstance(BusinessMetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, businessMetadataStore, new NoOpEntityValidator());
+    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -262,8 +263,8 @@ public class LineageAdminTest extends MetadataTestBase {
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
                                                  Id.DatasetInstance.from("default", "testDirectCycleTwoRuns"));
     Store store = getInjector().getInstance(Store.class);
-    BusinessMetadataStore businessMetadataStore = getInjector().getInstance(BusinessMetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, businessMetadataStore, new NoOpEntityValidator());
+    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -298,8 +299,8 @@ public class LineageAdminTest extends MetadataTestBase {
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
                                                  Id.DatasetInstance.from("default", "testBranchLineage"));
     Store store = getInjector().getInstance(Store.class);
-    BusinessMetadataStore businessMetadataStore = getInjector().getInstance(BusinessMetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, businessMetadataStore, new NoOpEntityValidator());
+    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -366,8 +367,8 @@ public class LineageAdminTest extends MetadataTestBase {
     LineageStore lineageStore = new LineageStore(getTxExecFactory(), getDatasetFramework(),
                                                  Id.DatasetInstance.from("default", "testBranchLoopLineage"));
     Store store = getInjector().getInstance(Store.class);
-    BusinessMetadataStore businessMetadataStore = getInjector().getInstance(BusinessMetadataStore.class);
-    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, businessMetadataStore, new NoOpEntityValidator());
+    MetadataStore metadataStore = getInjector().getInstance(MetadataStore.class);
+    LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
 
     // Add accesses
     addRuns(store, run1, run2, run3, run4, run5);
@@ -525,7 +526,7 @@ public class LineageAdminTest extends MetadataTestBase {
     public NoOpEntityValidator() {
       // This entity validator does not do any validation.
       // Hence it is okay to pass in null as constructor arguments.
-      super(null, null, null, null);
+      super(null, null, null, null, null);
     }
 
     @Override

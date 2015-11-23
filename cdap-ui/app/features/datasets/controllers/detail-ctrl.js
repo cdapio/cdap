@@ -35,4 +35,9 @@ angular.module(PKG.name + '.feature.datasets')
         });
     };
 
+    this.metadataParams = {
+      namespace: $state.params.namespace,
+      datasetId: $state.params.datasetId
+    };
+    
   });

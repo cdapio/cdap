@@ -95,7 +95,7 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
   public void initialize(TransformContext context) throws Exception {
     super.initialize(context);
     metrics = context.getMetrics();
-    logger = LoggerFactory.getLogger(ScriptFilterTransform.class.getName() + " - Stage:" + context.getStageId());
+    logger = LoggerFactory.getLogger(ScriptFilterTransform.class.getName() + " - Stage:" + context.getStageName());
     init(context);
   }
 

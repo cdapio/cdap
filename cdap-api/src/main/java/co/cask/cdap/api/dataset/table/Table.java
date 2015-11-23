@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.RecordScannable;
+import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.Dataset;
@@ -33,7 +34,7 @@ import javax.annotation.Nullable;
  * An ordered, optionally explorable, named table.
  */
 public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[], Put>,
-  Dataset, RecordScannable<StructuredRecord> {
+  Dataset, RecordScannable<StructuredRecord>, RecordWritable<StructuredRecord> {
 
   /**
    * Property set to configure time-to-live on data within this dataset. The value given is in seconds.

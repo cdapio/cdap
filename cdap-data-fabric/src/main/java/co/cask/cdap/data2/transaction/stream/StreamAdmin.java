@@ -143,6 +143,14 @@ public interface StreamAdmin {
   ViewSpecification getView(Id.Stream.View viewId) throws Exception;
 
   /**
+   * Checks if the view exists
+   *
+   * @param viewId the view
+   * @return boolean which is true if view exists else false
+   */
+  boolean viewExists(Id.Stream.View viewId) throws Exception;
+
+  /**
    * Register stream used by program.
    *
    * @param owners the ids that are using the stream

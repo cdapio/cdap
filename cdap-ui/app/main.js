@@ -28,9 +28,11 @@ angular
       PKG.name+'.feature.data',
       PKG.name+'.feature.admin',
       PKG.name+'.feature.userprofile',
-      PKG.name+'.feature.foo',
+      PKG.name+'.feature.experimental',
       PKG.name+'.feature.hydrator',
-      PKG.name+'.feature.explore'
+      PKG.name+'.feature.explore',
+      PKG.name +'.feature.search',
+      PKG.name +'.feature.pins'
     ]).name,
 
     angular.module(PKG.name+'.commons', [
@@ -319,5 +321,13 @@ angular
       $state.go('login');
     });
 
+    $scope.onSearch = _.debounce(function(event) {
+      if (event.keyCode === 70 && event.target.nodeName === 'BODY') {
+        $state.go('search.list');
+      } else if (event.keyCode === 80 && event.target.nodeName === 'BODY') {
+        $state.go('pins.list');
+      }
+      console.info('pressed');
+    }, 500);
     console.timeEnd(PKG.name);
   });
