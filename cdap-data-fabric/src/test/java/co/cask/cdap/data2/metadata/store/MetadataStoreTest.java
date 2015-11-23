@@ -18,7 +18,6 @@ package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.metadata.publisher.MetadataKafkaTestBase;
-import co.cask.cdap.data2.metadata.service.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;

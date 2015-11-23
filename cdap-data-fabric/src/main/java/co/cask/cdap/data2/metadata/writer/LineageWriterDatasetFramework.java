@@ -26,7 +26,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.service.MetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;

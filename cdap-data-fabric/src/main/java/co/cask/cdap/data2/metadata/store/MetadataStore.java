@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data2.metadata.service;
+package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.proto.Id;
