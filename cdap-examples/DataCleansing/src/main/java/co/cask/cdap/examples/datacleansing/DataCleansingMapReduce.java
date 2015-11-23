@@ -18,14 +18,12 @@ package co.cask.cdap.examples.datacleansing;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.lib.BatchPartitionConsumer;
 import co.cask.cdap.api.dataset.lib.DynamicPartitioner;
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
-import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
+import co.cask.cdap.api.dataset.lib.partitioned.KVTableStatePersistor;
+import co.cask.cdap.api.dataset.lib.partitioned.PartitionBatchInput;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
@@ -40,7 +38,6 @@ import org.apache.hadoop.mapreduce.Mapper;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * A simple MapReduce that reads records from the rawRecords PartitionedFileSet and writes all records
@@ -52,20 +49,7 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
   protected static final String OUTPUT_PARTITION_KEY = "output.partition.key";
   protected static final String SCHEMA_KEY = "schema.key";
 
-  private final BatchPartitionConsumer partitionConsumer = new BatchPartitionConsumer() {
-    private static final String STATE_KEY = "state.key";
-
-    @Nullable
-    @Override
-    protected byte[] readBytes(DatasetContext datasetContext) {
-      return ((KeyValueTable) datasetContext.getDataset(DataCleansing.CONSUMING_STATE)).read(STATE_KEY);
-    }
-
-    @Override
-    protected void writeBytes(DatasetContext datasetContext, byte[] stateBytes) {
-      ((KeyValueTable) datasetContext.getDataset(DataCleansing.CONSUMING_STATE)).write(STATE_KEY, stateBytes);
-    }
-  };
+  private PartitionBatchInput.BatchPartitionCommitter partitionCommitter;
 
   @Override
   public void configure() {
@@ -76,8 +60,9 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
 
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
-    PartitionedFileSet rawRecords = partitionConsumer.getConfiguredDataset(context, DataCleansing.RAW_RECORDS);
-    context.setInput(rawRecords);
+    partitionCommitter =
+      PartitionBatchInput.setInput(context, DataCleansing.RAW_RECORDS,
+                                   new KVTableStatePersistor(DataCleansing.CONSUMING_STATE, "state.key"));
 
     // Each run writes its output to a partition for the league
     Long timeKey = Long.valueOf(context.getRuntimeArguments().get(OUTPUT_PARTITION_KEY));
@@ -105,9 +90,7 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
 
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    if (succeeded) {
-      partitionConsumer.persist(context);
-    }
+    partitionCommitter.onFinish(succeeded);
   }
 
   /**

@@ -18,6 +18,7 @@ package co.cask.cdap.partitioned;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
@@ -27,14 +28,17 @@ import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
-import co.cask.cdap.api.dataset.lib.BatchPartitionConsumer;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
+import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
+import co.cask.cdap.api.dataset.lib.partitioned.KVTableStatePersistor;
+import co.cask.cdap.api.dataset.lib.partitioned.PartitionBatchInput;
+import co.cask.cdap.api.dataset.lib.partitioned.TransactionalPartitionConsumer;
 import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -43,6 +47,10 @@ import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.api.worker.AbstractWorker;
+import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
+import com.google.common.io.ByteStreams;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -54,9 +62,12 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import javax.ws.rs.GET;
@@ -65,17 +76,18 @@ import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 
 /**
- * App used to test that MapReduce can incrementally consume partitions.
+ * App used to test that MapReduce and Worker can incrementally consume partitions.
  */
-public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
+public class AppWithPartitionConsumers extends AbstractApplication {
 
   @Override
   public void configure() {
-    setName("AppWithMapReduceConsumingPartitions");
-    setDescription("Application with MapReduce job consuming partitions of a PartitionedFileSet Dataset");
+    setName("AppWithPartitionConsumers");
+    setDescription("Application with MapReduce job and Worker consuming partitions of a PartitionedFileSet Dataset");
     createDataset("consumingState", KeyValueTable.class);
     createDataset("counts", IncrementingKeyValueTable.class);
-    addMapReduce(new WordCount());
+    addMapReduce(new WordCountMapReduce());
+    addWorker(new WordCountWorker());
     addService(new DatasetService());
 
     // Create the "lines" partitioned file set, configure it to work with MapReduce
@@ -127,22 +139,71 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
     }
   }
 
-  public static class WordCount extends AbstractMapReduce {
 
-    private final BatchPartitionConsumer batchPartitionConsumer = new BatchPartitionConsumer() {
-      private static final String STATE_KEY = "state.key";
+  public static class WordCountWorker extends AbstractWorker {
+    public static final String NAME = "WordCountWorker";
 
-      @Nullable
-      @Override
-      protected byte[] readBytes(DatasetContext datasetContext) {
-        return ((KeyValueTable) datasetContext.getDataset("consumingState")).read(STATE_KEY);
+    @Override
+    public void run() {
+      TransactionalPartitionConsumer partitionConsumer =
+        new TransactionalPartitionConsumer(getContext(), "lines",
+                                           new KVTableStatePersistor("consumingState", "state.key"));
+      final List<PartitionDetail> partitions = partitionConsumer.consumePartitions().getPartitions();
+
+      if (partitions.isEmpty()) {
+        return;
       }
 
-      @Override
-      protected void writeBytes(DatasetContext datasetContext, byte[] stateBytes) {
-        ((KeyValueTable) datasetContext.getDataset("consumingState")).write(STATE_KEY, stateBytes);
-      }
-    };
+      // process the partitions (same as WordCountMapReduce):
+      //   - read the partitions' files
+      //   - increment the words' counts in the 'counts' dataset accordingly
+      //   - write the counts to the 'outputLines' partitioned fileset
+      getContext().execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+
+          Map<String, Long> wordCounts = new HashMap<>();
+          for (PartitionDetail partition : partitions) {
+            ByteBuffer content;
+            Location location = partition.getLocation();
+            content = ByteBuffer.wrap(ByteStreams.toByteArray(location.getInputStream()));
+            String string = Bytes.toString(Bytes.toBytes(content));
+
+            for (String token : string.split(" ")) {
+              Long count = Objects.firstNonNull(wordCounts.get(token), 0L);
+              wordCounts.put(token, count + 1);
+            }
+          }
+
+          IncrementingKeyValueTable counts = context.getDataset("counts");
+          for (Map.Entry<String, Long> entry : wordCounts.entrySet()) {
+            counts.write(Bytes.toBytes(entry.getKey()), entry.getValue());
+          }
+
+          PartitionedFileSet outputLines = context.getDataset("outputLines");
+          PartitionKey partitionKey = PartitionKey.builder().addLongField("time", System.currentTimeMillis()).build();
+          PartitionOutput outputPartition = outputLines.getPartitionOutput(partitionKey);
+
+          Location partitionDir = outputPartition.getLocation();
+          partitionDir.mkdirs();
+          Location outputLocation = partitionDir.append("file");
+          outputLocation.createNew();
+          try (OutputStream outputStream = outputLocation.getOutputStream()) {
+            outputStream.write(Bytes.toBytes(Joiner.on("\n").join(wordCounts.values())));
+          }
+          outputPartition.addPartition();
+
+        }
+      });
+
+      partitionConsumer.onFinish(partitions, true);
+    }
+  }
+
+  public static class WordCountMapReduce extends AbstractMapReduce {
+    public static final String NAME = "WordCountMapReduce";
+
+    private PartitionBatchInput.BatchPartitionCommitter batchPartitionCommitter;
 
     @Override
     public void configure() {
@@ -153,8 +214,8 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      PartitionedFileSet lines = batchPartitionConsumer.getConfiguredDataset(context, "lines");
-      context.setInput(lines);
+      batchPartitionCommitter =
+        PartitionBatchInput.setInput(context, "lines", new KVTableStatePersistor("consumingState", "state.key"));
 
       Map<String, String> outputArgs = new HashMap<>();
       PartitionKey partitionKey = PartitionKey.builder().addLongField("time", context.getLogicalStartTime()).build();
@@ -184,9 +245,7 @@ public class AppWithMapReduceConsumingPartitions extends AbstractApplication {
 
     @Override
     public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-      if (succeeded) {
-        batchPartitionConsumer.persist(context);
-      }
+      batchPartitionCommitter.onFinish(succeeded);
 
       // We have to manually call the PFS's onSuccess, because since we only added it as an OutputFormatProvider,
       // it doesn't get treated as a dataset (its onSuccess method won't be called by our MR framework)
