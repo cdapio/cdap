@@ -9,11 +9,14 @@ Docker Image
 
 .. highlight:: console
 
-A Docker image with CDAP SDK pre-installed is available on the Docker Hub for download.
+
+Docker is one of the easiest ways to start working with CDAP without having to manually
+configure anything. A Docker image with the CDAP SDK pre-installed is available on the Docker Hub
+for download.
 
 To use the **Docker image**, you can either use Docker's :ref:`Kitematic
-<docker-kitematic>` (on Mac OS X and Windows), a graphical user interface for running
-Docker containers, or start the container from :ref:`a command line <docker-command-line>`.
+<docker-kitematic>` (on Mac OS X and Windows) |---| a graphical user interface for running
+Docker containers |---| or start the container from :ref:`a command line <docker-command-line>`.
 
 .. _docker-kitematic:
 
@@ -31,9 +34,8 @@ Kitematic and then download, start, and connect to an instance of CDAP.
 #. Start Kitematic. On Mac OS X, it will be installed in ``/Applications/Docker/Kitematic``; on 
    Windows, in ``Start Menu > Docker > Kitematic``.
    
-#. Once Kitematic has started |---| you can either login to the Docker Hub or skip that step |---| 
-   search for the **CDAP image** using the search box at the top of the window. Then click on the
-   repository menu, circled in red here:
+#. Once Kitematic has started, search for the **CDAP image** using the search box at the
+   top of the window. Then click on the repository menu, circled in red here:
  
      .. image:: ../../_images/kitematic/kitematic-1-searching.png
         :width: 8in
@@ -45,7 +47,7 @@ Kitematic and then download, start, and connect to an instance of CDAP.
         :width: 4in
         :align: center
 
-#. Scroll the window to the last version shown, and select it (unless you'd like a different version).
+#. Scroll the window to the last version shown, and select the desired version.
    Note that the tag **latest** is the last version that was put up at Docker Hub, which is not the 
    necessarily the most-current version:
  
@@ -60,18 +62,19 @@ Kitematic and then download, start, and connect to an instance of CDAP.
         :width: 8in
         :align: center
 
-#. To connect a web browser for the CDAP UI, you'll need to find the IP address that the 
-   Kitematic instance is proxying the CDAP instance. The easiest way to do that is click
-   on the *Settings* tab, and then the *Ports* tab:
+#. To connect a web browser for the CDAP UI, you'll need to find the external IP addresses
+   and ports that the Docker instance is exposing. The easiest way to do that is click on the
+   *Settings* tab, and then the *Ports* tab:
  
      .. image:: ../../_images/kitematic/kitematic-5-links.png
         :width: 8in
         :align: center
 
 
-#. This shows that the CDAP instance is listening on Docker port ``9999``, and the Kitematic 
-   instance is listening on ``192.168.99.1100:32769``. The text in blue is a link;
-   clicking it will open it in your system web browser and connect to the CDAP UI:
+#. This shows that the CDAP instance is listening on the internal port ``9999`` within the
+   Docker instance, while the Docker instance exposes that port on the external IP address
+   and port ``192.168.99.1100:32769``. The text in blue is a link; clicking it will open it
+   in your system web browser and connect to the CDAP UI:
    
      .. image:: ../../_images/kitematic/kitematic-6-cdap-ui.png
         :width: 8in
