@@ -92,4 +92,14 @@ public class AppFabricServiceManager implements MasterServiceManager {
   public boolean isServiceEnabled() {
     return true;
   }
+
+  @Override
+  public void restartAllInstances() {
+    // no-op
+  }
+
+  @Override
+  public void restartInstances(int instanceId, int... moreInstanceIds) {
+    // no-op
+  }
 }
