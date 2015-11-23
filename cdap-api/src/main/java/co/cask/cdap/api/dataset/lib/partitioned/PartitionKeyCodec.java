@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.codec;
+package co.cask.cdap.api.dataset.lib.partitioned;
 
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import com.google.common.base.Throwables;

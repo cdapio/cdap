@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.PartitionNotFoundException;
 import co.cask.cdap.api.dataset.lib.Partition;
@@ -35,10 +36,8 @@ import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -58,7 +57,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -179,10 +177,10 @@ public class PartitionedFileSetTest {
     // consumer simply consumes initial partition
     TransactionContext txContext2 = new TransactionContext(txClient, (TransactionAware) dataset2);
     txContext2.start();
-    PartitionConsumer partitionConsumer = new PartitionConsumer(dataset2);
-    Iterator<Partition> partitionIterator = partitionConsumer.consumePartitions();
-    Assert.assertEquals(partitionKey1, partitionIterator.next().getPartitionKey());
-    Assert.assertFalse(partitionIterator.hasNext());
+    SimplePartitionConsumer partitionConsumer = new SimplePartitionConsumer(dataset2);
+    List<PartitionDetail> partitionIterator = partitionConsumer.consumePartitions();
+    Assert.assertEquals(1, partitionIterator.size());
+    Assert.assertEquals(partitionKey1, partitionIterator.get(0).getPartitionKey());
     txContext2.finish();
 
     // producer adds a second partition, but does not yet commit the transaction
@@ -193,7 +191,7 @@ public class PartitionedFileSetTest {
     // consumer attempts to consume at a time after the partition was added, but before it committed. Because of this,
     // the partition is not visible and will not be consumed
     txContext2.start();
-    Assert.assertFalse(partitionConsumer.consumePartitions().hasNext());
+    Assert.assertTrue(partitionConsumer.consumePartitions().isEmpty());
     txContext2.finish();
 
     // producer commits the transaction in which the second partition was added
@@ -202,8 +200,8 @@ public class PartitionedFileSetTest {
     // the next time the consumer runs, it processes the second partition
     txContext2.start();
     partitionIterator = partitionConsumer.consumePartitions();
-    Assert.assertEquals(partitionKey2, partitionIterator.next().getPartitionKey());
-    Assert.assertFalse(partitionIterator.hasNext());
+    Assert.assertEquals(1, partitionIterator.size());
+    Assert.assertEquals(partitionKey2, partitionIterator.get(0).getPartitionKey());
     txContext2.finish();
   }
 
@@ -222,7 +220,7 @@ public class PartitionedFileSetTest {
       partitionKeys2.add(generateUniqueKey());
     }
 
-    final PartitionConsumer partitionConsumer = new PartitionConsumer(dataset);
+    final SimplePartitionConsumer partitionConsumer = new SimplePartitionConsumer(dataset);
     dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
@@ -238,7 +236,7 @@ public class PartitionedFileSetTest {
         // Initial consumption results in the partitions corresponding to partitionKeys1 to be consumed because only
         // those partitions are added to the dataset at this point
         List<Partition> consumedPartitions = Lists.newArrayList();
-        Iterators.addAll(consumedPartitions, partitionConsumer.consumePartitions());
+        Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions());
 
         Set<PartitionKey> retrievedKeys = Sets.newHashSet();
         for (Partition consumedPartition : consumedPartitions) {
@@ -263,7 +261,7 @@ public class PartitionedFileSetTest {
         // using the same PartitionConsumer (which remembers the PartitionConsumerState) to consume additional
         // partitions results in only the newly added partitions (corresponding to partitionKeys2) to be returned
         List<Partition> consumedPartitions = Lists.newArrayList();
-        Iterators.addAll(consumedPartitions, partitionConsumer.consumePartitions());
+        Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions());
 
         Set<PartitionKey> retrievedKeys = Sets.newHashSet();
         for (Partition consumedPartition : consumedPartitions) {
@@ -277,7 +275,7 @@ public class PartitionedFileSetTest {
       @Override
       public void apply() throws Exception {
         // consuming the partitions again, without adding any new partitions returns an empty iterator
-        Assert.assertFalse(partitionConsumer.consumePartitions().hasNext());
+        Assert.assertTrue(partitionConsumer.consumePartitions().isEmpty());
       }
     });
 
@@ -287,7 +285,7 @@ public class PartitionedFileSetTest {
         // creating a new PartitionConsumer resets the consumption state. Consuming from it then returns an iterator
         // with all the partition keys
         List<Partition> consumedPartitions = Lists.newArrayList();
-        Iterators.addAll(consumedPartitions, new PartitionConsumer(dataset).consumePartitions());
+        Iterables.addAll(consumedPartitions, new SimplePartitionConsumer(dataset).consumePartitions());
 
         Set<PartitionKey> retrievedKeys = Sets.newHashSet();
         for (Partition consumedPartition : consumedPartitions) {
@@ -317,7 +315,7 @@ public class PartitionedFileSetTest {
       partitionKeys2.add(generateUniqueKey());
     }
 
-    final PartitionConsumer partitionConsumer = new PartitionConsumer(dataset);
+    final SimplePartitionConsumer partitionConsumer = new SimplePartitionConsumer(dataset);
     // add each of partitionKeys1 in separate transaction, so limit can be applied at arbitrary values
     // (consumption only happens at transaction borders)
     for (final PartitionKey partitionKey : partitionKeys1) {
@@ -337,15 +335,15 @@ public class PartitionedFileSetTest {
         List<Partition> consumedPartitions = Lists.newArrayList();
 
         // with limit = 1, the returned iterator is only size 1, even though there are more unconsumed partitions
-        Iterators.addAll(consumedPartitions, partitionConsumer.consumePartitions(PartitionFilter.ALWAYS_MATCH, 1));
+        Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions(1));
         Assert.assertEquals(1, consumedPartitions.size());
 
         // ask for 5 more
-        Iterators.addAll(consumedPartitions, partitionConsumer.consumePartitions(PartitionFilter.ALWAYS_MATCH, 5));
+        Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions(5));
         Assert.assertEquals(6, consumedPartitions.size());
 
         // ask for 5 more, but there are only 4 more unconsumed partitions (size of partitionKeys1 is 10).
-        Iterators.addAll(consumedPartitions, partitionConsumer.consumePartitions(PartitionFilter.ALWAYS_MATCH, 5));
+        Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions(5));
         Assert.assertEquals(10, consumedPartitions.size());
 
         Set<PartitionKey> retrievedKeys = Sets.newHashSet();
@@ -371,7 +369,7 @@ public class PartitionedFileSetTest {
         // using the same PartitionConsumer (which remembers the PartitionConsumerState) to consume additional
         // partitions results in only the newly added partitions (corresponding to partitionKeys2) to be returned
         List<Partition> consumedPartitions = Lists.newArrayList();
-        Iterators.addAll(consumedPartitions, partitionConsumer.consumePartitions(PartitionFilter.ALWAYS_MATCH, 1));
+        Iterables.addAll(consumedPartitions, partitionConsumer.consumePartitions(1));
 
         // even though we set limit to 1 in the previous call to consumePartitions, we get all the elements of
         // partitionKeys2, because they were all added in the same transaction
@@ -387,7 +385,7 @@ public class PartitionedFileSetTest {
       @Override
       public void apply() throws Exception {
         // consuming the partitions again, without adding any new partitions returns an empty iterator
-        Assert.assertFalse(partitionConsumer.consumePartitions().hasNext());
+        Assert.assertTrue(partitionConsumer.consumePartitions().isEmpty());
       }
     });
 
@@ -396,17 +394,23 @@ public class PartitionedFileSetTest {
       public void apply() throws Exception {
         // creating a new PartitionConsumer resets the consumption state.
         // test combination of filter and limit
-        PartitionConsumer newPartitionConsumer = new PartitionConsumer(dataset);
+        SimplePartitionConsumer newPartitionConsumer = new SimplePartitionConsumer(dataset);
         List<Partition> consumedPartitions = Lists.newArrayList();
         // the partitionFilter will match partitionKeys [1, 7), of which there are 6
-        PartitionFilter partitionFilter = PartitionFilter.builder().addRangeCondition("i", 1, 7).build();
+        final PartitionFilter partitionFilter = PartitionFilter.builder().addRangeCondition("i", 1, 7).build();
+        final Predicate<PartitionDetail> predicate = new Predicate<PartitionDetail>() {
+          @Override
+          public boolean apply(PartitionDetail partitionDetail) {
+            return partitionFilter.match(partitionDetail.getPartitionKey());
+          }
+        };
 
         // apply the filter (narrows it down to 6 elements) and apply a limit of 4 results in 4 consumed partitions
-        Iterators.addAll(consumedPartitions, newPartitionConsumer.consumePartitions(partitionFilter, 4));
+        Iterables.addAll(consumedPartitions, newPartitionConsumer.consumePartitions(4, predicate));
         Assert.assertEquals(4, consumedPartitions.size());
 
         // apply a limit of 3, using the same filter returns the remaining 2 elements that fit that filter
-        Iterators.addAll(consumedPartitions, newPartitionConsumer.consumePartitions(partitionFilter, 3));
+        Iterables.addAll(consumedPartitions, newPartitionConsumer.consumePartitions(3, predicate));
         Assert.assertEquals(6, consumedPartitions.size());
 
         // assert that the partitions returned have partition keys, where the i values range from [1, 7]
@@ -682,7 +686,8 @@ public class PartitionedFileSetTest {
       }, key);
 
       // test all filters
-      BasicPartition toRemove = Iterables.tryFind(allPartitionDetails, new Predicate<BasicPartition>() {
+      BasicPartition toRemove = Iterables.tryFind(allPartitionDetails,
+                                                  new com.google.common.base.Predicate<BasicPartition>() {
         @Override
         public boolean apply(BasicPartition partition) {
           return key.equals(partition.getPartitionKey());
@@ -712,7 +717,7 @@ public class PartitionedFileSetTest {
 
     // determine the keys and paths that match the filter
     final Set<BasicPartition> matching = filter == null ? allPartitionDetails :
-      Sets.filter(allPartitionDetails, new Predicate<BasicPartition>() {
+      Sets.filter(allPartitionDetails, new com.google.common.base.Predicate<BasicPartition>() {
         @Override
         public boolean apply(BasicPartition partition) {
           return filter.match(partition.getPartitionKey());

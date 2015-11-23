@@ -19,7 +19,9 @@ package co.cask.cdap.api.dataset.lib;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
 
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -181,10 +183,23 @@ public class PartitionedFileSetArguments {
    * @param arguments the runtime arguments for a partitioned dataset
    * @param partitionIterator the iterator of partitions to add as input
    */
-  public static void addInputPartitions(Map<String, String> arguments, Iterator<Partition> partitionIterator) {
+  public static void addInputPartitions(Map<String, String> arguments,
+                                        Iterator<? extends Partition> partitionIterator) {
     while (partitionIterator.hasNext()) {
       addInputPartition(arguments, partitionIterator.next());
     }
+  }
+
+  /**
+   * Sets partitions as input for a PartitionedFileSet. If both a PartitionFilter and Partition(s) are specified, the
+   * PartitionFilter takes precedence and the specified Partition(s) will be ignored.
+   *
+   * @param arguments the runtime arguments for a partitioned dataset
+   * @param partitions an iterable of partitions to add as input
+   */
+  public static void addInputPartitions(Map<String, String> arguments,
+                                        Iterable<? extends Partition> partitions) {
+    addInputPartitions(arguments, partitions.iterator());
   }
 
   /**
