@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.common.ConflictException;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
@@ -50,18 +51,25 @@ public class LineageDataset extends AbstractDataset {
   // ---------------------------
   //
   // Dataset access from program:
-  // -------------------------------------------------------------------------------
-  // | d | <id.dataset> | <inverted-start-time> | p | <id.run>     | <access-type> |
-  // -------------------------------------------------------------------------------
-  // | p | <id.run>     | <inverted-start-time> | p | <id.dataset> | <access-type> |
-  // -------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------------
+  // | d | <id.dataset>       | <inverted-start-time> | p | <id.run>          | <access-type> |
+  // ------------------------------------------------------------------------------------------
+  // | p | <id.run>           | <inverted-start-time> | p | <id.dataset>      | <access-type> |
+  // ------------------------------------------------------------------------------------------
   //
   // Stream access from program:
-  // -------------------------------------------------------------------------------
-  // | s | <id.stream>  | <inverted-start-time> | p | <id.run>     | <access-type> |
-  // -------------------------------------------------------------------------------
-  // | p | <id.run>     | <inverted-start-time> | s | <id.stream>  | <access-type> |
-  // -------------------------------------------------------------------------------
+  // ------------------------------------------------------------------------------------------
+  // | s | <id.stream>        | <inverted-start-time> | p | <id.run>          | <access-type> |
+  // ------------------------------------------------------------------------------------------
+  // | p | <id.run>           | <inverted-start-time> | s | <id.stream>       | <access-type> |
+  // ------------------------------------------------------------------------------------------
+  //
+  // View access from program:
+  // ------------------------------------------------------------------------------------------
+  // | s | <id.stream.view>   | <inverted-start-time> | p | <id.run>          | <access-type> |
+  // ------------------------------------------------------------------------------------------
+  // | p | <id.run>           | <inverted-start-time> | s | <id.stream.view>  | <access-type> |
+  // ------------------------------------------------------------------------------------------
 
   private static final Logger LOG = LoggerFactory.getLogger(LineageDataset.class);
   // Column used to store access time
@@ -71,6 +79,7 @@ public class LineageDataset extends AbstractDataset {
   private static final char PROGRAM_MARKER = 'p';
   private static final char FLOWLET_MARKER = 'f';
   private static final char STREAM_MARKER = 's';
+  private static final char VIEW_MARKER = 'v';
   private static final char NONE_MARKER = '0';
 
   private Table accessRegistryTable;
@@ -450,6 +459,9 @@ public class LineageDataset extends AbstractDataset {
       case STREAM_MARKER:
         return Id.Stream.from(splitter.getString(), splitter.getString());
 
+      case VIEW_MARKER:
+        return Id.Stream.View.from(splitter.getString(), splitter.getString(), splitter.getString());
+
       case PROGRAM_MARKER:
         return Id.Program.from(splitter.getString(), splitter.getString(),
                                ProgramType.valueOfCategoryName(splitter.getString()),
@@ -481,7 +493,7 @@ public class LineageDataset extends AbstractDataset {
     return invertTime(RunIds.getTime(RunIds.fromString(run.getId()), TimeUnit.MILLISECONDS));
   }
 
-  private Relation toRelation(Row row) {
+  private Relation toRelation(Row row) throws ConflictException {
     Map<Character, Id> rowInfo = new HashMap<>(4);
 
     MDSKey.Splitter splitter = new MDSKey(row.getRow()).split();
@@ -508,25 +520,39 @@ public class LineageDataset extends AbstractDataset {
     LOG.trace("Got datasetInstance {}", datasetInstance);
     Id.Stream stream = (Id.Stream) rowInfo.get(STREAM_MARKER);
     LOG.trace("Got stream {}", stream);
+    Id.Stream.View view = (Id.Stream.View) rowInfo.get(VIEW_MARKER);
+    LOG.trace("Got view {}", view);
 
     Id.Program program = (Id.Program) rowInfo.get(PROGRAM_MARKER);
     LOG.trace("Got program {}", program);
     Id.NamespacedId component = toComponent(splitter, program);
     LOG.trace("Got component {}", component);
 
-    if (stream == null) {
+    if (datasetInstance != null && stream == null && view == null) {
       return new Relation(datasetInstance,
                           program,
                           accessType,
                           runId,
                           component == null ? ImmutableSet.<Id.NamespacedId>of() : ImmutableSet.of(component));
-    }
+    } else if (stream != null && datasetInstance == null && view == null) {
+      return new Relation(stream,
+                          program,
+                          accessType,
+                          runId,
+                          component == null ? ImmutableSet.<Id.NamespacedId>of() : ImmutableSet.of(component));
 
-    return new Relation(stream,
-                        program,
-                        accessType,
-                        runId,
-                        component == null ? ImmutableSet.<Id.NamespacedId>of() : ImmutableSet.of(component));
+    } else if (view != null && datasetInstance == null && stream == null){
+      return new Relation(view,
+                          program,
+                          accessType,
+                          runId,
+                          component == null ? ImmutableSet.<Id.NamespacedId>of() : ImmutableSet.of(component));
+
+    } else {
+      throw new RuntimeException(String.format("Unable to parse the lineage record to Relation. Dataset: %s, " +
+                                                 "Stream: %s, View: %s. There should be only one non null entity.",
+                                               datasetInstance, stream, view));
+    }
   }
 
   private static final class RowKey {

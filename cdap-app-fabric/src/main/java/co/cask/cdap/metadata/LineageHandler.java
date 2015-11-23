@@ -104,6 +104,28 @@ public class LineageHandler extends AbstractHttpHandler {
   }
 
   @GET
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/lineage")
+  public void viewLineage(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("stream-id") String stream,
+                            @PathParam("view-id") String view,
+                            @QueryParam("start") String startStr,
+                            @QueryParam("end") String endStr,
+                            @QueryParam("levels") @DefaultValue("10") int levels) throws Exception {
+
+    checkLevels(levels);
+    TimeRange range = parseRange(startStr, endStr);
+
+    Id.Stream.View viewId = Id.Stream.View.from(namespaceId, stream, view);
+    Lineage lineage = lineageAdmin.computeLineage(viewId, range.getStart(), range.getEnd(), levels);
+    responder.sendJson(HttpResponseStatus.OK,
+                       LineageSerializer.toLineageRecord(TimeUnit.MILLISECONDS.toSeconds(range.getStart()),
+                                                         TimeUnit.MILLISECONDS.toSeconds(range.getEnd()),
+                                                         lineage),
+                       LineageRecord.class, GSON);
+  }
+
+  @GET
   @Path("/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/metadata")
   public void getAccessesForRun(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,

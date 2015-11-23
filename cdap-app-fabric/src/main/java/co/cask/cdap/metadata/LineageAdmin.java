@@ -106,6 +106,20 @@ public class LineageAdmin {
   }
 
   /**
+   * Computes lineage for a view between given time period.
+   *
+   * @param sourceView view to compute lineage for
+   * @param startMillis start time period
+   * @param endMillis end time period
+   * @param levels number of levels to compute lineage for
+   * @return lineage for sourceView
+   */
+  public Lineage computeLineage(final Id.Stream.View sourceView, long startMillis, long endMillis, int levels)
+    throws NotFoundException {
+    return doComputeLineage(sourceView, startMillis, endMillis, levels);
+  }
+
+  /**
    * @return metadata associated with a run
    */
   public Set<MetadataRecord> getMetadataForRun(Id.Run run) throws NotFoundException {

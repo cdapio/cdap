@@ -90,6 +90,10 @@ public final class LineageSerializer {
       return makeStreamKey((Id.Stream) data);
     }
 
+    if (data instanceof  Id.Stream.View) {
+      return makeViewKey((Id.Stream.View) data);
+    }
+
     throw new IllegalArgumentException("Unknown data object " + data);
   }
 
@@ -99,5 +103,9 @@ public final class LineageSerializer {
 
   private static String makeStreamKey(Id.Stream stream) {
     return Joiner.on('.').join("stream", stream.getNamespaceId(), stream.getId());
+  }
+
+  private static String makeViewKey(Id.Stream.View view) {
+    return Joiner.on('.').join("view", view.getNamespaceId(), view.getStreamId(), view.getId());
   }
 }

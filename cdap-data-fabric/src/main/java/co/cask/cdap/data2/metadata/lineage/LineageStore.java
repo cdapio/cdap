@@ -18,7 +18,6 @@ package co.cask.cdap.data2.metadata.lineage;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -128,6 +127,38 @@ public class LineageStore {
   }
 
   /**
+   * Add a program-view access.
+   *
+   * @param run program run information
+   * @param view view accessed by the program
+   * @param accessType access type
+   * @param accessTimeMillis time of access
+   */
+  public void addAccess(Id.Run run, Id.Stream.View view, AccessType accessType, long accessTimeMillis) {
+    addAccess(run, view, accessType, accessTimeMillis, null);
+  }
+
+  /**
+   * Add a program-view access.
+   *
+   * @param run program run information
+   * @param view view accessed by the program
+   * @param accessType access type
+   * @param accessTimeMillis time of access
+   * @param component program component such as flowlet id, etc.
+   */
+  public void addAccess(final Id.Run run, final Id.Stream.View view,
+                        final AccessType accessType, final long accessTimeMillis,
+                        @Nullable final Id.NamespacedId component) {
+    execute(new TransactionExecutor.Procedure<LineageDataset>() {
+      @Override
+      public void apply(LineageDataset input) throws Exception {
+        input.addAccess(run, view, accessType, accessTimeMillis, component);
+      }
+    });
+  }
+
+  /**
    * @return a set of entities (program and data it accesses) associated with a program run.
    */
   public Set<Id.NamespacedId> getEntitiesForRun(final Id.Run run) {
@@ -173,6 +204,25 @@ public class LineageStore {
       @Override
       public Set<Relation> apply(LineageDataset input) throws Exception {
         return input.getRelations(stream, start, end, filter);
+      }
+    });
+  }
+
+  /**
+   * Fetch program-view access information for a dataset for a given period.
+   *
+   * @param view view for which to fetch access information
+   * @param start start time period
+   * @param end end time period
+   * @param filter filter to be applied on result set
+   * @return program-view access information
+   */
+  public Set<Relation> getRelations(final Id.Stream.View view, final long start, final long end,
+                                    final Predicate<Relation> filter) {
+    return execute(new TransactionExecutor.Function<LineageDataset, Set<Relation>>() {
+      @Override
+      public Set<Relation> apply(LineageDataset input) throws Exception {
+        return input.getRelations(view, start, end, filter);
       }
     });
   }
