@@ -17,8 +17,6 @@
 package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
@@ -40,8 +38,8 @@ import co.cask.cdap.data.stream.StreamInputFormatProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
-import co.cask.cdap.internal.app.runtime.batch.dataset.DataSetOutputFormat;
 import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
+import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
@@ -74,7 +72,6 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   private final WorkflowToken workflowToken;
   private final Metrics userMetrics;
   private final Map<String, Plugin> plugins;
-  private final Map<String, Dataset> outputDatasets;
   private final Map<String, OutputFormatProvider> outputFormatProviders;
   private final TransactionContext txContext;
   private final StreamAdmin streamAdmin;
@@ -117,12 +114,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.spec = spec;
     this.mapperResources = spec.getMapperResources();
     this.reducerResources = spec.getReducerResources();
-
-    // We need to keep track of the output format providers, so that the MR job can use them.
-    // We still need to keep track of outputDatasets, so MapReduceRuntimeService#onFinish can call their
-    // DatasetOutputCommitter#onSuccess.
-    this.outputDatasets = new HashMap<>();
     this.outputFormatProviders = new HashMap<>();
+
     String outputDataSetName = spec.getOutputDataSet();
     if (outputDataSetName != null) {
       setOutput(outputDataSetName);
@@ -217,13 +210,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
 
   @Override
   public void setInput(String inputDatasetName, Dataset dataset) {
-    if (dataset instanceof BatchReadable) {
-      setInput(inputDatasetName, ((BatchReadable) dataset).getSplits());
-    } else if (dataset instanceof InputFormatProvider) {
-      setInput((InputFormatProvider) dataset);
-    } else {
-      throw new IllegalArgumentException("Input dataset must be a BatchReadable or InputFormatProvider.");
-    }
+    setInput(new DatasetInputFormatProvider(inputDatasetName, Collections.<String, String>emptyMap(),
+                                            dataset, null, MapReduceBatchReadableInputFormat.class));
   }
 
   @Override
@@ -242,12 +230,13 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
   @Override
   public void setOutput(String datasetName, Dataset dataset) {
     clearOutputs();
-    addOutput(datasetName, dataset);
+    addOutput(datasetName, new DatasetOutputFormatProvider(datasetName, Collections.<String, String>emptyMap(),
+                                                           dataset, MapReduceBatchWritableOutputFormat.class));
   }
 
   @Override
   public void addOutput(String datasetName) {
-    this.outputDatasets.put(datasetName, null);
+    addOutput(datasetName, Collections.<String, String>emptyMap());
   }
 
   @Override
@@ -256,7 +245,8 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     // compatability for the #setOutput(String, Dataset) method, so delaying the instantiation of this dataset will
     // bring about code complexity without much benefit. Once #setOutput(String, Dataset) is removed, we can postpone
     // this dataset instantiation
-    addOutput(datasetName, getDataset(datasetName, arguments));
+    addOutput(datasetName, new DatasetOutputFormatProvider(datasetName, arguments, getDataset(datasetName, arguments),
+                                                           MapReduceBatchWritableOutputFormat.class));
   }
 
   @Override
@@ -264,76 +254,17 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
     this.outputFormatProviders.put(outputName, outputFormatProvider);
   }
 
-  private void addOutput(String datasetName, Dataset dataset) {
-    if (!(dataset instanceof OutputFormatProvider)) {
-      throw new IllegalArgumentException("Output dataset must be an OutputFormatProvider.");
-    }
-    this.outputDatasets.put(datasetName, dataset);
-  }
-
   private void clearOutputs() {
-    this.outputDatasets.clear();
     this.outputFormatProviders.clear();
   }
 
   /**
-   * Retrieves the output datasets for this MapReduce job.
-   * The returned map is a mapping from a dataset name to the dataset instance
-   * If an output dataset was never specified, an empty map is returned.
-   *
-   * @return the output datasets for the MapReduce job.
-   */
-  public Map<String, Dataset> getOutputDatasets() {
-    // the dataset instance in the entries may be null, so instantiate the Dataset instance if needed, prior to
-    // returning the entries
-    for (Map.Entry<String, Dataset> datasetEntry : this.outputDatasets.entrySet()) {
-      if (datasetEntry.getValue() == null) {
-        datasetEntry.setValue(getDataset(datasetEntry.getKey()));
-      }
-    }
-    return this.outputDatasets;
-  }
-
-  /**
    * Gets the OutputFormatProviders for this MapReduce job.
-   * This is effectively a wrapper around {@link #getOutputDatasets()}, which turns the Datasets into
-   * OutputFormatProviders.
    *
    * @return the OutputFormatProviders for the MapReduce job
    */
   public Map<String, OutputFormatProvider> getOutputFormatProviders() {
-    Map<String, OutputFormatProvider> outputFormatProviders = new HashMap<>();
-
-    for (Map.Entry<String, Dataset> dsEntry : getOutputDatasets().entrySet()) {
-      final String datasetName = dsEntry.getKey();
-      Dataset dataset = dsEntry.getValue();
-
-      OutputFormatProvider outputFormatProvider;
-      // We checked on validation phase that it implements BatchWritable or OutputFormatProvider
-      if (dataset instanceof BatchWritable) {
-        outputFormatProvider = new OutputFormatProvider() {
-          @Override
-          public String getOutputFormatClassName() {
-            return DataSetOutputFormat.class.getName();
-          }
-
-          @Override
-          public Map<String, String> getOutputFormatConfiguration() {
-            return ImmutableMap.of(DataSetOutputFormat.HCONF_ATTR_OUTPUT_DATASET, datasetName);
-          }
-        };
-      } else {
-        // otherwise, dataset must be output format provider
-        outputFormatProvider = (OutputFormatProvider) dataset;
-      }
-      outputFormatProviders.put(datasetName, outputFormatProvider);
-    }
-
-    for (Map.Entry<String, OutputFormatProvider> entry : this.outputFormatProviders.entrySet()) {
-      outputFormatProviders.put(entry.getKey(), entry.getValue());
-    }
-
-    return outputFormatProviders;
+    return ImmutableMap.copyOf(outputFormatProviders);
   }
 
   @Override
@@ -409,6 +340,7 @@ public class BasicMapReduceContext extends AbstractContext implements MapReduceC
       return new StreamInputFormatProvider(getProgram().getId().getNamespace(),
                                            new StreamBatchReadable(URI.create(datasetName)), streamAdmin);
     }
-    return new DatasetInputFormatProvider(datasetName, datasetArgs, splits, this);
+    return new DatasetInputFormatProvider(datasetName, datasetArgs, getDataset(datasetName, datasetArgs),
+                                          splits, MapReduceBatchReadableInputFormat.class);
   }
 }

@@ -20,7 +20,6 @@ import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -478,16 +477,16 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Commit a single output after the MR has finished, if it is an OutputFormatCommitter.
    * @param succeeded whether the run was successful
    * @param datasetName the name of the dataset
-   * @param outputDataset the output dataset or output format provider to commit
+   * @param outputFormatProvider the output format provider to commit
    * @return whether the action was successful (it did not throw an exception)
    */
-  private boolean commitOutput(boolean succeeded, String datasetName, Object outputDataset) {
-    if (outputDataset instanceof DatasetOutputCommitter) {
+  private boolean commitOutput(boolean succeeded, String datasetName, OutputFormatProvider outputFormatProvider) {
+    if (outputFormatProvider instanceof DatasetOutputCommitter) {
       try {
         if (succeeded) {
-          ((DatasetOutputCommitter) outputDataset).onSuccess();
+          ((DatasetOutputCommitter) outputFormatProvider).onSuccess();
         } else {
-          ((DatasetOutputCommitter) outputDataset).onFailure();
+          ((DatasetOutputCommitter) outputFormatProvider).onFailure();
         }
       } catch (Throwable t) {
         LOG.error(String.format("Error from %s method of output dataset %s.",
@@ -511,11 +510,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
           // TODO (CDAP-1952): also, should failure of an output committer change the status of the program run?
           boolean success = succeeded;
-          for (Map.Entry<String, Dataset> dsEntry : context.getOutputDatasets().entrySet()) {
-            if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
-              success = false;
-            }
-          }
           for (Map.Entry<String, OutputFormatProvider> dsEntry : context.getOutputFormatProviders().entrySet()) {
             if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
               success = false;
@@ -572,7 +566,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Map<String, OutputFormatProvider> outputFormatProviders = context.getOutputFormatProviders();
     LOG.debug("Using Datasets as output for MapReduce Job: {}", outputFormatProviders.keySet());
 
-    if (outputFormatProviders.size() == 0) {
+    if (outputFormatProviders.isEmpty()) {
       // user is not going through our APIs to add output; leave the job's output format to user
       return;
     } else if (outputFormatProviders.size() == 1) {
