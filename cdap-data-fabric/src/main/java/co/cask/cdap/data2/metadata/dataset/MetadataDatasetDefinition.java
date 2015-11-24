@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
+import com.google.common.base.Joiner;
 
 import java.io.IOException;
 import java.util.Map;
@@ -31,15 +32,13 @@ import java.util.Map;
 /**
  * Define the Dataset for metadata.
  */
-public class BusinessMetadataDefinition extends AbstractDatasetDefinition<BusinessMetadataDataset, DatasetAdmin> {
+public class MetadataDatasetDefinition extends AbstractDatasetDefinition<MetadataDataset, DatasetAdmin> {
 
-  public static final String METADATA_INDEX_TABLE_NAME = "metadata_index";
-  public static final String INDEXED_COLS = BusinessMetadataDataset.KEYVALUE_COLUMN + "," +
-    BusinessMetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN;
+  private static final String METADATA_INDEX_TABLE_NAME = "metadata_index";
 
   private final DatasetDefinition<? extends IndexedTable, ?> indexedTableDef;
 
-  public BusinessMetadataDefinition(String name, DatasetDefinition<? extends IndexedTable, ?> indexedTableDef) {
+  public MetadataDatasetDefinition(String name, DatasetDefinition<? extends IndexedTable, ?> indexedTableDef) {
     super(name);
     this.indexedTableDef = indexedTableDef;
   }
@@ -51,7 +50,8 @@ public class BusinessMetadataDefinition extends AbstractDatasetDefinition<Busine
     // Define the columns for indexing on the partitionsTable
     DatasetProperties indexedTableProperties = DatasetProperties.builder()
       .addAll(properties.getProperties())
-      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, INDEXED_COLS)
+      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY,
+           Joiner.on(",").join(MetadataDataset.KEYVALUE_COLUMN, MetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN))
       .build();
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())
@@ -68,13 +68,13 @@ public class BusinessMetadataDefinition extends AbstractDatasetDefinition<Busine
   }
 
   @Override
-  public BusinessMetadataDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
-                                 Map<String, String> arguments, ClassLoader classLoader) throws IOException {
+  public MetadataDataset getDataset(DatasetContext datasetContext, DatasetSpecification spec,
+                                    Map<String, String> arguments, ClassLoader classLoader) throws IOException {
 
     IndexedTable indexedTable  = indexedTableDef.getDataset(datasetContext,
                                                             spec.getSpecification(METADATA_INDEX_TABLE_NAME),
                                                             arguments, classLoader);
 
-    return new BusinessMetadataDataset(indexedTable);
+    return new MetadataDataset(indexedTable);
   }
 }

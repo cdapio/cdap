@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -134,6 +135,7 @@ public class ArtifactConfigReader {
   private static final class ArtifactConfigDeserializer implements JsonDeserializer<ArtifactConfig> {
     private static final Type PLUGINS_TYPE = new TypeToken<Set<PluginClass>>() { }.getType();
     private static final Type PARENTS_TYPE = new TypeToken<Set<ArtifactRange>>() { }.getType();
+    private static final Type PROPERTIES_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
     @Override
     public ArtifactConfig deserialize(JsonElement json, Type typeOfT,
@@ -148,8 +150,10 @@ public class ArtifactConfigReader {
       parents = parents == null ? Collections.<ArtifactRange>emptySet() : parents;
       Set<PluginClass> plugins = context.deserialize(obj.get("plugins"), PLUGINS_TYPE);
       plugins = plugins == null ? Collections.<PluginClass>emptySet() : plugins;
+      Map<String, String> properties = context.deserialize(obj.get("properties"), PROPERTIES_TYPE);
+      properties = properties == null ? Collections.<String, String>emptyMap() : properties;
 
-      return new ArtifactConfig(parents, plugins);
+      return new ArtifactConfig(parents, plugins, properties);
     }
   }
 }

@@ -30,7 +30,7 @@ import java.lang.reflect.Type;
 
 /**
  * Codec for {@link Id.NamespacedId}. Currently only supports {@link Id.Application}, {@link Id.Artifact},
- * {@link Id.Program}, {@link Id.DatasetInstance} and {@link Id.Stream}.
+ * {@link Id.Program}, {@link Id.DatasetInstance}, {@link Id.Stream} and {@link Id.Stream.View}.
  * Support for other {@link Id.NamespacedId} objects will be added later.
  */
 public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedId> {
@@ -70,12 +70,14 @@ public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedI
         return deserializeDatasetInstanceId(id);
       case "stream":
         return deserializeStreamId(id);
+      case "view":
+        return deserializeViewId(id);
       case "artifact":
         return deserializeArtifactId(id);
       default:
         throw new UnsupportedOperationException(
           String.format("Unsupported object of type %s found. Deserialization of only %s, %s, %s, %s, %s, %s, %s, " +
-                          "%s, %s, %s, %s is supported.",
+                          "%s, %s, %s, %s, %s is supported.",
                         type,
                         Id.Application.class.getSimpleName(),
                         Id.Program.class.getSimpleName(),
@@ -87,6 +89,7 @@ public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedI
                         Id.Workflow.class.getSimpleName(),
                         Id.DatasetInstance.class.getSimpleName(),
                         Id.Stream.class.getSimpleName(),
+                        Id.Stream.View.class.getSimpleName(),
                         Id.Artifact.class.getSimpleName()
           )
         );
@@ -161,5 +164,11 @@ public class NamespacedIdCodec extends AbstractSpecificationCodec<Id.NamespacedI
     Id.Namespace namespace = deserializeNamespace(id);
     String streamName = id.get("streamName").getAsString();
     return Id.Stream.from(namespace, streamName);
+  }
+
+  private Id.Stream.View deserializeViewId(JsonObject id) {
+    Id.Stream streamId = deserializeStreamId(id.getAsJsonObject("stream"));
+    String view = id.get("id").getAsString();
+    return Id.Stream.View.from(streamId, view);
   }
 }

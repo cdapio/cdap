@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,21 @@
  * the License.
  */
 
-package co.cask.cdap.logging.run;
+angular.module(PKG.name + '.commons')
+  .directive('myEscapeClose', function () {
+    return {
+      restrict: 'A',
+      link: function (scope, element, attr) {
+        var escExpr = attr.myEscapeClose;
 
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.twill.AbstractInMemoryMasterServiceManager;
-
-/**
- * Service for managing app fabric service.
- */
-public class AppFabricServiceManager extends AbstractInMemoryMasterServiceManager {
-
-  @Override
-  public String getDescription() {
-    return Constants.AppFabric.SERVICE_DESCRIPTION;
-  }
-}
+        element.bind('keyup', function (event) {
+          if (event.keyCode === 27) {
+            scope.$apply(function () {
+              scope.$eval(escExpr);
+            });
+            event.preventDefault();
+          }
+        });
+      }
+    };
+  });

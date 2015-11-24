@@ -113,7 +113,7 @@ public class DatasetModulesDeployer {
 
   private ProgramClassLoader getClassLoader(CConfiguration cConf,
                                             Location jarLocation, File unpackDir) throws IOException {
-    BundleJarUtil.unpackProgramJar(jarLocation, unpackDir);
+    BundleJarUtil.unJar(jarLocation, unpackDir);
     // Create a ProgramClassLoader with the CDAP system ClassLoader as filter parent
     return ProgramClassLoader.create(cConf, unpackDir, ApplicationDeployable.class.getClassLoader());
   }

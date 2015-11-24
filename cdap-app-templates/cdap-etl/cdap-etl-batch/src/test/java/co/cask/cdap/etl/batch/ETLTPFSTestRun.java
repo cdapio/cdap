@@ -21,6 +21,7 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.common.ETLStage;
+import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -59,16 +60,19 @@ public class ETLTPFSTestRun extends ETLBatchTestBase {
       Schema.Field.of("l", Schema.of(Schema.Type.LONG))
     );
 
-    ETLStage source = new ETLStage("TPFSParquet",
+    Plugin sourceConfig = new Plugin("TPFSParquet",
       ImmutableMap.of(
         Properties.TimePartitionedFileSetDataset.SCHEMA, recordSchema.toString(),
         Properties.TimePartitionedFileSetDataset.TPFS_NAME, "inputParquet",
         Properties.TimePartitionedFileSetDataset.DELAY, "0d",
         Properties.TimePartitionedFileSetDataset.DURATION, "1h"));
-    ETLStage sink = new ETLStage("TPFSParquet",
+    Plugin sinkConfig = new Plugin("TPFSParquet",
       ImmutableMap.of(
         Properties.TimePartitionedFileSetDataset.SCHEMA, recordSchema.toString(),
         Properties.TimePartitionedFileSetDataset.TPFS_NAME, "outputParquet"));
+
+    ETLStage source = new ETLStage("source", sourceConfig);
+    ETLStage sink = new ETLStage("sink", sinkConfig);
 
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, ImmutableList.<ETLStage>of());
 
@@ -179,19 +183,22 @@ public class ETLTPFSTestRun extends ETLBatchTestBase {
   }
 
   private ETLBatchConfig constructTPFSETLConfig(String filesetName, String newFilesetName, Schema eventSchema) {
-    ETLStage source = new ETLStage("TPFSAvro",
+    Plugin sourceConfig = new Plugin("TPFSAvro",
                                    ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
                                                    eventSchema.toString(),
                                                    Properties.TimePartitionedFileSetDataset.TPFS_NAME, filesetName,
                                                    Properties.TimePartitionedFileSetDataset.DELAY, "0d",
                                                    Properties.TimePartitionedFileSetDataset.DURATION, "2m"));
-    ETLStage sink = new ETLStage("TPFSAvro",
+    Plugin sinkConfig = new Plugin("TPFSAvro",
                                  ImmutableMap.of(Properties.TimePartitionedFileSetDataset.SCHEMA,
                                                  eventSchema.toString(),
                                                  Properties.TimePartitionedFileSetDataset.TPFS_NAME,
                                                  newFilesetName));
 
-    ETLStage transform = new ETLStage("Projection", ImmutableMap.<String, String>of());
-    return new ETLBatchConfig("* * * * *", source, sink, Lists.newArrayList(transform));
+    Plugin transformConfig = new Plugin("Projection", ImmutableMap.<String, String>of());
+
+    return new ETLBatchConfig("* * * * *", new ETLStage("source", sourceConfig),
+                              new ETLStage("sink", sinkConfig),
+                              Lists.newArrayList(new ETLStage("transfor", transformConfig)));
   }
 }

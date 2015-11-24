@@ -20,11 +20,13 @@ import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.WordCountMinusFlowApp;
 import co.cask.cdap.api.Config;
+import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.metadata.MetadataRecord;
@@ -53,10 +55,12 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
   private final Id.Program pingService = Id.Program.from(application, ProgramType.SERVICE, "PingService");
   private final Id.DatasetInstance myds = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "myds");
   private final Id.Stream mystream = Id.Stream.from(Id.Namespace.DEFAULT, "mystream");
+  private final Id.Stream.View myview = Id.Stream.View.from(mystream, "myview");
   private final Id.Application nonExistingApp = Id.Application.from("blah", AppWithDataset.class.getSimpleName());
   private final Id.Service nonExistingService = Id.Service.from(nonExistingApp, "PingService");
   private final Id.DatasetInstance nonExistingDataset = Id.DatasetInstance.from("blah", "myds");
   private final Id.Stream nonExistingStream = Id.Stream.from("blah", "mystream");
+  private final Id.Stream.View nonExistingView = Id.Stream.View.from(nonExistingStream, "myView");
   private final Id.Artifact nonExistingArtifact = Id.Artifact.from(Id.Namespace.from("blah"), "art", "1.0.0");
 
   @Before
@@ -65,6 +69,9 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     AppRequest<Config> appRequest = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
     Assert.assertEquals(200, deploy(application, appRequest).getStatusLine().getStatusCode());
+    FormatSpecification format = new FormatSpecification("csv", null, null);
+    ViewSpecification viewSpec = new ViewSpecification(format, null);
+    createOrUpdateView(myview, viewSpec);
   }
 
   @After
@@ -91,6 +98,9 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     addProperties(mystream, null, BadRequestException.class);
     Map<String, String> streamProperties = ImmutableMap.of("stKey", "stValue", "stK", "stV");
     addProperties(mystream, streamProperties);
+    addProperties(myview, null, BadRequestException.class);
+    Map<String, String> viewProperties = ImmutableMap.of("viewKey", "viewValue", "viewK", "viewV");
+    addProperties(myview, viewProperties);
     // should fail because we haven't provided any metadata in the request
     addProperties(artifactId, null, BadRequestException.class);
     Map<String, String> artifactProperties = ImmutableMap.of("rKey", "rValue", "rK", "rV");
@@ -104,6 +114,8 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(datasetProperties, properties);
     properties = getProperties(mystream);
     Assert.assertEquals(streamProperties, properties);
+    properties = getProperties(myview);
+    Assert.assertEquals(viewProperties, properties);
     properties = getProperties(artifactId);
     Assert.assertEquals(artifactProperties, properties);
 
@@ -112,6 +124,22 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
                                                                       "stKey:stValue", MetadataSearchTargetType.STREAM);
     Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
       new MetadataSearchResultRecord(mystream)
+    );
+    Assert.assertEquals(expected, searchProperties);
+
+    // test search for view
+    searchProperties = searchMetadata(Id.Namespace.DEFAULT,
+                                      "viewKey:viewValue", MetadataSearchTargetType.VIEW);
+    expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(myview)
+    );
+    Assert.assertEquals(expected, searchProperties);
+
+    // test search for artifact
+    searchProperties = searchMetadata(Id.Namespace.DEFAULT,
+                                      "rKey:rValue", MetadataSearchTargetType.ARTIFACT);
+    expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(artifactId)
     );
     Assert.assertEquals(expected, searchProperties);
 
@@ -151,7 +179,10 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(ImmutableMap.of("dK", "dV"), getProperties(myds));
     removeProperty(mystream, "stK");
     Assert.assertEquals(ImmutableMap.of("stKey", "stValue"), getProperties(mystream));
+    removeProperty(myview, "viewK");
+    Assert.assertEquals(ImmutableMap.of("viewKey", "viewValue"), getProperties(myview));
     // cleanup
+    removeProperties(myview);
     removeProperties(application);
     removeProperties(pingService);
     removeProperties(myds);
@@ -161,6 +192,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertTrue(getProperties(pingService).isEmpty());
     Assert.assertTrue(getProperties(myds).isEmpty());
     Assert.assertTrue(getProperties(mystream).isEmpty());
+    Assert.assertTrue(getProperties(myview).isEmpty());
     Assert.assertTrue(getProperties(artifactId).isEmpty());
 
     // non-existing namespace
@@ -168,6 +200,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     addProperties(nonExistingService, serviceProperties, NotFoundException.class);
     addProperties(nonExistingDataset, datasetProperties, NotFoundException.class);
     addProperties(nonExistingStream, streamProperties, NotFoundException.class);
+    addProperties(nonExistingView, streamProperties, NotFoundException.class);
     addProperties(nonExistingArtifact, artifactProperties, NotFoundException.class);
   }
 
@@ -187,6 +220,9 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     addTags(mystream, null, BadRequestException.class);
     Set<String> streamTags = ImmutableSet.of("stTag", "stT");
     addTags(mystream, streamTags);
+    addTags(myview, null, BadRequestException.class);
+    Set<String> viewTags = ImmutableSet.of("viewTag", "viewT");
+    addTags(myview, viewTags);
     Set<String> artifactTags = ImmutableSet.of("rTag", "rT");
     addTags(artifactId, artifactTags);
     // retrieve tags and verify
@@ -202,6 +238,9 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     tags = getTags(mystream);
     Assert.assertTrue(tags.containsAll(streamTags));
     Assert.assertTrue(streamTags.containsAll(tags));
+    tags = getTags(myview);
+    Assert.assertTrue(tags.containsAll(viewTags));
+    Assert.assertTrue(viewTags.containsAll(tags));
     tags = getTags(artifactId);
     Assert.assertTrue(tags.containsAll(artifactTags));
     Assert.assertTrue(artifactTags.containsAll(tags));
@@ -210,6 +249,13 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
       searchMetadata(Id.Namespace.DEFAULT, "stT*", MetadataSearchTargetType.STREAM);
     Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
       new MetadataSearchResultRecord(mystream)
+    );
+    Assert.assertEquals(expected, searchTags);
+    // test search for view
+    searchTags =
+      searchMetadata(Id.Namespace.DEFAULT, "viewT*", MetadataSearchTargetType.VIEW);
+    expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(myview)
     );
     Assert.assertEquals(expected, searchTags);
     // test prefix search, should match stream and service programs
@@ -239,6 +285,8 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(ImmutableSet.of("dTag"), getTags(myds));
     removeTag(mystream, "stT");
     removeTag(mystream, "stTag");
+    removeTag(myview, "viewT");
+    removeTag(myview, "viewTag");
     Assert.assertTrue(getTags(mystream).isEmpty());
     removeTag(artifactId, "rTag");
     removeTag(artifactId, "rT");
@@ -248,6 +296,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     removeTags(pingService);
     removeTags(myds);
     removeTags(mystream);
+    removeTags(myview);
     removeTags(artifactId);
     Assert.assertTrue(getTags(application).isEmpty());
     Assert.assertTrue(getTags(pingService).isEmpty());
@@ -259,6 +308,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     addTags(nonExistingService, serviceTags, NotFoundException.class);
     addTags(nonExistingDataset, datasetTags, NotFoundException.class);
     addTags(nonExistingStream, streamTags, NotFoundException.class);
+    addTags(nonExistingView, streamTags, NotFoundException.class);
     addTags(nonExistingArtifact, artifactTags, NotFoundException.class);
   }
 
@@ -273,21 +323,25 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Map<String, String> serviceProperties = ImmutableMap.of("sKey", "sValue");
     Map<String, String> datasetProperties = ImmutableMap.of("dKey", "dValue");
     Map<String, String> streamProperties = ImmutableMap.of("stKey", "stValue");
+    Map<String, String> viewProperties = ImmutableMap.of("viewKey", "viewValue");
     Map<String, String> artifactProperties = ImmutableMap.of("rKey", "rValue");
     Set<String> appTags = ImmutableSet.of("aTag");
     Set<String> serviceTags = ImmutableSet.of("sTag");
     Set<String> datasetTags = ImmutableSet.of("dTag");
     Set<String> streamTags = ImmutableSet.of("stTag");
+    Set<String> viewTags = ImmutableSet.of("viewTag");
     Set<String> artifactTags = ImmutableSet.of("rTag");
     addProperties(application, appProperties);
     addProperties(pingService, serviceProperties);
     addProperties(myds, datasetProperties);
     addProperties(mystream, streamProperties);
+    addProperties(myview, viewProperties);
     addProperties(artifactId, artifactProperties);
     addTags(application, appTags);
     addTags(pingService, serviceTags);
     addTags(myds, datasetTags);
     addTags(mystream, streamTags);
+    addTags(myview, viewTags);
     addTags(artifactId, artifactTags);
     // verify app
     Set<MetadataRecord> metadataRecords = getMetadata(application);
@@ -313,7 +367,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(myds, metadata.getEntityId());
     Assert.assertEquals(datasetProperties, metadata.getProperties());
     Assert.assertEquals(datasetTags, metadata.getTags());
-    // verify service
+    // verify stream
     metadataRecords = getMetadata(mystream);
     Assert.assertEquals(1, metadataRecords.size());
     metadata = metadataRecords.iterator().next();
@@ -321,6 +375,14 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(mystream, metadata.getEntityId());
     Assert.assertEquals(streamProperties, metadata.getProperties());
     Assert.assertEquals(streamTags, metadata.getTags());
+    // verify view
+    metadataRecords = getMetadata(myview);
+    Assert.assertEquals(1, metadataRecords.size());
+    metadata = metadataRecords.iterator().next();
+    Assert.assertEquals(MetadataScope.USER, metadata.getScope());
+    Assert.assertEquals(myview, metadata.getEntityId());
+    Assert.assertEquals(viewProperties, metadata.getProperties());
+    Assert.assertEquals(viewTags, metadata.getTags());
     // verify artifact
     metadataRecords = getMetadata(artifactId);
     Assert.assertEquals(1, metadataRecords.size());
@@ -365,12 +427,14 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Id.Program nonExistingProgram = Id.Program.from(application, ProgramType.SERVICE, "NonExistingService");
     Id.DatasetInstance nonExistingDataset = Id.DatasetInstance.from(Id.Namespace.DEFAULT, "NonExistingDataset");
     Id.Stream nonExistingStream = Id.Stream.from(Id.Namespace.DEFAULT, "NonExistingStream");
-    Id.Application nonExistingApp = Id.Application.from(Id.Namespace.DEFAULT, "NonExistingStream");
+    Id.Stream.View nonExistingView = Id.Stream.View.from(mystream, "NonExistingView");
+    Id.Application nonExistingApp = Id.Application.from(Id.Namespace.DEFAULT, "NonExistingApp");
 
     Map<String, String> properties = ImmutableMap.of("aKey", "aValue", "aK", "aV");
     addProperties(nonExistingApp, properties, NotFoundException.class);
     addProperties(nonExistingProgram, properties, NotFoundException.class);
     addProperties(nonExistingDataset, properties, NotFoundException.class);
+    addProperties(nonExistingView, properties, NotFoundException.class);
     addProperties(nonExistingStream, properties, NotFoundException.class);
   }
 
@@ -442,6 +506,8 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     removeMetadata(pingService);
     removeMetadata(myds);
     removeMetadata(mystream);
+    removeMetadata(myview);
+    removeMetadata(artifactId);
   }
 
   private void assertCleanState() throws Exception {
@@ -470,5 +536,17 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     MetadataRecord streamMetadata = streamMetadatas.iterator().next();
     Assert.assertTrue(streamMetadata.getProperties().isEmpty());
     Assert.assertTrue(streamMetadata.getTags().isEmpty());
+    Set<MetadataRecord> viewMetadatas = getMetadata(myview);
+    // only user metadata right now.
+    Assert.assertEquals(1, viewMetadatas.size());
+    MetadataRecord viewMetadata = viewMetadatas.iterator().next();
+    Assert.assertTrue(viewMetadata.getProperties().isEmpty());
+    Assert.assertTrue(viewMetadata.getTags().isEmpty());
+    Set<MetadataRecord> artifactMetadatas = getMetadata(artifactId);
+    // only user metadata right now.
+    Assert.assertEquals(1, artifactMetadatas.size());
+    MetadataRecord artifactMetadata = artifactMetadatas.iterator().next();
+    Assert.assertTrue(artifactMetadata.getProperties().isEmpty());
+    Assert.assertTrue(artifactMetadata.getTags().isEmpty());
   }
 }

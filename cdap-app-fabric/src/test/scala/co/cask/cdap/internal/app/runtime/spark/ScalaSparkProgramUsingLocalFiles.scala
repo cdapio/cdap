@@ -38,13 +38,15 @@ class ScalaSparkProgramUsingLocalFiles extends ScalaSparkProgram {
     val localFilePath: String = URI.create(args.get(SparkAppUsingLocalFiles.LOCAL_FILE_RUNTIME_ARG)).getPath
     val taskLocalizationContext: TaskLocalizationContext = context.getTaskLocalizationContext
     val localFiles: util.Collection[File] = taskLocalizationContext.getAllLocalFiles.values()
-    JavaConversions.collectionAsScalaIterable(localFiles).find(_.toURI.getPath == localFilePath).get
+    JavaConversions.collectionAsScalaIterable(localFiles)
+      .find(_.getName == SparkAppUsingLocalFiles.LOCAL_FILE_ALIAS).get
     val sc: spark.SparkContext = context.getOriginalSparkContext.asInstanceOf[spark.SparkContext]
     val fileContents: RDD[String] = sc.textFile(localFilePath, 1)
     val rows: RDD[(Array[Byte], Array[Byte])] = fileContents.map {
       case line =>
-        taskLocalizationContext.getLocalFile(SparkAppUsingLocalFiles.LOCAL_FILE_ALIAS).exists().==(true)
-        taskLocalizationContext.getLocalFile(SparkAppUsingLocalFiles.LOCAL_ARCHIVE_ALIAS).exists().==(true)
+        taskLocalizationContext.getLocalFile(SparkAppUsingLocalFiles.LOCAL_FILE_ALIAS).exists.==(true)
+        taskLocalizationContext.getLocalFile(SparkAppUsingLocalFiles.LOCAL_ARCHIVE_ALIAS).exists.==(true)
+        taskLocalizationContext.getLocalFile(SparkAppUsingLocalFiles.LOCAL_ARCHIVE_ALIAS).isDirectory.==(true)
         val splitter: util.Iterator[String] = Splitter.on("=").omitEmptyStrings().trimResults().split(line).iterator()
         val key: String = splitter.next()
         val value: String = splitter.next()

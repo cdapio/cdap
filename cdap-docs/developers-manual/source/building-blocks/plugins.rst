@@ -131,11 +131,19 @@ the plugins when deploying the artifact. For example, if you are using the RESTf
 
 Plugin Deployment
 =================
+
+.. _plugins-deployment-artifact:
+
 To make plugins available to another artifact (and thus available to any application
 created from one of the artifacts), the plugins must first be packaged in a JAR file.
-After that, the JAR file must be deployed either as a system artifact or a user artifact.
+After that, the JAR file must be deployed either as a :ref:`system artifact 
+<plugins-deployment-system>` or a :ref:`user artifact <plugins-deployment-user>`.
+
 A system artifact is available to users across any namespace. A user artifact is available
-only to users in the namespace to which it is deployed.
+only to users in the namespace to which it is deployed. By design, deploying as a user
+artifact just requires acess to the :ref:`RESTful API <http-restful-api-artifact-add>`,
+while deploying as a system artifact requires access to the filesystem of the CDAP Master.
+This then requires administrator access and permission.
 
 .. _plugins-deployment-packaging:
 
@@ -171,8 +179,8 @@ packages, you would edit the bundler plugin in your pom.xml:
 
 .. _plugins-deployment-system:
 
-Deploying a System Artifact
----------------------------
+Deploying as a System Artifact
+------------------------------
 To deploy the artifact as a system artifact, both the JAR file and a matching configuration file
 must be placed in the appropriate directory.
 
@@ -242,8 +250,8 @@ mode, and ``cdap-master`` services should be restarted in the Distributed mode.
 
 .. _plugins-deployment-user:
 
-Deploying a User Artifact
--------------------------
+Deploying as a User Artifact
+----------------------------
 To deploy the artifact as a user artifact, use the :ref:`RESTful Add Artifact API <http-restful-api-artifact-add>`
 or the CLI. When using the RESTful API, you will need to specify the ``Artifact-Extends`` header. When using
 the CLI, a configuration file exactly like the one described in the

@@ -28,9 +28,9 @@ public class DefaultStageMetrics implements StageMetrics {
   private final Metrics metrics;
   private final String prefix;
 
-  public DefaultStageMetrics(Metrics metrics, PluginID id) {
+  public DefaultStageMetrics(Metrics metrics, String stageName) {
     this.metrics = metrics;
-    this.prefix = id.getMetricsContext() + ".";
+    this.prefix = stageName + ".";
   }
 
   @Override

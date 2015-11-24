@@ -22,9 +22,10 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.data2.metadata.lineage.Lineage;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.lineage.Relation;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -64,15 +65,15 @@ public class LineageAdmin {
 
   private final LineageStore lineageStore;
   private final Store store;
-  private final BusinessMetadataStore businessMetadataStore;
+  private final MetadataStore metadataStore;
   private final EntityValidator entityValidator;
 
   @Inject
-  LineageAdmin(LineageStore lineageStore, Store store, BusinessMetadataStore businessMetadataStore,
+  LineageAdmin(LineageStore lineageStore, Store store, MetadataStore metadataStore,
                EntityValidator entityValidator) {
     this.lineageStore = lineageStore;
     this.store = store;
-    this.businessMetadataStore = businessMetadataStore;
+    this.metadataStore = metadataStore;
     this.entityValidator = entityValidator;
   }
 
@@ -121,8 +122,8 @@ public class LineageAdmin {
     // The entities returned by lineageStore does not contain application
     Id.Application application = run.getProgram().getApplication();
     runEntities.add(application);
-    return businessMetadataStore.getSnapshotBeforeTime(runEntities,
-                                                       RunIds.getTime(runId, TimeUnit.MILLISECONDS));
+    return metadataStore.getSnapshotBeforeTime(MetadataScope.USER, runEntities,
+                                               RunIds.getTime(runId, TimeUnit.MILLISECONDS));
   }
 
   Lineage doComputeLineage(final Id.NamespacedId sourceData, long startMillis, long endMillis, int levels)

@@ -23,6 +23,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.http.AbstractHttpHandler;
@@ -67,7 +68,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private final MetadataAdmin metadataAdmin;
 
   @Inject
-  public MetadataHttpHandler(MetadataAdmin metadataAdmin) {
+  MetadataHttpHandler(MetadataAdmin metadataAdmin) {
     this.metadataAdmin = metadataAdmin;
   }
 
@@ -76,7 +77,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getAppMetadata(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("app-id") String appId) throws NotFoundException {
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(Id.Application.from(namespaceId, appId)),
+    responder.sendJson(HttpResponseStatus.OK,
+                       metadataAdmin.getMetadata(MetadataScope.USER, Id.Application.from(namespaceId, appId)),
                        SET_METADATA_RECORD_TYPE, GSON);
   }
 
@@ -89,7 +91,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                     @PathParam("program-id") String programId) throws NotFoundException {
     Id.Program program = Id.Program.from(Id.Application.from(namespaceId, appId),
                                          ProgramType.valueOfCategoryName(programType), programId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(program),
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(MetadataScope.USER, program),
                        SET_METADATA_RECORD_TYPE, GSON);
   }
 
@@ -100,7 +102,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                   @PathParam("artifact-name") String artifactName,
                                   @PathParam("artifact-version") String artifactVersionStr) throws NotFoundException {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.from(namespaceId), artifactName, artifactVersionStr);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(artifactId),
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(MetadataScope.USER, artifactId),
                        SET_METADATA_RECORD_TYPE, GSON);
   }
 
@@ -110,7 +112,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("dataset-id") String datasetId) throws NotFoundException {
     responder.sendJson(HttpResponseStatus.OK,
-                       metadataAdmin.getMetadata(Id.DatasetInstance.from(namespaceId, datasetId)),
+                       metadataAdmin.getMetadata(MetadataScope.USER, Id.DatasetInstance.from(namespaceId, datasetId)),
                        SET_METADATA_RECORD_TYPE, GSON);
   }
 
@@ -119,7 +121,19 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getStreamMetadata(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespaceId,
                                 @PathParam("stream-id") String streamId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(Id.Stream.from(namespaceId, streamId)),
+    responder.sendJson(HttpResponseStatus.OK,
+                       metadataAdmin.getMetadata(MetadataScope.USER, Id.Stream.from(namespaceId, streamId)),
+                       SET_METADATA_RECORD_TYPE, GSON);
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata")
+  public void getViewMetadata(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespaceId,
+                                @PathParam("stream-id") String streamId,
+                                @PathParam("view-id") String viewId) throws NotFoundException {
+    Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getMetadata(MetadataScope.USER, view),
                        SET_METADATA_RECORD_TYPE, GSON);
   }
 
@@ -128,7 +142,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getAppProperties(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("app-id") String appId) throws NotFoundException {
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getProperties(Id.Application.from(namespaceId, appId)));
+    responder.sendJson(HttpResponseStatus.OK,
+                       metadataAdmin.getProperties(MetadataScope.USER, Id.Application.from(namespaceId, appId)));
   }
 
   @GET
@@ -138,7 +153,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                     @PathParam("artifact-name") String artifactName,
                                     @PathParam("artifact-version") String artifactVersionStr) throws NotFoundException {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.from(namespaceId), artifactName, artifactVersionStr);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getProperties(artifactId));
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getProperties(MetadataScope.USER, artifactId));
   }
 
   @GET
@@ -150,7 +165,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                    @PathParam("program-id") String programId) throws NotFoundException {
     Id.Program program = Id.Program.from(Id.Application.from(namespaceId, appId),
                                          ProgramType.valueOfCategoryName(programType), programId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getProperties(program));
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getProperties(MetadataScope.USER, program));
   }
 
   @GET
@@ -159,7 +174,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                                    @PathParam("namespace-id") String namespaceId,
                                    @PathParam("dataset-id") String datasetId) throws NotFoundException {
     responder.sendJson(HttpResponseStatus.OK,
-                       metadataAdmin.getProperties(Id.DatasetInstance.from(namespaceId, datasetId)));
+                       metadataAdmin.getProperties(MetadataScope.USER,
+                                                   Id.DatasetInstance.from(namespaceId, datasetId)));
   }
 
   @GET
@@ -167,7 +183,18 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void getStreamProperties(HttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespaceId,
                                   @PathParam("stream-id") String streamId) throws NotFoundException {
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getProperties(Id.Stream.from(namespaceId, streamId)));
+    responder.sendJson(HttpResponseStatus.OK,
+                       metadataAdmin.getProperties(MetadataScope.USER, Id.Stream.from(namespaceId, streamId)));
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata/properties")
+  public void getViewProperties(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("stream-id") String streamId,
+                                  @PathParam("view-id") String viewId) throws NotFoundException {
+    Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getProperties(MetadataScope.USER, view));
   }
 
   @POST
@@ -228,6 +255,17 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     responder.sendString(HttpResponseStatus.OK, "Metadata added successfully to " + stream);
   }
 
+  @POST
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata/properties")
+  public void addViewProperties(HttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @PathParam("stream-id") String streamId,
+                                  @PathParam("view-id") String viewId) throws NotFoundException, BadRequestException {
+    Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
+    metadataAdmin.addProperties(view, readMetadata(request));
+    responder.sendString(HttpResponseStatus.OK, "Metadata added successfully to " + view);
+  }
+
   @DELETE
   @Path("/namespaces/{namespace-id}/apps/{app-id}/metadata")
   public void removeAppMetadata(HttpRequest request, HttpResponder responder,
@@ -285,6 +323,18 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     metadataAdmin.removeMetadata(stream);
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata for stream %s deleted successfully.", stream));
+  }
+
+  @DELETE
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata")
+  public void removeViewMetadata(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") String namespaceId,
+                                   @PathParam("stream-id") String streamId,
+                                   @PathParam("view-id") String viewId) throws NotFoundException {
+    Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
+    metadataAdmin.removeMetadata(view);
+    responder.sendString(HttpResponseStatus.OK,
+                         String.format("Metadata for view %s deleted successfully.", view));
   }
 
   @DELETE
@@ -402,6 +452,18 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @DELETE
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata/properties")
+  public void removeViewProperties(HttpRequest request, HttpResponder responder,
+                                      @PathParam("namespace-id") String namespaceId,
+                                      @PathParam("stream-id") String streamId,
+                                      @PathParam("view-id") String viewId) throws NotFoundException {
+    Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
+    metadataAdmin.removeProperties(view);
+    responder.sendString(HttpResponseStatus.OK,
+                         String.format("Metadata properties for view %s deleted successfully.", view));
+  }
+
+  @DELETE
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/metadata/properties/{property}")
   public void removeStreamProperty(HttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespaceId,
@@ -411,6 +473,19 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     metadataAdmin.removeProperties(stream, property);
     responder.sendString(HttpResponseStatus.OK,
                          String.format("Metadata property %s for stream %s deleted successfully.", property, stream));
+  }
+
+  @DELETE
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata/properties/{property}")
+  public void removeViewProperty(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("stream-id") String streamId,
+                                 @PathParam("view-id") String viewId,
+                                 @PathParam("property") String property) throws NotFoundException {
+    Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
+    metadataAdmin.removeProperties(view, property);
+    responder.sendString(HttpResponseStatus.OK,
+                         String.format("Metadata property %s for view %s deleted successfully.", property, view));
   }
 
   @POST
@@ -473,13 +548,25 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                          String.format("Added tags to stream %s successfully.", stream));
   }
 
+  @POST
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata/tags")
+  public void addViewTags(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("stream-id") String streamId,
+                            @PathParam("view-id") String viewId) throws NotFoundException, BadRequestException {
+    Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
+    metadataAdmin.addTags(view, readArray(request));
+    responder.sendString(HttpResponseStatus.OK,
+                         String.format("Added tags to view %s successfully", view));
+  }
+
   @GET
   @Path("/namespaces/{namespace-id}/apps/{app-id}/metadata/tags")
   public void getAppTags(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("app-id") String appId) throws NotFoundException {
     Id.Application app = Id.Application.from(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(app));
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(MetadataScope.USER, app));
   }
 
   @GET
@@ -490,7 +577,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                               @PathParam("artifact-version") String artifactVersionStr)
     throws BadRequestException, NotFoundException {
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.from(namespaceId), artifactName, artifactVersionStr);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(artifactId));
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(MetadataScope.USER, artifactId));
   }
 
   @GET
@@ -502,7 +589,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @PathParam("program-id") String programId) throws NotFoundException {
     Id.Program program = Id.Program.from(Id.Application.from(namespaceId, appId),
                                          ProgramType.valueOfCategoryName(programType), programId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(program));
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(MetadataScope.USER, program));
   }
 
   @GET
@@ -511,7 +598,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("dataset-id") String datasetId) throws NotFoundException {
     Id.DatasetInstance dataset = Id.DatasetInstance.from(namespaceId, datasetId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(dataset));
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(MetadataScope.USER, dataset));
   }
 
   @GET
@@ -520,7 +607,17 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                             @PathParam("namespace-id") String namespaceId,
                             @PathParam("stream-id") String streamId) throws NotFoundException {
     Id.Stream stream = Id.Stream.from(namespaceId, streamId);
-    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(stream));
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(MetadataScope.USER, stream));
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata/tags")
+  public void getViewTags(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace-id") String namespaceId,
+                            @PathParam("stream-id") String streamId,
+                            @PathParam("view-id") String viewId) throws NotFoundException {
+    Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
+    responder.sendJson(HttpResponseStatus.OK, metadataAdmin.getTags(MetadataScope.USER, view));
   }
 
   @DELETE
@@ -635,6 +732,18 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   }
 
   @DELETE
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata/tags")
+  public void removeViewTags(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespaceId,
+                               @PathParam("stream-id") String streamId,
+                               @PathParam("view-id") String viewId) throws NotFoundException {
+    Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
+    metadataAdmin.removeTags(view);
+    responder.sendString(HttpResponseStatus.OK,
+                         String.format("Tags for view %s deleted successfully.", view));
+  }
+
+  @DELETE
   @Path("/namespaces/{namespace-id}/streams/{stream-id}/metadata/tags/{tag}")
   public void removeStreamTag(HttpRequest request, HttpResponder responder,
                               @PathParam("namespace-id") String namespaceId,
@@ -646,17 +755,30 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                          String.format("Tag %s for stream %s deleted successfully.", tag, stream));
   }
 
+  @DELETE
+  @Path("/namespaces/{namespace-id}/streams/{stream-id}/views/{view-id}/metadata/tags/{tag}")
+  public void removeViewTag(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace-id") String namespaceId,
+                              @PathParam("stream-id") String streamId,
+                              @PathParam("view-id") String viewId,
+                              @PathParam("tag") String tag) throws NotFoundException {
+    Id.Stream.View view = Id.Stream.View.from(namespaceId, streamId, viewId);
+    metadataAdmin.removeTags(view, tag);
+    responder.sendString(HttpResponseStatus.OK,
+                         String.format("Tag %s for view %s deleted successfully.", tag, view));
+  }
+
   private Map<String, String> readMetadata(HttpRequest request) throws BadRequestException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
-      throw new BadRequestException("Unable to read business metadata from the request.");
+      throw new BadRequestException("Unable to read metadata properties from the request.");
     }
 
     Map<String, String> metadata;
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
       metadata = GSON.fromJson(reader, MAP_STRING_STRING_TYPE);
     } catch (IOException e) {
-      throw new BadRequestException("Unable to read business metadata from the request.", e);
+      throw new BadRequestException("Unable to read metadata properties from the request.", e);
     }
 
     if (metadata == null) {
@@ -668,18 +790,18 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   private String[] readArray(HttpRequest request) throws BadRequestException {
     ChannelBuffer content = request.getContent();
     if (!content.readable()) {
-      throw new BadRequestException("Unable to read a list of keys from the request.");
+      throw new BadRequestException("Unable to read a list of tags from the request.");
     }
 
     List<String> toReturn;
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8)) {
       toReturn = GSON.fromJson(reader, LIST_STRING_TYPE);
     } catch (IOException e) {
-      throw new BadRequestException("Unable to read a list of keys from the request.", e);
+      throw new BadRequestException("Unable to read a list of tags from the request.", e);
     }
 
     if (toReturn == null) {
-      throw new BadRequestException("Null value was read from the request.");
+      throw new BadRequestException("Null tags were read from the request.");
     }
     return toReturn.toArray(new String[toReturn.size()]);
   }

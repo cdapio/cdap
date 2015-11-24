@@ -69,10 +69,10 @@ function download_includes() {
   # Transforms
   test_an_include 06ddd340ba65bbc068ab3e3cf2f346c1 "${cdap_etl}/transform/LogParserTransform.java"
   test_an_include 7b5386499cc1a646e5be38ab5269d076 "${cdap_etl}/transform/ProjectionTransform.java"
-  test_an_include 38b69087c8a8d58e72a317e78e3b5aea "${cdap_etl}/transform/ScriptFilterTransform.java"
-  test_an_include 8848b0552a3ded6b40007836e9ca7b49 "${cdap_etl}/transform/ScriptTransform.java"
+  test_an_include 480bc77f42c8c155a54deb6377ef05a2 "${cdap_etl}/transform/ScriptFilterTransform.java"
+  test_an_include 0e09daa8c8e7b008f1b19ca1da224884 "${cdap_etl}/transform/ScriptTransform.java"
   test_an_include c3eb291d7b7d4ca0934d151bed882dd3 "${cdap_etl}/transform/StructuredRecordToGenericRecordTransform.java"
-  test_an_include bb92e174cb13f0a450fd8bd1d2526d4a "${cdap_etl}/transform/ValidatorTransform.java"
+  test_an_include a6acefc657d22f22133e931d92cfefa0 "${cdap_etl}/transform/ValidatorTransform.java"
 
   # Shared-Plugins
   test_an_include 4fc697d071e894cfce67dbf62c9709d0 "${cdap_etl}/validator/CoreValidator.java"

@@ -209,9 +209,9 @@ public class BundleJarUtil {
    * @return The {@code destinationFolder}
    * @throws IOException If failed to expand the jar
    */
-  public static File unpackProgramJar(Location jarLocation, File destinationFolder) throws IOException {
+  public static File unJar(Location jarLocation, File destinationFolder) throws IOException {
     Preconditions.checkArgument(jarLocation != null);
-    return unpackProgramJar(Locations.newInputSupplier(jarLocation), destinationFolder);
+    return unJar(Locations.newInputSupplier(jarLocation), destinationFolder);
   }
 
   /**
@@ -222,8 +222,8 @@ public class BundleJarUtil {
    * @return The {@code destinationFolder}
    * @throws IOException If failed to expand the jar
    */
-  public static File unpackProgramJar(InputSupplier<? extends InputStream> inputSupplier,
-                                      File destinationFolder) throws IOException {
+  public static File unJar(InputSupplier<? extends InputStream> inputSupplier,
+                           File destinationFolder) throws IOException {
     Preconditions.checkArgument(inputSupplier != null);
     Preconditions.checkArgument(destinationFolder != null);
     Preconditions.checkArgument(destinationFolder.canWrite());

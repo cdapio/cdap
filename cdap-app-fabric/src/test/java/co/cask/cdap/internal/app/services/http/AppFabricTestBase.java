@@ -39,6 +39,7 @@ import co.cask.cdap.metrics.query.MetricsQueryService;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.tephra.TransactionManager;
@@ -716,7 +717,16 @@ public abstract class AppFabricTestBase {
     return GSON.fromJson(json, new TypeToken<List<ScheduleSpecification>>() { }.getType());
   }
 
-  protected void verifyProgramRuns(final Id.Program program, final String status) throws Exception {
+  protected void verifyNoRunWithStatus(final Id.Program program, final String status) throws Exception {
+    Tasks.waitFor(0, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(program, status).size();
+      }
+    }, 60, TimeUnit.SECONDS);
+  }
+
+  protected void verifyProgramRuns(Id.Program program, String status) throws Exception {
     verifyProgramRuns(program, status, 0);
   }
 
@@ -745,6 +755,10 @@ public abstract class AppFabricTestBase {
 
   protected boolean streamExists(Id.Stream streamID) throws Exception {
     return streamAdmin.exists(streamID);
+  }
+
+  protected boolean createOrUpdateView(Id.Stream.View viewId, ViewSpecification spec) throws Exception {
+    return streamAdmin.createOrUpdateView(viewId, spec);
   }
 
   protected HttpResponse createNamespace(String id) throws Exception {

@@ -17,7 +17,7 @@ package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
@@ -30,7 +30,7 @@ import co.cask.cdap.data.stream.StreamUtils;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdmin;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.explore.client.ExploreFacade;
@@ -90,7 +90,7 @@ public class FileStreamAdmin implements StreamAdmin {
   private final ExploreTableNaming tableNaming;
   private final ViewAdmin viewAdmin;
   private ExploreFacade exploreFacade;
-  private final BusinessMetadataStore businessMds;
+  private final MetadataStore metadataStore;
 
   @Inject
   public FileStreamAdmin(NamespacedLocationFactory namespacedLocationFactory,
@@ -102,7 +102,7 @@ public class FileStreamAdmin implements StreamAdmin {
                          LineageWriter lineageWriter,
                          StreamMetaStore streamMetaStore,
                          ExploreTableNaming tableNaming,
-                         BusinessMetadataStore businessMds,
+                         MetadataStore metadataStore,
                          ViewAdmin viewAdmin) {
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.cConf = cConf;
@@ -114,7 +114,7 @@ public class FileStreamAdmin implements StreamAdmin {
     this.lineageWriter = lineageWriter;
     this.streamMetaStore = streamMetaStore;
     this.tableNaming = tableNaming;
-    this.businessMds = businessMds;
+    this.metadataStore = metadataStore;
     this.viewAdmin = viewAdmin;
   }
 
@@ -399,7 +399,7 @@ public class FileStreamAdmin implements StreamAdmin {
   @Override
   public boolean viewExists(Id.Stream.View viewId) throws Exception {
     if (!exists(viewId.getStream())) {
-      throw new NotFoundException(viewId.getStreamId());
+      throw new StreamNotFoundException(viewId.getStream());
     }
     return viewAdmin.exists(viewId);
   }
@@ -464,7 +464,7 @@ public class FileStreamAdmin implements StreamAdmin {
           }
 
           // Remove metadata for the stream
-          businessMds.removeMetadata(streamId);
+          metadataStore.removeMetadata(streamId);
 
           // Drop the associated views
           List<Id.Stream.View> views = viewAdmin.list(streamId);
