@@ -301,8 +301,8 @@ You can deploy third-party JARs in the same way except the plugin information ne
 :ref:`artifacts`, only snapshot artifacts can be re-deployed without requiring that they
 first be deleted.
 
-Using the RESTful API (note that the version needs to be set explicitly, as the contents of the
-JAR file are uploaded without the filename):
+Using the RESTful API (note that if the artifact version is not in the JAR manifest file,
+it needs to be set explicitly, as the JAR contents are uploaded without the filename):
 
 .. highlight:: console
 
@@ -314,7 +314,7 @@ JAR file are uploaded without the filename):
       -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \\
       -H 'Artifact-Version: 5.1.35' --data-binary @/path/to/mysql-connector-java-5.1.35.jar
 
-Using the CLI (note that the version, if not explicitly set, is derived from the filename):
+Using the CLI (note that the artifact version, if not explicitly set, is derived from the JAR filename):
 
 .. container:: highlight
 
