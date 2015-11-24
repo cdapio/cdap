@@ -120,12 +120,12 @@ Third-Party Plugins
 Sometimes there is a need to use classes in a third-party JAR as plugins. For example, you may want to be able to use
 a JDBC driver as a plugin. In these situations, you have no control over the code, which means you cannot
 annotate the relevant class with the ``@Plugin`` annotation. If this is the case, you can explicitly specify
-the plugins when deploying the artifact. For example, if you are using the RESTful API, you can set the
-``Artifact-Plugins`` header when deploying the artifact::
+the plugins when deploying the artifact. For example, if you are using the RESTful API, you set the
+``Artifact-Plugins`` and ``Artifact-Version`` headers when deploying the artifact::
 
   $ curl -w'\n' localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java \
       -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \
-      --data-binary @mysql-connector-java-5.1.3.jar
+      -H 'Artifact-Version: 5.1.35'  --data-binary @mysql-connector-java-5.1.35.jar
 
 .. _plugins-deployment:
 
@@ -141,7 +141,7 @@ After that, the JAR file must be deployed either as a :ref:`system artifact
 
 A system artifact is available to users across any namespace. A user artifact is available
 only to users in the namespace to which it is deployed. By design, deploying as a user
-artifact just requires acess to the :ref:`RESTful API <http-restful-api-artifact-add>`,
+artifact just requires access to the :ref:`RESTful API <http-restful-api-artifact-add>`,
 while deploying as a system artifact requires access to the filesystem of the CDAP Master.
 This then requires administrator access and permission.
 
@@ -252,9 +252,14 @@ mode, and ``cdap-master`` services should be restarted in the Distributed mode.
 
 Deploying as a User Artifact
 ----------------------------
-To deploy the artifact as a user artifact, use the :ref:`RESTful Add Artifact API <http-restful-api-artifact-add>`
-or the CLI. When using the RESTful API, you will need to specify the ``Artifact-Extends`` header. When using
-the CLI, a configuration file exactly like the one described in the
+To deploy the artifact as a user artifact, use the :ref:`RESTful Add Artifact API 
+<http-restful-api-artifact-add>` or the CLI. 
+
+When using the RESTful API, you will need to specify the ``Artifact-Extends`` header.
+Unless the artifact's version is defined in the manifest file of the JAR file you upload,
+you will also need to specify the ``Artifact-Version`` header.
+
+When using the CLI, a configuration file exactly like the one described in the
 :ref:`Deploying as a System Artifact <plugins-deployment-system>` must be used.
 
 For example, to deploy ``custom-transforms-1.0.0.jar`` using the RESTful API:
@@ -288,14 +293,16 @@ where ``config.json`` contains:
 
 Note that when deploying a user artifact that extends a system artifact,
 you must prefix the parent artifact name with ``'system:'``.
-This is in case there is a user artifact with the same name as the system artifact.
+This is in the event there is a user artifact with the same name as the system artifact.
 If you are extending a user artifact, no prefix is required.
 
-You can deploy third-party JARs in the same way except the plugin information needs to be explicitly listed.
-As described in the documentation on :ref:`artifacts`, only snapshot artifacts can be
-re-deployed without requiring that they first be deleted.
+You can deploy third-party JARs in the same way except the plugin information needs
+:ref:`to be explicitly listed <plugins-third-party>`. As described in the documentation on
+:ref:`artifacts`, only snapshot artifacts can be re-deployed without requiring that they
+first be deleted.
 
-Using the RESTful API:
+Using the RESTful API (note that the version needs to be set explicitly, as the contents of the
+JAR file are uploaded without the filename):
 
 .. highlight:: console
 
@@ -305,9 +312,9 @@ Using the RESTful API:
     |$| curl -w'\\n' localhost:10000/v3/namespaces/default/artifacts/mysql-connector-java \\
       -H 'Artifact-Extends: system:cdap-etl-batch[|version|,\ |version|]/system:cdap-etl-realtime[|version|,\ |version|]' \\
       -H 'Artifact-Plugins: [ { "name": "mysql", "type": "jdbc", "className": "com.mysql.jdbc.Driver" } ]' \\
-      --data-binary @/path/to/mysql-connector-java-5.1.35.jar
+      -H 'Artifact-Version: 5.1.35' --data-binary @/path/to/mysql-connector-java-5.1.35.jar
 
-Using the CLI:
+Using the CLI (note that the version, if not explicitly set, is derived from the filename):
 
 .. container:: highlight
 
