@@ -37,6 +37,7 @@ import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduledRuntime;
@@ -224,7 +225,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     startProgram(programId, 200);
 
     // Workflow should be running
-    waitState(programId, ProgramRunStatus.RUNNING.name());
+    waitState(programId, ProgramStatus.RUNNING.name());
 
     // Get runid for the running Workflow
     String runId = getRunIdOfRunningProgram(programId);
@@ -240,7 +241,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     suspendWorkflow(programId, runId, 200);
 
     // Workflow status hould be SUSPENDED
-    waitState(programId, ProgramRunStatus.SUSPENDED.name());
+    waitState(programId, ProgramStatus.STOPPED.name());
 
     // Meta store information for this Workflow should reflect suspended run
     verifyProgramRuns(programId, "suspended");
@@ -262,7 +263,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     resumeWorkflow(programId, runId, 200);
 
     // Workflow should be running
-    waitState(programId, ProgramRunStatus.RUNNING.name());
+    waitState(programId, ProgramStatus.RUNNING.name());
 
     verifyProgramRuns(programId, "running");
 
@@ -281,7 +282,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     suspendWorkflow(programId, runId, 200);
 
     // Status of the Workflow should be suspended
-    waitState(programId, ProgramRunStatus.SUSPENDED.name());
+    waitState(programId, ProgramStatus.STOPPED.name());
 
     // Store should reflect the suspended status of the Workflow
     verifyProgramRuns(programId, "suspended");
@@ -299,7 +300,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     resumeWorkflow(programId, runId, 200);
 
-    waitState(programId, ProgramRunStatus.RUNNING.name());
+    waitState(programId, ProgramStatus.RUNNING.name());
 
     while (!lastSimpleActionFile.exists()) {
       TimeUnit.SECONDS.sleep(1);
@@ -311,7 +312,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     verifyProgramRuns(programId, "completed");
 
-    waitState(programId, "STOPPED");
+    waitState(programId, ProgramStatus.STOPPED.name());
 
     suspendWorkflow(programId, runId, 404);
 
@@ -358,7 +359,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertTrue(run1DoneFile.createNewFile());
     Assert.assertTrue(run2DoneFile.createNewFile());
 
-    waitState(programId, "STOPPED");
+    waitState(programId, ProgramStatus.STOPPED.name());
     // delete the application
     deleteApp(programId.getApplication(), 200, 60, TimeUnit.SECONDS);
   }
@@ -433,7 +434,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     startProgram(programId);
 
     // Workflow should be running
-    waitState(programId, ProgramRunStatus.RUNNING.name());
+    waitState(programId, ProgramStatus.RUNNING.name());
 
     // Get the runId for the currently running Workflow
     String runId = getRunIdOfRunningProgram(programId);
@@ -456,7 +457,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     startProgram(programId);
 
     // Workflow should be running
-    waitState(programId, ProgramRunStatus.RUNNING.name());
+    waitState(programId, ProgramStatus.RUNNING.name());
 
     // Get the runId for the currently running Workflow
     String newRunId = getRunIdOfRunningProgram(programId);
@@ -485,7 +486,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     stopProgram(programId, 200);
 
     // Wait till the program stop
-    waitState(programId, "STOPPED");
+    waitState(programId, ProgramStatus.STOPPED.name());
 
     // Current endpoint would return 404
     response = getWorkflowCurrentStatus(programId, runId);
@@ -504,7 +505,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     startProgram(programId);
 
     // Wait till the Workflow is running
-    waitState(programId, ProgramRunStatus.RUNNING.name());
+    waitState(programId, ProgramStatus.RUNNING.name());
 
     // Store the new RunRecord for the currently running run
     runId = getRunIdOfRunningProgram(programId);
@@ -580,13 +581,13 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Start the workflow
     startProgram(programId);
-    waitState(programId, "RUNNING");
+    waitState(programId, ProgramStatus.RUNNING.name());
     List<RunRecord> workflowHistoryRuns = getProgramRuns(programId, "running");
     String workflowRunId = workflowHistoryRuns.get(0).getPid();
 
     Id.Program mr1ProgramId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithScopedParameters, ProgramType.MAPREDUCE,
                                               "OneMR");
-    waitState(mr1ProgramId, "RUNNING");
+    waitState(mr1ProgramId, ProgramStatus.RUNNING.name());
     List<RunRecord> oneMRHistoryRuns = getProgramRuns(mr1ProgramId, "running");
 
     String expectedMessage = String.format("Cannot stop the program '%s' started by the Workflow run '%s'. " +
@@ -1106,8 +1107,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInput("input"),
                                              "outputPath", outputPath));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
     List<RunRecord> programRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
     Assert.assertEquals(1, programRuns.size());
@@ -1211,8 +1212,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("firstInput"),
                                              "outputPath", outputPath, "put.in.mapper.initialize", "true"));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
     verifyProgramRuns(workflowId, "failed");
 
@@ -1225,8 +1226,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("secondInput"),
                                              "outputPath", outputPath, "put.in.map", "true"));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
     verifyProgramRuns(workflowId, "failed", 1);
 
@@ -1239,8 +1240,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("thirdInput"),
                                              "outputPath", outputPath, "put.in.reducer.initialize", "true"));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
     verifyProgramRuns(workflowId, "failed", 2);
 
@@ -1253,8 +1254,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("fourthInput"),
                                              "outputPath", outputPath, "put.in.reduce", "true"));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
     verifyProgramRuns(workflowId, "failed", 3);
 
@@ -1265,8 +1266,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("fifthInput"),
                                              "outputPath", outputPath, "closurePutToken", "true"));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
     verifyProgramRuns(workflowId, "failed", 4);
 
@@ -1282,8 +1283,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("sixthInput"),
                                              "outputPath", outputPath));
 
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
     verifyProgramRuns(workflowId, "completed");
 
@@ -1315,8 +1316,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
                                              "wait.file", fileToWait.getAbsolutePath(),
                                              "mapreduce." + WorkflowFailureInForkApp.SECOND_MAPREDUCE_NAME
                                                + ".throw.exception", "true"));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
     verifyProgramRuns(workflowId, "failed");
 

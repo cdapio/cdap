@@ -18,6 +18,7 @@ package co.cask.cdap.app.runtime;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.twill.api.RunId;
 import org.apache.twill.common.Cancellable;
@@ -104,12 +105,19 @@ public interface ProgramController {
 
     private final ProgramRunStatus runStatus;
 
+    private final ProgramStatus programStatus;
+
     State(ProgramRunStatus runStatus) {
       this.runStatus = runStatus;
+      this.programStatus = ProgramRunStatus.RUNNING == runStatus ? ProgramStatus.RUNNING : ProgramStatus.STOPPED;
     }
 
     public ProgramRunStatus getRunStatus() {
       return runStatus;
+    }
+
+    public ProgramStatus getProgramStatus() {
+      return programStatus;
     }
 
     public boolean isDone() {
