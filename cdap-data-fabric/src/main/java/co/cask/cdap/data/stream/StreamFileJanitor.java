@@ -19,13 +19,12 @@ package co.cask.cdap.data.stream;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.store.NamespaceStore;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.Location;
@@ -34,7 +33,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Performs deletion of unused stream files.
@@ -46,23 +44,23 @@ public final class StreamFileJanitor {
   private final StreamAdmin streamAdmin;
   private final NamespacedLocationFactory namespacedLocationFactory;
   private final String streamBaseDirPath;
-  private final NamespaceAdmin namespaceAdmin;
+  private final NamespaceStore namespaceStore;
 
   @Inject
   public StreamFileJanitor(CConfiguration cConf, StreamAdmin streamAdmin,
                            NamespacedLocationFactory namespacedLocationFactory,
-                           AbstractNamespaceClient namespaceClient) {
+                           NamespaceStore namespaceStore) {
     this.streamAdmin = streamAdmin;
     this.streamBaseDirPath = cConf.get(Constants.Stream.BASE_DIR);
     this.namespacedLocationFactory = namespacedLocationFactory;
-    this.namespaceAdmin = namespaceClient;
+    this.namespaceStore = namespaceStore;
   }
 
   /**
    * Performs file cleanup for all streams.
    */
   public void cleanAll() throws Exception {
-    List<NamespaceMeta> namespaces = namespaceAdmin.list();
+    List<NamespaceMeta> namespaces = namespaceStore.list();
 
     for (NamespaceMeta namespace : namespaces) {
       Location streamBaseLocation =

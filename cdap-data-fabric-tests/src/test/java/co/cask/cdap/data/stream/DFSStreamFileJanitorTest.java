@@ -22,10 +22,7 @@ import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.FileContextLocationFactory;
-import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.common.namespace.DefaultNamespacedLocationFactory;
-import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
-import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -42,6 +39,8 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -66,7 +65,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   private static MiniDFSCluster dfsCluster;
   private static StreamFileWriterFactory fileWriterFactory;
   private static StreamCoordinatorClient streamCoordinatorClient;
-  private static AbstractNamespaceClient namespaceClient;
+  private static NamespaceStore namespaceStore;
 
   @BeforeClass
   public static void init() throws IOException {
@@ -112,14 +111,14 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
         protected void configure() {
           // We don't need notification in this test, hence inject an no-op one
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
-          bind(AbstractNamespaceClient.class).to(InMemoryNamespaceClient.class);
+          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
         }
       }
     );
 
     locationFactory = injector.getInstance(LocationFactory.class);
     namespacedLocationFactory = injector.getInstance(NamespacedLocationFactory.class);
-    namespaceClient = injector.getInstance(AbstractNamespaceClient.class);
+    namespaceStore = injector.getInstance(NamespaceStore.class);
     streamAdmin = injector.getInstance(StreamAdmin.class);
     fileWriterFactory = injector.getInstance(StreamFileWriterFactory.class);
     streamCoordinatorClient = injector.getInstance(StreamCoordinatorClient.class);
@@ -148,8 +147,8 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
   }
 
   @Override
-  protected AbstractNamespaceClient getNamespaceClient() {
-    return namespaceClient;
+  protected NamespaceStore getNamespaceStore() {
+    return namespaceStore;
   }
 
   @Override
