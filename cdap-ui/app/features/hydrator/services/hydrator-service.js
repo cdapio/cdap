@@ -31,23 +31,28 @@ class HydratorService {
     let transforms = angular.copy(pipeline.config.transforms)
       .map( node => {
         node.type = artifact.transform;
-        node.id = node.name + '-' + node.type + '-' + this.uuid.v4();
+        if (!node.id) {
+          node.id = node.name + '-' + node.type + '-' + this.uuid.v4();
+        }
         node.icon = this.MyDAGFactory.getIcon(node.name);
         return node;
       });
     let sinks = angular.copy(pipeline.config.sinks)
       .map( node => {
         node.type = artifact.sink;
-        node.id = node.name + '-' + node.type + '-' + this.uuid.v4();
+        if (!node.id) {
+          node.id = node.name + '-' + node.type + '-' + this.uuid.v4();
+        }
         node.icon = this.MyDAGFactory.getIcon(node.name);
         return node;
       });
 
     source.type = artifact.source;
     source.icon = this.MyDAGFactory.getIcon(source.name);
-
+    if (!source.id) {
+      source.id = source.name + '-' + source.type + '-' + this.uuid.v4();
+    }
     // replace with backend id
-    source.id = source.name + '-' + source.type + '-' + this.uuid.v4();
     nodes.push(source);
     nodes = nodes.concat(transforms);
     nodes = nodes.concat(sinks);
