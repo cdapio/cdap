@@ -30,14 +30,17 @@ import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpResponse;
 import co.cask.common.http.ObjectResponse;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
+
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 
 /**
@@ -49,6 +52,8 @@ public class ScheduleClient {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(ScheduleSpecification.class, new ScheduleSpecificationCodec())
     .create();
+
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -132,6 +137,9 @@ public class ScheduleClient {
     if (HttpURLConnection.HTTP_NOT_FOUND == response.getResponseCode()) {
       throw new NotFoundException(schedule);
     }
-    return ObjectResponse.fromJsonBody(response, ProgramStatus.class).getResponseObject().getStatus();
+
+    Map<String, String> responseObject
+      = ObjectResponse.<Map<String, String>>fromJsonBody(response, MAP_STRING_STRING_TYPE, GSON).getResponseObject();
+    return responseObject.get("status");
   }
 }

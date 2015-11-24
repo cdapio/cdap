@@ -24,6 +24,7 @@ import com.google.common.collect.Iterables;
 
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.Vector;
 
 /**
  * Uniquely identifies a particular instance of an element.
@@ -63,6 +64,7 @@ public abstract class EntityId implements IdCompatible {
   private static final String IDSTRING_PART_SEPARATOR = ".";
 
   private final EntityType entity;
+  private Vector<EntityId> hierarchy;
 
   protected EntityId(EntityType entity) {
     this.entity = entity;
@@ -162,5 +164,19 @@ public abstract class EntityId implements IdCompatible {
 
   private static String remaining(Iterator<String> iterator) {
     return Joiner.on(IDSTRING_PART_SEPARATOR).join(iterator);
+  }
+
+  public Iterable<EntityId> getHierarchy() {
+    if (hierarchy == null) {
+      Vector<EntityId> hierarchy = new Vector<>();
+      EntityId current = this;
+      while (current instanceof ParentedId) {
+        hierarchy.insertElementAt(current, 0);
+        current = ((ParentedId) current).getParent();
+      }
+      hierarchy.insertElementAt(current, 0);
+      this.hierarchy = hierarchy;
+    }
+    return hierarchy;
   }
 }

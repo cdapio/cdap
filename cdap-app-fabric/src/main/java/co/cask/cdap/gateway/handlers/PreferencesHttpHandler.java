@@ -22,13 +22,12 @@ import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.HttpResponder;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import javax.ws.rs.DELETE;
@@ -43,15 +42,16 @@ import javax.ws.rs.QueryParam;
  */
 @Path(Constants.Gateway.API_VERSION_3)
 public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(PreferencesHttpHandler.class);
 
   private final PreferencesStore preferencesStore;
   private final Store store;
+  private final NamespaceStore nsStore;
 
   @Inject
-  public PreferencesHttpHandler(PreferencesStore preferencesStore, Store store) {
+  PreferencesHttpHandler(PreferencesStore preferencesStore, Store store, NamespaceStore nsStore) {
     this.preferencesStore = preferencesStore;
     this.store = store;
+    this.nsStore = nsStore;
   }
 
   //Instance Level Properties
@@ -87,7 +87,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   public void getNamespacePrefs(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespace, @QueryParam("resolved") String resolved)
     throws Exception {
-    if (store.getNamespace(Id.Namespace.from(namespace)) == null) {
+    if (nsStore.get(Id.Namespace.from(namespace)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
     } else {
       if (resolved != null && resolved.equals("true")) {
@@ -102,7 +102,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @PUT
   public void setNamespacePrefs(HttpRequest request, HttpResponder responder,
                                 @PathParam("namespace-id") String namespace) throws Exception {
-    if (store.getNamespace(Id.Namespace.from(namespace)) == null) {
+    if (nsStore.get(Id.Namespace.from(namespace)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
       return;
     }
@@ -120,7 +120,7 @@ public class PreferencesHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   public void deleteNamespacePrefs(HttpRequest request, HttpResponder responder,
                                    @PathParam("namespace-id") String namespace) throws Exception {
-    if (store.getNamespace(Id.Namespace.from(namespace)) == null) {
+    if (nsStore.get(Id.Namespace.from(namespace)) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace %s not present", namespace));
     } else {
       preferencesStore.deleteProperties(namespace);
