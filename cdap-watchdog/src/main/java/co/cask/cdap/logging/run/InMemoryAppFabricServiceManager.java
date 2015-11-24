@@ -22,7 +22,7 @@ import co.cask.cdap.common.twill.AbstractInMemoryMasterServiceManager;
 /**
  * Service for managing app fabric service.
  */
-public class AppFabricServiceManager extends AbstractInMemoryMasterServiceManager {
+public class InMemoryAppFabricServiceManager extends AbstractInMemoryMasterServiceManager {
 
   @Override
   public String getDescription() {

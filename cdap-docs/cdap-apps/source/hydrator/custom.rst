@@ -443,6 +443,9 @@ of those classes to the "Export-Package" as well. This is to ensure those classe
 visible to the Hadoop MapReduce framework during the plugin execution. Otherwise, the
 execution will typically fail with a ``ClassNotFoundException``.
 
+Plugin Deployment
+-----------------
+
 .. include:: ../../../developers-manual/source/building-blocks/plugins.rst 
-   :start-after: .. _plugins-deployment-packaging:
+   :start-after: .. _plugins-deployment-artifact:
    :end-before:  .. _plugins-use-case:
