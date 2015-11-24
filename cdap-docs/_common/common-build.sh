@@ -109,7 +109,7 @@ GITHUB="github"
 
 # BUILD.rst
 BUILD_RST="BUILD.rst"
-BUILD_RST_HASH="126957968d95aa006b7f0c5a7f2ff1ef"
+BUILD_RST_HASH="d7bac2503dbc69785a7b85be139ac25c"
 
 
 function usage() {
