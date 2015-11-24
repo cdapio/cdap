@@ -44,9 +44,9 @@ class ConfigStore {
         sinks: [],
         transforms: []
       },
-      ui: {
+      connections: [],
+      __ui__: {
         nodes: [],
-        connections: [],
       },
       description: '',
       name: ''
@@ -73,7 +73,7 @@ class ConfigStore {
     return this.state.artifact.name;
   }
   getConnections() {
-    return this.state.ui.connections;
+    return this.state.connections;
   }
   getConfig() {
     return this.state.config;
@@ -82,7 +82,7 @@ class ConfigStore {
     var config = this.getDefaultConfig();
     var artifactTypeExtension = this.GLOBALS.pluginTypes[this.state.artifact.name];
     var nodesMap = {};
-    this.state.ui.nodes.forEach(function(n) {
+    this.state.__ui__.nodes.forEach(function(n) {
       nodesMap[n.id] = n;
     });
 
@@ -115,9 +115,9 @@ class ConfigStore {
       delete nodesMap[id];
     }
     var connections = this.CanvasFactory.orderConnections(
-      angular.copy(this.state.ui.connections),
+      angular.copy(this.state.connections),
       this.state.artifact.name,
-      this.state.ui.nodes
+      this.state.__ui__.nodes
     );
 
     connections.forEach( connection => {
@@ -138,7 +138,7 @@ class ConfigStore {
   }
   getDisplayConfig() {
     var stateCopy = this.getConfigForExport();
-    delete stateCopy.ui.nodes;
+    delete stateCopy.__ui__;
     return stateCopy;
   }
   getDescription() {
@@ -181,19 +181,19 @@ class ConfigStore {
     this.emitChange();
   }
   setNodes(nodes) {
-    this.state.ui.nodes = nodes;
+    this.state.__ui__.nodes = nodes;
   }
   setConnections(connections) {
-    this.state.ui.connections = connections;
+    this.state.connections = connections;
   }
   addNode(node) {
-    this.state.ui.nodes.push(node);
+    this.state.__ui__.nodes.push(node);
   }
   getNodes() {
-    return this.state.ui.nodes;
+    return this.state.__ui__.nodes;
   }
   getNode(nodeId) {
-    var nodes = this.state.ui.nodes;
+    var nodes = this.state.__ui__.nodes;
     var match = nodes.filter( node => node.id === nodeId);
     if (match.length) {
       match = match[0];
