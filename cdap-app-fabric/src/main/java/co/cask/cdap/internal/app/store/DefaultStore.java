@@ -50,7 +50,6 @@ import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
 import co.cask.cdap.proto.AdapterStatus;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowStatistics;
@@ -865,82 +864,6 @@ public class DefaultStore implements Store {
       case WORKFLOW:  return appSpec.getWorkflows().containsKey(id.getId());
       default:        throw new IllegalArgumentException("Unexpected ProgramType " + id.getType());
     }
-  }
-
-  @Override
-  @Nullable
-  public NamespaceMeta createNamespace(final NamespaceMeta metadata) {
-    Preconditions.checkArgument(metadata != null, "Namespace metadata cannot be null.");
-    return appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, NamespaceMeta>() {
-        @Override
-        public NamespaceMeta apply(AppMetadataStore mds) throws Exception {
-          Id.Namespace namespaceId = Id.Namespace.from(metadata.getName());
-          NamespaceMeta existing = mds.getNamespace(namespaceId);
-          if (existing != null) {
-            return existing;
-          }
-          mds.createNamespace(metadata);
-          return null;
-        }
-      }, apps.get());
-  }
-
-  @Override
-  public void updateNamespace(final NamespaceMeta metadata) {
-    Preconditions.checkArgument(metadata != null, "Namespace metadata cannot be null.");
-    appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, Void>() {
-        @Override
-        public Void apply(AppMetadataStore mds) throws Exception {
-          NamespaceMeta existing = mds.getNamespace(Id.Namespace.from(metadata.getName()));
-          if (existing != null) {
-            mds.createNamespace(metadata);
-          }
-          return null;
-        }
-      }, apps.get());
-  }
-
-  @Override
-  @Nullable
-  public NamespaceMeta getNamespace(final Id.Namespace id) {
-    Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
-    return appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, NamespaceMeta>() {
-        @Override
-        public NamespaceMeta apply(AppMetadataStore mds) throws Exception {
-          return mds.getNamespace(id);
-        }
-      }, apps.get());
-  }
-
-  @Override
-  @Nullable
-  public NamespaceMeta deleteNamespace(final Id.Namespace id) {
-    Preconditions.checkArgument(id != null, "Namespace id cannot be null.");
-    return appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, NamespaceMeta>() {
-        @Override
-        public NamespaceMeta apply(AppMetadataStore mds) throws Exception {
-          NamespaceMeta existing = mds.getNamespace(id);
-          if (existing != null) {
-            mds.deleteNamespace(id);
-          }
-          return existing;
-        }
-      }, apps.get());
-  }
-
-  @Override
-  public List<NamespaceMeta> listNamespaces() {
-    return appsTx.get().executeUnchecked(
-      new TransactionExecutor.Function<AppMetadataStore, List<NamespaceMeta>>() {
-        @Override
-        public List<NamespaceMeta> apply(AppMetadataStore mds) throws Exception {
-          return mds.listNamespaces();
-        }
-      }, apps.get());
   }
 
   @Override
