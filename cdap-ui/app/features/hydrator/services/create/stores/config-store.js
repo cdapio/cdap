@@ -44,8 +44,10 @@ class ConfigStore {
         sinks: [],
         transforms: []
       },
-      nodes: [],
       connections: [],
+      __ui__: {
+        nodes: [],
+      },
       description: '',
       name: ''
     };
@@ -76,11 +78,11 @@ class ConfigStore {
   getConfig() {
     return this.state.config;
   }
-  getDisplayConfig() {
+  generateConfigFromState() {
     var config = this.getDefaultConfig();
     var artifactTypeExtension = this.GLOBALS.pluginTypes[this.state.artifact.name];
     var nodesMap = {};
-    this.state.nodes.forEach(function(n) {
+    this.state.__ui__.nodes.forEach(function(n) {
       nodesMap[n.id] = n;
     });
 
@@ -115,7 +117,7 @@ class ConfigStore {
     var connections = this.CanvasFactory.orderConnections(
       angular.copy(this.state.connections),
       this.state.artifact.name,
-      this.state.nodes
+      this.state.__ui__.nodes
     );
 
     connections.forEach( connection => {
@@ -126,10 +128,17 @@ class ConfigStore {
         addPluginToConfig(nodesMap[connection.target], connection.target);
       }
      });
+    return config;
+  }
+  getConfigForExport() {
+    var config = this.generateConfigFromState();
     this.CanvasFactory.pruneProperties(config);
     this.state.config = angular.copy(config);
-    var stateCopy = angular.copy(this.state);
-    delete stateCopy.nodes;
+    return angular.copy(this.state);
+  }
+  getDisplayConfig() {
+    var stateCopy = this.getConfigForExport();
+    delete stateCopy.__ui__;
     return stateCopy;
   }
   getDescription() {
@@ -172,19 +181,19 @@ class ConfigStore {
     this.emitChange();
   }
   setNodes(nodes) {
-    this.state.nodes = nodes;
+    this.state.__ui__.nodes = nodes;
   }
   setConnections(connections) {
     this.state.connections = connections;
   }
   addNode(node) {
-    this.state.nodes.push(node);
+    this.state.__ui__.nodes.push(node);
   }
   getNodes() {
-    return this.state.nodes;
+    return this.state.__ui__.nodes;
   }
   getNode(nodeId) {
-    var nodes = this.state.nodes;
+    var nodes = this.state.__ui__.nodes;
     var match = nodes.filter( node => node.id === nodeId);
     if (match.length) {
       match = match[0];

@@ -15,11 +15,10 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('NodeConfigStore', function(PipelineNodeConfigDispatcher, $q, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, ConfigStore, ConfigActionsFactory) {
+  .service('NodeConfigStore', function(PipelineNodeConfigDispatcher, $q, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, ConfigStore, DetailNonRunsStore, ConfigActionsFactory) {
 
-    var dispatcher = PipelineNodeConfigDispatcher.getDispatcher();
+    var dispatcher;
     this.changeListeners = [];
-    this.ConfigStore = ConfigStore;
     this.setDefaults = function() {
       this.state = {
         plugin: {},
@@ -58,13 +57,28 @@ angular.module(PKG.name + '.feature.hydrator')
       });
     };
 
-    dispatcher.register('onPluginChange', this.setState.bind(this));
-    dispatcher.register('onPluginRemove', function() {
-      this.setDefaults();
-      this.emitChange();
-    }.bind(this));
-    dispatcher.register('onReset', this.setDefaults.bind(this));
-    dispatcher.register('onPluginSave', this.setPlugin.bind(this));
+    this.reset = function() {
+      // This is done here as NodeConfigStore is being reused between create and view pipelines states.
+      // So we need to destroy the dispatcher updating all listeners of the store so when we switch states
+      // one does not get notified if out of context.
+      PipelineNodeConfigDispatcher.destroyDispatcher();
+      this.changeListeners = [];
+    };
+    this.init = function() {
+      if ($state.includes('hydrator.create.**')) {
+        this.ConfigStore = ConfigStore;
+      } else if ($state.includes('hydrator.detail.**')) {
+        this.ConfigStore = DetailNonRunsStore;
+      }
+      dispatcher = PipelineNodeConfigDispatcher.getDispatcher();
+      dispatcher.register('onPluginChange', this.setState.bind(this));
+      dispatcher.register('onPluginRemove', function() {
+        this.setDefaults();
+        this.emitChange();
+      }.bind(this));
+      dispatcher.register('onReset', this.setDefaults.bind(this));
+      dispatcher.register('onPluginSave', this.setPlugin.bind(this));
+    };
 
     function onPluginChange(plugin) {
       if (plugin && this.state.plugin && plugin.id === this.state.plugin.id) {

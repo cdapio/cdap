@@ -15,72 +15,73 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorSettingsController', function(MyAppDAGService, GLOBALS, EventPipe, $timeout, myHelpers, $scope) {
-    this.GLOBALS = GLOBALS;
-    this.metadata = MyAppDAGService.metadata;
-    this.initialCron = MyAppDAGService.metadata.template.schedule.cron || '* * * * *';
-
-    this.cron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '';
-    this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
-    this.saveDisabled = true;
-
-    if (MyAppDAGService.metadata.template.type === GLOBALS.etlBatch) {
-      $scope.$watch(function () {
-        return this.cron;
-      }.bind(this), function () {
-        var initialCron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '';
-        if (this.cron !== initialCron) {
-          this.saveDisabled = false;
-        } else {
-          this.saveDisabled = true;
-        }
-      }.bind(this));
-    }
-
-    function checkCron(cron) {
-      var pattern = /^[0-9\*\s]*$/g;
-      var parse = cron.split('');
-      for (var i = 0; i < parse.length; i++) {
-        if (!parse[i].match(pattern)) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    this.isBasic = checkCron(this.initialCron);
-
-    this.changeScheduler = function (type) {
-      if (type === 'BASIC') {
-        this.initialCron = this.cron;
-        var check = true;
-        if (!checkCron(this.initialCron)) {
-          check = confirm('You have advanced configuration that is not available in basic mode. Are you sure you want to go to basic scheduler?');
-        }
-        if (check) {
-          this.isBasic = true;
-        }
-      } else {
-        this.isBasic = false;
-      }
-    };
-
-    this.save = function () {
-      this.saveDisabled = true;
-      MyAppDAGService.metadata.template.schedule.cron = this.cron;
-      MyAppDAGService.metadata.template.instance = this.instance;
-    };
-
-    // Will be used once we figure out how to reset a bottom panel tab content.
-    this.reset = function() {
-      $timeout(function () {
-        this.initialCron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '* * * * *';
-      }.bind(this));
-
-      this.saveDisabled = true;
-      this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
-
-      EventPipe.emit('plugin.reset');
-    };
+  .controller('HydratorSettingsController', function() {
+    //GLOBALS, EventPipe, $timeout, myHelpers, $scope
+    // this.GLOBALS = GLOBALS;
+    // this.metadata = MyAppDAGService.metadata;
+    // this.initialCron = MyAppDAGService.metadata.template.schedule.cron || '* * * * *';
+    //
+    // this.cron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '';
+    // this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
+    // this.saveDisabled = true;
+    //
+    // if (MyAppDAGService.metadata.template.type === GLOBALS.etlBatch) {
+    //   $scope.$watch(function () {
+    //     return this.cron;
+    //   }.bind(this), function () {
+    //     var initialCron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '';
+    //     if (this.cron !== initialCron) {
+    //       this.saveDisabled = false;
+    //     } else {
+    //       this.saveDisabled = true;
+    //     }
+    //   }.bind(this));
+    // }
+    //
+    // function checkCron(cron) {
+    //   var pattern = /^[0-9\*\s]*$/g;
+    //   var parse = cron.split('');
+    //   for (var i = 0; i < parse.length; i++) {
+    //     if (!parse[i].match(pattern)) {
+    //       return false;
+    //     }
+    //   }
+    //   return true;
+    // }
+    //
+    // this.isBasic = checkCron(this.initialCron);
+    //
+    // this.changeScheduler = function (type) {
+    //   if (type === 'BASIC') {
+    //     this.initialCron = this.cron;
+    //     var check = true;
+    //     if (!checkCron(this.initialCron)) {
+    //       check = confirm('You have advanced configuration that is not available in basic mode. Are you sure you want to go to basic scheduler?');
+    //     }
+    //     if (check) {
+    //       this.isBasic = true;
+    //     }
+    //   } else {
+    //     this.isBasic = false;
+    //   }
+    // };
+    //
+    // this.save = function () {
+    //   this.saveDisabled = true;
+    //   MyAppDAGService.metadata.template.schedule.cron = this.cron;
+    //   MyAppDAGService.metadata.template.instance = this.instance;
+    // };
+    //
+    // // Will be used once we figure out how to reset a bottom panel tab content.
+    // this.reset = function() {
+    //   $timeout(function () {
+    //     this.initialCron = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'schedule', 'cron') || '* * * * *';
+    //   }.bind(this));
+    //
+    //   this.saveDisabled = true;
+    //   this.instance = myHelpers.objectQuery(MyAppDAGService, 'metadata', 'template', 'instance');
+    //
+    //   EventPipe.emit('plugin.reset');
+    // };
 
   });

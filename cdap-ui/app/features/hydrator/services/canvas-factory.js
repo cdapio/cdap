@@ -99,35 +99,6 @@ angular.module(PKG.name + '.feature.hydrator')
       return connections;
     }
 
-    function exportPipeline(detailedConfig, name, nodes, connections) {
-      var defer = $q.defer();
-      if (!name || name === '') {
-        detailedConfig.name = 'noname';
-      } else {
-        detailedConfig.name =  name;
-      }
-
-      detailedConfig.ui = {
-        nodes: angular.copy(nodes),
-        connections: angular.copy(connections)
-      };
-
-      angular.forEach(detailedConfig.ui.nodes, function(node) {
-        delete node._backendProperties;
-      });
-      detailedConfig.ui.connections.forEach(function(conn) {
-        delete conn.visited;
-      });
-
-      var content = JSON.stringify(detailedConfig, null, 4);
-      var blob = new Blob([content], { type: 'application/json'});
-      defer.resolve({
-        name:  detailedConfig.name + '-' + detailedConfig.artifact.name,
-        url: URL.createObjectURL(blob)
-      });
-      return defer.promise;
-    }
-
     function parseImportedJson(configJson, type) {
       var result;
       try {
@@ -256,7 +227,7 @@ angular.module(PKG.name + '.feature.hydrator')
         source = [findTransformThatIsSource(originalConnections)];
         addConnectionsInOrder(source, finalConnections, originalConnections);
       }
-      
+
       addConnectionsInOrder(source[0], finalConnections, originalConnections);
       if (finalConnections.length < originalConnections.length) {
         originalConnections.forEach(function(oConn) {
@@ -340,7 +311,6 @@ angular.module(PKG.name + '.feature.hydrator')
       getNodes: getNodes,
       extractMetadataFromDraft: extractMetadataFromDraft,
       getConnectionsBasedOnNodes: getConnectionsBasedOnNodes,
-      exportPipeline: exportPipeline,
       importPipeline: importPipeline,
       parseImportedJson: parseImportedJson,
       orderConnections: orderConnections,

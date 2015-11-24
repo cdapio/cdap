@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, MyAppDAGService, GLOBALS, MyNodeConfigService) {
+  .controller('PluginEditController', function($scope, PluginConfigFactory, myHelpers, EventPipe, $timeout, GLOBALS) {
 
     var propertiesFromBackend = Object.keys($scope.plugin._backendProperties);
     // Make a local copy that is a mix of properties from backend + config from nodejs
@@ -271,11 +271,6 @@ angular.module(PKG.name + '.feature.hydrator')
     } else {
       this.configfetched = true;
     }
-
-    $scope.$watchCollection('plugin.properties', function() {
-      MyNodeConfigService.notifyPluginSaveListeners($scope.plugin.id);
-      // This should use NodeConfigActionsFactory.savePlugin.
-    });
 
     function setGroups(propertiesFromBackend, res, group) {
       // For each group in groups iterate over its fields in position (order of all fields)

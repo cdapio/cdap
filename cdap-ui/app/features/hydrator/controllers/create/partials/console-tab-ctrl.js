@@ -30,17 +30,3 @@ class ConsoleTabController {
 ConsoleTabController.$inject = ['ConsoleStore'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('ConsoleTabController', ConsoleTabController);
-  // .controller('ConsoleTabController', function(MyConsoleTabService) {
-  //   this.messages = [];
-
-  //   this.onNewMessage = function(message) {
-  //     this.messages.push(message);
-  //   };
-  //   this.onResetMessage = function() {
-  //     this.messages = [];
-  //   };
-
-  //   MyConsoleTabService.registerOnMessageUpdates(this.onNewMessage.bind(this));
-  //   MyConsoleTabService.registerOnResetMessages(this.onResetMessage.bind(this));
-
-  // });

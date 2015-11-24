@@ -15,10 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('DetailRunsStore', function(PipelineDetailDispatcher, $state, myHelpers, GLOBALS, myPipelineCommonApi) {
+  .service('DetailRunsStore', function(PipelineDetailDispatcher, $state, myHelpers, GLOBALS, myPipelineCommonApi, HydratorService) {
 
     var dispatcher = PipelineDetailDispatcher.getDispatcher();
     this.changeListeners = [];
+    this.HydratorService = HydratorService;
     this.setDefaults = function(app) {
       this.state = {
         runs:{
@@ -29,16 +30,10 @@ angular.module(PKG.name + '.feature.hydrator')
         params: app.params || {},
         scheduleParams: app.scheduleParams || {},
         logsParams: app.logsParams || {},
-        configJson: app.configJson || {},
-        cloneConfig: app.cloneConfig || {},
         api: app.api,
         type: app.type,
         metricProgramType: app.metricProgramType,
-        statistics: '',
-        name: app.name,
-        datasets: app.datasets || [],
-        streams: app.streams || [],
-        description: app.description
+        statistics: ''
       };
     };
     this.setDefaults({});
@@ -68,7 +63,9 @@ angular.module(PKG.name + '.feature.hydrator')
       return metricRunId;
     };
     this.getHistory = this.getRuns;
-
+    this.getAppType = function() {
+      return this.state.type;
+    };
     this.getStatus = function() {
       var status;
       if (this.state.runs.list.length === 0) {
@@ -81,12 +78,7 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getRunsCount = function() {
       return this.state.runs.count;
     };
-    this.getDatasets = function() {
-      return this.state.datasets;
-    };
-    this.getStreams = function() {
-      return this.state.streams;
-    };
+
     this.getApi = function() {
       return this.state.api;
     };
@@ -100,30 +92,15 @@ angular.module(PKG.name + '.feature.hydrator')
       var logsParams = angular.extend({runId: this.state.runs.latest.runid}, this.state.logsParams);
       return logsParams;
     };
-    this.getConfigJson = function() {
-      return this.state.configJson;
-    };
-    this.getCloneConfig = function() {
-      return this.state.cloneConfig;
-    };
-    this.getPipelineType = function() {
-      return this.state.type;
-    };
-    this.getPipelineName = function() {
-      return this.state.name;
-    };
-    this.getPipelineDescription = function() {
-      return this.state.description;
-    };
+
     this.getStatistics = function() {
       return this.state.statistics;
     };
-    this.getAppType = function() {
-      return this.state.type;
-    };
+
     this.getMetricProgramType = function() {
       return this.state.metricProgramType;
     };
+
     this.registerOnChangeListener = function(callback) {
       this.changeListeners.push(callback);
     };
@@ -162,13 +139,6 @@ angular.module(PKG.name + '.feature.hydrator')
           programType;
 
       angular.extend(appConfig, app);
-      try {
-        appConfig.configJson = JSON.parse(app.configuration);
-      } catch(e) {
-        appConfig.configJson = e;
-        console.log('ERROR cannot parse configuration');
-        return;
-      }
       appLevelParams = {
         namespace: $state.params.namespace,
         app: app.name
@@ -203,39 +173,21 @@ angular.module(PKG.name + '.feature.hydrator')
           logsLevelParams.programType = program.type.toLowerCase() + 's';
         });
       }
-
-      appConfig.streams = app.streams.map(function (stream) {
-        stream.type = 'Stream';
-        return stream;
-      });
-      appConfig.datasets = app.datasets.map(function (dataset) {
-        dataset.type = 'Dataset';
-        return dataset;
-      });
+      app.type = app.artifact.name;
       appConfig.logsParams = logsLevelParams;
       appConfig.params = appLevelParams;
       appConfig.api = myPipelineCommonApi;
       appConfig.metricProgramType = metricProgramType;
-      appConfig.type = app.artifact.name;
       appConfig.scheduleParams = {
         app: appLevelParams.app,
         schedule: 'etlWorkflow',
         namespace: appLevelParams.namespace
       };
-      appConfig.cloneConfig = {
-        name: app.name,
-        artifact: app.artifact,
-        template: app.artifact.name,
-        description: app.description,
-        config: {
-          source: appConfig.configJson.source,
-          sinks: appConfig.configJson.sinks,
-          transforms: appConfig.configJson.transforms,
-          instances: app.instance,
-          schedule: appConfig.configJson.schedule
-        }
-      };
       this.setDefaults(appConfig);
+    };
+    this.reset = function() {
+      this.setDefaults({});
+      this.changeListeners = [];
     };
 
     dispatcher.register('onRunsChange', this.setRunsState.bind(this));
