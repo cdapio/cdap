@@ -647,6 +647,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(workflowRunRecordProperties.get("AnotherSpark"), anotherSparkHistoryRuns.get(0).getPid());
   }
 
+  @Ignore
   @Test
   public void testWorkflowSchedules() throws Exception {
     // Steps for the test:
