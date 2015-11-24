@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.store;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
+import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.stream.StreamSpecification;
 import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -42,9 +43,11 @@ import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.internal.app.ForwardingApplicationSpecification;
 import co.cask.cdap.internal.app.ForwardingFlowSpecification;
 import co.cask.cdap.internal.app.program.ProgramBundle;
@@ -57,12 +60,12 @@ import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -116,53 +119,44 @@ public class DefaultStore implements Store {
   private final Supplier<WorkflowDataset> workflows;
   private final Supplier<TransactionExecutor> appsTx;
   private final Supplier<TransactionExecutor> workflowsTx;
+  private final MultiThreadDatasetCache dsCache;
 
   @Inject
   public DefaultStore(CConfiguration conf,
                       LocationFactory locationFactory,
                       NamespacedLocationFactory namespacedLocationFactory,
                       final TransactionExecutorFactory txExecutorFactory,
-                      DatasetFramework framework) {
+                      DatasetFramework framework,
+                      TransactionSystemClient txClient) {
     this.configuration = conf;
     this.locationFactory = locationFactory;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.dsFramework = framework;
-    this.apps = Suppliers.memoize(
+    this.dsCache = new MultiThreadDatasetCache(
+      new SystemDatasetInstantiator(framework, null, null), txClient,
+      Id.Namespace.SYSTEM, ImmutableMap.<String, String>of(), null, null);
+    this.apps =
       new Supplier<AppMetadataStore>() {
         @Override
         public AppMetadataStore get() {
-          try {
-            Table mdsTable = DatasetsUtil.getOrCreateDataset(
-              dsFramework, APP_META_INSTANCE_ID, "table",
-              DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
-            return new AppMetadataStore(mdsTable, configuration);
-          } catch (DatasetManagementException | IOException e) {
-            throw Throwables.propagate(e);
-          }
+          Table table = getCachedOrCreateTable(APP_META_INSTANCE_ID.getId());
+          return new AppMetadataStore(table, configuration);
         }
-      }
-    );
+      };
     this.appsTx = new Supplier<TransactionExecutor>() {
       @Override
       public TransactionExecutor get() {
         return txExecutorFactory.createExecutor(ImmutableList.of((TransactionAware) apps.get()));
       }
     };
-    this.workflows = Suppliers.memoize(
+    this.workflows =
       new Supplier<WorkflowDataset>() {
         @Override
         public WorkflowDataset get() {
-          try {
-            Table workflowTable = DatasetsUtil.getOrCreateDataset(
-              dsFramework, WORKFLOW_STATS_INSTANCE_ID, "table",
-              DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
-            return new WorkflowDataset(workflowTable);
-          } catch (DatasetManagementException | IOException e) {
-            throw Throwables.propagate(e);
-          }
+          Table table = getCachedOrCreateTable(WORKFLOW_STATS_INSTANCE_ID.getId());
+          return new WorkflowDataset(table);
         }
-      }
-    );
+      };
     this.workflowsTx = new Supplier<TransactionExecutor>() {
       @Override
       public TransactionExecutor get() {
@@ -179,6 +173,21 @@ public class DefaultStore implements Store {
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
     framework.addInstance(Table.class.getName(), APP_META_INSTANCE_ID, DatasetProperties.EMPTY);
     framework.addInstance(Table.class.getName(), WORKFLOW_STATS_INSTANCE_ID, DatasetProperties.EMPTY);
+  }
+
+  private Table getCachedOrCreateTable(String name) {
+    try {
+      return dsCache.getDataset(name);
+    } catch (DatasetInstantiationException e) {
+      try {
+        DatasetsUtil.getOrCreateDataset(
+          dsFramework, Id.DatasetInstance.from(Id.Namespace.SYSTEM, name), "table",
+          DatasetProperties.EMPTY, DatasetDefinition.NO_ARGUMENTS, null);
+        return dsCache.getDataset(name);
+      } catch (DatasetManagementException | IOException e1) {
+        throw Throwables.propagate(e);
+      }
+    }
   }
 
   @Nullable

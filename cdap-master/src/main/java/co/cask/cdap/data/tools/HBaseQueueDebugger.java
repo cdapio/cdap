@@ -79,6 +79,7 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionNotInProgressException;
+import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicates;
@@ -488,11 +489,14 @@ public class HBaseQueueDebugger extends AbstractIdleService {
         @Singleton
         @Named("defaultStore")
         @SuppressWarnings("unused")
-        public Store getStore(DatasetFramework dsFramework,
-                              CConfiguration cConf, LocationFactory locationFactory,
+        public Store getStore(CConfiguration conf,
+                              LocationFactory locationFactory,
                               NamespacedLocationFactory namespacedLocationFactory,
-                              TransactionExecutorFactory txExecutorFactory) {
-          return new DefaultStore(cConf, locationFactory, namespacedLocationFactory, txExecutorFactory, dsFramework);
+                              final TransactionExecutorFactory txExecutorFactory,
+                              DatasetFramework framework,
+                              TransactionSystemClient txClient) {
+          return new DefaultStore(conf, locationFactory, namespacedLocationFactory,
+                                  txExecutorFactory, framework, txClient);
         }
 
         // This is needed because the LocalApplicationManager
