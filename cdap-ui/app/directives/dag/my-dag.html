@@ -15,7 +15,7 @@
 -->
 
 <!-- Control Buttons -->
-<div class="btn-group btn-group-sm pull-right zoom-control">
+<div class="btn-group btn-group-sm zoom-control">
   <button class="btn btn-default"
           ng-click="MyDAGController.zoomIn()">
     <i class="fa fa-plus"></i>
@@ -30,33 +30,36 @@
 <div class="my-js-dag"
     ng-class="{'disabled': MyDAGController.isDisabled}"
     ng-click="MyDAGController.clearNodeSelection()">
-  <div id="dag-container">
-    <!--
-      The condition on ng-click is to prevent user from being able to click
-      if the DAG is disabled. It will prevent the highlighting of nodes on select
-    -->
-    <div ng-repeat="plugin in nodes" class="box {{plugin.type}}" ng-style="plugin._uiPosition"
-           data-type="{{plugin.type}}"
-           id="{{plugin.id}}"
-           ng-click="MyDAGController.onNodeClick($event, plugin)"
-           ng-class="{'selected': plugin.selected}">
-      <div class="node">
-        <div class="error-node-notification"
-             ng-if="plugin.error"
-             tooltip="{{plugin.error.message}}"
-             tooltip-append-to-body="true"
-             tooltip-class="tooltip-error">
-          <span class="badge" ng-class="{'badge-danger': plugin.warning !== true, 'badge-warning': plugin.warning === true}">
-            <span>{{plugin.requiredFieldCount}}</span>
-          </span>
-        </div>
-        <div class="fa fa-close"
-             ng-if="!MyDAGController.isDisabled"
-             ng-click="MyDAGController.onNodeDelete($event, plugin)"></div>
-        <div class="icon fa {{plugin.icon}}"></div>
-      </div>
-      <div class="plugin-name" ng-bind="plugin.label | myEllipsis: 25"></div>
-    </div>
 
-  </div>
+    <div id="diagram-container">
+      <div id="dag-container" ng-style="MyDAGController.panning.style">
+        <!--
+          The condition on ng-click is to prevent user from being able to click
+          if the DAG is disabled. It will prevent the highlighting of nodes on select
+        -->
+        <div ng-repeat="plugin in nodes" class="box {{plugin.type}}" ng-style="plugin._uiPosition"
+               data-type="{{plugin.type}}"
+               id="{{plugin.id}}"
+               ng-click="MyDAGController.onNodeClick($event, plugin)"
+               ng-class="{'selected': plugin.selected}">
+          <div class="node">
+            <div class="error-node-notification"
+                 ng-if="plugin.error"
+                 tooltip="{{plugin.error.message}}"
+                 tooltip-append-to-body="true"
+                 tooltip-class="tooltip-error">
+              <span class="badge" ng-class="{'badge-danger': plugin.warning !== true, 'badge-warning': plugin.warning === true}">
+                <span>{{plugin.requiredFieldCount}}</span>
+              </span>
+            </div>
+            <div class="fa fa-close"
+                 ng-if="!MyDAGController.isDisabled"
+                 ng-click="MyDAGController.onNodeDelete($event, plugin)"></div>
+            <div class="icon fa {{plugin.icon}}"></div>
+          </div>
+          <div class="plugin-name" ng-bind="plugin.label | myEllipsis: 25"></div>
+        </div>
+
+      </div>
+    </div>
 </div>

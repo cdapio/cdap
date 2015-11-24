@@ -20,13 +20,21 @@
 
 my-dag {
   .zoom-control {
-    z-index: 2000;
+    z-index: 1500;
+    position: absolute;
+    right: 10px;
+    top: 5px;
   }
 
   .my-js-dag {
-    position: relative;
     width: inherit;
     height: inherit;
+
+    #diagram-container {
+      position: relative;
+      width: inherit;
+      height: inherit;
+    }
 
     &.disabled {
       background-image: none;
@@ -163,6 +171,7 @@ my-dag {
     #dag-container {
       height: 100%;
       width: inherit;
+      position: absolute;
     }
 
     .jsplumb-endpoint {

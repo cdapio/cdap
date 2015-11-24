@@ -26,8 +26,18 @@ angular.module(PKG.name + '.commons')
     var transformSinkSettings = angular.copy(MyDAGFactory.getSettings(false).transformSink);
 
     var dragged = false;
+    var canvasDragged = false;
 
     vm.scale = 1.0;
+
+    vm.panning = {
+      style: {
+        'top': 0,
+        'left': 0
+      },
+      top: 0,
+      left: 0
+    };
 
 
     function init() {
@@ -53,6 +63,8 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.zoomOut = function () {
+      if (vm.scale <= 0.2) { return; }
+
       vm.scale -= 0.1;
       setZoom(vm.scale, vm.instance);
     };
@@ -125,19 +137,35 @@ angular.module(PKG.name + '.commons')
 
       init();
 
+      // Making canvas draggable
+      vm.secondInstance = jsPlumb.getInstance();
+      vm.secondInstance.draggable('diagram-container', {
+        stop: function (e) {
+          e.el.style.left = '0px';
+          e.el.style.top = '0px';
+
+          vm.panning.top += e.pos[1];
+          vm.panning.left += e.pos[0];
+
+          vm.panning.style = {
+            'top': vm.panning.top + 'px',
+            'left': vm.panning.left + 'px'
+          };
+        },
+        start: function () { canvasDragged = true; }
+      });
+
       vm.instance.bind('connection', formatConnections);
       vm.instance.bind('connectionDetached', formatConnections);
 
       $scope.$watchCollection('nodes', function () {
         $timeout(function () {
           var nodes = document.querySelectorAll('.box');
+          addEndpoints();
           vm.instance.draggable(nodes, {
-            containment: true,
             start: function () { dragged = true; },
             stop: function () { $timeout(function () { vm.instance.repaintEverything(); }); }
           });
-          addEndpoints();
-
         });
       });
 
@@ -149,11 +177,17 @@ angular.module(PKG.name + '.commons')
       angular.element($window).on('resize', function() {
         vm.instance.repaintEverything();
       });
+
     });
 
     // var selectedNode = null;
 
     vm.clearNodeSelection = function () {
+      if (canvasDragged) {
+        canvasDragged = false;
+        return;
+      }
+
       vm.instance.clearDragSelection();
       angular.forEach($scope.nodes, function (node) {
         node.selected = false;
