@@ -114,6 +114,6 @@ public class TimePartitionedFileSetDatasetParquetSource extends
   @Override
   public void transform(KeyValue<NullWritable, GenericRecord> input,
                         Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(recordTransformer.transform(input.getValue()));
+    emitter.emit(super.getStageName(), recordTransformer.transform(input.getValue()));
   }
 }

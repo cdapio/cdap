@@ -61,7 +61,8 @@ public class SnapshotFileBatchAvroSink extends SnapshotFileBatchSink<AvroKey<Gen
   @Override
   public void transform(StructuredRecord input,
                         Emitter<KeyValue<AvroKey<GenericRecord>, NullWritable>> emitter) throws Exception {
-    emitter.emit(new KeyValue<>(new AvroKey<>(recordTransformer.transform(input)), NullWritable.get()));
+    emitter.emit(super.getStageName(),
+                 new KeyValue<>(new AvroKey<>(recordTransformer.transform(input)), NullWritable.get()));
   }
 
   @Override

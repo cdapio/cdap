@@ -157,11 +157,11 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
       Preconditions.checkState(result.containsKey("isValid"),
                                "Result map returned by isValid function did not contain an entry for 'isValid'");
 
-
+      String stageName = super.getContext().getStageName();
       if ((Boolean) result.get("isValid")) {
-        emitter.emit(input);
+        emitter.emit(stageName, input);
       } else {
-        emitter.emitError(getErrorObject(result, input));
+        emitter.emitError(stageName, getErrorObject(result, input));
         metrics.count("invalid", 1);
         metrics.pipelineCount("invalid", 1);
         LOG.trace("Error code : {} , Error Message {}", result.get("errorCode"), result.get("errorMsg"));

@@ -154,7 +154,7 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
     }
 
     if (output != null) {
-      emitter.emit(output);
+      emitter.emit(getContext().getStageName(), output);
     }
   }
 

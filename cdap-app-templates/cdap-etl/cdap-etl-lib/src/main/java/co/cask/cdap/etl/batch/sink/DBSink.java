@@ -117,7 +117,8 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
       output.set(column, input.get(column));
     }
 
-    emitter.emit(new KeyValue<DBRecord, NullWritable>(new DBRecord(output.build(), columnTypes), null));
+    emitter.emit(stageName(),
+                 new KeyValue<DBRecord, NullWritable>(new DBRecord(output.build(), columnTypes), null));
   }
 
   @Override
@@ -129,6 +130,11 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   @VisibleForTesting
   List<String> getColumns() {
     return columns;
+  }
+
+  @VisibleForTesting
+  String stageName() {
+    return super.getStageName();
   }
 
   private void setResultSetMetadata() throws Exception {

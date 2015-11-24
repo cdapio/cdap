@@ -127,7 +127,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
         .set("headers", headers)
         .set("body", event.getBody())
         .build();
-      emitter.emit(output);
+      emitter.emit(super.getStageName(), output);
     } else {
       // otherwise, it will be a GenericStreamEventData
       @SuppressWarnings("unchecked")
@@ -155,7 +155,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
         String fieldName = field.getName();
         builder.set(fieldName, record.get(fieldName));
       }
-      emitter.emit(builder.build());
+      emitter.emit(super.getStageName(), builder.build());
     }
   }
 

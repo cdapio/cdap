@@ -43,14 +43,6 @@ public class ETLConfig extends Config {
     this.resources = resources;
   }
 
-  public ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms, Resources resources) {
-    this(source, sinks, transforms, new ArrayList<Connection>(), resources);
-  }
-
-  public ETLConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms, Resources resources) {
-    this(source, ImmutableList.of(sink), transforms, new ArrayList<Connection>(), resources);
-  }
-
   public ETLConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms,
                    List<Connection> connections, Resources resources) {
     this(source, ImmutableList.of(sink), transforms, connections, resources);

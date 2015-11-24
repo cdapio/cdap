@@ -92,6 +92,6 @@ public class BatchCubeSink extends BatchWritableSink<StructuredRecord, byte[], C
 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<byte[], CubeFact>> emitter) throws Exception {
-    emitter.emit(new KeyValue<byte[], CubeFact>(null, transform.transform(input)));
+    emitter.emit(super.getStageName(), new KeyValue<byte[], CubeFact>(null, transform.transform(input)));
   }
 }

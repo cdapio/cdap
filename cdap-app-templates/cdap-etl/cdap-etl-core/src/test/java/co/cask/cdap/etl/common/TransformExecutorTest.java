@@ -19,13 +19,13 @@ package co.cask.cdap.etl.common;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.Transformation;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -36,152 +36,162 @@ public class TransformExecutorTest {
 
   @Test
   public void testEmptyTransforms() throws Exception {
-    TransformDetail transformDetail = new TransformDetail("sink", new DoubleToString(),
-                                                          new DefaultStageMetrics(new MockMetrics(), "sink1"), true);
+    MockMetrics mockMetrics = new MockMetrics();
+    Map<String, Transformation> transformationMap = new HashMap<>();
+    transformationMap.put("sink", new DoubleToString("sink"));
+    TransformDetail transformDetail = new TransformDetail(transformationMap, mockMetrics);
+    Map<String, List<String>> connectionsMap = new HashMap<>();
+    connectionsMap.put("source", ImmutableList.of("sink"));
 
-    Map<String, List<TransformDetail>> emptyTransforms = new HashMap<>();
-    emptyTransforms.put("source", ImmutableList.of(transformDetail));
     TransformExecutor executor =
-      new TransformExecutor(emptyTransforms, "source");
-    TransformResponse transformResponse = executor.runOneIteration(1);
-    Iterator sinkIterator = transformResponse.getSinksResults().get("sink").iterator();
-    Assert.assertTrue(sinkIterator.hasNext());
-    // note : sink transform would not be exectued, so the expected is integer and not string
-    Assert.assertEquals(1, sinkIterator.next());
-    executor.resetEmitters();
+      new TransformExecutor(transformDetail, connectionsMap, "source");
+    TransformResponse transformResponse = executor.runOneIteration(1d);
+    Map<String, List<Object>> sinkResult = transformResponse.getSinksResults();
+    Assert.assertTrue(sinkResult.containsKey("sink"));
+    List<Object> sinkResultList = sinkResult.get("sink");
+    Assert.assertEquals(1, sinkResultList.size());
+    // note : sink transform would have exectued, so the expected is string and not integer
+    Assert.assertEquals("1.0", sinkResultList.get(0));
+    executor.resetEmitter();
   }
 
 
   @Test
   public void testTransforms() throws Exception {
     MockMetrics mockMetrics = new MockMetrics();
-    Map<String, List<TransformDetail>> transforms = new HashMap<>();
+    Map<String, Transformation> transformationMap = new HashMap<>();
 
-    TransformDetail intToDoubleTransform =
-      new TransformDetail("transform1", new IntToDouble(), new DefaultStageMetrics(mockMetrics, "transform1"), false);
+    transformationMap.put("transform1", new IntToDouble("transform1"));
+    transformationMap.put("transform2", new Filter("transform2", 100d));
+    transformationMap.put("sink1", new DoubleToString("sink1"));
+    transformationMap.put("sink2", new DoubleToString("sink2"));
 
-    TransformDetail filterTransform =
-      new TransformDetail("transform2", new Filter(100d), new DefaultStageMetrics(mockMetrics, "transform2"), false);
+    TransformDetail transformDetail = new TransformDetail(transformationMap, mockMetrics);
 
-    TransformDetail doubleToStringTransform1 =
-      new TransformDetail("sink1", new DoubleToString(), new DefaultStageMetrics(mockMetrics, "sink1"), true);
+    Map<String, List<String>> connectionsMap = new HashMap<>();
 
-    TransformDetail doubleToStringTransform2 =
-      new TransformDetail("sink2", new DoubleToString(), new DefaultStageMetrics(mockMetrics, "sink2"), true);
+    connectionsMap.put("source", ImmutableList.of("transform1"));
+    connectionsMap.put("transform1", ImmutableList.of("transform2", "sink1"));
+    connectionsMap.put("transform2", ImmutableList.of("sink2"));
 
-    transforms.put("source", ImmutableList.of(intToDoubleTransform));
-    transforms.put("transform1", ImmutableList.of(filterTransform, doubleToStringTransform1));
-    transforms.put("transform2", ImmutableList.of(doubleToStringTransform2));
-
-    TransformExecutor<Integer, String> executor = new TransformExecutor<>(transforms, "source");
+    TransformExecutor<Integer> executor = new TransformExecutor<>(transformDetail, connectionsMap, "source");
 
     TransformResponse transformResponse = executor.runOneIteration(1);
 
-    assertResults(transformResponse.getSinksResults(), 3, 0);
-    assertErrors(transformResponse.getMapTransformIdToErrorEmitter(), true,  3);
+    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("transform1", 3,
+                                                                       "sink1", 3));
+
+    assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("transform2", 3));
+
     Assert.assertEquals(3, mockMetrics.getCount("transform1.records.out"));
     Assert.assertEquals(0, mockMetrics.getCount("transform2.records.out"));
     Assert.assertEquals(3, mockMetrics.getCount("sink1.records.out"));
     Assert.assertEquals(0, mockMetrics.getCount("sink2.records.out"));
-    executor.resetEmitters();
+    executor.resetEmitter();
     mockMetrics.clearMetrics();
 
 
     transformResponse = executor.runOneIteration(10);
 
-    assertResults(transformResponse.getSinksResults(), 3, 1);
-    assertErrors(transformResponse.getMapTransformIdToErrorEmitter(), true,  2);
+    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("transform1", 3,
+                                                                       "transform2", 1,
+                                                                       "sink1", 3,
+                                                                       "sink2", 1));
+
+    assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("transform2", 2));
+
     Assert.assertEquals(3, mockMetrics.getCount("transform1.records.out"));
     Assert.assertEquals(1, mockMetrics.getCount("transform2.records.out"));
     Assert.assertEquals(3, mockMetrics.getCount("sink1.records.out"));
     Assert.assertEquals(1, mockMetrics.getCount("sink2.records.out"));
-    executor.resetEmitters();
+    executor.resetEmitter();
     mockMetrics.clearMetrics();
 
     transformResponse = executor.runOneIteration(100);
 
-    assertResults(transformResponse.getSinksResults(), 3, 2);
-    assertErrors(transformResponse.getMapTransformIdToErrorEmitter(), true,  1);
+    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("transform1", 3,
+                                                                       "transform2", 2,
+                                                                       "sink1", 3,
+                                                                       "sink2", 2));
+
+    assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("transform2", 1));
     Assert.assertEquals(3, mockMetrics.getCount("transform1.records.out"));
     Assert.assertEquals(2, mockMetrics.getCount("transform2.records.out"));
     Assert.assertEquals(3, mockMetrics.getCount("sink1.records.out"));
     Assert.assertEquals(2, mockMetrics.getCount("sink2.records.out"));
-    executor.resetEmitters();
+    executor.resetEmitter();
     mockMetrics.clearMetrics();
 
-    executor.runOneIteration(10);
-    assertErrors(transformResponse.getMapTransformIdToErrorEmitter(), true,  2);
     transformResponse = executor.runOneIteration(2000);
 
-    assertResults(transformResponse.getSinksResults(), 6, 4);
-    assertErrors(transformResponse.getMapTransformIdToErrorEmitter(), false,  0);
-    Assert.assertEquals(6, mockMetrics.getCount("transform1.records.out"));
-    Assert.assertEquals(4, mockMetrics.getCount("transform2.records.out"));
-    Assert.assertEquals(6, mockMetrics.getCount("sink1.records.out"));
-    Assert.assertEquals(4, mockMetrics.getCount("sink2.records.out"));
-    executor.resetEmitters();
+    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("transform1", 3,
+                                                                       "transform2", 3,
+                                                                       "sink1", 3,
+                                                                       "sink2", 3));
+
+    assertResults(transformResponse.getMapTransformIdToErrorEmitter(), new HashMap<String, Integer>());
+    Assert.assertEquals(3, mockMetrics.getCount("transform1.records.out"));
+    Assert.assertEquals(3, mockMetrics.getCount("transform2.records.out"));
+    Assert.assertEquals(3, mockMetrics.getCount("sink1.records.out"));
+    Assert.assertEquals(3, mockMetrics.getCount("sink2.records.out"));
+    executor.resetEmitter();
     mockMetrics.clearMetrics();
   }
 
-  private void assertErrors(Map<String, Collection> mapTransformIdToErrorEmitter, boolean contains, int expected) {
-    Assert.assertEquals(contains, mapTransformIdToErrorEmitter.containsKey("transform2"));
-    if (contains) {
-      Assert.assertEquals(expected, mapTransformIdToErrorEmitter.get("transform2").size());
+  private <T> void assertResults(Map<String, List<T>> results, Map<String, Integer> expectedListsSize) {
+    Assert.assertEquals(expectedListsSize.size(), results.size());
+    for (Map.Entry<String, Integer> entry : expectedListsSize.entrySet()) {
+      Assert.assertTrue(results.containsKey(entry.getKey()));
+      Assert.assertEquals(entry.getValue().intValue(), results.get(entry.getKey()).size());
     }
   }
 
-  private void assertResults(Map<String, DefaultEmitter> results, int expectedSink1Count, int expectedSink2Count) {
-    Assert.assertEquals(2, results.size());
-    DefaultEmitter sink1 = results.get("sink1");
-    Iterator sink1Iterator = sink1.iterator();
-    int sink1Count = 0, sink2Count = 0;
-    while (sink1Iterator.hasNext()) {
-      sink1Iterator.next();
-      sink1Count++;
-    }
 
-    Assert.assertEquals(expectedSink1Count, sink1Count);
-
-    DefaultEmitter sink2 = results.get("sink2");
-    Iterator sink2Iterator = sink2.iterator();
-    while (sink2Iterator.hasNext()) {
-      sink2Iterator.next();
-      sink2Count++;
-    }
-
-    Assert.assertEquals(expectedSink2Count, sink2Count);
-  }
 
   private static class IntToDouble extends Transform<Integer, Double> {
+    private final String stageName;
+
+    IntToDouble(String stageName) {
+      this.stageName = stageName;
+    }
+
     @Override
     public void transform(Integer input, Emitter<Double> emitter) throws Exception {
-      emitter.emit(input.doubleValue());
-      emitter.emit(10 * input.doubleValue());
-      emitter.emit(100 * input.doubleValue());
+      emitter.emit(stageName, input.doubleValue());
+      emitter.emit(stageName, 10 * input.doubleValue());
+      emitter.emit(stageName, 100 * input.doubleValue());
     }
   }
 
   private static class Filter extends Transform<Double, Double> {
     private final Double threshold;
+    private final String stageName;
 
-    public Filter(Double threshold) {
+    public Filter(String stageName, Double threshold) {
+      this.stageName = stageName;
       this.threshold = threshold;
     }
 
     @Override
     public void transform(Double input, Emitter<Double> emitter) throws Exception {
       if (input > threshold) {
-        emitter.emit(input);
+        emitter.emit(stageName, input);
       } else {
-        emitter.emitError(new InvalidEntry<>(100, "less than threshold", input));
+        emitter.emitError(stageName, new InvalidEntry<>(100, "less than threshold", input));
       }
     }
   }
 
   private static class DoubleToString extends Transform<Double, String> {
+    private final String stageName;
+
+    DoubleToString(String stageName) {
+      this.stageName = stageName;
+    }
+
     @Override
     public void transform(Double input, Emitter<String> emitter) throws Exception {
-      emitter.emit(String.valueOf(input));
+      emitter.emit(stageName, String.valueOf(input));
     }
   }
 }

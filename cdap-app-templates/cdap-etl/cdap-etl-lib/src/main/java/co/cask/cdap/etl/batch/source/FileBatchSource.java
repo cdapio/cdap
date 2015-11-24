@@ -168,7 +168,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
       .set("ts", System.currentTimeMillis())
       .set("body", input.getValue().toString())
       .build();
-    emitter.emit(output);
+    emitter.emit(super.getStageName(), output);
   }
 
   @Override

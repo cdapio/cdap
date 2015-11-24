@@ -121,11 +121,12 @@ public class ScriptTransformTest {
     ScriptTransform.Config config = new ScriptTransform.Config(
       "function transform(x, context) { x.intField = x.intField * 1024; return x; }", null, null);
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
-    transform.initialize(new MockTransformContext());
+    MockTransformContext transformContext = new MockTransformContext();
+    transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(RECORD1, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     // check record1
     Assert.assertEquals(SCHEMA, output.getSchema());
@@ -146,7 +147,7 @@ public class ScriptTransformTest {
 
     // check record2
     transform.transform(RECORD2, emitter);
-    output = emitter.getEmitted().get(0);
+    output = emitter.getEmitted(transformContext.getStageName()).get(0);
     Assert.assertEquals(SCHEMA, output.getSchema());
     Assert.assertFalse((Boolean) output.get("booleanField"));
     Assert.assertEquals(-28 * 1024, output.get("intField"));
@@ -178,12 +179,13 @@ public class ScriptTransformTest {
           "purchases", new LookupTableConfig(LookupTableConfig.TableType.DATASET))
       ));
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
-    transform.initialize(new MockTransformContext(
-      Maps.<String, String>newHashMap(), new MockMetrics(), "", new MockLookupProvider(TEST_LOOKUP)));
+    MockTransformContext transformContext = new MockTransformContext(
+      Maps.<String, String>newHashMap(), new MockMetrics(), "", new MockLookupProvider(TEST_LOOKUP));
+    transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(STRING_RECORD, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     // check record1
     Assert.assertEquals(STRING_SCHEMA, output.getSchema());
@@ -200,11 +202,12 @@ public class ScriptTransformTest {
       "function transform(input, context) { return { 'x':input.intField, 'y':input.longField }; }",
       outputSchema.toString(), null);
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
-    transform.initialize(new MockTransformContext());
+    MockTransformContext transformContext = new MockTransformContext();
+    transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(RECORD1, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
     Assert.assertEquals(outputSchema, output.getSchema());
     Assert.assertEquals(28, output.get("x"));
     Assert.assertEquals(99L, output.get("y"));
@@ -283,11 +286,13 @@ public class ScriptTransformTest {
       outputSchema.toString(), null);
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     MockMetrics mockMetrics = new MockMetrics();
-    transform.initialize(new MockTransformContext(new HashMap<String, String>(), mockMetrics, "transform.1."));
+    MockTransformContext transformContext =
+      new MockTransformContext(new HashMap<String, String>(), mockMetrics, "transform.1.");
+    transform.initialize(transformContext);
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
     Assert.assertEquals(outputSchema, output.getSchema());
     Assert.assertTrue(Math.abs(2.71 * 2.71 + 3.14 * 3.14 * 3.14 - (Double) output.get("x")) < 0.000001);
     Assert.assertEquals(1, mockMetrics.getCount("script.transform.count"));

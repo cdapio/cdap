@@ -93,7 +93,7 @@ public class MockTransformContext implements TransformContext {
 
   @Override
   public String getStageName() {
-    return "singleStage";
+    return "mockTransformStage";
   }
 
   @Override

@@ -68,7 +68,8 @@ public class S3ParquetBatchSink extends S3BatchSink<Void, GenericRecord> {
   @Override
   public void transform(StructuredRecord input,
                         Emitter<KeyValue<Void, GenericRecord>> emitter) throws Exception {
-    emitter.emit(new KeyValue<Void, GenericRecord>(null, recordTransformer.transform(input)));
+    emitter.emit(super.getStageName(),
+                 new KeyValue<Void, GenericRecord>(null, recordTransformer.transform(input)));
   }
 
   /**

@@ -72,12 +72,12 @@ public class ScriptFilterTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
-    Assert.assertTrue(emitter.getEmitted().isEmpty());
+    Assert.assertNull(emitter.getEmitted(transformContext.getStageName()));
     emitter.clear();
 
     input = StructuredRecord.builder(schema).set("x", 2).build();
     transform.transform(input, emitter);
-    Assert.assertEquals(input, emitter.getEmitted().iterator().next());
+    Assert.assertEquals(input, emitter.getEmitted(transformContext.getStageName()).iterator().next());
   }
 
   @Test
@@ -143,7 +143,7 @@ public class ScriptFilterTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
-    Assert.assertTrue(emitter.getEmitted().isEmpty());
+    Assert.assertNull(emitter.getEmitted(transformContext.getStageName()));
     emitter.clear();
 
     config.script = "function shouldFilter(input) {\n" +
@@ -155,6 +155,6 @@ public class ScriptFilterTransformTest {
     transformContext = new MockTransformContext(ImmutableMap.<String, String>of());
     transform.initialize(transformContext);
     transform.transform(input, emitter);
-    Assert.assertEquals(input, emitter.getEmitted().iterator().next());
+    Assert.assertEquals(input, emitter.getEmitted(transformContext.getStageName()).iterator().next());
   }
 }

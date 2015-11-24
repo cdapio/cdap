@@ -31,7 +31,7 @@ import javax.annotation.Nullable;
  */
 @Beta
 public abstract class RealtimeSource<T> implements PipelineConfigurable, StageLifecycle<RealtimeContext> {
-
+  private String stageName;
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     // no-op
@@ -45,7 +45,7 @@ public abstract class RealtimeSource<T> implements PipelineConfigurable, StageLi
    */
   @Override
   public void initialize(RealtimeContext context) throws Exception {
-    // no-op
+    this.stageName = context.getStageName();
   }
 
   /**
@@ -59,6 +59,14 @@ public abstract class RealtimeSource<T> implements PipelineConfigurable, StageLi
    */
   @Nullable
   public abstract SourceState poll(Emitter<T> writer, SourceState currentState) throws Exception;
+
+  /**
+   * Returns the stageName associated, only used by sub-class for emitting to a stage.
+   * @return
+   */
+  protected String getStageName() {
+    return stageName;
+  }
 
   /**
    * Destroy the Source.

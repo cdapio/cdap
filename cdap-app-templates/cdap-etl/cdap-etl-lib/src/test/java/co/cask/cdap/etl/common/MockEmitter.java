@@ -20,30 +20,39 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
 import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Mock emitter for unit tests
  */
 public class MockEmitter<T> implements Emitter<T> {
-  private final List<T> emitted = Lists.newArrayList();
-  private final List<InvalidEntry<T>> errors = Lists.newArrayList();
+  private final Map<String, List<T>> emitted = new HashMap<>();
+  private final Map<String, List<InvalidEntry<T>>> errors = new HashMap<>();
 
   @Override
-  public void emit(T value) {
-    emitted.add(value);
+  public void emit(String stageName, T value) {
+    if (!emitted.containsKey(stageName)) {
+      emitted.put(stageName, new ArrayList<T>());
+    }
+    emitted.get(stageName).add(value);
   }
 
   @Override
-  public void emitError(InvalidEntry<T> value) {
-    errors.add(value);
+  public void emitError(String stageName, InvalidEntry<T> value) {
+    if (!errors.containsKey(stageName)) {
+      errors.put(stageName, new ArrayList<InvalidEntry<T>>());
+    }
+    errors.get(stageName).add(value);
   }
 
-  public List<T> getEmitted() {
-    return emitted;
+  public List<T> getEmitted(String stageName) {
+    return emitted.get(stageName);
   }
-  public List<InvalidEntry<T>> getErrors() {
-    return errors;
+  public List<InvalidEntry<T>> getErrors(String stageName) {
+    return errors.get(stageName);
   }
 
   public void clear() {

@@ -17,13 +17,10 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.etl.api.Destroyable;
-import co.cask.cdap.etl.api.StageMetrics;
+import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transformation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.collect.ImmutableList;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,154 +31,98 @@ import java.util.Map;
  * each transform.
  *
  * @param <IN> the type of input object to the first transform
- * @param <OUT> the type of object output by the last transform
+ *
  */
-public class TransformExecutor<IN, OUT> implements Destroyable {
+public class TransformExecutor<IN> implements Destroyable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TransformExecutor.class);
-
-  private final Map<String, List<TransformInformation>> transformInfos;
   private final String start;
+  private final Map<String, List<String>> connectionsMap;
+  private final TransformDetail trackedTransformDetail;
+  private final DefaultEmitter<Object> defaultEmitter;
 
-
-  class TransformInformation {
-    TransformDetail transformDetail;
-    DefaultEmitter emitter;
-    private boolean destroyed;
-
-    TransformInformation(TransformDetail transformDetail, DefaultEmitter emitter) {
-      this.transformDetail = transformDetail;
-      this.emitter = emitter;
-      this.destroyed = false;
-    }
-
-    TransformDetail getTransformDetail() {
-      return transformDetail;
-    }
-
-    DefaultEmitter getEmitter() {
-      return emitter;
-    }
-
-    void reset() {
-      emitter.reset();
-    }
-
-    void destroy() {
-      if (!destroyed) {
-        Transformation transformation = transformDetail.getTransformation();
-        if (transformation instanceof Destroyable) {
-          Destroyables.destroyQuietly((Destroyable) transformation);
-        }
-        destroyed = true;
-      }
-    }
-  }
-
-  public TransformExecutor(Map<String, List<TransformDetail>> transformDetailList, String start) {
-    this.transformInfos = new HashMap<>();
+  public TransformExecutor(TransformDetail transformDetail, Map<String, List<String>> connectionsMap, String start) {
     this.start = start;
-    Map<String, TransformInformation> transformInformationMap = new HashMap<>();
-
-    for (Map.Entry<String, List<TransformDetail>> transformEntry : transformDetailList.entrySet()) {
-      transformInfos.put(transformEntry.getKey(), new ArrayList<TransformInformation>());
-
-      for (TransformDetail transformDetail : transformEntry.getValue()) {
-        if (!transformInformationMap.containsKey(transformDetail.getTransformId())) {
-          transformInformationMap.put(
-            transformDetail.getTransformId(),
-            new TransformInformation(
-              new TransformDetail(transformDetail,
-                                  new TrackedTransform(transformDetail.getTransformation(),
-                                                       transformDetail.getMetrics())),
-              new DefaultEmitter(transformDetail.getMetrics())
-            ));
-
-        }
-
-        transformInfos.get(transformEntry.getKey()).add(transformInformationMap.get(transformDetail.getTransformId()));
-      }
+    this.connectionsMap = connectionsMap;
+    Map<String, Transformation> trackedTransformation = new HashMap<>();
+    for (Map.Entry<String, Transformation> transformationEntry : transformDetail.getTransformationMap().entrySet()) {
+      trackedTransformation.put(transformationEntry.getKey(),
+                                new TrackedTransform<>(transformationEntry.getValue(),
+                                                     new DefaultStageMetrics(transformDetail.getMetrics(),
+                                                                             transformationEntry.getKey())));
     }
+    trackedTransformDetail = new TransformDetail(transformDetail, trackedTransformation);
+    defaultEmitter = new DefaultEmitter<>(transformDetail.getMetrics());
   }
 
   public TransformResponse runOneIteration(IN input) throws Exception {
-    if (transformInfos.isEmpty()) {
-      // Note: this should not happen
-      throw new IllegalArgumentException("No Connections found to either transform or sink..");
+    executeTransfomation(start, ImmutableList.of(input));
+
+    Map<String, List<Object>> terminalNodeEntriesMap = new HashMap<>();
+    Map<String, List<Object>> emitterEntries = defaultEmitter.getEntriesMap();
+    for (String key : emitterEntries.keySet()) {
+      if (!connectionsMap.containsKey(key)) {
+        // terminal node
+        terminalNodeEntriesMap.put(key, emitterEntries.get(key));
+      }
     }
 
-    // just add the input to an emitter..
-    DefaultEmitter sourceEmitter = new DefaultEmitter<>(new StageMetrics() {
-      @Override
-      public void count(String metricName, int delta) {
-
-      }
-
-      @Override
-      public void gauge(String metricName, long value) {
-
-      }
-
-      @Override
-      public void pipelineCount(String metricName, int delta) {
-
-      }
-
-      @Override
-      public void pipelineGauge(String metricName, long value) {
-
-      }
-    });
-    sourceEmitter.emit(input);
-
-    Map<String, DefaultEmitter> sinksOutput = new HashMap<>();
-    Map<String, Collection> transformErrors = new HashMap<>();
-    transformGraph(sinksOutput, sourceEmitter, transformErrors, start);
-    return new TransformResponse(sinksOutput, transformErrors);
+    Map<String, List<InvalidEntry<Object>>> errors = defaultEmitter.getErrors();
+    return new TransformResponse(terminalNodeEntriesMap, errors);
   }
 
-  private void transformGraph(Map<String, DefaultEmitter> sinksOutput,
-                      DefaultEmitter previousEmitter, Map<String, Collection> transformErrors,
-                      String stageName) throws Exception {
-
-    for (TransformInformation transformInformation : transformInfos.get(stageName)) {
-      TransformDetail transformDetail = transformInformation.getTransformDetail();
-      if (!transformDetail.isSink()) {
-        transformInformation.getEmitter().reset();
-        for (Object transformedVal : previousEmitter) {
-          transformDetail.getTransformation().transform(transformedVal, transformInformation.getEmitter());
+  // this will be called with starting stage name
+  // we will get the transformation of it and also check if this is a terminal node
+  // if its not a terminal node
+  //    1) execute the transformation
+  //    2) using the connections map, recursively call the executeTransformation on the next links
+  // else if its a terminal node
+  //    1) if transformation exists, execute the transformation, else go to step-2
+  //    2) return
+  private <T> void executeTransfomation(String stageName, List<T> input) throws Exception {
+    Transformation<T, Object> transformation = trackedTransformDetail.getTransformation(stageName);
+    if (transformation == null) {
+      // could be either source or sink
+      // get the next connections, if they are not empty, its a source
+      List<String> nextStages = connectionsMap.get(stageName);
+      if (nextStages != null) {
+        // source
+        for (String nextStageName : nextStages) {
+          executeTransfomation(nextStageName, input);
         }
-        if (!transformInformation.getEmitter().getErrors().isEmpty()) {
-          transformErrors.put(transformDetail.getTransformId(), transformInformation.getEmitter().getErrors());
-        }
-        transformGraph(sinksOutput, transformInformation.getEmitter(),
-                       transformErrors, transformDetail.getTransformId());
       } else {
-        // if its a sink, add the previous emitter entries to the sink output list
-        if (!sinksOutput.containsKey(transformDetail.getTransformId())) {
-          sinksOutput.put(transformDetail.getTransformId(), transformInformation.getEmitter());
+        // its a sink, add the input to the emitter entries list
+        for (T inputEntry : input) {
+          defaultEmitter.emit(stageName, inputEntry);
         }
-        DefaultEmitter emitter = sinksOutput.get(transformDetail.getTransformId());
-        for (Object previousValue : previousEmitter) {
-          emitter.emit(previousValue);
+      }
+    } else {
+      // has transformation
+      if (input != null) {
+        // has input
+        for (T inputEntry : input) {
+          transformation.transform(inputEntry, defaultEmitter);
+        }
+      }
+      List<String> nextStages = connectionsMap.get(stageName);
+      if (nextStages != null) {
+        // transform
+        for (String nextStage : nextStages) {
+          executeTransfomation(nextStage, defaultEmitter.getEntries(stageName));
         }
       }
     }
   }
 
-  public void resetEmitters() {
-    for (List<TransformInformation> transformInformationList : transformInfos.values()) {
-      for (TransformInformation transformInformation : transformInformationList) {
-        transformInformation.reset();
-      }
-    }
+
+  public void resetEmitter() {
+    defaultEmitter.reset();
   }
 
   @Override
   public void destroy() {
-    for (List<TransformInformation> transformInformationList : transformInfos.values()) {
-      for (TransformInformation transformInformation : transformInformationList) {
-        transformInformation.destroy();
+    for (Transformation transformation : trackedTransformDetail.getTransformationMap().values()) {
+      if (transformation instanceof Destroyable) {
+        Destroyables.destroyQuietly((Destroyable) transformation);
       }
     }
   }

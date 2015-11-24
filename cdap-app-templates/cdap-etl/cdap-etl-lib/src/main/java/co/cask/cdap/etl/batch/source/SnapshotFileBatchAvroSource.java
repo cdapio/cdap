@@ -53,7 +53,7 @@ public class SnapshotFileBatchAvroSource extends SnapshotFileBatchSource<AvroKey
   @Override
   public void transform(KeyValue<AvroKey<GenericRecord>, NullWritable> input,
                         Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(recordTransformer.transform(input.getKey().datum()));
+    emitter.emit(super.getStageName(), recordTransformer.transform(input.getKey().datum()));
   }
 
   @Override

@@ -115,7 +115,7 @@ public class ProjectionTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     Schema expectedSchema = Schema.recordOf("three.projected", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     Assert.assertEquals(expectedSchema, output.getSchema());
@@ -141,7 +141,7 @@ public class ProjectionTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     Schema expectedSchema = Schema.recordOf("three",
       Schema.Field.of("y", Schema.of(Schema.Type.INT)),
@@ -171,7 +171,7 @@ public class ProjectionTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     Schema expectedSchema = Schema.recordOf("record.projected",
       Schema.Field.of("x", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
@@ -190,7 +190,7 @@ public class ProjectionTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(SIMPLE_TYPES_RECORD, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     Schema expectedSchema = Schema.recordOf("record",
       Schema.Field.of("booleanField", Schema.of(Schema.Type.STRING)),
@@ -239,7 +239,7 @@ public class ProjectionTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     Assert.assertEquals(SIMPLE_TYPES_SCHEMA, output.getSchema());
     Assert.assertTrue((Boolean) output.get("booleanField"));
@@ -262,7 +262,7 @@ public class ProjectionTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(SIMPLE_TYPES_RECORD, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     Schema expectedSchema = Schema.recordOf("record",
       Schema.Field.of("booleanField", Schema.of(Schema.Type.BYTES)),
@@ -311,7 +311,7 @@ public class ProjectionTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     Assert.assertEquals(SIMPLE_TYPES_SCHEMA, output.getSchema());
     Assert.assertTrue((Boolean) output.get("booleanField"));
@@ -333,7 +333,7 @@ public class ProjectionTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(SIMPLE_TYPES_RECORD, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     Schema expectedSchema = Schema.recordOf("record.projected",
       Schema.Field.of("booleanField", Schema.of(Schema.Type.BOOLEAN)),
@@ -364,7 +364,7 @@ public class ProjectionTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(SIMPLE_TYPES_RECORD, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     Schema expectedSchema = Schema.recordOf("record.projected",
       Schema.Field.of("booleanField", Schema.of(Schema.Type.BOOLEAN)),
@@ -395,7 +395,7 @@ public class ProjectionTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(SIMPLE_TYPES_RECORD, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     Schema expectedSchema = Schema.recordOf("record.projected",
       Schema.Field.of("booleanField", Schema.of(Schema.Type.BOOLEAN)),
@@ -430,7 +430,7 @@ public class ProjectionTransformTest {
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
-    StructuredRecord output = emitter.getEmitted().get(0);
+    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
 
     Schema expectedSchema = Schema.recordOf("record.projected",
       Schema.Field.of("x", Schema.nullableOf(Schema.of(Schema.Type.LONG))));

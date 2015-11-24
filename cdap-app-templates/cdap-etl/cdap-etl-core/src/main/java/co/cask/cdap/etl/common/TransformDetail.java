@@ -16,55 +16,40 @@
 
 package co.cask.cdap.etl.common;
 
-import co.cask.cdap.etl.api.StageMetrics;
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.Transformation;
+
+import java.util.Map;
 
 /**
  * Class that encapsulates {@link co.cask.cdap.etl.api.Transform} and transformId
- * and {@link DefaultStageMetrics} and boolean to indicate if the transform is sink.
+ * and {@link Metrics}
  */
 public class TransformDetail {
 
-  private final String transformId;
-  private final Transformation transformation;
-  private final StageMetrics metrics;
-  private final boolean isSink;
+  private final Map<String, Transformation> transformationMap;
+  private final Metrics metrics;
 
-  public TransformDetail(String transformId, Transformation transform, StageMetrics metrics, boolean isSink) {
-    this.transformation = transform;
-    this.transformId = transformId;
+  public TransformDetail(Map<String, Transformation> transformationMap, Metrics metrics) {
+    this.transformationMap = transformationMap;
     this.metrics = metrics;
-    this.isSink = isSink;
   }
 
-  public TransformDetail(String transformId, StageMetrics metrics, boolean isSink) {
-    this(transformId, null, metrics, isSink);
+  public TransformDetail(TransformDetail existing, Map<String, Transformation> transformationMap) {
+    this.transformationMap = transformationMap;
+    this.metrics = existing.getMetrics();
   }
 
-  public TransformDetail(String transformId, Transformation transform, StageMetrics metrics) {
-    this(transformId, transform, metrics, false);
+  public Transformation getTransformation(String stageName) {
+    return transformationMap.get(stageName);
   }
 
-  public TransformDetail(TransformDetail transformDetail, Transformation transformation) {
-    this.transformation = transformation;
-    this.transformId = transformDetail.getTransformId();
-    this.metrics = transformDetail.getMetrics();
-    this.isSink = transformDetail.isSink();
+
+  public Map<String, Transformation> getTransformationMap() {
+    return transformationMap;
   }
 
-  public Transformation getTransformation() {
-    return transformation;
-  }
-
-  public boolean isSink() {
-    return isSink;
-  }
-
-  public String getTransformId() {
-    return transformId;
-  }
-
-  public StageMetrics getMetrics() {
+  public Metrics getMetrics() {
     return metrics;
   }
 }

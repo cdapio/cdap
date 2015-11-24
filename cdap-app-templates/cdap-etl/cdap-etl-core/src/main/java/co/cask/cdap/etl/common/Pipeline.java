@@ -26,10 +26,10 @@ public class Pipeline {
   private final String source;
   private final List<SinkInfo> sinks;
   private final List<TransformInfo> transforms;
-  private final Map<String, List<ETLStage>> connections;
+  private final Map<String, List<String>> connections;
 
   public Pipeline(String source, List<SinkInfo> sinks, List<TransformInfo> transforms,
-                  Map<String, List<ETLStage>> connections) {
+                  Map<String, List<String>> connections) {
     this.source = source;
     this.sinks = sinks;
     this.transforms = transforms;
@@ -48,7 +48,7 @@ public class Pipeline {
     return transforms;
   }
 
-  public Map<String, List<ETLStage>> getConnections() {
+  public Map<String, List<String>> getConnections() {
     return connections;
   }
 }

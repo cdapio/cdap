@@ -149,7 +149,7 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
       engine.eval(String.format("var %s = %s;", VARIABLE_NAME, GSON.toJson(input)));
       Map scriptOutput = (Map) invocable.invokeFunction(FUNCTION_NAME);
       StructuredRecord output = decodeRecord(scriptOutput, schema == null ? input.getSchema() : schema);
-      emitter.emit(output);
+      emitter.emit(super.getContext().getStageName(), output);
     } catch (Exception e) {
       throw new IllegalArgumentException("Could not transform input: " + e.getMessage(), e);
     }

@@ -74,6 +74,6 @@ public class TableSource extends BatchReadableSource<byte[], Row, StructuredReco
 
   @Override
   public void transform(KeyValue<byte[], Row> input, Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(rowRecordTransformer.toRecord(input.getValue()));
+    emitter.emit(super.getStageName(), rowRecordTransformer.toRecord(input.getValue()));
   }
 }

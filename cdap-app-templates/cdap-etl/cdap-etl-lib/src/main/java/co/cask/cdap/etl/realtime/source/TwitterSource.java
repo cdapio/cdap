@@ -136,7 +136,7 @@ public class TwitterSource extends RealtimeSource<StructuredRecord> {
     if (!tweetQ.isEmpty()) {
       Status status = tweetQ.remove();
       StructuredRecord tweet = convertTweet(status);
-      writer.emit(tweet);
+      writer.emit(super.getStageName(), tweet);
     }
     return currentState;
   }

@@ -36,6 +36,6 @@ public class StructuredRecordToGenericRecordTransform extends Transform<Structur
 
   @Override
   public void transform(StructuredRecord structuredRecord, Emitter<GenericRecord> emitter) throws Exception {
-    emitter.emit(transformer.transform(structuredRecord));
+    emitter.emit(super.getContext().getStageName(), transformer.transform(structuredRecord));
   }
 }

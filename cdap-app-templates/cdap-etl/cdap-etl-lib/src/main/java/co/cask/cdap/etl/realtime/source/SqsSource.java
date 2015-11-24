@@ -71,8 +71,9 @@ public class SqsSource extends RealtimeSource<StructuredRecord> {
   }
 
   @Override
-  public void initialize(RealtimeContext contex) {
+  public void initialize(RealtimeContext context) {
     try {
+      super.initialize(context);
       SQSConnectionFactory.Builder sqsBuild = SQSConnectionFactory.builder()
         .withRegion(Region.getRegion(Regions.fromName(config.region)));
       connectionFactory = config.endpoint == null ? sqsBuild.build() : sqsBuild.withEndpoint(config.endpoint).build();
@@ -121,7 +122,7 @@ public class SqsSource extends RealtimeSource<StructuredRecord> {
       StructuredRecord record = StructuredRecord.builder(DEFAULT_SCHEMA)
         .set("body", text)
         .build();
-      writer.emit(record);
+      writer.emit(super.getStageName(), record);
       msg.acknowledge();
       count++;
     }

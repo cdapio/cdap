@@ -218,7 +218,7 @@ public class JmsSourceTest {
      * @param value data object.
      */
     @Override
-    public void emit(StructuredRecord value) {
+    public void emit(String stageName, StructuredRecord value) {
       currentValues.add(value);
     }
 
@@ -227,7 +227,7 @@ public class JmsSourceTest {
      * @param value the object to emit
      */
     @Override
-    public void emitError(InvalidEntry<StructuredRecord> value) {
+    public void emitError(String stageName, InvalidEntry<StructuredRecord> value) {
       //no-op
     }
 

@@ -33,7 +33,6 @@ public final class ETLBatchConfig extends ETLConfig {
   private final String schedule;
   private final List<ETLStage> actions;
 
-  // TODO consider using builder
   public ETLBatchConfig(String schedule, ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
                         List<Connection> connections, @Nullable Resources resources, @Nullable List<ETLStage> actions) {
     super(source, sinks, transforms, connections, resources);
@@ -48,24 +47,9 @@ public final class ETLBatchConfig extends ETLConfig {
     this.actions = actions;
   }
 
-  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
-                        Resources resources) {
-    this(schedule, source, sink, transforms, new ArrayList<Connection>(), resources, null);
-  }
-
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink,
                         List<ETLStage> transforms, List<ETLStage> actions) {
     this(schedule, source, sink, transforms, new ArrayList<Connection>(), null, actions);
-  }
-
-  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink,
-                        List<ETLStage> transforms, List<Connection> connections, List<ETLStage> actions) {
-    this(schedule, source, sink, transforms, connections, null, actions);
-  }
-
-  public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
-                        List<Connection> connections, Resources resources) {
-    this(schedule, source, sink, transforms, connections, resources, null);
   }
 
   @VisibleForTesting

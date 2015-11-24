@@ -45,6 +45,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -183,11 +185,12 @@ public class KafkaSourceTest {
     SourceState updatedSourceState = kafkaSource.poll(emitter, new SourceState());
 
     System.out.println("Message sent out: " + msgCount);
-    System.out.println("Message being emitted by Kafka realtime source: " + emitter.getInternalSize());
+    String stageName = new MockRealtimeContext().getStageName();
+    System.out.println("Message being emitted by Kafka realtime source: " + emitter.getInternalSize(stageName));
 
     Assert.assertTrue(updatedSourceState.getState() != null && !updatedSourceState.getState().isEmpty());
-    Assert.assertTrue(emitter.getInternalSize() == msgCount);
-    Assert.assertTrue(((String) emitter.entryList.get(0).get("body")).contains("Message"));
+    Assert.assertTrue(emitter.getInternalSize(stageName) == msgCount);
+    Assert.assertTrue(((String) emitter.entryList.get(stageName).get(0).get("body")).contains("Message"));
   }
 
   @Test(timeout = 5000, expected = IllegalArgumentException.class)
@@ -226,11 +229,12 @@ public class KafkaSourceTest {
     MockEmitter emitter = new MockEmitter();
     SourceState updatedSourceState = source.poll(emitter, sourceState);
 
+    String stageName = new MockRealtimeContext().getStageName();
     System.out.println("Message sent out: " + msgCount);
-    System.out.println("Message being emitted by Kafka realtime source: " + emitter.getInternalSize());
+    System.out.println("Message being emitted by Kafka realtime source: " + emitter.getInternalSize(stageName));
 
     Assert.assertTrue(updatedSourceState.getState() != null && !updatedSourceState.getState().isEmpty());
-    Assert.assertTrue(emitter.getInternalSize() == msgCount);
+    Assert.assertTrue(emitter.getInternalSize(stageName) == msgCount);
   }
 
   protected void sendMessage(String topic, Map<String, String> messages) {
@@ -287,20 +291,23 @@ public class KafkaSourceTest {
    * Helper class to emit message to next stage
    */
   private static class MockEmitter implements Emitter<StructuredRecord> {
-    private final List<StructuredRecord> entryList = Lists.newArrayList();
+    private final Map<String, List<StructuredRecord>> entryList = new HashMap<>();
 
     @Override
-    public void emit(StructuredRecord value) {
-      entryList.add(value);
+    public void emit(String stageName, StructuredRecord value) {
+      if (!entryList.containsKey(stageName)) {
+        entryList.put(stageName, new ArrayList<StructuredRecord>());
+      }
+      entryList.get(stageName).add(value);
     }
 
     @Override
-    public void emitError(InvalidEntry<StructuredRecord> value) {
+    public void emitError(String stageName, InvalidEntry<StructuredRecord> value) {
       //no-op
     }
 
-    public int getInternalSize() {
-      return entryList.size();
+    public int getInternalSize(String stageName) {
+      return entryList.get(stageName).size();
     }
 
     public void reset() {

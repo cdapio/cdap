@@ -105,7 +105,7 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
       engine.eval(String.format("var %s = %s;", VARIABLE_NAME, GSON.toJson(input)));
       Boolean shouldFilter = (Boolean) invocable.invokeFunction(FUNCTION_NAME);
       if (!shouldFilter) {
-        emitter.emit(input);
+        emitter.emit(super.getContext().getStageName(), input);
       } else {
         metrics.count("filtered", 1);
         metrics.pipelineCount("filtered", 1);

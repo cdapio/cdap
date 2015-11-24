@@ -27,9 +27,11 @@ import co.cask.cdap.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.common.guice.TypeResolver;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.GenericArrayType;
@@ -162,7 +164,19 @@ public class PipelineRegisterer {
       throw new RuntimeException(e);
     }
 
-    return new Pipeline(sourcePluginId, sinksInfo, transformInfos, connectionsMap);
+    Map<String, List<String>> connectionsMapString =
+      Maps.transformEntries(connectionsMap, new Maps.EntryTransformer<String, List<ETLStage>, List<String>>() {
+        @Override
+        public List<String> transformEntry(String key, List<ETLStage> stages) {
+          List<String> stageNames = new ArrayList<String>();
+          for (ETLStage stage : stages) {
+            stageNames.add(stage.getName());
+          }
+          return stageNames;
+        }
+      });
+
+    return new Pipeline(sourcePluginId, sinksInfo, transformInfos, connectionsMapString);
   }
 
   @VisibleForTesting

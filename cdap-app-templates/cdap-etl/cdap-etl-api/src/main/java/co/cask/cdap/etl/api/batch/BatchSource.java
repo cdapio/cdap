@@ -39,6 +39,9 @@ import co.cask.cdap.etl.api.Transformation;
 public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchConfigurable<BatchSourceContext>
   implements Transformation<KeyValue<KEY_IN, VAL_IN>, OUT>, StageLifecycle<BatchRuntimeContext> {
 
+  // name of the stage which uses this source
+  private String stageName;
+
   /**
    * Initialize the Batch Source stage. Executed inside the Batch Run. This method is guaranteed to be invoked
    * before any calls to {@link BatchSource#transform} are made.
@@ -48,7 +51,7 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchConfigurable
    */
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
-    // no-op
+    this.stageName = context.getStageName();
   }
 
   /**
@@ -62,7 +65,15 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchConfigurable
    */
   @Override
   public void transform(KeyValue<KEY_IN, VAL_IN> input, Emitter<OUT> emitter) throws Exception {
-    emitter.emit((OUT) input.getValue());
+    emitter.emit(stageName, (OUT) input.getValue());
+  }
+
+  /**
+   * Returns the stageName associated, only used by sub-class for emitting to a stage.
+   * @return
+   */
+  protected String getStageName() {
+    return stageName;
   }
 
   /**

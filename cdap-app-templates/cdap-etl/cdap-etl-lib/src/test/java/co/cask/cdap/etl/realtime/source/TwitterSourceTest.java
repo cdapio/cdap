@@ -91,12 +91,12 @@ public class TwitterSourceTest {
     private StructuredRecord tweet;
 
     @Override
-    public void emit(StructuredRecord value) {
+    public void emit(String stageName, StructuredRecord value) {
       tweet = value;
     }
 
     @Override
-    public void emitError(InvalidEntry<StructuredRecord> value) {
+    public void emitError(String stageName, InvalidEntry<StructuredRecord> value) {
       //no-op
     }
 

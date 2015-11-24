@@ -83,6 +83,7 @@ public class TableSink extends BatchWritableSink<StructuredRecord, byte[], Put> 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<byte[], Put>> emitter) throws Exception {
     Put put = recordPutTransformer.toPut(input);
-    emitter.emit(new KeyValue<>(put.getRow(), put));
+    emitter.emit(super.getStageName(),
+                 new KeyValue<>(put.getRow(), put));
   }
 }

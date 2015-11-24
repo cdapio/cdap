@@ -51,7 +51,7 @@ public class StructuredRecordToGenericRecordTransformTest {
     transformer.initialize(transformContext);
     MockEmitter<GenericRecord> emitter = new MockEmitter<>();
     transformer.transform(structuredRecord, emitter);
-    GenericRecord value = emitter.getEmitted().get(0);
+    GenericRecord value = emitter.getEmitted(transformContext.getStageName()).get(0);
     Assert.assertEquals("string1", value.get("field1"));
     Assert.assertEquals(2, value.get("field2"));
     Assert.assertEquals(3.0, value.get("field3"));

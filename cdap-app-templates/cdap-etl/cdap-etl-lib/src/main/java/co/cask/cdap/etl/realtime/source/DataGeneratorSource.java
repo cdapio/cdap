@@ -92,7 +92,7 @@ public class DataGeneratorSource extends RealtimeSource<StructuredRecord> {
     Schema.Field bodyField = Schema.Field.of("body", Schema.of(Schema.Type.STRING));
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(Schema.recordOf("defaultRecord", bodyField));
     recordBuilder.set("body", "Hello");
-    writer.emit(recordBuilder.build());
+    writer.emit(super.getStageName(), recordBuilder.build());
   }
 
   private void writeRecordsForStreamConsumption(Emitter<StructuredRecord> writer) {
@@ -102,23 +102,23 @@ public class DataGeneratorSource extends RealtimeSource<StructuredRecord> {
     // emit only string
     StructuredRecord.Builder recordBuilder = StructuredRecord.builder(Schema.recordOf("StringRecord", bodyField));
     recordBuilder.set("body", "Hello");
-    writer.emit(recordBuilder.build());
+    writer.emit(super.getStageName(), recordBuilder.build());
     // emit string + headers
     recordBuilder = StructuredRecord.builder(Schema.recordOf("StringHeadersRecord", bodyField, headersField));
     recordBuilder.set("body", "Hello");
     recordBuilder.set("headers", ImmutableMap.of("h1", "v1"));
-    writer.emit(recordBuilder.build());
+    writer.emit(super.getStageName(), recordBuilder.build());
     // byte array + headers
     bodyField = Schema.Field.of("body", Schema.of(Schema.Type.BYTES));
     recordBuilder = StructuredRecord.builder(Schema.recordOf("ByteArrayHeadersRecord", bodyField, headersField));
     recordBuilder.set("body", "Hello".getBytes(Charsets.UTF_8));
     recordBuilder.set("headers", ImmutableMap.of("h1", "v1"));
-    writer.emit(recordBuilder.build());
+    writer.emit(super.getStageName(), recordBuilder.build());
     // ByteBuffer + headers
     recordBuilder = StructuredRecord.builder(Schema.recordOf("ByteBufferHeadersRecord", bodyField, headersField));
     recordBuilder.set("body", ByteBuffer.wrap("Hello".getBytes(Charsets.UTF_8)));
     recordBuilder.set("headers", ImmutableMap.of("h1", "v1"));
-    writer.emit(recordBuilder.build());
+    writer.emit(super.getStageName(), recordBuilder.build());
   }
 
   private void writeRecordsForTableConsumption(Emitter<StructuredRecord> writer) {
@@ -137,7 +137,7 @@ public class DataGeneratorSource extends RealtimeSource<StructuredRecord> {
       .set("graduated", false)
       .set("binary", "Bob".getBytes(Charsets.UTF_8))
       .set("time", System.currentTimeMillis());
-    writer.emit(recordBuilder.build());
+    writer.emit(super.getStageName(), recordBuilder.build());
   }
 
   /**

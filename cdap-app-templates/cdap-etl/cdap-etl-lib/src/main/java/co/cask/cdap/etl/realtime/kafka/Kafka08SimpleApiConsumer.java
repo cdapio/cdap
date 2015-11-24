@@ -247,13 +247,13 @@ public class Kafka08SimpleApiConsumer extends KafkaSimpleApiConsumer<String, Byt
   @Override
   protected void processMessage(String key, ByteBuffer payload, Emitter<StructuredRecord> emitter) {
     StructuredRecord structuredRecord = byteBufferToStructuredRecord(key, payload);
-    emitter.emit(structuredRecord);
+    emitter.emit(super.getContext().getStageName(), structuredRecord);
   }
 
   @Override
   protected void processMessage(ByteBuffer payload , Emitter<StructuredRecord> emitter) {
     StructuredRecord structuredRecord = byteBufferToStructuredRecord(null, payload);
-    emitter.emit(structuredRecord);
+    emitter.emit(super.getContext().getStageName(), structuredRecord);
   }
 
   @Override

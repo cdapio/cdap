@@ -66,15 +66,18 @@ public class SqsSourceTest {
 
     SqsSource sqsSource = new SqsSource(new SqsSource.SqsConfig("us-west-1", SQSServer.AWS_CRED, SQSServer.AWS_CRED,
                                                                 queueName, sqsServer.getURL()));
-    sqsSource.initialize(new MockRealtimeContext());
+    MockRealtimeContext mockRealtimeContext = new MockRealtimeContext();
+    sqsSource.initialize(mockRealtimeContext);
 
     MockEmitter emitter = new MockEmitter();
     SourceState sourceState = new SourceState();
     sqsSource.poll(emitter, sourceState);
 
-    Assert.assertEquals(2, emitter.getEmitted().size());
-    Assert.assertEquals(testMsgExists, ((StructuredRecord) emitter.getEmitted().get(0)).get("body"));
-    Assert.assertEquals(testMsgOrder, ((StructuredRecord) emitter.getEmitted().get(1)).get("body"));
+    Assert.assertEquals(2, emitter.getEmitted(mockRealtimeContext.getStageName()).size());
+    Assert.assertEquals(testMsgExists,
+                        ((StructuredRecord) emitter.getEmitted(mockRealtimeContext.getStageName()).get(0)).get("body"));
+    Assert.assertEquals(testMsgOrder,
+                        ((StructuredRecord) emitter.getEmitted(mockRealtimeContext.getStageName()).get(1)).get("body"));
   }
 
   @After
