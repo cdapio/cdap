@@ -89,12 +89,10 @@ class TopPanelController{
       keyboard: true,
       controller: ['$scope', 'config', '$timeout', 'exportConfig', function($scope, config, $timeout, exportConfig) {
         $scope.config = JSON.stringify(config);
-        var exportConf = exportConfig;
         $scope.export = function () {
-          var content = exportConf;
-          var blob = new Blob([JSON.stringify(content, null, 4)], { type: 'application/json'});
+          var blob = new Blob([JSON.stringify(exportConfig, null, 4)], { type: 'application/json'});
           $scope.url = URL.createObjectURL(blob);
-          $scope.exportFileName = (content.name? content.name: 'noname') + '-' + content.artifact.name;
+          $scope.exportFileName = (exportConfig.name? exportConfig.name: 'noname') + '-' + exportConfig.artifact.name;
           $scope.$on('$destroy', function () {
             URL.revokeObjectURL($scope.url);
           });

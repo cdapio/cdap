@@ -208,6 +208,7 @@ angular.module(PKG.name + '.commons')
 
     $scope.$on('$destroy', function () {
       NodesActionsFactory.resetNodesAndConnections();
+      NodesStore.reset();
     });
 
   });
