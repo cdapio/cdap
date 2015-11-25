@@ -25,6 +25,8 @@ class ConfigStore {
     this.configDispatcher.register('onArtifactSave', this.setArtifact.bind(this));
     this.configDispatcher.register('onMetadataInfoSave', this.setMetadataInformation.bind(this));
     this.configDispatcher.register('onPluginAdd', this.setConfig.bind(this));
+    this.configDispatcher.register('onSetSchedule', this.setSchedule.bind(this));
+    this.configDispatcher.register('onSetInstance', this.setInstance.bind(this));
   }
   registerOnChangeListener(callback) {
     this.changeListeners.push(callback);
@@ -127,7 +129,7 @@ class ConfigStore {
       if (nodesMap[connection.target]) {
         addPluginToConfig(nodesMap[connection.target], connection.target);
       }
-     });
+    });
     return config;
   }
   getConfigForExport() {
@@ -178,6 +180,13 @@ class ConfigStore {
     this.state.artifact.name = artifact.name;
     this.state.artifact.version = artifact.version;
     this.state.artifact.scope = artifact.scope;
+
+    if (artifact.name === this.GLOBALS.etlBatch) {
+      this.state.schedule = '* * * * *';
+    } else if (artifact.name === this.GLOBALS.etlRealtime) {
+      this.state.instance = 1;
+    }
+
     this.emitChange();
   }
   setNodes(nodes) {
@@ -193,8 +202,8 @@ class ConfigStore {
     return this.state.__ui__.nodes;
   }
   getNode(nodeId) {
-    var nodes = this.state.__ui__.nodes;
-    var match = nodes.filter( node => node.id === nodeId);
+    let nodes = this.state.__ui__.nodes;
+    let match = nodes.filter( node => node.id === nodeId);
     if (match.length) {
       match = match[0];
     } else {
@@ -202,6 +211,21 @@ class ConfigStore {
     }
     return match;
   }
+
+  getSchedule() {
+    return this.state.schedule;
+  }
+  setSchedule(schedule) {
+    this.state.schedule = schedule;
+  }
+
+  getInstance() {
+    return this.state.instance;
+  }
+  setInstance(instance) {
+    this.state.instance = instance;
+  }
+
 }
 
 ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS'];
