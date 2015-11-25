@@ -36,7 +36,7 @@
     ],
     "instances": 1
   },
-  "description": "Ingests in real time from Kafka into stream",
+  "description": "Ingests in real time from Kafka into a stream",
   "name": "KafkaToStream"
 }
 

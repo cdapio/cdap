@@ -34,7 +34,7 @@
             }
         ]
     },
-    "description": "Real-time ETL from Kafka with in-flight transformation into an HBase table",
+    "description": "Ingests in real time from Kafka into an HBase table",
     "name": "KafkaToHbase"
 }
 

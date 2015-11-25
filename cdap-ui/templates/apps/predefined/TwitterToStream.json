@@ -38,7 +38,7 @@
     ],
     "instances": 1
   },
-  "description": "Ingest Real-time Twitter Stream into stream",
+  "description": "Ingest real-time Twitter Stream into a stream",
   "name": "TwitterToStream"
 }
 

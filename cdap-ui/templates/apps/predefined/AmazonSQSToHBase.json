@@ -28,7 +28,7 @@
     "transforms": [],
     "instances": 1
   },
-  "description": "Real-time updates from Amazon Simple Queue Service into HBase"
+  "description": "Real-time updates from Amazon Simple Queue Service into an HBase table"
   "name": "AmazonSQSToHBase"
 }
 
