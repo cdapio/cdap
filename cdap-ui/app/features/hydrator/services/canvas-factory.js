@@ -242,6 +242,9 @@ angular.module(PKG.name + '.feature.hydrator')
 
     function pruneNonBackEndProperties(config) {
       function propertiesIterator(properties, backendProperties) {
+        if (!backendProperties) {
+          return properties;
+        }
         angular.forEach(properties, function(value, key) {
           // If its a required field don't remove it.
           var isRequiredField = backendProperties[key] && backendProperties[key].required;

@@ -15,7 +15,7 @@
  */
 
 class HydratorCreateStudioController {
-  constructor(LeftPanelStore, LeftPanelActionsFactory, ConfigActionsFactory, $stateParams, rConfig, ConfigStore, $rootScope, $scope, DetailNonRunsStore, NodeConfigStore, NodesActionsFactory) {
+  constructor(LeftPanelStore, LeftPanelActionsFactory, ConfigActionsFactory, $stateParams, rConfig, ConfigStore, $rootScope, $scope, DetailNonRunsStore, NodeConfigStore, NodesActionsFactory, HydratorService) {
     // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
 
     this.LeftPanelActionsFactory = LeftPanelActionsFactory;
@@ -41,7 +41,17 @@ class HydratorCreateStudioController {
     NodeConfigStore.init();
     if (rConfig) {
       ConfigActionsFactory.initializeConfigStore(rConfig);
-      NodesActionsFactory.createGraphFromConfig(rConfig.__ui__.nodes, rConfig.connections);
+      let config = rConfig;
+      if (!rConfig.__ui__) {
+        config = HydratorService.getNodesAndConnectionsFromConfig(rConfig);
+        config = {
+          __ui__: {
+            nodes: config.nodes
+          },
+          connections: config.connections
+        };
+      }
+      NodesActionsFactory.createGraphFromConfig(config.__ui__.nodes, config.connections);
     }
   }
 
@@ -50,6 +60,6 @@ class HydratorCreateStudioController {
   }
 }
 
-HydratorCreateStudioController.$inject = ['LeftPanelStore', 'LeftPanelActionsFactory', 'ConfigActionsFactory', '$stateParams', 'rConfig', 'ConfigStore', '$rootScope', '$scope', 'DetailNonRunsStore', 'NodeConfigStore', 'NodesActionsFactory', '$timeout'];
+HydratorCreateStudioController.$inject = ['LeftPanelStore', 'LeftPanelActionsFactory', 'ConfigActionsFactory', '$stateParams', 'rConfig', 'ConfigStore', '$rootScope', '$scope', 'DetailNonRunsStore', 'NodeConfigStore', 'NodesActionsFactory', 'HydratorService'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorCreateStudioController', HydratorCreateStudioController);

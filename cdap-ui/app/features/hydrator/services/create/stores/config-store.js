@@ -39,12 +39,7 @@ class ConfigStore {
     this.changeListeners.forEach( callback => callback() );
   }
   setDefaults(config) {
-    // This will be eventually used when we just pass on a config to the store to draw the dag.
-    if (config) {
-      this.state = angular.copy(config);
-      this.emitChange();
-      return;
-    }
+
     this.state = {
       artifact: {
         name: '',
@@ -64,6 +59,10 @@ class ConfigStore {
       description: '',
       name: ''
     };
+    // This will be eventually used when we just pass on a config to the store to draw the dag.
+    if (config) {
+      angular.extend(this.state, config);
+    }
   }
   init(config) {
     this.setDefaults(config);
@@ -154,7 +153,7 @@ class ConfigStore {
   }
   getDisplayConfig() {
     var stateCopy = this.getConfigForExport();
-    // delete stateCopy.__ui__;
+    delete stateCopy.__ui__;
     return stateCopy;
   }
   getDescription() {
