@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.proto.metadata;
+package co.cask.cdap.data2.metadata.dataset;
 
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
@@ -25,52 +25,28 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents the complete metadata of a {@link Id.NamespacedId} including its properties, tags in a given
- * {@link MetadataScope}
+ * Represents the complete metadata of a {@link Id.NamespacedId} including its properties and tags.
  */
-public class MetadataRecord {
+public class MetadataHistoryEntry {
   private final Id.NamespacedId entityId;
-  private final MetadataScope scope;
   private final Map<String, String> properties;
   private final Set<String> tags;
 
   /**
-   * Returns an empty {@link MetadataRecord}
+   * Returns an empty {@link MetadataHistoryEntry}
    */
-  public MetadataRecord(Id.NamespacedId entityId) {
+  public MetadataHistoryEntry(Id.NamespacedId entityId) {
     this(entityId, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
   }
 
-  /**
-   * Returns an empty {@link MetadataRecord} in the specified {@link MetadataScope}
-   */
-  public MetadataRecord(Id.NamespacedId entityId, MetadataScope scope) {
-    this(entityId, scope, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
-  }
-
-  public MetadataRecord(MetadataRecord other) {
-    this(other.getEntityId(), other.getProperties(), other.getTags());
-  }
-
-  // TODO: CDAP-4295 Remove defaulting to USER
-  public MetadataRecord(Id.NamespacedId entityId, Map<String, String> properties, Set<String> tags) {
-    this(entityId, MetadataScope.USER, properties, tags);
-  }
-
-  public MetadataRecord(Id.NamespacedId entityId, MetadataScope scope, Map<String, String> properties,
-                        Set<String> tags) {
+  public MetadataHistoryEntry(Id.NamespacedId entityId, Map<String, String> properties, Set<String> tags) {
     this.entityId = entityId;
-    this.scope = scope;
     this.properties = properties;
     this.tags = tags;
   }
 
   public Id.NamespacedId getEntityId() {
     return entityId;
-  }
-
-  public MetadataScope getScope() {
-    return scope;
   }
 
   public Map<String, String> getProperties() {
@@ -90,24 +66,22 @@ public class MetadataRecord {
       return false;
     }
 
-    MetadataRecord that = (MetadataRecord) o;
+    MetadataHistoryEntry that = (MetadataHistoryEntry) o;
 
     return Objects.equals(entityId, that.entityId) &&
-      scope == that.scope &&
       Objects.equals(properties, that.properties) &&
       Objects.equals(tags, that.tags);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId, scope, properties, tags);
+    return Objects.hash(entityId, properties, tags);
   }
 
   @Override
   public String toString() {
     return "MetadataRecord{" +
       "entityId=" + entityId +
-      ", scope=" + scope +
       ", properties=" + properties +
       ", tags=" + tags +
       '}';
