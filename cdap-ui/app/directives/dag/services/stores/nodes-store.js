@@ -30,6 +30,7 @@ class NodesStore {
     dispatcher.register('onNodeSelect', this.setActiveNodeId.bind(this));
     dispatcher.register('onCreateGraphFromConfig', this.setNodesAndConnections.bind(this));
     dispatcher.register('onNodeSelectReset', this.resetActiveNode.bind(this));
+    dispatcher.register('onNodeUpdate', this.updateNode.bind(this));
   }
 
   setDefaults() {
@@ -54,6 +55,15 @@ class NodesStore {
 
   addNode(config) {
     this.state.nodes.push(config);
+    this.emitChange();
+  }
+  updateNode(nodeId, config) {
+    var matchNode = this.state.nodes.filter( node => node.id === nodeId);
+    if (!matchNode.length) {
+      return;
+    }
+    matchNode = matchNode[0];
+    angular.extend(matchNode, config);
     this.emitChange();
   }
   removeNode(node) {

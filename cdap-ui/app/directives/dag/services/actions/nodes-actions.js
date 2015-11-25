@@ -26,6 +26,9 @@ class NodesActionsFactory {
   addNode(config) {
     this.nodesDispatcher.dispatch('onNodeAdd', config);
   }
+  updateNode(nodeId, config) {
+    this.nodesDispatcher.dispatch('onNodeUpdate', nodeId, config);
+  }
 
   removeNode(node) {
     this.nodesDispatcher.dispatch('onRemoveNode', node);
