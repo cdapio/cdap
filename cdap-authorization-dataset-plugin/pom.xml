@@ -25,7 +25,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>cdap-security-authz-dataset</artifactId>
+  <artifactId>cdap-authorization-dataset-plugin</artifactId>
 
   <dependencies>
     <dependency>
