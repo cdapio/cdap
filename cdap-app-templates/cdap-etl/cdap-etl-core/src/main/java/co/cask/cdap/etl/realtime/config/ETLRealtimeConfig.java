@@ -24,6 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * ETL Realtime Configuration.
@@ -69,5 +70,27 @@ public final class ETLRealtimeConfig extends ETLConfig {
 
   public Integer getInstances() {
     return instances;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+
+    ETLRealtimeConfig that = (ETLRealtimeConfig) o;
+
+    return Objects.equals(instances, that.instances);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), instances);
   }
 }

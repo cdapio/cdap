@@ -17,9 +17,9 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.plugin.PluginSelector;
-import com.google.common.base.Objects;
 
 import java.util.Map;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -63,11 +63,31 @@ public class Plugin {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
-      .add("name", name)
-      .add("properties", properties)
-      .add("artifact", artifact)
-      .toString();
+    return "Plugin{" +
+      "name='" + name + '\'' +
+      ", properties=" + properties +
+      ", artifact=" + artifact +
+      '}';
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Plugin that = (Plugin) o;
+
+    return Objects.equals(name, that.name) &&
+      Objects.equals(properties, that.properties) &&
+      Objects.equals(artifact, that.artifact);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, properties, artifact);
+  }
 }
