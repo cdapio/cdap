@@ -22,7 +22,7 @@ A view has a specific read format. Read formats consist of a :ref:`schema
 (such as CSV, TSV, or Avro, amongst others).
 
 If :ref:`CDAP Explore <data-exploration>` is :ref:`enabled
-<configuration-explore-service>`, a Hive table will be created for each view that is
+<hadoop-configuration-explore-service>`, a Hive table will be created for each view that is
 created.
 
 Currently, views are only supported for streams. Support for datasets will be added in a

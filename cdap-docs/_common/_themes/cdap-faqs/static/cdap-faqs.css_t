@@ -58,3 +58,10 @@ div.toctree-wrapper.compound li.toctree-l2 a.reference.internal:hover {
   color: #005B81;
   font-weight: bold;
 }
+
+p.rubric {
+    margin-left: -15px;
+    background-color: #9d9d9d;
+    color: white;
+    text-shadow: none;
+}
