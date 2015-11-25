@@ -62,10 +62,10 @@ with the :ref:`Transaction Service HTTP RESTful API <http-restful-api-transactio
 
 Using the Queue Debugger Tool
 =============================
-The Queue Debugger Tool allows you to look at the entries in queues, and can be useful in
-solving problems with transactions. This is a debug tool for a queue, returning
-information such as how many entries are in a queue, how many have been processed, and how
-many are in progress. 
+The Queue Debugger Tool allows you to calculate queue statistics, and can be useful in
+solving problems with queues. This is a debug tool for a queue, returning information such
+as how many entries are in a queue, how many have been processed, and how many are not yet
+processed. 
 
 Background
 ----------
@@ -93,7 +93,5 @@ or::
   
 Running the ``help`` option will give a summary of commands and required parameters.
 
-The tool ``SimpleHBaseQueueDebugger`` is a wrapper of the tool that uses common defaults. 
-
-
-
+The tool ``SimpleHBaseQueueDebugger`` is a wrapper of the tool that that uses a set of
+defaults useful for displaying the minimum transaction time for all events in all queues.
