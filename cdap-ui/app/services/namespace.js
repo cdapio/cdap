@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.services')
-  .service('myNamespace', function myNamespace($q, MyDataSource, EventPipe, $http, $rootScope, myAuth, MYAUTH_EVENT, myHelpers, $state) {
+  .service('myNamespace', function myNamespace($q, MyCDAPDataSource, EventPipe, $http, $rootScope, myAuth, MYAUTH_EVENT, myHelpers, $state) {
 
     this.namespaceList = [];
 
-    var data = new MyDataSource(),
+    var data = new MyCDAPDataSource(),
         prom,
         queryInProgress = null;
 

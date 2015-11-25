@@ -104,6 +104,12 @@ public class DatasetSerDe implements SerDe {
   private void getDatasetSchema(Configuration conf, Id.DatasetInstance datasetId) throws SerDeException {
 
     try (ContextManager.Context hiveContext = ContextManager.getContext(conf)) {
+      // apparently the conf can be null in some versions of Hive?
+      // Because it calls initialize just to get the object inspector
+      if (hiveContext == null) {
+        LOG.info("Hive provided a null conf, will not be able to get dataset schema.");
+        return;
+      }
 
       // some datasets like Table and ObjectMappedTable have schema in the dataset properties
       try {

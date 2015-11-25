@@ -15,11 +15,11 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppMetadataController',
-function ($scope, $state, $alert, $timeout, MyDataSource, myAdapterFactory) {
+function ($scope, $state, $alert, $timeout, MyCDAPDataSource, myHydratorFactory) {
 
-  var data = new MyDataSource($scope);
+  var data = new MyCDAPDataSource($scope);
   var path = '/namespaces/' + $state.params.nsadmin + '/apps/' + $state.params.appId;
-  $scope.myAdapterFactory = myAdapterFactory;
+  $scope.myHydratorFactory = myHydratorFactory;
 
   data.request({
     _cdapPath: path

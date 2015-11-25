@@ -77,9 +77,11 @@ public class TableWrapperDefinition extends
    */
   public static class TableWrapper extends AbstractDataset
     implements RecordScannable<StructuredRecord>, RecordWritable<StructuredRecord> {
+    private final Table table;
 
     public TableWrapper(String instanceName, Table table) {
       super(instanceName, table);
+      this.table = table;
     }
 
     @Override
@@ -89,17 +91,17 @@ public class TableWrapperDefinition extends
 
     @Override
     public void write(StructuredRecord structuredRecord) throws IOException {
-
+      table.write(structuredRecord);
     }
 
     @Override
     public List<Split> getSplits() {
-      return null;
+      return table.getSplits();
     }
 
     @Override
     public RecordScanner<StructuredRecord> createSplitRecordScanner(Split split) {
-      return null;
+      return table.createSplitRecordScanner(split);
     }
   }
 

@@ -109,7 +109,7 @@ GITHUB="github"
 
 # BUILD.rst
 BUILD_RST="BUILD.rst"
-BUILD_RST_HASH="126957968d95aa006b7f0c5a7f2ff1ef"
+BUILD_RST_HASH="d7bac2503dbc69785a7b85be139ac25c"
 
 
 function usage() {
@@ -328,13 +328,6 @@ function set_version() {
   else
     # We are on a feature branch: but from develop or release?
     # This is not easy to determine. This can fail very easily.
-    local git_branch_listing=$(git show-branch | grep '*' | grep -v "$(git rev-parse --abbrev-ref HEAD)" | head -n1)
-    if [ "x${git_branch_listing}" == "x" ]; then 
-      echo_red_bold "Unable to determine parent branch as git_branch_listing empty"
-      echo_red_bold "Using default GIT_BRANCH_PARENT: ${GIT_BRANCH_PARENT}"
-    else
-      GIT_BRANCH_PARENT=$(echo ${git_branch_listing} | sed 's/.*\[\(.*\)\].*/\1/' | sed 's/[\^~].*//')
-    fi
     if [ "${GIT_BRANCH_PARENT:0:7}" == "release" ]; then
       GIT_BRANCH_TYPE="release-feature"
     else

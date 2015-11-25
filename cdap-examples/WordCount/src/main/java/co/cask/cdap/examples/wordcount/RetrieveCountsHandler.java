@@ -70,12 +70,6 @@ public class RetrieveCountsHandler extends AbstractHttpServiceHandler {
   }
 
   @Override
-  protected void configure() {
-    super.configure();
-    useDatasets(wordStatsTableName, wordCountTableName, uniqueCountTableName, wordAssocTableName);
-  }
-
-  @Override
   public void initialize(HttpServiceContext context) throws Exception {
     super.initialize(context);
     wordStatsTable = context.getDataset(wordStatsTableName);

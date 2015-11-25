@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceStreamMetadataController', function($scope, $stateParams, myHelpers, $alert, myStreamApi, $state, EventPipe) {
+  .controller('NamespaceStreamMetadataController', function($scope, $stateParams, myHelpers, $alert, myStreamApi, $state, EventPipe, myAlertOnValium) {
 
     $scope.avro = {};
 
@@ -128,7 +128,7 @@ angular.module(PKG.name + '.feature.admin')
         .then(function() {
           $scope.reload();
 
-          $alert({
+          myAlertOnValium.show({
             type: 'success',
             title: 'Success',
             content: 'Stream properties have been successfully saved'

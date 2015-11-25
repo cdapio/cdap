@@ -21,15 +21,20 @@ import javax.annotation.Nullable;
 
 /**
  * An Explore Client that uses the provided host and port to talk to a server
- * implementing {@link co.cask.cdap.explore.service.Explore} over HTTP.
+ * implementing {@link co.cask.cdap.explore.service.Explore} over HTTP/HTTPS.
  */
 public class FixedAddressExploreClient extends AbstractExploreClient {
   private final InetSocketAddress addr;
   private final String authToken;
+  private final boolean sslEnabled;
+  private final boolean verifySSLCert;
 
-  public FixedAddressExploreClient(String host, int port, @Nullable String authToken) {
+  public FixedAddressExploreClient(String host, int port, @Nullable String authToken,
+                                   boolean sslEnabled, boolean verifySSLCert) {
     this.addr = InetSocketAddress.createUnresolved(host, port);
     this.authToken = authToken;
+    this.sslEnabled = sslEnabled;
+    this.verifySSLCert = verifySSLCert;
   }
 
   @Override
@@ -37,7 +42,17 @@ public class FixedAddressExploreClient extends AbstractExploreClient {
     return addr;
   }
 
-  protected String getAuthorizationToken() {
+  protected String getAuthToken() {
     return authToken;
+  }
+
+  @Override
+  protected boolean isSSLEnabled() {
+    return sslEnabled;
+  }
+
+  @Override
+  protected boolean verifySSLCert() {
+    return verifySSLCert;
   }
 }

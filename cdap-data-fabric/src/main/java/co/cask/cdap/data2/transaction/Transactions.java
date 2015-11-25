@@ -20,15 +20,16 @@ import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Functions;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.concurrent.Callable;
 
 /**
@@ -54,20 +55,52 @@ public final class Transactions {
     }
   }
 
+  public static Supplier<TransactionContext>
+  constantContextSupplier(final TransactionSystemClient txClient,
+                          final TransactionAware txAware) {
+    return constantContextSupplier(txClient, Collections.singleton(txAware));
+  }
+
+  public static Supplier<TransactionContext>
+  constantContextSupplier(final TransactionSystemClient txClient,
+                          final Iterable<? extends TransactionAware> txAwares) {
+    return new Supplier<TransactionContext>() {
+      @Override
+      public TransactionContext get() {
+        return new TransactionContext(txClient, Iterables.transform(txAwares, Functions.<TransactionAware>identity()));
+      }
+    };
+  }
+
   /**
    * Handy method to create {@link TransactionExecutor} (See TEPHRA-71).
    */
   public static TransactionExecutor createTransactionExecutor(TransactionExecutorFactory factory,
-                                                              Iterable<? extends TransactionAware> txAwares) {
-    return factory.createExecutor(Iterables.transform(txAwares, Functions.<TransactionAware>identity()));
+                                                              final TransactionSystemClient txClient,
+                                                              final Iterable<? extends TransactionAware> txAwares) {
+    return factory.createExecutor(constantContextSupplier(txClient, txAwares));
   }
 
   /**
    * Handy method to create {@link TransactionExecutor} with single {@link TransactionAware}.
    */
   public static TransactionExecutor createTransactionExecutor(TransactionExecutorFactory factory,
+                                                              TransactionSystemClient txClient,
                                                               TransactionAware txAware) {
-    return factory.createExecutor(ImmutableList.of(txAware));
+    return createTransactionExecutor(factory, txClient, ImmutableList.of(txAware));
+  }
+
+  /**
+   * Handy method to create {@link TransactionExecutor} (See TEPHRA-71).
+   */
+  public static TransactionExecutor createTransactionExecutor(co.cask.tephra.TransactionExecutorFactory factory,
+                                                              Iterable<? extends TransactionAware> txAwares) {
+    return factory.createExecutor(Iterables.transform(txAwares, Functions.<TransactionAware>identity()));
+  }
+
+  public static TransactionExecutor createTransactionExecutor(co.cask.tephra.TransactionExecutorFactory factory,
+                                                              TransactionAware txAware) {
+    return factory.createExecutor(Collections.singleton(txAware));
   }
 
   /**

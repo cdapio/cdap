@@ -32,7 +32,6 @@ import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.api.realtime.SourceState;
@@ -41,15 +40,14 @@ import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.Pipeline;
 import co.cask.cdap.etl.common.PipelineRegisterer;
-import co.cask.cdap.etl.common.PluginID;
 import co.cask.cdap.etl.common.SinkInfo;
-import co.cask.cdap.etl.common.StageMetrics;
-import co.cask.cdap.etl.common.StructuredRecordStringConverter;
 import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
+import co.cask.cdap.etl.common.TxLookupProvider;
 import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
+import co.cask.cdap.format.StructuredRecordStringConverter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -90,16 +88,16 @@ public class ETLWorker extends AbstractWorker {
   // only visible at configure time
   private final ETLRealtimeConfig config;
 
+  @SuppressWarnings("unused")
+  private Metrics metrics;
+
   private RealtimeSource source;
   private List<RealtimeSink> sinks;
-  private List<Metrics> transformMetrics;
   private TransformExecutor transformExecutor;
   private DefaultEmitter sourceEmitter;
   private String stateStoreKey;
   private byte[] stateStoreKeyBytes;
   private String appName;
-  private Metrics metrics;
-  private List<TransformDetail> transformationDetailList;
   private Map<String, String> tranformIdToDatasetName;
   private volatile boolean stopped;
 
@@ -174,7 +172,7 @@ public class ETLWorker extends AbstractWorker {
     });
 
     initializeSource(context);
-    transformationDetailList = initializeTransforms(context);
+    List<TransformDetail> transformationDetailList = initializeTransforms(context);
     initializeSinks(context);
 
     transformExecutor = new TransformExecutor(transformationDetailList);
@@ -183,10 +181,11 @@ public class ETLWorker extends AbstractWorker {
   private void initializeSource(WorkerContext context) throws Exception {
     String sourcePluginId = context.getSpecification().getProperty(Constants.Source.PLUGINID);
     source = context.newPluginInstance(sourcePluginId);
-    RealtimeContext sourceContext = new WorkerRealtimeContext(context, metrics, sourcePluginId);
+    WorkerRealtimeContext sourceContext = new WorkerRealtimeContext(
+      context, metrics, new TxLookupProvider(context), sourcePluginId);
     LOG.debug("Source Class : {}", source.getClass().getName());
     source.initialize(sourceContext);
-    sourceEmitter = new DefaultEmitter(new StageMetrics(metrics, PluginID.from(sourcePluginId)));
+    sourceEmitter = new DefaultEmitter(sourceContext.getMetrics());
   }
 
   @SuppressWarnings("unchecked")
@@ -197,10 +196,11 @@ public class ETLWorker extends AbstractWorker {
 
     for (SinkInfo sinkInfo : sinkInfos) {
       RealtimeSink sink = context.newPluginInstance(sinkInfo.getSinkId());
-      RealtimeContext sinkContext = new WorkerRealtimeContext(context, metrics, sinkInfo.getSinkId());
+      WorkerRealtimeContext sinkContext = new WorkerRealtimeContext(
+        context, metrics, new TxLookupProvider(context), sinkInfo.getSinkId());
       LOG.debug("Sink Class : {}", sink.getClass().getName());
       sink.initialize(sinkContext);
-      sink = new TrackedRealtimeSink(sink, metrics, PluginID.from(sinkInfo.getSinkId()));
+      sink = new TrackedRealtimeSink(sink, sinkContext.getMetrics());
       sinks.add(sink);
     }
   }
@@ -212,17 +212,17 @@ public class ETLWorker extends AbstractWorker {
     List<TransformDetail> transformDetailList = new ArrayList<>(transformInfos.size());
     tranformIdToDatasetName = new HashMap<>(transformInfos.size());
 
-    for (int i = 0; i < transformInfos.size(); i++) {
-      String transformId = transformInfos.get(i).getTransformId();
+    for (TransformInfo transformInfo : transformInfos) {
+      String transformId = transformInfo.getTransformId();
       try {
         Transform transform = context.newPluginInstance(transformId);
-        RealtimeTransformContext transformContext = new RealtimeTransformContext(context, metrics, transformId);
+        WorkerRealtimeContext transformContext = new WorkerRealtimeContext(
+          context, metrics, new TxLookupProvider(context), transformId);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
-        StageMetrics stageMetrics = new StageMetrics(metrics, PluginID.from(transformId));
-        transformDetailList.add(new TransformDetail(transformId, transform, stageMetrics));
-        if (transformInfos.get(i).getErrorDatasetName() != null) {
-          tranformIdToDatasetName.put(transformId, transformInfos.get(i).getErrorDatasetName());
+        transformDetailList.add(new TransformDetail(transformId, transform, transformContext.getMetrics()));
+        if (transformInfo.getErrorDatasetName() != null) {
+          tranformIdToDatasetName.put(transformId, transformInfo.getErrorDatasetName());
         }
       } catch (InstantiationException e) {
         LOG.error("Unable to instantiate Transform", e);

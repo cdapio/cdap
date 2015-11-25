@@ -111,28 +111,26 @@ public abstract class HBaseQueueTest extends QueueTest {
   private static final Logger LOG = LoggerFactory.getLogger(QueueTest.class);
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+  @ClassRule
+  public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
 
   private static TransactionService txService;
   private static CConfiguration cConf;
   private static Configuration hConf;
   private static Injector injector;
 
-  protected static HBaseTestBase testHBase;
   protected static HBaseTableUtil tableUtil;
   protected static HBaseAdmin hbaseAdmin;
   private static ZKClientService zkClientService;
 
   @BeforeClass
   public static void init() throws Exception {
-    // Start hbase
-    testHBase = new HBaseTestFactory().get();
-    testHBase.startHBase();
-    hConf = testHBase.getConfiguration();
+    hConf = TEST_HBASE.getConfiguration();
 
     // Customize test configuration
     cConf = CConfiguration.create();
-    cConf.set(Constants.Zookeeper.QUORUM, testHBase.getZkConnectionString());
+    cConf.set(Constants.Zookeeper.QUORUM, TEST_HBASE.getZkConnectionString());
     cConf.set(TxConstants.Service.CFG_DATA_TX_BIND_PORT,
               Integer.toString(Networks.getRandomPort()));
     cConf.set(Constants.Dataset.TABLE_PREFIX, "test");
@@ -163,7 +161,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     );
 
     //create HBase namespace
-    hbaseAdmin = testHBase.getHBaseAdmin();
+    hbaseAdmin = TEST_HBASE.getHBaseAdmin();
     tableUtil = injector.getInstance(HBaseTableUtil.class);
     tableUtil.createNamespaceIfNotExists(hbaseAdmin, Id.Namespace.SYSTEM);
     tableUtil.createNamespaceIfNotExists(hbaseAdmin, NAMESPACE_ID);
@@ -226,7 +224,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     if (!admin.exists(queueName)) {
       admin.create(queueName);
     }
-    try (HTable hTable = tableUtil.createHTable(testHBase.getConfiguration(), tableId)) {
+    try (HTable hTable = tableUtil.createHTable(TEST_HBASE.getConfiguration(), tableId)) {
       Assert.assertEquals("Failed for " + admin.getClass().getName(),
                           cConf.getInt(QueueConstants.ConfigKeys.QUEUE_TABLE_PRESPLITS),
                           hTable.getRegionsInRange(new byte[]{0}, new byte[]{(byte) 0xff}).size());
@@ -684,7 +682,6 @@ public abstract class HBaseQueueTest extends QueueTest {
 
     hbaseAdmin.close();
     txService.stop();
-    testHBase.stopHBase();
     zkClientService.stopAndWait();
   }
 
@@ -696,7 +693,7 @@ public abstract class HBaseQueueTest extends QueueTest {
     // make sure consumer config cache is updated with the latest tx snapshot
     takeTxSnapshot();
     final Class coprocessorClass = tableUtil.getQueueRegionObserverClassForVersion();
-    testHBase.forEachRegion(tableName, new Function<HRegion, Object>() {
+    TEST_HBASE.forEachRegion(tableName, new Function<HRegion, Object>() {
       public Object apply(HRegion region) {
         try {
           Coprocessor cp = region.getCoprocessorHost().findCoprocessor(coprocessorClass.getName());
@@ -725,8 +722,8 @@ public abstract class HBaseQueueTest extends QueueTest {
     });
 
     // Force a table flush to trigger eviction
-    testHBase.forceRegionFlush(tableName);
-    testHBase.forceRegionCompact(tableName, true);
+    TEST_HBASE.forceRegionFlush(tableName);
+    TEST_HBASE.forceRegionCompact(tableName, true);
   }
 
   @Override

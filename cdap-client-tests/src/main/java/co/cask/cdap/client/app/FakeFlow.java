@@ -19,8 +19,7 @@ package co.cask.cdap.client.app;
 import co.cask.cdap.api.annotation.ProcessInput;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.common.Bytes;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.InputContext;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
@@ -30,20 +29,17 @@ import java.nio.charset.CharacterCodingException;
 /**
  *
  */
-public class FakeFlow implements Flow {
+public class FakeFlow extends AbstractFlow {
 
   public static final String NAME = "FakeFlow";
   public static final String FLOWLET_NAME = "fakeFlowlet";
 
   @Override
-  public FlowSpecification configure() {
-    return FlowSpecification.Builder.with()
-      .setName(NAME)
-      .setDescription("Does nothing")
-      .withFlowlets()
-        .add(FLOWLET_NAME, new FakeFlowlet())
-      .connect().fromStream(FakeApp.STREAM_NAME).to(FLOWLET_NAME)
-      .build();
+  protected void configureFlow() {
+    setName(NAME);
+    setDescription("Does nothing");
+    addFlowlet(FLOWLET_NAME, new FakeFlowlet());
+    connectStream(FakeApp.STREAM_NAME, FLOWLET_NAME);
   }
 
   /**

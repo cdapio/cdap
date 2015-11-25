@@ -36,6 +36,29 @@ angular.module(PKG.name + '.feature.streams')
         .state('streams.detail.overview', {
           url: '/overview',
           parent: 'streams.detail',
+          resolve: {
+            rStreamData: function($state, $q, myStreamApi, $stateParams) {
+              var params = {
+                namespace: $stateParams.namespace,
+                streamId: $stateParams.streamId
+              };
+              var defer = $q.defer();
+
+              myStreamApi
+                .get(params)
+                .$promise
+                .then(
+                  function success(streamDetail) {
+                    defer.resolve(streamDetail);
+                  },
+                  function error() {
+                    defer.reject();
+                    $state.go('404');
+                  }
+                );
+              return defer.promise;
+            }
+          },
           templateUrl: '/assets/features/streams/templates/detail.html',
           controller: 'CdapStreamDetailController',
           controllerAs: 'DetailController',

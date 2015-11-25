@@ -5,7 +5,7 @@
 .. _included-apps-etl-plugins-transformations-script:
 
 =======================
-Transformations: Script 
+Transformations: Script
 =======================
 
 .. rubric:: Description
@@ -13,7 +13,7 @@ Transformations: Script
 Executes user-provided Javascript that transforms one record into another.
 Input records are converted into JSON objects which can be directly accessed in
 Javascript. The transform expects to receive a JSON object as input, which it will
-convert back to a record in Java to pass to downstream transforms and sinks. 
+convert back to a record in Java to pass to downstream transforms and sinks.
 
 .. rubric:: Use Case
 
@@ -42,6 +42,11 @@ will scale the ``'count'`` field by 1024.
 
 **schema:** The schema of output objects. If no schema is given, it is assumed that the output
 schema is the same as the input schema.
+
+**lookup:** The configuration of the lookup tables to be used in your script.
+For example, if lookup table "purchases" is configured, then you will be able to perform
+operations with that lookup table in your script: ``context.getLookup('purchases').lookup('key')``
+Currently supports ``KeyValueTable``.
 
 .. rubric:: Example
 
@@ -72,6 +77,15 @@ schema is the same as the input schema.
           {\"name\":\"tax\",\"type\":\"double\"},
           {\"name\":\"total\",\"type\":\"double\"}
         ]
+      }",
+      "lookup": "{
+        \"purchases\":{
+          \"type\":\"DATASET\",
+          \"datasetProperties\":{
+            \"dataset_argument1\":\"foo\",
+            \"dataset_argument2\":\"bar\"
+          }
+        }
       }"
     }
   }

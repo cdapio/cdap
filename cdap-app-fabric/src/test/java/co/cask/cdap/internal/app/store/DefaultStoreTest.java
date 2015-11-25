@@ -37,7 +37,7 @@ import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
@@ -61,6 +61,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
@@ -97,11 +98,13 @@ import java.util.concurrent.TimeUnit;
 public class DefaultStoreTest {
   private static final Gson GSON = new Gson();
   private static DefaultStore store;
+  private static DefaultNamespaceStore nsStore;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     store = injector.getInstance(DefaultStore.class);
+    nsStore = injector.getInstance(DefaultNamespaceStore.class);
   }
 
   @Before
@@ -149,7 +152,7 @@ public class DefaultStoreTest {
     store.setStart(programId2, run2.getId(), runIdToSecs(run2));
     store.setSuspend(programId2, run2.getId());
     store.removeAll(namespaceId);
-    store.deleteNamespace(namespaceId);
+    nsStore.delete(namespaceId);
     Assert.assertTrue(store.getRuns(programId2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
   }
 
@@ -291,13 +294,13 @@ public class DefaultStoreTest {
 
     // Get run record for run5
     RunRecordMeta expectedRecord5 = new RunRecordMeta(run5.getId(), nowSecs - 8, nowSecs - 4,
-                                                      ProgramRunStatus.COMPLETED, noRuntimeArgsProps, null);
+                                                      ProgramRunStatus.COMPLETED, noRuntimeArgsProps, null, null);
     RunRecordMeta actualRecord5 = store.getRun(programId, run5.getId());
     Assert.assertEquals(expectedRecord5, actualRecord5);
 
     // Get run record for run6
     RunRecordMeta expectedRecord6 = new RunRecordMeta(run6.getId(), nowSecs - 2, null, ProgramRunStatus.RUNNING,
-                                                      noRuntimeArgsProps, null);
+                                                      noRuntimeArgsProps, null, null);
     RunRecordMeta actualRecord6 = store.getRun(programId, run6.getId());
     Assert.assertEquals(expectedRecord6, actualRecord6);
 
@@ -394,7 +397,7 @@ public class DefaultStoreTest {
     }
   }
 
-  private static class FlowImpl implements co.cask.cdap.api.flow.Flow {
+  private static class FlowImpl extends AbstractFlow {
     private String name;
 
     private FlowImpl(String name) {
@@ -402,13 +405,11 @@ public class DefaultStoreTest {
     }
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName(name)
-        .setDescription("Flow for counting words")
-        .withFlowlets().add(new FlowletImpl("flowlet1"))
-        .connect().from(new co.cask.cdap.api.data.stream.Stream("stream1")).to(new FlowletImpl("flowlet1"))
-        .build();
+    protected void configureFlow() {
+      setName(name);
+      setDescription("Flow for counting words");
+      addFlowlet(new FlowletImpl("flowlet1"));
+      connectStream("stream1", new FlowletImpl("flowlet1"));
     }
   }
 
@@ -416,6 +417,8 @@ public class DefaultStoreTest {
    *
    */
   public static class FlowletImpl extends AbstractFlowlet {
+    private final String name;
+
     @UseDataSet("dataset2")
     @SuppressWarnings("unused")
     private KeyValueTable counters;
@@ -425,12 +428,17 @@ public class DefaultStoreTest {
     private OutputEmitter<String> output;
 
     protected FlowletImpl(String name) {
-      super(name);
+      this.name = name;
     }
 
     @ProcessInput("process")
     public void bar(String str) {
       output.emit(str);
+    }
+
+    @Override
+    protected void configure() {
+      setName(name);
     }
   }
 
@@ -622,11 +630,12 @@ public class DefaultStoreTest {
     Id.Run mapreduceProgramRunId = new Id.Run(mapreduceProgramId, mapreduceRunId);
     Id.Run workflowProgramRunId = new Id.Run(workflowProgramId, workflowRunId);
 
-    store.setStart(flowProgramId, flowRunId, System.currentTimeMillis(), null, ImmutableMap.of("model", "click"));
+    store.setStart(flowProgramId, flowRunId, System.currentTimeMillis(), null,
+                   ImmutableMap.of("model", "click"), null);
     store.setStart(mapreduceProgramId, mapreduceRunId, System.currentTimeMillis(), null,
-                   ImmutableMap.of("path", "/data"));
+                   ImmutableMap.of("path", "/data"), null);
     store.setStart(workflowProgramId, workflowRunId, System.currentTimeMillis(), null,
-                   ImmutableMap.of("whitelist", "cask"));
+                   ImmutableMap.of("whitelist", "cask"), null);
 
     Map<String, String> args = store.getRuntimeArguments(flowProgramRunId);
     Assert.assertEquals(1, args.size());
@@ -794,10 +803,15 @@ public class DefaultStoreTest {
   private static final Id.Program program = new Id.Program(appId, ProgramType.WORKFLOW,
                                                            AppWithWorkflow.SampleWorkflow.NAME);
   private static final SchedulableProgramType programType = SchedulableProgramType.WORKFLOW;
-  private static final Schedule schedule1 = Schedules.createTimeSchedule("Schedule1", "Every minute", "* * * * ?");
-  private static final Schedule schedule2 = Schedules.createTimeSchedule("Schedule2", "Every Hour", "0 * * * ?");
-  private static final Schedule scheduleWithSameName = Schedules.createTimeSchedule("Schedule2", "Every minute",
-                                                                                    "* * * * ?");
+  private static final Schedule schedule1 = Schedules.builder("Schedule1")
+    .setDescription("Every minute")
+    .createTimeSchedule("* * * * ?");
+  private static final Schedule schedule2 = Schedules.builder("Schedule2")
+    .setDescription("Every Hour")
+    .createTimeSchedule("0 * * * ?");
+  private static final Schedule scheduleWithSameName = Schedules.builder("Schedule2")
+    .setDescription("Every minute")
+    .createTimeSchedule("* * * * ?");
   private static final Map<String, String> properties1 = ImmutableMap.of();
   private static final Map<String, String> properties2 = ImmutableMap.of();
   private static final ScheduleSpecification scheduleSpec1 =
@@ -1059,7 +1073,7 @@ public class DefaultStoreTest {
                                            runningPrograms.subSet(1000L, 45 * 10000L))),
                         runIdsToTime(store.getRunningInRange(1, 45 * 10)));
   }
-  
+
   private void writeStartRecord(Id.Run run) {
     store.setStart(run.getProgram(), run.getId(), RunIds.getTime(RunIds.fromString(run.getId()), TimeUnit.SECONDS));
     Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));

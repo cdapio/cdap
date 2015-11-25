@@ -18,7 +18,6 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.ConfigurableTestBase;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.SlowTests;
 import co.cask.cdap.test.TestBase;

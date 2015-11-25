@@ -19,12 +19,14 @@ package co.cask.cdap.data2.dataset2.lib.partitioned;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionConsumerResult;
 import co.cask.cdap.api.dataset.lib.PartitionConsumerState;
+import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 
 import java.util.Iterator;
 
 /**
- * A simple consumer for {@link Partition}s of a {@link PartitionedFileSet}
+ * A simple consumer for {@link Partition}s of a {@link PartitionedFileSet}, which maintains the PartitionConsumerState
+ * in memory.
  */
 public class PartitionConsumer {
   private final PartitionedFileSet partitionedFileSet;
@@ -52,12 +54,24 @@ public class PartitionConsumer {
   }
 
   /**
-   * @return an iterator to {@link Partition}s of the underlying {@link PartitionedFileSet} created since the last
-   * call to this method. This excludes partitions created in in-progress transactions including the one in which the
-   * call to this method is made.
+   * @return an iterator to {@link Partition}s of the underlying {@link PartitionedFileSet} created since the last call
+   *         to this method. This excludes partitions created in in-progress transactions including the one in which the
+   *         call to this method is made.
    */
   public Iterator<Partition> consumePartitions() {
-    PartitionConsumerResult partitionConsumerResult = partitionedFileSet.consumePartitions(partitionConsumerState);
+    return consumePartitions(PartitionFilter.ALWAYS_MATCH, Integer.MAX_VALUE);
+  }
+
+  /**
+   * @param filter PartitionFilter to be applied while consuming partitions
+   * @param limit limit to be applied while consuming partitions
+   * @return an iterator to {@link Partition}s of the underlying {@link PartitionedFileSet} created since the last call
+   *         to this method. This excludes partitions created in in-progress transactions including the one in which the
+   *         call to this method is made.
+   */
+  public Iterator<Partition> consumePartitions(PartitionFilter filter, int limit) {
+    PartitionConsumerResult partitionConsumerResult =
+      partitionedFileSet.consumePartitions(partitionConsumerState, filter, limit);
     partitionConsumerState = partitionConsumerResult.getPartitionConsumerState();
     return partitionConsumerResult.getPartitionIterator();
   }

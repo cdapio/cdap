@@ -62,6 +62,8 @@ import co.cask.cdap.proto.QueryHandle;
 import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.StreamProperties;
+import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.HttpHandler;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.TxConstants;
@@ -380,7 +382,7 @@ public class BaseHiveExploreServiceTest {
           handlerBinder.addBinding().to(StreamFetchHandler.class);
           handlerBinder.addBinding().to(StreamViewHttpHandler.class);
           CommonHandlers.add(handlerBinder);
-          bind(Store.class).to(DefaultStore.class);
+          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
 
           // Use LocalFileTransactionStateStorage, so that we can use transaction snapshots for assertions in test
@@ -438,7 +440,7 @@ public class BaseHiveExploreServiceTest {
           handlerBinder.addBinding().to(StreamHandler.class);
           handlerBinder.addBinding().to(StreamFetchHandler.class);
           CommonHandlers.add(handlerBinder);
-          bind(Store.class).to(DefaultStore.class);
+          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
           bind(StreamHttpService.class).in(Scopes.SINGLETON);
         }
       }

@@ -32,10 +32,16 @@
 
 }
 
-body.state-adapters {
+body.state-hydrator {
   [plugin-property-edit-view] {
     .widget-group-container {
+      border: 1px solid #eee;
+      border-bottom: 0;
+      padding: 10px;
 
+      &:last-child {
+        border-bottom: 1px solid #eee;
+      }
       &.well {
         h3 { margin: 0 0 10px 0; }
 
@@ -46,39 +52,6 @@ body.state-adapters {
           }
           textarea.form-control {
             min-height: 200px;
-          }
-        }
-      }
-    }
-  }
-  .modal {
-    @media (min-width: @screen-lg-min) {
-      [my-ace-editor] {
-        width: 100%;
-      }
-    }
-    &.well {
-      padding: 10px;
-    }
-    [class*="-container"] {
-      a.btn-info, a.btn-danger {
-        padding-top: 10px;
-        padding-bottom: 10px;
-      }
-    }
-    fieldset {
-      > div > div {
-        .widget-group-container {
-          padding-top: 15px;
-        }
-        &:first-child .widget-group-container {
-          padding-top: 0;
-        }
-      }
-      &[disabled] {
-        .schema-container {
-          .form-control {
-            height: 32px;
           }
         }
       }

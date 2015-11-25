@@ -19,23 +19,57 @@ package co.cask.cdap.etl.transform;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.etl.api.Lookup;
+import co.cask.cdap.etl.api.LookupConfig;
+import co.cask.cdap.etl.api.LookupTableConfig;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.common.MockEmitter;
+import co.cask.cdap.etl.common.MockLookupProvider;
 import co.cask.cdap.etl.common.MockMetrics;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Test case for {@link ScriptTransform}.
  */
 public class ScriptTransformTest {
+
+  private static final Gson GSON = new Gson();
+  private static final Lookup<String> TEST_LOOKUP = new Lookup<String>() {
+    @Override
+    public String lookup(String key) {
+      return key;
+    }
+
+    @Override
+    public Map<String, String> lookup(String... keys) {
+      Map<String, String> result = new HashMap<>();
+      for (String key : keys) {
+        result.put(key, key);
+      }
+      return result;
+    }
+
+    @Override
+    public Map<String, String> lookup(Set<String> keys) {
+      Map<String, String> result = new HashMap<>();
+      for (String key : keys) {
+        result.put(key, key);
+      }
+      return result;
+    }
+  };
+
   private static final Schema SCHEMA = Schema.recordOf("record",
     Schema.Field.of("booleanField", Schema.of(Schema.Type.BOOLEAN)),
     Schema.Field.of("intField", Schema.of(Schema.Type.INT)),
@@ -75,10 +109,17 @@ public class ScriptTransformTest {
     .set("unionField", 3)
     .build();
 
+  private static final Schema STRING_SCHEMA = Schema.recordOf(
+    "record",
+    Schema.Field.of("stringField", Schema.of(Schema.Type.STRING)));
+  private static final StructuredRecord STRING_RECORD = StructuredRecord.builder(STRING_SCHEMA)
+    .set("stringField", "zzz")
+    .build();
+
   @Test
   public void testSimple() throws Exception {
     ScriptTransform.Config config = new ScriptTransform.Config(
-      "function transform(x, context) { x.intField = x.intField * 1024; return x; }", null);
+      "function transform(x, context) { x.intField = x.intField * 1024; return x; }", null, null);
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     transform.initialize(new MockTransformContext());
 
@@ -123,6 +164,33 @@ public class ScriptTransformTest {
   }
 
   @Test
+  public void testLookup() throws Exception {
+    ScriptTransform.Config config = new ScriptTransform.Config(
+      "function transform(x, ctx) { " +
+        "var single = ctx.getLookup('purchases').lookup('abc');" +
+        "var batch = ctx.getLookup('purchases').lookup(['abc', 'sdf']);" +
+        "x.stringField = '1_' + single + ' 2_' + batch['abc'] + batch['sdf'] + '::' + batch.abc;" +
+        "return x;" +
+        "}",
+      null,
+      new LookupConfig(
+        ImmutableMap.of(
+          "purchases", new LookupTableConfig(LookupTableConfig.TableType.DATASET))
+      ));
+    Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
+    transform.initialize(new MockTransformContext(
+      Maps.<String, String>newHashMap(), new MockMetrics(), "", new MockLookupProvider(TEST_LOOKUP)));
+
+    MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
+    transform.transform(STRING_RECORD, emitter);
+    StructuredRecord output = emitter.getEmitted().get(0);
+
+    // check record1
+    Assert.assertEquals(STRING_SCHEMA, output.getSchema());
+    Assert.assertEquals("1_abc 2_abcsdf::abc", output.get("stringField"));
+  }
+
+  @Test
   public void testDropAndRename() throws Exception {
     Schema outputSchema = Schema.recordOf(
       "smallerSchema",
@@ -130,7 +198,7 @@ public class ScriptTransformTest {
       Schema.Field.of("y", Schema.of(Schema.Type.LONG)));
     ScriptTransform.Config config = new ScriptTransform.Config(
       "function transform(input, context) { return { 'x':input.intField, 'y':input.longField }; }",
-      outputSchema.toString());
+      outputSchema.toString(), null);
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     transform.initialize(new MockTransformContext());
 
@@ -201,6 +269,7 @@ public class ScriptTransformTest {
       "  var val = power(pi.val, 3) + power(e.val, 2);\n" +
       "  print(pi); print(e);\n print(context);\n" +
       "  context.getMetrics().count(\"script.transform.count\", 1);\n" +
+      "  context.getMetrics().pipelineCount(\"script.transform.count\", 1);\n" +
       "  context.getLogger().info(\"Log test from Script Transform\");\n" +
       "  return { 'x':val };\n" +
       "}" +
@@ -211,10 +280,10 @@ public class ScriptTransformTest {
       "  }\n" +
       "  return ans;\n" +
       "}",
-      outputSchema.toString());
+      outputSchema.toString(), null);
     Transform<StructuredRecord, StructuredRecord> transform = new ScriptTransform(config);
     MockMetrics mockMetrics = new MockMetrics();
-    transform.initialize(new MockTransformContext(new HashMap<String, String>(), mockMetrics));
+    transform.initialize(new MockTransformContext(new HashMap<String, String>(), mockMetrics, "transform.1."));
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
     transform.transform(input, emitter);
@@ -222,5 +291,6 @@ public class ScriptTransformTest {
     Assert.assertEquals(outputSchema, output.getSchema());
     Assert.assertTrue(Math.abs(2.71 * 2.71 + 3.14 * 3.14 * 3.14 - (Double) output.get("x")) < 0.000001);
     Assert.assertEquals(1, mockMetrics.getCount("script.transform.count"));
+    Assert.assertEquals(1, mockMetrics.getCount("transform.1.script.transform.count"));
   }
 }

@@ -20,9 +20,9 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').factory('MyDashboardsModel',
-function (Widget, MyDataSource, mySettings, $q, MyChartHelpers) {
+function (Widget, MyCDAPDataSource, mySettings, $q, MyChartHelpers) {
 
-  var dSrc = new MyDataSource(),
+  var dSrc = new MyCDAPDataSource(),
       API_PATH = '/configuration/dashboards';
 
 

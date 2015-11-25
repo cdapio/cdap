@@ -25,6 +25,7 @@ public final class Constants {
 
   public static final String ARCHIVE_DIR = "archive";
   public static final String ROOT_NAMESPACE = "root.namespace";
+  public static final String COLLECT_CONTAINER_LOGS = "master.collect.containers.log";
 
   /**
    * Global Service names.
@@ -162,7 +163,10 @@ public final class Constants {
    * Plugin Artifacts constants.
    */
   public static final class Plugin {
-    public static final String DIRECTORY = "artifacts.jar";
+    public static final String DIRECTORY = "artifacts";
+
+    // Key to be used in hConf to store location of the plugin artifact jar
+    public static final String ARCHIVE = "cdap.program.plugin.archive";
   }
 
   /**
@@ -272,6 +276,20 @@ public final class Constants {
       public static final String MAX_INSTANCES = "dataset.executor.max.instances";
 
       public static final String SERVICE_DESCRIPTION = "Service to perform dataset operations.";
+    }
+
+    /**
+     * Dataset extensions.
+     */
+    public static final class Extensions {
+      public static final String DIR = "dataset.extensions.dir";
+      public static final String MODULES = "dataset.extensions.modules";
+
+      /** Over-rides for default table bindings- use with caution! **/
+      public static final String DISTMODE_TABLE = "dataset.extensions.distributed.mode.table";
+      public static final String STREAM_CONSUMER_FACTORY = "stream.extension.consumer.factory";
+      public static final String DISTMODE_METRICS_TABLE = "dataset.extensions.distributed.mode.metrics.table";
+      public static final String DISTMODE_QUEUE_TABLE = "dataset.extensions.distributed.mode.queue.table";
     }
   }
 
@@ -654,6 +672,16 @@ public final class Constants {
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
     /** Enables SSL */
     public static final String SSL_ENABLED = "ssl.enabled";
+
+    /**
+     * Authorization.
+     */
+    public static final class Authorization {
+      /** Enables authorization */
+      public static final String ENABLED = "security.authorization.enabled";
+      /** AuthorizationPlugin class name */
+      public static final String HANDLER_CLASS = "security.authorization.pluginClassName";
+    }
 
     /**
      * Headers for security.

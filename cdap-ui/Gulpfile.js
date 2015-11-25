@@ -145,8 +145,8 @@ gulp.task('js:lib', function() {
       './bower_components/angular-ui-ace/ui-ace.js',
       './bower_components/jsPlumb/dist/js/dom.jsPlumb-1.7.5-min.js',
       './bower_components/angular-gridster/dist/angular-gridster.min.js',
-      './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.js'
-
+      './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.js',
+      './bower_components/angularjs-dropdown-multiselect/dist/angularjs-dropdown-multiselect.min.js'
 
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
@@ -184,7 +184,11 @@ function getEs6Features(isNegate) {
     with the package manager build step. The transition process is going to be painful but the end goal is better (hopefully :])
   */
   var es6features = [
-    'workflows'
+    'workflows',
+    'flows',
+    'apps',
+    'search',
+    'pins'
   ];
   var returnVal = [];
   es6features.forEach(function(feature) {
@@ -425,7 +429,7 @@ gulp.task('style', ['css']);
 gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html.dev']);
 gulp.task('build', ['js', 'css', 'img', 'tpl', 'html']);
 
-gulp.task('distribute', ['build', 'rev:replace']);
+gulp.task('distribute', ['clean', 'build', 'rev:replace']);
 
 gulp.task('default', ['lint', 'build']);
 
@@ -440,8 +444,22 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   gulp.watch('./dist/**/*')
     .on('change', plug.livereload.changed);
 
-  gulp.watch(['./app/**/*.js', '!./app/features/workflows/**/*.js', '!./app/**/*-test.js'], ['jshint', 'watch:js:app']);
-  gulp.watch(['./app/features/workflows/**/*.js'], ['jshint', 'watch:js:app:babel']);
+  gulp.watch([
+    './app/**/*.js',
+    '!./app/features/workflows/**/*.js',
+    '!./app/features/apps/**/*.js',
+    '!./app/features/search/**/*.js',
+    '!./app/features/pins/**/*.js',
+    '!./app/features/flows/**/*.js',
+    '!./app/**/*-test.js'
+  ], ['jshint', 'watch:js:app']);
+  gulp.watch([
+    './app/features/workflows/**/*.js',
+    './app/features/apps/**/*.js',
+    './app/features/pins/**/*.js',
+    './app/features/search/**/*.js',
+    './app/features/flows/**/*.js'
+  ], ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
   gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);

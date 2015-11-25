@@ -17,8 +17,10 @@
 package co.cask.cdap.notifications.service;
 
 import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.dataset2.DynamicDatasetContext;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
@@ -32,56 +34,42 @@ import org.slf4j.LoggerFactory;
 public final class BasicNotificationContext implements NotificationContext {
   private static final Logger LOG = LoggerFactory.getLogger(BasicNotificationContext.class);
 
-  private final Id.Namespace namespaceId;
-  private final DatasetFramework dsFramework;
-  private final TransactionSystemClient transactionSystemClient;
+  private final DynamicDatasetCache datasetContext;
 
   public BasicNotificationContext(Id.Namespace namespaceId, DatasetFramework dsFramework,
-                                  TransactionSystemClient transactionSystemClient) {
-    this.namespaceId = namespaceId;
-    this.dsFramework = dsFramework;
-    this.transactionSystemClient = transactionSystemClient;
+                                  TransactionSystemClient txSystemClient) {
+    // TODO this dataset context needs a metrics context [CDAP-3114]
+    // TODO this context is only used in system code. When we expose it to user code, we need to set the class loader,
+    //      the owners, the runtime arguments and the metrics context.
+    this.datasetContext = new MultiThreadDatasetCache(new SystemDatasetInstantiator(dsFramework, null, null),
+                                                      txSystemClient, namespaceId, null, null, null);
   }
 
   @Override
   public boolean execute(TxRunnable runnable, TxRetryPolicy policy) {
-    int countFail = 0;
+    int failureCount = 0;
     while (true) {
       try {
-        final TransactionContext context = new TransactionContext(transactionSystemClient);
+        TransactionContext context = datasetContext.newTransactionContext();
+        context.start();
         try {
-          context.start();
-          // TODO this dataset context needs a metrics context [CDAP-3114]
-          runnable.run(new DynamicDatasetContext(namespaceId, context, null, dsFramework,
-                                                 context.getClass().getClassLoader()));
-          context.finish();
-          return true;
-        } catch (TransactionFailureException e) {
-          abortTransaction(e, "Failed to commit. Aborting transaction.", context);
-        } catch (Exception e) {
-          abortTransaction(e, "Exception occurred running user code. Aborting transaction.", context);
+          runnable.run(datasetContext);
+        } catch (Throwable t) {
+          context.abort(new TransactionFailureException("Exception thrown from runnable. Aborting transaction.", t));
         }
+        context.finish();
+        return true;
+
       } catch (Throwable t) {
-        switch (policy.handleFailure(++countFail, t)) {
+        switch (policy.handleFailure(++failureCount, t)) {
           case RETRY:
-            LOG.warn("Retrying failed transaction");
+            LOG.warn("Retrying failed transactional operation", t);
             break;
           case DROP:
-            LOG.warn("Could not execute transactional operation.", t);
+            LOG.warn("Failed to execute transactional operation", t);
             return false;
         }
       }
-    }
-  }
-
-  private void abortTransaction(Exception e, String message, TransactionContext context) throws Exception {
-    try {
-      LOG.error(message, e);
-      context.abort();
-      throw e;
-    } catch (TransactionFailureException e1) {
-      LOG.error("Failed to abort transaction.", e1);
-      throw e1;
     }
   }
 }

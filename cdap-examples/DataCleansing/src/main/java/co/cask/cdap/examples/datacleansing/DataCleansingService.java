@@ -16,6 +16,7 @@
 
 package co.cask.cdap.examples.datacleansing;
 
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
@@ -23,11 +24,16 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import javax.ws.rs.POST;
@@ -53,25 +59,50 @@ public class DataCleansingService extends AbstractService {
   @Path("/v1")
   public static class RecordsHandler extends AbstractHttpServiceHandler {
 
+    private static final Logger LOG = LoggerFactory.getLogger(RecordsHandler.class);
+
     @SuppressWarnings("unused")
     @UseDataSet(DataCleansing.RAW_RECORDS)
     private PartitionedFileSet rawRecords;
 
     @POST
     @Path("/records/raw")
-    public void write(HttpServiceRequest request, HttpServiceResponder responder) {
+    public HttpContentConsumer write(HttpServiceRequest request, HttpServiceResponder responder) {
       PartitionKey key = PartitionKey.builder().addLongField("time", System.currentTimeMillis()).build();
-      PartitionOutput partitionOutput = rawRecords.getPartitionOutput(key);
-      Location location = partitionOutput.getLocation();
+      final PartitionOutput partitionOutput = rawRecords.getPartitionOutput(key);
+      final Location location = partitionOutput.getLocation();
+      try {
+        final WritableByteChannel channel = Channels.newChannel(location.getOutputStream());
+        return new HttpContentConsumer() {
+          @Override
+          public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
+            channel.write(chunk);
+          }
 
-      try (WritableByteChannel channel = Channels.newChannel(location.getOutputStream())) {
-        channel.write(request.getContent());
-        partitionOutput.addPartition();
+          @Override
+          public void onFinish(HttpServiceResponder responder) throws Exception {
+            channel.close();
+            partitionOutput.addPartition();
+            responder.sendStatus(200);
+          }
+
+          @Override
+          public void onError(HttpServiceResponder responder, Throwable failureCause) {
+            Closeables.closeQuietly(channel);
+            try {
+              location.delete();
+            } catch (IOException e) {
+              LOG.warn("Failed to delete {}", location, e);
+            }
+            LOG.debug("Unable to write path '{}'", location, failureCause);
+            responder.sendError(400, String.format("Unable to write path '%s'. Reason: '%s'",
+                                                   location, failureCause.getMessage()));
+          }
+        };
       } catch (IOException e) {
-        responder.sendError(400, String.format("Unable to write path '%s'", location));
-        return;
+        responder.sendError(400, String.format("Unable to write path '%s'. Reason: '%s'", location, e.getMessage()));
+        return null;
       }
-      responder.sendStatus(200);
     }
   }
 }

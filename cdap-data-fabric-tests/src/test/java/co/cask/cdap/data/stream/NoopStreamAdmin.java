@@ -103,6 +103,11 @@ public class NoopStreamAdmin implements StreamAdmin {
   }
 
   @Override
+  public boolean viewExists(Id.Stream.View viewId) throws Exception {
+    return false;
+  }
+
+  @Override
   public void register(Iterable<? extends Id> owners, Id.Stream streamId) {
   }
 

@@ -27,13 +27,13 @@ public class CannotBeCreatedException extends Exception {
   private final String reason;
 
   public CannotBeCreatedException(Id objectId, String reason) {
-    super(String.format("'%s' cannot be created. Reason: %s", objectId.getIdRep(), reason));
+    super(String.format("'%s' cannot be created. Reason: %s", objectId, reason));
     this.objectId = objectId;
     this.reason = reason;
   }
 
   public CannotBeCreatedException(Id objectId, Throwable cause) {
-    super(String.format("'%s' cannot be created. Reason: %s", objectId.getIdRep(), cause.getMessage()), cause);
+    super(String.format("'%s' cannot be created. Reason: %s", objectId, cause.getMessage()), cause);
     this.objectId = objectId;
     this.reason = cause.getMessage();
   }

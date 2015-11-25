@@ -16,13 +16,16 @@
 
 package co.cask.cdap.internal.app.runtime.batch;
 
+import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.dataset.lib.FileSet;
+import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
+import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.mapreduce.AbstractMapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
+import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import com.google.common.collect.Maps;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -45,12 +48,17 @@ public class AppWithMapReduceUsingRuntimeDatasets extends AbstractApplication {
   public static final String APP_NAME = "appWithRuntimeDS";
   public static final String MR_NAME = "computeSum";
 
+  public static final byte[] INPUT_RECORDS = Bytes.toBytes("inputRecords");
+  public static final byte[] REDUCE_KEYS = Bytes.toBytes("reduceKeys");
+  public static final String COUNTERS = "dynCounters";
+
   @Override
   public void configure() {
     setName(APP_NAME);
     setDescription("Application with MapReduce job using file as dataset");
     addMapReduce(new ComputeSum());
     createDataset("rtt", Table.class.getName());
+    createDataset(COUNTERS, KeyValueTable.class.getName());
   }
 
   /**
@@ -75,48 +83,71 @@ public class AppWithMapReduceUsingRuntimeDatasets extends AbstractApplication {
       String outputName = runtimeArgs.get(OUTPUT_NAME);
       String outputPath = runtimeArgs.get(OUTPUT_PATH);
 
-      FileSet input;
-      FileSet output;
-      if (inputName.equals(outputName)) {
-        Map<String, String> args = Maps.newHashMap();
-        FileSetArguments.setInputPaths(args, inputPaths);
-        FileSetArguments.setOutputPath(args, outputPath);
-        input = context.getDataset(inputName, args);
-        output = input;
-      } else {
-        Map<String, String> inputArgs = Maps.newHashMap();
-        FileSetArguments.setInputPaths(inputArgs, inputPaths);
-        Map<String, String> outputArgs = Maps.newHashMap();
-        FileSetArguments.setOutputPath(outputArgs, outputPath);
-        input = context.getDataset(inputName, inputArgs);
-        output = context.getDataset(outputName, outputArgs);
-      }
+      // Setup input and output file sets
+      Map<String, String> args = Maps.newHashMap();
+      FileSetArguments.setInputPaths(args, inputPaths);
+      context.setInput(inputName, args);
 
-      context.setInput(inputName, input);
-      context.setOutput(outputName, output);
+      args.clear();
+      FileSetArguments.setOutputPath(args, outputPath);
+      context.addOutput(outputName, args);
 
       Table table = context.getDataset("rtt");
       table.put(new Put("a").add("b", "c"));
     }
   }
 
-  public static class FileMapper extends Mapper<LongWritable, Text, Text, LongWritable> {
+  public static class FileMapper
+    extends Mapper<LongWritable, Text, Text, LongWritable>
+    implements ProgramLifecycle<MapReduceTaskContext> {
+
+    private KeyValueTable counters = null;
+
     public static final String ONLY_KEY = "x";
     @Override
     public void map(LongWritable key, Text data, Context context)
       throws IOException, InterruptedException {
+      counters.increment(INPUT_RECORDS, 1L);
       context.write(new Text(ONLY_KEY), new LongWritable(Long.valueOf(data.toString())));
+    }
+
+    @Override
+    public void initialize(MapReduceTaskContext context) throws Exception {
+      counters = context.getDataset(COUNTERS);
+    }
+
+    @Override
+    public void destroy() {
+      // no-op
     }
   }
 
-  public static class FileReducer extends Reducer<Text, LongWritable, String, Long> {
+  public static class FileReducer
+    extends Reducer<Text, LongWritable, String, Long>
+    implements ProgramLifecycle<MapReduceTaskContext> {
+
+    private KeyValueTable counters = null;
+
     public void reduce(Text key, Iterable<LongWritable> values, Context context)
                               throws IOException, InterruptedException  {
+
+      counters.increment(REDUCE_KEYS, 1L);
+
       long sum = 0L;
       for (LongWritable value : values) {
         sum += value.get();
       }
       context.write(key.toString(), sum);
+    }
+
+    @Override
+    public void initialize(MapReduceTaskContext context) throws Exception {
+      counters = context.getDataset(COUNTERS);
+    }
+
+    @Override
+    public void destroy() {
+      // no-op
     }
   }
 

@@ -33,7 +33,7 @@ angular.module(PKG.name+'.commons')
 
     // The ideal solution would be to use a service and have this directive register a callback to the service.
     // Once the service updates the data it could call the callbacks by updating them with data. This way there
-    // is no watch. This is done in adapters and we should fix this ASAP.
+    // is no watch. This is done in hydrator and we should fix this ASAP.
     $scope.$watch('onChangeFlag', function(newVal) {
       if (newVal) {
         update($scope.model);

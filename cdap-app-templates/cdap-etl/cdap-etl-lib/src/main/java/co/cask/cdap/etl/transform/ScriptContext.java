@@ -16,8 +16,12 @@
 
 package co.cask.cdap.etl.transform;
 
-import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.LookupConfig;
+import co.cask.cdap.etl.api.LookupProvider;
+import co.cask.cdap.etl.api.StageMetrics;
 import org.slf4j.Logger;
+
+import javax.annotation.Nullable;
 
 /**
  * Context passed to {@link co.cask.cdap.etl.transform.ScriptTransform} and
@@ -25,18 +29,30 @@ import org.slf4j.Logger;
  */
 public class ScriptContext {
   private final Logger logger;
-  private final Metrics metrics;
 
-  public ScriptContext(Logger logger, Metrics metrics) {
+  private final StageMetrics metrics;
+  private final ScriptLookupProvider lookup;
+  private final JavaTypeConverters js;
+
+  public ScriptContext(
+    Logger logger, StageMetrics metrics, LookupProvider lookup, @Nullable LookupConfig lookupConfig,
+    JavaTypeConverters js) {
+
     this.logger = logger;
     this.metrics = metrics;
+    this.lookup = new ScriptLookupProvider(lookup, lookupConfig);
+    this.js = js;
   }
 
   public Logger getLogger() {
     return logger;
   }
 
-  public Metrics getMetrics() {
+  public StageMetrics getMetrics() {
     return metrics;
+  }
+
+  public ScriptLookup getLookup(String table) {
+    return lookup.provide(table, js);
   }
 }

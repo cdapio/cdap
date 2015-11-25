@@ -16,21 +16,24 @@
 
 package co.cask.cdap.examples.wikipedia;
 
+import co.cask.cdap.api.Config;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.table.Table;
 
+import javax.annotation.Nullable;
+
 /**
  * App to demonstrate a data pipeline that processes Wikipedia data using a CDAP Workflow.
  */
-public class WikipediaPipelineApp extends AbstractApplication {
+public class WikipediaPipelineApp extends AbstractApplication<WikipediaPipelineApp.WikipediaAppConfig> {
   static final String PAGE_TITLES_STREAM = "pageTitleStream";
   static final String RAW_WIKIPEDIA_STREAM = "wikiStream";
   static final String PAGE_TITLES_DATASET = "pages";
   static final String RAW_WIKIPEDIA_DATASET = "wikidata";
   static final String NORMALIZED_WIKIPEDIA_DATASET = "normalized";
-  static final String SPARK_LDA_OUTPUT_DATASET = "lda";
+  static final String SPARK_CLUSTERING_OUTPUT_DATASET = "clustering";
   static final String MAPREDUCE_TOPN_OUTPUT = "topn";
   static final String LIKES_TO_DATASET_MR_NAME = "LikesToDataset";
   static final String WIKIPEDIA_TO_DATASET_MR_NAME = "WikiDataToDataset";
@@ -44,13 +47,30 @@ public class WikipediaPipelineApp extends AbstractApplication {
     addMapReduce(new WikipediaDataDownloader());
     addMapReduce(new WikiContentValidatorAndNormalizer());
     addMapReduce(new TopNMapReduce());
-    addSpark(new SparkWikipediaAnalyzer());
+    addSpark(new SparkWikipediaClustering(getConfig()));
     createDataset(PAGE_TITLES_DATASET, KeyValueTable.class);
     createDataset(RAW_WIKIPEDIA_DATASET, KeyValueTable.class);
     createDataset(NORMALIZED_WIKIPEDIA_DATASET, KeyValueTable.class);
-    createDataset(SPARK_LDA_OUTPUT_DATASET, Table.class);
+    createDataset(SPARK_CLUSTERING_OUTPUT_DATASET, Table.class);
     createDataset(MAPREDUCE_TOPN_OUTPUT, KeyValueTable.class);
-    addWorkflow(new WikipediaPipelineWorkflow());
+    addWorkflow(new WikipediaPipelineWorkflow(getConfig()));
     addService(new WikipediaService());
+  }
+
+  /**
+   * Config for Wikipedia App.
+   */
+  public static class WikipediaAppConfig extends Config {
+
+    @Nullable
+    public final String clusteringAlgorithm;
+
+    public WikipediaAppConfig() {
+      this(null);
+    }
+
+    public WikipediaAppConfig(@Nullable String clusteringAlgorithm) {
+      this.clusteringAlgorithm = clusteringAlgorithm == null ? "lda" : clusteringAlgorithm;
+    }
   }
 }

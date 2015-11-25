@@ -58,7 +58,7 @@ public class DefaultHttpServiceHandlerConfigurer extends DefaultPluginConfigurer
   public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler, Id.Artifact artifactId,
                                              ArtifactRepository artifactRepository,
                                              PluginInstantiator pluginInstantiator) {
-    super(artifactRepository, pluginInstantiator, artifactId);
+    super(artifactId, artifactRepository, pluginInstantiator);
     this.propertyFields = Maps.newHashMap();
     this.className = handler.getClass().getName();
     this.name = handler.getClass().getSimpleName();

@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.lib.cube.TimeSeries;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data2.dataset2.lib.cube.CubeDatasetDefinition;
 import co.cask.cdap.etl.common.ETLStage;
+import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.etl.realtime.source.DataGeneratorSource;
@@ -55,8 +56,9 @@ public class RealtimeCubeSinkTest extends ETLRealtimeBaseTest {
 
   @Test
   public void test() throws Exception {
-    ETLStage source = new ETLStage("DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
-                                                                    DataGeneratorSource.TABLE_TYPE));
+    Plugin source = new Plugin("DataGenerator",
+                                                         ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
+                                                                         DataGeneratorSource.TABLE_TYPE));
     // single aggregation
     Map<String, String> datasetProps = ImmutableMap.of(
       CubeDatasetDefinition.PROPERTY_AGGREGATION_PREFIX + "byName.dimensions", "name"
@@ -64,11 +66,12 @@ public class RealtimeCubeSinkTest extends ETLRealtimeBaseTest {
     Map<String, String> measurementsProps = ImmutableMap.of(
       Properties.Cube.MEASUREMENT_PREFIX + "score", "GAUGE"
     );
-    ETLStage sink = new ETLStage("Cube",
+    Plugin sink = new Plugin("Cube",
                                  ImmutableMap.of(Properties.Cube.DATASET_NAME, "cube1",
                                                  Properties.Cube.DATASET_OTHER, new Gson().toJson(datasetProps),
                                                  Properties.Cube.MEASUREMENTS, new Gson().toJson(measurementsProps)));
-    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, Lists.<ETLStage>newArrayList());
+    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(new ETLStage("source", source),
+                                                        new ETLStage("sink", sink), Lists.<ETLStage>newArrayList());
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testCubeSink");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -88,7 +91,7 @@ public class RealtimeCubeSinkTest extends ETLRealtimeBaseTest {
         Collection<TimeSeries> result = cube.query(buildCubeQuery(startTs));
         return !result.isEmpty();
       }
-    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 10, TimeUnit.SECONDS);
     workerManager.stop();
 
     // verify

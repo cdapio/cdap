@@ -19,6 +19,7 @@ package co.cask.cdap.internal.app.runtime.batch;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
@@ -35,8 +36,11 @@ import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.data.dataset.DatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -48,9 +52,11 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.XSlowTests;
+import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
+import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -90,7 +96,7 @@ public class MapReduceWithPartitionedTest {
 
   private static TransactionManager txService;
   private static DatasetFramework dsFramework;
-  private static DatasetInstantiator datasetInstantiator;
+  private static DynamicDatasetCache datasetCache;
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -117,10 +123,10 @@ public class MapReduceWithPartitionedTest {
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
-                                                  MapReduceWithPartitionedTest.class.getClassLoader(),
-                                                  null, null);
-
+    datasetCache = new SingleThreadDatasetCache(
+      new SystemDatasetInstantiator(dsFramework, MapReduceWithPartitionedTest.class.getClassLoader(), null),
+      injector.getInstance(TransactionSystemClient.class),
+      DefaultId.NAMESPACE, DatasetDefinition.NO_ARGUMENTS, null, null);
     txService.startAndWait();
   }
 
@@ -144,8 +150,8 @@ public class MapReduceWithPartitionedTest {
       AppFabricTestHelper.deployApplicationWithManager(AppWithTimePartitionedFileSet.class, TEMP_FOLDER_SUPPLIER);
 
     // write a value to the input table
-    final Table table = datasetInstantiator.getDataset(AppWithTimePartitionedFileSet.INPUT);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    final Table table = datasetCache.getDataset(AppWithTimePartitionedFileSet.INPUT);
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -169,8 +175,8 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithTimePartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
 
     // this should have created a partition in the tpfs
-    final TimePartitionedFileSet tpfs = datasetInstantiator.getDataset(TIME_PARTITIONED);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    final TimePartitionedFileSet tpfs = datasetCache.getDataset(TIME_PARTITIONED);
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) tpfs).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -184,7 +190,7 @@ public class MapReduceWithPartitionedTest {
       });
 
     // delete the data in the input table and write a new row
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -201,7 +207,7 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithTimePartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
 
     // this should have created a partition in the tpfs
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) tpfs).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -223,8 +229,8 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
     // this should have read both partitions - and written both x and y to row a
-    final Table output = datasetInstantiator.getDataset(AppWithTimePartitionedFileSet.OUTPUT);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    final Table output = datasetCache.getDataset(AppWithTimePartitionedFileSet.OUTPUT);
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -242,7 +248,7 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
     // this should have read the first partition only - and written only x to row b
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -260,7 +266,7 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithTimePartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
     // this should have read no partitions - and written nothing to row n
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -277,8 +283,8 @@ public class MapReduceWithPartitionedTest {
       AppFabricTestHelper.deployApplicationWithManager(AppWithPartitionedFileSet.class, TEMP_FOLDER_SUPPLIER);
 
     // write a value to the input table
-    final Table table = datasetInstantiator.getDataset(AppWithPartitionedFileSet.INPUT);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    final Table table = datasetCache.getDataset(AppWithPartitionedFileSet.INPUT);
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -300,8 +306,8 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithPartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
 
     // this should have created a partition in the tpfs
-    final PartitionedFileSet dataset = datasetInstantiator.getDataset(PARTITIONED);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    final PartitionedFileSet dataset = datasetCache.getDataset(PARTITIONED);
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) dataset).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -314,7 +320,7 @@ public class MapReduceWithPartitionedTest {
       });
 
     // delete the data in the input table and write a new row
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) table).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -335,7 +341,7 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithPartitionedFileSet.PartitionWriter.class, new BasicArguments(runtimeArguments));
 
     // this should have created a partition in the tpfs
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) dataset).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -362,8 +368,8 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
     // this should have read both partitions - and written both x and y to row a
-    final Table output = datasetInstantiator.getDataset(AppWithPartitionedFileSet.OUTPUT);
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    final Table output = datasetCache.getDataset(AppWithPartitionedFileSet.OUTPUT);
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -387,7 +393,7 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
     // this should have read the first partition only - and written only x to row b
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {
@@ -410,7 +416,7 @@ public class MapReduceWithPartitionedTest {
     runProgram(app, AppWithPartitionedFileSet.PartitionReader.class, new BasicArguments(runtimeArguments));
 
     // this should have read no partitions - and written nothing to row n
-    txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware()).execute(
+    Transactions.createTransactionExecutor(txExecutorFactory, (TransactionAware) output).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() {

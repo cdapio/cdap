@@ -64,9 +64,10 @@ import java.io.IOException;
 public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
 
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
+  public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();
+  @ClassRule
+  public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
 
-  private static HBaseTestBase testHBase;
   private static StreamAdmin streamAdmin;
   private static StreamConsumerStateStoreFactory stateStoreFactory;
   private static InMemoryZKServer zkServer;
@@ -75,13 +76,11 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
 
   @BeforeClass
   public static void init() throws Exception {
-    zkServer = InMemoryZKServer.builder().setDataDir(tmpFolder.newFolder()).build();
+    zkServer = InMemoryZKServer.builder().setDataDir(TMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
 
-    testHBase = new HBaseTestFactory().get();
-    testHBase.startHBase();
-    Configuration hConf = testHBase.getConfiguration();
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
+    Configuration hConf = TEST_HBASE.getConfiguration();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.Zookeeper.QUORUM, zkServer.getConnectionStr());
 
     Injector injector = Guice.createInjector(
@@ -111,24 +110,32 @@ public class HBaseConsumerStateTest extends StreamConsumerStateTestBase {
     stateStoreFactory = injector.getInstance(StreamConsumerStateStoreFactory.class);
 
     tableUtil = injector.getInstance(HBaseTableUtil.class);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), TEST_NAMESPACE);
-    tableUtil.createNamespaceIfNotExists(testHBase.getHBaseAdmin(), OTHER_NAMESPACE);
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), TEST_NAMESPACE);
+    tableUtil.createNamespaceIfNotExists(TEST_HBASE.getHBaseAdmin(), OTHER_NAMESPACE);
 
     setupNamespaces(injector.getInstance(NamespacedLocationFactory.class));
   }
 
   @AfterClass
   public static void finish() throws Exception {
-    deleteNamespace(OTHER_NAMESPACE);
-    deleteNamespace(TEST_NAMESPACE);
-    testHBase.stopHBase();
-    zkClientService.stopAndWait();
-    zkServer.stopAndWait();
+    try {
+      deleteNamespace(OTHER_NAMESPACE);
+    } finally {
+      try {
+        deleteNamespace(TEST_NAMESPACE);
+      } finally {
+        try {
+          zkClientService.stopAndWait();
+        } finally {
+          zkServer.stopAndWait();
+        }
+      }
+    }
   }
 
   private static void deleteNamespace(Id.Namespace namespace) throws IOException {
-    tableUtil.deleteAllInNamespace(testHBase.getHBaseAdmin(), namespace);
-    tableUtil.deleteNamespaceIfExists(testHBase.getHBaseAdmin(), namespace);
+    tableUtil.deleteAllInNamespace(TEST_HBASE.getHBaseAdmin(), namespace);
+    tableUtil.deleteNamespaceIfExists(TEST_HBASE.getHBaseAdmin(), namespace);
   }
 
   @Override

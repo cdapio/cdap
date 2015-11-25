@@ -25,6 +25,7 @@ import co.cask.cdap.PauseResumeWorklowApp;
 import co.cask.cdap.WorkflowAppWithErrorRuns;
 import co.cask.cdap.WorkflowAppWithFork;
 import co.cask.cdap.WorkflowAppWithScopedParameters;
+import co.cask.cdap.WorkflowFailureInForkApp;
 import co.cask.cdap.WorkflowTokenTestPutApp;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
@@ -32,11 +33,11 @@ import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.gateway.handlers.WorkflowHttpHandler;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
+import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.ScheduledRuntime;
@@ -58,6 +59,7 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -66,6 +68,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -93,7 +96,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
       public Integer call() throws Exception {
         return runningProgramCount(program, runId);
       }
-    }, 10, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 10, TimeUnit.SECONDS);
   }
 
   private Integer runningProgramCount(Id.Program program, String runId) throws Exception {
@@ -149,20 +152,6 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
   private HttpResponse getWorkflowCurrentStatus(Id.Program program, String runId) throws Exception {
     String currentUrl = String.format("apps/%s/workflows/%s/runs/%s/current", program.getApplicationId(),
-                                      program.getId(), runId);
-    String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN,
-                                              program.getNamespaceId());
-    return doGet(versionedUrl);
-  }
-
-  /**
-   * Tests deprecated workflow current API. For new tests, use {@link #getWorkflowCurrentStatus(Id.Program, String)}
-   * instead
-   * TODO: CDAP-2481: Remove in 3.2
-   */
-  @Deprecated
-  private HttpResponse getWorkflowCurrentStatusOld(Id.Program program, String runId) throws Exception {
-    String currentUrl = String.format("apps/%s/workflows/%s/%s/current", program.getApplicationId(),
                                       program.getId(), runId);
     String versionedUrl = getVersionedAPIPath(currentUrl, Constants.Gateway.API_VERSION_3_TOKEN,
                                               program.getNamespaceId());
@@ -236,12 +225,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     startProgram(programId, 200);
 
     // Workflow should be running
-    waitState(programId, ProgramRunStatus.RUNNING.name());
+    waitState(programId, ProgramStatus.RUNNING.name());
 
     // Get runid for the running Workflow
-    List<RunRecord> historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
-    String runId = historyRuns.get(0).getPid();
+    String runId = getRunIdOfRunningProgram(programId);
 
     while (!firstSimpleActionFile.exists()) {
       TimeUnit.MILLISECONDS.sleep(50);
@@ -254,7 +241,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     suspendWorkflow(programId, runId, 200);
 
     // Workflow status hould be SUSPENDED
-    waitState(programId, ProgramRunStatus.SUSPENDED.name());
+    waitState(programId, ProgramStatus.STOPPED.name());
 
     // Meta store information for this Workflow should reflect suspended run
     verifyProgramRuns(programId, "suspended");
@@ -276,7 +263,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     resumeWorkflow(programId, runId, 200);
 
     // Workflow should be running
-    waitState(programId, ProgramRunStatus.RUNNING.name());
+    waitState(programId, ProgramStatus.RUNNING.name());
 
     verifyProgramRuns(programId, "running");
 
@@ -295,7 +282,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     suspendWorkflow(programId, runId, 200);
 
     // Status of the Workflow should be suspended
-    waitState(programId, ProgramRunStatus.SUSPENDED.name());
+    waitState(programId, ProgramStatus.STOPPED.name());
 
     // Store should reflect the suspended status of the Workflow
     verifyProgramRuns(programId, "suspended");
@@ -313,7 +300,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     resumeWorkflow(programId, runId, 200);
 
-    waitState(programId, ProgramRunStatus.RUNNING.name());
+    waitState(programId, ProgramStatus.RUNNING.name());
 
     while (!lastSimpleActionFile.exists()) {
       TimeUnit.SECONDS.sleep(1);
@@ -325,7 +312,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     verifyProgramRuns(programId, "completed");
 
-    waitState(programId, "STOPPED");
+    waitState(programId, ProgramStatus.STOPPED.name());
 
     suspendWorkflow(programId, runId, 404);
 
@@ -336,15 +323,14 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   @Category(XSlowTests.class)
   @Test
   public void testMultipleWorkflowInstances() throws Exception {
-    String appWithConcurrentWorkflow = "ConcurrentWorkflowApp";
-    String appWithConcurrentWorkflowSchedule1 = "concurrentWorkflowSchedule1";
-    String appWithConcurrentWorkflowSchedule2 = "concurrentWorkflowSchedule2";
-    String concurrentWorkflowName = "ConcurrentWorkflow";
+    String appWithConcurrentWorkflow = ConcurrentWorkflowApp.class.getSimpleName();
 
     // Files used to synchronize between this test and workflow execution
-    File schedule1File = new File(tmpFolder.newFolder() + "/concurrentWorkflowSchedule1.file");
-    File schedule2File = new File(tmpFolder.newFolder() + "/concurrentWorkflowSchedule2.file");
-    File simpleActionDoneFile = new File(tmpFolder.newFolder() + "/simpleaction.file.done");
+    File tempDir = tmpFolder.newFolder(appWithConcurrentWorkflow);
+    File run1File = new File(tempDir, "concurrentRun1.file");
+    File run2File = new File(tempDir, "concurrentRun2.file");
+    File run1DoneFile = new File(tempDir, "concurrentRun1.done");
+    File run2DoneFile = new File(tempDir, "concurrentRun2.done");
 
     // create app in default namespace so that v2 and v3 api can be tested in the same test
     String defaultNamespace = Id.Namespace.DEFAULT.getId();
@@ -353,69 +339,50 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
     Id.Program programId = Id.Program.from(Id.Namespace.DEFAULT, appWithConcurrentWorkflow, ProgramType.WORKFLOW,
-                                           concurrentWorkflowName);
+                                           ConcurrentWorkflowApp.ConcurrentWorkflow.class.getSimpleName());
 
-    Map<String, String> propMap = ImmutableMap.of("concurrentWorkflowSchedule1.file", schedule1File.getAbsolutePath(),
-                                                  "concurrentWorkflowSchedule2.file", schedule2File.getAbsolutePath(),
-                                                  "done.file", simpleActionDoneFile.getAbsolutePath());
+    // start run 1
+    startProgram(programId, ImmutableMap.of(ConcurrentWorkflowApp.FILE_TO_CREATE_ARG, run1File.getAbsolutePath(),
+                                            ConcurrentWorkflowApp.DONE_FILE_ARG, run1DoneFile.getAbsolutePath()),
+                 200);
+    // start run 2
+    startProgram(programId, ImmutableMap.of(ConcurrentWorkflowApp.FILE_TO_CREATE_ARG, run2File.getAbsolutePath(),
+                                            ConcurrentWorkflowApp.DONE_FILE_ARG, run2DoneFile.getAbsolutePath()),
+                 200);
 
-    PreferencesStore store = getInjector().getInstance(PreferencesStore.class);
-    store.setProperties(defaultNamespace, appWithConcurrentWorkflow, ProgramType.WORKFLOW.getCategoryName(),
-                        concurrentWorkflowName, propMap);
-
-    Assert.assertEquals(200, resumeSchedule(defaultNamespace, appWithConcurrentWorkflow,
-                                            appWithConcurrentWorkflowSchedule1));
-    Assert.assertEquals(200, resumeSchedule(defaultNamespace, appWithConcurrentWorkflow,
-                                            appWithConcurrentWorkflowSchedule2));
-
-    while (!(schedule1File.exists() && schedule2File.exists())) {
+    while (!(run1File.exists() && run2File.exists())) {
       TimeUnit.MILLISECONDS.sleep(50);
     }
 
-    List<RunRecord> historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() >= 2);
+    verifyMultipleConcurrentRuns(programId);
 
-    // Suspend ConcurrentWorkflow schedules
-    List<ScheduleSpecification> schedules = getSchedules(defaultNamespace, appWithConcurrentWorkflow,
-                                                         concurrentWorkflowName);
+    Assert.assertTrue(run1DoneFile.createNewFile());
+    Assert.assertTrue(run2DoneFile.createNewFile());
 
-    for (ScheduleSpecification spec : schedules) {
-      Assert.assertEquals(200, suspendSchedule(defaultNamespace, appWithConcurrentWorkflow,
-                                               spec.getSchedule().getName()));
-    }
+    waitState(programId, ProgramStatus.STOPPED.name());
+    // delete the application
+    deleteApp(programId.getApplication(), 200, 60, TimeUnit.SECONDS);
+  }
 
-    response = getWorkflowCurrentStatus(programId, historyRuns.get(0).getPid());
+  private void verifyMultipleConcurrentRuns(Id.Program workflowId) throws Exception {
+    List<RunRecord> historyRuns = getProgramRuns(workflowId, "running");
+    Assert.assertEquals(2, historyRuns.size());
+
+    HttpResponse response = getWorkflowCurrentStatus(workflowId, historyRuns.get(0).getPid());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     String json = EntityUtils.toString(response.getEntity());
     List<WorkflowActionNode> nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
     Assert.assertEquals(1, nodes.size());
-    Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
+    Assert.assertEquals(ConcurrentWorkflowApp.SimpleAction.class.getSimpleName(),
+                        nodes.get(0).getProgram().getProgramName());
 
-    response = getWorkflowCurrentStatusOld(programId, historyRuns.get(0).getPid());
+    response = getWorkflowCurrentStatus(workflowId, historyRuns.get(1).getPid());
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
     json = EntityUtils.toString(response.getEntity());
     nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
     Assert.assertEquals(1, nodes.size());
-    Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
-
-    response = getWorkflowCurrentStatus(programId, historyRuns.get(1).getPid());
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
-    Assert.assertEquals(1, nodes.size());
-    Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
-
-    response = getWorkflowCurrentStatusOld(programId, historyRuns.get(1).getPid());
-    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
-    json = EntityUtils.toString(response.getEntity());
-    nodes = GSON.fromJson(json, LIST_WORKFLOWACTIONNODE_TYPE);
-    Assert.assertEquals(1, nodes.size());
-    Assert.assertEquals("SimpleAction", nodes.get(0).getProgram().getProgramName());
-
-    Assert.assertTrue(simpleActionDoneFile.createNewFile());
-
-    // delete the application
-    deleteApp(programId.getApplication(), 200, 60, TimeUnit.SECONDS);
+    Assert.assertEquals(ConcurrentWorkflowApp.SimpleAction.class.getSimpleName(),
+                        nodes.get(0).getProgram().getProgramName());
   }
 
   private void verifyFileExists(final List<File> fileList)
@@ -430,37 +397,36 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
         }
         return true;
       }
-    }, 180, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 180, TimeUnit.SECONDS);
   }
 
   @Test
   public void testWorkflowForkApp() throws Exception {
-    String workflowAppWithFork = "WorkflowAppWithFork";
-    String workflowWithFork = "WorkflowWithFork";
-
-    Map<String, String> runtimeArgs = Maps.newHashMap();
+    File directory = tmpFolder.newFolder();
+    Map<String, String> runtimeArgs = new HashMap<>();
 
     // Files used to synchronize between this test and workflow execution
-    File firstSimpleActionFile = new File(tmpFolder.newFolder() + "/firstsimpleaction.file");
-    File firstSimpleActionDoneFile = new File(tmpFolder.newFolder() + "/firstsimpleaction.file.done");
-    runtimeArgs.put("first.simple.action.file", firstSimpleActionFile.getAbsolutePath());
-    runtimeArgs.put("first.simple.action.donefile", firstSimpleActionDoneFile.getAbsolutePath());
+    File firstFile = new File(directory, "first.file");
+    File firstDoneFile = new File(directory, "first.done");
+    runtimeArgs.put("first.file", firstFile.getAbsolutePath());
+    runtimeArgs.put("first.donefile", firstDoneFile.getAbsolutePath());
 
-    File oneSimpleActionFile = new File(tmpFolder.newFolder() + "/onesimpleaction.file");
-    File oneSimpleActionDoneFile = new File(tmpFolder.newFolder() + "/onesimpleaction.file.done");
-    runtimeArgs.put("one.simple.action.file", oneSimpleActionFile.getAbsolutePath());
-    runtimeArgs.put("one.simple.action.donefile", oneSimpleActionDoneFile.getAbsolutePath());
+    File branch1File = new File(directory, "branch1.file");
+    File branch1DoneFile = new File(directory, "branch1.done");
+    runtimeArgs.put("branch1.file", branch1File.getAbsolutePath());
+    runtimeArgs.put("branch1.donefile", branch1DoneFile.getAbsolutePath());
 
-    File anotherSimpleActionFile = new File(tmpFolder.newFolder() + "/anothersimpleaction.file");
-    File anotherSimpleActionDoneFile = new File(tmpFolder.newFolder() + "/anothersimpleaction.file.done");
-    runtimeArgs.put("another.simple.action.file", anotherSimpleActionFile.getAbsolutePath());
-    runtimeArgs.put("another.simple.action.donefile", anotherSimpleActionDoneFile.getAbsolutePath());
+    File branch2File = new File(directory, "branch2.file");
+    File branch2DoneFile = new File(directory, "branch2.done");
+    runtimeArgs.put("branch2.file", branch2File.getAbsolutePath());
+    runtimeArgs.put("branch2.donefile", branch2DoneFile.getAbsolutePath());
 
     HttpResponse response = deploy(WorkflowAppWithFork.class, Constants.Gateway.API_VERSION_3_TOKEN, TEST_NAMESPACE2);
     Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
-    Id.Program programId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithFork, ProgramType.WORKFLOW,
-                                           workflowWithFork);
+    Id.Program programId = Id.Program.from(
+      TEST_NAMESPACE2, WorkflowAppWithFork.class.getSimpleName(), ProgramType.WORKFLOW,
+      WorkflowAppWithFork.WorkflowWithFork.class.getSimpleName());
 
     setAndTestRuntimeArgs(programId, runtimeArgs);
 
@@ -468,16 +434,13 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     startProgram(programId);
 
     // Workflow should be running
-    waitState(programId, ProgramRunStatus.RUNNING.name());
+    waitState(programId, ProgramStatus.RUNNING.name());
 
-    // Get the currently running RunRecord for the Workflow
-    List<RunRecord> historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
-    RunRecord record = historyRuns.get(0);
-    String runId = record.getPid();
+    // Get the runId for the currently running Workflow
+    String runId = getRunIdOfRunningProgram(programId);
 
     // Wait till first action in the Workflow starts executing
-    verifyFileExists(Lists.newArrayList(firstSimpleActionFile));
+    verifyFileExists(Lists.newArrayList(firstFile));
 
     verifyRunningProgramCount(programId, runId, 1);
 
@@ -488,33 +451,33 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyProgramRuns(programId, "killed");
 
     // Delete the asset created in the previous run
-    Assert.assertTrue(firstSimpleActionFile.delete());
+    Assert.assertTrue(firstFile.delete());
 
     // Start the Workflow again
     startProgram(programId);
 
     // Workflow should be running
-    waitState(programId, ProgramRunStatus.RUNNING.name());
+    waitState(programId, ProgramStatus.RUNNING.name());
 
-    // Get the currently running RunRecord for the Workflow
-    historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
-    record = historyRuns.get(0);
-    Assert.assertTrue(!runId.equals(record.getPid()));
+    // Get the runId for the currently running Workflow
+    String newRunId = getRunIdOfRunningProgram(programId);
+    Assert.assertTrue(
+      String.format("Expected a new runId to be generated after starting the workflow for the second time, but " +
+                      "found old runId '%s' = new runId '%s'", runId, newRunId), !runId.equals(newRunId));
 
     // Store the new RunId
-    runId = record.getPid();
+    runId = newRunId;
 
     // Wait till first action in the Workflow starts executing
-    verifyFileExists(Lists.newArrayList(firstSimpleActionFile));
+    verifyFileExists(Lists.newArrayList(firstFile));
 
     verifyRunningProgramCount(programId, runId, 1);
 
     // Signal the first action to continue
-    Assert.assertTrue(firstSimpleActionDoneFile.createNewFile());
+    Assert.assertTrue(firstDoneFile.createNewFile());
 
     // Wait till fork in the Workflow starts executing
-    verifyFileExists(Lists.newArrayList(oneSimpleActionFile, anotherSimpleActionFile));
+    verifyFileExists(Lists.newArrayList(branch1File, branch2File));
 
     // Two actions should be running in Workflow as a part of the fork
     verifyRunningProgramCount(programId, runId, 2);
@@ -523,7 +486,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     stopProgram(programId, 200);
 
     // Wait till the program stop
-    waitState(programId, "STOPPED");
+    waitState(programId, ProgramStatus.STOPPED.name());
 
     // Current endpoint would return 404
     response = getWorkflowCurrentStatus(programId, runId);
@@ -533,42 +496,47 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     verifyProgramRuns(programId, "killed", 1);
 
     // Delete the assets generated in the previous run
-    Assert.assertTrue(firstSimpleActionFile.delete());
-    Assert.assertTrue(firstSimpleActionDoneFile.delete());
-    Assert.assertTrue(oneSimpleActionFile.delete());
-    Assert.assertTrue(anotherSimpleActionFile.delete());
+    Assert.assertTrue(firstFile.delete());
+    Assert.assertTrue(firstDoneFile.delete());
+    Assert.assertTrue(branch1File.delete());
+    Assert.assertTrue(branch2File.delete());
 
     // Restart the run again
     startProgram(programId);
 
     // Wait till the Workflow is running
-    waitState(programId, ProgramRunStatus.RUNNING.name());
+    waitState(programId, ProgramStatus.RUNNING.name());
 
     // Store the new RunRecord for the currently running run
-    historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
-    runId = historyRuns.get(0).getPid();
+    runId = getRunIdOfRunningProgram(programId);
 
     // Wait till first action in the Workflow starts executing
-    verifyFileExists(Lists.newArrayList(firstSimpleActionFile));
+    verifyFileExists(Lists.newArrayList(firstFile));
 
     verifyRunningProgramCount(programId, runId, 1);
 
     // Signal the first action to continue
-    Assert.assertTrue(firstSimpleActionDoneFile.createNewFile());
+    Assert.assertTrue(firstDoneFile.createNewFile());
 
     // Wait till fork in the Workflow starts executing
-    verifyFileExists(Lists.newArrayList(oneSimpleActionFile, anotherSimpleActionFile));
+    verifyFileExists(Lists.newArrayList(branch1File, branch2File));
 
     // Two actions should be running in Workflow as a part of the fork
     verifyRunningProgramCount(programId, runId, 2);
 
     // Signal the Workflow that execution can be continued
-    Assert.assertTrue(oneSimpleActionDoneFile.createNewFile());
-    Assert.assertTrue(anotherSimpleActionDoneFile.createNewFile());
+    Assert.assertTrue(branch1DoneFile.createNewFile());
+    Assert.assertTrue(branch2DoneFile.createNewFile());
 
     // Workflow should now have one completed run
     verifyProgramRuns(programId, "completed");
+  }
+
+  private String getRunIdOfRunningProgram(Id.Program programId) throws Exception {
+    List<RunRecord> historyRuns = getProgramRuns(programId, "running");
+    Assert.assertEquals(1, historyRuns.size());
+    RunRecord record = historyRuns.get(0);
+    return record.getPid();
   }
 
   @Category(XSlowTests.class)
@@ -613,13 +581,13 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Start the workflow
     startProgram(programId);
-    waitState(programId, "RUNNING");
+    waitState(programId, ProgramStatus.RUNNING.name());
     List<RunRecord> workflowHistoryRuns = getProgramRuns(programId, "running");
     String workflowRunId = workflowHistoryRuns.get(0).getPid();
 
     Id.Program mr1ProgramId = Id.Program.from(TEST_NAMESPACE2, workflowAppWithScopedParameters, ProgramType.MAPREDUCE,
                                               "OneMR");
-    waitState(mr1ProgramId, "RUNNING");
+    waitState(mr1ProgramId, ProgramStatus.RUNNING.name());
     List<RunRecord> oneMRHistoryRuns = getProgramRuns(mr1ProgramId, "running");
 
     String expectedMessage = String.format("Cannot stop the program '%s' started by the Workflow run '%s'. " +
@@ -679,6 +647,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(workflowRunRecordProperties.get("AnotherSpark"), anotherSparkHistoryRuns.get(0).getPid());
   }
 
+  @Ignore
   @Test
   public void testWorkflowSchedules() throws Exception {
     // Steps for the test:
@@ -700,9 +669,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     Id.Program programId = Id.Program.from(TEST_NAMESPACE2, appName, ProgramType.WORKFLOW, workflowName);
 
-    Map<String, String> runtimeArguments = Maps.newHashMap();
-    runtimeArguments.put("someKey", "someWorkflowValue");
-    runtimeArguments.put("workflowKey", "workflowValue");
+    Map<String, String> runtimeArguments = ImmutableMap.of("someKey", "someWorkflowValue",
+                                                           "workflowKey", "workflowValue");
 
     setAndTestRuntimeArgs(programId, runtimeArguments);
 
@@ -710,51 +678,64 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     List<ScheduleSpecification> schedules = getSchedules(TEST_NAMESPACE2, appName, workflowName);
     Assert.assertEquals(1, schedules.size());
     String scheduleName = schedules.get(0).getSchedule().getName();
-    Assert.assertNotNull(scheduleName);
     Assert.assertFalse(scheduleName.isEmpty());
 
     // TODO [CDAP-2327] Sagar Investigate why following check fails sometimes. Mostly test case issue.
     // List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, scheduleName, "previousruntime");
     // Assert.assertTrue(previousRuntimes.size() == 0);
 
-    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
-
     long current = System.currentTimeMillis();
+    // make the check for next runtime fool proof, by resuming 1 second after recording the current time.
+    TimeUnit.SECONDS.sleep(1);
 
-    List<ScheduledRuntime> runtimes = getScheduledRunTime(programId, true);
-    String id = runtimes.get(0).getId();
-    Assert.assertTrue(id.contains(scheduleName));
-    Long nextRunTime = runtimes.get(0).getTime();
-    Assert.assertTrue(nextRunTime > current);
-
-    verifyProgramRuns(programId, "completed");
-
-    List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, false);
-    Assert.assertEquals(1, previousRuntimes.size());
-
+    Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, sampleSchedule));
     //Check schedule status
     assertSchedule(programId, scheduleName, true, 30, TimeUnit.SECONDS);
 
+    List<ScheduledRuntime> runtimes = getScheduledRunTime(programId, true);
+    String id = runtimes.get(0).getId();
+    Assert.assertTrue(String.format("Expected schedule id '%s' to contain schedule name '%s'", id, scheduleName),
+                      id.contains(scheduleName));
+    Long nextRunTime = runtimes.get(0).getTime();
+    Assert.assertTrue(String.format("Expected nextRuntime '%s' to be greater than current runtime '%s'",
+                                    nextRunTime, current),
+                      nextRunTime > current);
+
+    // Sleep for 2 seconds, so we're guaranteed at least two runs, then suspend
+    TimeUnit.SECONDS.sleep(2);
     Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName));
-    //check paused state
+    // check paused state
     assertSchedule(programId, scheduleName, false, 30, TimeUnit.SECONDS);
 
-    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+    // check that there were atleast 1 previous runs
+    List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, false);
+    int numRuns = previousRuntimes.size();
+    Assert.assertTrue(String.format("After sleeping for two seconds, the schedule should have atleast triggered " +
+                                      "once, but found %s previous runs", numRuns), numRuns >= 1);
 
+    // Since this schedule starts a workflow every second, sleep for a second to make sure that all workflow runs
+    // that were started before the schedule was suspended are at least running (if not completed) and
+    // there are no race conditions in the following verifications.
+    TimeUnit.SECONDS.sleep(1);
+    verifyNoRunWithStatus(programId, "running");
+    verifyProgramRuns(programId, "completed", 1);
+
+    // get number of completed runs after schedule is suspended
     int workflowRuns = getProgramRuns(programId, "completed").size();
-
-    //Sleep for some time and verify there are no more scheduled jobs after the suspend.
-    TimeUnit.SECONDS.sleep(10);
-
+    // Sleep for some time and verify there are no more scheduled jobs after the suspend.
+    TimeUnit.SECONDS.sleep(3);
     int workflowRunsAfterSuspend = getProgramRuns(programId, "completed").size();
     Assert.assertEquals(workflowRuns, workflowRunsAfterSuspend);
 
+    // verify that resuming the suspended schedule again has expected behavior (spawns new runs)
     Assert.assertEquals(200, resumeSchedule(TEST_NAMESPACE2, appName, scheduleName));
-
-    verifyProgramRuns(programId, "completed", workflowRunsAfterSuspend);
-
     //check scheduled state
     assertSchedule(programId, scheduleName, true, 30, TimeUnit.SECONDS);
+
+    verifyProgramRuns(programId, "completed", workflowRunsAfterSuspend);
+    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName));
+    //check paused state
+    assertSchedule(programId, scheduleName, false, 30, TimeUnit.SECONDS);
 
     //Check status of a non existing schedule
     try {
@@ -763,11 +744,6 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     } catch (Exception e) {
       // expected
     }
-
-    Assert.assertEquals(200, suspendSchedule(TEST_NAMESPACE2, appName, scheduleName));
-
-    //check paused state
-    assertSchedule(programId, scheduleName, false, 30, TimeUnit.SECONDS);
 
     //Schedule operations using invalid namespace
     try {
@@ -780,7 +756,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     Assert.assertEquals(404, suspendSchedule(TEST_NAMESPACE1, appName, scheduleName));
     Assert.assertEquals(404, resumeSchedule(TEST_NAMESPACE1, appName, scheduleName));
 
-    TimeUnit.SECONDS.sleep(2); //wait till any running jobs just before suspend call completes.
+    verifyNoRunWithStatus(programId, "running");
+    deleteApp(Id.Application.from(TEST_NAMESPACE2, AppWithSchedule.class.getSimpleName()), 200);
   }
 
   @Test
@@ -936,7 +913,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
 
     // Verify that there are two runs of the Workflow currently running.
     List<RunRecord> historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 2);
+    Assert.assertEquals(2, historyRuns.size());
 
     // Stop both Workflow runs.
     String runId = historyRuns.get(0).getPid();
@@ -957,7 +934,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     }
     // Verify that currently only one run of the Workflow should be running.
     historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
+    Assert.assertEquals(1, historyRuns.size());
 
     Assert.assertTrue(doneFile.createNewFile());
 
@@ -1052,9 +1029,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     }
 
     // Get running program run
-    List<RunRecord> historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
-    String runId = historyRuns.get(0).getPid();
+    String runId = getRunIdOfRunningProgram(programId);
 
     // Since the fork on the else branch of condition has 3 parallel branches
     // there should be 3 programs currently running
@@ -1103,9 +1078,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     }
 
     // Get running program run
-    historyRuns = getProgramRuns(programId, "running");
-    Assert.assertTrue(historyRuns.size() == 1);
-    runId = historyRuns.get(0).getPid();
+    runId = getRunIdOfRunningProgram(programId);
 
     // Since the fork on the if branch of the condition has 2 parallel branches
     // there should be 2 programs currently running
@@ -1135,8 +1108,8 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInput("input"),
                                              "outputPath", outputPath));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
     List<RunRecord> programRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
     Assert.assertEquals(1, programRuns.size());
@@ -1240,11 +1213,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("firstInput"),
                                              "outputPath", outputPath, "put.in.mapper.initialize", "true"));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
-    List<RunRecord> workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(1, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed");
 
     List<RunRecord> mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
     Assert.assertEquals(1, mapReduceProgramRuns.size());
@@ -1255,11 +1227,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("secondInput"),
                                              "outputPath", outputPath, "put.in.map", "true"));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(2, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed", 1);
 
     mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
     Assert.assertEquals(2, mapReduceProgramRuns.size());
@@ -1270,11 +1241,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("thirdInput"),
                                              "outputPath", outputPath, "put.in.reducer.initialize", "true"));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(3, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed", 2);
 
     mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
     Assert.assertEquals(3, mapReduceProgramRuns.size());
@@ -1285,11 +1255,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("fourthInput"),
                                              "outputPath", outputPath, "put.in.reduce", "true"));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(4, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed", 3);
 
     mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.FAILED.name());
     Assert.assertEquals(4, mapReduceProgramRuns.size());
@@ -1298,11 +1267,10 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("fifthInput"),
                                              "outputPath", outputPath, "closurePutToken", "true"));
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.FAILED.name());
-    Assert.assertEquals(5, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "failed", 4);
 
     mapReduceProgramRuns = getProgramRuns(mapReduceId, ProgramRunStatus.COMPLETED.name());
     Assert.assertEquals(1, mapReduceProgramRuns.size());
@@ -1316,13 +1284,48 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     startProgram(workflowId, ImmutableMap.of("inputPath", createInputForRecordVerification("sixthInput"),
                                              "outputPath", outputPath));
 
-    waitState(workflowId, ProgramRunStatus.RUNNING.name());
-    waitState(workflowId, "STOPPED");
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
 
-    workflowProgramRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
-    Assert.assertEquals(1, workflowProgramRuns.size());
+    verifyProgramRuns(workflowId, "completed");
 
-    workflowProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.COMPLETED.name());
-    Assert.assertEquals(1, workflowProgramRuns.size());
+    sparkProgramRuns = getProgramRuns(sparkId, ProgramRunStatus.COMPLETED.name());
+    Assert.assertEquals(1, sparkProgramRuns.size());
+  }
+
+  @Ignore
+  @Test
+  public void testWorkflowForkFailure() throws Exception {
+    // Deploy an application containing workflow with fork. Fork executes MapReduce programs
+    // 'FirstMapReduce' and 'SecondMapReduce' in parallel. Workflow is started with runtime argument
+    // "mapreduce.SecondMapReduce.throw.exception", so that the MapReduce program 'SecondMapReduce'
+    // fails. This causes the 'FirstMapReduce' program to get killed and Workflow is marked as failed.
+    Assert.assertEquals(200, deploy(WorkflowFailureInForkApp.class).getStatusLine().getStatusCode());
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, WorkflowFailureInForkApp.NAME);
+    Id.Workflow workflowId = Id.Workflow.from(appId, WorkflowFailureInForkApp.WorkflowWithFailureInFork.NAME);
+    Id.Program firstMRId = Id.Program.from(appId, ProgramType.MAPREDUCE,
+                                           WorkflowFailureInForkApp.FIRST_MAPREDUCE_NAME);
+    Id.Program secondMRId = Id.Program.from(appId, ProgramType.MAPREDUCE,
+                                            WorkflowFailureInForkApp.SECOND_MAPREDUCE_NAME);
+
+    String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
+    File fileToSync = new File(tmpFolder.newFolder() + "/sync.file");
+    File fileToWait = new File(tmpFolder.newFolder() + "/wait.file");
+    startProgram(workflowId, ImmutableMap.of("inputPath", createInput("testWorkflowForkFailureInput"),
+                                             "outputPath", outputPath,
+                                             "sync.file", fileToSync.getAbsolutePath(),
+                                             "wait.file", fileToWait.getAbsolutePath(),
+                                             "mapreduce." + WorkflowFailureInForkApp.SECOND_MAPREDUCE_NAME
+                                               + ".throw.exception", "true"));
+    waitState(workflowId, ProgramStatus.RUNNING.name());
+    waitState(workflowId, ProgramStatus.STOPPED.name());
+
+    verifyProgramRuns(workflowId, "failed");
+
+    List<RunRecord> mapReduceProgramRuns = getProgramRuns(firstMRId, ProgramRunStatus.KILLED.name());
+    Assert.assertEquals(1, mapReduceProgramRuns.size());
+
+    mapReduceProgramRuns = getProgramRuns(secondMRId, ProgramRunStatus.FAILED.name());
+    Assert.assertEquals(1, mapReduceProgramRuns.size());
   }
 }

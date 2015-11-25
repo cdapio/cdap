@@ -16,14 +16,18 @@
 
 package co.cask.cdap.api.spark;
 
+import co.cask.cdap.api.ClientLocalizationContext;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
+import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.stream.Stream;
+import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.stream.StreamEventDecoder;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -45,7 +49,7 @@ import javax.annotation.Nullable;
  * method acts.
  */
 @Beta
-public interface SparkContext extends RuntimeContext, DatasetContext {
+public interface SparkContext extends RuntimeContext, DatasetContext, ClientLocalizationContext {
   /**
    * @return The specification used to configure this {@link Spark} job instance.
    */
@@ -151,6 +155,15 @@ public interface SparkContext extends RuntimeContext, DatasetContext {
                        Class<? extends StreamEventDecoder> decoderType);
 
   /**
+   * Create a Spark RDD that uses {@link Stream} as input source according to the given {@link StreamBatchReadable}.
+   *
+   * @param stream a {@link StreamBatchReadable} containing information on the stream to read from
+   * @param vClass the value class
+   * @return the RDD created from {@link Stream}
+   */
+   <T> T readFromStream(StreamBatchReadable stream, Class<?> vClass);
+
+  /**
    * Returns
    * <a href="http://spark.apache.org/docs/latest/api/scala/index.html#org.apache.spark.api.java.JavaSparkContext">
    * JavaSparkContext</a> or
@@ -179,6 +192,14 @@ public interface SparkContext extends RuntimeContext, DatasetContext {
   Metrics getMetrics();
 
   /**
+   * Returns a {@link Serializable} {@link PluginContext} which can be used to request for plugins instances. The
+   * instance returned can also be used in Spark program's closures.
+   *
+   * @return A {@link Serializable} {@link PluginContext}.
+   */
+  PluginContext getPluginContext();
+
+  /**
    * Override the resources, such as memory and virtual cores, to use for each executor process for the Spark program.
    * This method should be called in {@link Spark#beforeSubmit(SparkContext)} to take effect.
    *
@@ -202,4 +223,12 @@ public interface SparkContext extends RuntimeContext, DatasetContext {
    */
   @Nullable
   WorkflowToken getWorkflowToken();
+
+  /**
+   * Returns a {@link Serializable} {@link TaskLocalizationContext} which can be used to retrieve files localized to
+   * task containers. The instance returned can also be used in Spark program's closures.
+   *
+   * @return the {@link TaskLocalizationContext} for the {@link Spark} program
+   */
+  TaskLocalizationContext getTaskLocalizationContext();
 }

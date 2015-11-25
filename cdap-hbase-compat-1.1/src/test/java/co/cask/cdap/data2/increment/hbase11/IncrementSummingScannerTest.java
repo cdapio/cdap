@@ -49,11 +49,10 @@ import org.apache.hadoop.hbase.regionserver.ScannerContext;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hadoop.hbase.wal.WALFactory;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.util.List;
 
@@ -66,22 +65,18 @@ import static org.junit.Assert.assertTrue;
  * Tests for {@link IncrementSummingScanner} implementation.
  */
 public class IncrementSummingScannerTest {
+
+  @ClassRule
+  public static final HBase11Test TEST_HBASE = new HBase11Test();
+
   private static final byte[] TRUE = Bytes.toBytes(true);
-  private static HBase11Test testUtil;
   private static Configuration conf;
   private static CConfiguration cConf;
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
-    testUtil = new HBase11Test();
-    testUtil.startHBase();
-    conf = testUtil.getConfiguration();
+    conf = TEST_HBASE.getConfiguration();
     cConf = CConfiguration.create();
-  }
-
-  @AfterClass
-  public static void shutdownAfterClass() throws Exception {
-    testUtil.stopHBase();
   }
 
   @Test

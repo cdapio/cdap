@@ -13,13 +13,25 @@
   License for the specific language governing permissions and limitations under
   the License.
 */
-angular.module(PKG.name + '.feature.apps')
-  .controller('AppDetailController', function(rAppData, GLOBALS, myAdapterFactory) {
-    this.myAdapterFactory = myAdapterFactory;
+
+class AppDetailController {
+  constructor(rAppData, GLOBALS, myHydratorFactory, $state) {
+    this.myHydratorFactory = myHydratorFactory;
 
     this.isHydrator = ([GLOBALS.etlBatch, GLOBALS.etlRealtime].indexOf(rAppData.artifact.name) !== -1);
     this.artifact = {
       name: rAppData.artifact.name
     };
+    this.metadataParams = {
+      namespace: $state.params.namespace,
+      appId: $state.params.appId
+    };
+
     this.GLOBALS = GLOBALS;
-  });
+  }
+}
+
+AppDetailController.$inject = ['rAppData', 'GLOBALS', 'myHydratorFactory', '$state'];
+
+angular.module(`${PKG.name}.feature.apps`)
+  .controller('AppDetailController', AppDetailController);

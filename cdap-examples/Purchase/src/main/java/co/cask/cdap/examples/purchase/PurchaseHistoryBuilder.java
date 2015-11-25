@@ -49,7 +49,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
   public void configure() {
     setDescription("Purchase History Builder");
     setInputDataset("purchases");
-    setOutputDataset("history");
+    setDriverResources(new Resources(1024));
     setMapperResources(new Resources(1024));
     setReducerResources(new Resources(1024));
   }
@@ -59,6 +59,7 @@ public class PurchaseHistoryBuilder extends AbstractMapReduce {
     Job job = context.getHadoopJob();
     job.setMapperClass(PurchaseMapper.class);
     job.setReducerClass(PerUserReducer.class);
+    context.addOutput("history");
 
     // override default memory usage if the corresponding runtime arguments are set.
     Map<String, String> runtimeArgs = context.getRuntimeArguments();

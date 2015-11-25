@@ -24,23 +24,20 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.plugin.PluginConfig;
-import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
-import co.cask.cdap.etl.common.DBConfig;
-import co.cask.cdap.etl.common.DBRecord;
-import co.cask.cdap.etl.common.DBUtils;
-import co.cask.cdap.etl.common.ETLDBOutputFormat;
 import co.cask.cdap.etl.common.FieldCase;
-import co.cask.cdap.etl.common.JDBCDriverShim;
-import co.cask.cdap.etl.common.Properties;
+import co.cask.cdap.etl.common.db.DBConfig;
+import co.cask.cdap.etl.common.db.DBManager;
+import co.cask.cdap.etl.common.db.DBRecord;
+import co.cask.cdap.etl.common.db.DBUtils;
+import co.cask.cdap.etl.common.db.ETLDBOutputFormat;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.lib.db.DBConfiguration;
@@ -52,13 +49,11 @@ import java.sql.Driver;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Sink that can be configured to export data to a database table.
@@ -69,21 +64,15 @@ import javax.annotation.Nullable;
 public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> {
   private static final Logger LOG = LoggerFactory.getLogger(DBSink.class);
 
-  private static final String COLUMN_CASE_DESCRIPTION = "Sets the case of the column names returned " +
-    "by the column check query. " +
-    "Possible options are upper or lower. By default or for any other input, the column names are not modified and " +
-    "the names returned from the database are used as-is. Note that setting this property provides predictability " +
-    "of column name cases across different databases but might result in column name conflicts if multiple column " +
-    "names are the same when the case is ignored.";
-
   private final DBSinkConfig dbSinkConfig;
+  private final DBManager dbManager;
   private Class<? extends Driver> driverClass;
-  private JDBCDriverShim driverShim;
   private int [] columnTypes;
   private List<String> columns;
 
   public DBSink(DBSinkConfig dbSinkConfig) {
     this.dbSinkConfig = dbSinkConfig;
+    this.dbManager = new DBManager(dbSinkConfig);
   }
 
   private String getJDBCPluginId() {
@@ -92,20 +81,7 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    Preconditions.checkArgument(!(dbSinkConfig.user == null && dbSinkConfig.password != null),
-                                "dbUser is null. Please provide both user name and password if database requires " +
-                                  "authentication. If not, please remove dbPassword and retry.");
-    Preconditions.checkArgument(!(dbSinkConfig.user != null && dbSinkConfig.password == null),
-                                "dbPassword is null. Please provide both user name and password if database requires" +
-                                  "authentication. If not, please remove dbUser and retry.");
-    Class<? extends Driver> jdbcDriverClass = pipelineConfigurer.usePluginClass(dbSinkConfig.jdbcPluginType,
-                                                                                dbSinkConfig.jdbcPluginName,
-                                                                                getJDBCPluginId(),
-                                                                                PluginProperties.builder().build());
-    Preconditions.checkArgument(
-      jdbcDriverClass != null, "Unable to load JDBC Driver class for plugin name '%s'. Please make sure that the " +
-        "plugin '%s' of type '%s' containing the driver has been installed correctly.", dbSinkConfig.jdbcPluginName,
-      dbSinkConfig.jdbcPluginName, dbSinkConfig.jdbcPluginType);
+    dbManager.validateJDBCPluginPipeline(pipelineConfigurer, getJDBCPluginId());
   }
 
   @Override
@@ -146,13 +122,8 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
 
   @Override
   public void destroy() {
-    try {
-      DriverManager.deregisterDriver(driverShim);
-    } catch (SQLException e) {
-      LOG.warn("Error while deregistering JDBC drivers in ETLDBOutputFormat.", e);
-      throw Throwables.propagate(e);
-    }
     DBUtils.cleanup(driverClass);
+    dbManager.destroy();
   }
 
   @VisibleForTesting
@@ -161,7 +132,8 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   }
 
   private void setResultSetMetadata() throws Exception {
-    ensureJDBCDriverIsAvailable();
+    dbManager.ensureJDBCDriverIsAvailable(driverClass);
+    Map<String, Integer> columnToType = new HashMap<>();
     Connection connection;
     if (dbSinkConfig.user == null) {
       connection = DriverManager.getConnection(dbSinkConfig.connectionString);
@@ -169,7 +141,6 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
       connection = DriverManager.getConnection(dbSinkConfig.connectionString, dbSinkConfig.user, dbSinkConfig.password);
     }
 
-    Map<String, Integer> columnToType = new HashMap<>();
     try {
       try (Statement statement = connection.createStatement();
            // Run a query against the DB table that returns 0 records, but returns valid ResultSetMetadata
@@ -205,38 +176,11 @@ public class DBSink extends BatchSink<StructuredRecord, DBRecord, NullWritable> 
   }
 
   /**
-   * Ensures that the JDBC driver is available for {@link DriverManager}
-   *
-   * @throws Exception if the driver is not available
-   */
-  private void ensureJDBCDriverIsAvailable() throws Exception {
-    try {
-      DriverManager.getDriver(dbSinkConfig.connectionString);
-    } catch (SQLException e) {
-      // Driver not found. We will try to register it with the DriverManager.
-      LOG.debug("Plugin Type: {} and Plugin Name: {}; Driver Class: {} not found; registering JDBC driver via shim {} ",
-                dbSinkConfig.jdbcPluginType, dbSinkConfig.jdbcPluginName, driverClass.getName(),
-                JDBCDriverShim.class.getName());
-      driverShim = new JDBCDriverShim(driverClass.newInstance());
-      DBUtils.deregisterAllDrivers(driverClass);
-      DriverManager.registerDriver(driverShim);
-    }
-  }
-
-  /**
    * {@link PluginConfig} for {@link DBSink}
    */
   public static class DBSinkConfig extends DBConfig {
     @Description("Comma-separated list of columns in the specified table to export to.")
     String columns;
-
-    @Description("Name of the table to export to.")
-    public String tableName;
-
-    @Nullable
-    @Name(Properties.DB.COLUMN_NAME_CASE)
-    @Description(COLUMN_CASE_DESCRIPTION)
-    String columnNameCase;
   }
 
   private static class DBOutputFormatProvider implements OutputFormatProvider {

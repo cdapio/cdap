@@ -24,8 +24,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.Callback;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
@@ -40,6 +39,8 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.spark.AbstractSpark;
+import co.cask.cdap.api.spark.JavaSparkProgram;
+import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import com.google.common.base.Charsets;
@@ -117,19 +118,18 @@ public class BloatedWordCountApp extends AbstractApplication {
   /**
    *
    */
-  public static class WordCountFlow implements Flow {
+  public static class WordCountFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("WordCountFlow")
-        .setDescription("Flow for counting words")
-        .withFlowlets().add("StreamSource", new StreamSucker())
-                       .add(new Tokenizer())
-                       .add(new CountByField("word", "field"))
-        .connect().fromStream("text").to("StreamSource")
-                  .from("StreamSource").to("Tokenizer")
-                  .from("Tokenizer").to("CountByField")
-        .build();
+    protected void configureFlow() {
+      setName("WordCountFlow");
+      setDescription("Flow for counting words");
+      addFlowlet("StreamSource", new StreamSucker());
+      addFlowlet(new Tokenizer());
+      addFlowlet(new CountByField("word", "field"));
+      connectStream("text", "StreamSource");
+      connect("StreamSource", "Tokenizer");
+      connect("Tokenizer", "CountByField");
     }
   }
 
@@ -256,15 +256,17 @@ public class BloatedWordCountApp extends AbstractApplication {
     }
   }
 
-  private static class SparklingNothing extends AbstractSpark {
+  private static class SparklingNothing extends AbstractSpark implements JavaSparkProgram {
     @Override
     protected void configure() {
       setDescription("Spark program that does nothing");
       setMainClass(this.getClass());
     }
-    public static void main(String[] args) {
-    }
 
+    @Override
+    public void run(SparkContext context) throws Exception {
+      // no-op
+    }
   }
 
   private static class LazyGuy extends AbstractWorker {

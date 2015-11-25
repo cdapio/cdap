@@ -26,10 +26,10 @@ angular.module(PKG.name + '.commons')
         runs: '='
       },
       templateUrl: 'program-status/program-status.html',
-      controller: function($scope, MyDataSource, $state) {
+      controller: function($scope, MyCDAPDataSource, $state) {
         // $scope.runs comes from parent controller
         if ($scope.runs.length !== 0) {
-          var dataSrc = new MyDataSource($scope),
+          var dataSrc = new MyCDAPDataSource($scope),
               path = '';
           var runCheck;
           var pollPromise;
@@ -42,11 +42,7 @@ angular.module(PKG.name + '.commons')
               dataSrc.stopPoll(pollPromise.__pollId__);
             }
 
-            if ($scope.type === 'adapters') {
-              path = '/adapters/' + $state.params.adapterId + '/runs/' + $scope.runid;
-            } else {
-              path = '/apps/' + $state.params.appId + '/' + $scope.type + '/' + $state.params.programId + '/runs/' + $scope.runid;
-            }
+            path = '/apps/' + $state.params.appId + '/' + $scope.type + '/' + $state.params.programId + '/runs/' + $scope.runid;
 
             pollPromise = dataSrc.poll({
               _cdapNsPath: path,

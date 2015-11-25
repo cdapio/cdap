@@ -34,7 +34,6 @@ import co.cask.cdap.api.dataset.module.EmbeddedDataset;
 import co.cask.cdap.api.spark.AbstractSpark;
 import co.cask.cdap.api.spark.JavaSparkProgram;
 import co.cask.cdap.api.spark.SparkContext;
-import co.cask.cdap.api.spark.SparkProgram;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -147,20 +146,6 @@ public class SparkAppUsingFileSet extends AbstractApplication {
             return new Tuple2<>(pair._2(), pair._2().length());
           }
         });
-    }
-  }
-
-  public static final class CharCount extends AbstractSpark {
-
-    private Class<? extends SparkProgram> mainSparkClass;
-
-    public CharCount(Class<? extends SparkProgram> mainSparkClass) {
-      this.mainSparkClass = mainSparkClass;
-    }
-
-    @Override
-    public void configure() {
-      setMainClass(mainSparkClass);
     }
   }
 

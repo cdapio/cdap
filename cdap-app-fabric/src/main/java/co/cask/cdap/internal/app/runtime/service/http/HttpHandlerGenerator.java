@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.service.http;
 
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
@@ -24,6 +25,8 @@ import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.internal.asm.ClassDefinition;
 import co.cask.cdap.internal.asm.Methods;
 import co.cask.cdap.internal.asm.Signatures;
+import co.cask.http.BodyConsumer;
+import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
@@ -87,7 +90,13 @@ import javax.ws.rs.Path;
  *     @literal @GET
  *     @literal @Path("/path")
  *     public void userMethod(HttpRequest request, HttpResponder responder) {
- *       // see generateTransactionalDelegateBody() for generated body.
+ *       // see generateTransactionalDelegateBody() for generated method body.
+ *     }
+ *
+ *     @literal @PUT
+ *     @literal @Path("/upload")
+ *     public HttpContentConsumer userUpload(HttpRequest request, HttpResponder responder) {
+ *       // see generateTransactionalDelegateBody() for generated method body.
  *     }
  *   }
  * }</pre>
@@ -102,6 +111,15 @@ final class HttpHandlerGenerator {
     Type.getType(HEAD.class)
   );
 
+  /**
+   * Generates a new class that implements {@link HttpHandler} by copying methods signatures from the given
+   * {@link HttpServiceHandler} class. Calls to {@link HttpServiceHandler} methods are transactional.
+   *
+   * @param delegateType type of the {@link HttpServiceHandler}
+   * @param pathPrefix prefix for all {@code @PATH} annotation
+   * @return A {@link ClassDefinition} containing information of the newly generated class.
+   * @throws IOException if failed to generate the class.
+   */
   ClassDefinition generate(TypeToken<? extends HttpServiceHandler> delegateType, String pathPrefix) throws IOException {
     Class<?> rawType = delegateType.getRawType();
     List<Class<?>> preservedClasses = Lists.newArrayList();
@@ -130,7 +148,7 @@ final class HttpHandlerGenerator {
 
     ClassDefinition classDefinition = new ClassDefinition(classWriter.toByteArray(), className, preservedClasses);
     // DEBUG block. Uncomment for debug
-//    co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
+    // co.cask.cdap.internal.asm.Debugs.debugByteCode(classDefinition, new java.io.PrintWriter(System.out));
     // End DEBUG block
     return classDefinition;
   }
@@ -212,7 +230,7 @@ final class HttpHandlerGenerator {
   }
 
   /**
-   * Generates the constructor. The constructor generated has signature {@code (DelegatorContext)}.
+   * Generates the constructor. The constructor generated has signature {@code (DelegatorContext, MetricsContext)}.
    */
   private void generateConstructor(TypeToken<? extends HttpServiceHandler> delegateType, ClassWriter classWriter) {
     Method constructor = Methods.getMethod(void.class, "<init>", DelegatorContext.class, MetricsContext.class);
@@ -236,6 +254,7 @@ final class HttpHandlerGenerator {
    * Generates a static Logger field for logging and a static initialization block to initialize the logger.
    */
   private void generateLogger(Type classType, ClassWriter classWriter) {
+    // private static final Logger LOG = LoggerFactory.getLogger(classType);
     classWriter.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL, "LOG",
                            Type.getType(Logger.class).getDescriptor(), null, null);
     Method init = Methods.getMethod(void.class, "<clinit>");
@@ -389,7 +408,22 @@ final class HttpHandlerGenerator {
 
       preserveParameterClasses(argTypes);
 
-      // Copy the method signature with the first two parameter types changed
+      // If the return type is an instance of HttpContentConsumer, the generated method need to have
+      // netty-http BodyConsumer as return type.
+      if (returnType.getSort() == Type.OBJECT) {
+        try {
+          Class<?> returnClass = delegateType.getRawType().getClassLoader().loadClass(returnType.getClassName());
+          if (HttpContentConsumer.class.isAssignableFrom(returnClass)) {
+            returnType = Type.getType(BodyConsumer.class);
+          }
+        } catch (ClassNotFoundException e) {
+          // Shouldn't happen since the delegateType (user handler class) is already loaded and the method return
+          // type should be loadable through the same classloader
+          throw Throwables.propagate(e);
+        }
+      }
+
+      // Copy the method signature with the first two parameter types changed and return type changed
       String methodDesc = Type.getMethodDescriptor(returnType, argTypes);
       MethodVisitor methodVisitor = classWriter.visitMethod(access, name, methodDesc,
                                                             rewriteMethodSignature(signature), exceptions);
@@ -473,35 +507,46 @@ final class HttpHandlerGenerator {
 
     /**
      * Wrap the user written Handler method in a transaction.
-     * The transaction begins before the request is delegated, and ends after the response.
+     * The transaction begins before calling the user method, and commit after the user method returns.
      * On errors the transaction is aborted and rolledback.
      *
      * The generated handler method body has the form:
      *
      * <pre>{@code
-     *   public void handle(HttpRequest request, HttpResponder responder, ...) {
+     *   public void|BodyConsumer handle(HttpRequest request, HttpResponder responder, ...) {
      *     T handler = getHandler();
      *     TransactionContext txContext = getTransactionContext();
      *     DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder);
+     *     HttpContentConsumer contentConsumer = null;
      *     try {
      *       txContext.start();
      *       try {
      *         ClassLoader classLoader = ClassLoaders.setContextClassLoader(handler.getClass().getClassLoader());
      *         try {
-     *           handler.handle(wrapRequest(request), wrappedResponder, ...);
+     *           // Only do assignment if handler method returns HttpContentConsumer
+     *           [contentConsumer = ]handler.handle(wrapRequest(request), wrappedResponder, ...);
      *         } finally {
      *           ClassLoaders.setContextClassLoader(classLoader);
      *         }
      *       } catch (Throwable t) {
-     *         LOG.error("User handler exception", e);
-     *         txContext.abort(new TransactionFailureException("User handler exception", e));
+     *         LOG.error("User handler exception", t);
+     *         txContext.abort(new TransactionFailureException("User handler exception", t));
      *       }
      *       txContext.finish();
      *     } catch (TransactionFailureException e) {
      *        LOG.error("Transaction failure: ", e);
      *        wrappedResponder.setTransactionFailureResponse(e);
+     *        contentConsunmer = null;
      *     }
-     *     wrappedResponder.execute();
+     *     if (contentConsumer == null) {
+     *       dismissTransactionContext();
+     *       wrappedResponder.execute();
+     *       // Only return null if handler method returns HttpContentConsumer
+     *       [return null;]
+     *     }
+     *
+     *     // Only generated if handler method returns HttpContentConsumer
+     *     [return wrapContentConsumer(wrappedResponder, httpContentConsumer, txContext);]
      *   }
      * }
      * </pre>
@@ -513,6 +558,7 @@ final class HttpHandlerGenerator {
       Type loggerType = Type.getType(Logger.class);
       Type throwableType = Type.getType(Throwable.class);
       Type delayedHttpServiceResponderType = Type.getType(DelayedHttpServiceResponder.class);
+      Type httpContentConsumerType = Type.getType(HttpContentConsumer.class);
 
       Label txTryBegin = mg.newLabel();
       Label txTryEnd = mg.newLabel();
@@ -550,6 +596,11 @@ final class HttpHandlerGenerator {
                        Methods.getMethod(DelayedHttpServiceResponder.class, "wrapResponder", HttpResponder.class));
       mg.storeLocal(wrappedResponder, delayedHttpServiceResponderType);
 
+      // HttpContentConsumer contentConsumer = null;
+      int contentConsumer = mg.newLocal(httpContentConsumerType);
+      mg.visitInsn(Opcodes.ACONST_NULL);
+      mg.storeLocal(contentConsumer, httpContentConsumerType);
+
       // try {  // Outer try for transaction failure
       mg.mark(txTryBegin);
 
@@ -560,8 +611,15 @@ final class HttpHandlerGenerator {
       // try { // Inner try for user handler failure
       mg.mark(handlerTryBegin);
 
+      // If no body consumer, generates:
       // this.getHandler(wrapRequest(request), wrappedResponder, ...);
+      //
+      // otherwise, generates:
+      // contentConsumer = this.getHandler(wrapRequest(reuqest), wrappedResponder, ...);
       generateInvokeDelegate(mg, handler, method, wrappedResponder);
+      if (method.getReturnType().getSort() == Type.OBJECT) {
+        mg.storeLocal(contentConsumer, httpContentConsumerType);
+      }
 
       // } // end of inner try
       mg.mark(handlerTryEnd);
@@ -588,8 +646,10 @@ final class HttpHandlerGenerator {
                            Methods.getMethod(void.class, "<init>", String.class, Throwable.class));
       mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "abort", TransactionFailureException.class));
 
+      // } // end of inner catch
       mg.mark(handlerFinish);
 
+      // txContext.finish()
       mg.loadLocal(txContext, txContextType);
       mg.invokeVirtual(txContextType, Methods.getMethod(void.class, "finish"));
 
@@ -617,13 +677,69 @@ final class HttpHandlerGenerator {
       mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "setTransactionFailureResponse",
                                                                           Throwable.class));
 
+      // contentConsumer = null;
+      mg.visitInsn(Opcodes.ACONST_NULL);
+      mg.storeLocal(contentConsumer);
+
+      // } // end of outer catch
       mg.mark(txFinish);
 
-      // wrappedResponder.execute()
-      mg.loadLocal(wrappedResponder);
-      mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "execute"));
+      // If body consumer is used, generates:
+      //
+      // if (httpContentConsumer == null) {
+      //   dismissTransactionContext();
+      //   wrappedResponder.execute();
+      //   return null;
+      // }
+      // return wrapContentConsumer(wrappedResponder, httpContentConsumer, txContext);
+      //
+      // Otherwise, generates
+      // dismissTransactionContext();
+      // wrappedResponder.execute();
+      if (method.getReturnType().getSort() == Type.OBJECT) {
+        Label hasContentConsumer = mg.newLabel();
+        mg.loadLocal(contentConsumer);
 
-      mg.returnValue();
+        // if contentConsumer != null, goto label hasContentConsumer
+        mg.ifNonNull(hasContentConsumer);
+
+        // dismissTransactionContext();
+        mg.loadThis();
+        mg.invokeVirtual(classType,
+                         Methods.getMethod(void.class, "dismissTransactionContext"));
+
+        //   wrappedResponder.execute();
+        //   return null;
+        mg.loadLocal(wrappedResponder);
+        mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "execute"));
+        mg.visitInsn(Opcodes.ACONST_NULL);
+        mg.returnValue();
+
+        mg.mark(hasContentConsumer);
+
+        // return wrapContentConsumer(wrappedResponder, httpContentConsumer, txContext);
+        mg.loadThis();
+        mg.loadLocal(contentConsumer);
+        mg.loadLocal(wrappedResponder);
+        mg.loadLocal(txContext);
+        mg.invokeVirtual(classType, Methods.getMethod(BodyConsumer.class, "wrapContentConsumer",
+                                                      HttpContentConsumer.class,
+                                                      DelayedHttpServiceResponder.class,
+                                                      TransactionContext.class));
+        mg.returnValue();
+      } else {
+        // dismissTransactionContext();
+        mg.loadThis();
+        mg.invokeVirtual(classType,
+                         Methods.getMethod(void.class, "dismissTransactionContext"));
+
+        // wrappedResponder.execute()
+        mg.loadLocal(wrappedResponder);
+        mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "execute"));
+
+        mg.returnValue();
+      }
+
       mg.endMethod();
     }
 

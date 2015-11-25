@@ -26,9 +26,9 @@ angular.module(PKG.name + '.feature.worker')
           highlightTab: 'development'
         },
         resolve : {
-          rRuns: function(MyDataSource, $stateParams, $q) {
+          rRuns: function(MyCDAPDataSource, $stateParams, $q, $state) {
             var defer = $q.defer();
-            var dataSrc = new MyDataSource();
+            var dataSrc = new MyCDAPDataSource();
             // Using _cdapPath here as $state.params is not updated with
             // runid param when the request goes out
             // (timing issue with re-direct from login state).
@@ -38,14 +38,20 @@ angular.module(PKG.name + '.feature.worker')
                          '/workers/' + $stateParams.programId +
                          '/runs'
             })
-              .then(function(res) {
-                defer.resolve(res);
-              });
+              .then(
+                function success(res) {
+                  defer.resolve(res);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
             return defer.promise;
           },
-          rWorkerDetail: function(MyDataSource, $stateParams, $q) {
+          rWorkerDetail: function(MyCDAPDataSource, $stateParams, $q, $state) {
             var defer = $q.defer();
-            var dataSrc = new MyDataSource();
+            var dataSrc = new MyCDAPDataSource();
             // Using _cdapPath here as $state.params is not updated with
             // runid param when the request goes out
             // (timing issue with re-direct from login state).
@@ -54,9 +60,15 @@ angular.module(PKG.name + '.feature.worker')
                          '/apps/' + $stateParams.appId +
                          '/workers/' + $stateParams.programId
             })
-              .then(function(res) {
-                defer.resolve(res);
-              });
+              .then(
+                function success(res) {
+                  defer.resolve(res);
+                },
+                function error() {
+                  defer.reject();
+                  $state.go('404');
+                }
+              );
             return defer.promise;
           }
         },

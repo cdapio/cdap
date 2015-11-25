@@ -91,7 +91,7 @@ class DatasetServiceClient {
     if (owners != null) {
       Set<String> ownerParams = Sets.newHashSet();
       for (Id owner : owners) {
-        ownerParams.add("owner=" + owner.getIdType() + "::" + owner.getIdRep());
+        ownerParams.add("owner=" + owner.toString());
       }
       query = ownerParams.isEmpty() ? "" : "?" + Joiner.on("&").join(ownerParams);
     }
@@ -310,7 +310,7 @@ class DatasetServiceClient {
   }
 
   private String resolve(String resource) throws DatasetManagementException {
-    Discoverable discoverable = endpointStrategySupplier.get().pick(1, TimeUnit.SECONDS);
+    Discoverable discoverable = endpointStrategySupplier.get().pick(3, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new ServiceUnavailableException("DatasetService");
     }

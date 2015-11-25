@@ -121,7 +121,7 @@ public class BatchFileFilter extends Configured implements PathFilter {
       pathName = pathName.substring(0, pathName.length() - 1);
     }
 
-    String input = conf.get(FileBatchSource.INPUT_REGEX_CONFIG, ".*");
+    String input = conf.get(FileBatchSource.INPUT_REGEX_CONFIG);
     if (input.equals(FileBatchSource.USE_TIMEFILTER)) {
       useTimeFilter = true;
     } else {

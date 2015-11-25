@@ -70,7 +70,11 @@ public abstract class ServiceMain {
 
   protected final void doMain(final Service mainService,
                               Service...prerequisites) throws ExecutionException, InterruptedException {
-    configureLogger();
+    if (Boolean.parseBoolean(System.getProperty("twill.disable.kafka"))) {
+      LOG.info("Log collection through kafka disabled");
+    } else {
+      configureLogger();
+    }
 
     Service requiredServices = new CompositeService(prerequisites);
     Runtime.getRuntime().addShutdownHook(new Thread() {

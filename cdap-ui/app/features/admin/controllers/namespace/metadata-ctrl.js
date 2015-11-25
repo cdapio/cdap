@@ -15,10 +15,10 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceMetadataController',
-function ($scope, $state, myAlert, MyDataSource, myNamespace) {
+function ($scope, $state, myAlert, MyCDAPDataSource, myNamespace) {
 
   $scope.nsname = myNamespace.getDisplayName($state.params.nsadmin);
-  var data = new MyDataSource($scope);
+  var data = new MyCDAPDataSource($scope);
   var path = '/namespaces/' + $state.params.nsadmin;
 
   data.request({

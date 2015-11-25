@@ -15,10 +15,10 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard')
-.controller('WidgetTableCtrl', function ($scope, MyDataSource, MyChartHelpers, MyMetricsQueryHelper) {
+.controller('WidgetTableCtrl', function ($scope, MyCDAPDataSource, MyChartHelpers, MyMetricsQueryHelper) {
 
   $scope.metrics = $scope.wdgt.metric;
-  var dataSrc = new MyDataSource($scope);
+  var dataSrc = new MyCDAPDataSource($scope);
 
   dataSrc.request(
     {

@@ -1,18 +1,18 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 <div class="modal-header clearfix">
   <h3 class="modal-title pull-left"> Add Namespace </h3>
@@ -67,12 +67,14 @@
 <div class="modal-footer">
   <div class="form-group">
     <a ui-sref="admin.overview" class="btn btn-default" ng-click="closeModal()">Cancel</a>
-    <a ng-disabled="isSaving == true"
-       class="btn btn-success"
+    <a ng-disabled="isSaving == true || !model.name.length"
+       class="btn"
+       ng-class="{'btn-success': isSaving == false && model.name.length > 0}"
+       ng-disabled="namespaceCreateForm.$invalid"
        ng-click="submitHandler()">
-      <div ng-if="isSaving == true" >
+      <span ng-if="isSaving == true" >
        <span class="fa fa-spin fa-refresh"></span>
-      </div>
+      </span>
       <span>Create</span>
     </a>
   </div>

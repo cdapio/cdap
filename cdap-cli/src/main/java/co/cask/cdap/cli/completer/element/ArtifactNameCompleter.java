@@ -18,16 +18,11 @@ package co.cask.cdap.cli.completer.element;
 
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.completer.StringsCompleter;
-import co.cask.cdap.client.ApplicationClient;
 import co.cask.cdap.client.ArtifactClient;
-import co.cask.cdap.common.NotFoundException;
-import co.cask.cdap.common.UnauthorizedException;
-import co.cask.cdap.proto.ApplicationRecord;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.base.Supplier;
 import com.google.common.collect.Lists;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import javax.inject.Inject;

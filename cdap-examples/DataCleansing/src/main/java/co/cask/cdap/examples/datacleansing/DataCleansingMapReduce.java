@@ -77,7 +77,7 @@ public class DataCleansingMapReduce extends AbstractMapReduce {
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
     PartitionedFileSet rawRecords = partitionConsumer.getConfiguredDataset(context, DataCleansing.RAW_RECORDS);
-    context.setInput(DataCleansing.RAW_RECORDS, rawRecords);
+    context.setInput(rawRecords);
 
     // Each run writes its output to a partition for the league
     Long timeKey = Long.valueOf(context.getRuntimeArguments().get(OUTPUT_PARTITION_KEY));

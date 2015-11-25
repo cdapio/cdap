@@ -17,31 +17,13 @@
 package co.cask.cdap.etl.api.batch;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.DatasetContext;
-import co.cask.cdap.etl.api.TransformContext;
-
-import java.util.Map;
 
 /**
  * Context passed to Batch Source and Sink.
+ * @deprecated This will be removed. Use {@link BatchContext} instead.
  */
 @Beta
-public interface BatchRuntimeContext extends DatasetContext, TransformContext {
-
-  /**
-   * Returns the logical start time of the Batch Job.  Logical start time is the time when this Batch
-   * job is supposed to start if this job is started by the scheduler. Otherwise it would be the current time when the
-   * job runs.
-   *
-   * @return Time in milliseconds since epoch time (00:00:00 January 1, 1970 UTC).
-   */
-  long getLogicalStartTime();
-
-  /**
-   * Returns runtime arguments of the Batch Job.
-   *
-   * @return runtime arguments of the Batch Job.
-   */
-  Map<String, String> getRuntimeArguments();
+@Deprecated
+public interface BatchRuntimeContext extends BatchContext {
 
 }

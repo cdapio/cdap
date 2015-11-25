@@ -21,7 +21,6 @@ import co.cask.cdap.api.app.ApplicationConfigurer;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.artifact.ArtifactId;
 import co.cask.cdap.api.artifact.ArtifactScope;
-import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.Flow;
 import co.cask.cdap.api.flow.FlowSpecification;
 import co.cask.cdap.api.mapreduce.MapReduce;
@@ -29,7 +28,6 @@ import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.schedule.SchedulableProgramType;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.service.Service;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.spark.Spark;
@@ -49,7 +47,6 @@ import co.cask.cdap.internal.app.services.DefaultServiceConfigurer;
 import co.cask.cdap.internal.app.spark.DefaultSparkConfigurer;
 import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
-import co.cask.cdap.internal.flow.DefaultFlowSpecification;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Preconditions;
@@ -90,7 +87,7 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
 
   public DefaultAppConfigurer(Id.Artifact artifactId, Application app, String configuration,
                               ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(artifactRepository, pluginInstantiator, artifactId);
+    super(artifactId, artifactRepository, pluginInstantiator);
     this.name = app.getClass().getSimpleName();
     this.description = "";
     this.configuration = configuration;
@@ -113,15 +110,8 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   public void addFlow(Flow flow) {
     Preconditions.checkArgument(flow != null, "Flow cannot be null.");
     DefaultFlowConfigurer configurer = new DefaultFlowConfigurer(flow);
-    FlowSpecification spec = flow.configure();
-    if (spec == null && flow instanceof AbstractFlow) {
-      AbstractFlow abstractFlow = (AbstractFlow) flow;
-      abstractFlow.configure(configurer);
-      spec = configurer.createSpecification();
-    } else {
-      spec = new DefaultFlowSpecification(flow.getClass().getName(), spec);
-    }
-
+    flow.configure(configurer);
+    FlowSpecification spec = configurer.createSpecification();
     addStreams(configurer.getStreams());
     addDatasetModules(configurer.getDatasetModules());
     addDatasetSpecs(configurer.getDatasetSpecs());
@@ -146,12 +136,14 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   @Override
   public void addSpark(Spark spark) {
     Preconditions.checkArgument(spark != null, "Spark cannot be null.");
-    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark);
+    DefaultSparkConfigurer configurer = new DefaultSparkConfigurer(spark, artifactId, artifactRepository,
+                                                                   pluginInstantiator);
     spark.configure(configurer);
 
     addStreams(configurer.getStreams());
     addDatasetModules(configurer.getDatasetModules());
     addDatasetSpecs(configurer.getDatasetSpecs());
+    addPlugins(configurer.getPlugins());
     SparkSpecification spec = configurer.createSpecification();
     sparks.put(spec.getName(), spec);
   }
@@ -204,18 +196,13 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
     Preconditions.checkArgument(!programName.isEmpty(), "Program name cannot be empty.");
     Preconditions.checkArgument(!schedules.containsKey(schedule.getName()), "Schedule with the name '" +
       schedule.getName()  + "' already exists.");
-    Schedule realSchedule = schedule;
-    if (schedule.getClass().equals(Schedule.class)) {
-      realSchedule = Schedules.createTimeSchedule(schedule.getName(), schedule.getDescription(),
-                                                  schedule.getCronEntry());
-    }
-    if (realSchedule instanceof StreamSizeSchedule) {
+    if (schedule instanceof StreamSizeSchedule) {
       Preconditions.checkArgument(((StreamSizeSchedule) schedule).getDataTriggerMB() > 0,
                                   "Schedule data trigger must be greater than 0.");
     }
 
     ScheduleSpecification spec =
-      new ScheduleSpecification(realSchedule, new ScheduleProgramInfo(programType, programName), properties);
+      new ScheduleSpecification(schedule, new ScheduleProgramInfo(programType, programName), properties);
 
     schedules.put(schedule.getName(), spec);
   }

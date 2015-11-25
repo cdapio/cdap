@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,8 +48,8 @@ import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hadoop.hbase.wal.WALFactory;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.net.InetAddress;
@@ -64,22 +64,18 @@ import static org.junit.Assert.assertTrue;
  * Tests for {@link IncrementSummingScanner} implementation.
  */
 public class IncrementSummingScannerTest {
+
+  @ClassRule
+  public static final HBase10Test TEST_HBASE = new HBase10Test();
+
   private static final byte[] TRUE = Bytes.toBytes(true);
-  private static HBase10Test testUtil;
   private static Configuration conf;
   private static CConfiguration cConf;
 
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
-    testUtil = new HBase10Test();
-    testUtil.startHBase();
-    conf = testUtil.getConfiguration();
+    conf = TEST_HBASE.getConfiguration();
     cConf = CConfiguration.create();
-  }
-
-  @AfterClass
-  public static void shutdownAfterClass() throws Exception {
-    testUtil.stopHBase();
   }
 
   @Test

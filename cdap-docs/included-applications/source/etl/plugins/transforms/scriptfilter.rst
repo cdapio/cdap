@@ -5,7 +5,7 @@
 .. _included-apps-etl-plugins-transformations-scriptfilter:
 
 ===============================
-Transformations: ScriptFilter 
+Transformations: ScriptFilter
 ===============================
 
 .. rubric:: Description
@@ -23,6 +23,11 @@ out records that have null values for an important field.
 JSON object (representing the input record) and a context object (which encapsulates CDAP metrics and logger),
 and returns true if the input record should be filtered and false if not.
 
+**lookup:** The configuration of the lookup tables to be used in your script.
+For example, if lookup table "purchases" is configured, then you will be able to perform
+operations with that lookup table in your script: ``context.getLookup('purchases').lookup('key')``
+Currently supports ``KeyValueTable``.
+
 .. rubric:: Example
 
 ::
@@ -36,6 +41,15 @@ and returns true if the input record should be filtered and false if not.
           context.getMetrics().count("negative.count", 1);
         }
        return input.count > 100; }",
+      "lookup": "{
+        \"purchases\":{
+          \"type\":\"DATASET\",
+          \"datasetProperties\":{
+            \"dataset_argument1\":\"foo\",
+            \"dataset_argument2\":\"bar\"
+          }
+        }
+      }"
     }
   }
 

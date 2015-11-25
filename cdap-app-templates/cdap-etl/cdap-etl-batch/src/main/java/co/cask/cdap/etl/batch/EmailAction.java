@@ -19,7 +19,6 @@ package co.cask.cdap.etl.batch;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
 import co.cask.cdap.api.workflow.WorkflowActionNode;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 import co.cask.cdap.api.workflow.WorkflowContext;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.etl.common.ETLStage;
@@ -68,8 +67,8 @@ public class EmailAction extends AbstractWorkflowAction {
   private Authenticator authenticator;
 
   public EmailAction(ETLStage action) {
-    super(action.getName());
-    properties = action.getProperties();
+    super(action.getPlugin().getName());
+    properties = action.getPlugin().getProperties();
   }
 
   @Override
@@ -144,15 +143,16 @@ public class EmailAction extends AbstractWorkflowAction {
       msg.setText(properties.get(MESSAGE) + "\nUSER Workflow Tokens:\n" + token.getAll(WorkflowToken.Scope.USER)
                     + "\nSYSTEM Workflow Tokens:\n" + token.getAll(WorkflowToken.Scope.SYSTEM)
       );
-      Transport transport;
-      if (!Strings.isNullOrEmpty(properties.get(PROTOCOL))) {
-        transport = session.getTransport(properties.get(PROTOCOL));
-      } else {
-        transport = session.getTransport(DEFAULT_PROTOCOL);
-      }
+
+      String protocol = Strings.isNullOrEmpty(properties.get(PROTOCOL)) ? DEFAULT_PROTOCOL : properties.get(PROTOCOL);
+      Transport transport = session.getTransport(protocol);
       transport.connect(properties.get(HOST), Integer.parseInt(properties.get(PORT)),
                         properties.get(USERNAME), properties.get(PASSWORD));
-      transport.sendMessage(msg, msg.getAllRecipients());
+      try {
+        transport.sendMessage(msg, msg.getAllRecipients());
+      } finally {
+        transport.close();
+      }
     } catch (Exception e) {
       throw new RuntimeException("Error sending email: ", e);
     }

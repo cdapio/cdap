@@ -22,18 +22,13 @@ angular.module(PKG.name + '.commons')
 
     return {
       restrict: 'E',
-
       scope: {
-        model: '=',
-        next: '&',
-        prev: '&',
-        loadingNext: '=',
-        loadingPrev: '='
+        params: '='
       },
-
       templateUrl: 'log-viewer/log-viewer.html',
 
-      controller: function ($scope) {
+      controller: function ($scope, myLogsApi) {
+        $scope.model = [];
 
         $scope.filters = 'all,info,warn,error,debug,other'.split(',')
           .map(function (key) {
@@ -61,6 +56,66 @@ angular.module(PKG.name + '.commons')
             one.entries = filterFilter(newVal, one.predicate);
           });
         });
+
+        var params = {};
+
+        function initialize() {
+          angular.copy($scope.params, params);
+          params.max = 50;
+          params.scope = $scope;
+
+          if (!params.runId) { return; }
+
+          $scope.loadingNext = true;
+          myLogsApi.prevLogs(params)
+            .$promise
+            .then(function (res) {
+              $scope.model = res;
+              $scope.loadingNext = false;
+            });
+        }
+
+        initialize();
+
+        $scope.$watch('params.runId', initialize);
+
+        $scope.loadNextLogs = function () {
+          if ($scope.loadingNext) {
+            return;
+          }
+
+          $scope.loadingNext = true;
+          params.fromOffset = $scope.model[$scope.model.length-1].offset;
+
+          myLogsApi.nextLogs(params)
+            .$promise
+            .then(function (res) {
+              $scope.model = _.uniq($scope.model.concat(res));
+              $scope.loadingNext = false;
+            });
+        };
+
+        $scope.loadPrevLogs = function () {
+          if ($scope.loadingPrev) {
+            return;
+          }
+
+          $scope.loadingPrev = true;
+          params.fromOffset = $scope.model[0].offset;
+
+          myLogsApi.prevLogs(params)
+            .$promise
+            .then(function (res) {
+              $scope.model = _.uniq(res.concat($scope.model));
+              $scope.loadingPrev = false;
+
+              $timeout(function() {
+                var container = angular.element(document.querySelector('[infinite-scroll]'))[0];
+                var logItem = angular.element(document.getElementById(params.fromOffset))[0];
+                container.scrollTop = logItem.offsetTop;
+              });
+            });
+        };
 
       },
 

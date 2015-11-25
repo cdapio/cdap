@@ -35,12 +35,19 @@ public abstract class AbstractProgramRunnerWithPlugin implements ProgramRunner {
     this.cConf = cConf;
   }
 
+  /**
+   * Creates a {@link PluginInstantiator} based on the {@link ProgramOptionConstants#PLUGIN_DIR} in
+   * the system arguments in the given {@link ProgramOptions}.
+   *
+   * @param options the program runner options
+   * @param classLoader the parent ClassLoader for the {@link PluginInstantiator} to use
+   * @return A new {@link PluginInstantiator} or {@code null} if no plugin is available.
+   */
   @Nullable
   protected PluginInstantiator createPluginInstantiator(ProgramOptions options, ClassLoader classLoader) {
-    if (options.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR) == null) {
+    if (!options.getArguments().hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
       return null;
     }
-
     return new PluginInstantiator(
       cConf, classLoader, new File(options.getArguments().getOption(ProgramOptionConstants.PLUGIN_DIR)));
   }

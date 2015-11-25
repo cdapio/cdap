@@ -174,6 +174,13 @@ public class FileLogReader implements LogReader {
     Long start = sortedFiles.floorKey(fromTimeMs);
     if (start == null) {
       start = sortedFiles.firstKey();
+
+      // It is possible that the log files for the requested range are already
+      // deleted, in case of old program runs. For such requests both the start and toTimeMs
+      // will fall outside the range sortedFiles. In that case return empty list.
+      if (start > toTimeMs) {
+        return ImmutableList.of();
+      }
     }
     return ImmutableList.copyOf(sortedFiles.subMap(start, toTimeMs).values());
   }

@@ -29,6 +29,8 @@ import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.TwillSpecification.Builder;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -36,6 +38,8 @@ import java.util.Map;
  * An abstract base class for all program {@link TwillApplication}.
  */
 public abstract class AbstractProgramTwillApplication implements TwillApplication {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractProgramTwillApplication.class);
 
   private final Program program;
   private final Map<String, LocalizeResource> localizeResources;
@@ -116,8 +120,10 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
   private Builder.RunnableSetter localizeFiles(Builder.LocalFileAdder fileAdder) {
     Location programLocation = program.getJarLocation();
 
+    LOG.debug("Localizing program jar for {}: {}", program.getName(), programLocation);
     Builder.MoreFile moreFile = fileAdder.add(programLocation.getName(), programLocation.toURI());
     for (Map.Entry<String, LocalizeResource> entry : localizeResources.entrySet()) {
+      LOG.debug("Localizing file for {}: {} {} {}", program.getName(), entry.getKey(), entry.getValue());
       moreFile.add(entry.getKey(), entry.getValue().getURI(), entry.getValue().isArchive());
     }
     return moreFile.apply();

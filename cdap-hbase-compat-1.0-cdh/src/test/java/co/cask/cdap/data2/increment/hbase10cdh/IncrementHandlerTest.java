@@ -116,8 +116,8 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     tableDesc.addFamily(columnDesc);
     tableDesc.addCoprocessor(IncrementHandler.class.getName());
     HTableDescriptor htd = tableDesc.build();
-    testUtil.getHBaseAdmin().createTable(htd);
-    testUtil.waitUntilTableAvailable(htd.getName(), 5000);
+    TEST_HBASE.getHBaseAdmin().createTable(htd);
+    TEST_HBASE.waitUntilTableAvailable(htd.getName(), 5000);
     return tableUtil.createHTable(conf, tableId);
   }
 
@@ -129,7 +129,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
       columnDesc.setValue(prop.getKey(), prop.getValue());
     }
     return new HBase98RegionWrapper(
-        IncrementSummingScannerTest.createRegion(testUtil.getConfiguration(), cConf, tableId, columnDesc));
+        IncrementSummingScannerTest.createRegion(TEST_HBASE.getConfiguration(), cConf, tableId, columnDesc));
   }
 
   public static ColumnCell convertCell(Cell cell) {
@@ -163,20 +163,17 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     public boolean scanRegion(List<ColumnCell> results, byte[] startRow, byte[][] columns) throws IOException {
       Scan scan = new Scan().setMaxVersions().setStartRow(startRow);
       if (columns != null) {
-        for (int i = 0; i < columns.length; i++) {
-          scan.addColumn(FAMILY, columns[i]);
+        for (byte[] column : columns) {
+          scan.addColumn(FAMILY, column);
         }
       }
-      RegionScanner rs = region.getScanner(scan);
-      try {
+      try (RegionScanner rs = region.getScanner(scan)) {
         List<Cell> tmpResults = new ArrayList<>();
         boolean hasMore = rs.next(tmpResults);
         for (Cell cell : tmpResults) {
           results.add(convertCell(cell));
         }
         return hasMore;
-      } finally {
-        rs.close();
       }
     }
 

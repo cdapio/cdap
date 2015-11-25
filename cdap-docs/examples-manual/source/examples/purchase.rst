@@ -22,8 +22,7 @@ The application uses a scheduled MapReduce and workflow to read from an ``Object
 and write to an ``ObjectStore`` dataset.
 
   - Send sentences of the form "Tom bought 5 apples for $10" to the *purchaseStream*.
-    You can send sentences either by using a ``curl`` call, using the ``inject-data`` script
-    included in the example's ``/bin`` directory, or by using the CDAP UI.
+    You can send sentences either by using a ``curl`` call, the CDAP CLI, or the CDAP UI.
   - The *PurchaseFlow* reads the *purchaseStream* and converts every input string into a
     Purchase object and stores the object in the *purchases* dataset.
   - The *PurchaseStore* flowlet demonstrates the setting of memory used by its YARN container. 
@@ -100,7 +99,7 @@ default values used in configuration and as runtime arguments:
 
 .. literalinclude:: /../../../cdap-examples/Purchase/src/main/java/co/cask/cdap/examples/purchase/PurchaseHistoryBuilder.java
    :language: java
-   :lines: 44-73
+   :lines: 44-74
 
 ``PurchaseHistoryService`` Service
 ----------------------------------
@@ -175,15 +174,15 @@ CDAP SDK directory, using the Command Line Interface::
     "{'id':'Alice','firstName':'Alice','lastName':'Bernard','categories':['fruits']}"
   Successfully connected to CDAP instance at http://localhost:10000/default
   < 200 OK
-    
+
 Injecting Sentences
 -------------------
 Inject a file of sentences by running this command from the Standalone
 CDAP SDK directory, using the Command Line Interface::
-  
+
   $ cdap-cli.sh load stream purchaseStream examples/Purchase/resources/purchases.txt 
   Successfully sent stream event to stream 'purchaseStream'
-  
+
 .. Starting the Workflow
 .. ---------------------
 .. |example-workflow| replace:: PurchaseHistoryWorkflow
@@ -223,7 +222,7 @@ For your convenience, the SDK's Command Line Interface can execute the series of
 From within the SDK root directory::
 
   $ cdap-cli.sh execute "\"SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')\""
-  
+
 This will submit the query, using the *history* table in the ``cdap_user`` namespace, wait
 for its completion and then retrieve and print all results, one by one (example
 reformatted to fit)::
@@ -259,7 +258,7 @@ First, submit the query for execution::
 
   $ curl -w'\n' -v http://localhost:10000/v3/namespaces/default/data/explore/queries \
     -d '{"query": "'"SELECT * FROM dataset_history WHERE customer IN ('Alice','Bob')"'"}'
-    
+
 Note that due to the mix and repetition of single and double quotes, it can be tricky to escape all quotes
 correctly at the shell command prompt. On success, this will return a handle for the query, such as::
 

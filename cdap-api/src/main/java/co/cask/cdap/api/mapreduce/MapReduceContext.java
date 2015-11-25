@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.mapreduce;
 
+import co.cask.cdap.api.ClientLocalizationContext;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
@@ -37,7 +38,8 @@ import javax.annotation.Nullable;
 /**
  * MapReduce job execution context.
  */
-public interface MapReduceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, PluginContext {
+public interface MapReduceContext
+  extends RuntimeContext, DatasetContext, ServiceDiscoverer, PluginContext, ClientLocalizationContext {
 
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.
@@ -74,6 +76,15 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
 
   /**
    * Overrides the input configuration of this MapReduce job to use
+   * the specified dataset by its name and arguments.
+   *
+   * @param datasetName the the name of the input dataset
+   * @param arguments the arguments to use when instantiating the dataset
+   */
+  void setInput(String datasetName, Map<String, String> arguments);
+
+  /**
+   * Overrides the input configuration of this MapReduce job to use
    * the specified dataset by its name and data selection splits.
    *
    * @param datasetName the name of the input dataset
@@ -82,7 +93,25 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
   void setInput(String datasetName, List<Split> splits);
 
   /**
-   * Overrides the input configuration of this MapReduce job to write to the specified dataset instance.
+   * Overrides the input configuration of this MapReduce job to use
+   * the specified dataset by its name and arguments with the given data selection splits.
+   *
+   * @param datasetName the name of the input dataset
+   * @param arguments the arguments to use when instantiating the dataset
+   * @param splits the data selection splits
+   */
+  void setInput(String datasetName, Map<String, String> arguments, List<Split> splits);
+
+  /**
+   * Overrides the input configuration of this MapReduce job to the one provided by the given
+   * {@link InputFormatProvider}.
+   *
+   * @param inputFormatProvider provider for InputFormat and configurations to be used
+   */
+  void setInput(InputFormatProvider inputFormatProvider);
+
+  /**
+   * Overrides the input configuration of this MapReduce job to read from the specified dataset instance.
    *
    * <p>
    * Currently, the dataset passed in must either be an {@link InputFormatProvider} or a {@link BatchReadable}.
@@ -94,7 +123,10 @@ public interface MapReduceContext extends RuntimeContext, DatasetContext, Servic
    *
    * @param datasetName the name of the input dataset
    * @param dataset the input dataset
+   * @deprecated as of version 3.3.0. Use {@link #setInput(String, Map)}
+   *             or {@link #setInput(InputFormatProvider)} instead.
    */
+  @Deprecated
   void setInput(String datasetName, Dataset dataset);
 
   /**

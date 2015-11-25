@@ -17,7 +17,6 @@
 package co.cask.cdap.explore.service;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 import com.google.common.io.ByteStreams;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -36,10 +35,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 

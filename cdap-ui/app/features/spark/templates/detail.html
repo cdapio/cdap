@@ -27,34 +27,7 @@
             <small> Type: Spark </small>
           </div>
           <p ng-bind="RunsController.description | myEllipsis: 144"></p>
-          <div class="program-tags">
-            <div class="tag" ng-if="!RunsController.metadataAddOpen">
-              <a class="btn" ng-click="RunsController.metadataAddOpen = true">
-                <span class="fa fa-plus"></span>
-              </a>
-            </div>
-            <div class="tag-input" ng-if="RunsController.metadataAddOpen">
-              <div class="input-group" ng-keypress="$event.keyCode === 13 && RunsController.addMetadata()">
-                <input type="text" class="form-control" ng-model="RunsController.tag">
-                <span class="input-group-btn">
-                  <button class="btn btn-default"
-                    ng-click="RunsController.metadataAddOpen = false">
-                    <i class="fa fa-times"></i>
-                  </button>
-                </span>
-              </div>
-            </div>
-            <div class="tag" ng-repeat="tag in RunsController.metadataTags">
-              <a class="btn"
-                ng-mouseover="tag.isHover = true"
-                ng-mouseleave="tag.isHover = false">
-                {{tag.tagName}}
-                <span class="fa fa-times"
-                  ng-click="RunsController.deleteMetadata(tag.tagName)"
-                  ng-if="tag.isHover"></span>
-              </a>
-            </div>
-          </div>
+          <my-metadata-tags params="RunsController.metadataParams" type="programs"></my-metadata-tags>
         </div>
         <div class="col-sm-8 col-md-6">
           <div class="button-bar text-right">

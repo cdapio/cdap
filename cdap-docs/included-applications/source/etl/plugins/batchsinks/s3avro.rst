@@ -31,6 +31,10 @@ specified file. The output of the run will be stored in a directory with suffix
 
 **basePath:** The S3 path where the data is stored. Example: 's3n://logs'.
 
+**fileSystemProperties:** A JSON string representing a map of properties needed for the
+distributed file system. The property names needed for S3 (*accessID* and *accessKey*)
+will be included as ``'fs.s3n.awsSecretAccessKey'`` and ``'fs.s3n.awsAccessKeyId'``.
+
 **pathFormat:** The format for the path that will be suffixed to the basePath; for
 example: the format ``'yyyy-MM-dd-HH-mm'`` will create a file path ending in
 ``'2015-01-01-20-42'``. Default format used is ``'yyyy-MM-dd-HH-mm'``.

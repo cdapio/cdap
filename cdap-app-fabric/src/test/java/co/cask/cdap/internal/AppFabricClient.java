@@ -21,6 +21,7 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
+import co.cask.cdap.common.NotImplementedException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
@@ -287,7 +288,8 @@ public class AppFabricClient {
     return workflowTokenDetail;
   }
 
-  public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) {
+  public List<RunRecord> getHistory(Id.Program programId, ProgramRunStatus status) throws BadRequestException,
+    NotImplementedException, NotFoundException {
     String namespaceId = programId.getNamespaceId();
     String appId = programId.getApplicationId();
     String programName = programId.getId();

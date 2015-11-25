@@ -13,10 +13,10 @@ Overview
 CDAP provides a JDBC driver to make integrations with external programs and third-party BI
 (business intelligence) tools easier.
 
-The JDBC driver is a JAR that is bundled with the CDAP SDK. You can find it in the ``lib``
+The JDBC driver is a JAR that is bundled with the CDAP SDK. You can find it in the ``libexec``
 directory of your SDK installation at::
 
-  lib/co.cask.cdap.cdap-explore-jdbc-<version>.jar
+  libexec/co.cask.cdap.cdap-explore-jdbc-<version>.jar
 
 If you don't have a CDAP SDK and only want to connect to an existing instance of CDAP, 
 you can download the CDAP JDBC driver from `this link 
@@ -48,20 +48,24 @@ and executes a query over a CDAP dataset ``mydataset``::
   // First, register the driver once in your application
   Class.forName("co.cask.cdap.explore.jdbc.ExploreDriver");
 
-  // If your CDAP instance requires a authentication token for connection,
-  // you have to specify it here.
+  // If your CDAP instance requires an authentication token for connection, specify it here.
   // Replace <cdap-host> and <authentication_token> as appropriate to your installation.
   String connectionUrl = "jdbc:cdap://<cdap-host>:10000" +
     "?auth.token=<authentication_token>";
 
-  // Connect to CDAP instance
+  // Connect to the CDAP instance
   Connection connection = DriverManager.getConnection(connectionUrl);
 
   // Execute a query over CDAP datasets and retrieve the results
   ResultSet resultSet = connection.prepareStatement("select * from dataset_mydataset").executeQuery();
   ...
 
+Here are the parameters that can be used in the connection URL:
+  
+- ``namespace``: CDAP namespace to run in
+- ``auth.token``: authentication token for the connection
+- ``ssl.enabled``: boolean; whether SSL is enabled or not
+- ``verify.ssl.cert``: boolean; false to suspend certificate checks and allow self-signed certificates
+
 JDBC drivers are a standard in the Java ecosystem, with many `resources about them available
 <http://docs.oracle.com/javase/tutorial/jdbc/>`__.
-
-

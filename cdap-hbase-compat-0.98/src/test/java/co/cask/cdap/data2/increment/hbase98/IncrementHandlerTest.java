@@ -116,8 +116,8 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
     tableDesc.addFamily(columnDesc);
     tableDesc.addCoprocessor(IncrementHandler.class.getName());
     HTableDescriptor htd = tableDesc.build();
-    testUtil.getHBaseAdmin().createTable(htd);
-    testUtil.waitUntilTableAvailable(htd.getName(), 5000);
+    TEST_HBASE.getHBaseAdmin().createTable(htd);
+    TEST_HBASE.waitUntilTableAvailable(htd.getName(), 5000);
     return tableUtil.createHTable(conf, tableId);
   }
 
@@ -129,7 +129,7 @@ public class IncrementHandlerTest extends AbstractIncrementHandlerTest {
       columnDesc.setValue(prop.getKey(), prop.getValue());
     }
     return new HBase98RegionWrapper(
-        IncrementSummingScannerTest.createRegion(testUtil.getConfiguration(), cConf, tableId, columnDesc));
+        IncrementSummingScannerTest.createRegion(TEST_HBASE.getConfiguration(), cConf, tableId, columnDesc));
   }
 
   public static ColumnCell convertCell(Cell cell) {

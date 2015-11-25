@@ -63,8 +63,8 @@ dataset as a file. It declares its use of the dataset using a ``@UseDataSet`` an
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
     :language: java
-    :lines: 58-61
-    :dedent: 2
+    :lines: 67-68
+    :dedent: 4
 
 Let's take a closer look at the upload method:
 
@@ -75,12 +75,16 @@ Let's take a closer look at the upload method:
   ``Location`` is a file system abstraction from `Apache™ Twill® <http://twill.incubator.apache.org>`__;
   you can read more about its interface in the `Apache Twill
   Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
-- Finally, it registers the written file as a new partition in the dataset, by calling the ``addPartition``
-  method of the PartitionOutput.
+- It then returns an ``HttpContentConsumer`` to consume the incoming request body.
+
+  - In the ``onReceive`` method, it keeps appending newly received bytes to the output stream.
+  - In the ``onFinish`` method, it registers the written file as a new partition in the dataset,
+    by calling the ``addPartition`` method of the PartitionOutput.
+  - In the ``onError`` method, it does cleanup by removing the partially written file and responds with an error status.
 
 .. literalinclude:: /../../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/UploadService.java
     :language: java
-    :lines: 88-118
+    :lines: 95-151
     :dedent: 4
 
 

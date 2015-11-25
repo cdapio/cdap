@@ -58,7 +58,6 @@ public class WikiContentValidatorAndNormalizer extends AbstractMapReduce {
     setDescription("A MapReduce program that dumps page titles to a dataset.");
     setMapperResources(new Resources(512));
     setInputDataset(WikipediaPipelineApp.RAW_WIKIPEDIA_DATASET);
-    setOutputDataset(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET);
   }
 
   @Override
@@ -66,6 +65,7 @@ public class WikiContentValidatorAndNormalizer extends AbstractMapReduce {
     Job job = context.getHadoopJob();
     job.setMapperClass(FilterNormalizerMapper.class);
     job.setNumReduceTasks(0);
+    context.addOutput(WikipediaPipelineApp.NORMALIZED_WIKIPEDIA_DATASET);
   }
 
   @Override
