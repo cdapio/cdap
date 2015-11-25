@@ -54,6 +54,8 @@ import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
+import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Predicates;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -421,6 +423,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
           });
 
           bind(Store.class).to(DefaultStore.class);
+          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
 
           // For binding StreamWriter
           install(createStreamFactoryModule());
