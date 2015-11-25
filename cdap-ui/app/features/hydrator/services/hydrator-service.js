@@ -15,10 +15,15 @@
  */
 
 class HydratorService {
-  constructor(GLOBALS, MyDAGFactory, uuid) {
+  constructor(GLOBALS, MyDAGFactory, uuid, $state, $rootScope, myPipelineApi, $q, ConfigStore) {
     this.GLOBALS = GLOBALS;
     this.MyDAGFactory = MyDAGFactory;
     this.uuid = uuid;
+    this.$state = $state;
+    this.$rootScope = $rootScope;
+    this.myPipelineApi = myPipelineApi;
+    this.$q = $q;
+    this.ConfigStore = ConfigStore;
   }
 
   getNodesAndConnectionsFromConfig(pipeline) {
@@ -103,7 +108,35 @@ class HydratorService {
       connections: connections
     };
   }
+
+  fetchBackendProperties(plugin) {
+    var defer = this.$q.defer();
+
+    // This needs to pass on a scope always. Right now there is no cleanup
+    // happening
+    var params = {
+      namespace: this.$state.params.namespace,
+      pipelineType: this.ConfigStore.getAppType(),
+      version: this.$rootScope.cdapVersion,
+      extensionType: plugin.type,
+      pluginName: plugin.name
+    };
+
+    return this.myPipelineApi.fetchPluginProperties(params)
+      .$promise
+      .then(function(res) {
+
+        var pluginProperties = (res.length? res[0].properties: {});
+        if (res.length && (!plugin.description || (plugin.description && !plugin.description.length))) {
+          plugin.description = res[0].description;
+        }
+        plugin._backendProperties = pluginProperties;
+        defer.resolve(plugin);
+        return defer.promise;
+      });
+  }
+
 }
-HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid'];
+HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'ConfigStore'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorService', HydratorService);

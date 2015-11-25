@@ -162,6 +162,19 @@ angular.module(PKG.name + '.feature.hydrator')
       return plugin.valid;
     }
 
+    function countRequiredFields(plugin) {
+      var i;
+      var keys = Object.keys(plugin._backendProperties);
+      var requiredFieldCount = 0;
+
+      for (i =0; i<keys.length; i++) {
+        if (plugin._backendProperties[keys[i]] && plugin._backendProperties[keys[i]].required) {
+          requiredFieldCount += 1;
+        }
+      }
+      return requiredFieldCount;
+    }
+
 
     /*
       This checks for unconnected nodes and for parallel connections.
@@ -281,7 +294,8 @@ angular.module(PKG.name + '.feature.hydrator')
     return {
       isModelValid: isModelValid,
       isValidPlugin: isValidPlugin,
-      hasNameAndTemplateType: hasNameAndTemplateType
+      hasNameAndTemplateType: hasNameAndTemplateType,
+      countRequiredFields: countRequiredFields
     };
 
   });
