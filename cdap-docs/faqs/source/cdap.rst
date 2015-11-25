@@ -11,6 +11,71 @@
 FAQs: CDAP
 ==========
 
+.. rubric:: Configuration: General
+
+
+.. _faq-installation-startup-memory-core-requirements:
+
+What are the memory and core requirements for CDAP?
+---------------------------------------------------
+The requirements are governed by two sources: CDAP and YARN, and the requirements are
+:ref:`described here <hadoop-install-hardware-memory-core-requirements>`.
+
+
+How do I set the CDAP properties for components running on multiple machines?
+-----------------------------------------------------------------------------
+In the configuration file ``cdap-site.xml``, there are numerous properties that specify an
+IP address where a service is running, such as ``router.server.address``,
+``metrics.query.bind.address``, ``data.tx.bind.address``, ``app.bind.address``,
+``router.bind.address``.
+       
+Our convention is that:
+
+- *\*.bind.\** properties are what services use during startup to listen on a particular interface/port.  
+- *\*.server.\** properties are used by clients to connect to another (potentially remote) service.
+
+For *\*.bind.address* properties, it is often easiest just to set these to ``'0.0.0.0'``
+to listen on all interfaces.
+
+The *\*.server.\** properties are used by clients to connect to another remote service.
+The only one you should need to configure initially is ``router.server.address``, which is
+used by the UI to connect to the router.  As an example, ideally routers running in
+production would have a load balancer in front, which is what you would set
+``router.server.address`` to. Alternatively, you could configure each UI instance to point
+to a particular router, and if you have both UI and router running on each node, you could
+use ``'127.0.0.1'``.
+
+
+How do I use YARN with the Linux Container Executor?
+----------------------------------------------------
+If you have YARN configured to use ``LinuxContainerExecutor`` (see the setting for
+``yarn.nodemanager.container-executor.class``):
+  
+- The ``cdap`` user needs to be present on all Hadoop nodes.
+
+- When using a ``LinuxContainerExecutor``, if the UID for the ``cdap`` user is less than
+  500, you will need to add the ``cdap`` user to the allowed users configuration for the
+  ``LinuxContainerExecutor`` in YARN by editing the ``/etc/hadoop/conf/container-executor.cfg``
+  file. Change the line for ``allowed.system.users`` to::
+
+    allowed.system.users=cdap
+
+
+Where is the CDAP CLI (Command Line Interface) in Distributed mode?
+-------------------------------------------------------------------
+If you've installed the ``cdap-cli`` RPM or DEB, it's located under ``/opt/cdap/cli/bin``.
+If you have installed CDAP manually (without using Cloudera Manager or Apache Ambari),
+you can add this location to your PATH to prevent the need for specifying the entire script every time.
+
+**Note:** These commands will list the contents of the package ``cdap-cli``, once it has
+been installed::
+
+  rpm -ql cdap-cli
+  dpkg -L cdap-cli
+
+
+.. rubric:: Installation: YARN
+
 
 I've followed the install instructions, yet CDAP does not start and fails verification. What next?
 --------------------------------------------------------------------------------------------------
@@ -64,20 +129,6 @@ If you have followed :ref:`the installation instructions <installation-index>`, 
   installed the packages and started the services).
 
 
-Using YARN with the LinuxContainerExecutor.
--------------------------------------------
-- If you have YARN configured to use LinuxContainerExecutor (see the setting for
-  ``yarn.nodemanager.container-executor.class``), the ``cdap`` user needs to be present on
-  all Hadoop nodes.
-
-- If you are using a LinuxContainerExecutor, and the UID for the ``cdap`` user is less than
-  500, you will need to add the ``cdap`` user to the allowed users configuration for the
-  LinuxContainerExecutor in YARN by editing the ``/etc/hadoop/conf/container-executor.cfg``
-  file. Change the line for ``allowed.system.users`` to::
-
-    allowed.system.users=cdap
-
-
 The CDAP UI is showing a message "namespace cannot be found".
 -------------------------------------------------------------
 This is indicative that the UI cannot connect to the CDAP system service containers running in YARN.
@@ -106,6 +157,15 @@ I don't see the CDAP Master service on YARN.
 - Is the router address properly configured (``router.server.address`` and ``router.server.port`` 
   (default 10000) in :ref:`cdap-site.xml file <hadoop-configuration-options>`) and the boxes using it?
 - Check that the classpath used includes the YARN configuration in it.
+
+
+YARN Application shows ACCEPTED for some time but then fails.
+-------------------------------------------------------------
+It's possible that YARN can't extract the .JARs to the ``/tmp``,
+either due to a lack of disk space or permissions.
+
+
+.. rubric:: Installation: General
 
 
 The CDAP Master log shows permissions issues.
@@ -159,45 +219,6 @@ You can set a system's network setting for a proxy by using::
   export no_proxy="localhost,127.0.0.1"
 
 
-Where is the CDAP CLI (Command Line Interface) in Distributed mode?
--------------------------------------------------------------------
-If you've installed the ``cdap-cli`` RPM or DEB, it's located under ``/opt/cdap/cli/bin``.
-If you have installed CDAP manually (without using Cloudera Manager or Apache Ambari),
-you can add this location to your PATH to prevent the need for specifying the entire script every time.
-
-**Note:** These commands will list the contents of the package ``cdap-cli``, once it has
-been installed::
-
-  rpm -ql cdap-cli
-  dpkg -L cdap-cli
-
-.. _faq-installation-startup-memory-core-requirements:
-
-What are the memory and core requirements for CDAP?
----------------------------------------------------
-The requirements are governed by two sources: CDAP and YARN, and the requirements are
-:ref:`described here <hadoop-install-hardware-memory-core-requirements>`.
-
-Can a CDAP installation be upgraded more than one version?
-----------------------------------------------------------
-In general, no. (The exception is an upgrade from 2.8.x to 3.0.x.)
-This table lists the upgrade paths available for different CDAP versions:
-
-+---------+---------------------+
-| Version | Upgrade Directly To |
-+=========+=====================+
-| 3.1.x   | 3.2.x               |
-+---------+---------------------+
-| 3.0.x   | 3.1.x               |
-+---------+---------------------+
-| 2.8.x   | 3.0.x               |
-+---------+---------------------+
-| 2.6.3   | 2.8.2               |
-+---------+---------------------+
-
-If you are doing a new installation, we recommend using the current version of CDAP.
-
-
 The HiveServer2 already listens on port 10000; what should I do?
 ----------------------------------------------------------------
 By default, CDAP uses port 10000. If port 10000 is being used by another service, simply
@@ -209,28 +230,6 @@ If you use CDM or Apache Ambari to install CDAP, it will detect this and run the
 Router on port 11015. Another solution is to simply run the CDAP Router on a different
 host than HiveServer2.
 
-How do I set the CDAP properties for components running on multiple machines?
------------------------------------------------------------------------------
-In the configuration file ``cdap-site.xml``, there are numerous properties that specify an
-IP address where a service is running, such as ``router.server.address``,
-``metrics.query.bind.address``, ``data.tx.bind.address``, ``app.bind.address``,
-``router.bind.address``.
-       
-Our convention is that:
-
-- *\*.bind.\** properties are what services use during startup to listen on a particular interface/port.  
-- *\*.server.\** properties are used by clients to connect to another (potentially remote) service.
-
-For *\*.bind.address* properties, it is often easiest just to set these to ``'0.0.0.0'``
-to listen on all interfaces.
-
-The *\*.server.\** properties are used by clients to connect to another remote service.
-The only one you should need to configure initially is ``router.server.address``, which is
-used by the UI to connect to the router.  As an example, ideally routers running in
-production would have a load balancer in front, which is what you would set
-``router.server.address`` to. Alternatively, you could configure each UI instance to point
-to a particular router, and if you have both UI and router running on each node, you could
-use ``'127.0.0.1'``.
 
 CDAP services on distributed CDAP aren't starting up due to ``java.lang.ClassNotFoundException``. What should I do?
 -------------------------------------------------------------------------------------------------------------------
@@ -257,23 +256,32 @@ Things to check as possible solutions:
 
     /opt/cdap/master/bin/svc-master classpath | tr ':' '\n'
    
-   Expect to see (where *<version>* is one of ``0.94``, ``0.96``, or ``0.98``)::
+   Expect to see (where *<version>* is the appropriate ``hbase-compat`` version)::
 
     /etc/cdap/conf/
     /opt/cdap/hbase-compat-<version>/lib/*
     /opt/cdap/master/conf/
     /opt/cdap/master/lib/*
 
-   If the classpath is incorrect, review the :ref:`installation instructions <installation-index>` and correct.
+   If the classpath is incorrect (in general, the ``hbase-compat-<version>/lib/*`` and
+   ``cdap/master/lib/*`` entries must precede any other paths that contain JARs or classes
+   such as the HBase classpath), review the :ref:`installation instructions
+   <installation-index>` and correct.
 
 
 We aren't seeing any Metrics or Logs. What should we do?
 --------------------------------------------------------
-Make sure the *Kafka* server is running, and make sure local the logs directory is created and accessible.
-On the initial startup, the number of available seed brokers must be greater than or equal to the
-*Kafka* default replication factor.
+Check that:
 
-In a two-box setup with a replication factor of two, if one box fails to startup,
+- ``cdap_kafka`` is running and listening on the configured port (9092 by default);
+- All nodes of the cluster can successfully connect to the ``cdap_kafka`` host/port; 
+  use telnet or similar to verify connectivity;
+- The *Kafka* server is running;
+- The local ``kafka.logs.dir`` exists and has full permissions for the ``cdap`` user; and
+- For systems with high availability (HA), on the initial startup the number of available
+  seed brokers must be greater than or equal to the *Kafka* default replication factor.
+
+In a two-box HA setup with a replication factor of two, if one box fails to startup,
 metrics will not show up though the application will still run::
 
   [2013-10-10 20:48:46,160] ERROR [KafkaApi-1511941310]
@@ -281,15 +289,16 @@ metrics will not show up though the application will still run::
         kafka.admin.AdministrationException:
                replication factor: 2 larger than available brokers: 1
 
+As a last resort, ``cdap_kafka`` can be reset by stopping CDAP (including ``cdap_kafka``),
+removing the Kafka ``znode`` (from within ZooKeeper use ``rmr /${cdap.namespace}/kafka``)
+and restarting CDAP.
+
 
 Only the first flowlet of our CDAP application is showing activity.
 -------------------------------------------------------------------
 Check that YARN has the capacity to start any of the remaining containers.
 
-YARN Application shows ACCEPTED for some time but then fails.
--------------------------------------------------------------
-It's possible that YARN can't extract the .JARs to the ``/tmp``,
-either due to a lack of disk space or permissions.
+
 
 Log Saver Process throws an Out-of-Memory Error; the CDAP UI shows service "Not OK"
 -----------------------------------------------------------------------------------
@@ -314,6 +323,55 @@ In the ``cdap-site.xml``, you can:
 See the ``log.saver`` parameter section of the :ref:`Appendix cdap-site.xml
 <appendix-cdap-site.xml>` for a list of these configuration parameters and their
 values that can be adjusted.
+
+
+.. rubric:: Upgrading CDAP
+
+
+Can a CDAP installation be upgraded more than one version?
+----------------------------------------------------------
+In general, no. (The exception is an upgrade from 2.8.x to 3.0.x.)
+This table lists the upgrade paths available for different CDAP versions:
+
++---------+---------------------+
+| Version | Upgrade Directly To |
++=========+=====================+
+| 3.1.x   | 3.2.x               |
++---------+---------------------+
+| 3.0.x   | 3.1.x               |
++---------+---------------------+
+| 2.8.x   | 3.0.x               |
++---------+---------------------+
+| 2.6.3   | 2.8.2               |
++---------+---------------------+
+
+If you are doing a new installation, we recommend using the current version of CDAP.
+
+
+.. _faqs-cloudera-troubleshooting-upgrade-cdh:
+
+I missed doing a step while upgrading; how do I fix my system?
+--------------------------------------------------------------
+If you miss a step in the upgrade process and something goes wrong, it's possible that the
+tables will get re-enabled before the coprocessors are upgraded. This could cause the
+regionservers to abort and may make it very difficult to get the cluster back to a stable
+state where the tables can be disabled again and complete the upgrade process.
+
+.. highlight:: xml
+
+In that case, set this configuration property in ``hbase-site.xml``::
+
+  <property>
+    <name>hbase.coprocessor.abortonerror</name>
+    <value>false</value>
+  </property>
+
+and restart the HBase regionservers. This will allow the regionservers to start up
+despite the coprocessor version mismatch. At this point, you should be able to run through
+the upgrade steps successfully. 
+
+At the end, remove the entry for ``hbase.coprocessor.abortonerror`` in order to ensure
+that data correctness is maintained.
 
 
 .. rubric:: Ask the CDAP Community for assistance
