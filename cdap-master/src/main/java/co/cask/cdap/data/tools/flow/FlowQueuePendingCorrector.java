@@ -68,6 +68,7 @@ import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -355,11 +356,14 @@ public class FlowQueuePendingCorrector extends AbstractIdleService {
         @Singleton
         @Named("defaultStore")
         @SuppressWarnings("unused")
-        public Store getStore(DatasetFramework dsFramework,
-                              CConfiguration cConf, LocationFactory locationFactory,
+        public Store getStore(CConfiguration conf,
+                              LocationFactory locationFactory,
                               NamespacedLocationFactory namespacedLocationFactory,
-                              TransactionExecutorFactory txExecutorFactory) {
-          return new DefaultStore(cConf, locationFactory, namespacedLocationFactory, txExecutorFactory, dsFramework);
+                              final TransactionExecutorFactory txExecutorFactory,
+                              DatasetFramework framework,
+                              TransactionSystemClient txClient) {
+          return new DefaultStore(conf, locationFactory, namespacedLocationFactory,
+                                  txExecutorFactory, framework, txClient);
         }
 
         // This is needed because the LocalApplicationManager
