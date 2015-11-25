@@ -4,7 +4,6 @@
         "scope": "SYSTEM",
         "version": "3.3.0-SNAPSHOT"
     },
-    "description": "Realtime ETL from Kafka with in-flight transformation into HBase Table.",
     "config": {
         "source": {
             "name": "Kafka",
@@ -35,6 +34,7 @@
             }
         ]
     },
-    "name": "KafkaToHbaseTable"
+    "description": "Real-time ETL from Kafka with in-flight transformation into an HBase table",
+    "name": "KafkaToHbase"
 }
 

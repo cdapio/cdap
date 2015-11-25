@@ -32,6 +32,7 @@
     "transforms": [],
     "instances": 1
   },
-  "description": "Realtime OLA Cube Generation."
+  "description": "Generate OLAP Cube in real time for events coming from Kafka",
+  "name": "KafkaToOLAPCube"
 }
 

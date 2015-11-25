@@ -29,7 +29,7 @@
         "transforms": [],
         "instances": 1
     },
-    "description": "Realtime stream Twitter data into a HBase Table.",
+    "description": "Ingest Real-time Twitter Stream into HBase",
     "name": "TwitterToHBase",
     "ui": {
         "nodes": {
