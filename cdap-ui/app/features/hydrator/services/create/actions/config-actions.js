@@ -18,6 +18,9 @@ class ConfigActionsFactory {
   constructor(ConfigDispatcher) {
     this.dispatcher = ConfigDispatcher.getDispatcher();
   }
+  initializeConfigStore(config) {
+    this.dispatcher.dispatch('onInitialize', config);
+  }
   setMetadataInfo(name, description) {
     this.dispatcher.dispatch('onMetadataInfoSave', name, description);
   }
@@ -29,6 +32,9 @@ class ConfigActionsFactory {
   }
   savePlugin(plugin, type) {
     this.dispatcher.dispatch('onPluginSave', {plugin: plugin, type: type});
+  }
+  saveAsDraft(config) {
+    this.dispatcher.dispatch('onSaveAsDraft', config);
   }
   setArtifact(artifact) {
     this.dispatcher.dispatch('onArtifactSave', artifact);

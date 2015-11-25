@@ -108,7 +108,15 @@ class TopPanelController{
     });
   }
   onSaveDraft() {
-
+    var config = this.ConfigStore.getConfigForExport();
+    if (!config.name) {
+      this.ConsoleActionsFactory.addMessage({
+        type: 'error',
+        content: this.GLOBALS.en.hydrator.studio.nameError
+      });
+      return;
+    }
+    this.ConfigActionsFactory.saveAsDraft(config);
   }
   onValidate() {
     this.ConsoleActionsFactory.resetMessages();

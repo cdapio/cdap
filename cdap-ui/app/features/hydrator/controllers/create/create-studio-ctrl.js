@@ -15,7 +15,7 @@
  */
 
 class HydratorCreateStudioController {
-  constructor(LeftPanelStore, LeftPanelActionsFactory, ConfigActionsFactory, $stateParams, rConfig, ConfigStore, $rootScope, $scope, DetailNonRunsStore, NodeConfigStore) {
+  constructor(LeftPanelStore, LeftPanelActionsFactory, ConfigActionsFactory, $stateParams, rConfig, ConfigStore, $rootScope, $scope, DetailNonRunsStore, NodeConfigStore, NodesActionsFactory) {
     // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
 
     this.LeftPanelActionsFactory = LeftPanelActionsFactory;
@@ -28,12 +28,6 @@ class HydratorCreateStudioController {
         scope: 'SYSTEM'
       });
     }
-    if (rConfig) {
-      ConfigActionsFactory.setArtifact(rConfig.artifact);
-      ConfigActionsFactory.setName(rConfig.name);
-      ConfigActionsFactory.setDescription(rConfig.description);
-    }
-
     this.isExpanded = LeftPanelStore.getState();
     LeftPanelStore.registerOnChangeListener( () => {
       this.isExpanded = LeftPanelStore.getState();
@@ -45,6 +39,10 @@ class HydratorCreateStudioController {
     });
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     NodeConfigStore.init();
+    if (rConfig) {
+      ConfigActionsFactory.initializeConfigStore(rConfig);
+      NodesActionsFactory.createGraphFromConfig(rConfig.__ui__.nodes, rConfig.connections);
+    }
   }
 
   toggleSidebar() {
@@ -52,6 +50,6 @@ class HydratorCreateStudioController {
   }
 }
 
-HydratorCreateStudioController.$inject = ['LeftPanelStore', 'LeftPanelActionsFactory', 'ConfigActionsFactory', '$stateParams', 'rConfig', 'ConfigStore', '$rootScope', '$scope', 'DetailNonRunsStore', 'NodeConfigStore'];
+HydratorCreateStudioController.$inject = ['LeftPanelStore', 'LeftPanelActionsFactory', 'ConfigActionsFactory', '$stateParams', 'rConfig', 'ConfigStore', '$rootScope', '$scope', 'DetailNonRunsStore', 'NodeConfigStore', 'NodesActionsFactory', '$timeout'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorCreateStudioController', HydratorCreateStudioController);

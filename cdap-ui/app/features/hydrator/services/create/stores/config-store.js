@@ -15,8 +15,10 @@
  */
 
 class ConfigStore {
-  constructor(ConfigDispatcher, CanvasFactory, GLOBALS){
+  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory){
     this.state = {};
+    this.mySettings = mySettings;
+    this.ConsoleActionsFactory = ConsoleActionsFactory;
     this.CanvasFactory = CanvasFactory;
     this.GLOBALS = GLOBALS;
     this.changeListeners = [];
@@ -27,6 +29,8 @@ class ConfigStore {
     this.configDispatcher.register('onPluginAdd', this.setConfig.bind(this));
     this.configDispatcher.register('onSetSchedule', this.setSchedule.bind(this));
     this.configDispatcher.register('onSetInstance', this.setInstance.bind(this));
+    this.configDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
+    this.configDispatcher.register('onInitialize', this.init.bind(this));
   }
   registerOnChangeListener(callback) {
     this.changeListeners.push(callback);
@@ -34,7 +38,13 @@ class ConfigStore {
   emitChange() {
     this.changeListeners.forEach( callback => callback() );
   }
-  setDefaults() {
+  setDefaults(config) {
+    // This will be eventually used when we just pass on a config to the store to draw the dag.
+    if (config) {
+      this.state = angular.copy(config);
+      this.emitChange();
+      return;
+    }
     this.state = {
       artifact: {
         name: '',
@@ -49,10 +59,14 @@ class ConfigStore {
       connections: [],
       __ui__: {
         nodes: [],
+        isEditing: true
       },
       description: '',
       name: ''
     };
+  }
+  init(config) {
+    this.setDefaults(config);
   }
   getDefaultConfig() {
     return {
@@ -140,7 +154,7 @@ class ConfigStore {
   }
   getDisplayConfig() {
     var stateCopy = this.getConfigForExport();
-    delete stateCopy.__ui__;
+    // delete stateCopy.__ui__;
     return stateCopy;
   }
   getDescription() {
@@ -226,8 +240,34 @@ class ConfigStore {
     this.state.instance = instance;
   }
 
+  saveAsDraft(config) {
+    this.state.__ui__.isEditing = false;
+    this.mySettings.get('adapterDrafts')
+       .then(res => {
+         if (!angular.isObject(res)) {
+           res = {};
+         }
+         res[config.name] = config;
+         return this.mySettings.set('adapterDrafts', res);
+       })
+       .then(
+          () => {
+            this.ConsoleActionsFactory.addMessage({
+              type: 'success',
+              content: `Draft ${config.name} saved successfully.`
+            });
+          },
+          err => {
+            this.state.__ui__.isEditing = true;
+            this.ConsoleActionsFactory.addMessage({
+              type: 'error',
+              content: err
+            });
+          }
+        );
+  }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS'];
+ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);
