@@ -204,6 +204,17 @@ public class EntityIdTest {
   }
 
   @Test
+  public void testHierarchy() {
+    NamespaceId namespace = Ids.namespace("foo");
+    ApplicationId app = namespace.app("bar");
+    ProgramId program = app.flow("foo");
+
+    Assert.assertEquals(ImmutableList.of(namespace), ImmutableList.copyOf(namespace.getHierarchy()));
+    Assert.assertEquals(ImmutableList.of(namespace, app), ImmutableList.copyOf(app.getHierarchy()));
+    Assert.assertEquals(ImmutableList.of(namespace, app, program), ImmutableList.copyOf(program.getHierarchy()));
+  }
+
+  @Test
   @Ignore
   public void printToString() {
     for (EntityId id : ids) {

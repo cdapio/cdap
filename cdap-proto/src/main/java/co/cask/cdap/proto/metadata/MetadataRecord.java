@@ -25,7 +25,8 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Represents the complete metadata of a {@link Id.NamespacedId} including its properties and tags.
+ * Represents the complete metadata of a {@link Id.NamespacedId} including its properties, tags in a given
+ * {@link MetadataScope}
  */
 public class MetadataRecord {
   private final Id.NamespacedId entityId;
@@ -40,10 +41,18 @@ public class MetadataRecord {
     this(entityId, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
   }
 
+  /**
+   * Returns an empty {@link MetadataRecord} in the specified {@link MetadataScope}
+   */
+  public MetadataRecord(Id.NamespacedId entityId, MetadataScope scope) {
+    this(entityId, scope, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
+  }
+
   public MetadataRecord(MetadataRecord other) {
     this(other.getEntityId(), other.getProperties(), other.getTags());
   }
 
+  // TODO: CDAP-4295 Remove defaulting to USER
   public MetadataRecord(Id.NamespacedId entityId, Map<String, String> properties, Set<String> tags) {
     this(entityId, MetadataScope.USER, properties, tags);
   }

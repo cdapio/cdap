@@ -92,13 +92,15 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 
 - |admin-manual|_ 
 
-  - **Installation:** Putting CDAP into production, with installation, configuration, and security setup
+  - **Installation:** Putting CDAP into production, with installation and configuration for different distributions
+  - **Security:** CDAP supports securing clusters using a perimeter security model
   - **Operations:** Logging, metrics, monitoring, runtime arguments, scaling instances, resource
     guarantees, transaction service maintenance, troubleshooting and introduces the CDAP UI
+  - **Troubleshooting and Appendices:** Installation and configuration troubleshooting
+    tips, and appendices that cover the CDAP installation and security configuration files
   - **Modes:** CDAP can be run in-memory for unit testing, standalone for testing on a developer's 
     laptop, and distributed CDAP for production
-    
-  
+
 .. |integrations| replace:: **Integrations:**
 .. _integrations: integrations/index.html
 

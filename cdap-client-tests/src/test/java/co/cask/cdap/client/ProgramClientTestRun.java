@@ -21,6 +21,7 @@ import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.app.PingService;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.BatchProgram;
 import co.cask.cdap.proto.BatchProgramResult;
@@ -212,9 +213,14 @@ public class ProgramClientTestRun extends ClientTestBase {
     Tasks.waitFor(1, new Callable<Integer>() {
       @Override
       public Integer call() throws Exception {
-        return programClient.getWorkflowCurrent(workflow.getApplication(), workflow.getId(), pid).size();
+        try {
+          return programClient.getWorkflowCurrent(workflow.getApplication(), workflow.getId(), pid).size();
+        } catch (NotFoundException e) {
+          // try again if the 'current' endpoint is not discoverable yet
+          return 0;
+        }
       }
-    }, 20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+    }, 20, TimeUnit.SECONDS);
 
     // Signal the FakeWorkflow that execution can be continued by creating temp file
     Assert.assertTrue(doneFile.createNewFile());

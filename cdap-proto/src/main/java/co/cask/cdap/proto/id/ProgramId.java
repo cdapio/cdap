@@ -58,6 +58,10 @@ public class ProgramId extends EntityId implements NamespacedId, ParentedId<Appl
     return program;
   }
 
+  public NamespaceId getNamespaceId() {
+    return new NamespaceId(namespace);
+  }
+
   @Override
   public ApplicationId getParent() {
     return new ApplicationId(namespace, application);

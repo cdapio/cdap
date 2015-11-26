@@ -36,6 +36,7 @@
     ],
     "instances": 1
   },
-  "description": "Streaming Twitter Tweets into Stream for downstream processing."
+  "description": "Ingests in real time from Kafka into a stream",
+  "name": "KafkaToStream"
 }
 

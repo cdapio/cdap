@@ -2004,8 +2004,8 @@ Deprecated and Removed Features
   contained a service worker must be redeployed.  
 - The old CDAP Console has been deprecated.
 - Support for JDK/JRE 1.6 (Java 6) has ended; JDK/JRE 1.7 (Java 7) is 
-  :ref:`now required for CDAP <install-java-runtime>` or the 
-  :ref:`CDAP SDK <standalone-index>`.
+  `now required for CDAP <http://docs.cask.co/cdap/3.0.0/en/admin-manual/installation/installation.html#install-java-runtime>`__ or the 
+  `CDAP SDK <http://docs.cask.co/cdap/3.0.0/en/developers-manual/getting-started/standalone/index.html#standalone-index>`__.
 
 
 .. _known-issues-300:
@@ -2015,7 +2015,8 @@ Known Issues
 
 - CDAP has been tested on and supports CDH 4.2.x through CDH 5.3.x, HDP 2.0 through 2.1, and
   Apache Bigtop 0.8.0. It has not been tested on more recent versions of CDH. 
-  See :ref:`our Hadoop/HBase Environment configurations <install-hadoop-hbase>`.
+  See `our Hadoop/HBase Environment configurations 
+  <http://docs.cask.co/cdap/3.0.0/en/admin-manual/installation/installation.html#install-hadoop-hbase>`__.
   
 - After upgrading CDAP from a pre-3.0 version, any unprocessed metrics data in Kafka will
   be lost and *WARN* log messages will be logged that tell about the inability to process
@@ -2337,8 +2338,8 @@ New Features
 
 - **Documentation**
 
-  - A :ref:`Quick Start Guide <installation-quick-start>` has been added to the 
-    :ref:`CDAP Administration Manual <admin-index>` 
+  - A `Quick Start Guide <http://docs.cask.co/cdap/2.6.0/en/admin-manual/installation/quick-start.html#installation-quick-start>`__ has been added to the 
+    `CDAP Administration Manual <http://docs.cask.co/cdap/2.6.0/en/admin-manual/index.html#admin-index>`__ 
     (`CDAP-695 <https://issues.cask.co/browse/CDAP-695>`__).
 
 CDAP Bug Fixes

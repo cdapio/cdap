@@ -52,6 +52,12 @@ Standalone and Distributed CDAP
 
     MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests
 
+- Build Standalone distribution ZIP with additional system artifacts::
+
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -pl cdap-standalone,cdap-app-templates/cdap-etl,cdap-app-templates/cdap-data-quality,cdap-examples -am -amd -DskipTests -P examples,templates,dist,release,unit-tests -Dadditional.artifacts.dir=</path/to/additional/artifacts>
+
+  This will copy any .jar and .json files in any 'target' directories under the specified path to the artifacts directory.
+
 - Build the limited set of Javadocs used in distribution ZIP::
 
     mvn clean package javadoc:javadoc -pl cdap-api -am -DskipTests -P release
@@ -101,7 +107,7 @@ Standalone and Distributed CDAP
     cd cdap-ui
     bower install && npm install && gulp build
     
-  (Whenever there is a change in the UI packages)
+  (Whenever there is a change in the UI packages.)
     
   Then, run standalone from IDE.
     

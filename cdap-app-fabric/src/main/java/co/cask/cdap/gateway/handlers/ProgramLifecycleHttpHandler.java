@@ -136,41 +136,6 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private final MRJobInfoFetcher mrJobInfoFetcher;
 
   /**
-   * Convenience class for representing the necessary components for retrieving status
-   */
-  private class StatusMap {
-    private String status = null;
-    private String error = null;
-    private Integer statusCode = null;
-
-    public StatusMap() { }
-
-    public int getStatusCode() {
-      return statusCode;
-    }
-
-    public String getError() {
-      return error;
-    }
-
-    public String getStatus() {
-      return status;
-    }
-
-    public void setStatusCode(int statusCode) {
-      this.statusCode = statusCode;
-    }
-
-    public void setError(String error) {
-      this.error = error;
-    }
-
-    public void setStatus(String status) {
-      this.status = status;
-    }
-  }
-
-  /**
    * Json serializer/deserializer.
    */
   private static final Gson GSON = ApplicationSpecificationAdapter
@@ -281,13 +246,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     ProgramType programType = ProgramType.valueOfCategoryName(type);
     Id.Program program = Id.Program.from(namespaceId, appId, programType, id);
-    StatusMap statusMap = getStatus(program);
-    // If status is null, then there was an error
-    if (statusMap.getStatus() == null) {
-      responder.sendString(HttpResponseStatus.valueOf(statusMap.getStatusCode()), statusMap.getError());
-      return;
-    }
-    Map<String, String> status = ImmutableMap.of("status", statusMap.getStatus());
+    ProgramStatus programStatus = getProgramStatus(program);
+
+    Map<String, String> status = ImmutableMap.of("status", programStatus.name());
     responder.sendJson(HttpResponseStatus.OK, status);
   }
 
@@ -593,9 +554,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       Id.Program progId = Id.Program.from(namespaceId, program.getAppId(),
                                           program.getProgramType(), program.getProgramId());
       try {
-        StatusMap statusMap = getStatus(progId);
+        ProgramStatus programStatus = getProgramStatus(progId);
         statuses.add(new BatchProgramStatus(
-          program, HttpResponseStatus.OK.getCode(), null, statusMap.getStatus()));
+          program, HttpResponseStatus.OK.getCode(), null, programStatus.name()));
       } catch (BadRequestException e) {
         statuses.add(new BatchProgramStatus(
           program, HttpResponseStatus.BAD_REQUEST.getCode(), e.getMessage(), null));
@@ -1056,9 +1017,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Id.Program programId = Id.Program.from(namespaceId, appId, ProgramType.FLOW, flowId);
     try {
       ProgramStatus status = getProgramStatus(programId);
-      if (status.getStatus().equals(HttpResponseStatus.NOT_FOUND.toString())) {
-        responder.sendStatus(HttpResponseStatus.NOT_FOUND);
-      } else if (status.getStatus().equals("RUNNING")) {
+      if (ProgramStatus.RUNNING == status) {
         responder.sendString(HttpResponseStatus.FORBIDDEN, "Flow is running, please stop it first.");
       } else {
         queueAdmin.dropAllForFlow(Id.Flow.from(programId.getApplication(), programId.getId()));
@@ -1173,7 +1132,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         String flowId = flow.getName();
         Id.Program programId = Id.Program.from(namespace, appId, ProgramType.FLOW, flowId);
         ProgramStatus status = getProgramStatus(programId);
-        if (!"STOPPED".equals(status.getStatus())) {
+        if (ProgramStatus.STOPPED != status) {
           responder.sendString(HttpResponseStatus.FORBIDDEN,
                                String.format("Flow '%s' from application '%s' in namespace '%s' is running, " +
                                                "please stop it first.", flowId, appId, namespaceId));
@@ -1244,15 +1203,13 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a map where the pairs map from status to program status (e.g. {"status" : "RUNNING"}) or
-   * in case of an error in the input (e.g. invalid id, program not found), a map from statusCode to integer and
-   * error to error message (e.g. {"statusCode": 404, "error": "Program not found"})
-   *
-   * @param id The Program Id to get the status of
-   * @throws BadRequestException if program type is invalid
+   * Returns the program status.
+   * @param id the id of the program for which the status call is made
+   * @return the status of the program
+   * @throws BadRequestException if the program type is invalid
    * @throws NotFoundException if the application to which this program belongs was not found
    */
-  private StatusMap getStatus(final Id.Program id) throws BadRequestException, NotFoundException {
+  private ProgramStatus getProgramStatus(Id.Program id) throws BadRequestException, NotFoundException {
     // invalid type does not exist
     if (id.getType() == null) {
       throw new BadRequestException(String.format("Invalid program type provided for program %s.", id.getId()));
@@ -1264,23 +1221,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       throw new NotFoundException(Id.Application.from(id.getNamespaceId(), id.getApplicationId()));
     }
 
-    String programStatus = getProgramStatus(id).getStatus();
-    StatusMap statusMap = new StatusMap();
-    statusMap.setStatus(programStatus);
-    statusMap.setStatusCode(HttpResponseStatus.OK.getCode());
-    return statusMap;
-  }
-
-  protected ProgramStatus getProgramStatus(Id.Program id) throws NotFoundException {
-    return getProgramStatus(id, null);
-  }
-
-  /**
-   * 'protected' for the workflow handler to use
-   */
-  protected ProgramStatus getProgramStatus(Id.Program id, @Nullable String runId) throws NotFoundException {
-
-    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id, runId);
+    ProgramRuntimeService.RuntimeInfo runtimeInfo = findRuntimeInfo(id, null);
 
     if (runtimeInfo == null) {
       if (id.getType() != ProgramType.WEBAPP) {
@@ -1293,9 +1234,9 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         if (id.getType() == ProgramType.MAPREDUCE &&
           !store.getRuns(id, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 1).isEmpty()) {
           // MapReduce program exists and running as a part of Workflow
-          return new ProgramStatus(id.getApplicationId(), id.getId(), "RUNNING");
+          return ProgramStatus.RUNNING;
         }
-        return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
+        return ProgramStatus.STOPPED;
       }
 
       // TODO: Fetching webapp status is a hack. This will be fixed when webapp spec is added.
@@ -1303,7 +1244,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         Location webappLoc = Programs.programLocation(namespacedLocationFactory, appFabricDir, id);
         if (webappLoc != null && webappLoc.exists()) {
           // webapp exists and not running. so return stopped.
-          return new ProgramStatus(id.getApplicationId(), id.getId(), "STOPPED");
+          return ProgramStatus.STOPPED;
         }
         // the webappLoc does not exists
         throw new NotFoundException(id);
@@ -1312,8 +1253,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       }
     }
 
-    String status = controllerStateToString(runtimeInfo.getController().getState());
-    return new ProgramStatus(id.getApplicationId(), id.getId(), status);
+    return runtimeInfo.getController().getState().getProgramStatus();
   }
 
   /**
@@ -1423,8 +1363,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   private boolean isRunning(Id.Program id) throws BadRequestException, NotFoundException {
-    String programStatus = getStatus(id).getStatus();
-    return programStatus != null && !"STOPPED".equals(programStatus);
+    return ProgramStatus.STOPPED != getProgramStatus(id);
   }
 
   private boolean isConcurrentRunsAllowed(ProgramType type) {

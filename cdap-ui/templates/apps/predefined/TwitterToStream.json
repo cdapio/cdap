@@ -38,6 +38,7 @@
     ],
     "instances": 1
   },
-  "description": "Streaming Twitter Tweets into Stream for downstream processing."
+  "description": "Ingest real-time Twitter Stream into a stream",
+  "name": "TwitterToStream"
 }
 

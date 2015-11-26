@@ -15,6 +15,7 @@ FAQs
 
     General Questions <general>
     CDAP <cdap>
+    Cloudera Manager <cloudera-manager>
 
 Additional Resources
 ====================

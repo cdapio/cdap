@@ -17,20 +17,9 @@
 package co.cask.cdap.proto;
 
 /**
- * Class containing a program status.
+ * Program level status types.
  */
-public class ProgramStatus {
-  private String applicationId;
-  private String programId;
-  private String status;
-
-  public ProgramStatus(String applicationId, String programId, String status) {
-    this.applicationId = applicationId;
-    this.programId = programId;
-    this.status = status;
-  }
-
-  public String getStatus() {
-    return this.status;
-  }
+public enum ProgramStatus {
+  RUNNING,
+  STOPPED
 }

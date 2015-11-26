@@ -31,8 +31,8 @@ import co.cask.cdap.data.runtime.TransactionMetricsModule;
 import co.cask.cdap.data.stream.service.InMemoryStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
 import co.cask.cdap.data.view.ViewAdminModules;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
-import co.cask.cdap.data2.metadata.service.NoOpBusinessMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.explore.guice.ExploreClientModule;
@@ -89,7 +89,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
       Modules.override(new DataSetsModules().getDistributedModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
-          bind(BusinessMetadataStore.class).to(NoOpBusinessMetadataStore.class);
+          bind(MetadataStore.class).to(NoOpMetadataStore.class);
         }
       }),
       new ExploreClientModule(),

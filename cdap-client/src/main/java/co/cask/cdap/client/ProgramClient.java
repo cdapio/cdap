@@ -37,7 +37,6 @@ import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramLiveInfo;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramRunStatus;
-import co.cask.cdap.proto.ProgramStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.codec.WorkflowActionSpecificationCodec;
@@ -76,6 +75,7 @@ public class ProgramClient {
     .create();
   private static final Type BATCH_STATUS_RESPONSE_TYPE = new TypeToken<List<BatchProgramStatus>>() { }.getType();
   private static final Type BATCH_RESULTS_TYPE = new TypeToken<List<BatchProgramResult>>() { }.getType();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -266,7 +266,9 @@ public class ProgramClient {
       throw new ProgramNotFoundException(program);
     }
 
-    return ObjectResponse.fromJsonBody(response, ProgramStatus.class).getResponseObject().getStatus();
+    Map<String, String> responseObject
+      = ObjectResponse.<Map<String, String>>fromJsonBody(response, MAP_STRING_STRING_TYPE, GSON).getResponseObject();
+    return responseObject.get("status");
   }
 
   /**

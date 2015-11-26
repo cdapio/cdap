@@ -58,6 +58,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.namespace.DefaultNamespaceAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.internal.app.runtime.batch.InMemoryTransactionServiceManager;
+import co.cask.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
 import co.cask.cdap.internal.app.runtime.distributed.TransactionServiceManager;
 import co.cask.cdap.internal.app.runtime.schedule.DistributedSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
@@ -70,7 +71,7 @@ import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.pipeline.SynchronousPipelineFactory;
-import co.cask.cdap.logging.run.AppFabricServiceManager;
+import co.cask.cdap.logging.run.InMemoryAppFabricServiceManager;
 import co.cask.cdap.logging.run.InMemoryDatasetExecutorServiceManager;
 import co.cask.cdap.logging.run.InMemoryExploreServiceManager;
 import co.cask.cdap.logging.run.InMemoryLogSaverServiceManager;
@@ -82,11 +83,15 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
@@ -131,26 +136,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(Scheduler.class).to(SchedulerService.class);
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
 
-                               MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
-                                 binder(), String.class, MasterServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.LOGSAVER)
-                                        .to(InMemoryLogSaverServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.TRANSACTION)
-                                        .to(InMemoryTransactionServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
-                                        .to(InMemoryMetricsProcessorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.METRICS)
-                                        .to(InMemoryMetricsServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
-                                        .to(AppFabricServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.STREAMS)
-                                        .to(InMemoryStreamServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
-                                        .to(InMemoryDatasetExecutorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
-                                        .to(InMemoryMetadataServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
-                                        .to(InMemoryExploreServiceManager.class);
+                               addInMemoryBindings(binder());
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -182,26 +168,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(Scheduler.class).to(SchedulerService.class);
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
 
-                               MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
-                                 binder(), String.class, MasterServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.LOGSAVER)
-                                        .to(InMemoryLogSaverServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.TRANSACTION)
-                                        .to(InMemoryTransactionServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
-                                        .to(InMemoryMetricsProcessorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.METRICS)
-                                        .to(InMemoryMetricsServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
-                                        .to(AppFabricServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.STREAMS)
-                                        .to(InMemoryStreamServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
-                                        .to(InMemoryDatasetExecutorServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
-                                        .to(InMemoryMetadataServiceManager.class);
-                               mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
-                                        .to(InMemoryExploreServiceManager.class);
+                               addInMemoryBindings(binder());
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -216,6 +183,29 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Stream.STREAM_HANDLER);
                              }
                            });
+  }
+
+  private void addInMemoryBindings(Binder binder) {
+    MapBinder<String, MasterServiceManager> mapBinder = MapBinder.newMapBinder(
+      binder, String.class, MasterServiceManager.class);
+    mapBinder.addBinding(Constants.Service.LOGSAVER)
+      .to(InMemoryLogSaverServiceManager.class);
+    mapBinder.addBinding(Constants.Service.TRANSACTION)
+      .to(InMemoryTransactionServiceManager.class);
+    mapBinder.addBinding(Constants.Service.METRICS_PROCESSOR)
+      .to(InMemoryMetricsProcessorServiceManager.class);
+    mapBinder.addBinding(Constants.Service.METRICS)
+      .to(InMemoryMetricsServiceManager.class);
+    mapBinder.addBinding(Constants.Service.APP_FABRIC_HTTP)
+      .to(InMemoryAppFabricServiceManager.class);
+    mapBinder.addBinding(Constants.Service.STREAMS)
+      .to(InMemoryStreamServiceManager.class);
+    mapBinder.addBinding(Constants.Service.DATASET_EXECUTOR)
+      .to(InMemoryDatasetExecutorServiceManager.class);
+    mapBinder.addBinding(Constants.Service.METADATA_SERVICE)
+      .to(InMemoryMetadataServiceManager.class);
+    mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE)
+      .to(InMemoryExploreServiceManager.class);
   }
 
   @Override
@@ -288,6 +278,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
 
       bind(Store.class).to(DefaultStore.class);
+      bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);

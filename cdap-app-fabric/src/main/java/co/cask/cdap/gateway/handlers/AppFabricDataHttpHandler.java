@@ -22,6 +22,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.StreamDetail;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -45,12 +46,15 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
    */
   private final Store store;
 
+  private final NamespaceStore nsStore;
+
   /**
    * Constructs an new instance. Parameters are binded by Guice.
    */
   @Inject
-  public AppFabricDataHttpHandler(Store store) {
+  AppFabricDataHttpHandler(Store store, NamespaceStore nsStore) {
     this.store = store;
+    this.nsStore = nsStore;
   }
 
   /**
@@ -67,7 +71,7 @@ public class AppFabricDataHttpHandler extends AbstractAppFabricHttpHandler {
     for (StreamSpecification spec : specs) {
       result.add(new StreamDetail(spec.getName()));
     }
-    if (result.isEmpty() && store.getNamespace(namespaceId) == null) {
+    if (result.isEmpty() && nsStore.get(namespaceId) == null) {
       responder.sendString(HttpResponseStatus.NOT_FOUND, String.format("Namespace '%s' not found.", namespace));
       return;
     }

@@ -184,7 +184,9 @@
         <stage.opt.dir>${sdk.dir}/cdap-sdk-${project.version}</stage.opt.dir>
         <stage.lib.dir>${stage.opt.dir}/lib</stage.lib.dir>
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
-        <stage.plugins.dir>${stage.opt.dir}/plugins</stage.plugins.dir>
+        <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
+        <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
+        <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
       </properties>
       <build>
         <plugins>
@@ -373,13 +375,13 @@
                 </configuration>
               </execution>
               <execution>
-                <id>copy-etl-batch</id>
+                <id>copy-etl</id>
                 <phase>prepare-package</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.opt.dir}/artifacts</outputDirectory>
+                  <outputDirectory>${stage.artifacts.dir}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -389,35 +391,6 @@
                         <include>cdap-etl-batch-${project.version}.jar</include>
                       </includes>
                     </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target
-                      </directory>
-                      <includes>
-                        <include>cdap-etl-lib-${project.version}-batch.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target/classes
-                      </directory>
-                      <filtering>true</filtering>
-                      <includes>
-                        <include>cdap-etl-lib-batch.json</include>
-                      </includes>
-                    </resource>
-                  </resources>
-                </configuration>
-              </execution>
-              <execution>
-                <id>copy-etl-realtime</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>copy-resources</goal>
-                </goals>
-                <configuration combine.self="override">
-                  <outputDirectory>${stage.opt.dir}/artifacts</outputDirectory>
-                  <resources>
                     <resource>
                       <directory>
                         ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-realtime/target
@@ -431,7 +404,7 @@
                         ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target
                       </directory>
                       <includes>
-                        <include>cdap-etl-lib-${project.version}-realtime.jar</include>
+                        <include>cdap-etl-lib-${project.version}.jar</include>
                       </includes>
                     </resource>
                     <resource>
@@ -440,7 +413,7 @@
                       </directory>
                       <filtering>true</filtering>
                       <includes>
-                        <include>cdap-etl-lib-realtime.json</include>
+                        <include>cdap-etl-lib.json</include>
                       </includes>
                     </resource>
                   </resources>
@@ -453,7 +426,7 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>${stage.opt.dir}/artifacts</outputDirectory>
+                  <outputDirectory>${stage.artifacts.dir}</outputDirectory>
                   <resources>
                     <resource>
                       <directory>
@@ -461,23 +434,6 @@
                       </directory>
                       <includes>
                         <include>cdap-data-quality-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target
-                      </directory>
-                      <includes>
-                        <include>cdap-etl-lib-${project.version}-batch-source.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target/classes
-                      </directory>
-                      <filtering>true</filtering>
-                      <includes>
-                        <include>cdap-etl-lib-batch-source.json</include>
                       </includes>
                     </resource>
                   </resources>
@@ -556,11 +512,28 @@
                 </goals>
                 <configuration>
                   <target>
-                    <move file="${stage.opt.dir}/artifacts/cdap-etl-lib-batch.json" tofile="${stage.opt.dir}/artifacts/cdap-etl-lib-${project.version}-batch.json" />
-                    <move file="${stage.opt.dir}/artifacts/cdap-etl-lib-realtime.json" tofile="${stage.opt.dir}/artifacts/cdap-etl-lib-${project.version}-realtime.json" />
-                    <move file="${stage.opt.dir}/artifacts/cdap-etl-lib-batch-source.json" tofile="${stage.opt.dir}/artifacts/cdap-etl-lib-${project.version}-batch-source.json" />
+                    <move file="${stage.artifacts.dir}/cdap-etl-lib.json" tofile="${stage.artifacts.dir}/cdap-etl-lib-${project.version}.json" />
                   </target>
                 </configuration>
+              </execution>
+              <!-- Copy any additional system artifacts.
+                   For example, if you want to include plugins from hydrator-plugins. -->
+              <execution>
+                <id>copy-additional-system-artifacts</id>
+                <phase>prepare-package</phase>
+                <configuration>
+                  <target if="additional.artifacts.dir">
+                    <copy todir="${stage.artifacts.dir}" flatten="true">
+                      <fileset dir="${additional.artifacts.dir}">
+                        <include name="${additional.artifacts.jar.pattern}"/>
+                        <include name="${additional.artifacts.config.pattern}"/>
+                      </fileset>
+                    </copy>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
               </execution>
               <!-- Rename CLI jar and make CLI scripts executable -->
               <execution>

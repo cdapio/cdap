@@ -43,7 +43,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.config.PreferencesStore;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -114,7 +114,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final MetricStore metricStore;
   private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
-  private final BusinessMetadataStore businessMds;
+  private final MetadataStore metadataStore;
 
   @Inject
   public ApplicationLifecycleService(ProgramRuntimeService runtimeService, Store store, CConfiguration configuration,
@@ -124,7 +124,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                      PreferencesStore preferencesStore, MetricStore metricStore,
                                      ArtifactRepository artifactRepository,
                                      ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
-                                     BusinessMetadataStore businessMds) {
+                                     MetadataStore metadataStore) {
     this.runtimeService = runtimeService;
     this.store = store;
     this.configuration = configuration;
@@ -137,7 +137,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.metricStore = metricStore;
     this.artifactRepository = artifactRepository;
     this.managerFactory = managerFactory;
-    this.businessMds = businessMds;
+    this.metadataStore = metadataStore;
   }
 
   @Override
@@ -587,7 +587,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     deleteProgramLocations(appId);
 
     ApplicationSpecification appSpec = store.getApplication(appId);
-    deleteAppBusinessMetadata(appId, appSpec);
+    deleteAppMetadata(appId, appSpec);
 
     store.removeApplication(appId);
 
@@ -599,13 +599,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Delete the business metadata for the application and the programs.
+   * Delete the metadata for the application and the programs.
    */
-  private void deleteAppBusinessMetadata(Id.Application appId, ApplicationSpecification appSpec) {
+  private void deleteAppMetadata(Id.Application appId, ApplicationSpecification appSpec) {
     // Remove metadata for the Application itself.
-    businessMds.removeMetadata(appId);
+    metadataStore.removeMetadata(appId);
 
-    // Remove business metadata for the programs of the Application
+    // Remove metadata for the programs of the Application
     // TODO: Need to remove this we support prefix search of metadata type.
     // See https://issues.cask.co/browse/CDAP-3669
     Map<ProgramType, Set<String>> programTypeToNames = new HashMap<>();
@@ -632,7 +632,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       Set<String> programNames = entry.getValue();
       for (String programName : programNames) {
         Id.Program programId = Id.Program.from(appId.getNamespaceId(), appId.getId(), entry.getKey(), programName);
-        businessMds.removeMetadata(programId);
+        metadataStore.removeMetadata(programId);
       }
     }
   }
