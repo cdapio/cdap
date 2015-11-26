@@ -22,7 +22,6 @@ Operations
     CDAP UI <cdap-ui>
     Master Services Logback <logback>
     Transaction Service Maintenance <tx-maintenance>
-    Troubleshooting <troubleshooting>
 
 .. |logging| replace:: **Logging:**
 .. _logging: logging.html
