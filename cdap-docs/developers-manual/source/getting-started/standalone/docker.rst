@@ -47,7 +47,7 @@ Kitematic and then download, start, and connect to an instance of CDAP.
         :width: 4in
         :align: center
 
-#. Scroll the window to the last version shown, and select the desired version.
+#. Select the desired version.
    Note that the tag **latest** is the last version that was put up at Docker Hub, which is not the 
    necessarily the most-current version:
  
