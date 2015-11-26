@@ -15,8 +15,10 @@
  */
 
 class ConfigStore {
-  constructor(ConfigDispatcher, CanvasFactory, GLOBALS){
+  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory){
     this.state = {};
+    this.mySettings = mySettings;
+    this.ConsoleActionsFactory = ConsoleActionsFactory;
     this.CanvasFactory = CanvasFactory;
     this.GLOBALS = GLOBALS;
     this.changeListeners = [];
@@ -27,6 +29,8 @@ class ConfigStore {
     this.configDispatcher.register('onPluginAdd', this.setConfig.bind(this));
     this.configDispatcher.register('onSetSchedule', this.setSchedule.bind(this));
     this.configDispatcher.register('onSetInstance', this.setInstance.bind(this));
+    this.configDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
+    this.configDispatcher.register('onInitialize', this.init.bind(this));
   }
   registerOnChangeListener(callback) {
     this.changeListeners.push(callback);
@@ -34,7 +38,8 @@ class ConfigStore {
   emitChange() {
     this.changeListeners.forEach( callback => callback() );
   }
-  setDefaults() {
+  setDefaults(config) {
+
     this.state = {
       artifact: {
         name: '',
@@ -49,10 +54,18 @@ class ConfigStore {
       connections: [],
       __ui__: {
         nodes: [],
+        isEditing: true
       },
       description: '',
       name: ''
     };
+    // This will be eventually used when we just pass on a config to the store to draw the dag.
+    if (config) {
+      angular.extend(this.state, config);
+    }
+  }
+  init(config) {
+    this.setDefaults(config);
   }
   getDefaultConfig() {
     return {
@@ -130,6 +143,12 @@ class ConfigStore {
         addPluginToConfig(nodesMap[connection.target], connection.target);
       }
     });
+    let appType = this.getAppType();
+    if ( appType=== this.GLOBALS.etlBatch) {
+      config.schedule = this.state.config.schedule;
+    } else if (appType === this.GLOBALS.etlRealtime) {
+      config.instance = this.state.config.instance;
+    }
     return config;
   }
   getConfigForExport() {
@@ -182,9 +201,9 @@ class ConfigStore {
     this.state.artifact.scope = artifact.scope;
 
     if (artifact.name === this.GLOBALS.etlBatch) {
-      this.state.schedule = '* * * * *';
+      this.state.config.schedule = '* * * * *';
     } else if (artifact.name === this.GLOBALS.etlRealtime) {
-      this.state.instance = 1;
+      this.state.config.instance = 1;
     }
 
     this.emitChange();
@@ -213,21 +232,47 @@ class ConfigStore {
   }
 
   getSchedule() {
-    return this.state.schedule;
+    return this.state.config.schedule;
   }
   setSchedule(schedule) {
-    this.state.schedule = schedule;
+    this.state.config.schedule = schedule;
   }
 
   getInstance() {
-    return this.state.instance;
+    return this.state.config.instance;
   }
   setInstance(instance) {
-    this.state.instance = instance;
+    this.state.config.instance = instance;
   }
 
+  saveAsDraft(config) {
+    this.state.__ui__.isEditing = false;
+    this.mySettings.get('adapterDrafts')
+       .then(res => {
+         if (!angular.isObject(res)) {
+           res = {};
+         }
+         res[config.name] = config;
+         return this.mySettings.set('adapterDrafts', res);
+       })
+       .then(
+          () => {
+            this.ConsoleActionsFactory.addMessage({
+              type: 'success',
+              content: `Draft ${config.name} saved successfully.`
+            });
+          },
+          err => {
+            this.state.__ui__.isEditing = true;
+            this.ConsoleActionsFactory.addMessage({
+              type: 'error',
+              content: err
+            });
+          }
+        );
+  }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS'];
+ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);

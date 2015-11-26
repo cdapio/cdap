@@ -39,7 +39,30 @@ angular.module(PKG.name + '.commons')
       left: 0
     };
 
+    /*
+    FIXME: This should be fixed. Right now the assumption is to update
+     the store before my-dag directive is rendered. What happens if we get the
+     data after the rendering? The init function is never called or the DAG is not
+     rendered based on the data.
 
+     Right now there is a cycle which prevents us from listening to the NodeStore
+     changes. The infinite recurrsion happens like this,
+     Assuming we have this
+     NodesStore.registerChangeListener(init);
+     1. User adds a connection in view
+     2. 'connection' event is fired by jsplumb
+     3. On connection event we call 'formatConnections' function
+     4. 'formatConnections' constructs the 'connections' array and sets it to NodesStore
+     5. Now NodesStore fires an update to changelisteners.
+     6. 'init' function gets called.
+     6. 'init' function again programmatically connects all the nodes and sets it to NodesStore
+     7. Control goes to step 5
+     7. Hence the loop.
+
+     We need to be able to separate render of graph from data and incremental user interactions.
+     - Programmatically it should be possible to provide data and should be able to ask dag to render it at any time post-rendering of the directive
+     - User should be able interact with the dag and add incremental changes.
+    */
     function init() {
       $scope.nodes = NodesStore.getNodes();
       $scope.connections = NodesStore.getConnections();
@@ -164,7 +187,16 @@ angular.module(PKG.name + '.commons')
           addEndpoints();
           vm.instance.draggable(nodes, {
             start: function () { dragged = true; },
-            stop: function () { $timeout(function () { vm.instance.repaintEverything(); }); }
+            stop: function (dragEndEvent) {
+              var config = {
+                _uiPosition: {
+                  top: dragEndEvent.el.style.top,
+                  left: dragEndEvent.el.style.left
+                }
+              };
+              NodesActionsFactory.updateNode(dragEndEvent.el.id, config);
+              $timeout(function () { vm.instance.repaintEverything(); });
+            }
           });
         });
       });
