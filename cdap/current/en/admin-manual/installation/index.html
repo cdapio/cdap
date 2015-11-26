@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta content="Cask Data, Inc." name="author" />
-<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
 <script type="text/javascript">
 
       var _gaq = _gaq || [];
@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.1">
-    <meta name="git_hash" content="ceac6fe19bea92b03403926de835d1bcd9fdf1d0">
-    <meta name="git_timestamp" content="2015-10-21 09:58:38 -0700">
+    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
+    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
     <title>Installation &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -52,7 +52,7 @@
     <!-- Amazon SQS Page Usage Logging end-->
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
     <link rel="top" title="Cask Data Application Platform 3.2.1 Documentation" href="../index.html" />
-    <link rel="next" title="Installation Quick Start" href="quick-start.html" />
+    <link rel="next" title="Apache Ambari (HDP)" href="ambari/index.html" />
     <link rel="prev" title="CDAP Administration Manual" href="../index.html" /> 
   </head>
   <body role="document">
@@ -63,7 +63,7 @@
           <a href="../genindex.html" title="General Index"
              accesskey="I">Index</a></li>
         <li class="right" >
-          <a href="quick-start.html" title="Installation Quick Start"
+          <a href="ambari/index.html" title="Apache Ambari (HDP)"
              accesskey="N">Next</a> |</li>
         <li class="right" >
           <a href="../index.html" title="CDAP Administration Manual"
@@ -86,36 +86,30 @@
 <span id="installation-index"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="quick-start.html"> Quick Start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="installation.html"> Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="configuration.html"> Configuration</a></li>
-<li class="toctree-l1"><a class="reference internal" href="security.html"> Security</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cdap-site.html"> Appendix: cdap-site.xml</a></li>
-<li class="toctree-l1"><a class="reference internal" href="cdap-security.html"> Appendix: cdap-security.xml</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ambari/index.html"> Apache Ambari (HDP)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cloudera/index.html"> Cloudera Manager (CDH)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hadoop/index.html"> Hadoop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mapr/index.html"> MapR</a></li>
 </ul>
 </div>
+<p><strong>Distribution-specific</strong> instructions are available, plus instructions for <strong>generic Apache Hadoop</strong> clusters:</p>
 <ul class="simple">
-<li><a class="reference external" href="quick-start.html"><strong>Quick Start:</strong></a> A quick start guide that covers the <strong>most-common case of installing and
-configuring CDAP.</strong> Many people may find this sufficient; if your case isn&#8217;t covered, the
-<a class="reference internal" href="installation.html#install"><span>Installation</span></a> and <a class="reference internal" href="configuration.html#configuration"><span>Configuration</span></a> guides have additional details.</li>
+<li><a class="reference external" href="ambari/index.html"><strong>Apache Ambari (HDP):</strong></a> Installing CDAP on <a class="reference external" href="http://hortonworks.com/">HDP (Hortonworks Data Platform)</a> clusters
+managed with <a class="reference external" href="https://ambari.apache.org/">Apache Ambari</a>.</li>
 </ul>
 <ul class="simple">
-<li><a class="reference external" href="installation.html"><strong>Installation:</strong></a> Covers <strong>installing CDAP:</strong> the system, network, and software
-requirements; packaging options; and the instructions for installation of the
-CDAP components so they will work with your existing Hadoop cluster.</li>
+<li><a class="reference external" href="cloudera/index.html"><strong>Cloudera Manager (CDH):</strong></a> Installing CDAP on <a class="reference external" href="http://www.cloudera.com/">CDH (Cloudera Data Hub)</a> clusters
+managed with <a class="reference external" href="http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html">Cloudera Manager</a>.</li>
 </ul>
 <ul class="simple">
-<li><a class="reference external" href="configuration.html"><strong>Configuration:</strong></a> Covers <strong>configuring CDAP:</strong> once CDAP <a class="reference internal" href="installation.html#install"><span>is installed</span></a>,
-covers the configuration and verification of the CDAP components.</li>
+<li><a class="reference external" href="hadoop/index.html"><strong>Hadoop:</strong></a> Installing CDAP on Hadoop systems, either <strong>generic Apache Hadoop</strong> distributions,
+CDH clusters <em>not</em> managed with Cloudera Manager, or HDP clusters <em>not</em> managed with Apache Ambari.</li>
 </ul>
 <ul class="simple">
-<li><a class="reference external" href="security.html"><strong>Security:</strong></a> CDAP supports <strong>securing clusters using a perimeter security model.</strong> This section
-describes enabling security, configuring authentication, testing security, and includes
-an example configuration file.</li>
+<li><a class="reference external" href="mapr/index.html"><strong>MapR:</strong></a> Installing CDAP on <a class="reference external" href="https://www.mapr.com">MapR systems</a>.</li>
 </ul>
 <ul class="simple">
-<li><strong>Appendices:</strong> Two appendices cover the XML files used to configure the
-<a class="reference internal" href="cdap-site.html#appendix-cdap-site-xml"><span>CDAP installation</span></a> and the <a class="reference internal" href="cdap-security.html#appendix-cdap-security-xml"><span>security configuration.</span></a></li>
+<li><a class="reference external" href="../developers-manual/getting-started/standalone/index.html"><strong>CDAP Standalone SDK:</strong></a> Installing the CDAP Standalone SDK on Linux, MacOS, and Windows systems. <em>(Developers&#8217; Manual)</em></li>
 </ul>
 <p class="rubric">Putting CDAP into Production</p>
 <p>The Cask Data Application Platform (CDAP) can be run in different modes: in-memory mode
@@ -179,14 +173,14 @@ CDAP.</p>
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
             rel="nofollow">Reference Manual</a></li>
             
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html"
+            rel="nofollow">FAQs</a></li>
+            
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
             rel="nofollow">Release Notes</a></li>
             
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
             rel="nofollow">Glossary</a></li>
-            
-      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
-            rel="nofollow">FAQ</a></li>
             
       <li><div class=""></div><a href="../table-of-contents/../../search.html"
             rel="nofollow">Search</a></li>
@@ -214,24 +208,24 @@ CDAP.</p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href=""> Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="quick-start.html"> Quick Start</a></li>
-<li class="toctree-l2"><a class="reference internal" href="installation.html"> Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="configuration.html"> Configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="security.html"> Security</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cdap-site.html"> Appendix: cdap-site.xml</a></li>
-<li class="toctree-l2"><a class="reference internal" href="cdap-security.html"> Appendix: cdap-security.xml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ambari/index.html"> Apache Ambari (HDP)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cloudera/index.html"> Cloudera Manager (CDH)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hadoop/index.html"> Hadoop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mapr/index.html"> MapR</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../security.html"> Security</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../appendices/index.html"> Appendices</a></li>
 </ul>
-
+ 
 </nav>
   <h4>Previous Topic</h4>
   <p class="topless"><a href="../index.html"
                         title="Previous Chapter">CDAP Administration Manual</a></p>
   <h4>Next Topic</h4>
-  <p class="topless"><a href="quick-start.html"
-                        title="Next Chapter">Installation Quick Start</a></p>
+  <p class="topless"><a href="ambari/index.html"
+                        title="Next Chapter">Apache Ambari (HDP)</a></p>
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
@@ -287,7 +281,7 @@ CDAP.</p>
     
     </th>
     <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
-    <a title="Installation Quick Start" href="quick-start.html" />Installation Quick Start</a>
+    <a title="Apache Ambari (HDP)" href="ambari/index.html" />Apache Ambari (HDP)</a>
     
     </th>
   </tr>

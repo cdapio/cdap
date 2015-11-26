@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <meta content="Cask Data, Inc." name="author" />
-<meta content="Copyright © 2014 Cask Data, Inc." name="copyright" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
 <script type="text/javascript">
 
       var _gaq = _gaq || [];
@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.1">
-    <meta name="git_hash" content="ceac6fe19bea92b03403926de835d1bcd9fdf1d0">
-    <meta name="git_timestamp" content="2015-10-21 09:58:38 -0700">
+    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
+    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
     <title>CDAP Administration Manual Table of Contents &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
@@ -83,67 +83,128 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation/index.html"> Installation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="installation/quick-start.html"> Quick Start</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="installation/quick-start.html#deployment">Deployment</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/quick-start.html#software-prerequisites">Software Prerequisites</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/quick-start.html#preparing-the-cluster">Preparing the Cluster</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/quick-start.html#configuring-package-managers">Configuring Package Managers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/quick-start.html#installation">Installation</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/quick-start.html#configuration">Configuration</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/quick-start.html#starting-services">Starting Services</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/quick-start.html#verification">Verification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation/ambari/index.html"> Apache Ambari (HDP)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation/ambari/prerequisites.html">Adding CDAP Service</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/ambari/prerequisites.html#preparing-ambari">Preparing Ambari</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/ambari/prerequisites.html#installing-the-cdap-service">Installing the CDAP Service</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="installation/installation.html"> Installation</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="installation/installation.html#introduction">Introduction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/installation.html#system-requirements">System Requirements</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/installation.html#preparing-the-cluster">Preparing the Cluster</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/installation.html#packaging">Packaging</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/installation.html#preparing-package-managers">Preparing Package Managers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/installation.html#id2">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation/ambari/adding-cdap.html">Adding CDAP</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/ambari/adding-cdap.html#dependencies">Dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/ambari/adding-cdap.html#core-dependencies">Core Dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/ambari/adding-cdap.html#optional-dependencies">Optional Dependencies</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="installation/configuration.html"> Configuration</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="installation/configuration.html#introduction">Introduction</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/configuration.html#configuration-central">Configuration</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/configuration.html#starting-services">Starting Services</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/configuration.html#making-cdap-highly-available">Making CDAP Highly-available</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/configuration.html#getting-a-health-check">Getting a Health Check</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/configuration.html#verification">Verification</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/configuration.html#upgrading-an-existing-version">Upgrading an Existing Version</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/configuration.html#troubleshooting">Troubleshooting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation/ambari/installing-cdap.html">Installing CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation/ambari/roadmap.html">Roadmap</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="installation/security.html"> Security</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="installation/security.html#enabling-security-standalone-cdap">Enabling Security (Standalone CDAP)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/security.html#enabling-security-distributed-cdap">Enabling Security (Distributed CDAP)</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/security.html#configuring-authentication-mechanisms">Configuring Authentication Mechanisms</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/security.html#testing-security">Testing Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation/cloudera/index.html"> Cloudera Manager (CDH)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation/cloudera/prerequisites.html">Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation/cloudera/installation.html">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/cloudera/installation.html#download">Download</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/cloudera/installation.html#install-the-csd">Install the CSD</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/cloudera/installation.html#download-and-distribute-parcel">Download and Distribute Parcel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/cloudera/installation.html#setup-and-startup-using-the-cloudera-manager">Setup and Startup using the Cloudera Manager</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="installation/cdap-site.html"> Appendix: cdap-site.xml</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#general">General</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#global">Global</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#applications">Applications</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#datasets">Datasets</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#explore-service">Explore Service</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#gateway">Gateway</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#kafka-server">Kafka Server</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#logging">Logging</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#master">Master</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#metadata">Metadata</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#metrics">Metrics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#monitor-handler">Monitor Handler</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#notification-system">Notification System</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#queue">Queue</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#router">Router</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#security">Security</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#stream">Stream</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#ui">UI</a></li>
-<li class="toctree-l3"><a class="reference internal" href="installation/cdap-site.html#notes">Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation/cloudera/step-by-step-cloudera.html">Add Service Wizard</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/cloudera/step-by-step-cloudera.html#add-a-service">Add A Service</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/cloudera/step-by-step-cloudera.html#the-add-service-wizard">The &#8220;Add Service&#8221; Wizard</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/cloudera/step-by-step-cloudera.html#startup-cdap">Startup CDAP</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/cloudera/step-by-step-cloudera.html#cdap-ui">CDAP UI</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="installation/cdap-security.html"> Appendix: cdap-security.xml</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation/cloudera/verification.html">Verification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation/cloudera/upgrading.html">Upgrading CDAP</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/cloudera/upgrading.html#upgrading-patch-release-versions">Upgrading Patch Release versions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/cloudera/upgrading.html#upgrading-major-minor-release-versions">Upgrading Major/Minor Release versions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/cloudera/upgrading.html#upgrading-cdh-5-3-to-5-4">Upgrading CDH 5.3 to 5.4</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/cloudera/upgrading.html#upgrading-cdap-2-8-to-3-0">Upgrading CDAP 2.8 to 3.0</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="installation/hadoop/index.html"> Hadoop</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation/hadoop/installation.html">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/installation.html#cdap-components">CDAP Components</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/installation.html#system-requirements">System Requirements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/installation.html#preparing-the-cluster">Preparing the Cluster</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/installation.html#packaging">Packaging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/installation.html#preparing-package-managers">Preparing Package Managers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/installation.html#package-installation">Package Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="installation/hadoop/configuration.html">Configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/configuration.html#configuration">Configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/configuration.html#secure-hadoop">Secure Hadoop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/configuration.html#ulimit-configuration">ULIMIT Configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/configuration.html#writing-to-temp-files">Writing to Temp Files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/configuration.html#configuring-security">Configuring Security</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/configuration.html#configuring-hortonworks-data-platform">Configuring Hortonworks Data Platform</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="installation/hadoop/starting-verification.html">Starting and Verification</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/starting-verification.html#starting-services">Starting Services</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/starting-verification.html#making-cdap-highly-available">Making CDAP Highly-Available</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/starting-verification.html#getting-a-health-check">Getting a Health Check</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/hadoop/starting-verification.html#verification">Verification</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="installation/hadoop/upgrading.html">Upgrading CDAP</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="installation/mapr/index.html"> MapR</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation/mapr/installation.html">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/installation.html#cdap-components">CDAP Components</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/installation.html#system-requirements">System Requirements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/installation.html#preparing-the-cluster">Preparing the Cluster</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/installation.html#packaging">Packaging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/installation.html#preparing-package-managers">Preparing Package Managers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/installation.html#package-installation">Package Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="installation/mapr/configuration.html">Configuration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/configuration.html#configuration">Configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/configuration.html#secure-hadoop">Secure Hadoop</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/configuration.html#ulimit-configuration">ULIMIT Configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/configuration.html#writing-to-temp-files">Writing to Temp Files</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/configuration.html#configuring-security">Configuring Security</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="installation/mapr/starting-verification.html">Starting and Verification</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/starting-verification.html#starting-services">Starting Services</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/starting-verification.html#making-cdap-highly-available">Making CDAP Highly-Available</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/starting-verification.html#getting-a-health-check">Getting a Health Check</a></li>
+<li class="toctree-l4"><a class="reference internal" href="installation/mapr/starting-verification.html#verification">Verification</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="installation/mapr/upgrading.html">Upgrading CDAP</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="security.html"> Security</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="security.html#enabling-security-standalone-cdap">Enabling Security (Standalone CDAP)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security.html#enabling-security-distributed-cdap">Enabling Security (Distributed CDAP)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="security.html#configuring-kerberos-required">Configuring Kerberos (required)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#configuring-zookeeper-required">Configuring ZooKeeper (required)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#running-servers-with-ssl">Running Servers with SSL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#default-ports">Default Ports</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#configuring-ssl-for-the-authentication-server">Configuring SSL for the Authentication Server</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#configuring-ssl-for-the-router">Configuring SSL for the Router</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#configuring-ssl-for-the-cdap-ui">Configuring SSL for the CDAP UI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#enabling-access-logging">Enabling Access Logging</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="security.html#configuring-authentication-mechanisms">Configuring Authentication Mechanisms</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="security.html#basic-authentication">Basic Authentication</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#ldap-authentication">LDAP Authentication</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#jaspi-authentication">JASPI Authentication</a></li>
+<li class="toctree-l3"><a class="reference internal" href="security.html#custom-authentication">Custom Authentication</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="security.html#testing-security">Testing Security</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="operations/index.html"> Operations</a><ul>
@@ -174,7 +235,32 @@
 <li class="toctree-l2"><a class="reference internal" href="operations/cdap-ui.html"> CDAP UI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="operations/logback.html"> Master Services Logback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="operations/tx-maintenance.html"> Transaction Service Maintenance</a></li>
-<li class="toctree-l2"><a class="reference internal" href="operations/troubleshooting.html"> Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="appendices/index.html"> Appendices</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="appendices/cdap-site.html"> Appendix: cdap-site.xml</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#general">General</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#global">Global</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#applications">Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#datasets">Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#explore-service">Explore Service</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#gateway">Gateway</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#kafka-server">Kafka Server</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#logging">Logging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#master">Master</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#metadata">Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#metrics">Metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#monitor-handler">Monitor Handler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#notification-system">Notification System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#queue">Queue</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#router">Router</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#security">Security</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#stream">Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#ui">UI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="appendices/cdap-site.html#notes">Notes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="appendices/cdap-security.html"> Appendix: cdap-security.xml</a></li>
 </ul>
 </li>
 </ul>
@@ -215,14 +301,14 @@
       <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html"
             rel="nofollow">Reference Manual</a></li>
             
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html"
+            rel="nofollow">FAQs</a></li>
+            
       <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html"
             rel="nofollow">Release Notes</a></li>
             
       <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html"
             rel="nofollow">Glossary</a></li>
-            
-      <li><div class=""></div><a href="table-of-contents/../../reference-manual/faq.html"
-            rel="nofollow">FAQ</a></li>
             
       <li><div class=""></div><a href="table-of-contents/../../search.html"
             rel="nofollow">Search</a></li>
@@ -250,9 +336,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="index.html"> Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation/index.html"> Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="security.html"> Security</a></li>
 <li class="toctree-l1"><a class="reference internal" href="operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendices/index.html"> Appendices</a></li>
 </ul>
-
+ 
 </nav>
   <h4>Next Topic</h4>
   <p class="topless"><a href="index.html"

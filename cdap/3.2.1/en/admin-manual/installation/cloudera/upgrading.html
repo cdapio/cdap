@@ -1,0 +1,353 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <meta name="git_release" content="3.2.1">
+    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
+    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
+    <title>Cloudera Manager: Upgrading an Existing CDAP Installation &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.2.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    
+    <!-- Amazon SQS Page Usage Logging start-->
+    <script type="text/javascript" src="https://sdk.amazonaws.com/js/aws-sdk-2.1.35.min.js"></script>
+    <script type="text/javascript" src="http://docs.cask.co/resources/scripts/aws-sqs-1.0.0.js"></script>
+    <!-- Amazon SQS Page Usage Logging end-->
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.2.1 Documentation" href="../../index.html" />
+    <link rel="up" title="Cloudera Manager (CDH)" href="index.html" />
+    <link rel="next" title="Hadoop" href="../hadoop/index.html" />
+    <link rel="prev" title="Cloudera Manager: Verification of the CDAP Installation" href="verification.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="../hadoop/index.html" title="Hadoop"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="verification.html" title="Cloudera Manager: Verification of the CDAP Installation"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.2.1');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Administration Manual</a> &raquo;</li>
+          <li><a href="../index.html" >Installation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Cloudera Manager (CDH)</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="cloudera-manager-upgrading-an-existing-cdap-installation">
+<span id="cloudera-upgrading"></span><h1>Cloudera Manager: Upgrading an Existing CDAP Installation<a class="headerlink" href="#cloudera-manager-upgrading-an-existing-cdap-installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="upgrading-patch-release-versions">
+<h2>Upgrading Patch Release versions<a class="headerlink" href="#upgrading-patch-release-versions" title="Permalink to this headline">¶</a></h2>
+<p>When a new compatible CDAP parcel is released, it will be available via the Parcels page in the Cloudera Manager UI.</p>
+<ol class="arabic simple">
+<li>Stop all flows, services, and other programs in all your applications.</li>
+<li>Stop CDAP services.</li>
+<li>Use the Cloudera Manager UI to download, distribute, and activate the parcel on all cluster hosts.</li>
+<li>Start CDAP services.</li>
+</ol>
+</div>
+<div class="section" id="upgrading-major-minor-release-versions">
+<h2>Upgrading Major/Minor Release versions<a class="headerlink" href="#upgrading-major-minor-release-versions" title="Permalink to this headline">¶</a></h2>
+<p>Upgrading between major versions of CDAP involves the additional steps of upgrading the CSD, and running the included
+CDAP Upgrade Tool. Upgrades between multiple Major/Minor versions must be done consecutively, and a version cannot be
+skipped unless otherwise noted.</p>
+<p>The following is the generic procedure for Major/Minor version upgrades:</p>
+<ol class="arabic simple">
+<li>Stop all flows, services, and other programs in all your applications.</li>
+<li>Stop CDAP services.</li>
+<li>Ensure your installed version of the CSD matches the target version of CDAP. For example, CSD version 3.0.* is compatible
+with CDAP version 3.0.*.  Download the latest version of the CSD <a class="reference external" href="http://cask.co/resources/#cdap-integrations">here</a>.</li>
+<li>Use the Cloudera Manager UI to download, distribute, and activate the corresponding CDAP parcel version on all cluster
+hosts.</li>
+<li>Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions. From the CDAP Service
+page, select &#8220;Run CDAP Upgrade Tool&#8221; from the Actions menu.</li>
+<li>Start the CDAP services.  At this point it may be necessary to correct for any changes in the CSD.  For example, if new CDAP services
+were added or removed, you must add or remove role instances as necessary. Check the
+<a class="reference internal" href="#cloudera-release-specific-upgrade-notes"><span>release-specific upgrade notes</span></a> below for any specific instructions.</li>
+<li>After CDAP services have started, run the Post-Upgrade tool to perform any necessary upgrade steps against the running services.  From the
+CDAP Service page, select &#8220;Run CDAP Post-Upgrade Tasks.&#8221;</li>
+<li>You must recompile and then redeploy your applications.</li>
+</ol>
+</div>
+<div class="section" id="upgrading-cdh-5-3-to-5-4">
+<span id="cloudera-release-specific-upgrade-notes"></span><h2>Upgrading CDH 5.3 to 5.4<a class="headerlink" href="#upgrading-cdh-5-3-to-5-4" title="Permalink to this headline">¶</a></h2>
+<p><strong>Background:</strong> CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
+CDH 5.4 as of CDAP 3.1.0 - however, upgrading the underlying CDH version is only supported
+since CDAP 3.2.0. Therefore, before upgrading from CDH 5.3 to CDH 5.4, upgrade CDAP to version
+3.2.0 or greater, following the normal upgrade procedure. Start CDAP at least once to make sure
+it works properly, before you upgrade to CDH 5.4.</p>
+<p><strong>It is important to perform these steps as described, otherwise the coprocessors may not
+get upgraded correctly and HBase regionservers may crash.</strong> In the case where something
+goes wrong, see these troubleshooting instructions for <a class="reference external" href="../../source/../../faqs/cdap.html#faqs-cloudera-troubleshooting-upgrade-cdh" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">problems while upgrading CDH</span></a>.</p>
+<p><strong>Upgrade Steps</strong></p>
+<ol class="arabic">
+<li><p class="first">If using Cloudera Manager, <a class="reference internal" href="../hadoop/upgrading.html#hadoop-upgrading"><span>stop all CDAP application and services</span></a>, as Cloudera Manager will have auto-started CDAP</p>
+</li>
+<li><p class="first">Disable all CDAP tables; from an HBase shell, run this command:</p>
+<div class="highlight-java"><div class="highlight"><pre>&gt; disable_all &#39;cdap.*&#39;
+</pre></div>
+</div>
+</li>
+<li><p class="first">Upgrade to CDH 5.4</p>
+</li>
+<li><p class="first"><a class="reference internal" href="../hadoop/upgrading.html#hadoop-upgrading"><span>Stop all CDAP services</span></a>, as CDH will have auto-started CDAP</p>
+</li>
+<li><p class="first">Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user):</p>
+<div class="highlight-java"><div class="highlight"><pre><span class="n">$</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">cdap</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">svc</span><span class="o">-</span><span class="n">master</span> <span class="n">run</span> <span class="n">co</span><span class="o">.</span><span class="na">cask</span><span class="o">.</span><span class="na">cdap</span><span class="o">.</span><span class="na">data</span><span class="o">.</span><span class="na">tools</span><span class="o">.</span><span class="na">UpgradeTool</span> <span class="n">upgrade_hbase</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Check if the coprocessor JARs for all CDAP tables have been upgraded to CDH HBase 1.0,
+by checking that the coprocessor classnames are using the <code class="docutils literal"><span class="pre">hbase10cdh</span></code> package—for example, <code class="docutils literal"><span class="pre">co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor</span></code></p>
+<p>Running this command in an HBase shell will give you table attributes:</p>
+<div class="highlight-java"><div class="highlight"><pre>&gt; describe &#39;cdap_system:app.meta&#39;
+</pre></div>
+</div>
+<p>The resulting output will show the coprocessor classname:</p>
+<div class="highlight-java"><div class="highlight"><pre>&#39;cdap_system:app.meta&#39;, {TABLE_ATTRIBUTES =&gt; {coprocessor$1 =&gt;
+&#39;hdfs://server.example.com/cdap/cdap/lib/
+coprocessorb5cb1b69834de686a84d513dff009908.jar|co.cask.cdap.data2.transaction.
+coprocessor.hbase10cdh.DefaultTransactionProcessor|1073741823|&#39;, METADATA =&gt;
+{&#39;cdap.version&#39; =&gt; &#39;3.1.0...
+</pre></div>
+</div>
+<p>Note that some CDAP tables do not have any coprocessors. You only need to verify tables
+that have coprocessors.</p>
+</li>
+<li><p class="first">Enable all CDAP tables; from an HBase shell, run this command:</p>
+<div class="highlight-java"><div class="highlight"><pre>&gt; enable_all &#39;cdap.*&#39;
+</pre></div>
+</div>
+</li>
+<li><p class="first">Start CDAP</p>
+</li>
+</ol>
+</div>
+<div class="section" id="upgrading-cdap-2-8-to-3-0">
+<h2>Upgrading CDAP 2.8 to 3.0<a class="headerlink" href="#upgrading-cdap-2-8-to-3-0" title="Permalink to this headline">¶</a></h2>
+<p><strong>Note:</strong> Apps need to be both recompiled and re-deployed.</p>
+<p>When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI
+role.  After starting the 3.0 services for the first time:</p>
+<blockquote>
+<div><ul class="simple">
+<li>From the CDAP Instances page, select &#8220;Add Role Instances&#8221;, and choose a host for the CDAP-UI role.</li>
+<li>From the CDAP Instances page, check the CDAP-Web-App role, and select &#8220;Delete&#8221; from the Actions menu.</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.2.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../included-applications/index.html"
+            rel="nofollow">Included Applications</a></li>
+            
+      <li><div class=""></div><b><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html"
+            rel="nofollow">FAQs</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Installation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../ambari/index.html"> Apache Ambari (HDP)</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Cloudera Manager (CDH)</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="prerequisites.html">Prerequisites</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="step-by-step-cloudera.html">Add Service Wizard</a></li>
+<li class="toctree-l3"><a class="reference internal" href="verification.html">Verification</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="">Upgrading CDAP</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#upgrading-patch-release-versions">Upgrading Patch Release versions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#upgrading-major-minor-release-versions">Upgrading Major/Minor Release versions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#upgrading-cdh-5-3-to-5-4">Upgrading CDH 5.3 to 5.4</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#upgrading-cdap-2-8-to-3-0">Upgrading CDAP 2.8 to 3.0</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../hadoop/index.html"> Hadoop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mapr/index.html"> MapR</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../security.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="verification.html"
+                        title="Previous Chapter">Cloudera Manager: Verification of the CDAP Installation</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="../hadoop/index.html"
+                        title="Next Chapter">Hadoop</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.2.1/cdap-docs-3.2.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Cloudera Manager: Verification of the CDAP Installation" href="verification.html" />Cloudera Manager: Verification of the CDAP Installation</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Hadoop" href="../hadoop/index.html" />Hadoop</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

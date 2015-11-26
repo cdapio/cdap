@@ -1,0 +1,606 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <meta name="git_release" content="3.2.1">
+    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
+    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
+    <title>MapR: Installation &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.2.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    
+    <!-- Amazon SQS Page Usage Logging start-->
+    <script type="text/javascript" src="https://sdk.amazonaws.com/js/aws-sdk-2.1.35.min.js"></script>
+    <script type="text/javascript" src="http://docs.cask.co/resources/scripts/aws-sqs-1.0.0.js"></script>
+    <!-- Amazon SQS Page Usage Logging end-->
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.2.1 Documentation" href="../../index.html" />
+    <link rel="up" title="MapR" href="index.html" />
+    <link rel="next" title="MapR: Configuration" href="configuration.html" />
+    <link rel="prev" title="MapR" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="configuration.html" title="MapR: Configuration"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="MapR"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.2.1');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Administration Manual</a> &raquo;</li>
+          <li><a href="../index.html" >Installation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">MapR</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="hadoop-distribution-installation">
+<span id="mapr-installation"></span><h1>MapR: Installation<a class="headerlink" href="#hadoop-distribution-installation" title="Permalink to this headline">¶</a></h1>
+<p>This document provides the
+<a class="reference external" href="#system-requirements">system</a>,
+<a class="reference external" href="#network-requirements">network</a>, and
+<a class="reference external" href="#software-prerequisites">software requirements</a>,
+<a class="reference external" href="#packaging">packaging options</a>, and
+instructions for
+<a class="reference external" href="#installation">installation</a> of
+the CDAP components so they work with your existing Hadoop cluster.</p>
+<div class="section" id="cdap-components">
+<span id="mapr-install-cdap-components"></span><h2>CDAP Components<a class="headerlink" href="#cdap-components" title="Permalink to this headline">¶</a></h2>
+<p>These are the CDAP components:</p>
+<ul class="simple">
+<li><strong>CDAP UI:</strong> User interface—the <em>Console</em>—for managing CDAP applications;</li>
+<li><strong>CDAP Router:</strong> Service supporting REST endpoints for CDAP;</li>
+<li><strong>CDAP Master:</strong> Service for managing runtime, lifecycle and resources of CDAP applications;</li>
+<li><strong>CDAP Kafka:</strong> Metrics and logging transport service, using an embedded version of <em>Kafka</em>; and</li>
+<li><strong>CDAP Authentication Server:</strong> Performs client authentication for CDAP when security is enabled.</li>
+</ul>
+<p>Before installing the CDAP components, you must first install a Hadoop cluster
+with <em>HDFS</em>, <em>YARN</em>, <em>HBase</em>, and <em>ZooKeeper</em>. In order to use the ad-hoc querying capabilities
+of CDAP, you will also need <em>Hive</em>. All CDAP components can be installed on the
+same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services.</p>
+<p>Our recommended installation is to use two boxes for the CDAP components; the
+<a class="reference external" href="#hardware-requirements">hardware requirements</a> are relatively modest,
+as most of the work is done by the Hadoop cluster. These two
+boxes provide high availability; at any one time, one of them is the leader
+providing services while the other is a follower providing failover support.</p>
+<p>Some CDAP components run on YARN, while others orchestrate “containers” in the Hadoop cluster.
+The CDAP Router service starts a router instance on each of the local boxes and instantiates
+one or more gateway instances on YARN as determined by the gateway service configuration.</p>
+<p>We have specific
+<a class="reference external" href="#hardware-requirements">hardware</a>,
+<a class="reference external" href="#network-requirements">network</a> and
+<a class="reference external" href="#software-prerequisites">prerequisite software</a> requirements detailed
+<a class="reference external" href="#system-requirements">below</a>
+that need to be met and completed before installation of the CDAP components.</p>
+</div>
+<div class="section" id="system-requirements">
+<h2>System Requirements<a class="headerlink" href="#system-requirements" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="hardware-requirements">
+<span id="mapr-install-hardware-requirements"></span><h3>Hardware Requirements<a class="headerlink" href="#hardware-requirements" title="Permalink to this headline">¶</a></h3>
+<p>Systems hosting the CDAP components must meet these hardware specifications,
+in addition to having CPUs with a minimum speed of 2 GHz:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="19%" />
+<col width="44%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">CDAP Component</th>
+<th class="head">Hardware Component</th>
+<th class="head">Specifications</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><strong>CDAP UI</strong></td>
+<td>RAM</td>
+<td>1 GB minimum, 2 GB recommended</td>
+</tr>
+<tr class="row-odd"><td><strong>CDAP Router</strong></td>
+<td>RAM</td>
+<td>2 GB minimum, 4 GB recommended</td>
+</tr>
+<tr class="row-even"><td><strong>CDAP Master</strong></td>
+<td>RAM</td>
+<td>2 GB minimum, 4 GB recommended</td>
+</tr>
+<tr class="row-odd"><td rowspan="2"><strong>CDAP Kafka</strong></td>
+<td>RAM</td>
+<td>1 GB minimum, 2 GB recommended</td>
+</tr>
+<tr class="row-even"><td>Disk Space</td>
+<td><em>CDAP Kafka</em> maintains a data cache in
+a configurable data directory.
+Required space depends on the number of
+CDAP applications deployed and running
+in the CDAP and the quantity
+of logs and metrics that they generate.</td>
+</tr>
+<tr class="row-odd"><td><strong>CDAP Authentication Server</strong></td>
+<td>RAM</td>
+<td>1 GB minimum, 2 GB recommended</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="memory-and-core-requirements">
+<span id="mapr-install-hardware-memory-core-requirements"></span><h3>Memory and Core Requirements<a class="headerlink" href="#memory-and-core-requirements" title="Permalink to this headline">¶</a></h3>
+<p>Memory and core requirements are governed by two sources: CDAP and YARN. The default
+settings for CDAP are found in the <a class="reference internal" href="../../appendices/cdap-site.html#appendix-cdap-default-xml"><span>cdap-defaults.xml</span></a>,
+and are overridden in particular instances by the <a class="reference internal" href="../../appendices/cdap-site.html#appendix-cdap-site-xml"><span>cdap-site.xml</span></a> file. These vary with each service and range from 512 to 1024 MB
+and from one to two cores.</p>
+<p>The YARN settings will override these; for instance, the minimum YARN container size is
+determined by <code class="docutils literal"><span class="pre">yarn.scheduler.minimum-allocation-mb</span></code>. The YARN default in Hadoop is 1024
+MB, so containers will be allocated with 1024 MB, even if the CDAP settings are for 512 MB.</p>
+<p>With the default YARN and CDAP settings of memory, having 14 to 16 CPU cores
+(and a total of 14 to 16 GB of memory) available to YARN can be required just to start.</p>
+</div>
+<div class="section" id="network-requirements">
+<span id="mapr-install-network-requirements"></span><h3>Network Requirements<a class="headerlink" href="#network-requirements" title="Permalink to this headline">¶</a></h3>
+<p>CDAP components communicate over your network with <em>HBase</em>, <em>HDFS</em>, and <em>YARN</em>.
+For the best performance, CDAP components should be located on the same LAN,
+ideally running at 1 Gbps or faster. A good rule of thumb is to treat CDAP
+components as you would <em>Hadoop DataNodes</em>.</p>
+</div>
+<div class="section" id="software-prerequisites">
+<span id="mapr-install-software-requirements"></span><h3>Software Prerequisites<a class="headerlink" href="#software-prerequisites" title="Permalink to this headline">¶</a></h3>
+<p>You&#8217;ll need this software installed:</p>
+<ul class="simple">
+<li>Java runtime (on CDAP and Hadoop nodes)</li>
+<li>Node.js runtime (on CDAP nodes)</li>
+<li>Hadoop and HBase (and optionally Hive) environment to run against</li>
+<li>CDAP nodes require Hadoop and HBase client installation and configuration.
+<strong>Note:</strong> No Hadoop services need to be running.</li>
+</ul>
+<p>As described in these Software Prerequisites, a configured Hadoop and HBase (plus an
+optional Hive client) needs to be configured on the node(s) where CDAP will run.</p>
+<p>If colocating CDAP on cluster hosts with actual services, such as the MapR CLDB, Yarn
+ResourceManager, or HBase Master, then the client configurations will already be in place.</p>
+<ul class="simple">
+<li>To configure a MapR client, see the MapR documentation on <a class="reference external" href="http://doc.mapr.com/display/MapR/Setting+Up+the+Client">Setting Up the Client</a>.</li>
+<li>To configure a MapR HBase client, see the MapR documentation on <a class="reference external" href="http://doc.mapr.com/display/MapR/Installing+HBase#InstallingHBase-HBaseonaClientInstallingHBaseonaClient">Installing HBase on a Client</a>.</li>
+<li>To configure a MapR Hive client, see the MapR documentation on <a class="reference external" href="http://doc.mapr.com/display/MapR/Installing+Hive">Installing Hive</a>.</li>
+</ul>
+<p>A typical client node should have the <code class="docutils literal"><span class="pre">mapr-client</span></code>, <code class="docutils literal"><span class="pre">mapr-hbase</span></code>, and <code class="docutils literal"><span class="pre">mapr-hive</span></code>
+packages installed, and can be configured using the MapR <a class="reference external" href="http://doc.mapr.com/display/MapR/configure.sh">configure.sh</a> utility.</p>
+<div class="section" id="java-runtime">
+<span id="mapr-install-java-runtime"></span><h4>Java Runtime<a class="headerlink" href="#java-runtime" title="Permalink to this headline">¶</a></h4>
+<p>The latest <a class="reference external" href="http://www.java.com/en/download/manual.jsp">JDK or JRE version 1.7.xx or 1.8.xx</a>
+for Linux, Windows, or Mac OS X must be installed in your environment; we recommend the Oracle JDK.</p>
+<p>To check the Java version installed, run the command:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> java -version
+</pre></div>
+</div>
+<p>CDAP is tested with the Oracle JDKs; it may work with other JDKs such as
+<a class="reference external" href="http://openjdk.java.net">Open JDK</a>, but it has not been tested with them.</p>
+<p>Once you have installed the JDK, you&#8217;ll need to set the JAVA_HOME environment variable.</p>
+</div>
+<div class="section" id="node-js-runtime">
+<span id="mapr-install-node-js"></span><h4>Node.js Runtime<a class="headerlink" href="#node-js-runtime" title="Permalink to this headline">¶</a></h4>
+<p>You can download the appropriate version of Node.js from <a class="reference external" href="http://nodejs.org">nodejs.org</a>:</p>
+<ol class="arabic simple">
+<li>We recommend any version of <a class="reference external" href="https://nodejs.org/">Node.js</a> greater than v0.10.0.</li>
+<li>Download the appropriate binary <code class="docutils literal"><span class="pre">.tar.gz</span></code> from
+<a class="reference external" href="http://nodejs.org/dist/">nodejs.org/download/</a>.</li>
+<li>Extract somewhere such as <code class="docutils literal"><span class="pre">/opt/node-[version]/</span></code></li>
+<li>Build node.js; instructions that may assist are available at
+<a class="reference external" href="https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager">github</a></li>
+<li>Ensure that <code class="docutils literal"><span class="pre">nodejs</span></code> is in the <code class="docutils literal"><span class="pre">$PATH</span></code>. One method is to use a symlink from the installation:
+<code class="docutils literal"><span class="pre">ln</span> <span class="pre">-s</span> <span class="pre">/opt/node-[version]/bin/node</span> <span class="pre">/usr/bin/node</span></code></li>
+</ol>
+</div>
+<div class="section" id="hadoop-hbase-environment">
+<span id="mapr-install-hadoop-hbase"></span><h4>Hadoop/HBase Environment<a class="headerlink" href="#hadoop-hbase-environment" title="Permalink to this headline">¶</a></h4>
+<p>For a distributed enterprise, you must install these Hadoop components:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="22%" />
+<col width="61%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Component</th>
+<th class="head">Source</th>
+<th class="head">Supported Versions</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td rowspan="3"><strong>HDFS</strong></td>
+<td>Apache Hadoop</td>
+<td>2.0.2-alpha through 2.6.0</td>
+</tr>
+<tr class="row-odd"><td>CDH or HDP</td>
+<td>(CDH) 5.0.0 through 5.4.x or (HDP) 2.0 through 2.3</td>
+</tr>
+<tr class="row-even"><td>MapR</td>
+<td>4.1 and 5.0 (with MapR-FS)</td>
+</tr>
+<tr class="row-odd"><td rowspan="3"><strong>YARN</strong></td>
+<td>Apache Hadoop</td>
+<td>2.0.2-alpha through 2.6.0</td>
+</tr>
+<tr class="row-even"><td>CDH or HDP</td>
+<td>(CDH) 5.0.0 through 5.4.x or (HDP) 2.0 through 2.3</td>
+</tr>
+<tr class="row-odd"><td>MapR</td>
+<td>4.1 and 5.0</td>
+</tr>
+<tr class="row-even"><td rowspan="3"><strong>HBase</strong></td>
+<td>Apache</td>
+<td>0.96.x, 0.98.x, and 1.0.x</td>
+</tr>
+<tr class="row-odd"><td>CDH or HDP</td>
+<td>(CDH) 5.0.0 through 5.4.x or (HDP) 2.0 through 2.3</td>
+</tr>
+<tr class="row-even"><td>MapR</td>
+<td>4.1 and 5.0 (with Apache HBase)</td>
+</tr>
+<tr class="row-odd"><td rowspan="3"><strong>ZooKeeper</strong></td>
+<td>Apache</td>
+<td>Version 3.4.3 through 3.4.5</td>
+</tr>
+<tr class="row-even"><td>CDH or HDP</td>
+<td>(CDH) 5.0.0 through 5.4.x or (HDP) 2.0 through 2.3</td>
+</tr>
+<tr class="row-odd"><td>MapR</td>
+<td>4.1 and 5.0</td>
+</tr>
+<tr class="row-even"><td rowspan="3"><strong>Hive</strong></td>
+<td>Apache</td>
+<td>Version 0.12.0 through 0.13.1</td>
+</tr>
+<tr class="row-odd"><td>CDH or HDP</td>
+<td>(CDH) 5.0.0 through 5.4.x or (HDP) 2.0 through 2.3</td>
+</tr>
+<tr class="row-even"><td>MapR</td>
+<td>4.1 and 5.0</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> Components versions shown in this table are those that we have tested and are
+confident of their suitability and compatibility. Later versions of components may work,
+but have not necessarily have been either tested or confirmed compatible.</p>
+<p><strong>Note:</strong> Certain CDAP components need to reference your <em>Hadoop</em>, <em>HBase</em>, <em>YARN</em> (and
+possibly <em>Hive</em>) cluster configurations by adding your configuration to their class paths.</p>
+<p><strong>Note:</strong> ZooKeeper&#8217;s <code class="docutils literal"><span class="pre">maxClientCnxns</span></code> must be raised from its default.  We suggest setting it to zero
+(unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper,
+the number of connections required is a function of usage.</p>
+<p><strong>Note:</strong> <em>Hive 0.12</em> is not supported for <a class="reference internal" href="../../security.html#admin-security"><span>secure cluster configurations</span></a>.</p>
+</div>
+</div>
+<div class="section" id="deployment-architectures">
+<span id="mapr-install-deployment-architectures"></span><h3>Deployment Architectures<a class="headerlink" href="#deployment-architectures" title="Permalink to this headline">¶</a></h3>
+<p class="rubric">CDAP Minimal Deployment</p>
+<p><strong>Note:</strong> Minimal deployment runs all the services on single host.</p>
+<a class="reference internal image-reference" href="../../_images/cdap-minimal-deployment1.png"><img alt="../../_images/cdap-minimal-deployment1.png" class="align-center" src="../../_images/cdap-minimal-deployment1.png" style="width: 8in;" /></a>
+<hr class="docutils" />
+<p class="rubric" id="mapr-install-deployment-architectures-ha">CDAP High Availability and Highly Scalable Deployment</p>
+<p><strong>Note:</strong> Each component in CDAP is horizontally scalable. This diagram presents the high
+availability and highly scalable deployment. The number of nodes for each component can be
+changed based on the requirements.</p>
+<a class="reference internal image-reference" href="../../_images/cdap-ha-hs-deployment1.png"><img alt="../../_images/cdap-ha-hs-deployment1.png" class="align-center" src="../../_images/cdap-ha-hs-deployment1.png" style="width: 8in;" /></a>
+</div>
+</div>
+<div class="section" id="preparing-the-cluster">
+<h2>Preparing the Cluster<a class="headerlink" href="#preparing-the-cluster" title="Permalink to this headline">¶</a></h2>
+<p id="mapr-install-preparing-the-cluster">To prepare your cluster so that CDAP can write to its default namespace,
+create a top-level <code class="docutils literal"><span class="pre">/cdap</span></code> directory in HDFS, owned by an HDFS user <code class="docutils literal"><span class="pre">yarn</span></code>:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo -u hdfs hadoop fs -mkdir /cdap <span class="o">&amp;&amp;</span> sudo -u hdfs hadoop fs -chown yarn /cdap
+</pre></div>
+</div>
+<p>In the CDAP packages, the default HDFS namespace is <code class="docutils literal"><span class="pre">/cdap</span></code> and the default HDFS user is
+<code class="docutils literal"><span class="pre">yarn</span></code>.</p>
+<p>Also, create a <code class="docutils literal"><span class="pre">tx.snapshot</span></code> subdirectory:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo -u hdfs hadoop fs -mkdir /cdap/tx.snapshot <span class="o">&amp;&amp;</span> sudo -u hdfs hadoop fs -chown yarn /cdap/tx.snapshot
+</pre></div>
+</div>
+<p><strong>Note:</strong> If you have customized <code class="docutils literal"><span class="pre">data.tx.snapshot.dir</span></code> in your CDAP configuration, use that value instead.</p>
+<p>If you set up your cluster as above, no further changes are required.</p>
+<span class="target" id="mapr-install-preparing-the-cluster-defaults"></span><p>If your cluster is not setup with these defaults, you&#8217;ll need to <a class="reference external" href="configuration.html">edit your CDAP configuration</a>
+once you have downloaded and installed the packages, and prior to starting services.</p>
+</div>
+<div class="section" id="packaging">
+<span id="mapr-install-packaging"></span><h2>Packaging<a class="headerlink" href="#packaging" title="Permalink to this headline">¶</a></h2>
+<p>CDAP components are available as either Yum <code class="docutils literal"><span class="pre">.rpm</span></code> or APT <code class="docutils literal"><span class="pre">.deb</span></code> packages. There is
+one package for each CDAP component, and each component may have multiple services.
+Additionally, there is a base CDAP package with three utility packages (for HBase
+compatibility) installed which creates the base configuration and the <code class="docutils literal"><span class="pre">cdap</span></code> user. We
+provide packages for <em>Ubuntu 12</em> and <em>CentOS 6</em>.</p>
+<p>Available packaging types:</p>
+<ul class="simple">
+<li>RPM: Yum repo</li>
+<li>Debian: APT repo</li>
+<li>Tar: For specialized installations only</li>
+</ul>
+<p><strong>Note:</strong> If you are using <a class="reference external" href="https://www.getchef.com">Chef</a> to install CDAP, an
+<a class="reference external" href="https://supermarket.getchef.com/cookbooks/cdap">official cookbook is available</a>.</p>
+</div>
+<div class="section" id="preparing-package-managers">
+<span id="mapr-install-preparing-package-managers"></span><h2>Preparing Package Managers<a class="headerlink" href="#preparing-package-managers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="rpm-using-yum">
+<span id="mapr-install-rpm-using-yum"></span><h3>RPM using Yum<a class="headerlink" href="#rpm-using-yum" title="Permalink to this headline">¶</a></h3>
+<p>Download the Cask Yum repo definition file:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/3.2/cask.repo
+</pre>
+</div>
+<p>This will create the file <code class="docutils literal"><span class="pre">/etc/yum.repos.d/cask.repo</span></code> with:</p>
+<pre class="literal-block">
+[cask]
+name=Cask Packages
+baseurl=http://repository.cask.co/centos/6/x86_64/cdap/3.2
+enabled=1
+gpgcheck=1
+</pre>
+<p>Add the Cask Public GPG Key to your repository:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo rpm --import http://repository.cask.co/centos/6/x86_64/cdap/3.2/pubkey.gpg
+</pre>
+</div>
+<p>Update your Yum cache:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo yum makecache
+</pre></div>
+</div>
+</div>
+<div class="section" id="debian-using-apt">
+<h3>Debian using APT<a class="headerlink" href="#debian-using-apt" title="Permalink to this headline">¶</a></h3>
+<p>Download the Cask APT repo definition file:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/ubuntu/precise/amd64/cdap/3.2/cask.list
+</pre>
+</div>
+<p>This will create the file <code class="docutils literal"><span class="pre">/etc/apt/sources.list.d/cask.list</span></code> with:</p>
+<pre class="literal-block">
+deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/cdap/3.2 precise cdap
+</pre>
+<p>Add the Cask Public GPG Key to your repository:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> curl -s http://repository.cask.co/ubuntu/precise/amd64/cdap/3.2/pubkey.gpg | sudo apt-key add -
+</pre>
+</div>
+<p>Update your APT-cache:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get update
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="package-installation">
+<span id="mapr-install-package-installation"></span><h2>Package Installation<a class="headerlink" href="#package-installation" title="Permalink to this headline">¶</a></h2>
+<p>Install the CDAP packages by using one of these methods:</p>
+<p>Using Chef:</p>
+<blockquote>
+<div>If you are using <a class="reference external" href="https://www.getchef.com">Chef</a> to install CDAP, an <a class="reference external" href="https://supermarket.getchef.com/cookbooks/cdap">official
+cookbook is available</a>.</div></blockquote>
+<p>Using Yum:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
+</pre></div>
+</div>
+<p>Using APT:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
+</pre></div>
+</div>
+<p>Do this on each of the boxes that are being used for the CDAP components; our
+recommended installation is a minimum of two boxes.</p>
+<p>This will download and install the latest version of CDAP with all of its dependencies.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.2.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../included-applications/index.html"
+            rel="nofollow">Included Applications</a></li>
+            
+      <li><div class=""></div><b><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html"
+            rel="nofollow">FAQs</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Installation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../ambari/index.html"> Apache Ambari (HDP)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cloudera/index.html"> Cloudera Manager (CDH)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hadoop/index.html"> Hadoop</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> MapR</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#cdap-components">CDAP Components</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#system-requirements">System Requirements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#preparing-the-cluster">Preparing the Cluster</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#packaging">Packaging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#preparing-package-managers">Preparing Package Managers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#package-installation">Package Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="starting-verification.html">Starting and Verification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="upgrading.html">Upgrading CDAP</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../security.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="Previous Chapter">MapR</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="configuration.html"
+                        title="Next Chapter">MapR: Configuration</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.2.1/cdap-docs-3.2.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="MapR" href="index.html" />MapR</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="MapR: Configuration" href="configuration.html" />MapR: Configuration</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

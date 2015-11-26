@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.1">
-    <meta name="git_hash" content="ceac6fe19bea92b03403926de835d1bcd9fdf1d0">
-    <meta name="git_timestamp" content="2015-10-21 09:58:38 -0700">
+    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
+    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
     <title>Data Quality Application &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -219,9 +219,12 @@ In order to make queries, we need to start the service in the application:</p>
 <p>There are four RESTful endpoints of the service which we can use:</p>
 <ul class="simple">
 <li>Retrieve all the fields for a given source and time range: <code class="docutils literal"><span class="pre">/v1/sources/{sourceID}/fields</span></code></li>
-<li>Retrieve all the aggregations available for a given source, time range, and field : <code class="docutils literal"><span class="pre">/v1/sources/{sourceID}/fields/{fieldName}/aggregations</span></code></li>
-<li>Retrieve the combined aggregation over a specified time interval for a given source, field, and aggregation type: <code class="docutils literal"><span class="pre">/v1/sources/{sourceID}/fields/{fieldName}/aggregations/{aggregationType}/totals</span></code></li>
-<li>Retrieve the aggregation corresponding to each time stamp in a specified time range for a given source, field, and aggregation type: <code class="docutils literal"><span class="pre">/v1/sources/{sourceID}/fields/{fieldName}/aggregations/{aggregationType}/timeseries</span></code></li>
+<li>Retrieve all the aggregations available for a given source, time range, and field:
+<code class="docutils literal"><span class="pre">/v1/sources/{sourceID}/fields/{fieldName}/aggregations</span></code></li>
+<li>Retrieve the combined aggregation over a specified time interval for a given source, field, and aggregation type:
+<code class="docutils literal"><span class="pre">/v1/sources/{sourceID}/fields/{fieldName}/aggregations/{aggregationType}/totals</span></code></li>
+<li>Retrieve the aggregation corresponding to each time stamp in a specified time range for a given source, field, and
+aggregation type: <code class="docutils literal"><span class="pre">/v1/sources/{sourceID}/fields/{fieldName}/aggregations/{aggregationType}/timeseries</span></code></li>
 </ul>
 <p>Suppose we want to query the aggregated data for the source <code class="docutils literal"><span class="pre">logStream</span></code> and the field <code class="docutils literal"><span class="pre">status</span></code>.
 We would make this request:</p>
@@ -240,23 +243,29 @@ We would make this request:</p>
 <div class="section" id="built-in-library-of-aggregation-functions">
 <h2>Built-in Library of Aggregation Functions<a class="headerlink" href="#built-in-library-of-aggregation-functions" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li>Discrete Values Histogram: Generates a histogram that maps various values of a field to corresponding frequencies. This is only for discrete data.</li>
-<li>Histogram with Bucketing: Generates a histogram that maps various values of a field to corresponding frequencies. This is only for numerical data.</li>
-<li>Unique: Generates the number of unique values seen for a given field.</li>
+<li>Discrete Values Histogram: Generates a histogram that maps various values of a field to corresponding frequencies.
+This is only for discrete data.</li>
+<li>Histogram With Bucketing: Generates a histogram that maps various values of a field to corresponding frequencies.
+This is only for numerical data.</li>
+<li>Unique Values: Generates the number of unique values seen for a given field.</li>
 <li>Mean: Generates the mean of all the values seen for a given field. This is only for numerical data.</li>
-<li>Standard Deviation: Generates the standard deviation of all the values seen for a given field. This is only for numerical data.</li>
+<li>Standard Deviation: Generates the standard deviation of all the values seen for a given field.
+This is only for numerical data.</li>
 </ul>
 </div>
 <div class="section" id="extending-the-application">
 <h2>Extending the Application<a class="headerlink" href="#extending-the-application" title="Permalink to this headline">¶</a></h2>
-<p>In addition to the built-in aggregation functions with the Data Quality Application,
-it&#8217;s possible to write and use custom aggregation functions. Take a look at the <code class="docutils literal"><span class="pre">BasicAggregationFunction.java</span></code>
-and <code class="docutils literal"><span class="pre">CombinableAggregationFunction.java</span></code> interfaces under the <code class="docutils literal"><span class="pre">functions</span></code> directory (<code class="docutils literal"><span class="pre">DQApp/src/main/java/data/quality/app/functions</span></code>).</p>
-<p>All aggregation functions need to implement the <code class="docutils literal"><span class="pre">BasicAggregationFunction</span></code> interface.
-If a function produces aggregations that can be combined (for example, frequencies can be combined but standard
-deviations cannot), it should also implement the <code class="docutils literal"><span class="pre">CombinableAggregationFunction</span></code> interface.
-This will let you combine existing aggregations over custom time ranges at query time.</p>
-<p>In addition to the these interfaces, take a look at the aggregation functions that come with the application for reference.</p>
+<p>In addition to the built-in aggregation functions with the Data Quality Application, it&#8217;s
+possible to write and use custom aggregation functions. Take a look at the
+<code class="docutils literal"><span class="pre">BasicAggregationFunction.java</span></code> and <code class="docutils literal"><span class="pre">CombinableAggregationFunction.java</span></code> interfaces
+under the <code class="docutils literal"><span class="pre">functions</span></code> directory (<code class="docutils literal"><span class="pre">DQApp/src/main/java/data/quality/app/functions</span></code>).</p>
+<p>All aggregation functions need to implement the <code class="docutils literal"><span class="pre">BasicAggregationFunction</span></code> interface. If
+a function produces aggregations that can be combined (for example, frequencies can be
+combined but standard deviations cannot), it should also implement the
+<code class="docutils literal"><span class="pre">CombinableAggregationFunction</span></code> interface. This will let you combine existing
+aggregations over custom time ranges at query time.</p>
+<p>In addition to the these interfaces, take a look at the aggregation functions that come
+with the application for reference.</p>
 </div>
 </div>
 
@@ -294,14 +303,14 @@ This will let you combine existing aggregations over custom time ranges at query
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
             rel="nofollow">Reference Manual</a></li>
             
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html"
+            rel="nofollow">FAQs</a></li>
+            
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
             rel="nofollow">Release Notes</a></li>
             
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
             rel="nofollow">Glossary</a></li>
-            
-      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
-            rel="nofollow">FAQ</a></li>
             
       <li><div class=""></div><a href="../table-of-contents/../../search.html"
             rel="nofollow">Search</a></li>
@@ -345,7 +354,7 @@ This will let you combine existing aggregations over custom time ranges at query
 </ul>
 </li>
 </ul>
-
+ 
 </nav>
   <h4>Previous Topic</h4>
   <p class="topless"><a href="../etl/plugins/third-party.html"

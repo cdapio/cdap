@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.1">
-    <meta name="git_hash" content="ceac6fe19bea92b03403926de835d1bcd9fdf1d0">
-    <meta name="git_timestamp" content="2015-10-21 09:58:38 -0700">
+    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
+    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
     <title>Cloudera &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
     
     <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
@@ -52,7 +52,7 @@
     <!-- Amazon SQS Page Usage Logging end-->
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="top" title="Cask Data Application Platform 3.2.1 Documentation" href="../../index.html" />
-    <link rel="next" title="Configuring and Installing CDAP using Cloudera Manager" href="configuring.html" />
+    <link rel="next" title="Ingestion and Exploration" href="ingesting.html" />
     <link rel="prev" title="Integrations" href="../../index.html" /> 
   </head>
   <body role="document">
@@ -63,7 +63,7 @@
           <a href="../../genindex.html" title="General Index"
              accesskey="I">Index</a></li>
         <li class="right" >
-          <a href="configuring.html" title="Configuring and Installing CDAP using Cloudera Manager"
+          <a href="ingesting.html" title="Ingestion and Exploration"
              accesskey="N">Next</a> |</li>
         <li class="right" >
           <a href="../../index.html" title="Integrations"
@@ -84,10 +84,10 @@
             
   <div class="section" id="cloudera">
 <span id="cloudera-index"></span><h1>Cloudera<a class="headerlink" href="#cloudera" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="configuring.html"> Configuring and Installing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="step-by-step-cloudera.html"> Add Service Wizard</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ingesting.html"> Ingestion and Exploration</a></li>
 </ul>
 </div>
@@ -117,10 +117,7 @@ a cluster, specify schema, or run interactive queries using Impala with CDAP for
 results.</p>
 <p><strong>CDAP</strong> <strong>3.2.1</strong> is certified on Cloudera&nbsp;5.</p>
 <ul class="simple">
-<li><a class="reference external" href="configuring.html"><strong>Configuring and Installing:</strong></a> Configuring and installing CDAP using Cloudera Manager</li>
-</ul>
-<ul class="simple">
-<li><a class="reference external" href="step-by-step-cloudera.html"><strong>Add Service Wizard:</strong></a> A <strong>step-by-step guide</strong> to installing CDAP using the Cloudera Manager <em>Add Service</em> Wizard</li>
+<li><a class="reference external" href="../../../admin-manual/installation/cloudera/index.html"><strong>Configuring and Installing:</strong></a> Configuring and installing CDAP using <strong>Cloudera Manager</strong> <em>(Administration Manual)</em></li>
 </ul>
 <ul class="simple">
 <li><a class="reference external" href="ingesting.html"><strong>Ingesting and Exploration:</strong></a> Ingest and explore data using <strong>Impala</strong></li>
@@ -128,6 +125,7 @@ results.</p>
 <p class="rubric">CDAP and Cloudera Architecture Schematic</p>
 <div class="figure align-center" style="width: 100%">
 <a class="bordered-image reference internal image-reference" href="../../_images/cloudera-integration-arch.png"><img alt="../../_images/cloudera-integration-arch.png" class="bordered-image" src="../../_images/cloudera-integration-arch.png" style="width: 800px;" /></a>
+</div>
 </div>
 </div>
 
@@ -165,14 +163,14 @@ results.</p>
       <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html"
             rel="nofollow">Reference Manual</a></li>
             
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html"
+            rel="nofollow">FAQs</a></li>
+            
       <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
             rel="nofollow">Release Notes</a></li>
             
       <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
             rel="nofollow">Glossary</a></li>
-            
-      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/faq.html"
-            rel="nofollow">FAQ</a></li>
             
       <li><div class=""></div><a href="../../table-of-contents/../../search.html"
             rel="nofollow">Search</a></li>
@@ -200,23 +198,24 @@ results.</p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href=""> Cloudera</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="configuring.html"> Configuring and Installing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="step-by-step-cloudera.html"> Add Service Wizard</a></li>
-<li class="toctree-l2"><a class="reference internal" href="ingesting.html"> Ingestion and Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ingesting.html"> Ingestion and Exploration</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../jdbc.html"> CDAP JDBC Driver</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../pentaho.html"> Pentaho Data Integration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../squirrel.html"> SquirrelSQL</a></li>
 </ul>
-
+ 
 </nav>
   <h4>Previous Topic</h4>
   <p class="topless"><a href="../../index.html"
                         title="Previous Chapter">Integrations</a></p>
   <h4>Next Topic</h4>
-  <p class="topless"><a href="configuring.html"
-                        title="Next Chapter">Configuring and Installing CDAP using Cloudera Manager</a></p>
+  <p class="topless"><a href="ingesting.html"
+                        title="Next Chapter">Ingestion and Exploration</a></p>
   <div role="note" aria-label="downloads links">
     <h3>Downloads</h3>
     <ul class="this-page-menu">
@@ -272,7 +271,7 @@ results.</p>
     
     </th>
     <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
-    <a title="Configuring and Installing CDAP using Cloudera Manager" href="configuring.html" />Configuring and Installing CDAP using Cloudera Manager</a>
+    <a title="Ingestion and Exploration" href="ingesting.html" />Ingestion and Exploration</a>
     
     </th>
   </tr>
