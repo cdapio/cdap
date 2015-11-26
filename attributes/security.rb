@@ -37,7 +37,7 @@ end
 # Auth-Server Settings
 if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.enabled') &&
    node['cdap']['cdap_site']['security.enabled'].to_s == 'true'
-  default['cdap']['cdap_security']['security.auth.server.address'] = node['fqdn']
+  default['cdap']['cdap_site']['security.auth.server.address'] = node['fqdn']
 end
 
 # realmfile creation
