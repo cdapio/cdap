@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory) {
 
     var vm = this;
 
@@ -181,7 +181,22 @@ angular.module(PKG.name + '.commons')
       vm.instance.bind('connection', formatConnections);
       vm.instance.bind('connectionDetached', formatConnections);
 
-      $scope.$watchCollection('nodes', function () {
+
+
+      // $scope.$watchCollection('nodes', function () {
+      //   console.log('nodes', $scope.nodes);
+      //   $timeout(function () {
+      //     var nodes = document.querySelectorAll('.box');
+      //     addEndpoints();
+      //     vm.instance.draggable(nodes, {
+      //       start: function () { dragged = true; },
+      //       stop: function () { $timeout(function () { vm.instance.repaintEverything(); }); }
+      //     });
+      //   });
+      // });
+
+      // This should be removed once the node config is using FLUX
+      $scope.$watch('nodes', function () {
         $timeout(function () {
           var nodes = document.querySelectorAll('.box');
           addEndpoints();
@@ -199,7 +214,19 @@ angular.module(PKG.name + '.commons')
             }
           });
         });
-      });
+
+        angular.forEach($scope.nodes, function (plugin) {
+          plugin.requiredFieldCount = HydratorErrorFactory.countRequiredFields(plugin);
+          if (plugin.requiredFieldCount > 0) {
+            plugin.error = {
+              message: GLOBALS.en.hydrator.studio.genericMissingRequiredFieldsError
+            };
+          } else {
+            plugin.error = false;
+          }
+        });
+
+      }, true);
 
       $scope.$watchCollection('connections', function () {
         console.log('ChangeConnection', $scope.connections);

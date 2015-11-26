@@ -166,9 +166,19 @@ angular.module(PKG.name + '.feature.hydrator')
       var i;
       var keys = Object.keys(plugin._backendProperties);
       var requiredFieldCount = 0;
+      if (!Object.keys(plugin.properties).length) {
+        keys = Object.keys(plugin._backendProperties);
+        for (i =0; i<keys.length; i++) {
+          if (plugin._backendProperties[keys[i]] && plugin._backendProperties[keys[i]].required) {
+            requiredFieldCount += 1;
+          }
+        }
+        return requiredFieldCount;
+      }
 
-      for (i =0; i<keys.length; i++) {
-        if (plugin._backendProperties[keys[i]] && plugin._backendProperties[keys[i]].required) {
+      for (i=0; i< keys.length; i++) {
+        var property = plugin.properties[keys[i]];
+        if (plugin._backendProperties[keys[i]] && plugin._backendProperties[keys[i]].required && (!property || property === '')) {
           requiredFieldCount += 1;
         }
       }
