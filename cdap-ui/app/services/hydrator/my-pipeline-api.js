@@ -41,6 +41,9 @@ angular.module(PKG.name + '.services')
         fetchSinkProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
         fetchTransformProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
 
+        // The above three could be replaced by this one.
+        fetchPluginProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
+
         // FIXME: This needs to be replaced with fetching etl-batch & etl-realtime separately.
         list: myHelpers.getConfig('GET', 'REQUEST', listPath, true),
         pollStatus: myHelpers.getConfig('GET', 'POLL', pipelinePath + '/status'),
