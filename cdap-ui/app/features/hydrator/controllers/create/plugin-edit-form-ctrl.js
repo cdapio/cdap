@@ -265,6 +265,9 @@ angular.module(PKG.name + '.feature.hydrator')
               }
               this.noconfig = true;
               this.configfetched = true;
+              propertiesFromBackend.forEach(function (property) {
+                $scope.plugin.properties[property] = $scope.plugin.properties[property] || '';
+              });
             }.bind(this), 1000);
           }.bind(this)
         );

@@ -246,8 +246,9 @@ angular.module(PKG.name + '.feature.hydrator')
           angular.forEach(properties, function(value, key) {
             // If its a required field don't remove it.
             var isRequiredField = backendProperties[key] && backendProperties[key].required;
+            var isPropertyEmptyOrNull = properties[key] === '' || properties[key] === null;
             var isErrorDatasetName = !backendProperties[key] && key !== 'errorDatasetName';
-            if (isErrorDatasetName || !isRequiredField) {
+            if (isErrorDatasetName || (!isRequiredField && isPropertyEmptyOrNull)) {
               delete properties[key];
             }
           });
