@@ -36,7 +36,7 @@ function download_includes() {
   local target_includes_dir=${1}
 
   echo_red_bold "Check guarded files for changes."
-  test_an_include 3cb2c42f0808a756421a180f96913025 "${DEFAULT_XML}"
+  test_an_include d8f4664279c72b4c9d51a07a0a1fc573 "${DEFAULT_XML}"
 
   echo "Building rst file from cdap-default.xml..." 
   python "${DEFAULT_TOOL}" -g -t "${target_includes_dir}/${DEFAULT_RST}"
