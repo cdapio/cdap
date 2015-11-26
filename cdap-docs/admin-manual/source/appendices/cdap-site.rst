@@ -22,7 +22,7 @@ Here are the parameters that can be defined in the ``cdap-site.xml`` file, their
 values (obtained from ``cdap-default.xml``), descriptions, and notes. 
 
 For information on configuring the ``cdap-site.xml`` file and CDAP for security,
-see the :ref:`configuration-security` section.
+see the :ref:`admin-security` section.
 
 .. include:: ../../target/_includes/cdap-default-table.rst
 

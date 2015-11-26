@@ -23,13 +23,40 @@ DEFAULT_TOOL="../tools/doc-cdap-default.py"
 DEFAULT_RST="cdap-default-table.rst"
 CHECK_INCLUDES=${TRUE}
 
-function download_includes() {
-  echo_red_bold "Check guarded files for changes"
-  test_an_include aab114b3f60da9900fdabdea0f11217b "${DEFAULT_XML}"
+function rewrite_references_sed() {
+  local source_rst=${1}
+  local target_rst=${2}
+  local source_pattern=${3}
+  local target_pattern=${4}
+  sed -e "s|${source_pattern}|${target_pattern}|g" ${source_rst} > ${target_rst}
+  echo "Copied file ${source_rst} changing '${source_pattern}' to '${target_pattern}'"
+}
 
-  echo "Building rst file from cdap-default.xml..."
-  local includes_dir=${1}
-  python "${DEFAULT_TOOL}" -g -t "${includes_dir}/${DEFAULT_RST}"
+function download_includes() {
+  local target_includes_dir=${1}
+
+  echo_red_bold "Check guarded files for changes."
+  test_an_include d01d16f0b6aa1c0398b1840f08f2fb4b "${DEFAULT_XML}"
+
+  echo "Building rst file from cdap-default.xml..." 
+  python "${DEFAULT_TOOL}" -g -t "${target_includes_dir}/${DEFAULT_RST}"
+  
+  echo "Copying files, changing references..."
+  local source_rst="${target_includes_dir}/../../source/_includes/installation"
+  
+  rewrite_references_sed "${source_rst}/installation.txt"          "${target_includes_dir}/ambari-installation.rst"          ".. _distribution-" ".. _ambari-"
+  echo
+  
+  rewrite_references_sed "${source_rst}/configuration.txt"         "${target_includes_dir}/hadoop-configuration.rst"         ".. _distribution-" ".. _hadoop-"
+  rewrite_references_sed "${source_rst}/installation.txt"          "${target_includes_dir}/hadoop-installation.rst"          ".. _distribution-" ".. _hadoop-"
+  rewrite_references_sed "${source_rst}/starting-verification.txt" "${target_includes_dir}/hadoop-starting-verification.rst" ".. _distribution-" ".. _hadoop-"
+  rewrite_references_sed "${source_rst}/upgrading.txt"             "${target_includes_dir}/hadoop-upgrading.rst"             ".. _distribution-" ".. _hadoop-"
+  echo
+  
+  rewrite_references_sed "${source_rst}/configuration.txt"         "${target_includes_dir}/mapr-configuration.rst"         ".. _distribution-" ".. _mapr-"
+  rewrite_references_sed "${source_rst}/installation.txt"          "${target_includes_dir}/mapr-installation.rst"          ".. _distribution-" ".. _mapr-"
+  rewrite_references_sed "${source_rst}/starting-verification.txt" "${target_includes_dir}/mapr-starting-verification.rst" ".. _distribution-" ".. _mapr-"
+  rewrite_references_sed "${source_rst}/upgrading.txt"             "${target_includes_dir}/mapr-upgrading.rst"             ".. _distribution-" ".. _mapr-"
 }
 
 run_command ${1}

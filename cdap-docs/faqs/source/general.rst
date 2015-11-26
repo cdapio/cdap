@@ -42,7 +42,7 @@ We recommend any version of `Node.js <https://nodejs.org/>`__ |node-js-version|.
 
 I have a Hadoop cluster in my data center, can I run CDAP that uses my Hadoop cluster?
 --------------------------------------------------------------------------------------
-Yes. You can install CDAP Distributed on your Hadoop cluster. See the :ref:`Installation procedure <install>`.
+Yes. You can install CDAP Distributed on your Hadoop cluster. See the :ref:`Installation procedure <installation-index>`.
 
 What Hadoop distributions can CDAP run on?
 ------------------------------------------
