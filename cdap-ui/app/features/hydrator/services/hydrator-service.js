@@ -34,6 +34,7 @@ class HydratorService {
         if (!node.id) {
           node.id = node.name + '-' + node.type + '-' + this.uuid.v4();
         }
+        node.label = node.label || node.name;
         node.icon = this.MyDAGFactory.getIcon(node.name);
         return node;
       });
@@ -43,12 +44,14 @@ class HydratorService {
         if (!node.id) {
           node.id = node.name + '-' + node.type + '-' + this.uuid.v4();
         }
+        node.label =node.label ||  node.name;
         node.icon = this.MyDAGFactory.getIcon(node.name);
         return node;
       });
 
     source.type = artifact.source;
     source.icon = this.MyDAGFactory.getIcon(source.name);
+    source.label = source.label || source.name;
     if (!source.id) {
       source.id = source.name + '-' + source.type + '-' + this.uuid.v4();
     }

@@ -242,25 +242,30 @@ angular.module(PKG.name + '.feature.hydrator')
 
     function pruneNonBackEndProperties(config) {
       function propertiesIterator(properties, backendProperties) {
-        if (!backendProperties) {
-          return properties;
+        if (backendProperties) {
+          angular.forEach(properties, function(value, key) {
+            // If its a required field don't remove it.
+            var isRequiredField = backendProperties[key] && backendProperties[key].required;
+            var isErrorDatasetName = !backendProperties[key] && key !== 'errorDatasetName';
+            if (isErrorDatasetName || !isRequiredField) {
+              delete properties[key];
+            }
+          });
         }
+        // FIXME: Remove this once https://issues.cask.co/browse/CDAP-3614 is fixed.
+        // FIXME: This should be removed. At any point in time we need the backend properties
+        // to find if a predefined app or imported config to assess if a property needs some modification.
         angular.forEach(properties, function(value, key) {
-          // If its a required field don't remove it.
-          var isRequiredField = backendProperties[key] && backendProperties[key].required;
-          var isErrorDatasetName = !backendProperties[key] && key !== 'errorDatasetName';
+          var isPropertyNotAString = typeof properties[key] !== 'string';
           var isPropertyEmptyOrNull = properties[key] === '' || properties[key] === null;
-          var isPropertyNotAString = properties[key] && typeof properties[key] !== 'string';
-
-          if (!isRequiredField && (isErrorDatasetName || isPropertyEmptyOrNull)) {
-            delete properties[key];
-          }
-          // FIXME: Remove this once https://issues.cask.co/browse/CDAP-3614 is fixed.
           if (isPropertyNotAString) {
             properties[key] = properties[key].toString();
           }
-
+          if (isPropertyEmptyOrNull) {
+            delete properties[key];
+          }
         });
+
         return properties;
       }
       if (myHelpers.objectQuery(config, 'source', 'properties') &&

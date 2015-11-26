@@ -15,7 +15,13 @@
  */
 
 class ConfigActionsFactory {
-  constructor(ConfigDispatcher) {
+  constructor(ConfigDispatcher, myPipelineApi, $state, ConfigStore, mySettings, ConsoleActionsFactory) {
+    this.ConfigStore = ConfigStore;
+    this.mySettings = mySettings;
+    this.$state = $state;
+    this.myPipelineApi = myPipelineApi;
+    this.ConsoleActionsFactory = ConsoleActionsFactory;
+
     this.dispatcher = ConfigDispatcher.getDispatcher();
   }
   initializeConfigStore(config) {
@@ -48,8 +54,55 @@ class ConfigActionsFactory {
   setInstance(instance) {
     this.dispatcher.dispatch('onSetInstance', instance);
   }
+  publishPipeline() {
+
+    let removeFromUserDrafts = (adapterName) => {
+      this.mySettings
+          .get('adapterDrafts')
+          .then(
+            (res) => {
+              if (angular.isObject(res)) {
+                delete res[adapterName];
+                return this.mySettings.set('adapterDrafts', res);
+              }
+            },
+            (err) => {
+              this.ConsoleActionsFactory.addMessage({
+                type: 'error',
+                content: err
+              });
+              return this.$q.reject(false);
+            }
+          )
+          .then(
+            () => this.$state.go('hydrator.list')
+          );
+    };
+
+    var config = this.ConfigStore.getConfigForExport();
+    this.myPipelineApi.save(
+      {
+        namespace: this.$state.params.namespace,
+        pipeline: config.name
+      },
+      config
+    )
+      .$promise
+      .then(
+        removeFromUserDrafts.bind(this, config.name),
+        (err) => {
+          this.ConsoleActionsFactory.addMessage({
+            type: 'error',
+            content: err
+          });
+          // this.notifyError({
+          //   canvas: [err.data]
+          // });
+        }
+      );
+  }
 }
 
-ConfigActionsFactory.$inject = ['ConfigDispatcher'];
+ConfigActionsFactory.$inject = ['ConfigDispatcher', 'myPipelineApi', '$state', 'ConfigStore', 'mySettings', 'ConsoleActionsFactory'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigActionsFactory', ConfigActionsFactory);

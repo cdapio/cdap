@@ -15,7 +15,8 @@
  */
 
 class HydratorCreateStudioController {
-  constructor(LeftPanelStore, LeftPanelActionsFactory, ConfigActionsFactory, $stateParams, rConfig, ConfigStore, $rootScope, $scope, DetailNonRunsStore, NodeConfigStore, NodesActionsFactory, HydratorService) {
+  // Holy cow. Much DI. Such angular.
+  constructor(LeftPanelStore, LeftPanelActionsFactory, ConfigActionsFactory, $stateParams, rConfig, ConfigStore, $rootScope, $scope, DetailNonRunsStore, NodeConfigStore, NodesActionsFactory, HydratorService, ConsoleActionsFactory) {
     // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
 
     this.LeftPanelActionsFactory = LeftPanelActionsFactory;
@@ -36,6 +37,7 @@ class HydratorCreateStudioController {
     $scope.$on('$destroy', () => {
       DetailNonRunsStore.reset();
       NodeConfigStore.reset();
+      ConsoleActionsFactory.resetMessages();
     });
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     NodeConfigStore.init();
@@ -60,6 +62,6 @@ class HydratorCreateStudioController {
   }
 }
 
-HydratorCreateStudioController.$inject = ['LeftPanelStore', 'LeftPanelActionsFactory', 'ConfigActionsFactory', '$stateParams', 'rConfig', 'ConfigStore', '$rootScope', '$scope', 'DetailNonRunsStore', 'NodeConfigStore', 'NodesActionsFactory', 'HydratorService'];
+HydratorCreateStudioController.$inject = ['LeftPanelStore', 'LeftPanelActionsFactory', 'ConfigActionsFactory', '$stateParams', 'rConfig', 'ConfigStore', '$rootScope', '$scope', 'DetailNonRunsStore', 'NodeConfigStore', 'NodesActionsFactory', 'HydratorService', 'ConsoleActionsFactory'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorCreateStudioController', HydratorCreateStudioController);

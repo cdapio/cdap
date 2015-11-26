@@ -126,7 +126,7 @@ class TopPanelController{
     });
   }
   onPublish() {
-
+    this.ConfigActionsFactory.publishPipeline();
   }
 }
 

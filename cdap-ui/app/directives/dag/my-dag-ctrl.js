@@ -141,7 +141,7 @@ angular.module(PKG.name + '.commons')
       });
     }
 
-    function formatConnections(info, originalEvent) {
+    function formatConnections() {
       var connections = [];
       angular.forEach(vm.instance.getConnections(), function (conn) {
         connections.push({
@@ -149,11 +149,7 @@ angular.module(PKG.name + '.commons')
           target: conn.targetId
         });
       });
-      // If the 'onConnection' event is not triggered from UI (view) then don't update
-      // the store as we are getting the data from NodeStore
-      if (originalEvent) {
-        NodesActionsFactory.setConnections(connections);
-      }
+      NodesActionsFactory.setConnections(connections);
     }
 
     jsPlumb.ready(function() {
