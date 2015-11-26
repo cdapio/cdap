@@ -1,0 +1,297 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Frequently Asked Questions about the Cask Data Application Platform" name="description" />
+<meta content="Copyright © 2014-2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <meta name="git_release" content="3.2.1">
+    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
+    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
+    <title>FAQs: General Questions &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
+    
+    <link rel="stylesheet" href="_static/cdap-faqs.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '3.2.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    
+    <!-- Amazon SQS Page Usage Logging start-->
+    <script type="text/javascript" src="https://sdk.amazonaws.com/js/aws-sdk-2.1.35.min.js"></script>
+    <script type="text/javascript" src="http://docs.cask.co/resources/scripts/aws-sqs-1.0.0.js"></script>
+    <!-- Amazon SQS Page Usage Logging end-->
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.2.1 Documentation" href="index.html" />
+    <link rel="next" title="FAQs: CDAP" href="cdap.html" />
+    <link rel="prev" title="FAQs: Cloudera Manager" href="cloudera-manager.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="cdap.html" title="FAQs: CDAP"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cloudera-manager.html" title="FAQs: Cloudera Manager"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.2.1');</script>
+       
+        <li><a href="table-of-contents.html">CDAP FAQs</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="faqs-general-questions">
+<span id="id1"></span><h1>FAQs: General Questions<a class="headerlink" href="#faqs-general-questions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="what-is-available-in-the-cdap-sdk">
+<h2>What is available in the CDAP SDK?<a class="headerlink" href="#what-is-available-in-the-cdap-sdk" title="Permalink to this headline">¶</a></h2>
+<p>The CDAP SDK includes:</p>
+<ul class="simple">
+<li>Local instance of the CDAP Server;</li>
+<li>CDAP APIs for building applications;</li>
+<li>CDAP UI and CDAP CLI for interacting with CDAP; and</li>
+<li>Examples for getting started with CDAP.</li>
+</ul>
+</div>
+<div class="section" id="what-platforms-are-supported-by-the-cask-data-application-platform-sdk">
+<h2>What platforms are supported by the Cask Data Application Platform SDK?<a class="headerlink" href="#what-platforms-are-supported-by-the-cask-data-application-platform-sdk" title="Permalink to this headline">¶</a></h2>
+<p>The CDAP SDK has been extensively tested on Mac OS X and Linux. CDAP on Windows has not
+been extensively tested. If you have any issues with CDAP on Windows, help us by
+<a class="reference external" href="https://issues.cask.co/browse/CDAP">filling a ticket</a>.</p>
+</div>
+<div class="section" id="what-programming-languages-are-supported-by-cdap">
+<h2>What programming languages are supported by CDAP?<a class="headerlink" href="#what-programming-languages-are-supported-by-cdap" title="Permalink to this headline">¶</a></h2>
+<p>CDAP currently supports Java for developing applications.</p>
+</div>
+<div class="section" id="what-version-of-java-sdk-is-required-by-cdap">
+<h2>What version of Java SDK is required by CDAP?<a class="headerlink" href="#what-version-of-java-sdk-is-required-by-cdap" title="Permalink to this headline">¶</a></h2>
+<p>The latest version of the JDK or JRE version 7 or version 8 must be installed
+in your environment; we recommend the Oracle JDK.</p>
+</div>
+<div class="section" id="what-version-of-node-js-is-required-by-cdap">
+<h2>What version of Node.js is required by CDAP?<a class="headerlink" href="#what-version-of-node-js-is-required-by-cdap" title="Permalink to this headline">¶</a></h2>
+<p>We recommend any version of <a class="reference external" href="https://nodejs.org/">Node.js</a> greater than v0.10.0.</p>
+</div>
+<div class="section" id="i-have-a-hadoop-cluster-in-my-data-center-can-i-run-cdap-that-uses-my-hadoop-cluster">
+<h2>I have a Hadoop cluster in my data center, can I run CDAP that uses my Hadoop cluster?<a class="headerlink" href="#i-have-a-hadoop-cluster-in-my-data-center-can-i-run-cdap-that-uses-my-hadoop-cluster" title="Permalink to this headline">¶</a></h2>
+<p>Yes. You can install CDAP Distributed on your Hadoop cluster. See the <a class="reference external" href="source/../../admin-manual/installation/index.html#installation-index" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">Installation procedure</span></a>.</p>
+</div>
+<div class="section" id="what-hadoop-distributions-can-cdap-run-on">
+<h2>What Hadoop distributions can CDAP run on?<a class="headerlink" href="#what-hadoop-distributions-can-cdap-run-on" title="Permalink to this headline">¶</a></h2>
+<p>CDAP 3.2.1 has been tested on and supports CDH 5.0.0 through 5.4.x; HDP 2.0 through 2.3;
+MapR 4.1 and 5.0, and Apache Bigtop 1.0.</p>
+</div>
+<div class="section" id="i-ve-found-a-bug-in-cdap-how-do-i-file-an-issue">
+<span id="faq-cdap-user-groups"></span><h2>I&#8217;ve found a bug in CDAP. How do I file an issue?<a class="headerlink" href="#i-ve-found-a-bug-in-cdap-how-do-i-file-an-issue" title="Permalink to this headline">¶</a></h2>
+<p>You can use the <a class="reference external" href="https://groups.google.com/d/forum/cdap-user">CDAP User GoogleGroup</a> to
+report issues or file a ticket using the available <a class="reference external" href="https://issues.cask.co/browse/CDAP">CDAP JIRA system</a>.</p>
+</div>
+<div class="section" id="what-user-groups-and-mailing-lists-are-available-about-cdap">
+<h2>What User Groups and Mailing Lists are available about CDAP?<a class="headerlink" href="#what-user-groups-and-mailing-lists-are-available-about-cdap" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="https://groups.google.com/d/forum/cdap-user">cdap-user&#64;googlegroups.com</a></li>
+</ul>
+<p>The <em>cdap-user</em> mailing list is primarily for users using the product to develop
+applications. You can expect questions from users, release announcements, and any other
+discussions that we think will be helpful to the users.</p>
+<ul class="simple">
+<li><a class="reference external" href="https://groups.google.com/d/forum/cdap-dev">cdap-dev&#64;googlegroups.com</a></li>
+</ul>
+<p>The <em>cdap-dev</em> mailing list is essentially for developers actively working
+on the product, and should be used for all our design, architecture and technical
+discussions moving forward. This mailing list will also receive all JIRA and GitHub
+notifications.</p>
+</div>
+<div class="section" id="is-cdap-on-irc">
+<h2>Is CDAP on IRC?<a class="headerlink" href="#is-cdap-on-irc" title="Permalink to this headline">¶</a></h2>
+<p><strong>CDAP IRC Channel:</strong> #cdap on <a class="reference external" href="irc://chat.freenode.net:6667/cdap">chat.freenode.net</a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.2.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../included-applications/index.html"
+            rel="nofollow">Included Applications</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><b><a href="table-of-contents/../../faqs/index.html"
+            rel="nofollow">FAQs</a></b></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="table-of-contents.html">FAQs: Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html"> Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href=""> General Questions</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cdap.html"> CDAP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cloudera-manager.html"> Cloudera Manager</a></li>
+</ul>
+ 
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="cloudera-manager.html"
+                        title="Previous Chapter">FAQs: Cloudera Manager</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="cdap.html"
+                        title="Next Chapter">FAQs: CDAP</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.2.1/cdap-docs-3.2.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="FAQs: Cloudera Manager" href="cloudera-manager.html" />FAQs: Cloudera Manager</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="FAQs: CDAP" href="cdap.html" />FAQs: CDAP</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

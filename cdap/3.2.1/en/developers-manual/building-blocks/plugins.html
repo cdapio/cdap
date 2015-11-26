@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.1">
-    <meta name="git_hash" content="ceac6fe19bea92b03403926de835d1bcd9fdf1d0">
-    <meta name="git_timestamp" content="2015-10-21 09:58:38 -0700">
+    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
+    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
     <title>Plugins &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -197,11 +197,14 @@ the plugins when deploying the artifact. For example, if you are using the RESTf
 </div>
 <div class="section" id="plugin-deployment">
 <span id="plugins-deployment"></span><h2>Plugin Deployment<a class="headerlink" href="#plugin-deployment" title="Permalink to this headline">¶</a></h2>
-<p>To make plugins available to another artifact (and thus available to any application
+<p id="plugins-deployment-artifact">To make plugins available to another artifact (and thus available to any application
 created from one of the artifacts), the plugins must first be packaged in a JAR file.
-After that, the JAR file must be deployed either as a system artifact or a user artifact.
-A system artifact is available to users across any namespace. A user artifact is available
-only to users in the namespace to which it is deployed.</p>
+After that, the JAR file must be deployed either as a <a class="reference internal" href="#plugins-deployment-system"><span>system artifact</span></a> or a <a class="reference internal" href="#plugins-deployment-user"><span>user artifact</span></a>.</p>
+<p>A system artifact is available to users across any namespace. A user artifact is available
+only to users in the namespace to which it is deployed. By design, deploying as a user
+artifact just requires acess to the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">RESTful API</span></a>,
+while deploying as a system artifact requires access to the filesystem of the CDAP Master.
+This then requires administrator access and permission.</p>
 <div class="section" id="plugin-packaging">
 <span id="plugins-deployment-packaging"></span><h3>Plugin Packaging<a class="headerlink" href="#plugin-packaging" title="Permalink to this headline">¶</a></h3>
 <p>A <em>Plugin</em> is packaged as a JAR file, which contains inside the plugin classes and their dependencies.
@@ -230,15 +233,15 @@ packages, you would edit the bundler plugin in your pom.xml:</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="deploying-a-system-artifact">
-<span id="plugins-deployment-system"></span><h3>Deploying a System Artifact<a class="headerlink" href="#deploying-a-system-artifact" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="deploying-as-a-system-artifact">
+<span id="plugins-deployment-system"></span><h3>Deploying as a System Artifact<a class="headerlink" href="#deploying-as-a-system-artifact" title="Permalink to this headline">¶</a></h3>
 <p>To deploy the artifact as a system artifact, both the JAR file and a matching configuration file
 must be placed in the appropriate directory.</p>
 <ul class="simple">
 <li><strong>Standalone mode:</strong> <code class="docutils literal"><span class="pre">$CDAP_INSTALL_DIR/artifacts</span></code></li>
 <li><strong>Distributed mode:</strong> The plugin JARs should be placed in the local file system and the path
 can be provided to CDAP by setting the property <code class="docutils literal"><span class="pre">app.artifact.dir</span></code> in
-<a class="reference external" href="../source/../../admin-manual/installation/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">cdap-site.xml</span></a>. The default path is <code class="docutils literal"><span class="pre">/opt/cdap/master/artifacts</span></code>.</li>
+<a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">cdap-site.xml</span></a>. The default path is <code class="docutils literal"><span class="pre">/opt/cdap/master/artifacts</span></code>.</li>
 </ul>
 <p>For each plugin JAR, there must also be a corresponding configuration file to specify which artifacts
 can use the plugins. The file name must match the name of the JAR, except it must have the <code class="docutils literal"><span class="pre">.json</span></code>
@@ -291,8 +294,8 @@ snapshot artifacts can be re-deployed without requiring that they first be delet
 <p>Alternatively, the CDAP Standalone should be restarted for this change to take effect in Standalone
 mode, and <code class="docutils literal"><span class="pre">cdap-master</span></code> services should be restarted in the Distributed mode.</p>
 </div>
-<div class="section" id="deploying-a-user-artifact">
-<span id="plugins-deployment-user"></span><h3>Deploying a User Artifact<a class="headerlink" href="#deploying-a-user-artifact" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="deploying-as-a-user-artifact">
+<span id="plugins-deployment-user"></span><h3>Deploying as a User Artifact<a class="headerlink" href="#deploying-as-a-user-artifact" title="Permalink to this headline">¶</a></h3>
 <p>To deploy the artifact as a user artifact, use the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">RESTful Add Artifact API</span></a>
 or the CLI. When using the RESTful API, you will need to specify the <code class="docutils literal"><span class="pre">Artifact-Extends</span></code> header. When using
 the CLI, a configuration file exactly like the one described in the
@@ -762,14 +765,14 @@ property must be given when registering the plugin:</p>
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
             rel="nofollow">Reference Manual</a></li>
             
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html"
+            rel="nofollow">FAQs</a></li>
+            
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
             rel="nofollow">Release Notes</a></li>
             
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
             rel="nofollow">Glossary</a></li>
-            
-      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
-            rel="nofollow">FAQ</a></li>
             
       <li><div class=""></div><a href="../table-of-contents/../../search.html"
             rel="nofollow">Search</a></li>
@@ -830,7 +833,7 @@ property must be given when registering the plugin:</p>
 <li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
 </ul>
-
+ 
 </nav>
   <h4>Previous Topic</h4>
   <p class="topless"><a href="workflows.html"

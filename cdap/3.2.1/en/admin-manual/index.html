@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.1">
-    <meta name="git_hash" content="ceac6fe19bea92b03403926de835d1bcd9fdf1d0">
-    <meta name="git_timestamp" content="2015-10-21 09:58:38 -0700">
+    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
+    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
     <title>CDAP Administration Manual &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
     
     <link rel="stylesheet" href="_static/cdap.css" type="text/css" />
@@ -83,31 +83,33 @@
             
   <div class="section" id="cdap-administration-manual">
 <span id="admin-index"></span><h1>CDAP Administration Manual<a class="headerlink" href="#cdap-administration-manual" title="Permalink to this headline">¶</a></h1>
-<p class="rubric">Installation</p>
-<p><a class="reference external" href="installation/index.html"><strong>Installation:</strong></a> Covers <strong>putting CDAP into production, with installation, configuration, and security setup.</strong>
-Appendices cover the XML files used to configure the CDAP installation and security configurations.</p>
+<p>Covers putting CDAP into production, with <strong>installation and configuration, security
+setup, operations,</strong> and <strong>troubleshooting.</strong> Appendices describe the <strong>XML files</strong> used to configure
+the CDAP installation and its security configuration.</p>
+<p class="rubric">Installation and Configuration</p>
+<p><strong>Distribution-specific</strong> instructions are available, plus instructions for <strong>generic Apache Hadoop</strong> clusters:</p>
 <ul class="simple">
-<li><a class="reference external" href="installation/quick-start.html"><strong>Quick Start:</strong></a> A quick start guide that covers the <strong>most-common case of installing and
-configuring CDAP.</strong> Many people may find this sufficient; if your case isn&#8217;t covered, the
-<a class="reference internal" href="installation/installation.html#install"><span>Installation</span></a> guide has additional details.</li>
+<li><a class="reference external" href="installation/ambari/index.html"><strong>Apache Ambari (HDP):</strong></a> Installing CDAP on <a class="reference external" href="http://hortonworks.com/">HDP (Hortonworks Data Platform)</a> clusters
+managed with <a class="reference external" href="https://ambari.apache.org/">Apache Ambari</a>.</li>
 </ul>
 <ul class="simple">
-<li><a class="reference external" href="installation/installation.html"><strong>Installation:</strong></a> Covers <strong>installing CDAP:</strong> the system, network, and software
-requirements; packaging options; and the instructions for installation of the
-CDAP components so they will work with your existing Hadoop cluster.</li>
+<li><a class="reference external" href="installation/cloudera/index.html"><strong>Cloudera Manager (CDH):</strong></a> Installing CDAP on <a class="reference external" href="http://www.cloudera.com/">CDH (Cloudera Data Hub)</a> clusters
+managed with <a class="reference external" href="http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html">Cloudera Manager</a>.</li>
 </ul>
 <ul class="simple">
-<li><a class="reference external" href="installation/configuration.html"><strong>Configuration:</strong></a> Covers <strong>configuring CDAP:</strong> once CDAP <a class="reference internal" href="installation/installation.html#install"><span>is installed</span></a>,
-covers the configuration and verification of the CDAP components.</li>
+<li><a class="reference external" href="installation/hadoop/index.html"><strong>Hadoop:</strong></a> Installing CDAP on Hadoop systems, either <strong>generic Apache Hadoop</strong> distributions,
+CDH clusters <em>not</em> managed with Cloudera Manager, or HDP clusters <em>not</em> managed with Apache Ambari.</li>
 </ul>
 <ul class="simple">
-<li><a class="reference external" href="installation/security.html"><strong>Security:</strong></a> CDAP supports <strong>securing clusters using perimeter security.</strong> This section
-describes enabling security, configuring authentication and testing security.</li>
+<li><a class="reference external" href="installation/mapr/index.html"><strong>MapR:</strong></a> Installing CDAP on <a class="reference external" href="https://www.mapr.com">MapR systems</a>.</li>
 </ul>
 <ul class="simple">
-<li><strong>Appendices:</strong> Two appendices cover the XML files used to configure the
-<a class="reference internal" href="installation/cdap-site.html#appendix-cdap-site-xml"><span>CDAP installation</span></a> and the <a class="reference internal" href="installation/cdap-security.html#appendix-cdap-security-xml"><span>security configuration.</span></a></li>
+<li><a class="reference external" href="../developers-manual/getting-started/standalone/index.html"><strong>CDAP Standalone SDK:</strong></a> Installing the CDAP Standalone SDK on Linux, MacOS, and Windows systems. <em>(Developers&#8217; Manual)</em></li>
 </ul>
+<p class="rubric">Security</p>
+<p><a class="reference external" href="installation/security.html"><strong>Security:</strong></a> CDAP supports <strong>securing clusters using a perimeter security model.</strong> This
+section describes enabling security, configuring authentication, testing security, and includes an
+example configuration file.</p>
 <p class="rubric">Operations</p>
 <p><a class="reference external" href="installation/index.html"><strong>Operations:</strong></a> Covers <strong>logging, metrics, monitoring, preferences, scaling instances, resource guarantees,
 transaction service maintenance, troubleshooting, and introduces the CDAP UI.</strong></p>
@@ -125,7 +127,7 @@ This section provides links to the relevant APIs for accessing these logs and me
 <li><a class="reference external" href="operations/preferences.html"><strong>Preferences and Runtime Arguments:</strong></a> Flows, MapReduce programs, services, workflows, and workers can receive <strong>runtime arguments.</strong></li>
 </ul>
 <ul class="simple">
-<li><a class="reference external" href="operations/scaling-instances.html"><strong>Scaling Instances:</strong></a> Covers <strong>querying and setting the number of instances of Flowlets.</strong></li>
+<li><a class="reference external" href="operations/scaling-instances.html"><strong>Scaling Instances:</strong></a> Covers <strong>querying and setting the number of instances of flowlets and services.</strong></li>
 </ul>
 <ul class="simple">
 <li><a class="reference external" href="operations/resource-guarantees.html"><strong>Resource Guarantees:</strong></a> Providing resource guarantees <strong>for CDAP programs in YARN.</strong></li>
@@ -134,10 +136,12 @@ This section provides links to the relevant APIs for accessing these logs and me
 <li><a class="reference external" href="operations/tx-maintenance.html"><strong>Transaction Service Maintenance:</strong></a> Periodic maintenance of the <strong>Transaction Service.</strong></li>
 </ul>
 <ul class="simple">
-<li><a class="reference external" href="operations/troubleshooting.html"><strong>Troubleshooting:</strong></a> Selected examples of potential <strong>problems and possible resolutions.</strong></li>
+<li><a class="reference external" href="operations/cdap-ui.html"><strong>CDAP UI:</strong></a> The CDAP UI is available for <strong>deploying, querying, and managing CDAP.</strong></li>
 </ul>
+<p class="rubric">Appendices</p>
 <ul class="simple">
-<li><a class="reference external" href="operations/cdap-ui.html"><strong>CDAP UI:</strong></a> The CDAP UI is available for <strong>deploying, querying and managing CDAP.</strong></li>
+<li><strong>Appendices:</strong> Two appendices cover the XML files used to configure the
+<a class="reference internal" href="appendices/cdap-site.html#appendix-cdap-site-xml"><span>CDAP installation</span></a> and the <a class="reference internal" href="appendices/cdap-security.html#appendix-cdap-security-xml"><span>security configuration.</span></a></li>
 </ul>
 </div>
 
@@ -175,14 +179,14 @@ This section provides links to the relevant APIs for accessing these logs and me
       <li><div class=""></div><a href="table-of-contents/../../reference-manual/index.html"
             rel="nofollow">Reference Manual</a></li>
             
+      <li><div class=""></div><a href="table-of-contents/../../faqs/index.html"
+            rel="nofollow">FAQs</a></li>
+            
       <li><div class=""></div><a href="table-of-contents/../../reference-manual/release-notes.html"
             rel="nofollow">Release Notes</a></li>
             
       <li><div class=""></div><a href="table-of-contents/../../reference-manual/glossary.html"
             rel="nofollow">Glossary</a></li>
-            
-      <li><div class=""></div><a href="table-of-contents/../../reference-manual/faq.html"
-            rel="nofollow">FAQ</a></li>
             
       <li><div class=""></div><a href="table-of-contents/../../search.html"
             rel="nofollow">Search</a></li>
@@ -210,9 +214,11 @@ This section provides links to the relevant APIs for accessing these logs and me
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href=""> Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation/index.html"> Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="security.html"> Security</a></li>
 <li class="toctree-l1"><a class="reference internal" href="operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="appendices/index.html"> Appendices</a></li>
 </ul>
-
+ 
 </nav>
   <h4>Previous Topic</h4>
   <p class="topless"><a href="table-of-contents.html"

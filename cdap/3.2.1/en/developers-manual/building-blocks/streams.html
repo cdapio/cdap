@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.1">
-    <meta name="git_hash" content="ceac6fe19bea92b03403926de835d1bcd9fdf1d0">
-    <meta name="git_timestamp" content="2015-10-21 09:58:38 -0700">
+    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
+    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
     <title>Streams &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -136,7 +136,7 @@ name, it will not return any of the previous stream&#8217;s events.</p>
 in order for a notification to be published is defined by the <code class="docutils literal"><span class="pre">notification.threshold.mb</span></code> configuration of a stream,
 and can be changed using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/stream.html#http-restful-api-stream" title="(in Cask Data Application Platform v3.2.1)"><span>Stream HTTP RESTful API</span></a>, the <a class="reference external" href="../source/../../reference-manual/java-client-api.html#stream-client" title="(in Cask Data Application Platform v3.2.1)"><span>StreamClient</span></a> of the <a class="reference external" href="../source/../../reference-manual/java-client-api.html#client-api" title="(in Cask Data Application Platform v3.2.1)"><span>Java Client API</span></a>, or
 by using the <a class="reference external" href="../source/../../reference-manual/cli-api.html#cli" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">Command Line Interface</span></a>. When creating a stream, by default the threshold is set to the value of
-<code class="docutils literal"><span class="pre">stream.notification.threshold</span></code> in the <a class="reference external" href="../source/../../admin-manual/installation/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">cdap-site.xml</span></a>.</p>
+<code class="docutils literal"><span class="pre">stream.notification.threshold</span></code> in the <a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">cdap-site.xml</span></a>.</p>
 <p>The notifications describe the absolute size of events ever ingested by a stream, and as such, they will always describe
 increasing data size. In particular, they do not reset when the stream is truncated, and they do not decrease when
 part of the data ingested by the stream has reach the TTL.</p>
@@ -192,14 +192,14 @@ reads events from a stream.</li>
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
             rel="nofollow">Reference Manual</a></li>
             
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html"
+            rel="nofollow">FAQs</a></li>
+            
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
             rel="nofollow">Release Notes</a></li>
             
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
             rel="nofollow">Glossary</a></li>
-            
-      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
-            rel="nofollow">FAQ</a></li>
             
       <li><div class=""></div><a href="../table-of-contents/../../search.html"
             rel="nofollow">Search</a></li>
@@ -253,7 +253,7 @@ reads events from a stream.</li>
 <li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
 </ul>
-
+ 
 </nav>
   <h4>Previous Topic</h4>
   <p class="topless"><a href="applications.html"

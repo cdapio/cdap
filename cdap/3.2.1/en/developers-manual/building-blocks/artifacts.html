@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.1">
-    <meta name="git_hash" content="ceac6fe19bea92b03403926de835d1bcd9fdf1d0">
-    <meta name="git_timestamp" content="2015-10-21 09:58:38 -0700">
+    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
+    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
     <title>Artifacts &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -85,29 +85,30 @@
             
   <div class="section" id="artifacts">
 <span id="id1"></span><h1>Artifacts<a class="headerlink" href="#artifacts" title="Permalink to this headline">¶</a></h1>
-<p>An <em>Artifact</em> is a JAR file that contains Java classes and resources required to create and run an <em>Application</em>.</p>
-<p><em>Artifacts</em> are identified by a name, version, and scope.
-The artifact name must consist of only alphanumeric, &#8216;-&#8216;, and &#8216;_&#8217; characters. For example,
-&#8216;my-application&#8217; is a valid artifact name, but &#8216;my:application&#8217; is not.</p>
-<p>The artifact version is of the format &#8216;[major].[minor].[fix](-|.)[suffix]&#8217;. Minor, fix, and suffix
+<p>An <em>Artifact</em> is a JAR file that contains Java classes and resources required to create and run an <em>Application</em>.
+<em>Artifacts</em> are identified by a <em>name</em>, <em>version</em>, and <em>scope</em>.</p>
+<p>The <strong>artifact name</strong> must consist only of alphanumeric, <code class="docutils literal"><span class="pre">'-'</span></code> (hyphen), and <code class="docutils literal"><span class="pre">'_'</span></code> (underscore) characters.
+For example, <code class="docutils literal"><span class="pre">'my-application'</span></code> is a valid artifact name, but <code class="docutils literal"><span class="pre">'my:application'</span></code> is not.</p>
+<p>The <strong>artifact version</strong> is of the format <code class="docutils literal"><span class="pre">'[major].[minor].[fix](-\|.)[suffix]'</span></code>. Minor, fix, and suffix
 portions of the version are optional, though it is suggested that you have them conform to
 standard versioning schemes. The major, minor, and fix portions of the version must be numeric.
-The suffix can be any of the acceptable characters. For example, &#8216;3.2.0-SNAPSHOT&#8217; is a valid artifact version,
-with a major version of 3, minor version of 2, fix version of 0, and suffix of SNAPSHOT.</p>
-<p>The artifact scope is either &#8216;user&#8217; or &#8216;system&#8217;. An artifact in the &#8216;user&#8217; scope was added by users
-through the CLI or RESTful API. A &#8216;user&#8217; artifact belongs in a namespace and cannot be accessed in
-another namespace. A &#8216;system&#8217; artifact is an artifact that is available across all namespaces. It
-is added by placing the artifact in a special directory on either the CDAP master node(s) or the
-CDAP Standalone.</p>
-<p>Once added to CDAP, an <em>Artifact</em> cannot be modified unless it is a snapshot artifact.
-An <em>Artifact</em> is a snapshot artifact if the version suffix begins with SNAPSHOT. For example,
-&#8216;1.2.3.SNAPSHOT-test&#8217; is a snapshot version because it has a suffix of &#8216;SNAPSHOT-test&#8217;, which
-begins with SNAPSHOT. &#8216;1.2.3&#8217; is not a snapshot version because there is no suffix. &#8216;1.2.3-hadoop2&#8217;
-is also not a snapshot version because the suffix does not begin with SNAPSHOT.</p>
+The suffix can be any of the acceptable characters. For example, <code class="docutils literal"><span class="pre">'3.2.0-SNAPSHOT'</span></code> is a valid artifact version,
+with a major version of 3, minor version of 2, fix version of 0, and suffix of <code class="docutils literal"><span class="pre">SNAPSHOT</span></code>.</p>
+<p>The <strong>artifact scope</strong> is either <code class="docutils literal"><span class="pre">'user'</span></code> or <code class="docutils literal"><span class="pre">'system'</span></code>. An artifact in the <em>&#8216;user&#8217;</em> scope is added by users
+through the CLI or RESTful API. A <em>&#8216;user&#8217;</em> artifact belongs in a namespace and cannot be accessed in
+another namespace. A <em>&#8216;system&#8217;</em> artifact is an artifact that is available across all namespaces. It
+is added by placing the artifact in a special directory on either the CDAP Master node(s) or the
+CDAP Standalone SDK.</p>
+<p>Once added to CDAP, an <em>Artifact</em> cannot be modified unless it is a <strong>snapshot artifact.</strong>
+An <em>Artifact</em> is a snapshot artifact if the version suffix begins with <code class="docutils literal"><span class="pre">SNAPSHOT</span></code>. For example,
+<code class="docutils literal"><span class="pre">'1.2.3.SNAPSHOT-test'</span></code> is a snapshot version because it has a suffix of <code class="docutils literal"><span class="pre">'SNAPSHOT-test'</span></code>, which
+begins with <code class="docutils literal"><span class="pre">SNAPSHOT</span></code>. <code class="docutils literal"><span class="pre">'1.2.3'</span></code> is not a snapshot version because there is no suffix. <code class="docutils literal"><span class="pre">'1.2.3-hadoop2'</span></code>
+is also not a snapshot version because the suffix does not begin with <code class="docutils literal"><span class="pre">SNAPSHOT</span></code>.</p>
 <p>Artifacts are managed using the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">Artifact HTTP RESTful APIs</span></a>.</p>
 <div class="section" id="deploying-an-artifact">
 <h2>Deploying an Artifact<a class="headerlink" href="#deploying-an-artifact" title="Permalink to this headline">¶</a></h2>
-<p>An artifact is deployed through the RESTful API. If it contains an Application class, the artifact
+<p>An artifact is deployed through the <a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-add" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">RESTful API</span></a>.
+If it contains an Application class, the artifact
 can then be used to create applications. Once an artifact is deployed, it cannot be changed, with
 the exception of snapshot versions of artifacts. Snapshot artifacts can be deployed multiple times,
 with each deployment overwriting the previous artifact. If a program is using a snapshot artifact,
@@ -133,21 +134,27 @@ If a program is already running, it will be unaffected. If that running program 
 be able to start again until the artifact is replaced, or the application is updated to use another
 artifact.</p>
 </div>
-<div class="section" id="system-artifacts">
-<h2>System Artifacts<a class="headerlink" href="#system-artifacts" title="Permalink to this headline">¶</a></h2>
-<p>Normally an artifact is added to a specific namespace. Users in one namespace cannot see or use
-artifacts in another namespace. Sometimes there is a need to provide an artifact that can be used
-across namespaces. One example of this are the etl artifacts shipped with CDAP. In such scenarios,
-a system artifact can be used. System artifacts cannot be added through the RESTful API, but must be
-added by placing the artifact in a special directory. For distributed CDAP, this directory is defined
-by the <code class="docutils literal"><span class="pre">app.artifact.dir</span></code> setting in cdap-site.xml. It defaults to <code class="docutils literal"><span class="pre">/opt/cdap/master/artifacts</span></code>.
-For CDAP standalone, the directory is set to the <code class="docutils literal"><span class="pre">artifacts</span></code> directory.</p>
-<p>Any artifact in the directory will be added to CDAP when it starts up. In addition, a RESTful API
+<div class="section" id="user-and-system-artifacts">
+<h2>User and System Artifacts<a class="headerlink" href="#user-and-system-artifacts" title="Permalink to this headline">¶</a></h2>
+<p>Normally, an artifact is added to a specific namespace. Users in one namespace cannot see or use
+artifacts in another namespace. These are referred to as <a class="reference internal" href="plugins.html#plugins-deployment-user"><span>user artifacts</span></a>.</p>
+<p>Sometimes there is a need to provide an artifact that can be used across namespaces. One
+example of this are the <a class="reference external" href="../source/../../included-applications/etl/plugins/index.html#included-apps-etl-plugins" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">ETL artifacts</span></a> shipped with
+CDAP. In such scenarios, a <a class="reference internal" href="plugins.html#plugins-deployment-system"><span>system artifact</span></a> can be used.</p>
+<p>System artifacts cannot be added through the RESTful API, but must be added by placing the
+artifact in a special directory. For Distributed CDAP, this directory is defined by the
+<code class="docutils literal"><span class="pre">app.artifact.dir</span></code> setting in <a class="reference external" href="../source/../../admin-manual/appendices/cdap-site.html#appendix-cdap-site-xml" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">cdap-site.xml</span></a>. It defaults to
+<code class="docutils literal"><span class="pre">/opt/cdap/master/artifacts</span></code>. For the CDAP Standalone SDK, the directory is set to the
+<code class="docutils literal"><span class="pre">artifacts</span></code> directory.</p>
+<p>Any artifact in the directory will be added to CDAP when it starts up. In addition, a
+<a class="reference external" href="../source/../../reference-manual/http-restful-api/artifact.html#http-restful-api-artifact-system-load" title="(in Cask Data Application Platform v3.2.1)"><span class="xref std std-ref">RESTful API</span></a>
 call can be made to scan the directory for any new artifacts that may have been added since CDAP
-started. If a system artifact contains plugins that extend another system artifact, a matching
+started.</p>
+<p>If a system artifact contains plugins that extend another system artifact, a matching
 JSON config file must be provided to specify which artifacts it extends. In addition, if a system
 artifact is a third-party JAR, the plugins in the artifact can be explicitly listed in that same config
-file. For example, suppose you want to add <code class="docutils literal"><span class="pre">mysql-connector-java-5.1.3.jar</span></code> as a system artifact. The
+file.</p>
+<p>For example, suppose you want to add <code class="docutils literal"><span class="pre">mysql-connector-java-5.1.3.jar</span></code> as a system artifact. The
 artifact is the MySQL JDBC driver, and is a third-party JAR that we want to use as a JDBC plugin for
 the <code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> artifact. You would place the JAR file in the artifacts directory along with a
 matching config file named <code class="docutils literal"><span class="pre">mysql-connector-java-5.1.3.json</span></code>. The config file would contain:</p>
@@ -389,14 +396,14 @@ bug and decide to roll back to the previous version. The flow is stopped and ano
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html"
             rel="nofollow">Reference Manual</a></li>
             
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html"
+            rel="nofollow">FAQs</a></li>
+            
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html"
             rel="nofollow">Release Notes</a></li>
             
       <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html"
             rel="nofollow">Glossary</a></li>
-            
-      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/faq.html"
-            rel="nofollow">FAQ</a></li>
             
       <li><div class=""></div><a href="../table-of-contents/../../search.html"
             rel="nofollow">Search</a></li>
@@ -442,7 +449,7 @@ bug and decide to roll back to the previous version. The flow is stopped and ano
 <li class="toctree-l3"><a class="reference internal" href="#deploying-an-artifact">Deploying an Artifact</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#plugin-artifacts">Plugin Artifacts</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#deleting-an-artifact">Deleting an Artifact</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#system-artifacts">System Artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-and-system-artifacts">User and System Artifacts</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#example-use-case-configurable-applications">Example Use Case: Configurable Applications</a></li>
 </ul>
 </li>
@@ -457,7 +464,7 @@ bug and decide to roll back to the previous version. The flow is stopped and ano
 <li class="toctree-l1"><a class="reference internal" href="../data-exploration/index.html"> Data Exploration</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../advanced/index.html"> Advanced Topics</a></li>
 </ul>
-
+ 
 </nav>
   <h4>Previous Topic</h4>
   <p class="topless"><a href="plugins.html"

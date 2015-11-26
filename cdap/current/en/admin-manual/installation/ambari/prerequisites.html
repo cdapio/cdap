@@ -1,0 +1,363 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <meta name="git_release" content="3.2.1">
+    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
+    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
+    <title>Adding the CDAP Service to Ambari &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '3.2.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    
+    <!-- Amazon SQS Page Usage Logging start-->
+    <script type="text/javascript" src="https://sdk.amazonaws.com/js/aws-sdk-2.1.35.min.js"></script>
+    <script type="text/javascript" src="http://docs.cask.co/resources/scripts/aws-sqs-1.0.0.js"></script>
+    <!-- Amazon SQS Page Usage Logging end-->
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.2.1 Documentation" href="../../index.html" />
+    <link rel="up" title="Apache Ambari (HDP)" href="index.html" />
+    <link rel="next" title="Adding CDAP to Your Cluster" href="adding-cdap.html" />
+    <link rel="prev" title="Apache Ambari (HDP)" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="adding-cdap.html" title="Adding CDAP to Your Cluster"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Apache Ambari (HDP)"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.2.1');</script>
+       
+        <li><a href="../../table-of-contents.html">CDAP Administration Manual</a> &raquo;</li>
+          <li><a href="../index.html" >Installation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Apache Ambari (HDP)</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="adding-the-cdap-service-to-ambari">
+<span id="ambari-adding-cdap-service"></span><h1>Adding the CDAP Service to Ambari<a class="headerlink" href="#adding-the-cdap-service-to-ambari" title="Permalink to this headline">¶</a></h1>
+<p>To install CDAP on a cluster managed by Ambari, we have provided packages for
+RHEL-compatible and Ubuntu systems, which are installed onto the Ambari management server.
+These packages add CDAP to the list of available services which Ambari can install.</p>
+<div class="section" id="preparing-ambari">
+<h2>Preparing Ambari<a class="headerlink" href="#preparing-ambari" title="Permalink to this headline">¶</a></h2>
+<p>To install the <code class="docutils literal"><span class="pre">cdap-ambari-service</span></code> package, first add the appropriate CDAP repository
+to your system’s package manager by following the steps below. These steps will install a
+Cask repository on your Ambari server.</p>
+<p>The <em>repository version</em> (shown in the commands below as &#8220;<code class="docutils literal"><span class="pre">cdap/</span></code><code class="docutils literal"><span class="pre">3.2</span></code>&#8221; ) must match the
+<em>CDAP version</em> which you’d like installed on your cluster. To get the <em>CDAP 3.0 series,</em>
+you would install the <em>CDAP 3.0 repository.</em> The default is to use CDAP 3.2, which has the
+widest compatibility with Ambari-supported Hadoop distributions.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="23%" />
+<col width="25%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="3">Supported Hortonworks Data Platform (HDP) Distributions</th>
+</tr>
+<tr class="row-even"><th class="head">CDAP Version</th>
+<th class="head">CDAP Repository</th>
+<th class="head">Hadoop Distributions</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td>CDAP 3.0.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.0</span></code></td>
+<td>HDP 2.0, HDP 2.1</td>
+</tr>
+<tr class="row-even"><td>CDAP 3.1.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.1</span></code></td>
+<td>HDP 2.0, HDP 2.1, HDP 2.2</td>
+</tr>
+<tr class="row-odd"><td>CDAP 3.2.x</td>
+<td><code class="docutils literal"><span class="pre">cdap/3.2</span></code></td>
+<td>HDP 2.0, HDP 2.1, HDP 2.2, HDP 2.3</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> The CDAP Ambari service has been tested on Ambari Server 2.0 and 2.1, as
+supplied from Hortonworks.</p>
+<div class="section" id="rpm-using-yum">
+<h3>RPM using Yum<a class="headerlink" href="#rpm-using-yum" title="Permalink to this headline">¶</a></h3>
+<p>Download the Cask Yum repo definition file:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo curl -o /etc/yum.repos.d/cask.repo http://repository.cask.co/centos/6/x86_64/cdap/3.2/cask.repo
+</pre>
+</div>
+<p>This will create the file <code class="docutils literal"><span class="pre">/etc/yum.repos.d/cask.repo</span></code> with:</p>
+<pre class="literal-block">
+[cask]
+name=Cask Packages
+baseurl=http://repository.cask.co/centos/6/x86_64/cdap/3.2
+enabled=1
+gpgcheck=1
+</pre>
+<p>Add the Cask Public GPG Key to your repository:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo rpm --import http://repository.cask.co/centos/6/x86_64/cdap/3.2/pubkey.gpg
+</pre>
+</div>
+<p>Update your Yum cache:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo yum makecache
+</pre></div>
+</div>
+</div>
+<div class="section" id="debian-using-apt">
+<h3>Debian using APT<a class="headerlink" href="#debian-using-apt" title="Permalink to this headline">¶</a></h3>
+<p>Download the Cask APT repo definition file:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> sudo curl -o /etc/apt/sources.list.d/cask.list http://repository.cask.co/ubuntu/precise/amd64/cdap/3.2/cask.list
+</pre>
+</div>
+<p>This will create the file <code class="docutils literal"><span class="pre">/etc/apt/sources.list.d/cask.list</span></code> with:</p>
+<pre class="literal-block">
+deb [ arch=amd64 ] http://repository.cask.co/ubuntu/precise/amd64/cdap/3.2 precise cdap
+</pre>
+<p>Add the Cask Public GPG Key to your repository:</p>
+<div class="highlight container">
+<pre class="literal-block">
+<span class="gp">$</span> curl -s http://repository.cask.co/ubuntu/precise/amd64/cdap/3.2/pubkey.gpg | sudo apt-key add -
+</pre>
+</div>
+<p>Update your APT-cache:</p>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get update
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="installing-the-cdap-service">
+<h2>Installing the CDAP Service<a class="headerlink" href="#installing-the-cdap-service" title="Permalink to this headline">¶</a></h2>
+<p>Now, install the <code class="docutils literal"><span class="pre">cdap-ambari-service</span></code> package from the repo you specified above:</p>
+<div class="section" id="installing-the-cdap-service-via-yum">
+<h3>Installing the CDAP Service via YUM<a class="headerlink" href="#installing-the-cdap-service-via-yum" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo yum install -y cdap-ambari-service
+<span class="gp">$</span> sudo ambari-server restart
+</pre></div>
+</div>
+</div>
+<div class="section" id="installing-the-cdap-service-via-apt">
+<h3>Installing the CDAP Service via APT<a class="headerlink" href="#installing-the-cdap-service-via-apt" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-console"><div class="highlight"><pre><span class="gp">$</span> sudo apt-get install -y cdap-ambari-service
+<span class="gp">$</span> sudo ambari-server restart
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../table-of-contents/../../index.html"
+        rel="nofollow">CDAP Documentation v3.2.1</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../table-of-contents/../../index.html"
+            rel="nofollow">Overview</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../introduction/index.html"
+            rel="nofollow">Introduction to CDAP</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../developers-manual/index.html"
+            rel="nofollow">Developers’ Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../included-applications/index.html"
+            rel="nofollow">Included Applications</a></li>
+            
+      <li><div class=""></div><b><a href="../../table-of-contents/../../admin-manual/index.html"
+            rel="nofollow">Administration Manual</a></b></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../integrations/index.html"
+            rel="nofollow">Integrations</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../examples-manual/index.html"
+            rel="nofollow">Examples, Guides, and Tutorials</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/index.html"
+            rel="nofollow">Reference Manual</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../faqs/index.html"
+            rel="nofollow">FAQs</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/release-notes.html"
+            rel="nofollow">Release Notes</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../reference-manual/glossary.html"
+            rel="nofollow">Glossary</a></li>
+            
+      <li><div class=""></div><a href="../../table-of-contents/../../search.html"
+            rel="nofollow">Search</a></li>
+    </ul>
+   </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+<h3 class="pagenavtitle"><a href="../../table-of-contents.html">Administration Manual:<br> Table&nbsp;of&nbsp;Contents</a></h3>
+<nav class="pagenav">
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html"> Installation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"> Apache Ambari (HDP)</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="">Adding CDAP Service</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#preparing-ambari">Preparing Ambari</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#installing-the-cdap-service">Installing the CDAP Service</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="adding-cdap.html">Adding CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installing-cdap.html">Installing CDAP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../cloudera/index.html"> Cloudera Manager (CDH)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hadoop/index.html"> Hadoop</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mapr/index.html"> MapR</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../security.html"> Security</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../operations/index.html"> Operations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../appendices/index.html"> Appendices</a></li>
+</ul>
+ 
+</nav>
+  <h4>Previous Topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="Previous Chapter">Apache Ambari (HDP)</a></p>
+  <h4>Next Topic</h4>
+  <p class="topless"><a href="adding-cdap.html"
+                        title="Next Chapter">Adding CDAP to Your Cluster</a></p>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.2.1/cdap-docs-3.2.1-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Apache Ambari (HDP)" href="index.html" />Apache Ambari (HDP)</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2015 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Adding CDAP to Your Cluster" href="adding-cdap.html" />Adding CDAP to Your Cluster</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

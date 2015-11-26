@@ -10,11 +10,11 @@
  */
  
 var manuals = {
-  "introduction":"Introduction to CDAP","developers-manual":"Developers’ Manual","included-applications":"Included Applications","admin-manual":"Administration Manual","integrations":"Integrations","examples-manual":"Examples, Guides, and Tutorials","reference-manual":"Reference Manual" 
+  "introduction":"Introduction to CDAP","developers-manual":"Developers’ Manual","included-applications":"Included Applications","admin-manual":"Administration Manual","integrations":"Integrations","examples-manual":"Examples, Guides, and Tutorials","reference-manual":"Reference Manual","faqs":"FAQs" 
 };
 
 var manualsArray = new Array(
-  "introduction","developers-manual","included-applications","admin-manual","integrations","examples-manual","reference-manual" 
+  "introduction","developers-manual","included-applications","admin-manual","integrations","examples-manual","reference-manual","faqs" 
 );
 
 
