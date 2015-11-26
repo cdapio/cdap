@@ -24,7 +24,7 @@ This section covers how you can explore data in CDAP through the use of ad-hoc S
 Queries can be run over streams and certain types of datasets.
 
 Note that if you are running a secure cluster, additional
-:ref:`configuration for a secure cluster <configuration-for-secure-hadoop>`
+:ref:`configuration for a secure cluster <hadoop-configuration-for-secure-hadoop>`
 is required.
 
 
