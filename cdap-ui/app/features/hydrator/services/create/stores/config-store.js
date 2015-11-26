@@ -152,7 +152,7 @@ class ConfigStore {
     return config;
   }
   getConfigForExport() {
-    var config = this.generateConfigFromState();
+    var config = angular.copy(this.generateConfigFromState());
     this.CanvasFactory.pruneProperties(config);
     this.state.config = angular.copy(config);
     return angular.copy(this.state);
