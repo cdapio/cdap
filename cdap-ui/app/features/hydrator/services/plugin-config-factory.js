@@ -16,13 +16,9 @@
 
 angular.module(PKG.name + '.feature.hydrator')
   .service('PluginConfigFactory', function(MyCDAPDataSource, $q) {
-    this.plugins = {};
 
     this.fetch = function(scope, templateid, pluginid) {
-      if (this.plugins[templateid + pluginid]) {
-        return $q.when(this.plugins[templateid + pluginid]);
-      }
-      
+
       var dataSrc = new MyCDAPDataSource(scope);
       var defer = $q.defer();
 
@@ -33,9 +29,8 @@ angular.module(PKG.name + '.feature.hydrator')
       })
         .then(
           function success(res) {
-            this.plugins[templateid+pluginid] = res;
-            defer.resolve(this.plugins[templateid+pluginid]);
-          }.bind(this),
+            defer.resolve(res);
+          },
           function error(err) {
             defer.reject(err);
           }

@@ -143,6 +143,12 @@ class ConfigStore {
         addPluginToConfig(nodesMap[connection.target], connection.target);
       }
     });
+    let appType = this.getAppType();
+    if ( appType=== this.GLOBALS.etlBatch) {
+      config.schedule = this.state.config.schedule;
+    } else if (appType === this.GLOBALS.etlRealtime) {
+      config.instance = this.state.config.instance;
+    }
     return config;
   }
   getConfigForExport() {
@@ -195,9 +201,9 @@ class ConfigStore {
     this.state.artifact.scope = artifact.scope;
 
     if (artifact.name === this.GLOBALS.etlBatch) {
-      this.state.schedule = '* * * * *';
+      this.state.config.schedule = '* * * * *';
     } else if (artifact.name === this.GLOBALS.etlRealtime) {
-      this.state.instance = 1;
+      this.state.config.instance = 1;
     }
 
     this.emitChange();
@@ -226,17 +232,17 @@ class ConfigStore {
   }
 
   getSchedule() {
-    return this.state.schedule;
+    return this.state.config.schedule;
   }
   setSchedule(schedule) {
-    this.state.schedule = schedule;
+    this.state.config.schedule = schedule;
   }
 
   getInstance() {
-    return this.state.instance;
+    return this.state.config.instance;
   }
   setInstance(instance) {
-    this.state.instance = instance;
+    this.state.config.instance = instance;
   }
 
   saveAsDraft(config) {
