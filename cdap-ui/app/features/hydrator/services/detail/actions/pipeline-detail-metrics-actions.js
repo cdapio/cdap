@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('PipelineDetailMetricsActionFactory', function(DetailRunsStore, PipelineDetailMetricslDispatcher, MyCDAPDataSource, $filter, MyMetricsQueryHelper) {
+  .service('PipelineDetailMetricsActionFactory', function(DetailRunsStore, PipelineDetailMetricslDispatcher, MyCDAPDataSource, $filter, MyMetricsQueryHelper, DetailNonRunsStore) {
 
     var dispatcher = PipelineDetailMetricslDispatcher.getDispatcher();
     var metricsPollId;
@@ -46,7 +46,7 @@ angular.module(PKG.name + '.feature.hydrator')
         method: 'POST',
         _cdapPath: metricBasePath
       }, function (res) {
-        var config = DetailRunsStore.getConfigJson();
+        var config = DetailNonRunsStore.getConfigJson();
         var source = config.source.name;
         var transforms = config.transforms.map(function (n) { return n.name; });
         var sinks = config.sinks.map(function (n) { return n.name; });

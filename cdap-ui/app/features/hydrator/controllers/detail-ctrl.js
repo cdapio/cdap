@@ -15,13 +15,22 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailController', function(DetailRunsStore, rPipelineDetail, PipelineDetailActionFactory, $scope) {
+  .controller('HydratorDetailController', function(DetailRunsStore, rPipelineDetail, PipelineDetailActionFactory, $scope, DetailNonRunsStore, NodeConfigStore) {
+    // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     DetailRunsStore.init(rPipelineDetail);
+    DetailNonRunsStore.init(rPipelineDetail);
+    NodeConfigStore.init();
+
     var params = angular.copy(DetailRunsStore.getParams());
     params.scope = $scope;
     PipelineDetailActionFactory.pollRuns(
       DetailRunsStore.getApi(),
       params
     );
-
+    $scope.$on('$destroy', function() {
+      // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
+      DetailRunsStore.reset();
+      DetailNonRunsStore.reset();
+      NodeConfigStore.reset();
+    });
   });

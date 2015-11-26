@@ -16,7 +16,7 @@
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, rPipelineDetail, GLOBALS, $state, $alert, myLoadingService, $timeout) {
     this.GLOBALS = GLOBALS;
-    this.config = DetailRunsStore.getCloneConfig();
+    this.config = DetailNonRunsStore.getCloneConfig();
     this.app = {
       name: rPipelineDetail.name,
       description: rPipelineDetail.description,
@@ -25,13 +25,13 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.setAppStatus = function() {
       this.appStatus = DetailRunsStore.getStatus();
-      this.config = DetailRunsStore.getCloneConfig();
+      this.config = DetailNonRunsStore.getCloneConfig();
     };
     this.setScheduleStatus = function() {
       this.scheduleStatus = DetailNonRunsStore.getScheduleStatus();
     };
     this.setAppStatus();
-    var appType = DetailRunsStore.getAppType();
+    var appType = DetailNonRunsStore.getAppType();
 
     if (appType === GLOBALS.etlBatch) {
       PipelineDetailActionFactory.fetchScheduleStatus(

@@ -31,6 +31,13 @@ angular.module(PKG.name + '.services')
         'transform': 'transform'
       }
     },
+    pluginConvert: {
+      'batchsource': 'source',
+      'realtimesource': 'source',
+      'batchsink': 'sink',
+      'realtimesink': 'sink',
+      'transform': 'transform'
+    },
 
     'en': {
       hydrator: {
@@ -43,6 +50,7 @@ angular.module(PKG.name + '.services')
           sourceRequiredFieldsError: 'Please provide required fields for the source.',
           sinkRequiredFieldsError: 'Please provide required fields for the sink.',
           transformRequiredFieldsError: 'Please provide required fields for the transform.',
+          genericMissingRequiredFieldsError: 'Missing required fields',
           oneSourceError: 'Pipelines can only have one source. Please remove any additional sources.',
           noSourceError: 'Please add a source to your pipeline',
           nameError: 'Please name your pipeline.',

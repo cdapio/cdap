@@ -14,21 +14,21 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.hydrator')
-.service('MySidebarService', function() {
-  this.isExpanded = true;
-  this.isExpandedCallbacks = [];
-  this.registerIsExpandedCallback = function(callback) {
-    this.isExpandedCallbacks.push(callback);
-  };
-  this.setIsExpanded = function(value) {
-    this.isExpanded = value;
-    this.callRegisteredCallbacks();
-  };
-
-  this.callRegisteredCallbacks = function() {
-    this.isExpandedCallbacks.forEach(function(callback) {
-      callback(this.isExpanded);
-    }.bind(this));
-  };
-});
+class ConsoleDispatcher {
+  constructor(CaskAngularDispatcher) {
+    this.baseDispatcher = CaskAngularDispatcher;
+    this.__dispatcher__ = null;
+  }
+  getDispatcher() {
+    if (!this.__dispatcher__) {
+       this.__dispatcher__ = new this.baseDispatcher();
+    }
+    return this.__dispatcher__;
+  }
+  destroyDispatcher() {
+    delete this.__dispatcher__;
+  }
+}
+ConsoleDispatcher.$inject = ['CaskAngularDispatcher'];
+angular.module(`${PKG.name}.feature.hydrator`)
+  .service('ConsoleDispatcher', ConsoleDispatcher);
