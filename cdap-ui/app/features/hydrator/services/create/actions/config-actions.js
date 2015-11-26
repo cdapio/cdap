@@ -36,6 +36,12 @@ class ConfigActionsFactory {
   addPlugin (plugin, type) {
     this.dispatcher.dispatch('onPluginAdd', plugin, type);
   }
+  setSchedule(schedule) {
+    this.dispatcher.dispatch('onSetSchedule', schedule);
+  }
+  setInstance(instance) {
+    this.dispatcher.dispatch('onSetInstance', instance);
+  }
 }
 
 ConfigActionsFactory.$inject = ['ConfigDispatcher'];
