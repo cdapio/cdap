@@ -42,7 +42,10 @@ public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
     Schema schema = config.getFormat().getSchema();
     if (schema != null) {
       for (Schema.Field field : schema.getFields()) {
-        properties.put(SCHEMA_FIELD_PROPERTY_PREFIX + CTRL_A + field.getName(), field.getSchema().getType().toString());
+        String fieldName = field.getName();
+        String fieldType = field.getSchema().getType().toString();
+        properties.put(SCHEMA_FIELD_PROPERTY_PREFIX + CTRL_A + fieldName + CTRL_A + fieldType,
+                       SCHEMA_FIELD_PROPERTY_PREFIX + CTRL_A + fieldName);
       }
     }
     return properties.build();

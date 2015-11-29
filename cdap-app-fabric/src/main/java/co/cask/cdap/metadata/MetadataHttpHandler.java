@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.net.URLDecoder;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -832,7 +833,8 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
     } else {
       metadataSearchTargetType = null;
     }
-    Set<MetadataSearchResultRecord> results = metadataAdmin.searchMetadata(namespaceId, searchQuery,
+    Set<MetadataSearchResultRecord> results = metadataAdmin.searchMetadata(namespaceId,
+                                                                           URLDecoder.decode(searchQuery, "UTF-8"),
                                                                            metadataSearchTargetType);
 
     responder.sendJson(HttpResponseStatus.OK, results, SET_METADATA_SEARCH_RESULT_TYPE, GSON);
