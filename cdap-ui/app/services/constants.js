@@ -36,26 +36,26 @@ angular.module(PKG.name + '.services')
       hydrator: {
         appLabel: 'Hydrator Pipeline',
         studio: {
-          noConfigMessage: 'No configuration found for plugin',
-          syntaxConfigJsonError: 'Syntax error in configuration JSON for plugin',
-          semanticConfigJsonError: 'Semantic error in configuration JSON for plugin',
+          noConfigMessage: 'No configuration was found for the plugin.',
+          syntaxConfigJsonError: 'Syntax error in the configuration JSON for the plugin.',
+          semanticConfigJsonError: 'Semantic error in the configuration JSON for the plugin.',
           oneSinkError: 'Please add at least one sink to your pipeline.',
-          sourceRequiredFieldsError: 'Please provide required fields for the source.',
-          sinkRequiredFieldsError: 'Please provide required fields for the sink.',
-          transformRequiredFieldsError: 'Please provide required fields for the transform.',
+          sourceRequiredFieldsError: 'Please provide all required fields for the source.',
+          sinkRequiredFieldsError: 'Please provide all required fields for the sink.',
+          transformRequiredFieldsError: 'Please provide all required fields for the transform.',
           oneSourceError: 'Pipelines can only have one source. Please remove any additional sources.',
-          noSourceError: 'Please add a source to your pipeline',
+          noSourceError: 'Please add a source to your pipeline.',
           nameError: 'Please name your pipeline.',
-          nameValidationError: 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\') characters and underscores ( \'_\'). Please remove other characters.',
+          nameValidationError: 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\') characters and underscores ( \'_\'). Please remove any other characters.',
           sinkBranchNodeError: 'Please connect multiple sinks to the same node.',
           branchError: 'Please remove branched connections.',
           unconnectedNodesError: 'Please connect all nodes.',
           circularConnectionError: 'Please remove the circular connection in this pipeline.',
           endSinkError: 'Please end the pipeline connections in a sink.',
           parallelConnectionError: 'Please remove parallel connections in this pipeline.',
-          pluginDoesNotExist: 'Plugin does not exist: ',
-          unsavedPluginMessage1: 'There are un-saved changes for node: ',
-          unsavedPluginMessage2: '. Please save them before publishing the pipeline'
+          pluginDoesNotExist: 'This plugin does not exist: ',
+          unsavedPluginMessage1: 'There are un-saved changes for the node \'',
+          unsavedPluginMessage2: '\'. Please save them before publishing the pipeline.'
         },
         wizard: {
           welcomeMessage1: 'Hydrator makes it easy to prepare data so you ',
@@ -65,9 +65,9 @@ angular.module(PKG.name + '.services')
         },
       },
       admin: {
-        templateNameExistsError: 'Template name already exists! Please choose another name.',
+        templateNameExistsError: 'The template name already exists! Please choose another name.',
         pluginSameNameError: 'There is already a plugin with the same name.',
-        templateNameMissingError: 'Please enter template name.'
+        templateNameMissingError: 'Please enter a template name.'
       }
     }
   });
