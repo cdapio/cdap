@@ -39,20 +39,21 @@ angular.module(PKG.name + '.commons')
     return {
       restrict: 'A',
       scope: {
-        ellipsis: '='
+        ellipsis: '=',
+        offsetValue: '='
       },
-      link: function (scope, element, attrs) {
+      link: function (scope, element) {
         function isEllipsisActive(e) {
-          return (e[0].offsetWidth > e[0].parentElement.offsetWidth - 20);
+          return (e[0].offsetWidth > e[0].parentElement.offsetWidth - scope.offsetValue);
         }
-
-        scope.$watch(attrs.tooltipEllipsis, function () {
-          if (attrs.tooltipEllipsis) {
-            if (isEllipsisActive(element)) {
-              scope.ellipsis = true;
-            } else {
-              scope.ellipsis = false;
-            }
+        // FIXME: Find more efficient approach
+        scope.$watch(function () {
+          return element[0].parentElement.offsetWidth;
+        }, function () {
+          if (isEllipsisActive(element)) {
+            scope.ellipsis = true;
+          } else {
+            scope.ellipsis = false;
           }
         });
 

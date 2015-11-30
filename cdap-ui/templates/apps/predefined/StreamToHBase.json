@@ -2,9 +2,8 @@
     "artifact": {
         "name": "cdap-etl-batch",
         "scope": "SYSTEM",
-        "version": "3.2.1"
+        "version": "3.3.0-SNAPSHOT"
     },
-    "description": "Periodically appends data from stream to Table.",
     "config": {
         "source": {
             "name": "Stream",
@@ -26,14 +25,15 @@
         "transforms": [],
         "schedule": "* * * * *"
     },
-    "name": "AppendStreamToTableWithProjections",
+    "description": "Periodically ingest from a stream into an HBase table",
+    "name": "StreamToHBase",
     "ui": {
         "nodes": {
             "Stream-source-1": {
                 "id": "Stream-source-1",
                 "name": "Stream",
                 "style": "",
-                "description": "Batch source for a stream.",
+                "description": "Batch source for a stream",
                 "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
                 "properties": {
                     "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",

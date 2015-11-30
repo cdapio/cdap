@@ -16,16 +16,20 @@
 
 package co.cask.cdap.examples.fileset;
 
-import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
+import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -55,11 +59,7 @@ public class FileSetService extends AbstractService {
    */
   public static class FileSetHandler extends AbstractHttpServiceHandler {
 
-    @UseDataSet("lines")
-    private FileSet lines;
-
-    @UseDataSet("counts")
-    private FileSet counts;
+    private static final Logger LOG = LoggerFactory.getLogger(FileSetHandler.class);
 
     @GET
     @Path("{fileSet}")
@@ -70,6 +70,7 @@ public class FileSetService extends AbstractService {
       try {
         fileSet = getContext().getDataset(set);
       } catch (DatasetInstantiationException e) {
+        LOG.warn("Error instantiating file set {}", set, e);
         responder.sendError(400, String.format("Invalid file set name '%s'", set));
         return;
       }
@@ -87,28 +88,52 @@ public class FileSetService extends AbstractService {
 
     @PUT
     @Path("{fileSet}")
-    public void write(HttpServiceRequest request, HttpServiceResponder responder,
-                      @PathParam("fileSet") String set, @QueryParam("path") String filePath) {
+    public HttpContentConsumer write(HttpServiceRequest request, HttpServiceResponder responder,
+                                     @PathParam("fileSet") final String set,
+                                     @QueryParam("path") final String filePath) {
 
       FileSet fileSet;
       try {
         fileSet = getContext().getDataset(set);
       } catch (DatasetInstantiationException e) {
+        LOG.warn("Error instantiating file set {}", set, e);
         responder.sendError(400, String.format("Invalid file set name '%s'", set));
-        return;
+        return null;
       }
 
-      Location location = fileSet.getLocation(filePath);
-
+      final Location location = fileSet.getLocation(filePath);
       try {
-        try (WritableByteChannel channel = Channels.newChannel(location.getOutputStream())) {
-          channel.write(request.getContent());
-        }
+        final WritableByteChannel channel = Channels.newChannel(location.getOutputStream());
+        return new HttpContentConsumer() {
+          @Override
+          public void onReceived(ByteBuffer chunk, Transactional transactional) throws Exception {
+            channel.write(chunk);
+          }
+
+          @Override
+          public void onFinish(HttpServiceResponder responder) throws Exception {
+            channel.close();
+            responder.sendStatus(200);
+          }
+
+          @Override
+          public void onError(HttpServiceResponder responder, Throwable failureCause) {
+            Closeables.closeQuietly(channel);
+            try {
+              location.delete();
+            } catch (IOException e) {
+              LOG.warn("Failed to delete {}", location, e);
+            }
+            LOG.debug("Unable to write path '{}' in file set '{}'", filePath, set, failureCause);
+            responder.sendError(400, String.format("Unable to write path '%s' in file set '%s'. Reason: '%s'",
+                                                   filePath, set, failureCause.getMessage()));
+          }
+        };
       } catch (IOException e) {
-        responder.sendError(400, String.format("Unable to write path '%s' in file set '%s'", filePath, set));
-        return;
+        responder.sendError(400, String.format("Unable to write path '%s' in file set '%s'. Reason: '%s'",
+                                               filePath, set, e.getMessage()));
+        return null;
       }
-      responder.sendStatus(200);
     }
   }
 }

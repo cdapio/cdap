@@ -26,7 +26,6 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
-import co.cask.cdap.api.workflow.WorkflowActionSpecification;
 
 import java.io.BufferedReader;
 import java.io.IOException;

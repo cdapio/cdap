@@ -41,6 +41,8 @@ import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.NamespaceStore;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -93,6 +95,7 @@ public class ExploreServiceTwillRunnable extends AbstractMasterTwillRunnable {
         @Override
         protected void configure() {
           bind(Store.class).to(DefaultStore.class);
+          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
         }
       });
 

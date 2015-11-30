@@ -17,11 +17,15 @@
 package co.cask.cdap.common.lang;
 
 import co.cask.cdap.api.app.Application;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.VersionInfo;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import javax.script.ScriptEngineFactory;
+import javax.ws.rs.PUT;
 
 /**
  */
@@ -37,11 +41,34 @@ public class FilterClassLoaderTest {
   public void testAPIVisible() throws ClassNotFoundException {
     FilterClassLoader classLoader = FilterClassLoader.create(this.getClass().getClassLoader());
     Assert.assertSame(Application.class, classLoader.loadClass(Application.class.getName()));
+
+    // Dependencies of API classes should also be visible
+    Assert.assertSame(Logger.class, classLoader.loadClass(Logger.class.getName()));
+
+    // JAX-RS classes should also be visible
+    Assert.assertSame(PUT.class, classLoader.loadClass(PUT.class.getName()));
   }
 
   @Test
   public void testBootstrapResourcesVisible() throws IOException {
     FilterClassLoader classLoader = FilterClassLoader.create(this.getClass().getClassLoader());
-    Assert.assertNotNull(classLoader.getResource("META-INF/services/" + ScriptEngineFactory.class.getName()));
+    Assert.assertNotNull(classLoader.getResource("java/lang/String.class"));
+  }
+
+  @Test
+  public void testHadoopResourcesVisible() throws ClassNotFoundException {
+    FilterClassLoader classLoader = FilterClassLoader.create(this.getClass().getClassLoader());
+    ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(classLoader);
+    try {
+      // VersionInfo will based on the context class loader to find the "common-version-info.properties" file.
+      // If it is missing/failed to locate that, getVersion() will returns "Unknown".
+      Assert.assertNotEquals("Unknown", VersionInfo.getVersion());
+    } finally {
+      ClassLoaders.setContextClassLoader(oldClassLoader);
+    }
+
+    // Load standard Hadoop class. It should pass. The class loader of the loaded class should be the same
+    // as the system Configuration class.
+    Assert.assertSame(Configuration.class, classLoader.loadClass(Configuration.class.getName()));
   }
 }

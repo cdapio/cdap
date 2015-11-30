@@ -14,102 +14,104 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailOutputController', function($state, $scope, MyDataSource, MyMetricsQueryHelper, MyChartHelpers, myFlowsApi) {
+ class FlowletDetailOutputController {
+   constructor($state, $scope, MyCDAPDataSource, MyMetricsQueryHelper, MyChartHelpers, myFlowsApi) {
+     let dataSrc = new MyCDAPDataSource($scope);
+     let flowletid = $scope.FlowletsController.activeFlowlet.name;
+     let runid = $scope.RunsController.runs.selected.runid;
+     this.outputs = [];
 
-    var dataSrc = new MyDataSource($scope);
-    var flowletid = $scope.FlowletsController.activeFlowlet.name;
-    var runid = $scope.RunsController.runs.selected.runid;
-    this.outputs = [];
+     this.chartSettings = {
+       chartMetadata: {
+         showx: true,
+         showy: true,
+         legend: {
+           show: false,
+           position: 'inset'
+         }
+       },
+       color: {
+         pattern: ['red']
+       },
+       isLive: true,
+       interval: 1000,
+       aggregate: 5
+     };
 
-    this.chartSettings = {
-      chartMetadata: {
-        showx: true,
-        showy: true,
-        legend: {
-          show: false,
-          position: 'inset'
-        }
-      },
-      color: {
-        pattern: ['red']
-      },
-      isLive: true,
-      interval: 1000,
-      aggregate: 5
-    };
+     let metric = {
+       startTime: 'now-90s',
+       endTime: 'now',
+       resolution: '1s',
+       names: ['system.process.events.out']
+     };
 
-    var metric = {
-      startTime: 'now-90s',
-      endTime: 'now',
-      resolution: '1s',
-      names: ['system.process.events.out']
-    };
+     let params = {
+       namespace: $state.params.namespace,
+       appId: $state.params.appId,
+       flowId: $state.params.programId,
+       scope: $scope
+     };
 
-    var params = {
-      namespace: $state.params.namespace,
-      appId: $state.params.appId,
-      flowId: $state.params.programId,
-      scope: $scope
-    };
+     let flowletTags = {
+       namespace: $state.params.namespace,
+       app: $state.params.appId,
+       flow: $state.params.programId,
+       run: runid,
+       flowlet: flowletid
+     };
 
-    var flowletTags = {
-      namespace: $state.params.namespace,
-      app: $state.params.appId,
-      flow: $state.params.programId,
-      run: runid,
-      flowlet: flowletid
-    };
+     myFlowsApi.get(params)
+       .$promise
+       .then( (res) => {
 
-    myFlowsApi.get(params)
-      .$promise
-      .then(function (res) {
+         // OUTPUTS
+         angular.forEach(res.connections, (v) => {
+           if (v.sourceName === flowletid) {
+             this.outputs.push(v.targetName);
+           }
+         });
 
-        // OUTPUTS
-        angular.forEach(res.connections, function(v) {
-          if (v.sourceName === flowletid) {
-            this.outputs.push(v.targetName);
-          }
-        }.bind(this));
+         if (this.outputs.length > 0) {
+           dataSrc
+             .poll({
+               _cdapPath: '/metrics/query',
+               method: 'POST',
+               interval: 5000,
+               body: MyMetricsQueryHelper.constructQuery('qid', flowletTags, metric)
+             },  (res) => {
+               var processedData = MyChartHelpers.processData(
+                 res,
+                 'qid',
+                 metric.names,
+                 metric.resolution
+               );
 
-        if (this.outputs.length > 0) {
-          dataSrc
-            .poll({
-              _cdapPath: '/metrics/query',
-              method: 'POST',
-              interval: 5000,
-              body: MyMetricsQueryHelper.constructQuery('qid', flowletTags, metric)
-            }, function (res) {
-              var processedData = MyChartHelpers.processData(
-                res,
-                'qid',
-                metric.names,
-                metric.resolution
-              );
+               processedData = MyChartHelpers.c3ifyData(processedData, metric, metric.names);
+               this.chartData = {
+                 x: 'x',
+                 columns: processedData.columns,
+                 keys: {
+                   x: 'x'
+                 }
+               };
+             });
 
-              processedData = MyChartHelpers.c3ifyData(processedData, metric, metric.names);
-              this.chartData = {
-                x: 'x',
-                columns: processedData.columns,
-                keys: {
-                  x: 'x'
-                }
-              };
-            }.bind(this));
+           // Total
+           dataSrc
+             .poll({
+               _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags) + '&metric=system.process.events.out',
+               method: 'POST'
+             }, (res) => {
+               if (res.series[0]) {
+                 this.total = res.series[0].data[0].value;
+               }
+             });
 
-          // Total
-          dataSrc
-            .poll({
-              _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(flowletTags) + '&metric=system.process.events.out',
-              method: 'POST'
-            }, function(res) {
-              if (res.series[0]) {
-                this.total = res.series[0].data[0].value;
-              }
-            }.bind(this));
+         }
 
-        }
-
-      }.bind(this));
-
-  });
+       });
+   }
+ }
+FlowletDetailOutputController.$inject = ['$state', '$scope', 'MyCDAPDataSource', 'MyMetricsQueryHelper', 'MyChartHelpers', 'myFlowsApi'];
+angular.module(`${PKG.name}.feature.flows`)
+  .controller('FlowletDetailOutputController', FlowletDetailOutputController);

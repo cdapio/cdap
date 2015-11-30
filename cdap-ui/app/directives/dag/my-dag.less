@@ -19,20 +19,29 @@
 @import "../../styles/themes/cdap/mixins.less";
 
 my-dag {
+  .zoom-control {
+    z-index: 1500;
+    position: absolute;
+    right: 10px;
+    top: 5px;
+  }
+
   .my-js-dag {
-    position: relative;
     width: inherit;
-    overflow: auto;
     height: inherit;
-    background-image: url('../img/grid.png');
-    border: 0.5px solid #c5c7d3;
-    margin-top: -1px;
+
+    #diagram-container {
+      position: relative;
+      width: inherit;
+      height: inherit;
+      overflow: hidden;
+    }
 
     &.disabled {
       background-image: none;
-      border: 1px solid #dddddd;
-      background-color: #f6f6f6;
-      border-radius: 4px;
+      border: 0;
+      background-color: @table-bg;
+      .border-radius(4px);
       .box {
         cursor: pointer;
       }
@@ -43,7 +52,7 @@ my-dag {
       text-align: center;
       cursor: move;
       left: 100px;
-      top: 250px;
+      top: 150px;
       padding: 0;
       height: 66px;
       width: 105px;
@@ -82,23 +91,23 @@ my-dag {
       }
       &.realtimesource, &.batchsource {
         color: #48c038;
+        left: 10vw;
         .node {
           border: 3px solid #48c038;
-          left: 10vw;
         }
       }
       &.transform {
         color: #4586f3;
+        left: 30vw;
         .node {
           border: 3px solid #4586f3;
-          left: 30vw;
         }
       }
       &.realtimesink, &.batchsink {
         color: #8367df;
+        left: 50vw;
         .node {
           border: 3px solid #8367df;
-          left: 50vw;
         }
       }
 
@@ -124,7 +133,7 @@ my-dag {
       }
 
       .label-as-badge {
-        border-radius: 50%;
+        .border-radius(50%);
       }
 
       .error-node-notification {
@@ -155,7 +164,7 @@ my-dag {
 
       &.well {
         background-color: @brand-danger;
-        border-radius: 8px;
+        .border-radius(8px);
         color: white;
       }
     }
@@ -163,9 +172,10 @@ my-dag {
     #dag-container {
       height: 100%;
       width: inherit;
+      position: absolute;
     }
 
-    ._jsPlumb_endpoint {
+    .jsplumb-endpoint {
       svg {
         overflow: visible;
       }
@@ -174,29 +184,28 @@ my-dag {
         r: 2px;
         stroke-width: 8px;
       }
-      &._sourceAnchor circle {
+      &-anchor-sourceAnchor circle {
         stroke: #48c038;
       }
-      &._transformAnchor circle {
+      &-anchor-transformAnchor circle {
         stroke: #4586f3;
       }
-      &._sinkAnchor circle {
+      &-anchor-sinkAnchor circle {
         stroke: #8367df;
       }
     }
 
-    ._jsPlumb_connector path:last-child {
+    .jsplumb-connector path:last-child {
       stroke-width: 0;
     }
   }
 
-  div._jsPlumb_overlay {
+  div.jsplumb-overlay {
     div.label-container {
       cursor: pointer;
       height: 14px;
       width: 14px;
       text-align: center;
-      border-radius: 1px;
       background-color: white;
       line-height: 14px;
       font-size: 10px;
@@ -211,8 +220,6 @@ my-dag {
       i.icon-SchemaEdge {
         font-size: 9px;
       }
-    }
-    &.selected div.label-container {
     }
   }
 

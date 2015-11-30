@@ -1,0 +1,53 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<my-breadcrumbs></my-breadcrumbs>
+<div class="row">
+  <div class="clearfix">
+    <div class="col-xs-4 h2">
+      <div class="input-group">
+        <div class="input-group-addon">
+          <span class="fa fa-filter"></span>
+        </div>
+        <input type="text"
+            name="searchByTags"
+            ng-model="SearchController.searchTxt"
+            cask-focus="searchByTags"
+            class="form-control">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main-search">
+  <div class="row">
+    <div class="col-xs-12">
+        <a  class="btn btn-default "
+            ng-repeat="tag in SearchController.filteredTags = (SearchController.tags | filter: SearchController.searchTxt ) track by $index "
+            ui-sref="search.objectswithtags({tag: tag})"
+        >
+          <span class="fa fa-tag"></span>
+          <span ng-bind="tag" tooltip="{{tag}}"></span>
+        </a>
+        <div class="well well-xs" ng-if="SearchController.filteredTags.length === 0 && SearchController.loadingData === false">
+          <h3>No Tags available</h3>
+        </div>
+        <div class="well well-xs" ng-if="SearchController.loadingData === true">
+          <h3>Loading Tags</h3>
+        </div>
+    </div>
+  </div>
+</div>

@@ -23,13 +23,12 @@ import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
-import co.cask.tephra.TransactionAware;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -46,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -143,28 +141,6 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
   }
 
   /**
-   * TODO: This code will be gone (CDAP-961).
-   *
-   * Collect set of datasets that are usable in the job.
-   * We should get it from the MapReduce spec, not the application spec. However, this bug exists for a long time
-   * (in the old AbstractMapReduceTaskContextBuilder), hence not going to fix it due to CDAP-961.
-   *
-   * @return set of dataset names used by the program.
-   */
-  private Set<String> getDatasets(Program program, MapReduceContextConfig contextConfig) {
-    final Set<String> datasets = Sets.newHashSet(program.getApplicationSpecification().getDatasets().keySet());
-    String dataset = contextConfig.getInputDataSet();
-    if (dataset != null) {
-      datasets.add(dataset);
-    }
-    dataset = contextConfig.getOutputDataSet();
-    if (dataset != null) {
-      datasets.add(dataset);
-    }
-    return datasets;
-  }
-
-  /**
    * Creates a {@link CacheLoader} for the task context cache.
    */
   private CacheLoader<ContextCacheKey, BasicMapReduceTaskContext> createCacheLoader(final Injector injector) {
@@ -192,19 +168,15 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
         MetricsCollectionService metricsCollectionService =
           (taskType == null) ? null : injector.getInstance(MetricsCollectionService.class);
 
-        BasicMapReduceTaskContext context = new BasicMapReduceTaskContext(
-          program, taskType, contextConfig.getRunId(), key.getTaskAttemptID().getTaskID().toString(),
-          contextConfig.getArguments(), getDatasets(program, contextConfig), spec, contextConfig.getLogicalStartTime(),
-          contextConfig.getWorkflowToken(), discoveryServiceClient, metricsCollectionService, datasetFramework,
-          classLoader.getPluginInstantiator()
-        );
+        TransactionSystemClient txClient = injector.getInstance(TransactionSystemClient.class);
 
-        // propagating tx to all txAware guys
-        // NOTE: tx will be committed by client code
-        for (TransactionAware txAware : context.getDatasetInstantiator().getTransactionAware()) {
-          txAware.startTx(contextConfig.getTx());
-        }
-        return context;
+        return new BasicMapReduceTaskContext(
+          program, taskType, contextConfig.getRunId(), key.getTaskAttemptID().getTaskID().toString(),
+          contextConfig.getArguments(), spec, contextConfig.getLogicalStartTime(),
+          contextConfig.getWorkflowToken(), discoveryServiceClient, metricsCollectionService, txClient,
+          contextConfig.getTx(), datasetFramework, classLoader.getPluginInstantiator(),
+          contextConfig.getLocalizedResources()
+        );
       }
     };
   }

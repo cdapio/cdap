@@ -15,9 +15,11 @@
        }
     }
   },
-  "schema" : {
-     "widget": "schema",
-     "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string", "map<string, string>" ],
-     "schema-default-type" : "string"
+  "outputschema": {
+    "schema" : {
+      "widget": "schema",
+      "schema-types" : [ "boolean", "int", "long", "float", "double", "bytes", "string", "map<string, string>" ],
+      "schema-default-type" : "string"
+    }
   }
 }

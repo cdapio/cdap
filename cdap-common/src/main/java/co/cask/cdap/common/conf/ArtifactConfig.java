@@ -19,6 +19,7 @@ package co.cask.cdap.common.conf;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -28,6 +29,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
 import java.lang.reflect.Type;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -40,14 +42,16 @@ public class ArtifactConfig  {
     .create();
   private final Set<ArtifactRange> parents;
   private final Set<PluginClass> plugins;
+  private final Map<String, String> properties;
 
   public ArtifactConfig() {
-    this(ImmutableSet.<ArtifactRange>of(), ImmutableSet.<PluginClass>of());
+    this(ImmutableSet.<ArtifactRange>of(), ImmutableSet.<PluginClass>of(), ImmutableMap.<String, String>of());
   }
 
-  public ArtifactConfig(Set<ArtifactRange> parents, Set<PluginClass> plugins) {
+  public ArtifactConfig(Set<ArtifactRange> parents, Set<PluginClass> plugins, Map<String, String> properties) {
     this.parents = ImmutableSet.copyOf(parents);
     this.plugins = ImmutableSet.copyOf(plugins);
+    this.properties = ImmutableMap.copyOf(properties);
   }
 
   public Set<ArtifactRange> getParents() {
@@ -56,6 +60,10 @@ public class ArtifactConfig  {
 
   public Set<PluginClass> getPlugins() {
     return plugins;
+  }
+
+  public Map<String, String> getProperties() {
+    return properties;
   }
 
   public boolean hasParent(Id.Artifact artifactId) {

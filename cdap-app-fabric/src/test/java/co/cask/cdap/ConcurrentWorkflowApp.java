@@ -17,68 +17,71 @@
 package co.cask.cdap;
 
 import co.cask.cdap.api.app.AbstractApplication;
-import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
-import com.google.common.collect.Maps;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- *
+ * App to test multiple concurrent runs of a single workflow.
  */
 public class ConcurrentWorkflowApp extends AbstractApplication {
+  private static final Logger LOG = LoggerFactory.getLogger(ConcurrentWorkflowApp.class);
+  public static final String FILE_TO_CREATE_ARG = "file.to.create";
+  public static final String DONE_FILE_ARG = "done.file";
 
   @Override
   public void configure() {
-    setName("ConcurrentWorkflowApp");
     setDescription("Application with concurrently running Workflow instances");
     addWorkflow(new ConcurrentWorkflow());
-
-    // Schedule Workflow
-    Map<String, String> schedule1Properties = Maps.newHashMap();
-    schedule1Properties.put("schedule.name", "concurrentWorkflowSchedule1");
-    scheduleWorkflow(Schedules.createTimeSchedule("concurrentWorkflowSchedule1", "", "* * * * *"),
-                     "ConcurrentWorkflow", schedule1Properties);
-
-    Map<String, String> schedule2Properties = Maps.newHashMap();
-    schedule2Properties.put("schedule.name", "concurrentWorkflowSchedule2");
-    scheduleWorkflow(Schedules.createTimeSchedule("concurrentWorkflowSchedule2", "", "* * * * *"),
-                     "ConcurrentWorkflow", schedule2Properties);
   }
 
   /**
-   *
+   * Workflow with a single action to test concurrent runs.
    */
-  private static class ConcurrentWorkflow extends AbstractWorkflow {
+  public static class ConcurrentWorkflow extends AbstractWorkflow {
 
     @Override
     public void configure() {
-      setName("ConcurrentWorkflow");
       setDescription("Workflow configured to run concurrently.");
       addAction(new SimpleAction());
     }
   }
 
-  static final class SimpleAction extends AbstractWorkflowAction {
+  /**
+   * Custom action that creates a file passed as a runtime argument and then waits for a done file to be created
+   * externally.
+   */
+  public static final class SimpleAction extends AbstractWorkflowAction {
     @Override
     public void run() {
+      Map<String, String> runtimeArguments = getContext().getRuntimeArguments();
+      File file = new File(runtimeArguments.get(FILE_TO_CREATE_ARG));
+      LOG.info("Creating file - " + file);
       try {
-        String scheduleName = getContext().getRuntimeArguments().get("schedule.name");
-
-        File file = new File(getContext().getRuntimeArguments().get(scheduleName + ".file"));
-        System.out.println("Creating file - " + getContext().getRuntimeArguments().get(scheduleName + ".file"));
-        file.createNewFile();
-        File doneFile = new File(getContext().getRuntimeArguments().get("done.file"));
-
-        while (!doneFile.exists()) {
-          TimeUnit.MILLISECONDS.sleep(50);
-        }
-      } catch (Exception e) {
-        // no-op
+        Preconditions.checkArgument(file.createNewFile());
+      } catch (IOException e) {
+        LOG.error("Exception while creating file {}", file, e);
+        throw Throwables.propagate(e);
       }
+      File doneFile = new File(runtimeArguments.get(DONE_FILE_ARG));
+
+      while (!doneFile.exists()) {
+        try {
+          TimeUnit.MILLISECONDS.sleep(50);
+        } catch (InterruptedException e) {
+          LOG.warn("Interrupted while waiting for done file.");
+          Thread.currentThread().interrupt();
+        }
+      }
+      LOG.info("Found done file {}. Workflow completed.", doneFile);
     }
   }
 }

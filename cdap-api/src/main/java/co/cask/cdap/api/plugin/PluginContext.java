@@ -20,7 +20,6 @@ import co.cask.cdap.api.annotation.Beta;
 
 /**
  * Provides access to plugin context when a program is executing.
- * TODO: Rename the methods in the class to the ones in AdapterContext once templates/adapters are removed.
  */
 @Beta
 public interface PluginContext {

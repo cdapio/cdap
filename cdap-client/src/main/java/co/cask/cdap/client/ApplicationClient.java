@@ -27,6 +27,7 @@ import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.ApplicationDetail;
 import co.cask.cdap.proto.ApplicationRecord;
+import co.cask.cdap.proto.BatchProgramStatus;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
@@ -79,8 +80,7 @@ public class ApplicationClient {
   }
 
   public ApplicationClient(ClientConfig config) {
-    this.config = config;
-    this.restClient = new RESTClient(config);
+    this(config, new RESTClient(config));
   }
 
   /**
@@ -470,14 +470,11 @@ public class ApplicationClient {
     URL url = config.resolveNamespacedURLV3(app.getNamespace(), path);
     HttpRequest request = HttpRequest.get(url).build();
 
-    ObjectResponse<ApplicationDetail> response = ObjectResponse.fromJsonBody(
-      restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND),
-      new TypeToken<ApplicationDetail>() { });
-
+    HttpResponse response = restClient.execute(request, config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(app);
     }
 
-    return response.getResponseObject().getPrograms();
+    return ObjectResponse.fromJsonBody(response, ApplicationDetail.class).getResponseObject().getPrograms();
   }
 }

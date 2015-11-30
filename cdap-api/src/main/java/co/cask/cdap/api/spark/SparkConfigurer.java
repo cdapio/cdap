@@ -20,12 +20,13 @@ import co.cask.cdap.api.DatasetConfigurer;
 import co.cask.cdap.api.ProgramConfigurer;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.api.plugin.PluginConfigurer;
 
 /**
  * Configurer for configuring {@link Spark}.
  */
 @Beta
-public interface SparkConfigurer extends ProgramConfigurer, DatasetConfigurer {
+public interface SparkConfigurer extends ProgramConfigurer, DatasetConfigurer, PluginConfigurer {
 
   /**
    * Sets the Spark job main class name in specification. The main method of this class will be called to run the

@@ -26,8 +26,8 @@ angular.module(PKG.name + '.commons')
       templateUrl: 'instance-control/instance-control.html',
     };
   })
-  .controller('instanceControlController', function ($scope, MyDataSource) {
-    var myDataSrc = new MyDataSource($scope);
+  .controller('instanceControlController', function ($scope, MyCDAPDataSource) {
+    var myDataSrc = new MyCDAPDataSource($scope);
 
     myDataSrc.request({
       _cdapPath: $scope.basePath + '/instances'

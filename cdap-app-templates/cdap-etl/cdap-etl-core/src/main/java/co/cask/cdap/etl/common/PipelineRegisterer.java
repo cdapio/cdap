@@ -35,7 +35,9 @@ import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Registers plugins needed by an ETL pipeline.
@@ -64,6 +66,7 @@ public class PipelineRegisterer {
    */
   public Pipeline registerPlugins(ETLConfig config, Class errorDatasetType, DatasetProperties errorDatasetProperties,
                                   boolean sinkWithErrorDataset) {
+    config = config.getCompatibleConfig();
     ETLStage sourceConfig = config.getSource();
     List<ETLStage> transformConfigs = config.getTransforms();
     List<ETLStage> sinkConfigs = config.getSinks();
@@ -76,18 +79,19 @@ public class PipelineRegisterer {
     if (sinkConfigs.isEmpty()) {
       throw new IllegalArgumentException("At least one sink must be specified.");
     }
+    // validate that the stage names are unique
+    validateStageNames(sourceConfig, config.getTransforms(), config.getSinks());
 
-    // plugin num starts at 1 and increments for each stage in the pipeline
-    int pluginNum = 1;
-    String sourcePluginId = PluginID.from("source", sourceConfig.getName(), pluginNum).getID();
-    pluginNum++;
+    String sourcePluginId = sourceConfig.getName();
 
     // instantiate source
-    PipelineConfigurable source = configurer.usePlugin(sourcePluginType, sourceConfig.getName(),
+    PipelineConfigurable source = configurer.usePlugin(sourcePluginType,
+                                                       sourceConfig.getPlugin().getName(),
                                                        sourcePluginId, getPluginProperties(sourceConfig));
     if (source == null) {
       throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found.",
-                                                       Constants.Source.PLUGINTYPE, sourceConfig.getName()));
+                                                       Constants.Source.PLUGINTYPE,
+                                                       sourceConfig.getPlugin().getName()));
     }
     // configure source, allowing it to add datasets, streams, etc
     PipelineConfigurer sourceConfigurer = new DefaultPipelineConfigurer(configurer, sourcePluginId);
@@ -97,16 +101,16 @@ public class PipelineRegisterer {
     List<TransformInfo> transformInfos = new ArrayList<>(transformConfigs.size());
     List<Transformation> transforms = new ArrayList<>(transformConfigs.size());
     for (ETLStage transformConfig : transformConfigs) {
+      String transformId = transformConfig.getName();
 
-      // Generate a transformId based on transform name and the array index (since there could
-      // multiple transforms - ex, N filter transforms in the same pipeline)
-      String transformId = PluginID.from(Constants.Transform.PLUGINTYPE, transformConfig.getName(), pluginNum).getID();
       PluginProperties transformProperties = getPluginProperties(transformConfig);
-      Transform transformObj = configurer.usePlugin(Constants.Transform.PLUGINTYPE, transformConfig.getName(),
+      Transform transformObj = configurer.usePlugin(Constants.Transform.PLUGINTYPE,
+                                                    transformConfig.getPlugin().getName(),
                                                     transformId, transformProperties);
       if (transformObj == null) {
         throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
-                                                         Constants.Transform.PLUGINTYPE, transformConfig.getName()));
+                                                         Constants.Transform.PLUGINTYPE,
+                                                         transformConfig.getPlugin().getName()));
       }
       // if the transformation is configured to write filtered records to error dataset, we create that dataset.
       if (transformConfig.getErrorDatasetName() != null) {
@@ -117,14 +121,12 @@ public class PipelineRegisterer {
       transformObj.configurePipeline(transformConfigurer);
       transformInfos.add(new TransformInfo(transformId, transformConfig.getErrorDatasetName()));
       transforms.add(transformObj);
-
-      pluginNum++;
     }
 
     List<SinkInfo> sinksInfo = new ArrayList<>();
     List<PipelineConfigurable> sinks = new ArrayList<>();
     for (ETLStage sinkConfig : sinkConfigs) {
-      String sinkPluginId = PluginID.from(Constants.Sink.PLUGINTYPE, sinkConfig.getName(), pluginNum).getID();
+      String sinkPluginId = sinkConfig.getName();
 
       // create error dataset for sink - if the sink supports it and error dataset is configured for it.
       if (sinkWithErrorDataset && sinkConfig.getErrorDatasetName() != null) {
@@ -134,19 +136,17 @@ public class PipelineRegisterer {
       sinksInfo.add(new SinkInfo(sinkPluginId, sinkConfig.getErrorDatasetName()));
 
       // try to instantiate the sink
-      PipelineConfigurable sink = configurer.usePlugin(sinkPluginType, sinkConfig.getName(),
+      PipelineConfigurable sink = configurer.usePlugin(sinkPluginType, sinkConfig.getPlugin().getName(),
         sinkPluginId, getPluginProperties(sinkConfig));
       if (sink == null) {
         throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found. " +
             "Please check that an artifact containing the plugin exists, and that it extends the etl application.",
-          Constants.Sink.PLUGINTYPE, sinkConfig.getName()));
+          Constants.Sink.PLUGINTYPE, sinkConfig.getPlugin().getName()));
       }
       // run configure pipeline on sink to let it add datasets, etc.
       PipelineConfigurer sinkConfigurer = new DefaultPipelineConfigurer(configurer, sinkPluginId);
       sink.configurePipeline(sinkConfigurer);
       sinks.add(sink);
-
-      pluginNum++;
     }
 
     // Validate Source -> Transform -> Sink hookup
@@ -159,10 +159,31 @@ public class PipelineRegisterer {
     return new Pipeline(sourcePluginId, sinksInfo, transformInfos);
   }
 
+  @VisibleForTesting
+  static void validateStageNames(ETLStage sourceConfig, List<ETLStage> transforms, List<ETLStage> sinks) {
+    Set<String> uniqueStageNames = new HashSet<>();
+    uniqueStageNames.add(sourceConfig.getName());
+    validateUniqueStageName(uniqueStageNames, transforms);
+    validateUniqueStageName(uniqueStageNames, sinks);
+  }
+
+
+  private static void validateUniqueStageName(Set<String> uniqueStageNames, List<ETLStage> stages) {
+    for (ETLStage stage : stages) {
+      boolean isUniqueStageName = uniqueStageNames.add(stage.getName());
+      if (!isUniqueStageName) {
+        throw new IllegalArgumentException(
+          String.format("Stage name : %s is not unique, its used for more than one stage in the pipeline, " +
+                          "check the pipeline config",
+                        stage.getName()));
+      }
+    }
+  }
+
   private PluginProperties getPluginProperties(ETLStage config) {
     PluginProperties.Builder builder = PluginProperties.builder();
-    if (config.getProperties() != null) {
-      builder.addAll(config.getProperties());
+    if (config.getPlugin().getProperties() != null) {
+      builder.addAll(config.getPlugin().getProperties());
     }
     return builder.build();
   }

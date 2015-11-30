@@ -32,7 +32,6 @@ import com.google.gson.Gson;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
-import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -116,7 +115,7 @@ public class ClassLoaderTest {
                                                     ClassLoaderTest.class);
     // Create a class loader that load from that jar.
     File unpackDir = TMP_FOLDER.newFolder();
-    BundleJarUtil.unpackProgramJar(jar, unpackDir);
+    BundleJarUtil.unJar(jar, unpackDir);
     ClassLoader cl = new DirectoryClassLoader(unpackDir, null, "lib");
 
     // Wrap it with the WeakReference ClassLoader
@@ -143,8 +142,8 @@ public class ClassLoaderTest {
     bundler.createBundle(gsonJar, Gson.class);
 
     // Unpack them
-    File guavaDir = BundleJarUtil.unpackProgramJar(guavaJar, TMP_FOLDER.newFolder());
-    File gsonDir = BundleJarUtil.unpackProgramJar(gsonJar, TMP_FOLDER.newFolder());
+    File guavaDir = BundleJarUtil.unJar(guavaJar, TMP_FOLDER.newFolder());
+    File gsonDir = BundleJarUtil.unJar(gsonJar, TMP_FOLDER.newFolder());
 
     // Create a DirectoryClassLoader using guava dir as the main directory, with the gson dir in the extra classpath
     String extraClassPath = gsonDir.getAbsolutePath() + File.pathSeparatorChar + gsonDir.getAbsolutePath() + "/lib/*";

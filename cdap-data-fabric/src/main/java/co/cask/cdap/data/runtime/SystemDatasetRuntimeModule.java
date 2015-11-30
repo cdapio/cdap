@@ -17,6 +17,8 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.lib.file.FileSetModule;
@@ -31,12 +33,15 @@ import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryMetricsTableModul
 import co.cask.cdap.data2.dataset2.module.lib.inmemory.InMemoryTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBMetricsTableModule;
 import co.cask.cdap.data2.dataset2.module.lib.leveldb.LevelDBTableModule;
-import co.cask.cdap.data2.metadata.dataset.BusinessMetadataDatasetModule;
+import co.cask.cdap.data2.metadata.dataset.MetadataDatasetModule;
 import co.cask.cdap.data2.metadata.lineage.LineageDatasetModule;
 import co.cask.cdap.data2.registry.UsageDatasetModule;
 import co.cask.cdap.data2.transaction.queue.hbase.HBaseQueueDatasetModule;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
 import com.google.inject.Module;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Names;
 
@@ -79,6 +84,31 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
     };
   }
 
+  private static final class OrderedTableModuleProvider implements Provider<DatasetModule> {
+    private final CConfiguration cConf;
+
+    @Inject
+    private OrderedTableModuleProvider(CConfiguration cConf) {
+      this.cConf = cConf;
+    }
+
+    @Override
+    public DatasetModule get() {
+      String moduleName = cConf.get(Constants.Dataset.Extensions.DISTMODE_TABLE);
+
+      if (moduleName != null) {
+        try {
+          return (DatasetModule) Class.forName(moduleName.trim()).newInstance();
+        } catch (ClassCastException | ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+          // Guice frowns on throwing exceptions from Providers, but if necesary use RuntimeException
+          throw new RuntimeException("Unable to obtain distributed table module extension class", ex);
+        }
+      } else {
+        return new HBaseTableModule();
+      }
+    }
+  }
+
   @Override
   public Module getDistributedModules() {
     return new AbstractModule() {
@@ -88,7 +118,7 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
                                                                             Names.named("defaultDatasetModules"));
 
         // NOTE: order is important due to dependencies between modules
-        mapBinder.addBinding("orderedTable-hbase").toInstance(new HBaseTableModule());
+        mapBinder.addBinding("orderedTable-hbase").toProvider(OrderedTableModuleProvider.class).in(Singleton.class);
         mapBinder.addBinding("metricsTable-hbase").toInstance(new HBaseMetricsTableModule());
         bindDefaultModules(mapBinder);
         mapBinder.addBinding("queueDataset").toInstance(new HBaseQueueDatasetModule());
@@ -107,7 +137,7 @@ public class SystemDatasetRuntimeModule extends RuntimeModule {
     mapBinder.addBinding("objectMappedTable").toInstance(new ObjectMappedTableModule());
     mapBinder.addBinding("cube").toInstance(new CubeModule());
     mapBinder.addBinding("usage").toInstance(new UsageDatasetModule());
-    mapBinder.addBinding("businessMetadata").toInstance(new BusinessMetadataDatasetModule());
+    mapBinder.addBinding("metadata").toInstance(new MetadataDatasetModule());
     mapBinder.addBinding("lineage").toInstance(new LineageDatasetModule());
   }
 }

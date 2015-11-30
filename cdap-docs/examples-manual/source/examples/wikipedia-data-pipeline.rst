@@ -24,7 +24,7 @@ This example can be run in both online and offline modes.
   *pageTitleStream*, each event of which is an element from the output of the `Facebook
   "Likes" API
   <https://developers.facebook.com/docs/graph-api/reference/v2.4/object/likes>`__. For
-  each event, it tries to download Wikipedia data for the page using the `MediaWiki
+  each event, it downloads Wikipedia data for the page using the `MediaWiki
   Wikipedia API <https://www.mediawiki.org/wiki/API:Main_page>`__. It stores the
   downloaded data in the ``KeyValueTable`` dataset *wikiData*.
 
@@ -42,13 +42,14 @@ output in another ``KeyValueTable`` dataset called *normalized*.
 
 The *WikipediaPipelineWorkflow* then contains a fork, with two branches:
 
-- One branch runs the Apache Spark program *SparkWikipediaAnalyzer*. This program consumes
-  normalized data and runs topic modeling on it using the 
-  `Latent Dirichlet Allocation (LDA) <https://en.wikipedia.org/wiki/Latent_Dirichlet_allocation>`__
-  algorithm. It stores its output in the CDAP Table dataset *lda*, with one row for each
-  iteration, and a column per topic containing the score for that topic.
-
-..
+- One branch runs the Apache Spark program *SparkWikipediaClustering*. This program can be configured to either run 
+  `Latent Dirichlet Allocation (LDA) 
+  <http://spark.apache.org/docs/latest/mllib-clustering.html#latent-dirichlet-allocation-lda>`__, or 
+  `K-Means <http://spark.apache.org/docs/latest/mllib-clustering.html#k-means>`__. The algorithm can be chosen by
+  setting the field *clusteringAlgorithm* in an application config. By default, the workflow is configured to use
+  *LDA*, if the *clusteringAlgorithm* field is not specified. This program consumes normalized
+  data and runs clustering on it using the configured algorithm. It stores its output in the CDAP Table dataset
+  *clustering*, with one row for each iteration, and a column per topic containing the score for that topic.
 
 - The other branch contains a MapReduce program *TopNMapReduce* that consumes the
   normalized data and produces the top "N" words in the dataset *topn*.
@@ -62,12 +63,14 @@ of the application are tied together by the class ``WikipediaPipelineApp``:
 
 .. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineApp.java
    :language: java
-   :lines: 24-57
+   :lines: 26-77
 
 This application demonstrates:
 
 - The use of assigning unique names, as the same MapReduce (*StreamToDataset*) is used twice in the workflow
-  (*WikipediaPipelineWorkflow*) under two different names.
+  (*WikipediaPipelineWorkflow*) under two different names. Also, depending on the chosen *clusteringAlgorithm*, the
+  name of the *SparkWikipediaClustering* will either be *SparkWikipediaClustering-LDA* or
+  *SparkWikipediaClustering-KMEANS*.
   
 - The use of Workflow Tokens in:
 
@@ -78,6 +81,11 @@ This application demonstrates:
     Spark Accumulators to the workflow token)
   - Assertions in application unit tests
 
+- The use of application configs to create from the same artifact different applications. Depending on the
+  value chosen for the *clusteringAlgorithm*, there can be two different applications, one using LDA for clustering,
+  and the other using K-Means. The application is packaged with the two possible application config JSON files at
+  *resources/wikipedia-kmeans.json* and *resources/wikipedia-lda.json* in the application directory.
+
 
 .. Building and Starting
 .. =====================
@@ -86,6 +94,28 @@ This application demonstrates:
 .. |application-overview-page| replace:: :cdap-ui-apps-programs:`application overview page, programs tab <WikipediaPipeline>`
 
 .. include:: _includes/_building-starting-running.txt
+
+
+Deploying the Example
+=====================
+Since deploying the WikipediaPipelineApp involves loading an artifact and creating an application from it, the
+preferred method of deploying it is to use the CDAP CLI.
+
+- Load the Artifact::
+
+    $ cdap-cli.sh load artifact target/WikipediaPipeline-3.3.0-SNAPSHOT.jar name WikipediaPipelineApp version
+    3.3.0-SNAPSHOT
+    Successfully added artifact with name 'WikipediaPipelineApp'
+
+- Create an application using LDA as the clustering algorithm::
+
+    $ cdap-cli.sh create app wiki-lda WikipediaPipelineApp 3.3.0-SNAPSHOT user resources/wikipedia-lda.json
+    Successfully created application
+
+- Create an application using K-Means as the clustering algorithm::
+
+    $ cdap-cli.sh create app wiki-kmeans WikipediaPipelineApp 3.3.0-SNAPSHOT user resources/wikipedia-kmeans.json
+    Successfully created application
 
 
 Running the Example

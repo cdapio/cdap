@@ -17,6 +17,8 @@
 package co.cask.cdap.data2.dataset2.lib.table;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
@@ -29,6 +31,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -117,6 +120,54 @@ public class ObjectMappedTableDatasetTest {
       results = records.scan(null, "123");
       Assert.assertFalse(results.hasNext());
       results.close();
+    } finally {
+      dsFrameworkUtil.deleteInstance(RECORDS_ID);
+    }
+  }
+
+  @Test
+  public void testGetSplits() throws Exception {
+    dsFrameworkUtil.createInstance(ObjectMappedTable.class.getName(), RECORDS_ID,
+                                   ObjectMappedTableProperties.builder().setType(Record.class).build());
+    try {
+      ObjectMappedTableDataset<Record> records = dsFrameworkUtil.getInstance(RECORDS_ID);
+      Record record = new Record(Integer.MAX_VALUE, Long.MAX_VALUE, Float.MAX_VALUE, Double.MAX_VALUE, "foobar",
+                                  Bytes.toBytes("foobar"), ByteBuffer.wrap(Bytes.toBytes("foobar")), UUID.randomUUID());
+      byte[] rowkey = Bytes.toBytes("row1");
+      records.write(rowkey, record);
+
+      // should not include the record, since upper bound is not inclusive
+      List<Split> splits = records.getSplits(1, null, rowkey);
+      List<Record> recordsRead = new ArrayList<>();
+      for (Split split : splits) {
+        SplitReader<byte[], Record> splitReader = records.createSplitReader(split);
+        try {
+          splitReader.initialize(split);
+          while (splitReader.nextKeyValue()) {
+            recordsRead.add(splitReader.getCurrentValue());
+          }
+        } finally {
+          splitReader.close();
+        }
+      }
+      Assert.assertEquals(0, recordsRead.size());
+
+      // should include the record, since lower bound is inclusive
+      splits = records.getSplits(1, rowkey, null);
+      recordsRead.clear();
+      for (Split split : splits) {
+        SplitReader<byte[], Record> splitReader = records.createSplitReader(split);
+        try {
+          splitReader.initialize(split);
+          while (splitReader.nextKeyValue()) {
+            recordsRead.add(splitReader.getCurrentValue());
+          }
+        } finally {
+          splitReader.close();
+        }
+      }
+      Assert.assertEquals(1, recordsRead.size());
+      Assert.assertEquals(record, recordsRead.get(0));
     } finally {
       dsFrameworkUtil.deleteInstance(RECORDS_ID);
     }

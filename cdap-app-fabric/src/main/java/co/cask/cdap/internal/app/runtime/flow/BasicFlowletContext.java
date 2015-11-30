@@ -31,6 +31,7 @@ import co.cask.cdap.common.utils.ImmutablePair;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -65,10 +66,11 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
                       Arguments runtimeArguments, FlowletSpecification flowletSpec,
                       MetricsCollectionService metricsCollectionService,
                       DiscoveryServiceClient discoveryServiceClient,
+                      TransactionSystemClient txClient,
                       DatasetFramework dsFramework) {
     super(program, runId, runtimeArguments, datasets,
           getMetricCollector(metricsCollectionService, program, flowletId, runId.getId(), instanceId),
-          dsFramework, discoveryServiceClient);
+          dsFramework, txClient, discoveryServiceClient, false);
     this.namespaceId = program.getNamespaceId();
     this.flowId = program.getName();
     this.flowletId = flowletId;
@@ -79,6 +81,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
     this.userMetrics = new ProgramUserMetrics(getMetricCollector(metricsCollectionService, program,
                                                                  flowletId, runId.getId(), instanceId));
     // TODO - does this have to cache the metric collectors? Metrics framework itself has a cache [CDAP-2334]
+    //noinspection NullableProblems
     this.queueMetrics = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new CacheLoader<String, MetricsContext>() {
@@ -88,6 +91,7 @@ final class BasicFlowletContext extends AbstractContext implements FlowletContex
         }
       });
 
+    //noinspection NullableProblems
     this.producerMetrics = CacheBuilder.newBuilder()
       .expireAfterAccess(1, TimeUnit.HOURS)
       .build(new CacheLoader<ImmutablePair<String, String>, MetricsContext>() {

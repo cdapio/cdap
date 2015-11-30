@@ -140,10 +140,9 @@ public abstract class AbstractDatasetProvider implements DatasetProvider {
    * @param <T> the type of DatasetType
    * @return an instance of the DatasetType
    */
-  public <T extends DatasetType> T getType(
-    DatasetTypeMeta implementationInfo,
-    ClassLoader classLoader,
-    DatasetClassLoaderProvider classLoaderProvider) {
+  public <T extends DatasetType> T getType(DatasetTypeMeta implementationInfo,
+                                           ClassLoader classLoader,
+                                           DatasetClassLoaderProvider classLoaderProvider) {
 
     if (classLoader == null) {
       classLoader = Objects.firstNonNull(Thread.currentThread().getContextClassLoader(), getClass().getClassLoader());
@@ -165,15 +164,24 @@ public abstract class AbstractDatasetProvider implements DatasetProvider {
 
       // try program class loader then cdap class loader
       try {
-        moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), classLoader, this);
-      } catch (ClassNotFoundException e) {
+        ClassLoader currentClassLoader = ClassLoaders.setContextClassLoader(classLoader);
         try {
-          moduleClass = ClassLoaders.loadClass(moduleMeta.getClassName(), null, this);
+          moduleClass = classLoader.loadClass(moduleMeta.getClassName());
+        } finally {
+          ClassLoaders.setContextClassLoader(currentClassLoader);
+        }
+      } catch (ClassNotFoundException e) {
+        // Load it with the CDAP system class loader
+        ClassLoader currentClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
+        try {
+          moduleClass = getClass().getClassLoader().loadClass(moduleMeta.getClassName());
         } catch (ClassNotFoundException e2) {
           e.addSuppressed(e2);
           LOG.error("Was not able to load dataset module class {} while trying to load type {}",
                     moduleMeta.getClassName(), implementationInfo, e);
           throw Throwables.propagate(e);
+        } finally {
+          ClassLoaders.setContextClassLoader(currentClassLoader);
         }
       }
 

@@ -218,9 +218,9 @@ public final class ClassPath {
     }
 
     /** Returns the url identifying the resource. */
+    @Nullable
     public final URL url() {
-      return checkNotNull(loader.getResource(resourceName),
-          "Failed to load resource: %s", resourceName);
+      return loader.getResource(resourceName);
     }
 
     /** Returns the fully qualified name of the resource. Such as "com/mycomp/foo/bar.txt". */

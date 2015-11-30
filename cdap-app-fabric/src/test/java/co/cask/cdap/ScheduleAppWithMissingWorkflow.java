@@ -29,7 +29,9 @@ public class ScheduleAppWithMissingWorkflow extends AbstractApplication {
     setName("ScheduleAppWithMissingWorkflow");
     setDescription("App that schedules a missing Workflow");
     addMapReduce(new NoOpMR());
-    scheduleWorkflow(Schedules.createTimeSchedule("EveryOneMinuteSchedule", "", "* * * * *"), "NonExistentWorkflow");
+    scheduleWorkflow(Schedules.builder("EveryOneMinuteSchedule")
+                       .createTimeSchedule("* * * * *"),
+                     "NonExistentWorkflow");
   }
 
   /**

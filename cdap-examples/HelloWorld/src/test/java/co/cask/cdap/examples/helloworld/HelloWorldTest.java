@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.examples.helloworld;
 
 import co.cask.cdap.api.metrics.RuntimeMetrics;
@@ -72,7 +73,7 @@ public class HelloWorldTest extends TestBase {
     // Wait service startup
     serviceManager.waitForStatus(true);
 
-    URL url = new URL(serviceManager.getServiceURL(15, TimeUnit.SECONDS), "greet");
+    URL url = new URL(serviceManager.getServiceURL(), "greet");
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     Assert.assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
     String response;

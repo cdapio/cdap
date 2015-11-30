@@ -23,8 +23,7 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.Callback;
 import co.cask.cdap.api.flow.flowlet.FailurePolicy;
@@ -115,19 +114,18 @@ public class WordCountApp extends AbstractApplication {
   /**
    * Flow that counts words coming from stream source.
    */
-  public static class WordCountFlow implements Flow {
+  public static class WordCountFlow extends AbstractFlow {
+
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("WordCountFlow")
-        .setDescription("Flow for counting words")
-        .withFlowlets().add(new StreamSource())
-                       .add(new Tokenizer())
-                       .add(new CountByField())
-        .connect().fromStream("text").to("StreamSource")
-                  .from("StreamSource").to("Tokenizer")
-                  .from("Tokenizer").to("CountByField")
-        .build();
+    protected void configureFlow() {
+      setName("WordCountFlow");
+      setDescription("Flow for counting words");
+      addFlowlet(new StreamSource());
+      addFlowlet(new Tokenizer());
+      addFlowlet(new CountByField());
+      connectStream("text", "StreamSource");
+      connect("StreamSource", "Tokenizer");
+      connect("Tokenizer", "CountByField");
     }
   }
 

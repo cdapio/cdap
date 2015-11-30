@@ -34,9 +34,9 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,10 +56,12 @@ import static org.junit.Assert.assertTrue;
 public abstract class AbstractIncrementHandlerTest {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractIncrementHandlerTest.class);
 
+  @ClassRule
+  public static final HBaseTestBase TEST_HBASE = new HBaseTestFactory().get();
+
   protected static final byte[] EMPTY_BYTES = new byte[0];
   protected static final byte[] FAMILY = Bytes.toBytes("i");
 
-  protected static HBaseTestBase testUtil;
   protected static Configuration conf;
   protected static CConfiguration cConf;
   protected static HBaseTableUtil tableUtil;
@@ -68,16 +70,9 @@ public abstract class AbstractIncrementHandlerTest {
 
   @BeforeClass
   public static void setup() throws Exception {
-    testUtil = new HBaseTestFactory().get();
-    testUtil.startHBase();
-    conf = testUtil.getConfiguration();
+    conf = TEST_HBASE.getConfiguration();
     cConf = CConfiguration.create();
     tableUtil = new HBaseTableUtilFactory(cConf).get();
-  }
-
-  @AfterClass
-  public static void tearDown() throws Exception {
-    testUtil.stopHBase();
   }
 
   @Test
@@ -146,7 +141,7 @@ public abstract class AbstractIncrementHandlerTest {
 
       assertColumn(table, row1, colA, 3);
 
-      testUtil.forceRegionFlush(tableBytes);
+      TEST_HBASE.forceRegionFlush(tableBytes);
 
       // verify increments after flush
       assertColumn(table, row1, colA, 3);
@@ -159,7 +154,7 @@ public abstract class AbstractIncrementHandlerTest {
       // verify increments merged well from hstore and memstore
       assertColumn(table, row1, colA, 6);
 
-      testUtil.forceRegionFlush(tableBytes);
+      TEST_HBASE.forceRegionFlush(tableBytes);
 
       // verify increments merged well into hstores
       assertColumn(table, row1, colA, 6);
@@ -170,11 +165,11 @@ public abstract class AbstractIncrementHandlerTest {
       table.put(newIncrement(row1, colA, 1));
 
       assertColumn(table, row1, colA, 9);
-      testUtil.forceRegionFlush(tableBytes);
+      TEST_HBASE.forceRegionFlush(tableBytes);
       assertColumn(table, row1, colA, 9);
 
       // verify increments merged well on minor compaction
-      testUtil.forceRegionCompact(tableBytes, false);
+      TEST_HBASE.forceRegionCompact(tableBytes, false);
       assertColumn(table, row1, colA, 9);
 
       // another round of increments to verify that merged on compaction merges well with memstore and with new hstores
@@ -183,12 +178,12 @@ public abstract class AbstractIncrementHandlerTest {
       table.put(newIncrement(row1, colA, 1));
 
       assertColumn(table, row1, colA, 12);
-      testUtil.forceRegionFlush(tableBytes);
+      TEST_HBASE.forceRegionFlush(tableBytes);
       assertColumn(table, row1, colA, 12);
 
       // do same, but with major compaction
       // verify increments merged well on minor compaction
-      testUtil.forceRegionCompact(tableBytes, true);
+      TEST_HBASE.forceRegionCompact(tableBytes, true);
       assertColumn(table, row1, colA, 12);
 
       // another round of increments to verify that merged on compaction merges well with memstore and with new hstores
@@ -197,7 +192,7 @@ public abstract class AbstractIncrementHandlerTest {
       table.put(newIncrement(row1, colA, 1));
 
       assertColumn(table, row1, colA, 15);
-      testUtil.forceRegionFlush(tableBytes);
+      TEST_HBASE.forceRegionFlush(tableBytes);
       assertColumn(table, row1, colA, 15);
 
     } finally {

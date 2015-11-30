@@ -15,9 +15,9 @@
 -->
 
 <br />
-<a ui-sref="adapters.detail({ adapterId: $state.params.appId })"
+<a ui-sref="hydrator.detail({ pipelineId: $state.params.appId })"
   class="dag-link">
-  <my-dag data-is-disabled="true"
-            ng-if="StatusController.nodes.length > 0"
-            data-config="StatusController.nodes"></my-dag>
+  <my-dag
+    data-is-disabled="true"
+  ></my-dag>
 </a>

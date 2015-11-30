@@ -1,0 +1,71 @@
+<!--
+  Copyright © 2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+<div ng-controller="HydratorSettingsController as HydratorSettingsController" class="pipeline-schedule">
+
+  <div class="bottompanel-header"
+       ng-if="HydratorSettingsController.templateType === HydratorSettingsController.GLOBALS.etlBatch">
+    <h3>
+      <span>Pipeline Schedule</span>
+    </h3>
+
+    <ul class="nav nav-tabs slanted-tabs" role="tablist">
+      <li role="presentation"
+        class="text-center"
+        ng-class="{ 'active': HydratorSettingsController.isBasic}"
+        ng-click="HydratorSettingsController.changeScheduler('BASIC')">
+        Simple
+      </li>
+      <li role="presentation"
+        class="text-center"
+        ng-class="{ 'active': !HydratorSettingsController.isBasic}"
+        ng-click="HydratorSettingsController.changeScheduler('ADVANCE')">
+        Cron Expression
+      </li>
+    </ul>
+  </div>
+
+  <div class="bottompanel-body">
+    <div ng-if="HydratorSettingsController.templateType === HydratorSettingsController.GLOBALS.etlBatch">
+      <div class="basic-cron" ng-if="HydratorSettingsController.isBasic">
+        <cron-selection class="select-wrapper" output="HydratorSettingsController.cron"
+          init="HydratorSettingsController.initialCron"></cron-selection>
+      </div>
+
+      <div class="form-group" ng-if="!HydratorSettingsController.isBasic">
+        <div class="col-sm-10">
+          <div data-name="field"
+               class="my-widget-container"
+               data-model="HydratorSettingsController.cron"
+               data-myconfig="{properties: {}, widget: 'schedule'}"
+               widget-container>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group" ng-if="HydratorSettingsController.templateType === HydratorSettingsController.GLOBALS.etlRealtime">
+      <label class="col-sm-2 control-label">Instances</label>
+      <div class="col-sm-10">
+        <input type="number"
+               ng-model="HydratorSettingsController.instance"
+               class="form-control"
+               min="1">
+      </div>
+    </div>
+  </div>
+
+</div>

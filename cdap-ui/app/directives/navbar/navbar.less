@@ -24,13 +24,18 @@ body {
     padding-bottom: 15px;
 
     a.navbar-brand {
+      max-width: 130px;
       > strong {
         display: inline-block;
         visibility: hidden;
         width: 84px;
       }
     }
-
+    span.cdap-logo {
+      display: inline-block;
+      width: 100px;
+      height: 24px;
+    }
     div.navbar-collapse {
 
       &.in {
@@ -269,7 +274,6 @@ body {
       }
     }
 
-    #navbar-search,
     #navbar-namespace {
       visibility: hidden;
     }
@@ -285,10 +289,9 @@ body {
         }
       }
 
-      a.navbar-brand {
-        background: url('@{img-path}/cdap.png') 15px center / 100px auto no-repeat;
+      span.cdap-logo {
+        background: url('@{img-path}/cdap_sprite.png') -240px -120px no-repeat;
       }
-
       div.navbar-collapse {
         // Namespace dropdown
         > ul.navbar-nav:first-child {
@@ -380,13 +383,6 @@ body {
   }
 }
 
-body.state-overview,
-body.state-apps, {
-  #navbar-search {
-    visibility: visible;
-  }
-}
-
 
 body.state-overview,
 body.state-operations-apps,
@@ -400,7 +396,7 @@ body.state-workflows,
 body.state-flows,
 body.state-mapreduce,
 body.state-services,
-body.state-adapters,
+body.state-hydrator,
 body.state-streams {
   #navbar-namespace {
     visibility: visible;

@@ -27,6 +27,12 @@ function myNavbarHydratorDirective (myAuth, MY_CONFIG) {
     link: function (scope) {
       scope.logout = myAuth.logout;
       scope.securityEnabled = MY_CONFIG.securityEnabled;
+    },
+    controller: function($scope, $state) {
+      $scope.highlightTab = $state.current.data && $state.current.data.highlightTab;
+      $scope.$on('$stateChangeSuccess', function(event, toState) {
+        $scope.highlightTab = toState.data && toState.data.highlightTab;
+      });
     }
   };
 });

@@ -36,6 +36,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
+import co.cask.cdap.store.NamespaceStore;
 import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Collections2;
@@ -69,10 +70,13 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private final Store store;
   private final ProgramRuntimeService runtimeService;
   private final CConfiguration configuration;
+  private final NamespaceStore nsStore;
 
   @Inject
-  public ProgramLifecycleService(Store store, ProgramRuntimeService runtimeService, CConfiguration configuration) {
+  ProgramLifecycleService(Store store, NamespaceStore nsStore,
+                          ProgramRuntimeService runtimeService, CConfiguration configuration) {
     this.store = store;
+    this.nsStore = nsStore;
     this.runtimeService = runtimeService;
     this.scheduledExecutorService = Executors.newScheduledThreadPool(1);
     this.configuration = configuration;
@@ -125,7 +129,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
    * @throws IOException if there is an error starting the program
    * @throws ProgramNotFoundException if program is not found
    */
-  public ProgramRuntimeService.RuntimeInfo start(final Id.Program id, Map<String, String> systemArgs,
+  public ProgramRuntimeService.RuntimeInfo start(final Id.Program id, final Map<String, String> systemArgs,
                                                  final Map<String, String> userArgs, boolean debug)
     throws IOException, ProgramNotFoundException, ApplicationNotFoundException {
     Program program = getProgram(id);
@@ -149,7 +153,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
             // If RunId is not time-based, use current time as start time
             startTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
           }
-          store.setStart(id, runId, startTimeInSeconds, twillRunId, userArgs);
+          store.setStart(id, runId, startTimeInSeconds, twillRunId, userArgs, systemArgs);
           if (state == ProgramController.State.COMPLETED) {
             completed();
           }
@@ -366,7 +370,7 @@ public class ProgramLifecycleService extends AbstractIdleService {
   private Id.Program retrieveProgramIdForRunRecord(ProgramType programType, String runId) {
 
     // Get list of namespaces (borrow logic from AbstractAppFabricHttpHandler#listPrograms)
-    List<NamespaceMeta> namespaceMetas = store.listNamespaces();
+    List<NamespaceMeta> namespaceMetas = nsStore.list();
 
     // For each, get all programs under it
     Id.Program targetProgramId = null;

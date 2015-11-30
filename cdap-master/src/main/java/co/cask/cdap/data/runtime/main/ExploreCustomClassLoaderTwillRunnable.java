@@ -18,7 +18,6 @@ package co.cask.cdap.data.runtime.main;
 
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.InstantiatorFactory;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.reflect.TypeToken;
 import org.apache.twill.api.AbstractTwillRunnable;
@@ -29,13 +28,12 @@ import org.apache.twill.api.TwillRunnableSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URL;
 import java.net.URLClassLoader;
 
 /**
- * Used to load a {@link ExploreServiceTwillRunnable} using {@link CustomResourcesClassLoader}. This loads
- * config files bundled with the application and not config files in the classpath used to start the application.
- * This is required as on some clusters the classpath used to start a container contains a stripped down version of 
+ * Used to load a {@link ExploreServiceTwillRunnable} using {@link ResourcesClassLoader}. This loads
+ * config files bundled with the application, and not config files in the classpath used to start the application.
+ * This is required as on some clusters, the classpath used to start a container contains a stripped down version of
  * Hadoop config files.
  */
 public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable {
@@ -58,12 +56,12 @@ public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable
   @Override
   public void initialize(TwillContext context) {
     super.initialize(context);
-    
+
     if (getClass().getClassLoader() instanceof URLClassLoader) {
-      LOG.info("Using CustomResourcesClassLoader to load config files bundled with application.");
+      LOG.debug("Using ResourcesClassLoader to load config files bundled with application.");
       customClassLoader =
-        new CustomResourcesClassLoader(((URLClassLoader) getClass().getClassLoader()).getURLs(),
-                                       getClass().getClassLoader());
+        new ResourcesClassLoader(((URLClassLoader) getClass().getClassLoader()).getURLs(),
+                                 getClass().getClassLoader());
     } else {
       LOG.warn("Classloader is not URLCLassLoader, config files bundled with application might not be loaded.");
       customClassLoader = getClass().getClassLoader();
@@ -121,32 +119,6 @@ public class ExploreCustomClassLoaderTwillRunnable extends AbstractTwillRunnable
       twillRunnable.run();
     } finally {
       ClassLoaders.setContextClassLoader(previousClassLoader);
-    }
-  }
-
-  /**
-   * A custom {@link ClassLoader} used to load config files bundled with a {@link TwillRunnable}.
-   */
-  @VisibleForTesting
-  static class CustomResourcesClassLoader extends URLClassLoader {
-    private final ClassLoader twillClassLoader;
-
-    public CustomResourcesClassLoader(URL[] urls, ClassLoader twillClassLoader) {
-      super(urls, ClassLoader.getSystemClassLoader().getParent());
-      this.twillClassLoader = twillClassLoader;
-    }
-
-    @Override
-    public Class<?> loadClass(String s) throws ClassNotFoundException {
-      // Load all Twill API classes from parent classloader, since they are already loaded by parent classloader.
-      // Also, com.mapr.fs.ShimLoader is used by MapR to load native libraries, since Twill would have already loaded
-      // the native libraries, we should not load this class and the classes it needs again through a different
-      // classloader.
-      if (s.startsWith("org.apache.twill.api.") || s.equals("com.mapr.fs.ShimLoader")) {
-        return twillClassLoader.loadClass(s);
-      }
-
-      return super.loadClass(s);
     }
   }
 }

@@ -22,8 +22,7 @@ import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.api.flow.Flow;
-import co.cask.cdap.api.flow.FlowSpecification;
+import co.cask.cdap.api.flow.AbstractFlow;
 import co.cask.cdap.api.flow.flowlet.AbstractFlowlet;
 import co.cask.cdap.api.flow.flowlet.OutputEmitter;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -75,19 +74,15 @@ public class ClassLoaderTestApp extends AbstractApplication {
     }
   }
 
-  public static final class BasicFlow implements Flow {
+  public static final class BasicFlow extends AbstractFlow {
 
     @Override
-    public FlowSpecification configure() {
-      return FlowSpecification.Builder.with()
-        .setName("BasicFlow")
-        .setDescription("BasicFlow")
-        .withFlowlets()
-          .add(new Source())
-          .add(new Sink())
-        .connect()
-          .from(new Source()).to(new Sink())
-        .build();
+    protected void configureFlow() {
+      setName("BasicFlow");
+      setDescription("BasicFlow");
+      addFlowlet(new Source());
+      addFlowlet(new Sink());
+      connect(new Source(), new Sink());
     }
   }
 

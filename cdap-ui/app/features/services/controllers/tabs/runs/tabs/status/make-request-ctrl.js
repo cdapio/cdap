@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.services')
-  .controller('StatusMakeRequestController', function($scope, $state, MyDataSource) {
+  .controller('StatusMakeRequestController', function($scope, $state, MyCDAPDataSource) {
     var vm = this;
 
     vm.programId = $state.params.programId;
@@ -25,9 +25,11 @@ angular.module(PKG.name + '.feature.services')
     vm.queryParams = [];
     vm.response = null;
     vm.postBody = {};
+    vm.loading = false;
+    vm.requestStatus = null;
 
     var pattern = /\{([\w\-]+)\}/g,
-        dataSrc = new MyDataSource($scope);
+        dataSrc = new MyCDAPDataSource($scope);
 
     vm.requestUrl.split('?')
       .forEach(function(item, index) {
@@ -83,6 +85,7 @@ angular.module(PKG.name + '.feature.services')
       });
 
     vm.makeRequest = function() {
+      vm.loading = true;
       var compiledUrl = '/apps/' +
         $state.params.appId + '/services/' +
         $state.params.programId + '/methods';
@@ -108,8 +111,14 @@ angular.module(PKG.name + '.feature.services')
       }
 
       dataSrc.request(requestObj)
-        .then(function(res) {
+        .then(function success(res) {
           vm.response = res;
+          vm.loading = false;
+          vm.requestStatus = 'SUCCESS';
+        }, function error(err) {
+          vm.response = 'Some error has occured: ' + err.data;
+          vm.loading = false;
+          vm.requestStatus = 'ERROR';
         });
     };
 

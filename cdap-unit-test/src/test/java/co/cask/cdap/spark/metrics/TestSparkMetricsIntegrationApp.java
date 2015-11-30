@@ -57,8 +57,8 @@ public class TestSparkMetricsIntegrationApp extends AbstractApplication {
       List<Integer> data = Arrays.asList(1, 2, 3, 4, 5);
       final Metrics metrics = context.getMetrics();
       JavaRDD<Integer> distData = ((JavaSparkContext) context.getOriginalSparkContext()).parallelize(data);
-      distData.count();
-      JavaRDD<Integer> newData = distData.map(new Function<Integer, Integer>() {
+
+      List<Integer> result = distData.map(new Function<Integer, Integer>() {
         @Override
         public Integer call(Integer val) throws Exception {
           int newVal = val * 10;
@@ -67,7 +67,13 @@ public class TestSparkMetricsIntegrationApp extends AbstractApplication {
           }
           return newVal;
         }
-      });
+      }).collect();
+
+      for (int i = 0; i < result.size(); i++) {
+        if (result.get(i) != data.get(i) * 10) {
+          throw new RuntimeException("Result not match: " + result.get(i) + " != " + (data.get(i) * 10));
+        }
+      }
     }
   }
 }

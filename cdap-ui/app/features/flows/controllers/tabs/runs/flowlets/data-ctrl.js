@@ -13,10 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+class FlowletDetailDataController {
+  constructor($state, $scope, MyCDAPDataSource, myHelpers, MyMetricsQueryHelper, myFlowsApi) {
+    this.dataSrc = new MyCDAPDataSource($scope);
+    this.$state = $state;
+    this.MyMetricsQueryHelper = MyMetricsQueryHelper;
 
-angular.module(PKG.name + '.feature.flows')
-  .controller('FlowletDetailDataController', function($state, $scope, MyDataSource, myHelpers, MyMetricsQueryHelper, myFlowsApi) {
-    var dataSrc = new MyDataSource($scope);
     var flowletid = $scope.FlowletsController.activeFlowlet.name;
     this.datasets = [];
 
@@ -29,7 +31,7 @@ angular.module(PKG.name + '.feature.flows')
 
     myFlowsApi.get(params)
       .$promise
-      .then(function (res) {
+      .then( (res) => {
         var obj = [];
         var datasets = myHelpers.objectQuery(res, 'flowlets', flowletid, 'flowletSpec', 'dataSets');
 
@@ -41,38 +43,43 @@ angular.module(PKG.name + '.feature.flows')
 
         this.datasets = obj;
 
-        pollDatasets.bind(this)();
+        this.pollDatasets();
 
-      }.bind(this));
-
-    function pollDatasets() {
-      angular.forEach(this.datasets, function (dataset) {
-        var datasetTags = {
-          namespace: $state.params.namespace,
-          dataset: dataset.name,
-          app: $state.params.appId,
-          flow: $state.params.programId
-        };
-        dataSrc
-          .poll({
-            _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(datasetTags) + '&metric=system.dataset.store.reads',
-            method: 'POST'
-          }, function(res) {
-            if (res.series[0]) {
-              dataset.reads = res.series[0].data[0].value;
-            }
-          });
-
-        dataSrc
-          .poll({
-            _cdapPath: '/metrics/query?' + MyMetricsQueryHelper.tagsToParams(datasetTags) + '&metric=system.dataset.store.writes',
-            method: 'POST'
-          }, function(res) {
-            if (res.series[0]) {
-              dataset.writes = res.series[0].data[0].value;
-            }
-          });
       });
-    }
+  }
 
-  });
+  pollDatasets() {
+    angular.forEach(this.datasets,  (dataset) => {
+      var datasetTags = {
+        namespace: this.$state.params.namespace,
+        dataset: dataset.name,
+        app: this.$state.params.appId,
+        flow: this.$state.params.programId
+      };
+      this.dataSrc
+        .poll({
+          _cdapPath: '/metrics/query?' + this.MyMetricsQueryHelper.tagsToParams(datasetTags) + '&metric=system.dataset.store.reads',
+          method: 'POST'
+        }, function(res) {
+          if (res.series[0]) {
+            dataset.reads = res.series[0].data[0].value;
+          }
+        });
+
+      this.dataSrc
+        .poll({
+          _cdapPath: '/metrics/query?' + this.MyMetricsQueryHelper.tagsToParams(datasetTags) + '&metric=system.dataset.store.writes',
+          method: 'POST'
+        }, function(res) {
+          if (res.series[0]) {
+            dataset.writes = res.series[0].data[0].value;
+          }
+        });
+    });
+  }
+}
+
+FlowletDetailDataController.$inject = ['$state', '$scope', 'MyCDAPDataSource', 'myHelpers', 'MyMetricsQueryHelper', 'myFlowsApi'];
+
+angular.module(PKG.name + '.feature.flows')
+  .controller('FlowletDetailDataController', FlowletDetailDataController);

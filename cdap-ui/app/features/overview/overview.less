@@ -40,8 +40,21 @@ body.state-overview {
         margin: 5px auto 2px;
       }
     }
-    img {
-      max-width: 120px;
+    div.welcome-icon {
+      background: url('@{img-path}/cdap_sprite.png') no-repeat;
+      display: inline-block;
+      width: 120px;
+      height: 105px;
+      vertical-align: middle;
+      &.simplify {
+        background-position: 0 0;
+      }
+      &.innovate {
+        background-position: -120px 0;
+      }
+      &.accelerate {
+        background-position: -240px 0;
+      }
       + div {
         display: inline-block;
         vertical-align: middle;

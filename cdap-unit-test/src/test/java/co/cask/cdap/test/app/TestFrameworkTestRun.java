@@ -16,6 +16,7 @@
 
 package co.cask.cdap.test.app;
 
+import co.cask.cdap.AppUsingNamespace;
 import co.cask.cdap.ConfigTestApp;
 import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.common.Bytes;
@@ -26,6 +27,8 @@ import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.dataset.table.Get;
 import co.cask.cdap.api.dataset.table.Put;
+import co.cask.cdap.api.dataset.table.Row;
+import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.metrics.MetricDataQuery;
@@ -49,6 +52,7 @@ import co.cask.cdap.test.FlowManager;
 import co.cask.cdap.test.MapReduceManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.SlowTests;
+import co.cask.cdap.test.SparkManager;
 import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.WorkerManager;
 import co.cask.cdap.test.WorkflowManager;
@@ -186,7 +190,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testServiceManager() throws Exception {
     ApplicationManager applicationManager = deployApplication(FilterApp.class);
-    ServiceManager countService = applicationManager.getServiceManager("CountService");
+    final ServiceManager countService = applicationManager.getServiceManager("CountService");
     countService.setInstances(2);
     Assert.assertEquals(0, countService.getProvisionedInstances());
     Assert.assertEquals(2, countService.getRequestedInstances());
@@ -204,13 +208,33 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(0, history.size());
 
     // requesting with either RUNNING or ALL will return one record
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return countService.getHistory(ProgramRunStatus.RUNNING).size();
+      }
+    }, 5, TimeUnit.SECONDS);
+
     history = countService.getHistory(ProgramRunStatus.RUNNING);
-    Assert.assertEquals(1, history.size());
     Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
 
     history = countService.getHistory(ProgramRunStatus.ALL);
     Assert.assertEquals(1, history.size());
     Assert.assertEquals(ProgramRunStatus.RUNNING, history.get(0).getStatus());
+  }
+
+  @Test
+  public void testNamespaceAvailableAtRuntime() throws Exception {
+    ApplicationManager applicationManager = deployApplication(testSpace, AppUsingNamespace.class);
+    ServiceManager serviceManager = applicationManager.getServiceManager(AppUsingNamespace.SERVICE_NAME);
+    serviceManager.start();
+    serviceManager.waitForStatus(true, 1, 10);
+
+    URL serviceURL = serviceManager.getServiceURL(10, TimeUnit.SECONDS);
+    Assert.assertEquals(testSpace.getId(), callServiceGet(serviceURL, "ns"));
+
+    serviceManager.stop();
+    serviceManager.waitForStatus(false, 1, 10);
   }
 
   @Test
@@ -237,27 +261,64 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
 
     ApplicationManager appManager = deployApplication(appId, createRequest);
-    WorkerManager workerManager = appManager.getWorkerManager(AppWithPlugin.WORKER);
+
+    final WorkerManager workerManager = appManager.getWorkerManager(AppWithPlugin.WORKER);
     workerManager.start();
     workerManager.waitForStatus(false, 5, 1);
-    List<RunRecord> workerRun = workerManager.getHistory(ProgramRunStatus.COMPLETED);
-    Assert.assertFalse(workerRun.isEmpty());
+    Tasks.waitFor(false, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return workerManager.getHistory(ProgramRunStatus.COMPLETED).isEmpty();
+      }
+    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
-    ServiceManager serviceManager = appManager.getServiceManager(AppWithPlugin.SERVICE);
+    final ServiceManager serviceManager = appManager.getServiceManager(AppWithPlugin.SERVICE);
     serviceManager.start();
     serviceManager.waitForStatus(true, 1, 10);
     URL serviceURL = serviceManager.getServiceURL(5, TimeUnit.SECONDS);
     callServiceGet(serviceURL, "dummy");
     serviceManager.stop();
     serviceManager.waitForStatus(false, 1, 10);
-    List<RunRecord> serviceRun = serviceManager.getHistory(ProgramRunStatus.KILLED);
-    Assert.assertFalse(serviceRun.isEmpty());
+    Tasks.waitFor(false, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        return serviceManager.getHistory(ProgramRunStatus.KILLED).isEmpty();
+      }
+    }, 5, TimeUnit.SECONDS, 10, TimeUnit.MILLISECONDS);
 
     MapReduceManager mrManager = appManager.getMapReduceManager(AppWithPlugin.MAPREDUCE);
     mrManager.start();
     mrManager.waitForFinish(10, TimeUnit.MINUTES);
     List<RunRecord> runRecords = mrManager.getHistory();
     Assert.assertNotEquals(ProgramRunStatus.FAILED, runRecords.get(0).getStatus());
+
+    // Testing Spark Plugins. First send some data to stream for the Spark program to process
+    StreamManager streamManager = getStreamManager(AppWithPlugin.SPARK_STREAM);
+    for (int i = 0; i < 5; i++) {
+      streamManager.send("Message " + i);
+    }
+
+    SparkManager sparkManager = appManager.getSparkManager(AppWithPlugin.SPARK).start();
+    sparkManager.waitForFinish(2, TimeUnit.MINUTES);
+
+    // Verify the Spark result.
+    DataSetManager<Table> dataSetManager = getDataset(AppWithPlugin.SPARK_TABLE);
+    Table table = dataSetManager.get();
+    Scanner scanner = table.scan(null, null);
+    try {
+      for (int i = 0; i < 5; i++) {
+        Row row = scanner.next();
+        Assert.assertNotNull(row);
+        String expected = "Message " + i + " " + AppWithPlugin.TEST;
+        Assert.assertEquals(expected, Bytes.toString(row.getRow()));
+        Assert.assertEquals(expected, Bytes.toString(row.get(expected)));
+      }
+      // There shouldn't be any more rows in the table.
+      Assert.assertNull(scanner.next());
+
+    } finally {
+      scanner.close();
+    }
   }
 
   @Test
@@ -586,7 +647,27 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       public Integer call() throws Exception {
         return workerManager.getInstances();
       }
-    }, 15, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 15, TimeUnit.SECONDS);
+  }
+
+  /**
+   * Checks to ensure that a particular key is present in a {@link KeyValueTable}
+   * @param namespace {@link Id.Namespace}
+   * @param datasetName name of the dataset
+   * @param expectedKey expected key byte array
+   *
+   * @throws Exception if the key is not found even after 15 seconds of timeout
+   */
+  private void kvTableKeyCheck(final Id.Namespace namespace, final String datasetName, final byte[] expectedKey)
+    throws Exception {
+    Tasks.waitFor(true, new Callable<Boolean>() {
+      @Override
+      public Boolean call() throws Exception {
+        DataSetManager<KeyValueTable> datasetManager = getDataset(namespace, datasetName);
+        KeyValueTable kvTable = datasetManager.get();
+        return kvTable.read(expectedKey) != null;
+      }
+    }, 15, TimeUnit.SECONDS);
   }
 
   @Category(SlowTests.class)
@@ -618,6 +699,12 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     // Set 5 instances for the LifecycleWorker
     lifecycleWorkerManager.setInstances(5);
     workerInstancesCheck(lifecycleWorkerManager, 5);
+
+    // Make sure all the keys have been written before stopping the worker
+    for (int i = 0; i < 5; i++) {
+      kvTableKeyCheck(testSpace, AppUsingGetServiceURL.WORKER_INSTANCES_DATASET,
+                      Bytes.toBytes(String.format("init.%d", i)));
+    }
 
     lifecycleWorkerManager.stop();
     lifecycleWorkerManager.waitForStatus(false);
@@ -816,12 +903,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   public void testTransactionHandlerService() throws Exception {
     ApplicationManager applicationManager = deployApplication(testSpace, AppWithServices.class);
     LOG.info("Deployed.");
+
     ServiceManager serviceManager =
       applicationManager.getServiceManager(AppWithServices.TRANSACTIONS_SERVICE_NAME).start();
     serviceManager.waitForStatus(true);
-
     LOG.info("Service Started");
-
 
     final URL baseUrl = serviceManager.getServiceURL(15, TimeUnit.SECONDS);
     Assert.assertNotNull(baseUrl);
@@ -928,7 +1014,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
 
     // also test the deprecated version of getDataset(). This can be removed when we remove the method
-    mydatasetManager = applicationManager.getDataSet("mydataset");
+    mydatasetManager = getDataset("mydataset");
     Assert.assertEquals(100L, Long.valueOf(mydatasetManager.get().get("title:title")).longValue());
   }
 
@@ -1129,7 +1215,6 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
   }
 
-
   @Category(XSlowTests.class)
   @Test
   public void testByteCodeClassLoader() throws Exception {
@@ -1187,4 +1272,3 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     }
   }
 }
-

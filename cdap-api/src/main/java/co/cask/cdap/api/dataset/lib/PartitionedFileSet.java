@@ -57,15 +57,19 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
 
   /**
    * Adds a new metadata entry for a particular partition.
-   * Note that existing entries can not be updated.
-   * @throws DataSetException in case an attempt is made to update existing entries.
+   * Note that existing entries cannot be updated.
+   * 
+   * @throws DataSetException when an attempt is made to either update an existing entry or add an entry for a
+   *         partition that does not exist
    */
   void addMetadata(PartitionKey key, String metadataKey, String metadataValue);
 
   /**
-   * Adds a set of new metadata entries for a particular partition
-   * Note that existing entries can not be updated.
-   * @throws DataSetException in case an attempt is made to update existing entries.
+   * Adds a set of new metadata entries for a particular partition.
+   * Note that existing entries cannot be updated.
+   * 
+   * @throws DataSetException when an attempt is made to either update existing entries or add entries for a
+   *         partition that does not exist
    */
   void addMetadata(PartitionKey key, Map<String, String> metadata);
 
@@ -97,6 +101,22 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * {@link Partition}s
    */
   PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState);
+
+  /**
+   * Incrementally consumes partitions. This method can be used to retrieve partitions that have been created since the
+   * last call to this method. Note that it is the client's responsibility to maintain state of the partitions processed
+   * in the iterator returned in the PartitionConsumerResult.
+   *
+   * @param partitionConsumerState the state from which to start consuming from
+   * @param partitionFilter a filter which must match the partitions to be consumed
+   * @param limit number of partitions, which once reached, will not add add more partitions committed by other
+   *              transactions; the limit is checked after adding consuming all partitions of a transaction, so
+   *              the total number of consumed partitions may be greater than this limit
+   * @return {@link PartitionConsumerResult} which holds the state of consumption as well as an iterator to the consumed
+   * {@link Partition}s
+   */
+  PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState,
+                                            PartitionFilter partitionFilter, int limit);
 
   /**
    * Return a partition output for a specific partition key, in preparation for creating a new partition.

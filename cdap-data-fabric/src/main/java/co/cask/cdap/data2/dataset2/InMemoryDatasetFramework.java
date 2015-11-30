@@ -47,6 +47,7 @@ import com.google.common.collect.Table;
 import com.google.common.collect.Tables;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -157,6 +158,13 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     } finally {
       writeLock.unlock();
     }
+  }
+
+  @Override
+  public void addModule(Id.DatasetModule moduleId, DatasetModule module,
+                        Location jarLocation) throws DatasetManagementException {
+    // Location is never used to create classloader for in memory dataset framework
+    addModule(moduleId, module);
   }
 
   @Override

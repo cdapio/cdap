@@ -62,7 +62,7 @@ public class AppWithTxAware extends AbstractApplication {
       job.setNumReduceTasks(0);
       FileOutputFormat.setOutputPath(job, new Path(context.getRuntimeArguments().get("outputPath")));
       PedanticTxAware input = context.getDataset("pedanticTxAware", ImmutableMap.of("value", "1"));
-      context.setInput("pedanticTxAware", input);
+      context.setInput("pedanticTxAware", ImmutableMap.of("value", "1"));
       input.rememberTx();
     }
   }

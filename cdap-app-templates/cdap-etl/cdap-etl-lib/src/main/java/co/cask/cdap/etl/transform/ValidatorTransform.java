@@ -20,12 +20,15 @@ import co.cask.cdap.api.annotation.Description;
 import co.cask.cdap.api.annotation.Name;
 import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.plugin.PluginProperties;
+import co.cask.cdap.etl.ScriptConstants;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
+import co.cask.cdap.etl.api.LookupConfig;
+import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.api.Validator;
@@ -35,6 +38,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +46,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -96,7 +101,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   private static final String CONTEXT_NAME = "dont_name_your_context_this";
 
   private final ValidatorConfig config;
-  private Metrics metrics;
+  private StageMetrics metrics;
   private Invocable invocable;
   private ScriptEngine engine;
   private Logger logger;
@@ -119,7 +124,8 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
       validators.add(validator);
     }
     try {
-      init(validators);
+      init(validators, null);
+      // TODO: CDAP-4169 verify existence of configured lookup tables
     } catch (ScriptException e) {
       throw new IllegalArgumentException("Invalid validation script: " + e.getMessage(), e);
     }
@@ -127,6 +133,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
 
   @Override
   public void initialize(TransformContext context) throws Exception {
+    super.initialize(context);
     List<Validator> validators = new ArrayList<>();
     for (String pluginId : config.validators.split("\\s*,\\s*")) {
       validators.add((Validator) context.newPluginInstance(pluginId));
@@ -137,8 +144,8 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   @VisibleForTesting
   void setUpInitialScript(TransformContext context, List<Validator> validators) throws ScriptException {
     metrics = context.getMetrics();
-    logger = LoggerFactory.getLogger(ValidatorTransform.class.getName() + " - Stage:" + context.getStageId());
-    init(validators);
+    logger = LoggerFactory.getLogger(ValidatorTransform.class.getName() + " - Stage:" + context.getStageName());
+    init(validators, context);
   }
 
   @Override
@@ -156,6 +163,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
       } else {
         emitter.emitError(getErrorObject(result, input));
         metrics.count("invalid", 1);
+        metrics.pipelineCount("invalid", 1);
         LOG.trace("Error code : {} , Error Message {}", result.get("errorCode"), result.get("errorMsg"));
       }
     } catch (Exception e) {
@@ -167,18 +175,36 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     Preconditions.checkState(result.containsKey("errorCode"));
 
     Object errorCode = result.get("errorCode");
-    Preconditions.checkState(errorCode instanceof Double,
+    Preconditions.checkState(errorCode instanceof Number,
                              "errorCode entry in resultMap is not a valid number. " +
                                "please check your script to make sure error-code is a number");
-    Double errorCodeNum = (Double) errorCode;
-    Preconditions.checkState((errorCodeNum >= Integer.MIN_VALUE && errorCodeNum <= Integer.MAX_VALUE),
-                             "errorCode must be a valid Integer");
-    return new InvalidEntry<>(errorCodeNum.intValue(), (String) result.get("errorMsg"), input);
+    int errorCodeInt;
+    if (errorCode instanceof Integer) {
+      errorCodeInt = (Integer) errorCode;
+    } else if (errorCode instanceof Double) {
+      Double errorCodeDouble = ((Double) errorCode);
+      Preconditions.checkState((errorCodeDouble >= Integer.MIN_VALUE && errorCodeDouble <= Integer.MAX_VALUE),
+                               "errorCode must be a valid Integer");
+      errorCodeInt = errorCodeDouble.intValue();
+    } else {
+      throw new IllegalArgumentException("Unsupported errorCode type: " + errorCode.getClass().getName());
+    }
+    return new InvalidEntry<>(errorCodeInt, (String) result.get("errorMsg"), input);
   }
 
-  private void init(List<Validator> validators) throws ScriptException {
+  private void init(List<Validator> validators, LookupProvider lookup) throws ScriptException {
     ScriptEngineManager manager = new ScriptEngineManager();
     engine = manager.getEngineByName("JavaScript");
+    try {
+      engine.eval(ScriptConstants.HELPER_DEFINITION);
+    } catch (ScriptException e) {
+      // shouldn't happen
+      throw new IllegalStateException("Couldn't define helper functions", e);
+    }
+
+    JavaTypeConverters js = ((Invocable) engine).getInterface(
+      engine.get(ScriptConstants.HELPER_NAME), JavaTypeConverters.class);
+
     String scriptStr = config.validationScript;
     Preconditions.checkArgument(!Strings.isNullOrEmpty(scriptStr), "Filter script must be specified.");
 
@@ -188,7 +214,16 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
       engine.put(validator.getValidatorName(), validator.getValidator());
       validatorMap.put(validator.getValidatorName(), validator.getValidator());
     }
-    engine.put(CONTEXT_NAME, new ValidatorScriptContext(logger, metrics, validatorMap));
+
+    LookupConfig lookupConfig;
+    try {
+      lookupConfig = GSON.fromJson(config.lookup, LookupConfig.class);
+    } catch (JsonSyntaxException e) {
+      throw new IllegalArgumentException("Invalid lookup config. Expected map of string to string", e);
+    }
+
+    engine.put(CONTEXT_NAME, new ValidatorScriptContext(
+      logger, metrics, lookup, lookupConfig, js, validatorMap));
 
     // this is pretty ugly, but doing this so that we can pass the 'input' json into the isValid function.
     // that is, we want people to implement
@@ -209,5 +244,9 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
     String validators;
     @Description(SCRIPT_DESCRIPTION)
     String validationScript;
+
+    @Description("Lookup tables to use during transform. Currently supports KeyValueTable.")
+    @Nullable
+    String lookup;
   }
 }

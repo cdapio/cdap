@@ -26,17 +26,14 @@ angular.module(PKG.name + '.commons')
         runtimeHandler: '&'
       },
       templateUrl: 'start-stop-button/start-stop-button.html',
-      controller: function($scope, $state, MyDataSource, myRuntimeService, myProgramPreferencesService) {
+      controller: function($scope, $state, MyCDAPDataSource, myRuntimeService, myProgramPreferencesService) {
         $scope.isStoppable = ($scope.isStoppable === 'true');
         $scope.isRestartable = ($scope.isRestartable === 'true');
 
         $scope.runtimeArgs = [];
         var path = '/apps/' + $state.params.appId +
                    '/' + $scope.type + '/' + $state.params.programId;
-        if ($scope.type === 'adapters') {
-          path = '/adapters/' + $state.params.adapterId;
-        }
-        var dataSrc = new MyDataSource($scope);
+        var dataSrc = new MyCDAPDataSource($scope);
 
         // Poll for status
         dataSrc.poll({

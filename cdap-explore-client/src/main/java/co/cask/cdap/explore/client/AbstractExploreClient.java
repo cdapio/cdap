@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP.
+ * A base for an Explore Client that talks to a server implementing {@link Explore} over HTTP/HTTPS.
  */
 public abstract class AbstractExploreClient extends ExploreHttpClient implements ExploreClient {
   private static final Gson GSON = new Gson();
@@ -539,12 +539,12 @@ public abstract class AbstractExploreClient extends ExploreHttpClient implements
           try {
             exploreClient.close(handle);
           } catch (ExploreException e) {
-            LOG.error("Caught exception during cancel operation", e);
+            LOG.error("Caught exception during close operation", e);
             throw Throwables.propagate(e);
           } catch (HandleNotFoundException e) {
             // Don't need to throw an exception in that case -
             // if the handle is not found, the query is already closed
-            LOG.warn("Caught exception when closing execution", e);
+            LOG.warn("Caught exception during close operation", e);
           }
         }
 

@@ -485,6 +485,14 @@
   </property>
 
   <property>
+    <name>dataset.extensions.dir</name>
+    <value>/opt/cdap/ext/lib</value>
+    <description>
+      Directory where all dataset extensions are stored
+    </description>
+  </property>
+
+  <property>
     <name>dataset.service.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -798,6 +806,14 @@
   </property>
 
   <property>
+    <name>master.collect.containers.log</name>
+    <value>true</value>
+    <description>
+      Determines if container logs are streamed back to the CDAP Master process log
+    </description>
+  </property>
+
+  <property>
     <name>master.service.max.instances</name>
     <value>5</value>
     <description>
@@ -821,7 +837,6 @@
     </description>
   </property>
 
-
   <!-- Metadata Configuration -->
 
   <property>
@@ -831,7 +846,7 @@
       Maximum number of characters for metadata keys, values, and tags
     </description>
   </property>
-  
+
   <property>
     <name>metadata.service.bind.address</name>
     <value>0.0.0.0</value>
@@ -863,7 +878,7 @@
       Kafka broker list to which metadata update notifications are published
     </description>
   </property>
-  
+
   <property>
     <name>metadata.updates.kafka.topic</name>
     <value>cdap-metadata-updates</value>
@@ -1389,6 +1404,21 @@
     </description>
   </property>
 
+  <property>
+    <name>security.authorization.enabled</name>
+    <value>false</value>
+    <description>
+      Determines if authorization is enabled
+    </description>
+  </property>
+
+  <property>
+    <name>security.authorization.pluginClassName</name>
+    <value></value>
+    <description>
+      Class name of the AuthorizationPlugin implementation to use
+    </description>
+  </property>
 
   <!-- Stream Configuration -->
 

@@ -2,7 +2,7 @@
   "artifact": {
     "name": "cdap-etl-realtime",
     "scope": "SYSTEM",
-    "version": "3.2.1"
+    "version": "3.3.0-SNAPSHOT"
   },
   "config": {
     "source": {
@@ -28,6 +28,7 @@
     "transforms": [],
     "instances": 1
   },
-  "description": "Realtime updates from Amazon Simple Queue Service to HBase."
+  "description": "Real-time updates from Amazon Simple Queue Service into an HBase table",
+  "name": "AmazonSQSToHBase"
 }
 

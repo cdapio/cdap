@@ -68,6 +68,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -231,7 +232,8 @@ public class UnitTestManager implements TestManager {
                                 @Nullable Set<PluginClass> additionalPlugins,
                                 Class<?> pluginClass, Class<?>... pluginClasses) throws Exception {
     File pluginJar = createPluginJar(artifactId, pluginClass, pluginClasses);
-    artifactRepository.addArtifact(artifactId, pluginJar, parents, additionalPlugins);
+    artifactRepository.addArtifact(artifactId, pluginJar, parents,
+                                   additionalPlugins, Collections.<String, String>emptyMap());
     pluginJar.delete();
   }
 
@@ -274,9 +276,7 @@ public class UnitTestManager implements TestManager {
   public final <T extends DatasetAdmin> T addDatasetInstance(Id.Namespace namespace,
                                                              String datasetTypeName,
                                                              String datasetInstanceName) throws Exception {
-    Id.DatasetInstance datasetInstanceId = Id.DatasetInstance.from(namespace, datasetInstanceName);
-    datasetFramework.addInstance(datasetTypeName, datasetInstanceId, DatasetProperties.EMPTY);
-    return datasetFramework.getAdmin(datasetInstanceId, null);
+    return addDatasetInstance(namespace, datasetTypeName, datasetInstanceName, DatasetProperties.EMPTY);
   }
 
   /**

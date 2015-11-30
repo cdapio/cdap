@@ -22,7 +22,7 @@
 
   <groupId>co.cask.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>3.2.1</version>
+  <version>3.3.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -139,6 +139,8 @@
     <twitter4j.version>4.0.3</twitter4j.version>
     <dumbster.version>1.6</dumbster.version>
     <javamail.version>1.4.1</javamail.version>
+    <commons.compress.version>1.9</commons.compress.version>
+    <mockftp.version>2.6</mockftp.version>
     <cask.packages.snapshot.repo>http://cask.invalid.snapshot.repo.co</cask.packages.snapshot.repo>
     <cask.packages.release.repo>http://cask.invalid.release.repo.co</cask.packages.release.repo>
     <release.iteration>1</release.iteration>
@@ -1281,6 +1283,17 @@
         <artifactId>mail</artifactId>
         <version>${javamail.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-compress</artifactId>
+        <version>${commons.compress.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockftpserver</groupId>
+        <artifactId>MockFtpServer</artifactId>
+        <version>${mockftp.version}</version>
+        <scope>test</scope>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -1310,6 +1323,7 @@
             </systemPropertyVariables>
             <includes>
               <include>**/*TestsSuite.java</include>
+              <include>**/*TestSuite.java</include>
               <include>**/Test*.java</include>
               <include>**/*Test.java</include>
               <include>**/*TestCase.java</include>
@@ -2250,6 +2264,7 @@
         <module>cdap-watchdog</module>
         <module>cdap-app-fabric</module>
         <module>cdap-security</module>
+        <module>cdap-authorization-dataset-plugin</module>
         <module>cdap-gateway</module>
         <module>cdap-explore-client</module>
         <module>cdap-explore-jdbc</module>

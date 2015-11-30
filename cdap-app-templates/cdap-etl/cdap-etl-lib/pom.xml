@@ -23,7 +23,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap-etl</artifactId>
-    <version>3.2.1</version>
+    <version>3.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-etl-lib</artifactId>
@@ -173,59 +173,22 @@
         <artifactId>maven-bundle-plugin</artifactId>
         <version>2.5.4</version>
         <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <_exportcontents>co.cask.cdap.etl.batch.*;co.cask.cdap.etl.transform.*;
+              co.cask.cdap.etl.validator.*;
+              co.cask.cdap.etl.common;org.apache.avro.mapreduce;parquet.avro.*;parquet.hadoop.*;
+              co.cask.cdap.etl.realtime.*;co.cask.cdap.etl.transform.*;
+              co.cask.cdap.etl.validator.*;co.cask.cdap.etl.common</_exportcontents>
+            <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
+            <Embed-Transitive>true</Embed-Transitive>
+            <Embed-Directory>lib</Embed-Directory>
+          </instructions>
+        </configuration>
         <executions>
           <execution>
-            <id>batch-source-bundle</id>
-            <phase>prepare-package</phase>
-            <configuration>
-              <classifier>batch-source</classifier>
-              <instructions>
-                <!-- build bundle jar for batch sources for data quality artifact -->
-                <Export-Package>co.cask.cdap.etl.batch.source.*;co.cask.cdap.etl.common;
-                  org.apache.avro.mapreduce;parquet.avro</Export-Package>
-                <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
-                <Embed-Transitive>true</Embed-Transitive>
-                <Embed-Directory>lib</Embed-Directory>
-              </instructions>
-            </configuration>
+            <phase>package</phase>
             <goals>
-              <goal>bundle</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>batch-bundle</id>
-            <phase>prepare-package</phase>
-            <configuration>
-              <classifier>batch</classifier>
-              <instructions>
-                <!-- build bundle jar for batch. excluding realtime-->
-                <Export-Package>co.cask.cdap.etl.batch.*;co.cask.cdap.etl.transform.*;
-                  co.cask.cdap.etl.validator.*;
-                  co.cask.cdap.etl.common;org.apache.avro.mapreduce;parquet.avro.*;parquet.hadoop.*</Export-Package>
-                <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
-                <Embed-Transitive>true</Embed-Transitive>
-                <Embed-Directory>lib</Embed-Directory>
-              </instructions>
-            </configuration>
-            <goals>
-              <goal>bundle</goal>
-            </goals>
-          </execution>
-          <execution>
-            <id>realtime-bundle</id>
-            <phase>prepare-package</phase>
-            <configuration>
-              <classifier>realtime</classifier>
-              <instructions>
-                <!-- build bundle jar for realtime. excluding batch-->
-                <Export-Package>co.cask.cdap.etl.realtime.*;co.cask.cdap.etl.transform.*;
-                  co.cask.cdap.etl.validator.*;co.cask.cdap.etl.common</Export-Package>
-                <Embed-Dependency>*;inline=false;scope=compile</Embed-Dependency>
-                <Embed-Transitive>true</Embed-Transitive>
-                <Embed-Directory>lib</Embed-Directory>
-              </instructions>
-            </configuration>
-           <goals>
               <goal>bundle</goal>
             </goals>
           </execution>

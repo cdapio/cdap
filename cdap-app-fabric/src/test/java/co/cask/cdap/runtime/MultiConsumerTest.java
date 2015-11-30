@@ -16,13 +16,17 @@
 
 package co.cask.cdap.runtime;
 
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.app.runtime.ProgramRunner;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.data.dataset.DatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
+import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -34,6 +38,7 @@ import co.cask.cdap.runtime.app.MultiApp;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -87,10 +92,12 @@ public class MultiConsumerTest {
 
     DatasetFramework datasetFramework = AppFabricTestHelper.getInjector().getInstance(DatasetFramework.class);
 
-    DatasetInstantiator datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, datasetFramework,
-                                                                      getClass().getClassLoader(), null, null);
+    DynamicDatasetCache datasetCache = new SingleThreadDatasetCache(
+      new SystemDatasetInstantiator(datasetFramework, getClass().getClassLoader(), null),
+      AppFabricTestHelper.getInjector().getInstance(TransactionSystemClient.class),
+      DefaultId.NAMESPACE, DatasetDefinition.NO_ARGUMENTS, null, null);
 
-    final KeyValueTable accumulated = datasetInstantiator.getDataset("accumulated");
+    final KeyValueTable accumulated = datasetCache.getDataset("accumulated");
     TransactionExecutorFactory txExecutorFactory =
       AppFabricTestHelper.getInjector().getInstance(TransactionExecutorFactory.class);
 
@@ -98,7 +105,7 @@ public class MultiConsumerTest {
     int trial = 0;
     while (trial < 60) {
       try {
-        txExecutorFactory.createExecutor(datasetInstantiator.getTransactionAware())
+        Transactions.createTransactionExecutor(txExecutorFactory, accumulated)
           .execute(new TransactionExecutor.Subroutine() {
             @Override
             public void apply() throws Exception {

@@ -51,13 +51,13 @@
 </div>
 <div class="modal-footer">
     <button class="btn btn-default" ng-click="closeModal()">Cancel</button>
-    <button class="btn btn-success"
-            ng-disabled="isSaving == true"
+    <button class="btn"
+            ng-disabled="isSaving == true || !streamId.length"
             ng-click="createStream()"
-            ng-class="{disabled: streamId.length === 0}">
-      <div ng-if="isSaving == true" >
+            ng-class="{'btn-success': streamId.length > 0}">
+      <span ng-if="isSaving == true" >
         <span class="fa fa-spin fa-refresh"></span>
-      </div>
+      </span>
       <span>Create</span>
     </button>
 </div>

@@ -66,7 +66,7 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
    */
   public DefaultServiceConfigurer(Service service, Id.Artifact artifactId, ArtifactRepository artifactRepository,
                                   PluginInstantiator pluginInstantiator) {
-    super(artifactRepository, pluginInstantiator, artifactId);
+    super(artifactId, artifactRepository, pluginInstantiator);
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";

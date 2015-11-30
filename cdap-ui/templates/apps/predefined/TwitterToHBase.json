@@ -2,7 +2,7 @@
     "artifact": {
         "name": "cdap-etl-realtime",
         "scope": "SYSTEM",
-        "version": "3.2.1"
+        "version": "3.3.0-SNAPSHOT"
     },
     "config": {
         "source": {
@@ -29,7 +29,7 @@
         "transforms": [],
         "instances": 1
     },
-    "description": "Realtime stream Twitter data into a HBase Table.",
+    "description": "Ingest real-time Twitter Stream into an HBase table",
     "name": "TwitterToHBase",
     "ui": {
         "nodes": {

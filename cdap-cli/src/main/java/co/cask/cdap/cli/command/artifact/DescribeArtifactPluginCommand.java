@@ -26,7 +26,6 @@ import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.ArtifactClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.PluginInfo;
-import co.cask.cdap.proto.artifact.PluginSummary;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;

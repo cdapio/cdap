@@ -22,6 +22,7 @@ import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
+import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import com.google.common.reflect.TypeToken;
@@ -57,12 +58,14 @@ public class SparkContextConfig {
   private static final String HCONF_ATTR_WORKFLOW_TOKEN = "hconf.program.workflow.token";
 
   private final Configuration hConf;
+  private final ApplicationSpecificationAdapter appSpecAdapter;
 
   /**
    * Creates an instance by copying from the given configuration.
    */
   public SparkContextConfig(Configuration hConf) {
     this.hConf = new Configuration(hConf);
+    this.appSpecAdapter = ApplicationSpecificationAdapter.create(new ReflectionSchemaGenerator());
   }
 
   /**
@@ -96,7 +99,7 @@ public class SparkContextConfig {
   }
 
   public ApplicationSpecification getApplicationSpecification() {
-    return GSON.fromJson(hConf.get(HCONF_ATTR_APP_SPEC), ApplicationSpecification.class);
+    return appSpecAdapter.fromJson(hConf.get(HCONF_ATTR_APP_SPEC));
   }
 
   /**
@@ -150,7 +153,7 @@ public class SparkContextConfig {
   }
 
   private void setApplicationSpecification(ApplicationSpecification spec) {
-    hConf.set(HCONF_ATTR_APP_SPEC, GSON.toJson(spec));
+    hConf.set(HCONF_ATTR_APP_SPEC, appSpecAdapter.toJson(spec));
   }
 
   private void setSpecification(SparkSpecification spec) {
@@ -177,7 +180,7 @@ public class SparkContextConfig {
     hConf.set(HCONF_ATTR_NEW_TX, GSON.toJson(tx));
   }
 
-  public void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
+  private void setWorkflowToken(@Nullable WorkflowToken workflowToken) {
     hConf.set(HCONF_ATTR_WORKFLOW_TOKEN, GSON.toJson(workflowToken));
   }
 }

@@ -16,11 +16,14 @@
 
 package co.cask.cdap.etl.transform;
 
-import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.LookupConfig;
+import co.cask.cdap.etl.api.LookupProvider;
+import co.cask.cdap.etl.api.StageMetrics;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Context passed to {@link co.cask.cdap.etl.transform.ValidatorTransform} script
@@ -28,8 +31,10 @@ import java.util.Map;
 public class ValidatorScriptContext extends ScriptContext {
   private final Map<String, Object> validators;
 
-  public ValidatorScriptContext(Logger logger, Metrics metrics, Map<String, Object> validators) {
-    super(logger, metrics);
+  public ValidatorScriptContext(Logger logger, StageMetrics metrics, LookupProvider lookup,
+                                @Nullable LookupConfig lookupConfig, JavaTypeConverters js,
+                                Map<String, Object> validators) {
+    super(logger, metrics, lookup, lookupConfig, js);
     this.validators = validators;
   }
 

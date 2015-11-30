@@ -68,8 +68,8 @@
     }
 
   },
-  "implicit": {
-    "schema": {
+  "outputschema": {
+    "implicit": {
       "message": "string"
     }
   }

@@ -20,7 +20,6 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.common.internal.guava.ClassPath;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Function;
-import com.google.common.base.Functions;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -41,6 +40,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,11 +54,9 @@ final class ProgramResources {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramResources.class);
 
-  private static final List<String> HADOOP_PACKAGES = ImmutableList.of("org.apache.hadoop");
-  private static final String HBASE_PACKAGE_PREFIX = "org/apache/hadoop/hbase/";
-  private static final List<String> SPARK_PACKAGES = ImmutableList.of("org.apache.spark", "scala");
-  private static final List<String> CDAP_API_PACKAGES = ImmutableList.of("co.cask.cdap.api", "co.cask.cdap.internal");
-  private static final List<String> JAVAX_WS_RS_PACKAGES = ImmutableList.of("javax.ws.rs");
+  private static final List<String> HADOOP_PACKAGES = ImmutableList.of("org.apache.hadoop.");
+  private static final List<String> HBASE_PACKAGES = ImmutableList.of("org.apache.hadoop.hbase.");
+  private static final List<String> SPARK_PACKAGES = ImmutableList.of("org.apache.spark.", "scala.");
 
   private static final Predicate<URI> JAR_ONLY_URI = new Predicate<URI>() {
     @Override
@@ -73,13 +71,13 @@ final class ProgramResources {
       return input.getName();
     }
   };
-  private static final Function<ClassPath.ClassInfo, String> CLASS_INFO_TO_RESOURCE_NAME =
-    new Function<ClassPath.ClassInfo, String>() {
-    @Override
-    public String apply(ClassPath.ClassInfo input) {
-      return input.getResourceName();
-    }
-  };
+  private static final Function<ClassPath.ResourceInfo, String> RESOURCE_INFO_TO_RESOURCE_NAME =
+    new Function<ClassPath.ResourceInfo, String>() {
+      @Override
+      public String apply(ClassPath.ResourceInfo input) {
+        return input.getResourceName();
+      }
+    };
 
 
   // Each program type has it's own set of visible resources
@@ -119,7 +117,8 @@ final class ProgramResources {
     // Current only Spark and Workflow type has extra visible resources
     if (type == ProgramType.SPARK || type == ProgramType.WORKFLOW) {
       resources = getResources(ClassPath.from(classLoader, JAR_ONLY_URI),
-                               SPARK_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, Sets.newHashSet(resources));
+                               SPARK_PACKAGES, ImmutableList.<String>of(),
+                               RESOURCE_INFO_TO_RESOURCE_NAME, Sets.newHashSet(resources));
     }
     return ImmutableSet.copyOf(resources);
   }
@@ -147,52 +146,83 @@ final class ProgramResources {
     ClassLoader classLoader = ProgramResources.class.getClassLoader();
 
     // Gather resources information for cdap-api classes
-    Set<ClassPath.ClassInfo> apiResources = getResources(getClassPath(classLoader, Application.class),
-                                                         CDAP_API_PACKAGES, Sets.<ClassPath.ClassInfo>newHashSet());
+    ClassPath apiClassPath = getClassPath(classLoader, Application.class);
+    // Add everything in cdap-api as visible resources
+    Set<String> result = Sets.newHashSet(Iterables.transform(apiClassPath.getResources(),
+                                                             RESOURCE_INFO_TO_RESOURCE_NAME));
     // Trace dependencies for cdap-api classes
-    Set<String> result = findClassDependencies(classLoader,
-                                               Iterables.transform(apiResources, CLASS_INFO_TO_CLASS_NAME),
-                                               Sets.<String>newHashSet());
+    findClassDependencies(classLoader, Iterables.transform(apiClassPath.getAllClasses(), CLASS_INFO_TO_CLASS_NAME),
+                          result);
 
     // Gather resources for javax.ws.rs classes. They are not traceable from the api classes.
-    getResources(getClassPath(classLoader, Path.class), JAVAX_WS_RS_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, result);
+    Iterables.addAll(result, Iterables.transform(getClassPath(classLoader, Path.class).getResources(),
+                                                 RESOURCE_INFO_TO_RESOURCE_NAME));
 
-    // Gather Hadoop classes.
-    getResources(ClassPath.from(classLoader, JAR_ONLY_URI), HADOOP_PACKAGES, CLASS_INFO_TO_RESOURCE_NAME, result);
+    // Gather Hadoop classes and resources
+    getResources(ClassPath.from(classLoader, JAR_ONLY_URI),
+                 HADOOP_PACKAGES, HBASE_PACKAGES, RESOURCE_INFO_TO_RESOURCE_NAME, result);
 
-    // Excludes HBase classes
-    return ImmutableSet.copyOf(Sets.filter(result, new Predicate<String>() {
-      @Override
-      public boolean apply(String input) {
-        return !input.startsWith(HBASE_PACKAGE_PREFIX);
-      }
-    }));
+    return ImmutableSet.copyOf(result);
   }
 
   /**
    * Finds all resources that are accessible in a given {@link ClassPath} that starts with certain package prefixes.
-   */
-  private static <T extends Collection<ClassPath.ClassInfo>> T getResources(ClassPath classPath,
-                                                                            Iterable<String> packages,
-                                                                            final T result) throws IOException {
-    return getResources(classPath, packages, Functions.<ClassPath.ClassInfo>identity(), result);
-  }
-
-  /**
-   * Finds all resources that are accessible in a given {@link ClassPath} that starts with certain package prefixes.
+   * Also includes all non .class file resources in the same base URLs of those classes that are accepted through
+   * the package prefixes filtering.
+   *
    * Resources information presented in the result collection is transformed by the given result transformation
    * function.
    */
   private static <V, T extends Collection<V>> T getResources(ClassPath classPath,
-                                                             Iterable<String> packages,
-                                                             Function<ClassPath.ClassInfo, V> resultTransform,
+                                                             Iterable<String> includePackagePrefixes,
+                                                             Iterable<String> excludePackagePrefixes,
+                                                             Function<ClassPath.ResourceInfo, V> resultTransform,
                                                              final T result) throws IOException {
-    for (String pkg : packages) {
-      Set<ClassPath.ClassInfo> packageClasses = classPath.getAllClassesRecursive(pkg);
-      for (ClassPath.ClassInfo cls : packageClasses) {
-        result.add(resultTransform.apply(cls));
+    Set<URL> resourcesBaseURLs = new HashSet<>();
+    // Adds all .class resources that should be included
+    // Also record the base URL of those resources
+    for (ClassPath.ClassInfo classInfo : classPath.getAllClasses()) {
+      boolean include = false;
+      for (String prefix : includePackagePrefixes) {
+        if (classInfo.getName().startsWith(prefix)) {
+          include = true;
+          break;
+        }
+      }
+      for (String prefix : excludePackagePrefixes) {
+        if (classInfo.getName().startsWith(prefix)) {
+          include = false;
+          break;
+        }
+      }
+
+      if (include) {
+        result.add(resultTransform.apply(classInfo));
+        URL url = classInfo.url();
+        // URL shouldn't be null for ".class" file. Since url() is @Nullable, hence the check
+        if (url != null) {
+          resourcesBaseURLs.add(getClassPathURL(classInfo.getResourceName(), url));
+        }
       }
     }
+
+    // Adds non .class resources that are in the resourceBaseURLs
+    for (ClassPath.ResourceInfo resourceInfo : classPath.getResources()) {
+      if (resourceInfo instanceof ClassPath.ClassInfo) {
+        // We already processed all classes in the loop above
+        continue;
+      }
+      // See if the resource base URL is already accepted through class filtering.
+      // If it does, adds the resource name to the collection as well.
+      URL url = resourceInfo.url();
+      // The url returned might be null under Java8. Apparently some resources that are inside lib/ext jars
+      // are not loadable through the underlying ClassLoader (ExtClassLoader).
+      // Since those resources won't be loadable anyway, hence it's ok to be ignored from the include list.
+      if (url != null && resourcesBaseURLs.contains(getClassPathURL(resourceInfo.getResourceName(), url))) {
+        result.add(resultTransform.apply(resourceInfo));
+      }
+    }
+
     return result;
   }
 

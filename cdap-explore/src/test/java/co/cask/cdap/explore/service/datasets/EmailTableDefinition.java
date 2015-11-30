@@ -43,7 +43,7 @@ import java.util.Map;
  * Dataset definition with a record scannable table, containing an extensive schema. Used for testing.
  */
 public class EmailTableDefinition extends AbstractDatasetDefinition<EmailTableDefinition.EmailTable, DatasetAdmin> {
-  private static final Schema SCHEMA = Schema.recordOf("email",
+  public static final Schema SCHEMA = Schema.recordOf("email",
     Schema.Field.of("id", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("subject", Schema.of(Schema.Type.STRING)),
     Schema.Field.of("body", Schema.of(Schema.Type.STRING)),

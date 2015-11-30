@@ -16,11 +16,14 @@
 
 package co.cask.cdap.data.stream;
 
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data.runtime.InMemoryStreamFileWriterFactory;
 import co.cask.cdap.data.runtime.LocationStreamFileWriterFactory;
 import co.cask.cdap.data.stream.service.MDSStreamMetaStore;
 import co.cask.cdap.data.stream.service.StreamMetaStore;
+import co.cask.cdap.data2.transaction.stream.AbstractStreamFileConsumerFactory;
 import co.cask.cdap.data2.transaction.stream.FileStreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConsumerFactory;
@@ -32,7 +35,10 @@ import co.cask.cdap.data2.transaction.stream.inmemory.InMemoryStreamConsumerStat
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamConsumerStateStoreFactory;
 import co.cask.cdap.data2.transaction.stream.leveldb.LevelDBStreamFileConsumerFactory;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 /**
@@ -72,6 +78,35 @@ public class StreamAdminModules extends RuntimeModule {
     };
   }
 
+  private static final class StreamConsumerFactoryProvider implements Provider<AbstractStreamFileConsumerFactory> {
+    private final Injector injector;
+    private final CConfiguration cConf;
+
+    @Inject
+    private StreamConsumerFactoryProvider(Injector injector, CConfiguration cConf) {
+        this.injector = injector;
+        this.cConf = cConf;
+    }
+
+    @Override
+    public AbstractStreamFileConsumerFactory get() {
+      Class<? extends AbstractStreamFileConsumerFactory> factoryClass;
+      String factoryName = cConf.get(Constants.Dataset.Extensions.STREAM_CONSUMER_FACTORY);
+
+      if (factoryName != null) {
+        try {
+          factoryClass = (Class<? extends AbstractStreamFileConsumerFactory>) Class.forName(factoryName.trim());
+        } catch (ClassCastException|ClassNotFoundException ex) {
+          // Guice frowns on throwing exceptions from Providers, but if necesary use RuntimeException
+          throw new RuntimeException("Unable to obtain stream consumer factory extension class", ex);
+        }
+      } else {
+        factoryClass = HBaseStreamFileConsumerFactory.class;
+      }
+      return injector.getInstance(factoryClass);
+    }
+  }
+
   @Override
   public Module getDistributedModules() {
     return new AbstractModule() {
@@ -81,7 +116,7 @@ public class StreamAdminModules extends RuntimeModule {
         bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Singleton.class);
         bind(StreamConsumerStateStoreFactory.class).to(HBaseStreamConsumerStateStoreFactory.class).in(Singleton.class);
         bind(StreamAdmin.class).to(FileStreamAdmin.class).in(Singleton.class);
-        bind(StreamConsumerFactory.class).to(HBaseStreamFileConsumerFactory.class).in(Singleton.class);
+        bind(StreamConsumerFactory.class).toProvider(StreamConsumerFactoryProvider.class).in(Singleton.class);
         bind(StreamFileWriterFactory.class).to(LocationStreamFileWriterFactory.class).in(Singleton.class);
       }
     };

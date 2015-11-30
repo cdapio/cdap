@@ -19,7 +19,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard')
-  .factory('Widget', function (MyDataSource, myHelpers) {
+  .factory('Widget', function (MyCDAPDataSource, myHelpers) {
 
     function Widget (opts) {
       opts = opts || {};

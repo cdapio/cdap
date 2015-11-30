@@ -60,9 +60,11 @@
         <div class="form-group">
           <label class="col-sm-2 control-label">Format</label>
           <div class="col-sm-2">
-            <select ng-model="format" class="form-control">
-              <option ng-repeat="option in formatOptions" value="{{option}}">{{option}}</option>
-            </select>
+            <div class="select-wrapper">
+              <select ng-model="format" class="form-control">
+                <option ng-repeat="option in formatOptions" value="{{option}}">{{option}}</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -84,17 +86,17 @@
                   <input type="text" class="form-control" ng-model="property.name" placeholder="name"/ my-focus-watch="$last">
                 </div>
                 <div class="col-sm-4">
-
-                  <select ng-model="property.type" class="form-control">
-                    <option value="boolean">boolean</option>
-                    <option value="bytes">bytes</option>
-                    <option value="double">double</option>
-                    <option value="float">float</option>
-                    <option value="int">int</option>
-                    <option value="long">long</option>
-                    <option value="string">string</option>
-                  </select>
-
+                  <div class="select-wrapper">
+                    <select ng-model="property.type" class="form-control">
+                      <option value="boolean">boolean</option>
+                      <option value="bytes">bytes</option>
+                      <option value="double">double</option>
+                      <option value="float">float</option>
+                      <option value="int">int</option>
+                      <option value="long">long</option>
+                      <option value="string">string</option>
+                    </select>
+                  </div>
                 </div>
                 <div class="col-sm-2 text-center null">
                   <input type="checkbox" ng-model="property.nullable">

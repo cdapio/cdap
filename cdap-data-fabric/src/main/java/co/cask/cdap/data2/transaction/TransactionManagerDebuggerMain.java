@@ -246,8 +246,7 @@ public class TransactionManagerDebuggerMain {
     if (tokenFile != null) {
       try {
         BufferedReader bufferedReader = new BufferedReader(new FileReader(tokenFile));
-        String line = bufferedReader.readLine();
-        accessToken = line;
+        accessToken = bufferedReader.readLine();
       } catch (FileNotFoundException e) {
         System.out.println("Could not find access token file: " + tokenFile + "\nNo access token will be used");
       } catch (IOException e) {

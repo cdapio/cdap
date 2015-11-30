@@ -143,10 +143,10 @@ gulp.task('js:lib', function() {
       './app/lib/c3.js',
       './bower_components/ace-builds/src-min-noconflict/ace.js',
       './bower_components/angular-ui-ace/ui-ace.js',
-      './bower_components/jsPlumb/dist/js/dom.jsPlumb-1.7.5-min.js',
+      './bower_components/jsPlumb/dist/js/jsPlumb-2.0.4-min.js',
       './bower_components/angular-gridster/dist/angular-gridster.min.js',
-      './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.js'
-
+      './bower_components/angular-cron-jobs/dist/angular-cron-jobs.min.js',
+      './bower_components/angularjs-dropdown-multiselect/dist/angularjs-dropdown-multiselect.min.js'
 
     ].concat([
       './bower_components/cask-angular-*/*/module.js'
@@ -184,7 +184,12 @@ function getEs6Features(isNegate) {
     with the package manager build step. The transition process is going to be painful but the end goal is better (hopefully :])
   */
   var es6features = [
-    'workflows'
+    'workflows',
+    'flows',
+    'apps',
+    'search',
+    'pins',
+    'hydrator'
   ];
   var returnVal = [];
   es6features.forEach(function(feature) {
@@ -194,6 +199,14 @@ function getEs6Features(isNegate) {
     ]);
   });
   return returnVal;
+}
+
+function getEs6Directives(isNegate) {
+  var es6directives = [
+    (isNegate ? '!' : '') + './app/directives/dag/**/*.js'
+  ];
+
+  return es6directives;
 }
 
 
@@ -206,15 +219,17 @@ gulp.task('watch:js:app', function() {
     v: pkg.version
   });
 
-  return gulp.src(
-      [
-        './app/main.js',
-        '!./app/lib/c3.js',
-        './app/features/*/module.js',
-        './app/**/*.js',
-        '!./app/**/*-test.js'
-      ].concat(getEs6Features(true))
-    )
+  var source = [
+    './app/main.js',
+    '!./app/lib/c3.js',
+    './app/features/*/module.js',
+    './app/**/*.js',
+    '!./app/**/*-test.js'
+  ];
+  source = source.concat(getEs6Features(true));
+  source = source.concat(getEs6Directives(true));
+
+  return gulp.src(source)
     .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
     .pipe(plug.wrapper({
@@ -230,17 +245,21 @@ gulp.task('watch:js:app:babel', function() {
     name: pkg.name,
     v: pkg.version
   });
-  return gulp.src(getEs6Features())
+
+  var source = getEs6Features();
+  source = source.concat(getEs6Directives());
+
+  return gulp.src(source)
     .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
-    .pipe(plug.sourcemaps.init())
+    // .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',
        footer: '\n})('+PKG+');\n'
     }))
     .pipe(plug.babel())
     .pipe(plug.concat('app.es6.js'))
-    .pipe(plug.sourcemaps.write("."))
+    // .pipe(plug.sourcemaps.write("."))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
 
@@ -258,14 +277,14 @@ gulp.task('js:app', function() {
   ])
     .pipe(plug.plumber())
     .pipe(plug.ngAnnotate())
-    .pipe(plug.sourcemaps.init())
+    // .pipe(plug.sourcemaps.init())
     .pipe(plug.wrapper({
        header: '\n(function (PKG){ /* ${filename} */\n',
        footer: '\n})('+PKG+');\n'
     }))
     .pipe(plug.babel())
     .pipe(plug.concat('app.js'))
-    .pipe(plug.sourcemaps.write("."))
+    // .pipe(plug.sourcemaps.write("."))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
 
@@ -425,7 +444,7 @@ gulp.task('style', ['css']);
 gulp.task('watch:build', ['watch:js', 'css', 'img', 'tpl', 'html.dev']);
 gulp.task('build', ['js', 'css', 'img', 'tpl', 'html']);
 
-gulp.task('distribute', ['build', 'rev:replace']);
+gulp.task('distribute', ['clean', 'build', 'rev:replace']);
 
 gulp.task('default', ['lint', 'build']);
 
@@ -440,8 +459,27 @@ gulp.task('watch', ['jshint', 'watch:build'], function() {
   gulp.watch('./dist/**/*')
     .on('change', plug.livereload.changed);
 
-  gulp.watch(['./app/**/*.js', '!./app/features/workflows/**/*.js', '!./app/**/*-test.js'], ['jshint', 'watch:js:app']);
-  gulp.watch(['./app/features/workflows/**/*.js'], ['jshint', 'watch:js:app:babel']);
+  gulp.watch([
+    './app/**/*.js',
+    '!./app/features/workflows/**/*.js',
+    '!./app/features/hydrator/**/*.js',
+    '!./app/features/apps/**/*.js',
+    '!./app/features/search/**/*.js',
+    '!./app/features/pins/**/*.js',
+    '!./app/features/flows/**/*.js',
+    '!./app/directives/dag/**/*.js',
+    '!./app/**/*-test.js'
+  ], ['jshint', 'watch:js:app']);
+  gulp.watch([
+    './app/features/workflows/**/*.js',
+    './app/features/hydrator/**/*.js',
+    './app/features/apps/**/*.js',
+    './app/features/pins/**/*.js',
+    './app/features/search/**/*.js',
+    './app/features/flows/**/*.js',
+    './app/features/flows/**/*.js',
+    './app/directives/dag/**/*.js'
+  ], ['jshint', 'watch:js:app:babel']);
 
   gulp.watch('./app/**/*.{less,css}', ['css']);
   gulp.watch(['./app/directives/**/*.html', './app/features/home/home.html'], ['tpl']);

@@ -21,7 +21,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 
 /**
- * Helper methods for keys of {@link BusinessMetadataDataset}.
+ * Helper methods for keys of {@link MetadataDataset}.
  */
 public class KeyHelper {
   public static void addNamespaceIdToKey(MDSKey.Builder builder, Id.NamespacedId namespacedId) {
@@ -54,6 +54,22 @@ public class KeyHelper {
       String instanceId = stream.getId();
       builder.add(namespaceId);
       builder.add(instanceId);
+    } else if (type.equals(Id.Stream.View.class.getSimpleName())) {
+      Id.Stream.View view = (Id.Stream.View) namespacedId;
+      String namespaceId = view.getNamespaceId();
+      String streamId = view.getStreamId();
+      String viewId = view.getId();
+      builder.add(namespaceId);
+      builder.add(streamId);
+      builder.add(viewId);
+    } else if (type.equals(Id.Artifact.class.getSimpleName())) {
+      Id.Artifact artifactId = (Id.Artifact) namespacedId;
+      String namespaceId = artifactId.getNamespace().getId();
+      String name = artifactId.getName();
+      String version = artifactId.getVersion().getVersion();
+      builder.add(namespaceId);
+      builder.add(name);
+      builder.add(version);
     } else {
       throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
     }
@@ -70,6 +86,11 @@ public class KeyHelper {
       String namespaceId = keySplitter.getString();
       String appId = keySplitter.getString();
       return Id.Application.from(namespaceId, appId);
+    } else if (type.equals(Id.Artifact.class.getSimpleName())) {
+      String namespaceId = keySplitter.getString();
+      String name = keySplitter.getString();
+      String version = keySplitter.getString();
+      return Id.Artifact.from(Id.Namespace.from(namespaceId), name, version);
     } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
@@ -78,6 +99,11 @@ public class KeyHelper {
       String namespaceId = keySplitter.getString();
       String instanceId  = keySplitter.getString();
       return Id.Stream.from(namespaceId, instanceId);
+    } else if (type.equals(Id.Stream.View.class.getSimpleName())) {
+      String namespaceId = keySplitter.getString();
+      String streamId  = keySplitter.getString();
+      String viewId = keySplitter.getString();
+      return Id.Stream.View.from(Id.Stream.from(namespaceId, streamId), viewId);
     }
     throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
   }

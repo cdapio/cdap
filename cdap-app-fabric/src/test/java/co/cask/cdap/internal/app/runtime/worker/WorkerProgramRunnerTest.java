@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.worker;
 
 import co.cask.cdap.AppWithWorker;
 import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
 import co.cask.cdap.api.metrics.MetricDataQuery;
@@ -30,8 +31,11 @@ import co.cask.cdap.common.app.RunIds;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.data.dataset.DatasetInstantiator;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
+import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
+import co.cask.cdap.data2.transaction.TransactionExecutorFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.TempFolder;
@@ -44,10 +48,9 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
-import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
-import co.cask.tephra.TransactionExecutorFactory;
 import co.cask.tephra.TransactionManager;
+import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -88,7 +91,7 @@ public class WorkerProgramRunnerTest {
 
   private static TransactionManager txService;
   private static DatasetFramework dsFramework;
-  private static DatasetInstantiator datasetInstantiator;
+  private static DynamicDatasetCache datasetCache;
   private static MetricStore metricStore;
 
   private static Collection<ProgramController> runningPrograms = new HashSet<>();
@@ -119,9 +122,10 @@ public class WorkerProgramRunnerTest {
     txService = injector.getInstance(TransactionManager.class);
     txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
     dsFramework = injector.getInstance(DatasetFramework.class);
-    datasetInstantiator = new DatasetInstantiator(DefaultId.NAMESPACE, dsFramework,
-                                                  WorkerProgramRunnerTest.class.getClassLoader(),
-                                                  null, null);
+    datasetCache = new SingleThreadDatasetCache(
+      new SystemDatasetInstantiator(dsFramework, WorkerProgramRunnerTest.class.getClassLoader(), null),
+      injector.getInstance(TransactionSystemClient.class),
+      DefaultId.NAMESPACE, DatasetDefinition.NO_ARGUMENTS, null, null);
     metricStore = injector.getInstance(MetricStore.class);
 
     txService.startAndWait();
@@ -152,9 +156,7 @@ public class WorkerProgramRunnerTest {
     ProgramController controller = startProgram(app, AppWithWorker.TableWriter.class);
 
     // validate worker wrote the "initialize" and "run" rows
-    final KeyValueTable kvTable = datasetInstantiator.getDataset(AppWithWorker.DATASET);
-    final TransactionExecutor executor =
-      txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) kvTable));
+    final TransactionExecutor executor = txExecutorFactory.createExecutor(datasetCache);
 
     // wait at most 5 seconds until the "RUN" row is set (indicates the worker has started running)
     Tasks.waitFor(AppWithWorker.RUN, new Callable<String>() {
@@ -164,18 +166,20 @@ public class WorkerProgramRunnerTest {
           new Callable<String>() {
             @Override
             public String call() throws Exception {
+              KeyValueTable kvTable = datasetCache.getDataset(AppWithWorker.DATASET);
               return Bytes.toString(kvTable.read(AppWithWorker.RUN));
             }
           });
       }
-    }, 5, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 5, TimeUnit.SECONDS);
 
     stopProgram(controller);
 
-    txExecutorFactory.createExecutor(Collections.singleton((TransactionAware) kvTable)).execute(
+    txExecutorFactory.createExecutor(datasetCache.getTransactionAwares()).execute(
       new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
+          KeyValueTable kvTable = datasetCache.getDataset(AppWithWorker.DATASET);
           Assert.assertEquals(AppWithWorker.RUN, Bytes.toString(kvTable.read(AppWithWorker.RUN)));
           Assert.assertEquals(AppWithWorker.INITIALIZE, Bytes.toString(kvTable.read(AppWithWorker.INITIALIZE)));
           Assert.assertEquals(AppWithWorker.STOP, Bytes.toString(kvTable.read(AppWithWorker.STOP)));
@@ -236,7 +240,7 @@ public class WorkerProgramRunnerTest {
         }
         return controller.getState();
       }
-    }, 30, TimeUnit.SECONDS, 50, TimeUnit.MILLISECONDS);
+    }, 30, TimeUnit.SECONDS);
 
     return controller;
   }

@@ -15,20 +15,30 @@
  */
 
 angular.module(PKG.name + '.services')
-  .service('StatusFactory', function($http, EventPipe, myAuth, $rootScope, MYAUTH_EVENT, MY_CONFIG, $alert, $timeout) {
+  .service('StatusFactory', function($http, EventPipe, myAuth, $rootScope, MYAUTH_EVENT, MY_CONFIG, $timeout) {
 
+    var isLoggedIn = true;
     this.startPolling = function () {
-      beginPolling.bind(this)();
+      if (isLoggedIn){
+        beginPolling.bind(this)();
+      }
     };
+    this.stopPolling = function() {
+      isLoggedIn = false;
+    };
+    $rootScope.$on(MYAUTH_EVENT.logoutSuccess, this.stopPolling.bind(this));
+
     function beginPolling() {
 
       _.debounce(function() {
-        $http.get(
-          (MY_CONFIG.sslEnabled? 'https://': 'http://') + window.location.host + '/backendstatus',
-          {ignoreLoadingBar: true}
-        )
-             .success(success.bind(this))
-             .error(error.bind(this));
+        if (isLoggedIn) {
+          $http.get(
+            (MY_CONFIG.sslEnabled? 'https://': 'http://') + window.location.host + '/backendstatus',
+            {ignoreLoadingBar: true}
+          )
+               .success(success.bind(this))
+               .error(error.bind(this));
+        }
       }.bind(this), 2000)();
 
     }

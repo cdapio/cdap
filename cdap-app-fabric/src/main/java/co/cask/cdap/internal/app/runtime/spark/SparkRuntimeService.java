@@ -27,6 +27,7 @@ import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtilFactory;
+import co.cask.cdap.internal.app.runtime.LocalizationUtils;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.spark.metrics.SparkMetricsSink;
 import co.cask.tephra.Transaction;
@@ -35,11 +36,13 @@ import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicates;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.gson.Gson;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.spark.deploy.SparkSubmit;
 import org.apache.twill.api.ClassAcceptor;
@@ -55,6 +58,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Writer;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -120,29 +125,45 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     this.cleanupTask = createCleanupTask(tempDir);
     try {
       SparkContextConfig contextConfig = new SparkContextConfig(hConf);
+      ClientSparkContext clientContext = sparkContextFactory.getClientContext();
 
       final File jobJar = generateJobJar(tempDir);
       File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties", tempDir));
       final List<LocalizeResource> localizeResources = new ArrayList<>();
+      File pluginJar = clientContext.getPluginArchive();
 
       if (!contextConfig.isLocal()) {
         localizeResources.add(new LocalizeResource(copyProgramJar(programJarLocation, tempDir), true));
         localizeResources.add(new LocalizeResource(buildDependencyJar(tempDir), true));
         localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
+        if (pluginJar != null) {
+          localizeResources.add(new LocalizeResource(pluginJar, true));
+        }
       }
 
       // Create a long running transaction
       Transaction transaction = txClient.startLong();
 
-      // Create execution spark context
-      final ExecutionSparkContext executionContext = sparkContextFactory.createExecutionContext(transaction);
+      Map<String, File> localizedFiles = localizeUserResources(contextConfig, clientContext,
+                                                               localizeResources, tempDir);
 
+      // Create execution spark context
+      final ExecutionSparkContext executionContext =
+        sparkContextFactory.createExecutionContext(transaction, localizedFiles);
+
+      // Add additional resources that need to be localized to executor containers
       if (!contextConfig.isLocal()) {
-        localizeResources.add(new LocalizeResource(saveHConf(contextConfig.set(executionContext).getConfiguration(),
-                                                             tempDir)));
+        Configuration hConf = contextConfig.set(executionContext).getConfiguration();
+        if (pluginJar != null) {
+          hConf = new Configuration(hConf);
+          hConf.set(Constants.Plugin.ARCHIVE, pluginJar.getName());
+        }
+        // also serialize the local resource names, so they can be recreated later.
+        hConf.set(SparkContextProvider.LOCAL_RESOURCES, new Gson().toJson(localizedFiles.keySet()));
+        localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
       }
 
-      final Map<String, String> configs = createSubmitConfigs(sparkContextFactory.getClientContext(),
+      final Map<String, String> configs = createSubmitConfigs(clientContext,
                                                               tempDir, metricsConf);
       submitSpark = new Callable<ExecutionFuture<RunId>>() {
         @Override
@@ -220,7 +241,6 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
       onFinish(success);
     } finally {
-      Closeables.closeQuietly(sparkContextFactory.getClientContext());
       cleanupTask.run();
       LOG.debug("Spark program completed: {}", sparkContextFactory.getClientContext());
     }
@@ -235,6 +255,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   @Override
   protected Executor executor() {
     // Always execute in new daemon thread.
+    //noinspection NullableProblems
     return new Executor() {
       @Override
       public void execute(final Runnable runnable) {
@@ -392,6 +413,44 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       hConf.writeXml(writer);
     }
     return file;
+  }
+
+  /**
+   * Localizes resources requested by users in the Spark Program's client (or beforeSubmit) phases.
+   *
+   * @param contextConfig the {@link SparkContextConfig} for this Spark program
+   * @param clientContext the {@link ClientSparkContext} for this Spark program
+   * @param allLocalizedResources the list of all (user-requested + CDAP system) {@link LocalizeResource} to be
+   *                                 localized for this Spark program
+   * @param targetDir a temporary directory to copy the resources to
+   * @return a {@link Map} of resource name to the {@link File} handle for the local file.
+   */
+  private Map<String, File> localizeUserResources(SparkContextConfig contextConfig,
+                                                  ClientSparkContext clientContext,
+                                                  List<LocalizeResource> allLocalizedResources,
+                                                  File targetDir) throws IOException {
+    Map<String, File> localizedResources = new HashMap<>();
+    Map<String, LocalizeResource> resourcesToLocalize = clientContext.getResourcesToLocalize();
+    for (final Map.Entry<String, LocalizeResource> entry : resourcesToLocalize.entrySet()) {
+      // localize resources in a temporary directory
+      File localizedFile = LocalizationUtils.localizeResource(entry.getKey(), entry.getValue(), targetDir);
+
+      if (!contextConfig.isLocal()) {
+        // in distributed mode, file localization happens in the Spark Submitter, so add it to the
+        // allLocalizedResources list
+        try {
+          URI uri = localizedFile.toURI();
+          URI actualURI = new URI(uri.getScheme(), uri.getAuthority(), uri.getPath(), uri.getQuery(), entry.getKey());
+          allLocalizedResources.add(new LocalizeResource(actualURI, entry.getValue().isArchive()));
+        } catch (URISyntaxException e) {
+          // Most of the URI is constructed from the passed URI. So ideally, this should not happen.
+          // If it does though, there is nothing that clients can do to recover, so not propagating a checked exception.
+          throw Throwables.propagate(e);
+        }
+      }
+      localizedResources.put(entry.getKey(), localizedFile);
+    }
+    return localizedResources;
   }
 
   /**

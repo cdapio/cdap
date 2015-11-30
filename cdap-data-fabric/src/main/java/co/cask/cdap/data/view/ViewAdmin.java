@@ -75,4 +75,8 @@ public class ViewAdmin {
   public ViewSpecification get(Id.Stream.View viewId) throws NotFoundException {
     return store.get(viewId);
   }
+
+  public boolean exists (Id.Stream.View viewId) {
+    return store.exists(viewId);
+  }
 }

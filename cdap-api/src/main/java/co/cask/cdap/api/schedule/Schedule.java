@@ -17,6 +17,8 @@
 package co.cask.cdap.api.schedule;
 
 
+import java.util.Objects;
+
 /**
  * Defines a cron-based schedule for running a program.
  */
@@ -26,20 +28,12 @@ public class Schedule {
 
   private final String description;
 
-  // NOTE: the below attribute is left for backwards compatibility
-  private final String cronEntry;
+  private final RunConstraints runConstraints;
 
-  @Deprecated
-  public Schedule(String name, String description, String cronEntry) {
+  protected Schedule(String name, String description, RunConstraints runConstraints) {
     this.name = name;
     this.description = description;
-    this.cronEntry = cronEntry;
-  }
-
-  protected Schedule(String name, String description) {
-    this.name = name;
-    this.description = description;
-    this.cronEntry = null;
+    this.runConstraints = runConstraints;
   }
 
   /**
@@ -56,13 +50,9 @@ public class Schedule {
     return description;
   }
 
-  /**
-   * @return Cron expression for the schedule.
-   * @deprecated As of version 2.8.0, do not use this method anymore
-   */
-  @Deprecated
-  public String getCronEntry() {
-    return cronEntry;
+  public RunConstraints getRunConstraints() {
+    // need this null check for backwards compatibility. Schedules saved prior to v3.3 will not have it.
+    return runConstraints == null ? RunConstraints.NONE : runConstraints;
   }
 
   @Override
@@ -74,30 +64,16 @@ public class Schedule {
       return false;
     }
 
-    Schedule schedule = (Schedule) o;
+    Schedule that = (Schedule) o;
 
-    if (cronEntry != null
-          ? !cronEntry.equals(schedule.cronEntry)
-          : schedule.cronEntry != null) {
-      return false;
-    }
-    if (description != null ? !description.equals(schedule.description) :
-         schedule.description != null) {
-      return false;
-    }
-    if (name != null ? !name.equals(schedule.name) : schedule.name != null) {
-      return false;
-    }
-
-    return true;
+    return Objects.equals(name, that.name) &&
+      Objects.equals(description, that.description) &&
+      Objects.equals(getRunConstraints(), that.getRunConstraints());
   }
 
   @Override
   public int hashCode() {
-    int result = name != null ? name.hashCode() : 0;
-    result = 31 * result + (description != null ? description.hashCode() : 0);
-    result = 31 * result + (cronEntry != null ? cronEntry.hashCode() : 0);
-    return result;
+    return Objects.hash(name, description, getRunConstraints());
   }
 
   @Override
@@ -105,7 +81,7 @@ public class Schedule {
     StringBuilder sb = new StringBuilder("Schedule{");
     sb.append("name='").append(name).append('\'');
     sb.append(", description='").append(description).append('\'');
-    sb.append(", cronEntry='").append(cronEntry).append('\'');
+    sb.append(", runConstraints='").append(getRunConstraints()).append('\'');
     sb.append('}');
     return sb.toString();
   }

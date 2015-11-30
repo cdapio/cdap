@@ -54,6 +54,10 @@ public class ArtifactConfigReaderTest {
           "x", new PluginPropertyField("x", "some field", "int", true),
           "y", new PluginPropertyField("y", "some other field", "string", false)
         ))
+      ),
+      ImmutableMap.of(
+        "k1", "v1",
+        "k2", "v2"
       )
     );
     File configFile = new File(tmpFolder.newFolder(), "r1-1.0.0.json");
@@ -70,7 +74,8 @@ public class ArtifactConfigReaderTest {
       ImmutableSet.of(
         new ArtifactRange(Id.Namespace.DEFAULT, "b", new ArtifactVersion("1.0.0"), new ArtifactVersion("2.0.0"))
       ),
-      ImmutableSet.<PluginClass>of());
+      ImmutableSet.<PluginClass>of(),
+      ImmutableMap.<String, String>of());
     File configFile = new File(tmpFolder.newFolder(), "r1-1.0.0.json");
     try (BufferedWriter writer = Files.newWriter(configFile, Charsets.UTF_8)) {
       writer.write(badConfig.toString());

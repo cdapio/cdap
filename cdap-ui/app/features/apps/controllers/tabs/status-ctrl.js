@@ -14,60 +14,23 @@
   the License.
 */
 
+class AppDetailStatusController {
+  constructor(DetailNonRunsStore, NodesActionsFactory, NodeConfigStore, rPipelineDetail, $scope) {
+    DetailNonRunsStore.init(rPipelineDetail);
+    NodeConfigStore.init();
+
+    var obj = DetailNonRunsStore.getDAGConfig();
+    NodesActionsFactory.createGraphFromConfig(obj.nodes, obj.connections);
+
+    $scope.$on('$destroy', function() {
+      // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
+      DetailNonRunsStore.reset();
+      NodeConfigStore.reset();
+    });
+  }
+}
+
+AppDetailStatusController.$inject = ['DetailNonRunsStore', 'NodesActionsFactory', 'NodeConfigStore', 'rPipelineDetail', '$scope'];
+
 angular.module(PKG.name + '.feature.apps')
-  .controller('AppDetailStatusController', function($state, myAdapterApi, MyAppDAGService, CanvasFactory, GLOBALS, $scope) {
-    this.nodes = [];
-    var params = {
-      namespace: $state.params.namespace,
-      adapter: $state.params.appId,
-      scope: $scope
-    };
-
-    this.cloneAdapter = function() {
-      if (this.config) {
-        $state.go('adapters.create', {
-          data: this.config,
-          type: this.config.artifact.name
-        });
-      }
-    };
-
-    myAdapterApi.get(params)
-      .$promise
-      .then(function(res) {
-        try{
-          res.config = JSON.parse(res.configuration);
-        } catch(e) {
-          console.log('ERROR in configuration from backend: ', e);
-        }
-        this.config = {
-          name: $state.params.appId,
-          artifact: res.artifact,
-          description: res.description,
-          config: {
-            source: res.config.source,
-            sinks: res.config.sinks,
-            transforms: res.config.transforms,
-            instances: res.instance,
-            schedule: res.config.schedule
-          }
-        };
-
-        MyAppDAGService.metadata.name = res.name;
-        MyAppDAGService.metadata.description = res.description;
-        MyAppDAGService.metadata.template.type = res.artifact.name;
-        if (res.artifact.name === GLOBALS.etlBatch) {
-          MyAppDAGService.metadata.template.schedule = res.config.schedule;
-        } else if (res.artifact.name === GLOBALS.etlRealtime) {
-          MyAppDAGService.metadata.template.instances = res.config.instances;
-        }
-        this.nodes = CanvasFactory.getNodes(res.config, MyAppDAGService.metadata.template.type);
-        this.nodes.forEach(function(node) {
-          MyAppDAGService.addNodes(node, node.type);
-        });
-
-        MyAppDAGService.connections = CanvasFactory.getConnectionsBasedOnNodes(this.nodes, res.artifact.name);
-
-
-      }.bind(this));
-  });
+  .controller('AppDetailStatusController', AppDetailStatusController);

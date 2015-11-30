@@ -22,13 +22,17 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.2.1</version>
+    <version>3.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-examples</artifactId>
   <packaging>pom</packaging>
   <name>CDAP Examples</name>
 
+  <!--
+    NOTE: This pom is not the one bundled in the cdap sdk.
+    When adding a new module here, be sure to add it to deploy_pom.xml too.
+  -->
   <modules>
     <module>CountRandom</module>
     <module>CubeService</module>
@@ -186,6 +190,12 @@
         <groupId>co.cask.common</groupId>
         <artifactId>common-http</artifactId>
         <version>${cask.common.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-all</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>co.cask.http</groupId>

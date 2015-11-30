@@ -32,8 +32,8 @@ import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.BatchFileFilter;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -77,7 +77,7 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
   protected static final String PATH_DESCRIPTION = "Path to file(s) to be read. If a directory is specified, " +
     "terminate the path name with a \'/\'.";
   protected static final String TABLE_DESCRIPTION = "Name of the Table that keeps track of the last time files " +
-    "were read in.";
+    "were read in. If this is null or empty, the Regex is used to filter filenames.";
   protected static final String INPUT_FORMAT_CLASS_DESCRIPTION = "Name of the input format class, which must be a " +
     "subclass of FileInputFormat. Defaults to CombineTextInputFormat.";
   protected static final String REGEX_DESCRIPTION = "Regex to filter out filenames in the path. " +
@@ -85,14 +85,15 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     "is reading in files with the File log naming convention of 'YYYY-MM-DD-HH-mm-SS-Tag'. The TimeFilter " +
     "reads in files from the previous hour if the field 'timeTable' is left blank. If it's currently " +
     "2015-06-16-15 (June 16th 2015, 3pm), it will read in files that contain '2015-06-16-14' in the filename. " +
-    "If the field 'timeTable' is present, then it will read in files that have not yet been read.";
+    "If the field 'timeTable' is present, then it will read in files that have not yet been read. Defaults to '.*', " +
+    "which indicates that no files will be filtered.";
   private static final String FILESYSTEM_PROPERTIES_DESCRIPTION = "A JSON string representing a map of properties " +
-    "needed for the distributed file system. For example, the property names needed for S3 are " +
-    "\"fs.s3n.awsSecretAccessKey\" and \"fs.s3n.awsAccessKeyId\".";
+    "needed for the distributed file system.";
   private static final Gson GSON = new Gson();
   private static final Type ARRAYLIST_DATE_TYPE = new TypeToken<ArrayList<Date>>() { }.getType();
   private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
-  private static final int DEFAULT_SPLIT_SIZE = 134217728;
+  @VisibleForTesting
+  static final long DEFAULT_MAX_SPLIT_SIZE = 134217728;
 
   private final FileBatchConfig config;
   private KeyValueTable table;
@@ -124,18 +125,17 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     cal.set(Calendar.MILLISECOND, 0);
     prevHour = cal.getTime();
 
-    Job job = context.getHadoopJob();
+    Job job = Job.getInstance();
     Configuration conf = job.getConfiguration();
-    if (config.fileSystemProperties != null) {
-      Map<String, String> properties = GSON.fromJson(config.fileSystemProperties, MAP_STRING_STRING_TYPE);
-      for (Map.Entry<String, String> entry : properties.entrySet()) {
-        conf.set(entry.getKey(), entry.getValue());
-      }
+    conf.clear();
+
+    Map<String, String> properties = GSON.fromJson(config.fileSystemProperties, MAP_STRING_STRING_TYPE);
+    //noinspection ConstantConditions
+    for (Map.Entry<String, String> entry : properties.entrySet()) {
+      conf.set(entry.getKey(), entry.getValue());
     }
 
-    if (config.fileRegex != null) {
-      conf.set(INPUT_REGEX_CONFIG, config.fileRegex);
-    }
+    conf.set(INPUT_REGEX_CONFIG, config.fileRegex);
     conf.set(INPUT_NAME_CONFIG, config.path);
 
     if (config.timeTable != null) {
@@ -154,26 +154,12 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
     }
 
     conf.set(CUTOFF_READ_TIME, dateFormat.format(prevHour));
-    if (!Strings.isNullOrEmpty(config.inputFormatClass)) {
-      ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-      @SuppressWarnings("unchecked")
-      Class<? extends FileInputFormat> classType =
-        (Class<? extends FileInputFormat>) classLoader.loadClass(config.inputFormatClass);
-      job.setInputFormatClass(classType);
-    } else {
-      job.setInputFormatClass(CombineTextInputFormat.class);
-    }
     FileInputFormat.setInputPathFilter(job, BatchFileFilter.class);
     FileInputFormat.addInputPath(job, new Path(config.path));
-    long maxSplitSize = DEFAULT_SPLIT_SIZE;
-    if (!Strings.isNullOrEmpty(config.maxSplitSize)) {
-      try {
-        maxSplitSize = Long.parseLong(config.maxSplitSize);
-      } catch (NumberFormatException e) {
-        // use default if an invalid split size is provided
-      }
+    if (config.maxSplitSize != null) {
+      FileInputFormat.setMaxInputSplitSize(job, config.maxSplitSize);
     }
-    CombineTextInputFormat.setMaxInputSplitSize(job, maxSplitSize);
+    context.setInput(new SourceInputFormatProvider(config.inputFormatClass, conf));
   }
 
   @Override
@@ -211,37 +197,46 @@ public class FileBatchSource extends BatchSource<LongWritable, Object, Structure
   public static class FileBatchConfig extends PluginConfig {
 
     @Description(PATH_DESCRIPTION)
-    protected String path;
+    public String path;
 
     @Nullable
     @Description(FILESYSTEM_PROPERTIES_DESCRIPTION)
-    protected String fileSystemProperties;
+    public String fileSystemProperties;
 
     @Nullable
     @Description(REGEX_DESCRIPTION)
-    protected String fileRegex;
+    public String fileRegex;
 
     @Nullable
     @Description(TABLE_DESCRIPTION)
-    protected String timeTable;
+    public String timeTable;
 
     @Nullable
     @Description(INPUT_FORMAT_CLASS_DESCRIPTION)
-    protected String inputFormatClass;
+    public String inputFormatClass;
 
     @Nullable
     @Description(MAX_SPLIT_SIZE_DESCRIPTION)
-    protected String maxSplitSize;
+    public Long maxSplitSize;
 
-    public FileBatchConfig(String path, @Nullable String regex, @Nullable String timeTable,
+    public FileBatchConfig() {
+      this.fileSystemProperties = GSON.toJson(ImmutableMap.<String, String>of());
+      this.fileRegex = ".*";
+      this.inputFormatClass = CombineTextInputFormat.class.getName();
+      this.maxSplitSize = DEFAULT_MAX_SPLIT_SIZE;
+    }
+
+    public FileBatchConfig(String path, @Nullable String fileRegex, @Nullable String timeTable,
                            @Nullable String inputFormatClass, @Nullable String fileSystemProperties,
-                           @Nullable String maxSplitSize) {
-      this.fileSystemProperties = fileSystemProperties;
+                           @Nullable Long maxSplitSize) {
       this.path = path;
-      this.fileRegex = regex;
+      this.fileSystemProperties = fileSystemProperties == null ? GSON.toJson(ImmutableMap.<String, String>of()) :
+        fileSystemProperties;
+      this.fileRegex = fileRegex == null ? ".*" : fileRegex;
+      // There is no default for timeTable, the code handles nulls
       this.timeTable = timeTable;
-      this.inputFormatClass = inputFormatClass;
-      this.maxSplitSize = maxSplitSize;
+      this.inputFormatClass = inputFormatClass == null ? CombineTextInputFormat.class.getName() : inputFormatClass;
+      this.maxSplitSize = maxSplitSize == null ? DEFAULT_MAX_SPLIT_SIZE : maxSplitSize;
     }
   }
 }

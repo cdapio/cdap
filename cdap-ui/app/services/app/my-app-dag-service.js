@@ -35,8 +35,8 @@
     4. Now we have an object to bind to the UI (properties modal).
     5. Any edits user make on the modal should automatically get saved.
 
-  Saving/Publishing an adapter from canvas-ctrl:
-    1. When we want to publish an adapter this service will be notified
+  Saving/Publishing an hydrator from canvas-ctrl:
+    1. When we want to publish an hydrator this service will be notified
     2. It will go through the list of connections and forms the config based on the node information
         we have from the list of nodes (along with its properties).
     3. Performs UI validation
@@ -47,7 +47,7 @@
 
 */
 angular.module(PKG.name + '.services')
-  .service('MyAppDAGService', function(myAdapterApi, $q, $bootstrapModal, $state, $filter, mySettings, AdapterErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, ModalConfirm, EventPipe, CanvasFactory, $rootScope, GLOBALS, MyNodeConfigService, MyConsoleTabService) {
+  .service('MyAppDAGService', function(myPipelineApi, $q, $bootstrapModal, $state, $filter, mySettings, HydratorErrorFactory, IMPLICIT_SCHEMA, myHelpers, PluginConfigFactory, EventPipe, CanvasFactory, $rootScope, GLOBALS, MyNodeConfigService, MyConsoleTabService) {
 
     var countSink = 0,
         countSource = 0,
@@ -125,16 +125,6 @@ angular.module(PKG.name + '.services')
     this.notifyError = function (errorObj) {
       this.errorCallbacks.forEach(function(callback) {
         callback(errorObj);
-      });
-    };
-
-    this.registerEditPropertiesCallback = function(callback) {
-      this.editPropertiesCallback.push(callback);
-    };
-
-    this.notifyEditPropertiesCallback = function(plugin) {
-      this.editPropertiesCallback.forEach(function(callback) {
-        callback(plugin);
       });
     };
 
@@ -420,16 +410,16 @@ angular.module(PKG.name + '.services')
           sinkType = GLOBALS.pluginTypes[this.metadata.template.type].sink;
 
       var propertiesApiMap = {
-        'transform': myAdapterApi.fetchTransformProperties
+        'transform': myPipelineApi.fetchTransformProperties
       };
-      propertiesApiMap[sourceType] = myAdapterApi.fetchSourceProperties;
-      propertiesApiMap[sinkType] = myAdapterApi.fetchSinkProperties;
+      propertiesApiMap[sourceType] = myPipelineApi.fetchSourceProperties;
+      propertiesApiMap[sinkType] = myPipelineApi.fetchSinkProperties;
 
       // This needs to pass on a scope always. Right now there is no cleanup
       // happening
       var params = {
         namespace: $state.params.namespace,
-        adapterType: this.metadata.template.type,
+        pipelineType: this.metadata.template.type,
         version: $rootScope.cdapVersion,
         extensionType: plugin.type,
         pluginName: plugin.name
@@ -459,9 +449,6 @@ angular.module(PKG.name + '.services')
         });
     }
 
-    this.editPluginProperties = function (scope, pluginId) {
-      this.notifyEditPropertiesCallback(this.nodes[pluginId]);
-    };
 
     // Used for UI alone. Has _backendProperties and ids to plugins for
     // construction and validation of DAGs in UI.
@@ -482,7 +469,6 @@ angular.module(PKG.name + '.services')
       var nodes = angular.copy(this.nodes);
 
       function addPluginToConfig(plugin, id) {
-
         var pluginConfig =  {
           // Solely adding id and _backendProperties for validation.
           // Should be removed while saving it to backend.
@@ -490,7 +476,8 @@ angular.module(PKG.name + '.services')
           name: plugin.name,
           label: plugin.label,
           properties: plugin.properties,
-          _backendProperties: plugin._backendProperties
+          _backendProperties: plugin._backendProperties,
+          outputSchema: plugin.outputSchema
         };
 
         if (plugin.type === artifactTypeExtension.source) {
@@ -611,33 +598,18 @@ angular.module(PKG.name + '.services')
     this.save = function() {
       var defer = $q.defer();
 
-      if (MyNodeConfigService.getIsPluginBeingEdited()) {
-        // This should have been a popup that we show for un-saved changes while switching the node.
-        // Couldn't do it here because we cannot set it to another plugin. Hence the console message.
-        // If we are able to fuse 4 hydrogen atoms and things turn out good, we will have auto-correct
-        // in the next realease and we should be able to remove a majority of
-        // communication happening with save and reset in node configuration.
-        this.notifyError({
-          canvas: [
-            GLOBALS.en.hydrator.studio.unsavedPluginMessage1 +
-            MyNodeConfigService.plugin.label +
-            GLOBALS.en.hydrator.studio.unsavedPluginMessage2
-          ]
-        });
-        defer.reject();
-        return defer.promise;
-      }
       this.isConfigTouched = false;
       var config = this.getConfig();
-      var errors = AdapterErrorFactory.isModelValid(this.nodes, this.connections, this.metadata, config);
+      var errors = HydratorErrorFactory.isModelValid(this.nodes, this.connections, this.metadata, config);
 
       if (!angular.isObject(errors)) {
         EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
         var data = this.getConfigForBackend();
-        myAdapterApi.save(
+
+        myPipelineApi.save(
           {
             namespace: $state.params.namespace,
-            adapter: this.metadata.name
+            pipeline: this.metadata.name
           },
           data
         )
@@ -678,7 +650,7 @@ angular.module(PKG.name + '.services')
       var defer = $q.defer();
       var config = this.getConfigForBackend();
       var error = {};
-      AdapterErrorFactory.hasNameAndTemplateType(null, null, this.metadata, null, error);
+      HydratorErrorFactory.hasNameAndTemplateType(null, null, this.metadata, null, error);
 
       if (Object.keys(error).length) {
         this.notifyError(error);

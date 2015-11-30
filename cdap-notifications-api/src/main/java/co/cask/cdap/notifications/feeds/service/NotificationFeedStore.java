@@ -39,21 +39,21 @@ public interface NotificationFeedStore {
   /**
    * Retrieves a Notification feed from the metadata store.
    *
-   * @param feedId id of the requested notification feed
+   * @param feed {@link Id.NotificationFeed} representing the feed
    * @return {@link Id.NotificationFeed} of the requested feed, or null if it was not found in the store
    */
   @Nullable
-  Id.NotificationFeed getNotificationFeed(String feedId);
+  Id.NotificationFeed getNotificationFeed(Id.NotificationFeed feed);
 
   /**
    * Deletes a Notification feed from the metadata store.
    *
-   * @param feedId id of the notification feed to delete
+   * @param feed {@link Id.NotificationFeed} representing the feed
    * @return {@link Id.NotificationFeed} of the feed if it was found and deleted,
    * null if the specified feed did not exist
    */
   @Nullable
-  Id.NotificationFeed deleteNotificationFeed(String feedId);
+  Id.NotificationFeed deleteNotificationFeed(Id.NotificationFeed feed);
 
   /**
    * Lists all registered Notification feeds for the {@code namespace}.

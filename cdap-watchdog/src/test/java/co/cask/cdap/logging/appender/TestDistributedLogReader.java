@@ -26,6 +26,7 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -107,6 +108,7 @@ public class TestDistributedLogReader extends KafkaTestBase {
       new ConfigModule(cConf, hConf),
       new LocationRuntimeModule().getInMemoryModules(),
       new TransactionModules().getInMemoryModules(),
+      new TransactionExecutorModule(),
       new LoggingModules().getInMemoryModules(),
       new DataSetsModules().getInMemoryModules(),
       new SystemDatasetRuntimeModule().getInMemoryModules(),

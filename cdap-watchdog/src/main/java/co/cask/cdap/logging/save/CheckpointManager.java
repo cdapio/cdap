@@ -19,7 +19,6 @@ package co.cask.cdap.logging.save;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Table;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;

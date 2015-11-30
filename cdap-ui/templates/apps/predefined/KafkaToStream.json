@@ -2,7 +2,7 @@
   "artifact": {
     "name": "cdap-etl-realtime",
     "scope": "SYSTEM",
-    "version": "3.2.1"
+    "version": "3.3.0-SNAPSHOT"
   },
   "config": {
     "source": {
@@ -36,6 +36,7 @@
     ],
     "instances": 1
   },
-  "description": "Streaming Twitter Tweets into Stream for downstream processing."
+  "description": "Ingests in real time from Kafka into a stream",
+  "name": "KafkaToStream"
 }
 

@@ -19,7 +19,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('UserDashboardCtrl',
-function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, DashboardHelper) {
+function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, myAlertOnValium, DashboardHelper) {
 
   $scope.unknownBoard = false;
   $scope.liveDashboard = false;
@@ -87,7 +87,7 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
     var timeRange = $scope.timeOptions.endMs - $scope.timeOptions.startMs;
     if (timeRange >  limitInDays * millisecondsPerDay) {
       // Note: alternative is to interpolate the many many points we get from the backend (mostly will be 0s?).
-      $alert({
+      myAlertOnValium.show({
         content: 'Please choose a shorter time range. Current time range limit is ' + limitInDays + ' days.',
         type: 'warning'
       });
@@ -120,6 +120,17 @@ function ($scope, $state, $dropdown, rDashboardsModel, MY_CONFIG, $alert, Dashbo
     });
 
     DashboardHelper.startPollDashboard($scope.currentBoard);
+  };
+
+  $scope.$watch('timeOptions.durationMs', function() {
+    if ($scope.liveDashboard) {
+      $scope.updateWithFrequency();
+    }
+  });
+  $scope.updateRefreshInterval =  function() {
+    if ($scope.liveDashboard) {
+      $scope.updateWithFrequency();
+    }
   };
 
   $scope.stopPolling = function() {

@@ -32,15 +32,20 @@ import co.cask.cdap.data2.metadata.writer.ProgramContextAware;
 import co.cask.cdap.internal.app.runtime.AbstractProgramRunnerWithPlugin;
 import co.cask.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
+import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
+import com.google.common.io.Closeables;
+import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.api.RunId;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.internal.RunIds;
+import org.apache.twill.internal.ServiceListenerAdapter;
 
 /**
  * A {@link ProgramRunner} that runs a {@link Worker}.
@@ -48,7 +53,6 @@ import org.apache.twill.internal.RunIds;
 public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final Gson GSON = new Gson();
 
-  private final CConfiguration cConf;
   private final MetricsCollectionService metricsCollectionService;
   private final DatasetFramework datasetFramework;
   private final DiscoveryServiceClient discoveryServiceClient;
@@ -60,7 +64,6 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
                              DatasetFramework datasetFramework, DiscoveryServiceClient discoveryServiceClient,
                              TransactionSystemClient txClient, StreamWriterFactory streamWriterFactory) {
     super(cConf);
-    this.cConf = cConf;
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
     this.discoveryServiceClient = discoveryServiceClient;
@@ -106,17 +109,35 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       ((ProgramContextAware) datasetFramework).initContext(new Id.Run(programId, runId.getId()));
     }
 
-    BasicWorkerContext context = new BasicWorkerContext(
-      newWorkerSpec, program, runId, instanceId, instanceCount,
-      options.getUserArguments(), cConf, metricsCollectionService, datasetFramework,
-      txClient, discoveryServiceClient, streamWriterFactory,
-      createPluginInstantiator(options, program.getClassLoader()));
-    WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
+    final PluginInstantiator pluginInstantiator = createPluginInstantiator(options, program.getClassLoader());
+    try {
+      BasicWorkerContext context = new BasicWorkerContext(
+        newWorkerSpec, program, runId, instanceId, instanceCount,
+        options.getUserArguments(), metricsCollectionService, datasetFramework,
+        txClient, discoveryServiceClient, streamWriterFactory, pluginInstantiator);
+      WorkerDriver worker = new WorkerDriver(program, newWorkerSpec, context);
 
-    ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
-                                                                      workerSpec.getName() + "-" + instanceId);
-    worker.start();
-    return controller;
+      // Add a service listener to make sure the plugin instantiator is closed when the worker driver finished.
+      worker.addListener(new ServiceListenerAdapter() {
+        @Override
+        public void terminated(Service.State from) {
+          Closeables.closeQuietly(pluginInstantiator);
+        }
+
+        @Override
+        public void failed(Service.State from, Throwable failure) {
+          Closeables.closeQuietly(pluginInstantiator);
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
+
+      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId(), runId,
+                                                                        workerSpec.getName() + "-" + instanceId);
+      worker.start();
+      return controller;
+    } catch (Throwable t) {
+      Closeables.closeQuietly(pluginInstantiator);
+      throw t;
+    }
   }
 
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {

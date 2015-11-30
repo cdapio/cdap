@@ -23,7 +23,10 @@
     "cask-angular-confirmable": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-confirmable.zip",
     "cask-angular-promptable": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-promptable.zip",
     "cask-angular-json-edit": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-json-edit.zip",
-    "sockjs-client": "1.0.2",
+    "cask-angular-eventpipe": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-eventpipe.zip",
+    "cask-angular-observable-promise": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-observable-promise.zip",
+    "cask-angular-socket-datasource": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-socket-datasource.zip",
+    "cask-angular-dispatcher": "https://github.com/caskdata/ng-capsules/raw/develop/zip/cask-angular-dispatcher.zip",
     "d3": "3.5.5",
     "ng-sortable": "1.1.9",
     "angular-breadcrumb": "0.3.3",
@@ -31,15 +34,16 @@
     "d3-tip": "0.6.7",
     "angular-moment": "0.10.1",
     "angular-bootstrap": "0.13.2",
-    "node-uuid": "1.4.3",
     "c3": "0.4.10",
     "angular-ui-ace": "bower",
-    "jsPlumb": "1.7.5",
+    "jsPlumb": "2.0.4",
     "angular-gridster": "0.13.5",
-    "angular-cron-jobs": "1.4.1"
+    "angular-cron-jobs": "1.4.1",
+    "angularjs-dropdown-multiselect": "1.5.2"
   },
   "resolutions": {
     "angular": "1.4.3",
-    "d3": "3.5.5"
+    "d3": "3.5.5",
+    "lodash": "3.10.1"
   }
 }

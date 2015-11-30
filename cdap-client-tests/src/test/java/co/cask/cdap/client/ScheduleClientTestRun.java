@@ -20,23 +20,29 @@ import co.cask.cdap.api.schedule.ScheduleSpecification;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeWorkflow;
 import co.cask.cdap.client.common.ClientTestBase;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.ScheduledRuntime;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link co.cask.cdap.client.ServiceClient}.
  */
 @Category(XSlowTests.class)
 public class ScheduleClientTestRun extends ClientTestBase {
+  private static final Logger LOG = LoggerFactory.getLogger(ScheduleClientTestRun.class);
 
   private final Id.Namespace namespace = Id.Namespace.DEFAULT;
   private final Id.Application app = Id.Application.from(namespace, FakeApp.NAME);
@@ -56,7 +62,11 @@ public class ScheduleClientTestRun extends ClientTestBase {
 
   @After
   public void tearDown() throws Throwable {
-    appClient.delete(app);
+    try {
+      appClient.delete(app);
+    } catch (Exception e) {
+      LOG.error("Error deleting app {} during test cleanup.", e);
+    }
   }
 
   @Test
@@ -91,5 +101,17 @@ public class ScheduleClientTestRun extends ClientTestBase {
     scheduleClient.suspend(schedule);
     status = scheduleClient.getStatus(schedule);
     Assert.assertEquals("SUSPENDED", status);
+
+    List<ScheduledRuntime> scheduledRuntimes = scheduleClient.nextRuntimes(workflow);
+    Assert.assertEquals(1, scheduledRuntimes.size());
+    // simply assert that its scheduled for some time in the future (or scheduled for now, but hasn't quite
+    // executed yet
+    Assert.assertTrue(scheduledRuntimes.get(0).getTime() >= System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(1));
+
+    try {
+      scheduleClient.nextRuntimes(Id.Workflow.from(app, "nonexistentWorkflow"));
+      Assert.fail("Expected not to be able to retrieve next run times for a nonexistent workflow.");
+    } catch (NotFoundException expected) {
+    }
   }
 }

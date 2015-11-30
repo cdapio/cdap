@@ -66,7 +66,6 @@ import co.cask.cdap.internal.app.runtime.schedule.LocalSchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.internal.app.runtime.schedule.SchedulerService;
 import co.cask.cdap.internal.app.runtime.schedule.store.DatasetBasedTimeScheduleStore;
-import co.cask.cdap.internal.app.services.AdapterService;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.internal.app.services.ProgramLifecycleService;
 import co.cask.cdap.internal.app.services.StandaloneAppFabricServer;
@@ -84,6 +83,8 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
@@ -277,8 +278,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       );
 
       bind(Store.class).to(DefaultStore.class);
+      bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
-      bind(AdapterService.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
 

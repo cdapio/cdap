@@ -26,6 +26,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
+import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -54,7 +55,10 @@ import javax.annotation.Nullable;
 public interface DatasetFramework {
 
   /**
-   * Adds dataset types by adding dataset module to the system.
+   * Adds dataset types by adding dataset module to the system. Calling this method to add {@link DatasetModule} may
+   * result in tracing class dependencies if the {@link DatasetModule} is not a system dataset, which can takes
+   * couple seconds for the tracing. If the jar {@link Location} containing the {@link DatasetModule} is known, it's
+   * better to call {@link #addModule(Id.DatasetModule, DatasetModule, Location)} instead.
    *
    * @param moduleId dataset module id
    * @param module dataset module
@@ -64,6 +68,21 @@ public interface DatasetFramework {
    * @throws ServiceUnavailableException when the dataset service is not running
    */
   void addModule(Id.DatasetModule moduleId, DatasetModule module) throws DatasetManagementException;
+
+  /**
+   * Adds dataset types by adding dataset module to the system with a jar location containing all dataset classes
+   * needed by the module.
+   *
+   * @param moduleId dataset module id
+   * @param module dataset module
+   * @param jarLocation location of the jar file that contains the dataset classes needed by the module
+   * @throws ModuleConflictException when module with same name is already registered or this module registers a type
+   *         with a same name as one of the already registered by another module types
+   * @throws DatasetManagementException in case of problems
+   * @throws ServiceUnavailableException when the dataset service is not running
+   */
+  void addModule(Id.DatasetModule moduleId, DatasetModule module,
+                 Location jarLocation) throws DatasetManagementException;
 
   /**
    * Deletes dataset module and its types from the system.

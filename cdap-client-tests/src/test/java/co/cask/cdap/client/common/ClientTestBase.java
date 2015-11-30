@@ -65,7 +65,10 @@ public abstract class ClientTestBase {
   public void setUp() throws Throwable {
     StandaloneTester standalone = STANDALONE.get();
     ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parse(standalone.getBaseURI().toString());
-    clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
+    clientConfig = new ClientConfig.Builder()
+      .setDefaultReadTimeout(60 * 1000)
+      .setUploadReadTimeout(120 * 1000)
+      .setConnectionConfig(connectionConfig).build();
   }
 
   protected ClientConfig getClientConfig() {

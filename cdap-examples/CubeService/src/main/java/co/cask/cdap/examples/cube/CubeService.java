@@ -22,7 +22,7 @@ import co.cask.cdap.api.dataset.lib.cube.AbstractCubeHttpHandler;
 import co.cask.cdap.api.dataset.lib.cube.Cube;
 
 /**
- * Simple Cube App with a Cube Service to access data
+ * Simple Cube App with a Cube Service to access data.
  */
 public class CubeService extends AbstractApplication {
 
@@ -34,7 +34,8 @@ public class CubeService extends AbstractApplication {
   }
 
   /**
-   * Cube Handler
+   * Cube Handler. This inherits all HTTP methods from {@link AbstractCubeHttpHandler};
+   * however, it implements the abstract method to get an instance of the Cube dataset that is being served.
    */
   public final class CubeHandler extends AbstractCubeHttpHandler {
     @UseDataSet("logEventCube")

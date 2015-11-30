@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.datasets')
-  .controller('DatasetsDetailController', function($scope, $state, MyDataSource, $alert, $filter, myDatasetApi, explorableDatasets) {
+  .controller('DatasetsDetailController', function($scope, $state, MyCDAPDataSource, $alert, $filter, myDatasetApi, explorableDatasets) {
     var params = {
       namespace: $state.params.namespace,
       scope: $scope
@@ -35,4 +35,9 @@ angular.module(PKG.name + '.feature.datasets')
         });
     };
 
+    this.metadataParams = {
+      namespace: $state.params.namespace,
+      datasetId: $state.params.datasetId
+    };
+    
   });
