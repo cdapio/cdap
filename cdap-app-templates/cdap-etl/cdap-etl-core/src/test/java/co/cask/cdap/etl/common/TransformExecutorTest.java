@@ -24,6 +24,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +34,8 @@ import java.util.Map;
 /**
  */
 public class TransformExecutorTest {
-  // TODO : Add more tests
 
+  private static final Logger LOG = LoggerFactory.getLogger(TransformExecutorTest.class);
   @Test
   public void testEmptyTransforms() throws Exception {
     MockMetrics mockMetrics = new MockMetrics();
@@ -62,7 +64,7 @@ public class TransformExecutorTest {
     Map<String, Transformation> transformationMap = new HashMap<>();
 
     transformationMap.put("transform1", new IntToDouble("transform1"));
-    transformationMap.put("transform2", new Filter("transform2", 100d));
+    transformationMap.put("transform2", new Filter("transform2", 100d, Threshold.LOWER));
     transformationMap.put("sink1", new DoubleToString("sink1"));
     transformationMap.put("sink2", new DoubleToString("sink2"));
 
@@ -128,6 +130,47 @@ public class TransformExecutorTest {
     mockMetrics.clearMetrics();
   }
 
+  @Test
+  public void testTransformsWithMerge() throws Exception {
+    MockMetrics mockMetrics = new MockMetrics();
+    Map<String, Transformation> transformationMap = new HashMap<>();
+
+    transformationMap.put("conversion", new IntToDouble("conversion"));
+    transformationMap.put("filter1", new Filter("filter1", 100d, Threshold.LOWER));
+    transformationMap.put("filter2", new Filter("filter2", 1000d, Threshold.LOWER));
+    transformationMap.put("limiter1", new Filter("limiter1", 5000d, Threshold.UPPER));
+    transformationMap.put("sink1", new DoubleToString("sink1"));
+    transformationMap.put("sink2", new DoubleToString("sink2"));
+    transformationMap.put("sink3", new DoubleToString("sink3"));
+
+    TransformDetail transformDetail = new TransformDetail(transformationMap, mockMetrics);
+
+    Map<String, List<String>> connectionsMap = new HashMap<>();
+
+    connectionsMap.put("source", ImmutableList.of("conversion"));
+    connectionsMap.put("conversion", ImmutableList.of("filter1", "filter2"));
+    connectionsMap.put("filter1", ImmutableList.of("limiter1", "sink1"));
+    connectionsMap.put("filter2", ImmutableList.of("limiter1", "sink2"));
+    connectionsMap.put("limiter1", ImmutableList.of("sink3"));
+
+    TransformExecutor<Integer> executor = new TransformExecutor<>(transformDetail, connectionsMap, "source");
+    TransformResponse transformResponse = executor.runOneIteration(200);
+    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 2, "sink3", 3));
+    assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("filter2", 1, "limiter1", 2));
+    Assert.assertEquals(3, mockMetrics.getCount("filter1.records.in"));
+    Assert.assertEquals(3, mockMetrics.getCount("filter1.records.out"));
+
+    Assert.assertEquals(3, mockMetrics.getCount("filter2.records.in"));
+    Assert.assertEquals(2, mockMetrics.getCount("filter2.records.out"));
+
+    Assert.assertEquals(5, mockMetrics.getCount("limiter1.records.in"));
+    Assert.assertEquals(3, mockMetrics.getCount("limiter1.records.out"));
+
+    Assert.assertEquals(3, mockMetrics.getCount("sink1.records.out"));
+    Assert.assertEquals(2, mockMetrics.getCount("sink2.records.out"));
+    Assert.assertEquals(3, mockMetrics.getCount("sink3.records.out"));
+  }
+
   private <T> void assertResults(Map<String, List<T>> results, Map<String, Integer> expectedListsSize) {
     Assert.assertEquals(expectedListsSize.size(), results.size());
     for (Map.Entry<String, Integer> entry : expectedListsSize.entrySet()) {
@@ -153,21 +196,39 @@ public class TransformExecutorTest {
     }
   }
 
+  private static enum Threshold {
+    LOWER,
+    UPPER
+  }
+
   private static class Filter extends Transform<Double, Double> {
     private final Double threshold;
     private final String stageName;
+    private final Threshold thresholdType;
 
-    public Filter(String stageName, Double threshold) {
+    public Filter(String stageName, Double threshold, Threshold thresholdType) {
       this.stageName = stageName;
       this.threshold = threshold;
+      this.thresholdType = thresholdType;
     }
 
     @Override
     public void transform(Double input, Emitter<Double> emitter) throws Exception {
-      if (input > threshold) {
-        emitter.emit(stageName, input);
+      if (thresholdType.equals(Threshold.LOWER)) {
+        if (input > threshold) {
+          emitter.emit(stageName, input);
+        } else {
+          emitter.emitError(stageName, new InvalidEntry<>(100, "less than threshold ", input));
+        }
       } else {
-        emitter.emitError(stageName, new InvalidEntry<>(100, "less than threshold", input));
+        LOG.info("Checking limit for number {} and stageName is {}", input, stageName);
+        if (input < threshold) {
+          LOG.info("Accepting number {}", input);
+          emitter.emit(stageName, input);
+        } else {
+          LOG.info("Rejecting number {}", input);
+          emitter.emitError(stageName, new InvalidEntry<>(200, "greater than limit ", input));
+        }
       }
     }
   }

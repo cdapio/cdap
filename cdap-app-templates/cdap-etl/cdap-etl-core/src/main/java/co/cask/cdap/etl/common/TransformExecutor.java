@@ -19,6 +19,7 @@ package co.cask.cdap.etl.common;
 import co.cask.cdap.etl.api.Destroyable;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transformation;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 
 import java.util.HashMap;
@@ -55,7 +56,16 @@ public class TransformExecutor<IN> implements Destroyable {
   }
 
   public TransformResponse runOneIteration(IN input) throws Exception {
-    executeTransfomation(start, ImmutableList.of(input));
+    if (trackedTransformDetail.getTransformationMap().containsKey(start)) {
+      executeTransformation(start, ImmutableList.of(input));
+    } else {
+      List<String> nextToStart = connectionsMap.get(start);
+      Preconditions.checkNotNull(nextToStart);
+
+      for (String stage : nextToStart) {
+        executeTransformation(stage, ImmutableList.of(input));
+      }
+    }
 
     Map<String, List<Object>> terminalNodeEntriesMap = new HashMap<>();
     Map<String, List<Object>> emitterEntries = defaultEmitter.getEntriesMap();
@@ -70,44 +80,37 @@ public class TransformExecutor<IN> implements Destroyable {
     return new TransformResponse(terminalNodeEntriesMap, errors);
   }
 
-  // this will be called with starting stage name
-  // we will get the transformation of it and also check if this is a terminal node
-  // if its not a terminal node
-  //    1) execute the transformation
-  //    2) using the connections map, recursively call the executeTransformation on the next links
-  // else if its a terminal node
-  //    1) if transformation exists, execute the transformation, else go to step-2
-  //    2) return
-  private <T> void executeTransfomation(String stageName, List<T> input) throws Exception {
+  private <T> void executeTransformation(String stageName, List<T> input) throws Exception {
     Transformation<T, Object> transformation = trackedTransformDetail.getTransformation(stageName);
-    if (transformation == null) {
-      // could be either source or sink
-      // get the next connections, if they are not empty, its a source
-      List<String> nextStages = connectionsMap.get(stageName);
-      if (nextStages != null) {
-        // source
-        for (String nextStageName : nextStages) {
-          executeTransfomation(nextStageName, input);
-        }
-      } else {
-        // its a sink, add the input to the emitter entries list
-        for (T inputEntry : input) {
-          defaultEmitter.emit(stageName, inputEntry);
-        }
+
+    // clear old data for this stageName if its not a terminal node
+    if (input == null) {
+      return;
+    }
+
+    if (connectionsMap.containsKey(stageName) && defaultEmitter.getEntriesMap().containsKey(stageName)) {
+      // clear old data if this node was used in a different path earlier during execution.
+      defaultEmitter.getEntries(stageName).clear();
+    }
+
+    if (trackedTransformDetail.getTransformationMap().containsKey(stageName)) {
+      // has transformation (could be source or transform or sink)
+      for (T inputEntry : input) {
+        transformation.transform(inputEntry, defaultEmitter);
+      }
+    }
+
+    List<String> nextStages = connectionsMap.get(stageName);
+    if (nextStages != null) {
+      // transform or source
+      for (String nextStage : nextStages) {
+        executeTransformation(nextStage, defaultEmitter.getEntries(stageName));
       }
     } else {
-      // has transformation
-      if (input != null) {
-        // has input
+      // terminal node, pass on the input if transformation for this terminal node is not already executed.
+      if (!trackedTransformDetail.getTransformationMap().containsKey(stageName)) {
         for (T inputEntry : input) {
-          transformation.transform(inputEntry, defaultEmitter);
-        }
-      }
-      List<String> nextStages = connectionsMap.get(stageName);
-      if (nextStages != null) {
-        // transform
-        for (String nextStage : nextStages) {
-          executeTransfomation(nextStage, defaultEmitter.getEntries(stageName));
+          defaultEmitter.emit(stageName, inputEntry);
         }
       }
     }
