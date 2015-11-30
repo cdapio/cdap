@@ -54,9 +54,9 @@ Installation
 
 .. rubric:: Putting CDAP into Production
 
-The Cask Data Application Platform (CDAP) can be run in different modes: **In-memory mode**
-for unit testing and continuous integration pipelines, **Standalone CDAP** for testing on a
-developer's laptop, and **Distributed CDAP** for staging and production.
+The Cask Data Application Platform (CDAP) can be run in different modes: **In-memory CDAP**
+for unit testing and continuous integration pipelines, **Standalone CDAP** for testing and
+development on a developer's laptop, or **Distributed CDAP** for staging and production.
 
 Regardless of the runtime mode, CDAP is fully-functional and the code you develop never
 changes. However, performance and scale are limited when using in-memory or standalone
@@ -72,11 +72,13 @@ another mode.
 The in-memory CDAP allows you to easily run CDAP for use in unit tests and continuous
 integration (CI) pipelines. In this mode, the underlying Big Data infrastructure is
 emulated using in-memory data structures and there is no persistence. The CDAP UI is not
-available in this mode. See :ref:`test-cdap` for information and examples on using this
-mode.
+available in this mode. 
+
+See :ref:`test-cdap` for information and examples on using this mode.
 
 - Purpose-built for writing unit tests and CI pipelines
-- Mimics storage technologies as in-memory data structures; for example, Java NavigableMap
+- Mimics storage technologies as in-memory data structures; for example, 
+  `Java NavigableMap <http://docs.oracle.com/javase/7/docs/api/java/util/NavigableMap.html>`__
 - Uses Java Threads as the processing abstraction (via Apache Twill)
 
 
@@ -104,9 +106,12 @@ SDK* for information on how to start and manage your Standalone CDAP.
 .. rubric:: Distributed Data Application Platform
 
 The Distributed CDAP runs in fully distributed mode. In addition to the system components
-of the CDAP, distributed and highly available deployments of the underlying Hadoop
+of the CDAP, distributed and highly available (HA) deployments of the underlying Hadoop
 infrastructure are included. Production applications should always be run on a Distributed
 CDAP.
+
+See the instructions for either a :ref:`distribution-specific <installation-index>` or 
+:ref:`generic Apache Hadoop <hadoop_index>` cluster for more information.
 
 - Production, Staging, and QA mode; runs in a distributed environment
 - Uses Apache HBase and HDFS as the storage technology (today)

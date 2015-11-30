@@ -38,7 +38,7 @@ services that support applications and data on existing Hadoop infrastructure su
 HBase, HDFS, YARN, MapReduce, Hive, and Spark.
 
 CDAP can be run in different modes: in-memory mode for unit testing and continuous
-integration pipelines, standalone CDAP for testing on a developer's laptop, and
+integration pipelines, standalone CDAP for testing and development, or
 distributed CDAP for staging and production. Regardless of the runtime mode, CDAP is
 fully-functional and the code you develop never changes.
 
@@ -98,8 +98,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
     guarantees, transaction service maintenance, troubleshooting and introduces the CDAP UI
   - **Troubleshooting and Appendices:** Installation and configuration troubleshooting
     tips, and appendices that cover the CDAP installation and security configuration files
-  - **Modes:** CDAP can be run in-memory for unit testing, standalone for testing on a developer's 
-    laptop, and distributed CDAP for production
+  - **Modes:** CDAP can be run three different modes: in-memory, standalone, or distributed
 
 .. |integrations| replace:: **Integrations:**
 .. _integrations: integrations/index.html
