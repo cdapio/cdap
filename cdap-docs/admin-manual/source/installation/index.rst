@@ -45,7 +45,7 @@ Installation
 - |mapr|_ Installing CDAP on `MapR systems <https://www.mapr.com>`__.
 
 .. |sdk| replace:: **CDAP Standalone SDK:**
-.. _sdk: ../developers-manual/getting-started/standalone/index.html
+.. _sdk: ../../developers-manual/getting-started/standalone/index.html
 
 - |sdk|_ Installing the CDAP Standalone SDK on Linux, MacOS, and Windows systems. *(Developers' Manual)*
 
