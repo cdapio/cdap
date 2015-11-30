@@ -1310,6 +1310,14 @@
   </property>
 
   <property>
+    <name>security.authorization.pluginClassName</name>
+    <value></value>
+    <description>
+      Class name of the AuthorizationPlugin implementation to use
+    </description>
+  </property>
+
+  <property>
     <name>security.data.keyfile.path</name>
     <value>${local.data.dir}/security/keyfile</value>
     <description>
@@ -1404,21 +1412,6 @@
     </description>
   </property>
 
-  <property>
-    <name>security.authorization.enabled</name>
-    <value>false</value>
-    <description>
-      Determines if authorization is enabled
-    </description>
-  </property>
-
-  <property>
-    <name>security.authorization.pluginClassName</name>
-    <value></value>
-    <description>
-      Class name of the AuthorizationPlugin implementation to use
-    </description>
-  </property>
 
   <!-- Stream Configuration -->
 
