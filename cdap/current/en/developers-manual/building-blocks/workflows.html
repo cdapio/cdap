@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.1">
-    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
-    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
+    <meta name="git_hash" content="ea78b17e5d4fedba3ff05816c075ab5dec46c15d">
+    <meta name="git_timestamp" content="2015-11-30 13:49:03 -0800">
     <title>Workflows &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -304,7 +304,7 @@ tokens.</p>
 <p><strong>Note:</strong> The test of <code class="docutils literal"><span class="pre">workflowToken</span> <span class="pre">!=</span> <span class="pre">null</span></code> is only required because this Reducer could
 be used outside of a workflow. When run from within a workflow, the token is guaranteed to
 be non-null.</p>
-<p>The <a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/workflow/WorkflowToken.html)">WorkflowToken Java API</a>
+<p>The <a class="reference external" href="../../reference-manual/javadocs/co/cask/cdap/api/workflow/WorkflowToken.html">WorkflowToken Java API</a>
 includes methods for getting values for different keys, scopes, and nodes. The same
 key can be added to the workflow by different nodes, and there are methods to return a map of those
 key-value pairs. Convenience methods allow the putting and getting of non-string values
