@@ -63,7 +63,7 @@
 
     <div ng-if="AppsSectionCtrl.dataList.length === 0">
       <div class="clearfix">
-        <h3> Data </h3>
+        <h3> Datasets </h3>
         <p> You haven't deployed any datasets: add one </p>
       </div>
       <hr />
@@ -77,7 +77,7 @@
   </div>
   <div class="col-xs-12 col-md-6">
     <div ng-if="AppsSectionCtrl.apps.length > 0">
-      <h3> Apps </h3>
+      <h3> Applications </h3>
       <div class="row">
         <div class="col-xs-12 col-sm-3">
           <p ng-if="AppsSectionCtrl.apps.length < 5"> Showing {{ AppsSectionCtrl.apps.length }} of {{ AppsSectionCtrl.apps.length }}</p>
@@ -95,13 +95,13 @@
             </a>
             <div class="btn-group dropdown-right" dropdown>
               <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
-                Add App <span class="caret"></span>
+                Add Application <span class="caret"></span>
               </button>
               <ul class="dropdown-menu dropdown-menu-right" role="menu">
                 <li>
                   <my-file-select dropdown="true"
                                   data-button-icon="__"
-                                  data-button-label="Custom App"
+                                  data-button-label="Custom Application"
                                   on-file-select="AppsSectionCtrl.onFileSelected($files)">
                   </my-file-select>
                 </li>
@@ -124,7 +124,7 @@
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
               <span class="icon-fist"></span>
-              <span> App </span>
+              <span> Application </span>
             </div>
           </a>
           <a ui-sref="apps.detail.overview.status({appId: app.id})"
@@ -154,12 +154,12 @@
       <hr />
       <div class="btn-group dropdown-right" dropdown>
         <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
-          Add App <span class="caret"></span>
+          Add Application <span class="caret"></span>
         </button>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
           <li>
             <my-file-select dropdown="true"
-                            data-button-label="Custom App"
+                            data-button-label="Custom Application"
                             data-button-icon="__"
                             on-file-select="AppsSectionCtrl.onFileSelected($files)">
             </my-file-select>

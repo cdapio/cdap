@@ -37,7 +37,7 @@ angular.module(PKG.name+'.feature.dashboard')
         { sizeX: 2, sizeY: 2, row: 0, col: 4 }
       ],
       [
-        'Transaction Commit',
+        'Transaction Commits',
         '',
         ['system.canCommit', 'system.commit', 'system.start.long', 'system.start.short'], 'c3-area-spline',
         { sizeX: 2, sizeY: 1, row: 2, col: 0 }
@@ -78,7 +78,7 @@ angular.module(PKG.name+'.feature.dashboard')
         { sizeX: 2, sizeY: 1, row: 4, col: 0 }
       ],
       [
-        'Dataset Reads/Writes',
+        'Dataset Reads and Writes',
         'namespace.*',
         ['system.dataset.store.writes' ,'system.dataset.store.reads'],
         'c3-area-spline',
