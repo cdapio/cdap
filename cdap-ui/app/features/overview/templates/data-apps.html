@@ -64,7 +64,7 @@
     <div ng-if="AppsSectionCtrl.dataList.length === 0">
       <div class="clearfix">
         <h3> Data </h3>
-        <p> You haven't deployed any datasets. Add one. </p>
+        <p> You haven't deployed any datasets: add one </p>
       </div>
       <hr />
       <div class="text-left">
@@ -87,7 +87,7 @@
           <div class="btn-group">
             <a ui-sref="apps.list" class="btn btn-default">
               <span class="fa fa-list-ul"></span>
-               <span>All Apps</span>
+               <span>All Applications</span>
             </a>
             <a ui-sref="hydrator.list" class="btn btn-default">
               <span class="icon-hydrator"></span>
@@ -138,7 +138,7 @@
               </span>
               <span ng-if="AppsSectionCtrl.GLOBALS.etlRealtime === app.artifact.name">
                 <span class="icon-ETLRealtime"></span>
-                <span>ETL Realtime</span>
+                <span>ETL Real-time</span>
               </span>
             </div>
           </a>
@@ -148,8 +148,8 @@
 
     <div ng-if="AppsSectionCtrl.apps.length === 0">
       <div class="clearfix">
-        <h3> Apps </h3>
-        <p> You haven't deployed any apps. Add one. </p>
+        <h3> Applications </h3>
+        <p> You haven't deployed any applications: add one </p>
       </div>
       <hr />
       <div class="btn-group dropdown-right" dropdown>

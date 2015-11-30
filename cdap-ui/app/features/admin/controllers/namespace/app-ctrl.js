@@ -39,7 +39,7 @@ function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, $alert, 
       $alert({
         type: 'success',
         title: id,
-        content: 'App deleted successfully'
+        content: 'Application deleted successfully'
       });
       $state.reload();
     });
