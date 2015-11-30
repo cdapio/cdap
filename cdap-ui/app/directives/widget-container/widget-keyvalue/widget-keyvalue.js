@@ -20,7 +20,8 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         model: '=ngModel',
-        config: '='
+        config: '=',
+        isDropdown: '='
       },
       templateUrl: 'widget-container/widget-keyvalue/widget-keyvalue.html',
       controller: function($scope, EventPipe) {
@@ -35,9 +36,7 @@ angular.module(PKG.name + '.commons')
         }
 
         // Changing value field to dropdown based on config
-        $scope.isDropdown = false;
-        if ($scope.config.properties && $scope.config.properties.isDropdown === 'true') {
-          $scope.isDropdown = true;
+        if ($scope.isDropdown) {
           $scope.dropdownOptions = $scope.config.properties.dropdownOptions;
         }
 
