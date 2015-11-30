@@ -80,7 +80,7 @@ angular.module(PKG.name+'.feature.dashboard')
       [
         'Dataset Reads and Writes',
         'namespace.*',
-        ['system.dataset.store.writes' ,'system.dataset.store.reads'],
+        ['system.dataset.store.reads' ,'system.dataset.store.writes'],
         'c3-area-spline',
         { sizeX: 2, sizeY: 1, row: 4, col: 2 }
       ],
