@@ -149,11 +149,6 @@ angular.module(PKG.name + '.feature.hydrator')
               templateUrl: '/assets/features/hydrator/templates/detail/canvas.html',
               controller: 'HydratorDetailCanvasController',
               controllerAs: 'CanvasCtrl'
-            },
-            'statuspanel@hydrator.detail': {
-              templateUrl: '/assets/features/hydrator/templates/detail/status-panel.html',
-              controller: 'HydratorDetailStatusPanelController',
-              controllerAs: 'StatusPanelCtrl'
             }
           }
         });

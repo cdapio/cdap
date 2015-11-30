@@ -14,7 +14,7 @@
  * the License.
  */
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, rPipelineDetail, GLOBALS, $state, $alert, myLoadingService, $timeout) {
+  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, rPipelineDetail, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope) {
     this.GLOBALS = GLOBALS;
     this.config = DetailRunsStore.getCloneConfig();
     this.app = {
@@ -22,6 +22,34 @@ angular.module(PKG.name + '.feature.hydrator')
       description: rPipelineDetail.description,
       type: rPipelineDetail.artifact.name
     };
+
+    var params;
+    this.setState = function() {
+      this.runsCount = DetailRunsStore.getRunsCount();
+      var runs = DetailRunsStore.getRuns();
+      var status, i;
+      for (i=0 ; i<runs.length; i++) {
+        status = runs[i].status;
+        if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
+          this.lastFinished = runs[i];
+          break;
+        }
+      }
+      this.lastRunTime = runs.length > 0 && runs[0].end ? runs[0].end - runs[0].start : 'N/A';
+      this.averageRunTime = DetailRunsStore.getStatistics().avgRunTime || 'N/A';
+      this.config = DetailRunsStore.getConfigJson();
+    };
+    this.setState();
+
+    this.pipelineType = DetailRunsStore.getPipelineType();
+    if (this.pipelineType === GLOBALS.etlBatch) {
+      params = angular.copy(DetailRunsStore.getParams());
+      params.scope = $scope;
+      PipelineDetailActionFactory.pollStatistics(
+        DetailRunsStore.getApi(),
+        params
+      );
+    }
 
     this.setAppStatus = function() {
       this.appStatus = DetailRunsStore.getStatus();
@@ -108,6 +136,8 @@ angular.module(PKG.name + '.feature.hydrator')
             );
       }
     };
+
     DetailRunsStore.registerOnChangeListener(this.setAppStatus.bind(this));
     DetailNonRunsStore.registerOnChangeListener(this.setScheduleStatus.bind(this));
+    DetailRunsStore.registerOnChangeListener(this.setState.bind(this));
   });

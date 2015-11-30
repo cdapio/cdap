@@ -73,16 +73,20 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.canvasOperations = [
       {
-        name: 'Export'
+        name: 'Export',
+        icon: 'fa-external-link-square'
       },
       {
-        name: 'Save Draft'
+        name: 'Save',
+        icon: 'fa-floppy-o'
       },
       {
-        name: 'Validate'
+        name: 'Validate',
+        icon: 'fa-code'
       },
       {
-        name: 'Publish'
+        name: 'Publish',
+        icon: 'fa-plus'
       }
     ];
 

@@ -14,54 +14,55 @@
   the License.
 -->
 
-<div class="side-panel top text-center clearfix">
-  <div class="hydrator-metadata pull-left"
-       ng-class="{'expanded': TopPanelController.metadataExpanded}">
-    <div ng-click="TopPanelController.openMetadata()">
-      <div class="name-type clearfix">
-
-        <div class="input-group pull-left">
-          <input type="text"
-                 ng-model="TopPanelController.metadata['name']"
-                 my-maxlength="64"
-                 placeholder="[Pipeline Name]"
-                 ng-keyup="TopPanelController.onEnterOnMetadata($event)"
-                 tooltip="{{ TopPanelController.metadata.name }}"
-                 tooltip-placement="right"
-                 tooltip-enable="TopPanelController.metadata.name.length > 27"
-                 tooltip-append-to-body="true" />
-          <span class="fa fa-pencil input-group-addon"></span>
+<div class="side-panel top text-center">
+  <div class="row nomargin">
+    <div class="col-xs-12 col-sm-6 text-left nopadding">
+      <div class="hydrator-metadata" ng-class="{'expanded': TopPanelController.metadataExpanded}">
+        <div ng-click="TopPanelController.openMetadata()" class="clearfix">
+          <div class="pipeline-type">
+            <span ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlBatch"
+                  title="Type: Batch"
+                  class="icon-ETLBatch"></span>
+            <span ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlRealtime"
+                  title="Type: Realtime"
+                  class="icon-ETLRealtime"></span>
+          </div>
+          <div class="pipeline-name pull-left">
+            <input type="text"
+                   ng-model="TopPanelController.metadata['name']"
+                   my-maxlength="64"
+                   placeholder="[Pipeline Name]"
+                   ng-keyup="TopPanelController.onEnterOnMetadata($event)"
+                   tooltip="{{ TopPanelController.metadata.name }}"
+                   tooltip-placement="right"
+                   tooltip-enable="TopPanelController.metadata.name.length > 27"
+                   tooltip-append-to-body="true" />
+            <textarea
+                      ng-model="TopPanelController.metadata['description']"
+                      my-maxlength="144"
+                      placeholder="Enter a description for your pipeline."
+                      tooltip="{{ TopPanelController.metadata.description }}"
+                      tooltip-placement="right"
+                      tooltip-enable="TopPanelController.metadata.description.length > 144"
+                      tooltip-append-to-body="true"></textarea>
+          </div>
         </div>
 
-        <span ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlBatch"
-              class="icon-ETLBatch"> Type: Batch </span>
-        <span ng-if="TopPanelController.metadata.template.type === TopPanelController.GLOBALS.etlRealtime"
-              class="icon-ETLRealtime"> Type: Realtime </span>
+        <div class="btn-group pull-right">
+          <button type="button" class="btn btn-default" ng-click="TopPanelController.resetMetadata()">Cancel</button>
+          <button type="button" class="btn btn-success" ng-click="TopPanelController.metadataExpanded = false;">Save</button>
+        </div>
       </div>
-
-      <textarea type="text"
-                class="pull-left"
-                ng-model="TopPanelController.metadata['description']"
-                my-maxlength="144"
-                placeholder="Enter a description for your pipeline."
-                tooltip="{{ TopPanelController.metadata.description }}"
-                tooltip-placement="right"
-                tooltip-enable="TopPanelController.metadata.description.length > 144"
-                tooltip-append-to-body="true"></textarea>
     </div>
-
-    <div class="btn-group pull-right">
-      <button type="button" class="btn btn-default" ng-click="TopPanelController.resetMetadata()">Cancel</button>
-      <button type="button" class="btn btn-success" ng-click="TopPanelController.metadataExpanded = false;">Save</button>
+    <div class="col-sm-3 col-sm-offset-3 text-right nopadding">
+      <div class="btn-group action-buttons">
+        <div class="btn"
+             ng-repeat="action in TopPanelController.canvasOperations"
+             ng-click="TopPanelController.onTopSideGroupItemClicked(action)"
+             title="{{action.name}}">
+          <span class="fa {{action.icon}}"></span>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="btn-group pull-right clearfix">
-    <div class="btn pull-left"
-         ng-repeat="action in TopPanelController.canvasOperations"
-         ng-click="TopPanelController.onTopSideGroupItemClicked(action)"
-         >
-      {{action.name}}
-    </div>
-  </div>
-
 </div>
