@@ -34,6 +34,13 @@ angular.module(PKG.name + '.commons')
           $scope.showDelimiter = false;
         }
 
+        // Changing value field to dropdown based on config
+        $scope.isDropdown = false;
+        if ($scope.config.properties && $scope.config.properties.isDropdown === 'true') {
+          $scope.isDropdown = true;
+          $scope.dropdownOptions = $scope.config.properties.dropdownOptions;
+        }
+
         // initializing
         function initialize() {
           var str = $scope.model;
