@@ -21,8 +21,8 @@
     </script>
     
     <meta name="git_release" content="3.2.1">
-    <meta name="git_hash" content="711c5df06d81c47f00be059e96905ce29364ce67">
-    <meta name="git_timestamp" content="2015-11-25 15:13:53 -0800">
+    <meta name="git_hash" content="ea78b17e5d4fedba3ff05816c075ab5dec46c15d">
+    <meta name="git_timestamp" content="2015-11-30 13:49:03 -0800">
     <title>Appendix: cdap-default.xml and cdap-site.xml &mdash; Cask Data Application Platform 3.2.1 Documentation</title>
     
     <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
@@ -97,7 +97,7 @@ values (obtained from <code class="docutils literal"><span class="pre">cdap-defa
 <p>For information on configuring the <code class="docutils literal"><span class="pre">cdap-site.xml</span></code> file and CDAP for security,
 see the <a class="reference internal" href="../security.html#admin-security"><span>CDAP Security</span></a> section.</p>
 <div class="section" id="general">
-<h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-general"></span><h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -188,7 +188,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="global">
-<h2>Global<a class="headerlink" href="#global" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-global"></span><h2>Global<a class="headerlink" href="#global" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -214,7 +214,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="applications">
-<h2>Applications<a class="headerlink" href="#applications" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-applications"></span><h2>Applications<a class="headerlink" href="#applications" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -272,7 +272,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="datasets">
-<h2>Datasets<a class="headerlink" href="#datasets" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-datasets"></span><h2>Datasets<a class="headerlink" href="#datasets" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -412,7 +412,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="explore-service">
-<h2>Explore Service<a class="headerlink" href="#explore-service" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-explore-service"></span><h2>Explore Service<a class="headerlink" href="#explore-service" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -466,7 +466,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="gateway">
-<h2>Gateway<a class="headerlink" href="#gateway" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-gateway"></span><h2>Gateway<a class="headerlink" href="#gateway" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -500,7 +500,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="kafka-server">
-<h2>Kafka Server<a class="headerlink" href="#kafka-server" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-kafka-server"></span><h2>Kafka Server<a class="headerlink" href="#kafka-server" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -534,7 +534,11 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 <td><code class="docutils literal"><span class="pre">10</span></code></td>
 <td>Default number of partitions for a topic</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">kafka.zookeeper.namespace</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">kafka.seed.brokers</span></code></td>
+<td><code class="docutils literal"><span class="pre">127.0.0.1:9092</span></code></td>
+<td>List of Kafka brokers (comma separated)</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">kafka.zookeeper.namespace</span></code></td>
 <td><code class="docutils literal"><span class="pre">kafka</span></code></td>
 <td>Kafka ZooKeeper namespace</td>
 </tr>
@@ -542,7 +546,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="logging">
-<h2>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-logging"></span><h2>Logging<a class="headerlink" href="#logging" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -556,43 +560,39 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </tr>
 </thead>
 <tbody valign="top">
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">kafka.seed.brokers</span></code></td>
-<td><code class="docutils literal"><span class="pre">127.0.0.1:9092</span></code></td>
-<td>List of Kafka brokers (comma separated)</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.base.dir</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.base.dir</span></code></td>
 <td><code class="docutils literal"><span class="pre">/logs/avro</span></code></td>
 <td>Base log directory</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.cleanup.run.interval.mins</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.cleanup.run.interval.mins</span></code></td>
 <td><code class="docutils literal"><span class="pre">1440</span></code></td>
 <td>Log cleanup interval in minutes</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.collection.root</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.collection.root</span></code></td>
 <td><code class="docutils literal"><span class="pre">${local.data.dir}/logs</span></code></td>
 <td>Root location for collecting logs when in standalone mode</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.publish.num.partitions</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.publish.num.partitions</span></code></td>
 <td><code class="docutils literal"><span class="pre">10</span></code></td>
 <td>Number of Kafka partitions to publish the logs to</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.retention.duration.days</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.retention.duration.days</span></code></td>
 <td><code class="docutils literal"><span class="pre">7</span></code></td>
 <td>Log file HDFS retention duration in days</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.saver.max.instances</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.saver.max.instances</span></code></td>
 <td><code class="docutils literal"><span class="pre">${master.service.max.instances}</span></code></td>
 <td>Maximum number of log saver instances to run in YARN</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.saver.num.instances</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.saver.num.instances</span></code></td>
 <td><code class="docutils literal"><span class="pre">1</span></code></td>
 <td>Number of log saver instances to run in YARN</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.saver.run.memory.megs</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.saver.run.memory.megs</span></code></td>
 <td><code class="docutils literal"><span class="pre">1024</span></code></td>
 <td>Memory in megabytes allocated for log saver instances to run in YARN</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">log.saver.status.bind.address</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">log.saver.status.bind.address</span></code></td>
 <td><code class="docutils literal"><span class="pre">0.0.0.0</span></code></td>
 <td>Default inet address for binding log saver HTTP service</td>
 </tr>
@@ -600,7 +600,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="master">
-<h2>Master<a class="headerlink" href="#master" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-master"></span><h2>Master<a class="headerlink" href="#master" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -646,7 +646,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="metadata">
-<h2>Metadata<a class="headerlink" href="#metadata" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-metadata"></span><h2>Metadata<a class="headerlink" href="#metadata" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -692,7 +692,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="metrics">
-<h2>Metrics<a class="headerlink" href="#metrics" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-metrics"></span><h2>Metrics<a class="headerlink" href="#metrics" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -798,7 +798,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="monitor-handler">
-<h2>Monitor Handler<a class="headerlink" href="#monitor-handler" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-monitor-handler"></span><h2>Monitor Handler<a class="headerlink" href="#monitor-handler" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -820,7 +820,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="notification-system">
-<h2>Notification System<a class="headerlink" href="#notification-system" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-notification-system"></span><h2>Notification System<a class="headerlink" href="#notification-system" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -842,7 +842,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="queue">
-<h2>Queue<a class="headerlink" href="#queue" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-queue"></span><h2>Queue<a class="headerlink" href="#queue" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -872,7 +872,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="router">
-<h2>Router<a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-router"></span><h2>Router<a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -894,23 +894,27 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 <td><code class="docutils literal"><span class="pre">10000</span></code></td>
 <td>Port number that the CDAP router should bind to for HTTP connections</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.server.port</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.server.address</span></code></td>
+<td><code class="docutils literal"><span class="pre">127.0.0.1</span></code></td>
+<td>Router address to which CDAP UI connects</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.server.port</span></code></td>
 <td><code class="docutils literal"><span class="pre">${router.bind.port}</span></code></td>
 <td>Router port to which CDAP UI connects</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.ssl.bind.port</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.ssl.bind.port</span></code></td>
 <td><code class="docutils literal"><span class="pre">10443</span></code></td>
 <td>Port number that the CDAP router should bind to for HTTPS connections</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.ssl.webapp.bind.port</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.ssl.webapp.bind.port</span></code></td>
 <td><code class="docutils literal"><span class="pre">20443</span></code></td>
 <td>Secure router listening port for webapp</td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.webapp.bind.port</span></code></td>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.webapp.bind.port</span></code></td>
 <td><code class="docutils literal"><span class="pre">20000</span></code></td>
 <td>Router listening port for webapp</td>
 </tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.webapp.enabled</span></code></td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">router.webapp.enabled</span></code></td>
 <td><code class="docutils literal"><span class="pre">false</span></code></td>
 <td>Determines if the webapp listening service should be started at router</td>
 </tr>
@@ -918,7 +922,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="security">
-<h2>Security<a class="headerlink" href="#security" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-security"></span><h2>Security<a class="headerlink" href="#security" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -1020,7 +1024,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="stream">
-<h2>Stream<a class="headerlink" href="#stream" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-stream"></span><h2>Stream<a class="headerlink" href="#stream" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -1114,7 +1118,7 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 </table>
 </div>
 <div class="section" id="ui">
-<h2>UI<a class="headerlink" href="#ui" title="Permalink to this headline">¶</a></h2>
+<span id="cdap-default-ui"></span><h2>UI<a class="headerlink" href="#ui" title="Permalink to this headline">¶</a></h2>
 <table border="1" class="docutils">
 <colgroup>
 <col width="30%" />
@@ -1143,10 +1147,6 @@ see the <a class="reference internal" href="../security.html#admin-security"><sp
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">dashboard.ssl.disable.cert.check</span></code></td>
 <td><code class="docutils literal"><span class="pre">false</span></code></td>
 <td>True to disable SSL certificate check from the CDAP UI</td>
-</tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">router.server.address</span></code></td>
-<td><code class="docutils literal"><span class="pre">127.0.0.1</span></code></td>
-<td>Router address to which CDAP UI connects</td>
 </tr>
 </tbody>
 </table>
