@@ -24,6 +24,7 @@ import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.common.MockLookupProvider;
 import co.cask.cdap.etl.common.NoopMetrics;
+import co.cask.cdap.etl.validator.CoreValidator;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -98,7 +99,12 @@ public class MockTransformContext implements TransformContext {
 
   @Override
   public <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return null;
+    // for validator transform
+    if (pluginId == "core") {
+      return (T) new CoreValidator();
+    } else {
+      return null;
+    }
   }
 
   @Override

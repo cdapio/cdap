@@ -60,12 +60,13 @@ public class ValidatorTransformTest {
         "      return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
         "   };";
 
-    config.validators = "apache";
+    config.validators = "core";
 
     ValidatorTransform transform = new ValidatorTransform(config);
     MockMetrics metrics = new MockMetrics();
     MockTransformContext transformContext =
       new MockTransformContext(new HashMap<String, String>(), metrics, "validator.1.");
+    transform.initialize(transformContext);
     transform.setUpInitialScript(transformContext, ImmutableList.<Validator>of(new CoreValidator()));
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
 

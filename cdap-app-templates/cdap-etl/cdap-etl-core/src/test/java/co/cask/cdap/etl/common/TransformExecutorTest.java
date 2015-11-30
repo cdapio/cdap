@@ -78,8 +78,7 @@ public class TransformExecutorTest {
 
     TransformResponse transformResponse = executor.runOneIteration(1);
 
-    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("transform1", 3,
-                                                                       "sink1", 3));
+    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3));
 
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("transform2", 3));
 
@@ -93,10 +92,7 @@ public class TransformExecutorTest {
 
     transformResponse = executor.runOneIteration(10);
 
-    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("transform1", 3,
-                                                                       "transform2", 1,
-                                                                       "sink1", 3,
-                                                                       "sink2", 1));
+    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 1));
 
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("transform2", 2));
 
@@ -109,10 +105,7 @@ public class TransformExecutorTest {
 
     transformResponse = executor.runOneIteration(100);
 
-    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("transform1", 3,
-                                                                       "transform2", 2,
-                                                                       "sink1", 3,
-                                                                       "sink2", 2));
+    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 2));
 
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("transform2", 1));
     Assert.assertEquals(3, mockMetrics.getCount("transform1.records.out"));
@@ -124,10 +117,7 @@ public class TransformExecutorTest {
 
     transformResponse = executor.runOneIteration(2000);
 
-    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("transform1", 3,
-                                                                       "transform2", 3,
-                                                                       "sink1", 3,
-                                                                       "sink2", 3));
+    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 3));
 
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), new HashMap<String, Integer>());
     Assert.assertEquals(3, mockMetrics.getCount("transform1.records.out"));
