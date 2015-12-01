@@ -78,17 +78,7 @@ class HydratorCreateCanvasController {
   }
 
   generateSchemaOnEdge(sourceId) {
-    var nodes = this.NodesStore.getNodes();
-    var sourceNode;
-
-    for (var i = 0; i<nodes.length; i++) {
-      if (nodes[i].id === sourceId) {
-        sourceNode = nodes[i];
-        break;
-      }
-    }
-
-    return this.HydratorService.formatSchema(sourceNode);
+    return this.HydratorService.generateSchemaOnEdge(sourceId);
   }
 }
 

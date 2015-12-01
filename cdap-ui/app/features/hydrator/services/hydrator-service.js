@@ -15,7 +15,7 @@
  */
 
 class HydratorService {
-  constructor(GLOBALS, MyDAGFactory, uuid, $state, $rootScope, myPipelineApi, $q, ConfigStore, IMPLICIT_SCHEMA) {
+  constructor(GLOBALS, MyDAGFactory, uuid, $state, $rootScope, myPipelineApi, $q, ConfigStore, IMPLICIT_SCHEMA, NodesStore) {
     this.GLOBALS = GLOBALS;
     this.MyDAGFactory = MyDAGFactory;
     this.uuid = uuid;
@@ -25,6 +25,7 @@ class HydratorService {
     this.$q = $q;
     this.ConfigStore = ConfigStore;
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
+    this.NodesStore = NodesStore;
   }
 
   getNodesAndConnectionsFromConfig(pipeline) {
@@ -200,7 +201,21 @@ class HydratorService {
 
   }
 
+  generateSchemaOnEdge(sourceId) {
+    var nodes = this.NodesStore.getNodes();
+    var sourceNode;
+
+    for (var i = 0; i<nodes.length; i++) {
+      if (nodes[i].id === sourceId) {
+        sourceNode = nodes[i];
+        break;
+      }
+    }
+
+    return this.formatSchema(sourceNode);
+  }
+
 }
-HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'ConfigStore', 'IMPLICIT_SCHEMA'];
+HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'ConfigStore', 'IMPLICIT_SCHEMA', 'NodesStore'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorService', HydratorService);
