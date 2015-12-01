@@ -9,7 +9,7 @@ CDAP Administration Manual
 ==================================================
 
 Covers putting CDAP into production, with **installation and configuration, security
-setup,** and operations.** Appendices describe the **XML files** used to configure
+setup,** and **operations.** Appendices describe the **XML files** used to configure
 the CDAP installation and its security configuration.
 
 
