@@ -64,7 +64,6 @@ angular.module(PKG.name + '.feature.admin')
           $state.go('admin.overview', {}, {reload: true});
           $alert({
             type: 'success',
-            content: 'You have successfully deleted a namespace'
           });
         }, 500);
       }, function error() {
