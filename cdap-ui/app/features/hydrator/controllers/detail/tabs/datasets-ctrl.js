@@ -15,17 +15,17 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailDatasetsController', function(DetailRunsStore) {
+  .controller('HydratorDetailDatasetsController', function(DetailNonRunsStore) {
     this.setDefaults = function() {
       this.state = {
-        data: DetailRunsStore.getDatasets().concat(DetailRunsStore.getStreams())
+        data: DetailNonRunsStore.getDatasets().concat(DetailNonRunsStore.getStreams())
       };
     };
     this.setDefaults();
 
     this.setState = function() {
-      this.state.datasets =  DetailRunsStore.getDatasets().concat(DetailRunsStore.getStreams());
+      this.state.datasets =  DetailNonRunsStore.getDatasets().concat(DetailNonRunsStore.getStreams());
     };
 
-    DetailRunsStore.registerOnChangeListener(this.setState.bind(this));
+    DetailNonRunsStore.registerOnChangeListener(this.setState.bind(this));
   });

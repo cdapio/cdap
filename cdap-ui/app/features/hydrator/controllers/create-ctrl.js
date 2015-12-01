@@ -64,6 +64,7 @@ angular.module(PKG.name + '.feature.hydrator')
         var plugins = res.map(function(plugin) {
           return {
             name: plugin.name,
+            label: plugin.name,
             description: plugin.description,
             type: GLOBALS.etlRealtime
           };

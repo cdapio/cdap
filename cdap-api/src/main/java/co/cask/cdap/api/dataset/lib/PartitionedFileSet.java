@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.PartitionNotFoundException;
 
 import java.util.Map;
 import java.util.Set;
@@ -59,27 +60,27 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * Adds a new metadata entry for a particular partition.
    * Note that existing entries cannot be updated.
    * 
-   * @throws DataSetException when an attempt is made to either update an existing entry or add an entry for a
-   *         partition that does not exist
+   * @throws DataSetException when an attempt is made to either update an existing entry
+   * @throws PartitionNotFoundException when a partition for the given key is not found
    */
   void addMetadata(PartitionKey key, String metadataKey, String metadataValue);
 
   /**
    * Adds a set of new metadata entries for a particular partition.
    * Note that existing entries cannot be updated.
-   * 
-   * @throws DataSetException when an attempt is made to either update existing entries or add entries for a
-   *         partition that does not exist
+   *
+   * @throws DataSetException when an attempt is made to either update existing entries
+   * @throws PartitionNotFoundException when a partition for the given key is not found
    */
   void addMetadata(PartitionKey key, Map<String, String> metadata);
 
   /**
-   * Remove a partition for a given partition key.
+   * Remove a partition for a given partition key, silently ignoring if the key is not found.
    */
   void dropPartition(PartitionKey key);
 
   /**
-   * Return the partition for a specific partition key.
+   * Return the partition for a specific partition key, or null if key is not found.
    */
   @Nullable
   PartitionDetail getPartition(PartitionKey key);
@@ -98,7 +99,7 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    *
    * @param partitionConsumerState the state from which to start consuming from
    * @return {@link PartitionConsumerResult} which holds the state of consumption as well as an iterator to the consumed
-   * {@link Partition}s
+   *         {@link Partition}s
    */
   PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState);
 
@@ -113,7 +114,7 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    *              transactions; the limit is checked after adding consuming all partitions of a transaction, so
    *              the total number of consumed partitions may be greater than this limit
    * @return {@link PartitionConsumerResult} which holds the state of consumption as well as an iterator to the consumed
-   * {@link Partition}s
+   *         {@link Partition}s
    */
   PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState,
                                             PartitionFilter partitionFilter, int limit);
