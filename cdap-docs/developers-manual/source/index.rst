@@ -28,8 +28,8 @@ CDAP Developers’ Manual
 .. |building-blocks| replace:: **Building Blocks:**
 .. _building-blocks: building-blocks/index.html
 
-- |building-blocks|_ This section covers **the two core abstractions in the Cask Data
-  Application Platform: **Data** and **Applications**.** *Data* abstractions include *streams*,
+- |building-blocks|_ This section covers the **two core abstractions** in the Cask Data
+  Application Platform: **Data** and **Applications**. *Data* abstractions include *streams*,
   *datasets*, and *views*. *Application* abstraction is accomplished using *flows* and *flowlets*, *MapReduce*, *Spark*,
   *workers*, *workflows*, *schedules*, and *services*. Details are provided on working with these abstractions to
   build Big Data applications.
