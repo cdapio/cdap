@@ -391,10 +391,55 @@ angular.module(PKG.name + '.commons')
         };
       });
 
+      vm.panning.top = 0;
+      vm.panning.left = 0;
+
+      vm.panning.style = {
+        'top': vm.panning.top + 'px',
+        'left': vm.panning.left + 'px'
+      };
+
       var margins = $scope.getGraphMargins($scope.nodes);
       vm.scale = margins.scale;
       $timeout(function () { vm.instance.repaintEverything(); });
       setZoom(vm.scale, vm.instance);
+    };
+
+    vm.locateNodes = function () {
+      var minLeft = parseInt($scope.nodes[0]._uiPosition.left, 10);
+      var leftMostNode = $scope.nodes[0];
+
+      angular.forEach($scope.nodes, function (node) {
+        var left = parseInt(node._uiPosition.left, 10);
+
+        if (left < minLeft) {
+          minLeft = left;
+          leftMostNode = node;
+        }
+      });
+
+      var offsetLeft = parseInt(leftMostNode._uiPosition.left, 10);
+      var offsetTop = parseInt(leftMostNode._uiPosition.top, 10);
+
+      angular.forEach($scope.nodes, function (node) {
+        var left = parseInt(node._uiPosition.left, 10);
+        var top = parseInt(node._uiPosition.top, 10);
+
+        node._uiPosition = {
+          left: (left - offsetLeft + 50) + 'px',
+          top: (top - offsetTop + 50) + 'px'
+        };
+      });
+
+      $timeout(function () { vm.instance.repaintEverything(); });
+
+      vm.panning.top = 0;
+      vm.panning.left = 0;
+
+      vm.panning.style = {
+        'top': vm.panning.top + 'px',
+        'left': vm.panning.left + 'px'
+      };
     };
 
 
