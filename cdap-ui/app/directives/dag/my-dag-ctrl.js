@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory, $rootScope, HydratorService, $popover) {
 
     var vm = this;
 
@@ -29,6 +29,8 @@ angular.module(PKG.name + '.commons')
     var canvasDragged = false;
 
     vm.isDisabled = $scope.isDisabled;
+
+    var popovers = [];
 
     vm.scale = 1.0;
 
@@ -98,11 +100,13 @@ angular.module(PKG.name + '.commons')
     }
 
     vm.zoomIn = function () {
+      closeAllPopovers();
       vm.scale += 0.1;
       setZoom(vm.scale, vm.instance);
     };
 
     vm.zoomOut = function () {
+      closeAllPopovers();
       if (vm.scale <= 0.2) { return; }
 
       vm.scale -= 0.1;
@@ -169,6 +173,7 @@ angular.module(PKG.name + '.commons')
     }
 
     function formatConnections() {
+      closeAllPopovers();
       var connections = [];
       angular.forEach(vm.instance.getConnections(), function (conn) {
         connections.push({
@@ -177,6 +182,44 @@ angular.module(PKG.name + '.commons')
         });
       });
       NodesActionsFactory.setConnections(connections);
+    }
+
+    function connectionClick (connection) {
+      if (!connection) {
+        return;
+      }
+
+      var label = angular.element(connection.getOverlay('label').getElement());
+      var scope = $rootScope.$new();
+
+      scope.data = $scope.connectionPopoverData().call($scope.context, connection.sourceId, connection.targetId);
+
+      var popover = $popover(label, {
+        trigger: 'manual',
+        placement: 'auto',
+        target: label,
+        templateUrl: $scope.templatePopover,
+        container: 'main',
+        scope: scope
+      });
+
+      popovers.push(popover);
+
+      $timeout(function() {
+        popover.show();
+      });
+
+      $scope.$on('$destroy', function () {
+        scope.$destroy();
+      });
+    }
+
+    function closeAllPopovers() {
+      if (popovers.length === 0) { return; }
+
+      angular.forEach(popovers, function (popover) {
+        popover.hide();
+      });
     }
 
     jsPlumb.ready(function() {
@@ -195,11 +238,16 @@ angular.module(PKG.name + '.commons')
           e.el.style.top = '0px';
           transformCanvas(e.pos[1], e.pos[0]);
         },
-        start: function () { canvasDragged = true; }
+        start: function () {
+          canvasDragged = true;
+          closeAllPopovers();
+        }
       });
 
       vm.instance.bind('connection', formatConnections);
       vm.instance.bind('connectionDetached', formatConnections);
+
+      vm.instance.bind('click', connectionClick);
 
 
 
@@ -217,13 +265,17 @@ angular.module(PKG.name + '.commons')
 
       // This should be removed once the node config is using FLUX
       $scope.$watch('nodes', function () {
+        closeAllPopovers();
         $timeout(function () {
           var nodes = document.querySelectorAll('.box');
           addEndpoints();
 
           if (!vm.isDisabled) {
             vm.instance.draggable(nodes, {
-              start: function () { dragged = true; },
+              start: function () {
+                dragged = true;
+                closeAllPopovers();
+              },
               stop: function (dragEndEvent) {
                 var config = {
                   _uiPosition: {
@@ -236,7 +288,6 @@ angular.module(PKG.name + '.commons')
               }
             });
           }
-
         });
 
         angular.forEach($scope.nodes, function (plugin) {
@@ -318,6 +369,7 @@ angular.module(PKG.name + '.commons')
 
     vm.onNodeDelete = function (event, node) {
       event.stopPropagation();
+      closeAllPopovers();
       NodesActionsFactory.removeNode(node.id);
       vm.instance.remove(node.id);
     };
