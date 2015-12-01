@@ -85,131 +85,39 @@ angular.module(PKG.name + '.feature.hydrator')
         return;
       }
       switchPlugin.call(this, plugin)
-        .then(function() {
-          this.emitChange();
-        }.bind(this));
+        .then(this.emitChange.bind(this));
     }
 
     function switchPlugin(plugin) {
       // This is super wrong. While re-writing this in flux architecture this should go away.
       this.state.plugin = plugin;
       this.state.isValidPlugin = false;
-      // // falsify the ng-if in the template for one tick so that the template gets reloaded
-      // // there by reloading the controller.
-      // $timeout(setPluginInfo.bind(this));
-      return setPluginInfo.call(this);
+      return setPluginInfo
+              .call(this)
+              .then(
+                configurePluginInfo.bind(this),
+                () => console.error('Fetching backend properties for :',this.state.plugin.name, ' failed.')
+              );
     }
 
     function setPluginInfo() {
       this.state.isSource = false;
       this.state.isTransform = false;
       this.state.isSink = false;
-      return configurePluginInfo.call(this).then(
-        function success() {
-          this.state.isValidPlugin = Object.keys(this.state.plugin).length;
-        }.bind(this),
-        function error() {
-          console.error('Fetching backend properties for :',this.state.plugin.name, ' failed.');
-        });
-    }
-
-    function configurePluginInfo() {
-      var defer = $q.defer();
-
       if (this.state.plugin._backendProperties) {
-        setSchemaForPlugin.call(this);
-        defer.resolve(true);
+        return $q.when(true);
       } else {
-        fetchBackendProperties
-          .call(this, this.state.plugin)
-          .then(
-            () => {
-              setSchemaForPlugin.call(this);
-              defer.resolve(true);
-            },
-            function error() {
-              defer.reject(false);
-            }
-          );
+        return fetchPluginDetails
+              .call(this, this.state.plugin);
       }
-
-      return defer.promise;
     }
 
-    function setSchemaForPlugin() {
-      var pluginId = this.state.plugin.id;
-      var input;
-      var sourceConn = $filter('filter')(this.ConfigStore.getConnections(), { target: pluginId });
-      var sourceSchema = null;
-      var isStreamSource = false;
-
-      var clfSchema = IMPLICIT_SCHEMA.clf;
-
-      var syslogSchema = IMPLICIT_SCHEMA.syslog;
-
-      var source;
-      if (sourceConn && sourceConn.length) {
-        source = this.ConfigStore.getNode(sourceConn[0].source);
-        sourceSchema = source.outputSchema;
-
-        if (source.name === 'Stream') {
-          isStreamSource = true;
-        }
-
-        if (source.properties.format && source.properties.format === 'clf') {
-          sourceSchema = clfSchema;
-        } else if (source.properties.format && source.properties.format === 'syslog') {
-          sourceSchema = syslogSchema;
-        }
-
-      } else {
-        sourceSchema = '';
-      }
+    function configurePluginInfo(pluginDetails) {
+      this.state.plugin._backendProperties = pluginDetails._backendProperties || this.state.plugin._backendProperties;
+      this.state.plugin.description = pluginDetails.description || this.state.plugin.description;
+      this.state.isValidPlugin = Object.keys(this.state.plugin).length;
 
       var artifactTypeExtension = GLOBALS.pluginTypes[this.ConfigStore.getAppType()];
-      try {
-        input = JSON.parse(sourceSchema);
-      } catch (e) {
-        input = null;
-      }
-
-      if (isStreamSource) {
-        // Must be in this order!!
-        if (!input) {
-          input = {
-            fields: [{ name: 'body', type: 'string' }]
-          };
-        }
-
-        input.fields.unshift({
-          name: 'headers',
-          type: {
-            type: 'map',
-            keys: 'string',
-            values: 'string'
-          }
-        });
-
-        input.fields.unshift({
-          name: 'ts',
-          type: 'long'
-        });
-      }
-
-      this.state.plugin.inputSchema = input ? input.fields : null;
-      angular.forEach(this.state.plugin.inputSchema, function (field) {
-        if (angular.isArray(field.type)) {
-          field.type = field.type[0];
-          field.nullable = true;
-        } else {
-          field.nullable = false;
-        }
-      });
-
-      if (!this.state.plugin.outputSchema && input) {
-        this.state.plugin.outputSchema = JSON.stringify(input) || null;
-      }
-
       if (this.state.plugin.type === artifactTypeExtension.source) {
         this.state.isSource = true;
       }
@@ -222,7 +130,7 @@ angular.module(PKG.name + '.feature.hydrator')
       }
     }
 
-    function fetchBackendProperties(plugin) {
+    function fetchPluginDetails(plugin) {
       var defer = $q.defer();
       var sourceType = GLOBALS.pluginTypes[this.ConfigStore.getAppType()].source,
           sinkType = GLOBALS.pluginTypes[this.ConfigStore.getAppType()].sink;
@@ -245,14 +153,14 @@ angular.module(PKG.name + '.feature.hydrator')
 
       return propertiesApiMap[plugin.type](params)
         .$promise
-        .then(function(res) {
-
+        .then( (res) => {
+          var pluginDetails = {};
           var pluginProperties = (res.length? res[0].properties: {});
           if (res.length && (!plugin.description || (plugin.description && !plugin.description.length))) {
-            plugin.description = res[0].description;
+            pluginDetails.description = res[0].description;
           }
-          plugin._backendProperties = pluginProperties;
-          defer.resolve(plugin);
+          pluginDetails._backendProperties = pluginProperties;
+          defer.resolve(pluginDetails);
           return defer.promise;
         });
     }

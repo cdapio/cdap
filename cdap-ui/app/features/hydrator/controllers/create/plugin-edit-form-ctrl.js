@@ -33,129 +33,6 @@ angular.module(PKG.name + '.feature.hydrator')
     this.configfetched = false;
     this.properties = [];
     this.noconfig = null;
-    /////////////////////////////////////
-    /*
-     This is snippet is here because the widget-schema-editor edits the outputschema that we pass in
-     which makes the plugin.outputschema to be always edited when the user opens the plugin for the first time.
-     So even though the user didn't actually do anything this behavior was forcing the user to save the node when opened for the first time.
-
-     So we are temporarily doing the coversion here before passing it to the widget-schema-editor so that it doesn't trigger that initial change.
-     This should eventually be removed and moved to a service (or a factory). For lack of time my sin stays here. - Ajai
-    */
-
-    var typeMap = 'map<string, string>';
-    var mapObj = {
-      type: 'map',
-      keys: 'string',
-      values: 'string'
-    };
-
-    function constructOutputSchema(jsonBlob, config, pluginProperties) {
-      var options, defaultType;
-      var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string', 'map<string, string>' ];
-      if (config){
-        options = config['schema-types'];
-        defaultType = config['schema-default-type'] || options[0];
-      } else {
-        options = defaultOptions;
-        defaultType = 'string';
-      }
-
-      var schema = jsonBlob;
-      schema = myHelpers.objectQuery(schema, 'fields');
-      var properties = [];
-      angular.forEach(schema, function(p) {
-        if (angular.isArray(p.type)) {
-          properties.push({
-            name: p.name,
-            type: p.type[0],
-            nullable: true
-          });
-        } else if (angular.isObject(p.type)) {
-          if (p.type.type === 'map') {
-            properties.push({
-              name: p.name,
-              type: typeMap,
-              nullable: p.nullable
-            });
-          } else {
-            properties.push({
-              name: p.name,
-              type: p.type.items,
-              nullable: p.nullable
-            });
-          }
-        } else {
-          properties.push({
-            name: p.name,
-            type: p.type,
-            nullable: p.nullable
-          });
-        }
-      });
-
-      // Note: 15 for now
-      if (properties.length < 15) {
-        if (properties.length === 0) {
-          properties.push({
-            name: '',
-            type: defaultType,
-            nullable: false
-          });
-        }
-
-        for (var i = properties.length; i < 15; i++) {
-          properties.push({
-            empty: true
-          });
-        }
-      } else { // to add one empty line when there are more than 15 fields
-        properties.push({
-          empty: true
-        });
-      }
-
-      return formatSchema(properties, config, pluginProperties);
-    }
-
-    function formatSchema(properties, config, pluginProperties) {
-
-      if (config && config['property-watch'] && pluginProperties && ['clf', 'syslog'].indexOf(pluginProperties[config['property-watch']]) !== -1) {
-        return null;
-      }
-
-      // Format Schema
-      var prop = [];
-      angular.forEach(properties, function(p) {
-        if (p.name) {
-          var property;
-          if (p.type === typeMap) {
-            property = angular.copy(mapObj);
-          } else {
-            property = p.type;
-          }
-
-          prop.push({
-            name: p.name,
-            type: p.nullable ? [property, 'null'] : property
-          });
-        }
-      });
-
-      // do not include properties on the request when schema field is empty
-      if (prop.length !== 0) {
-        var schema = {
-          type: 'record',
-          name: 'etlSchemaBody',
-          fields: prop
-        };
-        // turn schema into JSON string
-        return JSON.stringify(schema);
-      } else {
-        return null;
-      }
-    }
-    /////////////////////////////////////
 
     this.noproperty = Object.keys(
       $scope.plugin._backendProperties || {}
@@ -168,8 +45,7 @@ angular.module(PKG.name + '.feature.hydrator')
         $scope.plugin.name
       )
         .then(
-          function success(res) {
-            var jsonBlob;
+          (res) => {
             var outputSchemaProperty;
             var index;
             if (res.outputschema) {
@@ -218,19 +94,10 @@ angular.module(PKG.name + '.feature.hydrator')
                   type: res.outputschema.implicit[key]
                 });
               });
-
-              var obj = { fields: formattedSchema };
-              $scope.plugin.outputSchema = constructOutputSchema(obj, this.schemaProperties, $scope.plugin.properties);
               $scope.plugin.implicitSchema = true;
               this.isOuputSchemaExists = true;
-            } else {
-              try {
-                jsonBlob = JSON.parse($scope.plugin.outputSchema);
-              } catch(e) {
-                console.log('ERROR: ', e);
-              }
-              $scope.plugin.outputSchema = constructOutputSchema(jsonBlob, this.schemaProperties, $scope.plugin.properties);
             }
+
             if (this.isOuputSchemaExists) {
               if ($scope.plugin.properties[outputSchemaProperty[0]] !== $scope.plugin.outputSchema) {
                 $scope.plugin.properties[outputSchemaProperty[0]] = $scope.plugin.outputSchema;
@@ -247,29 +114,26 @@ angular.module(PKG.name + '.feature.hydrator')
             this.config = res;
             this.noconfig = false;
 
-          }.bind(this),
-          function error(err) {
-            // TODO: Hacky. Need to fix this for am-fade-top animation for modals.
-            $timeout(function() {
-              // Didn't receive a configuration from the backend. Fallback to all textboxes.
-              switch(err) {
-                case 'NO_JSON_FOUND':
-                  this.noConfigMessage = GLOBALS.en.hydrator.studio.noConfigMessage;
-                  break;
-                case 'CONFIG_SYNTAX_JSON_ERROR':
-                  this.noConfigMessage = GLOBALS.en.hydrator.studio.syntaxConfigJsonError;
-                  break;
-                case 'CONFIG_SEMANTICS_JSON_ERROR':
-                  this.noConfigMessage = GLOBALS.en.hydrator.studio.semanticConfigJsonError;
-                  break;
-              }
-              this.noconfig = true;
-              this.configfetched = true;
-              propertiesFromBackend.forEach(function (property) {
-                $scope.plugin.properties[property] = $scope.plugin.properties[property] || '';
-              });
-            }.bind(this), 1000);
-          }.bind(this)
+          },
+          (err) => {
+            // Didn't receive a configuration from the backend. Fallback to all textboxes.
+            switch(err) {
+              case 'NO_JSON_FOUND':
+                this.noConfigMessage = GLOBALS.en.hydrator.studio.noConfigMessage;
+                break;
+              case 'CONFIG_SYNTAX_JSON_ERROR':
+                this.noConfigMessage = GLOBALS.en.hydrator.studio.syntaxConfigJsonError;
+                break;
+              case 'CONFIG_SEMANTICS_JSON_ERROR':
+                this.noConfigMessage = GLOBALS.en.hydrator.studio.semanticConfigJsonError;
+                break;
+            }
+            this.noconfig = true;
+            this.configfetched = true;
+            propertiesFromBackend.forEach(function (property) {
+              $scope.plugin.properties[property] = $scope.plugin.properties[property] || '';
+            });
+          }
         );
     } else {
       this.configfetched = true;
