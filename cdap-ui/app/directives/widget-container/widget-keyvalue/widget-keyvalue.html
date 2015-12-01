@@ -34,7 +34,12 @@
   <div ng-repeat="property in properties" class="row" ng-keypress="enter($event, $last)">
     <div class="col-xs-10 col-lg-8">
       <input type="text" class="form-control" ng-model="property.key" placeholder="key" my-focus-watch="property.newField" />
-      <input type="text" class="form-control" ng-model="property.value" placeholder="value" />
+      <input type="text" class="form-control" ng-model="property.value" placeholder="value" ng-if="!isDropdown" />
+      <select class="form-control"
+        ng-model="property.value"
+        ng-if="isDropdown"
+        ng-options="option as option for option in dropdownOptions">
+      </select>
     </div>
     <div class="col-xs-2 col-lg-4">
       <a href="" class="btn btn-danger" ng-click="removeProperty(property)">
