@@ -28,7 +28,9 @@ commonModule.directive('myDag', function() {
       connections: '=',
       nodeClick: '&',
       nodeDelete: '&',
-      context: '='
+      context: '=',
+      templatePopover: '@',
+      connectionPopoverData: '&'
     },
     link: function(scope, element) {
       scope.element = element;

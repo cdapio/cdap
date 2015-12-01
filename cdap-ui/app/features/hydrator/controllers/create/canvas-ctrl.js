@@ -15,11 +15,12 @@
  */
 
 class HydratorCreateCanvasController {
-  constructor(BottomPanelStore, NodesStore, NodesActionsFactory, ConfigStore, PipelineNodeConfigActionFactory) {
+  constructor(BottomPanelStore, NodesStore, NodesActionsFactory, ConfigStore, PipelineNodeConfigActionFactory, HydratorService) {
     this.NodesStore = NodesStore;
     this.ConfigStore = ConfigStore;
     this.PipelineNodeConfigActionFactory = PipelineNodeConfigActionFactory;
     this.NodesActionsFactory = NodesActionsFactory;
+    this.HydratorService = HydratorService;
 
     this.setState = () => {
       this.state = {
@@ -75,9 +76,23 @@ class HydratorCreateCanvasController {
     this.setStateAndUpdateConfigStore();
     this.PipelineNodeConfigActionFactory.removePlugin();
   }
+
+  generateSchemaOnEdge(sourceId) {
+    var nodes = this.NodesStore.getNodes();
+    var sourceNode;
+
+    for (var i = 0; i<nodes.length; i++) {
+      if (nodes[i].id === sourceId) {
+        sourceNode = nodes[i];
+        break;
+      }
+    }
+
+    return this.HydratorService.formatSchema(sourceNode);
+  }
 }
 
 
-HydratorCreateCanvasController.$inject = ['BottomPanelStore', 'NodesStore', 'NodesActionsFactory', 'ConfigStore', 'PipelineNodeConfigActionFactory'];
+HydratorCreateCanvasController.$inject = ['BottomPanelStore', 'NodesStore', 'NodesActionsFactory', 'ConfigStore', 'PipelineNodeConfigActionFactory', 'HydratorService'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorCreateCanvasController', HydratorCreateCanvasController);
