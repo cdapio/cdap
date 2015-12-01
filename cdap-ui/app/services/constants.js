@@ -62,7 +62,7 @@ angular.module(PKG.name + '.services')
           endSinkError: 'Please end the pipeline connections in a sink.',
           parallelConnectionError: 'Please remove parallel connections in this pipeline.',
           pluginDoesNotExist: 'This plugin does not exist: ',
-          unsavedPluginMessage1: 'There are un-saved changes for node \'',
+          unsavedPluginMessage1: 'There are unsaved changes for node \'',
           unsavedPluginMessage2: '\'. Please save them before publishing the pipeline.'
         },
         wizard: {
