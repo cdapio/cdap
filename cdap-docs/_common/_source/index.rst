@@ -4,8 +4,8 @@
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-relations: true
-
 :hide-global-toc: true
+:link-only-global-toc: true
 
 .. _documentation-index:
 
@@ -37,6 +37,11 @@ and accessing core CDAP services. CDAP defines and implements a diverse collecti
 services that support applications and data on existing Hadoop infrastructure such as
 HBase, HDFS, YARN, MapReduce, Hive, and Spark.
 
+CDAP can be run in different modes: in-memory mode for unit testing and continuous
+integration pipelines, standalone CDAP for testing and development, or
+distributed CDAP for staging and production. Regardless of the runtime mode, CDAP is
+fully-functional and the code you develop never changes.
+
 These documents are your complete reference to the Cask Data Application Platform: they help
 you get started and set up your development environment; explain how CDAP works; and teach
 how to develop and test CDAP applications.
@@ -44,118 +49,78 @@ how to develop and test CDAP applications.
 It includes the CDAP programming APIs and client interfaces, with instructions
 on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoop cluster.
 
+.. _modes-data-application-platform:
 
-.. |introduction| replace:: **Introduction to CDAP:**
-.. _introduction: introduction/index.html
+.. .. rubric:: Putting CDAP into Production
 
-- |introduction|_
+Putting CDAP into Production
+============================
+The Cask Data Application Platform (CDAP) can be run in different modes: **In-memory CDAP**
+for unit testing and continuous integration pipelines, **Standalone CDAP** for testing and
+development on a developer's laptop, or **Distributed CDAP** for staging and production.
 
-  - **Simple Access to Powerful Technology:** A comparison between using the current 
-    technologies available from the Hadoop ecosystem and using CDAP
-
-
-.. |developers-manual| replace:: **Developers’ Manual:**
-.. _developers-manual: developers-manual/index.html
-
-- |developers-manual|_
-
-  - **Getting Started Developing:** A quick, hands-on introduction to developing with CDAP
-  - **Overview:** The overall architecture and technology behind CDAP
-  - **Building Blocks:** The two core abstractions in CDAP: *Data* and *Applications*, and their components
-  - **Security:** Perimeter security, configuration and client authentication
-  - **Testing and Debugging:** Test framework plus tools and practices for debugging your applications
-  - **Ingesting Data:** Different techniques for ingesting data into CDAP
-  - **Advanced Topics:** Best practices for CDAP development, adding a custom logback
+Regardless of the runtime mode, CDAP is fully-functional and the code you develop never
+changes. However, performance and scale are limited when using in-memory or standalone
+CDAPs. CDAP Applications are developed against the CDAP APIs, making the switch between
+these modes seamless. An application developed using a given mode can easily run in
+another mode.
 
 
-.. |included-applications| replace:: **Included Applications:**
-.. _included-applications: included-applications/index.html
+.. _in-memory-data-application-platform:
 
-- |included-applications|_
+.. rubric:: In-Memory CDAP
 
-  - **Big Data without Big Development:** How to use CDAP "out-of-the-box" to solve problems and use cases 
-  - **Introduction to Included Applications:** Applications that are reusable through configuration and
-    extensible through plugins 
-  - **Cask Hydrator and ETL Pipelines:** Makes performing ETL possible without writing code 
-  - **Creating Custom ETL Plugins:** For developers of custom ETL plugins 
-  - **Data Quality:** An extensible *Included Application* to assess the quality of data
-    using its out-of-the-box functionality and libraries
-  
-  
-.. |admin-manual| replace:: **Administration Manual:**
-.. _admin-manual: admin-manual/index.html
+The **In-Memory CDAP** allows you to easily run CDAP for use in unit tests and continuous
+integration (CI) pipelines. In this mode, the underlying Big Data infrastructure is
+emulated using in-memory data structures and there is no persistence. The CDAP UI is not
+available in this mode. 
 
-- |admin-manual|_ 
+See :ref:`test-cdap` for information and examples on using this mode.
 
-  - **Installation:** Putting CDAP into production, with installation and configuration for different distributions
-  - **Security:** CDAP supports securing clusters using a perimeter security model
-  - **Operations:** Logging, metrics, monitoring, runtime arguments, scaling instances, resource
-    guarantees, transaction service maintenance, troubleshooting and introduces the CDAP UI
-  - **Troubleshooting and Appendices:** Installation and configuration troubleshooting
-    tips, and appendices that cover the CDAP installation and security configuration files
+**Features:**
+
+- Purpose-built for writing unit tests and CI pipelines
+- Mimics storage technologies as in-memory data structures; for example, 
+  `Java NavigableMap <http://docs.oracle.com/javase/7/docs/api/java/util/NavigableMap.html>`__
+- Uses Java Threads as the processing abstraction (via Apache Twill)
 
 
-.. |integrations| replace:: **Integrations:**
-.. _integrations: integrations/index.html
+.. _standalone-data-application-platform:
 
-- |integrations|_ 
+.. rubric:: Standalone CDAP
 
-  - **Cloudera:** Integrating CDAP into Cloudera, using Cloudera Manager, and running interactive queries with Impala
-  - **JDBC:** The CDAP JDBC driver, included with CDAP
-  - **Pentaho:** *Pentaho Data Integration*, a business intelligence tool that can be used with CDAP
-  - **Squirrel:** *SquirrelSQL*, a simple JDBC client that can be integrated with CDAP
+The **Standalone CDAP** allows you to run the entire CDAP stack in a single Java Virtual
+Machine on your local machine and includes a local version of the CDAP UI. The
+underlying Big Data infrastructure is emulated on top of your local file system. All data
+is persisted.
 
+The Standalone CDAP by default binds to the localhost address, and is not available for
+remote access by any outside process or application outside of the local machine.
 
-.. |examples-manual| replace:: **Examples, Guides, and Tutorials:**
-.. _examples-manual: examples-manual/index.html
+See :ref:`Getting Started <getting-started-index>` and the *Cask Data Application Platform
+SDK* for information on how to start and manage your Standalone CDAP.
 
-- |examples-manual|_
+**Features:**
 
-  - **Examples:** Included with the :ref:`CDAP SDK <getting-started-index>`, they range from a simple introductory to more elaborate examples
-  - **How-To Guides:** Designed to be completed in 15-30 minutes, these guides provide quick, hands-on instructions
-  - **Tutorials:** Designed to be completed in 2-3 hours, these tutorials provide deeper, in-context explorations
-  - **CDAP Apps and Packs Repository:** data applications built using CDAP and useful building blocks for your data applications
-
-
-.. |reference-manual| replace:: **Reference Manual:**
-.. _reference-manual: reference-manual/index.html
-
-- |reference-manual|_ 
-
-  - **Command Line Interface API:** Methods for interacting with a CDAP instance from within a shell
-  - **HTTP RESTful API:** HTTP interface for a multitude of purposes
-  - **Java Client API:** Methods for interacting with CDAP from external Java applications
-  - **Javadocs:** The Java APIs for writing CDAP applications
-  - **Trademarks, Licenses, and Dependencies:** Trademark and License information for CDAP and lists of CDAP dependent packages
+- Designed to run in a standalone environment, for development and testing
+- Uses LevelDB/Local File System as the storage technology
+- Uses Java Threads as the processing abstraction (via Apache Twill)
 
 
-.. |faqs| replace:: **FAQs:**
-.. _faqs: faqs/index.html
+.. _distributed-data-application-platform:
 
-- |faqs|_ Answers to questions you might have about CDAP
+.. rubric:: Distributed Data Application Platform
 
-  - **General Questions** 
-  - **CDAP Startup** 
-  - **Other Resources:** Additional resources for solving problems
-  
-..   - **Applications** 
-..   - **User Interface** 
-..   - **Databases and Transactions** 
+The **Distributed CDAP** runs in fully distributed mode. In addition to the system components
+of the CDAP, distributed and highly available (HA) deployments of the underlying Hadoop
+infrastructure are included. Production applications should always be run on a Distributed
+CDAP.
 
+See the instructions for either a :ref:`distribution-specific <installation-index>` or 
+:ref:`generic Apache Hadoop <hadoop-index>` cluster for more information.
 
-.. |release-notes| replace:: **Release Notes:**
-.. _release-notes: reference-manual/release-notes.html
+**Features:**
 
-- |release-notes|_ Notes for current and previous CDAP versions
-
-
-.. |glossary| replace:: **Glossary:**
-.. _glossary: reference-manual/glossary.html
-
-- |glossary|_ Definitions of terms and phrases used in CDAP
-
-
-.. |search| replace:: **Search:**
-.. _search: search.html
-
-- |search|_ Search this documentation using *Quick Search*
+- A production, staging, and QA mode; runs in a distributed environment
+- Currently uses Apache HBase and HDFS as the underlying storage technology
+- Uses Apache Yarn Containers as the processing abstraction (via Apache Twill)
