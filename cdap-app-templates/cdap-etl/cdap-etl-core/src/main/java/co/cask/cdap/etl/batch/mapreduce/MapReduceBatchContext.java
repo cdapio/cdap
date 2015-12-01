@@ -24,6 +24,8 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -33,11 +35,14 @@ public abstract class MapReduceBatchContext extends AbstractTransformContext imp
 
   protected final MapReduceContext mrContext;
   protected final LookupProvider lookup;
+  private final Map<String, String> runtimeArguments;
 
-  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String stageName) {
+  public MapReduceBatchContext(MapReduceContext context, Metrics metrics,
+                               LookupProvider lookup, String stageName, Map<String, String> runtimeArguments) {
     super(context, metrics, lookup, stageName);
     this.mrContext = context;
     this.lookup = lookup;
+    this.runtimeArguments = new HashMap<>(runtimeArguments);
   }
 
   @Override
@@ -63,7 +68,13 @@ public abstract class MapReduceBatchContext extends AbstractTransformContext imp
 
   @Override
   public Map<String, String> getRuntimeArguments() {
-    return mrContext.getRuntimeArguments();
+    return Collections.unmodifiableMap(runtimeArguments);
   }
 
+  @Override
+  public void setRuntimeArgument(String key, String value, boolean overwrite) {
+    if (overwrite || !runtimeArguments.containsKey(key)) {
+      runtimeArguments.put(key, value);
+    }
+  }
 }
