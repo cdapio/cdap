@@ -68,6 +68,14 @@ angular.module(PKG.name + '.commons')
       $scope.connections = NodesStore.getConnections();
 
       $timeout(function () {
+        // centering DAG
+        if ($scope.nodes.length) {
+          var margins = $scope.getGraphMargins($scope.nodes);
+          $timeout(function () { vm.instance.repaintEverything(); });
+
+          vm.scale = margins.scale;
+        }
+
         addEndpoints();
 
         angular.forEach($scope.connections, function (conn) {
@@ -78,16 +86,7 @@ angular.module(PKG.name + '.commons')
           });
         });
 
-        // centering DAG
-        if ($scope.nodes.length) {
-          var margins = $scope.getGraphMargins($scope.nodes);
-          $timeout(function () { vm.instance.repaintEverything(); });
-
-          vm.scale = margins.scale;
-        }
-
         setZoom(vm.scale, vm.instance);
-
       });
 
     }
