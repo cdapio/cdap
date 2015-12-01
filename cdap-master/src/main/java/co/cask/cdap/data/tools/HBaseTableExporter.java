@@ -38,6 +38,7 @@ import co.cask.tephra.TransactionCodec;
 import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.TxConstants;
 import co.cask.tephra.distributed.TransactionService;
+import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
@@ -156,21 +157,27 @@ public class HBaseTableExporter {
     txService.startAndWait();
   }
 
-  private void stop() throws Exception {
+  /**
+   * Stops a guava {@link Service}. No exception will be thrown even stopping failed.
+   */
+  private void stopQuietly(Service service) {
     try {
-      txService.stopAndWait();
-      zkClientService.stopAndWait();
-    } catch (Throwable t) {
-      LOG.error("Exception while trying to stop the services.", t);
-      Runtime.getRuntime().halt(1);
+      service.stopAndWait();
+    } catch (Exception e) {
+      LOG.warn("Exception when stopping service {}", service, e);
     }
+  }
+
+
+  private void stop() throws Exception {
+    stopQuietly(txService);
+    stopQuietly(zkClientService);
   }
 
   private void printHelp() {
     System.out.println();
     System.out.println("Usage: /opt/cdap/master/bin/svc-master " +
                          "run co.cask.cdap.data.tools.HBaseTableExporter <tablename>");
-    System.out.println();
     System.out.println("Args:");
     System.out.println(" tablename    Name of the table to copy");
   }
