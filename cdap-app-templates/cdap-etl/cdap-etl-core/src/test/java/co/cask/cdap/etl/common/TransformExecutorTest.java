@@ -24,8 +24,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -40,12 +38,11 @@ public class TransformExecutorTest {
     MockMetrics mockMetrics = new MockMetrics();
     Map<String, Transformation> transformationMap = new HashMap<>();
     transformationMap.put("sink", new DoubleToString());
-    TransformDetail transformDetail = new TransformDetail(transformationMap, mockMetrics);
     Map<String, List<String>> connectionsMap = new HashMap<>();
     connectionsMap.put("source", ImmutableList.of("sink"));
 
     TransformExecutor executor =
-      new TransformExecutor(transformDetail, connectionsMap, "source");
+      new TransformExecutor(transformationMap, mockMetrics, connectionsMap, "source");
     TransformResponse transformResponse = executor.runOneIteration(1d);
     Map<String, List<Object>> sinkResult = transformResponse.getSinksResults();
     Assert.assertTrue(sinkResult.containsKey("sink"));
@@ -67,15 +64,14 @@ public class TransformExecutorTest {
     transformationMap.put("sink1", new DoubleToString());
     transformationMap.put("sink2", new DoubleToString());
 
-    TransformDetail transformDetail = new TransformDetail(transformationMap, mockMetrics);
-
     Map<String, List<String>> connectionsMap = new HashMap<>();
 
     connectionsMap.put("source", ImmutableList.of("transform1"));
     connectionsMap.put("transform1", ImmutableList.of("transform2", "sink1"));
     connectionsMap.put("transform2", ImmutableList.of("sink2"));
 
-    TransformExecutor<Integer> executor = new TransformExecutor<>(transformDetail, connectionsMap, "source");
+    TransformExecutor<Integer> executor = new TransformExecutor<>(transformationMap, mockMetrics,
+                                                                  connectionsMap, "source");
 
     TransformResponse transformResponse = executor.runOneIteration(1);
 
@@ -142,8 +138,6 @@ public class TransformExecutorTest {
     transformationMap.put("sink2", new DoubleToString());
     transformationMap.put("sink3", new DoubleToString());
 
-    TransformDetail transformDetail = new TransformDetail(transformationMap, mockMetrics);
-
     Map<String, List<String>> connectionsMap = new HashMap<>();
 
     connectionsMap.put("source", ImmutableList.of("conversion"));
@@ -152,7 +146,8 @@ public class TransformExecutorTest {
     connectionsMap.put("filter2", ImmutableList.of("limiter1", "sink2"));
     connectionsMap.put("limiter1", ImmutableList.of("sink3"));
 
-    TransformExecutor<Integer> executor = new TransformExecutor<>(transformDetail, connectionsMap, "source");
+    TransformExecutor<Integer> executor = new TransformExecutor<>(transformationMap, mockMetrics,
+                                                                  connectionsMap, "source");
     TransformResponse transformResponse = executor.runOneIteration(200);
     assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 2, "sink3", 3));
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("filter2", 1, "limiter1", 2));

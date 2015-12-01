@@ -39,8 +39,35 @@ public class ETLConfig extends Config {
     this.source = source;
     this.sinks = sinks;
     this.transforms = transforms;
-    this.connections = connections;
+    this.connections = getValidConnections(connections);
     this.resources = resources;
+  }
+
+  private List<Connection> getValidConnections(List<Connection> connections) {
+    if (source.getPlugin() == null) {
+      // if its old format, we just return an empty list.
+      return new ArrayList<>();
+    }
+
+    if (connections == null) {
+      connections = new ArrayList<>();
+    }
+    if (connections.isEmpty()) {
+      // if connections are empty, we create a connections list,
+      // which is a linear pipeline, source -> transforms -> sinks
+      String toSink = source.getName();
+      if (transforms != null && !transforms.isEmpty()) {
+        connections.add(new Connection(source.getName(), transforms.get(0).getName()));
+        for (int i = 0; i < transforms.size() - 1; i++) {
+          connections.add(new Connection(transforms.get(i).getName(), transforms.get(i + 1).getName()));
+        }
+        toSink = transforms.get(transforms.size() - 1).getName();
+      }
+      for (ETLStage stage : sinks) {
+        connections.add(new Connection(toSink, stage.getName()));
+      }
+    }
+    return connections;
   }
 
   public ETLConfig(ETLStage source, ETLStage sink, List<ETLStage> transforms,

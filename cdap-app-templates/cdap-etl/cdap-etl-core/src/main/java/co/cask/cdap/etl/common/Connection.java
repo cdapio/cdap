@@ -17,22 +17,22 @@
 package co.cask.cdap.etl.common;
 
 /**
- *  Represent a connection between two {@link ETLStage}
+ *  Represents a connection between two {@link ETLStage}
  */
 public class Connection {
-  private final String source;
-  private final String destination;
+  private final String from;
+  private final String to;
 
-  public Connection(String source, String destination) {
-    this.source = source;
-    this.destination = destination;
+  public Connection(String from, String to) {
+    this.from = from;
+    this.to = to;
   }
 
-  public String getSource() {
-    return source;
+  public String getFrom() {
+    return from;
   }
 
-  public String getDestination() {
-    return destination;
+  public String getTo() {
+    return to;
   }
 }

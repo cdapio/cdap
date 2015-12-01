@@ -43,7 +43,6 @@ import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.Pipeline;
 import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.common.SinkInfo;
-import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
@@ -74,8 +73,6 @@ import java.util.UUID;
 public class ETLWorker extends AbstractWorker {
   public static final String NAME = ETLWorker.class.getSimpleName();
   private static final Logger LOG = LoggerFactory.getLogger(ETLWorker.class);
-  private static final Type TRANSFORMDETAILS_LIST_TYPE = new TypeToken<List<TransformInfo>>() { }.getType();
-  private static final Type SINK_INFO_TYPE = new TypeToken<List<SinkInfo>>() { }.getType();
   private static final Gson GSON = new Gson();
   private static final String SEPARATOR = ":";
   private static final Schema ERROR_SCHEMA = Schema.recordOf(
@@ -85,7 +82,6 @@ public class ETLWorker extends AbstractWorker {
     Schema.Field.of(Constants.ErrorDataset.ERRMSG, Schema.unionOf(Schema.of(Schema.Type.STRING),
                                                                   Schema.of(Schema.Type.NULL))),
     Schema.Field.of(Constants.ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING)));
-  private static final Type CONNECTIONSDETAILS_MAP_TYPE = new TypeToken<Map<String, List<String>>>() { }.getType();
 
   // only visible at configure time
   private final ETLRealtimeConfig config;
@@ -123,15 +119,12 @@ public class ETLWorker extends AbstractWorker {
 
     PipelineRegisterer registerer = new PipelineRegisterer(getConfigurer(), "realtime");
     // using table dataset type for error dataset
-    Pipeline pluginIDs = registerer.registerPlugins(config, Table.class, DatasetProperties.builder()
+    Pipeline pipeline = registerer.registerPlugins(config, Table.class, DatasetProperties.builder()
       .add(Table.PROPERTY_SCHEMA, ERROR_SCHEMA.toString())
       .build(), false);
 
     Map<String, String> properties = new HashMap<>();
-    properties.put(Constants.Source.PLUGINID, pluginIDs.getSource());
-    properties.put(Constants.Sink.PLUGINIDS, GSON.toJson(pluginIDs.getSinks()));
-    properties.put(Constants.Transform.PLUGINIDS, GSON.toJson(pluginIDs.getTransforms()));
-    properties.put(Constants.Connections.PLUGINID, GSON.toJson(pluginIDs.getConnections()));
+    properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
     // Generate unique id for this app creation.
     properties.put(Constants.Realtime.UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
     setProperties(properties);
@@ -142,11 +135,8 @@ public class ETLWorker extends AbstractWorker {
     super.initialize(context);
     Map<String, String> properties = context.getSpecification().getProperties();
     appName = context.getApplicationSpecification().getName();
-    Preconditions.checkArgument(properties.containsKey(Constants.Source.PLUGINID));
-    Preconditions.checkArgument(properties.containsKey(Constants.Sink.PLUGINIDS));
-    Preconditions.checkArgument(properties.containsKey(Constants.Transform.PLUGINIDS));
+    Preconditions.checkArgument(properties.containsKey(Constants.PIPELINEID));
     Preconditions.checkArgument(properties.containsKey(Constants.Realtime.UNIQUE_ID));
-    Preconditions.checkArgument(properties.containsKey(Constants.Connections.PLUGINID));
 
     String uniqueId = properties.get(Constants.Realtime.UNIQUE_ID);
 
@@ -178,16 +168,16 @@ public class ETLWorker extends AbstractWorker {
 
     WorkerRealtimeContext source = initializeSource(context);
     Map<String, List<String>> connectionsMap =
-      GSON.fromJson(properties.get(Constants.Connections.PLUGINID), CONNECTIONSDETAILS_MAP_TYPE);
+      GSON.fromJson(properties.get(Constants.PIPELINEID), Pipeline.class).getConnections();
     Map<String, Transformation> transformationMap = new HashMap<>();
     initializeTransforms(context, transformationMap);
     initializeSinks(context);
-    TransformDetail transformDetail = new TransformDetail(transformationMap, metrics);
-    transformExecutor = new TransformExecutor(transformDetail, connectionsMap, source.getStageName());
+    transformExecutor = new TransformExecutor(transformationMap, metrics, connectionsMap, source.getStageName());
   }
 
   private WorkerRealtimeContext initializeSource(WorkerContext context) throws Exception {
-    String sourcePluginId = context.getSpecification().getProperty(Constants.Source.PLUGINID);
+    String sourcePluginId =
+      GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID), Pipeline.class).getSource();
     source = context.newPluginInstance(sourcePluginId);
     WorkerRealtimeContext sourceContext = new WorkerRealtimeContext(
       context, metrics, new TxLookupProvider(context), sourcePluginId);
@@ -200,8 +190,8 @@ public class ETLWorker extends AbstractWorker {
 
   @SuppressWarnings("unchecked")
   private void initializeSinks(WorkerContext context) throws Exception {
-    List<SinkInfo> sinkInfos = GSON.fromJson(context.getSpecification().getProperty(Constants.Sink.PLUGINIDS),
-                                             SINK_INFO_TYPE);
+    List<SinkInfo> sinkInfos = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
+                                             Pipeline.class).getSinks();
     sinks = new HashMap<>(sinkInfos.size());
     for (SinkInfo sinkInfo : sinkInfos) {
       RealtimeSink sink = context.newPluginInstance(sinkInfo.getSinkId());
@@ -217,7 +207,7 @@ public class ETLWorker extends AbstractWorker {
   private void initializeTransforms(WorkerContext context,
                                     Map<String, Transformation> transformDetailMap) throws Exception {
     List<TransformInfo> transformInfos =
-      GSON.fromJson(context.getSpecification().getProperty(Constants.Transform.PLUGINIDS), TRANSFORMDETAILS_LIST_TYPE);
+      GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID), Pipeline.class).getTransforms();
     Preconditions.checkArgument(transformInfos != null);
     tranformIdToDatasetName = new HashMap<>(transformInfos.size());
 

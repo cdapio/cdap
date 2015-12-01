@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.Destroyable;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
@@ -39,25 +40,24 @@ public class TransformExecutor<IN> implements Destroyable {
 
   private final String start;
   private final Map<String, List<String>> connectionsMap;
-  private final TransformDetail trackedTransformDetail;
+  private final Map<String, Transformation> trackedTransformation;
   private final DefaultEmitter<Object> defaultEmitter;
 
-  public TransformExecutor(TransformDetail transformDetail, Map<String, List<String>> connectionsMap, String start) {
+  public TransformExecutor(Map<String, Transformation> transformationMap, Metrics metrics,
+                           Map<String, List<String>> connectionsMap, String start) {
     this.start = start;
     this.connectionsMap = connectionsMap;
-    Map<String, Transformation> trackedTransformation = new HashMap<>();
-    for (Map.Entry<String, Transformation> transformationEntry : transformDetail.getTransformationMap().entrySet()) {
+    this.trackedTransformation = new HashMap<>();
+    for (Map.Entry<String, Transformation> transformationEntry : transformationMap.entrySet()) {
       trackedTransformation.put(transformationEntry.getKey(),
                                 new TrackedTransform<>(transformationEntry.getValue(),
-                                                     new DefaultStageMetrics(transformDetail.getMetrics(),
-                                                                             transformationEntry.getKey())));
+                                                     new DefaultStageMetrics(metrics, transformationEntry.getKey())));
     }
-    trackedTransformDetail = new TransformDetail(transformDetail, trackedTransformation);
-    defaultEmitter = new DefaultEmitter<>(transformDetail.getMetrics());
+    defaultEmitter = new DefaultEmitter<>(metrics);
   }
 
   public TransformResponse runOneIteration(IN input) throws Exception {
-    if (trackedTransformDetail.getTransformationMap().containsKey(start)) {
+    if (trackedTransformation.containsKey(start)) {
       executeTransformation(start, ImmutableList.of(input));
     } else {
       List<String> nextToStart = connectionsMap.get(start);
@@ -82,7 +82,7 @@ public class TransformExecutor<IN> implements Destroyable {
   }
 
   private <T> void executeTransformation(final String stageName, List<T> input) throws Exception {
-    Transformation<T, Object> transformation = trackedTransformDetail.getTransformation(stageName);
+    Transformation<T, Object> transformation = trackedTransformation.get(stageName);
 
     // clear old data for this stageName if its not a terminal node
     if (input == null) {
@@ -94,7 +94,7 @@ public class TransformExecutor<IN> implements Destroyable {
       defaultEmitter.getEntries(stageName).clear();
     }
 
-    if (trackedTransformDetail.getTransformationMap().containsKey(stageName)) {
+    if (trackedTransformation.containsKey(stageName)) {
       // has transformation (could be source or transform or sink)
       for (T inputEntry : input) {
         transformation.transform(inputEntry, new Emitter<Object>() {
@@ -119,7 +119,7 @@ public class TransformExecutor<IN> implements Destroyable {
       }
     } else {
       // terminal node, pass on the input if transformation for this terminal node is not already executed.
-      if (!trackedTransformDetail.getTransformationMap().containsKey(stageName)) {
+      if (!trackedTransformation.containsKey(stageName)) {
         for (T inputEntry : input) {
           defaultEmitter.emit(stageName, inputEntry);
         }
@@ -134,7 +134,7 @@ public class TransformExecutor<IN> implements Destroyable {
 
   @Override
   public void destroy() {
-    for (Transformation transformation : trackedTransformDetail.getTransformationMap().values()) {
+    for (Transformation transformation : trackedTransformation.values()) {
       if (transformation instanceof Destroyable) {
         Destroyables.destroyQuietly((Destroyable) transformation);
       }

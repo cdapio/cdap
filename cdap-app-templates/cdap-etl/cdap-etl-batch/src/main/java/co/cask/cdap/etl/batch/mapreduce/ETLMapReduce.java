@@ -40,13 +40,11 @@ import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
-import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.Pipeline;
 import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.common.SinkInfo;
 import co.cask.cdap.etl.common.StructuredRecordStringConverter;
-import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
@@ -87,10 +85,12 @@ public class ETLMapReduce extends AbstractMapReduce {
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final String SINK_OUTPUTS_KEY = "cdap.etl.sink.outputs";
   private static final Type SINK_OUTPUTS_TYPE = new TypeToken<List<SinkOutput>>() { }.getType();
+
   private static final Type SINK_INFO_TYPE = new TypeToken<List<SinkInfo>>() { }.getType();
   private static final Type TRANSFORMINFO_LIST_TYPE = new TypeToken<List<TransformInfo>>() { }.getType();
   private static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final String RUNTIME_ARGS_KEY_PREFIX = "cdap.etl.runtime.args.";
+
 
   private static final Gson GSON = new Gson();
 
@@ -129,7 +129,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     PipelineRegisterer pipelineRegisterer = new PipelineRegisterer(getConfigurer(), "batch");
 
-    Pipeline pipelineIds =
+    Pipeline pipeline =
       pipelineRegisterer.registerPlugins(
         config, TimePartitionedFileSet.class,
         FileSetProperties.builder()
@@ -148,10 +148,7 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
     Map<String, String> properties = new HashMap<>();
-    properties.put(Constants.Source.PLUGINID, pipelineIds.getSource());
-    properties.put(Constants.Sink.PLUGINIDS, GSON.toJson(pipelineIds.getSinks()));
-    properties.put(Constants.Transform.PLUGINIDS, GSON.toJson(pipelineIds.getTransforms()));
-    properties.put(Constants.Connections.PLUGINID, GSON.toJson(pipelineIds.getConnections()));
+    properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
     setProperties(properties);
   }
 
@@ -161,7 +158,15 @@ public class ETLMapReduce extends AbstractMapReduce {
     Configuration hConf = job.getConfiguration();
 
     Map<String, String> properties = context.getSpecification().getProperties();
-    String sourcePluginId = properties.get(Constants.Source.PLUGINID);
+    Pipeline pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), Pipeline.class);
+    // following should never happen
+    Preconditions.checkNotNull(pipeline, "Pipeline is null");
+    Preconditions.checkNotNull(pipeline.getSinks(), "Sinks could not be found in program properties");
+    // empty transform list is created during pipeline register
+    Preconditions.checkNotNull(pipeline.getTransforms());
+    Preconditions.checkNotNull(pipeline.getConnections(), "Connections could not be found in program properties");
+
+    String sourcePluginId = pipeline.getSource();
 
     batchSource = context.newPluginInstance(sourcePluginId);
     sourceContext = new MapReduceSourceContext(context, mrMetrics, new DatasetContextLookupProvider(context),
@@ -169,12 +174,11 @@ public class ETLMapReduce extends AbstractMapReduce {
     batchSource.prepareRun(sourceContext);
 
     hConf.set(RUNTIME_ARGS_KEY_PREFIX + sourcePluginId,
-                      GSON.toJson(sourceContext.getRuntimeArguments(), RUNTIME_ARGS_TYPE));
+              GSON.toJson(sourceContext.getRuntimeArguments(), RUNTIME_ARGS_TYPE));
 
-    String transformInfosStr = properties.get(Constants.Transform.PLUGINIDS);
-    Preconditions.checkNotNull(transformInfosStr, "Transform plugin ids not found in program properties.");
 
-    List<TransformInfo> transformInfos = GSON.fromJson(transformInfosStr, TRANSFORMINFO_LIST_TYPE);
+    List<TransformInfo> transformInfos = pipeline.getTransforms();
+
 
     // setup time partition for each error dataset
     for (TransformInfo transformInfo : transformInfos) {
@@ -184,13 +188,12 @@ public class ETLMapReduce extends AbstractMapReduce {
     }
 
     List<SinkOutput> sinkOutputs = new ArrayList<>();
-    String sinkPluginIdsStr = properties.get(Constants.Sink.PLUGINIDS);
-    // should never happen
-    Preconditions.checkNotNull(sinkPluginIdsStr, "Sink plugin ids could not be found in program properties.");
 
-    List<SinkInfo> sinkInfos = GSON.fromJson(sinkPluginIdsStr, SINK_INFO_TYPE);
+    List<SinkInfo> sinkInfos = pipeline.getSinks();
     batchSinks = new HashMap<>(sinkInfos.size());
     sinkContexts = new HashMap<>(sinkInfos.size());
+
+
     for (SinkInfo sinkInfo : sinkInfos) {
       BatchConfigurable<BatchSinkContext> batchSink = context.newPluginInstance(sinkInfo.getSinkId());
       MapReduceSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics,
@@ -229,7 +232,9 @@ public class ETLMapReduce extends AbstractMapReduce {
     LOG.info("Batch Run finished : succeeded = {}", succeeded);
   }
 
+
   private void onRunFinishSource(boolean succeeded) {
+
     LOG.info("On RunFinish Source : {}", batchSource.getClass().getName());
     try {
       batchSource.onRunFinish(succeeded, sourceContext);
@@ -238,12 +243,13 @@ public class ETLMapReduce extends AbstractMapReduce {
     }
   }
 
-  private void onRunFinishSinks(MapReduceContext context, boolean succeeded) {
-    String sinkPluginIdsStr = context.getSpecification().getProperty(Constants.Sink.PLUGINIDS);
-    // should never happen
-    Preconditions.checkNotNull(sinkPluginIdsStr, "Sink plugin ids could not be found in program properties.");
 
-    List<SinkInfo> sinkInfos = GSON.fromJson(sinkPluginIdsStr, SINK_INFO_TYPE);
+  private void onRunFinishSinks(MapReduceContext context, boolean succeeded) {
+    String pipelineStr = context.getSpecification().getProperty(Constants.PIPELINEID);
+    // should never happen
+    Preconditions.checkNotNull(pipelineStr, "pipeline could not be found in program properties.");
+
+    List<SinkInfo> sinkInfos = GSON.fromJson(pipelineStr, Pipeline.class).getSinks();
     for (SinkInfo sinkInfo : sinkInfos) {
       BatchConfigurable<BatchSinkContext> batchSink = batchSinks.get(sinkInfo.getSinkId());
       MapReduceSinkContext sinkContext = sinkContexts.get(sinkInfo.getSinkId());
@@ -261,8 +267,6 @@ public class ETLMapReduce extends AbstractMapReduce {
   public static class ETLMapper extends Mapper implements ProgramLifecycle<MapReduceTaskContext<Object, Object>> {
     private static final Logger LOG = LoggerFactory.getLogger(ETLMapper.class);
     private static final Gson GSON = new Gson();
-    private static final Type TRANSFORMDETAILS_LIST_TYPE = new TypeToken<List<TransformInfo>>() { }.getType();
-    private static final Type CONNECTIONSDETAILS_MAP_TYPE = new TypeToken<Map<String, List<String>>>() { }.getType();
     private Set<String> transformsWithoutErrorDataset;
 
     private TransformExecutor<KeyValue> transformExecutor;
@@ -282,17 +286,20 @@ public class ETLMapReduce extends AbstractMapReduce {
       context.getSpecification().getProperties();
       Map<String, String> properties = context.getSpecification().getProperties();
 
-      String sourcePluginId = properties.get(Constants.Source.PLUGINID);
-      // should never happen
-      String transformInfosStr = properties.get(Constants.Transform.PLUGINIDS);
-      Preconditions.checkNotNull(transformInfosStr, "Transform plugin ids not found in program properties.");
+      Pipeline pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), Pipeline.class);
+      // following should never happen
+      Preconditions.checkNotNull(pipeline, "Pipeline is null");
+      Preconditions.checkNotNull(pipeline.getSinks(), "Sinks could not be found in program properties");
+      // empty transform list is created during pipeline register
+      Preconditions.checkNotNull(pipeline.getTransforms());
+      Preconditions.checkNotNull(pipeline.getConnections(), "Connections could not be found in program properties");
 
-      //should never happen
-      String connectionsInfoStr = properties.get(Constants.Connections.PLUGINID);
-      Preconditions.checkNotNull(connectionsInfoStr, "Connections plugin ids not found in program properties.");
 
-      List<TransformInfo> transformInfos = GSON.fromJson(transformInfosStr, TRANSFORMDETAILS_LIST_TYPE);
-      Map<String, List<String>> connectionsMap = GSON.fromJson(connectionsInfoStr, CONNECTIONSDETAILS_MAP_TYPE);
+
+      String sourcePluginId = pipeline.getSource();
+
+      List<TransformInfo> transformInfos = pipeline.getTransforms();
+      Map<String, List<String>> connectionsMap = pipeline.getConnections();
       Map<String, Transformation> transformations = new HashMap<>();
 
       BatchSource source = context.newPluginInstance(sourcePluginId);
@@ -334,8 +341,7 @@ public class ETLMapReduce extends AbstractMapReduce {
         transformations.put(sinkPluginId, sink);
       }
 
-      TransformDetail transformDetail = new TransformDetail(transformations, mapperMetrics);
-      transformExecutor = new TransformExecutor(transformDetail, connectionsMap, sourcePluginId);
+      transformExecutor = new TransformExecutor(transformations, mapperMetrics, connectionsMap, sourcePluginId);
     }
 
 

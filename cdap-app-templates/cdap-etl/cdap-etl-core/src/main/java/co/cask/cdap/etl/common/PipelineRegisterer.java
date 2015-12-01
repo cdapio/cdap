@@ -27,11 +27,8 @@ import co.cask.cdap.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.common.guice.TypeResolver;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import java.lang.reflect.GenericArrayType;
@@ -86,7 +83,7 @@ public class PipelineRegisterer {
     validateStageNames(sourceConfig, config.getTransforms(), config.getSinks());
 
     // validate connections, there are no-cycles, all sinks are reachable, etc.
-    Map<String, List<ETLStage>> connectionsMap = validateConnections(config);
+    Map<String, List<String>> connectionsMap = validateConnections(config);
     String sourcePluginId = sourceConfig.getName();
 
     // instantiate source
@@ -164,99 +161,93 @@ public class PipelineRegisterer {
       throw new RuntimeException(e);
     }
 
-    Map<String, List<String>> connectionsMapString =
-      Maps.transformEntries(connectionsMap, new Maps.EntryTransformer<String, List<ETLStage>, List<String>>() {
-        @Override
-        public List<String> transformEntry(String key, List<ETLStage> stages) {
-          List<String> stageNames = new ArrayList<String>();
-          for (ETLStage stage : stages) {
-            stageNames.add(stage.getName());
-          }
-          return stageNames;
-        }
-      });
-
-    return new Pipeline(sourcePluginId, sinksInfo, transformInfos, connectionsMapString);
+    return new Pipeline(sourcePluginId, sinksInfo, transformInfos, connectionsMap);
   }
 
   @VisibleForTesting
-  static Map<String, List<ETLStage>> validateConnections(ETLConfig config) {
-    Map<String, List<ETLStage>> mapSourceToNextStages = new HashMap<>();
-    if (config.getConnections().isEmpty()) {
-      // connections list is empty, default pipeline, source->transforms(serial)-> sinks
-      String previous = config.getSource().getName();
-      for (ETLStage stage : config.getTransforms()) {
-        mapSourceToNextStages.put(previous, ImmutableList.of(stage));
-        previous = stage.getName();
-      }
-      mapSourceToNextStages.put(previous, ImmutableList.copyOf(config.getSinks()));
-    } else {
-      // there are connections provided perform validation
-      // 1) basic validation, # of connections >= (source + #transform + sink - 1)
-      if (config.getConnections().size() < (config.getTransforms().size() + config.getSinks().size())) {
-        throw new IllegalArgumentException(
-          "Number of edges connecting the pipeline is less than the number of vertices, please check the connections");
-      }
-      // 2) connections end up in a sink and all sinks are covered also check there are no cycles.
+  static Map<String, List<String>> validateConnections(ETLConfig config) {
+    Map<String, List<String>> stageConnections = new HashMap<>();
 
-      Map<String, ETLStage> mapStringToETLStage = new HashMap<>();
-      for (ETLStage stage : config.getTransforms()) {
-        mapStringToETLStage.put(stage.getName(), stage);
-      }
-      for (ETLStage stage : config.getSinks()) {
-        mapStringToETLStage.put(stage.getName(), stage);
-      }
-
-      for (Connection connection : config.getConnections()) {
-        if (mapSourceToNextStages.containsKey(connection.getSource())) {
-          mapSourceToNextStages.get(connection.getSource()).add(mapStringToETLStage.get(connection.getDestination()));
-        } else {
-          List<ETLStage> destinations = new ArrayList<>();
-          destinations.add(mapStringToETLStage.get(connection.getDestination()));
-          mapSourceToNextStages.put(connection.getSource(), destinations);
-        }
-      }
-
-      Set<String> visited = new HashSet<>();
-      visited.add(config.getSource().getName());
-      Set<String> sinksFromConfig = new HashSet<>();
-      for (ETLStage sink : config.getSinks()) {
-        sinksFromConfig.add(sink.getName());
-      }
-      connectionsReachabilityValidation(mapSourceToNextStages, config,
-                                        config.getSource(), visited, new HashSet<String>(), sinksFromConfig);
+    // 1) basic validation, # of connections >= (source + #transform + sink - 1)
+    if (config.getConnections().size() < (config.getTransforms().size() + config.getSinks().size())) {
+      throw new IllegalArgumentException(
+        "Number of edges connecting the pipeline is less than the number of vertices, please check the connections");
     }
-    return mapSourceToNextStages;
+    // 2) connections end up in a sink and all sinks are covered also check there are no cycles.
+
+    // set containing names of stages.
+    Set<String> stageNamesFromConfig = new HashSet<>();
+
+    stageNamesFromConfig.add(config.getSource().getName());
+    for (ETLStage stage : config.getTransforms()) {
+      stageNamesFromConfig.add(stage.getName());
+    }
+    for (ETLStage stage : config.getSinks()) {
+      stageNamesFromConfig.add(stage.getName());
+    }
+
+    for (Connection connection : config.getConnections()) {
+      // check if this connections's from and to belong to actual stage
+      Preconditions.checkState(
+        stageNamesFromConfig.contains(connection.getFrom()),
+        String.format("Connection from : %s does not belong to an actual stage name, please check the config",
+                      connection.getFrom()));
+      Preconditions.checkState(
+        stageNamesFromConfig.contains(connection.getTo()),
+        String.format("Connection to : %s does not belong to an actual stage name, please check the config",
+                      connection.getFrom()));
+      Preconditions.checkState(stageNamesFromConfig.contains(connection.getTo()));
+      if (stageConnections.containsKey(connection.getFrom())) {
+        stageConnections.get(connection.getFrom()).add(connection.getTo());
+      } else {
+        List<String> destinations = new ArrayList<>();
+        destinations.add(connection.getTo());
+        stageConnections.put(connection.getFrom(), destinations);
+      }
+    }
+
+    Set<String> visited = new HashSet<>();
+    visited.add(config.getSource().getName());
+    Set<String> sinksFromConfig = new HashSet<>();
+    for (ETLStage sink : config.getSinks()) {
+      sinksFromConfig.add(sink.getName());
+    }
+    connectionsReachabilityValidation(stageConnections, config,
+                                      config.getSource().getName(), visited, new HashSet<String>(), sinksFromConfig);
+    return stageConnections;
   }
 
   private static void connectionsReachabilityValidation(
-    Map<String, List<ETLStage>> mapStageToConnections, ETLConfig config,
-    ETLStage stage, Set<String> visited, Set<String> sinksVisited, Set<String> sinksFromConfig) {
+    Map<String, List<String>> mapStageToConnections, ETLConfig config,
+    String stageName, Set<String> visited, Set<String> sinksVisited, Set<String> sinksFromConfig) {
 
-    if (mapStageToConnections.get(stage.getName()) == null) {
+    if (mapStageToConnections.get(stageName) == null) {
       // check if this stage is a sink, if its not a sink, throw an exception.
-      if (!sinksFromConfig.contains(stage.getName())) {
+      if (!sinksFromConfig.contains(stageName)) {
         throw new IllegalArgumentException(
           String.format(
-            "Stage : %s is not connected to any transform or sink, please check the config", stage.getName()));
+            "Stage : %s is not connected to any transform or sink, please check the config", stageName));
       }
       // this is a sink, add it to sinks visited set
-      sinksVisited.add(stage.getName());
+      sinksVisited.add(stageName);
       return;
     }
 
-    for (ETLStage nextConnection : mapStageToConnections.get(stage.getName())) {
-      if (visited.contains(nextConnection.getName())) {
+    for (String nextConnection : mapStageToConnections.get(stageName)) {
+      if (visited.contains(nextConnection)) {
         // already been visited, cycle exists, throw exception
-        throw new IllegalArgumentException("Cycle exists in the graph connections");
+        throw new IllegalArgumentException(
+          String.format(
+            "Connection %s --> %s causes a cycle, Graph has to be a DAG, " +
+              "please check the graph connections", stageName, nextConnection));
       }
       HashSet<String> nextVisited = new HashSet<>(visited);
-      nextVisited.add(nextConnection.getName());
+      nextVisited.add(nextConnection);
       connectionsReachabilityValidation(mapStageToConnections, config, nextConnection, nextVisited,
                                         sinksVisited, sinksFromConfig);
     }
     // check if we have visited all the sinks, check this only when we are at source iteration level
-    if (config.getSource().getName().equals(stage.getName())) {
+    if (config.getSource().getName().equals(stageName)) {
       for (ETLStage sink : config.getSinks()) {
         if (!sinksVisited.contains(sink.getName())) {
           // if the sink hasn't been visited, throw exception
