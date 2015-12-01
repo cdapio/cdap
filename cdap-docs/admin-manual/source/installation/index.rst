@@ -111,7 +111,7 @@ infrastructure are included. Production applications should always be run on a D
 CDAP.
 
 See the instructions for either a :ref:`distribution-specific <installation-index>` or 
-:ref:`generic Apache Hadoop <hadoop_index>` cluster for more information.
+:ref:`generic Apache Hadoop <hadoop-index>` cluster for more information.
 
 - Production, Staging, and QA mode; runs in a distributed environment
 - Uses Apache HBase and HDFS as the storage technology (today)
