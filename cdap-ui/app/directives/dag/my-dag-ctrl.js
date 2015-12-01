@@ -187,14 +187,6 @@ angular.module(PKG.name + '.commons')
         stop: function (e) {
           e.el.style.left = '0px';
           e.el.style.top = '0px';
-
-          // vm.panning.top += e.pos[1];
-          // vm.panning.left += e.pos[0];
-
-          // vm.panning.style = {
-          //   'top': vm.panning.top + 'px',
-          //   'left': vm.panning.left + 'px'
-          // };
           transformCanvas(e.pos[1], e.pos[0]);
         },
         start: function () { canvasDragged = true; }
