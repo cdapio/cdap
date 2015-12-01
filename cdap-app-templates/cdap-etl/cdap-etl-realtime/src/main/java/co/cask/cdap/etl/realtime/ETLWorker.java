@@ -30,6 +30,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.worker.AbstractWorker;
 import co.cask.cdap.api.worker.WorkerContext;
+import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.Transformation;
@@ -39,7 +40,6 @@ import co.cask.cdap.etl.api.realtime.SourceState;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.Destroyables;
-import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Pipeline;
 import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.common.SinkInfo;
@@ -265,7 +265,17 @@ public class ETLWorker extends AbstractWorker {
     while (!stopped) {
       // Invoke poll method of the source to fetch data
       try {
-        SourceState newState = source.poll(sourceEmitter, new SourceState(currentState));
+        SourceState newState = source.poll(new Emitter() {
+          @Override
+          public void emit(Object value) {
+            sourceEmitter.emit(sourceStageName, value);
+          }
+
+          @Override
+          public void emitError(InvalidEntry invalidEntry) {
+            sourceEmitter.emit(sourceStageName, invalidEntry);
+          }
+        }, new SourceState(currentState));
         if (newState != null) {
           nextState.setState(newState);
         }

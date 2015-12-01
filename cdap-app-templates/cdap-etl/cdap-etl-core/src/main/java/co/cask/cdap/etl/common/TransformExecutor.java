@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.etl.api.Destroyable;
+import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transformation;
 import com.google.common.base.Preconditions;
@@ -80,7 +81,7 @@ public class TransformExecutor<IN> implements Destroyable {
     return new TransformResponse(terminalNodeEntriesMap, errors);
   }
 
-  private <T> void executeTransformation(String stageName, List<T> input) throws Exception {
+  private <T> void executeTransformation(final String stageName, List<T> input) throws Exception {
     Transformation<T, Object> transformation = trackedTransformDetail.getTransformation(stageName);
 
     // clear old data for this stageName if its not a terminal node
@@ -96,7 +97,17 @@ public class TransformExecutor<IN> implements Destroyable {
     if (trackedTransformDetail.getTransformationMap().containsKey(stageName)) {
       // has transformation (could be source or transform or sink)
       for (T inputEntry : input) {
-        transformation.transform(inputEntry, defaultEmitter);
+        transformation.transform(inputEntry, new Emitter<Object>() {
+          @Override
+          public void emit(Object value) {
+            defaultEmitter.emit(stageName, value);
+          }
+
+          @Override
+          public void emitError(InvalidEntry<Object> invalidEntry) {
+            defaultEmitter.emitError(stageName, invalidEntry);
+          }
+        });
       }
     }
 

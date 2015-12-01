@@ -449,14 +449,12 @@ public class ETLMapReduce extends AbstractMapReduce {
   // wrapper around sinks to help writing sink output to the correct named output
   private abstract static class WrappedSink<IN, KEY_OUT, VAL_OUT> {
     protected final BatchSink<IN, KEY_OUT, VAL_OUT> sink;
-    protected final DefaultEmitter<KeyValue<KEY_OUT, VAL_OUT>> emitter;
     protected final MapReduceTaskContext<KEY_OUT, VAL_OUT> context;
 
     protected WrappedSink(BatchSink<IN, KEY_OUT, VAL_OUT> sink,
                           MapReduceTaskContext<KEY_OUT, VAL_OUT> context,
                           StageMetrics metrics) {
       this.sink = sink;
-      this.emitter = new DefaultEmitter<>(metrics);
       this.context = context;
     }
 
@@ -475,7 +473,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     public void write(IN input) throws Exception {
       KeyValue<KEY_OUT, VAL_OUT> outputRecord = (KeyValue<KEY_OUT, VAL_OUT>) input;
       context.write(outputRecord.getKey(), outputRecord.getValue());
-      emitter.reset();
     }
   }
 
@@ -497,7 +494,6 @@ public class ETLMapReduce extends AbstractMapReduce {
       for (String outputName : outputNames) {
         context.write(outputName, outputRecord.getKey(), outputRecord.getValue());
       }
-      emitter.reset();
     }
   }
 

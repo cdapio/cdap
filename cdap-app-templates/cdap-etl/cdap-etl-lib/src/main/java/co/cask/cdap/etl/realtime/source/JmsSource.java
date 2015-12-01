@@ -243,7 +243,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
           continue;
         }
 
-        writer.emit(super.getStageName(), stringMessageToStructuredRecord(text));
+        writer.emit(stringMessageToStructuredRecord(text));
         count++;
       }
     } while (message != null && count < messagesToReceive);

@@ -141,7 +141,7 @@ public class ProjectionTransform extends Transform<StructuredRecord, StructuredR
         builder.set(outputFieldName, inputVal);
       }
     }
-    emitter.emit(super.getContext().getStageName(), builder.build());
+    emitter.emit(builder.build());
   }
 
   private void init() {

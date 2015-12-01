@@ -35,12 +35,11 @@ import java.util.Map;
  */
 public class TransformExecutorTest {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TransformExecutorTest.class);
   @Test
   public void testEmptyTransforms() throws Exception {
     MockMetrics mockMetrics = new MockMetrics();
     Map<String, Transformation> transformationMap = new HashMap<>();
-    transformationMap.put("sink", new DoubleToString("sink"));
+    transformationMap.put("sink", new DoubleToString());
     TransformDetail transformDetail = new TransformDetail(transformationMap, mockMetrics);
     Map<String, List<String>> connectionsMap = new HashMap<>();
     connectionsMap.put("source", ImmutableList.of("sink"));
@@ -63,10 +62,10 @@ public class TransformExecutorTest {
     MockMetrics mockMetrics = new MockMetrics();
     Map<String, Transformation> transformationMap = new HashMap<>();
 
-    transformationMap.put("transform1", new IntToDouble("transform1"));
-    transformationMap.put("transform2", new Filter("transform2", 100d, Threshold.LOWER));
-    transformationMap.put("sink1", new DoubleToString("sink1"));
-    transformationMap.put("sink2", new DoubleToString("sink2"));
+    transformationMap.put("transform1", new IntToDouble());
+    transformationMap.put("transform2", new Filter(100d, Threshold.LOWER));
+    transformationMap.put("sink1", new DoubleToString());
+    transformationMap.put("sink2", new DoubleToString());
 
     TransformDetail transformDetail = new TransformDetail(transformationMap, mockMetrics);
 
@@ -135,13 +134,13 @@ public class TransformExecutorTest {
     MockMetrics mockMetrics = new MockMetrics();
     Map<String, Transformation> transformationMap = new HashMap<>();
 
-    transformationMap.put("conversion", new IntToDouble("conversion"));
-    transformationMap.put("filter1", new Filter("filter1", 100d, Threshold.LOWER));
-    transformationMap.put("filter2", new Filter("filter2", 1000d, Threshold.LOWER));
-    transformationMap.put("limiter1", new Filter("limiter1", 5000d, Threshold.UPPER));
-    transformationMap.put("sink1", new DoubleToString("sink1"));
-    transformationMap.put("sink2", new DoubleToString("sink2"));
-    transformationMap.put("sink3", new DoubleToString("sink3"));
+    transformationMap.put("conversion", new IntToDouble());
+    transformationMap.put("filter1", new Filter(100d, Threshold.LOWER));
+    transformationMap.put("filter2", new Filter(1000d, Threshold.LOWER));
+    transformationMap.put("limiter1", new Filter(5000d, Threshold.UPPER));
+    transformationMap.put("sink1", new DoubleToString());
+    transformationMap.put("sink2", new DoubleToString());
+    transformationMap.put("sink3", new DoubleToString());
 
     TransformDetail transformDetail = new TransformDetail(transformationMap, mockMetrics);
 
@@ -182,17 +181,12 @@ public class TransformExecutorTest {
 
 
   private static class IntToDouble extends Transform<Integer, Double> {
-    private final String stageName;
-
-    IntToDouble(String stageName) {
-      this.stageName = stageName;
-    }
 
     @Override
     public void transform(Integer input, Emitter<Double> emitter) throws Exception {
-      emitter.emit(stageName, input.doubleValue());
-      emitter.emit(stageName, 10 * input.doubleValue());
-      emitter.emit(stageName, 100 * input.doubleValue());
+      emitter.emit(input.doubleValue());
+      emitter.emit(10 * input.doubleValue());
+      emitter.emit(100 * input.doubleValue());
     }
   }
 
@@ -203,11 +197,9 @@ public class TransformExecutorTest {
 
   private static class Filter extends Transform<Double, Double> {
     private final Double threshold;
-    private final String stageName;
     private final Threshold thresholdType;
 
-    public Filter(String stageName, Double threshold, Threshold thresholdType) {
-      this.stageName = stageName;
+    public Filter(Double threshold, Threshold thresholdType) {
       this.threshold = threshold;
       this.thresholdType = thresholdType;
     }
@@ -216,33 +208,25 @@ public class TransformExecutorTest {
     public void transform(Double input, Emitter<Double> emitter) throws Exception {
       if (thresholdType.equals(Threshold.LOWER)) {
         if (input > threshold) {
-          emitter.emit(stageName, input);
+          emitter.emit(input);
         } else {
-          emitter.emitError(stageName, new InvalidEntry<>(100, "less than threshold ", input));
+          emitter.emitError(new InvalidEntry<>(100, "less than threshold ", input));
         }
       } else {
-        LOG.info("Checking limit for number {} and stageName is {}", input, stageName);
         if (input < threshold) {
-          LOG.info("Accepting number {}", input);
-          emitter.emit(stageName, input);
+          emitter.emit(input);
         } else {
-          LOG.info("Rejecting number {}", input);
-          emitter.emitError(stageName, new InvalidEntry<>(200, "greater than limit ", input));
+          emitter.emitError(new InvalidEntry<>(200, "greater than limit ", input));
         }
       }
     }
   }
 
   private static class DoubleToString extends Transform<Double, String> {
-    private final String stageName;
-
-    DoubleToString(String stageName) {
-      this.stageName = stageName;
-    }
 
     @Override
     public void transform(Double input, Emitter<String> emitter) throws Exception {
-      emitter.emit(stageName, String.valueOf(input));
+      emitter.emit(String.valueOf(input));
     }
   }
 }

@@ -16,15 +16,9 @@
 
 package co.cask.cdap.etl.batch.sink;
 
-import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.lib.KeyValue;
-import co.cask.cdap.api.plugin.PluginProperties;
-import co.cask.cdap.etl.api.Lookup;
-import co.cask.cdap.etl.api.StageMetrics;
-import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.MockEmitter;
 import co.cask.cdap.etl.common.db.DBRecord;
 import com.google.common.base.Splitter;
@@ -49,16 +43,10 @@ public class DBSinkTest {
     config.columns = "ts,body";
     config.tableName = "foo";
 
-    final String stageName = "dbSinkStage";
-
     DBSink sink = new DBSink(config) {
       @Override
       public List<String> getColumns() {
         return ImmutableList.copyOf(Splitter.on(",").split(config.columns));
-      }
-      @Override
-      public String stageName() {
-        return stageName;
       }
     };
 
@@ -74,11 +62,10 @@ public class DBSinkTest {
     MockEmitter<KeyValue<DBRecord, NullWritable>> emitter = new MockEmitter<>();
     sink.transform(input, emitter);
 
-
-    Assert.assertEquals(1, emitter.getEmitted(stageName).size());
+    Assert.assertEquals(1, emitter.getEmitted().size());
     Assert.assertEquals(
       getRecordFields(input),
-      getRecordFields(emitter.getEmitted(stageName).get(0).getKey().getRecord()));
+      getRecordFields(emitter.getEmitted().get(0).getKey().getRecord()));
   }
 
   @Test
@@ -86,17 +73,11 @@ public class DBSinkTest {
     final DBSink.DBSinkConfig config = new DBSink.DBSinkConfig();
     config.columns = "body,ts";
     config.tableName = "foo";
-    final String stageName = "dbSinkStage";
 
     DBSink sink = new DBSink(config) {
       @Override
       public List<String> getColumns() {
         return ImmutableList.copyOf(Splitter.on(",").split(config.columns));
-      }
-
-      @Override
-      public String stageName() {
-        return stageName;
       }
     };
 
@@ -123,10 +104,10 @@ public class DBSinkTest {
     MockEmitter<KeyValue<DBRecord, NullWritable>> emitter = new MockEmitter<>();
     sink.transform(input, emitter);
 
-    Assert.assertEquals(1, emitter.getEmitted(stageName).size());
+    Assert.assertEquals(1, emitter.getEmitted().size());
     Assert.assertEquals(
       getRecordFields(output),
-      getRecordFields(emitter.getEmitted(stageName).get(0).getKey().getRecord()));
+      getRecordFields(emitter.getEmitted().get(0).getKey().getRecord()));
   }
 
   @Test

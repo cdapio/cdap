@@ -28,15 +28,14 @@ public interface Emitter<T> {
 
   /**
    * Emit an object.
-   * @param stageName stageName where record is emitted to
    * @param value the object to emit
    */
-  void emit(String stageName, T value);
+  void emit(T value);
 
   /**
    * Emit an Error object.
    *
    * @param invalidEntry {@link InvalidEntry<T>} representing the error.
    */
-  void emitError(String stageName, InvalidEntry<T> invalidEntry);
+  void emitError(InvalidEntry<T> invalidEntry);
 }

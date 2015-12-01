@@ -65,12 +65,9 @@ public class LogParserTransformTest {
              "\"-\" \"Mozilla/5.0 Gecko/20100115 Firefox/3.6\" -")
       .build();
 
-
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
-    MockTransformContext transformContext = new MockTransformContext();
-    S3_TRANSFORM.initialize(transformContext);
     S3_TRANSFORM.transform(botRecord, emitter);
-    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
+    StructuredRecord output = emitter.getEmitted().get(0);
     Assert.assertEquals("/my/uri.gif", output.get("uri"));
     Assert.assertEquals("122.122.111.11", output.get("ip"));
     Assert.assertEquals("unknown", output.get("browser"));
@@ -79,7 +76,7 @@ public class LogParserTransformTest {
     Assert.assertEquals(1421924601000L, output.get("ts"));
 
     S3_TRANSFORM.transform(browserRecord, emitter);
-    output = emitter.getEmitted(transformContext.getStageName()).get(1);
+    output = emitter.getEmitted().get(1);
     Assert.assertEquals("/my/uri.jpg", output.get("uri"));
     Assert.assertEquals("133.133.133.133", output.get("ip"));
     Assert.assertEquals("Firefox", output.get("browser"));
@@ -108,11 +105,8 @@ public class LogParserTransformTest {
       .build();
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
-    MockTransformContext transformContext = new MockTransformContext();
-    CLOUDFRONT_TRANSFORM.initialize(transformContext);
-
     CLOUDFRONT_TRANSFORM.transform(record, emitter);
-    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
+    StructuredRecord output = emitter.getEmitted().get(0);
     Assert.assertEquals("/coopr-standalone-vm/0.9.8/coopr-standalone-vm-0.9.8.ova", output.get("uri"));
     Assert.assertEquals("11.111.111.11", output.get("ip"));
     Assert.assertEquals("unknown", output.get("browser"));
@@ -121,7 +115,7 @@ public class LogParserTransformTest {
     Assert.assertEquals(1429277748000L, output.get("ts"));
 
     CLOUDFRONT_TRANSFORM.transform(commentRecord, emitter);
-    Assert.assertEquals(1, emitter.getEmitted(transformContext.getStageName()).size());
+    Assert.assertEquals(1, emitter.getEmitted().size());
   }
 
   @Test
@@ -135,12 +129,8 @@ public class LogParserTransformTest {
       .build();
 
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
-
-    MockTransformContext transformContext = new MockTransformContext();
-    CLF_TRANSFORM.initialize(transformContext);
     CLF_TRANSFORM.transform(record, emitter);
-
-    StructuredRecord output = emitter.getEmitted(transformContext.getStageName()).get(0);
+    StructuredRecord output = emitter.getEmitted().get(0);
     Assert.assertEquals("/apache_pb.gif", output.get("uri"));
     Assert.assertEquals("127.0.0.1", output.get("ip"));
     Assert.assertEquals("Chrome", output.get("browser"));

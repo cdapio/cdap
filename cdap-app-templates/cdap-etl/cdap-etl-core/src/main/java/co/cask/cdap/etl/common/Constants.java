@@ -68,7 +68,6 @@ public final class Constants {
    */
   public static final class Connections {
     public static final String PLUGINID = "connections";
-    public static final String SOURCEID = "source";
   }
 
   /**

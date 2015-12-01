@@ -74,7 +74,6 @@ public class KVTableSource extends BatchReadableSource<byte[], byte[], Structure
 
   @Override
   public void transform(KeyValue<byte[], byte[]> input, Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(super.getStageName(),
-                 StructuredRecord.builder(SCHEMA).set("key", input.getKey()).set("value", input.getValue()).build());
+    emitter.emit(StructuredRecord.builder(SCHEMA).set("key", input.getKey()).set("value", input.getValue()).build());
   }
 }

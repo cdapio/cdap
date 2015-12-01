@@ -109,7 +109,7 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void transform(KeyValue<LongWritable, DBRecord> input, Emitter<StructuredRecord> emitter) throws Exception {
-    emitter.emit(super.getStageName(), StructuredRecordUtils.convertCase(
+    emitter.emit(StructuredRecordUtils.convertCase(
       input.getValue().getRecord(), FieldCase.toFieldCase(dbSourceConfig.columnNameCase)));
   }
 

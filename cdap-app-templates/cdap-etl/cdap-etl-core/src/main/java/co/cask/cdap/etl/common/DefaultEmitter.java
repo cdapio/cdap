@@ -17,9 +17,7 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
-import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
-import co.cask.cdap.etl.api.StageMetrics;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,13 +25,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Default implementation of {@link Emitter}. Tracks how many records were emitted.
- *
- * @param <T> the type of object to emit
+ * Default Emitter, that tracks how many records were emitted across stages.
+ * @param <Object> Object is aggregated across stages.
  */
-public class DefaultEmitter<T> implements Emitter<T> {
-  private final Map<String, List<T>> entriesMap;
-  private final Map<String, List<InvalidEntry<T>>> errorMap;
+public class DefaultEmitter<Object> {
+  private final Map<String, List<Object>> entriesMap;
+  private final Map<String, List<InvalidEntry<Object>>> errorMap;
   private final Metrics metrics;
 
   public DefaultEmitter(Metrics metrics) {
@@ -42,33 +39,31 @@ public class DefaultEmitter<T> implements Emitter<T> {
     this.metrics = metrics;
   }
 
-  @Override
-  public void emit(String stageName, T value) {
+  public void emit(String stageName, Object value) {
     if (!entriesMap.containsKey(stageName)) {
-      entriesMap.put(stageName, new ArrayList<T>());
+      entriesMap.put(stageName, new ArrayList<Object>());
     }
     entriesMap.get(stageName).add(value);
     metrics.count(stageName + ".records.out", 1);
   }
 
-  @Override
-  public void emitError(String stageName, InvalidEntry<T> value) {
+  public void emitError(String stageName, InvalidEntry<Object> value) {
     if (!errorMap.containsKey(stageName)) {
-      errorMap.put(stageName, new ArrayList<InvalidEntry<T>>());
+      errorMap.put(stageName, new ArrayList<InvalidEntry<Object>>());
     }
     errorMap.get(stageName).add(value);
     metrics.count(stageName + ".records.errors", 1);
   }
 
-  public List<T> getEntries(String stageName) {
+  public List<Object> getEntries(String stageName) {
     return entriesMap.get(stageName);
   }
 
-  public Map<String, List<T>> getEntriesMap() {
+  public Map<String, List<Object>> getEntriesMap() {
     return entriesMap;
   }
 
-  public Map<String, List<InvalidEntry<T>>> getErrors() {
+  public Map<String, List<InvalidEntry<Object>>> getErrors() {
     return errorMap;
   }
 

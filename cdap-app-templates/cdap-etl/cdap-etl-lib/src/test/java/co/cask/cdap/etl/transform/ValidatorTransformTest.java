@@ -60,14 +60,12 @@ public class ValidatorTransformTest {
         "      return {'isValid': isValid, 'errorCode': errCode, 'errorMsg': errMsg}; " +
         "   };";
 
-    config.validators = "core";
+    config.validators = "apache";
 
     ValidatorTransform transform = new ValidatorTransform(config);
     MockMetrics metrics = new MockMetrics();
-    MockTransformContext transformContext =
-      new MockTransformContext(new HashMap<String, String>(), metrics, "validator.1.");
-    transform.initialize(transformContext);
-    transform.setUpInitialScript(transformContext, ImmutableList.<Validator>of(new CoreValidator()));
+    transform.setUpInitialScript(new MockTransformContext(new HashMap<String, String>(), metrics, "validator.1."),
+                                 ImmutableList.<Validator>of(new CoreValidator()));
     MockEmitter<StructuredRecord> emitter = new MockEmitter<>();
 
     StructuredRecord validRecord = StructuredRecord.builder(SCHEMA)
@@ -99,8 +97,8 @@ public class ValidatorTransformTest {
     transform.transform(invalidRecord2, emitter);
     transform.transform(invalidRecord3, emitter);
 
-    Assert.assertEquals(1, emitter.getEmitted(transformContext.getStageName()).size());
-    Assert.assertEquals(3, emitter.getErrors(transformContext.getStageName()).size());
+    Assert.assertEquals(1, emitter.getEmitted().size());
+    Assert.assertEquals(3, emitter.getErrors().size());
     Assert.assertEquals(4, metrics.getCount("total.processed"));
     Assert.assertEquals(4, metrics.getCount("validator.1.total.processed"));
   }

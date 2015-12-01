@@ -122,7 +122,7 @@ public class SqsSource extends RealtimeSource<StructuredRecord> {
       StructuredRecord record = StructuredRecord.builder(DEFAULT_SCHEMA)
         .set("body", text)
         .build();
-      writer.emit(super.getStageName(), record);
+      writer.emit(record);
       msg.acknowledge();
       count++;
     }
