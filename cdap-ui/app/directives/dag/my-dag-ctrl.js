@@ -28,6 +28,8 @@ angular.module(PKG.name + '.commons')
     var dragged = false;
     var canvasDragged = false;
 
+    vm.isDisabled = $scope.isDisabled;
+
     vm.scale = 1.0;
 
     vm.panning = {
@@ -73,9 +75,13 @@ angular.module(PKG.name + '.commons')
         angular.forEach($scope.connections, function (conn) {
           var sourceId = conn.source.indexOf('transform') !== -1 ? 'Left' + conn.source : conn.source;
           var targetId = conn.target.indexOf('transform') !== -1 ? 'Right' + conn.target : conn.target;
-          vm.instance.connect({
+          var connObj = {
             uuids: [sourceId, targetId]
-          });
+          };
+          if (vm.isDisabled) {
+            connObj.detachable = false;
+          }
+          vm.instance.connect(connObj);
         });
       });
     }
@@ -200,19 +206,23 @@ angular.module(PKG.name + '.commons')
         $timeout(function () {
           var nodes = document.querySelectorAll('.box');
           addEndpoints();
-          vm.instance.draggable(nodes, {
-            start: function () { dragged = true; },
-            stop: function (dragEndEvent) {
-              var config = {
-                _uiPosition: {
-                  top: dragEndEvent.el.style.top,
-                  left: dragEndEvent.el.style.left
-                }
-              };
-              NodesActionsFactory.updateNode(dragEndEvent.el.id, config);
-              $timeout(function () { vm.instance.repaintEverything(); });
-            }
-          });
+
+          if (!vm.isDisabled) {
+            vm.instance.draggable(nodes, {
+              start: function () { dragged = true; },
+              stop: function (dragEndEvent) {
+                var config = {
+                  _uiPosition: {
+                    top: dragEndEvent.el.style.top,
+                    left: dragEndEvent.el.style.left
+                  }
+                };
+                NodesActionsFactory.updateNode(dragEndEvent.el.id, config);
+                $timeout(function () { vm.instance.repaintEverything(); });
+              }
+            });
+          }
+
         });
 
         angular.forEach($scope.nodes, function (plugin) {
