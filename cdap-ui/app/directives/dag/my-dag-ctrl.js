@@ -68,6 +68,14 @@ angular.module(PKG.name + '.commons')
       $scope.connections = NodesStore.getConnections();
 
       $timeout(function () {
+        // centering DAG
+        if ($scope.nodes.length) {
+          var margins = $scope.getGraphMargins($scope.nodes);
+          $timeout(function () { vm.instance.repaintEverything(); });
+
+          vm.scale = margins.scale;
+        }
+
         addEndpoints();
 
         angular.forEach($scope.connections, function (conn) {
@@ -77,7 +85,10 @@ angular.module(PKG.name + '.commons')
             uuids: [sourceId, targetId]
           });
         });
+
+        setZoom(vm.scale, vm.instance);
       });
+
     }
 
     vm.zoomIn = function () {
@@ -141,6 +152,16 @@ angular.module(PKG.name + '.commons')
       });
     }
 
+    function transformCanvas (top, left) {
+      vm.panning.top += top;
+      vm.panning.left += left;
+
+      vm.panning.style = {
+        'top': vm.panning.top + 'px',
+        'left': vm.panning.left + 'px'
+      };
+    }
+
     function formatConnections() {
       var connections = [];
       angular.forEach(vm.instance.getConnections(), function (conn) {
@@ -166,14 +187,7 @@ angular.module(PKG.name + '.commons')
         stop: function (e) {
           e.el.style.left = '0px';
           e.el.style.top = '0px';
-
-          vm.panning.top += e.pos[1];
-          vm.panning.left += e.pos[0];
-
-          vm.panning.style = {
-            'top': vm.panning.top + 'px',
-            'left': vm.panning.left + 'px'
-          };
+          transformCanvas(e.pos[1], e.pos[0]);
         },
         start: function () { canvasDragged = true; }
       });
