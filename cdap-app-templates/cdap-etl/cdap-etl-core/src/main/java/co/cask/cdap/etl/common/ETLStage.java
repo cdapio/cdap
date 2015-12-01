@@ -17,6 +17,8 @@
 package co.cask.cdap.etl.common;
 
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -26,38 +28,49 @@ import javax.annotation.Nullable;
  */
 public final class ETLStage {
   private final String name;
+  private final Plugin plugin;
+  // TODO : can remove the following properties and clean up the constructor after UI support.
   private final Map<String, String> properties;
+  // TODO : remove errorDatasetName after CDAP-4232 is implemented
   private final String errorDatasetName;
 
-  public ETLStage(String name, Map<String, String> properties, @Nullable String errorDatasetName) {
+  public ETLStage(String name, Plugin plugin, @Nullable String errorDatasetName) {
     this.name = name;
-    this.properties = properties;
+    this.plugin = plugin;
+    this.properties = plugin.getProperties();
     this.errorDatasetName = errorDatasetName;
   }
 
-  public ETLStage(String name, Map<String, String> properties) {
-    this(name, properties, null);
+  public ETLStage(String name, Plugin plugin) {
+    this(name, plugin, null);
+  }
+
+  public ETLStage getCompatibleStage(String stageName) {
+    if (plugin != null) {
+      return this;
+    } else {
+      return new ETLStage(stageName, new Plugin(name, properties), errorDatasetName);
+    }
   }
 
   public String getName() {
     return name;
   }
 
-  @Nullable
-  public Map<String, String> getProperties() {
-    return properties;
+  public Plugin getPlugin() {
+    return plugin;
+  }
+
+  public String getErrorDatasetName() {
+    return errorDatasetName;
   }
 
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
       .add("name", name)
-      .add("properties", properties)
+      .add("plugin", plugin.toString())
       .toString();
   }
 
-  @Nullable
-  public String getErrorDatasetName() {
-    return errorDatasetName;
-  }
 }

@@ -34,8 +34,8 @@ public abstract class MapReduceBatchContext extends AbstractTransformContext imp
   protected final MapReduceContext mrContext;
   protected final LookupProvider lookup;
 
-  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String prefixId) {
-    super(context, metrics, lookup, prefixId);
+  public MapReduceBatchContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String stageName) {
+    super(context, metrics, lookup, stageName);
     this.mrContext = context;
     this.lookup = lookup;
   }

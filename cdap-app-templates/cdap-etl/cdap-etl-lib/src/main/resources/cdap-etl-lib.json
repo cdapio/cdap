@@ -1,0 +1,7 @@
+{
+  "parents": [
+    "cdap-etl-batch[${project.version},${project.version}]",
+    "cdap-etl-realtime[${project.version},${project.version}]",
+    "cdap-data-quality[${project.version},${project.version}]"
+  ]
+}

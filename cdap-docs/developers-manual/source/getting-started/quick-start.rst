@@ -261,7 +261,7 @@ repeating the injection of events into the stream:
 .. container:: highlight
 
   .. parsed-literal::
-    |$| cdap-wise-|cdap-apps-version|/bin/inject-data.sh
+    |$| cdap-cli.sh load stream logEventStream cdap-wise-|cdap-apps-version|/resources/apache.accesslog text/plain
   
 If you click on the right-most flowlet (*pageViewCount*) you see the current number of
 events being processed by each flowlet, in this case up to about 60 events per second:

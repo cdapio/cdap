@@ -157,7 +157,8 @@ public class ArtifactRepositoryTest {
       ImmutableSet.of(new ArtifactRange(
         Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0"))),
       // add a dummy plugin to test explicit addition of plugins through the config file
-      manuallyAddedPlugins1
+      manuallyAddedPlugins1,
+      ImmutableMap.of("k1", "v1", "k2", "v2")
     );
     try (BufferedWriter writer = Files.newWriter(pluginConfigFile, Charsets.UTF_8)) {
       writer.write(pluginConfig1.toString());
@@ -178,7 +179,8 @@ public class ArtifactRepositoryTest {
     ArtifactConfig pluginConfig2 = new ArtifactConfig(
       ImmutableSet.of(new ArtifactRange(
         Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0"))),
-      manuallyAddedPlugins2
+      manuallyAddedPlugins2,
+      ImmutableMap.of("k3", "v3")
     );
     try (BufferedWriter writer = Files.newWriter(pluginConfigFile, Charsets.UTF_8)) {
       writer.write(pluginConfig2.toString());
@@ -208,6 +210,8 @@ public class ArtifactRepositoryTest {
                         pluginArtifactDetail.getDescriptor().getArtifactId().getVersion());
     // check manually added plugins are there
     Assert.assertTrue(pluginArtifactDetail.getMeta().getClasses().getPlugins().containsAll(manuallyAddedPlugins1));
+    // check properties are there
+    Assert.assertEquals(pluginConfig1.getProperties(), pluginArtifactDetail.getMeta().getProperties());
 
     // check other plugin artifact added correctly
     pluginArtifactDetail = artifactRepository.getArtifact(pluginArtifactId2);
@@ -216,6 +220,8 @@ public class ArtifactRepositoryTest {
       pluginArtifactDetail.getDescriptor().getArtifactId().getVersion());
     // check manually added plugins are there
     Assert.assertTrue(pluginArtifactDetail.getMeta().getClasses().getPlugins().containsAll(manuallyAddedPlugins2));
+    // check properties are there
+    Assert.assertEquals(pluginConfig2.getProperties(), pluginArtifactDetail.getMeta().getProperties());
   }
 
   @Test
@@ -366,9 +372,49 @@ public class ArtifactRepositoryTest {
     artifactRepository.addArtifact(grandchildId, jarFile, parents);
   }
 
+  @Test
+  public void testArtifactProperties() throws Exception {
+    // test adding properties
+    Map<String, String> properties = ImmutableMap.of("k1", "v1", "k2", "v2");
+    artifactRepository.writeArtifactProperties(APP_ARTIFACT_ID, properties);
+    ArtifactDetail detail = artifactRepository.getArtifact(APP_ARTIFACT_ID);
+    Assert.assertEquals(properties, detail.getMeta().getProperties());
+
+    // test properties are overwritten
+    properties = ImmutableMap.of("k2", "v2-2", "k3", "v3");
+    artifactRepository.writeArtifactProperties(APP_ARTIFACT_ID, properties);
+    detail = artifactRepository.getArtifact(APP_ARTIFACT_ID);
+    Assert.assertEquals(properties, detail.getMeta().getProperties());
+
+    // test deleting a property
+    artifactRepository.deleteArtifactProperty(APP_ARTIFACT_ID, "k2");
+    detail = artifactRepository.getArtifact(APP_ARTIFACT_ID);
+    Assert.assertEquals(ImmutableMap.of("k3", "v3"), detail.getMeta().getProperties());
+
+    // test deleting a non-existant property is a no-op
+    artifactRepository.deleteArtifactProperty(APP_ARTIFACT_ID, "k2");
+    detail = artifactRepository.getArtifact(APP_ARTIFACT_ID);
+    Assert.assertEquals(ImmutableMap.of("k3", "v3"), detail.getMeta().getProperties());
+
+    // test updating one property
+    artifactRepository.writeArtifactProperty(APP_ARTIFACT_ID, "k3", "v3-2");
+    detail = artifactRepository.getArtifact(APP_ARTIFACT_ID);
+    Assert.assertEquals(ImmutableMap.of("k3", "v3-2"), detail.getMeta().getProperties());
+
+    // test writing one new property
+    artifactRepository.writeArtifactProperty(APP_ARTIFACT_ID, "k2", "v2-3");
+    detail = artifactRepository.getArtifact(APP_ARTIFACT_ID);
+    Assert.assertEquals(ImmutableMap.of("k2", "v2-3", "k3", "v3-2"), detail.getMeta().getProperties());
+
+    // test deleting all properties
+    artifactRepository.deleteArtifactProperties(APP_ARTIFACT_ID);
+    detail = artifactRepository.getArtifact(APP_ARTIFACT_ID);
+    Assert.assertEquals(0, detail.getMeta().getProperties().size());
+  }
+
   private static ClassLoader createAppClassLoader(File jarFile) throws IOException {
     final File unpackDir = DirUtils.createTempDir(TMP_FOLDER.newFolder());
-    BundleJarUtil.unpackProgramJar(Files.newInputStreamSupplier(jarFile), unpackDir);
+    BundleJarUtil.unJar(Files.newInputStreamSupplier(jarFile), unpackDir);
     return ProgramClassLoader.create(cConf, unpackDir, ArtifactRepositoryTest.class.getClassLoader());
   }
 

@@ -29,8 +29,8 @@ import co.cask.cdap.etl.common.AbstractTransformContext;
 public class WorkerRealtimeContext extends AbstractTransformContext implements RealtimeContext {
   private final WorkerContext context;
 
-  public WorkerRealtimeContext(WorkerContext context, Metrics metrics, LookupProvider lookup, String pluginPrefix) {
-    super(context, metrics, lookup, pluginPrefix);
+  public WorkerRealtimeContext(WorkerContext context, Metrics metrics, LookupProvider lookup, String stageName) {
+    super(context, metrics, lookup, stageName);
     this.context = context;
   }
 

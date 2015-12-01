@@ -22,7 +22,7 @@ import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.registry.UsageRegistry;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
@@ -69,7 +69,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final MetricStore metricStore;
   private final UsageRegistry usageRegistry;
   private final ArtifactRepository artifactRepository;
-  private final BusinessMetadataStore businessMetadataStore;
+  private final MetadataStore metadataStore;
 
   @Inject
   public LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
@@ -80,7 +80,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                                  StreamAdmin streamAdmin, Scheduler scheduler,
                                  @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
                                  UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-                                 BusinessMetadataStore businessMetadataStore) {
+                                 MetadataStore metadataStore) {
     this.configuration = configuration;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.pipelineFactory = pipelineFactory;
@@ -95,7 +95,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.metricStore = metricStore;
     this.usageRegistry = usageRegistry;
     this.artifactRepository = artifactRepository;
-    this.businessMetadataStore = businessMetadataStore;
+    this.metadataStore = metadataStore;
   }
 
   @Override
@@ -108,7 +108,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new CreateDatasetInstancesStage(configuration, datasetFramework, namespace));
     pipeline.addLast(new CreateStreamsStage(namespace, streamAdmin));
     pipeline.addLast(new DeletedProgramHandlerStage(store, programTerminator, streamConsumerFactory,
-                                                    queueAdmin, metricStore, businessMetadataStore));
+                                                    queueAdmin, metricStore, metadataStore));
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
     pipeline.addLast(new CreateSchedulesStage(scheduler));

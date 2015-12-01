@@ -216,6 +216,7 @@ if version:
 if short_version:
     rst_epilog = rst_epilog + """
 .. |short-version| replace:: %(short_version)s
+.. |literal-short-version| replace:: ``%(short_version)s``
 """ % {'short_version': short_version}
 
 if version_tuple:

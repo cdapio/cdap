@@ -156,29 +156,54 @@ body.theme-cdap {
             }
           }
         }
-
       }
     }
   }
   &.state-hydrator-detail {
     div.side-panel.top {
-      div.btn {
-        width: 20%;
+      div.tbl {
+        display: table;
+        height: 60px;
+        width: 100%;
+      }
+      div.tbl-cell {
+        display: table-cell;
+        border-left: 1px solid @table-border-color;
+        padding: 0 10px;
+        vertical-align: middle;
+        text-align: left;
+        &:first-child, &:last-child {
+          border-left: 0;
+        }
+        &:first-child {
+          width: 24%;
+        }
+        &:nth-child(2) {
+          width: 20%;
+        }
+        &:nth-child(3) {
+          width: 14%;
+        }
+        &:nth-child(4) {
+          width: 21%;
+        }
+        &:last-child {
+          padding-right: 0;
+          width: 21%;
+        }
       }
       .hydrator-detail-metadata {
-        border-right: 1px solid #eee;
-        padding: 10px 5px;
+        width: 75%;
         div.pipeline-type {
           text-decoration: none;
-          padding: 0 10px;
+          padding: 0 10px 0 5px;
           span {
-            display: inline-block;
-            line-height: 40px;
           }
         }
         div.pipeline-name {
           text-align: left;
-          padding-top: 4px;
+          width: 83%;
+          padding-top: 3px;
         }
         h1, p {
           white-space: nowrap;
@@ -197,6 +222,75 @@ body.theme-cdap {
           font-size: 12px;
           font-weight: 400;
           margin: 0;
+        }
+      }
+      div.app-status {
+        width: 25%;
+        .metric-value {
+          font-size: 20px;
+          line-height: 20px;
+          padding-bottom: 2px;
+        }
+        &.status-green span {
+          color: @brand-success;
+        }
+        &.status-red span {
+          color: @brand-danger;
+        }
+        span {
+          line-height: inherit;
+        }
+      }
+      div.last-run {
+        div.metric {
+          &:first-child {
+            padding-right: 5px;
+            width: 62%;
+          }
+          &:last-child {
+            width: 38%;
+          }
+        }
+      }
+      div.all-runs {
+        div.metric {
+          &:first-child {
+            padding-right: 5px;
+            width: 60%;
+          }
+          &:last-child {
+            width: 40%;
+          }
+        }
+      }
+      strong {
+        display: block;
+        margin-bottom: 2px;
+      }
+      span {
+        display: block;
+      }
+      span.metric-value {
+        color: #636363;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1;
+        small {
+          font-size: 10px;
+          font-weight: 400;
+        }
+      }
+      span.metric-label {
+        font-size: 10px;
+        color: rgba(0, 0, 0, 0.4);
+        font-weight: 600;
+      }
+      div.action-buttons {
+        > div {
+          width: 20%;
+        }
+        div.btn {
+          width: 100%;
         }
       }
     }
@@ -226,53 +320,6 @@ body.theme-cdap {
         }
       }
 
-      div.metrics {
-        display: table;
-        height: 60px;
-        width: 100%;
-        > div {
-          display: table-cell;
-          vertical-align: middle;
-          span {
-            display: block;
-            &.metric-label {
-              font-weight: 500;
-              margin-top: 5px;
-              font-size: 1.2vw;
-              @media (min-width: @screen-md-min) {
-                font-size: 12px;
-              }
-            }
-          }
-          &.app-status {
-            .metric-value {
-              font-size: 24px;
-            }
-            &.status-green {
-              color: @brand-success;
-            }
-            &.status-red {
-              color: @brand-danger;
-            }
-          }
-          &:not(.app-status) {
-            span {
-              &.metric-value {
-                color: @brand-primary;
-                font-weight: 600;
-                font-size: 1.2vw;
-                line-height: 24px;
-                @media (min-width: @screen-md-min) {
-                  font-size: 14px;
-                }
-              }
-              &.metric-label {
-                color: @cdap-darkness;
-              }
-            }
-          }
-        }
-      }
       div.action-buttons {
         width: 100%;
       }
@@ -282,9 +329,11 @@ body.theme-cdap {
         border-bottom: 1px solid transparent;
         border-left: 1px solid #eee;
         height: 60px;
-        line-height: 60px;
         padding: 0;
         .transition(all 0.2s ease);
+        span {
+          line-height: 60px;
+        }
         &:hover, &:focus {
           background-color: #ebebeb;
           border-right: 1px solid @table-border-color;

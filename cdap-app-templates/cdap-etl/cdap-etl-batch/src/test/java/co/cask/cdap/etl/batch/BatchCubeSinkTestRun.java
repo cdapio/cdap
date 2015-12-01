@@ -28,6 +28,7 @@ import co.cask.cdap.data2.dataset2.lib.cube.CubeDatasetDefinition;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.common.ETLStage;
+import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -59,11 +60,12 @@ public class BatchCubeSinkTestRun extends ETLBatchTestBase {
       Schema.Field.of("count", Schema.of(Schema.Type.INT))
     );
 
-    ETLStage source = new ETLStage("Table",
-      ImmutableMap.of(
-        Properties.BatchReadableWritable.NAME, "CubeSinkInputTable",
-        Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey",
-        Properties.Table.PROPERTY_SCHEMA, schema.toString()));
+    Plugin sourceConfig = new Plugin("Table",
+                                     ImmutableMap.of(
+                                       Properties.BatchReadableWritable.NAME, "CubeSinkInputTable",
+                                       Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "rowkey",
+                                       Properties.Table.PROPERTY_SCHEMA, schema.toString()));
+    ETLStage source = new ETLStage("tableSource", sourceConfig);
 
     // single aggregation
     Map<String, String> datasetProps = ImmutableMap.of(
@@ -72,11 +74,12 @@ public class BatchCubeSinkTestRun extends ETLBatchTestBase {
     Map<String, String> measurementsProps = ImmutableMap.of(
       Properties.Cube.MEASUREMENT_PREFIX + "count", "COUNTER"
     );
-    ETLStage sink = new ETLStage("Cube",
-                                 ImmutableMap.of(Properties.Cube.DATASET_NAME, "batch_cube",
-                                                 Properties.Cube.DATASET_OTHER, new Gson().toJson(datasetProps),
-                                                 Properties.Cube.MEASUREMENTS, new Gson().toJson(measurementsProps)));
+    Plugin sinkConfig = new Plugin("Cube",
+                                   ImmutableMap.of(Properties.Cube.DATASET_NAME, "batch_cube",
+                                                   Properties.Cube.DATASET_OTHER, new Gson().toJson(datasetProps),
+                                                   Properties.Cube.MEASUREMENTS, new Gson().toJson(measurementsProps)));
 
+    ETLStage sink = new ETLStage("cubeSinkUnique", sinkConfig);
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, Lists.<ETLStage>newArrayList());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);

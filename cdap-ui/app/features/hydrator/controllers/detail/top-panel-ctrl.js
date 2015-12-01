@@ -16,7 +16,7 @@
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, rPipelineDetail, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope) {
     this.GLOBALS = GLOBALS;
-    this.config = DetailRunsStore.getCloneConfig();
+    this.config = DetailNonRunsStore.getCloneConfig();
     this.app = {
       name: rPipelineDetail.name,
       description: rPipelineDetail.description,
@@ -37,11 +37,11 @@ angular.module(PKG.name + '.feature.hydrator')
       }
       this.lastRunTime = runs.length > 0 && runs[0].end ? runs[0].end - runs[0].start : 'N/A';
       this.averageRunTime = DetailRunsStore.getStatistics().avgRunTime || 'N/A';
-      this.config = DetailRunsStore.getConfigJson();
+      this.config = DetailNonRunsStore.getConfigJson();
     };
     this.setState();
 
-    this.pipelineType = DetailRunsStore.getPipelineType();
+    this.pipelineType = DetailNonRunsStore.getPipelineType();
     if (this.pipelineType === GLOBALS.etlBatch) {
       params = angular.copy(DetailRunsStore.getParams());
       params.scope = $scope;
@@ -53,13 +53,13 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.setAppStatus = function() {
       this.appStatus = DetailRunsStore.getStatus();
-      this.config = DetailRunsStore.getCloneConfig();
+      this.config = DetailNonRunsStore.getCloneConfig();
     };
     this.setScheduleStatus = function() {
       this.scheduleStatus = DetailNonRunsStore.getScheduleStatus();
     };
     this.setAppStatus();
-    var appType = DetailRunsStore.getAppType();
+    var appType = DetailNonRunsStore.getAppType();
 
     if (appType === GLOBALS.etlBatch) {
       PipelineDetailActionFactory.fetchScheduleStatus(

@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailStatusController', function(DetailRunsStore, GLOBALS, PipelineDetailActionFactory, $scope) {
+  .controller('HydratorDetailStatusController', function(DetailRunsStore, GLOBALS, PipelineDetailActionFactory, $scope, DetailNonRunsStore) {
     var params;
     this.setState = function() {
       this.runsCount = DetailRunsStore.getRunsCount();
@@ -30,11 +30,11 @@ angular.module(PKG.name + '.feature.hydrator')
       }
       this.lastRunTime = runs.length > 0 && runs[0].end ? runs[0].end - runs[0].start : 'N/A';
       this.averageRunTime = DetailRunsStore.getStatistics().avgRunTime || 'N/A';
-      this.config = DetailRunsStore.getConfigJson();
+      this.config = DetailNonRunsStore.getConfigJson();
     };
     this.setState();
     this.GLOBALS = GLOBALS;
-    this.pipelineType = DetailRunsStore.getPipelineType();
+    this.pipelineType = DetailNonRunsStore.getPipelineType();
     if (this.pipelineType === GLOBALS.etlBatch) {
       params = angular.copy(DetailRunsStore.getParams());
       params.scope = $scope;

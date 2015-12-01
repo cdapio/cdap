@@ -14,48 +14,54 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorCreateStudioController', function(MyAppDAGService, $scope, rConfig, $modalStack, EventPipe, $window, $timeout, MyConsoleTabService) {
-    this.isExpanded = true;
-    var confirmOnPageExit = function (e) {
+class HydratorCreateStudioController {
+  // Holy cow. Much DI. Such angular.
+  constructor(LeftPanelStore, LeftPanelActionsFactory, ConfigActionsFactory, $stateParams, rConfig, ConfigStore, $rootScope, $scope, DetailNonRunsStore, NodeConfigStore, NodesActionsFactory, HydratorService, ConsoleActionsFactory) {
+    // This is required because before we fireup the actions related to the store, the store has to be initialized to register for any events.
 
-      if (!MyAppDAGService.isConfigTouched) { return; }
-      // If we haven't been passed the event get the window.event
-      e = e || $window.event;
-      var message = 'You have unsaved changes.';
-      // For IE6-8 and Firefox prior to version 4
-      if (e) {
-        e.returnValue = message;
-      }
-      // For Chrome, Safari, IE8+ and Opera 12+
-      return message;
-    };
-    $window.onbeforeunload = confirmOnPageExit;
+    this.LeftPanelActionsFactory = LeftPanelActionsFactory;
 
-    $scope.$on('$stateChangeStart', function (event) {
-      if (MyAppDAGService.isConfigTouched) {
-        var response = confirm('You have unsaved changes. Are you sure you want to exit this page?');
-        if (!response) {
-          event.preventDefault();
-        }
-      }
-    });
-
-    if (rConfig) {
-      $timeout(function() {
-        MyAppDAGService.setNodesAndConnectionsFromDraft(rConfig);
+    ConfigStore.setDefaults();
+    if ($stateParams.type) {
+      ConfigActionsFactory.setArtifact({
+        version: $rootScope.cdapVersion,
+        name: $stateParams.type,
+        scope: 'SYSTEM'
       });
     }
-
-    $scope.$on('$destroy', function() {
-      $modalStack.dismissAll();
-      MyConsoleTabService.resetMessages();
-      $window.onbeforeunload = null;
-      EventPipe.cancelEvent('plugin.reset');
-      EventPipe.cancelEvent('schema.clear');
+    this.isExpanded = LeftPanelStore.getState();
+    LeftPanelStore.registerOnChangeListener( () => {
+      this.isExpanded = LeftPanelStore.getState();
     });
+    // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
+    $scope.$on('$destroy', () => {
+      DetailNonRunsStore.reset();
+      NodeConfigStore.reset();
+      ConsoleActionsFactory.resetMessages();
+    });
+    // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
+    NodeConfigStore.init();
+    if (rConfig) {
+      ConfigActionsFactory.initializeConfigStore(rConfig);
+      let config = rConfig;
+      if (!rConfig.__ui__) {
+        config = HydratorService.getNodesAndConnectionsFromConfig(rConfig);
+        config = {
+          __ui__: {
+            nodes: config.nodes
+          },
+          connections: config.connections
+        };
+      }
+      NodesActionsFactory.createGraphFromConfig(config.__ui__.nodes, config.connections);
+    }
+  }
 
-    this.toggleSidebar = function() {
-      this.isExpanded = !this.isExpanded;
-    };
-  });
+  toggleSidebar() {
+    this.LeftPanelActionsFactory.togglePanel();
+  }
+}
+
+HydratorCreateStudioController.$inject = ['LeftPanelStore', 'LeftPanelActionsFactory', 'ConfigActionsFactory', '$stateParams', 'rConfig', 'ConfigStore', '$rootScope', '$scope', 'DetailNonRunsStore', 'NodeConfigStore', 'NodesActionsFactory', 'HydratorService', 'ConsoleActionsFactory'];
+angular.module(PKG.name + '.feature.hydrator')
+  .controller('HydratorCreateStudioController', HydratorCreateStudioController);

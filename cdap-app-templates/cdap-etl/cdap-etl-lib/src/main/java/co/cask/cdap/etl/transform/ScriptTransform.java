@@ -126,7 +126,7 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   public void initialize(TransformContext context) throws Exception {
     super.initialize(context);
     metrics = context.getMetrics();
-    logger = LoggerFactory.getLogger(ScriptTransform.class.getName() + " - Stage:" + context.getStageId());
+    logger = LoggerFactory.getLogger(ScriptTransform.class.getName() + " - Stage:" + context.getStageName());
 
     // for Nashorn (Java 8+) support -- get method to convert ScriptObjectMirror to List
     try {

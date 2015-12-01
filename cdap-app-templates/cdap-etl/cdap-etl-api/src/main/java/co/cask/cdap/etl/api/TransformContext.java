@@ -44,9 +44,9 @@ public interface TransformContext extends PluginContext, LookupProvider {
   StageMetrics getMetrics();
 
   /**
-   * Gets the stage number of the transform, useful for setting the context of logging in transforms.
+   * Gets the unique stage name of the transform, useful for setting the context of logging in transforms.
    *
-   * @return stage number
+   * @return stage name
    */
-  int getStageId();
+  String getStageName();
 }

@@ -27,8 +27,8 @@ import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
-import co.cask.cdap.data2.metadata.service.DefaultBusinessMetadataStore;
+import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
@@ -107,7 +107,7 @@ public class MetadataKafkaTestBase {
         @Override
         protected void configure() {
           // Need the distributed metadata store.
-          bind(BusinessMetadataStore.class).to(DefaultBusinessMetadataStore.class);
+          bind(MetadataStore.class).to(DefaultMetadataStore.class);
         }
       }),
       new NamespaceClientRuntimeModule().getInMemoryModules()

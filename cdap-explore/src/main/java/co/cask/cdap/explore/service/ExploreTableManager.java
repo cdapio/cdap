@@ -205,10 +205,6 @@ public class ExploreTableManager {
         // if the type is a structured record, use the schema property to create the table
         // Use == because that's what same class means.
         if (StructuredRecord.class == recordType) {
-          // TODO: CDAP-3079 remove this check once RecordWritable<StructuredRecord> is supported
-          if (isRecordWritable && !isRecordScannable) {
-            throw new UnsupportedTypeException("StructuredRecord is not supported as a type for RecordWritable.");
-          }
           return createFromSchemaProperty(spec, datasetID, serdeProperties, true);
         }
 

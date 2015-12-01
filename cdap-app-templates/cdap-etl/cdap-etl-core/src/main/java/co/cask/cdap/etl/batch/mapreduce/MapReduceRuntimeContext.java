@@ -35,8 +35,9 @@ import java.util.Map;
 public class MapReduceRuntimeContext extends AbstractTransformContext implements BatchRuntimeContext {
   private final MapReduceTaskContext context;
 
-  public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics, LookupProvider lookup, String stageId) {
-    super(context, metrics, lookup, stageId);
+  public MapReduceRuntimeContext(MapReduceTaskContext context, Metrics metrics,
+                                 LookupProvider lookup, String stageName) {
+    super(context, metrics, lookup, stageName);
     this.context = context;
   }
 

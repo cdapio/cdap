@@ -34,6 +34,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -58,6 +59,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import javax.annotation.Nullable;
 
 /**
  */
@@ -864,6 +866,28 @@ public class ArtifactStoreTest {
     assertEqual(artifactId, expectedMeta, successfulWriter, info);
   }
 
+  @Test
+  public void testUpdateProperties() throws Exception {
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "abc", "1.2.3");
+    Map<String, String> properties = ImmutableMap.of("k1", "v1", "k2", "v2");
+    ArtifactMeta meta = new ArtifactMeta(
+      ArtifactClasses.builder().build(), ImmutableSet.<ArtifactRange>of(), properties);
+    writeArtifact(artifactId, meta, "some contents");
+
+    ArtifactDetail detail = artifactStore.getArtifact(artifactId);
+    Assert.assertEquals(properties, detail.getMeta().getProperties());
+
+    // update one key and add a new key
+    artifactStore.updateArtifactProperties(artifactId, new Function<Map<String, String>, Map<String, String>>() {
+      @Override
+      public Map<String, String> apply(Map<String, String> input) {
+        return ImmutableMap.of("k3", "v3");
+      }
+    });
+    properties = ImmutableMap.of("k3", "v3");
+    detail = artifactStore.getArtifact(artifactId);
+    Assert.assertEquals(properties, detail.getMeta().getProperties());
+  }
 
   @Category(SlowTests.class)
   @Test

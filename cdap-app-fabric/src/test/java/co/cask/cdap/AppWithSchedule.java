@@ -80,16 +80,11 @@ public class AppWithSchedule extends AbstractApplication {
     private static final Logger LOG = LoggerFactory.getLogger(DummyAction.class);
     @Override
     public void run() {
+      Preconditions.checkArgument(getContext().getRuntimeArguments().get("oneKey").equals("oneValue"));
+      Preconditions.checkArgument(getContext().getRuntimeArguments().get("anotherKey").equals("anotherValue"));
+      Preconditions.checkArgument(getContext().getRuntimeArguments().get("someKey").equals("someWorkflowValue"));
+      Preconditions.checkArgument(getContext().getRuntimeArguments().get("workflowKey").equals("workflowValue"));
       LOG.info("Ran dummy action");
-      try {
-        TimeUnit.MILLISECONDS.sleep(500);
-        Preconditions.checkArgument(getContext().getRuntimeArguments().get("oneKey").equals("oneValue"));
-        Preconditions.checkArgument(getContext().getRuntimeArguments().get("anotherKey").equals("anotherValue"));
-        Preconditions.checkArgument(getContext().getRuntimeArguments().get("someKey").equals("someWorkflowValue"));
-        Preconditions.checkArgument(getContext().getRuntimeArguments().get("workflowKey").equals("workflowValue"));
-      } catch (InterruptedException e) {
-        LOG.info("Interrupted");
-      }
     }
   }
 }
