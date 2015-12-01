@@ -680,6 +680,14 @@
   </property>
 
   <property>
+    <name>kafka.seed.brokers</name>
+    <value>127.0.0.1:9092</value>
+    <description>
+      List of Kafka brokers (comma separated)
+    </description>
+  </property>
+
+  <property>
     <name>kafka.zookeeper.namespace</name>
     <value>kafka</value>
     <description>
@@ -689,14 +697,6 @@
 
 
   <!-- Logging Configuration -->
-
-  <property>
-    <name>kafka.seed.brokers</name>
-    <value>127.0.0.1:9092</value>
-    <description>
-      List of Kafka brokers (comma separated)
-    </description>
-  </property>
 
   <property>
     <name>log.base.dir</name>
@@ -1163,6 +1163,14 @@
   </property>
 
   <property>
+    <name>router.server.address</name>
+    <value>127.0.0.1</value>
+    <description>
+      Router address to which CDAP UI connects
+    </description>
+  </property>
+
+  <property>
     <name>router.server.port</name>
     <value>${router.bind.port}</value>
     <description>
@@ -1302,6 +1310,14 @@
   </property>
 
   <property>
+    <name>security.authorization.pluginClassName</name>
+    <value></value>
+    <description>
+      Class name of the AuthorizationPlugin implementation to use
+    </description>
+  </property>
+
+  <property>
     <name>security.data.keyfile.path</name>
     <value>${local.data.dir}/security/keyfile</value>
     <description>
@@ -1396,21 +1412,6 @@
     </description>
   </property>
 
-  <property>
-    <name>security.authorization.enabled</name>
-    <value>false</value>
-    <description>
-      Determines if authorization is enabled
-    </description>
-  </property>
-
-  <property>
-    <name>security.authorization.pluginClassName</name>
-    <value></value>
-    <description>
-      Class name of the AuthorizationPlugin implementation to use
-    </description>
-  </property>
 
   <!-- Stream Configuration -->
 
@@ -1607,14 +1608,6 @@
     <value>false</value>
     <description>
       True to disable SSL certificate check from the CDAP UI
-    </description>
-  </property>
-
-  <property>
-    <name>router.server.address</name>
-    <value>127.0.0.1</value>
-    <description>
-      Router address to which CDAP UI connects
     </description>
   </property>
 

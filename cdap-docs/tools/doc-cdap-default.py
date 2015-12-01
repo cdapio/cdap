@@ -176,7 +176,8 @@ class Section:
         if name.endswith(CONFIG):
             name = name[0:-len(CONFIG)]
         underline = "-" * len(name)
-        rst = "\n%s\n%s\n%s\n" % (name, underline, RST_TABLE_HEADER)
+        reference = ".. _cdap-default-%s:" % name.lower()
+        rst = "\n%s\n\n%s\n%s\n%s\n" % (reference, name, underline, RST_TABLE_HEADER)
         return rst
 
     def display(self):

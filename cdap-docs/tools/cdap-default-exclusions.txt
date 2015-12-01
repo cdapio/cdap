@@ -1,2 +1,4 @@
 metrics.query.bind.address
 router.ssl.server.port
+security.authorization.enabled
+security.authorization.pluginClassName
