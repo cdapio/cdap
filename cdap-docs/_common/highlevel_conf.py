@@ -31,6 +31,9 @@ from sphinx.util.console import bold
 sys.path.append(os.path.abspath('../../_common'))
 from common_conf import *
 
+# Remove this guide from the mapping as it will fail as it has been deleted by clean
+intersphinx_mapping.pop(manual_intersphinx_mapping['overview'], None)
+    
 # Search Index
 # Includes handler to build a common search index of all manuals combined
 
