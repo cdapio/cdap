@@ -55,7 +55,7 @@
         <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-properties-template.html'"></div>
       </div>
 
-      <div class="col-xs-12 sink-output-schema" ng-if="PluginEditController.isOuputSchemaExists || plugin.implicitSchema">
+      <div class="col-xs-12 sink-output-schema" ng-if="PluginEditController.isOutputSchemaExists || PluginEditController.groupsConfig.implicitSchema">
         <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-output-schema.html'"></div>
       </div>
     </div>

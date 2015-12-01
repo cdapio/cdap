@@ -26,12 +26,12 @@
     <span ng-if="!isSink">Output Schema</span>
     <span ng-if="isSink">Schema</span>
 
-    <span class="fa fa-asterisk ng-scope" ng-if="PluginEditController.isOutputSchemaRequired"></span>
+    <span class="fa fa-asterisk ng-scope" ng-if="PluginEditController.groupsConfig.isOutputSchemaRequired"></span>
     <button
       class="btn btn-sm btn-default pull-right"
       ng-click="PluginEditController.schemaClear()"
-      ng-if="(!plugin.implicitSchema && !isDisabled)"
-      ng-disabled="plugin.implicitSchema || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
+      ng-if="(!PluginEditController.groupsConfig.implicitSchema && !isDisabled)"
+      ng-disabled="PluginEditController.groupsConfig.implicitSchema || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
       Clear
     </button>
   </h4>
@@ -41,17 +41,17 @@
       <my-schema-editor
         ng-model="plugin.outputSchema"
         ng-if="plugin.outputSchema"
-        data-disabled="plugin.implicitSchema || isDisabled"
+        data-disabled="PluginEditController.groupsConfig.implicitSchema || isDisabled"
         plugin-properties="plugin.properties"
-        config="PluginEditController.schemaProperties">
+        config="PluginEditController.groupsConfig.schemaProperties">
       </my-schema-editor>
     </div>
     <div ng-if="!isDisabled">
       <my-schema-editor
         ng-model="plugin.outputSchema"
-        data-disabled="plugin.implicitSchema || isDisabled"
+        data-disabled="PluginEditController.groupsConfig.implicitSchema || isDisabled"
         plugin-properties="plugin.properties"
-        config="PluginEditController.schemaProperties">
+        config="PluginEditController.groupsConfig.schemaProperties">
       </my-schema-editor>
     </div>
   </fieldset>
