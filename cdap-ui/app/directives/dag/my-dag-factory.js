@@ -162,8 +162,8 @@ angular.module(PKG.name + '.commons')
         nodesep: 90,
         ranksep: 100,
         rankdir: 'LR',
-        marginx: 30,
-        marginy: 30
+        marginx: 0,
+        marginy: 0
       });
       graph.setDefaultEdgeLabel(function() { return {}; });
 

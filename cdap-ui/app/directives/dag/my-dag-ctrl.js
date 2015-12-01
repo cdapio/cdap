@@ -80,9 +80,14 @@ angular.module(PKG.name + '.commons')
 
         // centering DAG
         if ($scope.nodes.length) {
-          var leftMargin = $scope.getGraphMargins($scope.nodes).left;
-          transformCanvas(0, leftMargin);
+          var margins = $scope.getGraphMargins($scope.nodes);
+          $timeout(function () { vm.instance.repaintEverything(); });
+
+          vm.scale = margins.scale;
         }
+
+        setZoom(vm.scale, vm.instance);
+
       });
 
     }
