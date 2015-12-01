@@ -21,6 +21,7 @@ import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.api.dataset.PartitionNotFoundException;
 import co.cask.cdap.api.dataset.lib.AbstractDataset;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetArguments;
@@ -335,7 +336,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
     final byte[] rowKey = generateRowKey(key, partitioning);
     Row row = partitionsTable.get(rowKey);
     if (row.isEmpty()) {
-      throw new DataSetException(String.format("Dataset '%s' does not have a partition for key: %s", getName(), key));
+      throw new PartitionNotFoundException(key, getName());
     }
 
     // ensure that none of the entries already exist in the metadata
