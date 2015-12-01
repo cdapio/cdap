@@ -40,24 +40,24 @@ public class TransformExecutor<IN> implements Destroyable {
 
   private final String start;
   private final Map<String, List<String>> connectionsMap;
-  private final Map<String, Transformation> trackedTransformation;
-  private final DefaultEmitter<Object> defaultEmitter;
+  private final Map<String, Transformation> trackedTransformations;
+  private final DefaultEmitter defaultEmitter;
 
   public TransformExecutor(Map<String, Transformation> transformationMap, Metrics metrics,
                            Map<String, List<String>> connectionsMap, String start) {
     this.start = start;
     this.connectionsMap = connectionsMap;
-    this.trackedTransformation = new HashMap<>();
+    this.trackedTransformations = new HashMap<>();
     for (Map.Entry<String, Transformation> transformationEntry : transformationMap.entrySet()) {
-      trackedTransformation.put(transformationEntry.getKey(),
+      trackedTransformations.put(transformationEntry.getKey(),
                                 new TrackedTransform<>(transformationEntry.getValue(),
-                                                     new DefaultStageMetrics(metrics, transformationEntry.getKey())));
+                                                       new DefaultStageMetrics(metrics, transformationEntry.getKey())));
     }
-    defaultEmitter = new DefaultEmitter<>(metrics);
+    defaultEmitter = new DefaultEmitter(metrics);
   }
 
   public TransformResponse runOneIteration(IN input) throws Exception {
-    if (trackedTransformation.containsKey(start)) {
+    if (trackedTransformations.containsKey(start)) {
       executeTransformation(start, ImmutableList.of(input));
     } else {
       List<String> nextToStart = connectionsMap.get(start);
@@ -82,7 +82,7 @@ public class TransformExecutor<IN> implements Destroyable {
   }
 
   private <T> void executeTransformation(final String stageName, List<T> input) throws Exception {
-    Transformation<T, Object> transformation = trackedTransformation.get(stageName);
+    Transformation<T, Object> transformation = trackedTransformations.get(stageName);
 
     // clear old data for this stageName if its not a terminal node
     if (input == null) {
@@ -94,7 +94,7 @@ public class TransformExecutor<IN> implements Destroyable {
       defaultEmitter.getEntries(stageName).clear();
     }
 
-    if (trackedTransformation.containsKey(stageName)) {
+    if (trackedTransformations.containsKey(stageName)) {
       // has transformation (could be source or transform or sink)
       for (T inputEntry : input) {
         transformation.transform(inputEntry, new Emitter<Object>() {
@@ -119,7 +119,7 @@ public class TransformExecutor<IN> implements Destroyable {
       }
     } else {
       // terminal node, pass on the input if transformation for this terminal node is not already executed.
-      if (!trackedTransformation.containsKey(stageName)) {
+      if (!trackedTransformations.containsKey(stageName)) {
         for (T inputEntry : input) {
           defaultEmitter.emit(stageName, inputEntry);
         }
@@ -134,7 +134,7 @@ public class TransformExecutor<IN> implements Destroyable {
 
   @Override
   public void destroy() {
-    for (Transformation transformation : trackedTransformation.values()) {
+    for (Transformation transformation : trackedTransformations.values()) {
       if (transformation instanceof Destroyable) {
         Destroyables.destroyQuietly((Destroyable) transformation);
       }

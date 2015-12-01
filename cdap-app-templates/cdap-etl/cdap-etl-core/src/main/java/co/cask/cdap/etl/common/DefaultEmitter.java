@@ -26,9 +26,8 @@ import java.util.Map;
 
 /**
  * Default Emitter, that tracks how many records were emitted across stages.
- * @param <Object> Object is aggregated across stages.
  */
-public class DefaultEmitter<Object> {
+public class DefaultEmitter {
   private final Map<String, List<Object>> entriesMap;
   private final Map<String, List<InvalidEntry<Object>>> errorMap;
   private final Metrics metrics;

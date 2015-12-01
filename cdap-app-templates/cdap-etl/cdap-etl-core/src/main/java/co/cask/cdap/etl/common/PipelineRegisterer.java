@@ -188,15 +188,16 @@ public class PipelineRegisterer {
 
     for (Connection connection : config.getConnections()) {
       // check if this connections's from and to belong to actual stage
-      Preconditions.checkState(
+      Preconditions.checkArgument(
         stageNamesFromConfig.contains(connection.getFrom()),
-        String.format("Connection from : %s does not belong to an actual stage name, please check the config",
-                      connection.getFrom()));
-      Preconditions.checkState(
+        String.format(" The from name %s in connection %s : %s " +
+                        "does not belong to an actual stage name, please check the config",
+                      connection.getFrom(), connection.getFrom(), connection.getTo()));
+      Preconditions.checkArgument(
         stageNamesFromConfig.contains(connection.getTo()),
-        String.format("Connection to : %s does not belong to an actual stage name, please check the config",
-                      connection.getFrom()));
-      Preconditions.checkState(stageNamesFromConfig.contains(connection.getTo()));
+        String.format("The to name : %s in connection %s : %s does not belong to an actual stage name, " +
+                        "please check the config",
+                      connection.getTo(), connection.getFrom(), connection.getTo()));
       if (stageConnections.containsKey(connection.getFrom())) {
         stageConnections.get(connection.getFrom()).add(connection.getTo());
       } else {
@@ -212,8 +213,20 @@ public class PipelineRegisterer {
     for (ETLStage sink : config.getSinks()) {
       sinksFromConfig.add(sink.getName());
     }
+
+    Set<String> sinksVisited = new HashSet<>();
     connectionsReachabilityValidation(stageConnections, config,
-                                      config.getSource().getName(), visited, new HashSet<String>(), sinksFromConfig);
+                                      config.getSource().getName(), visited, sinksVisited, sinksFromConfig);
+
+    // check if all sinks are connected
+    for (ETLStage sink : config.getSinks()) {
+      if (!sinksVisited.contains(sink.getName())) {
+        // if the sink hasn't been visited, throw exception
+        throw new IllegalArgumentException(
+          String.format("Sink %s is not connected, please check the connections", sink.getName()));
+      }
+    }
+
     return stageConnections;
   }
 
@@ -245,16 +258,6 @@ public class PipelineRegisterer {
       nextVisited.add(nextConnection);
       connectionsReachabilityValidation(mapStageToConnections, config, nextConnection, nextVisited,
                                         sinksVisited, sinksFromConfig);
-    }
-    // check if we have visited all the sinks, check this only when we are at source iteration level
-    if (config.getSource().getName().equals(stageName)) {
-      for (ETLStage sink : config.getSinks()) {
-        if (!sinksVisited.contains(sink.getName())) {
-          // if the sink hasn't been visited, throw exception
-          throw new IllegalArgumentException(
-            String.format("Sink %s is not connected, please check the connections", sink.getName()));
-        }
-      }
     }
   }
 

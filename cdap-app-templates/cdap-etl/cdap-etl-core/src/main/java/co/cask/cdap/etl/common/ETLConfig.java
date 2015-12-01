@@ -44,6 +44,7 @@ public class ETLConfig extends Config {
   }
 
   private List<Connection> getValidConnections(List<Connection> connections) {
+    // TODO : this can be removed once UI changes are made and we don't have to support the old format
     if (source.getPlugin() == null) {
       // if its old format, we just return an empty list.
       return new ArrayList<>();

@@ -334,9 +334,9 @@ public class ETLMapReduce extends AbstractMapReduce {
           GSON.<Map<String, String>>fromJson(hConf.get(RUNTIME_ARGS_KEY_PREFIX + sinkPluginId), RUNTIME_ARGS_TYPE));
         sink.initialize(runtimeContext);
         if (hasOneOutput) {
-          sinks.put(sinkPluginId, new SingleOutputSink<>(sink, context, runtimeContext.getMetrics()));
+          sinks.put(sinkPluginId, new SingleOutputSink<>(sink, context));
         } else {
-          sinks.put(sinkPluginId, new MultiOutputSink<>(sink, context, runtimeContext.getMetrics(), sinkOutputNames));
+          sinks.put(sinkPluginId, new MultiOutputSink<>(sink, context, sinkOutputNames));
         }
         transformations.put(sinkPluginId, sink);
       }
@@ -391,11 +391,9 @@ public class ETLMapReduce extends AbstractMapReduce {
         KeyValue<Object, Object> input = new KeyValue<>(key, value);
         TransformResponse transformResponse = transformExecutor.runOneIteration(input);
         for (Map.Entry<String, List<Object>> transformedEntry : transformResponse.getSinksResults().entrySet()) {
-          Iterator<Object> transformedRecords = transformedEntry.getValue().iterator();
           WrappedSink<Object, Object, Object> sink = sinks.get(transformedEntry.getKey());
-          while (transformedRecords.hasNext()) {
-            Object transformedRecord = transformedRecords.next();
-            sink.write(transformedRecord);
+          for (Object transformedRecord : transformedEntry.getValue()) {
+            sink.write((KeyValue<Object, Object>) transformedRecord);
           }
         }
 
@@ -458,13 +456,12 @@ public class ETLMapReduce extends AbstractMapReduce {
     protected final MapReduceTaskContext<KEY_OUT, VAL_OUT> context;
 
     protected WrappedSink(BatchSink<IN, KEY_OUT, VAL_OUT> sink,
-                          MapReduceTaskContext<KEY_OUT, VAL_OUT> context,
-                          StageMetrics metrics) {
+                          MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
       this.sink = sink;
       this.context = context;
     }
 
-    protected abstract void write(IN input) throws Exception;
+    protected abstract void write(KeyValue<KEY_OUT, VAL_OUT> output) throws Exception;
   }
 
   // need to write with a different method if there is only one output for the mapreduce
@@ -472,13 +469,12 @@ public class ETLMapReduce extends AbstractMapReduce {
   private static class SingleOutputSink<IN, KEY_OUT, VAL_OUT> extends WrappedSink<IN, KEY_OUT, VAL_OUT> {
 
     protected SingleOutputSink(BatchSink<IN, KEY_OUT, VAL_OUT> sink,
-                               MapReduceTaskContext<KEY_OUT, VAL_OUT> context, StageMetrics metrics) {
-      super(sink, context, metrics);
+                               MapReduceTaskContext<KEY_OUT, VAL_OUT> context) {
+      super(sink, context);
     }
 
-    public void write(IN input) throws Exception {
-      KeyValue<KEY_OUT, VAL_OUT> outputRecord = (KeyValue<KEY_OUT, VAL_OUT>) input;
-      context.write(outputRecord.getKey(), outputRecord.getValue());
+    public void write(KeyValue<KEY_OUT, VAL_OUT> output) throws Exception {
+      context.write(output.getKey(), output.getValue());
     }
   }
 
@@ -488,17 +484,14 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     private MultiOutputSink(BatchSink<IN, KEY_OUT, VAL_OUT> sink,
                             MapReduceTaskContext<KEY_OUT, VAL_OUT> context,
-                            StageMetrics metrics,
                             Set<String> outputNames) {
-      super(sink, context, metrics);
+      super(sink, context);
       this.outputNames = outputNames;
     }
 
-    public void write(IN input) throws Exception {
-      KeyValue<KEY_OUT, VAL_OUT> outputRecord = (KeyValue<KEY_OUT, VAL_OUT>) input;
-
+    public void write(KeyValue<KEY_OUT, VAL_OUT> output) throws Exception {
       for (String outputName : outputNames) {
-        context.write(outputName, outputRecord.getKey(), outputRecord.getValue());
+        context.write(outputName, output.getKey(), output.getValue());
       }
     }
   }
