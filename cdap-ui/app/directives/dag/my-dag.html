@@ -15,7 +15,7 @@
 -->
 
 <!-- Control Buttons -->
-<div class="btn-group btn-group-sm zoom-control">
+<div class="btn-group-vertical btn-group-sm zoom-control">
   <button class="btn btn-default"
           ng-click="MyDAGController.zoomIn()">
     <i class="fa fa-plus"></i>
@@ -24,6 +24,15 @@
   <button class="btn btn-default"
           ng-click="MyDAGController.zoomOut()">
     <i class="fa fa-minus"></i>
+  </button>
+
+  <button class="btn btn-default">
+    <i class="fa fa-desktop"></i>
+  </button>
+
+  <button class="btn btn-default"
+          ng-click="MyDAGController.cleanUpGraph()">
+    <i class="fa fa-magic"></i>
   </button>
 </div>
 
