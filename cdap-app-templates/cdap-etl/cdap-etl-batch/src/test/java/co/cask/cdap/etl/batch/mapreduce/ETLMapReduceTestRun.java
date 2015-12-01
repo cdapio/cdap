@@ -139,6 +139,8 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
     KeyValueTable sourceTable = sourceMetaTable.get();
     Assert.assertEquals(MetaKVTableSource.PREPARE_RUN_KEY,
                         Bytes.toString(sourceTable.read(MetaKVTableSource.PREPARE_RUN_KEY)));
+    Assert.assertEquals(MetaKVTableSource.INIT_RUN_KEY,
+                        Bytes.toString(sourceTable.read(MetaKVTableSource.INIT_RUN_KEY)));
     Assert.assertEquals(MetaKVTableSource.FINISH_RUN_KEY,
                         Bytes.toString(sourceTable.read(MetaKVTableSource.FINISH_RUN_KEY)));
 

@@ -34,7 +34,7 @@ public abstract class BatchConfigurable<T extends BatchContext> implements Pipel
   }
 
   /**
-   * Prepare the Batch run. Used to configure the Hadoop Job before starting the run.
+   * Prepare the Batch run. Used to configure the job before starting the run.
    *
    * @param context batch execution context
    * @throws Exception if there's an error during this method invocation

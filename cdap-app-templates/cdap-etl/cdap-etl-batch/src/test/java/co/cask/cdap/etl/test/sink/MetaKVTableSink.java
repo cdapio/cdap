@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
 import co.cask.cdap.etl.batch.sink.KVTableSink;
@@ -33,6 +34,7 @@ import co.cask.cdap.etl.batch.sink.KVTableSink;
 public class MetaKVTableSink extends KVTableSink {
   public static final String META_TABLE = "sinkMetaTable";
   public static final String PREPARE_RUN_KEY = "sink.prepare.run";
+  public static final String INIT_RUN_KEY = "sink.init.run";
   public static final String FINISH_RUN_KEY = "sink.finish.run";
 
   public MetaKVTableSink(KVTableConfig kvTableConfig) {
@@ -50,6 +52,18 @@ public class MetaKVTableSink extends KVTableSink {
     super.prepareRun(context);
     KeyValueTable table = context.getDataset(META_TABLE);
     table.write(PREPARE_RUN_KEY, PREPARE_RUN_KEY);
+
+    context.setRuntimeArgument("prepare", "sink", false);
+  }
+
+  @Override
+  public void initialize(BatchRuntimeContext context) throws Exception {
+    super.initialize(context);
+
+    if ("sink".equals(context.getRuntimeArguments().get("prepare"))) {
+      KeyValueTable table = context.getDataset(META_TABLE);
+      table.write(INIT_RUN_KEY, INIT_RUN_KEY);
+    }
   }
 
   @Override

@@ -60,6 +60,7 @@ import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.mapred.AvroKey;
 import org.apache.avro.mapreduce.AvroKeyInputFormat;
 import org.apache.avro.mapreduce.AvroKeyOutputFormat;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
@@ -88,6 +89,8 @@ public class ETLMapReduce extends AbstractMapReduce {
   private static final Type SINK_OUTPUTS_TYPE = new TypeToken<List<SinkOutput>>() { }.getType();
   private static final Type SINK_INFO_TYPE = new TypeToken<List<SinkInfo>>() { }.getType();
   private static final Type TRANSFORMINFO_LIST_TYPE = new TypeToken<List<TransformInfo>>() { }.getType();
+  private static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final String RUNTIME_ARGS_KEY_PREFIX = "cdap.etl.runtime.args.";
 
   private static final Gson GSON = new Gson();
 
@@ -103,7 +106,11 @@ public class ETLMapReduce extends AbstractMapReduce {
     new org.apache.avro.Schema.Parser().parse(ERROR_SCHEMA.toString());
 
   private BatchConfigurable<BatchSourceContext> batchSource;
-  private List<BatchConfigurable<BatchSinkContext>> batchSinks;
+  private MapReduceSourceContext sourceContext;
+
+  private Map<String, BatchConfigurable<BatchSinkContext>> batchSinks;
+  private Map<String, MapReduceSinkContext> sinkContexts;
+
   // injected by CDAP
   @SuppressWarnings("unused")
   private Metrics mrMetrics;
@@ -150,14 +157,18 @@ public class ETLMapReduce extends AbstractMapReduce {
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
     Job job = context.getHadoopJob();
+    Configuration hConf = job.getConfiguration();
 
     Map<String, String> properties = context.getSpecification().getProperties();
     String sourcePluginId = properties.get(Constants.Source.PLUGINID);
 
     batchSource = context.newPluginInstance(sourcePluginId);
-    BatchSourceContext sourceContext = new MapReduceSourceContext(
-      context, mrMetrics, new DatasetContextLookupProvider(context), sourcePluginId);
+    sourceContext = new MapReduceSourceContext(context, mrMetrics, new DatasetContextLookupProvider(context),
+                                               sourcePluginId, context.getRuntimeArguments());
     batchSource.prepareRun(sourceContext);
+
+    hConf.set(RUNTIME_ARGS_KEY_PREFIX + sourcePluginId,
+                      GSON.toJson(sourceContext.getRuntimeArguments(), RUNTIME_ARGS_TYPE));
 
     String transformInfosStr = properties.get(Constants.Transform.PLUGINIDS);
     Preconditions.checkNotNull(transformInfosStr, "Transform plugin ids not found in program properties.");
@@ -177,22 +188,27 @@ public class ETLMapReduce extends AbstractMapReduce {
     Preconditions.checkNotNull(sinkPluginIdsStr, "Sink plugin ids could not be found in program properties.");
 
     List<SinkInfo> sinkInfos = GSON.fromJson(sinkPluginIdsStr, SINK_INFO_TYPE);
-    batchSinks = Lists.newArrayListWithCapacity(sinkInfos.size());
+    batchSinks = new HashMap<>(sinkInfos.size());
+    sinkContexts = new HashMap<>(sinkInfos.size());
     for (SinkInfo sinkInfo : sinkInfos) {
       BatchConfigurable<BatchSinkContext> batchSink = context.newPluginInstance(sinkInfo.getSinkId());
-      MapReduceSinkContext sinkContext = new MapReduceSinkContext(
-        context, mrMetrics, new DatasetContextLookupProvider(context), sinkInfo.getSinkId());
+      MapReduceSinkContext sinkContext = new MapReduceSinkContext(context, mrMetrics,
+                                                                  new DatasetContextLookupProvider(context),
+                                                                  sinkInfo.getSinkId(), context.getRuntimeArguments());
+      sinkContexts.put(sinkInfo.getSinkId(), sinkContext);
+      batchSinks.put(sinkInfo.getSinkId(), batchSink);
+
       batchSink.prepareRun(sinkContext);
-      batchSinks.add(batchSink);
       sinkOutputs.add(new SinkOutput(sinkInfo.getSinkId(), sinkContext.getOutputNames(),
                                      sinkInfo.getErrorDatasetName()));
 
       if (sinkInfo.getErrorDatasetName() != null) {
         addPropertiesToErrorDataset(sinkInfo.getErrorDatasetName(), context);
       }
-
+      hConf.set(RUNTIME_ARGS_KEY_PREFIX + sinkInfo.getSinkId(),
+                GSON.toJson(sinkContext.getRuntimeArguments(), RUNTIME_ARGS_TYPE));
     }
-    job.getConfiguration().set(SINK_OUTPUTS_KEY, GSON.toJson(sinkOutputs));
+    hConf.set(SINK_OUTPUTS_KEY, GSON.toJson(sinkOutputs));
 
     job.setMapperClass(ETLMapper.class);
     job.setNumReduceTasks(0);
@@ -207,15 +223,12 @@ public class ETLMapReduce extends AbstractMapReduce {
 
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    onRunFinishSource(context, succeeded);
-    onRunFinishSink(context, succeeded);
+    onRunFinishSource(succeeded);
+    onRunFinishSinks(context, succeeded);
     LOG.info("Batch Run finished : succeeded = {}", succeeded);
   }
 
-  private void onRunFinishSource(MapReduceContext context, boolean succeeded) {
-    String sourcePluginId = context.getSpecification().getProperty(Constants.Source.PLUGINID);
-    BatchSourceContext sourceContext = new MapReduceSourceContext(
-      context, mrMetrics, new DatasetContextLookupProvider(context), sourcePluginId);
+  private void onRunFinishSource(boolean succeeded) {
     LOG.info("On RunFinish Source : {}", batchSource.getClass().getName());
     try {
       batchSource.onRunFinish(succeeded, sourceContext);
@@ -224,17 +237,15 @@ public class ETLMapReduce extends AbstractMapReduce {
     }
   }
 
-  private void onRunFinishSink(MapReduceContext context, boolean succeeded) {
+  private void onRunFinishSinks(MapReduceContext context, boolean succeeded) {
     String sinkPluginIdsStr = context.getSpecification().getProperty(Constants.Sink.PLUGINIDS);
     // should never happen
     Preconditions.checkNotNull(sinkPluginIdsStr, "Sink plugin ids could not be found in program properties.");
 
     List<SinkInfo> sinkInfos = GSON.fromJson(sinkPluginIdsStr, SINK_INFO_TYPE);
-    for (int i = 0; i < sinkInfos.size(); i++) {
-      BatchConfigurable<BatchSinkContext> batchSink = batchSinks.get(i);
-      String sinkPluginId = sinkInfos.get(i).getSinkId();
-      BatchSinkContext sinkContext = new MapReduceSinkContext(
-        context, mrMetrics, new DatasetContextLookupProvider(context), sinkPluginId);
+    for (SinkInfo sinkInfo : sinkInfos) {
+      BatchConfigurable<BatchSinkContext> batchSink = batchSinks.get(sinkInfo.getSinkId());
+      MapReduceSinkContext sinkContext = sinkContexts.get(sinkInfo.getSinkId());
       try {
         batchSink.onRunFinish(succeeded, sinkContext);
       } catch (Throwable t) {
@@ -261,6 +272,10 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     @Override
     public void initialize(MapReduceTaskContext<Object, Object> context) throws Exception {
+      // get the list of sinks, and the names of the outputs each sink writes to
+      Context hadoopContext = context.getHadoopContext();
+      Configuration hConf = hadoopContext.getConfiguration();
+
       // get source, transform, sink ids from program properties
       context.getSpecification().getProperties();
       Map<String, String> properties = context.getSpecification().getProperties();
@@ -275,7 +290,8 @@ public class ETLMapReduce extends AbstractMapReduce {
 
       BatchSource source = context.newPluginInstance(sourcePluginId);
       BatchRuntimeContext runtimeContext = new MapReduceRuntimeContext(
-        context, mapperMetrics, new DatasetContextLookupProvider(context), sourcePluginId);
+        context, mapperMetrics, new DatasetContextLookupProvider(context), sourcePluginId,
+        GSON.<Map<String, String>>fromJson(hConf.get(RUNTIME_ARGS_KEY_PREFIX + sourcePluginId), RUNTIME_ARGS_TYPE));
       source.initialize(runtimeContext);
       pipeline.add(new TransformDetail(sourcePluginId, source, runtimeContext.getMetrics()));
 
@@ -283,8 +299,6 @@ public class ETLMapReduce extends AbstractMapReduce {
       transformsWithoutErrorDataset = new HashSet<>();
       addTransforms(pipeline, transformInfos, context);
 
-      // get the list of sinks, and the names of the outputs each sink writes to
-      Context hadoopContext = context.getHadoopContext();
       String sinkOutputsStr = hadoopContext.getConfiguration().get(SINK_OUTPUTS_KEY);
       // should never happen, this is set in beforeSubmit
       Preconditions.checkNotNull(sinkOutputsStr, "Sink outputs not found in Hadoop conf.");
@@ -302,7 +316,8 @@ public class ETLMapReduce extends AbstractMapReduce {
 
         BatchSink<Object, Object, Object> sink = context.newPluginInstance(sinkPluginId);
         runtimeContext = new MapReduceRuntimeContext(
-          context, mapperMetrics, new DatasetContextLookupProvider(context), sinkPluginId);
+          context, mapperMetrics, new DatasetContextLookupProvider(context), sinkPluginId,
+          GSON.<Map<String, String>>fromJson(hConf.get(RUNTIME_ARGS_KEY_PREFIX + sinkPluginId), RUNTIME_ARGS_TYPE));
         sink.initialize(runtimeContext);
         if (hasOneOutput) {
           sinks.add(new SingleOutputSink<>(sink, context, runtimeContext.getMetrics()));
@@ -343,7 +358,8 @@ public class ETLMapReduce extends AbstractMapReduce {
         String transformId = transformInfo.getTransformId();
         Transform transform = context.newPluginInstance(transformId);
         BatchRuntimeContext transformContext = new MapReduceRuntimeContext(
-          context, mapperMetrics, new DatasetContextLookupProvider(context), transformId);
+          context, mapperMetrics, new DatasetContextLookupProvider(context), transformId,
+          context.getRuntimeArguments());
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
         pipeline.add(new TransformDetail(transformId, transform, transformContext.getMetrics()));
