@@ -117,8 +117,12 @@ angular.module(PKG.name + '.commons')
     /**
      * Utily function from jsPlumb
      * https://jsplumbtoolkit.com/community/doc/zooming.html
+     *
+     * slightly modified to fit our needs
      **/
     function setZoom(zoom, instance, transformOrigin, el) {
+      if ($scope.nodes.length === 0) { return; }
+
       transformOrigin = transformOrigin || [ 0.5, 0.5 ];
       instance = instance || jsPlumb;
       el = el || instance.getContainer();
@@ -372,6 +376,25 @@ angular.module(PKG.name + '.commons')
       closeAllPopovers();
       NodesActionsFactory.removeNode(node.id);
       vm.instance.remove(node.id);
+    };
+
+    vm.cleanUpGraph = function () {
+      if ($scope.nodes.length === 0) { return; }
+
+      var graphNodes = MyDAGFactory.getGraphLayout($scope.nodes, $scope.connections)._nodes;
+
+      angular.forEach($scope.nodes, function (node) {
+        var location = graphNodes[node.id];
+        node._uiPosition = {
+          left: location.x + 'px',
+          top: location.y + 'px'
+        };
+      });
+
+      var margins = $scope.getGraphMargins($scope.nodes);
+      vm.scale = margins.scale;
+      $timeout(function () { vm.instance.repaintEverything(); });
+      setZoom(vm.scale, vm.instance);
     };
 
 
