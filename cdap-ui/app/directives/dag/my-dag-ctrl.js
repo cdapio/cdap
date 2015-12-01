@@ -77,7 +77,14 @@ angular.module(PKG.name + '.commons')
             uuids: [sourceId, targetId]
           });
         });
+
+        // centering DAG
+        if ($scope.nodes.length) {
+          var leftMargin = $scope.getGraphMargins($scope.nodes).left;
+          transformCanvas(0, leftMargin);
+        }
       });
+
     }
 
     vm.zoomIn = function () {
@@ -141,6 +148,16 @@ angular.module(PKG.name + '.commons')
       });
     }
 
+    function transformCanvas (top, left) {
+      vm.panning.top += top;
+      vm.panning.left += left;
+
+      vm.panning.style = {
+        'top': vm.panning.top + 'px',
+        'left': vm.panning.left + 'px'
+      };
+    }
+
     function formatConnections() {
       var connections = [];
       angular.forEach(vm.instance.getConnections(), function (conn) {
@@ -167,13 +184,14 @@ angular.module(PKG.name + '.commons')
           e.el.style.left = '0px';
           e.el.style.top = '0px';
 
-          vm.panning.top += e.pos[1];
-          vm.panning.left += e.pos[0];
+          // vm.panning.top += e.pos[1];
+          // vm.panning.left += e.pos[0];
 
-          vm.panning.style = {
-            'top': vm.panning.top + 'px',
-            'left': vm.panning.left + 'px'
-          };
+          // vm.panning.style = {
+          //   'top': vm.panning.top + 'px',
+          //   'left': vm.panning.left + 'px'
+          // };
+          transformCanvas(e.pos[1], e.pos[0]);
         },
         start: function () { canvasDragged = true; }
       });
