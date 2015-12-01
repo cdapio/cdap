@@ -76,6 +76,8 @@ available in this mode.
 
 See :ref:`test-cdap` for information and examples on using this mode.
 
+**Features:**
+
 - Purpose-built for writing unit tests and CI pipelines
 - Mimics storage technologies as in-memory data structures; for example, 
   `Java NavigableMap <http://docs.oracle.com/javase/7/docs/api/java/util/NavigableMap.html>`__
@@ -97,6 +99,8 @@ remote access by any outside process or application outside of the local machine
 See :ref:`Getting Started <getting-started-index>` and the *Cask Data Application Platform
 SDK* for information on how to start and manage your Standalone CDAP.
 
+**Features:**
+
 - Designed to run in a standalone environment, for development and testing
 - Uses LevelDB/Local File System as the storage technology
 - Uses Java Threads as the processing abstraction (via Apache Twill)
@@ -113,6 +117,8 @@ CDAP.
 See the instructions for either a :ref:`distribution-specific <installation-index>` or 
 :ref:`generic Apache Hadoop <hadoop-index>` cluster for more information.
 
-- Production, Staging, and QA mode; runs in a distributed environment
-- Uses Apache HBase and HDFS as the storage technology (today)
+**Features:**
+
+- A production, staging, and QA mode; runs in a distributed environment
+- Currently uses Apache HBase and HDFS as the underlying storage technology
 - Uses Apache Yarn Containers as the processing abstraction (via Apache Twill)
