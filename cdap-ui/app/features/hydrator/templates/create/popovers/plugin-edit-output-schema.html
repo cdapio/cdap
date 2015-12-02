@@ -18,20 +18,20 @@
 
   <div class="schema-error">
     <ul>
-      <li class="text-danger" ng-repeat="error in errors">{{ error }}</li>
+      <li class="text-danger" ng-repeat="error in NodeConfigController.state.errors">{{ error }}</li>
     </ul>
   </div>
 
   <h4>
-    <span ng-if="!isSink">Output Schema</span>
-    <span ng-if="isSink">Schema</span>
+    <span ng-if="!NodeConfigController.state.isSink">Output Schema</span>
+    <span ng-if="NodeConfigController.state.isSink">Schema</span>
 
-    <span class="fa fa-asterisk ng-scope" ng-if="PluginEditController.groupsConfig.outputSchema.isOutputSchemaRequired"></span>
+    <span class="fa fa-asterisk ng-scope" ng-if="NodeConfigController.state.groupsConfig.outputSchema.isOutputSchemaRequired"></span>
     <button
       class="btn btn-sm btn-default pull-right"
-      ng-click="PluginEditController.schemaClear()"
-      ng-if="(!PluginEditController.groupsConfig.outputSchema.implicitSchema && !isDisabled)"
-      ng-disabled="PluginEditController.groupsConfig.outputSchema.implicitSchema || plugin.properties.format === 'clf' || plugin.properties.format === 'syslog'">
+      ng-click="NodeConfigController.schemaClear()"
+      ng-if="(!NodeConfigController.state.groupsConfig.outputSchema.implicitSchema && !isDisabled)"
+      ng-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema || NodeConfigController.state.plugin.properties.format === 'clf' || NodeConfigController.state.plugin.properties.format === 'syslog'">
       Clear
     </button>
   </h4>
@@ -39,24 +39,24 @@
   <fieldset class="clearfix" ng-disabled="isDisabled">
     <div ng-if="isDisabled">
       <my-schema-editor
-        ng-model="plugin.outputSchema"
-        ng-if="plugin.outputSchema"
-        data-disabled="PluginEditController.groupsConfig.outputSchema.implicitSchema || isDisabled"
-        plugin-properties="plugin.properties"
-        config="PluginEditController.groupsConfig.outputSchema.schemaProperty">
+        ng-model="NodeConfigController.state.plugin.outputSchema"
+        ng-if="NodeConfigController.state.plugin.outputSchema"
+        data-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema || isDisabled"
+        plugin-properties="NodeConfigController.state.plugin.properties"
+        config="NodeConfigController.state.groupsConfig.outputSchema.schemaProperty">
       </my-schema-editor>
     </div>
     <div ng-if="!isDisabled">
       <my-schema-editor
-        ng-model="plugin.outputSchema"
-        data-disabled="PluginEditController.groupsConfig.outputSchema.implicitSchema"
-        plugin-properties="plugin.properties"
-        config="PluginEditController.groupsConfig.schemaProperties">
+        ng-model="NodeConfigController.state.plugin.outputSchema"
+        data-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema"
+        plugin-properties="NodeConfigController.state.plugin.properties"
+        config="NodeConfigController.state.groupsConfig.schemaProperties">
       </my-schema-editor>
     </div>
   </fieldset>
 
-  <div ng-if="!plugin.outputSchema && isDisabled && plugin.properties.format !== 'clf' && plugin.properties.format !== 'syslog'">
+  <div ng-if="!NodeConfigController.state.plugin.outputSchema && isDisabled && NodeConfigController.state.plugin.properties.format !== 'clf' && NodeConfigController.state.plugin.properties.format !== 'syslog'">
     <div class="well well-lg">
       <h4>There is no output schema</h4>
     </div>

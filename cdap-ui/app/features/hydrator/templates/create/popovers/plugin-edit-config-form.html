@@ -14,7 +14,7 @@
   the License.
 -->
 
-<div class="config-table source-table" ng-if="isSource">
+<div class="config-table source-table" ng-if="NodeConfigController.state.isSource">
   <div>
     <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-properties-template.html'"></div>
   </div>
@@ -24,7 +24,7 @@
   </div>
 </div>
 
-<div class="config-table transform-table" ng-if="isTransform && plugin.name !== 'Validator'">
+<div class="config-table transform-table" ng-if="NodeConfigController.state.isTransform && NodeConfigController.state.plugin.name !== 'Validator'">
   <div>
     <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-input-schema.html'"></div>
   </div>
@@ -38,13 +38,13 @@
   </div>
 </div>
 
-<div class="validator-plugin" ng-if="isTransform && plugin.name === 'Validator'">
+<div class="validator-plugin" ng-if="NodeConfigController.state.isTransform && NodeConfigController.state.plugin.name === 'Validator'">
   <div>
     <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
   </div>
 </div>
 
-<div class="config-table sink-table" ng-if="isSink">
+<div class="config-table sink-table" ng-if="NodeConfigController.state.isSink">
   <div>
     <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-input-schema.html'"></div>
   </div>
@@ -55,7 +55,7 @@
         <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-properties-template.html'"></div>
       </div>
 
-      <div class="col-xs-12 sink-output-schema" ng-if="PluginEditController.isOutputSchemaExists || PluginEditController.groupsConfig.implicitSchema">
+      <div class="col-xs-12 sink-output-schema" ng-if="NodeConfigController.state.isOutputSchemaExists || NodeConfigController.state.groupsConfig.implicitSchema">
         <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-output-schema.html'"></div>
       </div>
     </div>
