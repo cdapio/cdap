@@ -199,9 +199,12 @@ public class HBaseTableExporter {
       }
       if (!job.waitForCompletion(true)) {
         LOG.info("MapReduce job failed!");
-        Transactions.invalidateQuietly(txClient, tx);
         throw new RuntimeException("Failed to run the MapReduce job.");
       }
+
+      // Always commit the transaction, since we are not doing any data update
+      // operation in this tool.
+      txClient.commit(tx);
       System.out.println("Export operation complete. HFiles are stored at location " + bulkloadDir.toString());
     } finally {
       stop();
