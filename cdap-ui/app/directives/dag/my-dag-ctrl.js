@@ -117,8 +117,12 @@ angular.module(PKG.name + '.commons')
     /**
      * Utily function from jsPlumb
      * https://jsplumbtoolkit.com/community/doc/zooming.html
+     *
+     * slightly modified to fit our needs
      **/
     function setZoom(zoom, instance, transformOrigin, el) {
+      if ($scope.nodes.length === 0) { return; }
+
       transformOrigin = transformOrigin || [ 0.5, 0.5 ];
       instance = instance || jsPlumb;
       el = el || instance.getContainer();
@@ -266,6 +270,7 @@ angular.module(PKG.name + '.commons')
       // This should be removed once the node config is using FLUX
       $scope.$watch('nodes', function () {
         closeAllPopovers();
+
         $timeout(function () {
           var nodes = document.querySelectorAll('.box');
           addEndpoints();
@@ -372,6 +377,75 @@ angular.module(PKG.name + '.commons')
       closeAllPopovers();
       NodesActionsFactory.removeNode(node.id);
       vm.instance.remove(node.id);
+    };
+
+    vm.cleanUpGraph = function () {
+      if ($scope.nodes.length === 0) { return; }
+
+      var graphNodes = MyDAGFactory.getGraphLayout($scope.nodes, $scope.connections)._nodes;
+
+      angular.forEach($scope.nodes, function (node) {
+        var location = graphNodes[node.id];
+        node._uiPosition = {
+          left: location.x + 'px',
+          top: location.y + 'px'
+        };
+      });
+
+      vm.panning.top = 0;
+      vm.panning.left = 0;
+
+      vm.panning.style = {
+        'top': vm.panning.top + 'px',
+        'left': vm.panning.left + 'px'
+      };
+
+      var margins = $scope.getGraphMargins($scope.nodes);
+      vm.scale = margins.scale;
+      $timeout(function () { vm.instance.repaintEverything(); });
+      setZoom(vm.scale, vm.instance);
+    };
+
+    vm.locateNodes = function () {
+      var minLeft = null;
+      var leftMostNode = null;
+
+      angular.forEach($scope.nodes, function (node) {
+        var left = parseInt(node._uiPosition.left, 10);
+
+        if (node._uiPosition.left.includes('vw')) {
+          left = parseInt(left, 10)/100 * document.documentElement.clientWidth;
+          node._uiPosition.left = left + 'px';
+        }
+
+        if (minLeft === null || left < minLeft) {
+          minLeft = left;
+          leftMostNode = node;
+        }
+      });
+
+      var offsetLeft = parseInt(leftMostNode._uiPosition.left, 10);
+      var offsetTop = parseInt(leftMostNode._uiPosition.top, 10);
+
+      angular.forEach($scope.nodes, function (node) {
+        var left = parseInt(node._uiPosition.left, 10);
+        var top = parseInt(node._uiPosition.top, 10);
+
+        node._uiPosition = {
+          left: (left - offsetLeft + 50) + 'px',
+          top: (top - offsetTop + 150) + 'px'
+        };
+      });
+
+      $timeout(function () { vm.instance.repaintEverything(); });
+
+      vm.panning.top = 0;
+      vm.panning.left = 0;
+
+      vm.panning.style = {
+        'top': vm.panning.top + 'px',
+        'left': vm.panning.left + 'px'
+      };
     };
 
 
