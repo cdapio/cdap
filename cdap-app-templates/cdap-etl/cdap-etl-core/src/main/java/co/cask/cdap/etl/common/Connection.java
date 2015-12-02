@@ -14,28 +14,25 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
-
-import co.cask.cdap.api.annotation.Beta;
+package co.cask.cdap.etl.common;
 
 /**
- * Used to emit one or more key, value pairs to the next stage.
- *
- * @param <T> Type of the object to emit
+ *  Represents a connection between two {@link ETLStage}
  */
-@Beta
-public interface Emitter<T> {
+public class Connection {
+  private final String from;
+  private final String to;
 
-  /**
-   * Emit an object.
-   * @param value the object to emit
-   */
-  void emit(T value);
+  public Connection(String from, String to) {
+    this.from = from;
+    this.to = to;
+  }
 
-  /**
-   * Emit an Error object.
-   *
-   * @param invalidEntry {@link InvalidEntry<T>} representing the error.
-   */
-  void emitError(InvalidEntry<T> invalidEntry);
+  public String getFrom() {
+    return from;
+  }
+
+  public String getTo() {
+    return to;
+  }
 }

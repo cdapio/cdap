@@ -14,28 +14,34 @@
  * the License.
  */
 
-package co.cask.cdap.etl.api;
+package co.cask.cdap.etl.common;
 
-import co.cask.cdap.api.annotation.Beta;
+import co.cask.cdap.etl.api.StageMetrics;
 
 /**
- * Used to emit one or more key, value pairs to the next stage.
- *
- * @param <T> Type of the object to emit
+ * No op metrics implementation for tests.
  */
-@Beta
-public interface Emitter<T> {
+public class NoopMetrics implements StageMetrics {
 
-  /**
-   * Emit an object.
-   * @param value the object to emit
-   */
-  void emit(T value);
+  public static final StageMetrics INSTANCE = new NoopMetrics();
 
-  /**
-   * Emit an Error object.
-   *
-   * @param invalidEntry {@link InvalidEntry<T>} representing the error.
-   */
-  void emitError(InvalidEntry<T> invalidEntry);
+  @Override
+  public void count(String s, int i) {
+    // no-op
+  }
+
+  @Override
+  public void gauge(String s, long l) {
+    // no-op
+  }
+
+  @Override
+  public void pipelineCount(String metricName, int delta) {
+    // no-op
+  }
+
+  @Override
+  public void pipelineGauge(String metricName, long value) {
+    // no-op
+  }
 }

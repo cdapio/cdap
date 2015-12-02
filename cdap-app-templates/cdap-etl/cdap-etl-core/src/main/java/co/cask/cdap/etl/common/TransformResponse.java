@@ -16,28 +16,30 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.etl.api.InvalidEntry;
+
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
  * class representing transform response.
- * @param <OUT> represents output type
  */
-public class TransformResponse<OUT> {
-  private final Iterator<OUT> emittedRecords;
-  private final Map<String, Collection<OUT>> mapTransformIdToErrorEmitter;
+public class TransformResponse {
+  private final Map<String, List<Object>> sinksResults;
+  private final Map<String, List<InvalidEntry<Object>>> mapTransformIdToErrorEmitter;
 
-  public TransformResponse(Iterator<OUT> outIterator, Map<String, Collection<OUT>> mapTransformIdToErrorEmitter) {
-    this.emittedRecords = outIterator;
+  public TransformResponse(Map<String, List<Object>> sinksResults,
+                           Map<String, List<InvalidEntry<Object>>> mapTransformIdToErrorEmitter) {
+    this.sinksResults = sinksResults;
     this.mapTransformIdToErrorEmitter = mapTransformIdToErrorEmitter;
   }
 
-  public Iterator<OUT> getEmittedRecords() {
-    return emittedRecords;
+  public Map<String, List<Object>> getSinksResults() {
+    return sinksResults;
   }
 
-  public Map<String, Collection<OUT>> getMapTransformIdToErrorEmitter() {
+  public Map<String, List<InvalidEntry<Object>>> getMapTransformIdToErrorEmitter() {
     return mapTransformIdToErrorEmitter;
   }
 

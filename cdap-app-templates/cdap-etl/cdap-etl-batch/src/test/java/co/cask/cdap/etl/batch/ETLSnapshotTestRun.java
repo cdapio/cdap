@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
 import co.cask.cdap.etl.batch.sink.SnapshotFileBatchSink;
+import co.cask.cdap.etl.common.Connection;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.etl.common.Properties;
@@ -90,6 +91,7 @@ public class ETLSnapshotTestRun extends ETLBatchTestBase {
                                             new ETLStage("sink2", sink2Config));
 
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", new ETLStage("source", sourceConfig), sinks, transforms,
+                                                  new ArrayList<Connection>(),
                                                   new Resources(), Lists.<ETLStage>newArrayList());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
@@ -162,6 +164,7 @@ public class ETLSnapshotTestRun extends ETLBatchTestBase {
     List<ETLStage> sinks = ImmutableList.of(new ETLStage("sink", sinkConfig));
     ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *",
                                                   new ETLStage("source", sourceConfig), sinks, transforms,
+                                                  new ArrayList<Connection>(),
                                                   new Resources(), Lists.<ETLStage>newArrayList());
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
