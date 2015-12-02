@@ -479,7 +479,7 @@ public final class StreamUtils {
     return Iterables.filter(streamRootLocation.list(), new Predicate<Location>() {
       @Override
       public boolean apply(Location location) {
-        // Any directories started with "." is special system directory, which is not regular stream directory
+        // Any directories started with "." is special system file, which is not regular stream directory
         return !location.getName().startsWith(".");
       }
     });

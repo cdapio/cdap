@@ -31,6 +31,7 @@ import com.google.common.reflect.TypeToken;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import javax.inject.Inject;
 
 /**
@@ -53,7 +54,11 @@ public class MetaClient {
   }
 
   public void ping() throws IOException, UnauthorizedException {
-    restClient.execute(HttpMethod.GET, config.resolveURLNoVersion("ping"), config.getAccessToken());
+    HttpResponse response = restClient.execute(
+      HttpMethod.GET, config.resolveURLNoVersion("ping"), config.getAccessToken());
+    if (!Objects.equals(response.getResponseBodyAsString(), "OK.\n")) {
+      throw new IOException("Unexpected response body");
+    }
   }
 
   public Version getVersion() throws IOException, UnauthorizedException {

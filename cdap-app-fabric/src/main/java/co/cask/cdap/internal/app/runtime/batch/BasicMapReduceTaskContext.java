@@ -18,6 +18,10 @@ package co.cask.cdap.internal.app.runtime.batch;
 
 import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.data.batch.BatchReadable;
+import co.cask.cdap.api.data.batch.BatchWritable;
+import co.cask.cdap.api.data.batch.Split;
+import co.cask.cdap.api.data.batch.SplitReader;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
@@ -35,6 +39,8 @@ import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.AbstractContext;
 import co.cask.cdap.internal.app.runtime.DefaultTaskLocalizationContext;
+import co.cask.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
+import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.batch.dataset.MultipleOutputs;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.logging.context.MapReduceLoggingContext;
@@ -42,6 +48,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionSystemClient;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -52,6 +60,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -262,5 +271,77 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   @Override
   public Map<String, File> getAllLocalFiles() {
     return taskLocalizationContext.getAllLocalFiles();
+  }
+
+  /**
+   * Returns a {@link BatchReadable} that reads data from the given dataset.
+   */
+  <K, V> BatchReadable<K, V> getBatchReadable(String datasetName, Map<String, String> datasetArgs) {
+    Dataset dataset = getDataset(datasetName, datasetArgs);
+    // Must be BatchReadable.
+    Preconditions.checkArgument(dataset instanceof BatchReadable, "Dataset '%s' is not a BatchReadable.", datasetName);
+
+    @SuppressWarnings("unchecked")
+    final BatchReadable<K, V> delegate = (BatchReadable<K, V>) dataset;
+    return new BatchReadable<K, V>() {
+      @Override
+      public List<Split> getSplits() {
+        try {
+          try {
+            return delegate.getSplits();
+          } finally {
+            flushOperations();
+          }
+        } catch (Exception e) {
+          throw Throwables.propagate(e);
+        }
+      }
+
+      @Override
+      public SplitReader<K, V> createSplitReader(Split split) {
+        return new ForwardingSplitReader<K, V>(delegate.createSplitReader(split)) {
+          @Override
+          public void close() {
+            try {
+              try {
+                super.close();
+              } finally {
+                flushOperations();
+              }
+            } catch (Exception e) {
+              throw Throwables.propagate(e);
+            }
+          }
+        };
+      }
+    };
+  }
+
+  /**
+   * Returns a {@link CloseableBatchWritable} that writes data to the given dataset.
+   */
+  <K, V> CloseableBatchWritable<K, V> getBatchWritable(String datasetName, Map<String, String> datasetArgs) {
+    Dataset dataset = getDataset(datasetName, datasetArgs);
+    // Must be BatchWritable.
+    Preconditions.checkArgument(dataset instanceof BatchWritable, "Dataset '%s' is not a BatchWritable.", datasetName);
+
+    @SuppressWarnings("unchecked") final
+    BatchWritable<K, V> delegate = (BatchWritable<K, V>) dataset;
+    return new CloseableBatchWritable<K, V>() {
+      @Override
+      public void write(K k, V v) {
+        delegate.write(k, v);
+      }
+
+      @Override
+      public void close() throws IOException {
+        try {
+          flushOperations();
+        } catch (Exception e) {
+          Throwables.propagateIfInstanceOf(e, IOException.class);
+          throw new IOException(e);
+        }
+      }
+    };
   }
 }

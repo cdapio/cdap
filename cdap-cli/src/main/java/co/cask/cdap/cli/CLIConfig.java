@@ -179,7 +179,12 @@ public class CLIConfig implements TableRendererConfig {
       .setAccessToken(accessToken)
       .build();
     MetaClient metaClient = new MetaClient(clientConfig);
-    metaClient.ping();
+
+    try {
+      metaClient.ping();
+    } catch (IOException e) {
+      throw new IOException("Check hostname and/or port", e);
+    }
   }
 
   private boolean isAuthenticationEnabled(ConnectionConfig connectionInfo) throws IOException {

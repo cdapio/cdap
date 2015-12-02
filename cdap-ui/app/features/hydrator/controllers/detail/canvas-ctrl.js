@@ -20,6 +20,8 @@ angular.module(PKG.name + '.feature.hydrator')
     this.NodesStore = NodesStore;
     this.DetailNonRunsStore = DetailNonRunsStore;
     this.PipelineNodeConfigActionFactory = PipelineNodeConfigActionFactory;
+    this.HydratorService = HydratorService;
+
     try{
       rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
     } catch(e) {
@@ -54,5 +56,10 @@ angular.module(PKG.name + '.feature.hydrator')
     this.deleteNode = function() {
       this.PipelineNodeConfigActionFactory.removePlugin();
     };
+
+    this.generateSchemaOnEdge = function (sourceId) {
+      return this.HydratorService.generateSchemaOnEdge(sourceId);
+    };
+
     NodesStore.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
   });

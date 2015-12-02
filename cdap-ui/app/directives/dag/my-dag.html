@@ -15,15 +15,43 @@
 -->
 
 <!-- Control Buttons -->
-<div class="btn-group btn-group-sm zoom-control">
+<div class="btn-group-vertical btn-group-sm zoom-control">
   <button class="btn btn-default"
-          ng-click="MyDAGController.zoomIn()">
+          ng-click="MyDAGController.zoomIn()"
+          tooltip="Zoom In"
+          tooltip-append-to-body="true"
+          tooltip-placement="left"
+          tooltip-popup-delay="500">
     <i class="fa fa-plus"></i>
   </button>
 
   <button class="btn btn-default"
-          ng-click="MyDAGController.zoomOut()">
+          ng-click="MyDAGController.zoomOut()"
+          tooltip="Zoom Out"
+          tooltip-append-to-body="true"
+          tooltip-placement="left"
+          tooltip-popup-delay="500">
     <i class="fa fa-minus"></i>
+  </button>
+
+  <button class="btn btn-default"
+          ng-click="MyDAGController.locateNodes()"
+          ng-if="!MyDAGController.isDisabled"
+          tooltip="Locate"
+          tooltip-append-to-body="true"
+          tooltip-placement="left"
+          tooltip-popup-delay="500">
+    <i class="fa fa-desktop"></i>
+  </button>
+
+  <button class="btn btn-default"
+          ng-click="MyDAGController.cleanUpGraph()"
+          ng-if="!MyDAGController.isDisabled"
+          tooltip="Clean Up"
+          tooltip-append-to-body="true"
+          tooltip-placement="left"
+          tooltip-popup-delay="500">
+    <i class="fa fa-magic"></i>
   </button>
 </div>
 
