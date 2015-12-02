@@ -270,6 +270,7 @@ angular.module(PKG.name + '.commons')
       // This should be removed once the node config is using FLUX
       $scope.$watch('nodes', function () {
         closeAllPopovers();
+
         $timeout(function () {
           var nodes = document.querySelectorAll('.box');
           addEndpoints();
@@ -406,13 +407,18 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.locateNodes = function () {
-      var minLeft = parseInt($scope.nodes[0]._uiPosition.left, 10);
-      var leftMostNode = $scope.nodes[0];
+      var minLeft = null;
+      var leftMostNode = null;
 
       angular.forEach($scope.nodes, function (node) {
         var left = parseInt(node._uiPosition.left, 10);
 
-        if (left < minLeft) {
+        if (node._uiPosition.left.includes('vw')) {
+          left = parseInt(left, 10)/100 * document.documentElement.clientWidth;
+          node._uiPosition.left = left + 'px';
+        }
+
+        if (minLeft === null || left < minLeft) {
           minLeft = left;
           leftMostNode = node;
         }
@@ -427,7 +433,7 @@ angular.module(PKG.name + '.commons')
 
         node._uiPosition = {
           left: (left - offsetLeft + 50) + 'px',
-          top: (top - offsetTop + 50) + 'px'
+          top: (top - offsetTop + 150) + 'px'
         };
       });
 
