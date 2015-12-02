@@ -18,6 +18,7 @@ package co.cask.cdap.security.authorization;
 import co.cask.cdap.proto.id.DatasetId;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.security.Action;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Test;
@@ -25,7 +26,7 @@ import org.junit.Test;
 /**
  *
  */
-public abstract class AuthorizationHandlerTest {
+public abstract class AuthorizationPluginTest {
 
   protected abstract AuthorizationPlugin get();
 
@@ -52,8 +53,22 @@ public abstract class AuthorizationHandlerTest {
 
     Assert.assertEquals(false, handler.authorized(namespace, user, ImmutableSet.of(Action.READ)));
     handler.grant(namespace, user);
-    Assert.assertEquals(true, handler.authorized(namespace, user, ImmutableSet.of(Action.READ)));
+    Assert.assertEquals(true, handler.authorized(namespace, user, ImmutableSet.of(Action.READ, Action.WRITE)));
     handler.revoke(namespace, user);
+    Assert.assertEquals(false, handler.authorized(namespace, user, ImmutableSet.of(Action.READ)));
+  }
+
+  @Test
+  public void testAll() {
+    AuthorizationPlugin handler = get();
+
+    NamespaceId namespace = Ids.namespace("foo");
+    String user = "alice";
+
+    Assert.assertEquals(false, handler.authorized(namespace, user, ImmutableSet.of(Action.READ)));
+    handler.grant(namespace, user, ImmutableSet.of(Action.ALL));
+    Assert.assertEquals(true, handler.authorized(namespace, user, ImmutableSet.of(Action.READ, Action.WRITE)));
+    handler.revoke(namespace, user, ImmutableSet.of(Action.ALL));
     Assert.assertEquals(false, handler.authorized(namespace, user, ImmutableSet.of(Action.READ)));
   }
 

@@ -38,7 +38,7 @@ import org.junit.BeforeClass;
 /**
  *
  */
-public class DatasetAuthorizationPluginTest extends AuthorizationHandlerTest {
+public class DatasetAuthorizationPluginTest extends AuthorizationPluginTest {
 
   private static DatasetAuthorizationPlugin handler;
   private static TransactionManager txManager;

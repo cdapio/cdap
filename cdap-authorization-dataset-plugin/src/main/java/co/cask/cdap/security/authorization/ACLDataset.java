@@ -23,6 +23,7 @@ import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.security.Action;
 
 import java.util.HashSet;
 import java.util.Set;
