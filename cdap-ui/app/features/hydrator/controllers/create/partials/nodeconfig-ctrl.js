@@ -15,7 +15,7 @@
  */
 
 class NodeConfigController {
-  constructor(NodeConfigStore, $scope, $timeout, $state, DetailNonRunsStore, PluginConfigFactory, EventPipe, GLOBALS) {
+  constructor(NodeConfigStore, $scope, $timeout, $state, DetailNonRunsStore, PluginConfigFactory, EventPipe, GLOBALS, ConfigActionsFactory) {
 
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -25,7 +25,8 @@ class NodeConfigController {
     this.PluginConfigFactory = PluginConfigFactory;
     this.GLOBALS = GLOBALS;
     this.NodeConfigStore = NodeConfigStore;
-    
+    this.ConfigActionsFactory = ConfigActionsFactory;
+
     this.setDefaults();
     NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
   }
@@ -107,11 +108,20 @@ class NodeConfigController {
               if (this.state.plugin.properties[this.state.groupsConfig.outputSchemaProperty[0]] !== this.state.outputSchema) {
                 this.state.properties[this.state.groupsConfig.outputSchemaProperty[0]] = this.state.outputSchema;
               }
-              this.$scope.$watch('plugin.outputSchema', function() {
-                if(this.validateSchema()) {
-                  this.state.properties[this.state.groupsConfig.outputSchemaProperty[0]] = this.state.outputSchema;
-                }
-              });
+              if (!this.$scope.isDisabled) {
+                this.$scope.$watch('plugin.outputSchema', function() {
+                  if(this.validateSchema()) {
+                    this.state.properties[this.state.groupsConfig.outputSchemaProperty[0]] = this.state.outputSchema;
+                  }
+                });
+              }
+            }
+            if (!this.$scope.isDisabled) {
+              this.$scope.$watch(
+                'NodeConfigController.state.plugin.properties',
+                _.debounce(() => this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin.properties), 1000),
+                true
+              );
             }
 
             // Mark the configfetched to show that configurations have been received.
@@ -186,7 +196,7 @@ class NodeConfigController {
   }
 }
 
-NodeConfigController.$inject = ['NodeConfigStore', '$scope', '$timeout', '$state', 'DetailNonRunsStore', 'PluginConfigFactory', 'EventPipe', 'GLOBALS'];
+NodeConfigController.$inject = ['NodeConfigStore', '$scope', '$timeout', '$state', 'DetailNonRunsStore', 'PluginConfigFactory', 'EventPipe', 'GLOBALS', 'ConfigActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('NodeConfigController', NodeConfigController);
