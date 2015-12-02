@@ -26,6 +26,7 @@ class PluginConfigFactory {
       pluginid: pluginid //'TwitterSource'
     });
   }
+
   generateNodeConfig(backendProperties, nodeConfig) {
     var isNewSpecVersion = this.myHelpers.objectQuery(nodeConfig, 'metadata', 'spec-version');
     if (isNewSpecVersion) {
@@ -34,17 +35,75 @@ class PluginConfigFactory {
       return this.generateConfigForOlderSpec(backendProperties, nodeConfig);
     }
   }
-  generateConfigForNewSpec() {
 
+  generateConfigForNewSpec(backendProperties, nodeConfig) {
+    var propertiesFromBackend = Object.keys(backendProperties);
+    var groupsConfig = {
+      backendProperties: propertiesFromBackend,
+      outputSchema: {
+        isOutputSchemaExists: false,
+        schemaProperty: null,
+        isOutputSchemaRequired: null,
+        implicitSchema: null
+      },
+      groups: []
+    };
+    var missedFieldsGroup = {
+      label: 'Generic',
+      properties: []
+    };
+    // Parse configuration groups
+    nodeConfig['configuration-groups'].forEach( (group) => {
+      let matchedProperties = group.properties.filter( (property) => {
+        let index = propertiesFromBackend.indexOf(property.name);
+        if (index !== -1) {
+          propertiesFromBackend.splice(index, 1);
+          return true;
+        }
+        return false;
+      });
+      groupsConfig.groups.push({
+        label: group.label,
+        properties: matchedProperties
+      });
+    });
+
+    // Parse 'outputs' and find the property that needs to be used as output schema.
+    if (nodeConfig.outputs && nodeConfig.outputs.length) {
+      nodeConfig.outputs.forEach( output => {
+        if (output['widget-type'] === 'non-editable-schema-editor') {
+          groupsConfig.outputSchema.isOutputSchemaExists = true;
+          groupsConfig.outputSchema.implicitSchema = this.myHelpers.objectQuery(nodeConfig, 'widget-attributes', 'schema');
+        }
+      });
+    }
+
+    // Parse properties that are from backend but not from config json.
+    if (propertiesFromBackend.length) {
+      propertiesFromBackend.forEach( property => {
+        missedFieldsGroup.properties.push({
+          'widget-type': 'textbox',
+          label: property,
+          info: 'Info',
+          description: this.myHelpers.objectQuery(backendProperties, property, 'description') || 'No Description Available'
+        });
+      });
+      nodeConfig['configuration-groups'].push(missedFieldsGroup);
+    }
+
+    return nodeConfig;
   }
+
   generateConfigForOlderSpec(backendProperties, nodeConfig) {
     var propertiesFromBackend = Object.keys(backendProperties);
     var groupConfig = {
       backendProperties: propertiesFromBackend,
-      isOutputSchemaExists: false,
-      schemaProperties: null,
-      isOutputSchemaRequired: null,
-      implicitSchema: false,
+      outputSchema: {
+        isOutputSchemaExists: false,
+        schemaProperty: null,
+        isOutputSchemaRequired: null,
+        implicitSchema: false
+      },
       groups: {}
     };
     var missedFieldsGroup = {
@@ -53,24 +112,26 @@ class PluginConfigFactory {
       fields: {}
     };
     var index;
+    var schemaProperty;
 
     if (nodeConfig.outputschema) {
       groupConfig.outputSchemaProperty = Object.keys(nodeConfig.outputschema);
 
       if (!nodeConfig.outputschema.implicit) {
-        groupConfig.isOutputSchemaExists = (propertiesFromBackend.indexOf(groupConfig.outputSchemaProperty[0]) !== -1);
-        if (groupConfig.isOutputSchemaExists) {
-          groupConfig.schemaProperties = nodeConfig.outputschema[groupConfig.outputSchemaProperty[0]];
-          groupConfig.isOutputSchemaRequired = backendProperties[groupConfig.outputSchemaProperty[0]].required;
-          index = propertiesFromBackend.indexOf(groupConfig.outputSchemaProperty[0]);
-
-          if (index !== -1) {
-            propertiesFromBackend.splice(index, 1);
-          }
+        groupConfig.outputSchema.isOutputSchemaExists = (propertiesFromBackend.indexOf(groupConfig.outputSchemaProperty[0]) !== -1);
+        if (groupConfig.outputSchema.isOutputSchemaExists) {
+          schemaProperty = groupConfig.outputSchemaProperty[0];
+          index = propertiesFromBackend.indexOf(schemaProperty);
+          groupConfig.outputSchema.schemaProperty = nodeConfig.outputschema[schemaProperty];
+          groupConfig.isOutputSchemaRequired = backendProperties[schemaProperty].required;
+          propertiesFromBackend.splice(index, 1);
         }
+      } else if (nodeConfig.outputschema && nodeConfig.outputschema.implicit) {
+        groupConfig.outputSchema.implicitSchema = true;
+        groupConfig.outputSchema.isOutputSchemaExists = true;
       }
     } else {
-      groupConfig.isOutputSchemaExists = false;
+      groupConfig.outputSchema.isOutputSchemaExists = false;
     }
 
     groupConfig.groups.position = nodeConfig.groups.position;
@@ -89,20 +150,6 @@ class PluginConfigFactory {
       );
       groupConfig.groups.position.push('generic');
       groupConfig.groups['generic'] = missedFieldsGroup;
-    }
-
-    if (nodeConfig.outputschema && nodeConfig.outputschema.implicit) {
-      var keys = Object.keys(nodeConfig.outputschema.implicit);
-
-      var formattedSchema = [];
-      angular.forEach(keys, function (key) {
-        formattedSchema.push({
-          name: key,
-          type: nodeConfig.outputschema.implicit[key]
-        });
-      });
-      groupConfig.implicitSchema = true;
-      groupConfig.isOutputSchemaExists = true;
     }
 
     return groupConfig;

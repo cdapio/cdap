@@ -113,6 +113,78 @@ angular.module(PKG.name + '.feature.hydrator')
     }
 
     function configurePluginInfo(pluginDetails) {
+      var pluginId = this.state.plugin.id;
+      var input;
+      var sourceConn = $filter('filter')(this.ConfigStore.getConnections(), { target: pluginId });
+      var sourceSchema = null;
+      var isStreamSource = false;
+
+      var clfSchema = IMPLICIT_SCHEMA.clf;
+
+      var syslogSchema = IMPLICIT_SCHEMA.syslog;
+
+      var source;
+      if (sourceConn && sourceConn.length) {
+        source = this.ConfigStore.getNode(sourceConn[0].source);
+        sourceSchema = source.outputSchema;
+
+        if (source.name === 'Stream') {
+          isStreamSource = true;
+        }
+
+        if (source.properties.format && source.properties.format === 'clf') {
+          sourceSchema = clfSchema;
+        } else if (source.properties.format && source.properties.format === 'syslog') {
+          sourceSchema = syslogSchema;
+        }
+
+      } else {
+        sourceSchema = '';
+      }
+
+      try {
+        input = JSON.parse(sourceSchema);
+      } catch (e) {
+        input = null;
+      }
+
+      if (isStreamSource) {
+        // Must be in this order!!
+        if (!input) {
+          input = {
+            fields: [{ name: 'body', type: 'string' }]
+          };
+        }
+
+        input.fields.unshift({
+          name: 'headers',
+          type: {
+            type: 'map',
+            keys: 'string',
+            values: 'string'
+          }
+        });
+
+        input.fields.unshift({
+          name: 'ts',
+          type: 'long'
+        });
+      }
+
+      this.state.plugin.inputSchema = input ? input.fields : null;
+      angular.forEach(this.state.plugin.inputSchema, function (field) {
+        if (angular.isArray(field.type)) {
+          field.type = field.type[0];
+          field.nullable = true;
+        } else {
+          field.nullable = false;
+        }
+      });
+
+      if (!this.state.plugin.outputSchema && input) {
+        this.state.plugin.outputSchema = JSON.stringify(input) || null;
+      }
+
       this.state.plugin._backendProperties = pluginDetails._backendProperties || this.state.plugin._backendProperties;
       this.state.plugin.description = pluginDetails.description || this.state.plugin.description;
       this.state.isValidPlugin = Object.keys(this.state.plugin).length;

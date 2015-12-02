@@ -26,8 +26,10 @@ angular.module(PKG.name + '.feature.hydrator')
       $scope.isSource = nodeState.isSource;
       $scope.isSink = nodeState.isSink;
       $scope.isTransform = nodeState.isTransform;
-      $scope.isValidPlugin = nodeState.isValidPlugin;
       $scope.type = appType;
+      $timeout( () => {
+        $scope.isValidPlugin = nodeState.isValidPlugin;
+      });
     };
     NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
   });

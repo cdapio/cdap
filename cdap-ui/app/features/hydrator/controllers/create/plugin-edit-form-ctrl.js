@@ -38,12 +38,24 @@ angular.module(PKG.name + '.feature.hydrator')
             angular.forEach(this.groupsConfig.groups, (group) => {
               angular.forEach(group.fields, (field, name) => {
                 if (field.defaultValue) {
-                  $scope.plugin.properties[name] = field.defaultValue;
+                  $scope.plugin.properties[name] = $scope.plugin.properties[name] || field.defaultValue;
                 }
               });
             });
+            if (this.groupsConfig.outputSchema.implicitSchema) {
+              var keys = Object.keys(res.outputschema.implicit);
+              var formattedSchema = [];
+              angular.forEach(keys, function (key) {
+                formattedSchema.push({
+                  name: key,
+                  type: res.outputschema.implicit[key]
+                });
+              });
 
-            if (this.groupsConfig.isOutputSchemaExists) {
+              $scope.plugin.outputSchema = JSON.stringify({ fields: formattedSchema });
+            }
+
+            if (this.groupsConfig.isOutputSchemaExists && !this.groupsConfig.outputSchema.implicitSchema) {
               if ($scope.plugin.properties[this.groupsConfig.outputSchemaProperty[0]] !== $scope.plugin.outputSchema) {
                 $scope.plugin.properties[this.groupsConfig.outputSchemaProperty[0]] = $scope.plugin.outputSchema;
               }
