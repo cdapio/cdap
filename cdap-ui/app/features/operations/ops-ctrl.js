@@ -26,7 +26,7 @@ angular.module(PKG.name+'.feature.dashboard')
    // Format:
    // [ Widget Title, context, [metricNames], line-type (options are in addwdgt-ctrl.js ]
       [
-        'Router requests',
+        'Router Requests',
         '',
         ['system.request.received','system.response.client-error', 'system.response.successful'], 'c3-scatter',
         { sizeX: 4, sizeY: 2, row: 0, col: 0 }
@@ -37,7 +37,7 @@ angular.module(PKG.name+'.feature.dashboard')
         { sizeX: 2, sizeY: 2, row: 0, col: 4 }
       ],
       [
-        'Transaction Commit',
+        'Transaction Commits',
         '',
         ['system.canCommit', 'system.commit', 'system.start.long', 'system.start.short'], 'c3-area-spline',
         { sizeX: 2, sizeY: 1, row: 2, col: 0 }
@@ -50,7 +50,7 @@ angular.module(PKG.name+'.feature.dashboard')
         { sizeX: 2, sizeY: 1, row: 2, col: 2 }
       ],
       [
-        'System Error and Warnings',
+        'System Errors and Warnings',
         '',
         ['system.services.log.error', 'system.services.log.warn'],
         'c3-area-step',
@@ -71,16 +71,16 @@ angular.module(PKG.name+'.feature.dashboard')
         { sizeX: 4, sizeY: 1, row: 3, col: 2 }
       ],
       [
-        'Bytes Store',
+        'Bytes Stored',
         'namespace.*',
         ['system.dataset.store.bytes'],
         'c3-line',
         { sizeX: 2, sizeY: 1, row: 4, col: 0 }
       ],
       [
-        'Dataset Read/Writes',
+        'Dataset Reads and Writes',
         'namespace.*',
-        ['system.dataset.store.writes' ,'system.dataset.store.reads'],
+        ['system.dataset.store.reads' ,'system.dataset.store.writes'],
         'c3-area-spline',
         { sizeX: 2, sizeY: 1, row: 4, col: 2 }
       ],
@@ -203,7 +203,7 @@ angular.module(PKG.name+'.feature.dashboard')
         widgets.push(widget);
       });
       // Note: title is not currently used in the view
-      return {title : 'System metrics', columns : widgets};
+      return {title : 'System Metrics', columns : widgets};
     }
 
     function startPolling (widget) {

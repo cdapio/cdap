@@ -41,7 +41,7 @@ angular.module(PKG.name + '.feature.admin')
 
     } else if (rSource === 'NAMESPACE') {
       $scope.heading = 'Namespace Preferences: ' + $state.params.nsadmin;
-      $scope.messages = 'Specify new or override system configurations that will be accessible in all applications & datasets within this namespace.';
+      $scope.messages = 'Specify new or override existing system configurations that will be accessible in all applications and datasets within this namespace';
 
       parentParams = {
         scope: $scope,
@@ -58,7 +58,7 @@ angular.module(PKG.name + '.feature.admin')
 
     } else if (rSource === 'APPLICATION') {
       $scope.heading = 'Application Preferences: ' + $state.params.appId;
-      $scope.messages = 'Specify new or override namespace configurations that will be accessible in all programs within this application.';
+      $scope.messages = 'Specify new or override existing namespace configurations that will be accessible in all programs within this application';
 
       parentParams = {
         namespace: $state.params.nsadmin,
