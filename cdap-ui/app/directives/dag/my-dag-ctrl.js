@@ -25,6 +25,24 @@ angular.module(PKG.name + '.commons')
     var transformSourceSettings = angular.copy(MyDAGFactory.getSettings(false).transformSource);
     var transformSinkSettings = angular.copy(MyDAGFactory.getSettings(false).transformSink);
 
+    var labels = [];
+
+    var metricsLabel = [
+      [ 'Custom', {
+        create: function (label) {
+          labels.push(label);
+          return angular.element('<span>3000</span>');
+        },
+        location: [2, 0],
+        id: 'metricLabel'
+      }]
+    ];
+
+    if ($scope.showMetrics) {
+      sourceSettings.overlays = metricsLabel;
+      transformSourceSettings.overlays = metricsLabel;
+    }
+
     var dragged = false;
     var canvasDragged = false;
 
@@ -95,6 +113,14 @@ angular.module(PKG.name + '.commons')
         });
 
         setZoom(vm.scale, vm.instance);
+
+        if ($scope.showMetrics) {
+          $scope.$watch('metricsData', function () {
+            console.log('metrics', $scope.metricsData);
+
+          }, true);
+        }
+
       });
 
     }
@@ -102,12 +128,25 @@ angular.module(PKG.name + '.commons')
     vm.zoomIn = function () {
       closeAllPopovers();
       vm.scale += 0.1;
+
+      if (vm.scale >= 0.8) {
+        angular.forEach(labels, function (label) {
+          label.getOverlay('metricLabel').show();
+        });
+      }
+
       setZoom(vm.scale, vm.instance);
     };
 
     vm.zoomOut = function () {
       closeAllPopovers();
       if (vm.scale <= 0.2) { return; }
+
+      if (vm.scale < 0.9) {
+        angular.forEach(labels, function (label) {
+          label.getOverlay('metricLabel').hide();
+        });
+      }
 
       vm.scale -= 0.1;
       setZoom(vm.scale, vm.instance);
@@ -252,8 +291,6 @@ angular.module(PKG.name + '.commons')
       vm.instance.bind('connectionDetached', formatConnections);
 
       vm.instance.bind('click', connectionClick);
-
-
 
       // $scope.$watchCollection('nodes', function () {
       //   console.log('nodes', $scope.nodes);
