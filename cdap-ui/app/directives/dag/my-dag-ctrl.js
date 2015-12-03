@@ -227,15 +227,12 @@ angular.module(PKG.name + '.commons')
       NodesActionsFactory.setConnections(connections);
     }
 
-    function connectionClick (connection) {
-      if (!connection) {
-        return;
-      }
+    function addConnection (connectionObj) {
+      console.log('conn', connection);
+      var connection = connectionObj.connection;
 
       var label = angular.element(connection.getOverlay('label').getElement());
       var scope = $rootScope.$new();
-
-      scope.data = $scope.connectionPopoverData().call($scope.context, connection.sourceId, connection.targetId);
 
       var popover = $popover(label, {
         trigger: 'manual',
@@ -248,14 +245,48 @@ angular.module(PKG.name + '.commons')
 
       popovers.push(popover);
 
-      $timeout(function() {
+      connection.bind('click', function (conn, event) {
+        event.stopPropagation();
+        scope.data = $scope.connectionPopoverData().call($scope.context, connection.sourceId, connection.targetId);
         popover.show();
       });
 
       $scope.$on('$destroy', function () {
         scope.$destroy();
       });
+
+      formatConnections();
     }
+
+    // function connectionClick (connection) {
+    //   if (!connection) {
+    //     return;
+    //   }
+
+    //   var label = angular.element(connection.getOverlay('label').getElement());
+    //   var scope = $rootScope.$new();
+
+    //   scope.data = $scope.connectionPopoverData().call($scope.context, connection.sourceId, connection.targetId);
+
+    //   var popover = $popover(label, {
+    //     trigger: 'manual',
+    //     placement: 'auto',
+    //     target: label,
+    //     templateUrl: $scope.templatePopover,
+    //     container: 'main',
+    //     scope: scope
+    //   });
+
+    //   popovers.push(popover);
+
+    //   $timeout(function() {
+    //     popover.show();
+    //   });
+
+    //   $scope.$on('$destroy', function () {
+    //     scope.$destroy();
+    //   });
+    // }
 
     function closeAllPopovers() {
       if (popovers.length === 0) { return; }
@@ -287,10 +318,10 @@ angular.module(PKG.name + '.commons')
         }
       });
 
-      vm.instance.bind('connection', formatConnections);
+      vm.instance.bind('connection', addConnection);
       vm.instance.bind('connectionDetached', formatConnections);
 
-      vm.instance.bind('click', connectionClick);
+      // vm.instance.bind('click', connectionClick);
 
       // $scope.$watchCollection('nodes', function () {
       //   console.log('nodes', $scope.nodes);
@@ -363,7 +394,7 @@ angular.module(PKG.name + '.commons')
         canvasDragged = false;
         return;
       }
-
+      closeAllPopovers();
       vm.instance.clearDragSelection();
       angular.forEach($scope.nodes, function (node) {
         node.selected = false;
