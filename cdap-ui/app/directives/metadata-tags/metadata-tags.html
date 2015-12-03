@@ -38,7 +38,7 @@
   <a ng-if="MetadataController.metadataTags.length > 5 && MetadataController.limit === 5"
      class="tag-toggle"
      ng-click="MetadataController.showMoreTags()">show more</a>
-  <a ng-if="MetadataController.limit > 5"
+  <a ng-if="MetadataController.metadataTags.length > 5 && MetadataController.limit > 5"
      class="tag-toggle"
      ng-click="MetadataController.hideTags()">show less</a>
 </div>
