@@ -61,7 +61,7 @@ class PluginConfigFactory {
           propertiesFromBackend.splice(index, 1);
           let description = property.description;
           if (!description || (description && !description.length)) {
-            description = this.myHelpers.objectQuery(groupsConfig, 'backendProperties', property.name, 'description');
+            description = this.myHelpers.objectQuery(backendProperties, property.name, 'description');
             property.description = description || 'No Description Available';
           }
           property.label = property.label || property.name;
@@ -156,12 +156,11 @@ class PluginConfigFactory {
 
           copyOfField.name = fieldName;
           copyOfField.info = this.myHelpers.objectQuery(groupConfig, 'groups', groupName, 'fields', fieldName, 'info') || 'Info';
-          copyOfField.defaultValue = this.myHelpers.objectQuery(groupConfig, 'groups', groupName, 'fields', fieldName, 'properties', 'default');
 
           // If there is a description in the config from nodejs use that otherwise fallback to description from backend.
           let description = this.myHelpers.objectQuery(nodeConfig, 'groups', groupName, 'fields', fieldName, 'description');
           if (!description || (description && !description.length)) {
-            description = this.myHelpers.objectQuery(groupConfig, 'backendProperties', fieldName, 'description');
+            description = this.myHelpers.objectQuery('backendProperties', fieldName, 'description');
             copyOfField.description = description || 'No Description Available';
           }
           let label = this.myHelpers.objectQuery(nodeConfig, 'groups', groupName, 'fields', fieldName, 'label');

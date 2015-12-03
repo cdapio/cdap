@@ -43,11 +43,10 @@ angular.module(PKG.name + '.commons')
 
         if ($scope.config) {
 
-          $scope.options = $scope.config['schema-types'];
-          defaultType = $scope.config['schema-default-type'] || $scope.options[0];
-
-          if ($scope.config['property-watch']) {
-            watchProperty = $scope.config['property-watch'];
+          $scope.options = myHelpers.objectQuery($scope.config, 'widget-attributes', 'schema-types') || myHelpers.objectQuery($scope.config, 'schema-types');
+          defaultType = myHelpers.objectQuery($scope.config, 'widget-attributes', 'schema-default-type') || myHelpers.objectQuery($scope.config, 'schema-default-type') || $scope.options[0];
+          watchProperty = myHelpers.objectQuery($scope.config, 'property-watch') || myHelpers.objectQuery($scope.config, 'widget-attributes', 'property-watch');
+          if (watchProperty) {
 
             // changing the format when it is stream
             EventPipe.on('dataset.selected', function (schema, format) {
