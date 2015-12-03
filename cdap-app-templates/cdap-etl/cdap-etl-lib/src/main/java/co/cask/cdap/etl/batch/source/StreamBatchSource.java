@@ -56,8 +56,6 @@ import javax.annotation.Nullable;
 @Name("Stream")
 @Description("Batch source for a stream.")
 public class StreamBatchSource extends BatchSource<LongWritable, Object, StructuredRecord> {
-
-  private static final Logger LOG = LoggerFactory.getLogger(StreamBatchSource.class);
   private static final String FORMAT_SETTING_PREFIX = "format.setting.";
   private static final Schema DEFAULT_SCHEMA = Schema.recordOf(
     "event",
@@ -103,7 +101,7 @@ public class StreamBatchSource extends BatchSource<LongWritable, Object, Structu
     long endTime = context.getLogicalStartTime() - delay;
     long startTime = endTime - duration;
 
-    LOG.info("Setting input to Stream : {}", streamBatchConfig.name);
+    context.getStageLogger(this.getClass()).info("Setting input to Stream : {}", streamBatchConfig.name);
 
     FormatSpecification formatSpec = streamBatchConfig.getFormatSpec();
 

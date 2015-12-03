@@ -34,15 +34,11 @@ import co.cask.cdap.etl.common.db.DBManager;
 import co.cask.cdap.etl.common.db.DBRecord;
 import co.cask.cdap.etl.common.db.DBUtils;
 import co.cask.cdap.etl.common.db.ETLDBInputFormat;
-import com.google.common.base.Throwables;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.sql.Driver;
 
 /**
@@ -53,8 +49,6 @@ import java.sql.Driver;
 @Description("Reads from a database using a configurable SQL query." +
   " Outputs one record for each row returned by the query.")
 public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredRecord> {
-  private static final Logger LOG = LoggerFactory.getLogger(DBSource.class);
-
   private static final String IMPORT_QUERY_DESCRIPTION = "The SELECT query to use to import data from the specified " +
     "table. You can specify an arbitrary number of columns to import, or import all columns using *. " +
     "You can also specify a number of WHERE clauses or ORDER BY clauses. However, LIMIT and OFFSET clauses " +
@@ -80,10 +74,11 @@ public class DBSource extends BatchSource<LongWritable, DBRecord, StructuredReco
 
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
-    LOG.debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
-                "countQuery = {}",
-              dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
-              dbSourceConfig.connectionString, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
+    context.getStageLogger(this.getClass())
+      .debug("pluginType = {}; pluginName = {}; connectionString = {}; importQuery = {}; " +
+               "countQuery = {}",
+             dbSourceConfig.jdbcPluginType, dbSourceConfig.jdbcPluginName,
+             dbSourceConfig.connectionString, dbSourceConfig.importQuery, dbSourceConfig.countQuery);
 
     Job job = Job.getInstance();
     Configuration hConf = job.getConfiguration();

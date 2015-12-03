@@ -26,12 +26,12 @@ import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.realtime.DataWriter;
+import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.api.realtime.RealtimeSink;
 import co.cask.cdap.etl.common.Properties;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -45,8 +45,6 @@ import javax.annotation.Nullable;
 @Name("Stream")
 @Description("Real-time sink that outputs to a specified CDAP stream.")
 public class StreamSink extends RealtimeSink<StructuredRecord> {
-  private static final Logger LOG = LoggerFactory.getLogger(StreamSink.class);
-
   private static final String NAME_DESC = "The name of the stream to output to. Must be a valid stream name. " +
     "The stream will be created if it does not exist.";
   private static final String BODY_FIELD_DESC = "Name of the field in the record that contains the data to be " +
@@ -56,6 +54,7 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
     "Headers are presumed to be a map of string to string.";
 
   private final StreamConfig streamConfig;
+  private Logger logger;
 
   public StreamSink(StreamConfig streamConfig) {
     this.streamConfig = streamConfig;
@@ -98,6 +97,12 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
   }
 
   @Override
+  public void initialize(RealtimeContext context) throws Exception {
+    super.initialize(context);
+    logger = context.getStageLogger(this.getClass());
+  }
+
+  @Override
   public int write(Iterable<StructuredRecord> structuredRecords, DataWriter dataWriter) throws Exception {
     int numRecordsWritten = 0;
     for (StructuredRecord structuredRecord : structuredRecords) {
@@ -105,14 +110,14 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
       Object data = structuredRecord.get(streamConfig.bodyField);
       Object headers = structuredRecord.get(streamConfig.headersField);
       if (data == null) {
-        LOG.debug("Found null data. Skipping record.");
+        logger.debug("Found null data. Skipping record.");
         continue;
       }
 
       if (headers != null && !isHeadersSchemaPresentAndSupported(schema)) {
-        LOG.debug("Headers found in input, however either the headers schema is not provided or the provided " +
-                    "schema is not supported. Only a map of string keys and string values is supported. " +
-                    "Skipping record.");
+        logger.debug("Headers found in input, however either the headers schema is not provided or the provided " +
+                       "schema is not supported. Only a map of string keys and string values is supported. " +
+                       "Skipping record.");
         continue;
       }
 
@@ -125,7 +130,7 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
           numRecordsWritten += writeString(dataWriter, data, headers);
           break;
         default:
-          LOG.debug("Type {} is not supported for writing to stream", data.getClass().getName());
+          logger.debug("Type {} is not supported for writing to stream", data.getClass().getName());
           break;
       }
     }
@@ -149,7 +154,7 @@ public class StreamSink extends RealtimeSink<StructuredRecord> {
     } else if (data instanceof byte []) {
       buffer = ByteBuffer.wrap((byte []) data);
     } else {
-      LOG.debug("Type {} is not supported for writing to stream", data.getClass().getName());
+      logger.debug("Type {} is not supported for writing to stream", data.getClass().getName());
       return 0;
     }
     if (headers != null && headers instanceof Map) {

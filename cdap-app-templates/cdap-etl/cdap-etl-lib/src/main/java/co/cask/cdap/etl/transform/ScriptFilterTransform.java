@@ -36,7 +36,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.script.Invocable;
@@ -95,7 +94,7 @@ public class ScriptFilterTransform extends Transform<StructuredRecord, Structure
   public void initialize(TransformContext context) throws Exception {
     super.initialize(context);
     metrics = context.getMetrics();
-    logger = LoggerFactory.getLogger(ScriptFilterTransform.class.getName() + " - Stage:" + context.getStageName());
+    logger = context.getStageLogger(this.getClass());
     init(context);
   }
 

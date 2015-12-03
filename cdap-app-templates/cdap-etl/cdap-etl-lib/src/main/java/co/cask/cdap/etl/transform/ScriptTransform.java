@@ -37,7 +37,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -126,7 +125,7 @@ public class ScriptTransform extends Transform<StructuredRecord, StructuredRecor
   public void initialize(TransformContext context) throws Exception {
     super.initialize(context);
     metrics = context.getMetrics();
-    logger = LoggerFactory.getLogger(ScriptTransform.class.getName() + " - Stage:" + context.getStageName());
+    logger = context.getStageLogger(context.getClass());
 
     // for Nashorn (Java 8+) support -- get method to convert ScriptObjectMirror to List
     try {

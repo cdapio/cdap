@@ -40,7 +40,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,7 +94,6 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(StructuredRecord.class, new StructuredRecordSerializer())
     .create();
-  private static final Logger LOG = LoggerFactory.getLogger(ValidatorTransform.class);
   private static final String VARIABLE_NAME = "dont_name_your_variable_this";
   private static final String FUNCTION_NAME = "dont_name_your_function_this";
   private static final String CONTEXT_NAME = "dont_name_your_context_this";
@@ -134,6 +132,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   @Override
   public void initialize(TransformContext context) throws Exception {
     super.initialize(context);
+    logger = context.getStageLogger(this.getClass());
     List<Validator> validators = new ArrayList<>();
     for (String pluginId : config.validators.split("\\s*,\\s*")) {
       validators.add((Validator) context.newPluginInstance(pluginId));
@@ -144,7 +143,6 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
   @VisibleForTesting
   void setUpInitialScript(TransformContext context, List<Validator> validators) throws ScriptException {
     metrics = context.getMetrics();
-    logger = LoggerFactory.getLogger(ValidatorTransform.class.getName() + " - Stage:" + context.getStageName());
     init(validators, context);
   }
 
@@ -164,7 +162,7 @@ public class ValidatorTransform extends Transform<StructuredRecord, StructuredRe
         emitter.emitError(getErrorObject(result, input));
         metrics.count("invalid", 1);
         metrics.pipelineCount("invalid", 1);
-        LOG.trace("Error code : {} , Error Message {}", result.get("errorCode"), result.get("errorMsg"));
+        logger.trace("Error code : {} , Error Message {}", result.get("errorCode"), result.get("errorMsg"));
       }
     } catch (Exception e) {
       throw new IllegalArgumentException("Invalid filter condition.", e);

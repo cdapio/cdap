@@ -24,12 +24,12 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.Emitter;
+import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.api.realtime.SourceState;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
@@ -42,7 +42,6 @@ import javax.annotation.Nullable;
 @Name("DataGenerator")
 @Description("Source that can generate test data for real-time Stream and Table sinks.")
 public class DataGeneratorSource extends RealtimeSource<StructuredRecord> {
-  private static final Logger LOG = LoggerFactory.getLogger(DataGeneratorSource.class);
   private static final String COUNT = "count";
   private static final String TYPE_DESCRIPTION = "The type of data to be generated. Currently, only two types " +
     "('stream' and 'table') are supported. By default, it generates a structured record containing one field " +
@@ -52,9 +51,16 @@ public class DataGeneratorSource extends RealtimeSource<StructuredRecord> {
   public static final String TABLE_TYPE = "table";
 
   private final DataGeneratorConfig config;
+  private Logger logger;
 
   public DataGeneratorSource(DataGeneratorConfig config) {
     this.config = config;
+  }
+
+  @Override
+  public void initialize(RealtimeContext context) throws Exception {
+    super.initialize(context);
+    logger = context.getStageLogger(this.getClass());
   }
 
   @Nullable
@@ -63,7 +69,7 @@ public class DataGeneratorSource extends RealtimeSource<StructuredRecord> {
     try {
       TimeUnit.MILLISECONDS.sleep(100);
     } catch (InterruptedException e) {
-      LOG.error("Some Error in Source");
+      logger.error("Some Error in Source");
     }
 
     int prevCount;
@@ -77,7 +83,7 @@ public class DataGeneratorSource extends RealtimeSource<StructuredRecord> {
       currentState.setState(COUNT, Bytes.toBytes(prevCount));
     }
 
-    LOG.info("Emitting data! {}", prevCount);
+    logger.info("Emitting data! {}", prevCount);
     if (STREAM_TYPE.equalsIgnoreCase(config.type)) {
       writeRecordsForStreamConsumption(writer);
     } else if (TABLE_TYPE.equalsIgnoreCase(config.type)) {

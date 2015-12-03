@@ -27,8 +27,6 @@ import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.api.realtime.SourceState;
 import com.google.common.collect.Queues;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import twitter4j.StallWarning;
 import twitter4j.Status;
 import twitter4j.StatusDeletionNotice;
@@ -53,7 +51,6 @@ import javax.annotation.Nullable;
   "rtCount (int), source (nullable string), geoLat (nullable double), geoLong (nullable double), " +
   "and isRetweet (boolean).")
 public class TwitterSource extends RealtimeSource<StructuredRecord> {
-  private static final Logger LOG = LoggerFactory.getLogger(TwitterSource.class);
   private static final String CONSUMER_KEY = "ConsumerKey";
   private static final String CONSUMER_SECRET = "ConsumerSecret";
   private static final String ACCESS_TOKEN = "AccessToken";
