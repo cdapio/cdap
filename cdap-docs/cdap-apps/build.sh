@@ -63,12 +63,12 @@ function download_includes() {
   test_an_include 4c156d69fcc4d7b9145caab2dbed26ff "${cdap_etl}/realtime/source/DataGeneratorSource.java"
   test_an_include c1d134466622468c36eaaf6a55677bb1 "${cdap_etl}/realtime/source/JmsSource.java"
   test_an_include c0605df8382ea941966785e5ad589c4a "${cdap_etl}/realtime/source/KafkaSource.java"
-  test_an_include 496fb353aa835ef2a60f2a76b56fdc01 "${cdap_etl}/realtime/source/SqsSource.java"
+  test_an_include 62c19ecd2d694d3291b104645ad529a1 "${cdap_etl}/realtime/source/SqsSource.java"
   test_an_include e8b987b6f648211ed183e18c68b41873 "${cdap_etl}/realtime/source/TwitterSource.java"
 
   # Transforms
   test_an_include 06ddd340ba65bbc068ab3e3cf2f346c1 "${cdap_etl}/transform/LogParserTransform.java"
-  test_an_include 7b5386499cc1a646e5be38ab5269d076 "${cdap_etl}/transform/ProjectionTransform.java"
+  test_an_include e2aa3c8d77b8f229e2642f5e1f0975bc "${cdap_etl}/transform/ProjectionTransform.java"
   test_an_include 480bc77f42c8c155a54deb6377ef05a2 "${cdap_etl}/transform/ScriptFilterTransform.java"
   test_an_include 0e09daa8c8e7b008f1b19ca1da224884 "${cdap_etl}/transform/ScriptTransform.java"
   test_an_include c3eb291d7b7d4ca0934d151bed882dd3 "${cdap_etl}/transform/StructuredRecordToGenericRecordTransform.java"
