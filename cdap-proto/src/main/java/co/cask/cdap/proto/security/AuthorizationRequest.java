@@ -18,17 +18,38 @@ package co.cask.cdap.proto.security;
 
 import co.cask.cdap.proto.id.EntityId;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Sets;
 
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
- * Request for granting a user permission to perform certain actions on an entity.
+ * Contains components for an Authorization request.
  */
-public class GrantRequest extends AuthorizationRequest {
+public class AuthorizationRequest {
 
-  public GrantRequest(EntityId entity, String user, Set<Action> actions) {
-    super(entity, user, actions);
-    Preconditions.checkArgument(user != null, "user is required");
-    Preconditions.checkArgument(actions != null, "actions is required");
+  private final EntityId entity;
+  private final String user;
+  private final Set<Action> actions;
+
+  protected AuthorizationRequest(EntityId entity, @Nullable String user, @Nullable Set<Action> actions) {
+    Preconditions.checkArgument(entity != null, "entity is required");
+    this.entity = entity;
+    this.user = user;
+    this.actions = (actions != null) ? Sets.newHashSet(actions) : null;
+  }
+
+  public EntityId getEntity() {
+    return entity;
+  }
+
+  @Nullable
+  public String getUser() {
+    return user;
+  }
+
+  @Nullable
+  public Set<Action> getActions() {
+    return actions;
   }
 }
