@@ -5,7 +5,6 @@
 
 :hide-relations: true
 :hide-global-toc: true
-:link-only-global-toc: true
 
 .. _documentation-index:
 
@@ -37,11 +36,6 @@ and accessing core CDAP services. CDAP defines and implements a diverse collecti
 services that support applications and data on existing Hadoop infrastructure such as
 HBase, HDFS, YARN, MapReduce, Hive, and Spark.
 
-CDAP can be run in different modes: in-memory mode for unit testing and continuous
-integration pipelines, standalone CDAP for testing and development, or
-distributed CDAP for staging and production. Regardless of the runtime mode, CDAP is
-fully-functional and the code you develop never changes.
-
 These documents are your complete reference to the Cask Data Application Platform: they help
 you get started and set up your development environment; explain how CDAP works; and teach
 how to develop and test CDAP applications.
@@ -49,15 +43,16 @@ how to develop and test CDAP applications.
 It includes the CDAP programming APIs and client interfaces, with instructions
 on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoop cluster.
 
+
 .. _modes-data-application-platform:
 
-.. .. rubric:: Putting CDAP into Production
-
-Putting CDAP into Production
-============================
-The Cask Data Application Platform (CDAP) can be run in different modes: **In-memory CDAP**
-for unit testing and continuous integration pipelines, **Standalone CDAP** for testing and
-development on a developer's laptop, or **Distributed CDAP** for staging and production.
+CDAP Runtime Modes
+==================
+The Cask Data Application Platform (CDAP) can be run in different modes:
+**Distributed CDAP** for staging and production,
+**Standalone CDAP** for testing and development on a developer's laptop,
+or 
+**In-Memory CDAP** for unit testing and continuous integration pipelines.
 
 Regardless of the runtime mode, CDAP is fully-functional and the code you develop never
 changes. However, performance and scale are limited when using in-memory or standalone
@@ -66,23 +61,23 @@ these modes seamless. An application developed using a given mode can easily run
 another mode.
 
 
-.. _in-memory-data-application-platform:
+.. _distributed-data-application-platform:
 
-.. rubric:: In-Memory CDAP
+.. rubric:: Distributed CDAP
 
-The **In-Memory CDAP** allows you to easily run CDAP for use in unit tests and continuous
-integration (CI) pipelines. In this mode, the underlying Big Data infrastructure is
-emulated using in-memory data structures and there is no persistence. The CDAP UI is not
-available in this mode. 
+The **Distributed CDAP** runs in fully distributed mode. In addition to the system components
+of the CDAP, distributed and highly available (HA) deployments of the underlying Hadoop
+infrastructure are included. Production applications should always be run on a Distributed
+CDAP.
 
-See :ref:`test-cdap` for information and examples on using this mode.
+See the instructions for either a :ref:`distribution-specific <installation-index>` or 
+:ref:`generic Apache Hadoop <hadoop-index>` cluster for more information.
 
 **Features:**
 
-- Purpose-built for writing unit tests and CI pipelines
-- Mimics storage technologies as in-memory data structures; for example, 
-  `Java NavigableMap <http://docs.oracle.com/javase/7/docs/api/java/util/NavigableMap.html>`__
-- Uses Java Threads as the processing abstraction (via Apache Twill)
+- A production, staging, and QA mode; runs in a distributed environment
+- Currently uses Apache HBase and HDFS as the underlying storage technology
+- Uses Apache Yarn Containers as the processing abstraction (via Apache Twill)
 
 
 .. _standalone-data-application-platform:
@@ -107,20 +102,20 @@ SDK* for information on how to start and manage your Standalone CDAP.
 - Uses Java Threads as the processing abstraction (via Apache Twill)
 
 
-.. _distributed-data-application-platform:
+.. _in-memory-data-application-platform:
 
-.. rubric:: Distributed Data Application Platform
+.. rubric:: In-Memory CDAP
 
-The **Distributed CDAP** runs in fully distributed mode. In addition to the system components
-of the CDAP, distributed and highly available (HA) deployments of the underlying Hadoop
-infrastructure are included. Production applications should always be run on a Distributed
-CDAP.
+The **In-Memory CDAP** allows you to easily run CDAP for use in unit tests and continuous
+integration (CI) pipelines. In this mode, the underlying Big Data infrastructure is
+emulated using in-memory data structures and there is no persistence. The CDAP UI is not
+available in this mode. 
 
-See the instructions for either a :ref:`distribution-specific <installation-index>` or 
-:ref:`generic Apache Hadoop <hadoop-index>` cluster for more information.
+See :ref:`test-cdap` for information and examples on using this mode.
 
 **Features:**
 
-- A production, staging, and QA mode; runs in a distributed environment
-- Currently uses Apache HBase and HDFS as the underlying storage technology
-- Uses Apache Yarn Containers as the processing abstraction (via Apache Twill)
+- Purpose-built for writing unit tests and CI pipelines
+- Mimics storage technologies as in-memory data structures; for example, 
+  `Java NavigableMap <http://docs.oracle.com/javase/7/docs/api/java/util/NavigableMap.html>`__
+- Uses Java Threads as the processing abstraction (via Apache Twill)
