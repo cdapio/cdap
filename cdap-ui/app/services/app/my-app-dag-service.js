@@ -530,13 +530,12 @@ angular.module(PKG.name + '.services')
           var isRequiredField = backendProperties[key] && backendProperties[key].required;
           var isErrorDatasetName = !backendProperties[key] && key !== 'errorDatasetName';
           var isPropertyEmptyOrNull = properties[key] === '' || properties[key] === null;
-          var isPropertyNotAString = properties[key] && typeof properties[key] !== 'string';
 
           if (!isRequiredField && (isErrorDatasetName || isPropertyEmptyOrNull)) {
             delete properties[key];
           }
           // FIXME: Remove this once https://issues.cask.co/browse/CDAP-3614 is fixed.
-          if (isPropertyNotAString) {
+          if (angular.isDefined(properties[key]) && !angular.isString(properties[key])) {
             properties[key] = properties[key].toString();
           }
 
