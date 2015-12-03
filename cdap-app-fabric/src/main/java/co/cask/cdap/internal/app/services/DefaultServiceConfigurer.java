@@ -38,6 +38,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
+import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -178,6 +179,16 @@ public class DefaultServiceConfigurer extends DefaultPluginConfigurer implements
     public HttpServiceContext getServiceContext() {
       // Never used. (It's only used during server runtime, which we don't verify).
       return null;
+    }
+
+    @Override
+    public Cancellable capture() {
+      return new Cancellable() {
+        @Override
+        public void cancel() {
+          // no-op
+        }
+      };
     }
   }
 }

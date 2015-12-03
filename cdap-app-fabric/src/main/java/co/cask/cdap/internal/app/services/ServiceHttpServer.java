@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.api.metrics.MetricsContext;
+import co.cask.cdap.api.metrics.NoopMetricsContext;
 import co.cask.cdap.api.service.ServiceSpecification;
 import co.cask.cdap.api.service.http.HttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -47,9 +48,13 @@ import co.cask.http.HttpHandler;
 import co.cask.http.NettyHttpService;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -63,15 +68,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.io.IOException;
-import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
@@ -80,30 +86,27 @@ import javax.annotation.Nullable;
  */
 public class ServiceHttpServer extends AbstractIdleService {
 
+  // The following three are system property keys for unit-test to alter behavior of the server to have faster test
+  @VisibleForTesting
+  public static final String THREAD_POOL_SIZE = "cdap.service.http.thread.pool.size";
+  @VisibleForTesting
+  public static final String THREAD_KEEP_ALIVE_SECONDS = "cdap.service.http.thread.keepalive.seconds";
+  @VisibleForTesting
+  public static final String HANDLER_CLEANUP_PERIOD_MILLIS = "cdap.service.http.handler.cleanup.millis";
+
   private static final Logger LOG = LoggerFactory.getLogger(ServiceHttpServer.class);
-  private static final long HANDLER_CLEANUP_PERIOD_MS = TimeUnit.SECONDS.toMillis(60);
+  private static final long DEFAULT_HANDLER_CLEANUP_PERIOD_MILLIS = TimeUnit.SECONDS.toMillis(60);
 
-  // The following two fields are for tracking GC'ed suppliers of handler and be able to call destroy on them.
-  private final Map<Reference<? extends Supplier<HandlerContextPair>>, HandlerContextPair> handlerReferences;
-  private final ReferenceQueue<Supplier<HandlerContextPair>> handlerReferenceQueue;
-
-  private final String host;
   private final Program program;
-  private final ServiceSpecification spec;
   private final RunId runId;
-  private final Arguments runtimeArgs;
   private final int instanceId;
   private final AtomicInteger instanceCount;
   private final ServiceAnnouncer serviceAnnouncer;
-  private final MetricsCollectionService metricsCollectionService;
-  private final DatasetFramework datasetFramework;
   private final DataFabricFacadeFactory dataFabricFacadeFactory;
-  private final TransactionSystemClient txClient;
-  private final DiscoveryServiceClient discoveryServiceClient;
-  private final BasicHttpServiceContextFactory contextFactory;
-  private final PluginInstantiator pluginInstantiator;
+  private final List<HandlerDelegatorContext> handlerContexts;
+  private final NettyHttpService service;
+  private final MetricsContext metricsContext;
 
-  private NettyHttpService service;
   private Cancellable cancelDiscovery;
   private Timer timer;
 
@@ -113,30 +116,23 @@ public class ServiceHttpServer extends AbstractIdleService {
                            DataFabricFacadeFactory dataFabricFacadeFactory, TransactionSystemClient txClient,
                            DiscoveryServiceClient discoveryServiceClient,
                            @Nullable PluginInstantiator pluginInstantiator) {
-    this.host = host;
     this.program = program;
-    this.spec = spec;
     this.runId = runId;
-    this.runtimeArgs = runtimeArgs;
     this.instanceId = instanceId;
     this.instanceCount = new AtomicInteger(instanceCount);
     this.serviceAnnouncer = serviceAnnouncer;
-    this.metricsCollectionService = metricsCollectionService;
-    this.datasetFramework = datasetFramework;
     this.dataFabricFacadeFactory = dataFabricFacadeFactory;
-    this.txClient = txClient;
-    this.discoveryServiceClient = discoveryServiceClient;
-    this.pluginInstantiator = pluginInstantiator;
-
-    this.contextFactory = createHttpServiceContextFactory();
-    this.handlerReferences = Maps.newConcurrentMap();
-    this.handlerReferenceQueue = new ReferenceQueue<>();
-
-    constructNettyHttpService(runId, metricsCollectionService);
+    this.metricsContext = getMetricCollector(metricsCollectionService, program, runId.getId());
+    BasicHttpServiceContextFactory contextFactory = createContextFactory(program, runId, instanceId, this.instanceCount,
+                                                                         runtimeArgs, metricsCollectionService,
+                                                                         datasetFramework, discoveryServiceClient,
+                                                                         txClient, pluginInstantiator);
+    this.handlerContexts = createHandlerDelegatorContexts(program, spec, contextFactory);
+    this.service = createNettyHttpService(program, host, handlerContexts, metricsContext);
   }
 
-  private void constructNettyHttpService(RunId runId, MetricsCollectionService metricsCollectionService) {
-    Id.Program programId = program.getId();
+  private List<HandlerDelegatorContext> createHandlerDelegatorContexts(Program program, ServiceSpecification spec,
+                                                                       BasicHttpServiceContextFactory contextFactory) {
     // Constructs all handler delegator. It is for bridging ServiceHttpHandler and HttpHandler (in netty-http).
     List<HandlerDelegatorContext> delegatorContexts = Lists.newArrayList();
     InstantiatorFactory instantiatorFactory = new InstantiatorFactory(false);
@@ -149,21 +145,66 @@ public class ServiceHttpServer extends AbstractIdleService {
         delegatorContexts.add(new HandlerDelegatorContext(type, instantiatorFactory, entry.getValue(), contextFactory));
       } catch (Exception e) {
         LOG.error("Could not initialize HTTP Service");
-        Throwables.propagate(e);
+        throw Throwables.propagate(e);
       }
     }
+    return delegatorContexts;
+  }
 
+  /**
+   * Creates a {@link NettyHttpService} from the given host, and list of {@link HandlerDelegatorContext}s
+   *
+   * @param program Program that contains the handler
+   * @param host the host which the service will run on
+   * @param delegatorContexts the list {@link HandlerDelegatorContext}
+   * @param metricsContext a {@link MetricsContext} for metrics collection
+   *
+   * @return a NettyHttpService which delegates to the {@link HttpServiceHandler}s to handle the HTTP requests
+   */
+  private NettyHttpService createNettyHttpService(Program program, String host,
+                                                  Iterable<HandlerDelegatorContext> delegatorContexts,
+                                                  MetricsContext metricsContext) {
     // The service URI is always prefixed for routing purpose
     String pathPrefix = String.format("%s/namespaces/%s/apps/%s/services/%s/methods",
                                       Constants.Gateway.API_VERSION_3,
-                                      programId.getNamespaceId(),
-                                      programId.getApplicationId(),
-                                      programId.getId());
+                                      program.getNamespaceId(),
+                                      program.getApplicationId(),
+                                      program.getName());
 
-    service = createNettyHttpService(runId, host, pathPrefix, delegatorContexts, metricsCollectionService);
+    // Create HttpHandlers which delegate to the HttpServiceHandlers
+    HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, metricsContext);
+    List<HttpHandler> nettyHttpHandlers = Lists.newArrayList();
+    // get the runtime args from the twill context
+    for (HandlerDelegatorContext context : delegatorContexts) {
+      nettyHttpHandlers.add(factory.createHttpHandler(context.getHandlerType(), context));
+    }
+
+    NettyHttpService.Builder builder = NettyHttpService.builder()
+      .setHost(host)
+      .setPort(0)
+      .addHttpHandlers(nettyHttpHandlers);
+
+    // These properties are for unit-test only. Currently they are not controllable by the user program
+    String threadPoolSize = System.getProperty(THREAD_POOL_SIZE);
+    if (threadPoolSize != null) {
+      builder.setExecThreadPoolSize(Integer.parseInt(threadPoolSize));
+    }
+    String threadAliveSec = System.getProperty(THREAD_KEEP_ALIVE_SECONDS);
+    if (threadAliveSec != null) {
+      builder.setExecThreadKeepAliveSeconds(Long.parseLong(threadAliveSec));
+    }
+
+    return builder.build();
   }
 
-  private BasicHttpServiceContextFactory createHttpServiceContextFactory() {
+  private BasicHttpServiceContextFactory createContextFactory(final Program program, final RunId runId,
+                                                              final int instanceId, final AtomicInteger instanceCount,
+                                                              final Arguments runtimeArgs,
+                                                              final MetricsCollectionService metricsCollectionService,
+                                                              final DatasetFramework datasetFramework,
+                                                              final DiscoveryServiceClient discoveryServiceClient,
+                                                              final TransactionSystemClient txClient,
+                                                              @Nullable final PluginInstantiator pluginInstantiator) {
     return new BasicHttpServiceContextFactory() {
       @Override
       public BasicHttpServiceContext create(HttpServiceHandlerSpecification spec) {
@@ -192,13 +233,20 @@ public class ServiceHttpServer extends AbstractIdleService {
     service.startAndWait();
 
     // announce the twill runnable
-    int port = service.getBindAddress().getPort();
+    InetSocketAddress bindAddress = service.getBindAddress();
+    int port = bindAddress.getPort();
     cancelDiscovery = serviceAnnouncer.announce(getServiceName(programId), port);
-    LOG.info("Announced HTTP Service for Service {} at {}:{}", programId, host, port);
+    LOG.info("Announced HTTP Service for Service {} at {}", programId, bindAddress);
 
     // Create a Timer thread to periodically collect handler that are no longer in used and call destroy on it
     timer = new Timer("http-handler-gc", true);
-    timer.scheduleAtFixedRate(createHandlerDestroyTask(), HANDLER_CLEANUP_PERIOD_MS, HANDLER_CLEANUP_PERIOD_MS);
+
+    long cleanupPeriod = DEFAULT_HANDLER_CLEANUP_PERIOD_MILLIS;
+    String cleanupPeriodProperty = System.getProperty(HANDLER_CLEANUP_PERIOD_MILLIS);
+    if (cleanupPeriodProperty != null) {
+      cleanupPeriod = Long.parseLong(cleanupPeriodProperty);
+    }
+    timer.scheduleAtFixedRate(createHandlerDestroyTask(), cleanupPeriod, cleanupPeriod);
   }
 
   @Override
@@ -211,13 +259,8 @@ public class ServiceHttpServer extends AbstractIdleService {
 
       // Go through all non-cleanup'ed handler and call destroy() upon them
       // At this point, there should be no call to any handler method, hence it's safe to call from this thread
-      for (HandlerContextPair handlerContextPair : handlerReferences.values()) {
-        try {
-          handlerContextPair.close();
-        } catch (IOException e) {
-          LOG.error("Exception raised when closing the HttpServiceHandler of class {} and it's context.",
-                    handlerContextPair.getClass(), e);
-        }
+      for (HandlerDelegatorContext context : handlerContexts) {
+        context.shutdown();
       }
     }
   }
@@ -236,18 +279,8 @@ public class ServiceHttpServer extends AbstractIdleService {
     return new TimerTask() {
       @Override
       public void run() {
-        Reference<? extends Supplier<HandlerContextPair>> ref = handlerReferenceQueue.poll();
-        while (ref != null) {
-          HandlerContextPair handler = handlerReferences.remove(ref);
-          if (handler != null) {
-            try {
-              handler.close();
-            } catch (IOException e) {
-              LOG.error("Exception raised when closing the HttpServiceHandler of class {} and it's context.",
-                        handler.getClass(), e);
-            }
-          }
-          ref = handlerReferenceQueue.poll();
+        for (HandlerDelegatorContext context : handlerContexts) {
+          context.cleanUp();
         }
       }
     };
@@ -290,37 +323,15 @@ public class ServiceHttpServer extends AbstractIdleService {
     }
   }
 
-  /**
-   * Creates a {@link NettyHttpService} from the given host, and list of {@link HandlerDelegatorContext}s
-   *
-   * @param host the host which the service will run on
-   * @param pathPrefix a string prepended to the paths which the handlers in handlerContextPairs will bind to
-   * @param delegatorContexts the list {@link HandlerDelegatorContext}
-   * @param metricsCollectionService a {@link MetricsCollectionService} for metrics collection
-   * @return a NettyHttpService which delegates to the {@link HttpServiceHandler}s to handle the HTTP requests
-   */
-  private NettyHttpService createNettyHttpService(RunId runId, String host, String pathPrefix,
-                                                  Iterable<HandlerDelegatorContext> delegatorContexts,
-                                                  MetricsCollectionService metricsCollectionService) {
-    // Create HttpHandlers which delegate to the HttpServiceHandlers
-    MetricsContext collector =
-      getMetricCollector(metricsCollectionService, program, runId.getId());
-    HttpHandlerFactory factory = new HttpHandlerFactory(pathPrefix, collector);
-    List<HttpHandler> nettyHttpHandlers = Lists.newArrayList();
-    // get the runtime args from the twill context
-    for (HandlerDelegatorContext context : delegatorContexts) {
-      nettyHttpHandlers.add(factory.createHttpHandler(context.getHandlerType(), context));
-    }
 
-    return NettyHttpService.builder().setHost(host)
-      .setPort(0)
-      .addHttpHandlers(nettyHttpHandlers)
-      .build();
+  private ClassLoader setContextCombinedClassLoader(HttpServiceHandler handler) {
+    return ClassLoaders.setContextClassLoader(
+      new CombineClassLoader(null, ImmutableList.of(handler.getClass().getClassLoader(), getClass().getClassLoader())));
   }
 
   private static MetricsContext getMetricCollector(MetricsCollectionService service, Program program, String runId) {
     if (service == null) {
-      return null;
+      return new NoopMetricsContext();
     }
     Map<String, String> tags = Maps.newHashMap(AbstractContext.getMetricsContext(program, runId));
     // todo: use proper service instance id. For now we have to emit smth for test framework's waitFor metric to work
@@ -351,7 +362,7 @@ public class ServiceHttpServer extends AbstractIdleService {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
       destroyHandler(handler, context);
       context.close();
     }
@@ -363,10 +374,16 @@ public class ServiceHttpServer extends AbstractIdleService {
   private final class HandlerDelegatorContext implements DelegatorContext<HttpServiceHandler> {
 
     private final InstantiatorFactory instantiatorFactory;
-    private final ThreadLocal<Supplier<HandlerContextPair>> handlerThreadLocal;
     private final TypeToken<HttpServiceHandler> handlerType;
     private final HttpServiceHandlerSpecification spec;
     private final BasicHttpServiceContextFactory contextFactory;
+    private final LoadingCache<Thread, HandlerContextPair> contextPairCache;
+    private final Queue<HandlerContextPair> contextPairPool;
+    // This tracks the size of the concurrent queue based on the app logic for metric purpose.
+    // This is used instead of queue.size() because calling ConcurrentLinkedQueue.size() is not a constant
+    // time operation, but rather linear (see the javadoc).
+    private final AtomicInteger contextPairPoolSize;
+    private volatile boolean shutdown;
 
     private HandlerDelegatorContext(TypeToken<HttpServiceHandler> handlerType,
                                     InstantiatorFactory instantiatorFactory,
@@ -374,32 +391,116 @@ public class ServiceHttpServer extends AbstractIdleService {
                                     BasicHttpServiceContextFactory contextFactory) {
       this.handlerType = handlerType;
       this.instantiatorFactory = instantiatorFactory;
-      this.handlerThreadLocal = new ThreadLocal<>();
       this.spec = spec;
       this.contextFactory = contextFactory;
+      this.contextPairCache = createContextPairCache();
+      this.contextPairPool = new ConcurrentLinkedQueue<>();
+      this.contextPairPoolSize = new AtomicInteger();
     }
 
     @Override
     public HttpServiceHandler getHandler() {
-      return getHandlerContextPair().getHandler();
+      return contextPairCache.getUnchecked(Thread.currentThread()).getHandler();
     }
 
     @Override
     public BasicHttpServiceContext getServiceContext() {
-      return getHandlerContextPair().getContext();
+      return contextPairCache.getUnchecked(Thread.currentThread()).getContext();
+    }
+
+    @Override
+    public Cancellable capture() {
+      // To capture, remove the context pair from the cache.
+      // The removal listener of the cache will be triggered for this thread entry with an EXPLICIT cause
+      final HandlerContextPair contextPair = contextPairCache.asMap().remove(Thread.currentThread());
+      if (contextPair == null) {
+        // Shouldn't happen, as the context pair should of the current thread must be in the cache
+        // Otherwise, it's a bug in the system.
+        throw new IllegalStateException("Handler context not found for thread " + Thread.currentThread());
+      }
+
+      final AtomicBoolean cancelled = new AtomicBoolean(false);
+      return new Cancellable() {
+        @Override
+        public void cancel() {
+          if (cancelled.compareAndSet(false, true)) {
+            contextPairPool.offer(contextPair);
+            // offer never return false for ConcurrentLinkedQueue
+            metricsContext.gauge("context.pool.size", contextPairPoolSize.incrementAndGet());
+          } else {
+            // This shouldn't happen, unless there is bug in the platform.
+            // Since the context capture and release is a complicated logic, it's better throwing exception
+            // to guard against potential future bug.
+            throw new IllegalStateException("Captured context cannot be released twice.");
+          }
+        }
+      };
+    }
+
+    TypeToken<HttpServiceHandler> getHandlerType() {
+      return handlerType;
     }
 
     /**
-     * If either a {@link HttpServiceHandler} or a {@link BasicHttpServiceContext} is requested and they aren't
-     * set in the ThreadLocal, then create both and set to the ThreadLocal.
-     * @return the HandlerContextPair created.
+     * Performs clean up task for the context pair cache.
      */
-    private HandlerContextPair getHandlerContextPair() {
-      Supplier<HandlerContextPair> supplier = handlerThreadLocal.get();
-      if (supplier != null) {
-        return supplier.get();
+    void cleanUp() {
+      // Invalid all cached entries if the corresponding thread is no longer running
+      List<Thread> invalidKeys = new ArrayList<>();
+      for (Map.Entry<Thread, HandlerContextPair> entry : contextPairCache.asMap().entrySet()) {
+        if (!entry.getKey().isAlive()) {
+          invalidKeys.add(entry.getKey());
+        }
       }
+      contextPairCache.invalidateAll(invalidKeys);
+      contextPairCache.cleanUp();
+    }
 
+    /**
+     * Shutdown this context delegator. All cached context pair instances will be closed.
+     */
+    private void shutdown() {
+      shutdown = true;
+      contextPairCache.invalidateAll();
+      contextPairCache.cleanUp();
+      for (HandlerContextPair contextPair : contextPairPool) {
+        contextPair.close();
+      }
+      contextPairPool.clear();
+    }
+
+    private LoadingCache<Thread, HandlerContextPair> createContextPairCache() {
+      return CacheBuilder.newBuilder()
+        .weakKeys()
+        .removalListener(new RemovalListener<Thread, HandlerContextPair>() {
+          @Override
+          public void onRemoval(RemovalNotification<Thread, HandlerContextPair> notification) {
+            Thread thread = notification.getKey();
+            HandlerContextPair contextPair = notification.getValue();
+            if (contextPair == null) {
+              return;
+            }
+            // If the removal is due to eviction (expired or GC'ed) or
+            // if the thread is no longer active, close the associated context.
+            if (shutdown || notification.wasEvicted() || thread == null || !thread.isAlive()) {
+              contextPair.close();
+            }
+          }
+        })
+        .build(new CacheLoader<Thread, HandlerContextPair>() {
+          @Override
+          public HandlerContextPair load(Thread key) throws Exception {
+            HandlerContextPair contextPair = contextPairPool.poll();
+            if (contextPair == null) {
+              return createContextPair();
+            }
+            metricsContext.gauge("context.pool.size", contextPairPoolSize.decrementAndGet());
+            return contextPair;
+          }
+        });
+    }
+
+    private HandlerContextPair createContextPair() {
       // Instantiate the user handler and injects Metrics and Dataset fields.
       HttpServiceHandler handler = instantiatorFactory.get(handlerType).create();
       BasicHttpServiceContext context = contextFactory.create(spec);
@@ -408,28 +509,7 @@ public class ServiceHttpServer extends AbstractIdleService {
                         new DataSetFieldSetter(context),
                         new PropertyFieldSetter(spec.getProperties()));
       initHandler(handler, context);
-      HandlerContextPair handlerContextPair = new HandlerContextPair(handler, context);
-      supplier = Suppliers.ofInstance(handlerContextPair);
-
-      // We use GC of the supplier as a signal for us to know that a thread is gone
-      // The supplier is set into the thread local, which will get GC'ed when the thread is gone.
-      // Since we use a weak reference key to the supplier that points to the handler
-      // (in the handlerReferences map), it won't block GC of the supplier instance.
-      // We can use the weak reference, which retrieved through polling the ReferenceQueue,
-      // to get back the handler and call destroy() on it.
-      handlerReferences.put(new WeakReference<>(supplier, handlerReferenceQueue),
-                            handlerContextPair);
-      handlerThreadLocal.set(supplier);
-      return handlerContextPair;
+      return new HandlerContextPair(handler, context);
     }
-
-    TypeToken<HttpServiceHandler> getHandlerType() {
-      return handlerType;
-    }
-  }
-
-  private ClassLoader setContextCombinedClassLoader(HttpServiceHandler handler) {
-    return ClassLoaders.setContextClassLoader(
-      new CombineClassLoader(null, ImmutableList.of(handler.getClass().getClassLoader(), getClass().getClassLoader())));
   }
 }

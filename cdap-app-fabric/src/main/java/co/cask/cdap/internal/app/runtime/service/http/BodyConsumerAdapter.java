@@ -30,6 +30,7 @@ import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
+import org.apache.twill.common.Cancellable;
 import org.jboss.netty.buffer.ChannelBuffer;
 
 import java.nio.ByteBuffer;
@@ -44,6 +45,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
   private final HttpContentConsumer delegate;
   private final TransactionContext txContext;
   private final TransactionalHttpServiceContext serviceContext;
+  private final Cancellable contextReleaser;
   private final Transactional transactional;
   private final ClassLoader programContextClassLoader;
 
@@ -54,15 +56,18 @@ final class BodyConsumerAdapter extends BodyConsumer {
    *
    * @param responder the responder used for sending response back to client
    * @param delegate the {@link HttpContentConsumer} to delegate calls to
-   * @param txContext
+   * @param txContext a {@link TransactionContext} for executing transactional task
    * @param serviceContext the {@link TransactionalHttpServiceContext} for this handler.
+   * @param contextReleaser A {@link Cancellable} for returning the context back to the http server
    */
   BodyConsumerAdapter(DelayedHttpServiceResponder responder, HttpContentConsumer delegate,
-                      TransactionContext txContext, TransactionalHttpServiceContext serviceContext) {
+                      TransactionContext txContext, TransactionalHttpServiceContext serviceContext,
+                      Cancellable contextReleaser) {
     this.responder = responder;
     this.delegate = delegate;
     this.txContext = txContext;
     this.serviceContext = serviceContext;
+    this.contextReleaser = contextReleaser;
     this.transactional = createTransactional(this.txContext);
     this.programContextClassLoader = new CombineClassLoader(null, ImmutableList.of(delegate.getClass().getClassLoader(),
                                                                                    getClass().getClassLoader()));
@@ -103,8 +108,12 @@ final class BodyConsumerAdapter extends BodyConsumer {
 
     // To the HttpContentConsumer, the call is completed even if it fails to send response back to client.
     completed = true;
-    serviceContext.dismissTransactionContext();
-    BodyConsumerAdapter.this.responder.execute();
+    try {
+      serviceContext.dismissTransactionContext();
+      BodyConsumerAdapter.this.responder.execute();
+    } finally {
+      contextReleaser.cancel();
+    }
   }
 
   @Override
@@ -150,8 +159,12 @@ final class BodyConsumerAdapter extends BodyConsumer {
     } catch (Throwable t) {
       responder.setTransactionFailureResponse(t);
     } finally {
-      serviceContext.dismissTransactionContext();
-      responder.execute(false);
+      try {
+        serviceContext.dismissTransactionContext();
+        responder.execute(false);
+      } finally {
+        contextReleaser.cancel();
+      }
     }
   }
 
