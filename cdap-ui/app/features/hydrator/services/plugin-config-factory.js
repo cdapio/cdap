@@ -49,22 +49,29 @@ class PluginConfigFactory {
       groups: []
     };
     var missedFieldsGroup = {
-      label: 'Generic',
-      properties: []
+      display: 'Generic',
+      fields: []
     };
+
     // Parse configuration groups
     nodeConfig['configuration-groups'].forEach( (group) => {
       let matchedProperties = group.properties.filter( (property) => {
         let index = propertiesFromBackend.indexOf(property.name);
         if (index !== -1) {
           propertiesFromBackend.splice(index, 1);
+          let description = property.description;
+          if (!description || (description && !description.length)) {
+            description = this.myHelpers.objectQuery(groupsConfig, 'backendProperties', property.name, 'description');
+            property.description = description || 'No Description Available';
+          }
+          property.label = property.label || property.name;
           return true;
         }
         return false;
       });
       groupsConfig.groups.push({
-        label: group.label,
-        properties: matchedProperties
+        display: group.label,
+        fields: matchedProperties
       });
     });
 
@@ -81,17 +88,17 @@ class PluginConfigFactory {
     // Parse properties that are from backend but not from config json.
     if (propertiesFromBackend.length) {
       propertiesFromBackend.forEach( property => {
-        missedFieldsGroup.properties.push({
+        missedFieldsGroup.fields.push({
           'widget-type': 'textbox',
           label: property,
           info: 'Info',
           description: this.myHelpers.objectQuery(backendProperties, property, 'description') || 'No Description Available'
         });
       });
-      nodeConfig['configuration-groups'].push(missedFieldsGroup);
+      groupsConfig.groups.push(missedFieldsGroup);
     }
 
-    return nodeConfig;
+    return groupsConfig;
   }
 
   generateConfigForOlderSpec(backendProperties, nodeConfig) {
@@ -104,16 +111,17 @@ class PluginConfigFactory {
         isOutputSchemaRequired: null,
         implicitSchema: false
       },
-      groups: {}
+      groups: []
     };
     var missedFieldsGroup = {
       display: 'Generic',
       position: [],
-      fields: {}
+      fields: []
     };
     var index;
     var schemaProperty;
 
+    // Parse 'outputs' and find the property that needs to be used as output schema.
     if (nodeConfig.outputschema) {
       groupConfig.outputSchemaProperty = Object.keys(nodeConfig.outputschema);
 
@@ -134,75 +142,58 @@ class PluginConfigFactory {
       groupConfig.outputSchema.isOutputSchemaExists = false;
     }
 
-    groupConfig.groups.position = nodeConfig.groups.position;
-    angular.forEach(
-      nodeConfig.groups.position,
-      this.setGroups.bind(this, propertiesFromBackend, nodeConfig, groupConfig)
-    );
+    // Parse configuration groups
+    angular.forEach( nodeConfig.groups.position, (groupName) => {
+      var group = nodeConfig.groups[groupName];
+      var newGroup = {};
+      newGroup.label = group.display;
+      newGroup.fields = [];
+      angular.forEach(group.position, (fieldName) => {
+        var copyOfField = group.fields[fieldName];
+        var index = propertiesFromBackend.indexOf(fieldName);
+        if (index!== -1) {
+          propertiesFromBackend.splice(index, 1);
+
+          copyOfField.name = fieldName;
+          copyOfField.info = this.myHelpers.objectQuery(groupConfig, 'groups', groupName, 'fields', fieldName, 'info') || 'Info';
+          copyOfField.defaultValue = this.myHelpers.objectQuery(groupConfig, 'groups', groupName, 'fields', fieldName, 'properties', 'default');
+
+          // If there is a description in the config from nodejs use that otherwise fallback to description from backend.
+          let description = this.myHelpers.objectQuery(nodeConfig, 'groups', groupName, 'fields', fieldName, 'description');
+          if (!description || (description && !description.length)) {
+            description = this.myHelpers.objectQuery(groupConfig, 'backendProperties', fieldName, 'description');
+            copyOfField.description = description || 'No Description Available';
+          }
+          let label = this.myHelpers.objectQuery(nodeConfig, 'groups', groupName, 'fields', fieldName, 'label');
+          if (!label) {
+            copyOfField.label = fieldName;
+          }
+        }
+        newGroup.fields.push(copyOfField);
+      });
+      groupConfig.groups.push(newGroup);
+    });
 
     // After iterating over all the groups check if the propertiesFromBackend is still empty
     // If not there are some fields from backend for which we don't have configuration from the nodejs.
     // Add them to the 'missedFieldsGroup' and show it as a separate group.
     if (propertiesFromBackend.length) {
-      angular.forEach(
-        propertiesFromBackend,
-        this.setMissedFields.bind(this, backendProperties, missedFieldsGroup)
-      );
-      groupConfig.groups.position.push('generic');
-      groupConfig.groups['generic'] = missedFieldsGroup;
+      let genericGroup = {
+        label: 'Generic',
+        fields: []
+      };
+      angular.forEach(propertiesFromBackend, (property) => {
+        genericGroup.fields.push({
+          widget: 'textbox',
+          label: property,
+          info: 'Info',
+          description: this.myHelpers.objectQuery(backendProperties, property, 'description') || 'No Description Available'
+        });
+      });
+      groupConfig.groups.push(missedFieldsGroup);
     }
-
     return groupConfig;
   }
-
-  setGroups(propertiesFromBackend, nodeConfig, groupConfig, group) {
-    // For each group in groups iterate over its fields in position (order of all fields)
-    var fieldsInGroup = nodeConfig.groups[group].position;
-    // Add an entry for the group in our local copy.
-    groupConfig.groups[group] = {
-      display: nodeConfig.groups[group].display,
-      position: [],
-      fields: {}
-    };
-    angular.forEach(fieldsInGroup, this.setGroupFields.bind(this, propertiesFromBackend, nodeConfig, group, groupConfig));
-  }
-
-  setGroupFields(propertiesFromBackend, nodeConfig, group, groupConfig, field) {
-    // For each field in the group check if its been provided by the backend.
-    // If yes add it to the local copy of groups
-    // and mark the field as added.(remove from propertiesFromBackend array)
-    var index = propertiesFromBackend.indexOf(field);
-    if (index!== -1) {
-      propertiesFromBackend.splice(index, 1);
-      groupConfig.groups[group].position.push(field);
-      groupConfig.groups[group].fields[field] = nodeConfig.groups[group].fields[field];
-      // If there is a description in the config from nodejs use that otherwise fallback to description from backend.
-      var description = this.myHelpers.objectQuery(nodeConfig, 'groups', group, 'fields', field, 'description');
-      var info = this.myHelpers.objectQuery(groupConfig, 'groups', group, 'fields', field, 'info') ;
-      var label = this.myHelpers.objectQuery(groupConfig, 'groups', group, 'fields', field, 'label');
-
-      if (!description || (description && !description.length)) {
-        description = this.myHelpers.objectQuery(groupConfig, 'backendProperties', field, 'description');
-        groupConfig.groups[group].fields[field].description = description || 'No Description Available';
-      }
-      groupConfig.groups[group].fields[field].info = info || 'Info';
-      if (!label) {
-        groupConfig.groups[group].fields[field].label = field;
-      }
-      groupConfig.groups[group].fields[field].defaultValue = this.myHelpers.objectQuery(groupConfig, 'groups', group, 'fields', field, 'properties', 'default');
-    }
-  }
-
-  setMissedFields (backendProperties, missedFieldsGroup, property) {
-    missedFieldsGroup.position.push(property);
-    missedFieldsGroup.fields[property] = {
-      widget: 'textbox',
-      label: property,
-      info: 'Info',
-      description: this.myHelpers.objectQuery(backendProperties, property, 'description') || 'No Description Available'
-    };
-  }
-
 }
 
 PluginConfigFactory.$inject = ['MyCDAPDataSource', '$q', 'myHelpers'];

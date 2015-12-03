@@ -131,7 +131,7 @@ class NodeConfigController {
 
           },
           (err) => {
-            var propertiesFromBackend = Object.keys(this.state._backendProperties);
+            var propertiesFromBackend = Object.keys(this.state.plugin._backendProperties);
             // Didn't receive a configuration from the backend. Fallback to all textboxes.
             switch(err) {
               case 'NO_JSON_FOUND':
@@ -146,7 +146,7 @@ class NodeConfigController {
             }
             this.state.noconfig = true;
             this.state.configfetched = true;
-            propertiesFromBackend.forEach(function (property) {
+            propertiesFromBackend.forEach( (property) => {
               this.state.plugin.properties[property] = this.state.plugin.properties[property] || '';
             });
           }
