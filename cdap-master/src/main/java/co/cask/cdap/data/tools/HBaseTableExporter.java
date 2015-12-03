@@ -28,7 +28,6 @@ import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data.stream.StreamAdminModules;
 import co.cask.cdap.data.view.ViewAdminModules;
-import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -194,9 +193,6 @@ public class HBaseTableExporter {
       startUp();
       Transaction tx = txClient.startLong();
       Job job = createSubmittableJob(tx, tableName);
-      if (job == null) {
-        throw new RuntimeException("Failed to configure the job.");
-      }
       if (!job.waitForCompletion(true)) {
         LOG.info("MapReduce job failed!");
         throw new RuntimeException("Failed to run the MapReduce job.");
