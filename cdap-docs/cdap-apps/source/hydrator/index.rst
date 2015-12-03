@@ -50,7 +50,7 @@ code; instead, you just configure CDAP appropriately and operate it.
 - |etl-plugins|_ Details on ETL plugins and exploring available plugins using RESTful APIs.
 
 
-- **Using Third-Party Jars: A third-party JAR (such as a JDBC driver) :ref:`can be used as a plugin <cdap-apps-third-party-jars>`.
+- **Using Third-Party Jars:** A third-party JAR (such as a JDBC driver) :ref:`can be used as a plugin <cdap-apps-third-party-jars>`.
 
 - **Lifecycle of ETL Applications:** This is managed using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
 
