@@ -14,13 +14,25 @@
   the License.
 -->
 
-<my-dag data-is-disabled="true"
-        ng-class="{'canvas-scroll': CanvasCtrl.setScroll}"
-        context="CanvasCtrl"
-        template-popover="/assets/features/hydrator/templates/partial/schema-popover.html"
-        connection-popover-data="CanvasCtrl.generateSchemaOnEdge"
-        show-metrics="true"
-        metrics-data="CanvasCtrl.metrics"
-        node-popover-template="/assets/features/hydrator/templates/partial/metrics-popover.html"
-        >
-</my-dag>
+<div class="popover">
+  <div class="arrow"></div>
+  <div class="popover-title">
+    <h4>
+      <span>{{ data.nodeName }}</span>
+      <i class="fa fa-times pull-right" ng-click="$hide()"></i>
+    </h4>
+  </div>
+  <div class="popover-content">
+
+    <div class="well">
+      <h5>Records In</h5>
+      <p>3000</p>
+
+      <br/>
+
+      <h5>Records out</h5>
+      <p>50000</p>
+    </div>
+
+  </div>
+</div>

@@ -32,7 +32,8 @@ commonModule.directive('myDag', function() {
       templatePopover: '@',
       connectionPopoverData: '&',
       showMetrics: '=',
-      metricsData: '='
+      metricsData: '=',
+      nodePopoverTemplate: '@'
     },
     link: function(scope, element) {
       scope.element = element;
