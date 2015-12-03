@@ -57,10 +57,10 @@ code; instead, you just configure CDAP appropriately and operate it.
 
 .. rubric:: Cask Hydrator
 
-In this CDAP release, we have added support for self-service batch and real-time data
-ingestion combined with ETL for the building of Hadoop Data Lakes. Called **Cask
-Hydrator**, it provides CDAP users a seamless and easy way to configure and operate
-ingestion pipelines from different types of sources and data.
+CDAP supports users with self-service batch and real-time data ingestion combined with
+ETL, expressly for the building of Hadoop data lakes. Called **Cask Hydrator**, it
+provides CDAP users a seamless and easy way to configure and operate ingestion pipelines
+from different types of sources and data.
 
 *Cask Hydrator* provides an easy method of configuring *pipelines* using a visual editor.
 You drag and drop sources, transformations, and sinks, configuring an ETL pipeline within
