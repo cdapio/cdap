@@ -588,17 +588,17 @@ and from within a workflow with a predicate, fork and joins::
     
     String startTime = token.get("start.time", "PurchaseHistoryBuilder");
  
-    // To get the most recent value of counter with group name
+    // To get the most recent value of the counter with group name
     // 'org.apache.hadoop.mapreduce.TaskCounter' and counter name 'MAP_INPUT_RECORDS':
    
-    String flattenCounterKey = "mr.counters.org.apache.hadoop.mapreduce.TaskCounter.MAP_INPUT_RECORDS";
-    workflowToken.get(flattenCounterKey, WorkflowToken.Scope.SYSTEM);
+    String flattenCounterKey = "org.apache.hadoop.mapreduce.TaskCounter.MAP_INPUT_RECORDS";
+    Int records = workflowToken.get(flattenCounterKey, WorkflowToken.Scope.SYSTEM).getAsInt();
  
-    // To get the value of counter with group name
+    // To get the value of the counter with group name
     // 'org.apache.hadoop.mapreduce.TaskCounter' and counter name 'MAP_INPUT_RECORDS' as
-    // set by a MapReduce program with unique name 'PurchaseHistoryBuilder':
+    // set by a MapReduce program with the unique name 'PurchaseHistoryBuilder':
     
-    workflowToken.get(flattenCounterKey, "PurchaseHistoryBuilder", WorkflowToken.Scope.SYSTEM);
+    Int recordsPHB = workflowToken.get(flattenCounterKey, "PurchaseHistoryBuilder", WorkflowToken.Scope.SYSTEM).getAsInt();
    ...
   }
 
