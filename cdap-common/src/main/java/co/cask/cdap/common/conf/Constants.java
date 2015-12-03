@@ -391,22 +391,12 @@ public final class Constants {
     public static final String SERVER_WORKER_THREADS = "router.server.worker.threads";
     public static final String CLIENT_BOSS_THREADS = "router.client.boss.threads";
     public static final String CLIENT_WORKER_THREADS = "router.client.worker.threads";
+    public static final String CONNECTION_TIMEOUT_SECS = "router.connection.timeout.secs";
 
     /**
      * Defaults.
      */
     public static final String DEFAULT_ROUTER_PORT = "10000";
-    public static final String DEFAULT_WEBAPP_PORT = "20000";
-    public static final String DEFAULT_ROUTER_SSL_PORT = "10443";
-    public static final String DEFAULT_WEBAPP_SSL_PORT = "20443";
-    public static final boolean DEFAULT_WEBAPP_ENABLED = false;
-
-
-    public static final int DEFAULT_BACKLOG = 20000;
-    public static final int DEFAULT_SERVER_BOSS_THREADS = 1;
-    public static final int DEFAULT_SERVER_WORKER_THREADS = 10;
-    public static final int DEFAULT_CLIENT_BOSS_THREADS = 1;
-    public static final int DEFAULT_CLIENT_WORKER_THREADS = 10;
 
     public static final String GATEWAY_DISCOVERY_NAME = Service.GATEWAY;
     public static final String WEBAPP_DISCOVERY_NAME = "webapp/$HOST";

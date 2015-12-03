@@ -1110,7 +1110,7 @@
     <name>notification.transport.system</name>
     <value>kafka</value>
     <description>
-      Transport system used by the Notification system - can be kafka/stream
+      Transport system used by the Notification system: can be kafka/stream
     </description>
   </property>
 
@@ -1163,11 +1163,49 @@
   </property>
 
   <property>
+    <name>router.client.boss.threads</name>
+    <value>1</value>
+    <description>The number of boss threads in the router client</description>
+  </property>
+
+  <property>
+    <name>router.client.worker.threads</name>
+    <value>10</value>
+    <description>The number of worker threads in the router client</description>
+  </property>
+
+  <property>
+    <name>router.connection.backlog</name>
+    <value>20000</value>
+    <description>The connection backlog in the router server</description>
+  </property>
+
+  <property>
+    <name>router.connection.timeout.secs</name>
+    <value>15</value>
+    <description>
+      The number of seconds after which idle router connections are closed
+    </description>
+  </property>
+
+  <property>
+    <name>router.server.boss.threads</name>
+    <value>1</value>
+    <description>The number of boss threads in the router server</description>
+  </property>
+
+  <property>
     <name>router.server.port</name>
     <value>${router.bind.port}</value>
     <description>
       Router port to which CDAP UI connects
     </description>
+  </property>
+
+  <property>
+    <name>router.server.worker.threads</name>
+    <value>10</value>
+    <description>The number of worker threads in the Router server</description>
   </property>
 
   <property>
