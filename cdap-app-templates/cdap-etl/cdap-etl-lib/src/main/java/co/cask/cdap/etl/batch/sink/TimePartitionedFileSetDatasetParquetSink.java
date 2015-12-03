@@ -29,7 +29,7 @@ import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
-import co.cask.cdap.etl.common.SchemaConverter;
+import co.cask.cdap.etl.common.HiveSchemaConverter;
 import co.cask.cdap.etl.common.StructuredToAvroTransformer;
 import org.apache.avro.generic.GenericRecord;
 import parquet.avro.AvroParquetInputFormat;
@@ -68,7 +68,7 @@ public class TimePartitionedFileSetDatasetParquetSink extends
     new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
     String hiveSchema;
     try {
-      hiveSchema = SchemaConverter.toHiveSchema(Schema.parseJson(config.schema.toLowerCase()));
+      hiveSchema = HiveSchemaConverter.toHiveSchema(Schema.parseJson(config.schema.toLowerCase()));
     } catch (UnsupportedTypeException | IOException e) {
       throw new RuntimeException("Error: Schema is not valid ", e);
     }
