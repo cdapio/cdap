@@ -36,6 +36,8 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.tephra.TransactionManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -53,7 +55,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
   private static StreamMetaStore streamMetaStore;
   private static DatasetService datasetService;
   private static TransactionManager transactionManager;
-  private static Store store;
+  private static NamespaceStore store;
 
   @BeforeClass
   public static void init() throws Exception {
@@ -72,6 +74,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
           bind(StreamMetaStore.class).to(MDSStreamMetaStore.class).in(Scopes.SINGLETON);
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
           bind(Store.class).to(DefaultStore.class);
+          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
         }
       }
     );
@@ -81,7 +84,7 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
     transactionManager.startAndWait();
     datasetService = injector.getInstance(DatasetService.class);
     datasetService.startAndWait();
-    store = injector.getInstance(Store.class);
+    store = injector.getInstance(NamespaceStore.class);
   }
 
   @AfterClass
@@ -97,14 +100,15 @@ public class MDSStreamMetaStoreTest extends StreamMetaStoreTestBase {
 
   @Override
   protected void createNamespace(String namespace) throws AlreadyExistsException {
-    store.createNamespace(new NamespaceMeta.Builder()
-                            .setName(namespace)
-                            .setDescription(namespace)
-                            .build());
+    store.create(
+      new NamespaceMeta.Builder()
+        .setName(namespace)
+        .setDescription(namespace)
+        .build());
   }
 
   @Override
   protected void deleteNamespace(String namespaceId) throws NotFoundException {
-    store.deleteNamespace(new Id.Namespace(namespaceId));
+    store.delete(new Id.Namespace(namespaceId));
   }
 }

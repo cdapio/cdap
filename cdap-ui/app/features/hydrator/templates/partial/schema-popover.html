@@ -25,7 +25,7 @@
   <div class="popover-content">
 
     <div class="schema-popover">
-      <div class="table-responsive" ng-if="schema.length > 0">
+      <div class="table-responsive" ng-if="data.length > 0">
         <table class="table table-curved">
           <thead>
             <th>Name</th>
@@ -34,7 +34,7 @@
           </thead>
 
           <tbody>
-            <tr ng-repeat="field in schema">
+            <tr ng-repeat="field in data">
               <td>{{ field.name }}</td>
               <td>
                 <span ng-if="field.type.type !== 'map'">{{field.type}}</span>
@@ -48,7 +48,7 @@
         </table>
       </div>
 
-      <div class="well text-center" ng-if="!schema || schema.length === 0">
+      <div class="well text-center" ng-if="!data || data.length === 0">
         <h4>No Schema</h4>
       </div>
 

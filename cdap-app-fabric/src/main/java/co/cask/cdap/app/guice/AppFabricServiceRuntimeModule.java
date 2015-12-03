@@ -38,6 +38,7 @@ import co.cask.cdap.explore.service.ExploreServiceManager;
 import co.cask.cdap.gateway.handlers.AppFabricDataHttpHandler;
 import co.cask.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
+import co.cask.cdap.gateway.handlers.AuthorizationHandler;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
 import co.cask.cdap.gateway.handlers.ConfigHandler;
 import co.cask.cdap.gateway.handlers.ConsoleSettingsHttpHandler;
@@ -83,14 +84,19 @@ import co.cask.cdap.logging.run.LogSaverStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsProcessorStatusServiceManager;
 import co.cask.cdap.metrics.runtime.MetricsServiceManager;
 import co.cask.cdap.pipeline.PipelineFactory;
+import co.cask.cdap.security.authorization.AuthorizationPlugin;
+import co.cask.cdap.store.DefaultNamespaceStore;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.http.HttpHandler;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
-import com.google.inject.Key;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
@@ -270,12 +276,16 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       install(
         new FactoryModuleBuilder()
-          .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() { },
-                     new TypeLiteral<LocalApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() { })
-          .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() { })
+          .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+          },
+                     new TypeLiteral<LocalApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() {
+                     })
+          .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() {
+          })
       );
 
       bind(Store.class).to(DefaultStore.class);
+      bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
       bind(ArtifactStore.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(NamespaceAdmin.class).to(DefaultNamespaceAdmin.class).in(Scopes.SINGLETON);
@@ -300,9 +310,33 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(WorkflowHttpHandler.class);
       handlerBinder.addBinding().to(ArtifactHttpHandler.class);
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
+      handlerBinder.addBinding().to(AuthorizationHandler.class);
 
       for (Class<? extends HttpHandler> handlerClass : handlerClasses) {
         handlerBinder.addBinding().to(handlerClass);
+      }
+
+      bind(AuthorizationPlugin.class).toProvider(AuthorizationPluginProvider.class);
+    }
+
+    @Provides
+    private Class<? extends AuthorizationPlugin> providePluginClass(CConfiguration conf) throws ClassNotFoundException {
+      return conf.getClass(Constants.Security.Authorization.HANDLER_CLASS, null, AuthorizationPlugin.class);
+    }
+
+    private static final class AuthorizationPluginProvider implements Provider<AuthorizationPlugin> {
+      private final Injector injector;
+      private final Class<? extends AuthorizationPlugin> pluginClass;
+
+      @Inject
+      private AuthorizationPluginProvider(Injector injector, Class<? extends AuthorizationPlugin> pluginClass) {
+        this.injector = injector;
+        this.pluginClass = pluginClass;
+      }
+
+      @Override
+      public AuthorizationPlugin get() {
+        return injector.getInstance(pluginClass);
       }
     }
 

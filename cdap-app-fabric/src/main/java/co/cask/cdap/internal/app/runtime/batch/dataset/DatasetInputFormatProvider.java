@@ -16,13 +16,11 @@
 
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.common.conf.ConfigurationUtil;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.conf.Configuration;
@@ -40,52 +38,48 @@ public class DatasetInputFormatProvider implements InputFormatProvider {
 
   private final String datasetName;
   private final Map<String, String> datasetArgs;
+  private final Dataset dataset;
   private final List<Split> splits;
-  private final DatasetContext datasetContext;
+  private final Class<? extends AbstractBatchReadableInputFormat> batchReadableInputFormat;
 
   public DatasetInputFormatProvider(String datasetName, Map<String, String> datasetArgs,
-                                    @Nullable List<Split> splits, DatasetContext datasetContext) {
+                                    Dataset dataset, @Nullable List<Split> splits,
+                                    Class<? extends AbstractBatchReadableInputFormat> batchReadableInputFormat) {
     this.datasetName = datasetName;
     this.datasetArgs = ImmutableMap.copyOf(datasetArgs);
+    this.dataset = dataset;
     this.splits = splits == null ? null : ImmutableList.copyOf(splits);
-    this.datasetContext = datasetContext;
+    this.batchReadableInputFormat = batchReadableInputFormat;
   }
 
   @Override
   public String getInputFormatClassName() {
-    Dataset dataset = datasetContext.getDataset(datasetName, datasetArgs);
-
-    if (dataset instanceof InputFormatProvider) {
-      return ((InputFormatProvider) dataset).getInputFormatClassName();
-    }
-    if (dataset instanceof BatchReadable) {
-      return DataSetInputFormat.class.getName();
-    }
-    throw new IllegalArgumentException("Dataset '" + dataset + "' is neither InputFormatProvider or BatchReadable.");
+    return dataset instanceof InputFormatProvider
+      ? ((InputFormatProvider) dataset).getInputFormatClassName()
+      : batchReadableInputFormat.getName();
   }
 
   @Override
   public Map<String, String> getInputFormatConfiguration() {
-    Dataset dataset = datasetContext.getDataset(datasetName, datasetArgs);
-
     if (dataset instanceof InputFormatProvider) {
       return ((InputFormatProvider) dataset).getInputFormatConfiguration();
     }
-    if (dataset instanceof BatchReadable) {
-      List<Split> splits = this.splits;
-      if (splits == null) {
-        splits = ((BatchReadable) dataset).getSplits();
-      }
-      Configuration hConf = new Configuration();
-      hConf.clear();
+    return createBatchReadableConfiguration();
+  }
 
-      try {
-        DataSetInputFormat.setDatasetSplits(hConf, datasetName, datasetArgs, splits);
-        return ConfigurationUtil.toMap(hConf);
-      } catch (IOException e) {
-        throw Throwables.propagate(e);
-      }
+  private Map<String, String> createBatchReadableConfiguration() {
+    List<Split> splits = this.splits;
+    if (splits == null) {
+      splits = ((BatchReadable<?, ?>) dataset).getSplits();
     }
-    throw new IllegalArgumentException("Dataset '" + dataset + "' is neither InputFormatProvider or BatchReadable.");
+    Configuration hConf = new Configuration();
+    hConf.clear();
+
+    try {
+      AbstractBatchReadableInputFormat.setDatasetSplits(hConf, datasetName, datasetArgs, splits);
+      return ConfigurationUtil.toMap(hConf);
+    } catch (IOException e) {
+      throw new IllegalArgumentException(e);
+    }
   }
 }

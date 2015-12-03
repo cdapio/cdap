@@ -29,7 +29,7 @@
               dropdown-toggle=""
               aria-haspopup="true"
               aria-expanded="false">
-        Add App <span class="caret"></span>
+        Add Application <span class="caret"></span>
       </button>
       <ul class="dropdown-menu dropdown-menu-right" role="menu">
         <li role="presentation">
@@ -58,7 +58,7 @@
 </div>
 <div ng-if="ListController.apps.length === 0">
   <div class="well well-lg text-center">
-    <h3>You haven't deployed any apps.</h3>
+    <h3>You haven't deployed any applications</h3>
   </div>
 </div>
 
@@ -102,7 +102,7 @@
           <span ng-if="ListController.myHydratorFactory.isETLApp(app.artifact.name)">
             <span ng-if="app.artifact.name === ListController.GLOBALS.etlRealtime">
               <span class="icon-ETLRealtime"></span>
-              <span> ETL Realtime</span>
+              <span> ETL Real-time</span>
             </span>
             <span ng-if="app.artifact.name === ListController.GLOBALS.etlBatch">
               <span class="icon-ETLBatch"></span>

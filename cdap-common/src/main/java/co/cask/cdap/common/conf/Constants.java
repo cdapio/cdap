@@ -489,6 +489,7 @@ public final class Constants {
       public static final String COMPONENT = "cmp";
       public static final String HANDLER = "hnd";
       public static final String METHOD = "mtd";
+      public static final String THREAD = "thd";
 
       public static final String STREAM = "str";
 
@@ -672,6 +673,16 @@ public final class Constants {
     public static final String BASIC_REALM_FILE = "security.authentication.basic.realmfile";
     /** Enables SSL */
     public static final String SSL_ENABLED = "ssl.enabled";
+
+    /**
+     * Authorization.
+     */
+    public static final class Authorization {
+      /** Enables authorization */
+      public static final String ENABLED = "security.authorization.enabled";
+      /** AuthorizationPlugin class name */
+      public static final String HANDLER_CLASS = "security.authorization.pluginClassName";
+    }
 
     /**
      * Headers for security.

@@ -21,7 +21,6 @@ import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.ConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
@@ -53,6 +52,7 @@ import co.cask.cdap.proto.QueryResult;
 import co.cask.cdap.proto.QueryStatus;
 import co.cask.cdap.proto.TableInfo;
 import co.cask.cdap.proto.TableNameInfo;
+import co.cask.cdap.store.NamespaceStore;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Charsets;
@@ -167,7 +167,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
 
   protected BaseHiveExploreService(TransactionSystemClient txClient, DatasetFramework datasetFramework,
                                    CConfiguration cConf, Configuration hConf,
-                                   File previewsDir, StreamAdmin streamAdmin, Store store,
+                                   File previewsDir, StreamAdmin streamAdmin, NamespaceStore store,
                                    SystemDatasetInstantiatorFactory datasetInstantiatorFactory,
                                    ExploreTableNaming tableNaming) {
     this.cConf = cConf;

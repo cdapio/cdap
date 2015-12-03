@@ -19,10 +19,14 @@ package co.cask.cdap;
 import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -31,8 +35,7 @@ import java.util.concurrent.TimeUnit;
 public class WorkflowAppWithFork extends AbstractApplication {
   @Override
   public void configure() {
-    setName("WorkflowAppWithFork");
-    setDescription("Workflow App containing fork");
+    setDescription("Workflow App containing fork.");
     addWorkflow(new WorkflowWithFork());
   }
 
@@ -43,13 +46,12 @@ public class WorkflowAppWithFork extends AbstractApplication {
 
     @Override
     public void configure() {
-      setName("WorkflowWithFork");
-      setDescription("WorkflowWithFork description");
+      setDescription("A workflow that tests forks.");
       addAction(new SimpleAction("first"));
       fork()
-        .addAction(new SimpleAction("one"))
+        .addAction(new SimpleAction("branch1"))
       .also()
-        .addAction(new SimpleAction("another"))
+        .addAction(new SimpleAction("branch2"))
       .join();
     }
   }
@@ -57,25 +59,31 @@ public class WorkflowAppWithFork extends AbstractApplication {
   static final class SimpleAction extends AbstractWorkflowAction {
     private static final Logger LOG = LoggerFactory.getLogger(SimpleAction.class);
 
-    public SimpleAction(String name) {
+    SimpleAction(String name) {
       super(name);
     }
 
     @Override
     public void run() {
-      LOG.info("Running SimpleAction: " + getContext().getSpecification().getName());
+      String name = getContext().getSpecification().getName();
+      LOG.info("Running SimpleAction: {}", name);
+      Map<String, String> runtimeArguments = getContext().getRuntimeArguments();
+      File file = new File(runtimeArguments.get(name + ".file"));
       try {
-        File file = new File(getContext().getRuntimeArguments().get(getContext().getSpecification().getName() +
-                                                                      ".simple.action.file"));
-        file.createNewFile();
-        File doneFile = new File(getContext().getRuntimeArguments().get(getContext().getSpecification().getName() +
-                                                                          ".simple.action.donefile"));
+        Preconditions.checkArgument(file.createNewFile(), "Failed to create file '%s'", file);
+      } catch (IOException e) {
+        throw Throwables.propagate(e);
+      }
+      File doneFile = new File(runtimeArguments.get(name + ".donefile"));
+      try {
         while (!doneFile.exists()) {
           TimeUnit.MILLISECONDS.sleep(50);
         }
-      } catch (Exception e) {
-        // no-op
+      } catch (InterruptedException e) {
+        LOG.warn("Interrupted while waiting for done file {}", doneFile);
+        Thread.currentThread().interrupt();
       }
+      LOG.info("Done file '{}' exists. Simple Action '{}' completed.", doneFile, name);
     }
   }
 }

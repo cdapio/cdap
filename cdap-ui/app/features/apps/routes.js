@@ -85,7 +85,17 @@ angular.module(`${PKG.name}.feature.apps`)
             },
             controller: 'AppDetailStatusController',
             controllerAs: 'StatusController',
-            templateUrl: '/assets/features/apps/templates/tabs/status.html'
+            templateUrl: '/assets/features/apps/templates/tabs/status.html',
+            resolve : {
+              rPipelineDetail: function($stateParams, $q, myPipelineApi) {
+                var params = {
+                  namespace: $stateParams.namespace,
+                  pipeline: $stateParams.appId
+                };
+
+                return myPipelineApi.get(params).$promise;
+              }
+            }
           })
 
           .state('apps.detail.overview.programs', {

@@ -17,11 +17,12 @@
 package co.cask.cdap.internal.app.services;
 
 import co.cask.cdap.app.runtime.scheduler.SchedulerQueueResolver;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.config.PreferencesStore;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.ProgramId;
+import co.cask.cdap.store.NamespaceStore;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -36,7 +37,7 @@ public class PropertiesResolver {
   private final SchedulerQueueResolver queueResolver;
 
   @Inject
-  public PropertiesResolver(PreferencesStore prefStore, Store store, CConfiguration cConf) {
+  PropertiesResolver(PreferencesStore prefStore, NamespaceStore store, CConfiguration cConf) {
     this.prefStore = prefStore;
     this.queueResolver = new SchedulerQueueResolver(cConf, store);
   }

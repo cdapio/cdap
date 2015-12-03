@@ -33,8 +33,9 @@ import java.util.Map;
  */
 public class MapReduceSourceContext extends MapReduceBatchContext implements BatchSourceContext {
 
-  public MapReduceSourceContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String stageName) {
-    super(context, metrics, lookup, stageName);
+  public MapReduceSourceContext(MapReduceContext context, Metrics metrics, LookupProvider lookup, String stageName,
+                                Map<String, String> runtimeArgs) {
+    super(context, metrics, lookup, stageName, runtimeArgs);
   }
 
   @Override

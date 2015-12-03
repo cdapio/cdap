@@ -15,7 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailCanvasController', function(rPipelineDetail, MyAppDAGService, BottomPanelStore) {
+  .controller('HydratorDetailCanvasController', function(rPipelineDetail, BottomPanelStore, NodesActionsFactory, HydratorService, NodesStore, ConfigStore, PipelineNodeConfigActionFactory, DetailNonRunsStore) {
+    this.ConfigStore = ConfigStore;
+    this.NodesStore = NodesStore;
+    this.DetailNonRunsStore = DetailNonRunsStore;
+    this.PipelineNodeConfigActionFactory = PipelineNodeConfigActionFactory;
+    this.HydratorService = HydratorService;
+
     try{
       rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
     } catch(e) {
@@ -27,5 +33,33 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.setState();
     BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
-    MyAppDAGService.setNodesAndConnectionsFromDraft(rPipelineDetail);
+    var obj = DetailNonRunsStore.getDAGConfig();
+    NodesActionsFactory.createGraphFromConfig(obj.nodes, obj.connections);
+
+    this.updateNodesAndConnections = function () {
+      var activeNode = this.NodesStore.getActiveNodeId();
+      if (!activeNode) {
+        this.deleteNode();
+      } else {
+        this.setActiveNode();
+      }
+    };
+
+    this.setActiveNode = function() {
+      var nodeId = this.NodesStore.getActiveNodeId();
+      if (!nodeId) {
+        return;
+      }
+      this.PipelineNodeConfigActionFactory.choosePlugin(this.DetailNonRunsStore.getPluginObject(nodeId));
+    };
+
+    this.deleteNode = function() {
+      this.PipelineNodeConfigActionFactory.removePlugin();
+    };
+
+    this.generateSchemaOnEdge = function (sourceId) {
+      return this.HydratorService.generateSchemaOnEdge(sourceId);
+    };
+
+    NodesStore.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
   });

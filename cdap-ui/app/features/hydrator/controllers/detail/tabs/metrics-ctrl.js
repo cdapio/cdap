@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.hydrator')
     checkAndPollForMetrics.call(this);
 
     function getMetricsForLatestRunId(isPoll) {
-      var latestRunId = DetailRunsStore.getLatestMericRunId();
+      var latestRunId = DetailRunsStore.getLatestMetricRunId();
       if (!latestRunId) {
         return;
       }

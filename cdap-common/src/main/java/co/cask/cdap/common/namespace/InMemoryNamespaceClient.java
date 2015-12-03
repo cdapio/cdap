@@ -17,6 +17,7 @@
 package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.NamespaceNotFoundException;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
@@ -64,7 +65,12 @@ public class InMemoryNamespaceClient extends AbstractNamespaceClient {
 
   @Override
   public boolean exists(Id.Namespace namespaceId) throws Exception {
-    return get(namespaceId) != null;
+    try {
+      get(namespaceId);
+    } catch (NotFoundException e) {
+      return false;
+    }
+    return true;
   }
 
   @Override

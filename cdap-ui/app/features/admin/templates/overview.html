@@ -1,18 +1,18 @@
 <!--
   Copyright © 2015 Cask Data, Inc.
- 
+
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
   the License at
- 
+
   http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
   WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
   License for the specific language governing permissions and limitations under
   the License.
---> 
+-->
 
 <div ng-hide="welcomeIsHidden">
   <div class="panel panel-message">
@@ -22,7 +22,7 @@
       </h3>
     </div>
     <div class="panel-body">
-      <p>This is the control console for CDAP. Here, you can view and manage your system configuration and define and manage namespaces and entities.
+      <p>This is the control console for CDAP. Here, you can manage your system configuration, namespaces, and entities.
          Begin by configuring your default namespace.</p>
     </div>
   </div>
@@ -43,7 +43,7 @@
         <thead>
           <tr ng-class="{'sort-enabled': nsList.length>0}">
             <th data-predicate="name">Name</th>
-            <th data-predicate="appsCount">Apps</th>
+            <th data-predicate="appsCount">Applications</th>
             <th data-predicate="datasetsCount">Datasets</th>
             <th data-predicate="streamsCount">Streams</th>
           </tr>
