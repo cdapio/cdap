@@ -26,8 +26,6 @@ ETL is **Extract**, **Transform** and **Load** of data, a common first-step in a
 application. CDAP endeavors to make performing ETL possible out-of-box without writing
 code; instead, you just configure CDAP appropriately and operate it.
 
-The **lifecycle of ETL Applications** is managed using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
-
 .. |overview| replace:: **ETL Overview:**
 .. _overview: overview.html
 
@@ -56,6 +54,11 @@ The **lifecycle of ETL Applications** is managed using CDAP's :ref:`Lifecycle HT
 .. _etl-third-party: plugins/third-party.html
 
 - |etl-third-party|_ Explains how to use a third-party JAR (such as a JDBC driver) as a plugin.
+
+
+.. |etl-lifecycle| replace:: **Lifecycle:**
+
+- |etl-lifecycle| The **lifecycle of ETL Applications** is managed using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
 
 
 .. rubric:: Cask Hydrator
