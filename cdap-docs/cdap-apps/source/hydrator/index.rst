@@ -20,6 +20,14 @@ Cask Hydrator and ETL Pipelines
     ETL Plugins <plugins/index>
     
     
+.. _cdap-apps-intro-hydrator:
+
+ETL is **Extract**, **Transform** and **Load** of data, a common first-step in any data
+application. CDAP endeavors to make performing ETL possible out-of-box without writing
+code; instead, you just configure CDAP appropriately and operate it.
+
+The **lifecycle of ETL Applications** is managed using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
+
 .. |overview| replace:: **ETL Overview:**
 .. _overview: overview.html
 
@@ -48,16 +56,6 @@ Cask Hydrator and ETL Pipelines
 .. _etl-third-party: plugins/third-party.html
 
 - |etl-third-party|_ Explains how to use a third-party JAR (such as a JDBC driver) as a plugin.
-
-
-The **lifecycle of ETL Applications** is managed using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
-
-
-.. _cdap-apps-intro-hydrator:
-
-ETL is **Extract**, **Transform** and **Load** of data, a common first-step in any data
-application. CDAP endeavors to make performing ETL possible out-of-box without writing
-code; instead, you just configure CDAP appropriately and operate it.
 
 
 .. rubric:: Cask Hydrator
