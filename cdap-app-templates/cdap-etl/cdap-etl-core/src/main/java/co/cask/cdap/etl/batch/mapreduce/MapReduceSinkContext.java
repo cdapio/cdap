@@ -21,10 +21,12 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSinkContext;
+import co.cask.cdap.etl.log.LogContext;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * MapReduce Sink Context. Delegates operations to MapReduceContext and also keeps track of which outputs
@@ -40,20 +42,38 @@ public class MapReduceSinkContext extends MapReduceBatchContext implements Batch
   }
 
   @Override
-  public void addOutput(String datasetName) {
-    mrContext.addOutput(datasetName);
+  public void addOutput(final String datasetName) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        mrContext.addOutput(datasetName);
+        return null;
+      }
+    });
     outputNames.add(datasetName);
   }
 
   @Override
-  public void addOutput(String datasetName, Map<String, String> arguments) {
-    mrContext.addOutput(datasetName, arguments);
+  public void addOutput(final String datasetName, final Map<String, String> arguments) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        mrContext.addOutput(datasetName, arguments);
+        return null;
+      }
+    });
     outputNames.add(datasetName);
   }
 
   @Override
-  public void addOutput(String outputName, OutputFormatProvider outputFormatProvider) {
-    mrContext.addOutput(outputName, outputFormatProvider);
+  public void addOutput(final String outputName, final OutputFormatProvider outputFormatProvider) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        mrContext.addOutput(outputName, outputFormatProvider);
+        return null;
+      }
+    });
     outputNames.add(outputName);
   }
 
