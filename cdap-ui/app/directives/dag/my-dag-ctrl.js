@@ -159,12 +159,10 @@ angular.module(PKG.name + '.commons')
       });
     }
 
-    vm.nodeMouseEnter = function (node) {
+    vm.nodeMouseEnter = _.debounce(function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
-      $timeout(function () {
-        nodePopovers[node.id].popover.show();
-      });
-    };
+      nodePopovers[node.id].popover.show();
+    }, 300);
 
     vm.nodeMouseLeave = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
@@ -563,6 +561,7 @@ angular.module(PKG.name + '.commons')
 
 
     $scope.$on('$destroy', function () {
+      closeAllPopovers();
       NodesActionsFactory.resetNodesAndConnections();
       NodesStore.reset();
     });
