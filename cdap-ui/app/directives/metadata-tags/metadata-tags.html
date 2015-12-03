@@ -22,15 +22,23 @@
   </div>
   <div class="tag-input" ng-if="MetadataController.metadataAddOpen">
     <div my-escape-close="MetadataController.escapeMetadata()" ng-keypress="$event.keyCode === 13 && MetadataController.addMetadata()">
-      <input placeholder="new tag" type="text" class="form-control" ng-model="MetadataController.tag" cask-focus="metadataInput">
+      <input placeholder="new tag" type="text" class="form-control" ng-model="MetadataController.tag" cask-focus="metadataInput" ng-blur="MetadataController.escapeMetadata()">
     </div>
   </div>
-  <div class="tag" ng-repeat="tag in MetadataController.metadataTags">
-    <a class="btn">
+
+  <div class="tag" ng-repeat="tag in MetadataController.metadataTags | orderBy: tag | limitTo: MetadataController.limit">
+    <span class="btn"
+       ng-click="MetadataController.goToTag($event, tag)">
       {{tag}}
       <span class="fa fa-times"
-        ng-click="MetadataController.deleteMetadata(tag)"
-      ></span>
-    </a>
+            ng-click="MetadataController.deleteMetadata($event, tag)"></span>
+    </span>
   </div>
+
+  <a ng-if="MetadataController.metadataTags.length > 5 && MetadataController.limit === 5"
+     class="tag-toggle"
+     ng-click="MetadataController.showMoreTags()">show more</a>
+  <a ng-if="MetadataController.limit > 5"
+     class="tag-toggle"
+     ng-click="MetadataController.hideTags()">show less</a>
 </div>
