@@ -15,20 +15,20 @@
 -->
 
 <my-breadcrumbs></my-breadcrumbs>
-<div class="row">
+<div class="row type-heading">
   <div class="col-sm-6">
-    <h2>
-      <span ng-bind="$state.params.streamId"></span>
-    </h2>
     <div class="type-block">
-      <span class="icon-streams"></span>
-      <small> Type: Stream </small>
+      <span class="icon-streams pull-left"
+              tooltip="Type: Stream"
+              tooltip-placement="top"
+              tooltip-append-to-body="true"></span>
+      <h2 ng-bind="$state.params.streamId"></h2>
     </div>
     <my-metadata-tags params="DetailController.metadataParams" type="streams"></my-metadata-tags>
   </div>
   <div class="col-sm-6 text-right">
 
-    <div class="btn-group dropdown-right h3" dropdown>
+    <div class="btn-group dropdown-right" dropdown>
       <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
         Actions <span class="caret"></span>
       </button>

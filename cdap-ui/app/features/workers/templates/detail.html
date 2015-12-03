@@ -21,9 +21,8 @@
     <div class="container">
       <div class="row" program-heading>
         <div class="col-sm-4 col-md-6">
-          <h2 ng-bind="$state.params.programId"></h2>
           <div class="type-block">
-            <small> Type: Worker </small>
+            <h2 ng-bind="$state.params.programId"></h2>
           </div>
           <p ng-bind="RunsController.description | myEllipsis: 144"></p>
           <my-metadata-tags params="RunsController.metadataParams" type="programs"></my-metadata-tags>

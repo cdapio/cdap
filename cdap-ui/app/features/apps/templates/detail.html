@@ -15,32 +15,36 @@
 -->
 
 <my-breadcrumbs></my-breadcrumbs>
-  <div class="row">
+  <div class="row type-heading">
     <div class="col-sm-6">
-      <h2>
-        <span ng-bind="$state.params.appId"></span>
-      </h2>
       <div class="type-block">
         <span ng-if="DetailController.myHydratorFactory.isCustomApp(DetailController.artifact.name)">
-          <span class="icon-app"></span>
-          <small> Type: App </small>
+          <span class="icon-app pull-left"
+                tooltip="Type: App"
+                tooltip-placement="top"
+                tooltip-append-to-body="true"></span>
         </span>
         <span ng-if="DetailController.myHydratorFactory.isETLApp(DetailController.artifact.name)">
           <span ng-if="DetailController.artifact.name === DetailController.GLOBALS.etlBatch">
-            <span class="icon-ETLBatch"></span>
-            <small> Type: ETL Batch </small>
+            <span class="icon-ETLBatch pull-left"
+                  tooltip="Type: ETL Batch"
+                  tooltip-placement="top"
+                  tooltip-append-to-body="true"></span>
           </span>
           <span ng-if="DetailController.artifact.name === DetailController.GLOBALS.etlRealtime">
-            <span class="icon-ETLRealtime"></span>
-            <small> Type: ETL Realtime </small>
+            <span class="icon-ETLRealtime pull-left"
+                  tooltip="Type: ETL Realtime"
+                  tooltip-placement="top"
+                  tooltip-append-to-body="true"></span>
           </span>
         </span>
+        <h2 ng-bind="$state.params.appId"></h2>
       </div>
       <my-metadata-tags params="DetailController.metadataParams" type="apps"></my-metadata-tags>
     </div>
     <div class="col-sm-6 text-right">
 
-      <div class="btn-group dropdown-right h3" dropdown>
+      <div class="btn-group dropdown-right" dropdown>
         <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
           Actions <span class="caret"></span>
         </button>
