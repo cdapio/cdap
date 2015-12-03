@@ -246,7 +246,7 @@ The `WorkflowToken Java API
 includes methods for getting values for different keys, scopes, and nodes. The same
 key can be added to the workflow by different nodes, and there are methods to return a map of those
 key-value pairs. Convenience methods allow the putting and getting of non-string values
-through the use of the class Value.
+through the use of the API's class ``Value``.
 
 MapReduce Counters and Workflow Tokens
 --------------------------------------
