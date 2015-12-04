@@ -37,7 +37,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
@@ -60,10 +60,10 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   private final TransactionExecutorFactory txExecutorFactory;
 
   @Inject
-  DistributedFlowProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory, Configuration hConfig,
+  DistributedFlowProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory, YarnConfiguration hConf,
                                CConfiguration cConfig, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
                                TransactionExecutorFactory txExecutorFactory) {
-    super(twillRunner, locationFactory, hConfig, cConfig);
+    super(twillRunner, locationFactory, hConf, cConfig);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;

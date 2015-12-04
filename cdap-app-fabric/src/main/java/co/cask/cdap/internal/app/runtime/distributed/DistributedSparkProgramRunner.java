@@ -31,7 +31,7 @@ import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunner;
@@ -53,7 +53,7 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
 
   @Inject
   public DistributedSparkProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                       Configuration hConf, CConfiguration cConf) {
+                                       YarnConfiguration hConf, CConfiguration cConf) {
     super(twillRunner, locationFactory, createConfiguration(hConf), cConf);
   }
 
@@ -87,8 +87,8 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
     return new SparkTwillProgramController(program.getId(), controller, runId).startListen();
   }
 
-  private static Configuration createConfiguration(Configuration hConf) {
-    Configuration configuration = new Configuration(hConf);
+  private static YarnConfiguration createConfiguration(YarnConfiguration hConf) {
+    YarnConfiguration configuration = new YarnConfiguration(hConf);
     configuration.setBoolean(SparkContextConfig.HCONF_ATTR_CLUSTER_MODE, true);
     return configuration;
   }
