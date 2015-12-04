@@ -23,7 +23,8 @@ angular.module(PKG.name + '.commons')
       controllerAs: 'MetadataController',
       scope: {
         params: '=',
-        type: '@'
+        type: '@',
+        tagLimit: '='
       },
       templateUrl: 'metadata-tags/metadata-tags.html',
     };
@@ -32,7 +33,7 @@ angular.module(PKG.name + '.commons')
     this.metadataAddOpen = false;
     this.metadataTags = [];
 
-    var tagLimit = 5;
+    var tagLimit = $scope.tagLimit;
     this.limit = tagLimit;
     this.showMoreTags = function() {
       this.limit = this.metadataTags.length;
