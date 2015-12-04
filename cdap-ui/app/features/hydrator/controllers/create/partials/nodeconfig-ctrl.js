@@ -27,31 +27,21 @@ class NodeConfigController {
     this.NodeConfigStore = NodeConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
 
-    this.setDefaults();
+    this.setDefaults({});
     NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
   }
   setState() {
     var appType = this.$state.params.type || this.DetailNonRunsStore.getAppType();
     var nodeState = this.NodeConfigStore.getState();
-    this.state = {
-      configfetched : false,
-      properties : [],
-      noconfig: null,
-      noproperty: true,
-      config: {},
-
-      isValidPlugin: nodeState.isValidPlugin,
-      plugin: nodeState.plugin,
-
-      isSource: nodeState.isSource,
-      isSink: nodeState.isSink,
-      isTransform: nodeState.isTransform,
-
-      type: appType
-    };
+    nodeState.appType = appType;
+    if (angular.isArray(this.state.watchers)) {
+      this.state.watchers.forEach(watcher => watcher());
+      this.state.watchers = [];
+    }
+    this.setDefaults(nodeState);
     this.loadNewPlugin();
   }
-  setDefaults() {
+  setDefaults(config) {
     this.state = {
       configfetched : false,
       properties : [],
@@ -59,14 +49,15 @@ class NodeConfigController {
       noproperty: true,
       config: {},
 
-      isValidPlugin: false,
-      plugin: {},
+      isValidPlugin: config.isValidPlugin || false,
+      plugin: config.plugin || {},
 
-      isSource: false,
-      isSink: false,
-      isTransform: false,
+      isSource: config.isSource || false,
+      isSink: config.isSink || false,
+      isTransform: config.isTransform || false,
 
-      type: null
+      type: config.appType || null,
+      watchers: []
     };
   }
   loadNewPlugin() {
@@ -85,43 +76,56 @@ class NodeConfigController {
 
             this.state.groupsConfig = this.PluginConfigFactory.generateNodeConfig(this.state.plugin._backendProperties, res);
             angular.forEach(this.state.groupsConfig.groups, (group) => {
-              angular.forEach(group.fields, (field, name) => {
+              angular.forEach(group.fields, (field) => {
                 if (field.defaultValue) {
-                  this.state.plugin.properties[name] = this.state.plugin.properties[name] || field.defaultValue;
+                  this.state.plugin.properties[field.name] = this.state.plugin.properties[field.name] || field.defaultValue;
                 }
               });
             });
-            if (this.state.groupsConfig.outputSchema.implicitSchema) {
-              var keys = Object.keys(res.outputschema.implicit);
+            var configOutputSchema = this.state.groupsConfig.outputSchema;
+            // If its an implicit schema, set the output schema to the implicit schema and inform ConfigActionFactory
+            if (configOutputSchema.implicitSchema) {
+              var keys = Object.keys(configOutputSchema.implicitSchema);
               var formattedSchema = [];
-              angular.forEach(keys, function (key) {
+              angular.forEach(keys, (key) => {
                 formattedSchema.push({
                   name: key,
-                  type: res.outputschema.implicit[key]
+                  type: configOutputSchema.implicitSchema[key]
                 });
               });
 
               this.state.plugin.outputSchema = JSON.stringify({ fields: formattedSchema });
-            }
+              this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin);
+            } else {
+              // If not an implcit schema check if an schema property exists in the node config.
+              // What this means is, has the plugin developer specified a plugin property in 'outputs' array of node config.
+              // If yes then set it as output schema and everytime when a user edits the output schema the value has to
+              // be transitioned to the respective plugin property.
+              if (configOutputSchema.isOutputSchemaExists) {
+                if (this.state.plugin.properties[configOutputSchema.outputSchemaProperty[0]] !== this.state.plugin.outputSchema) {
+                  this.state.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.plugin.outputSchema;
+                }
+                if (!this.$scope.isDisabled) {
+                  this.state.watchers.push(
+                    this.$scope.$watch('NodeConfigController.state.plugin.outputSchema', () => {
+                      if(this.validateSchema()) {
+                        this.state.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.plugin.outputSchema;
+                      }
+                    }),
+                    this.$scope.$watch(
+                      'NodeConfigController.state.plugin.properties',
+                      _.debounce(() => this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin), 1000),
+                      true
+                    )
+                  );
+                }
 
-            if (this.state.groupsConfig.isOutputSchemaExists && !this.state.groupsConfig.outputSchema.implicitSchema) {
-              if (this.state.plugin.properties[this.state.groupsConfig.outputSchemaProperty[0]] !== this.state.outputSchema) {
-                this.state.properties[this.state.groupsConfig.outputSchemaProperty[0]] = this.state.outputSchema;
+              } else if (this.state.plugin.inputSchema) {
+                // If there is no information of output schema in the node config then just mantain an output schema for UI purposes.
+                configOutputSchema.isOutputSchemaExists = true;
+                this.state.plugin.outputSchema = this.state.plugin.outputSchema || this.state.plugin.inputSchema;
+                this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin);
               }
-              if (!this.$scope.isDisabled) {
-                this.$scope.$watch('plugin.outputSchema', function() {
-                  if(this.validateSchema()) {
-                    this.state.properties[this.state.groupsConfig.outputSchemaProperty[0]] = this.state.outputSchema;
-                  }
-                });
-              }
-            }
-            if (!this.$scope.isDisabled) {
-              this.$scope.$watch(
-                'NodeConfigController.state.plugin.properties',
-                _.debounce(() => this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin.properties), 1000),
-                true
-              );
             }
 
             // Mark the configfetched to show that configurations have been received.

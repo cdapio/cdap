@@ -42,7 +42,8 @@ class PluginConfigFactory {
       backendProperties: propertiesFromBackend,
       outputSchema: {
         isOutputSchemaExists: false,
-        schemaProperty: null,
+        schemaProperties: null,
+        outputSchemaProperty: null,
         isOutputSchemaRequired: null,
         implicitSchema: null
       },
@@ -65,6 +66,7 @@ class PluginConfigFactory {
             property.description = description || 'No Description Available';
           }
           property.label = property.label || property.name;
+          property.defaultValue = this.myHelpers.objectQuery(property, 'widget-attributes', 'default');
           return true;
         }
         return false;
@@ -78,9 +80,19 @@ class PluginConfigFactory {
     // Parse 'outputs' and find the property that needs to be used as output schema.
     if (nodeConfig.outputs && nodeConfig.outputs.length) {
       nodeConfig.outputs.forEach( output => {
+        var index;
         if (output['widget-type'] === 'non-editable-schema-editor') {
           groupsConfig.outputSchema.isOutputSchemaExists = true;
-          groupsConfig.outputSchema.implicitSchema = this.myHelpers.objectQuery(nodeConfig, 'widget-attributes', 'schema');
+          groupsConfig.outputSchema.implicitSchema = output.schema;
+        } else {
+          index = propertiesFromBackend.indexOf(output.name);
+          groupsConfig.outputSchema.isOutputSchemaExists = true;
+          groupsConfig.outputSchema.outputSchemaProperty = [output.name];
+          groupsConfig.outputSchema.schemaProperties = output['widget-attributes'];
+          groupsConfig.outputSchema.isOutputSchemaRequired = backendProperties[output.name].required;
+          if (index !== -1) {
+            propertiesFromBackend.splice(index, 1);
+          }
         }
       });
     }
@@ -91,6 +103,7 @@ class PluginConfigFactory {
         missedFieldsGroup.fields.push({
           'widget-type': 'textbox',
           label: property,
+          name: property,
           info: 'Info',
           description: this.myHelpers.objectQuery(backendProperties, property, 'description') || 'No Description Available'
         });
@@ -107,7 +120,8 @@ class PluginConfigFactory {
       backendProperties: propertiesFromBackend,
       outputSchema: {
         isOutputSchemaExists: false,
-        schemaProperty: null,
+        schemaProperties: null,
+        outputSchemaProperty: null,
         isOutputSchemaRequired: null,
         implicitSchema: false
       },
@@ -123,19 +137,19 @@ class PluginConfigFactory {
 
     // Parse 'outputs' and find the property that needs to be used as output schema.
     if (nodeConfig.outputschema) {
-      groupConfig.outputSchemaProperty = Object.keys(nodeConfig.outputschema);
+      groupConfig.outputSchema.outputSchemaProperty = Object.keys(nodeConfig.outputschema);
 
       if (!nodeConfig.outputschema.implicit) {
-        groupConfig.outputSchema.isOutputSchemaExists = (propertiesFromBackend.indexOf(groupConfig.outputSchemaProperty[0]) !== -1);
+        groupConfig.outputSchema.isOutputSchemaExists = (propertiesFromBackend.indexOf(groupConfig.outputSchema.outputSchemaProperty[0]) !== -1);
         if (groupConfig.outputSchema.isOutputSchemaExists) {
-          schemaProperty = groupConfig.outputSchemaProperty[0];
+          schemaProperty = groupConfig.outputSchema.outputSchemaProperty[0];
           index = propertiesFromBackend.indexOf(schemaProperty);
           groupConfig.outputSchema.schemaProperty = nodeConfig.outputschema[schemaProperty];
-          groupConfig.isOutputSchemaRequired = backendProperties[schemaProperty].required;
+          groupConfig.outputSchema.isOutputSchemaRequired = backendProperties[schemaProperty].required;
           propertiesFromBackend.splice(index, 1);
         }
       } else if (nodeConfig.outputschema && nodeConfig.outputschema.implicit) {
-        groupConfig.outputSchema.implicitSchema = true;
+        groupConfig.outputSchema.implicitSchema = nodeConfig.outputschema.implict;
         groupConfig.outputSchema.isOutputSchemaExists = true;
       }
     } else {
@@ -163,10 +177,13 @@ class PluginConfigFactory {
             description = this.myHelpers.objectQuery('backendProperties', fieldName, 'description');
             copyOfField.description = description || 'No Description Available';
           }
+
           let label = this.myHelpers.objectQuery(nodeConfig, 'groups', groupName, 'fields', fieldName, 'label');
           if (!label) {
             copyOfField.label = fieldName;
           }
+
+          copyOfField.defaultValue = myHelpers.objectQuery(nodeConfig, 'groups', groupName, 'fields', fieldName, 'properties', 'default');
         }
         newGroup.fields.push(copyOfField);
       });

@@ -231,12 +231,12 @@ class ConfigStore {
     }
     return angular.copy(match);
   }
-  editNodeProperties(nodeId, nodeProperties) {
+  editNodeProperties(nodeId, nodeConfig) {
     let nodes = this.state.__ui__.nodes;
     let match = nodes.filter( node => node.id === nodeId);
     if (match.length) {
       match = match[0];
-      angular.forEach(nodeProperties, (pValue, pName) => match.properties[pName] = pValue);
+      angular.forEach(nodeConfig, (pValue, pName) => match[pName] = pValue);
     }
   }
   getSchedule() {

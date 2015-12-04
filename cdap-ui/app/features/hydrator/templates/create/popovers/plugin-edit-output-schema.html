@@ -35,7 +35,6 @@
       Clear
     </button>
   </h4>
-
   <fieldset class="clearfix" ng-disabled="isDisabled">
     <div ng-if="isDisabled">
       <my-schema-editor
@@ -43,7 +42,7 @@
         ng-if="NodeConfigController.state.plugin.outputSchema"
         data-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema || isDisabled"
         plugin-properties="NodeConfigController.state.plugin.properties"
-        config="NodeConfigController.state.groupsConfig.outputSchema.schemaProperty">
+        config="NodeConfigController.state.groupsConfig.outputSchema.schemaProperties">
       </my-schema-editor>
     </div>
     <div ng-if="!isDisabled">
@@ -51,7 +50,7 @@
         ng-model="NodeConfigController.state.plugin.outputSchema"
         data-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema"
         plugin-properties="NodeConfigController.state.plugin.properties"
-        config="NodeConfigController.state.groupsConfig.schemaProperties">
+        config="NodeConfigController.state.groupsConfig.outputSchema.schemaProperties">
       </my-schema-editor>
     </div>
   </fieldset>
