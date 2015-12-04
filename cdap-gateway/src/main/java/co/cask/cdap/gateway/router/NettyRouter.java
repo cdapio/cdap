@@ -19,6 +19,7 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
+import co.cask.cdap.gateway.router.handlers.HttpIdleStateHandler;
 import co.cask.cdap.gateway.router.handlers.HttpRequestHandler;
 import co.cask.cdap.gateway.router.handlers.HttpStatusRequestHandler;
 import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
@@ -52,6 +53,7 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
+import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.util.HashedWheelTimer;
 import org.jboss.netty.util.Timer;
@@ -146,6 +148,7 @@ public class NettyRouter extends AbstractIdleService {
       this.sslHandlerFactory = null;
     }
     this.connectionTimeout = cConf.getInt(Constants.Router.CONNECTION_TIMEOUT_SECS);
+    LOG.info("Using connection timeout: {}", connectionTimeout);
     this.timer = new HashedWheelTimer(Threads.newDaemonThreadFactory("idle-event-generator-timer"));
     LOG.info("Service to Port Mapping - {}", this.serviceToPortMap);
   }
@@ -273,12 +276,16 @@ public class NettyRouter extends AbstractIdleService {
         new NioClientBossPool(clientBossExecutor, clientBossThreadPoolSize),
         new NioWorkerPool(clientWorkerExecutor, clientWorkerThreadPoolSize)));
 
+
     clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       @Override
       public ChannelPipeline getPipeline() throws Exception {
         ChannelPipeline pipeline = Channels.pipeline();
         pipeline.addLast("tracker", connectionTracker);
         pipeline.addLast("request-encoder", new HttpRequestEncoder());
+        // outbound handler gets dynamically added here (after 'request-encoder')
+        pipeline.addLast("response-decoder", new HttpResponseDecoder());
+        pipeline.addLast("read-timeout", new HttpIdleStateHandler(timer, connectionTimeout));
         return pipeline;
       }
     });

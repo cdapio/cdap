@@ -19,9 +19,9 @@ package co.cask.cdap.gateway.router;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.utils.Networks;
-import co.cask.cdap.test.SlowTests;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
+import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Supplier;
@@ -58,7 +58,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,13 +67,11 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -93,7 +90,7 @@ public abstract class NettyRouterTestBase {
   protected static final String WEBAPP_SERVICE = Constants.Router.WEBAPP_DISCOVERY_NAME;
   protected static final String APP_FABRIC_SERVICE = Constants.Service.APP_FABRIC_HTTP;
   protected static final String WEB_APP_SERVICE_PREFIX = "webapp/";
-  protected static final int CONNECTION_IDLE_TIMEOUT_SECS = 5;
+  protected static final int CONNECTION_IDLE_TIMEOUT_SECS = 2;
 
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTestBase.class);
   private static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -395,21 +392,13 @@ public abstract class NettyRouterTestBase {
 
   @Test
   public void testConnectionNoIdleTimeout() throws Exception {
-    // 300ms under the configured idle timeout
-    testConnectionIdleTimeout(TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) - 300);
-  }
-
-  // TODO: this exception shouldn't get thrown. the timeout is only once the http request is complete
-  @Test(expected = SocketException.class)
-  public void testConnectionIdleTimeout() throws Exception {
-    // 300ms over the configured idle timeout
-    testConnectionIdleTimeout(TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 300);
-  }
-
-  private void testConnectionIdleTimeout(long timeoutMillis) throws Exception {
+    // even though the handler will sleep for 500ms over the configured idle timeout before responding, the connection
+    // is not closed because the http request is in progress
+    long timeoutMillis = TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) - 500;
     URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/timeout/" + timeoutMillis));
     HttpURLConnection urlConnection = openURL(url);
     urlConnection.getResponseCode();
+    urlConnection.disconnect();
   }
 
   protected HttpURLConnection openURL(URL url) throws Exception {
