@@ -123,6 +123,7 @@ angular.module(PKG.name + '.commons')
           else {
             $scope.disableEdit = false;
             $scope.fields = 'SHOW';
+            initialize($scope.model);
           }
         }
 

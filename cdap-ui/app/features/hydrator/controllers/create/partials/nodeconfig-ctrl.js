@@ -125,6 +125,17 @@ class NodeConfigController {
                 configOutputSchema.isOutputSchemaExists = true;
                 this.state.plugin.outputSchema = this.state.plugin.outputSchema || this.state.plugin.inputSchema;
                 this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin);
+                this.state.watchers.push(
+                  this.$scope.$watch(
+                    'NodeConfigController.state.plugin.outputSchema',
+                    _.debounce(() => {
+                      if(this.validateSchema()) {
+                        this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin);
+                      }
+                    }, 1000),
+                    true
+                  )
+                );
               }
             }
 
