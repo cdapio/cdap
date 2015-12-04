@@ -38,7 +38,7 @@ angular.module(PKG.name + '.commons')
       this.limit = this.metadataTags.length;
     };
     this.hideTags = function() {
-      this.limit = 5;
+      this.limit = tagLimit;
     };
 
     var prom;
