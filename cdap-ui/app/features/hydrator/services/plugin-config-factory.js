@@ -127,11 +127,6 @@ class PluginConfigFactory {
       },
       groups: []
     };
-    var missedFieldsGroup = {
-      display: 'Generic',
-      position: [],
-      fields: []
-    };
     var index;
     var schemaProperty;
 
@@ -183,7 +178,7 @@ class PluginConfigFactory {
             copyOfField.label = fieldName;
           }
 
-          copyOfField.defaultValue = myHelpers.objectQuery(nodeConfig, 'groups', groupName, 'fields', fieldName, 'properties', 'default');
+          copyOfField.defaultValue = this.myHelpers.objectQuery(nodeConfig, 'groups', groupName, 'fields', fieldName, 'properties', 'default');
         }
         newGroup.fields.push(copyOfField);
       });
@@ -206,7 +201,7 @@ class PluginConfigFactory {
           description: this.myHelpers.objectQuery(backendProperties, property, 'description') || 'No Description Available'
         });
       });
-      groupConfig.groups.push(missedFieldsGroup);
+      groupConfig.groups.push(genericGroup);
     }
     return groupConfig;
   }

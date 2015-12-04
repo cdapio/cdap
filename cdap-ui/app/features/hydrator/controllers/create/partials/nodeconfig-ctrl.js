@@ -153,6 +153,13 @@ class NodeConfigController {
             propertiesFromBackend.forEach( (property) => {
               this.state.plugin.properties[property] = this.state.plugin.properties[property] || '';
             });
+            this.state.watchers.push(
+              this.$scope.$watch(
+                'NodeConfigController.state.plugin.properties',
+                _.debounce(() => this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin), 1000),
+                true
+              )
+            );
           }
         );
     } else {
