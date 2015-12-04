@@ -26,7 +26,7 @@ An *Artifact* is a JAR file that packages the Java Application class that define
 *Programs*, *Services*, *Schedules*, *Streams*, and *Datasets* interact.
 It also packages any dependent classes and libraries needed to run the *Application*. 
 
-Implementing an Application class
+Implementing an Application Class
 =================================
 To implement an application class, extend the ``AbstractApplication`` class,
 specifying the application metadata and declaring and
