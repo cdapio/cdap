@@ -301,36 +301,6 @@ angular.module(PKG.name + '.commons')
       formatConnections();
     }
 
-    // function connectionClick (connection) {
-    //   if (!connection) {
-    //     return;
-    //   }
-
-    //   var label = angular.element(connection.getOverlay('label').getElement());
-    //   var scope = $rootScope.$new();
-
-    //   scope.data = $scope.connectionPopoverData().call($scope.context, connection.sourceId, connection.targetId);
-
-    //   var popover = $popover(label, {
-    //     trigger: 'manual',
-    //     placement: 'auto',
-    //     target: label,
-    //     templateUrl: $scope.templatePopover,
-    //     container: 'main',
-    //     scope: scope
-    //   });
-
-    //   popovers.push(popover);
-
-    //   $timeout(function() {
-    //     popover.show();
-    //   });
-
-    //   $scope.$on('$destroy', function () {
-    //     scope.$destroy();
-    //   });
-    // }
-
     function closeAllPopovers() {
       if (popovers.length === 0) { return; }
 
