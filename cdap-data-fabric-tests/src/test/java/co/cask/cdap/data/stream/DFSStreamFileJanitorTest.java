@@ -39,7 +39,6 @@ import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.service.NoOpNotificationFeedManager;
 import co.cask.cdap.proto.Id;
-import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -111,7 +110,7 @@ public class DFSStreamFileJanitorTest extends StreamFileJanitorTestBase {
         protected void configure() {
           // We don't need notification in this test, hence inject an no-op one
           bind(NotificationFeedManager.class).to(NoOpNotificationFeedManager.class);
-          bind(NamespaceStore.class).to(DefaultNamespaceStore.class);
+          bind(NamespaceStore.class).to(InMemoryNamespaceStore.class);
         }
       }
     );

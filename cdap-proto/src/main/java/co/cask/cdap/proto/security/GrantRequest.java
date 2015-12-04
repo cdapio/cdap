@@ -13,20 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.security.authorization;
+
+package co.cask.cdap.proto.security;
+
+import co.cask.cdap.proto.id.EntityId;
+import com.google.common.base.Preconditions;
+
+import java.util.Set;
 
 /**
- * Types of actions that users can perform on entities.
- * Actions are inherited, so granting an action on a namespace
- * would also grant that action on entities in that namespace.
+ * Request for granting a user permission to perform certain actions on an entity.
  */
-public enum Action {
-  /** Read data, metrics, and logs from the entity */
-  READ,
-  /** Write data to the entity */
-  WRITE,
-  /** Configure, run, and delete the entity */
-  MANAGE,
-  /** In addition to all other actions, grant/revoke actions for an entity */
-  ALL,
+public class GrantRequest extends AuthorizationRequest {
+
+  public GrantRequest(EntityId entity, String user, Set<Action> actions) {
+    super(entity, user, actions);
+    Preconditions.checkArgument(user != null, "user is required");
+    Preconditions.checkArgument(actions != null, "actions is required");
+  }
 }

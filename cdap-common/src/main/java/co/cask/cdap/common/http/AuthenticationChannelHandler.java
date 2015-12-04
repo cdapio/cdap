@@ -39,6 +39,7 @@ public class AuthenticationChannelHandler extends SimpleChannelUpstreamHandler {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
   private String currentUserId;
+  private String currentUserIP;
 
   /**
    * Decode the AccessTokenIdentifier passed as a header and set it in a ThreadLocal.
@@ -51,9 +52,12 @@ public class AuthenticationChannelHandler extends SimpleChannelUpstreamHandler {
       // TODO: authenticate the user using user id - CDAP-688
       HttpRequest request = (HttpRequest) message;
       currentUserId = request.getHeader(Constants.Security.Headers.USER_ID);
+      currentUserIP = request.getHeader(Constants.Security.Headers.USER_IP);
       SecurityRequestContext.setUserId(currentUserId);
+      SecurityRequestContext.setUserIP(currentUserIP);
     } else if (message instanceof HttpChunk) {
       SecurityRequestContext.setUserId(currentUserId);
+      SecurityRequestContext.setUserIP(currentUserIP);
     }
 
     super.messageReceived(ctx, e);

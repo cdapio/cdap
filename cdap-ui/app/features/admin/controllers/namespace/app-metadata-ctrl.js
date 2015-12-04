@@ -36,7 +36,7 @@ function ($scope, $state, $alert, $timeout, MyCDAPDataSource, myHydratorFactory)
       $alert({
         type: 'success',
         title: app,
-        content: 'App deleted successfully'
+        content: 'Application deleted successfully'
       });
       // FIXME: Have to avoid $timeout here. Un-necessary.
       $timeout(function() {

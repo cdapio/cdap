@@ -41,6 +41,7 @@ import co.cask.cdap.test.StreamManager;
 import co.cask.cdap.test.TestConfiguration;
 import co.cask.cdap.test.WorkerManager;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -65,6 +66,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -129,7 +131,9 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
       new ETLStage("sink2", new Plugin("Stream", ImmutableMap.of(Properties.Stream.NAME, "streamB"))),
       new ETLStage("sink3", new Plugin("Stream", ImmutableMap.of(Properties.Stream.NAME, "streamC")))
     );
-    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(1, source, sinks, null, null);
+    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sinks,
+                                                        new ArrayList<ETLStage>(),
+                                                        new ArrayList<co.cask.cdap.etl.common.Connection>());
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testToStream");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -266,6 +270,93 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
     Assert.assertArrayEquals("Bob".getBytes(Charsets.UTF_8), results.getBytes(1));
     Assert.assertEquals("Bob", results.getString(2));
     Assert.assertEquals(3.4, results.getDouble(3), 0.000001);
+  }
+
+
+
+  @Test
+  @SuppressWarnings("ConstantConditions")
+  public void testDAG() throws Exception {
+
+    Schema.Field idField = Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.INT)));
+    Schema.Field nameField = Schema.Field.of("name", Schema.of(Schema.Type.STRING));
+    Schema.Field scoreField = Schema.Field.of("score", Schema.of(Schema.Type.DOUBLE));
+    Schema.Field graduatedField = Schema.Field.of("graduated", Schema.of(Schema.Type.BOOLEAN));
+    // nullable row key field to test cdap-3239
+    Schema.Field binaryNameField = Schema.Field.of("binary", Schema.nullableOf(Schema.of(Schema.Type.BYTES)));
+    Schema.Field timeField = Schema.Field.of("time", Schema.of(Schema.Type.LONG));
+    Schema schema =  Schema.recordOf("tableRecord", idField, nameField, scoreField, graduatedField,
+                                     binaryNameField, timeField);
+
+    Plugin source = new Plugin("DataGenerator", ImmutableMap.of(DataGeneratorSource.PROPERTY_TYPE,
+                                                                DataGeneratorSource.TABLE_TYPE));
+
+    Plugin sinkConfig1 = new Plugin("Table", ImmutableMap.of(Properties.Table.NAME, "table1",
+                                                      Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary",
+                                                      Properties.Table.PROPERTY_SCHEMA, schema.toString()));
+
+    Plugin sinkConfig2 = new Plugin("Table", ImmutableMap.of(Properties.Table.NAME, "table2",
+                                                             Properties.Table.PROPERTY_SCHEMA_ROW_FIELD, "binary",
+                                                             Properties.Table.PROPERTY_SCHEMA, schema.toString()));
+
+    List<ETLStage> sinks = ImmutableList.of(new ETLStage("sink1", sinkConfig1),
+                                            new ETLStage("sink2", sinkConfig2));
+
+
+    String script = "function transform(x, context) {  " +
+      "x.name = \"Rob\";" +
+      "x.id = 2;" +
+      "return x;" +
+      "};";
+    Plugin transformConfig = new Plugin("Script", ImmutableMap.of("script", script));
+
+    List<ETLStage> transformList = Lists.newArrayList(new ETLStage("transform", transformConfig));
+
+    List<co.cask.cdap.etl.common.Connection> connections = new ArrayList<>();
+    connections.add(new co.cask.cdap.etl.common.Connection("source", "sink1"));
+    connections.add(new co.cask.cdap.etl.common.Connection("source", "transform"));
+    connections.add(new co.cask.cdap.etl.common.Connection("transform", "sink2"));
+
+    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(new ETLStage("source", source),
+                                                        sinks, transformList, connections);
+
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testToStream");
+    AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    WorkerManager workerManager = appManager.getWorkerManager(ETLWorker.NAME);
+
+    workerManager.start();
+    DataSetManager<Table> tableManager1 = getDataset("table1");
+    waitForTableToBePopulated(tableManager1);
+    DataSetManager<Table> tableManager2 = getDataset("table2");
+    waitForTableToBePopulated(tableManager2);
+    workerManager.stop();
+
+    // verify
+    Table table = tableManager1.get();
+    Row row = table.get("Bob".getBytes(Charsets.UTF_8));
+
+    Assert.assertEquals("Bob", row.getString("name"));
+    Assert.assertEquals(1, (int) row.getInt("id"));
+    Assert.assertEquals(3.4, row.getDouble("score"), 0.000001);
+    // binary field was the row key and thus shouldn't be present in the columns
+    Assert.assertNull(row.get("binary"));
+    Assert.assertNotNull(row.getLong("time"));
+
+    // verify that table2 doesn't have these records
+    tableManager2 = getDataset("table2");
+    table = tableManager2.get();
+
+    row = table.get("Bob".getBytes(Charsets.UTF_8));
+
+    Assert.assertEquals(2, (int) row.getInt("id"));
+    // transformed
+    Assert.assertEquals("Rob", row.getString("name"));
+    Assert.assertEquals(3.4, row.getDouble("score"), 0.000001);
+    // binary field was the row key and thus shouldn't be present in the columns
+    Assert.assertNull(row.get("binary"));
+    Assert.assertNotNull(row.getLong("time"));
   }
 
   @Test

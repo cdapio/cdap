@@ -16,6 +16,7 @@
 package co.cask.cdap.security.authorization;
 
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.security.Action;
 
 import java.util.Set;
 

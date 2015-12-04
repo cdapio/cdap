@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,20 +14,20 @@
  * the License.
  */
 
-package co.cask.cdap.app.authorization;
-
-import co.cask.cdap.common.conf.CConfiguration;
+package co.cask.cdap.proto.security;
 
 /**
- * Factory for handling authorization service.
+ * Response for {@link CheckAuthorizedRequest}.
  */
-public interface AuthorizationFactory {
-  /**
-   * Creates an instance of {@link AuthorizationHandler} for authorizing requests
-   * being processed by any service.
-   *
-   * @param configuration An instance of {@link CConfiguration} to configure.
-   * @return An instance of {@link AuthorizationHandler}
-   */
-  AuthorizationHandler create(CConfiguration configuration);
+public class CheckAuthorizedResponse {
+
+  private final boolean authorized;
+
+  public CheckAuthorizedResponse(boolean authorized) {
+    this.authorized = authorized;
+  }
+
+  public boolean isAuthorized() {
+    return authorized;
+  }
 }

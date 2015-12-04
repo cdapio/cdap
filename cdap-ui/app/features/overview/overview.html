@@ -85,13 +85,13 @@
               </div>
               <div class="col-xs-8">
                 <p ng-if="OverviewCtrl.systemStatus === 'yellow'">
-                  Some services might have an issue.
+                  Some services might have an issue
                 </p>
                 <p ng-if="OverviewCtrl.systemStatus === 'red'">
-                  All services are down.
+                  All services are down
                 </p>
                 <p ng-if="OverviewCtrl.systemStatus === 'green'">
-                  All services are up and running.
+                  All services are up and running
                 </p>
               </div>
             </div>
@@ -118,8 +118,8 @@
               ></c3-spline>
             <div class="warning-alert">
               <div>
-                <p> Warning </p><span class="warn"> {{wdgt.chartData.totals[1]}} </span>
-                <p> Alert </p><span class="error"> {{wdgt.chartData.totals[0]}} </span>
+                <p> Warnings </p><span class="warn"> {{wdgt.chartData.totals[1]}} </span>
+                <p> Alerts </p><span class="error"> {{wdgt.chartData.totals[0]}} </span>
               </div>
             </div>
           </div>

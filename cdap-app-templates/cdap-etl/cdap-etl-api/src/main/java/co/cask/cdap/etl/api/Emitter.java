@@ -28,7 +28,6 @@ public interface Emitter<T> {
 
   /**
    * Emit an object.
-   *
    * @param value the object to emit
    */
   void emit(T value);
