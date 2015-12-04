@@ -359,7 +359,7 @@ public class ETLMapReduce extends AbstractMapReduce {
                                                 new ArrayList<String>()));
       }
 
-      transformExecutor = new TransformExecutor(transformations, ImmutableList.of(sourcePluginId));
+      transformExecutor = new TransformExecutor<>(transformations, ImmutableList.of(sourcePluginId));
 
     }
 

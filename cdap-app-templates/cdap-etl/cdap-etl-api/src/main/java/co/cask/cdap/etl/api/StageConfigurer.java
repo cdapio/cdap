@@ -17,18 +17,28 @@
 package co.cask.cdap.etl.api;
 
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.plugin.PluginConfigurer;
+import co.cask.cdap.api.data.schema.Schema;
+
+import javax.annotation.Nullable;
 
 /**
- * Configures an ETL Pipeline. Allows adding datasets and streams, which will be created when a pipeline is created.
- * Using this as a layer between plugins and CDAP's PluginConfigurer in case pipelines need etl specific methods.
+ * This stores the input schema that is passed to this stage from other stages in the pipeline and
+ * the output schema that could be sent to the next stages from this stage.
  */
 @Beta
-public interface PipelineConfigurer extends PluginConfigurer {
+public interface StageConfigurer {
 
   /**
-   * Get stage configurer for the pipeline stage
-   * @return stage configurer
+   * get the input schema for this stage, or null if its unknown
+   * @return input schema
    */
-  StageConfigurer getStageConfigurer();
+  @Nullable
+  Schema getInputSchema();
+
+  /**
+   * set output schema for this stage, or null if its unknown
+   * @param outputSchema output schema for this stage
+   */
+  void setOutputSchema(@Nullable Schema outputSchema);
+
 }
