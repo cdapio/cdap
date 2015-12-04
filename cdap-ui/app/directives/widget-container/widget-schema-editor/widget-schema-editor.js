@@ -43,11 +43,10 @@ angular.module(PKG.name + '.commons')
 
         if ($scope.config) {
 
-          $scope.options = $scope.config['schema-types'];
-          defaultType = $scope.config['schema-default-type'] || $scope.options[0];
-
-          if ($scope.config['property-watch']) {
-            watchProperty = $scope.config['property-watch'];
+          $scope.options = myHelpers.objectQuery($scope.config, 'widget-attributes', 'schema-types') || myHelpers.objectQuery($scope.config, 'schema-types');
+          defaultType = myHelpers.objectQuery($scope.config, 'widget-attributes', 'schema-default-type') || myHelpers.objectQuery($scope.config, 'schema-default-type') || $scope.options[0];
+          watchProperty = myHelpers.objectQuery($scope.config, 'property-watch') || myHelpers.objectQuery($scope.config, 'widget-attributes', 'property-watch');
+          if (watchProperty) {
 
             // changing the format when it is stream
             EventPipe.on('dataset.selected', function (schema, format) {
@@ -124,6 +123,7 @@ angular.module(PKG.name + '.commons')
           else {
             $scope.disableEdit = false;
             $scope.fields = 'SHOW';
+            initialize($scope.model);
           }
         }
 
@@ -238,14 +238,10 @@ angular.module(PKG.name + '.commons')
         }
 
 
-        function formatSchema(newValue, oldValue) {
+        function formatSchema() {
 
           if (watchProperty && $scope.pluginProperties && ['clf', 'syslog'].indexOf($scope.pluginProperties[watchProperty]) !== -1) {
             $scope.model = null;
-            return;
-          }
-
-          if (newValue === oldValue) {
             return;
           }
           // Format Schema

@@ -23,10 +23,12 @@ angular.module(PKG.name + '.commons')
         config: '='
       },
       templateUrl: 'widget-container/widget-schedule/widget-schedule.html',
-      controller: function($scope, EventPipe) {
+      controller: function($scope, EventPipe, myHelpers) {
         var modelCopy = angular.copy($scope.model);
 
-        var defaultSchedule = $scope.config.properties.default || ['*', '*', '*', '*', '*'];
+        var defaultSchedule = myHelpers.objectQuery($scope.config, 'properties', 'default') ||
+                              myHelpers.objectQuery($scope.config, 'widget-attributes', 'default') ||
+                              ['*', '*', '*', '*', '*'];
 
         function initialize() {
           $scope.schedule = {};
