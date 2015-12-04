@@ -139,7 +139,7 @@ class PluginConfigFactory {
         if (groupConfig.outputSchema.isOutputSchemaExists) {
           schemaProperty = groupConfig.outputSchema.outputSchemaProperty[0];
           index = propertiesFromBackend.indexOf(schemaProperty);
-          groupConfig.outputSchema.schemaProperty = nodeConfig.outputschema[schemaProperty];
+          groupConfig.outputSchema.schemaProperties = nodeConfig.outputschema[schemaProperty];
           groupConfig.outputSchema.isOutputSchemaRequired = backendProperties[schemaProperty].required;
           propertiesFromBackend.splice(index, 1);
         }

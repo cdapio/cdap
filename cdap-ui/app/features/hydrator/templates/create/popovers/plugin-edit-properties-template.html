@@ -38,17 +38,17 @@
                   </span>
                   <span class="fa fa-asterisk" ng-if="NodeConfigController.state.plugin._backendProperties[field.name].required"></span>
                 </label>
-              </div>
 
-              <div>
-                <div data-name="field"
-                     class="my-widget-container"
-                     ng-class="{'select-wrapper': field.widget === 'select'}"
-                     data-model="NodeConfigController.state.plugin.properties[field.name]"
-                     data-myconfig="field"
-                     data-properties="NodeConfigController.state.plugin.properties"
-                     widget-disabled="NodeConfigController.state.plugin.pluginTemplate && NodeConfigController.state.plugin.lock[field.name]"
-                     widget-container>
+                <div>
+                  <div data-name="field"
+                       class="my-widget-container"
+                       ng-class="{'select-wrapper': field.widget === 'select'}"
+                       data-model="NodeConfigController.state.plugin.properties[field.name]"
+                       data-myconfig="field"
+                       data-properties="NodeConfigController.state.plugin.properties"
+                       widget-disabled="NodeConfigController.state.plugin.pluginTemplate && NodeConfigController.state.plugin.lock[field.name]"
+                       widget-container>
+                  </div>
                 </div>
               </div>
 

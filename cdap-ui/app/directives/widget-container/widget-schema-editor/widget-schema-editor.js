@@ -237,14 +237,10 @@ angular.module(PKG.name + '.commons')
         }
 
 
-        function formatSchema(newValue, oldValue) {
+        function formatSchema() {
 
           if (watchProperty && $scope.pluginProperties && ['clf', 'syslog'].indexOf($scope.pluginProperties[watchProperty]) !== -1) {
             $scope.model = null;
-            return;
-          }
-
-          if (newValue === oldValue) {
             return;
           }
           // Format Schema
