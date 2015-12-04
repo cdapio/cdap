@@ -82,6 +82,25 @@ public abstract class EntityId implements IdCompatible {
     return (T) id.toId();
   }
 
+  public static <T extends EntityId> T fromString(String string) {
+    String[] typeAndId = string.split(IDSTRING_TYPE_SEPARATOR, 2);
+    Preconditions.checkArgument(
+      typeAndId.length == 2,
+      "Expected type separator '%s' to be in the ID string: %s", IDSTRING_TYPE_SEPARATOR, string);
+
+    String typeString = typeAndId[0];
+    EntityType type = EntityType.valueOf(typeString.toUpperCase());
+    Preconditions.checkArgument(type != null, "Invalid element type: " + typeString);
+
+    String idString = typeAndId[1];
+    try {
+      return type.fromIdParts(Splitter.on(IDSTRING_PART_SEPARATOR).split(idString));
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+        String.format("Invalid ID: %s", string), e);
+    }
+  }
+
   protected static <T extends EntityId> T fromString(String string, Class<T> idClass) {
     String[] typeAndId = string.split(IDSTRING_TYPE_SEPARATOR, 2);
     Preconditions.checkArgument(

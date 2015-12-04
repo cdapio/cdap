@@ -28,7 +28,8 @@ public enum CommandCategory {
   EXPLORE("Explore"),
   METRICS("Metrics"),
   INGEST("Ingest"),
-  EGRESS("Egress");
+  EGRESS("Egress"),
+  SECURITY("Security");
 
   final String name;
 
