@@ -150,6 +150,7 @@ try:
     from recommonmark.parser import CommonMarkParser
     source_parsers = {'.md': CommonMarkParser}
     source_suffix = ['.rst', '.md']
+    print "Imported CommonMarkParser from recommonmark; can process Markdown files."
 except ImportError:
     print "Unable to import CommonMarkParser from recommonmark; can't process Markdown files."
 
