@@ -117,7 +117,6 @@ angular.module(PKG.name + '.commons')
 
         setZoom(vm.scale, vm.instance);
 
-
         // Process metrics data
         if ($scope.showMetrics) {
 
@@ -150,6 +149,9 @@ angular.module(PKG.name + '.commons')
 
           });
 
+          if (vm.scale <= SHOW_METRICS_THRESHOLD) {
+            hideMetricsLabel();
+          }
 
           $scope.$watch('metricsData', function () {
             console.log('metrics', $scope.metricsData);
@@ -174,9 +176,7 @@ angular.module(PKG.name + '.commons')
       vm.scale += 0.1;
 
       if (vm.scale >= SHOW_METRICS_THRESHOLD) {
-        angular.forEach(labels, function (label) {
-          label.getOverlay('metricLabel').show();
-        });
+        showMetricsLabel();
       }
 
       setZoom(vm.scale, vm.instance);
@@ -187,14 +187,24 @@ angular.module(PKG.name + '.commons')
       if (vm.scale <= 0.2) { return; }
 
       if (vm.scale <= SHOW_METRICS_THRESHOLD) {
-        angular.forEach(labels, function (label) {
-          label.getOverlay('metricLabel').hide();
-        });
+        hideMetricsLabel();
       }
 
       vm.scale -= 0.1;
       setZoom(vm.scale, vm.instance);
     };
+
+    function showMetricsLabel() {
+      angular.forEach(labels, function (label) {
+        label.getOverlay('metricLabel').show();
+      });
+    }
+
+    function hideMetricsLabel() {
+      angular.forEach(labels, function (label) {
+        label.getOverlay('metricLabel').hide();
+      });
+    }
 
 
     /**
