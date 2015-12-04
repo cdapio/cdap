@@ -183,7 +183,7 @@ public class DataQualityApp extends AbstractApplication<DataQualityApp.DataQuali
       // Constructs a BatchSourceContext. The stageId needs to match the format expected by PluginID
       BatchSourceContext sourceContext = new MapReduceSourceContext(
         context, metrics, new DatasetContextLookupProvider(context),
-        "batchsource:" + context.getSpecification().getProperty("sourceName") + ":0");
+        "batchsource:" + context.getSpecification().getProperty("sourceName") + ":0", context.getRuntimeArguments());
       batchSource.prepareRun(sourceContext);
       context.addOutput(context.getSpecification().getProperty("datasetName"));
     }

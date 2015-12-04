@@ -17,6 +17,7 @@ package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.codec.IdTypeAdapter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -36,6 +37,7 @@ public class EntityIdTest {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Id.class, new IdTypeAdapter())
+    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
 
   private final List<? extends EntityId> ids = ImmutableList.<EntityId>builder()
@@ -164,6 +166,10 @@ public class EntityIdTest {
       "doTestToFromJson failed for class " + id.getClass().getName(),
       id, GSON.fromJson(GSON.toJson(id), id.getClass())
     );
+    Assert.assertEquals(
+      "doTestToFromJson failed for class " + id.getClass().getName(),
+      id, GSON.fromJson(GSON.toJson(id), EntityId.class)
+    );
   }
 
   @Test
@@ -201,6 +207,17 @@ public class EntityIdTest {
     for (Map.Entry<? extends EntityId, String> toJsonEntry : idsToJson.entrySet()) {
       Assert.assertEquals(toJsonEntry.getValue(), GSON.toJson(toJsonEntry.getKey()));
     }
+  }
+
+  @Test
+  public void testHierarchy() {
+    NamespaceId namespace = Ids.namespace("foo");
+    ApplicationId app = namespace.app("bar");
+    ProgramId program = app.flow("foo");
+
+    Assert.assertEquals(ImmutableList.of(namespace), ImmutableList.copyOf(namespace.getHierarchy()));
+    Assert.assertEquals(ImmutableList.of(namespace, app), ImmutableList.copyOf(app.getHierarchy()));
+    Assert.assertEquals(ImmutableList.of(namespace, app, program), ImmutableList.copyOf(program.getHierarchy()));
   }
 
   @Test

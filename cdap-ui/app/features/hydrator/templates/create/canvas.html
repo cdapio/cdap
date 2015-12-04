@@ -14,4 +14,11 @@
   the License.
 -->
 
-<my-dag ng-class="{'canvas-scroll': CanvasCtrl.state.setScroll}"> </my-dag>
+<my-dag ng-class="{'canvas-scroll': CanvasCtrl.state.setScroll}"
+  nodes="CanvasCtrl.nodes"
+  connections="CanvasCtrl.connections"
+  context="CanvasCtrl"
+  node-delete="CanvasCtrl.deleteNode",
+  template-popover="/assets/features/hydrator/templates/partial/schema-popover.html"
+  connection-popover-data="CanvasCtrl.generateSchemaOnEdge"
+></my-dag>

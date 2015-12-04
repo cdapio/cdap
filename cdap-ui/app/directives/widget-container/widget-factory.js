@@ -30,7 +30,7 @@ angular.module(PKG.name + '.commons')
           'class': 'form-control',
           'data-ng-trim': 'false',
           'ng-model': 'model',
-          placeholder: '{{myconfig.properties.default || ""}}'
+          placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
         }
       },
       'password': {
@@ -53,7 +53,7 @@ angular.module(PKG.name + '.commons')
         element: '<my-dsv></my-dsv>',
         attributes: {
           'ng-model': 'model',
-          'data-delimiter': '{{ myconfig.properties.delimiter }}',
+          'data-delimiter': '{{ myconfig.properties.delimiter || myconfig["widget-attributes"].delimiter }}',
           'data-type': 'csv'
         }
       },
@@ -61,7 +61,7 @@ angular.module(PKG.name + '.commons')
         element: '<my-dsv></my-dsv>',
         attributes: {
           'ng-model': 'model',
-          'data-delimiter': '{{ myconfig.properties.delimiter }}',
+          'data-delimiter': '{{ myconfig.properties.delimiter || myconfig["widget-attributes"].delimiter }}',
           'data-type': 'dsv'
         }
       },
@@ -69,7 +69,7 @@ angular.module(PKG.name + '.commons')
         element: '<my-json-textbox></my-json-textbox>',
         attributes: {
           'ng-model': 'model',
-          placeholder: 'myconfig.properties.default'
+          placeholder: 'myconfig.properties.default || myconfig["widget-attributes"].default'
         }
       },
       'javascript-editor': {
@@ -78,7 +78,7 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'config': 'myconfig',
           'mode': 'javascript',
-          placeholder: '{{myconfig.properties.default || ""}}'
+          placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
         }
       },
       'python-editor': {
@@ -87,7 +87,7 @@ angular.module(PKG.name + '.commons')
           'ng-model': 'model',
           'config': 'myconfig',
           'mode': 'python',
-          placeholder: '{{myconfig.properties.default || ""}}'
+          placeholder: '{{myconfig.properties.default || myconfig["widget-attributes"].default || ""}}'
         }
       },
       'schema': {
@@ -104,6 +104,14 @@ angular.module(PKG.name + '.commons')
           'data-config': 'myconfig'
         }
       },
+      'keyvalue-dropdown': {
+        element: '<my-key-value></my-key-value>',
+        attributes: {
+          'ng-model': 'model',
+          'data-config': 'myconfig',
+          'is-dropdown': 'true'
+        }
+      },
       'schedule': {
         element: '<my-schedule></my-schedule>',
         attributes: {
@@ -116,8 +124,8 @@ angular.module(PKG.name + '.commons')
         attributes: {
           'ng-model': 'model',
           'class': 'form-control',
-          'ng-options': 'item as item for item in myconfig.properties.values',
-          'ng-init': 'model = model.length ? model : myconfig.properties.default'
+          'ng-options': 'item as item for item in (myconfig.properties.values || myconfig["widget-attributes"].values)',
+          'ng-init': 'model = model.length ? model : (myconfig.properties.default || myconfig["widget-attributes"].default)'
         }
       },
       'stream-selector': {

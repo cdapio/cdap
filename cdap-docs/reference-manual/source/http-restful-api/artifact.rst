@@ -46,7 +46,7 @@ Several optional headers may also be specified:
      - Example
    * - **Artifact-Version**
      - The version of the artifact to add. If not specified, the ``Bundle-Version`` attribute
-       in the JAR file's Manfiest will be used.
+       in the JAR file's Manifest will be used.
      - ``1.0.0``
    * - **Artifact-Extends**
      - If the artifact contains plugins, describes which parent artifacts should have access to those plugins.

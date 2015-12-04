@@ -79,7 +79,7 @@ public class MdsValueKey {
     return keySplitter.getString();
   }
 
-  public static MDSKey getMDSKey(Id.NamespacedId targetId, BusinessMetadataDataset.MetadataType type,
+  public static MDSKey getMDSKey(Id.NamespacedId targetId, MetadataDataset.MetadataType type,
                                  @Nullable String key) {
     String targetType = KeyHelper.getTargetType(targetId);
     MDSKey.Builder builder = new MDSKey.Builder();

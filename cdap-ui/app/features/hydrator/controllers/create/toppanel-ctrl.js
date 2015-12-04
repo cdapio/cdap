@@ -14,187 +14,123 @@
  * the License.
  */
 
-angular.module(PKG.name + '.feature.hydrator')
-  .controller('TopPanelController', function(EventPipe, CanvasFactory, MyAppDAGService, $scope, $timeout, $bootstrapModal, $alert, $state, $stateParams, GLOBALS, HydratorErrorFactory, MyConsoleTabService, MyBottomPanelService) {
-
-    this.metadata = MyAppDAGService['metadata'];
-    function resetMetadata() {
-      this.metadata = MyAppDAGService['metadata'];
-    }
+class TopPanelController{
+  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory) {
     this.GLOBALS = GLOBALS;
-    this.metadataExpanded = false;
-    MyAppDAGService.registerResetCallBack(resetMetadata.bind(this));
-
-    if ($stateParams.name) {
-      this.metadata.name = $stateParams.name;
-    }
-    if ($stateParams.type) {
-      if ([GLOBALS.etlBatch, GLOBALS.etlRealtime].indexOf($stateParams.type) !== -1) {
-        this.metadata.template.type = $stateParams.type;
-      } else {
-        $alert({
-          type: 'danger',
-          content: 'Invalid template type. Has to be either ETLBatch or ETLRealtime.'
-        });
-      }
-    }
-    this.saveMetadata = function() {
-      this.metadata['name'] = this.pipelineName;
-      this.metadata['description'] = this.pipelineDescription;
-      this.metadataExpanded = false;
-    };
-
-    this.onEnterOnMetadata = function(event) {
-      // Save when user hits ENTER key.
-      if (event.keyCode === 13) {
-        this.metadataExpanded = false;
-      } else if (event.keyCode === 27) {
-        // Reset if the user hits ESC key.
-        this.resetMetadata();
-      }
-    };
-
-    this.openMetadata = function () {
-      this.metadata = MyAppDAGService['metadata'];
-      if (this.metadataExpanded) { return; }
-      EventPipe.emit('popovers.close');
-      var name = this.metadata.name;
-      var description = this.metadata.description;
-      this.metadataExpanded = true;
-      this.pipelineName = name;
-      this.pipelineDescription = description;
-    };
-
-    this.resetMetadata = function() {
-      this.metadata.name = this.pipelineName;
-      this.metadata.description = this.pipelineDescription;
-      this.metadataExpanded = false;
-    };
-
+    this.ConfigStore = ConfigStore;
+    this.ConfigActionsFactory = ConfigActionsFactory;
+    this.$bootstrapModal = $bootstrapModal;
+    this.ConsoleActionsFactory = ConsoleActionsFactory;
     this.canvasOperations = [
       {
-        name: 'Export'
+        name: 'Export',
+        fn: this.onExport.bind(this)
       },
       {
-        name: 'Save Draft'
+        name: 'Save Draft',
+        fn: this.onSaveDraft.bind(this)
       },
       {
-        name: 'Validate'
+        name: 'Validate',
+        fn: this.onValidate.bind(this)
       },
       {
-        name: 'Publish'
+        name: 'Publish',
+        fn: this.onPublish.bind(this)
       }
     ];
+    this.$stateParams = $stateParams;
+    this.setState();
+    ConfigStore.registerOnChangeListener(this.setState.bind(this));
+  }
+  setMetadata(metadata) {
+    this.state.metadata = metadata;
+  }
+  setArtifact(artifact) {
+    this.state.artifact = artifact;
+  }
+  setState() {
+    this.state = {
+      metadata: {
+        name: this.ConfigStore.getName(),
+        description: this.ConfigStore.getDescription()
+      },
+      artifact: this.ConfigStore.getArtifact()
+    };
+  }
 
-    this.onTopSideGroupItemClicked = function(group) {
-      EventPipe.emit('popovers.close');
-      var config;
-      switch(group.name) {
-        case 'Export':
-          config = angular.copy(MyAppDAGService.getConfigForBackend());
-          $bootstrapModal.open({
-            templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
-            size: 'lg',
-            keyboard: true,
-            controller: ['$scope', 'config', 'CanvasFactory', 'MyAppDAGService', function($scope, config, CanvasFactory, MyAppDAGService) {
-              $scope.config = JSON.stringify(config);
+  openMetadata() {
+    this.metadataExpanded = true;
+  }
+  resetMetadata() {
+    this.setState();
+    this.metadataExpanded = false;
+  }
+  saveMetadata() {
+    this.ConfigActionsFactory.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
+    this.metadataExpanded = false;
+  }
+  onEnterOnMetadata(event) {
+    // Save when user hits ENTER key.
+    if (event.keyCode === 13) {
+      this.saveMetadata();
+      this.metadataExpanded = false;
+    } else if (event.keyCode === 27) {
+      // Reset if the user hits ESC key.
+      this.resetMetadata();
+    }
+  }
 
-              $scope.export = function () {
-                CanvasFactory
-                  .exportPipeline(
-                    MyAppDAGService.getConfigForBackend(),
-                    MyAppDAGService.metadata.name,
-                    MyAppDAGService.nodes,
-                    MyAppDAGService.connections)
-                  .then(
-                    function success(result) {
-                      $scope.exportFileName = result.name;
-                      $scope.url = result.url;
-                      $scope.$on('$destroy', function () {
-                        URL.revokeObjectURL($scope.url);
-                      });
-                      // Clicking on the hidden download button. #hack.
-                      $timeout(function() {
-                        document.getElementById('pipeline-export-config-link').click();
-                      });
-                    }.bind(this),
-                    function error() {
-                      console.log('ERROR: Exporting ' + MyAppDAGService.metadata.name + ' failed.');
-                    }
-                  );
-              };
-            }],
-            resolve: {
-              config: function() {
-                return config;
-              }
-            }
+  onExport() {
+    let config = angular.copy(this.ConfigStore.getDisplayConfig());
+    this.$bootstrapModal.open({
+      templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
+      size: 'lg',
+      keyboard: true,
+      controller: ['$scope', 'config', '$timeout', 'exportConfig', function($scope, config, $timeout, exportConfig) {
+        $scope.config = JSON.stringify(config);
+        $scope.export = function () {
+          var blob = new Blob([JSON.stringify(exportConfig, null, 4)], { type: 'application/json'});
+          $scope.url = URL.createObjectURL(blob);
+          $scope.exportFileName = (exportConfig.name? exportConfig.name: 'noname') + '-' + exportConfig.artifact.name;
+          $scope.$on('$destroy', function () {
+            URL.revokeObjectURL($scope.url);
           });
-          break;
-        case 'Publish':
-          MyConsoleTabService.resetMessages();
-          MyAppDAGService
-            .save()
-            .then(
-              function sucess(pipeline) {
-                $alert({
-                  type: 'success',
-                  content: pipeline + ' successfully published.'
-                });
-                $state.go('hydrator.list');
-              },
-              function error(errorObj) {
-                console.info('ERROR: ', errorObj);
-              }.bind(this)
-            );
-          MyBottomPanelService.setIsCollapsed(false);
-          break;
-        case 'Save Draft':
-          MyConsoleTabService.resetMessages();
-          MyAppDAGService
-            .saveAsDraft()
-            .then(
-              function success() {
-                MyConsoleTabService.addMessage({
-                  type: 'success',
-                  content: MyAppDAGService.metadata.name + ' successfully saved as draft.'
-                });
-              },
-              function error() {
-                console.info('Failed saving as draft.');
-              }
-            );
-          MyBottomPanelService.setIsCollapsed(false);
-          break;
-        case 'Validate':
-          MyConsoleTabService.resetMessages();
-          this.validatePipeline();
-          MyBottomPanelService.setIsCollapsed(false);
-          break;
+          $timeout(function() {
+            document.getElementById('pipeline-export-config-link').click();
+          });
+        };
+      }],
+      resolve: {
+        config: () => config,
+        exportConfig: () => this.ConfigStore.getConfigForExport()
       }
-    };
+    });
+  }
+  onSaveDraft() {
+    var config = this.ConfigStore.getConfigForExport();
+    if (!config.name) {
+      this.ConsoleActionsFactory.addMessage({
+        type: 'error',
+        content: this.GLOBALS.en.hydrator.studio.nameError
+      });
+      return;
+    }
+    this.ConfigActionsFactory.saveAsDraft(config);
+  }
+  onValidate() {
+    this.ConsoleActionsFactory.resetMessages();
+    this.ConsoleActionsFactory.addMessage({
+      type: 'success',
+      content: 'This is a validate test'
+    });
+  }
+  onPublish() {
+    this.ConfigActionsFactory.publishPipeline();
+  }
+}
 
-    this.importFile = function(files) {
-      CanvasFactory
-        .importPipeline(files, MyAppDAGService.metadata.template.type)
-        .then(
-          MyAppDAGService.onImportSuccess.bind(MyAppDAGService),
-          function error(errorEvent) {
-            console.error('Upload config failed.', errorEvent);
-          }
-        );
-    };
+TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory'];
 
-    this.validatePipeline = function() {
-      var errors = HydratorErrorFactory.isModelValid(MyAppDAGService.nodes, MyAppDAGService.connections, MyAppDAGService.metadata, MyAppDAGService.getConfig());
-
-      if (angular.isObject(errors)) {
-        MyAppDAGService.notifyError(errors);
-      } else {
-        MyConsoleTabService.addMessage({
-          type: 'success',
-          content: MyAppDAGService.metadata.name + ' is valid.'
-        });
-      }
-    };
-  });
+angular.module(PKG.name + '.feature.hydrator')
+  .controller('TopPanelController', TopPanelController);

@@ -28,10 +28,11 @@ import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
 import co.cask.cdap.data2.metadata.publisher.NoOpMetadataChangePublisher;
-import co.cask.cdap.data2.metadata.service.BusinessMetadataStore;
-import co.cask.cdap.data2.metadata.service.DefaultBusinessMetadataStore;
+import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
@@ -53,7 +54,7 @@ public class BasicLineageWriterTest {
   @Test
   public void testWrites() throws Exception {
     Injector injector = getInjector();
-    BusinessMetadataStore businessMetadataStore = injector.getInstance(BusinessMetadataStore.class);
+    MetadataStore metadataStore = injector.getInstance(MetadataStore.class);
     LineageStore lineageStore = injector.getInstance(LineageStore.class);
     LineageWriter lineageWriter = new BasicLineageWriter(lineageStore);
 
@@ -64,7 +65,7 @@ public class BasicLineageWriterTest {
     Id.Run run2 = new Id.Run(program, RunIds.generate(20000).getId());
 
     // Tag stream
-    businessMetadataStore.addTags(stream, "stag1", "stag2");
+    metadataStore.addTags(MetadataScope.USER, stream, "stag1", "stag2");
     // Write access for run1
     lineageWriter.addAccess(run1, stream, AccessType.READ);
     Assert.assertEquals(ImmutableSet.of(program, stream), lineageStore.getEntitiesForRun(run1));
@@ -75,7 +76,7 @@ public class BasicLineageWriterTest {
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Add another tag to stream
-    businessMetadataStore.addTags(stream, "stag3");
+    metadataStore.addTags(MetadataScope.USER, stream, "stag3");
     // Write access for run1 again
     lineageWriter.addAccess(run1, stream, AccessType.READ);
     // The write should be no-op, and access time for run1 should not be updated
@@ -99,7 +100,7 @@ public class BasicLineageWriterTest {
             .annotatedWith(Names.named(DataSetsModules.BASIC_DATASET_FRAMEWORK))
             .to(InMemoryDatasetFramework.class);
           bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
-          bind(BusinessMetadataStore.class).to(DefaultBusinessMetadataStore.class);
+          bind(MetadataStore.class).to(DefaultMetadataStore.class);
         }
       }
     );

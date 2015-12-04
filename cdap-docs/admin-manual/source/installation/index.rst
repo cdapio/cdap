@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014 Cask Data, Inc.
+    :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -13,58 +13,41 @@ Installation
 .. toctree::
    :maxdepth: 1
    
-    Quick Start <quick-start>
-    Installation <installation>
-    Configuration <configuration>
-    Security <security>
-    Appendix: cdap-site.xml <cdap-site>
-    Appendix: cdap-security.xml <cdap-security>
+    Apache Ambari (HDP) <ambari/index>
+    Cloudera Manager (CDH) <cloudera/index>
+    Hadoop <hadoop/index>
+    MapR <mapr/index>
 
-  
-.. include:: installation-note.txt  
+**Distribution-specific** instructions are available, plus instructions for **generic Apache Hadoop** clusters:
 
-Covers **putting CDAP into production, with installation, configuration, and security setup.**
-Appendices cover the XML files used to configure the CDAP installation and security configurations.
+.. |ambari| replace:: **Apache Ambari (HDP):**
+.. _ambari: ambari/index.html
 
-.. |quickstart| replace:: **Quick Start:**
-.. _quickstart: quick-start.html
+- |ambari|_ Installing CDAP on `HDP (Hortonworks Data Platform) <http://hortonworks.com/>`__ clusters
+  managed with `Apache Ambari <https://ambari.apache.org/>`__.
 
-- |quickstart|_ A quick start guide that covers the **most-common case of installing and 
-  configuring CDAP.** Many people may find this sufficient; if your case isn't covered, the
-  :ref:`install` and :ref:`configuration` guides have additional details. Use this if you aren't using 
-  :ref:`Cloudera Manager <cloudera-configuring>` or :ref:`Apache Ambari <ambari-configuring>`.
+.. |cloudera| replace:: **Cloudera Manager (CDH):**
+.. _cloudera: cloudera/index.html
 
+- |cloudera|_ Installing CDAP on `CDH (Cloudera Data Hub) <http://www.cloudera.com/>`__ clusters
+  managed with `Cloudera Manager
+  <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__.
 
-.. |installation| replace:: **Installation:**
-.. _installation: installation.html
+.. |hadoop| replace:: **Hadoop:**
+.. _hadoop: hadoop/index.html
 
-- |installation|_ Covers **installing CDAP:** the system, network, and software
-  requirements; packaging options; and the instructions for installation of the
-  CDAP components so they will work with your existing Hadoop cluster. Use this if you aren't
-  using the :ref:`Quick Start guide <installation-quick-start>`, 
-  :ref:`Cloudera Manager <cloudera-configuring>`, or :ref:`Apache Ambari <ambari-configuring>`.
+- |hadoop|_ Installing CDAP on Hadoop systems, either **generic Apache Hadoop** distributions, 
+  CDH clusters *not* managed with Cloudera Manager, or HDP clusters *not* managed with Apache Ambari.
 
+.. |mapr| replace:: **MapR:**
+.. _mapr: mapr/index.html
 
-.. |configuration| replace:: **Configuration:**
-.. _configuration: configuration.html
+- |mapr|_ Installing CDAP on `MapR systems <https://www.mapr.com>`__.
 
-- |configuration|_ Covers **configuring CDAP:** once CDAP :ref:`is installed <install>`,
-  covers the configuration and verification of the CDAP components.
+.. |sdk| replace:: **CDAP Standalone SDK:**
+.. _sdk: ../developers-manual/getting-started/standalone/index.html
 
-
-.. |security| replace:: **Security:**
-.. _security: security.html
-
-- |security|_ CDAP supports **securing clusters using a perimeter security model.** This section
-  describes enabling security, configuring authentication, testing security, and includes 
-  an example configuration file.
-
-
-.. |appendices| replace:: **Appendices:**
-
-- |appendices| Two appendices cover the XML files used to configure the 
-  :ref:`CDAP installation <appendix-cdap-site.xml>` and the :ref:`security configuration.
-  <appendix-cdap-security.xml>`
+- |sdk|_ Installing the CDAP Standalone SDK on Linux, MacOS, and Windows systems. *(Developers' Manual)*
 
 
 .. rubric:: Putting CDAP into Production

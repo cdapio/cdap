@@ -143,11 +143,21 @@ public final class DatasetFrameworkTestUtil extends ExternalResource {
     return framework.getDatasetSpec(datasetInstanceId);
   }
 
+  /**
+   * @param tables the TransactionAwares over which the returned TransactionExecutor operates on.
+   * @return a TransactionExecutor that uses a dummy implementation of a TransactionSystemClient. Note that this
+   *         TransactionExecutor returns the same transaction ID across transactions, since it is using a dummy
+   *         implementation of TransactionSystemClient.
+   */
   public TransactionExecutor newTransactionExecutor(TransactionAware...tables) {
     Preconditions.checkArgument(tables != null);
     return new DefaultTransactionExecutor(new MinimalTxSystemClient(), tables);
   }
 
+  /**
+   * @param tables the TransactionAwares over which the returned TransactionExecutor operates on.
+   * @return a TransactionExecutor that uses an in-memory implementation of a TransactionSystemClient.
+   */
   public TransactionExecutor newInMemoryTransactionExecutor(TransactionAware...tables) {
     Preconditions.checkArgument(tables != null);
     return new DefaultTransactionExecutor(new InMemoryTxSystemClient(txManager), tables);

@@ -44,6 +44,7 @@ import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.reflect.TypeToken;
+import org.apache.twill.common.Cancellable;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -370,6 +371,17 @@ public class HttpHandlerGeneratorTest {
     @Override
     public final HttpServiceContext getServiceContext() {
       return new NoOpHttpServiceContext();
+    }
+
+    @Override
+    public Cancellable capture() {
+      threadLocal.remove();
+      return new Cancellable() {
+        @Override
+        public void cancel() {
+          // no-op
+        }
+      };
     }
 
     protected abstract T createHandler();

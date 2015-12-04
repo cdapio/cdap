@@ -63,8 +63,8 @@
 
     <div ng-if="AppsSectionCtrl.dataList.length === 0">
       <div class="clearfix">
-        <h3> Data </h3>
-        <p> You haven't deployed any datasets. Add one. </p>
+        <h3> Datasets </h3>
+        <p> You haven't deployed any datasets: add one </p>
       </div>
       <hr />
       <div class="text-left">
@@ -77,7 +77,7 @@
   </div>
   <div class="col-xs-12 col-md-6">
     <div ng-if="AppsSectionCtrl.apps.length > 0">
-      <h3> Apps </h3>
+      <h3> Applications </h3>
       <div class="row">
         <div class="col-xs-12 col-sm-3">
           <p ng-if="AppsSectionCtrl.apps.length < 5"> Showing {{ AppsSectionCtrl.apps.length }} of {{ AppsSectionCtrl.apps.length }}</p>
@@ -87,7 +87,7 @@
           <div class="btn-group">
             <a ui-sref="apps.list" class="btn btn-default">
               <span class="fa fa-list-ul"></span>
-               <span>All Apps</span>
+               <span>All Applications</span>
             </a>
             <a ui-sref="hydrator.list" class="btn btn-default">
               <span class="icon-hydrator"></span>
@@ -95,13 +95,13 @@
             </a>
             <div class="btn-group dropdown-right" dropdown>
               <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
-                Add App <span class="caret"></span>
+                Add Application <span class="caret"></span>
               </button>
               <ul class="dropdown-menu dropdown-menu-right" role="menu">
                 <li>
                   <my-file-select dropdown="true"
                                   data-button-icon="__"
-                                  data-button-label="Custom App"
+                                  data-button-label="Custom Application"
                                   on-file-select="AppsSectionCtrl.onFileSelected($files)">
                   </my-file-select>
                 </li>
@@ -124,7 +124,7 @@
             <p ng-bind="app.name"> </p>
             <div class="title-type-image">
               <span class="icon-fist"></span>
-              <span> App </span>
+              <span> Application </span>
             </div>
           </a>
           <a ui-sref="apps.detail.overview.status({appId: app.id})"
@@ -138,7 +138,7 @@
               </span>
               <span ng-if="AppsSectionCtrl.GLOBALS.etlRealtime === app.artifact.name">
                 <span class="icon-ETLRealtime"></span>
-                <span>ETL Realtime</span>
+                <span>ETL Real-time</span>
               </span>
             </div>
           </a>
@@ -148,18 +148,18 @@
 
     <div ng-if="AppsSectionCtrl.apps.length === 0">
       <div class="clearfix">
-        <h3> Apps </h3>
-        <p> You haven't deployed any apps. Add one. </p>
+        <h3> Applications </h3>
+        <p> You haven't deployed any applications: add one </p>
       </div>
       <hr />
       <div class="btn-group dropdown-right" dropdown>
         <button type="button" class="btn btn-default dropdown-toggle white-dropdown" dropdown-toggle>
-          Add App <span class="caret"></span>
+          Add Application <span class="caret"></span>
         </button>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
           <li>
             <my-file-select dropdown="true"
-                            data-button-label="Custom App"
+                            data-button-label="Custom Application"
                             data-button-icon="__"
                             on-file-select="AppsSectionCtrl.onFileSelected($files)">
             </my-file-select>

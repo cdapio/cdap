@@ -21,7 +21,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 
 /**
- * Helper methods for keys of {@link BusinessMetadataDataset}.
+ * Helper methods for keys of {@link MetadataDataset}.
  */
 public class KeyHelper {
   public static void addNamespaceIdToKey(MDSKey.Builder builder, Id.NamespacedId namespacedId) {

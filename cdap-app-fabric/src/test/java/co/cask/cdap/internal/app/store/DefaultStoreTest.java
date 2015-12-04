@@ -61,6 +61,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.store.DefaultNamespaceStore;
 import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Function;
 import com.google.common.base.Objects;
@@ -97,11 +98,13 @@ import java.util.concurrent.TimeUnit;
 public class DefaultStoreTest {
   private static final Gson GSON = new Gson();
   private static DefaultStore store;
+  private static DefaultNamespaceStore nsStore;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     store = injector.getInstance(DefaultStore.class);
+    nsStore = injector.getInstance(DefaultNamespaceStore.class);
   }
 
   @Before
@@ -149,7 +152,7 @@ public class DefaultStoreTest {
     store.setStart(programId2, run2.getId(), runIdToSecs(run2));
     store.setSuspend(programId2, run2.getId());
     store.removeAll(namespaceId);
-    store.deleteNamespace(namespaceId);
+    nsStore.delete(namespaceId);
     Assert.assertTrue(store.getRuns(programId2, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, Integer.MAX_VALUE).isEmpty());
   }
 
@@ -1070,7 +1073,7 @@ public class DefaultStoreTest {
                                            runningPrograms.subSet(1000L, 45 * 10000L))),
                         runIdsToTime(store.getRunningInRange(1, 45 * 10)));
   }
-  
+
   private void writeStartRecord(Id.Run run) {
     store.setStart(run.getProgram(), run.getId(), RunIds.getTime(RunIds.fromString(run.getId()), TimeUnit.SECONDS));
     Assert.assertNotNull(store.getRun(run.getProgram(), run.getId()));

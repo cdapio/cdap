@@ -6,15 +6,16 @@
 
 .. _cloudera-index:
 
-==================================================
+========
 Cloudera
-==================================================
+========
+
+Overview
+========
 
 .. toctree::
    :maxdepth: 1
    
-    Configuring and Installing <configuring>
-    Add Service Wizard <step-by-step-cloudera>
     Ingestion and Exploration <ingesting>
 
 .. include:: /_includes/cloudera-certified.rst
@@ -44,28 +45,16 @@ results.
 
 **CDAP** |bold-version| is certified on Cloudera 5.
 
-.. |cloudera-configuring| replace:: **Configuring and Installing:**
-.. _cloudera-configuring: configuring.html
 
-- |cloudera-configuring|_ Configuring and installing CDAP using Cloudera Manager
+.. |cloudera-install| replace:: **Configuring and Installing:**
+.. _cloudera-install: ../../../admin-manual/installation/cloudera/index.html
 
-
-.. |cloudera-add-service| replace:: **Add Service Wizard:**
-.. _cloudera-add-service: step-by-step-cloudera.html
-
-- |cloudera-add-service|_ A **step-by-step guide** to installing CDAP using the Cloudera Manager *Add Service* Wizard
-
+- |cloudera-install|_ Configuring and installing CDAP using **Cloudera Manager** *(Administration Manual)*
 
 .. |cloudera-ingesting| replace:: **Ingesting and Exploration:**
 .. _cloudera-ingesting: ingesting.html
 
 - |cloudera-ingesting|_ Ingest and explore data using **Impala**
-
-
-.. .. |cloudera-faq| replace:: **FAQ:**
-.. .. _cloudera-faq: faq.html
-
-.. .. - |cloudera-faq|_ for Cloudera and Impala
 
 
 .. rubric:: CDAP and Cloudera Architecture Schematic

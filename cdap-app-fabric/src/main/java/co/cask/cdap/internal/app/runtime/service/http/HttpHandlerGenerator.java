@@ -717,6 +717,8 @@ final class HttpHandlerGenerator {
 
         mg.mark(hasContentConsumer);
 
+        // IMPORTANT: If body consumer is used, calling wrapContentConsumer must be
+        // the last thing to do in this generated method since the current context will be captured
         // return wrapContentConsumer(wrappedResponder, httpContentConsumer, txContext);
         mg.loadThis();
         mg.loadLocal(contentConsumer);

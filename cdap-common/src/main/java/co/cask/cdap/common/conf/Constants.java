@@ -489,6 +489,7 @@ public final class Constants {
       public static final String COMPONENT = "cmp";
       public static final String HANDLER = "hnd";
       public static final String METHOD = "mtd";
+      public static final String THREAD = "thd";
 
       public static final String STREAM = "str";
 
@@ -674,11 +675,23 @@ public final class Constants {
     public static final String SSL_ENABLED = "ssl.enabled";
 
     /**
+     * Authorization.
+     */
+    public static final class Authorization {
+      /** Enables authorization */
+      public static final String ENABLED = "security.authorization.enabled";
+      /** AuthorizationPlugin class name */
+      public static final String HANDLER_CLASS = "security.authorization.pluginClassName";
+    }
+
+    /**
      * Headers for security.
      */
     public static final class Headers {
       /** Internal user ID header passed from Router to downstream services */
       public static final String USER_ID = "CDAP-UserId";
+      /** User IP header passed from Router to downstream services */
+      public static final String USER_IP = "CDAP-UserIP";
     }
 
     /**

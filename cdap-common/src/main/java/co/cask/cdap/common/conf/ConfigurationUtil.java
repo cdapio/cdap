@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Has methods to set/get objects into Configuration object.
@@ -77,7 +78,10 @@ public final class ConfigurationUtil {
    *
    * @return the {@link Configuration} instance provided
    */
-  public static Configuration setAll(Map<String, String> map, Configuration conf) {
+  public static Configuration setAll(@Nullable Map<String, String> map, Configuration conf) {
+    if (map == null) {
+      return conf;
+    }
     for (Map.Entry<String, String> entry : map.entrySet()) {
       conf.set(entry.getKey(), entry.getValue());
     }

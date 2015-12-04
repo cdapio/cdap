@@ -15,366 +15,443 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyAppDAGService, myHelpers, MyDAGFactory, $window, $popover, $rootScope, EventPipe, GLOBALS, MyNodeConfigService, HydratorErrorFactory, PipelineNodeConfigActionFactory) {
-    this.plugins = $scope.config || [];
-    this.MyAppDAGService = MyAppDAGService;
-    this.isDisabled = $scope.isDisabled;
-    MyAppDAGService.setIsDisabled(this.isDisabled);
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory, $rootScope, HydratorService, $popover) {
+
+    var vm = this;
+
+    var endpoints = [];
+    var sourceSettings = angular.copy(MyDAGFactory.getSettings(false).source);
+    var sinkSettings = angular.copy(MyDAGFactory.getSettings(false).sink);
+    var transformSourceSettings = angular.copy(MyDAGFactory.getSettings(false).transformSource);
+    var transformSinkSettings = angular.copy(MyDAGFactory.getSettings(false).transformSink);
+
+    var dragged = false;
+    var canvasDragged = false;
+
+    vm.isDisabled = $scope.isDisabled;
 
     var popovers = [];
-    var popoverScopes = [];
 
-    this.instance = null;
+    vm.scale = 1.0;
 
-    this.resetPluginSelection = function(plugin) {
-      angular.forEach(this.plugins, function(plug) {
-        plug.selected = false;
-        if (plug.id === plugin.id) {
-          plug.selected = true;
+    vm.panning = {
+      style: {
+        'top': 0,
+        'left': 0
+      },
+      top: 0,
+      left: 0
+    };
+
+    /*
+    FIXME: This should be fixed. Right now the assumption is to update
+     the store before my-dag directive is rendered. What happens if we get the
+     data after the rendering? The init function is never called or the DAG is not
+     rendered based on the data.
+
+     Right now there is a cycle which prevents us from listening to the NodeStore
+     changes. The infinite recurrsion happens like this,
+     Assuming we have this
+     NodesStore.registerChangeListener(init);
+     1. User adds a connection in view
+     2. 'connection' event is fired by jsplumb
+     3. On connection event we call 'formatConnections' function
+     4. 'formatConnections' constructs the 'connections' array and sets it to NodesStore
+     5. Now NodesStore fires an update to changelisteners.
+     6. 'init' function gets called.
+     6. 'init' function again programmatically connects all the nodes and sets it to NodesStore
+     7. Control goes to step 5
+     7. Hence the loop.
+
+     We need to be able to separate render of graph from data and incremental user interactions.
+     - Programmatically it should be possible to provide data and should be able to ask dag to render it at any time post-rendering of the directive
+     - User should be able interact with the dag and add incremental changes.
+    */
+    function init() {
+      $scope.nodes = NodesStore.getNodes();
+      $scope.connections = NodesStore.getConnections();
+
+      $timeout(function () {
+        // centering DAG
+        if ($scope.nodes.length) {
+          var margins = $scope.getGraphMargins($scope.nodes);
+          $timeout(function () { vm.instance.repaintEverything(); });
+
+          vm.scale = margins.scale;
         }
-        this.highlightRequiredFields(plug);
-      }.bind(this));
-    };
 
-    this.addPlugin = function addPlugin(config, type) {
-      closeAllPopovers();
-      var plugin;
-      this.plugins.push(angular.extend({
-        icon: MyDAGFactory.getIcon(config.name)
-      }, config));
+        addEndpoints();
 
-      plugin = this.plugins[this.plugins.length-1];
-      this.highlightRequiredFields(plugin);
-      $timeout(drawNode.bind(this, config.id, type));
-      $timeout(this.instance.repaintEverything);
-    };
-
-    this.highlightRequiredFields = function(plugin) {
-      if (!angular.isObject(plugin)) {
-        angular.forEach(MyAppDAGService.nodes, function(plug, pluginId) {
-          if (plugin === pluginId) {
-            plugin = plug;
+        angular.forEach($scope.connections, function (conn) {
+          var sourceId = conn.source.indexOf('transform') !== -1 ? 'Left' + conn.source : conn.source;
+          var targetId = conn.target.indexOf('transform') !== -1 ? 'Right' + conn.target : conn.target;
+          var connObj = {
+            uuids: [sourceId, targetId]
+          };
+          if (vm.isDisabled) {
+            connObj.detachable = false;
           }
+          vm.instance.connect(connObj);
         });
+
+        setZoom(vm.scale, vm.instance);
+      });
+
+    }
+
+    vm.zoomIn = function () {
+      closeAllPopovers();
+      vm.scale += 0.1;
+      setZoom(vm.scale, vm.instance);
+    };
+
+    vm.zoomOut = function () {
+      closeAllPopovers();
+      if (vm.scale <= 0.2) { return; }
+
+      vm.scale -= 0.1;
+      setZoom(vm.scale, vm.instance);
+    };
+
+
+    /**
+     * Utily function from jsPlumb
+     * https://jsplumbtoolkit.com/community/doc/zooming.html
+     *
+     * slightly modified to fit our needs
+     **/
+    function setZoom(zoom, instance, transformOrigin, el) {
+      if ($scope.nodes.length === 0) { return; }
+
+      transformOrigin = transformOrigin || [ 0.5, 0.5 ];
+      instance = instance || jsPlumb;
+      el = el || instance.getContainer();
+      var p = [ 'webkit', 'moz', 'ms', 'o' ],
+          s = 'scale(' + zoom + ')',
+          oString = (transformOrigin[0] * 100) + '% ' + (transformOrigin[1] * 100) + '%';
+
+      for (var i = 0; i < p.length; i++) {
+        el.style[p[i] + 'Transform'] = s;
+        el.style[p[i] + 'TransformOrigin'] = oString;
       }
 
-      HydratorErrorFactory.isValidPlugin(plugin);
+      el.style['transform'] = s;
+      el.style['transformOrigin'] = oString;
 
-      this.plugins.forEach(function(p) {
-        if (!p._backendProperties) {
-          p.requiredFieldCount = '!';
-          p.error = {};
-          p.error.message = GLOBALS.en.hydrator.studio.pluginDoesNotExist + p.name;
-          p.warning = false;
+      instance.setZoom(zoom);
+    }
+
+
+    function addEndpoints() {
+      angular.forEach($scope.nodes, function (node) {
+        if (endpoints.indexOf(node.id) !== -1) {
           return;
         }
+        endpoints.push(node.id);
 
-        if (p.id === plugin.id) {
-          if (plugin.valid) {
-            p.requiredFieldCount = 0;
-            p.error = false;
-            p.warning = false;
-          } else {
-            p.requiredFieldCount = plugin.requiredFieldCount;
-            p.error = {};
-            p.error.message = 'Missing required fields';
-            p.warning = true;
-          }
-          p.properties = plugin.properties;
-        }
-      });
-    };
-
-    this.removePlugin = function(index, nodeId) {
-      closeAllPopovers();
-
-      this.instance.detachAllConnections(nodeId);
-      this.instance.remove(nodeId);
-      this.plugins.splice(index, 1);
-      MyAppDAGService.removeNode(nodeId);
-      MyAppDAGService.setConnections(this.instance.getConnections());
-      PipelineNodeConfigActionFactory.removePlugin();
-    };
-
-    $scope.isCollapsed = true;
-
-    // Need to move this to the controller that is using this directive.
-    this.onPluginClick = function(plugin) {
-      closeAllPopovers();
-      angular.forEach(this.plugins, function(plug) {
-        plug.selected = false;
-      });
-
-      plugin.selected = true;
-      PipelineNodeConfigActionFactory.choosePlugin(plugin);
-    };
-
-    function errorNotification(errObj) {
-      this.canvasError = [];
-      if (errObj.canvas) {
-        this.canvasError = errObj.canvas;
-      }
-
-      angular.forEach(this.plugins, function (plugin) {
-        if (errObj[plugin.id]) {
-          plugin.error = errObj[plugin.id];
-          plugin.warning = false;
-        } else if (plugin.error) {
-          // The nodes could just lie there on the canvas without connected.
-          // In such cases there might still be some required fields not set in those nodes.
-          // we would still want to show them as a warning.
-          HydratorErrorFactory.isValidPlugin(plugin);
-          if (plugin.valid) {
-            delete plugin.error;
-          } else {
-            plugin.warning = false;
-          }
+        var type = GLOBALS.pluginConvert[node.type];
+        switch(type) {
+          case 'source':
+            vm.instance.addEndpoint(node.id, sourceSettings, {uuid: node.id});
+            break;
+          case 'sink':
+            vm.instance.addEndpoint(node.id, sinkSettings, {uuid: node.id});
+            break;
+          case 'transform':
+            // Need to id each end point so that it can be used later to make connections.
+            vm.instance.addEndpoint(node.id, transformSourceSettings, {uuid: 'Left' + node.id});
+            vm.instance.addEndpoint(node.id, transformSinkSettings, {uuid: 'Right' + node.id});
+            break;
         }
       });
     }
 
-    MyAppDAGService.errorCallback(errorNotification.bind(this));
+    function transformCanvas (top, left) {
+      vm.panning.top += top;
+      vm.panning.left += left;
 
-    this.closeCanvasError = function () {
-      this.canvasError = [];
-    };
+      vm.panning.style = {
+        'top': vm.panning.top + 'px',
+        'left': vm.panning.left + 'px'
+      };
+    }
 
-    this.drawGraph = function() {
-      var graph = MyDAGFactory.getGraph(this.plugins, MyAppDAGService.metadata.template.type);
-      var nodes = graph.nodes()
-        .map(function(node) {
-          return graph.node(node);
+    function formatConnections() {
+      closeAllPopovers();
+      var connections = [];
+      angular.forEach(vm.instance.getConnections(), function (conn) {
+        connections.push({
+          source: conn.sourceId,
+          target: conn.targetId
         });
-      var margins, marginLeft;
-      margins = $scope.getGraphMargins(this.plugins);
-      marginLeft = margins.left;
-      this.instance.endpointAnchorClassPrefix = '';
-      this.plugins.forEach(function(plugin) {
-        plugin.icon = MyDAGFactory.getIcon(plugin.name);
-        if (this.isDisabled) {
-          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, marginLeft, 0);
-        } else {
-          plugin.style = plugin.style || MyDAGFactory.generateStyles(plugin.id, nodes, marginLeft, 50);
-        }
-        drawNode.call(this, plugin.id, plugin.type);
-      }.bind(this));
-
-      drawConnections.call(this);
-
-      mapSchemas.call(this);
-
-      $timeout(this.instance.repaintEverything);
-    };
-
-    function drawNode(id, type) {
-      var sourceSettings = angular.copy(MyDAGFactory.getSettings(this.isDisabled).source),
-          sinkSettings = angular.copy(MyDAGFactory.getSettings(this.isDisabled).sink);
-      var artifactType = GLOBALS.pluginTypes[MyAppDAGService.metadata.template.type];
-      switch(type) {
-        case artifactType.source:
-          this.instance.addEndpoint(id, sourceSettings, {uuid: id});
-          break;
-        case artifactType.sink:
-          this.instance.addEndpoint(id, sinkSettings, {uuid: id});
-          break;
-        case artifactType.transform:
-          sourceSettings.anchor = [ 0.5, 1, 1, 0, 26, -43, 'transformAnchor'];
-          sinkSettings.anchor = [ 0.5, 1, -1, 0, -26, -43, 'transformAnchor'];
-          // Need to id each end point so that it can be used later to make connections.
-          this.instance.addEndpoint(id, sourceSettings, {uuid: 'Left' + id});
-          this.instance.addEndpoint(id, sinkSettings, {uuid: 'Right' + id});
-          break;
-      }
-      if (!this.isDisabled) {
-        this.instance.draggable(id, {
-          drag: function (evt) { return dragnode.call(this, evt); }.bind(this)
-        });
-      }
-      // Super hacky way of restricting user to not scroll beyond certain top and left.
-      function dragnode(e) {
-        closeAllPopovers();
-
-        var returnResult = true;
-        if (e.pos[1] < 0) {
-          e.e.preventDefault();
-          e.el.style.top = '10px';
-          returnResult = false;
-        }
-        if (e.pos[0] < 0) {
-          e.e.preventDefault();
-          e.el.style.left = '10px';
-          returnResult = false;
-        }
-        MyAppDAGService.nodes[e.el.id].style = {top: e.el.style.top, left: e.el.style.left};
-        return returnResult;
-      }
-    }
-
-    function drawConnections() {
-      var i;
-      var curr, next;
-
-      var connections = MyAppDAGService.connections;
-      for(i=0; i<connections.length; i++) {
-        if (connections[i].source.indexOf('transform') !== -1) {
-          curr = 'Left' + connections[i].source;
-        } else {
-          curr = connections[i].source;
-        }
-        if (connections[i].target.indexOf('transform') !== -1) {
-          next = 'Right' + connections[i].target;
-        } else {
-          next = connections[i].target;
-        }
-
-        var connObj = {
-          uuids: [curr, next]
-        };
-
-        if (this.isDisabled) {
-          connObj.detachable = false;
-        }
-        this.instance.connect(connObj);
-      }
-    }
-
-    function mapSchemas() {
-      var connections = MyAppDAGService.connections;
-      var nodes = MyAppDAGService.nodes;
-      connections.forEach(function(connection) {
-        var sourceNode = nodes[connection.source];
-        var targetNode = nodes[connection.target];
-        var sourceOutputSchema = myHelpers.objectQuery(sourceNode, 'properties', 'schema');
-        var targetOuputSchema = myHelpers.objectQuery(targetNode, 'properties', 'schema');
-        if (sourceOutputSchema) {
-          sourceNode.outputSchema = sourceOutputSchema;
-        }
-        if (targetOuputSchema) {
-          targetNode.outputSchema = targetOuputSchema;
-        } else {
-          targetNode.outputSchema = targetNode.outputSchema || sourceNode.outputSchema;
-        }
       });
+      NodesActionsFactory.setConnections(connections);
     }
 
-    function closeAllPopovers() {
-      angular.forEach(popovers, function (popover) {
-        popover.hide();
-      });
-    }
+    function connectionClick (connection) {
+      if (!connection) {
+        return;
+      }
 
-    EventPipe.on('popovers.close', function () {
-      closeAllPopovers();
-    });
-
-    EventPipe.on('popovers.reset', function () {
-      closeAllPopovers();
-
-      popovers = [];
-
-      angular.forEach(popoverScopes, function (s) {
-        s.$destroy();
-      });
-
-    });
-
-    function createPopover(connection) {
       var label = angular.element(connection.getOverlay('label').getElement());
-
       var scope = $rootScope.$new();
-      popoverScopes.push(scope);
+
+      scope.data = $scope.connectionPopoverData().call($scope.context, connection.sourceId, connection.targetId);
 
       var popover = $popover(label, {
         trigger: 'manual',
         placement: 'auto',
         target: label,
-        template: '/assets/features/hydrator/templates/partial/schema-popover.html',
+        templateUrl: $scope.templatePopover,
         container: 'main',
         scope: scope
       });
 
       popovers.push(popover);
 
-      connection.bind('click', function () {
-        scope.schema = MyAppDAGService.formatSchema(MyAppDAGService.nodes[connection.sourceId]);
+      $timeout(function() {
         popover.show();
       });
+
+      $scope.$on('$destroy', function () {
+        scope.$destroy();
+      });
     }
 
-    $scope.$on('$destroy', function() {
-      MyNodeConfigService.unRegisterPluginSaveCallback($scope.$id);
-      PipelineNodeConfigActionFactory.reset();
-      closeAllPopovers();
-      angular.forEach(popoverScopes, function (s) {
-        s.$destroy();
-      });
+    function closeAllPopovers() {
+      if (popovers.length === 0) { return; }
 
-      this.instance.reset();
-      MyAppDAGService.resetToDefaults();
-    }.bind(this));
+      angular.forEach(popovers, function (popover) {
+        popover.hide();
+      });
+    }
 
     jsPlumb.ready(function() {
+      var dagSettings = MyDAGFactory.getSettings().default;
 
       jsPlumb.setContainer('dag-container');
-      this.instance = jsPlumb.getInstance();
-      // Overrides JSPlumb's prefixed endpoint classes. This variable will be changing in the next version of JSPlumb
-      this.instance.endpointAnchorClassPrefix = '';
+      vm.instance = jsPlumb.getInstance(dagSettings);
 
+      init();
+
+      // Making canvas draggable
+      vm.secondInstance = jsPlumb.getInstance();
+      vm.secondInstance.draggable('diagram-container', {
+        stop: function (e) {
+          e.el.style.left = '0px';
+          e.el.style.top = '0px';
+          transformCanvas(e.pos[1], e.pos[0]);
+        },
+        start: function () {
+          canvasDragged = true;
+          closeAllPopovers();
+        }
+      });
+
+      vm.instance.bind('connection', formatConnections);
+      vm.instance.bind('connectionDetached', formatConnections);
+
+      vm.instance.bind('click', connectionClick);
+
+
+
+      // $scope.$watchCollection('nodes', function () {
+      //   console.log('nodes', $scope.nodes);
+      //   $timeout(function () {
+      //     var nodes = document.querySelectorAll('.box');
+      //     addEndpoints();
+      //     vm.instance.draggable(nodes, {
+      //       start: function () { dragged = true; },
+      //       stop: function () { $timeout(function () { vm.instance.repaintEverything(); }); }
+      //     });
+      //   });
+      // });
+
+      // This should be removed once the node config is using FLUX
+      $scope.$watch('nodes', function () {
+        closeAllPopovers();
+
+        $timeout(function () {
+          var nodes = document.querySelectorAll('.box');
+          addEndpoints();
+
+          if (!vm.isDisabled) {
+            vm.instance.draggable(nodes, {
+              start: function () {
+                dragged = true;
+                closeAllPopovers();
+              },
+              stop: function (dragEndEvent) {
+                var config = {
+                  _uiPosition: {
+                    top: dragEndEvent.el.style.top,
+                    left: dragEndEvent.el.style.left
+                  }
+                };
+                NodesActionsFactory.updateNode(dragEndEvent.el.id, config);
+                $timeout(function () { vm.instance.repaintEverything(); });
+              }
+            });
+          }
+        });
+
+        angular.forEach($scope.nodes, function (plugin) {
+          plugin.requiredFieldCount = HydratorErrorFactory.countRequiredFields(plugin);
+          if (plugin.requiredFieldCount > 0) {
+            plugin.error = {
+              message: GLOBALS.en.hydrator.studio.genericMissingRequiredFieldsError
+            };
+          } else {
+            plugin.error = false;
+          }
+        });
+
+      }, true);
+
+      $scope.$watchCollection('connections', function () {
+        console.log('ChangeConnection', $scope.connections);
+      });
+
+      // This is needed to redraw connections and endpoints on browser resize
       angular.element($window).on('resize', function() {
-        this.instance.repaintEverything();
-      }.bind(this));
+        vm.instance.repaintEverything();
+      });
 
-      this.instance.importDefaults(MyDAGFactory.getSettings(this.isDisabled).default);
+    });
 
-      // Need to move this to the controller that is using this directive.
-      this.instance.bind('connection', function (con) {
-        if (!this.isDisabled) {
-          createPopover(con.connection);
+    // var selectedNode = null;
+
+    vm.clearNodeSelection = function () {
+      if (canvasDragged) {
+        canvasDragged = false;
+        return;
+      }
+
+      vm.instance.clearDragSelection();
+      angular.forEach($scope.nodes, function (node) {
+        node.selected = false;
+      });
+    };
+
+    function checkSelection() {
+      vm.instance.clearDragSelection();
+
+      var selected = [];
+      angular.forEach($scope.nodes, function (node) {
+        if (node.selected) {
+          selected.push(node.id);
+        }
+      });
+
+      vm.instance.addToDragSelection(selected);
+    }
+
+    vm.onNodeClick = function(event, node) {
+      event.stopPropagation();
+
+      if (dragged) {
+        dragged = false;
+        return;
+      }
+
+      if ((event.ctrlKey || event.metaKey)) {
+        node.selected = !node.selected;
+        NodesActionsFactory.resetSelectedNode();
+
+        if (node.selected) {
+          checkSelection();
+        } else {
+          vm.instance.removeFromDragSelection(node.id);
+        }
+      } else {
+        vm.clearNodeSelection();
+        node.selected = true;
+        NodesActionsFactory.selectNode(node.id);
+      }
+
+      // $scope.nodeClick.call($scope.context, node);
+    };
+
+    vm.onNodeDelete = function (event, node) {
+      event.stopPropagation();
+      closeAllPopovers();
+      NodesActionsFactory.removeNode(node.id);
+      vm.instance.remove(node.id);
+    };
+
+    vm.cleanUpGraph = function () {
+      if ($scope.nodes.length === 0) { return; }
+
+      var graphNodes = MyDAGFactory.getGraphLayout($scope.nodes, $scope.connections)._nodes;
+
+      angular.forEach($scope.nodes, function (node) {
+        var location = graphNodes[node.id];
+        node._uiPosition = {
+          left: location.x + 'px',
+          top: location.y + 'px'
+        };
+      });
+
+      vm.panning.top = 0;
+      vm.panning.left = 0;
+
+      vm.panning.style = {
+        'top': vm.panning.top + 'px',
+        'left': vm.panning.left + 'px'
+      };
+
+      var margins = $scope.getGraphMargins($scope.nodes);
+      vm.scale = margins.scale;
+      $timeout(function () { vm.instance.repaintEverything(); });
+      setZoom(vm.scale, vm.instance);
+    };
+
+    vm.locateNodes = function () {
+      var minLeft = null;
+      var leftMostNode = null;
+
+      angular.forEach($scope.nodes, function (node) {
+        var left = parseInt(node._uiPosition.left, 10);
+
+        if (node._uiPosition.left.includes('vw')) {
+          left = parseInt(left, 10)/100 * document.documentElement.clientWidth;
+          node._uiPosition.left = left + 'px';
         }
 
-        // Whenever there is a change in the connection just copy the entire array
-        // We never know if a connection was altered or removed. We don't want to 'Sync'
-        // between jsPlumb's internal connection array and ours (pointless)
-        MyAppDAGService.setConnections(this.instance.getConnections());
-      }.bind(this));
-    }.bind(this));
+        if (minLeft === null || left < minLeft) {
+          minLeft = left;
+          leftMostNode = node;
+        }
+      });
 
-    function resetComponent() {
+      var offsetLeft = parseInt(leftMostNode._uiPosition.left, 10);
+      var offsetTop = parseInt(leftMostNode._uiPosition.top, 10);
 
-        angular.forEach(this.instance.getConnections(), function (connection) {
-          connection.unbind('click');
-        });
-        popovers = [];
+      angular.forEach($scope.nodes, function (node) {
+        var left = parseInt(node._uiPosition.left, 10);
+        var top = parseInt(node._uiPosition.top, 10);
 
-        this.instance.reset();
-        this.instance = jsPlumb.getInstance();
-        this.instance.importDefaults(MyDAGFactory.getSettings(this.isDisabled).default);
-        this.instance.bind('connection', function (con) {
-          if (!this.isDisabled) {
-            createPopover(con.connection);
-          }
+        node._uiPosition = {
+          left: (left - offsetLeft + 50) + 'px',
+          top: (top - offsetTop + 150) + 'px'
+        };
+      });
 
-          MyAppDAGService.setConnections(this.instance.getConnections());
-        }.bind(this));
-        this.instance.bind('connectionDetached', function(obj) {
-          obj.connection.unbind('click');
-          MyAppDAGService.setConnections(this.instance.getConnections());
-        }.bind(this));
-        this.plugins = [];
-        angular.forEach(MyAppDAGService.nodes, function(node) {
-          this.plugins.push(node);
-          if (node._backendProperties) {
-            this.highlightRequiredFields(this.plugins[this.plugins.length -1]);
-          }
-        }.bind(this));
-        $timeout(this.drawGraph.bind(this));
-    }
+      $timeout(function () { vm.instance.repaintEverything(); });
 
-    if (MyAppDAGService.nodes) {
-      resetComponent.call(this);
-    }
+      vm.panning.top = 0;
+      vm.panning.left = 0;
 
-    MyNodeConfigService.registerPluginSaveCallback($scope.$id, this.highlightRequiredFields.bind(this));
-    MyAppDAGService.registerCallBack(this.addPlugin.bind(this));
-    MyAppDAGService.registerResetCallBack(resetComponent.bind(this));
+      vm.panning.style = {
+        'top': vm.panning.top + 'px',
+        'left': vm.panning.left + 'px'
+      };
+    };
+
+
+    $scope.$on('$destroy', function () {
+      NodesActionsFactory.resetNodesAndConnections();
+      NodesStore.reset();
+    });
+
   });

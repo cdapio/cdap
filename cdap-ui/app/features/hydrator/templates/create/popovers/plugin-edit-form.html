@@ -30,44 +30,43 @@
 
 
 -->
-<div ng-controller="PluginEditController as PluginEditController">
-  <div class="bottompanel-header clearfix" ng-init="showinfo = false">
-    <div class="pull-left">
+
+<div class="bottompanel-header clearfix" ng-init="showinfo = false">
+  <div class="pull-left">
+    <h3>
+      {{NodeConfigController.state.plugin.name}} Properties
+      <small class="text-danger" ng-if="NodeConfigController.state.noConfigMessage">({{NodeConfigController.state.noConfigMessage}})</small>
+    </h3>
+    <p>{{NodeConfigController.state.plugin.description}}</p>
+  </div>
+</div>
+
+<div class="bottompanel-body" ng-class="{'modal-sink': NodeConfigController.state.plugin.type === 'sink'}">
+  <div ng-show="!showinfo">
+    <div ng-if="NodeConfigController.state.configfetched">
+
+      <div ng-if="NodeConfigController.state.noproperty !== 0">
+        <div ng-if="NodeConfigController.state.noconfig" ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-noconfig-form.html'"></div>
+
+        <div ng-if="(NodeConfigController.state.configfetched && !NodeConfigController.state.noconfig)">
+          <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-config-form.html'"></div>
+        </div>
+      </div>
+
+      <div ng-if="NodeConfigController.state.noproperty === 0">
+        <div class="well well-lg">
+          <p>No Properties for this Plugin.</p>
+        </div>
+      </div>
+    </div>
+
+    <div ng-if="!NodeConfigController.state.configfetched">
       <h3>
-        {{plugin.name}} Properties
-        <small class="text-danger" ng-if="PluginEditController.noConfigMessage">({{PluginEditController.noConfigMessage}})</small>
+        <span class="fa fa-spinner fa-spin"></span>
+        <span>Loading...</span>
       </h3>
-      <p>{{plugin.description}}</p>
-    </div>
-  </div>
-
-  <div class="bottompanel-body" ng-class="{'modal-sink': plugin.type === 'sink'}">
-    <div ng-show="!showinfo">
-      <div ng-if="PluginEditController.configfetched">
-
-        <div ng-if="PluginEditController.noproperty !== 0">
-          <div ng-if="PluginEditController.noconfig" ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-noconfig-form.html'"></div>
-
-          <div ng-if="(PluginEditController.configfetched && !PluginEditController.noconfig)">
-            <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-config-form.html'"></div>
-          </div>
-        </div>
-
-        <div ng-if="PluginEditController.noproperty === 0">
-          <div class="well well-lg">
-            <p>No Properties for this Plugin.</p>
-          </div>
-        </div>
-      </div>
-
-      <div ng-if="!PluginEditController.configfetched">
-        <h3>
-          <span class="fa fa-spinner fa-spin"></span>
-          <span>Loading...</span>
-        </h3>
-      </div>
-
     </div>
 
   </div>
+
 </div>

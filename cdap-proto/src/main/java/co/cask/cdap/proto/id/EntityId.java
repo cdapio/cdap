@@ -24,6 +24,7 @@ import com.google.common.collect.Iterables;
 
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.Vector;
 
 /**
  * Uniquely identifies a particular instance of an element.
@@ -63,6 +64,7 @@ public abstract class EntityId implements IdCompatible {
   private static final String IDSTRING_PART_SEPARATOR = ".";
 
   private final EntityType entity;
+  private Vector<EntityId> hierarchy;
 
   protected EntityId(EntityType entity) {
     this.entity = entity;
@@ -78,6 +80,25 @@ public abstract class EntityId implements IdCompatible {
     EntityType type = EntityType.valueOfOldIdClass(oldIdClass);
     EntityId id = fromString(string, type.getIdClass());
     return (T) id.toId();
+  }
+
+  public static <T extends EntityId> T fromString(String string) {
+    String[] typeAndId = string.split(IDSTRING_TYPE_SEPARATOR, 2);
+    Preconditions.checkArgument(
+      typeAndId.length == 2,
+      "Expected type separator '%s' to be in the ID string: %s", IDSTRING_TYPE_SEPARATOR, string);
+
+    String typeString = typeAndId[0];
+    EntityType type = EntityType.valueOf(typeString.toUpperCase());
+    Preconditions.checkArgument(type != null, "Invalid element type: " + typeString);
+
+    String idString = typeAndId[1];
+    try {
+      return type.fromIdParts(Splitter.on(IDSTRING_PART_SEPARATOR).split(idString));
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+        String.format("Invalid ID: %s", string), e);
+    }
   }
 
   protected static <T extends EntityId> T fromString(String string, Class<T> idClass) {
@@ -162,5 +183,19 @@ public abstract class EntityId implements IdCompatible {
 
   private static String remaining(Iterator<String> iterator) {
     return Joiner.on(IDSTRING_PART_SEPARATOR).join(iterator);
+  }
+
+  public Iterable<EntityId> getHierarchy() {
+    if (hierarchy == null) {
+      Vector<EntityId> hierarchy = new Vector<>();
+      EntityId current = this;
+      while (current instanceof ParentedId) {
+        hierarchy.insertElementAt(current, 0);
+        current = ((ParentedId) current).getParent();
+      }
+      hierarchy.insertElementAt(current, 0);
+      this.hierarchy = hierarchy;
+    }
+    return hierarchy;
   }
 }

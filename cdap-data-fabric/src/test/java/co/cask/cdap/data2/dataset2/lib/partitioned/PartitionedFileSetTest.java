@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
 import co.cask.cdap.api.dataset.DataSetException;
+import co.cask.cdap.api.dataset.PartitionNotFoundException;
 import co.cask.cdap.api.dataset.lib.Partition;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
@@ -26,6 +27,7 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetProperties;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionAware;
@@ -52,6 +54,7 @@ import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -140,6 +143,20 @@ public class PartitionedFileSetTest {
   public void testDecodeIncomplete() {
     byte[] rowKey = PartitionedFileSetDataset.generateRowKey(PARTITION_KEY, PARTITIONING_1);
     PartitionedFileSetDataset.parseRowKey(rowKey, PARTITIONING_2);
+  }
+
+  @Test
+  public void testMetadataForNonexistentPartition() throws Exception {
+    PartitionedFileSet pfs = dsFrameworkUtil.getInstance(pfsInstance);
+    PartitionKey key = generateUniqueKey();
+    try {
+      // didn't add any partitions to the dataset, so any partition key should throw a PartitionNotFoundException
+      pfs.addMetadata(key, "metaKey", "metaValue");
+      Assert.fail("Expected not to find key: " + key);
+    } catch (PartitionNotFoundException e) {
+      Assert.assertEquals(pfsInstance.getId(), e.getPartitionedFileSetName());
+      Assert.assertEquals(key, e.getPartitionKey());
+    }
   }
 
   @Test
