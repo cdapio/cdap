@@ -91,7 +91,7 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
    * @throws Exception
    */
   private boolean validateSecuredInterception(ChannelHandlerContext ctx, HttpRequest msg,
-                                      Channel inboundChannel, AuditLogEntry logEntry) throws Exception {
+                                              Channel inboundChannel, AuditLogEntry logEntry) throws Exception {
     String auth = msg.getHeader(HttpHeaders.Names.AUTHORIZATION);
     String accessToken = null;
 
@@ -155,6 +155,8 @@ public class SecurityAuthenticationHttpHandler extends SimpleChannelHandler {
                     "CDAP-verified " + accessTokenIdentifierPair.getAccessTokenIdentifierStr());
       msg.setHeader(Constants.Security.Headers.USER_ID,
                     accessTokenIdentifierPair.getAccessTokenIdentifierObj().getUsername());
+      msg.setHeader(Constants.Security.Headers.USER_IP,
+                    ((InetSocketAddress) ctx.getChannel().getRemoteAddress()).getAddress().getHostAddress());
       return true;
     }
   }

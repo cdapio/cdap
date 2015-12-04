@@ -19,7 +19,10 @@ package co.cask.cdap.gateway.handlers;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.http.SecurityRequestContext;
+import co.cask.cdap.common.logging.AuditLogEntry;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import co.cask.cdap.proto.security.AuthorizationRequest;
 import co.cask.cdap.proto.security.CheckAuthorizedRequest;
 import co.cask.cdap.proto.security.CheckAuthorizedResponse;
 import co.cask.cdap.proto.security.GrantRequest;
@@ -29,7 +32,11 @@ import co.cask.http.HttpResponder;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -39,6 +46,7 @@ import javax.ws.rs.Path;
 @Path(Constants.Gateway.API_VERSION_3 + "/security")
 public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
 
+  private static final Logger AUDIT_LOG = LoggerFactory.getLogger("authorization-access");
   private final AuthorizationPlugin auth;
   private final boolean enabled;
 
@@ -46,6 +54,18 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
   public AuthorizationHandler(AuthorizationPlugin auth, CConfiguration conf) {
     this.auth = auth;
     this.enabled = conf.getBoolean(Constants.Security.Authorization.ENABLED);
+  }
+
+  private void createLogEntry(HttpRequest httpRequest, AuthorizationRequest request,
+                              HttpResponseStatus responseStatus) throws UnknownHostException {
+    String reqBody = String.format("[%s %s %s]", request.getUser(), request.getEntity(), request.getActions());
+    AuditLogEntry logEntry = new AuditLogEntry();
+    logEntry.setUserName(SecurityRequestContext.getUserId().or("-"));
+    logEntry.setClientIP(InetAddress.getByName(SecurityRequestContext.getUserIP().or("0.0.0.0")));
+    logEntry.setRequestLine(httpRequest.getMethod(), httpRequest.getUri(), httpRequest.getProtocolVersion());
+    logEntry.setRequestBody(reqBody);
+    logEntry.setResponseCode(responseStatus.getCode());
+    AUDIT_LOG.trace(logEntry.toString());
   }
 
   @Path("/authorized")
@@ -64,6 +84,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     CheckAuthorizedResponse response = new CheckAuthorizedResponse(
       auth.authorized(request.getEntity(), request.getUser(), request.getActions()));
     httpResponder.sendJson(HttpResponseStatus.OK, response);
+    createLogEntry(httpRequest, request, HttpResponseStatus.OK);
   }
 
   @Path("/grant")
@@ -86,6 +107,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     }
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
+    createLogEntry(httpRequest, request, HttpResponseStatus.OK);
   }
 
   @Path("/revoke")
@@ -110,6 +132,7 @@ public class AuthorizationHandler extends AbstractAppFabricHttpHandler {
     }
 
     httpResponder.sendStatus(HttpResponseStatus.OK);
+    createLogEntry(httpRequest, request, HttpResponseStatus.OK);
   }
 
 }

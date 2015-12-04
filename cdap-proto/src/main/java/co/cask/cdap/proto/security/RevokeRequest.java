@@ -25,31 +25,10 @@ import javax.annotation.Nullable;
 /**
  * Request for revoking a user's permission to perform certain actions on an entity.
  */
-public class RevokeRequest {
-
-  private final EntityId entity;
-  private final String user;
-  private final Set<Action> actions;
+public class RevokeRequest extends AuthorizationRequest {
 
   public RevokeRequest(EntityId entity, @Nullable String user, @Nullable Set<Action> actions) {
-    Preconditions.checkArgument(entity != null, "entity is required");
+    super(entity, user, actions);
     Preconditions.checkArgument(actions == null || (user != null), "user is required when actions is provided");
-    this.entity = entity;
-    this.user = user;
-    this.actions = actions;
-  }
-
-  public EntityId getEntity() {
-    return entity;
-  }
-
-  @Nullable
-  public String getUser() {
-    return user;
-  }
-
-  @Nullable
-  public Set<Action> getActions() {
-    return actions;
   }
 }

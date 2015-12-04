@@ -690,6 +690,8 @@ public final class Constants {
     public static final class Headers {
       /** Internal user ID header passed from Router to downstream services */
       public static final String USER_ID = "CDAP-UserId";
+      /** User IP header passed from Router to downstream services */
+      public static final String USER_IP = "CDAP-UserIP";
     }
 
     /**
