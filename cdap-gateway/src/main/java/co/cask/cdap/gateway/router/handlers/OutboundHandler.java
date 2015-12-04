@@ -18,8 +18,11 @@ package co.cask.cdap.gateway.router.handlers;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.ExceptionEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -39,9 +42,16 @@ public class OutboundHandler extends SimpleChannelUpstreamHandler {
   }
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx, final MessageEvent e) throws Exception {
+  public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent e) throws Exception {
     ChannelBuffer msg = (ChannelBuffer) e.getMessage();
-    inboundChannel.write(msg);
+
+    // TODO: can this cause messages to go out of order?
+    Channels.write(inboundChannel, msg).addListener(new ChannelFutureListener() {
+      @Override
+      public void operationComplete(ChannelFuture future) throws Exception {
+        OutboundHandler.super.messageReceived(ctx, e);
+      }
+    });
   }
 
   @Override

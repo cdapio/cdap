@@ -76,16 +76,20 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
 
 /**
  * Verify the ordering of events in the RouterPipeline.
@@ -97,7 +101,6 @@ public class NettyRouterPipelineTest {
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
   private static final String gatewayService = Constants.Service.APP_FABRIC_HTTP;
   private static final String GATEWAY_LOOKUP = Constants.Router.GATEWAY_DISCOVERY_NAME;
-  private static final String webappService = "$HOST";
   private static final int maxUploadBytes = 10 * 1024 * 1024;
   private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
   private static byte[] applicationJarInBytes;
@@ -178,8 +181,7 @@ public class NettyRouterPipelineTest {
   private void deploy(int num) throws Exception {
 
     String path = String.format("http://%s:%d/v1/deploy",
-                                hostname,
-                                ROUTER.getServiceMap().get(GATEWAY_LOOKUP));
+                                hostname, ROUTER.getServiceMap().get(GATEWAY_LOOKUP));
 
     LocationFactory lf = new LocalLocationFactory(TMP_FOLDER.newFolder());
     Location programJar = AppJarHelper.createDeploymentJar(lf, AllProgramsApp.class);
@@ -196,6 +198,7 @@ public class NettyRouterPipelineTest {
 
       ByteStreams.copy(Locations.newInputSupplier(programJar), urlConn.getOutputStream());
       Assert.assertEquals(200, urlConn.getResponseCode());
+      // TODO: close the InputStream
       urlConn.disconnect();
     }
   }
@@ -359,8 +362,8 @@ public class NettyRouterPipelineTest {
               responder.sendStatus(HttpResponseStatus.OK);
               return;
             }
-              responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-            }
+            responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          }
 
           @Override
           public void handleError(Throwable cause) {
@@ -368,7 +371,6 @@ public class NettyRouterPipelineTest {
           }
         };
       }
-
     }
   }
 

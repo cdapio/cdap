@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -84,6 +84,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
       cConf.setInt(Constants.Router.ROUTER_PORT, 0);
       cConf.setBoolean(Constants.Router.WEBAPP_ENABLED, true);
       cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
+      cConf.setInt(Constants.Router.CONNECTION_TIMEOUT_SECS, CONNECTION_IDLE_TIMEOUT_SECS);
       router =
         new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,
