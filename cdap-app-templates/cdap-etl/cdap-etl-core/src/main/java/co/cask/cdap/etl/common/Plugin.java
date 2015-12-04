@@ -49,8 +49,10 @@ public class Plugin {
   }
 
   /**
-   * @param pluginType the plugin type to get a selector for. Only used for error messages
-   * @param pluginName the plugin name to get a selector for. Only used for error messages
+   * @param pluginType the plugin type to get a selector for. Only used for error messages when no matching artifact
+   *                   for the plugin is found
+   * @param pluginName the plugin name to get a selector for. Only used for error messages when no matching artifact
+   *                   for the plugin is found
    * @return the plugin selector for this plugin. If artifact settings have been given, the selector will try to
    *         match the specified artifact settings using an {@link ArtifactSelector}.
    *         If not, the default {@link PluginSelector} is returned.

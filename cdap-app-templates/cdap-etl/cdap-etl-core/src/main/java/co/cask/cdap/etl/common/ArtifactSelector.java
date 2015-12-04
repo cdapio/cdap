@@ -35,6 +35,8 @@ public class ArtifactSelector extends PluginSelector {
   private final ArtifactScope scope;
   private final String name;
   private final ArtifactVersion version;
+  private final String pluginType;
+  private final String pluginName;
   private final String errMsg;
 
   public ArtifactSelector(String pluginType,
@@ -47,6 +49,8 @@ public class ArtifactSelector extends PluginSelector {
     this.scope = scope;
     this.name = name;
     this.version = version;
+    this.pluginType = pluginType;
+    this.pluginName = pluginName;
     StringBuilder msg = new StringBuilder("Could not find an artifact that matches");
     if (scope != null) {
       msg.append(" scope ");
@@ -69,6 +73,10 @@ public class ArtifactSelector extends PluginSelector {
 
   @Override
   public Map.Entry<ArtifactId, PluginClass> select(SortedMap<ArtifactId, PluginClass> plugins) {
+    if (plugins.isEmpty()) {
+      throw new IllegalArgumentException(String.format("No plugins of type %s and name %s were found.",
+                                                       pluginType, pluginName));
+    }
     for (Map.Entry<ArtifactId, PluginClass> entry : plugins.entrySet()) {
       ArtifactId artifactId = entry.getKey();
       if ((scope == null || artifactId.getScope().equals(scope)) &&
