@@ -175,6 +175,11 @@ body.theme-cdap {
         &:first-child, &:last-child {
           border-left: 0;
         }
+        &:last-child {
+          padding-right: 0;
+        }
+      }
+      div.batch div.tbl-cell {
         &:first-child {
           width: 24%;
         }
@@ -191,7 +196,23 @@ body.theme-cdap {
           width: 14%;
         }
         &:last-child {
-          padding-right: 0;
+          width: 21%;
+        }
+      }
+      div.realtime div.tbl-cell {
+        &:first-child {
+          width: 24%;
+        }
+        &:nth-child(2) {
+          width: 6%;
+        }
+        &:nth-child(3) {
+          width: 27%;
+        }
+        &:nth-child(4) {
+          width: 22%;
+        }
+        &:last-child {
           width: 21%;
         }
       }
@@ -286,8 +307,11 @@ body.theme-cdap {
         font-weight: 600;
       }
       div.action-buttons {
-        > div {
+        &.batch > div {
           width: 20%;
+        }
+        &.realtime > div {
+          width: 25%;
         }
         div.btn {
           width: 100%;

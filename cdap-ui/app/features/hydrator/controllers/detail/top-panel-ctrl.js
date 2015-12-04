@@ -30,6 +30,7 @@ angular.module(PKG.name + '.feature.hydrator')
       var status, i;
       var lastRunDuration = (runs.length > 0 && runs[0].end) ? runs[0].end - runs[0].start : angular.noop();
       var nextRunTime = DetailRunsStore.getNextRunTime();
+      var averageRunTime = DetailRunsStore.getStatistics().avgRunTime;
       if (nextRunTime) {
         nextRunTime = nextRunTime[0].time? nextRunTime[0].time: null;
       }
@@ -42,9 +43,17 @@ angular.module(PKG.name + '.feature.hydrator')
       }
 
       this.nextRunTime = nextRunTime || 'N/A';
-      this.lastRunTime = moment.utc(lastRunDuration * 1000).format('HH:mm:ss') || 'N/A';
+      if (lastRunDuration) {
+        this.lastRunTime = moment.utc(lastRunDuration * 1000).format('HH:mm:ss');
+      } else {
+        this.lastRunTime = 'N/A';
+      }
       // We get time as seconds from backend. So multiplying it by 1000 to give moment.js in milliseconds.
-      this.avgRunTime = moment.utc(DetailRunsStore.getStatistics().avgRunTime * 1000 ).format('HH:mm:ss') || 'N/A';
+      if (averageRunTime) {
+        this.avgRunTime = moment.utc( averageRunTime * 1000 ).format('HH:mm:ss');
+      } else {
+        this.avgRunTime = 'N/A';
+      }
       this.config = DetailNonRunsStore.getConfigJson();
     };
     this.setState();

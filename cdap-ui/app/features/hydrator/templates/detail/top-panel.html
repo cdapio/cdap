@@ -13,7 +13,7 @@
 
 <!-- TOP PANEL -->
 <div class="side-panel top text-center">
-<div class="tbl">
+<div class="tbl" ng-class="{'batch': TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlBatch, 'realtime': TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime}">
   <div class="tbl-cell">
     <div class="clearfix">
       <div class="hydrator-detail-metadata">
@@ -92,7 +92,7 @@
   </div>
   <div class="tbl-cell">
     <!-- Right Buttons Actions -->
-    <div class="btn-group action-buttons clearfix">
+    <div class="btn-group action-buttons clearfix" ng-class="{'batch': TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlBatch, 'realtime': TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime}">
       <!-- IF ETL REALTIME -->
       <div class="pull-left"
         ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime && (['KILLED', 'STOPPED', 'COMPLETED', 'FAILED', 'STARTING'].indexOf(TopPanelCtrl.appStatus) !== -1)">
