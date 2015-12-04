@@ -28,24 +28,54 @@ commonModule.directive('myDag', function() {
       connections: '=',
       nodeClick: '&',
       nodeDelete: '&',
-      context: '='
+      context: '=',
+      templatePopover: '@',
+      connectionPopoverData: '&'
     },
     link: function(scope, element) {
       scope.element = element;
       scope.getGraphMargins = function (plugins) {
-        // Very simple logic for centering the DAG.
-        // Should eventually be changed to something close to what we use in workflow/flow graphs.
         var margins = this.element[0].parentElement.getBoundingClientRect();
         var parentWidth = margins.width;
-        var noOfNodes = plugins.length;
-        var marginLeft = parentWidth - (noOfNodes * 174);
-        if (marginLeft < 100){
-          marginLeft = -20;
-        } else {
-          marginLeft = marginLeft/2;
+        var parentHeight = margins.height;
+
+        var scale = 1.0;
+
+        // Find furthest nodes
+        var maxLeft = 0;
+        var maxTop = 0;
+        angular.forEach(plugins, function (plugin) {
+          var left = parseInt(plugin._uiPosition.left, 10);
+          var top = parseInt(plugin._uiPosition.top, 10);
+
+          maxLeft = maxLeft < left ? left : maxLeft;
+          maxTop = maxTop < top ? top : maxTop;
+        });
+
+
+        var marginLeft = (parentWidth - maxLeft) / 2 - 50;
+        var marginTop = (parentHeight - maxTop) / 2 - 50;
+
+        angular.forEach(plugins, function (plugin) {
+          var left = parseInt(plugin._uiPosition.left, 10) + marginLeft;
+          var top = parseInt(plugin._uiPosition.top, 10) + marginTop;
+
+          plugin._uiPosition.left = left + 'px';
+          plugin._uiPosition.top = top + 'px';
+        });
+
+
+        if (maxLeft > parentWidth - 100) {
+          scale = (parentWidth - 100) / maxLeft;
         }
+
+        if (maxTop > parentHeight - 100) {
+          var topScale = (parentHeight - 100) / maxTop;
+          scale = scale < topScale ? scale : topScale;
+        }
+
         return {
-          left: marginLeft
+          scale: scale
         };
       };
     },

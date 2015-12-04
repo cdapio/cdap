@@ -26,6 +26,8 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.Instances;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
+import co.cask.cdap.proto.id.EntityId;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
@@ -34,6 +36,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -62,7 +65,9 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
   /**
    * Json serializer.
    */
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
+    .create();
 
   protected static final java.lang.reflect.Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
@@ -142,7 +147,7 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(content), Charsets.UTF_8);
     try {
       return GSON.fromJson(reader, type);
-    } catch (JsonSyntaxException e) {
+    } catch (RuntimeException e) {
       LOG.info("Failed to parse body on {} as {}", request.getUri(), type, e);
       throw e;
     } finally {

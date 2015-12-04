@@ -21,6 +21,7 @@ import co.cask.cdap.api.annotation.Plugin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.batch.source.KVTableSource;
@@ -33,6 +34,7 @@ import co.cask.cdap.etl.batch.source.KVTableSource;
 public class MetaKVTableSource extends KVTableSource {
   public static final String META_TABLE = "sourceMetaTable";
   public static final String PREPARE_RUN_KEY = "source.prepare.run";
+  public static final String INIT_RUN_KEY = "source.init.run";
   public static final String FINISH_RUN_KEY = "source.finish.run";
 
   public MetaKVTableSource(KVTableConfig kvTableConfig) {
@@ -50,6 +52,18 @@ public class MetaKVTableSource extends KVTableSource {
     super.prepareRun(context);
     KeyValueTable table = context.getDataset(META_TABLE);
     table.write(PREPARE_RUN_KEY, PREPARE_RUN_KEY);
+
+    context.setRuntimeArgument("prepare", "source", true);
+  }
+
+  @Override
+  public void initialize(BatchRuntimeContext context) throws Exception {
+    super.initialize(context);
+
+    if ("source".equals(context.getRuntimeArguments().get("prepare"))) {
+      KeyValueTable table = context.getDataset(META_TABLE);
+      table.write(INIT_RUN_KEY, INIT_RUN_KEY);
+    }
   }
 
   @Override

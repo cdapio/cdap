@@ -14,7 +14,7 @@
  * the License.
  */
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, rPipelineDetail, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope) {
+  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, rPipelineDetail, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope, moment) {
     this.GLOBALS = GLOBALS;
     this.config = DetailNonRunsStore.getCloneConfig();
     this.app = {
@@ -28,6 +28,11 @@ angular.module(PKG.name + '.feature.hydrator')
       this.runsCount = DetailRunsStore.getRunsCount();
       var runs = DetailRunsStore.getRuns();
       var status, i;
+      var lastRunDuration = (runs.length > 0 && runs[0].end) ? runs[0].end - runs[0].start : angular.noop();
+      var nextRunTime = DetailRunsStore.getNextRunTime();
+      if (nextRunTime) {
+        nextRunTime = nextRunTime[0].time? nextRunTime[0].time: null;
+      }
       for (i=0 ; i<runs.length; i++) {
         status = runs[i].status;
         if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
@@ -35,8 +40,11 @@ angular.module(PKG.name + '.feature.hydrator')
           break;
         }
       }
-      this.lastRunTime = runs.length > 0 && runs[0].end ? runs[0].end - runs[0].start : 'N/A';
-      this.averageRunTime = DetailRunsStore.getStatistics().avgRunTime || 'N/A';
+
+      this.nextRunTime = nextRunTime || 'N/A';
+      this.lastRunTime = moment.utc(lastRunDuration * 1000).format('HH:mm:ss') || 'N/A';
+      // We get time as seconds from backend. So multiplying it by 1000 to give moment.js in milliseconds.
+      this.avgRunTime = moment.utc(DetailRunsStore.getStatistics().avgRunTime * 1000 ).format('HH:mm:ss') || 'N/A';
       this.config = DetailNonRunsStore.getConfigJson();
     };
     this.setState();
@@ -48,6 +56,10 @@ angular.module(PKG.name + '.feature.hydrator')
       PipelineDetailActionFactory.pollStatistics(
         DetailRunsStore.getApi(),
         params
+      );
+      PipelineDetailActionFactory.getNextRunTime(
+        DetailRunsStore.getApi(),
+        DetailRunsStore.getParams()
       );
     }
 

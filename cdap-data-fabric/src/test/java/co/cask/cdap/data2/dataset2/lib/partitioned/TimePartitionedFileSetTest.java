@@ -80,7 +80,8 @@ public class TimePartitionedFileSetTest {
   @Test
   public void testPartitionMetadata() throws Exception {
     final TimePartitionedFileSet tpfs = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
-    dsFrameworkUtil.newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
+    TransactionAware txAware = (TransactionAware) tpfs;
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAware).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         // make sure the dataset has no partitions
@@ -126,8 +127,8 @@ public class TimePartitionedFileSetTest {
   @Test
   public void testAddGetPartitions() throws Exception {
     final TimePartitionedFileSet fileSet = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
-
-    dsFrameworkUtil.newTransactionExecutor((TransactionAware) fileSet).execute(new TransactionExecutor.Subroutine() {
+    TransactionAware txAwareDataset = (TransactionAware) fileSet;
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         // this is an arbitrary data to use as the test time
@@ -253,11 +254,12 @@ public class TimePartitionedFileSetTest {
   public void testInputPartitionPaths() throws Exception {
     // make sure the dataset has no partitions
     final TimePartitionedFileSet tpfs = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
+    TransactionAware txAwareDataset = (TransactionAware) tpfs;
     validateTimePartitions(tpfs, 0L, MAX, Collections.<Long, String>emptyMap());
 
     Date date = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).parse("6/4/12 10:00 am");
     final long time = date.getTime();
-    dsFrameworkUtil.newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         tpfs.addPartition(time, "file");
@@ -284,7 +286,8 @@ public class TimePartitionedFileSetTest {
     TimePartitionedFileSetArguments.setInputStartTime(arguments, time + start * MINUTE);
     TimePartitionedFileSetArguments.setInputEndTime(arguments, time + end * MINUTE);
     final TimePartitionedFileSet tpfs = dsFrameworkUtil.getInstance(TPFS_INSTANCE, arguments);
-    dsFrameworkUtil.newTransactionExecutor((TransactionAware) tpfs).execute(new TransactionExecutor.Subroutine() {
+    TransactionAware txAwareDataset = (TransactionAware) tpfs;
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         Map<String, String> inputConfig = tpfs.getInputFormatConfiguration();
@@ -486,7 +489,8 @@ public class TimePartitionedFileSetTest {
     // add a few partitions
     {
       final TimePartitionedFileSet dataset = dsFrameworkUtil.getInstance(TPFS_INSTANCE);
-      dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+      final TransactionAware txAwareDataset = (TransactionAware) dataset;
+      dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
         @Override
         public void apply() throws Exception {
           dataset.addPartition(time8, path8);
@@ -521,7 +525,8 @@ public class TimePartitionedFileSetTest {
 
   private void testInputConfiguration(Map<String, String> arguments, final String expectedPath) throws Exception {
     final TimePartitionedFileSet dataset = dsFrameworkUtil.getInstance(TPFS_INSTANCE, arguments);
-    dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+    TransactionAware txAwareDataset = (TransactionAware) dataset;
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         Map<String, String> inputConf = dataset.getInputFormatConfiguration();
@@ -530,12 +535,14 @@ public class TimePartitionedFileSetTest {
         String[] inputs = input.split(",");
         Assert.assertEquals(1, inputs.length);
         Assert.assertTrue(inputs[0].endsWith(expectedPath));
-      }});
+      }
+    });
   }
 
   private void testInputConfigurationFailure(Map<String, String> arguments, final String why) throws Exception {
     final TimePartitionedFileSet dataset = dsFrameworkUtil.getInstance(TPFS_INSTANCE, arguments);
-    dsFrameworkUtil.newTransactionExecutor((TransactionAware) dataset).execute(new TransactionExecutor.Subroutine() {
+    TransactionAware txAwareDataset = (TransactionAware) dataset;
+    dsFrameworkUtil.newInMemoryTransactionExecutor(txAwareDataset).execute(new TransactionExecutor.Subroutine() {
       @Override
       public void apply() throws Exception {
         try {

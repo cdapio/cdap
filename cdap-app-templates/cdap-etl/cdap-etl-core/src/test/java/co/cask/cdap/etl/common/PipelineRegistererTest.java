@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchSink;
@@ -26,7 +27,6 @@ import com.google.common.reflect.TypeToken;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.ipc.trace.TimestampedEvent;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -132,6 +132,125 @@ public class PipelineRegistererTest {
     ETLStage sink = new ETLStage("AvroSink", new Plugin("tpfsAvro", ImmutableMap.<String, String>of()));
     PipelineRegisterer.validateStageNames(source,
                                           ImmutableList.of(transform1, transform2), ImmutableList.of(sink));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCycleInConfig() throws Exception {
+    ETLStage source = new ETLStage("DBSource", new Plugin("db", ImmutableMap.<String, String>of()));
+    ETLStage transform1 = new ETLStage("TableValidation1", new Plugin("validator", ImmutableMap.<String, String>of()));
+    //duplicate transform name
+    ETLStage transform2 = new ETLStage("TableValidation2", new Plugin("script", ImmutableMap.<String, String>of()));
+    ETLStage transform3 = new ETLStage("TableValidation3", new Plugin("script", ImmutableMap.<String, String>of()));
+    ETLStage sink = new ETLStage("AvroSink", new Plugin("tpfsAvro", ImmutableMap.<String, String>of()));
+
+    List<ETLStage> transforms = ImmutableList.of(transform1, transform2, transform3);
+    List<Connection> connections = ImmutableList.of(new Connection("DBSource", "TableValidation1"),
+                                                    new Connection("TableValidation1", "TableValidation2"),
+                                                    new Connection("TableValidation1", "TableValidation3"),
+                                                    // cycle connection
+                                                    new Connection("TableValidation3", "TableValidation1"),
+                                                    new Connection("TableValidation2", "AvroSink")
+    );
+    ETLConfig config = new ETLConfig(source, ImmutableList.of(sink), transforms, connections, new Resources());
+    PipelineRegisterer.validateConnections(config);
+  }
+
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testUnconnectedSinkConfig() throws Exception {
+    ETLStage source = new ETLStage("DBSource", new Plugin("db", ImmutableMap.<String, String>of()));
+    ETLStage transform1 = new ETLStage("TableValidation1", new Plugin("validator", ImmutableMap.<String, String>of()));
+    //duplicate transform name
+    ETLStage transform2 = new ETLStage("TableValidation2", new Plugin("script", ImmutableMap.<String, String>of()));
+    ETLStage transform3 = new ETLStage("TableValidation3", new Plugin("script", ImmutableMap.<String, String>of()));
+
+    ETLStage sink1 = new ETLStage("AvroSink1", new Plugin("tpfsAvro", ImmutableMap.<String, String>of()));
+    ETLStage sink2 = new ETLStage("AvroSink2", new Plugin("tpfsAvro", ImmutableMap.<String, String>of()));
+
+    List<ETLStage> transforms = ImmutableList.of(transform1, transform2, transform3);
+    List<ETLStage> sinks = ImmutableList.of(sink1, sink2);
+
+    List<Connection> connections = ImmutableList.of(new Connection("DBSource", "TableValidation1"),
+                                                    new Connection("TableValidation1", "TableValidation2"),
+                                                    new Connection("TableValidation1", "TableValidation3"),
+                                                    new Connection("TableValidation2", "AvroSink1"),
+                                                    new Connection("TableValidation3", "AvroSink1")
+                                                    // sink2 is unconnected
+    );
+    ETLConfig config = new ETLConfig(source, sinks, transforms, connections, new Resources());
+    PipelineRegisterer.validateConnections(config);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testUnconnectedTransformConfig() throws Exception {
+    ETLStage source = new ETLStage("DBSource", new Plugin("db", ImmutableMap.<String, String>of()));
+    ETLStage transform1 = new ETLStage("TableValidation1", new Plugin("validator", ImmutableMap.<String, String>of()));
+    //duplicate transform name
+    ETLStage transform2 = new ETLStage("TableValidation2", new Plugin("script", ImmutableMap.<String, String>of()));
+    ETLStage transform3 = new ETLStage("TableValidation3", new Plugin("script", ImmutableMap.<String, String>of()));
+
+    ETLStage sink1 = new ETLStage("AvroSink1", new Plugin("tpfsAvro", ImmutableMap.<String, String>of()));
+    ETLStage sink2 = new ETLStage("AvroSink2", new Plugin("tpfsAvro", ImmutableMap.<String, String>of()));
+
+    List<ETLStage> transforms = ImmutableList.of(transform1, transform2, transform3);
+    List<ETLStage> sinks = ImmutableList.of(sink1, sink2);
+
+    List<Connection> connections = ImmutableList.of(new Connection("DBSource", "TableValidation1"),
+                                                    new Connection("TableValidation1", "AvroSink1"),
+                                                    new Connection("TableValidation1", "AvroSink2"),
+                                                    new Connection("TableValidation1", "TableValidation2"),
+                                                    new Connection("TableValidation2", "TableValidation3")
+                                                    // TablValidation3 is not connected to a sink
+    );
+    ETLConfig config = new ETLConfig(source, sinks, transforms, connections, new Resources());
+    PipelineRegisterer.validateConnections(config);
+  }
+
+
+  @Test
+  public void testValidSinkConfigs() throws Exception {
+    ETLStage source = new ETLStage("DBSource", new Plugin("db", ImmutableMap.<String, String>of()));
+    ETLStage transform1 = new ETLStage("TableValidation1", new Plugin("validator", ImmutableMap.<String, String>of()));
+    //duplicate transform name
+    ETLStage transform2 = new ETLStage("TableValidation2", new Plugin("script", ImmutableMap.<String, String>of()));
+    ETLStage transform3 = new ETLStage("TableValidation3", new Plugin("script", ImmutableMap.<String, String>of()));
+    ETLStage transform4 = new ETLStage("TableValidation4", new Plugin("script", ImmutableMap.<String, String>of()));
+    ETLStage sink1 = new ETLStage("AvroSink1", new Plugin("tpfsAvro", ImmutableMap.<String, String>of()));
+    ETLStage sink2 = new ETLStage("AvroSink2", new Plugin("tpfsAvro", ImmutableMap.<String, String>of()));
+
+    List<ETLStage> transforms = ImmutableList.of(transform1, transform2, transform3, transform4);
+    List<ETLStage> sinks = ImmutableList.of(sink1, sink2);
+
+    List<Connection> connections = ImmutableList.of(new Connection("DBSource", "TableValidation1"),
+                                                    new Connection("TableValidation1", "TableValidation2"),
+                                                    new Connection("TableValidation1", "TableValidation3"),
+                                                    new Connection("TableValidation2", "AvroSink1"),
+                                                    new Connection("TableValidation3", "AvroSink1"),
+                                                    new Connection("TableValidation3", "AvroSink2")
+    );
+    ETLConfig config = new ETLConfig(source, sinks, transforms, connections, new Resources());
+    PipelineRegisterer.validateConnections(config);
+    // test without any connections, the default should be used.
+    config = new ETLConfig(source, sinks, transforms, new ArrayList<Connection>(), new Resources());
+    PipelineRegisterer.validateConnections(config);
+
+    // test with complex connections
+    connections = ImmutableList.of(new Connection("DBSource", "TableValidation1"),
+                                   new Connection("DBSource", "TableValidation2"),
+                                   new Connection("TableValidation1", "TableValidation3"),
+                                   new Connection("TableValidation2", "TableValidation1"),
+                                   new Connection("TableValidation2", "TableValidation4"),
+                                   new Connection("TableValidation4", "TableValidation3"),
+                                   new Connection("TableValidation3", "AvroSink1"),
+                                   new Connection("TableValidation4", "AvroSink1"),
+                                   new Connection("TableValidation4", "AvroSink2")
+    );
+    config = new ETLConfig(source, sinks, transforms, connections, new Resources());
+    PipelineRegisterer.validateConnections(config);
+
+    // simple source to sink connections, no transforms and no connections
+    config = new ETLConfig(source, sinks, new ArrayList<ETLStage>(), new ArrayList<Connection>(), new Resources());
+    PipelineRegisterer.validateConnections(config);
   }
 
   private static List<Type> getBothParameters(Class klass) {

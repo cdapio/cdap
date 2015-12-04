@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,10 +20,6 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.Split;
 import co.cask.cdap.api.data.batch.SplitReader;
-import co.cask.cdap.api.dataset.Dataset;
-import co.cask.cdap.internal.app.runtime.batch.BasicMapReduceTaskContext;
-import co.cask.cdap.internal.app.runtime.batch.MapReduceClassLoader;
-import com.google.common.base.Preconditions;
 import com.google.common.io.ByteArrayDataInput;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
@@ -43,11 +39,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * An {@link InputFormat} that reads from dataset.
+ * An abstract {@link InputFormat} implementation that reads from {@link BatchReadable}.
  * @param <KEY> Type of key.
  * @param <VALUE> Type of value.
  */
-public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
+public abstract class AbstractBatchReadableInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE> {
 
   private static final Gson GSON = new Gson();
   private static final Type DATASET_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
@@ -60,10 +56,10 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
   /**
    * Sets dataset and splits information into the given {@link Configuration}.
    *
-   * @param hConf configuration to modify
-   * @param datasetName name of the dataset
+   * @param hConf            configuration to modify
+   * @param datasetName      name of the dataset
    * @param datasetArguments arguments for the dataset
-   * @param splits list of splits on the dataset
+   * @param splits           list of splits on the dataset
    * @throws IOException
    */
   public static void setDatasetSplits(Configuration hConf,
@@ -105,23 +101,71 @@ public final class DataSetInputFormat<KEY, VALUE> extends InputFormat<KEY, VALUE
     throws IOException, InterruptedException {
 
     DataSetInputSplit inputSplit = (DataSetInputSplit) split;
-
     Configuration conf = context.getConfiguration();
-    MapReduceClassLoader classLoader = MapReduceClassLoader.getFromConfiguration(conf);
-    BasicMapReduceTaskContext taskContext = classLoader.getTaskContextProvider().get(context);
 
     String datasetName = conf.get(DATASET_NAME);
     Map<String, String> datasetArgs = GSON.fromJson(conf.get(DATASET_ARGS), DATASET_ARGS_TYPE);
 
-    Dataset dataset = taskContext.getDataset(datasetName, datasetArgs);
-    // Must be BatchReadable.
-    Preconditions.checkArgument(dataset instanceof BatchReadable, "Dataset '%s' is not a BatchReadable.", datasetName);
-
     @SuppressWarnings("unchecked")
-    BatchReadable<KEY, VALUE> batchReadable = (BatchReadable<KEY, VALUE>) dataset;
+    BatchReadable<KEY, VALUE> batchReadable = createBatchReadable(context, datasetName, datasetArgs);
     SplitReader<KEY, VALUE> splitReader = batchReadable.createSplitReader(inputSplit.getSplit());
+    return new SplitReaderRecordReader<>(splitReader);
+  }
 
-    // the record reader now owns the context and will close it
-    return new DataSetRecordReader<>(splitReader, taskContext);
+  /**
+   * Subclass needs to implementation this method to return a {@link BatchReadable} for reading records from
+   * the given dataset.
+   *
+   * @param context the hadoop task context
+   * @param datasetName name of the dataset to read from
+   * @param datasetArgs arguments of the dataset to read from
+   */
+  protected abstract BatchReadable<KEY, VALUE> createBatchReadable(TaskAttemptContext context,
+                                                                   String datasetName, Map<String, String> datasetArgs);
+
+  /**
+   * Implementation of {@link RecordReader} by delegating to the underlying {@link SplitReader}.
+   *
+   * @param <KEY> type of key returned by this reader
+   * @param <VALUE> type of value returned by this reader
+   */
+  private static final class SplitReaderRecordReader<KEY, VALUE> extends RecordReader<KEY, VALUE> {
+
+    private final SplitReader<KEY, VALUE> splitReader;
+
+    public SplitReaderRecordReader(final SplitReader<KEY, VALUE> splitReader) {
+      this.splitReader = splitReader;
+    }
+
+    @Override
+    public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
+      DataSetInputSplit inputSplit = (DataSetInputSplit) split;
+      splitReader.initialize(inputSplit.getSplit());
+    }
+
+    @Override
+    public boolean nextKeyValue() throws IOException, InterruptedException {
+      return splitReader.nextKeyValue();
+    }
+
+    @Override
+    public KEY getCurrentKey() throws IOException, InterruptedException {
+      return splitReader.getCurrentKey();
+    }
+
+    @Override
+    public VALUE getCurrentValue() throws IOException, InterruptedException {
+      return splitReader.getCurrentValue();
+    }
+
+    @Override
+    public float getProgress() throws IOException, InterruptedException {
+      return splitReader.getProgress();
+    }
+
+    @Override
+    public void close() throws IOException {
+      splitReader.close();
+    }
   }
 }

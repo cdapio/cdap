@@ -24,22 +24,22 @@ class TopPanelController{
     this.canvasOperations = [
       {
         name: 'Export',
-        icon: 'fa-external-link-square',
+        icon: 'icon-export',
         fn: this.onExport.bind(this)
       },
       {
         name: 'Save',
-        icon: 'fa-floppy-o',
+        icon: 'icon-savedraft',
         fn: this.onSaveDraft.bind(this)
       },
       {
         name: 'Validate',
-        icon: 'fa-code',
+        icon: 'icon-validate',
         fn: this.onValidate.bind(this)
       },
       {
         name: 'Publish',
-        icon: 'fa-paper-plane',
+        icon: 'icon-publish',
         fn: this.onPublish.bind(this)
       }
     ];

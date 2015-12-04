@@ -15,20 +15,14 @@
 -->
 
 <div class="program-tags">
-  <div class="tag" ng-if="!MetadataController.metadataAddOpen">
-    <a class="btn" ng-click="MetadataController.metadataAddOpen = true">
+  <div class="add-tag" ng-if="!MetadataController.metadataAddOpen">
+    <a class="btn add" ng-click="MetadataController.metadataAddOpen = true">
       <span class="fa fa-plus"></span>
     </a>
   </div>
   <div class="tag-input" ng-if="MetadataController.metadataAddOpen">
-    <div class="input-group" my-escape-close="MetadataController.escapeMetadata()" ng-keypress="$event.keyCode === 13 && MetadataController.addMetadata()">
-      <input type="text" class="form-control" ng-model="MetadataController.tag" cask-focus="metadataInput">
-      <span class="input-group-btn">
-        <button class="btn btn-default"
-          ng-click="MetadataController.metadataAddOpen = false">
-          <i class="fa fa-times"></i>
-        </button>
-      </span>
+    <div my-escape-close="MetadataController.escapeMetadata()" ng-keypress="$event.keyCode === 13 && MetadataController.addMetadata()">
+      <input placeholder="new tag" type="text" class="form-control" ng-model="MetadataController.tag" cask-focus="metadataInput">
     </div>
   </div>
   <div class="tag" ng-repeat="tag in MetadataController.metadataTags">

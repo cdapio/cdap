@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package co.cask.cdap.security.authorization;
+package co.cask.cdap.proto.security;
 
 /**
  * Types of actions that users can perform on entities.

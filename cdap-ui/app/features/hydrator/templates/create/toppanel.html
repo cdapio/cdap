@@ -21,10 +21,12 @@
         <div ng-click="TopPanelController.openMetadata()" class="clearfix">
           <div class="pipeline-type">
             <span ng-if="TopPanelController.state.artifact.name === TopPanelController.GLOBALS.etlBatch"
-                  title="Type: Batch"
+                  tooltip="Type: Batch"
+                  tooltip-placement="right"
                   class="icon-ETLBatch"></span>
             <span ng-if="TopPanelController.state.artifact.name === TopPanelController.GLOBALS.etlRealtime"
-                  title="Type: Realtime"
+                  tooltip="Type: Realtime"
+                  tooltip-placement="right"
                   class="icon-ETLRealtime"></span>
           </div>
           <div class="pipeline-name pull-left">
@@ -35,15 +37,13 @@
                    ng-keyup="TopPanelController.onEnterOnMetadata($event)"
                    tooltip="{{ TopPanelController.state.metadata.name }}"
                    tooltip-placement="right"
-                   tooltip-enable="TopPanelController.state.metadata.name.length > 27"
-                   tooltip-append-to-body="true" />
+                   tooltip-enable="TopPanelController.state.metadata.name.length > 27" />
             <textarea ng-model="TopPanelController.state.metadata['description']"
                       my-maxlength="144"
                       placeholder="Enter a description for your pipeline."
                       tooltip="{{ TopPanelController.metadata.description }}"
                       tooltip-placement="right"
-                      tooltip-enable="TopPanelController.metadata.description.length > 144"
-                      tooltip-append-to-body="true"></textarea>
+                      tooltip-enable="TopPanelController.metadata.description.length > 144"></textarea>
           </div>
         </div>
 
@@ -58,7 +58,8 @@
         <div class="btn"
              ng-repeat="action in TopPanelController.canvasOperations"
              ng-click="action.fn()"
-             title="{{action.name}}">
+             tooltip="{{action.name}}"
+             tooltip-placement="top">
           <span class="fa {{action.icon}}"></span>
         </div>
       </div>

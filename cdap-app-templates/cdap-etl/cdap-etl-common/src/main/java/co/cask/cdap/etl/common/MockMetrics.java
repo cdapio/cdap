@@ -51,4 +51,9 @@ public class MockMetrics implements Metrics {
     Long val = gauges.get(metric);
     return val == null ? 0 : val;
   }
+
+  public void clearMetrics() {
+    counts.clear();
+    gauges.clear();
+  }
 }

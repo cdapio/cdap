@@ -58,6 +58,5 @@ public class MetaClientTestRun extends ClientTestBase {
     Assert.assertNotNull(configEntry);
     Assert.assertEquals("hadoop.tmp.dir", configEntry.getName());
     Assert.assertNotNull(configEntry.getValue());
-
   }
 }

@@ -96,6 +96,28 @@ class LeftPanelController {
       };
     }
 
+    // set initial position
+    switch (this.GLOBALS.pluginConvert[config.type]) {
+      case 'source':
+        config._uiPosition = {
+          top: '150px',
+          left: '10vw'
+        };
+        break;
+      case 'transform':
+        config._uiPosition = {
+          top: '150px',
+          left: '30vw'
+        };
+        break;
+      case 'sink':
+        config._uiPosition = {
+          top: '150px',
+          left: '50vw'
+        };
+        break;
+    }
+
     // this.ConfigActionsFactory.addPlugin(config, this.GLOBALS.pluginConvert[config.type]);
     this.HydratorService.fetchBackendProperties(config)
       .then( () => {

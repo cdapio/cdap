@@ -109,7 +109,8 @@ public class ProjectionTransform extends Transform<StructuredRecord, StructuredR
   }
 
   @Override
-  public void initialize(TransformContext context) {
+  public void initialize(TransformContext context) throws Exception {
+    super.initialize(context);
     init();
   }
 

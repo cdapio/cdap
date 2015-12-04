@@ -14,17 +14,34 @@
  * the License.
  */
 
-package co.cask.cdap.internal.app.runtime.spark.dataset;
+package co.cask.cdap.etl.common;
 
-import co.cask.cdap.api.data.batch.BatchWritable;
-
-import java.io.Closeable;
+import co.cask.cdap.etl.api.StageMetrics;
 
 /**
- * A {@link BatchWritable} that is also {@link Closeable}.
- *
- * @param <K> The key type.
- * @param <V> The value type.
+ * No op metrics implementation for tests.
  */
-public interface CloseableBatchWritable<K, V> extends BatchWritable<K, V>, Closeable {
+public class NoopMetrics implements StageMetrics {
+
+  public static final StageMetrics INSTANCE = new NoopMetrics();
+
+  @Override
+  public void count(String s, int i) {
+    // no-op
+  }
+
+  @Override
+  public void gauge(String s, long l) {
+    // no-op
+  }
+
+  @Override
+  public void pipelineCount(String metricName, int delta) {
+    // no-op
+  }
+
+  @Override
+  public void pipelineGauge(String metricName, long value) {
+    // no-op
+  }
 }

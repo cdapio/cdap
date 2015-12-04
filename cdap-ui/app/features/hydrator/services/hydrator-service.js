@@ -15,7 +15,7 @@
  */
 
 class HydratorService {
-  constructor(GLOBALS, MyDAGFactory, uuid, $state, $rootScope, myPipelineApi, $q, ConfigStore) {
+  constructor(GLOBALS, MyDAGFactory, uuid, $state, $rootScope, myPipelineApi, $q, ConfigStore, IMPLICIT_SCHEMA, NodesStore) {
     this.GLOBALS = GLOBALS;
     this.MyDAGFactory = MyDAGFactory;
     this.uuid = uuid;
@@ -24,6 +24,8 @@ class HydratorService {
     this.myPipelineApi = myPipelineApi;
     this.$q = $q;
     this.ConfigStore = ConfigStore;
+    this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
+    this.NodesStore = NodesStore;
   }
 
   getNodesAndConnectionsFromConfig(pipeline) {
@@ -136,7 +138,84 @@ class HydratorService {
       });
   }
 
+  formatSchema (node) {
+
+    let isStreamSource = node.name === 'Stream';
+    let schema;
+    let input;
+    let jsonSchema;
+
+    if (isStreamSource) {
+      if (node.properties.format === 'clf') {
+        jsonSchema = this.IMPLICIT_SCHEMA.clf;
+      } else if (node.properties.format === 'syslog') {
+        jsonSchema = this.IMPLICIT_SCHEMA.syslog;
+      } else {
+        jsonSchema = node.outputSchema;
+      }
+    } else {
+      jsonSchema = node.outputSchema;
+    }
+
+    try {
+      input = JSON.parse(jsonSchema);
+    } catch (e) {
+      input = null;
+    }
+
+    if (isStreamSource) {
+      // Must be in this order!!
+      if (!input) {
+        input = {
+          fields: [{ name: 'body', type: 'string' }]
+        };
+      }
+
+      input.fields.unshift({
+        name: 'headers',
+        type: {
+          type: 'map',
+          keys: 'string',
+          values: 'string'
+        }
+      });
+
+      input.fields.unshift({
+        name: 'ts',
+        type: 'long'
+      });
+
+    }
+
+    schema = input ? input.fields : null;
+    angular.forEach(schema, function (field) {
+      if (angular.isArray(field.type)) {
+        field.type = field.type[0];
+        field.nullable = true;
+      } else {
+        field.nullable = false;
+      }
+    });
+
+    return schema;
+
+  }
+
+  generateSchemaOnEdge(sourceId) {
+    var nodes = this.NodesStore.getNodes();
+    var sourceNode;
+
+    for (var i = 0; i<nodes.length; i++) {
+      if (nodes[i].id === sourceId) {
+        sourceNode = nodes[i];
+        break;
+      }
+    }
+
+    return this.formatSchema(sourceNode);
+  }
+
 }
-HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'ConfigStore'];
+HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'ConfigStore', 'IMPLICIT_SCHEMA', 'NodesStore'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorService', HydratorService);

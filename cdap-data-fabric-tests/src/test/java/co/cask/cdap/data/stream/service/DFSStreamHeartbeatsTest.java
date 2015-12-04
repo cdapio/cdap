@@ -25,8 +25,9 @@ import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.metrics.NoOpMetricsCollectionService;
+import co.cask.cdap.common.namespace.AbstractNamespaceClient;
+import co.cask.cdap.common.namespace.InMemoryNamespaceClient;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
-import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.runtime.DataFabricModules;
 import co.cask.cdap.data.runtime.DataSetServiceModules;
@@ -133,9 +134,11 @@ public class DFSStreamHeartbeatsTest {
         // that performs heartbeats aggregation
         new StreamServiceRuntimeModule().getDistributedModules(),
         new StreamAdminModules().getInMemoryModules()).with(new AbstractModule() {
+
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+          bind(AbstractNamespaceClient.class).to(InMemoryNamespaceClient.class);
 
           bind(StreamConsumerStateStoreFactory.class).to(LevelDBStreamConsumerStateStoreFactory.class)
             .in(Singleton.class);
@@ -147,8 +150,7 @@ public class DFSStreamHeartbeatsTest {
           bind(StreamMetaStore.class).to(InMemoryStreamMetaStore.class).in(Scopes.SINGLETON);
           bind(HeartbeatPublisher.class).to(MockHeartbeatPublisher.class).in(Scopes.SINGLETON);
         }
-      }),
-      new NamespaceClientRuntimeModule().getDistributedModules());
+      }));
 
     zkClient = injector.getInstance(ZKClientService.class);
     txManager = injector.getInstance(TransactionManager.class);
