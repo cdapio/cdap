@@ -35,10 +35,10 @@
     </span>
   </div>
 
-  <a ng-if="MetadataController.limit === MetadataController.tagLimit"
+  <a ng-if="MetadataController.metadataTags.length > MetadataController.tagLimit && MetadataController.limit === MetadataController.tagLimit"
      class="tag-toggle"
      ng-click="MetadataController.limit = null">show more</a>
-  <a ng-if="MetadataController.limit === null"
+  <a ng-if="MetadataController.metadataTags.length > MetadataController.tagLimit && MetadataController.limit === null"
      class="tag-toggle"
      ng-click="MetadataController.limit = MetadataController.tagLimit">show less</a>
 </div>
