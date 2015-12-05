@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.distributed;
 
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.app.program.Program;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -116,7 +117,7 @@ public abstract class AbstractProgramTwillApplication implements TwillApplicatio
   private Builder.RunnableSetter localizeFiles(Builder.LocalFileAdder fileAdder) {
     Location programLocation = program.getJarLocation();
 
-    Builder.MoreFile moreFile = fileAdder.add(programLocation.getName(), programLocation.toURI());
+    Builder.MoreFile moreFile = fileAdder.add(programLocation.getName(), Locations.toURI(programLocation));
     for (Map.Entry<String, LocalizeResource> entry : localizeResources.entrySet()) {
       moreFile.add(entry.getKey(), entry.getValue().getURI(), entry.getValue().isArchive());
     }

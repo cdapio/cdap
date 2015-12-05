@@ -93,7 +93,7 @@ public final class StreamUtils {
    * @see StreamInputFormat
    */
   public static String getPartitionName(Location eventLocation) {
-    URI uri = eventLocation.toURI();
+    URI uri = Locations.toURI(eventLocation);
     String path = uri.getPath();
     int endIdx = path.lastIndexOf('/');
     Preconditions.checkArgument(endIdx >= 0,

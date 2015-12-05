@@ -80,7 +80,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
 
     // Check exists, create, check exists again to avoid failure due to race condition.
     if (!appFabricDir.exists() && !appFabricDir.mkdirs() && !appFabricDir.exists()) {
-      throw new IOException(String.format("Failed to create directory %s", appFabricDir.toURI().getPath()));
+      throw new IOException(String.format("Failed to create directory %s", appFabricDir));
     }
 
     // Now, we iterate through all ProgramSpecification and generate programs
@@ -190,7 +190,7 @@ public class ProgramGenerationStage extends AbstractStage<ApplicationDeployable>
     }
     if (oldArchiveDir.renameTo(newArchiveLocation) == null) {
       throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                          oldArchiveDir.toURI(), newArchiveLocation.toURI()));
+                                          oldArchiveDir, newArchiveLocation));
     }
   }
 
