@@ -36,9 +36,10 @@ later version of CDAP.
 
 Views and CDAP Explore
 ======================
-:ref:`CDAP Explore <data-exploration>` needs to be :ref:`enabled <configuration-explore-service>` 
-before any streams and stream views are created so that a Hive table can be created for each view.
-
+:ref:`CDAP Explore <data-exploration>` needs to be :ref:`enabled <hadoop-configuration-explore-service>` 
+before any streams and stream views are created so that a Hive table can be created for
+each view. (See the :ref:`CDAP installation instructions <installation-index>` for your
+particular Hadoop distribution for details.)
 
 Stream View
 ===========
