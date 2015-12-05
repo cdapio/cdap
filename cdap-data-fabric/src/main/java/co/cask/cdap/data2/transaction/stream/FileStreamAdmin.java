@@ -451,7 +451,7 @@ public class FileStreamAdmin implements StreamAdmin {
           alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false, null);
 
           if (!configLocation.delete()) {
-            LOG.debug("Could not delete stream config location " + streamLocation.toURI().getPath());
+            LOG.debug("Could not delete stream config location {}", streamLocation);
           }
 
           // Remove metadata for the stream

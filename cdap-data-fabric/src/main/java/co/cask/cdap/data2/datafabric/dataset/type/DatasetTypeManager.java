@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -54,6 +55,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -107,7 +109,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     throws DatasetModuleConflictException {
 
     LOG.info("adding module: {}, className: {}, jarLocation: {}",
-             datasetModuleId, className, jarLocation == null ? "[local]" : jarLocation.toURI());
+             datasetModuleId, className, jarLocation == null ? "[local]" : jarLocation);
 
     try {
       mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
@@ -167,8 +169,8 @@ public class DatasetTypeManager extends AbstractIdleService {
             }
           }
 
-          DatasetModuleMeta moduleMeta = new DatasetModuleMeta(datasetModuleId.getId(), className,
-                                                               jarLocation == null ? null : jarLocation.toURI(),
+          URI jarURI = jarLocation == null ? null : Locations.toURI(jarLocation);
+          DatasetModuleMeta moduleMeta = new DatasetModuleMeta(datasetModuleId.getId(), className, jarURI,
                                                                reg.getTypes(), Lists.newArrayList(moduleDependencies));
           datasets.getTypeMDS().writeModule(datasetModuleId.getNamespace(), moduleMeta);
 
@@ -358,7 +360,7 @@ public class DatasetTypeManager extends AbstractIdleService {
           // Delete module locations
           for (Location moduleLocation : moduleLocations) {
             if (!moduleLocation.delete()) {
-              LOG.debug("Could not delete dataset module archive - " + moduleLocation.toURI().getPath());
+              LOG.debug("Could not delete dataset module archive - {}", moduleLocation);
             }
           }
           return null;

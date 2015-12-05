@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.FileSetArguments;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Function;
@@ -122,10 +123,10 @@ public final class FileSetDataset implements FileSet {
                    "To disable this message, upgrade the dataset properties with a relative path. ",
                  spec.getName(), basePath);
       } else {
-        String topLevelPath = namespacedLocationFactory.getBaseLocation().toURI().getPath();
+        String topLevelPath = Locations.toURI(namespacedLocationFactory.getBaseLocation()).getPath();
         topLevelPath = topLevelPath.endsWith("/") ? topLevelPath : topLevelPath + "/";
         Location baseLocation = rootLocationFactory.create(basePath);
-        if (baseLocation.toURI().getPath().startsWith(topLevelPath)) {
+        if (Locations.toURI(baseLocation).getPath().startsWith(topLevelPath)) {
           throw new DataSetException("Invalid base path '" + basePath + "' for dataset '" + spec.getName() + "'. " +
                                        "It must not be inside the CDAP base path '" + topLevelPath + "'.");
         }
@@ -157,7 +158,7 @@ public final class FileSetDataset implements FileSet {
     try {
       return baseLocation.append(relativePath);
     } catch (IOException e) {
-      throw new DataSetException("Error constructing path from base '" + baseLocation.toURI().getPath() +
+      throw new DataSetException("Error constructing path from base '" + baseLocation +
                                    "' and relative path '" + relativePath + "'", e);
     }
   }
@@ -249,6 +250,6 @@ public final class FileSetDataset implements FileSet {
   }
 
   private String getFileSystemPath(Location loc) {
-    return loc.toURI().getPath();
+    return Locations.toURI(loc).getPath();
   }
 }

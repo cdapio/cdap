@@ -16,6 +16,7 @@
 package co.cask.cdap.data2.dataset2.lib.hbase;
 
 import co.cask.cdap.api.dataset.DatasetAdmin;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
@@ -192,7 +193,7 @@ public abstract class AbstractHBaseDataSetAdmin implements DatasetAdmin {
     if (priority == null) {
       priority = Coprocessor.PRIORITY_USER;
     }
-    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(jarFile.toURI()), priority, null);
+    tableDescriptor.addCoprocessor(coprocessor.getName(), new Path(Locations.toURI(jarFile)), priority, null);
   }
 
   protected abstract CoprocessorJar createCoprocessorJar() throws IOException;

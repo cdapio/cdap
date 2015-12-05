@@ -41,6 +41,7 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -417,8 +418,8 @@ public class DefaultStore implements Store {
     txnl.executeUnchecked(new TransactionExecutor.Function<AppMds, Void>() {
       @Override
       public Void apply(AppMds mds) throws Exception {
-        mds.apps.writeApplication(id.getNamespaceId(), id.getId(), spec, appArchiveLocation.toURI().toString());
-
+        mds.apps.writeApplication(id.getNamespaceId(), id.getId(), spec, 
+                                  Locations.toURI(appArchiveLocation).toString());
         return null;
       }
     });
@@ -1037,8 +1038,8 @@ public class DefaultStore implements Store {
         Location movedTo = tmpProgramLocation.renameTo(programLocation);
         if (movedTo == null) {
           throw new RuntimeException("Could not replace program jar with the one with updated app spec, " +
-                                       "original program file: " + programLocation.toURI() +
-                                       ", was trying to replace with file: " + tmpProgramLocation.toURI());
+                                       "original program file: " + programLocation +
+                                       ", was trying to replace with file: " + tmpProgramLocation);
         }
       } finally {
         if (tmpProgramLocation != null && tmpProgramLocation.exists()) {
