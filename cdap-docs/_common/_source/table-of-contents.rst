@@ -23,6 +23,14 @@ CDAP Documentation Table of Contents
     FAQs </faqs/index>
 
 
+.. |overview| replace:: **Overview:**
+.. _overview: index.html
+
+- |overview|_
+
+  - **CDAP Summary:** A description of CDAP, its features, and different runtime modes
+
+
 .. |introduction| replace:: **Introduction to CDAP:**
 .. _introduction: introduction/index.html
 
