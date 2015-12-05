@@ -33,14 +33,8 @@ angular.module(PKG.name + '.commons')
     this.metadataAddOpen = false;
     this.metadataTags = [];
 
-    var tagLimit = $scope.tagLimit;
-    this.limit = tagLimit;
-    this.showMoreTags = function() {
-      this.limit = this.metadataTags.length;
-    };
-    this.hideTags = function() {
-      this.limit = tagLimit;
-    };
+    this.tagLimit = $scope.tagLimit;
+    this.limit = $scope.tagLimit;
 
     var prom;
     switch($scope.type) {
