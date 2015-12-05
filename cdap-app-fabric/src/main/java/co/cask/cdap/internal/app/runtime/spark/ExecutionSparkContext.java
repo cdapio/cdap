@@ -37,6 +37,7 @@ import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
 import co.cask.cdap.common.conf.ConfigurationUtil;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.options.UnsupportedOptionTypeException;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -464,7 +465,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
     StreamInputFormat.setTTL(configuration, streamConfig.getTTL());
-    StreamInputFormat.setStreamPath(configuration, streamPath.toURI());
+    StreamInputFormat.setStreamPath(configuration, Locations.toURI(streamPath));
     StreamInputFormat.setTimeRange(configuration, stream.getStartTime(), stream.getEndTime());
 
     String decoderType = stream.getDecoderType();

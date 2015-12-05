@@ -368,7 +368,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
           YarnUtils.addDelegationTokens(hConf, locationFactory, credentials);
         } else if (locationFactory instanceof FileContextLocationFactory) {
           List<Token<?>> tokens = ((FileContextLocationFactory) locationFactory).getFileContext().getDelegationTokens(
-            new Path(locationFactory.getHomeLocation().toURI()), YarnUtils.getYarnTokenRenewer(hConf)
+            new Path(Locations.toURI(locationFactory.getHomeLocation())), YarnUtils.getYarnTokenRenewer(hConf)
           );
           for (Token<?> token : tokens) {
             credentials.addToken(token.getService(), token);
