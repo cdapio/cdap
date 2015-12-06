@@ -30,9 +30,9 @@ angular.module(PKG.name + '.commons')
         var angularElement,
             widget,
             fieldset;
-        if (WidgetFactory.registry[scope.myconfig.widget]) {
-          widget = WidgetFactory.registry[scope.myconfig.widget];
-        } else {
+        widget = WidgetFactory.registry[scope.myconfig.widget] ||
+                 WidgetFactory.registry[scope.myconfig['widget-type']];
+        if (!widget) {
           widget = WidgetFactory.registry['__default__'];
         }
 

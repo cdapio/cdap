@@ -427,7 +427,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // if we couldn't find it there either, error out
     throw new FileNotFoundException(String.format(
       "Could not find jar for app '%s' in namespace '%s'. Expected it to be at %s.",
-      appId.getId(), appId.getNamespaceId(), recordedLocation.toURI()));
+      appId.getId(), appId.getNamespaceId(), recordedLocation));
   }
 
   /**

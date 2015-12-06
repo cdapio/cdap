@@ -24,11 +24,15 @@ angular.module(PKG.name + '.commons')
         isDropdown: '='
       },
       templateUrl: 'widget-container/widget-keyvalue/widget-keyvalue.html',
-      controller: function($scope, EventPipe) {
+      controller: function($scope, EventPipe, myHelpers) {
         var modelCopy = angular.copy($scope.model);
 
-        $scope.kvdelimiter = $scope.config['kv-delimiter'] || ':';
-        $scope.delimiter = $scope.config.delimiter || ',';
+        $scope.kvdelimiter = myHelpers.objectQuery($scope.config, 'kv-delimiter') ||
+                             myHelpers.objectQuery($scope.config, 'widget-attributes', 'kv-delimiter') ||
+                             ':';
+        $scope.delimiter = myHelpers.objectQuery($scope.config, 'delimiter') ||
+                           myHelpers.objectQuery($scope.config, 'widget-attributes', 'delimiter') ||
+                           ',';
 
         $scope.showDelimiter = true;
         if ($scope.config.properties && $scope.config.properties.showDelimiter === 'false') {

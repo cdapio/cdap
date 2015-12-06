@@ -89,12 +89,16 @@ body.theme-cdap {
     }
 
     .type-block {
-      padding: 5px 0 10px;
-      small, span {
-        display: inline-block;
-        font-size: 16px;
+      padding-bottom: 5px;
+      h2, [class*="icon-"] {
+        font-size: 21px;
+      }
+      h2 {
+        margin: 0;
+      }
+      [class*="icon-"] {
         color: @brand-primary;
-        line-height: 15px;
+        margin-right: 5px;
         vertical-align: middle;
       }
       + p {
@@ -102,14 +106,8 @@ body.theme-cdap {
         font-size: 14px;
         margin-bottom: 0;
       }
-      [class*="icon-"] {
-        font-size: 23px;
-      }
     }
-    .type-icon {
-      margin-right: 5px;
-    }
-    // All custom icons we added need to be a little bigger.
+    // Make all custom icons outside of class="type-block" a little bit bigger
     [class*="icon-"] {
       font-size: 15px;
     }
@@ -177,7 +175,6 @@ body.theme-cdap {
         border-top: 1px solid @table-border-color;
         border-bottom: 1px solid @table-border-color;
       }
-      margin-top: 20px;
       .run-level-inner {
         .flexbox();
         flex-direction: row;

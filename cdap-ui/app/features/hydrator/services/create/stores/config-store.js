@@ -27,6 +27,7 @@ class ConfigStore {
     this.configDispatcher.register('onArtifactSave', this.setArtifact.bind(this));
     this.configDispatcher.register('onMetadataInfoSave', this.setMetadataInformation.bind(this));
     this.configDispatcher.register('onPluginAdd', this.setConfig.bind(this));
+    this.configDispatcher.register('onPluginEdit', this.editNodeProperties.bind(this));
     this.configDispatcher.register('onSetSchedule', this.setSchedule.bind(this));
     this.configDispatcher.register('onSetInstance', this.setInstance.bind(this));
     this.configDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
@@ -79,19 +80,19 @@ class ConfigStore {
     this.state = state;
   }
   getState() {
-    return this.state;
+    return angular.copy(this.state);
   }
   getArtifact() {
-    return this.state.artifact;
+    return this.getState().artifact;
   }
   getAppType() {
-    return this.state.artifact.name;
+    return this.getState().artifact.name;
   }
   getConnections() {
-    return this.state.connections;
+    return this.getState().connections;
   }
   getConfig() {
-    return this.state.config;
+    return this.getState().config;
   }
   generateConfigFromState() {
     var config = this.getDefaultConfig();
@@ -163,10 +164,10 @@ class ConfigStore {
     return stateCopy;
   }
   getDescription() {
-    return this.state.description;
+    return this.getState().description;
   }
   getName() {
-    return this.state.name;
+    return this.getState().name;
   }
   setName(name) {
     this.state.name = name;
@@ -218,7 +219,7 @@ class ConfigStore {
     this.state.__ui__.nodes.push(node);
   }
   getNodes() {
-    return this.state.__ui__.nodes;
+    return this.getState().__ui__.nodes;
   }
   getNode(nodeId) {
     let nodes = this.state.__ui__.nodes;
@@ -228,18 +229,25 @@ class ConfigStore {
     } else {
       match = null;
     }
-    return match;
+    return angular.copy(match);
   }
-
+  editNodeProperties(nodeId, nodeConfig) {
+    let nodes = this.state.__ui__.nodes;
+    let match = nodes.filter( node => node.id === nodeId);
+    if (match.length) {
+      match = match[0];
+      angular.forEach(nodeConfig, (pValue, pName) => match[pName] = pValue);
+    }
+  }
   getSchedule() {
-    return this.state.config.schedule;
+    return this.getState().config.schedule;
   }
   setSchedule(schedule) {
     this.state.config.schedule = schedule;
   }
 
   getInstance() {
-    return this.state.config.instance;
+    return this.getState().config.instance;
   }
   setInstance(instance) {
     this.state.config.instance = instance;

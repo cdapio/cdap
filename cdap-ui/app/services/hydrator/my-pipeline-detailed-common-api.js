@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
- 
+
 angular.module(PKG.name + '.services')
   .factory('myPipelineCommonApi', function($resource, myHelpers) {
 
@@ -40,7 +40,8 @@ angular.module(PKG.name + '.services')
         pollStatistics: myHelpers.getConfig('GET', 'POLL', basePath + '/statistics'),
 
         getRuns: myHelpers.getConfig('GET', 'REQUEST', runsPath),
-        pollRuns: myHelpers.getConfig('GET', 'POLL', basePath + '/runs', true)
+        pollRuns: myHelpers.getConfig('GET', 'POLL', basePath + '/runs', true),
+        nextRunTime: myHelpers.getConfig('GET', 'REQUEST', basePath + '/nextruntime', true)
       }
     );
   });

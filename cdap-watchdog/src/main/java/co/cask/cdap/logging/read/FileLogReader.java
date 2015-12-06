@@ -88,7 +88,7 @@ public class FileLogReader implements LogReader {
       List<Location> filesInRange = getFilesInRange(sortedFiles, readRange.getFromMillis(), readRange.getToMillis());
       AvroFileReader logReader = new AvroFileReader(schema);
       for (Location file : filesInRange) {
-        LOG.trace("Reading file {}", file.toURI());
+        LOG.trace("Reading file {}", file);
         logReader.readLog(file, logFilter, fromTimeMs, Long.MAX_VALUE, maxEvents - callback.getCount(), callback);
         if (callback.getCount() >= maxEvents) {
           break;
@@ -121,7 +121,7 @@ public class FileLogReader implements LogReader {
       AvroFileReader logReader = new AvroFileReader(schema);
       int count = 0;
       for (Location file : Lists.reverse(filesInRange)) {
-        LOG.trace("Reading file {}", file.toURI());
+        LOG.trace("Reading file {}", file);
         Collection<LogEvent> events = logReader.readLogPrev(file, logFilter, fromTimeMs, maxEvents - count);
         logSegments.add(events);
         count += events.size();
@@ -156,7 +156,7 @@ public class FileLogReader implements LogReader {
       List<Location> filesInRange = getFilesInRange(sortedFiles, fromTimeMs, toTimeMs);
       AvroFileReader avroFileReader = new AvroFileReader(schema);
       for (Location file : filesInRange) {
-        LOG.trace("Reading file {}", file.toURI());
+        LOG.trace("Reading file {}", file);
         avroFileReader.readLog(file, logFilter, fromTimeMs, toTimeMs, Integer.MAX_VALUE, callback);
       }
     } catch (Throwable e) {

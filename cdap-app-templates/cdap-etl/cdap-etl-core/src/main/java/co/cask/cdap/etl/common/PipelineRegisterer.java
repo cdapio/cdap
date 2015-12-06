@@ -87,9 +87,12 @@ public class PipelineRegisterer {
     String sourcePluginId = sourceConfig.getName();
 
     // instantiate source
+    String pluginName = sourceConfig.getPlugin().getName();
     PipelineConfigurable source = configurer.usePlugin(sourcePluginType,
-                                                       sourceConfig.getPlugin().getName(),
-                                                       sourcePluginId, getPluginProperties(sourceConfig));
+                                                       pluginName,
+                                                       sourcePluginId, getPluginProperties(sourceConfig),
+                                                       sourceConfig.getPlugin()
+                                                         .getPluginSelector(sourcePluginType, pluginName));
     if (source == null) {
       throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found.",
                                                        Constants.Source.PLUGINTYPE,
@@ -106,9 +109,12 @@ public class PipelineRegisterer {
       String transformId = transformConfig.getName();
 
       PluginProperties transformProperties = getPluginProperties(transformConfig);
+      pluginName = transformConfig.getPlugin().getName();
       Transform transformObj = configurer.usePlugin(Constants.Transform.PLUGINTYPE,
-                                                    transformConfig.getPlugin().getName(),
-                                                    transformId, transformProperties);
+                                                    pluginName,
+                                                    transformId, transformProperties,
+                                                    transformConfig.getPlugin()
+                                                      .getPluginSelector(Constants.Transform.PLUGINTYPE, pluginName));
       if (transformObj == null) {
         throw new IllegalArgumentException(String.format("No Plugin of type '%s' named '%s' was found",
                                                          Constants.Transform.PLUGINTYPE,
@@ -138,8 +144,11 @@ public class PipelineRegisterer {
       sinksInfo.add(new SinkInfo(sinkPluginId, sinkConfig.getErrorDatasetName()));
 
       // try to instantiate the sink
-      PipelineConfigurable sink = configurer.usePlugin(sinkPluginType, sinkConfig.getPlugin().getName(),
-                                                       sinkPluginId, getPluginProperties(sinkConfig));
+      pluginName = sinkConfig.getPlugin().getName();
+      PipelineConfigurable sink = configurer.usePlugin(sinkPluginType, pluginName,
+                                                       sinkPluginId, getPluginProperties(sinkConfig),
+                                                       sinkConfig.getPlugin()
+                                                         .getPluginSelector(sinkPluginType, pluginName));
       if (sink == null) {
         throw new IllegalArgumentException(
           String.format(

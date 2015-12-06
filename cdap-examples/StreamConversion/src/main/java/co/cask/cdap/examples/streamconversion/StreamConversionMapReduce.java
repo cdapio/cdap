@@ -77,7 +77,7 @@ public class StreamConversionMapReduce extends AbstractMapReduce {
     context.addOutput("converted", partitionedFileSet);
 
     LOG.info("Output location for new partition is: {}",
-             partitionedFileSet.getEmbeddedFileSet().getOutputLocation().toURI().toString());
+             partitionedFileSet.getEmbeddedFileSet().getOutputLocation());
   }
 
   /**

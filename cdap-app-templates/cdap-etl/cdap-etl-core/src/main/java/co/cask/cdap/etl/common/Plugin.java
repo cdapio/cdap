@@ -16,24 +16,24 @@
 
 package co.cask.cdap.etl.common;
 
-import co.cask.cdap.api.artifact.ArtifactId;
+import co.cask.cdap.api.plugin.PluginSelector;
 import com.google.common.base.Objects;
 
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Plugin Configuration that is part of {@link ETLStage}
+ * Plugin Configuration that is part of {@link ETLStage}.
  */
 public class Plugin {
   private final String name;
   private final Map<String, String> properties;
-  private final ArtifactId artifactId;
+  private final ArtifactSelectorConfig artifact;
 
-  public Plugin(String name, Map<String, String> properties, @Nullable ArtifactId artifactId) {
+  public Plugin(String name, Map<String, String> properties, @Nullable ArtifactSelectorConfig artifact) {
     this.name = name;
     this.properties = properties;
-    this.artifactId = artifactId;
+    this.artifact = artifact;
   }
 
   public Plugin(String name, Map<String, String> properties) {
@@ -48,9 +48,17 @@ public class Plugin {
     return properties;
   }
 
-  @Nullable
-  public ArtifactId getArtifactId() {
-    return artifactId;
+  /**
+   * @param pluginType the plugin type to get a selector for. Only used for error messages when no matching artifact
+   *                   for the plugin is found
+   * @param pluginName the plugin name to get a selector for. Only used for error messages when no matching artifact
+   *                   for the plugin is found
+   * @return the plugin selector for this plugin. If artifact settings have been given, the selector will try to
+   *         match the specified artifact settings using an {@link ArtifactSelector}.
+   *         If not, the default {@link PluginSelector} is returned.
+   */
+  public PluginSelector getPluginSelector(String pluginType, String pluginName) {
+    return artifact == null ? new PluginSelector() : artifact.getArtifactSelector(pluginType, pluginName);
   }
 
   @Override
@@ -58,7 +66,7 @@ public class Plugin {
     return Objects.toStringHelper(this)
       .add("name", name)
       .add("properties", properties)
-      .add("artifact", artifactId)
+      .add("artifact", artifact)
       .toString();
   }
 
