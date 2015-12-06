@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.webapp;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
@@ -63,7 +64,7 @@ public class IntactJarHttpHandler extends AbstractHttpHandler implements JarHttp
   public void init(HandlerContext context) {
     super.init(context);
     try {
-      jarFile = new JarFile(new File(jarLocation.toURI()));
+      jarFile = new JarFile(new File(Locations.toURI(jarLocation)));
 
       Predicate<String> fileExists = new Predicate<String>() {
         @Override

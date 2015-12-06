@@ -107,9 +107,9 @@ public class FileSetTest {
     Assert.assertEquals(fileSet1NsDir.getName(), DatasetFrameworkTestUtil.NAMESPACE_ID.getId());
     Assert.assertEquals(fileSet2NsDir.getName(), OTHER_NAMESPACE.getId());
 
-    Assert.assertNotEquals(fileSet1.getInputLocations().get(0).toURI().getPath(),
-                           fileSet2.getInputLocations().get(0).toURI().getPath());
-    Assert.assertNotEquals(fileSet1Output.toURI().getPath(), fileSet2Output.toURI().getPath());
+    Assert.assertNotEquals(Locations.toURI(fileSet1.getInputLocations().get(0)).getPath(),
+                           Locations.toURI(fileSet2.getInputLocations().get(0)).getPath());
+    Assert.assertNotEquals(Locations.toURI(fileSet1Output).getPath(), Locations.toURI(fileSet2Output).getPath());
 
     OutputStream out = fileSet1.getOutputLocation().getOutputStream();
     out.write(42);
@@ -140,7 +140,7 @@ public class FileSetTest {
     FileSet fileSet = dsFrameworkUtil.getInstance(testFileSetInstance3, fileArgs);
 
     // write to the output path
-    Assert.assertEquals(absolutePath + "/out", fileSet.getOutputLocation().toURI().getPath());
+    Assert.assertEquals(absolutePath + "/out", Locations.toURI(fileSet.getOutputLocation()).getPath());
     OutputStream out = fileSet.getOutputLocation().getOutputStream();
     out.write(42);
     out.close();

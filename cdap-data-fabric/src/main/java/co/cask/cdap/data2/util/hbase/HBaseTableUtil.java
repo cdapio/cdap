@@ -313,7 +313,7 @@ public abstract class HBaseTableUtil {
 
         // Copy jar file into filesystem
         if (!jarDir.mkdirs() && !jarDir.exists()) {
-          throw new IOException("Fails to create directory: " + jarDir.toURI());
+          throw new IOException("Fails to create directory: " + jarDir);
         }
         Files.copy(jarFile, new OutputSupplier<OutputStream>() {
           @Override

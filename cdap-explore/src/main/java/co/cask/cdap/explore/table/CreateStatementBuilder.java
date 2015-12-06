@@ -20,6 +20,7 @@ import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.data.schema.UnsupportedTypeException;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.ProjectInfo;
 import co.cask.cdap.data2.dataset2.lib.partitioned.FieldTypes;
 import com.google.common.base.Preconditions;
@@ -113,7 +114,7 @@ public class CreateStatementBuilder {
    * Set the location of the Hive table.
    */
   public CreateStatementBuilder setLocation(Location location) {
-    this.location = location.toURI().toString();
+    this.location = Locations.toURI(location).toString();
     return this;
   }
 

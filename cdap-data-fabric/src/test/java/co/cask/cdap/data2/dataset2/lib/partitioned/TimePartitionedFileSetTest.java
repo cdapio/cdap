@@ -24,6 +24,7 @@ import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.TimePartitionDetail;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSetArguments;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
@@ -211,7 +212,7 @@ public class TimePartitionedFileSetTest {
     TimePartitionedFileSetArguments.setOutputPathFormat(args, "yyyy-MM-dd/HH_mm", timeZone.getID());
     TimePartitionedFileSet ds = dsFrameworkUtil.getInstance(TPFS_INSTANCE, args);
 
-    String outputPath = ds.getEmbeddedFileSet().getOutputLocation().toURI().getPath();
+    String outputPath = Locations.toURI(ds.getEmbeddedFileSet().getOutputLocation()).getPath();
     Assert.assertTrue(outputPath.endsWith("2015-01-01/20_42"));
 
     Map<String, String> outputConfig = ds.getOutputFormatConfiguration();

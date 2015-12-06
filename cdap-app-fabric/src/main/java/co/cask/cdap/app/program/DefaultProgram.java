@@ -74,7 +74,7 @@ public final class DefaultProgram implements Program {
 
     Manifest manifest = BundleJarUtil.getManifest(programJarLocation);
     if (manifest == null) {
-      throw new IOException("Failed to load manifest in program jar from " + programJarLocation.toURI());
+      throw new IOException("Failed to load manifest in program jar from " + programJarLocation);
     }
 
     mainClassName = getAttribute(manifest, ManifestFields.MAIN_CLASS);
