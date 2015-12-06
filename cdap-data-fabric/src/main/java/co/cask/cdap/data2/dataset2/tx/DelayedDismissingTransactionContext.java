@@ -16,6 +16,9 @@
 
 package co.cask.cdap.data2.dataset2.tx;
 
+import co.cask.cdap.api.data.DatasetProvider;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
@@ -30,57 +33,49 @@ import java.util.Collection;
 import javax.annotation.Nullable;
 
 /**
- * This is an implementation of TransactionContext that maintains some of its transaction-awares as
- * weak references, to allow them to be garbage-collected between transactions:
- * <ul>
- *   <li>When a new transaction is started, it promotes all weak references to strong references
- *   (by de-referencing before adding them to the transaction);</li>
- *   <li>When the transaction finishes (either through finish() or abort()), it discards all strong
- *   references;</li>
- *   <li>All other transaction-awares (not instances of {@link WeakReferenceDelegatingTransactionAware})
- *   are passed through to the transaction as is.</li>
- * </ul>
- * This makes sure that after the transaction is finished, the weak-references can be garbage-collected. But
- * for the lifetime of a transaction, they are protected from garbage collection to ensure that they can
- * participate in commit or rollback.
- *
- * Note that because TransactionContext is not an interface, we must extend the existing implementation
- * even though this implementation in fact delegates to another TransactionContext rather than extending one.
+ * This is an implementation of TransactionContext that delays the dismissal of a transaction-aware
+ * dataset until after the transaction is complete. This is needed in cases where a client calls
+ * {@link DatasetProvider#dismissDataset(Dataset)} in the middle of a transaction: The client indicates
+ * that it does not need that dataset any more. But it is participating in the current transaction,
+ * and needs to continue to do so until the transaction has ended. Therefore this class will put
+ * that dataset on a toDismiss set, which is inspected after every transaction.
  */
-public class WeakReferencePromotingTransactionContext extends TransactionContext {
+public class DelayedDismissingTransactionContext extends TransactionContext {
 
-  private static final Logger LOG = LoggerFactory.getLogger(WeakReferencePromotingTransactionContext.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DelayedDismissingTransactionContext.class);
 
   private final TransactionSystemClient txClient;
   private final Collection<TransactionAware> txAwares;
+  private final Collection<TransactionAware> toDismiss;
+  private final SingleThreadDatasetCache cache;
   private TransactionContext txContext;
 
-  public WeakReferencePromotingTransactionContext(TransactionSystemClient txClient) {
+  /**
+   * Constructs the context from the transaction system client (needed by TransactionContext) and
+   * the dataset cache that owns this context. That cache is needed to close and dismiss datasets
+   * after a transaction has finished.
+   * @param txClient the transaction system client, passed on to the actual transaction context
+   * @param cache the dataset cache that owns this context, and that will close and invalidate each dataset
+   */
+  public DelayedDismissingTransactionContext(TransactionSystemClient txClient, SingleThreadDatasetCache cache) {
     super(txClient);
     this.txClient = txClient;
-    this.txAwares = Sets.newLinkedHashSet();
+    this.txAwares = Sets.newIdentityHashSet();
+    this.toDismiss = Sets.newIdentityHashSet();
+    this.cache = cache;
   }
 
   @Override
   public boolean addTransactionAware(TransactionAware txAware) {
-    TransactionAware toAdd = txAware;
-    // promote weak references to the actual tx-aware before adding to actual tx-context
-    if (txAware instanceof WeakReferenceDelegatingTransactionAware) {
-      toAdd = ((WeakReferenceDelegatingTransactionAware) txAware).get();
-      if (toAdd == null) {
-        // this should never happen. It means that a tx-aware was already gc'ed before it was added here
-        LOG.warn("Attempt to add weak-referenced transaction-aware '{}' that has already been garbage-collected");
-        return false;
-      }
-    }
     if (!txAwares.add(txAware)) {
       return false; // it must already be in the actual tx-context
     }
-    if (txContext != null && !txContext.addTransactionAware(toAdd) && toAdd != txAware) {
-      // this must be a duplicate weak-reference to the same tx-aware, which should never happen
-      LOG.warn("Attempt to add weak-referenced transaction-aware '{}' that was already added " +
-                 "either directly or through a different weak reference");
+    // this is new, add it to current tx context
+    if (txContext != null) {
+      txContext.addTransactionAware(txAware);
     }
+    // in case this was marked for dismissal, remove that mark
+    toDismiss.remove(txAware);
     return true;
   }
 
@@ -91,22 +86,33 @@ public class WeakReferencePromotingTransactionContext extends TransactionContext
     return txAwares.remove(txAware);
   }
 
+  /**
+   * Mark a tx-aware for dismissal after the transaction is complete.
+   */
+  public void dismissAfterTx(TransactionAware txAware) {
+    toDismiss.add(txAware);
+    txAwares.remove(txAware);
+  }
+
+  /**
+   * Dismisses all datasets marked for dismissal, through the dataset cache, and set the tx context to null.
+   */
+  public void cleanup() {
+    for (TransactionAware txAware : toDismiss) {
+      cache.dismissSafely(txAware);
+    }
+    toDismiss.clear();
+    txContext = null;
+  }
+
   @Override
   public void start() throws TransactionFailureException {
     if (txContext != null && txContext.getCurrentTransaction() != null) {
       LOG.warn("Starting a new transaction while the previous transaction {} is still on-going. ",
                txContext.getCurrentTransaction().getTransactionId());
+      cleanup();
     }
-    txContext = new TransactionContext(txClient);
-    for (TransactionAware txAware : txAwares) {
-      if (txAware instanceof WeakReferenceDelegatingTransactionAware) {
-        txAware = ((WeakReferenceDelegatingTransactionAware) txAware).get();
-        if (txAware == null) {
-          continue;
-        }
-      }
-      txContext.addTransactionAware(txAware);
-    }
+    txContext = new TransactionContext(txClient, txAwares);
     txContext.start();
   }
 
@@ -117,7 +123,7 @@ public class WeakReferencePromotingTransactionContext extends TransactionContext
     try {
       txContext.finish();
     } finally {
-      txContext = null;
+      cleanup();
     }
   }
 
@@ -144,7 +150,7 @@ public class WeakReferencePromotingTransactionContext extends TransactionContext
     try {
       txContext.abort(cause);
     } finally {
-      txContext = null;
+      cleanup();
     }
   }
 }

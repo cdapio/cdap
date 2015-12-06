@@ -28,6 +28,9 @@ import java.util.Objects;
 public class NamespaceId extends EntityId {
   private final String namespace;
 
+  public static final NamespaceId DEFAULT = new NamespaceId("default");
+  public static final NamespaceId SYSTEM = new NamespaceId("system");
+
   public NamespaceId(String namespace) {
     super(EntityType.NAMESPACE);
     this.namespace = namespace;

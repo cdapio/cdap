@@ -23,14 +23,12 @@ import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.tx.WeakReferenceDelegatingTransactionAware;
-import co.cask.cdap.data2.dataset2.tx.WeakReferencePromotingTransactionContext;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.data2.dataset2.tx.DelayedDismissingTransactionContext;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
-import com.google.common.base.Function;
-import com.google.common.base.Predicates;
+import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -44,9 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -66,11 +62,11 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
 
   private final LoadingCache<DatasetCacheKey, Dataset> datasetCache;
   private final CacheLoader<DatasetCacheKey, Dataset> datasetLoader;
-  private final Map<DatasetCacheKey, WeakReferenceDelegatingTransactionAware> activeTxAwares = new HashMap<>();
+  private final Map<DatasetCacheKey, TransactionAware> activeTxAwares = new HashMap<>();
   private final Map<DatasetCacheKey, Dataset> staticDatasets = new HashMap<>();
   private final Set<TransactionAware> extraTxAwares = Sets.newIdentityHashSet();
 
-  private TransactionContext txContext = null;
+  private DelayedDismissingTransactionContext txContext = null;
 
   /**
    * See {@link DynamicDatasetCache}.
@@ -81,7 +77,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
    */
   public SingleThreadDatasetCache(final SystemDatasetInstantiator instantiator,
                                   final TransactionSystemClient txClient,
-                                  final Id.Namespace namespace,
+                                  final NamespaceId namespace,
                                   Map<String, String> runtimeArguments,
                                   @Nullable final MetricsContext metricsContext,
                                   @Nullable Map<String, Map<String, String>> staticDatasets) {
@@ -90,8 +86,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       @Override
       @ParametersAreNonnullByDefault
       public Dataset load(DatasetCacheKey key) throws Exception {
-        Dataset dataset = instantiator.getDataset(
-          Id.DatasetInstance.from(namespace, key.getName()), key.getArguments());
+        Dataset dataset = instantiator.getDataset(namespace.dataset(key.getName()), key.getArguments());
         if (dataset instanceof MeteredDataset && metricsContext != null) {
           ((MeteredDataset) dataset).setMetricsCollector(
             metricsContext.childContext(Constants.Metrics.Tag.DATASET, key.getName()));
@@ -107,7 +102,6 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
           closeDataset(notification.getKey(), notification.getValue());
         }
       })
-      .weakValues()
       .build(datasetLoader);
 
     // add all the static datasets to the cache. This makes sure that a) the cache is preloaded and
@@ -169,30 +163,20 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
 
     // any transaction aware that is not in the active tx-awares is added to the current tx context (if there is one).
     if (!bypass && dataset instanceof TransactionAware) {
-      WeakReferenceDelegatingTransactionAware txAware =
-        new WeakReferenceDelegatingTransactionAware((TransactionAware) dataset);
-      WeakReferenceDelegatingTransactionAware existing = activeTxAwares.get(key);
+      TransactionAware txAware = (TransactionAware) dataset;
+      TransactionAware existing = activeTxAwares.get(key);
       if (existing == null) {
         activeTxAwares.put(key, txAware);
         if (txContext != null) {
           txContext.addTransactionAware(txAware);
         }
       } else {
-        TransactionAware actual = existing.get();
-        if (actual == null) {
-          activeTxAwares.put(key, txAware);
-          if (txContext != null) {
-            txContext.removeTransactionAware(existing);
-            txContext.addTransactionAware(txAware);
-          }
-        } else {
-          // this better be the same dataset, otherwise the cache did not work
-          if (actual != dataset) {
-            throw new IllegalStateException(
-              String.format("Unexpected state: Cache returned %s for %s, which is different from the " +
-                              "active transaction aware %s for the same key. This should never happen.",
-                            dataset, key, actual));
-          }
+        // this better be the same dataset, otherwise the cache did not work
+        if (existing != dataset) {
+          throw new IllegalStateException(
+            String.format("Unexpected state: Cache returned %s for %s, which is different from the " +
+                            "active transaction aware %s for the same key. This should never happen.",
+                          dataset, key, existing));
         }
       }
     }
@@ -200,21 +184,53 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   }
 
   @Override
-  public TransactionContext newTransactionContext() {
-    dismissTransactionContext();
-    txContext = new WeakReferencePromotingTransactionContext(txClient);
-    // make sure all in-progress participate in the transaction. But beware that weak refs may have expired
-    List<DatasetCacheKey> expiredTxAwares = new ArrayList<>();
-    for (Map.Entry<DatasetCacheKey, WeakReferenceDelegatingTransactionAware> entry : activeTxAwares.entrySet()) {
-      if (entry.getValue().isExpired()) {
-        expiredTxAwares.add(entry.getKey());
-      } else {
-        txContext.addTransactionAware(entry.getValue());
+  public void dismissDataset(Dataset dataset) {
+    Preconditions.checkNotNull(dataset);
+    // static datasets cannot be dismissed
+    if (staticDatasets.containsValue(dataset)) {
+      LOG.warn("Attempt to dismiss static dataset {} from dataset cache", dataset);
+      return;
+    }
+    if (txContext == null || !(dataset instanceof TransactionAware)) {
+      dismissSafely(dataset);
+    } else {
+      // it is a tx-aware: it may participate in a transaction, so mark it as to be dismissed after the tx
+      txContext.dismissAfterTx((TransactionAware) dataset);
+    }
+    // remove from activeTxAwares in any case - a dismissed dataset does not need to participate in external tx
+    // iterates over all datasets but we do not expect this map to become large
+    for (Map.Entry<DatasetCacheKey, TransactionAware> entry : activeTxAwares.entrySet()) {
+      if (dataset == entry.getValue()) {
+        activeTxAwares.remove(entry.getKey());
+        return;
       }
     }
-    // remove the expired dynamic datasets
-    for (DatasetCacheKey key : expiredTxAwares) {
-      activeTxAwares.remove(key);
+  }
+
+  /**
+   * Dismiss a dataset when it is known that no transaction is going on.
+   *
+   * @param dataset this is an Object because we need to pass in TransactionAware or Dataset
+   */
+  public void dismissSafely(Object dataset) {
+    // iterates over all datasets but we do not expect this map to become large
+    for (Map.Entry<DatasetCacheKey, Dataset> entry : datasetCache.asMap().entrySet()) {
+      if (dataset == entry.getValue()) {
+        datasetCache.invalidate(entry.getKey());
+        return;
+      }
+    }
+    // we can only hope that dataset.toString() is meaningful
+    LOG.warn("Attempt to dismiss dataset that was not acquired through this provider: " + dataset);
+  }
+
+  @Override
+  public TransactionContext newTransactionContext() {
+    dismissTransactionContext();
+    txContext = new DelayedDismissingTransactionContext(txClient, this);
+    // make sure all in-progress participate in the transaction. But beware that weak refs may have expired
+    for (Map.Entry<DatasetCacheKey, TransactionAware> entry : activeTxAwares.entrySet()) {
+      txContext.addTransactionAware(entry.getValue());
     }
     // and finally also add the extra tx-awares
     for (TransactionAware txAware : extraTxAwares) {
@@ -225,7 +241,10 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
 
   @Override
   public void dismissTransactionContext() {
-    txContext = null;
+    if (txContext != null) {
+      txContext.cleanup();
+      txContext = null;
+    }
   }
 
   @Override
@@ -238,15 +257,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     if (txContext == null) {
       return NO_TX_AWARES;
     }
-    return Iterables.concat(extraTxAwares, Iterables.filter(
-      Iterables.transform(activeTxAwares.values(),
-                          new Function<WeakReferenceDelegatingTransactionAware, TransactionAware>() {
-                            @Nullable
-                            public TransactionAware apply(WeakReferenceDelegatingTransactionAware ref) {
-                              return ref.get();
-                            }
-                          }),
-                          Predicates.notNull()));
+    return Iterables.concat(extraTxAwares, activeTxAwares.values());
   }
 
   @Override

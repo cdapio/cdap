@@ -20,7 +20,7 @@ import co.cask.cdap.api.ClientLocalizationContext;
 import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.DatasetProvider;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
@@ -39,7 +39,7 @@ import javax.annotation.Nullable;
  * MapReduce job execution context.
  */
 public interface MapReduceContext
-  extends RuntimeContext, DatasetContext, ServiceDiscoverer, PluginContext, ClientLocalizationContext {
+  extends RuntimeContext, DatasetProvider, ServiceDiscoverer, PluginContext, ClientLocalizationContext {
 
   /**
    * @return The specification used to configure this {@link MapReduce} job instance.

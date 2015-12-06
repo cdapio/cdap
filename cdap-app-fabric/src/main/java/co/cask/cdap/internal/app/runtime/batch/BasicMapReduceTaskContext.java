@@ -254,6 +254,18 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
     return dataset;
   }
 
+  @Override
+  public void releaseDataset(Dataset dataset) {
+    // nop-op: all datasets have to participate until the transaction (that is, the program) finishes
+  }
+
+  @Override
+  public void dismissDataset(Dataset dataset) {
+    // nop-op: all datasets have to participate until the transaction (that is, the program) finishes
+  }
+
+
+
   /**
    * Force all transaction-aware datasets participating in this context to flush their writes.
    */

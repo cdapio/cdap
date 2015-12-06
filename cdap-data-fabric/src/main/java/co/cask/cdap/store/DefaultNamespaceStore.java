@@ -28,6 +28,7 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -62,7 +63,7 @@ public class DefaultNamespaceStore implements NamespaceStore {
     DatasetFramework framework) {
     this.dsFramework = framework;
     this.dsCache = new MultiThreadDatasetCache(
-      new SystemDatasetInstantiator(dsFramework, null, null), txClient, Id.Namespace.SYSTEM, null, null, null);
+      new SystemDatasetInstantiator(dsFramework, null, null), txClient, NamespaceId.SYSTEM, null, null, null);
     this.apps =
       new Supplier<NamespaceMDS>() {
         @Override
