@@ -27,8 +27,8 @@ import java.util.Map;
  */
 public abstract class AbstractSystemMetadataWriter {
 
-  protected static final char CTRL_A = '\001';
-  protected static final String SCHEMA_FIELD_PROPERTY_PREFIX = "field";
+  public static final char CTRL_A = '\001';
+  public static final String SCHEMA_FIELD_PROPERTY_PREFIX = "schema";
 
   private final MetadataStore metadataStore;
   private final Id.NamespacedId entityId;

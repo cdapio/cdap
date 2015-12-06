@@ -48,8 +48,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -517,8 +515,8 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, AllProgramsApp.STREAM_NAME);
     Assert.assertTrue(getTags(streamId, MetadataScope.SYSTEM).isEmpty());
     Map<String, String> streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
-    Assert.assertEquals("field\u0001body",
-                        streamSystemProperties.get("field\u0001body\u0001" + Schema.Type.STRING.toString()));
+    Assert.assertEquals("schema\u0001body",
+                        streamSystemProperties.get("schema\u0001body\u0001" + Schema.Type.STRING.toString()));
     Id.DatasetInstance datasetInstance = Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME);
     Set<String> dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(4, dsSystemTags.size());
@@ -530,6 +528,9 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(KeyValueTable.class.getName(), dsSystemProperties.get("type"));
     Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, AllProgramsApp.NAME);
     Set<String> appSystemTags = getTags(app, MetadataScope.SYSTEM);
+    // add a user property with "schema" as key
+    Map<String, String> datasetProperties = ImmutableMap.of("schema", "schemaValue");
+    addProperties(datasetInstance, datasetProperties);
     Assert.assertEquals(AllProgramsApp.class.getSimpleName(), appSystemTags.iterator().next());
     Assert.assertTrue(getProperties(app, MetadataScope.SYSTEM).isEmpty());
     assertProgramSystemMetadata(Id.Program.from(app, ProgramType.FLOW, AllProgramsApp.NoOpFlow.NAME), "Real-time");
@@ -539,9 +540,43 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     assertProgramSystemMetadata(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME), "Batch");
     assertProgramSystemMetadata(Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME), "Batch");
     assertProgramSystemMetadata(Id.Program.from(app, ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME), "Batch");
-    String encoded = URLEncoder.encode("field\u0001body", "UTF-8");
+
+    // schema search with fieldname
     Set<MetadataSearchResultRecord> metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT,
-                                                                                 encoded, null);
+                                                                                 "schema:body", null);
+    Assert.assertTrue(2 == metadataSearchResultRecords.size());
+    Set<MetadataSearchResultRecord> expected = ImmutableSet.of(
+      new MetadataSearchResultRecord(streamId),
+      new MetadataSearchResultRecord(mystream)
+    );
+    Assert.assertEquals(expected, metadataSearchResultRecords);
+
+    // schema search with fieldname and fieldtype
+    metadataSearchResultRecords =
+      searchMetadata(Id.Namespace.DEFAULT, ("schema:body:" + Schema.Type.STRING.toString()),
+                     null);
+    Assert.assertTrue(2 == metadataSearchResultRecords.size());
+    Assert.assertEquals(expected, metadataSearchResultRecords);
+
+    // schema search for everything which has schema and partial fieldname
+    metadataSearchResultRecords =
+      searchMetadata(Id.Namespace.DEFAULT, "schema:bo*", null);
+    Assert.assertTrue(2 == metadataSearchResultRecords.size());
+    Assert.assertEquals(expected, metadataSearchResultRecords);
+
+    // schema search with fieldname and all/partial fieldtype
+    metadataSearchResultRecords =
+      searchMetadata(Id.Namespace.DEFAULT, "schema:body:*", null);
+    Assert.assertTrue(2 == metadataSearchResultRecords.size());
+    Assert.assertEquals(expected, metadataSearchResultRecords);
+
+    // schema search for everything which has schema as key
+    Set<MetadataSearchResultRecord> expectedNewSet = new ImmutableSet.Builder<MetadataSearchResultRecord>().
+      addAll(expected).add(new MetadataSearchResultRecord(datasetInstance)).build();
+    metadataSearchResultRecords =
+      searchMetadata(Id.Namespace.DEFAULT, "schema:*", null);
+    Assert.assertTrue(3 == metadataSearchResultRecords.size());
+    Assert.assertEquals(expectedNewSet, metadataSearchResultRecords);
   }
 
   private void assertProgramSystemMetadata(Id.Program programId, String mode) throws Exception {

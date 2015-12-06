@@ -22,7 +22,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ViewSpecification;
 import com.google.common.collect.ImmutableMap;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
