@@ -41,7 +41,8 @@ angular.module(PKG.name + '.services')
 
         getRuns: myHelpers.getConfig('GET', 'REQUEST', runsPath),
         pollRuns: myHelpers.getConfig('GET', 'POLL', basePath + '/runs', true),
-        nextRunTime: myHelpers.getConfig('GET', 'REQUEST', basePath + '/nextruntime', true)
+        nextRunTime: myHelpers.getConfig('GET', 'REQUEST', basePath + '/nextruntime', true),
+        pollNextRunTime: myHelpers.getConfig('GET', 'POLL', basePath + '/nextruntime', true)
       }
     );
   });
