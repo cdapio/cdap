@@ -160,7 +160,7 @@ public final class LiveStreamFileReader extends LiveFileReader<PositionStreamEve
       this.offset = new StreamFileOffset(offset);
       this.partitionLocation = Locations.getParent(offset.getEventLocation());
 
-      LOG.trace("Stream reader created for {}", offset.getEventLocation().toURI());
+      LOG.trace("Stream reader created for {}", offset.getEventLocation());
     }
 
     @Override

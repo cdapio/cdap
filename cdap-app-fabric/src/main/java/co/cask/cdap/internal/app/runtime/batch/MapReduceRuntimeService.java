@@ -220,7 +220,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // ClassLoader from here and use it for setting up the job
         Location pluginArchive = createPluginArchive(tempLocation);
         if (pluginArchive != null) {
-          job.addCacheArchive(pluginArchive.toURI());
+          job.addCacheArchive(Locations.toURI(pluginArchive));
           mapredConf.set(Constants.Plugin.ARCHIVE, pluginArchive.getName());
         }
       }
@@ -244,7 +244,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // Copy and localize the program jar in distributed mode
         programJar = copyProgramJar(tempLocation);
-        job.addCacheFile(programJar.toURI());
+        job.addCacheFile(Locations.toURI(programJar));
 
         // Generate and localize the launcher jar to control the classloader of MapReduce containers processes
         List<String> paths = new ArrayList<>();
@@ -252,7 +252,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         paths.add("job.jar/classes");
         Location launcherJar = createLauncherJar(
           Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, paths)), tempLocation);
-        job.addCacheFile(launcherJar.toURI());
+        job.addCacheFile(Locations.toURI(launcherJar));
 
         // The only thing in the container classpath is the launcher.jar
         // The MapReduceContainerLauncher inside the launcher.jar will creates a MapReduceClassLoader and launch
@@ -274,7 +274,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       try {
         // We remember tx, so that we can re-use it in mapreduce tasks
         CConfiguration cConfCopy = cConf;
-        contextConfig.set(context, cConfCopy, tx, programJar.toURI(), localizedUserResources);
+        contextConfig.set(context, cConfCopy, tx, Locations.toURI(programJar), localizedUserResources);
 
         LOG.info("Submitting MapReduce Job: {}", context);
         // submits job and returns immediately. Shouldn't need to set context ClassLoader.
@@ -863,7 +863,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location programJarCopy = targetDir.append("program.jar");
 
     ByteStreams.copy(Locations.newInputSupplier(programJarLocation), Locations.newOutputSupplier(programJarCopy));
-    LOG.info("Copied Program Jar to {}, source: {}", programJarCopy.toURI(), programJarLocation.toURI());
+    LOG.info("Copied Program Jar to {}, source: {}", programJarCopy, programJarLocation);
     return programJarCopy;
   }
 
