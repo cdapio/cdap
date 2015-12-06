@@ -954,7 +954,7 @@ public class ArtifactStore {
     private final ArtifactMeta meta;
 
     public ArtifactData(Location location, ArtifactMeta meta) {
-      this.locationURI = Locations.toURI(location);
+      this.locationURI = location.toURI();
       this.meta = meta;
     }
   }
@@ -968,7 +968,7 @@ public class ArtifactStore {
     public PluginData(PluginClass pluginClass, ArtifactRange usableBy, Location artifactLocation) {
       this.pluginClass = pluginClass;
       this.usableBy = usableBy;
-      this.artifactLocationURI = Locations.toURI(artifactLocation);
+      this.artifactLocationURI = artifactLocation.toURI();
     }
   }
   
@@ -979,7 +979,7 @@ public class ArtifactStore {
 
     public AppData(ApplicationClass appClass, Location artifactLocation) {
       this.appClass = appClass;
-      this.artifactLocationURI = Locations.toURI(artifactLocation);
+      this.artifactLocationURI = artifactLocation.toURI();
     }
   }
 

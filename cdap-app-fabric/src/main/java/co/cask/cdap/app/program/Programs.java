@@ -69,7 +69,7 @@ public final class Programs {
     Location namespaceHome = namespacedLocationFactory.get(id.getNamespace());
     if (!namespaceHome.exists()) {
       throw new FileNotFoundException("Unable to locate the Program, namespace location doesn't exist: " +
-                                        namespaceHome);
+                                        namespaceHome.toURI().getPath());
     }
     Location appFabricLocation = namespaceHome.append(appFabricDir);
 
@@ -77,7 +77,7 @@ public final class Programs {
       appFabricLocation.append(id.getApplicationId()).append(id.getType().toString());
     if (!applicationProgramsLocation.exists()) {
       throw new FileNotFoundException("Unable to locate the Program,  location doesn't exist: " +
-                                        applicationProgramsLocation);
+                                        applicationProgramsLocation.toURI().getPath());
     }
     Location programLocation = applicationProgramsLocation.append(String.format("%s.jar", id.getId()));
     if (!programLocation.exists()) {

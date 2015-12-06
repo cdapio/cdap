@@ -356,7 +356,7 @@ public class AppFabricClient {
     Preconditions.checkNotNull(applicationClz, "Application cannot be null.");
 
     Location deployedJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, bundleEmbeddedJars);
-    LOG.info("Created deployedJar at {}", deployedJar);
+    LOG.info("Created deployedJar at {}", deployedJar.toURI().toASCIIString());
 
     String archiveName = String.format("%s-1.0.%d.jar", appName, System.currentTimeMillis());
     DefaultHttpRequest request = new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST,

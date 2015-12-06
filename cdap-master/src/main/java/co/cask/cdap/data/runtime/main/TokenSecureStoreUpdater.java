@@ -19,7 +19,6 @@ package co.cask.cdap.data.runtime.main;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.FileContextLocationFactory;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.explore.security.HiveTokenUtils;
@@ -93,7 +92,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
         YarnUtils.addDelegationTokens(hConf, locationFactory, refreshedCredentials);
       } else if (locationFactory instanceof FileContextLocationFactory) {
         List<Token<?>> tokens = ((FileContextLocationFactory) locationFactory).getFileContext().getDelegationTokens(
-          new Path(Locations.toURI(locationFactory.getHomeLocation())), YarnUtils.getYarnTokenRenewer(hConf)
+          new Path(locationFactory.getHomeLocation().toURI()), YarnUtils.getYarnTokenRenewer(hConf)
         );
         for (Token<?> token : tokens) {
           refreshedCredentials.addToken(token.getService(), token);

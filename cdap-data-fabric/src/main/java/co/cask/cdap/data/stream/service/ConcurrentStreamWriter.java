@@ -350,7 +350,7 @@ public final class ConcurrentStreamWriter implements Closeable {
       // The creation should succeed, as it's expected to only have one process running per fileNamePrefix.
       if (!destEventFile.createNew() || !destIndexFile.createNew()) {
         throw new IOException(String.format("Failed to create new file at %s and %s",
-                                            destEventFile, destIndexFile));
+                                            destEventFile.toURI(), destIndexFile.toURI()));
       }
 
       // Rename the index file first, then the event file

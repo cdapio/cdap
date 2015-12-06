@@ -18,7 +18,6 @@ package co.cask.cdap.archive;
 
 import co.cask.cdap.WebCrawlApp;
 import co.cask.cdap.app.program.ManifestFields;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.JarResources;
 import co.cask.cdap.internal.test.AppJarHelper;
 import com.google.common.base.Charsets;
@@ -70,7 +69,7 @@ public class ArchiveBundlerTest {
       bundler.clone(out, manifest, ImmutableMap.of("application.json",
                                                    ByteStreams.newInputStreamSupplier("{}".getBytes(Charsets.UTF_8))));
       Assert.assertTrue(out.exists());
-      JarFile file = new JarFile(new File(Locations.toURI(out)));
+      JarFile file = new JarFile(new File(out.toURI()));
       Enumeration<JarEntry> entries = file.entries();
 
       Manifest newManifest = file.getManifest();

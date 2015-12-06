@@ -340,7 +340,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
     });
     appBundler.createBundle(tempLocation, SparkProgramWrapper.class, HBaseTableUtilFactory.getHBaseTableUtilClass());
-    return new File(Locations.toURI(tempLocation));
+    return new File(tempLocation.toURI());
   }
 
   /**

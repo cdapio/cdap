@@ -138,9 +138,9 @@ public final class InMemoryConfigurator implements Configurator {
   private void readAppClassName() throws IOException {
     // Load the JAR using the JAR class load and load the manifest file.
     Manifest manifest = BundleJarUtil.getManifest(artifact);
-    Preconditions.checkArgument(manifest != null, "Failed to load manifest from %s", artifact);
+    Preconditions.checkArgument(manifest != null, "Failed to load manifest from %s", artifact.toURI());
     Preconditions.checkArgument(manifest.getMainAttributes() != null,
-      "Failed to load manifest attributes from %s", artifact);
+      "Failed to load manifest attributes from %s", artifact.toURI());
 
     appClassName = manifest.getMainAttributes().getValue(ManifestFields.MAIN_CLASS);
     Preconditions.checkArgument(appClassName != null && !appClassName.isEmpty(),

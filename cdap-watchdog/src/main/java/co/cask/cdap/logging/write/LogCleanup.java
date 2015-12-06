@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Set;
 
 /**
@@ -61,12 +60,12 @@ public final class LogCleanup implements Runnable {
                                           public void handle(Location location, String namespacedLogBaseDir) {
                                             try {
                                               if (location.exists()) {
-                                                LOG.info("Deleting log file {}", location);
+                                                LOG.info("Deleting log file {}", location.toURI());
                                                 location.delete();
                                               }
                                               parentDirs.put(namespacedLogBaseDir, getParent(location));
                                             } catch (IOException e) {
-                                              LOG.error("Got exception when deleting path {}", location, e);
+                                              LOG.error("Got exception when deleting path {}", location.toURI(), e);
                                               throw Throwables.propagate(e);
                                             }
                                           }
@@ -95,7 +94,7 @@ public final class LogCleanup implements Runnable {
    * @throws IOException
    */
   void deleteEmptyDir(String namespacedLogBaseDir, Location dir) throws IOException {
-    LOG.debug("Got path {}", dir);
+    LOG.debug("Got path {}", dir.toURI());
     Location namespacedLogBaseLocation = rootDir.append(namespacesDir).append(namespacedLogBaseDir);
     deleteEmptyDirsInNamespace(namespacedLogBaseLocation, dir);
   }
@@ -108,27 +107,25 @@ public final class LogCleanup implements Runnable {
    */
   private void deleteEmptyDirsInNamespace(Location namespacedLogBaseDir, Location dirToDelete) {
     // Don't delete a dir if it is equal to or a parent of logBaseDir
-    URI namespacedLogBaseURI = Locations.toURI(namespacedLogBaseDir);
-    URI dirToDeleteURI = Locations.toURI(dirToDelete);
-    if (namespacedLogBaseURI.equals(dirToDeleteURI) ||
-      !dirToDeleteURI.getRawPath().startsWith(namespacedLogBaseURI.getRawPath())) {
-      LOG.debug("{} not deletion candidate.", dirToDelete);
+    if (namespacedLogBaseDir.toURI().equals(dirToDelete.toURI()) ||
+      !dirToDelete.toURI().getRawPath().startsWith(namespacedLogBaseDir.toURI().getRawPath())) {
+      LOG.debug("{} not deletion candidate.", dirToDelete.toURI());
       return;
     }
 
     try {
       if (dirToDelete.list().isEmpty() && dirToDelete.delete()) {
-        LOG.info("Deleted empty dir {}", dirToDelete);
+        LOG.info("Deleted empty dir {}", dirToDelete.toURI());
 
         // See if parent dir is empty, and needs deleting
         Location parent = getParent(dirToDelete);
         LOG.debug("Deleting parent dir {}", parent);
         deleteEmptyDirsInNamespace(namespacedLogBaseDir, parent);
       } else {
-        LOG.debug("Not deleting non-dir or non-empty dir {}", dirToDelete);
+        LOG.debug("Not deleting non-dir or non-empty dir {}", dirToDelete.toURI());
       }
     } catch (IOException e) {
-      LOG.error("Got exception while deleting dir {}", dirToDelete, e);
+      LOG.error("Got exception while deleting dir {}", dirToDelete.toURI(), e);
     }
   }
 }

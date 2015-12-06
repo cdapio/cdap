@@ -59,15 +59,15 @@ public class StorageProviderNamespaceAdmin {
     Location namespaceHome = namespacedLocationFactory.get(namespaceId);
     if (namespaceHome.exists()) {
       LOG.warn("Home directory '{}' for namespace '{}' already exists. Deleting it.",
-               namespaceHome, namespaceId);
+               namespaceHome.toURI().toString(), namespaceId);
       if (!namespaceHome.delete(true)) {
         throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
-                                            namespaceHome, namespaceId.getId()));
+                                            namespaceHome.toURI().toString(), namespaceId.getId()));
       }
     }
     if (!namespaceHome.mkdirs()) {
       throw new IOException(String.format("Error while creating home directory '%s' for namesapce '%s'",
-                                          namespaceHome, namespaceId));
+                                          namespaceHome.toURI().toString(), namespaceId));
     }
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
@@ -89,11 +89,11 @@ public class StorageProviderNamespaceAdmin {
     Location namespaceHome = namespacedLocationFactory.get(namespaceId);
     if (namespaceHome.exists() && !namespaceHome.delete(true)) {
         throw new IOException(String.format("Error while deleting home directory '%s' for namespace '%s'",
-                                            namespaceHome, namespaceId.getId()));
+                                            namespaceHome.toURI().toString(), namespaceId.getId()));
     } else {
       // warn that namespace home was not found and skip delete step
       LOG.warn(String.format("Home directory '%s' for namespace '%s' does not exist.",
-                             namespaceHome, namespaceId));
+                             namespaceHome.toURI().toString(), namespaceId));
     }
 
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {

@@ -132,7 +132,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
       try {
         entry.getValue().close();
       } catch (Throwable e) {
-        LOG.error("Caught exception while closing file {}", entry.getValue().getLocation(), e);
+        LOG.error(String.format("Caught exception while closing file %s", entry.getValue().getLocation().toURI()), e);
       }
     }
     fileMap.clear();
@@ -165,7 +165,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
   private AvroFile createAvroFile(LoggingContext loggingContext, long timestamp) throws Exception {
     long currentTs = System.currentTimeMillis();
     Location location = createLocation(loggingContext.getLogPathFragment(logBaseDir), currentTs);
-    LOG.info("Creating Avro file {}", location);
+    LOG.info(String.format("Creating Avro file %s", location.toURI()));
     AvroFile avroFile = new AvroFile(location);
     try {
       avroFile.open();
@@ -192,7 +192,7 @@ public final class AvroFileWriter implements Closeable, Flushable {
 
   private AvroFile rotateFile(AvroFile avroFile, LoggingContext loggingContext, long timestamp) throws Exception {
     if (avroFile.getPos() > maxFileSize) {
-      LOG.info("Rotating file {}", avroFile.getLocation());
+      LOG.info(String.format("Rotating file %s", avroFile.getLocation().toURI()));
       flush();
       avroFile.close();
       return createAvroFile(loggingContext, timestamp);

@@ -16,7 +16,6 @@
 package co.cask.cdap.data.stream;
 
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
-import co.cask.cdap.common.io.Locations;
 import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -34,6 +33,13 @@ import java.util.List;
  * Tests for {@link co.cask.cdap.data.stream.TimePartitionedStreamFileWriter}.
  */
 public abstract class TimePartitionedStreamTestBase {
+
+  private static final Comparator<Location> LOCATION_COMPARATOR = new Comparator<Location>() {
+    @Override
+    public int compare(Location o1, Location o2) {
+      return o1.toURI().toASCIIString().compareTo(o2.toURI().toASCIIString());
+    }
+  };
 
   @ClassRule
   public static TemporaryFolder tmpFolder = new TemporaryFolder();
@@ -66,7 +72,7 @@ public abstract class TimePartitionedStreamTestBase {
     Assert.assertEquals(4, partitionDirs.size());
 
     // The start time for the partitions should be 0, 1000, 2000, 3000
-    Collections.sort(partitionDirs, Locations.LOCATION_COMPARATOR);
+    Collections.sort(partitionDirs, LOCATION_COMPARATOR);
     for (int i = 0; i < 4; i++) {
       Assert.assertEquals(i * 1000, StreamUtils.getPartitionStartTime(partitionDirs.get(i).getName()));
     }
@@ -99,7 +105,7 @@ public abstract class TimePartitionedStreamTestBase {
     Assert.assertEquals(4, partitionDirs.size());
 
     // The start time for the partitions should be 0, 1000, 2000, 3000
-    Collections.sort(partitionDirs, Locations.LOCATION_COMPARATOR);
+    Collections.sort(partitionDirs, LOCATION_COMPARATOR);
     for (int i = 0; i < 4; i++) {
       Assert.assertEquals(i * 1000, StreamUtils.getPartitionStartTime(partitionDirs.get(i).getName()));
     }

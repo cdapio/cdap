@@ -138,7 +138,7 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
       long partitionStart = partition.getStartTimestamp();
 
       if (!streamLocation.isDirectory()) {
-        throw new IOException("Stream " + streamLocation.getName() + " not exist in " + streamLocation);
+        throw new IOException("Stream " + streamLocation.getName() + " not exist in " + streamLocation.toURI());
       }
 
       Location partitionDirectory = StreamUtils.createPartitionLocation(streamLocation,
@@ -154,10 +154,10 @@ public class TimePartitionedStreamFileWriter extends PartitionedFileWriter<Strea
                                                             fileSequence, StreamFileType.INDEX);
       // The creation should succeed, as it's expected to only have one process running per fileNamePrefix.
       if (!eventFile.createNew() || !indexFile.createNew()) {
-        throw new IOException("Failed to create new file at " + eventFile + " and " + indexFile);
+        throw new IOException("Failed to create new file at " + eventFile.toURI() + " and " + indexFile.toURI());
       }
 
-      LOG.debug("New stream file created at {}", eventFile);
+      LOG.debug("New stream file created at {}", eventFile.toURI());
       return new StreamDataFileWriter(createOutputSupplier(eventFile), createOutputSupplier(indexFile), indexInterval);
     }
 

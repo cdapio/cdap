@@ -111,7 +111,7 @@ public final class StreamConfig {
       .add("duration", partitionDuration)
       .add("indexInterval", indexInterval)
       .add("ttl", ttl)
-      .add("location", location)
+      .add("location", location.toURI())
       .add("format", format)
       .add("notificationThresholdMB", notificationThresholdMB)
       .toString();

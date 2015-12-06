@@ -152,16 +152,16 @@ public class LogCleanupTest {
     logCleanup.run();
 
     for (Location location : toDelete) {
-      Assert.assertFalse("Location " + location + " is not deleted!", location.exists());
+      Assert.assertFalse("Location " + location.toURI() + " is not deleted!", location.exists());
     }
 
     for (Location location : notDelete) {
-      Assert.assertTrue("Location " + location + " is deleted!", location.exists());
+      Assert.assertTrue("Location " + location.toURI() + " is deleted!", location.exists());
     }
 
     for (int i = 0; i < 5; ++i) {
       Location delDir = contextDir.append("2012-12-1" + i);
-      Assert.assertFalse("Location " + delDir + " is not deleted!", delDir.exists());
+      Assert.assertFalse("Location " + delDir.toURI() + " is not deleted!", delDir.exists());
     }
   }
 
@@ -215,12 +215,12 @@ public class LogCleanupTest {
 
     // Assert non-empty dirs (and their files) are still present
     for (Location location : files) {
-      Assert.assertTrue("Location " + location + " is deleted!", location.exists());
+      Assert.assertTrue("Location " + location.toURI() + " is deleted!", location.exists());
     }
 
     // Assert empty dirs are deleted
     for (Location location : emptyDirs) {
-      Assert.assertFalse("Dir " + location + " is still present!", location.exists());
+      Assert.assertFalse("Dir " + location.toURI() + " is still present!", location.exists());
     }
 
     // Assert base dir and namespaced log dirs exist
@@ -287,7 +287,7 @@ public class LogCleanupTest {
     new Function<Location, URI>() {
       @Override
       public URI apply(Location input) {
-        return Locations.toURI(input);
+        return input.toURI();
       }
     };
 }

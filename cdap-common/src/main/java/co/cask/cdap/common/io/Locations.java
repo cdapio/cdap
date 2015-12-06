@@ -30,7 +30,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
-import org.apache.hadoop.hdfs.HAUtil;
 import org.apache.twill.filesystem.HDFSLocationFactory;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -45,7 +44,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -74,14 +72,14 @@ public final class Locations {
     new FunctionWithException<Location, LocationStatus, IOException>() {
       @Override
       public LocationStatus apply(Location location) throws IOException {
-        return new LocationStatus(Locations.toURI(location), location.length(), location.isDirectory());
+        return new LocationStatus(location.toURI(), location.length(), location.isDirectory());
       }
     };
 
   public static final Comparator<Location> LOCATION_COMPARATOR = new Comparator<Location>() {
     @Override
     public int compare(Location o1, Location o2) {
-      return Locations.toURI(o1).compareTo(Locations.toURI(o2));
+      return o1.toURI().compareTo(o2.toURI());
     }
   };
 
@@ -106,35 +104,6 @@ public final class Locations {
         }
       }
     };
-  }
-
-  /**
-   * Gets an {@link URI} representation of the given {@link Location}.
-   * This method is mainly for dealing with the inconsistency in HDFS {@link FileContext} and {@link FileSystem} URI
-   * handling in HA environment.
-   */
-  public static URI toURI(Location location) {
-    LocationFactory locationFactory = location.getLocationFactory();
-
-    if (locationFactory instanceof FileContextLocationFactory) {
-      // In HA mode, the path URI returned by FileContext is incompatible with the one expected by
-      // DistributedFileSystem. It is due to the fact that FileContext is not HA aware and it always
-      // append "port" to the path URI, while the DistributedFileSystem always use the cluster logical
-      // name, which doesn't have the port in it.
-      URI uri = location.toURI();
-      if (HAUtil.isLogicalUri(((FileContextLocationFactory) locationFactory).getConfiguration(), uri)) {
-        try {
-          // Need to strip out the port if in HA
-          return new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(),
-                         -1, uri.getPath(), uri.getQuery(), uri.getFragment());
-        } catch (URISyntaxException e) {
-          // Shouldn't happen
-          throw Throwables.propagate(e);
-        }
-      }
-    }
-
-    return location.toURI();
   }
 
   /**
@@ -170,8 +139,8 @@ public final class Locations {
             }
 
             if (fs != null) {
-              return new DFSSeekableInputStream(dataInput, createDFSStreamSizeProvider(fs, new Path(toURI(location)),
-                                                                                       dataInput));
+              return new DFSSeekableInputStream(dataInput,
+                                                createDFSStreamSizeProvider(fs, new Path(location.toURI()), dataInput));
             }
             // This shouldn't happen
             return new DFSSeekableInputStream(dataInput, new StreamSizeProvider() {
@@ -183,7 +152,7 @@ public final class Locations {
             });
           }
 
-          throw new IOException("Failed to create SeekableInputStream from location " + location);
+          throw new IOException("Failed to create SeekableInputStream from location " + location.toURI());
         } catch (Throwable t) {
           Closeables.closeQuietly(input);
           Throwables.propagateIfInstanceOf(t, IOException.class);
@@ -237,11 +206,11 @@ public final class Locations {
     LocationFactory lf = location.getLocationFactory();
     if (lf instanceof HDFSLocationFactory) {
       return FILE_STATUS_TO_LOCATION_STATUS.apply(
-        ((HDFSLocationFactory) lf).getFileSystem().getFileLinkStatus(new Path(Locations.toURI(location))));
+        ((HDFSLocationFactory) lf).getFileSystem().getFileLinkStatus(new Path(location.toURI())));
     }
     if (lf instanceof FileContextLocationFactory) {
       return FILE_STATUS_TO_LOCATION_STATUS.apply(
-        ((FileContextLocationFactory) lf).getFileContext().getFileLinkStatus(new Path(Locations.toURI(location))));
+        ((FileContextLocationFactory) lf).getFileContext().getFileLinkStatus(new Path(location.toURI())));
     }
     return LOCATION_TO_LOCATION_STATUS.apply(location);
   }
@@ -253,13 +222,12 @@ public final class Locations {
   private static RemoteIterator<LocationStatus> listLocationStatus(Location location) throws IOException {
     LocationFactory lf = location.getLocationFactory();
     if (lf instanceof HDFSLocationFactory) {
-      FileStatus[] fileStatuses = ((HDFSLocationFactory) lf).getFileSystem()
-        .listStatus(new Path(Locations.toURI(location)));
+      FileStatus[] fileStatuses = ((HDFSLocationFactory) lf).getFileSystem().listStatus(new Path(location.toURI()));
       return transform(asRemoteIterator(Iterators.forArray(fileStatuses)), FILE_STATUS_TO_LOCATION_STATUS);
     }
     if (lf instanceof FileContextLocationFactory) {
       FileContext fc = ((FileContextLocationFactory) lf).getFileContext();
-      return transform(fc.listStatus(new Path(Locations.toURI(location))), FILE_STATUS_TO_LOCATION_STATUS);
+      return transform(fc.listStatus(new Path(location.toURI())), FILE_STATUS_TO_LOCATION_STATUS);
     }
     return transform(asRemoteIterator(location.list().iterator()), LOCATION_TO_LOCATION_STATUS);
   }
@@ -322,7 +290,7 @@ public final class Locations {
    */
   @Nullable
   public static Location getParent(Location location) {
-    URI source = Locations.toURI(location);
+    URI source = location.toURI();
 
     // If it is root, return null
     if ("/".equals(source.getPath())) {
@@ -348,7 +316,7 @@ public final class Locations {
   public static void mkdirsIfNotExists(Location location) throws IOException {
     // Need to check && mkdir && check to deal with race condition
     if (!location.isDirectory() && !location.mkdirs() && !location.isDirectory()) {
-      throw new IOException("Failed to create directory at " + location);
+      throw new IOException("Failed to create directory at " + location.toURI());
     }
   }
 
@@ -360,7 +328,7 @@ public final class Locations {
     try {
       location.delete(recursive);
     } catch (IOException e) {
-      LOG.error("IOException while deleting location {}", location, e);
+      LOG.error("IOException while deleting location {}", location.toURI(), e);
     }
   }
 

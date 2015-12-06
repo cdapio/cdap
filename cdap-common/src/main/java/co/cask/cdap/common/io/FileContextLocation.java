@@ -125,7 +125,7 @@ final class FileContextLocation implements Location {
   @Nullable
   @Override
   public Location renameTo(Location destination) throws IOException {
-    Path targetPath = new Path(Locations.toURI(destination));
+    Path targetPath = new Path(destination.toURI());
     try {
       fc.rename(path, targetPath, Options.Rename.OVERWRITE);
       return new FileContextLocation(locationFactory, fc, targetPath);

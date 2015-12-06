@@ -15,7 +15,6 @@
  */
 package co.cask.cdap.data.stream;
 
-import co.cask.cdap.common.io.Locations;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import org.apache.twill.filesystem.Location;
@@ -116,7 +115,7 @@ public final class StreamFileOffset {
   @Override
   public String toString() {
     return Objects.toStringHelper(this)
-      .add("event", eventLocation)
+      .add("event", eventLocation.toURI())
       .add("offset", getOffset())
       .toString();
   }
@@ -148,7 +147,7 @@ public final class StreamFileOffset {
    */
   private Location createIndexLocation(Location eventLocation) {
     LocationFactory factory = eventLocation.getLocationFactory();
-    String eventPath = Locations.toURI(eventLocation).toString();
+    String eventPath = eventLocation.toURI().toString();
     int extLength = StreamFileType.EVENT.getSuffix().length();
 
     return factory.create(URI.create(String.format("%s%s",

@@ -52,7 +52,6 @@ import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.runtime.ProgramController;
 import co.cask.cdap.common.app.RunIds;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
@@ -329,7 +328,7 @@ public class DefaultStoreTest {
 
     Location archiveLocation = store.getApplicationArchiveLocation(id);
     Assert.assertNotNull(archiveLocation);
-    Assert.assertEquals("/foo/path/application1.jar", Locations.toURI(archiveLocation).getPath());
+    Assert.assertEquals("/foo/path/application1.jar", archiveLocation.toURI().getPath());
   }
 
   @Test
@@ -346,7 +345,7 @@ public class DefaultStoreTest {
     Location archiveLocation = store.getApplicationArchiveLocation(id);
     Assert.assertNotNull(archiveLocation);
     Assert.assertEquals("/foo/path/application1_modified.jar",
-                        Locations.toURI(archiveLocation).getPath());
+                        archiveLocation.toURI().getPath());
   }
 
   @Test
