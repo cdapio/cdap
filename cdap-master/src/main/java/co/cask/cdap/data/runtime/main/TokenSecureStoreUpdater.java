@@ -57,7 +57,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(TokenSecureStoreUpdater.class);
-  private final Configuration hConf;
+  private final YarnConfiguration hConf;
   private final LocationFactory locationFactory;
   private final long updateInterval;
   private final boolean secureExplore;
@@ -65,7 +65,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
   private Credentials credentials;
 
   @Inject
-  public TokenSecureStoreUpdater(Configuration hConf, CConfiguration cConf, LocationFactory locationFactory) {
+  public TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf, LocationFactory locationFactory) {
     this.hConf = hConf;
     this.locationFactory = locationFactory;
     secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
@@ -77,13 +77,16 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
     try {
       Credentials refreshedCredentials = new Credentials();
 
+      if (User.isSecurityEnabled()) {
+        YarnTokenUtils.obtainToken(hConf, refreshedCredentials);
+      }
+
       if (User.isHBaseSecurityEnabled(hConf)) {
         HBaseTokenUtils.obtainToken(hConf, refreshedCredentials);
       }
 
       if (secureExplore) {
         HiveTokenUtils.obtainToken(refreshedCredentials);
-        YarnTokenUtils.obtainToken(hConf, refreshedCredentials);
         JobHistoryServerTokenUtils.obtainToken(hConf, refreshedCredentials);
       }
 
