@@ -292,7 +292,9 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
     TransactionContext transactionContext = new TransactionContext(txClient);
     Collection<Dataset> datasets = ((BasicWorkflowContext) context).getDatasets().values();
     for (Dataset ds : datasets) {
-      transactionContext.addTransactionAware((TransactionAware) ds);
+      if (ds instanceof TransactionAware) {
+        transactionContext.addTransactionAware((TransactionAware) ds);
+      }
     }
     return transactionContext;
   }
