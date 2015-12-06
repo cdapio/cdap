@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.FileContextLocationFactory;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
+import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
@@ -98,7 +99,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
   private final TwillRunner twillRunner;
   private final LocationFactory locationFactory;
-  protected final Configuration hConf;
+  protected final YarnConfiguration hConf;
   protected final CConfiguration cConf;
   protected final EventHandler eventHandler;
 
@@ -146,7 +147,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   }
 
   protected AbstractDistributedProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                             Configuration hConf, CConfiguration cConf) {
+                                             YarnConfiguration hConf, CConfiguration cConf) {
     this.twillRunner = twillRunner;
     this.locationFactory = locationFactory;
     this.hConf = hConf;
@@ -213,7 +214,7 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
 
           String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
                                            Joiner.on(",").join(YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-          TwillController twillController = addSecureStore(twillPreparer, locationFactory)
+          TwillController twillController = addSecureStore(twillPreparer, locationFactory, hConf)
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
             .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
               .split(hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH, ""))))
@@ -353,8 +354,14 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
   /**
    * Add secure tokens to the {@link TwillPreparer}.
    */
-  private TwillPreparer addSecureStore(TwillPreparer preparer, LocationFactory locationFactory) {
+  private TwillPreparer addSecureStore(TwillPreparer preparer, LocationFactory locationFactory,
+                                       YarnConfiguration yarnConf) {
     Credentials credentials = new Credentials();
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      YarnTokenUtils.obtainToken(yarnConf, credentials);
+    }
+
     if (User.isHBaseSecurityEnabled(hConf)) {
       HBaseTokenUtils.obtainToken(hConf, credentials);
     }
