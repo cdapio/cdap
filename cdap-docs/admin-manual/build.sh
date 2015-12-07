@@ -19,6 +19,8 @@
 source ../_common/common-build.sh
 
 DEFAULT_XML="../../cdap-common/src/main/resources/cdap-default.xml"
+DEFAULT_XML_MD5_HASH="e8cc6ab35e17a8c28adafb02d65027b5"
+
 DEFAULT_TOOL="../tools/doc-cdap-default.py"
 DEFAULT_RST="cdap-default-table.rst"
 CHECK_INCLUDES=${TRUE}
@@ -36,7 +38,7 @@ function download_includes() {
   local target_includes_dir=${1}
 
   echo_red_bold "Check guarded files for changes."
-  test_an_include d8f4664279c72b4c9d51a07a0a1fc573 "${DEFAULT_XML}"
+  test_an_include "${DEFAULT_XML_MD5_HASH}" "${DEFAULT_XML}"
 
   echo "Building rst file from cdap-default.xml..." 
   python "${DEFAULT_TOOL}" -g -t "${target_includes_dir}/${DEFAULT_RST}"
