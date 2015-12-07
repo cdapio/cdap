@@ -52,6 +52,8 @@ public class MetadataClient {
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
   private static final Type SET_METADATA_SEARCH_RESULT_TYPE =
     new TypeToken<Set<MetadataSearchResultRecord>>() { }.getType();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -157,6 +159,146 @@ public class MetadataClient {
     String path = String.format("%s/metadata", entityPath);
     HttpResponse response = makeRequest(namespacedId, path, HttpMethod.GET);
     return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_TYPE);
+  }
+
+  /**
+   * @param appId the app for which to retrieve metadata properties
+   * @return The metadata properties for the application.
+   */
+  public Map<String, String> getProperties(Id.Application appId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(appId, constructPath(appId));
+  }
+
+  /**
+   * @param artifactId the artifact for which to retrieve metadata properties
+   * @return The metadata properties for the artifact.
+   */
+  public Map<String, String> getProperties(Id.Artifact artifactId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(artifactId, constructPath(artifactId));
+  }
+
+  /**
+   * @param datasetInstance the dataset for which to retrieve metadata properties
+   * @return The metadata properties for the dataset.
+   */
+  public Map<String, String> getProperties(Id.DatasetInstance datasetInstance)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(datasetInstance, constructPath(datasetInstance));
+  }
+
+  /**
+   * @param streamId the stream for which to retrieve metadata properties
+   * @return The metadata properties for the stream.
+   */
+  public Map<String, String> getProperties(Id.Stream streamId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(streamId, constructPath(streamId));
+  }
+
+  /**
+   * @param viewId the view for which to retrieve metadata properties
+   * @return The metadata properties for the view.
+   */
+  public Map<String, String> getProperties(Id.Stream.View viewId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(viewId, constructPath(viewId));
+  }
+
+  /**
+   * @param programId the program for which to retrieve metadata properties
+   * @return The metadata properties for the program.
+   */
+  public Map<String, String> getProperties(Id.Program programId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(programId, constructPath(programId));
+  }
+
+  /**
+   * @param runId the run for which to retrieve metadata properties
+   * @return The metadata properties for the run.
+   */
+  public Map<String, String> getProperties(Id.Run runId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(runId, constructPath(runId));
+  }
+
+  private Map<String, String> getProperties(Id.NamespacedId namespacedId, String entityPath)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    String path = String.format("%s/metadata/properties", entityPath);
+    HttpResponse response = makeRequest(namespacedId, path, HttpMethod.GET);
+    return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
+  }
+
+  /**
+   * @param appId the app for which to retrieve metadata tags
+   * @return The metadata tags for the application.
+   */
+  public Set<String> getTags(Id.Application appId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(appId, constructPath(appId));
+  }
+
+  /**
+   * @param artifactId the artifact for which to retrieve metadata tags
+   * @return The metadata tags for the artifact.
+   */
+  public Set<String> getTags(Id.Artifact artifactId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(artifactId, constructPath(artifactId));
+  }
+
+  /**
+   * @param datasetInstance the dataset for which to retrieve metadata tags
+   * @return The metadata tags for the dataset.
+   */
+  public Set<String> getTags(Id.DatasetInstance datasetInstance)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(datasetInstance, constructPath(datasetInstance));
+  }
+
+  /**
+   * @param streamId the stream for which to retrieve metadata tags
+   * @return The metadata tags for the stream.
+   */
+  public Set<String> getTags(Id.Stream streamId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(streamId, constructPath(streamId));
+  }
+
+  /**
+   * @param viewId the view for which to retrieve metadata tags
+   * @return The metadata tags for the view.
+   */
+  public Set<String> getTags(Id.Stream.View viewId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(viewId, constructPath(viewId));
+  }
+
+  /**
+   * @param programId the program for which to retrieve metadata tags
+   * @return The metadata tags for the program.
+   */
+  public Set<String> getTags(Id.Program programId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(programId, constructPath(programId));
+  }
+
+  /**
+   * @param runId the run for which to retrieve metadata tags
+   * @return The metadata tags for the run.
+   */
+  public Set<String> getTags(Id.Run runId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(runId, constructPath(runId));
+  }
+
+  private Set<String> getTags(Id.NamespacedId namespacedId, String entityPath)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    String path = String.format("%s/metadata/tags", entityPath);
+    HttpResponse response = makeRequest(namespacedId, path, HttpMethod.GET);
+    return GSON.fromJson(response.getResponseBodyAsString(), SET_STRING_TYPE);
   }
 
   /**
