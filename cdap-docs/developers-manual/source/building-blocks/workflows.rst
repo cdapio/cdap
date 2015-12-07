@@ -592,13 +592,13 @@ and from within a workflow with a predicate, fork and joins::
     // 'org.apache.hadoop.mapreduce.TaskCounter' and counter name 'MAP_INPUT_RECORDS':
    
     String flattenCounterKey = "org.apache.hadoop.mapreduce.TaskCounter.MAP_INPUT_RECORDS";
-    Int records = workflowToken.get(flattenCounterKey, WorkflowToken.Scope.SYSTEM).getAsInt();
+    int records = workflowToken.get(flattenCounterKey, WorkflowToken.Scope.SYSTEM).getAsInt();
  
     // To get the value of the counter with group name
     // 'org.apache.hadoop.mapreduce.TaskCounter' and counter name 'MAP_INPUT_RECORDS' as
     // set by a MapReduce program with the unique name 'PurchaseHistoryBuilder':
     
-    Int recordsPHB = workflowToken.get(flattenCounterKey, "PurchaseHistoryBuilder", WorkflowToken.Scope.SYSTEM).getAsInt();
+    int recordsPHB = workflowToken.get(flattenCounterKey, "PurchaseHistoryBuilder", WorkflowToken.Scope.SYSTEM).getAsInt();
    ...
   }
 
