@@ -45,7 +45,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 
 /**
- * Application commands.
+ * Metadata commands.
  */
 public class MetadataCommands extends CommandSet<Command> implements Categorized {
 
@@ -68,6 +68,6 @@ public class MetadataCommands extends CommandSet<Command> implements Categorized
 
   @Override
   public String getCategory() {
-    return CommandCategory.APPLICATION_LIFECYCLE.getName();
+    return CommandCategory.GENERAL.getName();
   }
 }

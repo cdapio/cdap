@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.cli.command.lineage;
 
-import co.cask.cdap.api.service.Service;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractCommand;
@@ -28,7 +27,7 @@ import com.google.inject.Inject;
 import java.io.PrintStream;
 
 /**
- * Call an endpoint of a {@link Service}.
+ * Gets the lineage for a dataset.
  */
 public class GetDatasetLineageCommand extends AbstractCommand {
 
@@ -54,7 +53,8 @@ public class GetDatasetLineageCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get lineage dataset <%s>", ArgumentName.DATASET);
+    return String.format("get lineage dataset <%s> [start <start>] [end <end>] [levels <levels>]",
+                         ArgumentName.DATASET);
   }
 
   @Override
