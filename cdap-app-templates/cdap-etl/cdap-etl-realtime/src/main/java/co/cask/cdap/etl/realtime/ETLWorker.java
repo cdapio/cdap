@@ -39,16 +39,17 @@ import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.api.realtime.SourceState;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultEmitter;
+import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.LoggedTransform;
 import co.cask.cdap.etl.common.Pipeline;
 import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.common.SinkInfo;
+import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.common.TxLookupProvider;
-import co.cask.cdap.etl.log.LogContext;
 import co.cask.cdap.etl.log.LogStageInjector;
 import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.format.StructuredRecordStringConverter;
@@ -61,6 +62,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -172,16 +174,21 @@ public class ETLWorker extends AbstractWorker {
       }
     });
 
-    WorkerRealtimeContext source = initializeSource(context);
     Map<String, List<String>> connectionsMap =
       GSON.fromJson(properties.get(Constants.PIPELINEID), Pipeline.class).getConnections();
-    Map<String, Transformation> transformationMap = new HashMap<>();
-    initializeTransforms(context, transformationMap);
-    initializeSinks(context);
-    transformExecutor = new TransformExecutor(transformationMap, metrics, connectionsMap, source.getStageName());
+    Map<String, TransformDetail> transformationMap = new HashMap<>();
+    DefaultEmitter defaultEmitter = new DefaultEmitter(metrics);
+
+    initializeSource(context);
+
+    initializeTransforms(context, transformationMap, connectionsMap);
+    initializeSinks(context, transformationMap);
+    List<String> startStages = new ArrayList<>();
+    startStages.addAll(connectionsMap.get(sourceStageName));
+    transformExecutor = new TransformExecutor(transformationMap, startStages);
   }
 
-  private WorkerRealtimeContext initializeSource(WorkerContext context) throws Exception {
+  private void initializeSource(WorkerContext context) throws Exception {
     String sourcePluginId =
       GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID), Pipeline.class).getSource();
     source = context.newPluginInstance(sourcePluginId);
@@ -192,11 +199,11 @@ public class ETLWorker extends AbstractWorker {
     LOG.debug("Source Class : {}", source.getClass().getName());
     source.initialize(sourceContext);
     sourceEmitter = new DefaultEmitter(sourceContext.getMetrics());
-    return sourceContext;
   }
 
   @SuppressWarnings("unchecked")
-  private void initializeSinks(WorkerContext context) throws Exception {
+  private void initializeSinks(WorkerContext context,
+                               Map<String, TransformDetail> transformationMap) throws Exception {
     List<SinkInfo> sinkInfos = GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID),
                                              Pipeline.class).getSinks();
     sinks = new HashMap<>(sinkInfos.size());
@@ -209,12 +216,25 @@ public class ETLWorker extends AbstractWorker {
       LOG.debug("Sink Class : {}", sink.getClass().getName());
       sink.initialize(sinkContext);
       sink = new TrackedRealtimeSink(sink, sinkContext.getMetrics());
+
+      Transformation identityTransformation = new Transformation() {
+        @Override
+        public void transform(Object input, Emitter emitter) throws Exception {
+          emitter.emit(input);
+        }
+      };
+
+      transformationMap.put(sinkInfo.getSinkId(),
+                            new TransformDetail(identityTransformation,
+                                                new DefaultStageMetrics(metrics, sinkInfo.getSinkId()),
+                                                new ArrayList<String>()));
       sinks.put(sinkInfo.getSinkId(), sink);
     }
   }
 
   private void initializeTransforms(WorkerContext context,
-                                    Map<String, Transformation> transformDetailMap) throws Exception {
+                                    Map<String, TransformDetail> transformDetailMap,
+                                    Map<String, List<String>> connectionsMap) throws Exception {
     List<TransformInfo> transformInfos =
       GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID), Pipeline.class).getTransforms();
     Preconditions.checkArgument(transformInfos != null);
@@ -229,7 +249,9 @@ public class ETLWorker extends AbstractWorker {
           context, metrics, new TxLookupProvider(context), transformId);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
-        transformDetailMap.put(transformId, transform);
+        transformDetailMap.put(transformId,
+                               new TransformDetail(transform, new DefaultStageMetrics(metrics, transformId),
+                                                   connectionsMap.get(transformId)));
         if (transformInfo.getErrorDatasetName() != null) {
           tranformIdToDatasetName.put(transformId, transformInfo.getErrorDatasetName());
         }
@@ -265,17 +287,7 @@ public class ETLWorker extends AbstractWorker {
     while (!stopped) {
       // Invoke poll method of the source to fetch data
       try {
-        SourceState newState = source.poll(new Emitter<Object>() {
-          @Override
-          public void emit(Object value) {
-            sourceEmitter.emit(sourceStageName, value);
-          }
-
-          @Override
-          public void emitError(InvalidEntry invalidEntry) {
-            sourceEmitter.emit(sourceStageName, invalidEntry);
-          }
-        }, new SourceState(currentState));
+        SourceState newState = source.poll(sourceEmitter, new SourceState(currentState));
         if (newState != null) {
           nextState.setState(newState);
         }
@@ -288,11 +300,12 @@ public class ETLWorker extends AbstractWorker {
 
       // For each object emitted by the source, invoke the transformExecutor and collect all the data
       // to be persisted in the sink.
-      for (Object sourceData : sourceEmitter.getEntries(sourceStageName)) {
+      for (Object sourceData : sourceEmitter.getEntries()) {
         try {
           TransformResponse transformResponse = transformExecutor.runOneIteration(sourceData);
 
-          for (Map.Entry<String, List<Object>> transformedValues : transformResponse.getSinksResults().entrySet()) {
+          for (Map.Entry<String, Collection<Object>> transformedValues :
+            transformResponse.getSinksResults().entrySet()) {
             dataToSink.put(transformedValues.getKey(), new ArrayList<>());
             Iterator emitterIterator = transformedValues.getValue().iterator();
             while (emitterIterator.hasNext()) {
@@ -303,7 +316,7 @@ public class ETLWorker extends AbstractWorker {
             }
           }
 
-          for (Map.Entry<String, List<InvalidEntry<Object>>> transformErrorsEntry :
+          for (Map.Entry<String, Collection<InvalidEntry<Object>>> transformErrorsEntry :
             transformResponse.getMapTransformIdToErrorEmitter().entrySet()) {
 
             if (!transformErrorsWithoutDataset.contains(transformErrorsEntry.getKey())) {

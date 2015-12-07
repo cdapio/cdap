@@ -26,20 +26,20 @@ import java.util.Map;
  * class representing transform response.
  */
 public class TransformResponse {
-  private final Map<String, List<Object>> sinksResults;
-  private final Map<String, List<InvalidEntry<Object>>> mapTransformIdToErrorEmitter;
+  private final Map<String, Collection<Object>> sinksResults;
+  private final Map<String, Collection<InvalidEntry<Object>>> mapTransformIdToErrorEmitter;
 
-  public TransformResponse(Map<String, List<Object>> sinksResults,
-                           Map<String, List<InvalidEntry<Object>>> mapTransformIdToErrorEmitter) {
+  public TransformResponse(Map<String, Collection<Object>> sinksResults,
+                           Map<String, Collection<InvalidEntry<Object>>> mapTransformIdToErrorEmitter) {
     this.sinksResults = sinksResults;
     this.mapTransformIdToErrorEmitter = mapTransformIdToErrorEmitter;
   }
 
-  public Map<String, List<Object>> getSinksResults() {
+  public Map<String, Collection<Object>> getSinksResults() {
     return sinksResults;
   }
 
-  public Map<String, List<InvalidEntry<Object>>> getMapTransformIdToErrorEmitter() {
+  public Map<String, Collection<InvalidEntry<Object>>> getMapTransformIdToErrorEmitter() {
     return mapTransformIdToErrorEmitter;
   }
 

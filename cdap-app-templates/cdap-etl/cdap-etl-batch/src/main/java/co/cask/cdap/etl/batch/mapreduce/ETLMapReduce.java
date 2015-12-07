@@ -29,7 +29,6 @@ import co.cask.cdap.api.mapreduce.MapReduceTaskContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.Transformation;
 import co.cask.cdap.etl.api.batch.BatchConfigurable;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSink;
@@ -42,12 +41,15 @@ import co.cask.cdap.etl.batch.LoggedBatchSource;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DatasetContextLookupProvider;
+import co.cask.cdap.etl.common.DefaultEmitter;
+import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.LoggedTransform;
 import co.cask.cdap.etl.common.Pipeline;
 import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.common.SinkInfo;
 import co.cask.cdap.etl.common.StructuredRecordStringConverter;
+import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
@@ -55,6 +57,7 @@ import co.cask.cdap.etl.log.LogStageInjector;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.apache.avro.generic.GenericRecord;
@@ -305,10 +308,11 @@ public class ETLMapReduce extends AbstractMapReduce {
 
 
       String sourcePluginId = pipeline.getSource();
+      DefaultEmitter defaultEmitter = new DefaultEmitter(mapperMetrics);
 
       List<TransformInfo> transformInfos = pipeline.getTransforms();
       Map<String, List<String>> connectionsMap = pipeline.getConnections();
-      Map<String, Transformation> transformations = new HashMap<>();
+      Map<String, TransformDetail> transformations = new HashMap<>();
 
       BatchSource source = context.newPluginInstance(sourcePluginId);
       source = new LoggedBatchSource(sourcePluginId, source);
@@ -316,11 +320,13 @@ public class ETLMapReduce extends AbstractMapReduce {
         context, mapperMetrics, new DatasetContextLookupProvider(context), sourcePluginId,
         GSON.<Map<String, String>>fromJson(hConf.get(RUNTIME_ARGS_KEY_PREFIX + sourcePluginId), RUNTIME_ARGS_TYPE));
       source.initialize(runtimeContext);
-      transformations.put(sourcePluginId, source);
+      transformations.put(sourcePluginId,
+                          new TransformDetail(source, new DefaultStageMetrics(mapperMetrics, sourcePluginId),
+                                              connectionsMap.get(sourcePluginId)));
 
       transformErrorSinkMap = new HashMap<>();
       transformsWithoutErrorDataset = new HashSet<>();
-      addTransforms(transformations, transformInfos, context);
+      addTransforms(transformations, connectionsMap, transformInfos, context);
 
       String sinkOutputsStr = hadoopContext.getConfiguration().get(SINK_OUTPUTS_KEY);
       // should never happen, this is set in beforeSubmit
@@ -348,10 +354,13 @@ public class ETLMapReduce extends AbstractMapReduce {
         } else {
           sinks.put(sinkPluginId, new MultiOutputSink<>(sink, context, sinkOutputNames));
         }
-        transformations.put(sinkPluginId, sink);
+        transformations.put(sinkPluginId,
+                            new TransformDetail(sink, new DefaultStageMetrics(mapperMetrics, sinkPluginId),
+                                                new ArrayList<String>()));
       }
 
-      transformExecutor = new TransformExecutor<>(transformations, mapperMetrics, connectionsMap, sourcePluginId);
+      transformExecutor = new TransformExecutor(transformations, ImmutableList.of(sourcePluginId));
+
     }
 
 
@@ -375,7 +384,8 @@ public class ETLMapReduce extends AbstractMapReduce {
       return allOutputs.size() == 1;
     }
 
-    private void addTransforms(Map<String, Transformation> pipeline,
+    private void addTransforms(Map<String, TransformDetail> pipeline,
+                               Map<String, List<String>> connectionsMap,
                                List<TransformInfo> transformInfos,
                                MapReduceTaskContext context) throws Exception {
 
@@ -388,7 +398,9 @@ public class ETLMapReduce extends AbstractMapReduce {
           context.getRuntimeArguments());
         LOG.debug("Transform Class : {}", transform.getClass().getName());
         transform.initialize(transformContext);
-        pipeline.put(transformId, transform);
+        pipeline.put(transformId,
+                     new TransformDetail(transform, new DefaultStageMetrics(mapperMetrics, transformId),
+                                         connectionsMap.get(transformId)));
         if (transformInfo.getErrorDatasetName() != null) {
           transformErrorSinkMap.put(transformId,
                                     new ErrorSink<>(context, transformInfo.getErrorDatasetName()));
@@ -401,14 +413,14 @@ public class ETLMapReduce extends AbstractMapReduce {
       try {
         KeyValue<Object, Object> input = new KeyValue<>(key, value);
         TransformResponse transformResponse = transformExecutor.runOneIteration(input);
-        for (Map.Entry<String, List<Object>> transformedEntry : transformResponse.getSinksResults().entrySet()) {
+        for (Map.Entry<String, Collection<Object>> transformedEntry : transformResponse.getSinksResults().entrySet()) {
           WrappedSink<Object, Object, Object> sink = sinks.get(transformedEntry.getKey());
           for (Object transformedRecord : transformedEntry.getValue()) {
             sink.write((KeyValue<Object, Object>) transformedRecord);
           }
         }
 
-        for (Map.Entry<String, List<InvalidEntry<Object>>> errorEntries :
+        for (Map.Entry<String, Collection<InvalidEntry<Object>>> errorEntries :
           transformResponse.getMapTransformIdToErrorEmitter().entrySet()) {
 
           if (transformsWithoutErrorDataset.contains(errorEntries.getKey())) {
