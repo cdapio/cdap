@@ -22,6 +22,7 @@ import co.cask.cdap.api.app.Application;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.CloseableIterator;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.dataset.lib.cube.AggregationFunction;
@@ -88,6 +89,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
@@ -412,7 +414,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Test
   public void testCustomActionDatasetAccess() throws Exception {
     addDatasetInstance("keyValueTable", DatasetWithCustomActionApp.CUSTOM_TABLE).create();
-    addDatasetInstance("keyValueTable", DatasetWithCustomActionApp.CUSTOM_TABLE1).create();
+    addDatasetInstance("fileSet", DatasetWithCustomActionApp.CUSTOM_FILESET).create();
 
     ApplicationManager appManager = deployApplication(DatasetWithCustomActionApp.class);
     ServiceManager serviceManager = appManager.getServiceManager(DatasetWithCustomActionApp.CUSTOM_SERVICE).start();
@@ -425,12 +427,14 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     DataSetManager<KeyValueTable> outTableManager = getDataset(DatasetWithCustomActionApp.CUSTOM_TABLE);
     KeyValueTable outputTable = outTableManager.get();
 
-    DataSetManager<KeyValueTable> outTableManager1 = getDataset(DatasetWithCustomActionApp.CUSTOM_TABLE1);
-    KeyValueTable outputTable1 = outTableManager1.get();
-
     Assert.assertEquals("world", Bytes.toString(outputTable.read("hello")));
     Assert.assertEquals("service", Bytes.toString(outputTable.read("hi")));
-    Assert.assertEquals("another", Bytes.toString(outputTable1.read("test")));
+
+    DataSetManager<FileSet> outFileSetManager = getDataset(DatasetWithCustomActionApp.CUSTOM_FILESET);
+    FileSet fs = outFileSetManager.get();
+    try (InputStream in = fs.getLocation("test").getInputStream()) {
+      Assert.assertEquals(42, in.read());
+    }
   }
 
   @Category(XSlowTests.class)
