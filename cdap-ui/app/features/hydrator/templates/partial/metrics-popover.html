@@ -25,12 +25,12 @@
 
     <div class="well">
       <h5>Records In</h5>
-      <p>3000</p>
+      <p>{{ data.metrics.recordsIn || "Not Available" }}</p>
 
       <br/>
 
       <h5>Records out</h5>
-      <p>50000</p>
+      <p>{{ data.metrics.recordsOut || "Not Available"  }}</p>
     </div>
 
   </div>

@@ -62,20 +62,23 @@ angular.module(PKG.name + '.feature.hydrator')
       return this.HydratorService.generateSchemaOnEdge(sourceId);
     };
 
-    function convertMetricsArrayIntoObject(arr) {
+    function convertMetricsArrayIntoObject(arr, nodes) {
       var obj = {};
 
       angular.forEach(arr, function (item) {
-        obj[item.nodeName] = item.recordsOut;
+        obj[nodes[item.stage - 1].id] = {
+          recordsOut: item.recordsOut,
+          recordsIn: item.recordsIn
+        };
       });
 
       return obj;
     }
-
-    this.metrics = convertMetricsArrayIntoObject(this.MetricsStore.getMetrics());
+    var nodes = this.NodesStore.getNodes();
+    this.metrics = convertMetricsArrayIntoObject(this.MetricsStore.getMetrics(), nodes);
 
     this.MetricsStore.registerOnChangeListener(function () {
-      this.metrics = convertMetricsArrayIntoObject(this.MetricsStore.getMetrics());
+      this.metrics = convertMetricsArrayIntoObject(this.MetricsStore.getMetrics(), nodes);
     }.bind(this));
 
 
