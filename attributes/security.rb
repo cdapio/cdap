@@ -24,7 +24,6 @@ if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('ssl.enabled
   # auth
   default['cdap']['cdap_security']['security.server.ssl.keystore.password'] = 'somedefaultpassword'
   default['cdap']['cdap_security']['security.server.ssl.keystore.path'] = '/opt/cdap/security/conf/keystore.jks'
-  default['cdap']['cdap_security']['security.auth.server.address'] = node['fqdn']
 
   # router
   default['cdap']['cdap_security']['router.ssl.keystore.password'] = 'somedefaultpassword'
@@ -33,6 +32,12 @@ if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('ssl.enabled
   # web ui
   default['cdap']['cdap_security']['dashboard.ssl.key'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.key"
   default['cdap']['cdap_security']['dashboard.ssl.cert'] = "/etc/cdap/#{node['cdap']['conf_dir']}/webapp.crt"
+end
+
+# Auth-Server Settings
+if node['cdap'].key?('cdap_site') && node['cdap']['cdap_site'].key?('security.enabled') &&
+   node['cdap']['cdap_site']['security.enabled'].to_s == 'true'
+  default['cdap']['cdap_site']['security.auth.server.address'] = node['fqdn']
 end
 
 # realmfile creation
