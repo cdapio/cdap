@@ -98,7 +98,8 @@ public enum ArgumentName {
   PLUGIN_NAME("plugin-name"),
 
   INSTANCE_URI("cdap-instance-uri"),
-  VERIFY_SSL_CERT("verify-ssl-cert");
+  VERIFY_SSL_CERT("verify-ssl-cert"),
+  ENTITY("entity-id");
 
   private final String name;
 
