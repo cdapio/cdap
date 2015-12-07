@@ -36,7 +36,6 @@ import co.cask.cdap.format.RecordFormats;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -57,7 +56,6 @@ import javax.annotation.Nullable;
 @Description("Kafka real-time source: emits a record with the schema specified by the user. " +
   "If no schema is specified, it will emit a record with two fields: 'key' (nullable string) and 'message' (bytes).")
 public class KafkaSource extends RealtimeSource<StructuredRecord> {
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaSource.class);
   private static final int EXCEPTION_SLEEP_IN_SEC = 1;
 
   public static final String MESSAGE = "message";
@@ -79,6 +77,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
                                                          Schema.of(Schema.Type.STRING))));
   private KafkaSimpleApiConsumer kafkaConsumer;
   private KafkaPluginConfig config;
+  private Logger logger;
 
   private boolean logException;
 
@@ -101,6 +100,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
   @Override
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
+    logger = context.getStageLogger(this.getClass());
 
     kafkaConsumer = new Kafka08SimpleApiConsumer(this);
     kafkaConsumer.initialize(context);
@@ -123,7 +123,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
       logException = true;
     } catch (Throwable t) {
       if (logException) {
-        LOG.error("Error encountered during poll to get message for Kafka source.", t);
+        logger.error("Error encountered during poll to get message for Kafka source.", t);
         logException = false;
       }
       TimeUnit.SECONDS.sleep(EXCEPTION_SLEEP_IN_SEC);
@@ -150,7 +150,7 @@ public class KafkaSource extends RealtimeSource<StructuredRecord> {
       StreamEvent toStream = new StreamEvent(payload);
       return format.read(toStream);
     } catch (Exception e) {
-      LOG.debug("Could not parse Kafka payload into schema. Using default structured record instead.");
+      logger.debug("Could not parse Kafka payload into schema. Using default structured record instead.");
       return byteBufferToSchemalessByteRecord(key, payload);
     }
   }

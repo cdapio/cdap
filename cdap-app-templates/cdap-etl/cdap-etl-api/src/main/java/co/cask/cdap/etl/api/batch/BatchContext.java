@@ -19,6 +19,7 @@ package co.cask.cdap.etl.api.batch;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.etl.api.TransformContext;
+import org.slf4j.Logger;
 
 import java.util.Map;
 

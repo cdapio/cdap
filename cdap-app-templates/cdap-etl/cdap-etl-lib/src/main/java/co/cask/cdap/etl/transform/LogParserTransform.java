@@ -26,11 +26,11 @@ import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.TransformContext;
 import net.sf.uadetector.ReadableUserAgent;
 import net.sf.uadetector.UserAgentStringParser;
 import net.sf.uadetector.service.UADetectorServiceFactory;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.text.ParseException;
@@ -60,7 +60,6 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
     "CLF, and Cloudfront formats.";
   private static final String INPUT_NAME_DESCRIPTION = "Name of the field in the input schema which encodes the " +
     "log information. The given field must be of type String or Bytes.";
-  private static final Logger LOG = LoggerFactory.getLogger(LogParserTransform.class);
   //Regex used to parse a CLF log, each field is commented above
   private static final Pattern CLF_LOG_PATTERN = Pattern.compile(
     //   IP                    id    user      date          request     code     size    referrer    user agent
@@ -89,6 +88,7 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
   private final LogParserConfig config;
   private final SimpleDateFormat sdfStrftime = new SimpleDateFormat("dd/MMM/yyyy:HH:mm:ss Z");
   private final SimpleDateFormat sdfCloudfront = new SimpleDateFormat("yyyy-MM-dd:HH:mm:ss z");
+  private Logger logger;
 
   public LogParserTransform(LogParserConfig config) {
     this.config = config;
@@ -99,16 +99,21 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
     super.configurePipeline(pipelineConfigurer);
     if (!S3_LOG.equals(config.logFormat) && !CLF_LOG.equals(config.logFormat) &&
         !CLOUDFRONT_LOG.equals(config.logFormat)) {
-      LOG.error("Log format not currently supported.");
       throw new IllegalStateException("Unsupported log format: " + config.logFormat);
     }
+  }
+
+  @Override
+  public void initialize(TransformContext context) throws Exception {
+    super.initialize(context);
+    logger = context.getStageLogger(this.getClass());
   }
 
   @Override
   public void transform(StructuredRecord input, Emitter<StructuredRecord> emitter) throws Exception {
     String log = getLog(input);
     if (log == null) {
-      LOG.debug("Couldn't read schema, log message was null");
+      logger.debug("Couldn't read schema, log message was null");
       return;
     }
 
@@ -116,20 +121,20 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
     if (S3_LOG.equals(config.logFormat)) {
       Matcher logMatcher = S3_LOG_PATTERN.matcher(log);
       if (!logMatcher.matches() || logMatcher.groupCount() < S3_REGEX_LENGTH) {
-        LOG.debug("Couldn't parse log because log did not match the S3 format, log: {}", log);
+        logger.debug("Couldn't parse log because log did not match the S3 format, log: {}", log);
         return;
       }
       output = parseRequest(logMatcher, S3_INDICES);
     } else if (CLF_LOG.equals(config.logFormat)) {
       Matcher logMatcher = CLF_LOG_PATTERN.matcher(log);
       if (!logMatcher.matches() || logMatcher.groupCount() < CLF_REGEX_LENGTH) {
-        LOG.debug("Couldn't parse log because the log did not match the CLF format. log: {}", log);
+        logger.debug("Couldn't parse log because the log did not match the CLF format. log: {}", log);
         return;
       }
       output = parseRequest(logMatcher, CLF_INDICES);
     } else {
       if (log.startsWith("#")) {
-        LOG.trace("Log is a comment. Ignoring...");
+        logger.trace("Log is a comment. Ignoring...");
         return;
       }
 
@@ -167,7 +172,7 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
   private String getLog(StructuredRecord input) {
     Schema.Field inputField = input.getSchema().getField(config.inputName);
     if (inputField == null) {
-      LOG.debug("Invalid inputName, no known inputField matches given input of " + config.inputName);
+      logger.debug("Invalid inputName, no known inputField matches given input of " + config.inputName);
       return null;
     }
 
@@ -178,7 +183,7 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
     Schema.Type inputType = inputSchema.getType();
 
     if (!Schema.Type.STRING.equals(inputType) && !Schema.Type.BYTES.equals(inputType)) {
-      LOG.error("Unsupported inputType in schema, only Schema.Type.BYTES and Schema.Type.STRING are supported. " +
+      logger.error("Unsupported inputType in schema, only Schema.Type.BYTES and Schema.Type.STRING are supported. " +
                   "InputType: {}", inputType.toString());
       return null;
     }
@@ -192,7 +197,7 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
       } else if (data instanceof byte[]) {
         return Bytes.toString((byte[]) input.get(config.inputName));
       } else {
-        LOG.debug("Not a byte type, type is {}", data.getClass().toString());
+        logger.debug("Not a byte type, type is {}", data.getClass().toString());
         return null;
       }
     }
@@ -209,7 +214,7 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
     String request = logMatcher.group(indices[0]);
     Matcher requestMatcher = REQUEST_PAGE_PATTERN.matcher(request);
     if (!requestMatcher.matches() || requestMatcher.groupCount() < 2) {
-      LOG.debug("Couldn't parse uri because request does not match request pattern, request: {}", request);
+      logger.debug("Couldn't parse uri because request does not match request pattern, request: {}", request);
       return null;
     }
 
@@ -218,8 +223,8 @@ public class LogParserTransform extends Transform<StructuredRecord, StructuredRe
     try {
       ts = sdfStrftime.parse(logMatcher.group(indices[1])).getTime();
     } catch (ParseException e) {
-      LOG.debug("Couldn't parse time from the input record, using current timestamp instead. Exception: {}",
-                e.getMessage());
+      logger.debug("Couldn't parse time from the input record, using current timestamp instead. Exception: {}",
+                   e.getMessage());
     }
 
     String ip = logMatcher.group(indices[2]);

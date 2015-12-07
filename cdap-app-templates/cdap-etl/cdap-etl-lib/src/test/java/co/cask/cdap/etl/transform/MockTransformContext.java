@@ -24,6 +24,8 @@ import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.TransformContext;
 import co.cask.cdap.etl.common.MockLookupProvider;
 import co.cask.cdap.etl.common.NoopMetrics;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -94,6 +96,11 @@ public class MockTransformContext implements TransformContext {
   @Override
   public String getStageName() {
     return "singleStage";
+  }
+
+  @Override
+  public Logger getStageLogger(Class clazz) {
+    return LoggerFactory.getLogger(clazz);
   }
 
   @Override

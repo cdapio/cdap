@@ -31,7 +31,6 @@ import com.amazon.sqs.javamessaging.SQSConnectionFactory;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.jms.Message;
@@ -47,7 +46,6 @@ import javax.jms.TextMessage;
 @Name("AmazonSQS")
 @Description("Amazon Simple Queue Service real-time source: emits a record with a field 'body' of type String.")
 public class SqsSource extends RealtimeSource<StructuredRecord> {
-  private static final Logger LOG = LoggerFactory.getLogger(SqsSource.class);
   private static final String REGION_DESCRIPTION = "Region where the queue is located.";
   private static final String ACCESSKEY_DESCRIPTION = "Access Key of the AWS (Amazon Web Services) account to use.";
   private static final String ACCESSID_DESCRIPTION = "Access ID of the AWS (Amazon Web Services) account to use.";
@@ -65,6 +63,7 @@ public class SqsSource extends RealtimeSource<StructuredRecord> {
   private MessageConsumer consumer;
   private Session session;
   private SQSConnection connection;
+  private Logger logger;
 
   public SqsSource(SqsConfig config) {
     this.config = config;
@@ -72,6 +71,7 @@ public class SqsSource extends RealtimeSource<StructuredRecord> {
 
   @Override
   public void initialize(RealtimeContext context) {
+    logger = context.getStageLogger(this.getClass());
     try {
       super.initialize(context);
       SQSConnectionFactory.Builder sqsBuild = SQSConnectionFactory.builder()
@@ -86,24 +86,24 @@ public class SqsSource extends RealtimeSource<StructuredRecord> {
         try {
           session.close();
         } catch (Exception ex1) {
-          LOG.warn("Exception when closing session", ex1);
+          logger.warn("Exception when closing session", ex1);
         }
       }
       if (connection != null) {
         try {
           connection.close();
         } catch (Exception ex2) {
-          LOG.warn("Exception when closing connection", ex2);
+          logger.warn("Exception when closing connection", ex2);
         }
       }
       if (consumer != null) {
         try {
           consumer.close();
         } catch (Exception ex3) {
-          LOG.warn("Exception when closing consumer", ex3);
+          logger.warn("Exception when closing consumer", ex3);
         }
       }
-      LOG.error("Failed to connect to SQS");
+      logger.error("Failed to connect to SQS");
       throw new IllegalStateException("Could not connect to SQS.");
     }
   }

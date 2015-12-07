@@ -26,8 +26,6 @@ import co.cask.cdap.etl.common.SnapshotFileSetConfig;
 import co.cask.cdap.etl.dataset.SnapshotFileSet;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -40,7 +38,6 @@ import java.util.Map;
  * @param <VAL_OUT> the type of value the sink outputs
  */
 public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<StructuredRecord, KEY_OUT, VAL_OUT> {
-  private static final Logger LOG = LoggerFactory.getLogger(SnapshotFileBatchSink.class);
   private static final Gson GSON = new Gson();
   private static final Type MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
@@ -78,7 +75,8 @@ public abstract class SnapshotFileBatchSink<KEY_OUT, VAL_OUT> extends BatchSink<
       try {
         snapshotFileSet.onSuccess(context.getLogicalStartTime());
       } catch (Exception e) {
-        LOG.error("Exception updating state file with value of latest snapshot, ", e);
+        context.getStageLogger(this.getClass())
+          .error("Exception updating state file with value of latest snapshot, ", e);
       }
     }
   }

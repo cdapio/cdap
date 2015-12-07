@@ -34,7 +34,6 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.Hashtable;
@@ -61,8 +60,6 @@ import javax.naming.Context;
 @Name("JMS")
 @Description("JMS real-time source: emits a record with a field 'message' of type String.")
 public class JmsSource extends RealtimeSource<StructuredRecord> {
-  private static final Logger LOG = LoggerFactory.getLogger(JmsSource.class);
-
   private static final Gson GSON = new Gson();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
 
@@ -89,6 +86,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
 
   private int jmsAcknowledgeMode = Session.AUTO_ACKNOWLEDGE;
   private JmsProvider jmsProvider;
+  private Logger logger;
 
   private transient Connection connection;
   private transient Session session;
@@ -112,6 +110,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
    */
   public void initialize(RealtimeContext context) throws Exception {
     super.initialize(context);
+    logger = context.getStageLogger(this.getClass());
 
     Map<String, String> runtimeArguments = Maps.newHashMap();
     if (config.getProperties() != null) {
@@ -154,12 +153,12 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
   private void initializeJMSConnection(Hashtable<String, String> envVars, String destinationName,
                                        String connectionFactoryName, ClassLoader driverClassLoader) {
     if (jmsProvider == null) {
-      LOG.trace("JMS provider is not set when trying to initialize JMS connection.");
+      logger.trace("JMS provider is not set when trying to initialize JMS connection.");
       if (destinationName == null) {
         throw new IllegalStateException("Could not have null JMSProvider for JMS Source. " +
                                           "Please set the right JMSProvider");
       } else {
-        LOG.trace("Using JNDI default JMS provider for destination: {}", destinationName);
+        logger.trace("Using JNDI default JMS provider for destination: {}", destinationName);
         if (driverClassLoader != null) {
           Thread.currentThread().setContextClassLoader(driverClassLoader);
         }
@@ -179,14 +178,14 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
         try {
           session.close();
         } catch (JMSException ex1) {
-          LOG.warn("Exception when closing session", ex1);
+          logger.warn("Exception when closing session", ex1);
         }
       }
       if (connection != null) {
         try {
           connection.close();
         } catch (JMSException ex2) {
-          LOG.warn("Exception when closing connection", ex2);
+          logger.warn("Exception when closing connection", ex2);
         }
       }
       throw new RuntimeException("JMSException thrown when trying to initialize connection", ex);
@@ -219,7 +218,7 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
       try {
         message = consumer.receive(JMS_CONSUMER_TIMEOUT_MS);
       } catch (JMSException e) {
-        LOG.warn("Exception when trying to receive message from JMS consumer.");
+        logger.warn("Exception when trying to receive message from JMS consumer.");
       }
       if (message != null) {
         String text;
@@ -227,19 +226,19 @@ public class JmsSource extends RealtimeSource<StructuredRecord> {
           if (message instanceof TextMessage) {
             TextMessage textMessage = (TextMessage) message;
             text = textMessage.getText();
-            LOG.trace("Process JMS TextMessage : ", text);
+            logger.trace("Process JMS TextMessage : ", text);
           } else if (message instanceof BytesMessage) {
             BytesMessage bytesMessage = (BytesMessage) message;
             text = bytesMessage.readUTF();
-            LOG.trace("Processing JMS ByteMessage : {}", text);
+            logger.trace("Processing JMS ByteMessage : {}", text);
           } else {
             // Different kind of messages, just get String for now
             // TODO Process different kind of JMS messages
             text = message.toString();
-            LOG.trace("Processing JMS message : ", text);
+            logger.trace("Processing JMS message : ", text);
           }
         } catch (JMSException e) {
-          LOG.error("Unable to read text from a JMS Message.");
+          logger.error("Unable to read text from a JMS Message.");
           continue;
         }
 

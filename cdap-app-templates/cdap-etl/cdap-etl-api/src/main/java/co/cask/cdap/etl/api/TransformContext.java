@@ -20,6 +20,7 @@ import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.plugin.PluginProperties;
+import org.slf4j.Logger;
 
 /**
  * Context passed to ETL stages.
@@ -44,9 +45,17 @@ public interface TransformContext extends PluginContext, LookupProvider {
   StageMetrics getMetrics();
 
   /**
-   * Gets the unique stage name of the transform, useful for setting the context of logging in transforms.
+   * Gets the unique stage name of the transform.
    *
    * @return stage name
    */
   String getStageName();
+
+  /**
+   * Get a logger that will prefix all log messages with the name of the stage it was logged from.
+   *
+   * @param clazz class of the stage
+   * @return logger that will prefix all log messages with the name of the stage it was logged from
+   */
+  Logger getStageLogger(Class clazz);
 }

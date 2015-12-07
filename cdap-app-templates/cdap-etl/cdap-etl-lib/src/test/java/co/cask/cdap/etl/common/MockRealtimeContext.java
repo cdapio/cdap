@@ -21,6 +21,8 @@ import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.realtime.RealtimeContext;
 import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -51,6 +53,11 @@ public class MockRealtimeContext implements RealtimeContext {
   @Override
   public String getStageName() {
     return "singleStage";
+  }
+
+  @Override
+  public Logger getStageLogger(Class clazz) {
+    return LoggerFactory.getLogger(clazz);
   }
 
   @Override

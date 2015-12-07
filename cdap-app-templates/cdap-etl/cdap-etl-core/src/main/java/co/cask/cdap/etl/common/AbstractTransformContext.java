@@ -23,6 +23,8 @@ import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.TransformContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
@@ -83,5 +85,10 @@ public abstract class AbstractTransformContext implements TransformContext {
   @Override
   public <T> Lookup<T> provide(String table, Map<String, String> arguments) {
     return lookup.provide(table, arguments);
+  }
+
+  @Override
+  public Logger getStageLogger(Class clazz) {
+    return new StageLogger(LoggerFactory.getLogger(clazz), stageName);
   }
 }
