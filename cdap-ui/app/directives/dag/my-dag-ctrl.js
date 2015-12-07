@@ -364,7 +364,6 @@ angular.module(PKG.name + '.commons')
       vm.instance.bind('connection', addConnection);
       vm.instance.bind('connectionDetached', formatConnections);
 
-      // vm.instance.bind('click', connectionClick);
 
 
       // This should be removed once the node config is using FLUX
