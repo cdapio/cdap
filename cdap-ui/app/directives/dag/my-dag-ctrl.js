@@ -154,7 +154,19 @@ angular.module(PKG.name + '.commons')
           }
 
           $scope.$watch('metricsData', function () {
-            console.log('metrics', $scope.metricsData);
+            angular.forEach($scope.metricsData, function (value, key) {
+              nodePopovers[key].scope.data.metrics = value;
+            });
+
+            angular.forEach(labels, function (endpoint) {
+              var label = endpoint.getOverlay('metricLabel');
+              if ($scope.metricsData[endpoint.elementId] === null || $scope.metricsData[endpoint.elementId] === undefined) {
+                return;
+              }
+
+              angular.element(label.getElement())
+                .text($scope.metricsData[endpoint.elementId].recordsOut);
+            });
           }, true);
         }
 
