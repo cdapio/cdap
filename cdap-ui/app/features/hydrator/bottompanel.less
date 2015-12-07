@@ -110,6 +110,7 @@ body.theme-cdap.state-hydrator {
     min-height: ~"-moz-calc(40vh - 113px)";
     min-height: ~"-webkit-calc(40vh - 113px)";
     min-height: ~"calc(40vh - 113px)";
+    z-index: 1024;
     .transition(height 0.2s ease);
 
     @media (min-height: 800px) {
@@ -148,6 +149,7 @@ body.theme-cdap.state-hydrator {
       z-index: 9999;
       div.console-tabs {
         border-top: 0;
+        .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
       }
     }
   }
