@@ -4,7 +4,7 @@ maintainer_email 'ops@cask.co'
 license          'Apache 2.0'
 description      'Installs/Configures Cask Data Application Platform (CDAP)'
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
-version          '2.16.1'
+version          '2.17.0'
 
 %w(apt ark hadoop java nodejs ntp yum yum-epel).each do |cb|
   depends cb
@@ -15,3 +15,6 @@ depends 'krb5_utils'
 %w(amazon centos debian redhat scientific ubuntu).each do |os|
   supports os
 end
+
+source_url 'https://github.com/caskdata/cdap_cookbook'
+issues_url 'https://issues.cask.co/browse/COOK/component/10603'
