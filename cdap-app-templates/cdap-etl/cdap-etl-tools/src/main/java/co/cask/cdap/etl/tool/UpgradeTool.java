@@ -44,13 +44,14 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
@@ -61,7 +62,7 @@ public class UpgradeTool {
   private static final String BATCH_NAME = "cdap-etl-batch";
   private static final String REALTIME_NAME = "cdap-etl-realtime";
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-  private static final int DEFAULT_READ_TIMEOUT = 90 * 1000;
+  private static final int DEFAULT_READ_TIMEOUT_MILLIS = 90 * 1000;
   private final NamespaceClient namespaceClient;
   private final ApplicationClient appClient;
   private final ArtifactSummary batchArtifact;
@@ -75,26 +76,32 @@ public class UpgradeTool {
     this.namespaceClient = new NamespaceClient(clientConfig);
   }
 
-  private void upgrade() throws Exception {
+  private Set<Id.Application> upgrade() throws Exception {
+    Set<Id.Application> upgraded = new HashSet<>();
     for (NamespaceMeta namespaceMeta : namespaceClient.list()) {
       Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
-      upgrade(namespace);
+      upgraded.addAll(upgrade(namespace));
     }
+    return upgraded;
   }
 
-  private void upgrade(Id.Namespace namespace) throws Exception {
+  private Set<Id.Application> upgrade(Id.Namespace namespace) throws Exception {
+    Set<Id.Application> upgraded = new HashSet<>();
     Set<String> artifactNames = ImmutableSet.of(BATCH_NAME, REALTIME_NAME);
     for (ApplicationRecord appRecord : appClient.list(namespace, artifactNames, null)) {
       Id.Application appId = Id.Application.from(namespace, appRecord.getName());
-      upgrade(appId);
+      if (upgrade(appId)) {
+        upgraded.add(appId);
+      }
     }
+    return upgraded;
   }
 
-  private void upgrade(Id.Application appId) throws Exception {
+  private boolean upgrade(Id.Application appId) throws Exception {
     ApplicationDetail appDetail = appClient.get(appId);
 
     if (!shouldUpgrade(appDetail.getArtifact())) {
-      return;
+      return false;
     }
 
     if (BATCH_NAME.equals(appDetail.getArtifact().getName())) {
@@ -108,6 +115,7 @@ public class UpgradeTool {
       AppRequest<ETLRealtimeConfig> updateRequest = new AppRequest<>(realtimeArtifact, newConfig);
       appClient.update(appId, updateRequest);
     }
+    return true;
   }
 
   public static void main(String[] args) throws Exception {
@@ -119,7 +127,7 @@ public class UpgradeTool {
       .addOption(new Option("a", "accesstoken", true, "File containing the access token to use when interacting " +
         "with a secure CDAP instance."))
       .addOption(new Option("t", "timeout", true, "Timeout in milliseconds to use when interacting with the " +
-        "CDAP RESTful APIs. Defaults to " + DEFAULT_READ_TIMEOUT + "."))
+        "CDAP RESTful APIs. Defaults to " + DEFAULT_READ_TIMEOUT_MILLIS + "."))
       .addOption(new Option("n", "namespace", true, "Namespace to perform the upgrade in. If none is given, " +
         "pipelines in all namespaces will be upgraded."))
       .addOption(new Option("p", "pipeline", true, "Name of the pipeline to upgrade. If specified, a namespace " +
@@ -130,7 +138,10 @@ public class UpgradeTool {
         "It is expected to be a JSON Object containing 'artifact' and 'config' fields." +
         "The value for 'artifact' must be a JSON Object that specifies the artifact scope, name, and version. " +
         "The value for 'config' must be a JSON Object specifies the source, transforms, and sinks of the pipeline, " +
-        "as expected by older versions of the etl artifacts."));
+        "as expected by older versions of the etl artifacts."))
+      .addOption(new Option("o", "outputfile", true, "File to write the converted application details provided in " +
+        "the configfile option. If none is given, results will be written to the input file + '.converted'. " +
+        "The contents of this file can be sent directly to CDAP to update or create an application."));
 
     CommandLineParser parser = new BasicParser();
     CommandLine commandLine = parser.parse(options, args);
@@ -145,7 +156,9 @@ public class UpgradeTool {
     }
 
     if (commandLine.hasOption("f")) {
-      convertFile(commandLine.getOptionValue("f"));
+      String inputFilePath = commandLine.getOptionValue("f");
+      String outputFilePath = commandLine.hasOption("o") ? commandLine.getOptionValue("o") : inputFilePath + ".new";
+      convertFile(inputFilePath, outputFilePath);
       System.exit(0);
     }
 
@@ -159,19 +172,31 @@ public class UpgradeTool {
         throw new IllegalArgumentException("Must specify a namespace when specifying a pipeline.");
       }
       Id.Application appId = Id.Application.from(namespace, pipelineName);
-      upgradeTool.upgrade(appId);
-      System.out.println("Successfully upgraded pipeline " + appId);
+      if (upgradeTool.upgrade(appId)) {
+        System.out.println("Successfully upgraded " + appId);
+      } else {
+        System.out.println(appId + " did not need to be upgraded.");
+      }
       System.exit(0);
     }
 
     if (namespace != null) {
-      upgradeTool.upgrade(Id.Namespace.from(namespace));
-      System.out.println("Successfully upgraded all pipelines in namespace " + namespace);
+      printUpgraded(upgradeTool.upgrade(Id.Namespace.from(namespace)));
       System.exit(0);
     }
 
-    upgradeTool.upgrade();
-    System.out.println("Successfully upgraded all pipelines.");
+    printUpgraded(upgradeTool.upgrade());
+  }
+
+  private static void printUpgraded(Set<Id.Application> pipelines) {
+    if (pipelines.size() == 0) {
+      System.out.println("Did not find any pipelines that needed upgrading.");
+      return;
+    }
+    System.out.println("Successfully upgraded " + pipelines.size() + " pipelines:");
+    for (Id.Application pipeline : pipelines) {
+      System.out.println(pipeline);
+    }
   }
 
   private static ClientConfig getClientConfig(CommandLine commandLine) throws IOException {
@@ -190,7 +215,7 @@ public class UpgradeTool {
       .build();
 
     int readTimeout = commandLine.hasOption("t") ?
-      Integer.parseInt(commandLine.getOptionValue("t")) : DEFAULT_READ_TIMEOUT;
+      Integer.parseInt(commandLine.getOptionValue("t")) : DEFAULT_READ_TIMEOUT_MILLIS;
     ClientConfig.Builder clientConfigBuilder = ClientConfig.builder()
       .setDefaultReadTimeout(readTimeout)
       .setConnectionConfig(connectionConfig);
@@ -212,7 +237,7 @@ public class UpgradeTool {
     return clientConfigBuilder.build();
   }
 
-  private static void convertFile(String configFilePath) throws IOException {
+  private static void convertFile(String configFilePath, String outputFilePath) throws IOException {
     File configFile = new File(configFilePath);
     if (!configFile.exists()) {
       throw new IllegalArgumentException(configFilePath + " does not exist.");
@@ -231,24 +256,32 @@ public class UpgradeTool {
 
     String version = getVersion();
 
+    File outputFile = new File(outputFilePath);
     if (BATCH_NAME.equals(artifactFile.artifact.getName())) {
       ArtifactSummary artifact = new ArtifactSummary(BATCH_NAME, version, ArtifactScope.SYSTEM);
       OldETLBatchConfig oldConfig = GSON.fromJson(artifactFile.config, OldETLBatchConfig.class);
       AppRequest<ETLBatchConfig> updated = new AppRequest<>(artifact, oldConfig.getNewConfig());
       System.out.println(GSON.toJson(updated));
+      try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), StandardCharsets.UTF_8)) {
+        writer.write(GSON.toJson(updated));
+      }
     } else {
       ArtifactSummary artifact = new ArtifactSummary(REALTIME_NAME, version, ArtifactScope.SYSTEM);
       OldETLRealtimeConfig oldConfig = GSON.fromJson(artifactFile.config, OldETLRealtimeConfig.class);
       AppRequest<ETLRealtimeConfig> updated = new AppRequest<>(artifact, oldConfig.getNewConfig());
-      System.out.println(GSON.toJson(updated));
+      try (BufferedWriter writer = Files.newBufferedWriter(outputFile.toPath(), StandardCharsets.UTF_8)) {
+        writer.write(GSON.toJson(updated));
+      }
     }
+
+    System.out.println("Successfully converted application details from file " + configFilePath + ". " +
+                         "Results have been written to " + outputFilePath);
   }
 
   // reads current version from the etl.properties file contained in resources.
   private static String getVersion() {
     Properties prop = new Properties();
     try {
-      URL resource = UpgradeTool.class.getResource("/etl.properties");
       try (InputStream in = UpgradeTool.class.getResourceAsStream("/etl.properties")) {
         prop.load(in);
       }
