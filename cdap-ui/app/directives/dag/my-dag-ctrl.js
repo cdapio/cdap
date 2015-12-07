@@ -33,7 +33,7 @@ angular.module(PKG.name + '.commons')
       [ 'Custom', {
         create: function (label) {
           labels.push(label);
-          return angular.element('<span>3000</span>');
+          return angular.element('<span></span>');
         },
         location: [2, 0],
         id: 'metricLabel'
