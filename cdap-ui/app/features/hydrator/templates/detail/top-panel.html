@@ -83,7 +83,7 @@
       <div class="metric pull-left">
         <span class="metric-value" ng-if="TopPanelCtrl.nextRunTime === 'N/A'"> &mdash; </span>
         <span class="metric-value" ng-if="TopPanelCtrl.nextRunTime !== 'N/A'">
-          {{ TopPanelCtrl.nextRunTime | amDateFormat:'HH:mm:ss'}}
+          {{ TopPanelCtrl.nextRunTime | amDateFormat:'h:mm:ss A'}}
           <small> {{ TopPanelCtrl.nextRunTime | amDateFormat:'MM/DD/YYYY'}}</small>
         </span>
         <span class="metric-label">Start</span>
@@ -147,7 +147,7 @@
             ng-click="TopPanelCtrl.do('Suspend')"
             ng-disabled="TopPanelCtrl.scheduleStatus === 'SUSPENDING'">
             <span ng-if="TopPanelCtrl.scheduleStatus ==='SCHEDULED'">
-              <span class="fa fa-exclamation-triangle"
+              <span class="icon-suspend"
                     tooltip="Suspend"
                     tooltip-placement="top"></span>
             </span>
