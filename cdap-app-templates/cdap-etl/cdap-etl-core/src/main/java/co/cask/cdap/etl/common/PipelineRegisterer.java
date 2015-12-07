@@ -23,8 +23,6 @@ import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.etl.api.Transformation;
-import co.cask.cdap.etl.api.realtime.RealtimeSink;
-import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.common.guice.TypeResolver;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -163,12 +161,7 @@ public class PipelineRegisterer {
       sinks.add(sink);
     }
 
-    // Validate Source -> Transform -> Sink hookup
-    try {
-      validateStages(source, sinks, transforms);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    // TODO : CDAP-4387 Validate Stages has been removed due to DAG implementation, have to be refactored
 
     return new Pipeline(sourcePluginId, sinksInfo, transformInfos, connectionsMap);
   }
@@ -299,52 +292,6 @@ public class PipelineRegisterer {
     return builder.build();
   }
 
-  public static void validateStages(PipelineConfigurable source, List<PipelineConfigurable> sinks,
-                                    List<Transformation> transforms) throws Exception {
-    ArrayList<Type> unresTypeList = Lists.newArrayListWithCapacity(transforms.size() + 2);
-    Type inType = Transformation.class.getTypeParameters()[0];
-    Type outType = Transformation.class.getTypeParameters()[1];
-
-    // Load the classes using the class names provided
-    Class<?> sourceClass = source.getClass();
-    TypeToken sourceToken = TypeToken.of(sourceClass);
-
-    // Extract the source's output type
-    if (RealtimeSource.class.isAssignableFrom(sourceClass)) {
-      Type type = RealtimeSource.class.getTypeParameters()[0];
-      unresTypeList.add(sourceToken.resolveType(type).getType());
-    } else {
-      unresTypeList.add(sourceToken.resolveType(outType).getType());
-    }
-
-    // Extract the transforms' input and output type
-    for (Transformation transform : transforms) {
-      Class<?> klass = transform.getClass();
-      TypeToken transformToken = TypeToken.of(klass);
-      unresTypeList.add(transformToken.resolveType(inType).getType());
-      unresTypeList.add(transformToken.resolveType(outType).getType());
-    }
-
-    // Extract the sink's input type
-    for (PipelineConfigurable sink : sinks) {
-      Class<?> sinkClass = sink.getClass();
-      TypeToken sinkToken = TypeToken.of(sinkClass);
-      // some inefficiency if there are multiple sinks since the source and transform types will be re-validated
-      // each time. this only happens when the app is created though, and logic is easier to follow if its
-      // always one stage followed by another, rather than having a fork at the very end.
-      List<Type> pipelineTypes = Lists.newArrayList(unresTypeList);
-      if (RealtimeSink.class.isAssignableFrom(sinkClass)) {
-        Type type = RealtimeSink.class.getTypeParameters()[0];
-        pipelineTypes.add(sinkToken.resolveType(type).getType());
-      } else {
-        pipelineTypes.add(sinkToken.resolveType(inType).getType());
-      }
-      // Invoke validation method with list of unresolved types
-      validateTypes(pipelineTypes);
-    }
-
-  }
-
   /**
    * Takes in an unresolved type list and resolves the types and verifies if the types are assignable.
    * Ex: An unresolved type could be : String, T, List<T>, List<String>
@@ -352,6 +299,7 @@ public class PipelineRegisterer {
    *     And the assignability will be checked : String --> String && List<String> --> List<String>
    *     which is true in the case above.
    */
+  // TODO : CDAP-4387 Validate Stages has been removed due to DAG implementation, have to be refactored
   @VisibleForTesting
   static void validateTypes(List<Type> unresTypeList) {
     Preconditions.checkArgument(unresTypeList.size() % 2 == 0, "ETL Stages validation expects even number of types");
