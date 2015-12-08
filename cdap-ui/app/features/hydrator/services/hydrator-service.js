@@ -56,33 +56,7 @@ class HydratorService {
     nodes = nodes.concat(transforms);
     nodes = nodes.concat(sinks);
 
-    let prevId;
-
-    if (transforms.length === 0) {
-      prevId = source.name;
-    } else {
-      prevId = transforms[0].name;
-      // Set Connections
-      connections.push({
-        source: source.name,
-        target: transforms[0].name
-      });
-    }
-
-    for (let i = 1; i < transforms.length; i++) {
-      connections.push({
-        source: prevId,
-        target: transforms[i].name
-      });
-      prevId = transforms[i].name;
-    }
-
-    for (let i = 0; i < sinks.length; i++) {
-      connections.push({
-        source: prevId,
-        target: sinks[i].name
-      });
-    }
+    connections = pipeline.config.connections;
 
     // Obtaining layout of graph with Dagre
     var graph = this.MyDAGFactory.getGraphLayout(nodes, connections);

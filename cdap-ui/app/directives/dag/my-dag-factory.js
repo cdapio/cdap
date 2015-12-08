@@ -130,7 +130,7 @@ angular.module(PKG.name + '.commons')
       });
 
       connections.forEach(function (connection) {
-        graph.setEdge(connection.source, connection.target);
+        graph.setEdge(connection.from, connection.to);
       });
 
       dagre.layout(graph);

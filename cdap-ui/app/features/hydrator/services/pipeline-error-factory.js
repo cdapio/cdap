@@ -228,15 +228,15 @@ angular.module(PKG.name + '.feature.hydrator')
       var branch = false;
 
       angular.forEach(connections, function (conn) {
-        nodesCopy[conn.source].visited = true;
-        nodesCopy[conn.target].visited = true;
+        nodesCopy[conn.from].visited = true;
+        nodesCopy[conn.to].visited = true;
 
-        if (!connectionHash[conn.source] || sinks.indexOf(conn.target) !== -1) {
-          if (sinks.indexOf(conn.target) !== -1) {
-            sinksConnections.push(conn.source);
+        if (!connectionHash[conn.from] || sinks.indexOf(conn.to) !== -1) {
+          if (sinks.indexOf(conn.to) !== -1) {
+            sinksConnections.push(conn.from);
           } else {
-            connectionHash[conn.source] = {
-              target: conn.target,
+            connectionHash[conn.from] = {
+              target: conn.to,
               visited: false
             };
           }

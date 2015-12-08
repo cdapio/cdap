@@ -83,13 +83,13 @@ angular.module(PKG.name + '.commons')
         addEndpoints();
 
         angular.forEach($scope.connections, function (conn) {
-          var sourceNode = $scope.nodes.filter( node => node.id === conn.source);
-          var targetNode = $scope.nodes.filter( node => node.id === conn.target);
+          var sourceNode = $scope.nodes.filter( node => node.id === conn.from);
+          var targetNode = $scope.nodes.filter( node => node.id === conn.to);
           if (!sourceNode.length || !targetNode.length) {
             return;
           }
-          var sourceId = sourceNode[0].type === 'transform' ? 'Left' + conn.source : conn.source;
-          var targetId = targetNode[0].type === 'transform' ? 'Right' + conn.target : conn.target;
+          var sourceId = sourceNode[0].type === 'transform' ? 'Left' + conn.from : conn.from;
+          var targetId = targetNode[0].type === 'transform' ? 'Right' + conn.to : conn.to;
           var connObj = {
             uuids: [sourceId, targetId]
           };
@@ -187,8 +187,8 @@ angular.module(PKG.name + '.commons')
       var connections = [];
       angular.forEach(vm.instance.getConnections(), function (conn) {
         connections.push({
-          source: conn.sourceId,
-          target: conn.targetId
+          from: conn.sourceId,
+          to: conn.targetId
         });
       });
       NodesActionsFactory.setConnections(connections);

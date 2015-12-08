@@ -129,7 +129,7 @@ angular.module(PKG.name + '.feature.hydrator')
       node.visited = true;
       finalConnections.push(node);
       var nextConnection = originalConnections.filter(function(conn) {
-        if (node.target === conn.source) {
+        if (node.to === conn.from) {
           return conn;
         }
       });
@@ -150,7 +150,7 @@ angular.module(PKG.name + '.feature.hydrator')
     function findTransformThatIsSource(originalConnections) {
       var transformAsSource = {};
       function isSource (c) {
-        if (c.target === connection.source) {
+        if (c.to === connection.from) {
           return c;
         }
       }
@@ -182,7 +182,7 @@ angular.module(PKG.name + '.feature.hydrator')
         nodesMap[n.id] = n;
       });
       var source = connections.filter(function(conn) {
-        if (nodesMap[conn.source].type === GLOBALS.pluginTypes[appType].source) {
+        if (nodesMap[conn.from].type === GLOBALS.pluginTypes[appType].source) {
           return conn;
         }
       });

@@ -53,9 +53,9 @@ class ConfigStore {
           plugin: {}
         },
         sinks: [],
-        transforms: []
+        transforms: [],
+        connections: []
       },
-      connections: [],
       __ui__: {
         nodes: [],
         isEditing: true
@@ -78,7 +78,8 @@ class ConfigStore {
         plugin: {}
       },
       sinks: [],
-      transforms: []
+      transforms: [],
+      connections: []
     };
   }
 
@@ -95,7 +96,7 @@ class ConfigStore {
     return this.getState().artifact.name;
   }
   getConnections() {
-    return this.getState().connections;
+    return this.getConfig().connections;
   }
   getConfig() {
     return this.getState().config;
@@ -147,17 +148,17 @@ class ConfigStore {
       delete nodesMap[id];
     }
     var connections = this.CanvasFactory.orderConnections(
-      angular.copy(this.state.connections),
+      angular.copy(this.state.config.connections),
       this.state.artifact.name,
       this.state.__ui__.nodes
     );
 
     connections.forEach( connection => {
-      if (nodesMap[connection.source]) {
-        addPluginToConfig(nodesMap[connection.source], connection.source);
+      if (nodesMap[connection.from]) {
+          addPluginToConfig(nodesMap[connection.from], connection.from);
       }
-      if (nodesMap[connection.target]) {
-        addPluginToConfig(nodesMap[connection.target], connection.target);
+      if (nodesMap[connection.to]) {
+        addPluginToConfig(nodesMap[connection.to], connection.to);
       }
     });
     let appType = this.getAppType();
@@ -166,6 +167,10 @@ class ConfigStore {
     } else if (appType === this.GLOBALS.etlRealtime) {
       config.instance = this.state.config.instance;
     }
+    config.connections = connections.map(conn => {
+      delete conn.visited;
+      return conn;
+    });
     return config;
   }
   getConfigForExport() {
@@ -246,7 +251,7 @@ class ConfigStore {
     this.state.__ui__.nodes = nodes;
   }
   setConnections(connections) {
-    this.state.connections = connections;
+    this.state.config.connections = connections;
   }
   addNode(node) {
     this.state.__ui__.nodes.push(node);
