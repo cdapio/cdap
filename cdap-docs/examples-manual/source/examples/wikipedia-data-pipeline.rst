@@ -101,21 +101,32 @@ Deploying the Example
 Since deploying the WikipediaPipelineApp involves loading an artifact and creating an application from it, the
 preferred method of deploying it is to use the CDAP CLI.
 
-- Load the Artifact::
+- Load the Artifact:
 
-    $ cdap-cli.sh load artifact target/WikipediaPipeline-3.3.0-SNAPSHOT.jar name WikipediaPipelineApp version
-    3.3.0-SNAPSHOT
-    Successfully added artifact with name 'WikipediaPipelineApp'
+  .. container:: highlight
 
-- Create an application using LDA as the clustering algorithm::
+    .. parsed-literal::
+    
+      |$| cdap-cli.sh load artifact target/WikipediaPipeline-\ |release|.jar name WikipediaPipelineApp version |release|
+      Successfully added artifact with name 'WikipediaPipelineApp'
 
-    $ cdap-cli.sh create app wiki-lda WikipediaPipelineApp 3.3.0-SNAPSHOT user resources/wikipedia-lda.json
-    Successfully created application
+- Create an application using LDA as the clustering algorithm:
 
-- Create an application using K-Means as the clustering algorithm::
+  .. container:: highlight
 
-    $ cdap-cli.sh create app wiki-kmeans WikipediaPipelineApp 3.3.0-SNAPSHOT user resources/wikipedia-kmeans.json
-    Successfully created application
+    .. parsed-literal::
+    
+      |$| cdap-cli.sh create app wiki-lda WikipediaPipelineApp |release| user resources/wikipedia-lda.json
+      Successfully created application
+
+- Create an application using K-Means as the clustering algorithm:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+    
+      |$| cdap-cli.sh create app wiki-kmeans WikipediaPipelineApp |release| user resources/wikipedia-kmeans.json
+      Successfully created application
 
 
 Running the Example
