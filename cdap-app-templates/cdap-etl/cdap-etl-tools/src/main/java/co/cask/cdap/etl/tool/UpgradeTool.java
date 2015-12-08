@@ -145,10 +145,14 @@ public class UpgradeTool {
 
     CommandLineParser parser = new BasicParser();
     CommandLine commandLine = parser.parse(options, args);
+    String[] commandArgs = commandLine.getArgs();
 
-    if (commandLine.hasOption("h")) {
+    // if help is an option, or if there isn't a single 'upgrade' command, print usage and exit.
+    if (commandLine.hasOption("h") || commandArgs.length != 1 || !"upgrade".equalsIgnoreCase(commandArgs[0])) {
       HelpFormatter helpFormatter = new HelpFormatter();
-      helpFormatter.printHelp(UpgradeTool.class.getName(), "Upgrades Hydrator pipelines created for 3.2.x versions" +
+      helpFormatter.printHelp(
+        UpgradeTool.class.getName() + " upgrade",
+        "Upgrades Hydrator pipelines created for 3.2.x versions" +
         "of the cdap-etl-batch and cdap-etl-realtime artifacts into pipelines compatible with 3.3.x versions of " +
         "cdap-etl-batch and cdap-etl-realtime. Connects to an instance of CDAP to find any 3.2.x pipelines, then " +
         "upgrades those pipelines.", options, "");
