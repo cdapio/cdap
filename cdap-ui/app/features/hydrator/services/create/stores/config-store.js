@@ -116,6 +116,7 @@ class ConfigStore {
         id: plugin.id,
         name: plugin.name,
         label: plugin.label,
+        artifact: plugin.artifact,
         properties: plugin.properties,
         _backendProperties: plugin._backendProperties,
         outputSchema: plugin.outputSchema

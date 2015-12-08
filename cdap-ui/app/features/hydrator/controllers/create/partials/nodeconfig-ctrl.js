@@ -68,7 +68,8 @@ class NodeConfigController {
 
     if (this.state.noproperty) {
       this.PluginConfigFactory.fetch(
-        this.state.type,
+        this.state.plugin.artifact.name,
+        this.state.plugin.artifact.version,
         this.state.plugin.name
       )
         .then(
