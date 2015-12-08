@@ -43,17 +43,16 @@ class HydratorCreateStudioController {
     NodeConfigStore.init();
     if (rConfig) {
       ConfigActionsFactory.initializeConfigStore(rConfig);
-      let config = rConfig;
+      let configJson = rConfig;
       if (!rConfig.__ui__) {
-        config = HydratorService.getNodesAndConnectionsFromConfig(rConfig);
-        config = {
+        configJson = HydratorService.getNodesAndConnectionsFromConfig(rConfig);
+        configJson = {
           __ui__: {
-            nodes: config.nodes
-          },
-          connections: config.connections
+            nodes: configJson.nodes
+          }
         };
       }
-      NodesActionsFactory.createGraphFromConfig(config.__ui__.nodes, config.connections);
+      NodesActionsFactory.createGraphFromConfig(configJson.__ui__.nodes, configJson.config.connections);
     }
   }
 

@@ -65,7 +65,13 @@ angular.module(PKG.name + '.feature.hydrator')
       return this.state.description;
     };
     this.getDAGConfig = function() {
-      return this.state.DAGConfig;
+      var config = angular.copy(this.state.DAGConfig);
+      angular.forEach(config.nodes, (node) => {
+        if (node.plugin){
+          node.label = node.plugin.label;
+        }
+      });
+      return config;
     };
     this.getConnections = function() {
       return this.state.DAGConfig.connections;
@@ -87,9 +93,10 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.getPluginObject = function(nodeId) {
       var nodes = this.getNodes();
-      var match = nodes.filter( node => node.id === nodeId);
+      var match = nodes.filter( node => node.name === nodeId);
       match = (match.length? match[0]: null);
-      return match;
+      match.plugin.type = match.type;
+      return match.plugin;
     };
     this.getNode = this.getPluginObject;
     this.init = function(app) {
