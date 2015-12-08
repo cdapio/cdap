@@ -63,7 +63,7 @@ Bug Fixes
   Fixed a problem that prevented streams from being read in HA HDFS mode.
 
 
-.. _known-issues-321:
+.. _known-issues-322:
 
 Known Issues
 ------------
