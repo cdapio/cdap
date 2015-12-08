@@ -17,57 +17,52 @@
 package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
+import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
+import com.google.common.collect.Lists;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Default Emitter, that tracks how many records were emitted across stages.
+ * Default implementation of {@link Emitter}. Tracks how many records were emitted.
+ *
+ * @param <T> the type of object to emit
  */
-public class DefaultEmitter {
-  private final Map<String, List<Object>> entriesMap;
-  private final Map<String, List<InvalidEntry<Object>>> errorMap;
+public class DefaultEmitter<T> implements Emitter<T> {
+  private final List<T> entryList;
+  private final List<InvalidEntry<T>> errorList;
   private final Metrics metrics;
 
   public DefaultEmitter(Metrics metrics) {
-    this.entriesMap = new HashMap<>();
-    this.errorMap = new HashMap<>();
+    this.entryList = Lists.newArrayList();
+    this.errorList = Lists.newArrayList();
     this.metrics = metrics;
   }
 
-  public void emit(String stageName, Object value) {
-    if (!entriesMap.containsKey(stageName)) {
-      entriesMap.put(stageName, new ArrayList<Object>());
-    }
-    entriesMap.get(stageName).add(value);
-    metrics.count(stageName + ".records.out", 1);
+  @Override
+  public void emit(T value) {
+    entryList.add(value);
+    metrics.count("records.out", 1);
   }
 
-  public void emitError(String stageName, InvalidEntry<Object> value) {
-    if (!errorMap.containsKey(stageName)) {
-      errorMap.put(stageName, new ArrayList<InvalidEntry<Object>>());
-    }
-    errorMap.get(stageName).add(value);
-    metrics.count(stageName + ".records.errors", 1);
+  @Override
+  public void emitError(InvalidEntry<T> value) {
+    errorList.add(value);
+    metrics.count("records.error", 1);
   }
 
-  public List<Object> getEntries(String stageName) {
-    return entriesMap.get(stageName);
+  public Collection<T> getEntries() {
+    return entryList;
   }
 
-  public Map<String, List<Object>> getEntriesMap() {
-    return entriesMap;
-  }
-
-  public Map<String, List<InvalidEntry<Object>>> getErrors() {
-    return errorMap;
+  public Collection<InvalidEntry<T>> getErrors() {
+    return errorList;
   }
 
   public void reset() {
-    entriesMap.clear();
-    errorMap.clear();
+    entryList.clear();
+    errorList.clear();
   }
 }
