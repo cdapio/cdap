@@ -48,7 +48,10 @@ class ConfigStore {
         version: ''
       },
       config: {
-        source: {},
+        source: {
+          name: '',
+          plugin: {}
+        },
         sinks: [],
         transforms: []
       },
@@ -70,7 +73,10 @@ class ConfigStore {
   }
   getDefaultConfig() {
     return {
-      source: {},
+      source: {
+        name: '',
+        plugin: {}
+      },
       sinks: [],
       transforms: []
     };
@@ -115,7 +121,10 @@ class ConfigStore {
       };
 
       if (plugin.type === artifactTypeExtension.source) {
-        config['source'] = pluginConfig;
+        config['source'] = {
+          name: pluginConfig.id,
+          plugin: pluginConfig
+        };
       } else if (plugin.type === 'transform') {
         if (plugin.errorDatasetName && plugin.errorDatasetName.length > 0) {
           pluginConfig.errorDatasetName = plugin.errorDatasetName;
@@ -123,9 +132,16 @@ class ConfigStore {
         if (plugin.validationFields) {
           pluginConfig.validationFields = plugin.validationFields;
         }
-
+        pluginConfig = {
+          name: pluginConfig.id,
+          plugin: pluginConfig
+        };
         config['transforms'].push(pluginConfig);
       } else if (plugin.type === artifactTypeExtension.sink) {
+        pluginConfig = {
+          name: pluginConfig.id,
+          plugin: pluginConfig
+        };
         config['sinks'].push(pluginConfig);
       }
       delete nodesMap[id];
@@ -154,7 +170,7 @@ class ConfigStore {
   }
   getConfigForExport() {
     var config = angular.copy(this.generateConfigFromState());
-    this.CanvasFactory.pruneProperties(config);
+      this.CanvasFactory.pruneProperties(config);
     this.state.config = angular.copy(config);
     return angular.copy(this.state);
   }
