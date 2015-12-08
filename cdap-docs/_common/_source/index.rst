@@ -60,12 +60,12 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
 - |developers-manual|_
 
   - **Getting Started Developing:** A quick, hands-on introduction to developing with CDAP
-  - **Overview:** The overall architecture and technology behind CDAP
+  - **Overview:** The overall architecture, abstractions, modes, and components behind CDAP
   - **Building Blocks:** The two core abstractions in CDAP: *Data* and *Applications*, and their components
   - **Security:** Perimeter security, configuration and client authentication
   - **Testing and Debugging:** Test framework plus tools and practices for debugging your applications
   - **Ingesting Data:** Different techniques for ingesting data into CDAP
-  - **Advanced Topics:** Best practices for CDAP development, adding a custom logback
+  - **Advanced Topics:** Class loading in CDAP, best practices for CDAP development, adding a custom logback
 
 
 .. |cdap-apps| replace:: **CDAP Applications:**
