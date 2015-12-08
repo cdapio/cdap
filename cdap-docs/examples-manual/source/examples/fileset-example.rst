@@ -61,8 +61,8 @@ file, and it opens an input stream for that location. ``Location`` is a file sys
 `Apache Twill Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
 
 Note that after obtaining the location from the file set, the handler dismisses that dataset through its context |---|
-it is not needed any more and can therefore be returned to the system. This is not strictly necessary: All datasets
-are eventually reclaimed by the system. However, explicitly dismissing a dataset allows the system to reclaim it
+it is not needed any more and therefore can be returned to the system. This is not strictly necessary: all datasets
+are eventually reclaimed by the system. However, explicitly discarding a dataset allows the system to reclaim it
 as soon as the current transaction ends, possibly freeing valuable resources.
 
 The ``write`` method uses an ``HttpContentConsumer`` to stream the body of the request to the location specified
