@@ -96,17 +96,8 @@ Configuration
   
    .. _distribution-configuration-explore-service:
  
-   - To use the **ad-hoc querying capabilities of CDAP,** enable the CDAP Explore Service in
-     ``conf/cdap-site.xml`` (by default, it is disabled)::
- 
-       <property>
-         <name>cdap.explore.enabled</name>
-         <value>true</value>
-         <description>Enable Explore functionality</description>
-       </property>
- 
-     This feature cannot be used unless the cluster has a compatible version of Hive installed.
-     See the section on `Hadoop/HBase Environment <installation.html#hadoop-hbase-environment>`__.
+   - To use the **ad-hoc querying capabilities of CDAP,** ensure the cluster has a compatible version of
+     Hive installed. See the section on `Hadoop/HBase Environment <installation.html#hadoop-hbase-environment>`__.
      To use this feature on secure Hadoop clusters, please see these instructions on
      `configuring secure Hadoop <configuration.html#secure-hadoop>`__.
  

@@ -95,12 +95,6 @@
         </description>
     </property>
 
-    <property>
-        <name>explore.enabled</name>
-        <value>true</value>
-        <description>Enable Explore functionality</description>
-    </property>
-
     <!--
         Stream configuration
     -->
