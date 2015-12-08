@@ -62,11 +62,11 @@ angular.module(PKG.name + '.feature.hydrator')
       return this.HydratorService.generateSchemaOnEdge(sourceId);
     };
 
-    function convertMetricsArrayIntoObject(arr, nodes) {
+    function convertMetricsArrayIntoObject(arr) {
       var obj = {};
 
       angular.forEach(arr, function (item) {
-        obj[nodes.name] = {
+        obj[item.nodeName] = {
           recordsOut: item.recordsOut,
           recordsIn: item.recordsIn
         };
@@ -74,11 +74,10 @@ angular.module(PKG.name + '.feature.hydrator')
 
       return obj;
     }
-    var nodes = this.NodesStore.getNodes();
-    this.metrics = convertMetricsArrayIntoObject(this.MetricsStore.getMetrics(), nodes);
+    this.metrics = convertMetricsArrayIntoObject(this.MetricsStore.getMetrics());
 
     this.MetricsStore.registerOnChangeListener(function () {
-      this.metrics = convertMetricsArrayIntoObject(this.MetricsStore.getMetrics(), nodes);
+      this.metrics = convertMetricsArrayIntoObject(this.MetricsStore.getMetrics());
     }.bind(this));
 
 
