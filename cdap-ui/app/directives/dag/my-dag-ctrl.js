@@ -445,21 +445,17 @@ angular.module(PKG.name + '.commons')
       setZoom(vm.scale, vm.instance);
 
 
-      if (parseInt(minLeft._uiPosition.left, 10) < 0) {
-        var offsetLeft = parseInt(minLeft._uiPosition.left, 10);
+      var offsetLeft = parseInt(minLeft._uiPosition.left, 10);
+      angular.forEach($scope.nodes, function (node) {
+        node._uiPosition.left = (parseInt(node._uiPosition.left, 10) - offsetLeft + 25) + 'px';
+      });
 
-        angular.forEach($scope.nodes, function (node) {
-          node._uiPosition.left = Math.abs(offsetLeft) + parseInt(node._uiPosition.left, 10) + 'px';
-        });
-      }
+      var offsetTop = parseInt(minTop._uiPosition.top, 10);
 
-      if (parseInt(minTop._uiPosition.top, 10) < 0) {
-        var offsetTop = parseInt(minLeft._uiPosition.top, 10);
+      angular.forEach($scope.nodes, function (node) {
+        node._uiPosition.top = (parseInt(node._uiPosition.top, 10) - offsetTop + 25) + 'px';
+      });
 
-        angular.forEach($scope.nodes, function (node) {
-          node._uiPosition.top = Math.abs(offsetTop) + parseInt(node._uiPosition.top, 10) + 'px';
-        });
-      }
 
       $timeout(function () { vm.instance.repaintEverything(); });
 
