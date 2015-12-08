@@ -18,15 +18,17 @@ package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.data.DatasetProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.data2.dataset2.tx.DelayedDismissingTransactionContext;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
+import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
@@ -42,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -194,7 +197,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     if (txContext == null || !(dataset instanceof TransactionAware)) {
       dismissSafely(dataset);
     } else {
-      // it is a tx-aware: it may participate in a transaction, so mark it as to be dismissed after the tx
+      // it is a tx-aware: it may participate in a transaction, so mark it as to be dismissed after the tx:
+      // the transaction context will call dismissSafely() for this dataset when the tx is complete.
       txContext.dismissAfterTx((TransactionAware) dataset);
     }
     // remove from activeTxAwares in any case - a dismissed dataset does not need to participate in external tx
@@ -221,13 +225,13 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       }
     }
     // we can only hope that dataset.toString() is meaningful
-    LOG.warn("Attempt to dismiss dataset that was not acquired through this provider: " + dataset);
+    LOG.warn("Attempt to dismiss dataset that was not acquired through this provider: {}", dataset);
   }
 
   @Override
   public TransactionContext newTransactionContext() {
     dismissTransactionContext();
-    txContext = new DelayedDismissingTransactionContext(txClient, this);
+    txContext = new DelayedDismissingTransactionContext(txClient);
     // make sure all in-progress participate in the transaction. But beware that weak refs may have expired
     for (Map.Entry<DatasetCacheKey, TransactionAware> entry : activeTxAwares.entrySet()) {
       txContext.addTransactionAware(entry.getValue());
@@ -301,6 +305,124 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     }
     invalidate();
     super.close();
+  }
+
+  /**
+   * This is an implementation of TransactionContext that delays the dismissal of a transaction-aware
+   * dataset until after the transaction is complete. This is needed in cases where a client calls
+   * {@link DatasetProvider#dismissDataset(Dataset)} in the middle of a transaction: The client indicates
+   * that it does not need that dataset any more. But it is participating in the current transaction,
+   * and needs to continue to do so until the transaction has ended. Therefore this class will put
+   * that dataset on a toDismiss set, which is inspected after every transaction.
+   */
+  private class DelayedDismissingTransactionContext extends TransactionContext {
+
+    private final TransactionSystemClient txClient;
+    private final Collection<TransactionAware> txAwares;
+    private final Collection<TransactionAware> toDismiss;
+    private TransactionContext txContext;
+
+    /**
+     * Constructs the context from the transaction system client (needed by TransactionContext) and
+     * the dataset cache that owns this context. That cache is needed to close and dismiss datasets
+     * after a transaction has finished.
+     * @param txClient the transaction system client, passed on to the actual transaction context
+     */
+    private DelayedDismissingTransactionContext(TransactionSystemClient txClient) {
+      super(txClient);
+      this.txClient = txClient;
+      this.txAwares = Sets.newIdentityHashSet();
+      this.toDismiss = Sets.newIdentityHashSet();
+    }
+
+    @Override
+    public boolean addTransactionAware(TransactionAware txAware) {
+      if (!txAwares.add(txAware)) {
+        return false; // it must already be in the actual tx-context
+      }
+      // this is new, add it to current tx context
+      if (txContext != null) {
+        txContext.addTransactionAware(txAware);
+      }
+      // in case this was marked for dismissal, remove that mark
+      toDismiss.remove(txAware);
+      return true;
+    }
+
+    @Override
+    public boolean removeTransactionAware(TransactionAware txAware) {
+      // if the actual tx-context is non-null, we are in the middle of a transaction, and can't remove the tx-aware
+      // so just remove this from the tx-awares here, and the next transaction will be started without it.
+      return txAwares.remove(txAware);
+    }
+
+    /**
+     * Mark a tx-aware for dismissal after the transaction is complete.
+     */
+    public void dismissAfterTx(TransactionAware txAware) {
+      toDismiss.add(txAware);
+      txAwares.remove(txAware);
+    }
+
+    /**
+     * Dismisses all datasets marked for dismissal, through the dataset cache, and set the tx context to null.
+     */
+    public void cleanup() {
+      for (TransactionAware txAware : toDismiss) {
+        SingleThreadDatasetCache.this.dismissSafely(txAware);
+      }
+      toDismiss.clear();
+      txContext = null;
+    }
+
+    @Override
+    public void start() throws TransactionFailureException {
+      if (txContext != null && txContext.getCurrentTransaction() != null) {
+        LOG.warn("Starting a new transaction while the previous transaction {} is still on-going. ",
+                 txContext.getCurrentTransaction().getTransactionId());
+        cleanup();
+      }
+      txContext = new TransactionContext(txClient, txAwares);
+      txContext.start();
+    }
+
+    @Override
+    public void finish() throws TransactionFailureException {
+      // copied from TransactionContext so it behaves exactly the same in this case
+      Preconditions.checkState(txContext != null, "Cannot finish tx that has not been started");
+      try {
+        txContext.finish();
+      } finally {
+        cleanup();
+      }
+    }
+
+    @Override
+    public void checkpoint() throws TransactionFailureException {
+      // copied from TransactionContext so it behaves exactly the same in this case
+      Preconditions.checkState(txContext != null, "Cannot checkpoint tx that has not been started");
+      txContext.checkpoint();
+    }
+
+    @Nullable
+    @Override
+    public Transaction getCurrentTransaction() {
+      return txContext == null ? null : txContext.getCurrentTransaction();
+    }
+
+    @Override
+    public void abort(TransactionFailureException cause) throws TransactionFailureException {
+      if (txContext == null) {
+        // same behavior as Tephra's TransactionContext
+        // might be called by some generic exception handler even though already aborted/finished - we allow that
+        return;
+      }
+      try {
+        txContext.abort(cause);
+      } finally {
+        cleanup();
+      }
+    }
   }
 }
 

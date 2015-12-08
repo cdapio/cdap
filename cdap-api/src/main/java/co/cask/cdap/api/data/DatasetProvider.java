@@ -33,7 +33,7 @@ public interface DatasetProvider extends DatasetContext {
    * or {@link #getDataset(String, Map)}. It is up to the implementation of the
    * provider whether this dataset is discarded, or whether it is reused as the
    * result for subsequent {@link #getDataset} calls with the same arguments.
-
+   *
    * @param dataset The dataset to be released.
    */
   void releaseDataset(Dataset dataset);
