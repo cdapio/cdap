@@ -259,23 +259,14 @@ angular.module(PKG.name + '.feature.hydrator')
 
       if (config.source.plugin && (config.source.name || config.source.plugin._backendProperties)) {
         delete config.source.plugin._backendProperties;
-        delete config.source.plugin.id;
-        delete config.source.plugin.outputSchema;
-        delete config.source.plugin.inputSchema;
       }
 
       config.sinks.forEach(function(sink) {
         delete sink.plugin._backendProperties;
-        delete sink.plugin.id;
-        delete sink.plugin.outputSchema;
-        delete sink.plugin.inputSchema;
       });
 
       config.transforms.forEach(function(t) {
         delete t.plugin._backendProperties;
-        delete t.plugin.id;
-        delete t.plugin.outputSchema;
-        delete t.plugin.inputSchema;
       });
       return config;
     }

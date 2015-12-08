@@ -105,7 +105,13 @@ class NodeConfigController {
                 if (this.state.plugin.properties[configOutputSchema.outputSchemaProperty[0]] !== this.state.plugin.outputSchema) {
                   this.state.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.plugin.outputSchema;
                 }
-
+                this.state.watchers.push(
+                  this.$scope.$watch('NodeConfigController.state.plugin.outputSchema', () => {
+                    if(this.validateSchema()) {
+                      this.state.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.plugin.outputSchema;
+                    }
+                  })
+                );
               } else if (this.state.plugin.inputSchema) {
                 // If there is no information of output schema in the node config then just mantain an output schema for UI purposes.
                 configOutputSchema.isOutputSchemaExists = true;

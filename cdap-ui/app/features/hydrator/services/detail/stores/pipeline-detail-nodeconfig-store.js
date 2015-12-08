@@ -81,7 +81,7 @@ angular.module(PKG.name + '.feature.hydrator')
     };
 
     function onPluginChange(plugin) {
-      if (plugin && this.state.plugin && plugin.name === this.state.plugin.name) {
+      if (plugin && this.state.plugin && plugin.id === this.state.plugin.id) {
         return;
       }
       switchPlugin.call(this, plugin)

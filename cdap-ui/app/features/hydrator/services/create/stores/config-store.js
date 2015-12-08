@@ -170,12 +170,29 @@ class ConfigStore {
   }
   getConfigForExport() {
     var config = angular.copy(this.generateConfigFromState());
-      this.CanvasFactory.pruneProperties(config);
+    this.CanvasFactory.pruneProperties(config);
     this.state.config = angular.copy(config);
     return angular.copy(this.state);
   }
   getDisplayConfig() {
     var stateCopy = this.getConfigForExport();
+    var source = stateCopy.config.source;
+    var sinks = stateCopy.config.sinks;
+    var transforms = stateCopy.config.transforms;
+
+    if (source.plugin) {
+      delete source.plugin.outputSchema;
+    }
+    angular.forEach(sinks, (sink) => {
+      if (sink.plugin) {
+        delete sink.plugin.outputSchema;
+      }
+    });
+    angular.forEach(transforms, (transform) =>  {
+      if (transform.plugin) {
+        delete transform.plugin.outputSchema;
+      }
+    });
     delete stateCopy.__ui__;
     return stateCopy;
   }
