@@ -146,6 +146,14 @@ class NodesStore {
   getNodes() {
     return this.state.nodes;
   }
+  getNodesAsObjects() {
+    var obj = {};
+    angular.forEach(this.state.nodes, function (node) {
+      obj[node.id] = node;
+    });
+    return obj;
+  }
+
   setNodes(nodes) {
     nodes.forEach(node => {
       if (!node.id) {

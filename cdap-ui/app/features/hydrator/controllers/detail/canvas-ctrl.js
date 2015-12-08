@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.hydrator')
       var obj = {};
 
       angular.forEach(arr, function (item) {
-        obj[nodes[item.stage - 1].id] = {
+        obj[nodes.name] = {
           recordsOut: item.recordsOut,
           recordsIn: item.recordsIn
         };
