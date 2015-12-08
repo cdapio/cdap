@@ -20,6 +20,8 @@ import co.cask.cdap.api.app.AbstractApplication;
 import co.cask.cdap.api.schedule.Schedules;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.mapreduce.ETLMapReduce;
+import co.cask.cdap.etl.batch.spark.ETLSpark;
+import com.google.common.base.Joiner;
 
 /**
  * ETL Batch Application.
@@ -32,7 +34,19 @@ public class ETLBatchApplication extends AbstractApplication<ETLBatchConfig> {
   public void configure() {
     ETLBatchConfig config = getConfig();
     setDescription(DEFAULT_DESCRIPTION);
-    addMapReduce(new ETLMapReduce(config));
+    switch (config.getEngine()) {
+      case MAPREDUCE:
+        addMapReduce(new ETLMapReduce(config));
+        break;
+      case SPARK:
+        addSpark(new ETLSpark(config));
+        break;
+      default:
+        throw new IllegalArgumentException(
+          String.format("Invalid execution engine '%s'. Must be one of %s.",
+                        config.getEngine(), Joiner.on(',').join(ETLBatchConfig.Engine.values())));
+    }
+
     addWorkflow(new ETLWorkflow(config));
     scheduleWorkflow(Schedules.builder(SCHEDULE_NAME)
                        .setDescription("ETL Batch schedule")

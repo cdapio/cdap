@@ -20,16 +20,25 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.log.LogContext;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.concurrent.Callable;
 
 /**
  * Wrapper around the {@link Metrics} instance from CDAP that prefixes metric names with the ETL context the metric
  * was emitted from.
  */
-public class DefaultStageMetrics implements StageMetrics {
+public class DefaultStageMetrics implements StageMetrics, Externalizable {
 
-  private final Metrics metrics;
-  private final String prefix;
+  private Metrics metrics;
+  private String prefix;
+
+  // Only used by Externalizable
+  public DefaultStageMetrics() {
+    // no-op
+  }
 
   public DefaultStageMetrics(Metrics metrics, String stageName) {
     this.metrics = metrics;
@@ -78,5 +87,17 @@ public class DefaultStageMetrics implements StageMetrics {
         return null;
       }
     });
+  }
+
+  @Override
+  public void writeExternal(ObjectOutput out) throws IOException {
+    out.writeObject(metrics);
+    out.writeObject(prefix);
+  }
+
+  @Override
+  public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+    metrics = (Metrics) in.readObject();
+    prefix = (String) in.readObject();
   }
 }

@@ -41,6 +41,15 @@ public class ETLDBInputFormat extends DBInputFormat {
   private Driver driver;
   private JDBCDriverShim driverShim;
 
+  public static void setInput(Configuration conf,
+                              Class<? extends DBWritable> inputClass,
+                              String inputQuery, String inputCountQuery) {
+    DBConfiguration dbConf = new DBConfiguration(conf);
+    dbConf.setInputClass(inputClass);
+    dbConf.setInputQuery(inputQuery);
+    dbConf.setInputCountQuery(inputCountQuery);
+  }
+
   @Override
   public Connection getConnection() {
     if (this.connection == null) {

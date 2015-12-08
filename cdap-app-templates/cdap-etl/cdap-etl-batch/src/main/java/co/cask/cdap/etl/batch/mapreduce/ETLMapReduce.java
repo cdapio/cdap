@@ -18,7 +18,6 @@ package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.ProgramLifecycle;
 import co.cask.cdap.api.data.format.StructuredRecord;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
@@ -54,7 +53,6 @@ import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.log.LogStageInjector;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -90,23 +88,14 @@ public class ETLMapReduce extends AbstractMapReduce {
   private static final Logger LOG = LoggerFactory.getLogger(ETLMapReduce.class);
   private static final String SINK_OUTPUTS_KEY = "cdap.etl.sink.outputs";
   private static final Type SINK_OUTPUTS_TYPE = new TypeToken<List<SinkOutput>>() { }.getType();
-
   private static final Type RUNTIME_ARGS_TYPE = new TypeToken<Map<String, String>>() { }.getType();
   private static final String RUNTIME_ARGS_KEY_PREFIX = "cdap.etl.runtime.args.";
 
 
   private static final Gson GSON = new Gson();
 
-  @VisibleForTesting
-  static final Schema ERROR_SCHEMA = Schema.recordOf(
-    "error",
-    Schema.Field.of(Constants.ErrorDataset.ERRCODE, Schema.of(Schema.Type.INT)),
-    Schema.Field.of(Constants.ErrorDataset.ERRMSG, Schema.unionOf(Schema.of(Schema.Type.STRING),
-                                                                  Schema.of(Schema.Type.NULL))),
-    Schema.Field.of(Constants.ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING)));
-
   private static final org.apache.avro.Schema AVRO_ERROR_SCHEMA =
-    new org.apache.avro.Schema.Parser().parse(ERROR_SCHEMA.toString());
+    new org.apache.avro.Schema.Parser().parse(Constants.ERROR_SCHEMA.toString());
 
   private BatchConfigurable<BatchSourceContext> batchSource;
   private MapReduceSourceContext sourceContext;
@@ -142,7 +131,7 @@ public class ETLMapReduce extends AbstractMapReduce {
           .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
           .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
           .setExploreOutputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
-          .setTableProperty("avro.schema.literal", ERROR_SCHEMA.toString())
+          .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
           .build(), true);
 
     if (config.getResources() != null) {
@@ -187,7 +176,6 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     List<TransformInfo> transformInfos = pipeline.getTransforms();
 
-
     // setup time partition for each error dataset
     for (TransformInfo transformInfo : transformInfos) {
       if (transformInfo.getErrorDatasetName() != null) {
@@ -200,8 +188,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     List<SinkInfo> sinkInfos = pipeline.getSinks();
     batchSinks = new HashMap<>(sinkInfos.size());
     sinkContexts = new HashMap<>(sinkInfos.size());
-
-
     for (SinkInfo sinkInfo : sinkInfos) {
       BatchConfigurable<BatchSinkContext> batchSink = context.newPluginInstance(sinkInfo.getSinkId());
       batchSink = new LoggedBatchConfigurable<>(sinkInfo.getSinkId(), batchSink);
@@ -229,7 +215,8 @@ public class ETLMapReduce extends AbstractMapReduce {
 
   private void addPropertiesToErrorDataset(String errorDatasetName, MapReduceContext context) {
     Map<String, String> args = new HashMap<>();
-    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key", ERROR_SCHEMA.toString());
+    args.put(FileSetProperties.OUTPUT_PROPERTIES_PREFIX + "avro.schema.output.key",
+             Constants.ERROR_SCHEMA.toString());
     TimePartitionedFileSetArguments.setOutputPartitionTime(args, context.getLogicalStartTime());
     context.addOutput(errorDatasetName, args);
   }
@@ -304,8 +291,6 @@ public class ETLMapReduce extends AbstractMapReduce {
       // empty transform list is created during pipeline register
       Preconditions.checkNotNull(pipeline.getTransforms());
       Preconditions.checkNotNull(pipeline.getConnections(), "Connections could not be found in program properties");
-
-
 
       String sourcePluginId = pipeline.getSource();
       DefaultEmitter defaultEmitter = new DefaultEmitter(mapperMetrics);
