@@ -17,6 +17,7 @@ package co.cask.cdap.data2.transaction.stream;
 
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.StreamNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -365,7 +366,9 @@ public class FileStreamAdmin implements StreamAdmin {
       viewId.getStream(), new Callable<Boolean>() {
         @Override
         public Boolean call() throws Exception {
-          Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+          if (!exists(viewId.getStream())) {
+            throw new NotFoundException(viewId.getStream());
+          }
           return viewAdmin.createOrUpdate(viewId, spec);
         }
       });
@@ -377,7 +380,9 @@ public class FileStreamAdmin implements StreamAdmin {
       viewId.getStream(), new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+          if (!exists(viewId.getStream())) {
+            throw new StreamNotFoundException(viewId.getStream());
+          }
           viewAdmin.delete(viewId);
           return null;
         }
@@ -386,13 +391,17 @@ public class FileStreamAdmin implements StreamAdmin {
 
   @Override
   public List<Id.Stream.View> listViews(final Id.Stream streamId) throws Exception {
-    Preconditions.checkArgument(exists(streamId), "Stream '%s' does not exist.", streamId);
+    if (!exists(streamId)) {
+      throw new StreamNotFoundException(streamId);
+    }
     return viewAdmin.list(streamId);
   }
 
   @Override
   public ViewSpecification getView(final Id.Stream.View viewId) throws Exception {
-    Preconditions.checkArgument(exists(viewId.getStream()), "Stream '%s' does not exist.", viewId.getStreamId());
+    if (!exists(viewId.getStream())) {
+      throw new StreamNotFoundException(viewId.getStream());
+    }
     return viewAdmin.get(viewId);
   }
 
