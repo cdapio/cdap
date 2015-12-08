@@ -46,6 +46,10 @@
           <groupId>org.apache.hbase</groupId>
           <artifactId>hbase</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>co.cask.hbase</groupId>
+          <artifactId>hbase</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
