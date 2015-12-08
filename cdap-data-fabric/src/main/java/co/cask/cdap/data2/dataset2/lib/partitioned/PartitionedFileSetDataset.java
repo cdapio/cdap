@@ -16,6 +16,7 @@
 
 package co.cask.cdap.data2.dataset2.lib.partitioned;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.dataset.DataSetException;
@@ -39,6 +40,9 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
+import co.cask.cdap.api.dataset.lib.partitioned.ConcurrentPartitionConsumer;
+import co.cask.cdap.api.dataset.lib.partitioned.ConsumerConfiguration;
+import co.cask.cdap.api.dataset.lib.partitioned.StatePersistor;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -49,7 +53,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -62,11 +65,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -205,7 +205,12 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   @Override
   public PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState) {
-    return consumePartitions(partitionConsumerState, PartitionFilter.ALWAYS_MATCH, Integer.MAX_VALUE);
+    return consumePartitions(partitionConsumerState, Integer.MAX_VALUE, new Predicate<PartitionDetail>() {
+      @Override
+      public boolean apply(@Nullable PartitionDetail input) {
+        return true;
+      }
+    });
   }
 
   /**
@@ -216,22 +221,20 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
    *
    * @param scanner the scanner on the partitions table from which to read partitions
    * @param partitions list to add the qualifying partitions to
-   * @param filter partition filter to apply before adding to the partitions list
    * @param limit limit, which once reached, partitions committed by other transactions will not be added.
    *              The limit is checked after adding consuming all partitions of a transaction, so
    *              the total number of consumed partitions may be greater than this limit.
+   * @param predicate predicate to apply before adding to the partitions list
    * @return Transaction ID of the partition that we reached in the scanner, but did not add to the list. This value
    *         can be useful in future scans.
    */
   @Nullable
-  private Long scannerToPartitions(Scanner scanner, List<Partition> partitions, PartitionFilter filter, int limit) {
+  private Long scannerToPartitions(Scanner scanner, List<PartitionDetail> partitions, int limit,
+                                   Predicate<PartitionDetail> predicate) {
     Long prevTxId = null;
     Row row;
     while ((row = scanner.next()) != null) {
       PartitionKey key = parseRowKey(row.getRow(), partitioning);
-      if (!filter.match(key)) {
-        continue;
-      }
 
       String relativePath = Bytes.toString(row.get(RELATIVE_PATH));
       Long txId = Bytes.toLong(row.get(WRITE_PTR_COL));
@@ -248,6 +251,10 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
       BasicPartitionDetail partitionDetail =
         new BasicPartitionDetail(PartitionedFileSetDataset.this, relativePath, key, metadataFromRow(row));
+
+      if (!predicate.apply(partitionDetail)) {
+        continue;
+      }
       partitions.add(partitionDetail);
     }
     return null;
@@ -261,12 +268,12 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
   //      previous call stopped scanning partitions at.
   //   Note that each of the transactions IDs in (1) will be smaller than the transactionId in (2).
   @Override
-  public PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState,
-                                                   PartitionFilter filter, int limit) {
+  public PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState, int limit,
+                                                   Predicate<PartitionDetail> predicate) {
     List<Long> previousInProgress = partitionConsumerState.getVersionsToCheck();
     Set<Long> noLongerInProgress = setDiff(previousInProgress, tx.getInProgress());
 
-    List<Partition> partitions = Lists.newArrayList();
+    List<PartitionDetail> partitions = Lists.newArrayList();
 
     for (Long txId : noLongerInProgress) {
       if (partitions.size() >= limit) {
@@ -274,7 +281,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       }
       Scanner scanner = partitionsTable.readByIndex(WRITE_PTR_COL, Bytes.toBytes(txId));
       try {
-        scannerToPartitions(scanner, partitions, filter, limit);
+        scannerToPartitions(scanner, partitions, limit, predicate);
       } finally {
         scanner.close();
       }
@@ -293,7 +300,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
                                                     Bytes.toBytes(scanUpTo));
       Long endTxId;
       try {
-        endTxId = scannerToPartitions(scanner, partitions, filter, limit);
+        endTxId = scannerToPartitions(scanner, partitions, limit, predicate);
       } finally {
         scanner.close();
       }
@@ -315,7 +322,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       inProgressBeforeScanEnd.add(txId);
     }
     return new PartitionConsumerResult(new PartitionConsumerState(scanUpTo, inProgressBeforeScanEnd),
-                                       partitions.iterator());
+                                       partitions);
   }
 
   // returns the set of Longs that are in oldLongs, but not in newLongs (oldLongs - newLongs)

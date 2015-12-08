@@ -32,9 +32,9 @@ public class PartitionConsumerState {
   public static final PartitionConsumerState FROM_BEGINNING =
     new PartitionConsumerState(0, Collections.<Long>emptyList());
 
-  // Read pointer of the transaction from the previous query of partitions. This is used to scan for new partitions
-  // created since then.
+  // Write pointer of a transaction, to be used as the start of the next scan for partitions.
   private final long startVersion;
+
   // The list of in progress transactions from the previous query of partitions that are smaller than the startVersion.
   // We do not need to include the in-progress transaction Ids that are larger than the startVersion because those will
   // be picked up in the next scan anyways, since we will start the scan from the startVersion.

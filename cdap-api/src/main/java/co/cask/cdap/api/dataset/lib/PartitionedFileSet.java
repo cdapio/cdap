@@ -16,12 +16,16 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import co.cask.cdap.api.Predicate;
 import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.DataSetException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.PartitionNotFoundException;
+import co.cask.cdap.api.dataset.lib.partitioned.ConsumerConfiguration;
+import co.cask.cdap.api.dataset.lib.partitioned.PartitionConsumer;
+import co.cask.cdap.api.dataset.lib.partitioned.StatePersistor;
 
 import java.util.Map;
 import java.util.Set;
@@ -109,15 +113,15 @@ public interface PartitionedFileSet extends Dataset, InputFormatProvider, Output
    * in the iterator returned in the PartitionConsumerResult.
    *
    * @param partitionConsumerState the state from which to start consuming from
-   * @param partitionFilter a filter which must match the partitions to be consumed
    * @param limit number of partitions, which once reached, will not add add more partitions committed by other
    *              transactions; the limit is checked after adding consuming all partitions of a transaction, so
    *              the total number of consumed partitions may be greater than this limit
+   * @param predicate a predicate which determines the partitions to be consumed
    * @return {@link PartitionConsumerResult} which holds the state of consumption as well as an iterator to the consumed
    *         {@link Partition}s
    */
   PartitionConsumerResult consumePartitions(PartitionConsumerState partitionConsumerState,
-                                            PartitionFilter partitionFilter, int limit);
+                                            int limit, Predicate<PartitionDetail> predicate);
 
   /**
    * Return a partition output for a specific partition key, in preparation for creating a new partition.

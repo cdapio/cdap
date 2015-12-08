@@ -68,7 +68,7 @@ public abstract class BatchPartitionConsumer {
     finalConsumerState = partitionConsumerResult.getPartitionConsumerState();
 
     Map<String, String> arguments = new HashMap<>();
-    PartitionedFileSetArguments.addInputPartitions(arguments, partitionConsumerResult.getPartitionIterator());
+    PartitionedFileSetArguments.addInputPartitions(arguments, partitionConsumerResult.getPartitions());
 
     return datasetContext.getDataset(partitionedFileSetName, arguments);
   }
