@@ -23,9 +23,12 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.log.LogContext;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Batch runtime context that delegates most operations to MapReduceTaskContext. It also extends
@@ -47,7 +50,12 @@ public class MapReduceRuntimeContext extends AbstractTransformContext implements
 
   @Override
   public long getLogicalStartTime() {
-    return context.getLogicalStartTime();
+    return LogContext.runWithoutLoggingUnchecked(new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        return context.getLogicalStartTime();
+      }
+    });
   }
 
   @Override
@@ -61,13 +69,33 @@ public class MapReduceRuntimeContext extends AbstractTransformContext implements
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-    return context.getDataset(name);
+  public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
+    try {
+      return LogContext.runWithoutLogging(new Callable<T>() {
+        @Override
+        public T call() throws DatasetInstantiationException {
+          return context.getDataset(name);
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, DatasetInstantiationException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String name,
-                                          Map<String, String> arguments) throws DatasetInstantiationException {
-    return context.getDataset(name, arguments);
+  public <T extends Dataset> T getDataset(final String name,
+                                          final Map<String, String> arguments) throws DatasetInstantiationException {
+    try {
+      return LogContext.runWithoutLogging(new Callable<T>() {
+        @Override
+        public T call() throws DatasetInstantiationException {
+          return context.getDataset(name, arguments);
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, DatasetInstantiationException.class);
+      throw Throwables.propagate(e);
+    }
   }
 }

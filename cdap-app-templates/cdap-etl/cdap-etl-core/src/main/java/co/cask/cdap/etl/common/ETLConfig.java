@@ -28,6 +28,7 @@ import java.util.List;
  * Common ETL Config.
  */
 public class ETLConfig extends Config {
+  private Boolean stageLoggingEnabled;
   private final ETLStage source;
   private final List<ETLStage> sinks;
   private final List<ETLStage> transforms;
@@ -41,6 +42,7 @@ public class ETLConfig extends Config {
     this.transforms = transforms;
     this.connections = getValidConnections(connections);
     this.resources = resources;
+    this.stageLoggingEnabled = true;
   }
 
   private List<Connection> getValidConnections(List<Connection> connections) {
@@ -113,5 +115,9 @@ public class ETLConfig extends Config {
 
   public Resources getResources() {
     return resources;
+  }
+
+  public Boolean isStageLoggingEnabled() {
+    return stageLoggingEnabled == null ? true : stageLoggingEnabled;
   }
 }

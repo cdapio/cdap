@@ -46,12 +46,12 @@ public class ETLRealtimeBaseTest extends TestBase {
   @BeforeClass
   public static void setupTests() throws Exception {
     addAppArtifact(APP_ARTIFACT_ID, ETLRealtimeApplication.class,
-      RealtimeSource.class.getPackage().getName(),
-      PipelineConfigurable.class.getPackage().getName());
+                   RealtimeSource.class.getPackage().getName(),
+                   PipelineConfigurable.class.getPackage().getName());
 
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "realtime-sources", "1.0.0"), APP_ARTIFACT_ID,
-      DataGeneratorSource.class, JmsSource.class, KafkaSource.class,
-      TwitterSource.class, SqsSource.class);
+                      DataGeneratorSource.class, JmsSource.class, KafkaSource.class,
+                      TwitterSource.class, SqsSource.class);
     addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "realtime-sinks", "1.0.0"), APP_ARTIFACT_ID,
       RealtimeCubeSink.class, RealtimeTableSink.class,
       StreamSink.class);

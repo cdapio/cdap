@@ -42,9 +42,13 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+    </dependency>
   </dependencies>
 
-<build>
+  <build>
     <!-- Resource filtering for non xml files only -->
     <resources>
       <resource>
@@ -54,6 +58,6 @@
           <exclude>**/*.xml</exclude>
         </excludes>
       </resource>
-   </resources>
-</build>
+    </resources>
+  </build>
 </project>

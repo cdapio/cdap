@@ -40,6 +40,7 @@ import co.cask.cdap.etl.api.realtime.SourceState;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.Destroyables;
+import co.cask.cdap.etl.common.LoggedTransform;
 import co.cask.cdap.etl.common.Pipeline;
 import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.common.SinkInfo;
@@ -47,18 +48,18 @@ import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.common.TxLookupProvider;
+import co.cask.cdap.etl.log.LogContext;
+import co.cask.cdap.etl.log.LogStageInjector;
 import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.format.StructuredRecordStringConverter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Sets;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -89,7 +90,7 @@ public class ETLWorker extends AbstractWorker {
   @SuppressWarnings("unused")
   private Metrics metrics;
 
-  private RealtimeSource source;
+  private RealtimeSource<Object> source;
   private String sourceStageName;
   private Map<String, RealtimeSink> sinks;
   private TransformExecutor transformExecutor;
@@ -127,12 +128,17 @@ public class ETLWorker extends AbstractWorker {
     properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
     // Generate unique id for this app creation.
     properties.put(Constants.Realtime.UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
+    properties.put(Constants.STAGE_LOGGING_ENABLED, String.valueOf(config.isStageLoggingEnabled()));
     setProperties(properties);
   }
 
   @Override
   public void initialize(final WorkerContext context) throws Exception {
+    if (Boolean.valueOf(context.getSpecification().getProperty(Constants.STAGE_LOGGING_ENABLED))) {
+      LogStageInjector.start();
+    }
     super.initialize(context);
+
     Map<String, String> properties = context.getSpecification().getProperties();
     appName = context.getApplicationSpecification().getName();
     Preconditions.checkArgument(properties.containsKey(Constants.PIPELINEID));
@@ -179,6 +185,7 @@ public class ETLWorker extends AbstractWorker {
     String sourcePluginId =
       GSON.fromJson(context.getSpecification().getProperty(Constants.PIPELINEID), Pipeline.class).getSource();
     source = context.newPluginInstance(sourcePluginId);
+    source = new LoggedRealtimeSource<>(sourcePluginId, source);
     WorkerRealtimeContext sourceContext = new WorkerRealtimeContext(
       context, metrics, new TxLookupProvider(context), sourcePluginId);
     sourceStageName = sourcePluginId;
@@ -194,9 +201,11 @@ public class ETLWorker extends AbstractWorker {
                                              Pipeline.class).getSinks();
     sinks = new HashMap<>(sinkInfos.size());
     for (SinkInfo sinkInfo : sinkInfos) {
-      RealtimeSink sink = context.newPluginInstance(sinkInfo.getSinkId());
+      String sinkName = sinkInfo.getSinkId();
+      RealtimeSink sink = context.newPluginInstance(sinkName);
+      sink = new LoggedRealtimeSink(sinkName, sink);
       WorkerRealtimeContext sinkContext = new WorkerRealtimeContext(
-        context, metrics, new TxLookupProvider(context), sinkInfo.getSinkId());
+        context, metrics, new TxLookupProvider(context), sinkName);
       LOG.debug("Sink Class : {}", sink.getClass().getName());
       sink.initialize(sinkContext);
       sink = new TrackedRealtimeSink(sink, sinkContext.getMetrics());
@@ -214,7 +223,8 @@ public class ETLWorker extends AbstractWorker {
     for (TransformInfo transformInfo : transformInfos) {
       String transformId = transformInfo.getTransformId();
       try {
-        Transform transform = context.newPluginInstance(transformId);
+        Transform<?, ?> transform = context.newPluginInstance(transformId);
+        transform = new LoggedTransform<>(transformId, transform);
         WorkerRealtimeContext transformContext = new WorkerRealtimeContext(
           context, metrics, new TxLookupProvider(context), transformId);
         LOG.debug("Transform Class : {}", transform.getClass().getName());
@@ -255,7 +265,7 @@ public class ETLWorker extends AbstractWorker {
     while (!stopped) {
       // Invoke poll method of the source to fetch data
       try {
-        SourceState newState = source.poll(new Emitter() {
+        SourceState newState = source.poll(new Emitter<Object>() {
           @Override
           public void emit(Object value) {
             sourceEmitter.emit(sourceStageName, value);

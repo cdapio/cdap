@@ -30,6 +30,7 @@ import co.cask.cdap.api.plugin.PluginConfig;
 import co.cask.cdap.api.stream.GenericStreamEventData;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
 import co.cask.cdap.etl.common.ETLUtils;

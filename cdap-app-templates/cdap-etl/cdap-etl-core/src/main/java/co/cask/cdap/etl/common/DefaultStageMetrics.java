@@ -18,6 +18,9 @@ package co.cask.cdap.etl.common;
 
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.StageMetrics;
+import co.cask.cdap.etl.log.LogContext;
+
+import java.util.concurrent.Callable;
 
 /**
  * Wrapper around the {@link Metrics} instance from CDAP that prefixes metric names with the ETL context the metric
@@ -34,22 +37,46 @@ public class DefaultStageMetrics implements StageMetrics {
   }
 
   @Override
-  public void count(String metricName, int delta) {
-    metrics.count(prefix + metricName, delta);
+  public void count(final String metricName, final int delta) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        metrics.count(prefix + metricName, delta);
+        return null;
+      }
+    });
   }
 
   @Override
-  public void gauge(String metricName, long value) {
-    metrics.gauge(prefix + metricName, value);
+  public void gauge(final String metricName, final long value) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        metrics.gauge(prefix + metricName, value);
+        return null;
+      }
+    });
   }
 
   @Override
-  public void pipelineCount(String metricName, int delta) {
-    metrics.count(metricName, delta);
+  public void pipelineCount(final String metricName, final int delta) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        metrics.count(metricName, delta);
+        return null;
+      }
+    });
   }
 
   @Override
-  public void pipelineGauge(String metricName, long value) {
-    metrics.gauge(metricName, value);
+  public void pipelineGauge(final String metricName, final long value) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        metrics.gauge(metricName, value);
+        return null;
+      }
+    });
   }
 }
