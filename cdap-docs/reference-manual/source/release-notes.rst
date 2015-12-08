@@ -29,14 +29,17 @@ Cask Data Application Platform Release Notes
 Improvement
 -----------
 
+- `CDAP-3644 <https://issues.cask.co/browse/CDAP-3644>`__ -
+  Made the metadata system datasets upgradable.
+
+- `CDAP-4093 <https://issues.cask.co/browse/CDAP-4093>`__ -
+  Revised the installation documentation for Cloudera Manager and Apache Ambari.
+
 - `CDAP-4133 <https://issues.cask.co/browse/CDAP-4133>`__ -
   Added ability to get the live-info for the CDAP AppFabric system service.
 
 Bug Fixes
 ---------
-
-- `CDAP-3644 <https://issues.cask.co/browse/CDAP-3644>`__ -
-  Fixed a problem with upgrading the metadata system datasets.
 
 - `CDAP-4067 <https://issues.cask.co/browse/CDAP-4067>`__ -
   Fixed an issue where socket connections to the TransactionManager were not being closed.
@@ -45,18 +48,9 @@ Bug Fixes
   Fixes an issue that causes worker threads to go into an infinite recursion while
   exceptions are being thrown in channel handlers.
 
-- `CDAP-4093 <https://issues.cask.co/browse/CDAP-4093>`__ -
-  Fixed a problem with installation documentation for Cloudera Manager and Apache Ambari.
-
-- `CDAP-4097 <https://issues.cask.co/browse/CDAP-4097>`__ -
-  Fixed a problem with the AbstractDatasetProvider throwing exceptions and polluting the logs.
-
 - `CDAP-4119 <https://issues.cask.co/browse/CDAP-4119>`__ -
   Fixed a problem where, when the CDAP Master switched from active to standby, that 
   any programs that were running were marked as failed.
-
-- `CDAP-4275 <https://issues.cask.co/browse/CDAP-4275>`__ -
-  Fixed a problem with searching CDAP entities based on tags where the entity has multiple tags.
 
 - `CDAP-4278 <https://issues.cask.co/browse/CDAP-4278>`__ -
   Fixed a problem that caused a Workflow to fail if datasets were used in custom actions.
@@ -67,6 +61,17 @@ Bug Fixes
 
 - `CDAP-4384 <https://issues.cask.co/browse/CDAP-4384>`__ -
   Fixed a problem that prevented streams from being read in HA HDFS mode.
+
+
+.. _known-issues-321:
+
+Known Issues
+------------
+
+- `CDAP-4393 <https://issues.cask.co/browse/CDAP-4393>`__ -
+  Metadata search for tags does not work if the search key is not the first tag in the list.
+
+- See also the *Known Issues* of `version 3.2.0 <#known-issues-320>`_\ .
 
 
 `Release 3.2.1 <http://docs.cask.co/cdap/3.2.1/index.html>`__
