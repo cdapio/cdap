@@ -451,11 +451,9 @@ angular.module(PKG.name + '.commons')
       });
 
       var offsetTop = parseInt(minTop._uiPosition.top, 10);
-
       angular.forEach($scope.nodes, function (node) {
-        node._uiPosition.top = (parseInt(node._uiPosition.top, 10) - offsetTop + 25) + 'px';
+        node._uiPosition.top = (parseInt(node._uiPosition.top, 10) - offsetTop + 50) + 'px';
       });
-
 
       $timeout(function () { vm.instance.repaintEverything(); });
 
