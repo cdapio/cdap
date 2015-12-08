@@ -73,6 +73,7 @@ class LeftPanelController {
       config = {
         label: item.name,
         name: item.pluginName,
+        artifact: item.artifact,
         icon: this.MyDAGFactory.getIcon(item.pluginName),
         type: item.pluginType,
         properties: item.properties,
@@ -83,6 +84,7 @@ class LeftPanelController {
     } else {
       config = {
         label: item.name,
+        artifact: item.artifact,
         name: item.name,
         icon: item.icon,
         description: item.description,
