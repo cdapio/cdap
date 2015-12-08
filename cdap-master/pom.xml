@@ -176,6 +176,8 @@
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
+        <!-- contains hydrator upgrade tool. Should be moved out when Hydrator is moved out of CDAP -->
+        <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
       </properties>
       <build>
         <plugins>
@@ -226,6 +228,26 @@
                       <includes>
                         <include>cdap-etl-lib-${project.version}.jar</include>
                         <include>cdal-etl-lib-${project.version}.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+              <execution>
+                <id>copy-etl-tools</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>${stage.libexec.dir}</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-tools/target
+                      </directory>
+                      <includes>
+                        <include>cdap-etl-tools-${project.version}.jar</include>
                       </includes>
                     </resource>
                   </resources>

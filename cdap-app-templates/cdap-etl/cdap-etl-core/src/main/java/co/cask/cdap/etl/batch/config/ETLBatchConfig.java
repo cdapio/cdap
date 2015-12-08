@@ -24,6 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -68,5 +69,28 @@ public final class ETLBatchConfig extends ETLConfig {
 
   public List<ETLStage> getActions() {
     return actions;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+
+    ETLBatchConfig that = (ETLBatchConfig) o;
+
+    return Objects.equals(schedule, that.schedule) &&
+      Objects.equals(actions, that.actions);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), schedule, actions);
   }
 }

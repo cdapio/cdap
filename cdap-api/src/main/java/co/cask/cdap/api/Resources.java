@@ -16,6 +16,8 @@
 
 package co.cask.cdap.api;
 
+import java.util.Objects;
+
 /**
  * Carries system resources requirements.
  */
@@ -66,5 +68,24 @@ public final class Resources {
    */
   public int getMemoryMB() {
     return memoryMB;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    Resources that = (Resources) o;
+
+    return virtualCores == that.virtualCores && memoryMB == that.memoryMB;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(virtualCores, memoryMB);
   }
 }
