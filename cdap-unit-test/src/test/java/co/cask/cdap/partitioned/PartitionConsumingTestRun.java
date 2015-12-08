@@ -35,12 +35,13 @@ import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
-import co.cask.cdap.test.MapReduceManager;
+import co.cask.cdap.test.ProgramManager;
 import co.cask.cdap.test.ServiceManager;
 import co.cask.cdap.test.base.TestFrameworkTestBase;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
+import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
@@ -56,16 +57,35 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test that MapReduce can incrementally process partitions.
+ * Test that MapReduce and Worker can incrementally process partitions.
  */
-public class MapReducePartitionConsumingTestRun extends TestFrameworkTestBase {
+public class PartitionConsumingTestRun extends TestFrameworkTestBase {
   private static final String LINE1 = "a b a";
   private static final String LINE2 = "b a b";
   private static final String LINE3 = "c c c";
 
   @Test
-  public void testWordCountOnFileSet() throws Exception {
-    ApplicationManager applicationManager = deployApplication(AppWithMapReduceConsumingPartitions.class);
+  public void testMapReduceConsumer() throws Exception {
+    testWordCountOnFileSet(new Function<ApplicationManager, ProgramManager>() {
+      @Override
+      public ProgramManager apply(ApplicationManager input) {
+        return input.getMapReduceManager(AppWithPartitionConsumers.WordCountMapReduce.NAME).start();
+      }
+    });
+  }
+
+  @Test
+  public void testWorkerConsumer() throws Exception {
+    testWordCountOnFileSet(new Function<ApplicationManager, ProgramManager>() {
+      @Override
+      public ProgramManager apply(ApplicationManager input) {
+        return input.getWorkerManager(AppWithPartitionConsumers.WordCountWorker.NAME).start();
+      }
+    });
+  }
+
+  private void testWordCountOnFileSet(Function<ApplicationManager, ProgramManager> runProgram) throws Exception {
+    ApplicationManager applicationManager = deployApplication(AppWithPartitionConsumers.class);
 
     ServiceManager serviceManager = applicationManager.getServiceManager("DatasetService").start();
     serviceManager.waitForStatus(true);
@@ -74,8 +94,8 @@ public class MapReducePartitionConsumingTestRun extends TestFrameworkTestBase {
     // write a file to the file set using the service and run the WordCount MapReduce job on that one partition
     createPartition(serviceURL, LINE1, "1");
 
-    MapReduceManager mapReduceManager = applicationManager.getMapReduceManager("WordCount").start();
-    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+    ProgramManager programManager = runProgram.apply(applicationManager);
+    programManager.waitForFinish(5, TimeUnit.MINUTES);
 
     Assert.assertEquals(new Long(2), getCount(serviceURL, "a"));
     Assert.assertEquals(new Long(1), getCount(serviceURL, "b"));
@@ -85,27 +105,25 @@ public class MapReducePartitionConsumingTestRun extends TestFrameworkTestBase {
     createPartition(serviceURL, LINE2, "2");
     createPartition(serviceURL, LINE3, "3");
 
-    // running the MapReduce job now processes these two new partitions (LINE2 and LINE3) and updates the counts
+    // running the program job now processes these two new partitions (LINE2 and LINE3) and updates the counts
     // dataset accordingly
-    mapReduceManager = applicationManager.getMapReduceManager("WordCount").start();
-    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+    programManager = runProgram.apply(applicationManager);
+    programManager.waitForFinish(5, TimeUnit.MINUTES);
 
     Assert.assertEquals(new Long(3), getCount(serviceURL, "a"));
     Assert.assertEquals(new Long(3), getCount(serviceURL, "b"));
     Assert.assertEquals(new Long(3), getCount(serviceURL, "c"));
 
-    // running the MapReduce job without adding new partitions does not affect the counts dataset
-    mapReduceManager = applicationManager.getMapReduceManager("WordCount").start();
-    mapReduceManager.waitForFinish(5, TimeUnit.MINUTES);
+    // running the program without adding new partitions does not affect the counts dataset
+    programManager = runProgram.apply(applicationManager);
+    programManager.waitForFinish(5, TimeUnit.MINUTES);
 
     Assert.assertEquals(new Long(3), getCount(serviceURL, "a"));
     Assert.assertEquals(new Long(3), getCount(serviceURL, "b"));
     Assert.assertEquals(new Long(3), getCount(serviceURL, "c"));
 
     DataSetManager<PartitionedFileSet> outputLines = getDataset("outputLines");
-    PartitionFilter filter =
-      PartitionFilter.builder().addRangeCondition("time", 0L, System.currentTimeMillis()).build();
-    Set<PartitionDetail> partitions = outputLines.get().getPartitions(filter);
+    Set<PartitionDetail> partitions = outputLines.get().getPartitions(PartitionFilter.ALWAYS_MATCH);
 
     Assert.assertEquals(2, partitions.size());
 
