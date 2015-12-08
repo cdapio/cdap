@@ -3,7 +3,7 @@
     :description: Frequently Asked Questions about the Cask Data Application Platform
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-:titles-only-toc: true
+:titles-only-global-toc: true
 
 .. _faqs-cloudera-manager:
 

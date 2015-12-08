@@ -219,6 +219,7 @@ function build_docs_first_pass() {
   echo "--------------------------------------------------------"
   echo
   build_docs_inner_level build-docs
+  build_docs_outer_level ${google_analytics_code}
   echo "--------------------------------------------------------"
   echo "Completed Building First Pass of Docs"
   echo "========================================================"

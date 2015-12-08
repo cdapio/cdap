@@ -124,6 +124,7 @@ _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
 
 # The Inter-Sphinx mapping keys must be alpha-numeric only
 intersphinx_mapping = {
+  'overview':     ('../../',                      os.path.abspath(_intersphinx_mapping % '')),
   'introduction': ('../../introduction/',      os.path.abspath(_intersphinx_mapping % 'introduction')),
   'developers':   ('../../developers-manual/', os.path.abspath(_intersphinx_mapping % 'developers-manual')),
   'cdapapps':     ('../../cdap-apps',          os.path.abspath(_intersphinx_mapping % 'cdap-apps')),
@@ -347,6 +348,7 @@ manuals_list = [
 ]
 
 manual_intersphinx_mapping = {
+  'overview': 'overview',
   'introduction': 'introduction',
   'developers-manual': 'developers',
   'cdap-apps': 'cdapapps',
