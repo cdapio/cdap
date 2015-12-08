@@ -395,50 +395,121 @@ angular.module(PKG.name + '.commons')
         'left': vm.panning.left + 'px'
       };
 
-      var margins = $scope.getGraphMargins($scope.nodes);
-      vm.scale = margins.scale;
       $timeout(function () { vm.instance.repaintEverything(); });
+
       setZoom(vm.scale, vm.instance);
 
       NodesActionsFactory.resetPluginCount();
       NodesActionsFactory.setCanvasPanning(vm.panning);
+
     };
 
-    vm.locateNodes = function () {
-      var minLeft = null;
-      var leftMostNode = null;
+    vm.fitToScreen = function () {
+      // var minLeft = null;
 
-      angular.forEach($scope.nodes, function (node) {
-        var left = parseInt(node._uiPosition.left, 10);
+      // var leftMostNode = null;
 
+
+      // angular.forEach($scope.nodes, function (node) {
+      //   var left = parseInt(node._uiPosition.left, 10);
+
+      //   if (node._uiPosition.left.includes('vw')) {
+      //     left = parseInt(left, 10)/100 * document.documentElement.clientWidth;
+      //     node._uiPosition.left = left + 'px';
+      //   }
+
+      //   if (minLeft === null || left < minLeft) {
+      //     minLeft = left;
+      //     leftMostNode = node;
+      //   }
+      // });
+
+      // var offsetLeft = parseInt(leftMostNode._uiPosition.left, 10);
+      // var offsetTop = parseInt(leftMostNode._uiPosition.top, 10);
+
+      // angular.forEach($scope.nodes, function (node) {
+      //   var left = parseInt(node._uiPosition.left, 10);
+      //   var top = parseInt(node._uiPosition.top, 10);
+
+      //   node._uiPosition = {
+      //     left: (left - offsetLeft + 50) + 'px',
+      //     top: (top - offsetTop + 150) + 'px'
+      //   };
+      // });
+
+      // $timeout(function () { vm.instance.repaintEverything(); });
+
+      // vm.panning.top = 0;
+      // vm.panning.left = 0;
+
+      // vm.panning.style = {
+      //   'top': vm.panning.top + 'px',
+      //   'left': vm.panning.left + 'px'
+      // };
+
+      var minLeft = _.min($scope.nodes, function (node) {
         if (node._uiPosition.left.includes('vw')) {
-          left = parseInt(left, 10)/100 * document.documentElement.clientWidth;
+          var left = parseInt(node._uiPosition.left, 10)/100 * document.documentElement.clientWidth;
           node._uiPosition.left = left + 'px';
         }
-
-        if (minLeft === null || left < minLeft) {
-          minLeft = left;
-          leftMostNode = node;
+        return parseInt(node._uiPosition.left, 10);
+      });
+      var maxLeft = _.max($scope.nodes, function (node) {
+        if (node._uiPosition.left.includes('vw')) {
+          var left = parseInt(node._uiPosition.left, 10)/100 * document.documentElement.clientWidth;
+          node._uiPosition.left = left + 'px';
         }
+        return parseInt(node._uiPosition.left, 10);
       });
 
-      var offsetLeft = parseInt(leftMostNode._uiPosition.left, 10);
-      var offsetTop = parseInt(leftMostNode._uiPosition.top, 10);
-
-      angular.forEach($scope.nodes, function (node) {
-        var left = parseInt(node._uiPosition.left, 10);
-        var top = parseInt(node._uiPosition.top, 10);
-
-        node._uiPosition = {
-          left: (left - offsetLeft + 50) + 'px',
-          top: (top - offsetTop + 150) + 'px'
-        };
+      var minTop = _.min($scope.nodes, function (node) {
+        return parseInt(node._uiPosition.top, 10);
       });
+
+      var maxTop = _.max($scope.nodes, function (node) {
+        return parseInt(node._uiPosition.top, 10);
+      });
+
+      var width = parseInt(maxLeft._uiPosition.left, 10) - parseInt(minLeft._uiPosition.left, 10);
+      var height = parseInt(maxTop._uiPosition.top, 10) - parseInt(minTop._uiPosition.top, 10);
+
+      var parent = $scope.element[0].parentElement.getBoundingClientRect();
+
+      var widthScale = (parent.width - 100) / width;
+      var heightScale = (parent.height - 100) / height;
+
+      vm.scale = widthScale < heightScale ? widthScale : heightScale;
+
+      console.log('check', width, height, vm.scale);
+
+      if (vm.scale > 1) {
+        vm.scale = 1;
+      }
+      setZoom(vm.scale, vm.instance);
+
+
+      if (parseInt(minLeft._uiPosition.left, 10) < 0) {
+        var offsetLeft = parseInt(minLeft._uiPosition.left, 10);
+
+        angular.forEach($scope.nodes, function (node) {
+          node._uiPosition.left = Math.abs(offsetLeft) + parseInt(node._uiPosition.left, 10) + 'px';
+        });
+      }
+
+      if (parseInt(minTop._uiPosition.top, 10) < 0) {
+        var offsetTop = parseInt(minLeft._uiPosition.top, 10);
+
+        angular.forEach($scope.nodes, function (node) {
+          node._uiPosition.top = Math.abs(offsetTop) + parseInt(node._uiPosition.top, 10) + 'px';
+        });
+      }
+
+      $scope.getGraphMargins($scope.nodes);
 
       $timeout(function () { vm.instance.repaintEverything(); });
 
-      vm.panning.top = 0;
       vm.panning.left = 0;
+      vm.panning.top = 0;
 
       vm.panning.style = {
         'top': vm.panning.top + 'px',
