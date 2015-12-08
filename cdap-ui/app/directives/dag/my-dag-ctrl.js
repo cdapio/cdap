@@ -249,6 +249,7 @@ angular.module(PKG.name + '.commons')
           transformCanvas(e.pos[1], e.pos[0]);
         },
         start: function () {
+          NodesActionsFactory.resetPluginCount();
           canvasDragged = true;
           closeAllPopovers();
         }

@@ -15,11 +15,12 @@
  */
 
 class NodesStore {
-  constructor(NodesDispatcher, uuid) {
+  constructor(NodesDispatcher, uuid, GLOBALS) {
     this.state = {};
     this.setDefaults();
     this.changeListeners = [];
     this.uuid = uuid;
+    this.GLOBALS = GLOBALS;
 
     let dispatcher = NodesDispatcher.getDispatcher();
     dispatcher.register('onNodeAdd', this.addNode.bind(this));
@@ -32,13 +33,20 @@ class NodesStore {
     dispatcher.register('onCreateGraphFromConfig', this.setNodesAndConnections.bind(this));
     dispatcher.register('onNodeSelectReset', this.resetActiveNode.bind(this));
     dispatcher.register('onNodeUpdate', this.updateNode.bind(this));
+    dispatcher.register('onAddSourceCount', this.addSourceCount.bind(this));
+    dispatcher.register('onAddSinkCount', this.addSinkCount.bind(this));
+    dispatcher.register('onAddTransformCount', this.addTransformCount.bind(this));
+    dispatcher.register('onResetPluginCount', this.resetPluginCount.bind(this));
   }
 
   setDefaults() {
     this.state = {
       nodes: [],
       connections: [],
-      activeNodeId: null
+      activeNodeId: null,
+      currentSourceCount: 0,
+      currentTransformCount: 0,
+      currentSinkCount: 0
     };
   }
 
@@ -52,6 +60,40 @@ class NodesStore {
   }
   emitChange() {
     this.changeListeners.forEach( callback => callback() );
+  }
+
+  addSourceCount() {
+    this.state.currentSourceCount++;
+  }
+  addTransformCount() {
+    this.state.currentTransformCount++;
+  }
+  addSinkCount() {
+    this.state.currentSinkCount++;
+  }
+  resetSourceCount() {
+    this.state.currentSourceCount = 0;
+  }
+  resetTransformCount() {
+    this.state.currentTransformCount = 0;
+  }
+  resetSinkCount() {
+    this.state.currentSinkCount = 0;
+  }
+
+  resetPluginCount() {
+    this.state.currentSourceCount = 0;
+    this.state.currentTransformCount = 0;
+    this.state.currentSinkCount = 0;
+  }
+  getSourceCount() {
+    return this.state.currentSourceCount;
+  }
+  getTransformCount() {
+    return this.state.currentTransformCount;
+  }
+  getSinkCount() {
+    return this.state.currentSinkCount;
   }
 
   addNode(config) {
@@ -72,6 +114,17 @@ class NodesStore {
   }
   removeNode(node) {
     let match = this.state.nodes.filter(n => n.id === node);
+    switch (this.GLOBALS.pluginConvert[match[0].type]) {
+      case 'source':
+        this.resetSourceCount();
+        break;
+      case 'transform':
+        this.resetTransformCount();
+        break;
+      case 'sink':
+        this.resetSinkCount();
+        break;
+    }
     this.state.nodes.splice(this.state.nodes.indexOf(match[0]), 1);
     this.state.activeNodeId = null;
     this.emitChange();
@@ -129,6 +182,6 @@ class NodesStore {
 
 }
 
-NodesStore.$inject = ['NodesDispatcher', 'uuid'];
+NodesStore.$inject = ['NodesDispatcher', 'uuid', 'GLOBALS'];
 angular.module(`${PKG.name}.commons`)
   .service('NodesStore', NodesStore);

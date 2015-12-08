@@ -24,6 +24,50 @@ class NodesActionsFactory {
   }
 
   addNode(config) {
+    let sourcePosition = {
+      top: 150,
+      left: (10/100 * document.documentElement.clientWidth)
+    };
+    let transformPosition = {
+      top: 150,
+      left: (30/100 * document.documentElement.clientWidth)
+    };
+    let sinkPosition = {
+      top: 150,
+      left: (50/100 * document.documentElement.clientWidth)
+    };
+
+    let offset = 35;
+
+
+    // set initial position
+    switch (this.GLOBALS.pluginConvert[config.type]) {
+      case 'source':
+        let sourceOffset = this.NodesStore.getSourceCount() * offset;
+        config._uiPosition = {
+          top: (sourcePosition.top + sourceOffset) + 'px',
+          left: (sourcePosition.left + sourceOffset) + 'px'
+        };
+        this.nodesDispatcher.dispatch('onAddSourceCount');
+        break;
+      case 'transform':
+        let transformOffset = this.NodesStore.getTransformCount() * offset;
+        config._uiPosition = {
+          top: (transformPosition.top + transformOffset) + 'px',
+          left: (transformPosition.left + transformOffset) + 'px'
+        };
+        this.nodesDispatcher.dispatch('onAddTransformCount');
+        break;
+      case 'sink':
+        let sinkOffset = this.NodesStore.getSinkCount() * offset;
+        config._uiPosition = {
+          top: (sinkPosition.top + sinkOffset) + 'px',
+          left: (sinkPosition.left + sinkOffset) + 'px'
+        };
+        this.nodesDispatcher.dispatch('onAddSinkCount');
+        break;
+    }
+
     this.nodesDispatcher.dispatch('onNodeAdd', config);
   }
   updateNode(nodeId, config) {
@@ -57,6 +101,10 @@ class NodesActionsFactory {
   }
   resetSelectedNode() {
     this.nodesDispatcher.dispatch('onNodeSelectReset');
+  }
+
+  resetPluginCount() {
+    this.nodesDispatcher.dispatch('onResetPluginCount');
   }
 
   createGraphFromConfig(nodes, connections) {
