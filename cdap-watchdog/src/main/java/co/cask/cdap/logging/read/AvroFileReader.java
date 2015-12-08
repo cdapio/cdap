@@ -99,11 +99,11 @@ public class AvroFileReader {
         try {
           dataFileReader.close();
         } catch (IOException e) {
-          LOG.error(String.format("Got exception while closing log file %s", file.toURI()), e);
+          LOG.error("Got exception while closing log file {}", file, e);
         }
       }
     } catch (Exception e) {
-      LOG.error(String.format("Got exception while reading log file %s", file.toURI()), e);
+      LOG.error("Got exception while reading log file {}", file, e);
       throw Throwables.propagate(e);
     }
   }
@@ -172,11 +172,11 @@ public class AvroFileReader {
         try {
           dataFileReader.close();
         } catch (IOException e) {
-          LOG.error(String.format("Got exception while closing log file %s", file.toURI()), e);
+          LOG.error("Got exception while closing log file {}", file, e);
         }
       }
     } catch (Exception e) {
-      LOG.error(String.format("Got exception while reading log file %s", file.toURI()), e);
+      LOG.error("Got exception while reading log file {}", file, e);
       throw Throwables.propagate(e);
     }
   }

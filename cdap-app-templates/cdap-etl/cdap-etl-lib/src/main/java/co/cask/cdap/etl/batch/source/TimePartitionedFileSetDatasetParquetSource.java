@@ -27,7 +27,7 @@ import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.common.AvroToStructuredTransformer;
-import co.cask.cdap.etl.common.SchemaConverter;
+import co.cask.cdap.etl.common.HiveSchemaConverter;
 import com.google.common.base.Throwables;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -83,7 +83,7 @@ public class TimePartitionedFileSetDatasetParquetSource extends
       .setEnableExploreOnCreate(true)
       .setExploreFormat("parquet");
     try {
-      String hiveSchema = SchemaConverter.toHiveSchema(
+      String hiveSchema = HiveSchemaConverter.toHiveSchema(
         co.cask.cdap.api.data.schema.Schema.parseJson(tpfsParquetConfig.schema.toLowerCase()));
       properties.setExploreSchema(hiveSchema.substring(1, hiveSchema.length() - 1));
     } catch (UnsupportedTypeException e) {

@@ -24,34 +24,15 @@ import java.util.Set;
 /**
  * Request for checking if a user can perform certain actions on an entity.
  */
-public class CheckAuthorizedRequest {
-
-  private final EntityId entity;
-  private final String user;
-  private final Set<Action> actions;
+public class CheckAuthorizedRequest extends AuthorizationRequest {
 
   public CheckAuthorizedRequest(EntityId entity, String user, Set<Action> actions) {
-    Preconditions.checkArgument(entity != null, "entity is required");
+    super(entity, user, actions);
     Preconditions.checkArgument(user != null, "user is required");
     Preconditions.checkArgument(actions != null, "actions is required");
-    this.entity = entity;
-    this.user = user;
-    this.actions = actions;
   }
 
   public CheckAuthorizedRequest(CheckAuthorizedRequest other) {
-    this(other.entity, other.user, other.actions);
-  }
-
-  public EntityId getEntity() {
-    return entity;
-  }
-
-  public String getUser() {
-    return user;
-  }
-
-  public Set<Action> getActions() {
-    return actions;
+    this(other.getEntity(), other.getUser(), other.getActions());
   }
 }

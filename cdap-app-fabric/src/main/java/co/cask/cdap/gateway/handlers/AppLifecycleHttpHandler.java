@@ -352,7 +352,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
-                                 namespaceHomeLocation.toURI().getPath(), namespace.getId());
+                                 namespaceHomeLocation, namespace.getId());
       LOG.error(msg);
       responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
       return null;

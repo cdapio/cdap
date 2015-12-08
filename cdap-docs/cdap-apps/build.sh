@@ -34,11 +34,11 @@ function download_includes() {
   test_an_include e9827888762f1d583e905d49619c1fe6 "${cdap_etl}/batch/sink/S3BatchSink.java"
   test_an_include 58f13539632d13993069b6caeff15c03 "${cdap_etl}/batch/sink/S3ParquetBatchSink.java"
   test_an_include c48f5570829cd49f4518afe2602007d4 "${cdap_etl}/batch/sink/SnapshotFileBatchAvroSink.java"
-  test_an_include 0c22ee5c57de83614d8235096e8efa8d "${cdap_etl}/batch/sink/SnapshotFileBatchParquetSink.java"
+  test_an_include 4d8181cc90ae3faf29a4502fae52eaa4 "${cdap_etl}/batch/sink/SnapshotFileBatchParquetSink.java"
   test_an_include 288b88b520b32f16fb0d0dafab5c52be "${cdap_etl}/batch/sink/SnapshotFileBatchSink.java"
   test_an_include 8e51b83878c90f000e59ada65630457d "${cdap_etl}/batch/sink/TableSink.java"
   test_an_include 1075ca865257ad570a5e530f07e1358b "${cdap_etl}/batch/sink/TimePartitionedFileSetDatasetAvroSink.java"
-  test_an_include 95ae9c116aa257efd5e3bb6cacaa4033 "${cdap_etl}/batch/sink/TimePartitionedFileSetDatasetParquetSink.java"
+  test_an_include 6752ffa48d3e0303d5b9b59745360ad5 "${cdap_etl}/batch/sink/TimePartitionedFileSetDatasetParquetSink.java"
   test_an_include 3069701c1070f0546d6a73800f558e72 "${cdap_etl}/batch/sink/TimePartitionedFileSetSink.java"
 
   # Batchsources
@@ -47,11 +47,11 @@ function download_includes() {
   test_an_include a3e5de66820f096813a6d58fdba86b52 "${cdap_etl}/batch/source/KVTableSource.java"
   test_an_include 329b73ee4e2bba510f006f1b80ef0089 "${cdap_etl}/batch/source/S3BatchSource.java"
   test_an_include 2af8f3fbf95a9d5f7becd9a7cbfaf6f9 "${cdap_etl}/batch/source/SnapshotFileBatchAvroSource.java"
-  test_an_include 91525581c2d6c657c89eb6fac7b5d470 "${cdap_etl}/batch/source/SnapshotFileBatchParquetSource.java"
+  test_an_include cef2765da51af1eac905d920b7b92522 "${cdap_etl}/batch/source/SnapshotFileBatchParquetSource.java"
   test_an_include 1ad8f9d4d9a27f10cdc0304bddf84c2b "${cdap_etl}/batch/source/StreamBatchSource.java"
   test_an_include f8c07741ac3b09da7554b91351e7973b "${cdap_etl}/batch/source/TableSource.java"
   test_an_include 8835caf7e8c6c100904e88fc10b41ba2 "${cdap_etl}/batch/source/TimePartitionedFileSetDatasetAvroSource.java"
-  test_an_include 6b4f6ae29a36ba88827dffea52ed20a1 "${cdap_etl}/batch/source/TimePartitionedFileSetDatasetParquetSource.java"
+  test_an_include 03a4aa20385b9fb084938dc3df18b4c7 "${cdap_etl}/batch/source/TimePartitionedFileSetDatasetParquetSource.java"
   test_an_include d7231465fb80b3e945d8ea755535fe24 "${cdap_etl}/batch/source/TimePartitionedFileSetSource.java"
 
   # Realtimesinks

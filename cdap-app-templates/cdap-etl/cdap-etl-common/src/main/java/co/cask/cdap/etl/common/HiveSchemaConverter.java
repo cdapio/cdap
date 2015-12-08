@@ -25,9 +25,9 @@ import java.util.Map;
 /**
  * Helper class for converting a {@link Schema} into a hive schema.
  */
-public final class SchemaConverter {
+public final class HiveSchemaConverter {
 
-  private SchemaConverter() { }
+  private HiveSchemaConverter() { }
 
   /**
    * Translate the given schema into a hive schema. Assumes the input schema is not recursive.

@@ -40,6 +40,7 @@ public final class AuditLogEntry {
   private String userName;
   private Date date;
   private String requestLine;
+  private String requestBody;
   private Integer responseCode;
   private Long responseContentLength;
   private String userIdentity;
@@ -49,12 +50,13 @@ public final class AuditLogEntry {
   }
 
   public String toString() {
-    return String.format("%s %s %s [%s] \"%s\" %s %s",
+    return String.format("%s %s %s [%s] \"%s\" %s %s %s",
                          clientIP != null ? clientIP.getHostAddress() : DEFAULT_VALUE,
                          fieldOrDefault(userIdentity),
                          fieldOrDefault(userName),
                          DEFAULT_DATE_FORMAT.format(date),
                          fieldOrDefault(requestLine),
+                         fieldOrDefault(requestBody),
                          fieldOrDefault(responseCode),
                          fieldOrDefault(responseContentLength));
   }
@@ -109,6 +111,14 @@ public final class AuditLogEntry {
 
   public void setRequestLine(String method, String uri, String protocolVersion) {
     this.requestLine = method + " " + uri + " " + protocolVersion;
+  }
+
+  public void setRequestBody(String requestBody) {
+    this.requestBody = requestBody;
+  }
+
+  public String getRequestBody() {
+    return requestBody;
   }
 
   public Integer getResponseCode() {

@@ -166,7 +166,7 @@ Aggregator.prototype.pushConfiguration = function(resource) {
     }
   }
 
-  if (statusCode === 200) {
+  if (statusCode === 200 && !(config.metadata && config.metadata['spec-version'])) {
     isConfigSemanticsValid = validateSemanticsOfConfigJSON(config);
     if (!isConfigSemanticsValid) {
       statusCode = 500;

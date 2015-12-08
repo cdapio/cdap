@@ -143,7 +143,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
     final Location namespaceHomeLocation = namespacedLocationFactory.get(namespace);
     if (!namespaceHomeLocation.exists()) {
       String msg = String.format("Home directory %s for namespace %s not found",
-                                 namespaceHomeLocation.toURI().getPath(), namespaceId);
+                                 namespaceHomeLocation, namespaceId);
       LOG.error(msg);
       responder.sendString(HttpResponseStatus.NOT_FOUND, msg);
       return null;
@@ -189,17 +189,17 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
 
           Locations.mkdirsIfNotExists(archiveDir);
 
-          LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation.toURI());
+          LOG.debug("Copy from {} to {}", uploadedFile, tmpLocation);
           Files.copy(uploadedFile, Locations.newOutputSupplier(tmpLocation));
 
           // Check if the module exists one more time to minimize the window of possible conflict
           conflictIfModuleExists(datasetModuleId);
 
           // Finally, move archive to final location
-          LOG.debug("Storing module {} jar at {}", datasetModuleId, archive.toURI());
+          LOG.debug("Storing module {} jar at {}", datasetModuleId, archive);
           if (tmpLocation.renameTo(archive) == null) {
             throw new IOException(String.format("Could not move archive from location: %s, to location: %s",
-                                                tmpLocation.toURI(), archive.toURI()));
+                                                tmpLocation, archive));
           }
 
           manager.addModule(datasetModuleId, className, archive);
@@ -211,7 +211,7 @@ public class DatasetTypeHandler extends AbstractHttpHandler {
           try {
             tmpLocation.delete();
           } catch (IOException ex) {
-            LOG.warn("Failed to cleanup temporary location {}", tmpLocation.toURI());
+            LOG.warn("Failed to cleanup temporary location {}", tmpLocation);
           }
           if (e instanceof DatasetModuleConflictException) {
             responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());

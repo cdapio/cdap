@@ -41,6 +41,13 @@ angular.module(PKG.name + '.feature.hydrator')
           dispatcher.dispatch('onRunsChange', runs);
         });
     };
+    this.pollNextRunTime = function(api, params) {
+      api.pollNextRunTime(params)
+        .$promise
+        .then(function (nextRuntime) {
+          dispatcher.dispatch('onNextRunTime', nextRuntime);
+        });
+    };
     this.fetchScheduleStatus = function(api, params) {
       api.scheduleStatus(params)
         .$promise
@@ -50,10 +57,10 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.pollStatistics = function(api, params) {
       api.pollStatistics(params)
-          .$promise
-          .then(function(res) {
-            dispatcher.dispatch('onStatisticsFetch', res);
-          });
+        .$promise
+        .then(function(res) {
+          dispatcher.dispatch('onStatisticsFetch', res);
+        });
     };
 
   });

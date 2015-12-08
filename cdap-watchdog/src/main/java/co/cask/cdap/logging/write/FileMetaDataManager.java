@@ -22,6 +22,7 @@ import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.logging.LoggingConfiguration;
@@ -91,14 +92,14 @@ public final class FileMetaDataManager {
                              final long startTimeMs,
                              final Location location) throws Exception {
     LOG.debug("Writing meta data for logging context {} as startTimeMs {} and location {}",
-              logPartition, startTimeMs, location.toURI());
+              logPartition, startTimeMs, location);
 
     execute(new TransactionExecutor.Procedure<Table>() {
       @Override
       public void apply(Table table) throws Exception {
         table.put(getRowKey(logPartition),
                   Bytes.toBytes(startTimeMs),
-                  Bytes.toBytes(location.toURI().toString()));
+                  Bytes.toBytes(Locations.toURI(location).toString()));
       }
     });
   }

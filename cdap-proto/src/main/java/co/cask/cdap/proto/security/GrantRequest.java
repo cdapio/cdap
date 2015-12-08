@@ -24,30 +24,11 @@ import java.util.Set;
 /**
  * Request for granting a user permission to perform certain actions on an entity.
  */
-public class GrantRequest {
-
-  private final EntityId entity;
-  private final String user;
-  private final Set<Action> actions;
+public class GrantRequest extends AuthorizationRequest {
 
   public GrantRequest(EntityId entity, String user, Set<Action> actions) {
-    Preconditions.checkArgument(entity != null, "entity is required");
+    super(entity, user, actions);
     Preconditions.checkArgument(user != null, "user is required");
     Preconditions.checkArgument(actions != null, "actions is required");
-    this.entity = entity;
-    this.user = user;
-    this.actions = actions;
-  }
-
-  public EntityId getEntity() {
-    return entity;
-  }
-
-  public String getUser() {
-    return user;
-  }
-
-  public Set<Action> getActions() {
-    return actions;
   }
 }

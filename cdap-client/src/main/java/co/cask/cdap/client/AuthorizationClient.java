@@ -84,18 +84,18 @@ public class AuthorizationClient {
   }
 
   public void revoke(EntityId entity, String user, Set<Action> actions) throws IOException, UnauthorizedException {
-    doRevoke(new RevokeRequest(entity, user, actions));
+    revoke(new RevokeRequest(entity, user, actions));
   }
 
   public void revoke(EntityId entity, String user) throws IOException, UnauthorizedException {
-    doRevoke(new RevokeRequest(entity, user, null));
+    revoke(new RevokeRequest(entity, user, null));
   }
 
   public void revoke(EntityId entity) throws IOException, UnauthorizedException {
-    doRevoke(new RevokeRequest(entity, null, null));
+    revoke(new RevokeRequest(entity, null, null));
   }
 
-  private void doRevoke(RevokeRequest revokeRequest) throws IOException, UnauthorizedException {
+  public void revoke(RevokeRequest revokeRequest) throws IOException, UnauthorizedException {
     URL url = config.resolveURLV3("security/revoke");
     HttpRequest request = HttpRequest.post(url).withBody(GSON.toJson(revokeRequest)).build();
     restClient.execute(request, config.getAccessToken());
