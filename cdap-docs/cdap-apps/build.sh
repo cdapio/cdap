@@ -48,7 +48,7 @@ function download_includes() {
   test_an_include 329b73ee4e2bba510f006f1b80ef0089 "${cdap_etl}/batch/source/S3BatchSource.java"
   test_an_include 2af8f3fbf95a9d5f7becd9a7cbfaf6f9 "${cdap_etl}/batch/source/SnapshotFileBatchAvroSource.java"
   test_an_include cef2765da51af1eac905d920b7b92522 "${cdap_etl}/batch/source/SnapshotFileBatchParquetSource.java"
-  test_an_include 1ad8f9d4d9a27f10cdc0304bddf84c2b "${cdap_etl}/batch/source/StreamBatchSource.java"
+  test_an_include e7137b4c3e38ada2e10409d2b946bac6 "${cdap_etl}/batch/source/StreamBatchSource.java"
   test_an_include f8c07741ac3b09da7554b91351e7973b "${cdap_etl}/batch/source/TableSource.java"
   test_an_include 8835caf7e8c6c100904e88fc10b41ba2 "${cdap_etl}/batch/source/TimePartitionedFileSetDatasetAvroSource.java"
   test_an_include 03a4aa20385b9fb084938dc3df18b4c7 "${cdap_etl}/batch/source/TimePartitionedFileSetDatasetParquetSource.java"
@@ -60,7 +60,7 @@ function download_includes() {
   test_an_include ff03b40c1dfdc25d75dc6d3547d7293b "${cdap_etl}/realtime/sink/StreamSink.java"
 
   # Realtimesources
-  test_an_include 4c156d69fcc4d7b9145caab2dbed26ff "${cdap_etl}/realtime/source/DataGeneratorSource.java"
+  test_an_include ea55a0dfc9f6e085fba25b47435ff064 "${cdap_etl}/realtime/source/DataGeneratorSource.java"
   test_an_include c1d134466622468c36eaaf6a55677bb1 "${cdap_etl}/realtime/source/JmsSource.java"
   test_an_include c0605df8382ea941966785e5ad589c4a "${cdap_etl}/realtime/source/KafkaSource.java"
   test_an_include 62c19ecd2d694d3291b104645ad529a1 "${cdap_etl}/realtime/source/SqsSource.java"
