@@ -48,7 +48,7 @@ For example, the ``read`` method returns the contents of the requested file for 
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 64-87
+    :lines: 64-89
     :dedent: 4
 
 It first instantiates the dataset specified by the first path parameter through its ``HttpServiceContext``.
@@ -60,13 +60,18 @@ file, and it opens an input stream for that location. ``Location`` is a file sys
 `Apache™ Twill® <http://twill.incubator.apache.org>`__; you can read more about its interface in the
 `Apache Twill Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
 
+Note that after obtaining the location from the file set, the handler dismisses that dataset through its context |---|
+it is not needed any more and can therefore be returned to the system. This is not strictly necessary: All datasets
+are eventually reclaimed by the system. However, explicitly dismissing a dataset allows the system to reclaim it
+as soon as the current transaction ends, possibly freeing valuable resources.
+
 The ``write`` method uses an ``HttpContentConsumer`` to stream the body of the request to the location specified
 by the ``path`` query parameter. See the section on :ref:`Handling Large Requests <services-content-consumer>`
 and the :ref:`Sport Results Example <examples-sport-results>` for a more detailed explanation:
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
      :language: java
-     :lines: 89-137
+     :lines: 91-141
      :dedent: 4
 
 MapReduce over Files

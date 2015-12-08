@@ -145,7 +145,7 @@ function download_includes() {
   test_an_include 92ee39ca2ae5940f2daa1fc31471aa8c ../../cdap-examples/DataCleansing/src/main/java/co/cask/cdap/examples/datacleansing/DataCleansingMapReduce.java
 
   test_an_include 8a7b4aacee88800cd82d96b07280cc64 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetExample.java
-  test_an_include 2c5094ecef8ca4fa8cadce5a70c88ee4 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
+  test_an_include 61e27fb1d9a15079a296a9de93d1dc14 ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
   test_an_include 738f54aa72df27c8a7022bd25c92e27f ../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/WordCount.java
   
   test_an_include c2374d482454dc57c5944e557b544dba ../../cdap-examples/HelloWorld/src/main/java/co/cask/cdap/examples/helloworld/HelloWorld.java
