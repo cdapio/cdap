@@ -125,7 +125,7 @@ There are two ways to use a dataset in a program:
   by the program.
 
   However, contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes
-  after you are done using them. You can do that by calling the ``dismissDataset()`` method of the program context:
+  after you are done using them. You can do that by calling the ``discardDataset()`` method of the program context:
   it marks the dataset to be closed and removed from all transactions as soon as the current transaction completes,
   thereby releasing its resources.
 

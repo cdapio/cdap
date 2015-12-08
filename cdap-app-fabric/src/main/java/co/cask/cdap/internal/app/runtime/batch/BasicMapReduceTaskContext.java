@@ -260,7 +260,7 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
   }
 
   @Override
-  public void dismissDataset(Dataset dataset) {
+  public void discardDataset(Dataset dataset) {
     // nop-op: all datasets have to participate until the transaction (that is, the program) finishes
   }
 

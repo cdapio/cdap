@@ -105,8 +105,8 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   }
 
   @Override
-  public void dismissDataset(Dataset dataset) {
-    delegate.dismissDataset(dataset);
+  public void discardDataset(Dataset dataset) {
+    delegate.discardDataset(dataset);
   }
 
   @Override

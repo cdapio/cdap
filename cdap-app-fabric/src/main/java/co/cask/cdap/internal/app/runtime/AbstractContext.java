@@ -174,8 +174,8 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
-  public void dismissDataset(Dataset dataset) {
-    datasetCache.dismissDataset(dataset);
+  public void discardDataset(Dataset dataset) {
+    datasetCache.discardDataset(dataset);
   }
 
   public String getNamespaceId() {

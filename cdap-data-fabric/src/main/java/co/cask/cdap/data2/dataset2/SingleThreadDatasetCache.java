@@ -69,7 +69,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   private final Map<DatasetCacheKey, Dataset> staticDatasets = new HashMap<>();
   private final Set<TransactionAware> extraTxAwares = Sets.newIdentityHashSet();
 
-  private DelayedDismissingTransactionContext txContext = null;
+  private DelayedDiscardingTransactionContext txContext = null;
 
   /**
    * See {@link DynamicDatasetCache}.
@@ -185,21 +185,21 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   }
 
   @Override
-  public void dismissDataset(Dataset dataset) {
+  public void discardDataset(Dataset dataset) {
     Preconditions.checkNotNull(dataset);
-    // static datasets cannot be dismissed
+    // static datasets cannot be discarded
     if (staticDatasets.containsValue(dataset)) {
-      LOG.warn("Attempt to dismiss static dataset {} from dataset cache", dataset);
+      LOG.warn("Attempt to discard static dataset {} from dataset cache", dataset);
       return;
     }
     if (txContext == null || !(dataset instanceof TransactionAware)) {
-      dismissSafely(dataset);
+      discardSafely(dataset);
     } else {
-      // it is a tx-aware: it may participate in a transaction, so mark it as to be dismissed after the tx:
-      // the transaction context will call dismissSafely() for this dataset when the tx is complete.
-      txContext.dismissAfterTx((TransactionAware) dataset);
+      // it is a tx-aware: it may participate in a transaction, so mark it as to be discarded after the tx:
+      // the transaction context will call discardSafely() for this dataset when the tx is complete.
+      txContext.discardAfterTx((TransactionAware) dataset);
     }
-    // remove from activeTxAwares in any case - a dismissed dataset does not need to participate in external tx
+    // remove from activeTxAwares in any case - a discarded dataset does not need to participate in external tx
     // iterates over all datasets but we do not expect this map to become large
     for (Map.Entry<DatasetCacheKey, TransactionAware> entry : activeTxAwares.entrySet()) {
       if (dataset == entry.getValue()) {
@@ -210,11 +210,11 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   }
 
   /**
-   * Dismiss a dataset when it is known that no transaction is going on.
+   * Discard a dataset when it is known that no transaction is going on.
    *
    * @param dataset this is an Object because we need to pass in TransactionAware or Dataset
    */
-  public void dismissSafely(Object dataset) {
+  public void discardSafely(Object dataset) {
     // iterates over all datasets but we do not expect this map to become large
     for (Map.Entry<DatasetCacheKey, Dataset> entry : datasetCache.asMap().entrySet()) {
       if (dataset == entry.getValue()) {
@@ -223,13 +223,13 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       }
     }
     // we can only hope that dataset.toString() is meaningful
-    LOG.warn("Attempt to dismiss dataset that was not acquired through this provider: {}", dataset);
+    LOG.warn("Attempt to discard a dataset that was not acquired through this provider: {}", dataset);
   }
 
   @Override
   public TransactionContext newTransactionContext() {
     dismissTransactionContext();
-    txContext = new DelayedDismissingTransactionContext(txClient, activeTxAwares.values(), extraTxAwares);
+    txContext = new DelayedDiscardingTransactionContext(activeTxAwares.values(), extraTxAwares);
     return txContext;
   }
 
@@ -298,32 +298,26 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   }
 
   /**
-   * This is an implementation of TransactionContext that delays the dismissal of a transaction-aware
+   * This is an implementation of TransactionContext that delays the discarding of a transaction-aware
    * dataset until after the transaction is complete. This is needed in cases where a client calls
-   * {@link DatasetProvider#dismissDataset(Dataset)} in the middle of a transaction: The client indicates
+   * {@link DatasetProvider#discardDataset(Dataset)} in the middle of a transaction: The client indicates
    * that it does not need that dataset any more. But it is participating in the current transaction,
    * and needs to continue to do so until the transaction has ended. Therefore this class will put
-   * that dataset on a toDismiss set, which is inspected after every transaction.
+   * that dataset on a toDiscard set, which is inspected after every transaction.
    */
-  private class DelayedDismissingTransactionContext extends TransactionContext {
+  private class DelayedDiscardingTransactionContext extends TransactionContext {
 
-    private final TransactionSystemClient txClient;
     private final Collection<TransactionAware> txAwares;
-    private final Collection<TransactionAware> toDismiss;
+    private final Collection<TransactionAware> toDiscard;
     private TransactionContext txContext;
 
     /**
-     * Constructs the context from the transaction system client (needed by TransactionContext) and
-     * the dataset cache that owns this context. That cache is needed to close and dismiss datasets
-     * after a transaction has finished.
-     * @param txClient the transaction system client, passed on to the actual transaction context
+     * Constructs the context from the transaction system client (needed by TransactionContext).
      */
-    private DelayedDismissingTransactionContext(TransactionSystemClient txClient,
-                                                Collection<TransactionAware> txAwares,
+    private DelayedDiscardingTransactionContext(Collection<TransactionAware> txAwares,
                                                 Collection<TransactionAware> extraTxAwares) {
       super(txClient);
-      this.txClient = txClient;
-      this.toDismiss = Sets.newIdentityHashSet();
+      this.toDiscard = Sets.newIdentityHashSet();
       this.txAwares = Sets.newIdentityHashSet();
       this.txAwares.addAll(txAwares);
       this.txAwares.addAll(extraTxAwares);
@@ -338,8 +332,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       if (txContext != null) {
         txContext.addTransactionAware(txAware);
       }
-      // in case this was marked for dismissal, remove that mark
-      toDismiss.remove(txAware);
+      // in case this was marked for discarding, remove that mark
+      toDiscard.remove(txAware);
       return true;
     }
 
@@ -351,21 +345,21 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
     }
 
     /**
-     * Mark a tx-aware for dismissal after the transaction is complete.
+     * Mark a tx-aware for discarding after the transaction is complete.
      */
-    public void dismissAfterTx(TransactionAware txAware) {
-      toDismiss.add(txAware);
+    public void discardAfterTx(TransactionAware txAware) {
+      toDiscard.add(txAware);
       txAwares.remove(txAware);
     }
 
     /**
-     * Dismisses all datasets marked for dismissal, through the dataset cache, and set the tx context to null.
+     * Discards all datasets marked for discarding, through the dataset cache, and set the tx context to null.
      */
     public void cleanup() {
-      for (TransactionAware txAware : toDismiss) {
-        SingleThreadDatasetCache.this.dismissSafely(txAware);
+      for (TransactionAware txAware : toDiscard) {
+        SingleThreadDatasetCache.this.discardSafely(txAware);
       }
-      toDismiss.clear();
+      toDiscard.clear();
       txContext = null;
     }
 
@@ -376,7 +370,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
                  txContext.getCurrentTransaction().getTransactionId());
         cleanup();
       }
-      txContext = new TransactionContext(txClient, txAwares);
+      txContext = new TransactionContext(SingleThreadDatasetCache.this.txClient, txAwares);
       txContext.start();
     }
 

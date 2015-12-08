@@ -76,7 +76,7 @@ public class FileSetService extends AbstractService {
       }
 
       Location location = fileSet.getLocation(filePath);
-      getContext().dismissDataset(fileSet);
+      getContext().discardDataset(fileSet);
 
       ByteBuffer content;
       try {
@@ -104,7 +104,7 @@ public class FileSetService extends AbstractService {
       }
 
       final Location location = fileSet.getLocation(filePath);
-      getContext().dismissDataset(fileSet);
+      getContext().discardDataset(fileSet);
       try {
         final WritableByteChannel channel = Channels.newChannel(location.getOutputStream());
         return new HttpContentConsumer() {

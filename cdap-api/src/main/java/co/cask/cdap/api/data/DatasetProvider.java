@@ -47,5 +47,5 @@ public interface DatasetProvider extends DatasetContext {
    *
    * @param dataset The dataset to be dismissed.
    */
-  void dismissDataset(Dataset dataset);
+  void discardDataset(Dataset dataset);
 }

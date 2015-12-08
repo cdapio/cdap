@@ -167,9 +167,9 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertSame(b, txAwares.get(1));
     Assert.assertSame(c, txAwares.get(2));
 
-    // dismiss b and c, validate that they are not closed yet
-    cache.dismissDataset(b);
-    cache.dismissDataset(c);
+    // discard b and c, validate that they are not closed yet
+    cache.discardDataset(b);
+    cache.discardDataset(c);
     Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("b", "k", "b", "close")));
     Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("c", "c", "c", "close")));
 
@@ -192,9 +192,9 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertSame(b, txAwares.get(1));
     Assert.assertSame(c, txAwares.get(2));
 
-    // dismiss b and c, validate that they are not closed yet
-    cache.dismissDataset(b);
-    cache.dismissDataset(c);
+    // discard b and c, validate that they are not closed yet
+    cache.discardDataset(b);
+    cache.discardDataset(c);
     Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("b", "k", "b", "close")));
     Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("c", "c", "c", "close")));
 
@@ -226,18 +226,18 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertNotNull(System.getProperty(TestDataset.generateSystemProperty("b", "k", "b", "tx")));
     Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("c", "c", "c", "tx")));
 
-    // validate that dismissing a dataset that is not in the tx does not cause errors
-    cache.dismissDataset(c);
+    // validate that discarding a dataset that is not in the tx does not cause errors
+    cache.discardDataset(c);
 
-    // get a new instance of c, validate that it is not the same as before, that is, c was really dismissed
+    // get a new instance of c, validate that it is not the same as before, that is, c was really discarded
     c1 = cache.getDataset("c", C_ARGUMENTS);
     Assert.assertNotSame(c, c1);
 
-    // dismiss c and finish the tx
-    cache.dismissDataset(c1);
+    // discard c and finish the tx
+    cache.discardDataset(c1);
     txContext.finish();
 
-    // verify that after dismissing the tx context, tx-awares is empty
+    // verify that after discarding the tx context, tx-awares is empty
     cache.dismissTransactionContext();
     Assert.assertTrue(getTxAwares().isEmpty());
 
@@ -270,7 +270,7 @@ public abstract class DynamicDatasetCacheTest {
           hash.set(System.identityHashCode(ds));
           // this would close and discard ds, but the transaction is going on, so we should get the
           // identical instance of the dataset again
-          cache.dismissDataset(ds);
+          cache.discardDataset(ds);
           ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
           Assert.assertEquals(hash.get(), System.identityHashCode(ds));
         } catch (Exception e) {
@@ -280,7 +280,7 @@ public abstract class DynamicDatasetCacheTest {
           // get the same dataset again. It should be the same object
           TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
           Assert.assertEquals(hash.get(), System.identityHashCode(ds));
-          cache.dismissDataset(ds);
+          cache.discardDataset(ds);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
@@ -294,7 +294,7 @@ public abstract class DynamicDatasetCacheTest {
         try {
           TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
           Assert.assertEquals("x", ds.read());
-          // validate that we now have a different instance because the old one was dismissed
+          // validate that we now have a different instance because the old one was discarded
           Assert.assertNotEquals(hash.get(), System.identityHashCode(ds));
         } catch (Exception e) {
           throw Throwables.propagate(e);

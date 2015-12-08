@@ -440,7 +440,7 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
-    public void dismissDataset(Dataset dataset) {
+    public void discardDataset(Dataset dataset) {
       // nop-op
     }
 

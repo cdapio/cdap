@@ -126,7 +126,7 @@ public abstract class DynamicDatasetCache implements DatasetProvider, Supplier<T
 
   @Override
   public void releaseDataset(Dataset dataset) {
-    dismissDataset(dataset);
+    discardDataset(dataset);
   }
 
   /**

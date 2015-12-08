@@ -114,8 +114,8 @@ public final class ClientSparkContext extends AbstractSparkContext {
   }
 
   @Override
-  public void dismissDataset(Dataset dataset) {
-    datasetCache.dismissDataset(dataset);
+  public void discardDataset(Dataset dataset) {
+    datasetCache.discardDataset(dataset);
   }
 
   @Override

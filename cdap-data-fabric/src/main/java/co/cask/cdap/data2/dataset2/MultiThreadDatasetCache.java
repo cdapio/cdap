@@ -104,8 +104,8 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
   }
 
   @Override
-  public void dismissDataset(Dataset dataset) {
-    entryForCurrentThread().dismissDataset(dataset);
+  public void discardDataset(Dataset dataset) {
+    entryForCurrentThread().discardDataset(dataset);
   }
 
   @Override
