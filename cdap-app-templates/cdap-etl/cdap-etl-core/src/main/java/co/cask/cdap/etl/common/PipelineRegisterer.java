@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
@@ -82,6 +83,10 @@ public class PipelineRegisterer {
 
     // validate connections, there are no-cycles, all sinks are reachable, etc.
     Map<String, List<String>> connectionsMap = validateConnections(config);
+    List<String> stageTopologicalSortedOrder = getStagesAfterTopologicalSorting(connectionsMap,
+                                                                                sourceConfig.getName());
+    Map<String, PipelineConfigureDetail> stageToPipelineConfigureDetailMap = new HashMap<>();
+
     String sourcePluginId = sourceConfig.getName();
 
     // instantiate source
@@ -98,7 +103,7 @@ public class PipelineRegisterer {
     }
     // configure source, allowing it to add datasets, streams, etc
     PipelineConfigurer sourceConfigurer = new DefaultPipelineConfigurer(configurer, sourcePluginId);
-    source.configurePipeline(sourceConfigurer);
+    stageToPipelineConfigureDetailMap.put(sourcePluginId, new PipelineConfigureDetail(source, sourceConfigurer));
 
     // transform id list will eventually be serialized and passed to the driver program
     List<TransformInfo> transformInfos = new ArrayList<>(transformConfigs.size());
@@ -124,7 +129,8 @@ public class PipelineRegisterer {
       }
 
       PipelineConfigurer transformConfigurer = new DefaultPipelineConfigurer(configurer, transformId);
-      transformObj.configurePipeline(transformConfigurer);
+      stageToPipelineConfigureDetailMap.put(transformId,
+                                            new PipelineConfigureDetail(transformObj, transformConfigurer));
       transformInfos.add(new TransformInfo(transformId, transformConfig.getErrorDatasetName()));
       transforms.add(transformObj);
     }
@@ -157,13 +163,106 @@ public class PipelineRegisterer {
       }
       // run configure pipeline on sink to let it add datasets, etc.
       PipelineConfigurer sinkConfigurer = new DefaultPipelineConfigurer(configurer, sinkPluginId);
-      sink.configurePipeline(sinkConfigurer);
+      stageToPipelineConfigureDetailMap.put(sinkPluginId, new PipelineConfigureDetail(sink, sinkConfigurer));
       sinks.add(sink);
     }
 
     // TODO : CDAP-4387 Validate Stages has been removed due to DAG implementation, have to be refactored
 
+    for (String stageName : stageTopologicalSortedOrder) {
+      PipelineConfigureDetail pipelineConfigureDetail = stageToPipelineConfigureDetailMap.get(stageName);
+      // configure pipeline in the topologically sorted order, to handle dependencies.
+      pipelineConfigureDetail.getPipelineConfigurable().configurePipeline(
+        pipelineConfigureDetail.getPipelineConfigurer());
+
+      DefaultStageConfigurer defaultStageConfigurer =
+        (DefaultStageConfigurer) pipelineConfigureDetail.getPipelineConfigurer().getStageConfigurer();
+
+      Schema outputSchema = defaultStageConfigurer.getOutputSchema();
+
+      // get the next connections from this stage and add this outputSchema list to their input
+      if (connectionsMap.containsKey(stageName)) {
+        for (String nextStage : connectionsMap.get(stageName)) {
+          defaultStageConfigurer = (DefaultStageConfigurer)
+            stageToPipelineConfigureDetailMap.get(nextStage).getPipelineConfigurer().getStageConfigurer();
+          defaultStageConfigurer.setInputSchema(outputSchema);
+        }
+      }
+    }
+
+
     return new Pipeline(sourcePluginId, sinksInfo, transformInfos, connectionsMap);
+  }
+
+  private class PipelineConfigureDetail {
+    PipelineConfigurable pipelineConfigurable;
+    PipelineConfigurer pipelineConfigurer;
+
+    PipelineConfigureDetail(PipelineConfigurable pipelineConfigurable, PipelineConfigurer pipelineConfigurer) {
+      this.pipelineConfigurable = pipelineConfigurable;
+      this.pipelineConfigurer = pipelineConfigurer;
+    }
+
+    PipelineConfigurable getPipelineConfigurable() {
+      return pipelineConfigurable;
+    }
+
+    PipelineConfigurer getPipelineConfigurer() {
+      return pipelineConfigurer;
+    }
+  }
+
+  /**
+   * Given the DAG and starting point,
+   * return the DAG as a list sorted by topographical order used for configuring the pipeline in that order
+   * @param connectionsMap - DAG representation in map
+   * @param start - starting node name
+   * @return
+   */
+  @VisibleForTesting
+  static List<String> getStagesAfterTopologicalSorting(Map<String, List<String>> connectionsMap, String start) {
+
+    // store the reverse of connectionsMap, where we maintain the inLinks for each node
+    Map<String, List<String>> inLinksMap = new HashMap<>();
+    for (Map.Entry<String, List<String>> connectionEntry : connectionsMap.entrySet()) {
+      for (String destinationNode : connectionEntry.getValue()) {
+        if (!inLinksMap.containsKey(destinationNode)) {
+          inLinksMap.put(destinationNode, new ArrayList<String>());
+        }
+        inLinksMap.get(destinationNode).add(connectionEntry.getKey());
+      }
+    }
+
+    Set<String> sourceNodes = new HashSet<>();
+    // this maintains the order for processing the nodes
+    List<String> sortedOrder = new ArrayList<>();
+    sourceNodes.add(start);
+
+    while (!sourceNodes.isEmpty()) {
+      String sourceNode = sourceNodes.iterator().next();
+      sourceNodes.remove(sourceNode);
+
+      sortedOrder.add(sourceNode);
+
+      if (connectionsMap.containsKey(sourceNode)) {
+        for (String destinationNode : connectionsMap.get(sourceNode)) {
+          // remove the in-link for sourceNode from the list maintained for destination nodes in inLinksMap.
+          inLinksMap.get(destinationNode).remove(sourceNode);
+          // if after removal, the list has become empty, we can move this to sourceNodes for processing next.
+          if (inLinksMap.get(destinationNode).isEmpty()) {
+            sourceNodes.add(destinationNode);
+          }
+        }
+      }
+    }
+
+    for (List<String> inLinksEntryList : inLinksMap.values()) {
+      if (!inLinksEntryList.isEmpty()) {
+        // should not happen, as we have checked for cycle before.
+        throw new IllegalArgumentException("Cycle exists in the graph.");
+      }
+    }
+    return sortedOrder;
   }
 
   @VisibleForTesting

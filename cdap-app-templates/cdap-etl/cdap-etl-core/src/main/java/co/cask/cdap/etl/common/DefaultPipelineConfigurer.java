@@ -24,6 +24,7 @@ import co.cask.cdap.api.plugin.PluginConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
 
 import javax.annotation.Nullable;
 
@@ -34,11 +35,13 @@ import javax.annotation.Nullable;
  */
 public class DefaultPipelineConfigurer implements PipelineConfigurer {
   private final PluginConfigurer configurer;
-  private final String pluginPrefix;
+  private final String stageName;
+  private final DefaultStageConfigurer stageConfigurer;
 
-  public DefaultPipelineConfigurer(PluginConfigurer configurer, String pluginPrefix) {
+  public DefaultPipelineConfigurer(PluginConfigurer configurer, String stageName) {
     this.configurer = configurer;
-    this.pluginPrefix = pluginPrefix;
+    this.stageName = stageName;
+    this.stageConfigurer = new DefaultStageConfigurer(stageName);
   }
 
   @Override
@@ -109,6 +112,11 @@ public class DefaultPipelineConfigurer implements PipelineConfigurer {
   }
   
   private String getPluginId(String childPluginId) {
-    return String.format("%s%s%s", pluginPrefix, Constants.ID_SEPARATOR, childPluginId);
+    return String.format("%s%s%s", stageName, Constants.ID_SEPARATOR, childPluginId);
+  }
+
+  @Override
+  public StageConfigurer getStageConfigurer() {
+    return stageConfigurer;
   }
 }
