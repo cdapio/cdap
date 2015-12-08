@@ -67,6 +67,7 @@ public class StreamViewClientTestRun extends ClientTestBase {
   public void testAll() throws Exception {
     Id.Namespace namespace = Id.Namespace.DEFAULT;
     Id.Stream stream = Id.Stream.from(namespace, "foo");
+    Id.Stream.View view1 = Id.Stream.View.from(stream, "view1");
     LOG.info("Creating stream {}", stream);
     streamClient.create(stream);
 
@@ -77,7 +78,6 @@ public class StreamViewClientTestRun extends ClientTestBase {
       streamClient.sendEvent(stream, "g,h,i");
 
       LOG.info("Verifying that no views exist yet");
-      Id.Stream.View view1 = Id.Stream.View.from(stream, "view1");
       Assert.assertEquals(ImmutableList.of(), streamViewClient.list(stream));
       try {
         streamViewClient.get(view1);
@@ -149,6 +149,28 @@ public class StreamViewClientTestRun extends ClientTestBase {
       }
       Assert.assertEquals(ImmutableList.of(), streamViewClient.list(stream));
     } finally {
+      streamClient.delete(stream);
+    }
+
+    // test deleting stream with a view
+    LOG.info("Creating stream {}", stream);
+    streamClient.create(stream);
+
+    try {
+      FormatSpecification format = new FormatSpecification(
+        "csv",
+        Schema.recordOf(
+          "foo",
+          Schema.Field.of("one", Schema.of(Schema.Type.STRING)),
+          Schema.Field.of("two", Schema.of(Schema.Type.STRING)),
+          Schema.Field.of("three", Schema.of(Schema.Type.STRING))));
+      ViewSpecification viewSpecification = new ViewSpecification(format, "firsttable");
+      LOG.info("Creating view {} with config {}", view1, GSON.toJson(viewSpecification));
+      Assert.assertEquals(true, streamViewClient.createOrUpdate(view1, viewSpecification));
+
+      streamClient.delete(stream);
+    } finally {
+      streamViewClient.delete(view1);
       streamClient.delete(stream);
     }
   }
