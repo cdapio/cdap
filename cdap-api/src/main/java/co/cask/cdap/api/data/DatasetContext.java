@@ -24,7 +24,10 @@ import java.util.Map;
  * This interface provides methods that instantiate a Dataset during the runtime
  * of a program. If the same arguments are provided for the same dataset, then the
  * returned instance is the same as returned by previous calls.
+ *
+ * @deprecated replaced by {@link DatasetProvider}
  */
+@Deprecated
 public interface DatasetContext {
 
   /**

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.api.data;
 
+import co.cask.cdap.api.annotation.Beta;
 import co.cask.cdap.api.dataset.Dataset;
 
 import java.util.Map;
@@ -41,6 +42,7 @@ public interface DatasetProvider extends DatasetContext {
    *
    * @param dataset The dataset to be released.
    */
+  @Beta
   void releaseDataset(Dataset dataset);
 
   /**
@@ -62,5 +64,6 @@ public interface DatasetProvider extends DatasetContext {
    *
    * @param dataset The dataset to be dismissed.
    */
+  @Beta
   void discardDataset(Dataset dataset);
 }
