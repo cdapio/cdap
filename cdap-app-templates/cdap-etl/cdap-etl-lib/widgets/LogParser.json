@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "spec-version": "1.0",
+    "artifact-version": "3.3.0-SNAPSHOT",
+    "name": "LogParser",
+    "type": ""
+  },
+  "configuration-groups": [
+    {
+      "label": "Log Parser Transform",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Log Format",
+          "name": "logFormat"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Input Name",
+          "name": "inputName"
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}
