@@ -19,6 +19,7 @@ package co.cask.cdap.data.runtime.main;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.FileContextLocationFactory;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
 import co.cask.cdap.explore.security.HiveTokenUtils;
@@ -57,7 +58,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
   private static final Logger LOG = LoggerFactory.getLogger(TokenSecureStoreUpdater.class);
-  private final Configuration hConf;
+  private final YarnConfiguration hConf;
   private final LocationFactory locationFactory;
   private final long updateInterval;
   private final boolean secureExplore;
@@ -65,7 +66,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
   private Credentials credentials;
 
   @Inject
-  public TokenSecureStoreUpdater(Configuration hConf, CConfiguration cConf, LocationFactory locationFactory) {
+  public TokenSecureStoreUpdater(YarnConfiguration hConf, CConfiguration cConf, LocationFactory locationFactory) {
     this.hConf = hConf;
     this.locationFactory = locationFactory;
     secureExplore = cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED) && UserGroupInformation.isSecurityEnabled();
@@ -77,13 +78,16 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
     try {
       Credentials refreshedCredentials = new Credentials();
 
+      if (User.isSecurityEnabled()) {
+        YarnTokenUtils.obtainToken(hConf, refreshedCredentials);
+      }
+
       if (User.isHBaseSecurityEnabled(hConf)) {
         HBaseTokenUtils.obtainToken(hConf, refreshedCredentials);
       }
 
       if (secureExplore) {
         HiveTokenUtils.obtainToken(refreshedCredentials);
-        YarnTokenUtils.obtainToken(hConf, refreshedCredentials);
         JobHistoryServerTokenUtils.obtainToken(hConf, refreshedCredentials);
       }
 
@@ -92,7 +96,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
         YarnUtils.addDelegationTokens(hConf, locationFactory, refreshedCredentials);
       } else if (locationFactory instanceof FileContextLocationFactory) {
         List<Token<?>> tokens = ((FileContextLocationFactory) locationFactory).getFileContext().getDelegationTokens(
-          new Path(locationFactory.getHomeLocation().toURI()), YarnUtils.getYarnTokenRenewer(hConf)
+          new Path(Locations.toURI(locationFactory.getHomeLocation())), YarnUtils.getYarnTokenRenewer(hConf)
         );
         for (Token<?> token : tokens) {
           refreshedCredentials.addToken(token.getService(), token);

@@ -26,6 +26,7 @@ angular.module(PKG.name + '.feature.hydrator')
           list: [],
           latest: {},
           count: 0,
+          nextRunTime: null
         },
         params: app.params || {},
         scheduleParams: app.scheduleParams || {},
@@ -78,7 +79,13 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getRunsCount = function() {
       return this.state.runs.count;
     };
-
+    this.getNextRunTime = function() {
+      return this.state.runs.nextRunTime;
+    };
+    this.setNextRunTime = function(nextRunTime) {
+      this.state.runs.nextRunTime = nextRunTime;
+      this.emitChange();
+    };
     this.getApi = function() {
       return this.state.api;
     };
@@ -118,7 +125,8 @@ angular.module(PKG.name + '.feature.hydrator')
         list: runs,
         count: runs.length,
         latest: runs[0],
-        runsCount: runs.length
+        runsCount: runs.length,
+        nextRunTime: this.state.runs.nextRunTime || null
       };
       if (this.state.type === GLOBALS.etlBatch) {
         this.state.logsParams.runId = this.state.runs.latest.properties.ETLMapReduce;
@@ -193,4 +201,5 @@ angular.module(PKG.name + '.feature.hydrator')
     dispatcher.register('onRunsChange', this.setRunsState.bind(this));
     dispatcher.register('onStatisticsFetch', this.setStatistics.bind(this));
     dispatcher.register('onReset', this.setDefaults.bind(this, {}));
+    dispatcher.register('onNextRunTime', this.setNextRunTime.bind(this));
   });

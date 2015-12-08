@@ -15,262 +15,393 @@
  */
 
 @import '../../styles/variables.less';
-@import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../../bower_components/bootstrap/less/mixins.less';
 @import '../../styles/themes/cdap/mixins.less';
 
-body.theme-cdap.state-hydrator {
-  div.side-panel.top {
-    background-color: white;
-    border-bottom: 1px solid @table-border-color;
-    position: fixed;
-    top: 60px;
-    right: 0;
-    left: 0;
-    z-index: 1032;
-    height: 60px;
-    .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
-
-    div.btn {
-      .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 0);
-      border-right: 1px solid transparent;
-      border-bottom: 1px solid transparent;
-      border-left: 1px solid #eee;
-      font-weight: 500;
-      height: 60px;
-      line-height: 59px;
-      width: 80px;
-      .transition(all 0.2s ease);
-      &:hover, &:focus {
-        background-color: #ebebeb;
-        border-left: 1px solid @table-border-color;
+body.theme-cdap {
+  &.state-hydrator-create-studio {
+    div.side-panel.top {
+      div.btn {
+        width: 25%;
       }
-      &:active {
-        background-color: #828da0;
-        color: white;
-        .box-shadow(inset 0 0 20px 0 rgba(0, 0, 0, 0.25));
-      }
-      @media (max-width: @screen-sm-max) {
-        font-size: 11px;
-        width: 62px;
-      }
-
-      &.btn-cdap {
-        width: 120px;
-
-      }
-
-      &.btn-status {
-        width: 200px;
-        cursor: default;
+      div.hydrator-metadata {
+        background-color: transparent;
+        height: 60px;
+        padding: 10px 5px;
+        position: relative;
+        z-index: 1021;
+        .box-shadow(none);
+        .transition(all 0.2s ease);
+        @media (min-width: @screen-lg-min) {
+          max-width: 650px;
+        }
         &:hover, &:focus {
-          border-left: 1px solid #eee;
-          background-color: white;
+          cursor: pointer;
         }
-        &:active {
-          background-color: white;
-          color: inherit;
-          .box-shadow(none);
+        div.pipeline-type {
+          padding-left: 10px;
         }
-        span {
-          display: inline-block;
-          width: 10px;
-          height: 10px;
-          margin-right: 5px;
-          .border-radius(25px);
-          &.status-green { background-color: @brand-success; }
-          &.status-red { background-color: @brand-danger; }
-        }
-      }
-      @media (max-width: @screen-xs-max) {
-        display: none;
-      }
-    }
-
-    .hydrator-detail-metadata {
-      padding: 5px 15px 0;
-      @media (max-width: @screen-sm-max) {
-        max-width: 400px;
-      }
-
-      h1 {
-        display: inline-block;
-        font-size: 20px;
-        font-weight: 500;
-        margin-top: 0;
-        margin-right: 10px;
-        margin-bottom: 5px;
-      }
-      span.pipeline-type {
-        font-weight: 500;
-        text-decoration: none;
-        color: #397cf1;
-        span {
-          font-size: 16px;
-        }
-      }
-      p {
-        color: #666;
-        font-size: 14px;
-        font-weight: 400;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-    }
-
-    .hydrator-metadata {
-      background-color: transparent;
-      height: 60px;
-      width: 600px;
-      padding: 5px 15px 0;
-      position: relative;
-      z-index: 1021;
-      .box-shadow(none);
-      .transition(all 0.2s ease);
-      @media (max-width: @screen-md-max) {
-        max-width: 400px;
-      }
-      @media (min-width: @screen-lg-min) {
-        width: 600px;
-      }
-      &:hover, &:focus {
-        cursor: pointer;
-        span.fa-pencil {
-          .opacity(1);
-        }
-      }
-      &.expanded {
-        background-color: white;
-        height: 170px;
-        cursor: auto;
-        @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
-        .box-shadow(@box-shadow);
-        @media (max-width: @screen-sm-max) {
-          height: 175px;
+        div.pipeline-name {
+          margin-left: 10px;
+          position: relative;
+          &:after {
+            position: absolute;
+            font-family: FontAwesome;
+            top: 0;
+            right: 5px;
+            content: "\f040";
+            .opacity(0);
+            .transition(opacity 0.2s ease);
+          }
+          &:hover, &:focus {
+            &:after {
+              .opacity(1);
+            }
+          }
         }
         input, textarea {
-          border: 1px solid @table-border-color;
-          font-size: 12px;
-          padding: 10px 12px;
-          white-space: initial;
-          text-overflow: initial;
-          overflow: initial;
-          .border-radius(6px);
-          &:hover, &:focus {
-            cursor: auto;
+          background-color: transparent;
+          cursor: pointer;
+          display: inline-block;
+          padding: 0;
+          border: 0;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+          width: 100%;
+          max-width: 100%;
+          .border-radius(0);
+          &:focus {
+            outline: 0;
           }
         }
-
-        div.input-group {
-          width: 75%;
-          text-align: left;
-          + span {
-            line-height: 40px;
-            float: right;
-          }
-        }
-
         input {
-          height: 40px;
-          width: 82%;
-          cursor: default;
+          font-size: 16px;
+          .placeholder-color(@color: gray);
         }
         textarea {
-          margin-top: 10px;
-          min-height: 65px;
+          min-height: 0;
+          font-size: 12px;
+          font-weight: 400;
           resize: none;
-          width: 100%;
-          cursor: default;
+          margin-bottom: 0;
+          .placeholder-color(@color: gray);
         }
-        div.btn-group {
-          margin: 10px 0;
-          .btn {
-            display: inline-block;
-            width: 62px;
-            height: 32px;
-            .border-radius(4px);
-            .opacity(1);
+        button {
+          font-weight: 500;
+          text-decoration: none;
+          &.btn {
+            width: 0;
+            height: 0;
+            .opacity(0);
+            visibility: hidden;
             .transition(all 0.5s ease);
-            visibility: visible;
-            &:first-child {
-              background-color: @body-bg;
-              &:hover, &:focus {
-                background-color: darken(@body-bg, 10%)
-              }
+          }
+        }
+        &.expanded {
+          background-color: white;
+          height: 185px;
+          cursor: auto;
+          @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+          .box-shadow(@box-shadow);
+          div.pipeline-name {
+            width: 85%;
+            &:after {
+              content: none;
             }
-            &:last-child {
-              margin-left: 5px;
+          }
+          input, textarea {
+            border: 1px solid @table-border-color;
+            font-size: 12px;
+            padding: 10px 12px;
+            white-space: initial;
+            text-overflow: initial;
+            overflow: initial;
+            .border-radius(6px);
+            &:hover, &:focus {
+              cursor: auto;
+            }
+          }
+          input {
+            height: 40px;
+            cursor: default;
+          }
+          textarea {
+            margin-top: 10px;
+            min-height: 65px;
+            resize: none;
+            cursor: default;
+          }
+          div.btn-group {
+            margin: 10px 0;
+            padding-right: 10px;
+            .btn {
+              display: inline-block;
+              width: auto;
+              height: 32px;
+              padding: 0 10px;
+              .border-radius(4px);
+              .opacity(1);
+              .transition(all 0.2s ease);
+              visibility: visible;
+              &:first-child {
+                background-color: @body-bg;
+                &:hover, &:focus {
+                  background-color: darken(@body-bg, 10%)
+                }
+              }
+              &:last-child {
+                margin-left: 5px;
+              }
             }
           }
         }
-        span.fa-pencil {
-          .opacity(0);
-          cursor: auto;
-        }
-      }
-      div.input-group {
-        text-align: left;
-        + span {
-          float: left;
-          color: #397cf1;
-          font-size: 16px;
-          line-height: 25px;
-        }
-      }
-      input, textarea {
-        background-color: transparent;
-        cursor: pointer;
-        line-height: 1.1;
-        padding: 0;
-        border: 0;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
-        .border-radius(0);
-        &:focus {
-          outline: 0;
-        }
-      }
-      input {
-        display: inline-block;
-        font-size: 20px;
-        margin: 0;
-        max-width: 350px;
-        .placeholder-color(@color: gray);
-      }
-      .input-group-addon {
-        background-color: transparent;
-        border: 0;
-      }
-      textarea {
-        min-height: 0;
-        margin-top: 5px;
-        font-size: 14px;
-        font-weight: 400;
-        resize: none;
-        width: 100%;
-        margin-bottom: 0;
-        .placeholder-color(@color: gray);
-      }
-      button {
-        font-weight: 500;
-        text-decoration: none;
-        &.btn {
-          width: 0;
-          height: 0;
-          .opacity(0);
-          visibility: hidden;
-          .transition(all 0.5s ease);
-        }
-      }
-      span.fa-pencil {
-        color: @cdap-lightgray;
-        cursor: pointer;
-        margin-right: 5px;
-        padding-top: 0;
-        .opacity(0);
-        .transition(opacity 0.2s ease);
       }
     }
   }
+  &.state-hydrator-detail {
+    div.side-panel.top {
+      div.tbl {
+        display: table;
+        height: 60px;
+        width: 100%;
+      }
+      div.tbl-cell {
+        display: table-cell;
+        border-left: 1px solid @table-border-color;
+        padding: 0 10px;
+        vertical-align: middle;
+        text-align: left;
+        &:first-child, &:last-child {
+          border-left: 0;
+        }
+        &:last-child {
+          padding-right: 0;
+        }
+      }
+      div.batch div.tbl-cell {
+        &:first-child {
+          width: 24%;
+        }
+        &:nth-child(2) {
+          width: 6%;
+        }
+        &:nth-child(3) {
+          width: 20%;
+        }
+        &:nth-child(4) {
+          width: 15%;
+        }
+        &:nth-child(5) {
+          width: 14%;
+        }
+        &:last-child {
+          width: 21%;
+        }
+      }
+      div.realtime div.tbl-cell {
+        &:first-child {
+          width: 24%;
+        }
+        &:nth-child(2) {
+          width: 6%;
+        }
+        &:nth-child(3) {
+          width: 27%;
+        }
+        &:nth-child(4) {
+          width: 22%;
+        }
+        &:last-child {
+          width: 21%;
+        }
+      }
+      .hydrator-detail-metadata {
+        div.pipeline-type {
+          text-decoration: none;
+          padding: 0 10px 0 5px;
+          span {
+          }
+        }
+        div.pipeline-name {
+          text-align: left;
+          padding-top: 4px;
+        }
+        h1, p {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 100%;
+        }
+        h1 {
+          font-size: 16px;
+          font-weight: 500;
+          margin-top: 0;
+          margin-bottom: 0;
+        }
+        p {
+          color: #666;
+          font-size: 12px;
+          font-weight: 400;
+          margin: 0;
+        }
+      }
+      div.app-status {
+        .metric-value {
+          font-size: 20px;
+          line-height: 20px;
+          padding-bottom: 2px;
+        }
+        &.status-green span {
+          color: @brand-success;
+        }
+        &.status-red span {
+          color: @brand-danger;
+        }
+        span {
+          line-height: inherit;
+        }
+      }
+      div.last-run {
+        div.metric {
+          &:first-child {
+            padding-right: 5px;
+            width: 62%;
+          }
+          &:last-child {
+            width: 38%;
+          }
+        }
+      }
+      div.all-runs {
+        div.metric {
+          &:first-child {
+            padding-right: 5px;
+            width: 60%;
+          }
+          &:last-child {
+            width: 40%;
+          }
+        }
+      }
+      strong {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 2px;
+      }
+      span {
+        display: block;
+      }
+      span.metric-value {
+        color: #636363;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1;
+        small {
+          font-size: 10px;
+          font-weight: 400;
+        }
+      }
+      span.metric-label {
+        font-size: 10px;
+        color: rgba(0, 0, 0, 0.4);
+        font-weight: 600;
+      }
+      div.action-buttons {
+        &.batch > div {
+          width: 20%;
+        }
+        &.realtime > div {
+          width: 25%;
+        }
+        div.btn {
+          width: 100%;
+        }
+      }
+    }
+  }
+  &.state-hydrator {
+    div.side-panel.top {
+      background-color: white;
+      border-bottom: 1px solid @table-border-color;
+      position: fixed;
+      top: 60px;
+      right: 0;
+      left: 0;
+      z-index: 1032;
+      height: 60px;
+      .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
+      div.pipeline-type {
+        color: #397cf1;
+        float: left;
+        text-decoration: none;
+        span {
+          display: inline-block;
+          line-height: 40px;
+          font-size: 1.8em;
+          @media (min-width: @screen-sm-min) {
+            font-size: 26px;
+          }
+        }
+      }
+
+      div.action-buttons {
+        width: 100%;
+      }
+      div.btn {
+        .cask-btn(@border: 0, @border-radius: 0, @color: #666, @padding: 0);
+        border-right: 1px solid transparent;
+        border-bottom: 1px solid transparent;
+        border-left: 1px solid @table-border-color;
+        height: 60px;
+        padding: 0;
+        .transition(all 0.2s ease);
+        span {
+          line-height: 60px;
+        }
+        &:hover, &:focus {
+          background-color: #ebebeb;
+          border-right: 1px solid #ebebeb;
+          border-left: 1px solid @table-border-color;
+        }
+        &:active {
+          background-color: #828da0;
+          border-right: #828da0;
+          border-bottom: 1px solid #828da0;
+          color: white;
+          .box-shadow(inset 0 0 20px 0 rgba(0, 0, 0, 0.25));
+        }
+        + .btn {
+          margin-left: 0;
+        }
+        @media (max-width: @screen-xs-max) {
+          display: none;
+        }
+      }
+      .tooltip {
+        &.in {
+          .opacity(1);
+        }
+        &.top {
+          top: -25px!important;
+          .tooltip-arrow {
+            border-top: 5px solid #666;
+          }
+        }
+      }
+      .tooltip-inner {
+        background-color: #666;
+        border: 1px solid #666;
+        padding-right: 10px;
+        padding-left: 10px;
+      }
+      .nopadding {
+        padding: 0;
+      }
+      .nomargin {
+        margin: 0;
+      }
+    }
+  }
+
 }

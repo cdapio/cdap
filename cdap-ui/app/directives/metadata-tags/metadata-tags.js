@@ -23,14 +23,19 @@ angular.module(PKG.name + '.commons')
       controllerAs: 'MetadataController',
       scope: {
         params: '=',
-        type: '@'
+        type: '@',
+        tagLimit: '='
       },
       templateUrl: 'metadata-tags/metadata-tags.html',
     };
   })
-  .controller('MetadataTagsController', function ($scope, myMetadataFactory, caskFocusManager) {
+  .controller('MetadataTagsController', function ($scope, myMetadataFactory, caskFocusManager, $state) {
     this.metadataAddOpen = false;
     this.metadataTags = [];
+
+    this.tagLimit = $scope.tagLimit;
+    this.limit = $scope.tagLimit;
+
     var prom;
     switch($scope.type) {
       case 'datasets':
@@ -73,7 +78,8 @@ angular.module(PKG.name + '.commons')
       }.bind(this));
     };
 
-    this.deleteMetadata = function (tag) {
+    this.deleteMetadata = function (event, tag) {
+      event.stopPropagation();
       var prom;
       switch($scope.type) {
         case 'datasets':
@@ -97,6 +103,11 @@ angular.module(PKG.name + '.commons')
     this.escapeMetadata = function () {
       this.tag = '';
       this.metadataAddOpen = false;
+    };
+
+    this.goToTag = function(event, tag) {
+      event.stopPropagation();
+      $state.go('search.objectswithtags', {tag: tag});
     };
 
     caskFocusManager.focus('metadataInput');

@@ -29,7 +29,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
-import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
@@ -49,8 +49,8 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
 
   @Inject
   DistributedServiceProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                  Configuration hConfig, CConfiguration cConfig) {
-    super(twillRunner, locationFactory, hConfig, cConfig);
+                                  YarnConfiguration hConf, CConfiguration cConf) {
+    super(twillRunner, locationFactory, hConf, cConf);
   }
 
   @Override

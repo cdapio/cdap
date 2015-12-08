@@ -166,7 +166,7 @@ function download_includes() {
   test_an_include 5f7838093050321c558a0eae4b802c5f ../../cdap-examples/SportResults/src/main/java/co/cask/cdap/examples/sportresults/ScoreCounter.java
   
   test_an_include 41db6b1cd160fd92bf03395454414206 ../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionApp.java
-  test_an_include 91e8be60edf306d7403786d82a04f0c5 ../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
+  test_an_include b254b6b2d34b9a39cbce0aca10d4fd52 ../../cdap-examples/StreamConversion/src/main/java/co/cask/cdap/examples/streamconversion/StreamConversionMapReduce.java
   
   test_an_include 2260781c7cef2938aa36c946f3a34341 ../../cdap-examples/UserProfiles/src/main/java/co/cask/cdap/examples/profiles/UserProfiles.java
 

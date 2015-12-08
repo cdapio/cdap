@@ -26,7 +26,7 @@ import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.batch.BatchRuntimeContext;
-import co.cask.cdap.etl.common.SchemaConverter;
+import co.cask.cdap.etl.common.HiveSchemaConverter;
 import co.cask.cdap.etl.common.SnapshotFileSetConfig;
 import co.cask.cdap.etl.common.StructuredToAvroTransformer;
 import org.apache.avro.generic.GenericRecord;
@@ -71,7 +71,7 @@ public class SnapshotFileBatchParquetSink extends SnapshotFileBatchSink<Void, Ge
     new org.apache.avro.Schema.Parser().parse(config.schema.toLowerCase());
     String hiveSchema;
     try {
-      hiveSchema = SchemaConverter.toHiveSchema(Schema.parseJson(config.schema.toLowerCase()));
+      hiveSchema = HiveSchemaConverter.toHiveSchema(Schema.parseJson(config.schema.toLowerCase()));
     } catch (UnsupportedTypeException | IOException e) {
       throw new RuntimeException("Error: Schema is not valid ", e);
     }

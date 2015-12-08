@@ -14,7 +14,7 @@
  * the License.
  */
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, rPipelineDetail, GLOBALS, $state, $alert, myLoadingService, $timeout) {
+  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, rPipelineDetail, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope, moment) {
     this.GLOBALS = GLOBALS;
     this.config = DetailNonRunsStore.getCloneConfig();
     this.app = {
@@ -22,6 +22,55 @@ angular.module(PKG.name + '.feature.hydrator')
       description: rPipelineDetail.description,
       type: rPipelineDetail.artifact.name
     };
+
+    var params;
+    this.setState = function() {
+      this.runsCount = DetailRunsStore.getRunsCount();
+      var runs = DetailRunsStore.getRuns();
+      var status, i;
+      var lastRunDuration;
+      var nextRunTime = DetailRunsStore.getNextRunTime();
+      if (nextRunTime) {
+        nextRunTime = nextRunTime[0].time? nextRunTime[0].time: null;
+      }
+      this.nextRunTime = nextRunTime || 'N/A';
+      for (i=0 ; i<runs.length; i++) {
+        status = runs[i].status;
+        if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
+          this.lastFinished = runs[i];
+          break;
+        }
+      }
+      if (this.lastFinished) {
+        lastRunDuration = this.lastFinished.end - this.lastFinished.start;
+        this.lastRunTime = moment.utc(lastRunDuration * 1000).format('HH:mm:ss');
+      } else {
+        this.lastRunTime = 'N/A';
+      }
+      var averageRunTime = DetailRunsStore.getStatistics().avgRunTime;
+      // We get time as seconds from backend. So multiplying it by 1000 to give moment.js in milliseconds.
+      if (averageRunTime) {
+        this.avgRunTime = moment.utc( averageRunTime * 1000 ).format('HH:mm:ss');
+      } else {
+        this.avgRunTime = 'N/A';
+      }
+      this.config = DetailNonRunsStore.getConfigJson();
+    };
+    this.setState();
+
+    this.pipelineType = DetailNonRunsStore.getPipelineType();
+    if (this.pipelineType === GLOBALS.etlBatch) {
+      params = angular.copy(DetailRunsStore.getParams());
+      params.scope = $scope;
+      PipelineDetailActionFactory.pollStatistics(
+        DetailRunsStore.getApi(),
+        params
+      );
+      PipelineDetailActionFactory.pollNextRunTime(
+        DetailRunsStore.getApi(),
+        DetailRunsStore.getParams()
+      );
+    }
 
     this.setAppStatus = function() {
       this.appStatus = DetailRunsStore.getStatus();
@@ -108,6 +157,8 @@ angular.module(PKG.name + '.feature.hydrator')
             );
       }
     };
+
     DetailRunsStore.registerOnChangeListener(this.setAppStatus.bind(this));
     DetailNonRunsStore.registerOnChangeListener(this.setScheduleStatus.bind(this));
+    DetailRunsStore.registerOnChangeListener(this.setState.bind(this));
   });

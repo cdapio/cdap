@@ -19,7 +19,7 @@ angular.module(PKG.name + '.feature.hydrator')
     this.HydratorService = HydratorService;
     this.setDefaults = function(app) {
       this.state = {
-        scheduleStatus: '',
+        scheduleStatus: null,
         name: app.name || '',
         type: app.type,
         description: app.description,
