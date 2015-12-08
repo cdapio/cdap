@@ -26,6 +26,7 @@ import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.common.cli.Arguments;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
@@ -37,7 +38,7 @@ import java.util.List;
  */
 public class GetDatasetLineageCommand extends AbstractCommand {
 
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private final LineageClient client;
 
   @Inject
