@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.common.discovery.ResolvingDiscoverable;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
+import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
 import com.google.common.base.Supplier;
@@ -89,6 +90,7 @@ public abstract class NettyRouterTestBase {
   protected static final String WEBAPP_SERVICE = Constants.Router.WEBAPP_DISCOVERY_NAME;
   protected static final String APP_FABRIC_SERVICE = Constants.Service.APP_FABRIC_HTTP;
   protected static final String WEB_APP_SERVICE_PREFIX = "webapp/";
+  protected static final int CONNECTION_IDLE_TIMEOUT_SECS = 2;
 
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTestBase.class);
   private static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -388,6 +390,17 @@ public abstract class NettyRouterTestBase {
     Assert.assertEquals(times, defaultServer1.getNumRequests() + defaultServer2.getNumRequests());
   }
 
+  @Test
+  public void testConnectionNoIdleTimeout() throws Exception {
+    // even though the handler will sleep for 500ms over the configured idle timeout before responding, the connection
+    // is not closed because the http request is in progress
+    long timeoutMillis = TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 500;
+    URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/timeout/" + timeoutMillis));
+    HttpURLConnection urlConnection = openURL(url);
+    urlConnection.getResponseCode();
+    urlConnection.disconnect();
+  }
+
   protected HttpURLConnection openURL(URL url) throws Exception {
     return (HttpURLConnection) url.openConnection();
   }
@@ -580,9 +593,18 @@ public abstract class NettyRouterTestBase {
         responder.sendStatus(HttpResponseStatus.OK);
       }
 
+      @GET
+      @Path("/v1/timeout/{timeout-millis}")
+      public void timeout(HttpRequest request, HttpResponder responder,
+                          @PathParam("timeout-millis") int timeoutMillis) throws InterruptedException {
+        numRequests.incrementAndGet();
+        TimeUnit.MILLISECONDS.sleep(timeoutMillis);
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
+
       @POST
       @Path("/v1/upload")
-      public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException, IOException {
+      public void upload(HttpRequest request, HttpResponder responder) throws IOException {
         ChannelBuffer content = request.getContent();
 
         int readableBytes;
