@@ -378,7 +378,6 @@ angular.module(PKG.name + '.commons')
       if ($scope.nodes.length === 0) { return; }
 
       var graphNodes = MyDAGFactory.getGraphLayout($scope.nodes, $scope.connections)._nodes;
-
       angular.forEach($scope.nodes, function (node) {
         var location = graphNodes[node.id];
         node._uiPosition = {

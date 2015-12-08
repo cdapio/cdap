@@ -126,7 +126,7 @@ angular.module(PKG.name + '.commons')
       graph.setDefaultEdgeLabel(function() { return {}; });
 
       nodes.forEach(function (node) {
-        graph.setNode(node.name, { label: node.label, width: 100, height: 100 });
+        graph.setNode(node.id, { label: node.label, width: 100, height: 100 });
       });
 
       connections.forEach(function (connection) {
