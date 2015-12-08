@@ -26,10 +26,15 @@ import java.util.concurrent.Callable;
  * stage name if it is set.
  */
 public class LogContext {
+  private static volatile boolean enabled = false;
   static final String STAGE = "cdap.etl.stage";
 
   private LogContext() {
 
+  }
+
+  public static void enable() {
+    enabled = true;
   }
 
   /**
@@ -43,11 +48,15 @@ public class LogContext {
    * @throws Exception if the command throws an exception
    */
   public static <T> T run(Callable<T> command, String stageName) throws Exception {
-    MDC.put(STAGE, stageName);
-    try {
+    if (enabled) {
+      MDC.put(STAGE, stageName);
+      try {
+        return command.call();
+      } finally {
+        MDC.remove(STAGE);
+      }
+    } else {
       return command.call();
-    } finally {
-      MDC.remove(STAGE);
     }
   }
 
@@ -63,18 +72,15 @@ public class LogContext {
    * @return the result of running the command
    */
   public static <T> T runUnchecked(Callable<T> command, String stageName) {
-    MDC.put(STAGE, stageName);
-    try {
+    if (enabled) {
+      MDC.put(STAGE, stageName);
       try {
-        return command.call();
-      } catch (Exception e) {
-        Throwables.propagateIfPossible(e);
-        // this shouldn't happen unless the caller is behaving badly and passes
-        // in a command that does throw a check exception
-        throw Throwables.propagate(e);
+        return runUnchecked(command);
+      } finally {
+        MDC.remove(STAGE);
       }
-    } finally {
-      MDC.remove(STAGE);
+    } else {
+      return runUnchecked(command);
     }
   }
 
@@ -88,18 +94,23 @@ public class LogContext {
    * @throws Exception if the command throws an exception
    */
   public static <T> T runWithoutLogging(Callable<T> command) throws Exception {
-    String stage = MDC.get(STAGE);
-    if (stage == null) {
-      return command.call();
-    } else {
+    if (enabled) {
+      String stage = MDC.get(STAGE);
+      if (stage == null) {
+        return command.call();
+      }
+
       MDC.remove(STAGE);
       try {
         return command.call();
       } finally {
         MDC.put(STAGE, stage);
       }
+    } else {
+      return command.call();
     }
   }
+
   /**
    * Run the specified command and leave out the stage name prefix for messages logged within the command.
    * Used to run CDAP system calls within a command passed to {@link #run(Callable, String)}.
@@ -111,30 +122,32 @@ public class LogContext {
    * @return the result of running the command
    */
   public static <T> T runWithoutLoggingUnchecked(Callable<T> command) {
-    String stage = MDC.get(STAGE);
+    if (enabled) {
+      String stage = MDC.get(STAGE);
 
-    if (stage == null) {
-      try {
-        return command.call();
-      } catch (Exception e) {
-        Throwables.propagateIfPossible(e);
-        // this shouldn't happen unless the caller is behaving badly and passes
-        // in a command that does throw a check exception
-        throw Throwables.propagate(e);
+      if (stage == null) {
+        return runUnchecked(command);
       }
-    } else {
+
       MDC.remove(STAGE);
       try {
-        return command.call();
-      } catch (Exception e) {
-        Throwables.propagateIfPossible(e);
-        // this shouldn't happen unless the caller is behaving badly and passes
-        // in a command that does throw a check exception
-        throw Throwables.propagate(e);
+        return runUnchecked(command);
       } finally {
         MDC.put(STAGE, stage);
       }
+    } else {
+      return runUnchecked(command);
     }
   }
 
+  private static <T> T runUnchecked(Callable<T> command) {
+    try {
+      return command.call();
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e);
+      // this shouldn't happen unless the caller is behaving badly and passes
+      // in a command that does throw a check exception
+      throw Throwables.propagate(e);
+    }
+  }
 }

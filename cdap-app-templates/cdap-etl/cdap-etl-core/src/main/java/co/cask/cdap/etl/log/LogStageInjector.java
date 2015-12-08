@@ -48,6 +48,8 @@ public class LogStageInjector {
     if (!initialized.compareAndSet(false, true)) {
       return;
     }
+
+    LogContext.enable();
     ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
     if (!(loggerFactory instanceof LoggerContext)) {
       LOG.warn("LoggerFactory is not a logback LoggerContext. ETLStage names will not be injected into log messages.");

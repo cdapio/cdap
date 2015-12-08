@@ -48,6 +48,7 @@ import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.common.TxLookupProvider;
+import co.cask.cdap.etl.log.LogContext;
 import co.cask.cdap.etl.log.LogStageInjector;
 import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.format.StructuredRecordStringConverter;
@@ -127,12 +128,15 @@ public class ETLWorker extends AbstractWorker {
     properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
     // Generate unique id for this app creation.
     properties.put(Constants.Realtime.UNIQUE_ID, String.valueOf(System.currentTimeMillis()));
+    properties.put(Constants.STAGE_LOGGING_ENABLED, String.valueOf(config.isStageLoggingEnabled()));
     setProperties(properties);
   }
 
   @Override
   public void initialize(final WorkerContext context) throws Exception {
-    LogStageInjector.start();
+    if (Boolean.valueOf(context.getSpecification().getProperty(Constants.STAGE_LOGGING_ENABLED))) {
+      LogStageInjector.start();
+    }
     super.initialize(context);
 
     Map<String, String> properties = context.getSpecification().getProperties();

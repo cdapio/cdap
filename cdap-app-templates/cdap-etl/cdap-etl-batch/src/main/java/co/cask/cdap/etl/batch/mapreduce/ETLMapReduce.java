@@ -149,12 +149,15 @@ public class ETLMapReduce extends AbstractMapReduce {
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
+    properties.put(Constants.STAGE_LOGGING_ENABLED, String.valueOf(config.isStageLoggingEnabled()));
     setProperties(properties);
   }
 
   @Override
   public void beforeSubmit(MapReduceContext context) throws Exception {
-    LogStageInjector.start();
+    if (Boolean.valueOf(context.getSpecification().getProperty(Constants.STAGE_LOGGING_ENABLED))) {
+      LogStageInjector.start();
+    }
     Job job = context.getHadoopJob();
     Configuration hConf = job.getConfiguration();
 
@@ -281,15 +284,15 @@ public class ETLMapReduce extends AbstractMapReduce {
 
     @Override
     public void initialize(MapReduceTaskContext<Object, Object> context) throws Exception {
-      LogStageInjector.start();
+      // get source, transform, sink ids from program properties
+      Map<String, String> properties = context.getSpecification().getProperties();
+      if (Boolean.valueOf(properties.get(Constants.STAGE_LOGGING_ENABLED))) {
+        LogStageInjector.start();
+      }
 
       // get the list of sinks, and the names of the outputs each sink writes to
       Context hadoopContext = context.getHadoopContext();
       Configuration hConf = hadoopContext.getConfiguration();
-
-      // get source, transform, sink ids from program properties
-      context.getSpecification().getProperties();
-      Map<String, String> properties = context.getSpecification().getProperties();
 
       Pipeline pipeline = GSON.fromJson(properties.get(Constants.PIPELINEID), Pipeline.class);
       // following should never happen

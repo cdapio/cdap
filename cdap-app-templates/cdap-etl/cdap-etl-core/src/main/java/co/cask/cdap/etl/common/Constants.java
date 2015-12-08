@@ -23,6 +23,7 @@ public final class Constants {
 
   public static final String ID_SEPARATOR = ":";
   public static final String PIPELINEID = "pipeline";
+  public static final String STAGE_LOGGING_ENABLED = "stage.logging.enabled";
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");
