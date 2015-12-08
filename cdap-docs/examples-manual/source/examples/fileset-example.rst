@@ -48,17 +48,22 @@ For example, the ``read`` method returns the contents of the requested file for 
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
     :language: java
-    :lines: 64-87
+    :lines: 64-89
     :dedent: 4
 
 It first instantiates the dataset specified by the first path parameter through its ``HttpServiceContext``.
 Note that, conceptually, this method is not limited to using only the two datasets of this application (*lines* and
 *counts*) |---| ``getDataset()`` can dynamically instantiate any existing dataset.
 
-The handler method then uses the ``getLocation()`` of the file set to obtain the location representing the requested
+The handler method then uses the ``getLocation()`` of the FileSet to obtain the location representing the requested
 file, and it opens an input stream for that location. ``Location`` is a file system abstraction from
 `Apache™ Twill® <http://twill.incubator.apache.org>`__; you can read more about its interface in the
 `Apache Twill Javadocs <http://twill.incubator.apache.org/apidocs/org/apache/twill/filesystem/Location.html>`__.
+
+Note that after obtaining the location from the FileSet, the handler discards that dataset through its context |---|
+it is not needed any more and therefore can be returned to the system. This is not strictly necessary: all datasets
+are eventually reclaimed by the system. However, explicitly discarding a dataset allows the system to reclaim it
+as soon as the current transaction ends, possibly freeing valuable resources.
 
 The ``write`` method uses an ``HttpContentConsumer`` to stream the body of the request to the location specified
 by the ``path`` query parameter. See the section on :ref:`Handling Large Requests <services-content-consumer>`
@@ -66,7 +71,7 @@ and the :ref:`Sport Results Example <examples-sport-results>` for a more detaile
 
 .. literalinclude:: /../../../cdap-examples/FileSetExample/src/main/java/co/cask/cdap/examples/fileset/FileSetService.java
      :language: java
-     :lines: 89-137
+     :lines: 91-141
      :dedent: 4
 
 MapReduce over Files

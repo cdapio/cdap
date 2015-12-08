@@ -22,6 +22,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionFailureException;
 import co.cask.tephra.TransactionSystemClient;
@@ -42,7 +43,8 @@ public final class BasicNotificationContext implements NotificationContext {
     // TODO this context is only used in system code. When we expose it to user code, we need to set the class loader,
     //      the owners, the runtime arguments and the metrics context.
     this.datasetContext = new MultiThreadDatasetCache(new SystemDatasetInstantiator(dsFramework, null, null),
-                                                      txSystemClient, namespaceId, null, null, null);
+                                                      txSystemClient, new NamespaceId(namespaceId.getId()),
+                                                      null, null, null);
   }
 
   @Override

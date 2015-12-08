@@ -30,6 +30,7 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.internal.app.runtime.distributed.LocalizeResource;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.base.Throwables;
@@ -70,7 +71,7 @@ public final class ClientSparkContext extends AbstractSparkContext {
 
     this.datasetCache = new SingleThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework, program.getClassLoader(), getOwners()),
-      txClient, program.getId().getNamespace(), runtimeArguments, getMetricsContext(), null);
+      txClient, new NamespaceId(program.getId().getNamespace().getId()), runtimeArguments, getMetricsContext(), null);
     this.transactionContext = datasetCache.newTransactionContext();
     this.pluginArchive = pluginArchive;
     this.resourcesToLocalize = new HashMap<>();
@@ -105,6 +106,16 @@ public final class ClientSparkContext extends AbstractSparkContext {
   @Override
   public synchronized <T extends Dataset> T getDataset(String name, Map<String, String> arguments) {
     return datasetCache.getDataset(name, arguments);
+  }
+
+  @Override
+  public void releaseDataset(Dataset dataset) {
+    datasetCache.releaseDataset(dataset);
+  }
+
+  @Override
+  public void discardDataset(Dataset dataset) {
+    datasetCache.discardDataset(dataset);
   }
 
   @Override

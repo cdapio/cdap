@@ -36,14 +36,13 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Implements both MapReduceContext and MapReduceTaskContext to support backwards compatability of Mapper/Reducer tasks
+ * Implements both MapReduceContext and MapReduceTaskContext to support backwards compatibility of Mapper/Reducer tasks
  * that implemented ProgramLifeCycle<MapReduceContext>.
  *
  * @param <KEY>   Type of output key.
@@ -98,6 +97,16 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   public <T extends Dataset> T getDataset(String name,
                                           Map<String, String> arguments) throws DatasetInstantiationException {
     return delegate.getDataset(name, arguments);
+  }
+
+  @Override
+  public void releaseDataset(Dataset dataset) {
+    delegate.releaseDataset(dataset);
+  }
+
+  @Override
+  public void discardDataset(Dataset dataset) {
+    delegate.discardDataset(dataset);
   }
 
   @Override

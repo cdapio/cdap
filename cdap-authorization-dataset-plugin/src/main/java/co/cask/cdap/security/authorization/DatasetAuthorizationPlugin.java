@@ -26,6 +26,7 @@ import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.MultiThreadDatasetCache;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -54,7 +55,8 @@ public class DatasetAuthorizationPlugin implements AuthorizationPlugin {
                                     final TransactionExecutorFactory txExecutorFactory,
                                     TransactionSystemClient txClient) {
     this.dsCache = new MultiThreadDatasetCache(
-      new SystemDatasetInstantiator(dsFramework, null, null), txClient, ACLDataset.ID.getNamespace(), null, null, null);
+      new SystemDatasetInstantiator(dsFramework, null, null), txClient,
+      new NamespaceId(ACLDataset.ID.getNamespace().getId()), null, null, null);
     this.acls =
       new Supplier<ACLDataset>() {
         @Override

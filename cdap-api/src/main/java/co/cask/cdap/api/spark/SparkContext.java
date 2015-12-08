@@ -22,7 +22,7 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.DatasetProvider;
 import co.cask.cdap.api.data.stream.Stream;
 import co.cask.cdap.api.data.stream.StreamBatchReadable;
 import co.cask.cdap.api.dataset.Dataset;
@@ -49,7 +49,7 @@ import javax.annotation.Nullable;
  * method acts.
  */
 @Beta
-public interface SparkContext extends RuntimeContext, DatasetContext, ClientLocalizationContext {
+public interface SparkContext extends RuntimeContext, DatasetProvider, ClientLocalizationContext {
   /**
    * @return The specification used to configure this {@link Spark} job instance.
    */

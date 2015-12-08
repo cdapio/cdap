@@ -20,12 +20,13 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.data.DatasetProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
@@ -41,31 +42,25 @@ import javax.annotation.Nullable;
  * into a started {@link TransactionContext}. Datasets acquired from this context are
  * distinct from any Datasets instantiated outside this class. Datasets are cached,
  * such that repeated calls to (@link #getDataset()} for the same dataset and arguments
- * return the same instance. Caching happens with weak references, that is, a dataset is
- * removed from the cache only if no other object is holding a reference to it.
+ * return the same instance.
  *
  * The cache also maintains a transaction context and adds all acquired datasets to that
- * context, so that they participate in the transactions executed with that context. For
- * the duration of a transaction, this context maintains strong references to all datasets
- * that participate, to ensure that none of them are garbage-collected before the transaction
- * is complete, and hence all datasets participate in the entire transaction. However, between
- * transactions, the cache and the context only hold weak references to the datasets, allowing
- * for garbage collection to claim orphaned dataset instances (see {@link
- * co.cask.cdap.data2.dataset2.tx.WeakReferencePromotingTransactionContext}).
+ * context, so that they participate in the transactions executed with that context. If a
+ * dataset is dismissed during the course of a transaction, then this context delays the
+ * dismissal until the transaction is complete.
  *
  * Optionally, this cache can have a set of static datasets that are added to every
- * transaction context created by the cache. Static datasets are held with strong references,
- * so that they never get garbage-collected.
+ * transaction context created by the cache. Static datasets cannot be dismissed.
  *
  * Also, transaction-aware "datasets" that were not created by this DynamicDatasetCache,
  * can be added to the transaction context. This is useful for transaction-aware's that
  * do not implement a Dataset (such as queue consumers etc.).
  */
-public abstract class DynamicDatasetCache implements DatasetContext, Supplier<TransactionContext> {
+public abstract class DynamicDatasetCache implements DatasetProvider, Supplier<TransactionContext> {
 
   protected final SystemDatasetInstantiator instantiator;
   protected final TransactionSystemClient txClient;
-  protected final Id.Namespace namespace;
+  protected final NamespaceId namespace;
   protected final Map<String, String> runtimeArguments;
   protected final MetricsContext metricsContext;
 
@@ -73,7 +68,7 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
    * Create a dynamic dataset factory.
    *
    * @param txClient the transaction system client to use for new transaction contexts
-   * @param namespace the {@link Id.Namespace} in which all datasets are instantiated
+   * @param namespace the {@link NamespaceId} in which all datasets are instantiated
    * @param runtimeArguments all runtime arguments that are available to datasets in the context. Runtime arguments
    *                         are expected to be scoped so that arguments for one dataset do not override arguments
    *                         of other datasets.
@@ -82,7 +77,7 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
    */
   public DynamicDatasetCache(SystemDatasetInstantiator instantiator,
                              TransactionSystemClient txClient,
-                             Id.Namespace namespace,
+                             NamespaceId namespace,
                              Map<String, String> runtimeArguments,
                              @Nullable MetricsContext metricsContext) {
     this.instantiator = instantiator;
@@ -127,6 +122,11 @@ public abstract class DynamicDatasetCache implements DatasetContext, Supplier<Tr
     } finally {
       ClassLoaders.setContextClassLoader(currentClassLoader);
     }
+  }
+
+  @Override
+  public void releaseDataset(Dataset dataset) {
+    discardDataset(dataset);
   }
 
   /**

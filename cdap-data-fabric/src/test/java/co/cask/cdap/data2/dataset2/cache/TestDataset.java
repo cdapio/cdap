@@ -32,12 +32,28 @@ public class TestDataset extends AbstractDataset implements Comparable<TestDatas
   private final String key;
   private final String value;
 
+  public static String generateSystemProperty(String name, String key, String value, String operation) {
+    return String.format("TestDataset.%s.%s.%s.%s", name, key, value, operation);
+  }
+
+  private void setSystemProperty(String operation, String valueToSet) {
+    String prop = generateSystemProperty(getName(), key, value, operation);
+    System.setProperty(prop, valueToSet);
+  }
+
+  private void clearSystemProperty(String operation) {
+    String prop = generateSystemProperty(getName(), key, value, operation);
+    System.clearProperty(prop);
+  }
+
   public TestDataset(DatasetSpecification spec, KeyValueTable kv, Map<String, String> args) {
     super(spec.getName(), kv);
     this.kvTable = kv;
     this.arguments = ImmutableSortedMap.copyOf(args);
     this.key = arguments.get("key") == null ? "key" : arguments.get("key");
     this.value = arguments.get("value") == null ? "value" : arguments.get("value");
+    clearSystemProperty("tx");
+    clearSystemProperty("close");
   }
 
   public void write() throws Exception {
@@ -62,13 +78,19 @@ public class TestDataset extends AbstractDataset implements Comparable<TestDatas
 
   @Override
   public void startTx(Transaction tx) {
-    System.setProperty("testDataset." + getName() + ".tx", "" + tx.getWritePointer());
+    setSystemProperty("tx", Long.toString(tx.getWritePointer()));
     super.startTx(tx);
   }
 
   @Override
+  public boolean commitTx() throws Exception {
+    clearSystemProperty("tx");
+    return super.commitTx();
+  }
+
+  @Override
   public boolean rollbackTx() throws Exception {
-    System.clearProperty("testDataset." + getName() + ".tx");
+    clearSystemProperty("tx");
     return super.rollbackTx();
   }
 
@@ -92,5 +114,10 @@ public class TestDataset extends AbstractDataset implements Comparable<TestDatas
       return result;
     }
     return Integer.compare(hashCode(), other.hashCode());
+  }
+
+  @Override
+  public void close() {
+    setSystemProperty("close", Integer.toString(System.identityHashCode(this)));
   }
 }

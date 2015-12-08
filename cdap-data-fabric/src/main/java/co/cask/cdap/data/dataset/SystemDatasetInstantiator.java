@@ -26,6 +26,7 @@ import co.cask.cdap.data2.datafabric.dataset.type.DirectoryClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.DatasetId;
 import com.google.common.base.Objects;
 
 import java.io.Closeable;
@@ -77,7 +78,13 @@ public class SystemDatasetInstantiator implements Closeable {
   }
 
   @SuppressWarnings("unchecked")
-  public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId, Map<String, String> arguments)
+  public <T extends Dataset> T getDataset(DatasetId datasetId, Map<String, String> arguments)
+    throws DatasetInstantiationException {
+    return getDataset((Id.DatasetInstance) datasetId.toId(), arguments);
+  }
+
+  @SuppressWarnings("unchecked")
+    public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId, Map<String, String> arguments)
     throws DatasetInstantiationException {
 
     T dataset;

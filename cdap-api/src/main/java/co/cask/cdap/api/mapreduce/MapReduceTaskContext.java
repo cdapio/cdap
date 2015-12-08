@@ -20,7 +20,7 @@ import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
 import co.cask.cdap.api.TaskLocalizationContext;
 import co.cask.cdap.api.annotation.Beta;
-import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.DatasetProvider;
 import co.cask.cdap.api.plugin.PluginContext;
 import co.cask.cdap.api.workflow.Workflow;
 import co.cask.cdap.api.workflow.WorkflowToken;
@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
  * @param <VALUEOUT> output value type
  */
 @Beta
-public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, DatasetContext,
+public interface MapReduceTaskContext<KEYOUT, VALUEOUT> extends RuntimeContext, DatasetProvider,
   ServiceDiscoverer, PluginContext, TaskLocalizationContext {
 
   /**

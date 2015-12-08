@@ -57,6 +57,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.WorkflowStatistics;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.templates.AdapterDefinition;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -135,7 +136,7 @@ public class DefaultStore implements Store {
     this.dsFramework = framework;
     this.dsCache = new MultiThreadDatasetCache(
       new SystemDatasetInstantiator(framework, null, null), txClient,
-      Id.Namespace.SYSTEM, ImmutableMap.<String, String>of(), null, null);
+      NamespaceId.SYSTEM, ImmutableMap.<String, String>of(), null, null);
     this.apps =
       new Supplier<AppMetadataStore>() {
         @Override
