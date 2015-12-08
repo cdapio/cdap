@@ -15,12 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailCanvasController', function(rPipelineDetail, BottomPanelStore, NodesActionsFactory, HydratorService, NodesStore, ConfigStore, PipelineNodeConfigActionFactory, DetailNonRunsStore) {
+  .controller('HydratorDetailCanvasController', function(rPipelineDetail, BottomPanelStore, NodesActionsFactory, HydratorService, NodesStore, ConfigStore, PipelineNodeConfigActionFactory, DetailNonRunsStore, MetricsStore) {
     this.ConfigStore = ConfigStore;
     this.NodesStore = NodesStore;
     this.DetailNonRunsStore = DetailNonRunsStore;
     this.PipelineNodeConfigActionFactory = PipelineNodeConfigActionFactory;
     this.HydratorService = HydratorService;
+    this.MetricsStore = MetricsStore;
 
     try{
       rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
@@ -60,6 +61,26 @@ angular.module(PKG.name + '.feature.hydrator')
     this.generateSchemaOnEdge = function (sourceId) {
       return this.HydratorService.generateSchemaOnEdge(sourceId);
     };
+
+    function convertMetricsArrayIntoObject(arr, nodes) {
+      var obj = {};
+
+      angular.forEach(arr, function (item) {
+        obj[nodes[item.stage - 1].id] = {
+          recordsOut: item.recordsOut,
+          recordsIn: item.recordsIn
+        };
+      });
+
+      return obj;
+    }
+    var nodes = this.NodesStore.getNodes();
+    this.metrics = convertMetricsArrayIntoObject(this.MetricsStore.getMetrics(), nodes);
+
+    this.MetricsStore.registerOnChangeListener(function () {
+      this.metrics = convertMetricsArrayIntoObject(this.MetricsStore.getMetrics(), nodes);
+    }.bind(this));
+
 
     NodesStore.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
   });

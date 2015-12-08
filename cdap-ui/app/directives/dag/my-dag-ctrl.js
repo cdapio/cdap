@@ -25,12 +25,33 @@ angular.module(PKG.name + '.commons')
     var transformSourceSettings = angular.copy(MyDAGFactory.getSettings(false).transformSource);
     var transformSinkSettings = angular.copy(MyDAGFactory.getSettings(false).transformSink);
 
+    var SHOW_METRICS_THRESHOLD = 0.8;
+
+    var labels = [];
+
+    var metricsLabel = [
+      [ 'Custom', {
+        create: function (label) {
+          labels.push(label);
+          return angular.element('<span></span>');
+        },
+        location: [2, 0],
+        id: 'metricLabel'
+      }]
+    ];
+
+    if ($scope.showMetrics) {
+      sourceSettings.overlays = metricsLabel;
+      transformSourceSettings.overlays = metricsLabel;
+    }
+
     var dragged = false;
     var canvasDragged = false;
 
     vm.isDisabled = $scope.isDisabled;
 
     var popovers = [];
+    var nodePopovers = {};
 
     vm.scale = 1.0;
 
@@ -95,13 +116,81 @@ angular.module(PKG.name + '.commons')
         });
 
         setZoom(vm.scale, vm.instance);
-      });
 
+        // Process metrics data
+        if ($scope.showMetrics) {
+
+          angular.forEach($scope.nodes, function (node) {
+            var elem = angular.element(document.getElementById(node.id)).children();
+
+            var scope = $rootScope.$new();
+
+            scope.data = {
+              nodeName: node.name
+            };
+
+            var popover = $popover(elem, {
+              trigger: 'manual',
+              placement: 'auto right',
+              target: angular.element(elem[0]),
+              templateUrl: $scope.nodePopoverTemplate,
+              container: 'body',
+              scope: scope
+            });
+
+            nodePopovers[node.id] = {
+              scope: scope,
+              popover: popover
+            };
+
+            $scope.$on('$destroy', function () {
+              scope.$destroy();
+            });
+
+          });
+
+          if (vm.scale <= SHOW_METRICS_THRESHOLD) {
+            hideMetricsLabel();
+          }
+
+          $scope.$watch('metricsData', function () {
+            angular.forEach($scope.metricsData, function (value, key) {
+              nodePopovers[key].scope.data.metrics = value;
+            });
+
+            angular.forEach(labels, function (endpoint) {
+              var label = endpoint.getOverlay('metricLabel');
+              if ($scope.metricsData[endpoint.elementId] === null || $scope.metricsData[endpoint.elementId] === undefined) {
+                return;
+              }
+
+              angular.element(label.getElement())
+                .text($scope.metricsData[endpoint.elementId].recordsOut);
+            });
+          }, true);
+        }
+
+      });
     }
+
+    vm.nodeMouseEnter = _.debounce(function (node) {
+      if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
+      nodePopovers[node.id].popover.show();
+    }, 300);
+
+    vm.nodeMouseLeave = function (node) {
+      if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
+      nodePopovers[node.id].popover.hide();
+    };
 
     vm.zoomIn = function () {
       closeAllPopovers();
       vm.scale += 0.1;
+
+      if (vm.scale >= SHOW_METRICS_THRESHOLD) {
+        showMetricsLabel();
+      }
+
       setZoom(vm.scale, vm.instance);
     };
 
@@ -109,9 +198,25 @@ angular.module(PKG.name + '.commons')
       closeAllPopovers();
       if (vm.scale <= 0.2) { return; }
 
+      if (vm.scale <= SHOW_METRICS_THRESHOLD) {
+        hideMetricsLabel();
+      }
+
       vm.scale -= 0.1;
       setZoom(vm.scale, vm.instance);
     };
+
+    function showMetricsLabel() {
+      angular.forEach(labels, function (label) {
+        label.getOverlay('metricLabel').show();
+      });
+    }
+
+    function hideMetricsLabel() {
+      angular.forEach(labels, function (label) {
+        label.getOverlay('metricLabel').hide();
+      });
+    }
 
 
     /**
@@ -188,15 +293,11 @@ angular.module(PKG.name + '.commons')
       NodesActionsFactory.setConnections(connections);
     }
 
-    function connectionClick (connection) {
-      if (!connection) {
-        return;
-      }
+    function addConnection (connectionObj) {
+      var connection = connectionObj.connection;
 
       var label = angular.element(connection.getOverlay('label').getElement());
       var scope = $rootScope.$new();
-
-      scope.data = $scope.connectionPopoverData().call($scope.context, connection.sourceId, connection.targetId);
 
       var popover = $popover(label, {
         trigger: 'manual',
@@ -209,13 +310,17 @@ angular.module(PKG.name + '.commons')
 
       popovers.push(popover);
 
-      $timeout(function() {
+      connection.bind('click', function (conn, event) {
+        event.stopPropagation();
+        scope.data = $scope.connectionPopoverData().call($scope.context, connection.sourceId, connection.targetId);
         popover.show();
       });
 
       $scope.$on('$destroy', function () {
         scope.$destroy();
       });
+
+      formatConnections();
     }
 
     function closeAllPopovers() {
@@ -248,11 +353,8 @@ angular.module(PKG.name + '.commons')
         }
       });
 
-      vm.instance.bind('connection', formatConnections);
+      vm.instance.bind('connection', addConnection);
       vm.instance.bind('connectionDetached', formatConnections);
-
-      vm.instance.bind('click', connectionClick);
-
 
 
       // $scope.$watchCollection('nodes', function () {
@@ -326,7 +428,7 @@ angular.module(PKG.name + '.commons')
         canvasDragged = false;
         return;
       }
-
+      closeAllPopovers();
       vm.instance.clearDragSelection();
       angular.forEach($scope.nodes, function (node) {
         node.selected = false;
@@ -450,6 +552,7 @@ angular.module(PKG.name + '.commons')
 
 
     $scope.$on('$destroy', function () {
+      closeAllPopovers();
       NodesActionsFactory.resetNodesAndConnections();
       NodesStore.reset();
     });

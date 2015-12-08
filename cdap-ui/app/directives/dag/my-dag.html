@@ -70,7 +70,9 @@
                id="{{plugin.id}}"
                ng-click="MyDAGController.onNodeClick($event, plugin)"
                ng-class="{'selected': plugin.selected}">
-          <div class="node">
+          <div class="node"
+            ng-mouseenter="MyDAGController.nodeMouseEnter(plugin)"
+            ng-mouseleave="MyDAGController.nodeMouseLeave(plugin)">
             <div class="error-node-notification"
                  ng-if="plugin.error"
                  tooltip="{{plugin.error.message}}"
