@@ -38,9 +38,6 @@ class HydratorService {
     let transforms = angular.copy(pipeline.config.transforms)
       .map( node => {
         node.type = artifact.transform;
-        if (!node.id) {
-          node.id = node.name + '-' + node.type + '-' + this.uuid.v4();
-        }
         node.label = node.label || node.name;
         node.icon = this.MyDAGFactory.getIcon(node.name);
         return node;
@@ -48,51 +45,42 @@ class HydratorService {
     let sinks = angular.copy(pipeline.config.sinks)
       .map( node => {
         node.type = artifact.sink;
-        if (!node.id) {
-          node.id = node.name + '-' + node.type + '-' + this.uuid.v4();
-        }
-        node.label =node.label ||  node.name;
         node.icon = this.MyDAGFactory.getIcon(node.name);
         return node;
       });
 
     source.type = artifact.source;
     source.icon = this.MyDAGFactory.getIcon(source.name);
-    source.label = source.label || source.name;
-    if (!source.id) {
-      source.id = source.name + '-' + source.type + '-' + this.uuid.v4();
-    }
     // replace with backend id
     nodes.push(source);
     nodes = nodes.concat(transforms);
     nodes = nodes.concat(sinks);
 
-
     let prevId;
 
     if (transforms.length === 0) {
-      prevId = source.id;
+      prevId = source.name;
     } else {
-      prevId = transforms[0].id;
+      prevId = transforms[0].name;
       // Set Connections
       connections.push({
-        source: source.id,
-        target: transforms[0].id
+        source: source.name,
+        target: transforms[0].name
       });
     }
 
     for (let i = 1; i < transforms.length; i++) {
       connections.push({
         source: prevId,
-        target: transforms[i].id
+        target: transforms[i].name
       });
-      prevId = transforms[i].id;
+      prevId = transforms[i].name;
     }
 
     for (let i = 0; i < sinks.length; i++) {
       connections.push({
         source: prevId,
-        target: sinks[i].id
+        target: sinks[i].name
       });
     }
 
@@ -100,8 +88,8 @@ class HydratorService {
     var graph = this.MyDAGFactory.getGraphLayout(nodes, connections);
     angular.forEach(nodes, function (node) {
       node._uiPosition = {
-        'top': graph._nodes[node.id].y + 'px' ,
-        'left': graph._nodes[node.id].x + 'px'
+        'top': graph._nodes[node.name].y + 'px' ,
+        'left': graph._nodes[node.name].x + 'px'
       };
     });
 
