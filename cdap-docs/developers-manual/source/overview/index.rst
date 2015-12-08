@@ -16,7 +16,7 @@ Cask Data Application Platform Overview
    
     Anatomy of a Big Data Application <anatomy>
     Modes and Components <modes>
-    CDAP Abstractions <abstractions>
+    Abstractions <abstractions>
     Programming Interfaces <interfaces>
 
 

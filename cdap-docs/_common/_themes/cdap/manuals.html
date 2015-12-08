@@ -33,7 +33,8 @@
     {%- for manual in manuals %}
       {%- set doc = '' %}{% set docb = '' %}
       {%- set title = titles[loop.index0] %}
-      {%- if title == html_short_title_toc or manual == pagename %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
+      {%- if (title == html_short_title_toc) and (pagename == 'index') %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
+      {%- if manual == pagename %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
       {%- if loop.first and html_short_title_toc == CDAP_DOCS and pagename == 'index' %}{% set doc = '<b>' %}{% set docb = '</b>' %}{%- endif %}
       <li><div class="{{ icons[loop.index0] }}"></div>{{ doc }}<a href="{{ hrefs[loop.index0] }}" rel="nofollow">{{ title }}</a>{{ docb }}</li>
     {%- endfor %}

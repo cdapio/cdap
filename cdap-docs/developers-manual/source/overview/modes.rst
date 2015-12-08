@@ -8,8 +8,8 @@ CDAP Modes and Components
 
 .. _modes-data-application-platform:
 
-CDAP Runtime Modes
-==================
+Runtime Modes
+=============
 The Cask Data Application Platform (CDAP) can be run in different modes:
 **Distributed CDAP** for staging and production,
 **Standalone CDAP** for testing and development on a developer's laptop,
@@ -83,8 +83,8 @@ See :ref:`test-cdap` for information and examples on using this mode.
 - Uses Java Threads as the processing abstraction (via Apache Twill)
 
 
-CDAP Components
-===============
+Components
+==========
 This diagram illustrates the components that comprise Distributed CDAP and shows some of their interactions,
 with CDAP System components in orange and non-system components in yellow and grey:
 
@@ -94,16 +94,16 @@ with CDAP System components in orange and non-system components in yellow and gr
 
 CDAP consists chiefly of these components:
 
-- **The Router** is the only public access point into CDAP for external clients. It forwards client requests to
+- The **Router** is the only public access point into CDAP for external clients. It forwards client requests to
   the appropriate system service or application. In a secure setup, the router also performs authentication;
   it is then complemented by an authentication service that allows clients to obtain access tokens for CDAP.
   
-- **The Master** controls and manages all services and applications.
+- The **Master** controls and manages all services and applications.
 
 - **System Services** provide vital platform features such datasets, transactions, service discovery logging,
   and metrics collection. System services run in application containers.
   
-- **Application containers** provide abstraction and isolation for execution of application code (and, as a
+- **Application Containers** provide abstraction and isolation for execution of application code (and, as a
   special case, system services). Application containers scale linearly and elastically with the underlying
   infrastructure.
 
