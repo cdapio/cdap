@@ -34,6 +34,7 @@ public final class FormatSpecification {
   private final Map<String, String> settings;
 
   // for Gson deserialization, to make sure settings is an empty map and not null.
+  @SuppressWarnings("unused")
   private FormatSpecification() {
     this(null, null, Collections.<String, String>emptyMap());
   }

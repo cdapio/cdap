@@ -21,18 +21,23 @@ import co.cask.cdap.api.dataset.DatasetAdmin;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.module.DatasetModule;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.data.dataset.SystemDatasetInstantiatorFactory;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.type.DatasetClassLoaderProvider;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -47,13 +52,16 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   private final LineageWriter lineageWriter;
   private final ProgramContext programContext = new ProgramContext();
   private final MetadataStore metadataStore;
+  private final SystemDatasetInstantiatorFactory dsInstantiatorFactory;
 
   @Inject
   LineageWriterDatasetFramework(@Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
-                                LineageWriter lineageWriter, MetadataStore metadataStore) {
+                                LineageWriter lineageWriter, MetadataStore metadataStore,
+                                LocationFactory locationFactory, CConfiguration cConf) {
     this.delegate = datasetFramework;
     this.lineageWriter = lineageWriter;
     this.metadataStore = metadataStore;
+    this.dsInstantiatorFactory = new SystemDatasetInstantiatorFactory(locationFactory, datasetFramework, cConf);
   }
 
   @Override
@@ -91,12 +99,35 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   public void addInstance(String datasetTypeName, Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
     delegate.addInstance(datasetTypeName, datasetInstanceId, props);
+    // add system metadata for user datasets only
+    if (!isUserDataset(datasetInstanceId)) {
+      return;
+    }
+    AbstractSystemMetadataWriter systemMetadataWriter =
+      new DatasetSystemMetadataWriter(metadataStore, dsInstantiatorFactory, datasetInstanceId, props, datasetTypeName);
+    systemMetadataWriter.write();
+  }
+
+  //TODO: Improve?
+  private boolean isUserDataset(Id.DatasetInstance datasetInstanceId) {
+    return !Id.Namespace.SYSTEM.equals(datasetInstanceId.getNamespace()) &&
+      !"system.queue.config".equals(datasetInstanceId.getId()) &&
+      !datasetInstanceId.getId().startsWith("system.sharded.queue") &&
+      !datasetInstanceId.getId().startsWith("system.queue") &&
+      !datasetInstanceId.getId().startsWith("system.stream");
   }
 
   @Override
   public void updateInstance(Id.DatasetInstance datasetInstanceId, DatasetProperties props)
     throws DatasetManagementException, IOException {
     delegate.updateInstance(datasetInstanceId, props);
+    // add system metadata for user datasets only
+    if (!isUserDataset(datasetInstanceId)) {
+      return;
+    }
+    AbstractSystemMetadataWriter systemMetadataWriter =
+      new DatasetSystemMetadataWriter(metadataStore, dsInstantiatorFactory, datasetInstanceId, props, null);
+    systemMetadataWriter.write();
   }
 
   @Override
