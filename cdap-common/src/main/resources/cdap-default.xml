@@ -1184,8 +1184,7 @@
     <name>router.connection.timeout.secs</name>
     <value>15</value>
     <description>
-      <!-- TODO: make it more clear that in-progress http requests aren't timed out-->
-      The number of seconds after which idle router connections are closed
+      The number of seconds after an http request completes that idle router connections are closed
     </description>
   </property>
 

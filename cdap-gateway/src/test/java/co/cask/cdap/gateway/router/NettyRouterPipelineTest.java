@@ -198,7 +198,7 @@ public class NettyRouterPipelineTest {
 
       ByteStreams.copy(Locations.newInputSupplier(programJar), urlConn.getOutputStream());
       Assert.assertEquals(200, urlConn.getResponseCode());
-      // TODO: close the InputStream
+      urlConn.getInputStream().close();
       urlConn.disconnect();
     }
   }

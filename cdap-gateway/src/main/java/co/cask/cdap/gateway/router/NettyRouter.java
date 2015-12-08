@@ -93,8 +93,8 @@ public class NettyRouter extends AbstractIdleService {
   private final boolean sslEnabled;
   private final SSLHandlerFactory sslHandlerFactory;
   private final int connectionTimeout;
-  private final Timer timer;
 
+  private Timer timer;
   private ServerBootstrap serverBootstrap;
   private ClientBootstrap clientBootstrap;
   private DiscoveryServiceClient discoveryServiceClient;
@@ -149,7 +149,6 @@ public class NettyRouter extends AbstractIdleService {
     }
     this.connectionTimeout = cConf.getInt(Constants.Router.CONNECTION_TIMEOUT_SECS);
     LOG.info("Using connection timeout: {}", connectionTimeout);
-    this.timer = new HashedWheelTimer(Threads.newDaemonThreadFactory("idle-event-generator-timer"));
     LOG.info("Service to Port Mapping - {}", this.serviceToPortMap);
   }
 
@@ -165,6 +164,7 @@ public class NettyRouter extends AbstractIdleService {
     };
 
     tokenValidator.startAndWait();
+    timer = new HashedWheelTimer(Threads.newDaemonThreadFactory("router-idle-event-generator-timer"));
     bootstrapClient(connectionTracker);
 
     bootstrapServer(connectionTracker);

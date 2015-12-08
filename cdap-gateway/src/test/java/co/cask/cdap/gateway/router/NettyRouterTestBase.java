@@ -394,7 +394,7 @@ public abstract class NettyRouterTestBase {
   public void testConnectionNoIdleTimeout() throws Exception {
     // even though the handler will sleep for 500ms over the configured idle timeout before responding, the connection
     // is not closed because the http request is in progress
-    long timeoutMillis = TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) - 500;
+    long timeoutMillis = TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 500;
     URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/timeout/" + timeoutMillis));
     HttpURLConnection urlConnection = openURL(url);
     urlConnection.getResponseCode();

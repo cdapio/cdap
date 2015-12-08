@@ -100,10 +100,12 @@ public class HttpIdleStateHandler extends SimpleChannelHandler
    * handler.  You should not call this method if the {@link Timer} is in use
    * by other objects.
    */
+  @Override
   public void releaseExternalResources() {
     timer.stop();
   }
 
+  @Override
   public void beforeAdd(ChannelHandlerContext ctx) throws Exception {
     if (ctx.getPipeline().isAttached()) {
       // channelOpen event has been fired already, which means
@@ -116,14 +118,17 @@ public class HttpIdleStateHandler extends SimpleChannelHandler
     }
   }
 
+  @Override
   public void afterAdd(ChannelHandlerContext ctx) throws Exception {
     // NOOP
   }
 
+  @Override
   public void beforeRemove(ChannelHandlerContext ctx) throws Exception {
     destroy(ctx);
   }
 
+  @Override
   public void afterRemove(ChannelHandlerContext ctx) throws Exception {
     // NOOP
   }
@@ -197,11 +202,11 @@ public class HttpIdleStateHandler extends SimpleChannelHandler
     // See: https://github.com/netty/netty/issues/143
     synchronized (state) {
       switch (state.state) {
-        case 1:
-        case 2:
+        case INITIALIZED:
+        case DESTROYED:
           return;
       }
-      state.state = 1;
+      state.state = State.SetupState.INITIALIZED;
     }
 
     state.lastMessageTime = System.currentTimeMillis();
@@ -214,10 +219,10 @@ public class HttpIdleStateHandler extends SimpleChannelHandler
   private static void destroy(ChannelHandlerContext ctx) {
     State state = state(ctx);
     synchronized (state) {
-      if (state.state != 1) {
+      if (state.state != State.SetupState.INITIALIZED) {
         return;
       }
-      state.state = 2;
+      state.state = State.SetupState.DESTROYED;
     }
 
     if (state.requestIdleTimeout != null) {
@@ -240,7 +245,7 @@ public class HttpIdleStateHandler extends SimpleChannelHandler
 
   private void fireChannelIdle(final ChannelHandlerContext ctx) {
     ctx.getPipeline().execute(new Runnable() {
-
+      @Override
       public void run() {
         try {
           ctx.getChannel().close();
@@ -259,6 +264,7 @@ public class HttpIdleStateHandler extends SimpleChannelHandler
       this.ctx = ctx;
     }
 
+    @Override
     public void run(Timeout timeout) throws Exception {
       if (timeout.isCancelled() || !ctx.getChannel().isOpen()) {
         return;
@@ -289,8 +295,10 @@ public class HttpIdleStateHandler extends SimpleChannelHandler
   }
 
   private static final class State {
-    // 0 - none, 1 - initialized, 2 - destroyed
-    int state;
+    private enum SetupState {
+      NONE, INITIALIZED, DESTROYED
+    }
+    SetupState state = SetupState.NONE;
 
     volatile Timeout requestIdleTimeout;
     volatile long lastMessageTime;
