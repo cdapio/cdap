@@ -30,16 +30,6 @@
   <name>CDAP ETL App Template Library</name>
   <packaging>jar</packaging>
 
-  <properties>
-    <!-- properties for script build step that creates the config files for the artifacts -->
-    <widgets.dir>widgets</widgets.dir>
-    <docs.dir>docs</docs.dir>
-    <etl.versionRange>[${project.version},${project.version}]</etl.versionRange>
-    <!-- this is here because project.basedir evaluates to null in the script build step -->
-    <main.basedir>${project.basedir}</main.basedir>
-  </properties>
-
-
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>
@@ -200,95 +190,6 @@
             <phase>package</phase>
             <goals>
               <goal>bundle</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>1.7</version>
-        <executions>
-          <!-- Create the config file for artifact which can be used to deploy the artifact.
-               Sets the parents field to system:cdap-etl-batch and system:cdap-etl-realtime with whatever
-               version range is set in the etl.versionRange property.
-               also sets a widget and doc property for each file contained in the widgets and docs directories. -->
-          <execution>
-            <id>create-artifact-config</id>
-            <phase>prepare-package</phase>
-            <configuration>
-              <target>
-                <script language="javascript"> <![CDATA[
-                  importClass(java.io.File);
-                  importClass(java.io.FileWriter);
-                  importClass(java.io.BufferedWriter);
-                  importClass(java.nio.file.Files);
-                  importClass(java.nio.charset.StandardCharsets);
-
-                  // for some reason, project.basedir evaluates to null if we just get the property here.
-                  // so we set main.basedir to project.basedir in the pom properties, then main.basedir is used here
-                  // where it evaluates correctly for whatever reason
-                  var baseDir = project.getProperty("main.basedir");
-                  var targetDir = project.getProperty("project.build.directory");
-                  var artifactId = project.getProperty("project.artifactId");
-                  var version = project.getProperty("project.version");
-
-                  var cfgFile = new File(targetDir, artifactId + "-" + version + ".json");
-                  if (!cfgFile.exists()) {
-                    cfgFile.createNewFile();
-                  }
-
-                  var etlRange = project.getProperty("etl.versionRange");
-                  var config = {
-                    "parents": [ "system:cdap-etl-batch" + etlRange, "system:cdap-etl-realtime" + etlRange, "system:cdap-data-quality" + etlRange ],
-                    "properties": {}
-                  }
-
-                  // look in widgets directory for widget config for each plugin
-                  var widgetsDir = new File(baseDir, project.getProperty("widgets.dir"));
-                  if (widgetsDir.isDirectory()) {
-                    var widgetsFiles = widgetsDir.listFiles();
-                    for (i = 0; i < widgetsFiles.length; i++) {
-                      var widgetsFile = widgetsFiles[i];
-                      if (widgetsFile.isFile()) {
-                        var contents = new java.lang.String(Files.readAllBytes(widgetsFile.toPath()), StandardCharsets.UTF_8);
-                        var contentsAsJson = JSON.parse(contents);
-                        var propertyName = "widgets." + widgetsFile.getName();
-                        // if the filename ends with .json, strip the .json
-                        if (propertyName.indexOf(".json", propertyName.length - 5) !== -1) {
-                          propertyName = propertyName.slice(0, -5);
-                        }
-                        config.properties[propertyName] = JSON.stringify(contentsAsJson);
-                      }
-                    }
-                  }
-
-                  // look in the docs directory for docs for each plugin
-                  var docsDir = new File(baseDir, project.getProperty("docs.dir"));
-                  if (docsDir.isDirectory()) {
-                    var docFiles = docsDir.listFiles();
-                    for (i = 0; i < docFiles.length; i++) {
-                      var docFile = docFiles[i];
-                      if (docFile.isFile()) {
-                        var contents = new java.lang.String(Files.readAllBytes(docFile.toPath()), StandardCharsets.UTF_8);
-                        var propertyName = "doc." + docFile.getName();
-                        // if the filename ends with .md, strip the extension
-                        if (propertyName.indexOf(".md", propertyName.length - 3) !== -1) {
-                          propertyName = propertyName.slice(0, -3);
-                        }
-                        config.properties[propertyName] = contentsAsJson;
-                      }
-                    }
-                  }
-
-                  var fw = new BufferedWriter(FileWriter(cfgFile.getAbsoluteFile()));
-                  fw.write(JSON.stringify(config, null, 2));
-                  fw.close();
-                ]]></script>
-              </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
             </goals>
           </execution>
         </executions>
