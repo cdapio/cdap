@@ -65,8 +65,8 @@ parsing. The list is zero-based, as can be seen in this fragment of a CDAP CLI c
 
   settings "mapping=0:ticker,1:num_traded,2:price"
 
-In this example, the *0* object is mapped to the *ticker* field, the *1* object is mapped
-to the *num_traded* field, etc.
+In this example, ``0:ticker`` means map the 0th column of the CSV row to the name *ticker*, 
+the 1st column to the name *num_traded*, and so on.
 
 
 Stream View Lifecycle
