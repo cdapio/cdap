@@ -17,6 +17,7 @@ package co.cask.cdap.proto.id;
 
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.codec.EntityIdTypeAdapter;
 import co.cask.cdap.proto.codec.IdTypeAdapter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -36,6 +37,7 @@ public class EntityIdTest {
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Id.class, new IdTypeAdapter())
+    .registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())
     .create();
 
   private final List<? extends EntityId> ids = ImmutableList.<EntityId>builder()
@@ -163,6 +165,10 @@ public class EntityIdTest {
     Assert.assertEquals(
       "doTestToFromJson failed for class " + id.getClass().getName(),
       id, GSON.fromJson(GSON.toJson(id), id.getClass())
+    );
+    Assert.assertEquals(
+      "doTestToFromJson failed for class " + id.getClass().getName(),
+      id, GSON.fromJson(GSON.toJson(id), EntityId.class)
     );
   }
 

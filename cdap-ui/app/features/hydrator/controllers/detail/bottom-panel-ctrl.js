@@ -18,10 +18,6 @@ angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorDetailBottomPanelController', function(BottomPanelStore, PipelineDetailBottomPanelActionFactory, NodeConfigStore, $scope) {
     this.tabs = [
       {
-        title: 'Status',
-        template: '/assets/features/hydrator/templates/detail/tabs/status.html'
-      },
-      {
         title: 'History',
         template: '/assets/features/hydrator/templates/detail/tabs/history.html'
       },
@@ -74,7 +70,7 @@ angular.module(PKG.name + '.feature.hydrator')
     BottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
     PipelineDetailBottomPanelActionFactory.expand();
     NodeConfigStore.registerOnChangeListener(function() {
-      this.selectTab(6);
+      this.selectTab(5);
     }.bind(this));
 
     $scope.$on('$destroy', function() {

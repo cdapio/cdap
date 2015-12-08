@@ -36,6 +36,8 @@ import co.cask.cdap.api.spark.SparkContext;
 import co.cask.cdap.api.spark.SparkProgram;
 import co.cask.cdap.api.spark.SparkSpecification;
 import co.cask.cdap.api.workflow.WorkflowToken;
+import co.cask.cdap.common.conf.ConfigurationUtil;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.logging.LoggingContext;
 import co.cask.cdap.common.options.UnsupportedOptionTypeException;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -47,10 +49,11 @@ import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.metadata.lineage.AccessType;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
+import co.cask.cdap.internal.app.runtime.batch.dataset.CloseableBatchWritable;
+import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetInputFormatProvider;
+import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvider;
+import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import co.cask.cdap.internal.app.runtime.spark.dataset.CloseableBatchWritable;
-import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetInputFormat;
-import co.cask.cdap.internal.app.runtime.spark.dataset.SparkDatasetOutputFormat;
 import co.cask.cdap.proto.Id;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
@@ -153,92 +156,74 @@ public class ExecutionSparkContext extends AbstractSparkContext {
 
   @Override
   public <T> T readFromDataset(String datasetName, Class<?> kClass, Class<?> vClass, Map<String, String> userDsArgs) {
-    // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
-    Configuration configuration = new Configuration(hConf);
-
-    // first try if it is InputFormatProvider
     Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
     dsArgs.putAll(userDsArgs);
     Dataset dataset = instantiateDataset(datasetName, dsArgs);
+
     try {
-      if (dataset instanceof InputFormatProvider) {
-        // get the input format and its configuration from the dataset
-        String inputFormatName = ((InputFormatProvider) dataset).getInputFormatClassName();
-        // load the input format class
-        if (inputFormatName == null) {
-          throw new DatasetInstantiationException(
-            String.format("Dataset '%s' provided null as the input format class name", datasetName));
-        }
-        Class<? extends InputFormat> inputFormatClass;
-        try {
-          @SuppressWarnings("unchecked")
-          Class<? extends InputFormat> ifClass =
-            (Class<? extends InputFormat>) SparkClassLoader.findFromContext().loadClass(inputFormatName);
-          inputFormatClass = ifClass;
-          Map<String, String> inputConfig = ((InputFormatProvider) dataset).getInputFormatConfiguration();
-          if (inputConfig != null) {
-            for (Map.Entry<String, String> entry : inputConfig.entrySet()) {
-              configuration.set(entry.getKey(), entry.getValue());
-            }
-          }
-        } catch (ClassNotFoundException e) {
-          throw new DatasetInstantiationException(String.format(
-            "Cannot load input format class %s provided by dataset '%s'", inputFormatName, datasetName), e);
-        } catch (ClassCastException e) {
-          throw new DatasetInstantiationException(String.format(
-            "Input format class %s provided by dataset '%s' is not an input format", inputFormatName, datasetName), e);
-        }
+      InputFormatProvider inputFormatProvider = new DatasetInputFormatProvider(datasetName, dsArgs, dataset, null,
+                                                                               SparkBatchReadableInputFormat.class);
+
+      // get the input format and its configuration from the dataset
+      String inputFormatName = inputFormatProvider.getInputFormatClassName();
+      // load the input format class
+      if (inputFormatName == null) {
+        throw new DatasetInstantiationException(
+          String.format("Dataset '%s' provided null as the input format class name", datasetName));
+      }
+      try {
+        @SuppressWarnings("unchecked")
+        Class<? extends InputFormat> inputFormatClass =
+          (Class<? extends InputFormat>) SparkClassLoader.findFromContext().loadClass(inputFormatName);
+
+        // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
+        Configuration configuration = new Configuration(hConf);
+        ConfigurationUtil.setAll(inputFormatProvider.getInputFormatConfiguration(), configuration);
         return getSparkFacade().createRDD(inputFormatClass, kClass, vClass, configuration);
+      } catch (ClassNotFoundException e) {
+        throw new DatasetInstantiationException(String.format(
+          "Cannot load input format class %s provided by dataset '%s'", inputFormatName, datasetName), e);
+      } catch (ClassCastException e) {
+        throw new DatasetInstantiationException(String.format(
+          "Input format class %s provided by dataset '%s' is not an input format", inputFormatName, datasetName), e);
       }
     } finally {
       commitAndClose(datasetName, dataset);
     }
-
-    // it must be supported by SparkDatasetInputFormat
-    SparkDatasetInputFormat.setDataset(configuration, datasetName, dsArgs);
-    return getSparkFacade().createRDD(SparkDatasetInputFormat.class, kClass, vClass, configuration);
   }
 
   @Override
   public <T> void writeToDataset(T rdd, String datasetName, Class<?> kClass, Class<?> vClass,
                                  Map<String, String> userDsArgs) {
-    // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
-    Configuration configuration = new Configuration(hConf);
-
-    // first try if it is OutputFormatProvider
     Map<String, String> dsArgs = RuntimeArguments.extractScope(Scope.DATASET, datasetName, getRuntimeArguments());
     dsArgs.putAll(userDsArgs);
     Dataset dataset = instantiateDataset(datasetName, dsArgs);
+
     try {
-      if (dataset instanceof OutputFormatProvider) {
-        // get the output format and its configuration from the dataset
-        String outputFormatName = ((OutputFormatProvider) dataset).getOutputFormatClassName();
-        // load the output format class
-        if (outputFormatName == null) {
-          throw new DatasetInstantiationException(
-            String.format("Dataset '%s' provided null as the output format class name", datasetName));
-        }
-        Class<? extends OutputFormat> outputFormatClass;
+      OutputFormatProvider outputFormatProvider = new DatasetOutputFormatProvider(datasetName, dsArgs, dataset,
+                                                                                  SparkBatchWritableOutputFormat.class);
+      // get the output format and its configuration from the dataset
+      String outputFormatName = outputFormatProvider.getOutputFormatClassName();
+      // load the output format class
+      if (outputFormatName == null) {
+        throw new DatasetInstantiationException(
+          String.format("Dataset '%s' provided null as the output format class name", datasetName));
+      }
+
+      try {
+        @SuppressWarnings("unchecked")
+        Class<? extends OutputFormat> outputFormatClass =
+          (Class<? extends OutputFormat>) SparkClassLoader.findFromContext().loadClass(outputFormatName);
+
         try {
-          @SuppressWarnings("unchecked")
-          Class<? extends OutputFormat> ofClass =
-            (Class<? extends OutputFormat>) SparkClassLoader.findFromContext().loadClass(outputFormatName);
-          outputFormatClass = ofClass;
-          Map<String, String> outputConfig = ((OutputFormatProvider) dataset).getOutputFormatConfiguration();
-          if (outputConfig != null) {
-            for (Map.Entry<String, String> entry : outputConfig.entrySet()) {
-              configuration.set(entry.getKey(), entry.getValue());
-            }
-          }
-        } catch (ClassNotFoundException e) {
-          throw new DatasetInstantiationException(String.format(
-            "Cannot load input format class %s provided by dataset '%s'", outputFormatName, datasetName), e);
-        } catch (ClassCastException e) {
-          throw new DatasetInstantiationException(String.format(
-            "Input format class %s provided by dataset '%s' is not an input format", outputFormatName, datasetName), e);
-        }
-        try {
+          // Clone the configuration since it's dataset specification and shouldn't affect the global hConf
+          Configuration configuration = new Configuration(hConf);
+          ConfigurationUtil.setAll(outputFormatProvider.getOutputFormatConfiguration(), configuration);
           getSparkFacade().saveAsDataset(rdd, outputFormatClass, kClass, vClass, configuration);
+
+          if (dataset instanceof DatasetOutputCommitter) {
+            ((DatasetOutputCommitter) dataset).onSuccess();
+          }
         } catch (Throwable t) {
           // whatever went wrong, give the dataset a chance to handle the failure
           if (dataset instanceof DatasetOutputCommitter) {
@@ -246,18 +231,16 @@ public class ExecutionSparkContext extends AbstractSparkContext {
           }
           throw t;
         }
-        if (dataset instanceof DatasetOutputCommitter) {
-          ((DatasetOutputCommitter) dataset).onSuccess();
-        }
-        return;
+      } catch (ClassNotFoundException e) {
+        throw new DatasetInstantiationException(String.format(
+          "Cannot load output format class %s provided by dataset '%s'", outputFormatName, datasetName), e);
+      } catch (ClassCastException e) {
+        throw new DatasetInstantiationException(String.format(
+          "Output format class %s provided by dataset '%s' is not an output format", outputFormatName, datasetName), e);
       }
     } finally {
       commitAndClose(datasetName, dataset);
     }
-
-    // it must be supported by SparkDatasetOutputFormat
-    SparkDatasetOutputFormat.setDataset(hConf, datasetName, dsArgs);
-    getSparkFacade().saveAsDataset(rdd, SparkDatasetOutputFormat.class, kClass, vClass, new Configuration(hConf));
   }
 
   @Override
@@ -339,7 +322,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
 
   /**
    * Returns a {@link BatchReadable} that is implemented by the given dataset. This method is expected to be
-   * called by {@link SparkDatasetInputFormat}.
+   * called by {@link SparkBatchReadableInputFormat}.
    *
    * @param datasetName name of the dataset
    * @param arguments arguments for the dataset
@@ -349,7 +332,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
    * @throws DatasetInstantiationException if cannot find the dataset
    * @throws IllegalArgumentException if the dataset does not implement BatchReadable
    */
-  public <K, V> BatchReadable<K, V> getBatchReadable(final String datasetName, Map<String, String> arguments) {
+  <K, V> BatchReadable<K, V> getBatchReadable(final String datasetName, Map<String, String> arguments) {
     final Dataset dataset = instantiateDataset(datasetName, arguments);
     Preconditions.checkArgument(dataset instanceof BatchReadable, "Dataset %s of type %s does not implements %s",
                                 datasetName, dataset.getClass().getName(), BatchReadable.class.getName());
@@ -385,7 +368,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
   /**
    * Returns a {@link BatchWritable} that is implemented by the given dataset. The {@link BatchWritable} returned
    * is also {@link Closeable}. Caller of this method is responsible for calling {@link Closeable#close()}} of
-   * the returned object. This method is expected to be called by {@link SparkDatasetOutputFormat}.
+   * the returned object. This method is expected to be called by {@link SparkBatchWritableOutputFormat}.
    *
    * @param datasetName name of the dataset
    * @param arguments arguments for the dataset
@@ -395,7 +378,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
    * @throws DatasetInstantiationException if cannot find the dataset
    * @throws IllegalArgumentException if the dataset does not implement BatchWritable
    */
-  public <K, V> CloseableBatchWritable<K, V> getBatchWritable(final String datasetName, Map<String, String> arguments) {
+  <K, V> CloseableBatchWritable<K, V> getBatchWritable(final String datasetName, Map<String, String> arguments) {
     final Dataset dataset = instantiateDataset(datasetName, arguments);
     Preconditions.checkArgument(dataset instanceof BatchWritable, "Dataset %s of type %s does not implements %s",
                                 datasetName, dataset.getClass().getName(), BatchWritable.class.getName());
@@ -482,7 +465,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
     StreamInputFormat.setTTL(configuration, streamConfig.getTTL());
-    StreamInputFormat.setStreamPath(configuration, streamPath.toURI());
+    StreamInputFormat.setStreamPath(configuration, Locations.toURI(streamPath));
     StreamInputFormat.setTimeRange(configuration, stream.getStartTime(), stream.getEndTime());
 
     String decoderType = stream.getDecoderType();

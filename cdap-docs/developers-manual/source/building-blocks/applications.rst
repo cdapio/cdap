@@ -26,8 +26,8 @@ An *Artifact* is a JAR file that packages the Java Application class that define
 *Programs*, *Services*, *Schedules*, *Streams*, and *Datasets* interact.
 It also packages any dependent classes and libraries needed to run the *Application*. 
 
-.. rubric:: Implementing an Application class
-
+Implementing an Application Class
+=================================
 To implement an application class, extend the ``AbstractApplication`` class,
 specifying the application metadata and declaring and
 configuring each of the application components::
@@ -56,8 +56,8 @@ name.
 Names used for streams and datasets need to be unique across the CDAP namespace, while
 names used for programs and services need to be unique only to the application.
 
-.. rubric:: A Typical CDAP Application Class
-
+A Typical CDAP Application Class
+================================
 A typical design of a CDAP application class consists of:
 
 - *Streams* to ingest data into CDAP;
@@ -73,8 +73,8 @@ application could include a stream, a flow, a flowlet, and a dataset. It's possi
 stream is not needed, if other methods of bringing in data are used. In the next pages,
 we'll look at these components, and their interactions.
 
-.. rubric:: Application Configuration
-
+Application Configuration
+=========================
 Application classes can use a ``Config`` class to receive a configuration when an Application is created.
 For example, configuration can be used to specify |---| at application creation time |---| a stream to be created or
 a dataset to be read, rather than having them hard-coded in the ``AbstractApplication``'s ``configure`` method.
@@ -146,5 +146,10 @@ usage of the dataset. It is also used during the runtime to get the dataset inst
       this.uniqueCountTable.updateUniqueCount(word);
     }
   }
+
+Application Example
+===================
+Applications are included in just about every CDAP :ref:`application <apps-and-packs>`,
+:ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
 
 An example demonstrating the usage of a configuration is the :ref:`WordCount example <examples-word-count>`.

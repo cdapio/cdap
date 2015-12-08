@@ -18,6 +18,7 @@ package co.cask.cdap.test.app;
 
 import co.cask.cdap.api.annotation.UseDataSet;
 import co.cask.cdap.api.app.AbstractApplication;
+import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.api.service.AbstractService;
 import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
@@ -26,10 +27,13 @@ import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.api.workflow.AbstractWorkflow;
 import co.cask.cdap.api.workflow.AbstractWorkflowAction;
 import co.cask.cdap.api.workflow.WorkflowActionConfigurer;
+import com.google.common.base.Throwables;
+import org.junit.Assert;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import javax.ws.rs.GET;
@@ -41,7 +45,7 @@ import javax.ws.rs.PathParam;
  */
 public class DatasetWithCustomActionApp extends AbstractApplication {
   static final String CUSTOM_TABLE = "customtable";
-  static final String CUSTOM_TABLE1 = "customtable1";
+  static final String CUSTOM_FILESET = "customfs";
   static final String CUSTOM_PROGRAM = "DatasetWithCustomActionApp";
   static final String CUSTOM_WORKFLOW = "CustomWorkflow";
   static final String CUSTOM_SERVICE = "CustomService";
@@ -67,30 +71,35 @@ public class DatasetWithCustomActionApp extends AbstractApplication {
       @Override
       public void configure(WorkflowActionConfigurer configurer) {
         super.configure(configurer);
-        useDatasets(CUSTOM_TABLE1);
+        useDatasets(CUSTOM_FILESET);
       }
 
       @Override
       public void run() {
         table.write("hello", "world");
 
-        KeyValueTable table1 = getContext().getDataset(CUSTOM_TABLE1);
-        table1.write("test", "another");
+        FileSet fs = getContext().getDataset(CUSTOM_FILESET);
+        try (OutputStream out = fs.getLocation("test").getOutputStream()) {
+          out.write(42);
+        } catch (IOException e) {
+          Throwables.propagate(e);
+        }
 
         URL serviceURL = getContext().getServiceURL(CUSTOM_SERVICE);
         if (serviceURL != null) {
           BufferedReader in = null;
           try {
             HttpURLConnection con =
-              (HttpURLConnection) new URL(serviceURL, String.format("service")).openConnection();
+              (HttpURLConnection) new URL(serviceURL, "service").openConnection();
             con.setRequestMethod("GET");
 
             in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            StringBuffer response = new StringBuffer();
+            StringBuilder response = new StringBuilder();
             String line;
             while ((line = in.readLine()) != null) {
               response.append(line);
             }
+            Assert.assertEquals("service", response.toString());
 
           } catch (IOException e) {
             e.printStackTrace();

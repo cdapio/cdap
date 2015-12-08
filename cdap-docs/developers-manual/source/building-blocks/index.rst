@@ -17,6 +17,7 @@ Building Blocks
     Applications <applications>
     Streams <streams>
     Datasets <datasets/index>
+    Views <views>
     Flows and Flowlets <flows-flowlets/index>
     MapReduce Programs<mapreduce-programs>
     Schedules <schedules>
@@ -40,10 +41,11 @@ write data through the data abstraction layer in CDAP.
 
 - :doc:`Streams <streams>`
 - :doc:`Datasets <datasets/index>`
+- :doc:`Views <views>`
 
 **Applications** are composed from these building blocks:
 
-- :doc:`Flows (and flowlets) <flows-flowlets/index>`
+- :doc:`Flows and Flowlets <flows-flowlets/index>`
 - :doc:`MapReduce Programs <mapreduce-programs>`
 - :doc:`Schedules <schedules>`
 - :doc:`Services <services>`
@@ -52,24 +54,26 @@ write data through the data abstraction layer in CDAP.
 - :doc:`Workflows <workflows>`
 - :doc:`Plugins <plugins>`
 
-An :doc:`Artifact <artifacts>` is a jar file that packages the Java Application class, as well
-as any other classes and libraries needed to create and run an Application. 
+**Additional abstractions** include:
 
-:doc:`Metadata <metadata-lineage>` |---| consisting of **properties** (a list of key-value pairs)
-or **tags** (a list of keys) |---| can be set for datasets, streams, and applications.
-These can be retrieved and searched, and the metadata used to discover CDAP entities.
-Access of these entities is tracked, and you can view the :doc:`lineage <metadata-lineage>` of datasets and streams.
-With a lineage diagram, you can then drill down into the metadata of its nodes. 
+- An :doc:`Artifact <artifacts>` is a jar file that packages the Java Application class, as well
+  as any other classes and libraries needed to create and run an Application. 
 
-A :doc:`Namespace <namespaces>` is a logical grouping of application and data in CDAP.
-Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
-All applications and data live in an explicit CDAP namespace.
+- :doc:`Metadata <metadata-lineage>` |---| consisting of **properties** (a list of key-value pairs)
+  or **tags** (a list of keys) |---| can be set for datasets, streams, and applications.
+  These can be retrieved and searched, and the metadata used to discover CDAP entities.
+  Access of these entities is tracked, and you can view the :doc:`lineage <metadata-lineage>` of datasets and streams.
+  With a lineage diagram, you can then drill down into the metadata of its nodes. 
 
-Additionally, the :doc:`Transaction System <transaction-system>` is an essential service
-that provides ACID (*atomicity, consistency, isolation,* and *durability*) guarantees,
-critical in applications where data accuracy is required.
+- A :doc:`Namespace <namespaces>` is a logical grouping of application and data in CDAP.
+  Conceptually, namespaces can be thought of as a partitioning of a CDAP instance.
+  All applications and data live in an explicit CDAP namespace.
 
-For a high-level view of the concepts of the Cask Data Application Platform, see the
+- The :doc:`Transaction System <transaction-system>` is an essential service
+  that provides ACID (*atomicity, consistency, isolation,* and *durability*) guarantees,
+  critical in applications where data accuracy is required.
+
+For a **high-level view of the concepts** of the Cask Data Application Platform, see the
 platform :doc:`overview. </overview/index>`
 
 For information beyond this section, see the :ref:`Javadocs <reference:javadocs>` and

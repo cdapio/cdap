@@ -17,6 +17,7 @@
 package co.cask.cdap.hive.stream;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.data.stream.StreamInputSplitFactory;
 import co.cask.cdap.data.stream.StreamInputSplitFinder;
 import co.cask.cdap.data.stream.StreamUtils;
@@ -92,7 +93,7 @@ public class HiveStreamInputFormat implements InputFormat<Void, ObjectWritable> 
     Location streamPath = StreamUtils.createGenerationLocation(streamConfig.getLocation(),
                                                                StreamUtils.getGeneration(streamConfig));
 
-    StreamInputSplitFinder.Builder builder = StreamInputSplitFinder.builder(streamPath.toURI());
+    StreamInputSplitFinder.Builder builder = StreamInputSplitFinder.builder(Locations.toURI(streamPath));
 
     // Get the Hive table path for the InputSplit created. It is just to satisfy hive. The InputFormat never uses it.
     JobContext jobContext = ShimLoader.getHadoopShims().newJobContext(Job.getInstance(conf));

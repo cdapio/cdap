@@ -232,6 +232,11 @@ set_hive_classpath() {
 
       if [[ $(which hive 2>/dev/null) ]]; then
         HIVE_VAR_OUT=$(hive -e 'set -v' 2>/dev/null)
+        __ret=$?
+        if [ ${__ret} -ne 0 ]; then
+          echo "ERROR - Problem running: hive -e 'set -v'"
+          return 1
+        fi
         HIVE_VARS=$(echo ${HIVE_VAR_OUT} | tr ' ' '\n')
         # Quotes preserve whitespace
         HIVE_HOME=${HIVE_HOME:-$(echo -e "${HIVE_VARS}" | grep '^env:HIVE_HOME=' | cut -d= -f2)}

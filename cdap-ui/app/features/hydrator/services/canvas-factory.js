@@ -257,7 +257,7 @@ angular.module(PKG.name + '.feature.hydrator')
         // FIXME: This should be removed. At any point in time we need the backend properties
         // to find if a predefined app or imported config to assess if a property needs some modification.
         angular.forEach(properties, function(value, key) {
-          var isPropertyNotAString = typeof properties[key] !== 'string';
+          var isPropertyNotAString = angular.isDefined(properties[key]) && angular.isString(properties[key]);
           var isPropertyEmptyOrNull = properties[key] === '' || properties[key] === null;
           if (isPropertyNotAString) {
             properties[key] = properties[key].toString();

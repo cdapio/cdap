@@ -30,8 +30,8 @@ function ($scope, $state, myAlert, MyCDAPDataSource, myNamespace) {
 
   $scope.doSave = function () {
     myAlert({
-      title: 'it doesn\'t work yet',
-      content: 'there is no content yet',
+      title: 'It doesn\'t work yet',
+      content: 'There is no content yet',
       type: 'warning'
     });
   };

@@ -18,7 +18,6 @@ package co.cask.cdap.common.namespace;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.proto.Id;
-import com.google.common.collect.ImmutableMap;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -28,9 +27,9 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
+ * Tests for {@link DefaultNamespacedLocationFactory}.
  */
 public class DefaultNamespacedLocationFactoryTest {
 
@@ -43,24 +42,12 @@ public class DefaultNamespacedLocationFactoryTest {
     NamespacedLocationFactory namespacedLocationFactory =
       new DefaultNamespacedLocationFactory(CConfiguration.create(), locationFactory);
 
-    // should not be any locations
-    Assert.assertTrue(namespacedLocationFactory.list().isEmpty());
-
     Location defaultLoc = namespacedLocationFactory.get(Id.Namespace.DEFAULT);
     Id.Namespace ns1 = Id.Namespace.from("ns1");
     Location ns1Loc = namespacedLocationFactory.get(ns1);
 
     // test these are not the same
     Assert.assertNotEquals(defaultLoc, ns1Loc);
-
-    // should be 2 in the map now
-    defaultLoc.mkdirs();
-    ns1Loc.mkdirs();
-    Map<Id.Namespace, Location> expected = ImmutableMap.of(
-      Id.Namespace.DEFAULT, defaultLoc,
-      ns1, ns1Loc
-    );
-    Assert.assertEquals(expected, namespacedLocationFactory.list());
 
     // test subdirectories in a namespace
     Location sub1 = namespacedLocationFactory.get(ns1, "sub1");

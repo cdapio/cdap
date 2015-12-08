@@ -20,7 +20,6 @@ import co.cask.cdap.api.data.batch.DatasetOutputCommitter;
 import co.cask.cdap.api.data.batch.InputFormatProvider;
 import co.cask.cdap.api.data.batch.OutputFormatProvider;
 import co.cask.cdap.api.dataset.DataSetException;
-import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.flow.flowlet.StreamEvent;
 import co.cask.cdap.api.mapreduce.MapReduce;
 import co.cask.cdap.api.mapreduce.MapReduceContext;
@@ -221,7 +220,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // ClassLoader from here and use it for setting up the job
         Location pluginArchive = createPluginArchive(tempLocation);
         if (pluginArchive != null) {
-          job.addCacheArchive(pluginArchive.toURI());
+          job.addCacheArchive(Locations.toURI(pluginArchive));
           mapredConf.set(Constants.Plugin.ARCHIVE, pluginArchive.getName());
         }
       }
@@ -245,7 +244,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // Copy and localize the program jar in distributed mode
         programJar = copyProgramJar(tempLocation);
-        job.addCacheFile(programJar.toURI());
+        job.addCacheFile(Locations.toURI(programJar));
 
         // Generate and localize the launcher jar to control the classloader of MapReduce containers processes
         List<String> paths = new ArrayList<>();
@@ -253,7 +252,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         paths.add("job.jar/classes");
         Location launcherJar = createLauncherJar(
           Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, paths)), tempLocation);
-        job.addCacheFile(launcherJar.toURI());
+        job.addCacheFile(Locations.toURI(launcherJar));
 
         // The only thing in the container classpath is the launcher.jar
         // The MapReduceContainerLauncher inside the launcher.jar will creates a MapReduceClassLoader and launch
@@ -275,7 +274,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       try {
         // We remember tx, so that we can re-use it in mapreduce tasks
         CConfiguration cConfCopy = cConf;
-        contextConfig.set(context, cConfCopy, tx, programJar.toURI(), localizedUserResources);
+        contextConfig.set(context, cConfCopy, tx, Locations.toURI(programJar), localizedUserResources);
 
         LOG.info("Submitting MapReduce Job: {}", context);
         // submits job and returns immediately. Shouldn't need to set context ClassLoader.
@@ -478,16 +477,16 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
    * Commit a single output after the MR has finished, if it is an OutputFormatCommitter.
    * @param succeeded whether the run was successful
    * @param datasetName the name of the dataset
-   * @param outputDataset the output dataset or output format provider to commit
+   * @param outputFormatProvider the output format provider to commit
    * @return whether the action was successful (it did not throw an exception)
    */
-  private boolean commitOutput(boolean succeeded, String datasetName, Object outputDataset) {
-    if (outputDataset instanceof DatasetOutputCommitter) {
+  private boolean commitOutput(boolean succeeded, String datasetName, OutputFormatProvider outputFormatProvider) {
+    if (outputFormatProvider instanceof DatasetOutputCommitter) {
       try {
         if (succeeded) {
-          ((DatasetOutputCommitter) outputDataset).onSuccess();
+          ((DatasetOutputCommitter) outputFormatProvider).onSuccess();
         } else {
-          ((DatasetOutputCommitter) outputDataset).onFailure();
+          ((DatasetOutputCommitter) outputFormatProvider).onFailure();
         }
       } catch (Throwable t) {
         LOG.error(String.format("Error from %s method of output dataset %s.",
@@ -511,11 +510,6 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
           // TODO (CDAP-1952): this should be done in the output committer, to make the M/R fail if addPartition fails
           // TODO (CDAP-1952): also, should failure of an output committer change the status of the program run?
           boolean success = succeeded;
-          for (Map.Entry<String, Dataset> dsEntry : context.getOutputDatasets().entrySet()) {
-            if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
-              success = false;
-            }
-          }
           for (Map.Entry<String, OutputFormatProvider> dsEntry : context.getOutputFormatProviders().entrySet()) {
             if (!commitOutput(succeeded, dsEntry.getKey(), dsEntry.getValue())) {
               success = false;
@@ -572,7 +566,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Map<String, OutputFormatProvider> outputFormatProviders = context.getOutputFormatProviders();
     LOG.debug("Using Datasets as output for MapReduce Job: {}", outputFormatProviders.keySet());
 
-    if (outputFormatProviders.size() == 0) {
+    if (outputFormatProviders.isEmpty()) {
       // user is not going through our APIs to add output; leave the job's output format to user
       return;
     } else if (outputFormatProviders.size() == 1) {
@@ -869,7 +863,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location programJarCopy = targetDir.append("program.jar");
 
     ByteStreams.copy(Locations.newInputSupplier(programJarLocation), Locations.newOutputSupplier(programJarCopy));
-    LOG.info("Copied Program Jar to {}, source: {}", programJarCopy.toURI(), programJarLocation.toURI());
+    LOG.info("Copied Program Jar to {}, source: {}", programJarCopy, programJarLocation);
     return programJarCopy;
   }
 

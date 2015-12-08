@@ -24,6 +24,8 @@ import co.cask.cdap.data.file.FileWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.store.NamespaceStore;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
@@ -51,14 +53,17 @@ public abstract class StreamFileJanitorTestBase {
 
   protected abstract StreamAdmin getStreamAdmin();
 
+  protected abstract NamespaceStore getNamespaceStore();
+
   protected abstract CConfiguration getCConfiguration();
 
   protected abstract FileWriter<StreamEvent> createWriter(Id.Stream streamId) throws IOException;
 
   @Before
-  public void setup() throws IOException {
+  public void setup() throws Exception {
     // FileStreamAdmin expects namespace directory to exist.
-    // Simulate namespace create
+    // Simulate namespace create, since its an inmemory-namespace admin
+    getNamespaceStore().create(NamespaceMeta.DEFAULT);
     getNamespacedLocationFactory().get(Id.Namespace.DEFAULT).mkdirs();
   }
 
@@ -72,7 +77,7 @@ public abstract class StreamFileJanitorTestBase {
     streamAdmin.create(streamId);
     StreamConfig streamConfig = streamAdmin.getConfig(streamId);
     StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(),
-                                                      getNamespacedLocationFactory());
+                                                      getNamespacedLocationFactory(), getNamespaceStore());
 
     for (int i = 0; i < 5; i++) {
       FileWriter<StreamEvent> writer = createWriter(streamId);
@@ -107,7 +112,7 @@ public abstract class StreamFileJanitorTestBase {
 
     StreamAdmin streamAdmin = getStreamAdmin();
     StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), getStreamAdmin(),
-                                                      getNamespacedLocationFactory());
+                                                      getNamespacedLocationFactory(), getNamespaceStore());
 
     Properties properties = new Properties();
     properties.setProperty(Constants.Stream.PARTITION_DURATION, "2000");
@@ -146,7 +151,8 @@ public abstract class StreamFileJanitorTestBase {
   public void testCleanupDeletedStream() throws Exception {
     Id.Stream streamId = Id.Stream.from(Id.Namespace.DEFAULT, "cleanupDelete");
     StreamAdmin streamAdmin = getStreamAdmin();
-    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), streamAdmin, getNamespacedLocationFactory());
+    StreamFileJanitor janitor = new StreamFileJanitor(getCConfiguration(), streamAdmin, getNamespacedLocationFactory(),
+                                                      getNamespaceStore());
     streamAdmin.create(streamId);
 
     // Write some data

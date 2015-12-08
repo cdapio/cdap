@@ -17,6 +17,7 @@
 package co.cask.cdap.internal.app.runtime.webapp;
 
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.io.Locations;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HandlerContext;
 import co.cask.http.HttpResponder;
@@ -66,7 +67,7 @@ public class ExplodeJarHttpHandler extends AbstractHttpHandler implements JarHtt
 
     // Setup program jar for serving
     try {
-      File jarFile = new File(jarLocation.toURI());
+      File jarFile = new File(Locations.toURI(jarLocation));
 
       baseDir = Files.createTempDir();
       cannonicalBaseDir = baseDir.getCanonicalPath();

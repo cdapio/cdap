@@ -591,9 +591,8 @@ and from within a workflow with a predicate, fork and joins::
   }
 
 
-Example of Using a Workflow
-===========================
-
+Workflow Examples
+=================
 - For an example of the use of **a workflow,** see the :ref:`Purchase
   <examples-purchase>` example.
 - The :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example is another workflow example.

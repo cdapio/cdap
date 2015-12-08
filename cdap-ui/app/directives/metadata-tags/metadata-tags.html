@@ -15,28 +15,30 @@
 -->
 
 <div class="program-tags">
-  <div class="tag" ng-if="!MetadataController.metadataAddOpen">
-    <a class="btn" ng-click="MetadataController.metadataAddOpen = true">
+  <div class="add-tag" ng-if="!MetadataController.metadataAddOpen">
+    <a class="btn add" ng-click="MetadataController.metadataAddOpen = true">
       <span class="fa fa-plus"></span>
     </a>
   </div>
   <div class="tag-input" ng-if="MetadataController.metadataAddOpen">
-    <div class="input-group" my-escape-close="MetadataController.escapeMetadata()" ng-keypress="$event.keyCode === 13 && MetadataController.addMetadata()">
-      <input type="text" class="form-control" ng-model="MetadataController.tag" cask-focus="metadataInput">
-      <span class="input-group-btn">
-        <button class="btn btn-default"
-          ng-click="MetadataController.metadataAddOpen = false">
-          <i class="fa fa-times"></i>
-        </button>
-      </span>
+    <div my-escape-close="MetadataController.escapeMetadata()" ng-keypress="$event.keyCode === 13 && MetadataController.addMetadata()">
+      <input placeholder="new tag" type="text" class="form-control" ng-model="MetadataController.tag" cask-focus="metadataInput" ng-blur="MetadataController.escapeMetadata()">
     </div>
   </div>
-  <div class="tag" ng-repeat="tag in MetadataController.metadataTags">
-    <a class="btn">
+
+  <div class="tag" ng-repeat="tag in MetadataController.metadataTags | orderBy: tag | limitTo: MetadataController.limit">
+    <span class="btn"
+       ng-click="MetadataController.goToTag($event, tag)">
       {{tag}}
       <span class="fa fa-times"
-        ng-click="MetadataController.deleteMetadata(tag)"
-      ></span>
-    </a>
+            ng-click="MetadataController.deleteMetadata($event, tag)"></span>
+    </span>
   </div>
+
+  <a ng-if="MetadataController.metadataTags.length > MetadataController.tagLimit && MetadataController.limit === MetadataController.tagLimit"
+     class="tag-toggle"
+     ng-click="MetadataController.limit = null">show more</a>
+  <a ng-if="MetadataController.metadataTags.length > MetadataController.tagLimit && MetadataController.limit === null"
+     class="tag-toggle"
+     ng-click="MetadataController.limit = MetadataController.tagLimit">show less</a>
 </div>

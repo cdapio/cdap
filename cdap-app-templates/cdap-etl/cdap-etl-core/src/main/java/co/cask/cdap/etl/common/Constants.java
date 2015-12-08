@@ -22,6 +22,7 @@ package co.cask.cdap.etl.common;
 public final class Constants {
 
   public static final String ID_SEPARATOR = ":";
+  public static final String PIPELINEID = "pipeline";
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");
@@ -31,7 +32,6 @@ public final class Constants {
    * Constants related to Source.
    */
   public static final class Source {
-    public static final String PLUGINID = "sourceId";
     public static final String PLUGINTYPE = "source";
 
     private Source() {
@@ -43,7 +43,6 @@ public final class Constants {
    * Constants related to Sink.
    */
   public static final class Sink {
-    public static final String PLUGINIDS = "sinkIds";
     public static final String PLUGINTYPE = "sink";
 
     private Sink() {
@@ -55,7 +54,6 @@ public final class Constants {
    * Constants related to Transform.
    */
   public static final class Transform {
-    public static final String PLUGINIDS = "transformIds";
     public static final String PLUGINTYPE = "transform";
 
     private Transform() {

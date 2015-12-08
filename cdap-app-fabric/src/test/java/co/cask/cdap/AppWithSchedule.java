@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Application with workflow scheduling.
@@ -52,7 +51,7 @@ public class AppWithSchedule extends AbstractApplication {
 
       scheduleWorkflow(Schedules.builder("SampleSchedule")
                          .setDescription("Sample schedule")
-                         .createTimeSchedule("0/1 * * * * ?"),
+                         .createTimeSchedule("0/15 * * * * ?"),
                        "SampleWorkflow",
                        scheduleProperties);
     } catch (UnsupportedTypeException e) {

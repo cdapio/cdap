@@ -321,6 +321,7 @@ function build_docs_outer_level() {
   cp ${SCRIPT_PATH}/${COMMON_HIGHLEVEL_PY}  ${TARGET_PATH}/${SOURCE}/conf.py
   cp -R ${SCRIPT_PATH}/${COMMON_IMAGES}     ${TARGET_PATH}/${SOURCE}/
   cp ${SCRIPT_PATH}/${COMMON_SOURCE}/*.rst  ${TARGET_PATH}/${SOURCE}/
+  cp ${SCRIPT_PATH}/${COMMON_SOURCE}/*.md   ${TARGET_PATH}/${SOURCE}/
   
   local google_options
   if [ "x${google_code}" != "x" ]; then

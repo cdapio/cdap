@@ -22,6 +22,7 @@ import co.cask.cdap.data2.dataset2.DatasetFrameworkTestUtil;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.id.Ids;
 import co.cask.cdap.proto.id.NamespaceId;
+import co.cask.cdap.proto.security.Action;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionFailureException;
 import com.google.common.collect.ImmutableSet;

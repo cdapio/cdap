@@ -62,9 +62,9 @@ implementation for this method that does nothing::
     // Do nothing by default
   }
 
-Spark and Resources
-----------------------
 
+Spark and Resources
+===================
 When a Spark program is configured, the resource requirements for both the Spark driver
 processes and the Spark executor processes can be set, both in terms of the amount of
 memory (in megabytes) and the number of virtual cores assigned.
@@ -82,8 +82,9 @@ If both the memory and the number of cores needs to be set, this can be done usi
     
 In this case, 1024 MB and two cores is assigned to each executor process.
 
+
 CDAP SparkContext
------------------
+=================
 CDAP provides its own ``SparkContext``, which is needed to access :ref:`datasets <spark-datasets>`.
 
 CDAP Spark programs must implement either ``JavaSparkProgram`` or ``ScalaSparkProgram``,
@@ -112,8 +113,9 @@ depending upon the language (Java or Scala) in which the program is written. You
 
 .. _spark-datasets:
 
+
 Spark and Datasets
-------------------
+==================
 Spark programs in CDAP can directly access **dataset** similar to the way a MapReduce can. 
 These programs can create Spark's Resilient Distributed Dataset (RDD) by
 reading a dataset and can also write RDD to a dataset.
@@ -158,8 +160,9 @@ An ``ObjectStore`` dataset can be used, provided its classes are serializable.
 You can also access a dataset directly by calling the ``getDataset()`` method of the SparkContext.
 See also the section on :ref:`Using Datasets in Programs <datasets-in-programs>`.
 
+
 Spark and Streams
------------------
+=================
 Spark programs in CDAP can directly access **streams** similar to the way a MapReduce can.
 These programs can create Spark's Resilient Distributed Dataset (RDD) by reading a stream.
 You can read from a stream using:
@@ -183,8 +186,9 @@ You can read custom objects from a stream by providing a decoderType extended fr
 
     sc.readFromStream(streamName, vClass, startTime, endTime, decoderType);
 
+
 Spark and Services
-------------------
+==================
 Spark programs in CDAP, including worker nodes, can discover Services.
 Service Discovery by worker nodes ensures that if an endpoint changes during the execution of a Spark program,
 due to failure or another reason, worker nodes will see the most recent endpoint.
@@ -220,8 +224,9 @@ Here is an example of service discovery in a Spark program::
       }
     });
 
+
 Spark Metrics
-------------------
+=============
 Spark programs in CDAP emit metrics, similar to a MapReduce program.
 CDAP collect system metrics emitted by Spark and display them in the **CDAP UI**.
 This helps in monitoring the progress and resources used by a Spark program.
@@ -238,14 +243,14 @@ You can also emit custom user metrics from the worker nodes of your Spark progra
       }
     });
     
+
 Spark in Workflows
-------------------
+==================
 Spark programs in CDAP can also be added to a :ref:`workflow <workflows>`, similar to a :ref:`MapReduce <mapreduce>`.
 
 
-Examples of Using Spark Programs
---------------------------------
-
+Spark Program Examples
+======================
 - For an example of **a Spark program,** see the :ref:`Spark K-Means <examples-spark-k-means>`
   and :ref:`Spark Page Rank <examples-spark-page-rank>` examples.
 

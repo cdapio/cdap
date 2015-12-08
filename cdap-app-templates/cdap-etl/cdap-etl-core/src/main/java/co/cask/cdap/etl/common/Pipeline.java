@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.common;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Keeps track of the plugin ids for the source, transforms, and sink of a pipeline
@@ -25,11 +26,14 @@ public class Pipeline {
   private final String source;
   private final List<SinkInfo> sinks;
   private final List<TransformInfo> transforms;
+  private final Map<String, List<String>> connections;
 
-  public Pipeline(String source, List<SinkInfo> sinks, List<TransformInfo> transforms) {
+  public Pipeline(String source, List<SinkInfo> sinks, List<TransformInfo> transforms,
+                  Map<String, List<String>> connections) {
     this.source = source;
     this.sinks = sinks;
     this.transforms = transforms;
+    this.connections = connections;
   }
 
   public String getSource() {
@@ -42,5 +46,9 @@ public class Pipeline {
 
   public List<TransformInfo> getTransforms() {
     return transforms;
+  }
+
+  public Map<String, List<String>> getConnections() {
+    return connections;
   }
 }

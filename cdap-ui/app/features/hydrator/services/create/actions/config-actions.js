@@ -48,6 +48,9 @@ class ConfigActionsFactory {
   addPlugin (plugin, type) {
     this.dispatcher.dispatch('onPluginAdd', plugin, type);
   }
+  editPlugin(pluginId, pluginProperties) {
+    this.dispatcher.dispatch('onPluginEdit', pluginId, pluginProperties);
+  }
   setSchedule(schedule) {
     this.dispatcher.dispatch('onSetSchedule', schedule);
   }

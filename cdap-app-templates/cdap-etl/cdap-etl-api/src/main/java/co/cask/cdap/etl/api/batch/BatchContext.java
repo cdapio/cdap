@@ -45,6 +45,16 @@ public interface BatchContext extends DatasetContext, TransformContext {
   Map<String, String> getRuntimeArguments();
 
   /**
+   * Updates an entry in the runtime arguments.
+   *
+   * @param key key to update
+   * @param value value to update to
+   * @param overwrite if {@code true} and if the key exists in the runtime arguments, it will get overwritten to
+   *                  the given value; if {@code false}, the existing value of the key won't get updated.
+   */
+  void setRuntimeArgument(String key, String value, boolean overwrite);
+
+  /**
    * Returns the hadoop job.
    * @deprecated this method will be removed.
    */

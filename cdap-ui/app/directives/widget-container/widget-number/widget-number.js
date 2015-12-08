@@ -23,8 +23,10 @@ angular.module(PKG.name + '.commons')
         config: '='
       },
       template: '<input type="number" class="form-control" min="{{min}}" max="{{max}}" ng-model="internalModel" />',
-      controller: function($scope) {
-        $scope.model = $scope.model || $scope.config.properties.default;
+      controller: function($scope, myHelpers) {
+        $scope.model = $scope.model ||
+                       myHelpers.objectQuery($scope.config, 'properties', 'default') ||
+                       myHelpers.objectQuery($scope.config, 'widget-attributes', 'default');
         $scope.internalModel = $scope.model;
         // The number textbox requires the input to be number.
         // This will be correct for a fresh create studio view. But when the user is trying to import or clone

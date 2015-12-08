@@ -37,7 +37,7 @@ Installing CDAP
    - **Master:** coordinator service which launches CDAP system services into YARN
    - **Router:** serves HTTP endpoints for CDAP applications and REST API
    - **Kafka Server:** used for storing CDAP metrics and CDAP system service log data
-   - **UI:** web interface to CDAP and :ref:`Cask Hydrator <included-apps-intro-hydrator>`
+   - **UI:** web interface to CDAP and :ref:`Cask Hydrator <cdap-apps-intro-hydrator>`
      (for CDAP 3.2.x installations)
  
    .. figure:: ../../_images/ambari/ss03-assign-masters.png

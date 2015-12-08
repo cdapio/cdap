@@ -125,14 +125,14 @@ _intersphinx_mapping = "../../%%s/%s/html/objects.inv" % target
 # The Inter-Sphinx mapping keys must be alpha-numeric only
 intersphinx_mapping = {
   'overview':     ('../../',                      os.path.abspath(_intersphinx_mapping % '')),
-  'introduction': ('../../introduction/',         os.path.abspath(_intersphinx_mapping % 'introduction')),
-  'developers':   ('../../developers-manual/',    os.path.abspath(_intersphinx_mapping % 'developers-manual')),
-  'includedapps': ('../../included-applications', os.path.abspath(_intersphinx_mapping % 'included-applications')),
-  'admin':        ('../../admin-manual/',         os.path.abspath(_intersphinx_mapping % 'admin-manual')),
-  'integrations': ('../../integrations/',         os.path.abspath(_intersphinx_mapping % 'integrations')),
-  'examples':     ('../../examples-manual',       os.path.abspath(_intersphinx_mapping % 'examples-manual')),
-  'reference':    ('../../reference-manual',      os.path.abspath(_intersphinx_mapping % 'reference-manual')),
-  'faqs':         ('../../faqs',                  os.path.abspath(_intersphinx_mapping % 'faqs')),
+  'introduction': ('../../introduction/',      os.path.abspath(_intersphinx_mapping % 'introduction')),
+  'developers':   ('../../developers-manual/', os.path.abspath(_intersphinx_mapping % 'developers-manual')),
+  'cdapapps':     ('../../cdap-apps',          os.path.abspath(_intersphinx_mapping % 'cdap-apps')),
+  'admin':        ('../../admin-manual/',      os.path.abspath(_intersphinx_mapping % 'admin-manual')),
+  'integrations': ('../../integrations/',      os.path.abspath(_intersphinx_mapping % 'integrations')),
+  'examples':     ('../../examples-manual',    os.path.abspath(_intersphinx_mapping % 'examples-manual')),
+  'reference':    ('../../reference-manual',   os.path.abspath(_intersphinx_mapping % 'reference-manual')),
+  'faqs':         ('../../faqs',               os.path.abspath(_intersphinx_mapping % 'faqs')),
 }
 
 extlinks = {
@@ -147,6 +147,13 @@ templates_path = ['_templates', '../../_common/_templates']
 
 # The suffix of source filenames.
 source_suffix = '.rst'
+try:
+    from recommonmark.parser import CommonMarkParser
+    source_parsers = {'.md': CommonMarkParser}
+    source_suffix = ['.rst', '.md']
+    print "Imported CommonMarkParser from recommonmark; can process Markdown files."
+except ImportError:
+    print "Unable to import CommonMarkParser from recommonmark; can't process Markdown files."
 
 # The encoding of source files.
 #source_encoding = 'utf-8-sig'
@@ -330,21 +337,21 @@ html_theme = 'cdap'
 # Fields: directory, manual name, icon
 # icon: "" for none, "new-icon" for the ico_new.png
 manuals_list = [
-    ['introduction',          'Introduction to CDAP',            '',],
-    ['developers-manual',    u'Developers’ Manual',              '',],
-    ['included-applications', 'Included Applications',           '',],
-    ['admin-manual',          'Administration Manual',           '',],
-    ['integrations',          'Integrations',                    '',],
-    ['examples-manual',       'Examples, Guides, and Tutorials', '',],
-    ['reference-manual',      'Reference Manual',                '',],
-    ['faqs',                  'FAQs',                            '',],
+    ['introduction',       'Introduction to CDAP',            '',],
+    ['developers-manual', u'Developers’ Manual',              '',],
+    ['cdap-apps',          'CDAP Applications',               '',],
+    ['admin-manual',       'Administration Manual',           '',],
+    ['integrations',       'Integrations',                    '',],
+    ['examples-manual',    'Examples, Guides, and Tutorials', '',],
+    ['reference-manual',   'Reference Manual',                '',],
+    ['faqs',               'FAQs',                            '',],
 ]
 
 manual_intersphinx_mapping = {
   'overview': 'overview',
   'introduction': 'introduction',
   'developers-manual': 'developers',
-  'included-applications': 'includedapps',
+  'cdap-apps': 'cdapapps',
   'admin-manual': 'admin',
   'integrations': 'integrations',
   'examples-manual': 'examples',
