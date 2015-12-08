@@ -16,7 +16,12 @@
 
 package co.cask.cdap.api.dataset.lib;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
+
 import java.util.Iterator;
+import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Returns access to an iterator of the requested partitions as well as a {@link PartitionConsumerState} which can be
@@ -24,18 +29,33 @@ import java.util.Iterator;
  */
 public class PartitionConsumerResult {
   private final PartitionConsumerState partitionConsumerState;
-  private final Iterator<Partition> partitionIterator;
+  private final List<PartitionDetail> partitions;
 
-  public PartitionConsumerResult(PartitionConsumerState partitionConsumerState, Iterator<Partition> partitionIterator) {
+  public PartitionConsumerResult(PartitionConsumerState partitionConsumerState,
+                                 List<PartitionDetail> partitions) {
     this.partitionConsumerState = partitionConsumerState;
-    this.partitionIterator = partitionIterator;
+    this.partitions = partitions;
   }
 
   public PartitionConsumerState getPartitionConsumerState() {
     return partitionConsumerState;
   }
 
+  public List<PartitionDetail> getPartitions() {
+    return partitions;
+  }
+
+  /**
+   * @deprecated Use {@link #getPartitions()} instead.
+   */
+  @Deprecated
   public Iterator<Partition> getPartitionIterator() {
-    return partitionIterator;
+    return Lists.transform(partitions, new Function<PartitionDetail, Partition>() {
+      @Nullable
+      @Override
+      public Partition apply(PartitionDetail input) {
+        return input;
+      }
+    }).iterator();
   }
 }

@@ -26,11 +26,14 @@ import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.ipc.trace.TimestampedEvent;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Testing the Validation of etl stage hookups.
@@ -181,6 +184,7 @@ public class PipelineRegistererTest {
     PipelineRegisterer.validateConnections(config);
   }
 
+
   @Test(expected = IllegalArgumentException.class)
   public void testUnconnectedTransformConfig() throws Exception {
     ETLStage source = new ETLStage("DBSource", new Plugin("db", ImmutableMap.<String, String>of()));
@@ -204,6 +208,55 @@ public class PipelineRegistererTest {
     );
     ETLConfig config = new ETLConfig(source, sinks, transforms, connections, new Resources());
     PipelineRegisterer.validateConnections(config);
+  }
+
+  @Test
+  public void testTopologySorting() throws Exception {
+
+    // linear
+    Map<String, List<String>> connectionsMap = new HashMap<>();
+    connectionsMap.put("source", ImmutableList.of("trA"));
+    connectionsMap.put("trA", ImmutableList.of("trB"));
+    connectionsMap.put("trB", ImmutableList.of("trC"));
+    connectionsMap.put("trC", ImmutableList.of("sink"));
+
+    Assert.assertEquals(ImmutableList.of("source", "trA", "trB", "trC", "sink") ,
+                        PipelineRegisterer.getStagesAfterTopologicalSorting(connectionsMap, "source"));
+
+
+    connectionsMap.clear();
+    connectionsMap.put("sourceA", ImmutableList.of("transformB", "transformC"));
+    connectionsMap.put("transformB", ImmutableList.of("transformD"));
+    connectionsMap.put("transformC", ImmutableList.of("transformB", "transformD"));
+    connectionsMap.put("transformD", ImmutableList.of("sinkE"));
+
+    Assert.assertEquals(ImmutableList.of("sourceA", "transformC", "transformB", "transformD", "sinkE") ,
+                        PipelineRegisterer.getStagesAfterTopologicalSorting(connectionsMap, "sourceA"));
+
+
+    connectionsMap.clear();
+    connectionsMap.put("sourceA", ImmutableList.of("transformB", "transformC", "transformD"));
+    connectionsMap.put("transformB", ImmutableList.of("transformD", "sink1"));
+    connectionsMap.put("transformC", ImmutableList.of("transformB", "transformE"));
+    connectionsMap.put("transformD", ImmutableList.of("sink1"));
+    connectionsMap.put("transformE", ImmutableList.of("transformB", "sink1"));
+
+
+    Assert.assertEquals(ImmutableList.of("sourceA", "transformC", "transformE", "transformB", "transformD", "sink1") ,
+                        PipelineRegisterer.getStagesAfterTopologicalSorting(connectionsMap, "sourceA"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCycleInTopologySorting() throws Exception {
+
+    // linear
+    Map<String, List<String>> connectionsMap = new HashMap<>();
+    connectionsMap.put("source", ImmutableList.of("trA", "trB"));
+    connectionsMap.put("trA", ImmutableList.of("trB", "sink1"));
+    connectionsMap.put("trB", ImmutableList.of("trC"));
+    connectionsMap.put("trC", ImmutableList.of("trB", "sink2"));
+    PipelineRegisterer.getStagesAfterTopologicalSorting(connectionsMap, "source");
+
   }
 
 

@@ -286,6 +286,7 @@ body.theme-cdap {
       }
       strong {
         display: block;
+        font-size: 12px;
         margin-bottom: 2px;
       }
       span {
@@ -378,18 +379,21 @@ body.theme-cdap {
         }
       }
       .tooltip {
+        &.in {
+          .opacity(1);
+        }
         &.top {
           top: -25px!important;
           .tooltip-arrow {
-            border-top: 5px solid darken(#666, 10%);
+            border-top: 5px solid #666;
           }
         }
       }
       .tooltip-inner {
-        background-color: darken(#666, 10%);
-        border: 1px solid darken(#666, 10%);
+        background-color: #666;
+        border: 1px solid #666;
         padding-right: 10px;
-        padding-left: 10px
+        padding-left: 10px;
       }
       .nopadding {
         padding: 0;

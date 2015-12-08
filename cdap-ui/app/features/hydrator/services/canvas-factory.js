@@ -17,42 +17,6 @@
 
 angular.module(PKG.name + '.feature.hydrator')
   .factory('CanvasFactory', function(myHelpers, $q, $alert, GLOBALS, $filter) {
-    function getNodes(config, type) {
-      var nodes = [];
-      var i =0;
-      nodes.push({
-        id: config.source.name + '-source-' + (++i),
-        name: config.source.name,
-        label: config.source.label || config.source.name,
-        type: GLOBALS.pluginTypes[type].source,
-        properties: config.source.properties,
-        outputSchema: config.source.outputSchema
-      });
-      config.transforms.forEach(function(transform) {
-        nodes.push({
-          id: transform.name + '-transform-' + (++i),
-          name: transform.name,
-          label: transform.label || transform.name,
-          type: 'transform',
-          properties: transform.properties,
-          errorDatasetName: transform.errorDatasetName,
-          validationFields: transform.validationFields,
-          outputSchema: transform.outputSchema
-        });
-      });
-      config.sinks.forEach(function(sink) {
-        nodes.push({
-          id: sink.name + '-sink-' + (++i),
-          name: sink.name,
-          label: sink.label || sink.name,
-          type: GLOBALS.pluginTypes[type].sink,
-          properties: sink.properties,
-          outputSchema: sink.outputSchema
-        });
-      });
-      return nodes;
-    }
-
     function extractMetadataFromDraft(data) {
       var returnConfig = {};
       returnConfig.name = myHelpers.objectQuery(data, 'name');
@@ -165,7 +129,7 @@ angular.module(PKG.name + '.feature.hydrator')
       node.visited = true;
       finalConnections.push(node);
       var nextConnection = originalConnections.filter(function(conn) {
-        if (node.target === conn.source) {
+        if (node.to === conn.from) {
           return conn;
         }
       });
@@ -186,7 +150,7 @@ angular.module(PKG.name + '.feature.hydrator')
     function findTransformThatIsSource(originalConnections) {
       var transformAsSource = {};
       function isSource (c) {
-        if (c.target === connection.source) {
+        if (c.to === connection.from) {
           return c;
         }
       }
@@ -218,7 +182,7 @@ angular.module(PKG.name + '.feature.hydrator')
         nodesMap[n.id] = n;
       });
       var source = connections.filter(function(conn) {
-        if (nodesMap[conn.source].type === GLOBALS.pluginTypes[appType].source) {
+        if (nodesMap[conn.from].type === GLOBALS.pluginTypes[appType].source) {
           return conn;
         }
       });
@@ -269,22 +233,22 @@ angular.module(PKG.name + '.feature.hydrator')
 
         return properties;
       }
-      if (myHelpers.objectQuery(config, 'source', 'properties') &&
-          Object.keys(config.source.properties).length > 0) {
-        config.source.properties = propertiesIterator(config.source.properties, config.source._backendProperties);
+      if (myHelpers.objectQuery(config, 'source', 'plugin', 'properties') &&
+          Object.keys(config.source.plugin.properties).length > 0) {
+        config.source.plugin.properties = propertiesIterator(config.source.plugin.properties, config.source.plugin._backendProperties);
       }
 
       config.sinks.forEach(function(sink) {
-        if (myHelpers.objectQuery(sink, 'properties') &&
-            Object.keys(sink.properties).length > 0) {
-          sink.properties = propertiesIterator(sink.properties, sink._backendProperties);
+        if (myHelpers.objectQuery(sink, 'plugin', 'properties') &&
+            Object.keys(sink.plugin.properties).length > 0) {
+          sink.plugin.properties = propertiesIterator(sink.plugin.properties, sink.plugin._backendProperties);
         }
       });
 
       config.transforms.forEach(function(transform) {
-        if (myHelpers.objectQuery(transform, 'properties') &&
-            Object.keys(transform.properties).length > 0) {
-          transform.properties = propertiesIterator(transform.properties, transform._backendProperties);
+        if (myHelpers.objectQuery(transform, 'plugin', 'properties') &&
+            Object.keys(transform.plugin.properties).length > 0) {
+          transform.plugin.properties = propertiesIterator(transform.plugin.properties, transform.plugin._backendProperties);
         }
       });
     }
@@ -293,31 +257,21 @@ angular.module(PKG.name + '.feature.hydrator')
 
       pruneNonBackEndProperties(config);
 
-      if (config.source && (config.source.id || config.source._backendProperties)) {
-        delete config.source._backendProperties;
-        delete config.source.id;
-        delete config.source.outputSchema;
-        delete config.source.inputSchema;
+      if (config.source.plugin && (config.source.name || config.source.plugin._backendProperties)) {
+        delete config.source.plugin._backendProperties;
       }
 
       config.sinks.forEach(function(sink) {
-        delete sink._backendProperties;
-        delete sink.id;
-        delete sink.outputSchema;
-        delete sink.inputSchema;
+        delete sink.plugin._backendProperties;
       });
 
       config.transforms.forEach(function(t) {
-        delete t._backendProperties;
-        delete t.id;
-        delete t.outputSchema;
-        delete t.inputSchema;
+        delete t.plugin._backendProperties;
       });
       return config;
     }
 
     return {
-      getNodes: getNodes,
       extractMetadataFromDraft: extractMetadataFromDraft,
       getConnectionsBasedOnNodes: getConnectionsBasedOnNodes,
       importPipeline: importPipeline,

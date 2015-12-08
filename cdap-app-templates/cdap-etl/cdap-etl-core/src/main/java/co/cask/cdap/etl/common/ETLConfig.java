@@ -23,11 +23,13 @@ import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Common ETL Config.
  */
 public class ETLConfig extends Config {
+  private Boolean stageLoggingEnabled;
   private final ETLStage source;
   private final List<ETLStage> sinks;
   private final List<ETLStage> transforms;
@@ -41,6 +43,7 @@ public class ETLConfig extends Config {
     this.transforms = transforms;
     this.connections = getValidConnections(connections);
     this.resources = resources;
+    this.stageLoggingEnabled = true;
   }
 
   private List<Connection> getValidConnections(List<Connection> connections) {
@@ -113,5 +116,45 @@ public class ETLConfig extends Config {
 
   public Resources getResources() {
     return resources;
+  }
+
+  public Boolean isStageLoggingEnabled() {
+    return stageLoggingEnabled == null ? true : stageLoggingEnabled;
+  }
+
+  @Override
+  public String toString() {
+    return "ETLConfig{" +
+      "stageLoggingEnabled=" + stageLoggingEnabled +
+      ", source=" + source +
+      ", sinks=" + sinks +
+      ", transforms=" + transforms +
+      ", connections=" + connections +
+      ", resources=" + resources +
+      "} " + super.toString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ETLConfig that = (ETLConfig) o;
+
+    return Objects.equals(source, that.source) &&
+      Objects.equals(sinks, that.sinks) &&
+      Objects.equals(transforms, that.transforms) &&
+      Objects.equals(connections, that.connections) &&
+      Objects.equals(resources, that.resources) &&
+      isStageLoggingEnabled() == that.isStageLoggingEnabled();
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(source, sinks, transforms, connections, resources, isStageLoggingEnabled());
   }
 }

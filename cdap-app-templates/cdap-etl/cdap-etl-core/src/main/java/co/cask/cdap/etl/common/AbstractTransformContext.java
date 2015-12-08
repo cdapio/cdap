@@ -23,8 +23,11 @@ import co.cask.cdap.etl.api.Lookup;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.StageMetrics;
 import co.cask.cdap.etl.api.TransformContext;
+import co.cask.cdap.etl.log.LogContext;
+import com.google.common.base.Throwables;
 
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Base implementation of {@link TransformContext} for common functionality.
@@ -47,23 +50,48 @@ public abstract class AbstractTransformContext implements TransformContext {
   }
 
   @Override
-  public final PluginProperties getPluginProperties(String pluginId) {
-    return pluginContext.getPluginProperties(scopePluginId(pluginId));
+  public final PluginProperties getPluginProperties(final String pluginId) {
+    return LogContext.runWithoutLoggingUnchecked(new Callable<PluginProperties>() {
+      @Override
+      public PluginProperties call() throws Exception {
+        return pluginContext.getPluginProperties(scopePluginId(pluginId));
+      }
+    });
   }
 
   @Override
-  public final <T> T newPluginInstance(String pluginId) throws InstantiationException {
-    return pluginContext.newPluginInstance(scopePluginId(pluginId));
+  public final <T> T newPluginInstance(final String pluginId) throws InstantiationException {
+    try {
+      return LogContext.runWithoutLogging(new Callable<T>() {
+        @Override
+        public T call() throws Exception {
+          return pluginContext.newPluginInstance(scopePluginId(pluginId));
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, InstantiationException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
-  public final <T> Class<T> loadPluginClass(String pluginId) {
-    return pluginContext.loadPluginClass(scopePluginId(pluginId));
+  public final <T> Class<T> loadPluginClass(final String pluginId) {
+    return LogContext.runWithoutLoggingUnchecked(new Callable<Class<T>>() {
+      @Override
+      public Class<T> call() throws Exception {
+        return pluginContext.loadPluginClass(scopePluginId(pluginId));
+      }
+    });
   }
 
   @Override
   public final PluginProperties getPluginProperties() {
-    return pluginContext.getPluginProperties(stageName);
+    return LogContext.runWithoutLoggingUnchecked(new Callable<PluginProperties>() {
+      @Override
+      public PluginProperties call() throws Exception {
+        return pluginContext.getPluginProperties(stageName);
+      }
+    });
   }
 
   @Override

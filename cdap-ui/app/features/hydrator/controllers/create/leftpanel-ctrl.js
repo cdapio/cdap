@@ -65,16 +65,13 @@ class LeftPanelController {
   }
 
   onLeftSidePanelItemClicked(event, item) {
-    // TODO: Better UUID?
-    let id = item.name + '-' + item.type + '-' + Date.now();
     event.stopPropagation();
 
     let config;
 
     if (item.pluginTemplate) {
       config = {
-        id: id,
-        label: id,
+        label: item.name,
         name: item.pluginName,
         icon: this.MyDAGFactory.getIcon(item.pluginName),
         type: item.pluginType,
@@ -85,7 +82,6 @@ class LeftPanelController {
       };
     } else {
       config = {
-        id: id,
         label: item.name,
         name: item.name,
         icon: item.icon,

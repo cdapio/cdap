@@ -48,11 +48,14 @@ class ConfigStore {
         version: ''
       },
       config: {
-        source: {},
+        source: {
+          name: '',
+          plugin: {}
+        },
         sinks: [],
-        transforms: []
+        transforms: [],
+        connections: []
       },
-      connections: [],
       __ui__: {
         nodes: [],
         isEditing: true
@@ -70,9 +73,13 @@ class ConfigStore {
   }
   getDefaultConfig() {
     return {
-      source: {},
+      source: {
+        name: '',
+        plugin: {}
+      },
       sinks: [],
-      transforms: []
+      transforms: [],
+      connections: []
     };
   }
 
@@ -89,7 +96,7 @@ class ConfigStore {
     return this.getState().artifact.name;
   }
   getConnections() {
-    return this.getState().connections;
+    return this.getConfig().connections;
   }
   getConfig() {
     return this.getState().config;
@@ -115,7 +122,10 @@ class ConfigStore {
       };
 
       if (plugin.type === artifactTypeExtension.source) {
-        config['source'] = pluginConfig;
+        config['source'] = {
+          name: pluginConfig.id,
+          plugin: pluginConfig
+        };
       } else if (plugin.type === 'transform') {
         if (plugin.errorDatasetName && plugin.errorDatasetName.length > 0) {
           pluginConfig.errorDatasetName = plugin.errorDatasetName;
@@ -123,25 +133,32 @@ class ConfigStore {
         if (plugin.validationFields) {
           pluginConfig.validationFields = plugin.validationFields;
         }
-
+        pluginConfig = {
+          name: pluginConfig.id,
+          plugin: pluginConfig
+        };
         config['transforms'].push(pluginConfig);
       } else if (plugin.type === artifactTypeExtension.sink) {
+        pluginConfig = {
+          name: pluginConfig.id,
+          plugin: pluginConfig
+        };
         config['sinks'].push(pluginConfig);
       }
       delete nodesMap[id];
     }
     var connections = this.CanvasFactory.orderConnections(
-      angular.copy(this.state.connections),
+      angular.copy(this.state.config.connections),
       this.state.artifact.name,
       this.state.__ui__.nodes
     );
 
     connections.forEach( connection => {
-      if (nodesMap[connection.source]) {
-        addPluginToConfig(nodesMap[connection.source], connection.source);
+      if (nodesMap[connection.from]) {
+          addPluginToConfig(nodesMap[connection.from], connection.from);
       }
-      if (nodesMap[connection.target]) {
-        addPluginToConfig(nodesMap[connection.target], connection.target);
+      if (nodesMap[connection.to]) {
+        addPluginToConfig(nodesMap[connection.to], connection.to);
       }
     });
     let appType = this.getAppType();
@@ -150,6 +167,10 @@ class ConfigStore {
     } else if (appType === this.GLOBALS.etlRealtime) {
       config.instance = this.state.config.instance;
     }
+    config.connections = connections.map(conn => {
+      delete conn.visited;
+      return conn;
+    });
     return config;
   }
   getConfigForExport() {
@@ -160,6 +181,23 @@ class ConfigStore {
   }
   getDisplayConfig() {
     var stateCopy = this.getConfigForExport();
+    var source = stateCopy.config.source;
+    var sinks = stateCopy.config.sinks;
+    var transforms = stateCopy.config.transforms;
+
+    if (source.plugin) {
+      delete source.plugin.outputSchema;
+    }
+    angular.forEach(sinks, (sink) => {
+      if (sink.plugin) {
+        delete sink.plugin.outputSchema;
+      }
+    });
+    angular.forEach(transforms, (transform) =>  {
+      if (transform.plugin) {
+        delete transform.plugin.outputSchema;
+      }
+    });
     delete stateCopy.__ui__;
     return stateCopy;
   }
@@ -213,7 +251,7 @@ class ConfigStore {
     this.state.__ui__.nodes = nodes;
   }
   setConnections(connections) {
-    this.state.connections = connections;
+    this.state.config.connections = connections;
   }
   addNode(node) {
     this.state.__ui__.nodes.push(node);

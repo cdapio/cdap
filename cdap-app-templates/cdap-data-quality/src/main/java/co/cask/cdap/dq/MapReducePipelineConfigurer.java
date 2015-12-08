@@ -24,6 +24,8 @@ import co.cask.cdap.api.mapreduce.MapReduceConfigurer;
 import co.cask.cdap.api.plugin.PluginProperties;
 import co.cask.cdap.api.plugin.PluginSelector;
 import co.cask.cdap.etl.api.PipelineConfigurer;
+import co.cask.cdap.etl.api.StageConfigurer;
+import co.cask.cdap.etl.common.DefaultStageConfigurer;
 
 import javax.annotation.Nullable;
 
@@ -32,11 +34,13 @@ import javax.annotation.Nullable;
  */
 public class MapReducePipelineConfigurer implements PipelineConfigurer {
   private final MapReduceConfigurer mrConfigurer;
-  private final String prefixId;
+  private final String stageName;
+  private final StageConfigurer stageConfigurer;
 
-  public MapReducePipelineConfigurer(MapReduceConfigurer configurer, String prefixId) {
+  public MapReducePipelineConfigurer(MapReduceConfigurer configurer, String stageName) {
     this.mrConfigurer = configurer;
-    this.prefixId = prefixId;
+    this.stageName = stageName;
+    this.stageConfigurer = new DefaultStageConfigurer(stageName);
   }
 
   @Override
@@ -82,27 +86,32 @@ public class MapReducePipelineConfigurer implements PipelineConfigurer {
   @Nullable
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties) {
-    return mrConfigurer.usePlugin(pluginType, pluginName, prefixId + pluginId, properties);
+    return mrConfigurer.usePlugin(pluginType, pluginName, stageName + pluginId, properties);
   }
 
   @Nullable
   @Override
   public <T> T usePlugin(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                          PluginSelector selector) {
-    return mrConfigurer.usePlugin(pluginType, pluginName, prefixId + pluginId, properties, selector);
+    return mrConfigurer.usePlugin(pluginType, pluginName, stageName + pluginId, properties, selector);
   }
 
   @Nullable
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId,
                                      PluginProperties properties) {
-    return mrConfigurer.usePluginClass(pluginType, pluginName, prefixId + pluginId, properties);
+    return mrConfigurer.usePluginClass(pluginType, pluginName, stageName + pluginId, properties);
   }
 
   @Nullable
   @Override
   public <T> Class<T> usePluginClass(String pluginType, String pluginName, String pluginId, PluginProperties properties,
                                      PluginSelector selector) {
-    return mrConfigurer.usePluginClass(pluginType, pluginName, prefixId + pluginId, properties, selector);
+    return mrConfigurer.usePluginClass(pluginType, pluginName, stageName + pluginId, properties, selector);
+  }
+
+  @Override
+  public StageConfigurer getStageConfigurer() {
+    return stageConfigurer;
   }
 }

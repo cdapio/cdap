@@ -23,11 +23,14 @@ import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.stream.StreamEventData;
 import co.cask.cdap.api.worker.WorkerContext;
 import co.cask.cdap.etl.api.realtime.DataWriter;
+import co.cask.cdap.etl.log.LogContext;
+import com.google.common.base.Throwables;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Implementation of {@link DataWriter}.
@@ -42,43 +45,128 @@ public class DefaultDataWriter implements DataWriter {
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-    return dsContext.getDataset(name);
+  public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
+    try {
+      return LogContext.runWithoutLogging(new Callable<T>() {
+        @Override
+        public T call() throws Exception {
+          return dsContext.getDataset(name);
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, DatasetInstantiationException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+  public <T extends Dataset> T getDataset(final String name, final Map<String, String> arguments)
     throws DatasetInstantiationException {
-    return dsContext.getDataset(name, arguments);
+    try {
+      return LogContext.runWithoutLogging(new Callable<T>() {
+        @Override
+        public T call() throws Exception {
+          return dsContext.getDataset(name, arguments);
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, DatasetInstantiationException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
-  public void write(String stream, String data) throws IOException {
-    context.write(stream, data);
+  public void write(final String stream, final String data) throws IOException {
+    try {
+      LogContext.runWithoutLogging(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          context.write(stream, data);
+          return  null;
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
-  public void write(String stream, String data, Map<String, String> headers) throws IOException {
-    context.write(stream, data, headers);
+  public void write(final String stream, final String data, final Map<String, String> headers) throws IOException {
+    try {
+      LogContext.runWithoutLogging(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          context.write(stream, data, headers);
+          return  null;
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
-  public void write(String stream, ByteBuffer data) throws IOException {
-    context.write(stream, data);
+  public void write(final String stream, final ByteBuffer data) throws IOException {
+    try {
+      LogContext.runWithoutLogging(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          context.write(stream, data);
+          return  null;
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
-  public void write(String stream, StreamEventData data) throws IOException {
-    context.write(stream, data);
+  public void write(final String stream, final StreamEventData data) throws IOException {
+    try {
+      LogContext.runWithoutLogging(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          context.write(stream, data);
+          return  null;
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
-  public void writeFile(String stream, File file, String contentType) throws IOException {
-    context.writeFile(stream, file, contentType);
+  public void writeFile(final String stream, final File file, final String contentType) throws IOException {
+    try {
+      LogContext.runWithoutLogging(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          context.writeFile(stream, file, contentType);
+          return  null;
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
-  public StreamBatchWriter createBatchWriter(String stream, String contentType) throws IOException {
-    return context.createBatchWriter(stream, contentType);
+  public StreamBatchWriter createBatchWriter(final String stream, final String contentType) throws IOException {
+    try {
+      return LogContext.runWithoutLogging(new Callable<StreamBatchWriter>() {
+        @Override
+        public StreamBatchWriter call() throws Exception {
+          return context.createBatchWriter(stream, contentType);
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, IOException.class);
+      throw Throwables.propagate(e);
+    }
   }
 }

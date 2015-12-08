@@ -70,8 +70,8 @@ In this example, the *name*, *description*, *with* (or *without*)
 flowlets, and *connections* are specified before building the flow.
 
 
-.. rubric::  Examples of Using Flows and Flowlets
-
+Flow and Flowlet Examples
+=========================
 Flows and flowlets are included in just about every CDAP :ref:`application <apps-and-packs>`,
 :ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
 

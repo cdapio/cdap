@@ -45,6 +45,7 @@ commonModule.directive('myDag', function() {
         var maxLeft = 0;
         var maxTop = 0;
         angular.forEach(plugins, function (plugin) {
+          if (!plugin._uiPosition) { return; }
           var left = parseInt(plugin._uiPosition.left, 10);
           var top = parseInt(plugin._uiPosition.top, 10);
 
@@ -57,6 +58,7 @@ commonModule.directive('myDag', function() {
         var marginTop = (parentHeight - maxTop) / 2 - 50;
 
         angular.forEach(plugins, function (plugin) {
+          if (!plugin._uiPosition) { return; }
           var left = parseInt(plugin._uiPosition.left, 10) + marginLeft;
           var top = parseInt(plugin._uiPosition.top, 10) + marginTop;
 

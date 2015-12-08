@@ -105,38 +105,30 @@ class NodeConfigController {
                 if (this.state.plugin.properties[configOutputSchema.outputSchemaProperty[0]] !== this.state.plugin.outputSchema) {
                   this.state.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.plugin.outputSchema;
                 }
-                if (!this.$scope.isDisabled) {
-                  this.state.watchers.push(
-                    this.$scope.$watch('NodeConfigController.state.plugin.outputSchema', () => {
-                      if(this.validateSchema()) {
-                        this.state.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.plugin.outputSchema;
-                      }
-                    }),
-                    this.$scope.$watch(
-                      'NodeConfigController.state.plugin.properties',
-                      _.debounce(() => this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin), 1000),
-                      true
-                    )
-                  );
-                }
-
+                this.state.watchers.push(
+                  this.$scope.$watch('NodeConfigController.state.plugin.outputSchema', () => {
+                    if(this.validateSchema()) {
+                      this.state.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.plugin.outputSchema;
+                    }
+                  })
+                );
               } else if (this.state.plugin.inputSchema) {
                 // If there is no information of output schema in the node config then just mantain an output schema for UI purposes.
                 configOutputSchema.isOutputSchemaExists = true;
                 this.state.plugin.outputSchema = this.state.plugin.outputSchema || this.state.plugin.inputSchema;
                 this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin);
-                this.state.watchers.push(
-                  this.$scope.$watch(
-                    'NodeConfigController.state.plugin.outputSchema',
-                    _.debounce(() => {
-                      if(this.validateSchema()) {
-                        this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin);
-                      }
-                    }, 1000),
-                    true
-                  )
-                );
               }
+            }
+            if (!this.$scope.isDisabled) {
+              this.state.watchers.push(
+                this.$scope.$watch(
+                  'NodeConfigController.state.plugin',
+                  _.debounce( () => {
+                    this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin);
+                  }, 1000),
+                  true
+                )
+              );
             }
 
             // Mark the configfetched to show that configurations have been received.

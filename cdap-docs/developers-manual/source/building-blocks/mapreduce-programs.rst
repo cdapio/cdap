@@ -342,7 +342,8 @@ The Resources API, if called with two arguments, sets both the memory used in me
 and the number of virtual cores used.
 
 
-.. rubric::  Examples of Using MapReduce Programs
+MapReduce Program Examples
+==========================
 
 - For an example of **a MapReduce program,** see the :ref:`Purchase
   <examples-purchase>` example.

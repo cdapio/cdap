@@ -269,8 +269,10 @@ such as the format and schema, while abstracting from the actual underlying file
   Cube <cdap-cube-guide>` guide. 
   
 
-.. rubric::  Examples of Using Datasets
+.. .. rubric::  Examples of Using Datasets
 
+Dataset Examples
+================
 Datasets are included in just about every CDAP :ref:`application <apps-and-packs>`,
 :ref:`tutorial <tutorials>`, :ref:`guide <guides-index>` or :ref:`example <examples-index>`.
 

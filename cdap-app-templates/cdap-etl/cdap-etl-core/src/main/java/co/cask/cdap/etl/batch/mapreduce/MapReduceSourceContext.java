@@ -24,9 +24,11 @@ import co.cask.cdap.api.mapreduce.MapReduceContext;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchSourceContext;
+import co.cask.cdap.etl.log.LogContext;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * MapReduce Source Context.
@@ -39,37 +41,79 @@ public class MapReduceSourceContext extends MapReduceBatchContext implements Bat
   }
 
   @Override
-  public void setInput(StreamBatchReadable stream) {
-    mrContext.setInput(stream);
+  public void setInput(final StreamBatchReadable stream) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        mrContext.setInput(stream);
+        return null;
+      }
+    });
   }
 
   @Override
-  public void setInput(String datasetName) {
-    mrContext.setInput(datasetName);
+  public void setInput(final String datasetName) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        mrContext.setInput(datasetName);
+        return null;
+      }
+    });
   }
 
   @Override
-  public void setInput(String datasetName, Map<String, String> arguments) {
-    mrContext.setInput(datasetName, arguments);
+  public void setInput(final String datasetName, final Map<String, String> arguments) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        mrContext.setInput(datasetName, arguments);
+        return null;
+      }
+    });
   }
 
   @Override
-  public void setInput(String datasetName, List<Split> splits) {
-    mrContext.setInput(datasetName, splits);
+  public void setInput(final String datasetName, final List<Split> splits) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        mrContext.setInput(datasetName, splits);
+        return null;
+      }
+    });
   }
 
   @Override
-  public void setInput(String datasetName, Map<String, String> arguments, List<Split> splits) {
-    mrContext.setInput(datasetName, arguments, splits);
+  public void setInput(final String datasetName, final Map<String, String> arguments, final List<Split> splits) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        mrContext.setInput(datasetName, arguments, splits);
+        return null;
+      }
+    });
   }
 
   @Override
-  public void setInput(InputFormatProvider inputFormatProvider) {
-    mrContext.setInput(inputFormatProvider);
+  public void setInput(final InputFormatProvider inputFormatProvider) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        mrContext.setInput(inputFormatProvider);
+        return null;
+      }
+    });
   }
 
   @Override
-  public void setInput(String datasetName, Dataset dataset) {
-    mrContext.setInput(datasetName, dataset);
+  public void setInput(final String datasetName, final Dataset dataset) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        mrContext.setInput(datasetName, dataset);
+        return null;
+      }
+    });
   }
 }

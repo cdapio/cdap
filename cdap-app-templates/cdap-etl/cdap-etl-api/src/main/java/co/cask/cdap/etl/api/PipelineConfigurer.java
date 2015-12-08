@@ -26,4 +26,9 @@ import co.cask.cdap.api.plugin.PluginConfigurer;
 @Beta
 public interface PipelineConfigurer extends PluginConfigurer {
 
+  /**
+   * Get stage configurer for the pipeline stage
+   * @return stage configurer
+   */
+  StageConfigurer getStageConfigurer();
 }

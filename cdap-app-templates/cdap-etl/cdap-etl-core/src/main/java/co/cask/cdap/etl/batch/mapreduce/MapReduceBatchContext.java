@@ -23,10 +23,13 @@ import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
+import co.cask.cdap.etl.log.LogContext;
+import com.google.common.base.Throwables;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 /**
  * Abstract implementation of {@link BatchContext} using {@link MapReduceContext}.
@@ -47,23 +50,53 @@ public abstract class MapReduceBatchContext extends AbstractTransformContext imp
 
   @Override
   public long getLogicalStartTime() {
-    return mrContext.getLogicalStartTime();
+    return LogContext.runWithoutLoggingUnchecked(new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        return mrContext.getLogicalStartTime();
+      }
+    });
   }
 
   @Override
   public <T> T getHadoopJob() {
-    return mrContext.getHadoopJob();
+    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        return mrContext.getHadoopJob();
+      }
+    });
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String name) throws DatasetInstantiationException {
-    return mrContext.getDataset(name);
+  public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
+    try {
+      return LogContext.runWithoutLogging(new Callable<T>() {
+        @Override
+        public T call() throws Exception {
+          return mrContext.getDataset(name);
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, DatasetInstantiationException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override
-  public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
+  public <T extends Dataset> T getDataset(final String name, final Map<String, String> arguments)
     throws DatasetInstantiationException {
-    return mrContext.getDataset(name, arguments);
+    try {
+      return LogContext.runWithoutLogging(new Callable<T>() {
+        @Override
+        public T call() throws Exception {
+          return mrContext.getDataset(name, arguments);
+        }
+      });
+    } catch (Exception e) {
+      Throwables.propagateIfInstanceOf(e, DatasetInstantiationException.class);
+      throw Throwables.propagate(e);
+    }
   }
 
   @Override

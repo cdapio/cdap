@@ -125,7 +125,8 @@ angular.module(PKG.name + '.feature.hydrator')
         list: runs,
         count: runs.length,
         latest: runs[0],
-        runsCount: runs.length
+        runsCount: runs.length,
+        nextRunTime: this.state.runs.nextRunTime || null
       };
       if (this.state.type === GLOBALS.etlBatch) {
         this.state.logsParams.runId = this.state.runs.latest.properties.ETLMapReduce;

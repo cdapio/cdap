@@ -15,10 +15,11 @@
  */
 
 class NodesStore {
-  constructor(NodesDispatcher) {
+  constructor(NodesDispatcher, uuid) {
     this.state = {};
     this.setDefaults();
     this.changeListeners = [];
+    this.uuid = uuid;
 
     let dispatcher = NodesDispatcher.getDispatcher();
     dispatcher.register('onNodeAdd', this.addNode.bind(this));
@@ -54,6 +55,9 @@ class NodesStore {
   }
 
   addNode(config) {
+    if (!config.id) {
+      config.id = (config.label || config.name) + '-' + this.uuid.v4();
+    }
     this.state.nodes.push(config);
     this.emitChange();
   }
@@ -76,7 +80,23 @@ class NodesStore {
     return this.state.nodes;
   }
   setNodes(nodes) {
+    nodes.forEach(node => {
+      if (!node.id) {
+        node.id = node.name || (node.label + '-' + this.uuid.v4());
+      }
+    });
     this.state.nodes = nodes;
+    this.emitChange();
+  }
+  getActiveNodeId() {
+    return this.state.activeNodeId;
+  }
+  setActiveNodeId(nodeId) {
+    this.state.activeNodeId = nodeId;
+    this.emitChange();
+  }
+  resetActiveNode() {
+    this.state.activeNodeId = null;
     this.emitChange();
   }
 
@@ -96,30 +116,19 @@ class NodesStore {
   getConnections() {
     return this.state.connections;
   }
-  getActiveNodeId() {
-    return this.state.activeNodeId;
-  }
   setConnections(connections) {
     this.state.connections = connections;
     this.emitChange();
   }
 
   setNodesAndConnections(nodes, connections) {
-    this.state.nodes = nodes;
+    this.setNodes(nodes);
     this.state.connections = connections;
     this.emitChange();
   }
 
-  setActiveNodeId(nodeId) {
-    this.state.activeNodeId = nodeId;
-    this.emitChange();
-  }
-  resetActiveNode() {
-    this.state.activeNodeId = null;
-    this.emitChange();
-  }
 }
 
-NodesStore.$inject = ['NodesDispatcher'];
+NodesStore.$inject = ['NodesDispatcher', 'uuid'];
 angular.module(`${PKG.name}.commons`)
   .service('NodesStore', NodesStore);

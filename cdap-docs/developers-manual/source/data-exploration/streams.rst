@@ -23,8 +23,8 @@ Let's take a closer look at attaching format and schema on streams.
 
 .. _stream-exploration-stream-format:
 
-Stream Format
--------------
+Formats
+-------
 
 A format defines how the bytes in an event body can be read as a higher level object.
 For example, the CSV (comma separated values) format can read each value in comma-delimited text
@@ -59,7 +59,7 @@ and
 
 Schema
 ------
-CDAP schemas are adopted from the `Avro Schema Declaration <http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__
+CDAP schemas are adapted from the `Avro Schema Declaration <http://avro.apache.org/docs/1.7.3/spec.html#schemas>`__
 with a few differences:
 
   * Map keys do not have to be strings, but can be of any type.
@@ -143,6 +143,8 @@ For example::
 
   set stream format mystream text "data string not null" "charset=ISO-8859-1"
 
+.. _stream-exploration-stream-format_csv_tsv:
+
 CSV and TSV Formats
 -------------------
 The ``csv`` (comma separated values) and ``tsv`` (tab separated values) formats read event bodies as delimited text.
@@ -160,8 +162,6 @@ All types can be nullable. If no schema is given, the default schema is an array
 For example::
 
   set stream format mystream csv "col1 string, col2 int not null, col3 array<string>"
-
-
 
 Avro Format
 -----------
@@ -228,7 +228,7 @@ When creating your queries, keep these limitations in mind:
 - CDAP uses a custom storage handler to read streams through Hive. This means that queries must be run through
   CDAP and not directly through Hive unless you place CDAP jars in your Hive classpath. This also means that
   streams cannot be queried directly by Impala. If you wish to use Impala to explore data in a stream, you can
-  create an :ref:`ETL application <included-apps-etl-index>` that converts stream data into a ``TimePartitionedFileSet``.
+  create an :ref:`ETL application <cdap-apps-hydrator-index>` that converts stream data into a ``TimePartitionedFileSet``.
   This is described in the "How-To Guide" :ref:`Batch CDAP Stream to Impala <cdap-etl-application-guide>`.
 - Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
   If you are seeing permission errors, try setting ``hive.exec.stagingdir`` in your Hive configuration to ``/tmp/hive-staging``.

@@ -83,14 +83,20 @@ angular.module(PKG.name + '.commons')
         addEndpoints();
 
         angular.forEach($scope.connections, function (conn) {
-          var sourceId = conn.source.indexOf('transform') !== -1 ? 'Left' + conn.source : conn.source;
-          var targetId = conn.target.indexOf('transform') !== -1 ? 'Right' + conn.target : conn.target;
+          var sourceNode = $scope.nodes.filter( node => node.id === conn.from);
+          var targetNode = $scope.nodes.filter( node => node.id === conn.to);
+          if (!sourceNode.length || !targetNode.length) {
+            return;
+          }
+          var sourceId = sourceNode[0].type === 'transform' ? 'Left' + conn.from : conn.from;
+          var targetId = targetNode[0].type === 'transform' ? 'Right' + conn.to : conn.to;
           var connObj = {
             uuids: [sourceId, targetId]
           };
           if (vm.isDisabled) {
             connObj.detachable = false;
           }
+
           vm.instance.connect(connObj);
         });
 
@@ -181,8 +187,8 @@ angular.module(PKG.name + '.commons')
       var connections = [];
       angular.forEach(vm.instance.getConnections(), function (conn) {
         connections.push({
-          source: conn.sourceId,
-          target: conn.targetId
+          from: conn.sourceId,
+          to: conn.targetId
         });
       });
       NodesActionsFactory.setConnections(connections);
@@ -253,19 +259,6 @@ angular.module(PKG.name + '.commons')
 
       vm.instance.bind('click', connectionClick);
 
-
-
-      // $scope.$watchCollection('nodes', function () {
-      //   console.log('nodes', $scope.nodes);
-      //   $timeout(function () {
-      //     var nodes = document.querySelectorAll('.box');
-      //     addEndpoints();
-      //     vm.instance.draggable(nodes, {
-      //       start: function () { dragged = true; },
-      //       stop: function () { $timeout(function () { vm.instance.repaintEverything(); }); }
-      //     });
-      //   });
-      // });
 
       // This should be removed once the node config is using FLUX
       $scope.$watch('nodes', function () {

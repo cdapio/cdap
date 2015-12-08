@@ -28,12 +28,12 @@ angular.module(PKG.name + '.feature.hydrator')
       this.runsCount = DetailRunsStore.getRunsCount();
       var runs = DetailRunsStore.getRuns();
       var status, i;
-      var lastRunDuration = (runs.length > 0 && runs[0].end) ? runs[0].end - runs[0].start : angular.noop();
+      var lastRunDuration;
       var nextRunTime = DetailRunsStore.getNextRunTime();
-      var averageRunTime = DetailRunsStore.getStatistics().avgRunTime;
       if (nextRunTime) {
         nextRunTime = nextRunTime[0].time? nextRunTime[0].time: null;
       }
+      this.nextRunTime = nextRunTime || 'N/A';
       for (i=0 ; i<runs.length; i++) {
         status = runs[i].status;
         if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
@@ -41,13 +41,13 @@ angular.module(PKG.name + '.feature.hydrator')
           break;
         }
       }
-
-      this.nextRunTime = nextRunTime || 'N/A';
-      if (lastRunDuration) {
+      if (this.lastFinished) {
+        lastRunDuration = this.lastFinished.end - this.lastFinished.start;
         this.lastRunTime = moment.utc(lastRunDuration * 1000).format('HH:mm:ss');
       } else {
         this.lastRunTime = 'N/A';
       }
+      var averageRunTime = DetailRunsStore.getStatistics().avgRunTime;
       // We get time as seconds from backend. So multiplying it by 1000 to give moment.js in milliseconds.
       if (averageRunTime) {
         this.avgRunTime = moment.utc( averageRunTime * 1000 ).format('HH:mm:ss');
@@ -66,7 +66,7 @@ angular.module(PKG.name + '.feature.hydrator')
         DetailRunsStore.getApi(),
         params
       );
-      PipelineDetailActionFactory.getNextRunTime(
+      PipelineDetailActionFactory.pollNextRunTime(
         DetailRunsStore.getApi(),
         DetailRunsStore.getParams()
       );

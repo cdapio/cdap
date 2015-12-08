@@ -19,14 +19,14 @@ package co.cask.cdap.etl.common;
 import co.cask.cdap.etl.api.Emitter;
 import co.cask.cdap.etl.api.InvalidEntry;
 import co.cask.cdap.etl.api.Transform;
-import co.cask.cdap.etl.api.Transformation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,20 +36,20 @@ public class TransformExecutorTest {
   @Test
   public void testEmptyTransforms() throws Exception {
     MockMetrics mockMetrics = new MockMetrics();
-    Map<String, Transformation> transformationMap = new HashMap<>();
-    transformationMap.put("sink", new DoubleToString());
-    Map<String, List<String>> connectionsMap = new HashMap<>();
-    connectionsMap.put("source", ImmutableList.of("sink"));
+    Map<String, TransformDetail> transformationMap = new HashMap<>();
+    transformationMap.put("sink", new TransformDetail(new DoubleToString(),
+                                                      new DefaultStageMetrics(mockMetrics, "sink"),
+                                                      new ArrayList<String>()));
 
     TransformExecutor executor =
-      new TransformExecutor(transformationMap, mockMetrics, connectionsMap, "source");
+      new TransformExecutor(transformationMap, ImmutableList.of("sink"));
     TransformResponse transformResponse = executor.runOneIteration(1d);
-    Map<String, List<Object>> sinkResult = transformResponse.getSinksResults();
+    Map<String, Collection<Object>> sinkResult = transformResponse.getSinksResults();
     Assert.assertTrue(sinkResult.containsKey("sink"));
-    List<Object> sinkResultList = sinkResult.get("sink");
+    Collection<Object> sinkResultList = sinkResult.get("sink");
     Assert.assertEquals(1, sinkResultList.size());
     // note : sink transform would have exectued, so the expected is string and not integer
-    Assert.assertEquals("1.0", sinkResultList.get(0));
+    Assert.assertEquals("1.0", sinkResultList.iterator().next());
     executor.resetEmitter();
   }
 
@@ -57,25 +57,29 @@ public class TransformExecutorTest {
   @Test
   public void testTransforms() throws Exception {
     MockMetrics mockMetrics = new MockMetrics();
-    Map<String, Transformation> transformationMap = new HashMap<>();
+    Map<String, TransformDetail> transformationMap = new HashMap<>();
 
-    transformationMap.put("transform1", new IntToDouble());
-    transformationMap.put("transform2", new Filter(100d, Threshold.LOWER));
-    transformationMap.put("sink1", new DoubleToString());
-    transformationMap.put("sink2", new DoubleToString());
+    transformationMap.put("transform1",
+                          new TransformDetail(new IntToDouble(), new DefaultStageMetrics(mockMetrics, "transform1"),
+                                              ImmutableList.of("transform2", "sink1")));
 
-    Map<String, List<String>> connectionsMap = new HashMap<>();
+    transformationMap.put("transform2", new TransformDetail(new Filter(100d, Threshold.LOWER),
+                                                            new DefaultStageMetrics(mockMetrics, "transform2"),
+                                                            ImmutableList.of("sink2")));
 
-    connectionsMap.put("source", ImmutableList.of("transform1"));
-    connectionsMap.put("transform1", ImmutableList.of("transform2", "sink1"));
-    connectionsMap.put("transform2", ImmutableList.of("sink2"));
+    transformationMap.put("sink1", new TransformDetail(new DoubleToString(),
+                                                       new DefaultStageMetrics(mockMetrics, "sink1"),
+                                                       ImmutableList.<String>of()));
 
-    TransformExecutor<Integer> executor = new TransformExecutor<>(transformationMap, mockMetrics,
-                                                                  connectionsMap, "source");
+    transformationMap.put("sink2", new TransformDetail(new DoubleToString(),
+                                                       new DefaultStageMetrics(mockMetrics, "sink2"),
+                                                       ImmutableList.<String>of()));
+
+    TransformExecutor<Integer> executor = new TransformExecutor<>(transformationMap, ImmutableList.of("transform1"));
 
     TransformResponse transformResponse = executor.runOneIteration(1);
 
-    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3));
+    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 0));
 
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("transform2", 3));
 
@@ -128,26 +132,42 @@ public class TransformExecutorTest {
   @Test
   public void testTransformsWithMerge() throws Exception {
     MockMetrics mockMetrics = new MockMetrics();
-    Map<String, Transformation> transformationMap = new HashMap<>();
+    Map<String, TransformDetail> transformationMap = new HashMap<>();
 
-    transformationMap.put("conversion", new IntToDouble());
-    transformationMap.put("filter1", new Filter(100d, Threshold.LOWER));
-    transformationMap.put("filter2", new Filter(1000d, Threshold.LOWER));
-    transformationMap.put("limiter1", new Filter(5000d, Threshold.UPPER));
-    transformationMap.put("sink1", new DoubleToString());
-    transformationMap.put("sink2", new DoubleToString());
-    transformationMap.put("sink3", new DoubleToString());
+    transformationMap.put("conversion", new TransformDetail(new IntToDouble(),
+                                                            new DefaultStageMetrics(mockMetrics, "conversion"),
+                                                            ImmutableList.of("filter1", "filter2")));
 
-    Map<String, List<String>> connectionsMap = new HashMap<>();
+    transformationMap.put("filter1", new TransformDetail(new Filter(100d, Threshold.LOWER),
+                                                         new DefaultStageMetrics(mockMetrics, "filter1"),
+                                                         ImmutableList.of("limiter1", "sink1")));
 
-    connectionsMap.put("source", ImmutableList.of("conversion"));
-    connectionsMap.put("conversion", ImmutableList.of("filter1", "filter2"));
-    connectionsMap.put("filter1", ImmutableList.of("limiter1", "sink1"));
-    connectionsMap.put("filter2", ImmutableList.of("limiter1", "sink2"));
-    connectionsMap.put("limiter1", ImmutableList.of("sink3"));
+    transformationMap.put("filter2", new TransformDetail(new Filter(1000d, Threshold.LOWER),
+                                                         new DefaultStageMetrics(mockMetrics, "filter2"),
+                                                         ImmutableList.of("limiter1", "sink2")));
 
-    TransformExecutor<Integer> executor = new TransformExecutor<>(transformationMap, mockMetrics,
-                                                                  connectionsMap, "source");
+
+    transformationMap.put("limiter1", new TransformDetail(new Filter(5000d, Threshold.UPPER),
+                                                          new DefaultStageMetrics(mockMetrics, "limiter1"),
+                                                          ImmutableList.of("sink3")));
+
+    transformationMap.put("sink1", new TransformDetail(new DoubleToString(),
+                                                       new DefaultStageMetrics(mockMetrics, "sink1"),
+                                                       ImmutableList.<String>of()));
+
+    transformationMap.put("sink2", new TransformDetail(new DoubleToString(),
+                                                       new DefaultStageMetrics(mockMetrics, "sink2"),
+                                                       ImmutableList.<String>of()));
+
+    transformationMap.put("sink3", new TransformDetail(new DoubleToString(),
+                                                       new DefaultStageMetrics(mockMetrics, "sink3"),
+                                                       ImmutableList.<String>of()));
+
+
+
+    TransformExecutor<Integer> executor = new TransformExecutor<>(transformationMap,
+                                                                  ImmutableList.of("conversion"));
+
     TransformResponse transformResponse = executor.runOneIteration(200);
     assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 2, "sink3", 3));
     assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("filter2", 1, "limiter1", 2));
@@ -165,7 +185,62 @@ public class TransformExecutorTest {
     Assert.assertEquals(3, mockMetrics.getCount("sink3.records.out"));
   }
 
-  private <T> void assertResults(Map<String, List<T>> results, Map<String, Integer> expectedListsSize) {
+  @Test
+  public void testTransformsWithMergeWithMultipleStarts() throws Exception {
+    MockMetrics mockMetrics = new MockMetrics();
+    Map<String, TransformDetail> transformationMap = new HashMap<>();
+
+
+    transformationMap.put("filter1", new TransformDetail(new Filter(100d, Threshold.LOWER),
+                                                         new DefaultStageMetrics(mockMetrics, "filter1"),
+                                                         ImmutableList.of("limiter1", "sink1")));
+
+    transformationMap.put("filter2", new TransformDetail(new Filter(1000d, Threshold.LOWER),
+                                                         new DefaultStageMetrics(mockMetrics, "filter2"),
+                                                         ImmutableList.of("limiter1", "sink2")));
+
+
+    transformationMap.put("limiter1", new TransformDetail(new Filter(5000d, Threshold.UPPER),
+                                                          new DefaultStageMetrics(mockMetrics, "limiter1"),
+                                                          ImmutableList.of("sink3")));
+
+    transformationMap.put("sink1", new TransformDetail(new DoubleToString(),
+                                                       new DefaultStageMetrics(mockMetrics, "sink1"),
+                                                       ImmutableList.<String>of()));
+
+    transformationMap.put("sink2", new TransformDetail(new DoubleToString(),
+                                                       new DefaultStageMetrics(mockMetrics, "sink2"),
+                                                       ImmutableList.<String>of()));
+
+    transformationMap.put("sink3", new TransformDetail(new DoubleToString(),
+                                                       new DefaultStageMetrics(mockMetrics, "sink3"),
+                                                       ImmutableList.<String>of()));
+
+
+
+    TransformExecutor<Double> executor = new TransformExecutor<>(transformationMap,
+                                                                 ImmutableList.of("filter1", "filter2"));
+
+    executor.runOneIteration(200d);
+    executor.runOneIteration(2000d);
+    TransformResponse transformResponse = executor.runOneIteration(20000d);
+    assertResults(transformResponse.getSinksResults(), ImmutableMap.of("sink1", 3, "sink2", 2, "sink3", 3));
+    assertResults(transformResponse.getMapTransformIdToErrorEmitter(), ImmutableMap.of("filter2", 1, "limiter1", 2));
+    Assert.assertEquals(3, mockMetrics.getCount("filter1.records.in"));
+    Assert.assertEquals(3, mockMetrics.getCount("filter1.records.out"));
+
+    Assert.assertEquals(3, mockMetrics.getCount("filter2.records.in"));
+    Assert.assertEquals(2, mockMetrics.getCount("filter2.records.out"));
+
+    Assert.assertEquals(5, mockMetrics.getCount("limiter1.records.in"));
+    Assert.assertEquals(3, mockMetrics.getCount("limiter1.records.out"));
+
+    Assert.assertEquals(3, mockMetrics.getCount("sink1.records.out"));
+    Assert.assertEquals(2, mockMetrics.getCount("sink2.records.out"));
+    Assert.assertEquals(3, mockMetrics.getCount("sink3.records.out"));
+  }
+
+  private <T> void assertResults(Map<String, Collection<T>> results, Map<String, Integer> expectedListsSize) {
     Assert.assertEquals(expectedListsSize.size(), results.size());
     for (Map.Entry<String, Integer> entry : expectedListsSize.entrySet()) {
       Assert.assertTrue(results.containsKey(entry.getKey()));
@@ -185,7 +260,7 @@ public class TransformExecutorTest {
     }
   }
 
-  private static enum Threshold {
+  private enum Threshold {
     LOWER,
     UPPER
   }

@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command.security;
 
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.AuthorizationClient;
@@ -45,7 +46,7 @@ public class GrantActionCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get("entity"));
+    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String user = arguments.get("user");
     Set<Action> actions = fromStrings(Splitter.on(",").split(arguments.get("actions")));
 
@@ -56,7 +57,7 @@ public class GrantActionCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return "security grant entity <entity> user <user> actions <actions>";
+    return String.format("security grant entity <%s> user <user> actions <actions>", ArgumentName.ENTITY);
   }
 
   @Override
