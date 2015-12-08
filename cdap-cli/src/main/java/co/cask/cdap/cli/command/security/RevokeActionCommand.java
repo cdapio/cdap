@@ -16,6 +16,7 @@
 
 package co.cask.cdap.cli.command.security;
 
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.ElementType;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
@@ -49,7 +50,7 @@ public class RevokeActionCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get("entity"));
+    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String user = arguments.getOptional("user", null);
     String actionsString = arguments.getOptional("actions", null);
     Set<Action> actions = actionsString == null ? null : fromStrings(Splitter.on(",").split(actionsString));
@@ -68,7 +69,7 @@ public class RevokeActionCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return "security revoke entity <entity> [user <user>] [actions <actions>]";
+    return String.format("security revoke entity <%s> [user <user>] [actions <actions>]", ArgumentName.ENTITY);
   }
 
   @Override

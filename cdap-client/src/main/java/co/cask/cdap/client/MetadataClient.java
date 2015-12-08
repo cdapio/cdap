@@ -52,6 +52,8 @@ public class MetadataClient {
   private static final Type SET_METADATA_RECORD_TYPE = new TypeToken<Set<MetadataRecord>>() { }.getType();
   private static final Type SET_METADATA_SEARCH_RESULT_TYPE =
     new TypeToken<Set<MetadataSearchResultRecord>>() { }.getType();
+  private static final Type MAP_STRING_STRING_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
 
   private final RESTClient restClient;
   private final ClientConfig config;
@@ -88,6 +90,262 @@ public class MetadataClient {
     return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_SEARCH_RESULT_TYPE);
   }
 
+  /**
+   * @param id the entity for which to retrieve metadata
+   * @return The metadata for the entity.
+   */
+  public Set<MetadataRecord> getMetadata(Id id)
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+
+    if (id instanceof Id.Application) {
+      return getMetadata((Id.Application) id);
+    } else if (id instanceof Id.Artifact) {
+      return getMetadata((Id.Artifact) id);
+    } else if (id instanceof Id.DatasetInstance) {
+      return getMetadata((Id.DatasetInstance) id);
+    } else if (id instanceof Id.Stream) {
+      return getMetadata((Id.Stream) id);
+    } else if (id instanceof Id.Stream.View) {
+      return getMetadata((Id.Stream.View) id);
+    } else if (id instanceof Id.Program) {
+      return getMetadata((Id.Program) id);
+    } else if (id instanceof Id.Run) {
+      return getMetadata((Id.Run) id);
+    }
+
+    throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
+  }
+
+  /**
+   * @param id the entity for which to retrieve metadata properties
+   * @return The metadata properties for the entity.
+   */
+  public Map<String, String> getProperties(Id id)
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+
+    if (id instanceof Id.Application) {
+      return getProperties((Id.Application) id);
+    } else if (id instanceof Id.Artifact) {
+      return getProperties((Id.Artifact) id);
+    } else if (id instanceof Id.DatasetInstance) {
+      return getProperties((Id.DatasetInstance) id);
+    } else if (id instanceof Id.Stream) {
+      return getProperties((Id.Stream) id);
+    } else if (id instanceof Id.Stream.View) {
+      return getProperties((Id.Stream.View) id);
+    } else if (id instanceof Id.Program) {
+      return getProperties((Id.Program) id);
+    } else if (id instanceof Id.Run) {
+      return getProperties((Id.Run) id);
+    }
+
+    throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
+  }
+
+  /**
+   * @param id the entity for which to retrieve metadata tags
+   * @return The metadata tags for the entity.
+   */
+  public Set<String> getTags(Id id)
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+
+    if (id instanceof Id.Application) {
+      return getTags((Id.Application) id);
+    } else if (id instanceof Id.Artifact) {
+      return getTags((Id.Artifact) id);
+    } else if (id instanceof Id.DatasetInstance) {
+      return getTags((Id.DatasetInstance) id);
+    } else if (id instanceof Id.Stream) {
+      return getTags((Id.Stream) id);
+    } else if (id instanceof Id.Stream.View) {
+      return getTags((Id.Stream.View) id);
+    } else if (id instanceof Id.Program) {
+      return getTags((Id.Program) id);
+    } else if (id instanceof Id.Run) {
+      return getTags((Id.Run) id);
+    }
+
+    throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
+  }
+
+  /**
+   * @param id the entity for which to add metadata properties
+   * @param properties the metadata properties
+   */
+  public void addProperties(Id id, Map<String, String> properties)
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+
+    if (id instanceof Id.Application) {
+      addProperties((Id.Application) id, properties);
+    } else if (id instanceof Id.Artifact) {
+      addProperties((Id.Artifact) id, properties);
+    } else if (id instanceof Id.DatasetInstance) {
+      addProperties((Id.DatasetInstance) id, properties);
+    } else if (id instanceof Id.Stream) {
+      addProperties((Id.Stream) id, properties);
+    } else if (id instanceof Id.Stream.View) {
+      addProperties((Id.Stream.View) id, properties);
+    } else if (id instanceof Id.Program) {
+      addProperties((Id.Program) id, properties);
+    } else if (id instanceof Id.Run) {
+      addProperties((Id.Run) id, properties);
+    } else {
+      throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
+    }
+  }
+
+  /**
+   * @param id the entity for which to add metadata tags
+   * @param tags the metadata tags
+   */
+  public void addTags(Id id, Set<String> tags)
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+
+    if (id instanceof Id.Application) {
+      addTags((Id.Application) id, tags);
+    } else if (id instanceof Id.Artifact) {
+      addTags((Id.Artifact) id, tags);
+    } else if (id instanceof Id.DatasetInstance) {
+      addTags((Id.DatasetInstance) id, tags);
+    } else if (id instanceof Id.Stream) {
+      addTags((Id.Stream) id, tags);
+    } else if (id instanceof Id.Stream.View) {
+      addTags((Id.Stream.View) id, tags);
+    } else if (id instanceof Id.Program) {
+      addTags((Id.Program) id, tags);
+    } else if (id instanceof Id.Run) {
+      addTags((Id.Run) id, tags);
+    } else {
+      throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
+    }
+  }
+
+  /**
+   * @param id the entity for which to remove metadata
+   */
+  public void removeMetadata(Id id)
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+
+    if (id instanceof Id.Application) {
+      removeMetadata((Id.Application) id);
+    } else if (id instanceof Id.Artifact) {
+      removeMetadata((Id.Artifact) id);
+    } else if (id instanceof Id.DatasetInstance) {
+      removeMetadata((Id.DatasetInstance) id);
+    } else if (id instanceof Id.Stream) {
+      removeMetadata((Id.Stream) id);
+    } else if (id instanceof Id.Stream.View) {
+      removeMetadata((Id.Stream.View) id);
+    } else if (id instanceof Id.Program) {
+      removeMetadata((Id.Program) id);
+    } else if (id instanceof Id.Run) {
+      removeMetadata((Id.Run) id);
+    } else {
+      throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
+    }
+  }
+
+  /**
+   * @param id the entity for which to remove metadata properties
+   */
+  public void removeProperties(Id id)
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+
+    if (id instanceof Id.Application) {
+      removeProperties((Id.Application) id);
+    } else if (id instanceof Id.Artifact) {
+      removeProperties((Id.Artifact) id);
+    } else if (id instanceof Id.DatasetInstance) {
+      removeProperties((Id.DatasetInstance) id);
+    } else if (id instanceof Id.Stream) {
+      removeProperties((Id.Stream) id);
+    } else if (id instanceof Id.Stream.View) {
+      removeProperties((Id.Stream.View) id);
+    } else if (id instanceof Id.Program) {
+      removeProperties((Id.Program) id);
+    } else if (id instanceof Id.Run) {
+      removeProperties((Id.Run) id);
+    } else {
+      throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
+    }
+  }
+
+  /**
+   * @param id the entity for which to remove metadata tags
+   */
+  public void removeTags(Id id)
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+
+    if (id instanceof Id.Application) {
+      removeTags((Id.Application) id);
+    } else if (id instanceof Id.Artifact) {
+      removeTags((Id.Artifact) id);
+    } else if (id instanceof Id.DatasetInstance) {
+      removeTags((Id.DatasetInstance) id);
+    } else if (id instanceof Id.Stream) {
+      removeTags((Id.Stream) id);
+    } else if (id instanceof Id.Stream.View) {
+      removeTags((Id.Stream.View) id);
+    } else if (id instanceof Id.Program) {
+      removeTags((Id.Program) id);
+    } else if (id instanceof Id.Run) {
+      removeTags((Id.Run) id);
+    } else {
+      throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
+    }
+  }
+
+  /**
+   * @param id the entity for which to remove a metadata property
+   * @param property the property to remove
+   */
+  public void removeProperty(Id id, String property)
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+
+    if (id instanceof Id.Application) {
+      removeProperty((Id.Application) id, property);
+    } else if (id instanceof Id.Artifact) {
+      removeProperty((Id.Artifact) id, property);
+    } else if (id instanceof Id.DatasetInstance) {
+      removeProperty((Id.DatasetInstance) id, property);
+    } else if (id instanceof Id.Stream) {
+      removeProperty((Id.Stream) id, property);
+    } else if (id instanceof Id.Stream.View) {
+      removeProperty((Id.Stream.View) id, property);
+    } else if (id instanceof Id.Program) {
+      removeProperty((Id.Program) id, property);
+    } else if (id instanceof Id.Run) {
+      removeProperty((Id.Run) id, property);
+    } else {
+      throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
+    }
+  }
+
+  /**
+   * @param id the entity for which to remove a metadata tag
+   * @param tag the tag to remove
+   */
+  public void removeTag(Id id, String tag)
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+
+    if (id instanceof Id.Application) {
+      removeTag((Id.Application) id, tag);
+    } else if (id instanceof Id.Artifact) {
+      removeTag((Id.Artifact) id, tag);
+    } else if (id instanceof Id.DatasetInstance) {
+      removeTag((Id.DatasetInstance) id, tag);
+    } else if (id instanceof Id.Stream) {
+      removeTag((Id.Stream) id, tag);
+    } else if (id instanceof Id.Stream.View) {
+      removeTag((Id.Stream.View) id, tag);
+    } else if (id instanceof Id.Program) {
+      removeTag((Id.Program) id, tag);
+    } else if (id instanceof Id.Run) {
+      removeTag((Id.Run) id, tag);
+    } else {
+      throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
+    }
+  }
 
   /**
    * @param appId the app for which to retrieve metadata
@@ -157,6 +415,146 @@ public class MetadataClient {
     String path = String.format("%s/metadata", entityPath);
     HttpResponse response = makeRequest(namespacedId, path, HttpMethod.GET);
     return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_TYPE);
+  }
+
+  /**
+   * @param appId the app for which to retrieve metadata properties
+   * @return The metadata properties for the application.
+   */
+  public Map<String, String> getProperties(Id.Application appId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(appId, constructPath(appId));
+  }
+
+  /**
+   * @param artifactId the artifact for which to retrieve metadata properties
+   * @return The metadata properties for the artifact.
+   */
+  public Map<String, String> getProperties(Id.Artifact artifactId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(artifactId, constructPath(artifactId));
+  }
+
+  /**
+   * @param datasetInstance the dataset for which to retrieve metadata properties
+   * @return The metadata properties for the dataset.
+   */
+  public Map<String, String> getProperties(Id.DatasetInstance datasetInstance)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(datasetInstance, constructPath(datasetInstance));
+  }
+
+  /**
+   * @param streamId the stream for which to retrieve metadata properties
+   * @return The metadata properties for the stream.
+   */
+  public Map<String, String> getProperties(Id.Stream streamId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(streamId, constructPath(streamId));
+  }
+
+  /**
+   * @param viewId the view for which to retrieve metadata properties
+   * @return The metadata properties for the view.
+   */
+  public Map<String, String> getProperties(Id.Stream.View viewId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(viewId, constructPath(viewId));
+  }
+
+  /**
+   * @param programId the program for which to retrieve metadata properties
+   * @return The metadata properties for the program.
+   */
+  public Map<String, String> getProperties(Id.Program programId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(programId, constructPath(programId));
+  }
+
+  /**
+   * @param runId the run for which to retrieve metadata properties
+   * @return The metadata properties for the run.
+   */
+  public Map<String, String> getProperties(Id.Run runId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getProperties(runId, constructPath(runId));
+  }
+
+  private Map<String, String> getProperties(Id.NamespacedId namespacedId, String entityPath)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    String path = String.format("%s/metadata/properties", entityPath);
+    HttpResponse response = makeRequest(namespacedId, path, HttpMethod.GET);
+    return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
+  }
+
+  /**
+   * @param appId the app for which to retrieve metadata tags
+   * @return The metadata tags for the application.
+   */
+  public Set<String> getTags(Id.Application appId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(appId, constructPath(appId));
+  }
+
+  /**
+   * @param artifactId the artifact for which to retrieve metadata tags
+   * @return The metadata tags for the artifact.
+   */
+  public Set<String> getTags(Id.Artifact artifactId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(artifactId, constructPath(artifactId));
+  }
+
+  /**
+   * @param datasetInstance the dataset for which to retrieve metadata tags
+   * @return The metadata tags for the dataset.
+   */
+  public Set<String> getTags(Id.DatasetInstance datasetInstance)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(datasetInstance, constructPath(datasetInstance));
+  }
+
+  /**
+   * @param streamId the stream for which to retrieve metadata tags
+   * @return The metadata tags for the stream.
+   */
+  public Set<String> getTags(Id.Stream streamId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(streamId, constructPath(streamId));
+  }
+
+  /**
+   * @param viewId the view for which to retrieve metadata tags
+   * @return The metadata tags for the view.
+   */
+  public Set<String> getTags(Id.Stream.View viewId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(viewId, constructPath(viewId));
+  }
+
+  /**
+   * @param programId the program for which to retrieve metadata tags
+   * @return The metadata tags for the program.
+   */
+  public Set<String> getTags(Id.Program programId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(programId, constructPath(programId));
+  }
+
+  /**
+   * @param runId the run for which to retrieve metadata tags
+   * @return The metadata tags for the run.
+   */
+  public Set<String> getTags(Id.Run runId)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return getTags(runId, constructPath(runId));
+  }
+
+  private Set<String> getTags(Id.NamespacedId namespacedId, String entityPath)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    String path = String.format("%s/metadata/tags", entityPath);
+    HttpResponse response = makeRequest(namespacedId, path, HttpMethod.GET);
+    return GSON.fromJson(response.getResponseBodyAsString(), SET_STRING_TYPE);
   }
 
   /**

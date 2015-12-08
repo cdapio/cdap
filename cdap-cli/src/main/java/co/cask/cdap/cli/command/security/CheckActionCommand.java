@@ -16,13 +16,13 @@
 
 package co.cask.cdap.cli.command.security;
 
+import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractAuthCommand;
 import co.cask.cdap.client.AuthorizationClient;
 import co.cask.cdap.proto.id.EntityId;
 import co.cask.cdap.proto.security.Action;
 import co.cask.common.cli.Arguments;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.inject.Inject;
 
@@ -45,7 +45,7 @@ public class CheckActionCommand extends AbstractAuthCommand {
 
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
-    EntityId entity = EntityId.fromString(arguments.get("entity"));
+    EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
     String user = arguments.get("user");
     Set<Action> actions = fromStrings(Splitter.on(",").split(arguments.get("actions")));
 
@@ -55,7 +55,7 @@ public class CheckActionCommand extends AbstractAuthCommand {
 
   @Override
   public String getPattern() {
-    return "security access entity <entity> user <user> actions <actions>";
+    return String.format("security access entity <%s> user <user> actions <actions>", ArgumentName.ENTITY);
   }
 
   @Override

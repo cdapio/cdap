@@ -21,12 +21,16 @@ import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.exception.CommandInputError;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.common.cli.util.Parser;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 
 /**
  *
@@ -38,6 +42,18 @@ public abstract class AbstractCommand extends AbstractAuthCommand {
 
   public AbstractCommand(CLIConfig cliConfig) {
     super(cliConfig);
+  }
+
+  protected Map<String, String> parseMap(@Nullable String value) {
+    return ArgumentParser.parseMap(value);
+  }
+
+  protected List<String> parseList(@Nullable String value) {
+    if (value == null) {
+      return ImmutableList.of();
+    }
+
+    return Parser.parseInput(value);
   }
 
   /**
