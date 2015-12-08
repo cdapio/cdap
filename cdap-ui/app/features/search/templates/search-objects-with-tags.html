@@ -15,95 +15,101 @@
 -->
 
 <my-breadcrumbs></my-breadcrumbs>
-<div class="row">
-  <div class="col-sm-6">
-    <h2>
-      <span>Search</span>
-    </h2>
-  </div>
-  <div class="col-sm-6 text-right">
-  </div>
-</div>
 
 <div class="row main-search">
-  <div class="col-xs-4">
-    <div class="input-group pull-right">
-      <div class="input-group-addon">
-        <span class="fa fa-search"></span>
-      </div>
-      <input type="text"
-          ng-model="SearchObjectWithTagsController.searchTxt"
-          cask-focus="searchObjectWithTags"
-          class="form-control">
-    </div>
-  </div>
-  <div class="col-xs-12 h2">
-
-      <div ng-repeat="tObject in SearchController.filteredTObjects = (SearchObjectWithTagsController.taggedObjects | filter: SearchObjectWithTagsController.searchTxt ) ">
-        <div ng-if="tObject.type === 'application'">
-          <a class="btn btn-default"
-              ui-sref="apps.detail.overview.status({namespace: tObject.namespaceId, appId: tObject.appId})"
-          >
-            <span class="{{tObject.icon}}"></span>
+  <div class="col-xs-12">
+    <p class="results-count" ng-if="SearchController.filteredTObjects.length">
+      <span>{{SearchController.filteredTObjects.length}}</span>
+      <span> result<span ng-if="SearchController.filteredTObjects.length > 1">s</span> </span>
+      <span>for "{{SearchObjectWithTagsController.$stateParams.tag}}"</span>
+    </p>
+    <div ng-repeat="tObject in SearchController.filteredTObjects = (SearchObjectWithTagsController.taggedObjects | filter: SearchObjectWithTagsController.searchTxt ) ">
+      <div ng-if="tObject.type === 'application'">
+        <div class="tobject">
+          <a ui-sref="apps.detail.overview.status({namespace: tObject.namespaceId, appId: tObject.appId})">
             <span ng-bind="tObject.appId"></span>
           </a>
+          <p class="tobject-type">
+            <span class="{{tObject.icon}} pull-left"></span>
+            <span> Application </span>
+          </p>
         </div>
-        <div ng-if="tObject.type === 'datasetinstance'">
-          <a class="btn btn-default"
-              ui-sref="datasets.detail.overview.status({namespace: tObject.namespaceId, datasetId: tObject.datasetId})"
-          >
-            <span class="{{tObject.icon}}"></span>
+      </div>
+      <div ng-if="tObject.type === 'datasetinstance'">
+        <div class="tobject">
+          <a ui-sref="datasets.detail.overview.status({namespace: tObject.namespaceId, datasetId: tObject.datasetId})">
             <span ng-bind="tObject.datasetId"></span>
           </a>
+          <p class="tobject-type">
+            <span class="{{tObject.icon}} pull-left"></span>
+            <span> Dataset </span>
+          </p>
         </div>
-        <div ng-if="tObject.type === 'stream'">
-          <a class="btn btn-default"
-              ui-sref="streams.detail.overview.status({namespace: tObject.namespaceId, streamId: tObject.streamId})"
-          >
-            <span class="{{tObject.icon}}"></span>
+      </div>
+      <div ng-if="tObject.type === 'stream'">
+        <div class="tobject">
+          <a ui-sref="streams.detail.overview.status({namespace: tObject.namespaceId, streamId: tObject.streamId})">
             <span ng-bind="tObject.streamId"></span>
           </a>
+          <p class="tobject-type">
+            <span class="{{tObject.icon}} pull-left"></span>
+            <span> Stream </span>
+          </p>
         </div>
-        <div ng-if="tObject.type === 'program'">
-          <div ng-if="tObject.programType === 'Workflow'">
-            <a class="btn btn-default"
-                ui-sref="workflows.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
-            >
-              <span class="{{tObject.icon}}"></span>
+      </div>
+      <div ng-if="tObject.type === 'program'">
+        <div ng-if="tObject.programType === 'Workflow'">
+          <div class="tobject">
+            <a ui-sref="workflows.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})">
               <span ng-bind="tObject.programId"></span>
             </a>
+            <p class="tobject-type">
+              <span class="{{tObject.icon}} pull-left"></span>
+              <span> Workflow </span>
+            </p>
           </div>
-          <div ng-if="tObject.programType === 'Mapreduce'">
-            <a class="btn btn-default"
-                ui-sref="mapreduce.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
-            >
-              <span class="{{tObject.icon}}"></span>
+        </div>
+        <div ng-if="tObject.programType === 'Mapreduce'">
+          <div class="tobject">
+            <a ui-sref="mapreduce.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})">
               <span ng-bind="tObject.programId"></span>
             </a>
+            <p class="tobject-type">
+              <span class="{{tObject.icon}} pull-left"></span>
+              <span> Mapreduce </span>
+            </p>
           </div>
-          <div ng-if="tObject.programType === 'Flow'">
-            <a class="btn btn-default"
-                ui-sref="flow.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
-            >
+        </div>
+        <div ng-if="tObject.programType === 'Flow'">
+          <div class="tobject">
+            <a ui-sref="flow.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})">
             <span class="{{tObject.icon}}"></span>
+            <span ng-bind="tObject.programId"></span>
+            </a>
+            <p class="tobject-type">
+              <span class="{{tObject.icon}} pull-left"></span>
+              <span> Flow </span>
+            </p>
+          </div>
+        </div>
+        <div ng-if="tObject.programType === 'Service'">
+          <div class="tobject">
+            <a ui-sref="services.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})">
               <span ng-bind="tObject.programId"></span>
             </a>
+            <p class="tobject-type">
+              <span class="{{tObject.icon}} pull-left"></span>
+              <span> Service </span>
+            </p>
           </div>
-          <div ng-if="tObject.programType === 'Service'">
-            <a class="btn btn-default"
-                ui-sref="services.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})"
-            >
-              <span class="{{tObject.icon}}"></span>
-              <span ng-bind="tObject.programId"></span>
-            </a>
-          </div>
-
         </div>
 
       </div>
 
-      <div class="well well-xs" ng-if="SearchController.filteredTObjects.length === 0">
-        <h3> No CDAP objects tagged with {{SearchObjectWithTagsController.$stateParams.tag}} tag</h3>
-      </div>
+    </div>
+
+    <div class="well well-xs" ng-if="SearchController.filteredTObjects.length === 0">
+      <h3> No CDAP objects tagged with "{{SearchObjectWithTagsController.$stateParams.tag}}"</h3>
+    </div>
   </div>
 </div>

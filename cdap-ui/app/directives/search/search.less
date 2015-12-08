@@ -14,27 +14,41 @@
  * the License.
  */
 
+ @import "../../styles/variables.less";
+ @import "../../styles/themes/cdap/mixins.less";
+ @import "../../../bower_components/bootstrap/less/mixins.less";
+
 my-search{
   .search-box {
+    .input-group-addon {
+      background-color: white;
+      color: @cdap-header;
+      font-size: 21px;
+      padding: 0 5px;
+      @media (min-width: @screen-lg-min) {
+        .border-radius(8px);
+      }
+    }
     .input-group {
-      .input-group-btn {
-        &.dropdown-right {
-          border: 1px solid #eee;
-          border-radius: 0;
-          border-left: 0;
-
-          &:last-child{
-            > .btn {
-              margin-left: 0;
-            }
-            &:focus, &:active, &:hover {
-
+      .form-control {
+        @media (min-width: @screen-lg-min) {
+          border: 0;
+          width: 0;
+          padding: 0;
+          .transition(all 0.2s ease);
+          &.search-active {
+            width: 100%;
+            padding: 6px 12px;
+            + .input-group-addon {
+              border: 1px solid white;
+              .border-radius(0);
             }
           }
         }
-      }
-      .form-control {
-        border-right: 0;
+        &:focus {
+          outline: 0;
+          .box-shadow(none);
+        }
       }
     }
   }

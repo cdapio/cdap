@@ -204,6 +204,13 @@ body {
             }
           }
         }
+        form.navbar-form {
+          @media (max-width: @screen-md-max) {
+            margin-right: 0;
+            margin-left: 15px;
+            padding: 0;
+          }
+        }
       }
 
       ul.navbar-nav {
@@ -376,6 +383,12 @@ body {
           ul.dropdown-menu {
             li.nav-subsection { color: lightgray; }
             a:disabled { color: lightgray; }
+          }
+          form.navbar-form {
+            @media (max-width: @screen-md-max) {
+              border-color: transparent;
+              .box-shadow(none);
+            }
           }
         }
       }
