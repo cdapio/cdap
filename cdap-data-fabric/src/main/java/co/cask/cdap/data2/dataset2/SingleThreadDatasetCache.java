@@ -229,7 +229,8 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   @Override
   public TransactionContext newTransactionContext() {
     dismissTransactionContext();
-    return new DelayedDismissingTransactionContext(txClient, activeTxAwares.values(), extraTxAwares);
+    txContext = new DelayedDismissingTransactionContext(txClient, activeTxAwares.values(), extraTxAwares);
+    return txContext;
   }
 
   @Override
