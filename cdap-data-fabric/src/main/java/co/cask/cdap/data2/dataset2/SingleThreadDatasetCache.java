@@ -173,14 +173,12 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
         if (txContext != null) {
           txContext.addTransactionAware(txAware);
         }
-      } else {
+      } else if (existing != dataset) {
         // this better be the same dataset, otherwise the cache did not work
-        if (existing != dataset) {
-          throw new IllegalStateException(
-            String.format("Unexpected state: Cache returned %s for %s, which is different from the " +
-                            "active transaction aware %s for the same key. This should never happen.",
-                          dataset, key, existing));
-        }
+        throw new IllegalStateException(
+          String.format("Unexpected state: Cache returned %s for %s, which is different from the " +
+                          "active transaction aware %s for the same key. This should never happen.",
+                        dataset, key, existing));
       }
     }
     return typedDataset;
@@ -231,16 +229,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   @Override
   public TransactionContext newTransactionContext() {
     dismissTransactionContext();
-    txContext = new DelayedDismissingTransactionContext(txClient);
-    // make sure all in-progress participate in the transaction. But beware that weak refs may have expired
-    for (Map.Entry<DatasetCacheKey, TransactionAware> entry : activeTxAwares.entrySet()) {
-      txContext.addTransactionAware(entry.getValue());
-    }
-    // and finally also add the extra tx-awares
-    for (TransactionAware txAware : extraTxAwares) {
-      txContext.addTransactionAware(txAware);
-    }
-    return txContext;
+    return new DelayedDismissingTransactionContext(txClient, activeTxAwares.values(), extraTxAwares);
   }
 
   @Override
@@ -328,11 +317,15 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
      * after a transaction has finished.
      * @param txClient the transaction system client, passed on to the actual transaction context
      */
-    private DelayedDismissingTransactionContext(TransactionSystemClient txClient) {
+    private DelayedDismissingTransactionContext(TransactionSystemClient txClient,
+                                                Collection<TransactionAware> txAwares,
+                                                Collection<TransactionAware> extraTxAwares) {
       super(txClient);
       this.txClient = txClient;
-      this.txAwares = Sets.newIdentityHashSet();
       this.toDismiss = Sets.newIdentityHashSet();
+      this.txAwares = Sets.newIdentityHashSet();
+      this.txAwares.addAll(txAwares);
+      this.txAwares.addAll(extraTxAwares);
     }
 
     @Override
