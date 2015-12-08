@@ -19,18 +19,25 @@ package co.cask.cdap.cli.command.lineage;
 import co.cask.cdap.cli.ArgumentName;
 import co.cask.cdap.cli.CLIConfig;
 import co.cask.cdap.cli.util.AbstractCommand;
+import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.LineageClient;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.common.cli.Arguments;
+import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import com.google.inject.Inject;
 
 import java.io.PrintStream;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Gets the lineage for a dataset.
  */
 public class GetDatasetLineageCommand extends AbstractCommand {
 
+  private static final Gson GSON = new Gson();
   private final LineageClient client;
 
   @Inject
@@ -48,7 +55,18 @@ public class GetDatasetLineageCommand extends AbstractCommand {
     long end = getTimestamp(arguments.getOptional("end", "max"), currentTime);
     Integer levels = arguments.getIntOptional("levels", null);
 
-    client.getLineage(dataset, start, end, levels);
+    LineageRecord lineage = client.getLineage(dataset, start, end, levels);
+    Table table = Table.builder()
+      .setHeader("start", "end", "relations", "programs", "data")
+      .setRows(
+        Collections.<List<String>>singletonList(
+          Lists.newArrayList(
+            Long.toString(lineage.getStart()), Long.toString(lineage.getEnd()), GSON.toJson(lineage.getRelations()),
+            GSON.toJson(lineage.getPrograms()), GSON.toJson(lineage.getData()))
+        )
+      ).build();
+
+    cliConfig.getTableRenderer().render(cliConfig, output, table);
   }
 
   @Override
