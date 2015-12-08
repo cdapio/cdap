@@ -15,12 +15,12 @@ Cask Data Application Platform Overview
    :maxdepth: 1
    
     Anatomy of a Big Data Application <anatomy>
-    Concepts and Components <concepts>
+    Modes and Components <modes>
     CDAP Abstractions <abstractions>
     Programming Interfaces <interfaces>
 
 
-**Cask Data Application Platform (CDAP)** is a developer-centric middleware for developing and running
+**Cask Data Application Platform (CDAP)** is developer-centric middleware for developing and running
 Big Data applications. Before you learn how to develop and operate applications, this chapter will
 explain the concepts and architecture of CDAP.
 
@@ -28,19 +28,22 @@ explain the concepts and architecture of CDAP.
 .. |anatomy| replace:: **Anatomy of a Big Data Application:**
 .. _anatomy: anatomy.html
 
-.. |concepts| replace:: **Concepts and Components:**
-.. _concepts: concepts.html
+- |anatomy|_ Explains the **areas of concern in developing a Big Data application,** and how you use CDAP to address these.
+
+.. |modes| replace:: **Modes and Components:**
+.. _modes: modes.html
+
+- |modes|_ Covers the **modes** and **components** of CDAP.
 
 .. |abstractions| replace:: **CDAP Abstractions:**
 .. _abstractions: abstractions.html
 
+- |abstractions|_ Describes how CDAP abstractions provide **portability by decoupling your
+  data and applications** from the underlying infrastructure.
+
 .. |interfaces| replace:: **Programming Interfaces:**
 .. _interfaces: interfaces.html
 
-- |anatomy|_ Explains the **areas of concern in developing a Big Data application,** and how you use CDAP to address these.
-- |concepts|_ Covers the **components of CDAP and their interactions.**
-- |abstractions|_ Describes how CDAP abstractions provide **portability by decoupling your
-  data and applications** from the underlying infrastructure.
 - |interfaces|_ CDAP interfaces can be described as either **Developer or Clients interfaces.**
 
 
