@@ -16,44 +16,25 @@
 
 package co.cask.cdap.data2.datafabric.dataset.service;
 
-import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
 import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.datafabric.dataset.service.executor.DatasetAdminOpResponse;
-import co.cask.cdap.data2.transaction.queue.QueueConstants;
 import co.cask.cdap.proto.DatasetInstanceConfiguration;
 import co.cask.cdap.proto.DatasetMeta;
-import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 import com.google.inject.Inject;
-import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.lang.reflect.Type;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
-import javax.annotation.Nullable;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -82,7 +63,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/")
   public void list(HttpRequest request, HttpResponder responder,
                    @PathParam("namespace-id") String namespaceId) throws Exception {
-    responder.sendJson(HttpResponseStatus.OK, spec2Summary(instanceService.list(Id.Namespace.from(namespaceId))));
+    responder.sendJson(HttpResponseStatus.OK, ConversionHelpers.spec2Summary(
+      instanceService.list(ConversionHelpers.toNamespaceId(namespaceId))));
   }
 
   /**
@@ -100,10 +82,10 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                   @PathParam("namespace-id") String namespaceId,
                   @PathParam("name") String name,
                   @QueryParam("owner") List<String> owners) throws Exception {
-    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
     responder.sendJson(HttpResponseStatus.OK,
-                       instanceService.get(instance, strings2Ids(owners)),
-                       DatasetMeta.class, GSON);
+                       instanceService.get(ConversionHelpers.toDatasetInstanceId(namespaceId, name),
+                                           ConversionHelpers.strings2ProgramIds(owners)),
+                       DatasetMeta.class);
   }
 
   /**
@@ -116,13 +98,12 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) throws Exception {
-    DatasetInstanceConfiguration creationProperties = getInstanceConfiguration(request);
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    DatasetInstanceConfiguration creationProperties = ConversionHelpers.getInstanceConfiguration(request);
 
     LOG.info("Creating dataset {}.{}, type name: {}, typeAndProps: {}",
              namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
     try {
-      instanceService.create(namespace, name, creationProperties);
+      instanceService.create(namespaceId, name, creationProperties);
       responder.sendStatus(HttpResponseStatus.OK);
     } catch (DatasetAlreadyExistsException e) {
       responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
@@ -145,9 +126,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void update(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) throws Exception {
-    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
-    Map<String, String> properties = getProperties(request);
-
+    Id.DatasetInstance instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
+    Map<String, String> properties = ConversionHelpers.getProperties(request);
     LOG.info("Update dataset {}, type name: {}, props: {}", name, GSON.toJson(properties));
     instanceService.update(instance, properties);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -164,8 +144,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}")
   public void drop(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                    @PathParam("name") String name) throws Exception {
+    Id.DatasetInstance instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     LOG.info("Deleting dataset {}.{}", namespaceId, name);
-    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
     instanceService.drop(instance);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -183,7 +163,7 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void executeAdmin(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                            @PathParam("name") String name,
                            @PathParam("method") String method) throws Exception {
-    Id.DatasetInstance instance = Id.DatasetInstance.from(namespaceId, name);
+    Id.DatasetInstance instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     try {
       DatasetAdminOpResponse response = instanceService.executeAdmin(instance, method);
       responder.sendJson(HttpResponseStatus.OK, response);
@@ -205,45 +185,5 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                             @PathParam("name") String name, @PathParam("method") String method) {
     // todo: execute data operation
     responder.sendStatus(HttpResponseStatus.NOT_IMPLEMENTED);
-  }
-
-  private List<? extends Id> strings2Ids(List<String> strings) {
-    return Lists.transform(strings, new Function<String, Id>() {
-      @Nullable
-      @Override
-      public Id apply(@Nullable String input) {
-        if (input == null) {
-          return null;
-        }
-
-        return Id.fromString(input, Id.Program.class);
-      }
-    });
-  }
-
-  private Collection<DatasetSpecificationSummary> spec2Summary(Collection<DatasetSpecification> specs) {
-    List<DatasetSpecificationSummary> datasetSummaries = Lists.newArrayList();
-    for (DatasetSpecification spec : specs) {
-      // TODO: (CDAP-3097) handle system datasets specially within a namespace instead of filtering them out
-      // by the handler. This filter is only in the list endpoint because the other endpoints are used by
-      // HBaseQueueAdmin through DatasetFramework.
-      if (QueueConstants.STATE_STORE_NAME.equals(spec.getName())) {
-        continue;
-      }
-      datasetSummaries.add(new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties()));
-    }
-    return datasetSummaries;
-  }
-
-  private DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) {
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
-    DatasetInstanceConfiguration creationProperties = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
-    return creationProperties;
-  }
-
-  private Map<String, String> getProperties(HttpRequest request) {
-    Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
-    Map<String, String> properties = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
-    return properties;
   }
 }

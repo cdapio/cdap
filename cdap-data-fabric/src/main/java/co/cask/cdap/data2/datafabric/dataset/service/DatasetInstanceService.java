@@ -18,6 +18,7 @@ package co.cask.cdap.data2.datafabric.dataset.service;
 
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
+import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.DatasetAlreadyExistsException;
 import co.cask.cdap.common.DatasetNotFoundException;
 import co.cask.cdap.common.DatasetTypeNotFoundException;
@@ -55,7 +56,7 @@ import javax.annotation.Nullable;
 /**
  * Handles dataset instance management calls.
  */
-public class DatasetInstanceService {
+public class DatasetInstanceService extends ConversionHelpers {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceService.class);
 
   private final DatasetTypeManager implManager;
@@ -150,7 +151,7 @@ public class DatasetInstanceService {
   /**
    * Creates a dataset instance.
    *
-   * @param namespace the namespace to create the dataset instance in
+   * @param namespaceId the namespace to create the dataset instance in
    * @param name the name of the new dataset instance
    * @param props the properties for the new dataset instance
    * @throws NamespaceNotFoundException if the specified namespace was not found
@@ -158,10 +159,12 @@ public class DatasetInstanceService {
    * @throws DatasetTypeNotFoundException if the dataset type was not found
    * @throws Exception if something went wrong
    */
-  public void create(Id.Namespace namespace, String name, DatasetInstanceConfiguration props) throws Exception {
+  public void create(String namespaceId, String name, DatasetInstanceConfiguration props) throws Exception {
     // Throws NamespaceNotFoundException if the namespace does not exist
+    Id.Namespace namespace = toNamespaceId(namespaceId);
     ensureNamespaceExists(namespace);
-    Id.DatasetInstance newInstance = Id.DatasetInstance.from(namespace, name);
+
+    Id.DatasetInstance newInstance = toDatasetInstanceId(namespaceId, name);
     DatasetSpecification existing = instanceManager.get(newInstance);
     if (existing != null && !allowDatasetUncheckedUpgrade) {
       throw new DatasetAlreadyExistsException(newInstance);
@@ -175,7 +178,7 @@ public class DatasetInstanceService {
     DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName());
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
-      throw new DatasetTypeNotFoundException(Id.DatasetType.from(namespace, props.getTypeName()));
+      throw new DatasetTypeNotFoundException(toDatasetTypeId(namespace, props.getTypeName()));
     }
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
@@ -192,7 +195,7 @@ public class DatasetInstanceService {
   private void createIfNotExists(Id.Namespace namespace, String name,
                                  DatasetInstanceConfiguration props) throws Exception {
     try {
-      create(namespace, name, props);
+      create(namespace.getId(), name, props);
     } catch (DatasetAlreadyExistsException e) {
       // ignore
     }
@@ -221,7 +224,7 @@ public class DatasetInstanceService {
     DatasetTypeMeta typeMeta = getTypeInfo(instance.getNamespace(), existing.getType());
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
-      throw new DatasetTypeNotFoundException(Id.DatasetType.from(instance.getNamespace(), existing.getType()));
+      throw new DatasetTypeNotFoundException(toDatasetTypeId(instance.getNamespace(), existing.getType()));
     }
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
@@ -303,12 +306,12 @@ public class DatasetInstanceService {
    * TODO: This may need to move to a util class eventually
    */
   @Nullable
-  private DatasetTypeMeta getTypeInfo(Id.Namespace namespaceId, String typeName) {
-    Id.DatasetType datasetTypeId = Id.DatasetType.from(namespaceId, typeName);
+  private DatasetTypeMeta getTypeInfo(Id.Namespace namespaceId, String typeName) throws BadRequestException {
+    Id.DatasetType datasetTypeId = toDatasetTypeId(namespaceId, typeName);
     DatasetTypeMeta typeMeta = implManager.getTypeInfo(datasetTypeId);
     if (typeMeta == null) {
       // Type not found in the instance's namespace. Now try finding it in the system namespace
-      Id.DatasetType systemDatasetTypeId = Id.DatasetType.from(Id.Namespace.SYSTEM, typeName);
+      Id.DatasetType systemDatasetTypeId = toDatasetTypeId(Id.Namespace.SYSTEM, typeName);
       typeMeta = implManager.getTypeInfo(systemDatasetTypeId);
     }
     return typeMeta;
@@ -372,4 +375,5 @@ public class DatasetInstanceService {
       namespaceClient.get(namespace);
     }
   }
+
 }

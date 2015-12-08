@@ -849,9 +849,9 @@ public abstract class Id implements EntityIdCompatible {
 
     private DatasetType(Namespace namespace, String typeName) {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
-      Preconditions.checkNotNull(typeName, "Dataset type id cannot be null.");
-      Preconditions.checkArgument(isValidDatasetId(typeName), "Invalid characters found in dataset type Id. '" +
-        typeName + "'. Module id can contain alphabets, numbers or _, -, . or $ characters");
+      Preconditions.checkNotNull(typeName, "Dataset type name cannot be null.");
+      Preconditions.checkArgument(isValidDatasetId(typeName), "Invalid characters found in dataset type name '" +
+        typeName + "'. Allowed characters are ASCII letters, numbers, and _, -, . or $.");
       this.namespace = namespace;
       this.typeName = typeName;
     }
@@ -948,7 +948,7 @@ public abstract class Id implements EntityIdCompatible {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(instanceId, "Dataset instance id cannot be null.");
       Preconditions.checkArgument(isValidDatasetId(instanceId), "Invalid characters found in dataset instance id. '" +
-        instanceId + "'. Instance id can contain alphabets, numbers or _, -, . or $ characters");
+        instanceId + "'. Instance id can contain ASCII letters, numbers, and _, -, . or $.");
       this.namespace = namespace;
       this.instanceId = instanceId;
     }
