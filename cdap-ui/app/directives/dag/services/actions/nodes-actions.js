@@ -105,8 +105,12 @@ class NodesActionsFactory {
     this.nodesDispatcher.dispatch('onNodeSelectReset');
   }
 
-  resetPluginCount(panning) {
-    this.nodesDispatcher.dispatch('onResetPluginCount', panning);
+  resetPluginCount() {
+    this.nodesDispatcher.dispatch('onResetPluginCount');
+  }
+
+  setCanvasPanning(panning) {
+    this.nodesDispatcher.dispatch('onSetCanvasPanning', panning);
   }
 
   createGraphFromConfig(nodes, connections) {

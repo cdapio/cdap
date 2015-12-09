@@ -37,6 +37,7 @@ class NodesStore {
     dispatcher.register('onAddSinkCount', this.addSinkCount.bind(this));
     dispatcher.register('onAddTransformCount', this.addTransformCount.bind(this));
     dispatcher.register('onResetPluginCount', this.resetPluginCount.bind(this));
+    dispatcher.register('onSetCanvasPanning', this.setCanvasPanning.bind(this));
   }
 
   setDefaults() {
@@ -85,13 +86,17 @@ class NodesStore {
     this.state.currentSinkCount = 0;
   }
 
-  resetPluginCount(panning) {
+  resetPluginCount() {
     this.state.currentSourceCount = 0;
     this.state.currentTransformCount = 0;
     this.state.currentSinkCount = 0;
+  }
+
+  setCanvasPanning(panning) {
     this.state.canvasPanning.top = panning.top;
     this.state.canvasPanning.left = panning.left;
   }
+
   getSourceCount() {
     return this.state.currentSourceCount;
   }

@@ -247,7 +247,8 @@ angular.module(PKG.name + '.commons')
           e.el.style.left = '0px';
           e.el.style.top = '0px';
           transformCanvas(e.pos[1], e.pos[0]);
-          NodesActionsFactory.resetPluginCount(vm.panning);
+          NodesActionsFactory.resetPluginCount();
+          NodesActionsFactory.setCanvasPanning(vm.panning);
         },
         start: function () {
           canvasDragged = true;
@@ -398,6 +399,9 @@ angular.module(PKG.name + '.commons')
       vm.scale = margins.scale;
       $timeout(function () { vm.instance.repaintEverything(); });
       setZoom(vm.scale, vm.instance);
+
+      NodesActionsFactory.resetPluginCount();
+      NodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
     vm.locateNodes = function () {
@@ -440,6 +444,9 @@ angular.module(PKG.name + '.commons')
         'top': vm.panning.top + 'px',
         'left': vm.panning.left + 'px'
       };
+
+      NodesActionsFactory.resetPluginCount();
+      NodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
 
