@@ -8,8 +8,8 @@
 Cloudera Manager: Upgrading an Existing CDAP Installation
 =========================================================
 
-Upgrading Patch Release versions
---------------------------------
+Upgrading Patch Releases
+------------------------
 When a new compatible CDAP parcel is released, it will be available via the Parcels page in the Cloudera Manager UI.
 
 #. Stop all flows, services, and other programs in all your applications.
@@ -20,8 +20,8 @@ When a new compatible CDAP parcel is released, it will be available via the Parc
 
 #. Start CDAP services.
 
-Upgrading Major/Minor Release versions
---------------------------------------
+Upgrading Major/Minor Releases
+------------------------------
 Upgrading between major versions of CDAP involves the additional steps of upgrading the CSD, and running the included
 CDAP Upgrade Tool. Upgrades between multiple Major/Minor versions must be done consecutively, and a version cannot be
 skipped unless otherwise noted.

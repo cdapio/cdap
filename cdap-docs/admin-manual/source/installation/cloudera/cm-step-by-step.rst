@@ -4,9 +4,9 @@
 
 .. _step-by-step-cloudera-add-service:
 
-====================================================
-Cloudera Manager: *Add Service* Wizard, Step-by-Step
-====================================================
+=========================================
+Cloudera Manager: Installing CDAP Service
+=========================================
 
 As described in :ref:`cloudera-installation`, you can use `Cloudera Manager
 <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__ 
@@ -15,8 +15,46 @@ to integrate CDAP into a Hadoop cluster by:
 - :ref:`downloading and installing a CDAP CSD (Custom Service Descriptor) <cloudera-installation-csd>`; and
 - :ref:`download and distributing the CDAP parcel <cloudera-installation-download-distribute-parcel>`.
 
-Once you have done those two steps, these instructions show you how to use that CSD with
+Once you have done those two steps, the instructions below show you how to use that CSD with
 the Cloudera Manager Admin Console *Add Service* Wizard to install and start CDAP.
+
+.. _cloudera-installation-setup-startup:
+
+Step-by-Step
+============
+Run the Cloudera Manager Admin Console *Add Service* Wizard and select *CDAP*.
+When completing the Wizard, these notes may help:
+
+- *Add Service* Wizard, Page 2: **Optional Hive dependency** is for the optional CDAP
+  "Explore" component which can be enabled later.
+ 
+- *Add Service* Wizard, Page 3: **Choosing Role Assignments**. Ensure CDAP roles are assigned to hosts colocated
+  with service or gateway roles for HBase, HDFS, Yarn, and optionally Hive.
+
+- *Add Service* Wizard, Page 3: CDAP **Security Auth** service is an optional service
+  for CDAP perimeter security; it can be configured and enabled post-wizard.
+ 
+- *Add Service* Wizard, Pages 4 & 5: **Kerberos Auth Enabled** is needed if running against a
+  secure Hadoop cluster.
+
+- *Add Service* Wizard, Pages 4 & 5: **Router Server Port:** This should match the "Router Bind
+  Port"; it’s used by the CDAP UI to connect to the Router service.
+
+- *Add Service* Wizard, Page 4 & 5: **App Artifact Dir:** This should initially point to the
+  bundled system artifacts included in the CDAP parcel directory. If you have modified
+  ``${PARCELS_ROOT}``, please update this setting to match. Users will want to customize
+  this directory to a location outside of the CDAP Parcel.
+
+- **Additional CDAP configuration properties** can be added using the Cloudera Manager's 
+  *Safety Valve* Advanced Configuration Snippets. Documentation of the available CDAP
+  properties is in the :ref:`appendix-cdap-site.xml`.
+
+Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to
+install CDAP follow.
+
+Once you have completed the installation and :ref:`started CDAP
+<step-by-step-cloudera-add-service-startup>`, you can then 
+:ref:`verify the installation <admin-manual-verification>`.
 
 .. _step-by-step-cloudera-add-a-service:
 
@@ -34,8 +72,8 @@ Add A Service
 
 .. _step-by-step-cloudera-add-service-wizard:
 
-The "Add Service" Wizard
-========================
+Add Service Wizard
+==================
 
 .. figure:: ../../_images/cloudera/cloudera-csd-02.png
    :figwidth: 100%

@@ -15,7 +15,7 @@ Cloudera Manager (CDH)
     Preparing Roles <cm-preparing-roles>
     Adding Parcels <cm-adding-parcels>
     Installing CDAP Service <cm-step-by-step>
-    Upgrading using Cloudera Manager <cm-upgrading>
+    Upgrading using CM <cm-upgrading>
 
 ..     Prerequisites <prerequisites>
 ..     Installation <installation>
