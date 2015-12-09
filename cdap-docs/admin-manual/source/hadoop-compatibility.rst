@@ -8,7 +8,7 @@
 Hadoop/HBase Environment
 ========================
 
-For a distributed enterprise, you must install these Hadoop components:
+For a Distributed CDAP enterprise, version |release|, you must install these Hadoop components:
 
 +---------------+-------------------+-----------------------------------------------------+
 | Component     | Source            | Supported Versions                                  |

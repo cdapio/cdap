@@ -4,14 +4,14 @@
 
 .. _cloudera-installation:
 
-====================================================
-Cloudera Manager: Installing the CDAP Custom Service
-====================================================
+================================
+Cloudera Manager: Adding Parcels
+================================
 
 .. _cloudera-installation-download:
 
 Download
---------
+========
 Download the CDAP CSD (Custom Service Descriptor) by `downloading the JAR file <http://cask.co/resources/#cdap-integrations>`__.
 The source code is available `for review or download <https://github.com/caskdata/cm_csd>`__.
 
@@ -21,13 +21,13 @@ Details on CSDs and Cloudera Manager Extensions are `available online
 .. _cloudera-installation-csd:
 
 Install the CSD
----------------
+===============
 Following the instructions at Cloudera's website, `install the CSD <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__.
 
 .. _cloudera-installation-download-distribute-parcel:
 
 Download and Distribute Parcel
-------------------------------
+==============================
 Download and distribute the CDAP-|version| parcel. Complete instructions on parcels are
 available at `Cloudera's website
 <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/
@@ -53,7 +53,7 @@ suggestions <faqs-cloudera-direct-parcel-access>`.
 .. _cloudera-installation-setup-startup:
 
 Setup and Startup using the Cloudera Manager
---------------------------------------------
+============================================
 Complete instructions, step-by-step, for using the Admin Console *Add Service* Wizard to install CDAP
 :ref:`are available <step-by-step-cloudera-add-service>`.
 
@@ -85,4 +85,4 @@ When completing the Wizard, these notes may help:
   properties is in the :ref:`appendix-cdap-site.xml`.
 
 Once you have completed the installation and :ref:`started CDAP <step-by-step-cloudera-add-service-startup>`, you can then 
-:ref:`verify the installation <cloudera-verification>`.
+:ref:`verify the installation <admin-manual-verification>`.

@@ -2,18 +2,9 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-.. _admin-manual-health-check:
-
-==============================
-Health Check and Verifications
-==============================
-
-Getting a Health Check
-----------------------
-
-.. include:: operations/index.rst 
-   :start-after: .. _operations-health-check:
-
+=============================
+Verification and Health Check
+=============================
 
 .. _admin-manual-verification:
 
@@ -42,3 +33,14 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 #. You should be able to start the application, inject sentences, and retrieve results.
 #. When finished, you can stop and remove the application as described in the section on
    :ref:`cdap-building-running`.
+
+
+.. _admin-manual-health-check:
+
+Getting a Health Check
+----------------------
+
+.. include:: operations/index.rst 
+   :start-after: .. _operations-health-check:
+
+

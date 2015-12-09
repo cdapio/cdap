@@ -5,11 +5,11 @@
 .. _cloudera-configuring:
 
 ====================================
-Cloudera Manager: CDAP Prerequisites
+Cloudera Manager: Preparing Roles
 ====================================
 
-.. rubric:: Roles and Dependencies
-
+Roles and Dependencies
+======================
 The CDAP CSD consists of four mandatory roles:
 
 - Master
@@ -29,8 +29,8 @@ the HBase Master, Yarn Resourcemanager, or HDFS Namenode.
 All services run as the 'cdap' user installed by the parcel.
 
 
-.. rubric:: Prerequisites
-
+Prerequisites
+=============
 #. Node.js (we recommend any version of `Node.js <https://nodejs.org/>`__ |node-js-version|.) 
    must be installed on the node(s) where the UI
    role instance will run. You can download the appropriate version of Node.js from `nodejs.org
