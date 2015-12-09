@@ -328,7 +328,7 @@ body.theme-cdap {
       top: 60px;
       right: 0;
       left: 0;
-      z-index: 1032;
+      z-index: 1029;
       height: 60px;
       .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
       div.pipeline-type {
@@ -378,15 +378,20 @@ body.theme-cdap {
           display: none;
         }
       }
-      .tooltip {
-        &.in {
-          .opacity(1);
-        }
-        &.top {
-          top: -25px!important;
-          .tooltip-arrow {
-            border-top: 5px solid #666;
-          }
+      .nopadding {
+        padding: 0;
+      }
+      .nomargin {
+        margin: 0;
+      }
+    }
+    .toppanel-tooltip {
+      &.in {
+        .opacity(1);
+      }
+      &.top {
+        .tooltip-arrow {
+          border-top: 5px solid #666;
         }
       }
       .tooltip-inner {
@@ -394,12 +399,6 @@ body.theme-cdap {
         border: 1px solid #666;
         padding-right: 10px;
         padding-left: 10px;
-      }
-      .nopadding {
-        padding: 0;
-      }
-      .nomargin {
-        margin: 0;
       }
     }
   }
