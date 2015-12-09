@@ -851,7 +851,7 @@ public abstract class Id implements EntityIdCompatible {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(typeName, "Dataset type name cannot be null.");
       Preconditions.checkArgument(isValidDatasetId(typeName), "Invalid characters found in dataset type name '" +
-        typeName + "'. Allowed characters are ASCII letters, numbers, and _, -, . or $.");
+        typeName + "'. Allowed characters are ASCII letters, numbers, and _, -, ., or $.");
       this.namespace = namespace;
       this.typeName = typeName;
     }
@@ -902,7 +902,7 @@ public abstract class Id implements EntityIdCompatible {
       Preconditions.checkNotNull(namespace, "Namespace cannot be null.");
       Preconditions.checkNotNull(moduleId, "Dataset module id cannot be null.");
       Preconditions.checkArgument(isValidDatasetId(moduleId), "Invalid characters found in dataset module Id. '" +
-        moduleId + "'. Module id can contain alphabets, numbers or _, -, . or $ characters");
+        moduleId + "'. Module id can contain alphabets, numbers or _, -, ., or $ characters");
       this.namespace = namespace;
       this.moduleId = moduleId;
     }
