@@ -22,6 +22,7 @@ angular.module(PKG.name + '.commons')
       controllerAs: 'MyPopoverCtrl',
       scope: {
         template: '=',
+        contentData:'=',
         title: '@',
         placement: '@'
 
@@ -63,14 +64,17 @@ angular.module(PKG.name + '.commons')
         }
         function createPopover() {
           mypopover = $popover(targetElement, {
-            title: 'My Super Title',
+            title: scope.title,
             contentTemplate: scope.template,
             show: false,
             placement: 'right',
             trigger: 'manual',
             container: 'body',
-            customClass: 'my-awesome-popover'
+            customClass: 'my-cdap-popover'
           });
+          if (scope.contentData) {
+            mypopover.$scope.contentData = angular.copy(scope.contentData);
+          }
           return mypopover.$promise;
         }
         function initPopover() {
@@ -82,14 +86,14 @@ angular.module(PKG.name + '.commons')
                 showPopover();
               }
             })
-            .on('mouseleave', delayClose.bind(null, 500));
+            .on('mouseleave', delayClose.bind(null, 100));
         }
         function showPopover() {
           cancelTimers();
           mypopover.show();
           popoverElement = mypopover.$element;
           popoverElement.on('mouseenter', cancelTimers);
-          popoverElement.on('mouseleave', delayClose.bind(null, 500));
+          popoverElement.on('mouseleave', delayClose.bind(null, 100));
         }
         initPopover();
       }
