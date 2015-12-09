@@ -107,7 +107,7 @@ preferred method of deploying it is to use the CDAP CLI.
 
     .. parsed-literal::
     
-      |$| cdap-cli.sh load artifact target/WikipediaPipeline-\ |release|.jar name WikipediaPipelineApp version |release|
+      |$| cdap-cli.sh load artifact target/WikipediaPipeline-|release|.jar name WikipediaPipelineApp version |release|
       Successfully added artifact with name 'WikipediaPipelineApp'
 
 - Create an application using LDA as the clustering algorithm:
