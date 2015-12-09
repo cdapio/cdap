@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. _ambari-adding-cdap-service:
+.. _ambari-setting-up:
 
-=================================
-Adding the CDAP Service to Ambari
-=================================
+=====================
+Setting-up CDAP Repos
+=====================
 
 To install CDAP on a cluster managed by Ambari, we have provided packages for
 RHEL-compatible and Ubuntu systems, which are installed onto the Ambari management server.
@@ -15,7 +15,7 @@ These packages add CDAP to the list of available services which Ambari can insta
 .. highlight:: console
 
 Preparing Ambari
-----------------
+================
 To install the ``cdap-ambari-service`` package, first add the appropriate CDAP repository
 to your system’s package manager by following the steps below. These steps will install a
 Cask repository on your Ambari server.
@@ -46,18 +46,18 @@ supplied from Hortonworks.
 
 
 Installing the CDAP Service
----------------------------
+===========================
 Now, install the ``cdap-ambari-service`` package from the repo you specified above:
 
 Installing the CDAP Service via YUM
-...................................
+-----------------------------------
 ::
 
   $ sudo yum install -y cdap-ambari-service
   $ sudo ambari-server restart
 
 Installing the CDAP Service via APT
-...................................
+-----------------------------------
 ::
 
   $ sudo apt-get install -y cdap-ambari-service

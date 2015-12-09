@@ -4,9 +4,9 @@
 
 .. _ambari-installing-cdap:
 
-===============
-Installing CDAP
-===============
+==========================================
+Installing using the Ambari Service Wizard
+==========================================
 
 1. In the Ambari UI (the Ambari Dashboard), start the **Add Service Wizard**.
 

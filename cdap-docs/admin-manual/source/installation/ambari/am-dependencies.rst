@@ -2,11 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
     
-.. _ambari-adding-cdap:
+.. _ambari-adding-dependencies:
 
-===========================
-Adding CDAP to Your Cluster
-===========================
+============================
+Adding Dependencies for CDAP
+============================
 
 Dependencies
 ============
