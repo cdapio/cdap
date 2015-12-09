@@ -56,7 +56,7 @@ import javax.annotation.Nullable;
 /**
  * Handles dataset instance management calls.
  */
-public class DatasetInstanceService extends ConversionHelpers {
+public class DatasetInstanceService {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceService.class);
 
   private final DatasetTypeManager implManager;
@@ -161,10 +161,10 @@ public class DatasetInstanceService extends ConversionHelpers {
    */
   public void create(String namespaceId, String name, DatasetInstanceConfiguration props) throws Exception {
     // Throws NamespaceNotFoundException if the namespace does not exist
-    Id.Namespace namespace = toNamespaceId(namespaceId);
+    Id.Namespace namespace = ConversionHelpers.toNamespaceId(namespaceId);
     ensureNamespaceExists(namespace);
 
-    Id.DatasetInstance newInstance = toDatasetInstanceId(namespaceId, name);
+    Id.DatasetInstance newInstance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     DatasetSpecification existing = instanceManager.get(newInstance);
     if (existing != null && !allowDatasetUncheckedUpgrade) {
       throw new DatasetAlreadyExistsException(newInstance);
@@ -173,7 +173,7 @@ public class DatasetInstanceService extends ConversionHelpers {
     DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName());
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
-      throw new DatasetTypeNotFoundException(toDatasetTypeId(namespace, props.getTypeName()));
+      throw new DatasetTypeNotFoundException(ConversionHelpers.toDatasetTypeId(namespace, props.getTypeName()));
     }
 
     LOG.info("Creating dataset {}.{}, type name: {}, properties: {}",
@@ -229,7 +229,8 @@ public class DatasetInstanceService extends ConversionHelpers {
     DatasetTypeMeta typeMeta = getTypeInfo(instance.getNamespace(), existing.getType());
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
-      throw new DatasetTypeNotFoundException(toDatasetTypeId(instance.getNamespace(), existing.getType()));
+      throw new DatasetTypeNotFoundException(
+        ConversionHelpers.toDatasetTypeId(instance.getNamespace(), existing.getType()));
     }
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
@@ -311,11 +312,11 @@ public class DatasetInstanceService extends ConversionHelpers {
    */
   @Nullable
   private DatasetTypeMeta getTypeInfo(Id.Namespace namespaceId, String typeName) throws BadRequestException {
-    Id.DatasetType datasetTypeId = toDatasetTypeId(namespaceId, typeName);
+    Id.DatasetType datasetTypeId = ConversionHelpers.toDatasetTypeId(namespaceId, typeName);
     DatasetTypeMeta typeMeta = implManager.getTypeInfo(datasetTypeId);
     if (typeMeta == null) {
       // Type not found in the instance's namespace. Now try finding it in the system namespace
-      Id.DatasetType systemDatasetTypeId = toDatasetTypeId(Id.Namespace.SYSTEM, typeName);
+      Id.DatasetType systemDatasetTypeId = ConversionHelpers.toDatasetTypeId(Id.Namespace.SYSTEM, typeName);
       typeMeta = implManager.getTypeInfo(systemDatasetTypeId);
     }
     return typeMeta;

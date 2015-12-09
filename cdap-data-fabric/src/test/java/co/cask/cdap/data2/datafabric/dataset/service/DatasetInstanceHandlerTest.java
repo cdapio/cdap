@@ -346,8 +346,7 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
 
   private ObjectResponse<List<DatasetSpecificationSummary>> getInstances(String namespace) throws IOException {
     return ObjectResponse.fromJsonBody(makeInstancesRequest(namespace),
-                                       new TypeToken<List<DatasetSpecificationSummary>>() {
-                                       }.getType());
+                                       new TypeToken<List<DatasetSpecificationSummary>>() { }.getType());
   }
 
   private HttpResponse makeInstancesRequest(String namespace) throws IOException {
