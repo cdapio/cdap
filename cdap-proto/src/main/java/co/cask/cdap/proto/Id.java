@@ -67,8 +67,8 @@ public abstract class Id implements EntityIdCompatible {
     return namespaceMatcher.matchesAllOf(name);
   }
 
-  private String toString;
-  private int hashCode = -1;
+  private transient String toString;
+  private transient Integer hashCode;
 
   private static boolean isValidId(String name) {
     return idMatcher.matchesAllOf(name);
@@ -109,7 +109,7 @@ public abstract class Id implements EntityIdCompatible {
 
   @Override
   public final int hashCode() {
-    if (hashCode == -1) {
+    if (hashCode == null) {
       hashCode = toEntityId().hashCode();
     }
     return hashCode;
