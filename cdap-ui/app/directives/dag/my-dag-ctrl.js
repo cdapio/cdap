@@ -386,6 +386,8 @@ angular.module(PKG.name + '.commons')
         };
       });
 
+      $scope.getGraphMargins($scope.nodes);
+
       vm.panning.top = 0;
       vm.panning.left = 0;
 
@@ -396,15 +398,20 @@ angular.module(PKG.name + '.commons')
 
       $timeout(function () { vm.instance.repaintEverything(); });
 
-      setZoom(vm.scale, vm.instance);
-
       NodesActionsFactory.resetPluginCount();
       NodesActionsFactory.setCanvasPanning(vm.panning);
-
     };
 
     // This algorithm is f* up
     vm.fitToScreen = function () {
+
+      /**
+       * Need to find the furthest nodes:
+       * 1. Left most nodes
+       * 2. Right most nodes
+       * 3. Top most nodes
+       * 4. Bottom most nodes
+       **/
       var minLeft = _.min($scope.nodes, function (node) {
         if (node._uiPosition.left.includes('vw')) {
           var left = parseInt(node._uiPosition.left, 10)/100 * document.documentElement.clientWidth;
@@ -428,11 +435,16 @@ angular.module(PKG.name + '.commons')
         return parseInt(node._uiPosition.top, 10);
       });
 
+      /**
+       * Calculate the max width and height of the actual diagram by calculating the difference
+       * between the furthest nodes + margins ( 50 on each side ).
+       **/
       var width = parseInt(maxLeft._uiPosition.left, 10) - parseInt(minLeft._uiPosition.left, 10) + 100;
       var height = parseInt(maxTop._uiPosition.top, 10) - parseInt(minTop._uiPosition.top, 10) + 100;
 
       var parent = $scope.element[0].parentElement.getBoundingClientRect();
 
+      // calculating the scales and finding the minimum scale
       var widthScale = (parent.width - 100) / width;
       var heightScale = (parent.height - 100) / height;
 
@@ -444,9 +456,11 @@ angular.module(PKG.name + '.commons')
       setZoom(vm.scale, vm.instance);
 
 
+      // This will move all nodes by the minimum left and minimum top by the container
+      // with margin of 50px
       var offsetLeft = parseInt(minLeft._uiPosition.left, 10);
       angular.forEach($scope.nodes, function (node) {
-        node._uiPosition.left = (parseInt(node._uiPosition.left, 10) - offsetLeft + 25) + 'px';
+        node._uiPosition.left = (parseInt(node._uiPosition.left, 10) - offsetLeft + 50) + 'px';
       });
 
       var offsetTop = parseInt(minTop._uiPosition.top, 10);
@@ -454,10 +468,12 @@ angular.module(PKG.name + '.commons')
         node._uiPosition.top = (parseInt(node._uiPosition.top, 10) - offsetTop + 50) + 'px';
       });
 
+      $scope.getGraphMargins($scope.nodes);
+
       $timeout(function () { vm.instance.repaintEverything(); });
 
-      vm.panning.left = -(parent.width - (parent.width * vm.scale)) / 2;
-      vm.panning.top = -(parent.height - (parent.height * vm.scale)) / 2;
+      vm.panning.left = 0;
+      vm.panning.top = 0;
 
       vm.panning.style = {
         'top': vm.panning.top + 'px',
