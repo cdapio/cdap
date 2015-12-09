@@ -3,27 +3,28 @@
     <li class="list-group-item">
       <h5>
         <strong>{{::contentData.name}}</strong>
-        <small ng-if="contentData.showAllVersion">
-          <a href="#" ng-click="contentData.showAllVersion=!contentData.showAllVersion">Back</a>
-        </small>
       </h5>
     </li>
-    <li class="list-group-item" ng-if="!contentData.showAllVersion">
+    <li class="list-group-item">
       <h6>
-        {{::contentData.defaultVersion}}
-        <small>
+        {{contentData.defaultVersion}}
+        <small ng-if="!contentData.showAllVersion">
           <a href="#" ng-click="contentData.showAllVersion = !contentData.showAllVersion">Change</a>
+        </small>
+        <small ng-if="contentData.showAllVersion">
+          <a href="#" ng-click="contentData.showAllVersion=!contentData.showAllVersion">Back</a>
         </small>
       </h6>
     </li>
     <li class="list-group-item" ng-if="!contentData.showAllVersion">
       {{::contentData.description}}
     </li>
-    <a href="#"
-        ng-if="contentData.showAllVersion"
+    <a  ng-if="contentData.showAllVersion"
+        href="#"
         class="list-group-item"
         ng-repeat="version in contentData.allVersions track by $index"
-        ng-class="{'active': version === contentData.defaultVersion}">
+        ng-class="{'active': version === contentData.defaultVersion}"
+        ng-click="(contentData.defaultVersion = version) && popoverContext.onItemClicked($event, contentData)">
       {{::version}}
     </a>
   </ul>
