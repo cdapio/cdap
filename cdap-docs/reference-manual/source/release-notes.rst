@@ -23,6 +23,57 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 3.2.2 <http://docs.cask.co/cdap/3.2.2/index.html>`__
+=============================================================
+
+Improvement
+-----------
+
+- `CDAP-3644 <https://issues.cask.co/browse/CDAP-3644>`__ -
+  Made the metadata system datasets upgradable.
+
+- `CDAP-4093 <https://issues.cask.co/browse/CDAP-4093>`__ -
+  Revised the installation documentation for Cloudera Manager and Apache Ambari.
+
+- `CDAP-4133 <https://issues.cask.co/browse/CDAP-4133>`__ -
+  Added ability to get the live-info for the CDAP AppFabric system service.
+
+Bug Fixes
+---------
+
+- `CDAP-4067 <https://issues.cask.co/browse/CDAP-4067>`__ -
+  Fixed an issue where socket connections to the TransactionManager were not being closed.
+
+- `CDAP-4092 <https://issues.cask.co/browse/CDAP-4092>`__ -
+  Fixes an issue that causes worker threads to go into an infinite recursion while
+  exceptions are being thrown in channel handlers.
+
+- `CDAP-4119 <https://issues.cask.co/browse/CDAP-4119>`__ -
+  Fixed a problem where, when the CDAP Master switched from active to standby, that 
+  any programs that were running were marked as failed.
+
+- `CDAP-4278 <https://issues.cask.co/browse/CDAP-4278>`__ -
+  Fixed a problem that caused a Workflow to fail if datasets were used in custom actions.
+
+- `CDAP-4373 <https://issues.cask.co/browse/CDAP-4373>`__ -
+  Fixed a problem that prevented MapReduce jobs from being run when the Resource Manager
+  switches from active to standby in a Kerberos-enabled HA cluster.
+
+- `CDAP-4384 <https://issues.cask.co/browse/CDAP-4384>`__ -
+  Fixed a problem that prevented streams from being read in HA HDFS mode.
+
+
+.. _known-issues-322:
+
+Known Issues
+------------
+
+- `CDAP-4393 <https://issues.cask.co/browse/CDAP-4393>`__ -
+  Metadata search for tags does not work if the search key is not the first tag in the list.
+
+- See also the *Known Issues* of `version 3.2.0 <#known-issues-320>`_\ .
+
+
 `Release 3.2.1 <http://docs.cask.co/cdap/3.2.1/index.html>`__
 =============================================================
 
