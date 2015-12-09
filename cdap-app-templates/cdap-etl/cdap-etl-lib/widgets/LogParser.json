@@ -3,7 +3,7 @@
     "spec-version": "1.0",
     "artifact-version": "3.3.0-SNAPSHOT",
     "name": "LogParser",
-    "type": ""
+    "type": ["transform"]
   },
   "configuration-groups": [
     {

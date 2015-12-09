@@ -3,7 +3,7 @@
     "spec-version": "1.0",
     "artifact-version": "3.3.0-SNAPSHOT",
     "name": "S3BatchSource",
-    "type": ""
+    "type": ["batchsource"]
   },
   "configuration-groups": [
     {

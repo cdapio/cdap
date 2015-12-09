@@ -3,7 +3,7 @@
     "spec-version": "1.0",
     "artifact-version": "3.3.0-SNAPSHOT",
     "name": "SnapshotAvro",
-    "type": ""
+    "type": ["batchsource", "batchsink"]
   },
   "configuration-groups": [
     {

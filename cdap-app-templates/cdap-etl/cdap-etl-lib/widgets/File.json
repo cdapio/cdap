@@ -3,7 +3,7 @@
     "spec-version": "1.0",
     "artifact-version": "3.3.0-SNAPSHOT",
     "name": "File",
-    "type": ""
+    "type": ["batchsource"]
   },
   "configuration-groups": [
     {
