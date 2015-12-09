@@ -45,6 +45,9 @@ class LeftPanelController {
         plugins: []
       }
     ];
+    this.sourcesToVersionMap = {};
+    this.transformsToVersionMap = {};
+    this.sinksToVersionMap = {};
 
     this.LeftPanelStore.registerOnChangeListener(() => {
       this.pluginTypes[0].plugins = this.LeftPanelStore.getSources();
