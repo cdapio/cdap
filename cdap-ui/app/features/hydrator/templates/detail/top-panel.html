@@ -110,7 +110,7 @@
           <span ng-if="TopPanelCtrl.appStatus !=='STARTING'">
           <span class="icon-start"
                   tooltip="Run"
-                  tooltip-placement="top"
+                  tooltip-placement="bottom"
                   tooltip-append-to-body="true"
                   tooltip-class="toppanel-tooltip"></span>
           </span>
@@ -127,7 +127,7 @@
           <span ng-if="TopPanelCtrl.appStatus !=='STOPPING'">
             <span class="icon-stopped"
                   tooltip="Stop"
-                  tooltip-placement="top"
+                  tooltip-placement="bottom"
                   tooltip-append-to-body="true"
                   tooltip-class="toppanel-tooltip"></span>
           </span>
@@ -147,7 +147,7 @@
             <span ng-if="TopPanelCtrl.scheduleStatus === 'SUSPENDED'">
               <span class="icon-calendar"
                     tooltip="Schedule"
-                    tooltip-placement="top"
+                    tooltip-placement="bottom"
                     tooltip-append-to-body="true"
                     tooltip-class="toppanel-tooltip"></span>
             </span>
@@ -163,7 +163,7 @@
             <span ng-if="TopPanelCtrl.scheduleStatus ==='SCHEDULED'">
               <span class="icon-suspend"
                     tooltip="Suspend"
-                    tooltip-placement="top"
+                    tooltip-placement="bottom"
                     tooltip-append-to-body="true"
                     tooltip-class="toppanel-tooltip"></span>
             </span>
@@ -182,7 +182,7 @@
             <span ng-if="TopPanelCtrl.appStatus !== 'STARTING'">
               <span class="icon-start"
                     tooltip="Run"
-                    tooltip-placement="top"
+                    tooltip-placement="bottom"
                     tooltip-append-to-body="true"
                     tooltip-class="toppanel-tooltip"></span>
             </span>
@@ -198,7 +198,7 @@
             <span ng-if="TopPanelCtrl.appStatus !== 'STOPPING'">
             <span class="icon-stopped"
                   tooltip="Stop"
-                  tooltip-placement="top"
+                  tooltip-placement="bottom"
                   tooltip-append-to-body="true"
                   tooltip-class="toppanel-tooltip"></span>
             </span>
@@ -213,7 +213,7 @@
         <div ui-sref="hydrator.create.studio({data: TopPanelCtrl.config, type: TopPanelCtrl.app.type})" class="btn">
         <span class="icon-clone"
               tooltip="Clone"
-              tooltip-placement="top"
+              tooltip-placement="bottom"
               tooltip-append-to-body="true"
               tooltip-class="toppanel-tooltip"></span>
         </div>
@@ -223,7 +223,7 @@
              ui-sref="apps.detail.overview.status({ appId: TopPanelCtrl.app.name })">
              <span class="icon-fist"
                    tooltip="View in CDAP"
-                   tooltip-placement="top"
+                   tooltip-placement="bottom"
                    tooltip-append-to-body="true"
                    tooltip-class="toppanel-tooltip"></span>
         </div>
@@ -235,7 +235,7 @@
           data-confirmable-content="Are you sure you want to delete this pipeline?">
           <span class="icon-delete"
                 tooltip="Delete"
-                tooltip-placement="top"
+                tooltip-placement="bottom"
                 tooltip-append-to-body="true"
                 tooltip-class="toppanel-tooltip"></span>
         </div>
