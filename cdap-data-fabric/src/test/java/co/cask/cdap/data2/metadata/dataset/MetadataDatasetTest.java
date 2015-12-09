@@ -339,22 +339,22 @@ public class MetadataDatasetTest {
   private void doTestHistory(MetadataDataset dataset, Id.NamespacedId targetId, String prefix)
     throws Exception {
     // Metadata change history keyed by time in millis the change was made
-    Map<Long, MetadataHistoryEntry> expected = new HashMap<>();
+    Map<Long, Metadata> expected = new HashMap<>();
 
     // No history for targetId at the beginning
-    MetadataHistoryEntry completeRecord = new MetadataHistoryEntry(targetId);
+    Metadata completeRecord = new Metadata(targetId);
     expected.put(System.currentTimeMillis(), completeRecord);
     // Get history for targetId, should be empty
     Assert.assertEquals(ImmutableSet.of(completeRecord),
                         dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis()));
     // Also, the metadata itself should be equal to the last recorded snapshot
     Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
-                        new MetadataHistoryEntry(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                        new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     // Since the key to expected map is time in millis, sleep for a millisecond to make sure the key is distinct
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Add first record
-    completeRecord = new MetadataHistoryEntry(targetId, toProps(prefix, "k1", "v1"), toTags(prefix, "t1", "t2"));
+    completeRecord = new Metadata(targetId, toProps(prefix, "k1", "v1"), toTags(prefix, "t1", "t2"));
     addMetadataHistory(dataset, completeRecord);
     long time = System.currentTimeMillis();
     expected.put(time, completeRecord);
@@ -363,14 +363,14 @@ public class MetadataDatasetTest {
                         dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
     Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
-                        new MetadataHistoryEntry(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                        new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Add a new property and a tag
     dataset.setProperty(targetId, prefix + "k2", "v2");
     dataset.addTags(targetId, prefix + "t3");
     // Save the complete metadata record at this point
-    completeRecord = new MetadataHistoryEntry(targetId, toProps(prefix, "k1", "v1", "k2", "v2"),
+    completeRecord = new Metadata(targetId, toProps(prefix, "k1", "v1", "k2", "v2"),
                                               toTags(prefix, "t1", "t2", "t3"));
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
@@ -379,14 +379,14 @@ public class MetadataDatasetTest {
                         dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
     Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
-                        new MetadataHistoryEntry(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                        new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Add another property and a tag
     dataset.setProperty(targetId, prefix + "k3", "v3");
     dataset.addTags(targetId, prefix + "t4");
     // Save the complete metadata record at this point
-    completeRecord = new MetadataHistoryEntry(targetId, toProps(prefix, "k1", "v1", "k2", "v2", "k3", "v3"),
+    completeRecord = new Metadata(targetId, toProps(prefix, "k1", "v1", "k2", "v2", "k3", "v3"),
                                         toTags(prefix, "t1", "t2", "t3", "t4"));
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
@@ -395,14 +395,14 @@ public class MetadataDatasetTest {
                         dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
     Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
-                        new MetadataHistoryEntry(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                        new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Add the same property and tag as second time
     dataset.setProperty(targetId, prefix + "k2", "v2");
     dataset.addTags(targetId, prefix + "t3");
     // Save the complete metadata record at this point
-    completeRecord = new MetadataHistoryEntry(targetId, toProps(prefix, "k1", "v1", "k2", "v2", "k3", "v3"),
+    completeRecord = new Metadata(targetId, toProps(prefix, "k1", "v1", "k2", "v2", "k3", "v3"),
                                         toTags(prefix, "t1", "t2", "t3", "t4"));
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
@@ -411,7 +411,7 @@ public class MetadataDatasetTest {
                         dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
     Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
-                        new MetadataHistoryEntry(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                        new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Remove a property and two tags
@@ -419,7 +419,7 @@ public class MetadataDatasetTest {
     dataset.removeTags(targetId, prefix + "t4");
     dataset.removeTags(targetId, prefix + "t2");
     // Save the complete metadata record at this point
-    completeRecord = new MetadataHistoryEntry(targetId, toProps(prefix, "k1", "v1", "k3", "v3"),
+    completeRecord = new Metadata(targetId, toProps(prefix, "k1", "v1", "k3", "v3"),
                                         toTags(prefix, "t1", "t3"));
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
@@ -428,14 +428,14 @@ public class MetadataDatasetTest {
                         dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
     Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
-                        new MetadataHistoryEntry(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                        new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Remove all properties and all tags
     dataset.removeProperties(targetId);
     dataset.removeTags(targetId);
     // Save the complete metadata record at this point
-    completeRecord = new MetadataHistoryEntry(targetId);
+    completeRecord = new Metadata(targetId);
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
     // Assert the history record with the change
@@ -443,14 +443,14 @@ public class MetadataDatasetTest {
                         dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
     Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
-                        new MetadataHistoryEntry(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                        new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Add one more property and a tag
     dataset.setProperty(targetId, prefix + "k2", "v2");
     dataset.addTags(targetId, prefix + "t2");
     // Save the complete metadata record at this point
-    completeRecord = new MetadataHistoryEntry(targetId, toProps(prefix, "k2", "v2"),
+    completeRecord = new Metadata(targetId, toProps(prefix, "k2", "v2"),
                                         toTags(prefix, "t2"));
     time = System.currentTimeMillis();
     expected.put(time, completeRecord);
@@ -459,11 +459,11 @@ public class MetadataDatasetTest {
                         dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), time));
     // Also, the metadata itself should be equal to the last recorded snapshot
     Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
-                        new MetadataHistoryEntry(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                        new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
     TimeUnit.MILLISECONDS.sleep(1);
 
     // Now assert all history
-    for (Map.Entry<Long, MetadataHistoryEntry> entry : expected.entrySet()) {
+    for (Map.Entry<Long, Metadata> entry : expected.entrySet()) {
       Assert.assertEquals(entry.getValue(),
                           getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), entry.getKey())));
     }
@@ -473,10 +473,10 @@ public class MetadataDatasetTest {
                         dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis()));
     // Also, the metadata itself should be equal to the last recorded snapshot
     Assert.assertEquals(getFirst(dataset.getSnapshotBeforeTime(ImmutableSet.of(targetId), System.currentTimeMillis())),
-                        new MetadataHistoryEntry(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
+                        new Metadata(targetId, dataset.getProperties(targetId), dataset.getTags(targetId)));
   }
 
-  private void addMetadataHistory(MetadataDataset dataset, MetadataHistoryEntry record) {
+  private void addMetadataHistory(MetadataDataset dataset, Metadata record) {
     for (Map.Entry<String, String> entry : record.getProperties().entrySet()) {
       dataset.setProperty(record.getEntityId(), entry.getKey(), entry.getValue());
     }
