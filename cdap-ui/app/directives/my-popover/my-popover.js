@@ -17,15 +17,13 @@
 angular.module(PKG.name + '.commons')
   .directive('myPopover', function($compile, $popover, $timeout) {
     return {
-      restrict: 'EA',
-      controller: 'MyPopoverController',
-      controllerAs: 'MyPopoverCtrl',
+      restrict: 'A',
       scope: {
         template: '=',
         contentData:'=',
         title: '@',
-        placement: '@'
-
+        placement: '@',
+        popoverContext: '='
       },
       link: function(scope, element) {
         scope.isOpen = false;
@@ -73,7 +71,10 @@ angular.module(PKG.name + '.commons')
             customClass: 'my-cdap-popover'
           });
           if (scope.contentData) {
-            mypopover.$scope.contentData = angular.copy(scope.contentData);
+            mypopover.$scope.contentData = scope.contentData;
+          }
+          if (scope.popoverContext) {
+            mypopover.$scope.popoverContext = scope.popoverContext;
           }
           return mypopover.$promise;
         }
@@ -98,7 +99,4 @@ angular.module(PKG.name + '.commons')
         initPopover();
       }
     };
-  })
-  .controller('MyPopoverController', function() {
-
   });
