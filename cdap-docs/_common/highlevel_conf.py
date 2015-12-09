@@ -29,12 +29,16 @@ from sphinx.util.osutil import movefile
 from sphinx.util.console import bold
 
 sys.path.append(os.path.abspath('../../_common'))
+from common_conf import setup as _setup
 from common_conf import *
+
 
 # Search Index
 # Includes handler to build a common search index of all manuals combined
 
 def setup(app):
+    # Call imported setup
+    _setup(app)
     # Define handler to build the common index
     app.connect('build-finished', build_common_index)
 
