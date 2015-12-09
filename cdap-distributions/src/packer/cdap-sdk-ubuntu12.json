@@ -28,8 +28,10 @@
         "keyboard-configuration/variant=USA console-setup/ask_detect=false ",
         "initrd=/install/initrd.gz -- <enter>"
       ],
+      "vboxmanage": [
+        ["modifyvm", "{{ .Name }}", "--memory", "4096"]
+      ],
       "vboxmanage_post": [
-        ["modifyvm", "{{ .Name }}", "--memory", "4096"],
         ["modifyvm", "{{ .Name }}", "--clipboard", "bidirectional"],
         ["modifyvm", "{{ .Name }}", "--accelerate2dvideo", "on"],
         ["modifyvm", "{{ .Name }}", "--accelerate3d", "on"],
