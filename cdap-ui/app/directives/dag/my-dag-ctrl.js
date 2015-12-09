@@ -247,9 +247,9 @@ angular.module(PKG.name + '.commons')
           e.el.style.left = '0px';
           e.el.style.top = '0px';
           transformCanvas(e.pos[1], e.pos[0]);
+          NodesActionsFactory.resetPluginCount(vm.panning);
         },
         start: function () {
-          NodesActionsFactory.resetPluginCount();
           canvasDragged = true;
           closeAllPopovers();
         }

@@ -24,17 +24,19 @@ class NodesActionsFactory {
   }
 
   addNode(config) {
+    let canvasPanning = this.NodesStore.getCanvasPanning();
+
     let sourcePosition = {
-      top: 150,
-      left: (10/100 * document.documentElement.clientWidth)
+      top: 150 - canvasPanning.top,
+      left: (10/100 * document.documentElement.clientWidth) - canvasPanning.left
     };
     let transformPosition = {
-      top: 150,
-      left: (30/100 * document.documentElement.clientWidth)
+      top: 150 - canvasPanning.top,
+      left: (30/100 * document.documentElement.clientWidth) - canvasPanning.left
     };
     let sinkPosition = {
-      top: 150,
-      left: (50/100 * document.documentElement.clientWidth)
+      top: 150 - canvasPanning.top,
+      left: (50/100 * document.documentElement.clientWidth) - canvasPanning.left
     };
 
     let offset = 35;
@@ -103,8 +105,8 @@ class NodesActionsFactory {
     this.nodesDispatcher.dispatch('onNodeSelectReset');
   }
 
-  resetPluginCount() {
-    this.nodesDispatcher.dispatch('onResetPluginCount');
+  resetPluginCount(panning) {
+    this.nodesDispatcher.dispatch('onResetPluginCount', panning);
   }
 
   createGraphFromConfig(nodes, connections) {

@@ -46,7 +46,11 @@ class NodesStore {
       activeNodeId: null,
       currentSourceCount: 0,
       currentTransformCount: 0,
-      currentSinkCount: 0
+      currentSinkCount: 0,
+      canvasPanning: {
+        top: 0,
+        left: 0
+      }
     };
   }
 
@@ -81,10 +85,12 @@ class NodesStore {
     this.state.currentSinkCount = 0;
   }
 
-  resetPluginCount() {
+  resetPluginCount(panning) {
     this.state.currentSourceCount = 0;
     this.state.currentTransformCount = 0;
     this.state.currentSinkCount = 0;
+    this.state.canvasPanning.top = panning.top;
+    this.state.canvasPanning.left = panning.left;
   }
   getSourceCount() {
     return this.state.currentSourceCount;
@@ -94,6 +100,9 @@ class NodesStore {
   }
   getSinkCount() {
     return this.state.currentSinkCount;
+  }
+  getCanvasPanning() {
+    return this.state.canvasPanning;
   }
 
   addNode(config) {
