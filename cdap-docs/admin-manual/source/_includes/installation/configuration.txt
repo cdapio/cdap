@@ -1,21 +1,21 @@
 .. _distribution-configuration:
 
-====================================
-|hadoop-distribution|: Configuration
-====================================
+================================================
+|hadoop-distribution|: Additional Configurations
+================================================
 
 This page is to help you configure Cask Data Application Platform (CDAP). It provides the
 instructions for `configuring <#configuration>`__ the CDAP components so they work with
 your existing |hadoop-distribution| cluster. 
 
-It's assumed that you have already followed the `installation <installation.html>`__ steps.
+It's assumed that you have already followed the installation steps.
 
 After completing the configuration, you can `start and verify <starting-verification.html>`__ your installation.
 
 .. _distribution-configuration-central:
 
-Configuration
--------------
+CDAP Configuration
+------------------
 
 #. CDAP packages utilize a central configuration, stored by default in ``/etc/cdap``.
 

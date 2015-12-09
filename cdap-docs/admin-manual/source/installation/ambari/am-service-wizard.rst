@@ -8,6 +8,9 @@
 Installing using the Ambari Service Wizard
 ==========================================
 
+Start the Wizard
+================
+
 1. In the Ambari UI (the Ambari Dashboard), start the **Add Service Wizard**.
 
    .. figure:: ../../_images/ambari/ss01-add-service.png
@@ -30,7 +33,10 @@ Installing using the Ambari Service Wizard
  
       **Ambari Dashboard:** Selecting *CDAP*
  
-#. Next, we will assign CDAP services to hosts.
+Assign CDAP Services to Hosts
+=============================
+
+3. Next, we will assign CDAP services to hosts.
 
    CDAP consists of 4 daemons:
  
@@ -65,7 +71,10 @@ Installing using the Ambari Service Wizard
  
 #. Click *Next* to continue with customizing CDAP.
 
-#. On the **Customize Services** screen, click *Advanced* to bring up the CDAP configuration.
+Customize CDAP
+==============
+
+6. On the **Customize Services** screen, click *Advanced* to bring up the CDAP configuration.
    Under *Advanced cdap-env*, you can configure heap sizes, and log and pid directories for the
    CDAP services which run on the edge nodes.
 
@@ -104,7 +113,10 @@ Installing using the Ambari Service Wizard
    cdap-site.xml <appendix-cdap-site.xml>`. After making any configuration changes, click
    *Next*.
 
-#. Review the desired service layout and click *Deploy* to begin installing CDAP.
+Deploy CDAP
+===========
+
+9. Review the desired service layout and click *Deploy* to begin installing CDAP.
 
    .. figure:: ../../_images/ambari/ss08-review-deploy.png
       :figwidth: 100%
@@ -140,7 +152,10 @@ Installing using the Ambari Service Wizard
 
 #. Click *Complete* to complete the CDAP installation.
 
-#. Now, you should see **CDAP** listed on the main summary screen for your cluster.
+CDAP Listed
+===========
+
+14. Now, you should see **CDAP** listed on the main summary screen for your cluster.
 
    .. figure:: ../../_images/ambari/ss11-main-screen.png
       :figwidth: 100%

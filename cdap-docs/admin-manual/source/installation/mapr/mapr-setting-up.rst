@@ -2,13 +2,15 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. |hadoop-distribution| replace:: MapR
+.. _mapr-setting-up:
 
-.. include:: /../target/_includes/mapr-installation.rst
-  :end-before: .. _mapr-install-java-runtime:
+=======================
+Setting-up MapR Clients
+=======================
 
-As described in these Software Prerequisites, a configured Hadoop and HBase (plus an
-optional Hive client) needs to be configured on the node(s) where CDAP will run.
+As described in the :ref:`Software Prerequisites <admin-manual-install-software-requirements>`, 
+a configured Hadoop and HBase (plus an optional Hive client) needs to be configured on the
+node(s) where CDAP will run.
 
 If colocating CDAP on cluster hosts with actual services, such as the MapR CLDB, Yarn
 ResourceManager, or HBase Master, then the client configurations will already be in place.
@@ -26,7 +28,5 @@ A typical client node should have the ``mapr-client``, ``mapr-hbase``, and ``map
 packages installed, and can be configured using the MapR `configure.sh
 <http://doc.mapr.com/display/MapR/configure.sh>`__ utility.
 
-.. _mapr-install-java-runtime:
-
 .. include:: /../target/_includes/mapr-installation.rst
-  :start-after: .. _mapr-install-java-runtime:
+  :end-before: .. _mapr-install-packaging:

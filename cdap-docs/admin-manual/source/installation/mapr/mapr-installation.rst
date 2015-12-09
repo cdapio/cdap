@@ -1,0 +1,12 @@
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2015 Cask Data, Inc.
+
+.. _mapr-component-installation:
+
+=======================================
+Component Installation using RPM/Debian
+=======================================
+
+.. include:: /../target/_includes/mapr-installation.rst
+    :start-after: .. _mapr-install-package-installation:

@@ -8,8 +8,6 @@
 Adding Dependencies for CDAP
 ============================
 
-Dependencies
-============
 CDAP depends on certain services being present on the cluster. There are **core
 dependencies,** which must be running for CDAP system services to operate correctly, and
 **optional dependencies,** which may be required for certain functionality or program types.
