@@ -170,15 +170,18 @@ public class DatasetInstanceService extends ConversionHelpers {
       throw new DatasetAlreadyExistsException(newInstance);
     }
 
-    // Disable explore if the table already existed
-    if (existing != null) {
-      disableExplore(newInstance);
-    }
-
     DatasetTypeMeta typeMeta = getTypeInfo(namespace, props.getTypeName());
     if (typeMeta == null) {
       // Type not found in the instance's namespace and the system namespace. Bail out.
       throw new DatasetTypeNotFoundException(toDatasetTypeId(namespace, props.getTypeName()));
+    }
+
+    LOG.info("Creating dataset {}.{}, type name: {}, properties: {}",
+             namespaceId, name, props.getTypeName(), props.getProperties());
+
+    // Disable explore if the table already existed
+    if (existing != null) {
+      disableExplore(newInstance);
     }
 
     // Note how we execute configure() via opExecutorClient (outside of ds service) to isolate running user code
@@ -219,6 +222,8 @@ public class DatasetInstanceService extends ConversionHelpers {
       throw new DatasetNotFoundException(instance);
     }
 
+    LOG.info("Update dataset {}, properties: {}", instance.getId(), ConversionHelpers.toJson(properties));
+
     disableExplore(instance);
 
     DatasetTypeMeta typeMeta = getTypeInfo(instance.getNamespace(), existing.getType());
@@ -252,12 +257,11 @@ public class DatasetInstanceService extends ConversionHelpers {
   public void drop(Id.DatasetInstance instance) throws Exception {
     // Throws NamespaceNotFoundException if the namespace does not exist
     ensureNamespaceExists(instance.getNamespace());
-    LOG.info("Deleting dataset {}.{}", instance.getNamespaceId(), instance.getId());
     DatasetSpecification spec = instanceManager.get(instance);
     if (spec == null) {
       throw new DatasetNotFoundException(instance);
     }
-
+    LOG.info("Deleting dataset {}.{}", instance.getNamespaceId(), instance.getId());
     dropDataset(instance, spec);
   }
 

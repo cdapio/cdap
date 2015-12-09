@@ -24,6 +24,7 @@ import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -108,8 +109,10 @@ class ConversionHelpers {
   static DatasetInstanceConfiguration getInstanceConfiguration(HttpRequest request) throws BadRequestException {
     Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()), Charsets.UTF_8);
     try {
-      return GSON.fromJson(reader, DatasetInstanceConfiguration.class);
-    } catch (JsonSyntaxException e) {
+      DatasetInstanceConfiguration config = GSON.fromJson(reader, DatasetInstanceConfiguration.class);
+      Preconditions.checkNotNull(config.getTypeName(), "The typeName must be specified.");
+      return config;
+    } catch (JsonSyntaxException | NullPointerException e) {
       throw new BadRequestException(e.getMessage());
     }
   }
@@ -123,4 +126,10 @@ class ConversionHelpers {
       throw new BadRequestException(e.getMessage());
     }
   }
+
+  static String toJson(Map<String, String> properties) {
+    return GSON.toJson(properties);
+  }
 }
+
+

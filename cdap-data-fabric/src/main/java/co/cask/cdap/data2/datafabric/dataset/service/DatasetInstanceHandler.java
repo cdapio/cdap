@@ -26,7 +26,6 @@ import co.cask.cdap.proto.DatasetMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpResponder;
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -50,7 +49,6 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
 public class DatasetInstanceHandler extends AbstractHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(DatasetInstanceHandler.class);
-  private static final Gson GSON = new Gson();
 
   private final DatasetInstanceService instanceService;
 
@@ -98,10 +96,8 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}")
   public void create(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) throws Exception {
-    DatasetInstanceConfiguration creationProperties = ConversionHelpers.getInstanceConfiguration(request);
 
-    LOG.info("Creating dataset {}.{}, type name: {}, typeAndProps: {}",
-             namespaceId, name, creationProperties.getTypeName(), creationProperties.getProperties());
+    DatasetInstanceConfiguration creationProperties = ConversionHelpers.getInstanceConfiguration(request);
     try {
       instanceService.create(namespaceId, name, creationProperties);
       responder.sendStatus(HttpResponseStatus.OK);
@@ -128,7 +124,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
                      @PathParam("name") String name) throws Exception {
     Id.DatasetInstance instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
     Map<String, String> properties = ConversionHelpers.getProperties(request);
-    LOG.info("Update dataset {}, type name: {}, props: {}", name, GSON.toJson(properties));
     instanceService.update(instance, properties);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -145,7 +140,6 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
   public void drop(HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId,
                    @PathParam("name") String name) throws Exception {
     Id.DatasetInstance instance = ConversionHelpers.toDatasetInstanceId(namespaceId, name);
-    LOG.info("Deleting dataset {}.{}", namespaceId, name);
     instanceService.drop(instance);
     responder.sendStatus(HttpResponseStatus.OK);
   }
