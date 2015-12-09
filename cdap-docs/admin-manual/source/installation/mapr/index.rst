@@ -16,6 +16,7 @@ MapR
     Preparing Package Managers <mapr-preparing>
     Component Installation <mapr-installation>
     Additional Configurations <mapr-configuration>
+    Starting Services <mapr-starting>
     Upgrading CDAP on MapR <mapr-upgrading>
 
 ..     Installation <installation>
