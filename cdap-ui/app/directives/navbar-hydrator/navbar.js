@@ -20,18 +20,48 @@
 
 angular.module(PKG.name+'.commons').directive('myNavbarHydrator',
 
-function myNavbarHydratorDirective (myAuth, MY_CONFIG) {
+function myNavbarHydratorDirective (myAuth, MY_CONFIG, $dropdown) {
   return {
     restrict: 'A',
     templateUrl: 'navbar-hydrator/navbar.html',
-    link: function (scope) {
+    link: function (scope, element) {
+      var toggles = element[0].querySelectorAll('a.hy-dropdown-toggle');
+
+      $dropdown(angular.element(toggles), {
+        template: 'navbar-hydrator/namespace.html',
+        animation: 'none',
+        scope: scope
+      });
+
       scope.logout = myAuth.logout;
       scope.securityEnabled = MY_CONFIG.securityEnabled;
     },
-    controller: function($scope, $state) {
+    controller: function($scope, $state, EventPipe, myNamespace) {
       $scope.highlightTab = $state.current.data && $state.current.data.highlightTab;
       $scope.$on('$stateChangeSuccess', function(event, toState) {
         $scope.highlightTab = toState.data && toState.data.highlightTab;
+      });
+
+      // Namespace dropdown
+      $scope.namespaces = [];
+      function updateNamespaceList() {
+        myNamespace.getList()
+          .then(function(list) {
+            $scope.namespaces = list;
+          });
+      }
+      updateNamespaceList();
+
+      // Listening for event from namespace create or namespace delete
+      EventPipe.on('namespace.update', function() {
+        updateNamespaceList();
+      });
+
+      $scope.$on (myAuth.loginSuccess, updateNamespaceList);
+      $scope.getDisplayName = myNamespace.getDisplayName.bind(myNamespace);
+      $scope.namespace = $state.params.namespace;
+      $scope.$on (myAuth.logoutSuccess, function () {
+        $scope.namespaces = [];
       });
     }
   };

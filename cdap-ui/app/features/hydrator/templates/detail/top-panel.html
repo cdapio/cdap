@@ -21,21 +21,29 @@
           <span ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlBatch"
                 class="icon-ETLBatch"
                 tooltip="Type: Batch"
-                tooltip-placement="right"></span>
+                tooltip-placement="right"
+                tooltip-append-to-body="true"
+                tooltip-class="toppanel-tooltip"></span>
           <span ng-if="TopPanelCtrl.app.type === TopPanelCtrl.GLOBALS.etlRealtime"
                 class="icon-ETLRealtime"
                 tooltip="Type: Realtime"
-                tooltip-placement="right"></span>
+                tooltip-placement="right"
+                tooltip-append-to-body="true"
+                tooltip-class="toppanel-tooltip"></span>
         </div>
         <div class="pipeline-name text-left">
           <h1 tooltip="{{ TopPanelCtrl.app.name }}"
               tooltip-placement="right"
-              tooltip-enable="TopPanelCtrl.app.name.length > 20">
+              tooltip-enable="TopPanelCtrl.app.name.length > 20"
+              tooltip-append-to-body="true"
+              tooltip-class="toppanel-tooltip">
             {{ ::TopPanelCtrl.app.name }}
           </h1>
           <p tooltip="{{ TopPanelCtrl.app.description }}"
              tooltip-placement="right"
-             tooltip-enable="TopPanelCtrl.app.description.length > 40">
+             tooltip-enable="TopPanelCtrl.app.description.length > 40"
+             tooltip-append-to-body="true"
+             tooltip-class="toppanel-tooltip">
             {{ ::TopPanelCtrl.app.description }}
           </p>
         </div>
@@ -102,7 +110,9 @@
           <span ng-if="TopPanelCtrl.appStatus !=='STARTING'">
           <span class="icon-start"
                   tooltip="Run"
-                  tooltip-placement="top"></span>
+                  tooltip-placement="bottom"
+                  tooltip-append-to-body="true"
+                  tooltip-class="toppanel-tooltip"></span>
           </span>
           <span ng-if="TopPanelCtrl.appStatus === 'STARTING'">
             <span class="fa fa-refresh fa-spin"></span>
@@ -117,7 +127,9 @@
           <span ng-if="TopPanelCtrl.appStatus !=='STOPPING'">
             <span class="icon-stopped"
                   tooltip="Stop"
-                  tooltip-placement="top"></span>
+                  tooltip-placement="bottom"
+                  tooltip-append-to-body="true"
+                  tooltip-class="toppanel-tooltip"></span>
           </span>
           <span ng-if="TopPanelCtrl.appStatus === 'STOPPING'">
             <span class="fa fa-refresh fa-spin"></span>
@@ -135,7 +147,9 @@
             <span ng-if="TopPanelCtrl.scheduleStatus === 'SUSPENDED'">
               <span class="icon-calendar"
                     tooltip="Schedule"
-                    tooltip-placement="top"></span>
+                    tooltip-placement="bottom"
+                    tooltip-append-to-body="true"
+                    tooltip-class="toppanel-tooltip"></span>
             </span>
             <span ng-if="TopPanelCtrl.scheduleStatus === 'SCHEDULING'">
               <span class="fa fa-refresh fa-spin"></span>
@@ -149,7 +163,9 @@
             <span ng-if="TopPanelCtrl.scheduleStatus ==='SCHEDULED'">
               <span class="icon-suspend"
                     tooltip="Suspend"
-                    tooltip-placement="top"></span>
+                    tooltip-placement="bottom"
+                    tooltip-append-to-body="true"
+                    tooltip-class="toppanel-tooltip"></span>
             </span>
             <span ng-if="TopPanelCtrl.scheduleStatus === 'SUSPENDING'">
               <span class="fa fa-refresh fa-spin"></span>
@@ -166,7 +182,9 @@
             <span ng-if="TopPanelCtrl.appStatus !== 'STARTING'">
               <span class="icon-start"
                     tooltip="Run"
-                    tooltip-placement="top"></span>
+                    tooltip-placement="bottom"
+                    tooltip-append-to-body="true"
+                    tooltip-class="toppanel-tooltip"></span>
             </span>
             <span ng-if="TopPanelCtrl.appStatus === 'STARTING'">
               <span class="fa fa-refresh fa-spin"></span>
@@ -180,7 +198,9 @@
             <span ng-if="TopPanelCtrl.appStatus !== 'STOPPING'">
             <span class="icon-stopped"
                   tooltip="Stop"
-                  tooltip-placement="top"></span>
+                  tooltip-placement="bottom"
+                  tooltip-append-to-body="true"
+                  tooltip-class="toppanel-tooltip"></span>
             </span>
             <span ng-if="TopPanelCtrl.appStatus === 'STOPPING'">
               <span class="fa fa-refresh fa-spin"></span>
@@ -193,7 +213,9 @@
         <div ui-sref="hydrator.create.studio({data: TopPanelCtrl.config, type: TopPanelCtrl.app.type})" class="btn">
         <span class="icon-clone"
               tooltip="Clone"
-              tooltip-placement="top"></span>
+              tooltip-placement="bottom"
+              tooltip-append-to-body="true"
+              tooltip-class="toppanel-tooltip"></span>
         </div>
       </div>
       <div class="pull-left">
@@ -201,7 +223,9 @@
              ui-sref="apps.detail.overview.status({ appId: TopPanelCtrl.app.name })">
              <span class="icon-fist"
                    tooltip="View in CDAP"
-                   tooltip-placement="top"></span>
+                   tooltip-placement="bottom"
+                   tooltip-append-to-body="true"
+                   tooltip-class="toppanel-tooltip"></span>
         </div>
       </div>
       <div class="pull-left">
@@ -211,7 +235,9 @@
           data-confirmable-content="Are you sure you want to delete this pipeline?">
           <span class="icon-delete"
                 tooltip="Delete"
-                tooltip-placement="top"></span>
+                tooltip-placement="bottom"
+                tooltip-append-to-body="true"
+                tooltip-class="toppanel-tooltip"></span>
         </div>
       </div>
     </div>
