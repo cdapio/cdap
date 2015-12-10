@@ -98,8 +98,8 @@ class NodesActionsFactory {
     this.nodesDispatcher.dispatch('onReset');
   }
 
-  selectNode(nodeId) {
-    this.nodesDispatcher.dispatch('onNodeSelect', nodeId);
+  selectNode(nodeName) {
+    this.nodesDispatcher.dispatch('onNodeSelect', nodeName);
   }
   resetSelectedNode() {
     this.nodesDispatcher.dispatch('onNodeSelectReset');

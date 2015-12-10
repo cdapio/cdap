@@ -110,15 +110,15 @@ class NodesStore {
     return this.state.canvasPanning;
   }
 
-  addNode(config) {
-    if (!config.id) {
-      config.id = (config.label || config.name) + '-' + this.uuid.v4();
+  addNode(nodeConfig) {
+    if (!nodeConfig.name) {
+      nodeConfig.name = nodeConfig.plugin.label + '-' + this.uuid.v4();
     }
-    this.state.nodes.push(config);
+    this.state.nodes.push(nodeConfig);
     this.emitChange();
   }
   updateNode(nodeId, config) {
-    var matchNode = this.state.nodes.filter( node => node.id === nodeId);
+    var matchNode = this.state.nodes.filter( node => node.name === nodeId);
     if (!matchNode.length) {
       return;
     }
@@ -127,7 +127,6 @@ class NodesStore {
     this.emitChange();
   }
   removeNode(node) {
-    let match = this.state.nodes.filter(n => n.id === node);
     switch (this.GLOBALS.pluginConvert[match[0].type]) {
       case 'source':
         this.resetSourceCount();
@@ -139,6 +138,7 @@ class NodesStore {
         this.resetSinkCount();
         break;
     }
+    let match = this.state.nodes.filter(n => n.name === node);
     this.state.nodes.splice(this.state.nodes.indexOf(match[0]), 1);
     this.state.activeNodeId = null;
     this.emitChange();
@@ -156,8 +156,8 @@ class NodesStore {
 
   setNodes(nodes) {
     nodes.forEach(node => {
-      if (!node.id) {
-        node.id = node.name || (node.label + '-' + this.uuid.v4());
+      if (!node.name) {
+        node.name = node.label + '-' + this.uuid.v4();
       }
     });
     this.state.nodes = nodes;

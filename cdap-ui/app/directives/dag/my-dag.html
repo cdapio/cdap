@@ -65,29 +65,29 @@
           The condition on ng-click is to prevent user from being able to click
           if the DAG is disabled. It will prevent the highlighting of nodes on select
         -->
-        <div ng-repeat="plugin in nodes" class="box {{plugin.type}}" ng-style="plugin._uiPosition"
-               data-type="{{plugin.type}}"
-               id="{{plugin.id}}"
-               ng-click="MyDAGController.onNodeClick($event, plugin)"
-               ng-class="{'selected': plugin.selected}">
+        <div ng-repeat="node in nodes" class="box {{node.type}}" ng-style="node._uiPosition"
+               data-type="{{node.type}}"
+               id="{{node.name}}"
+               ng-click="MyDAGController.onNodeClick($event, node)"
+               ng-class="{'selected': node.selected}">
           <div class="node"
-            ng-mouseenter="MyDAGController.nodeMouseEnter(plugin)"
-            ng-mouseleave="MyDAGController.nodeMouseLeave(plugin)">
+                ng-mouseenter="MyDAGController.nodeMouseEnter(node)"
+                ng-mouseleave="MyDAGController.nodeMouseLeave(node)">
             <div class="error-node-notification"
-                 ng-if="plugin.error"
-                 tooltip="{{plugin.error.message}}"
+                 ng-if="node.error"
+                 tooltip="{{node.error.message}}"
                  tooltip-append-to-body="true"
                  tooltip-class="tooltip-error">
-              <span class="badge" ng-class="{'badge-danger': plugin.warning !== true, 'badge-warning': plugin.warning === true}">
-                <span>{{plugin.requiredFieldCount}}</span>
+              <span class="badge" ng-class="{'badge-danger': node.warning !== true, 'badge-warning': node.warning === true}">
+                <span>{{node.requiredFieldCount}}</span>
               </span>
             </div>
             <div class="fa fa-close"
                  ng-if="!MyDAGController.isDisabled"
-                 ng-click="MyDAGController.onNodeDelete($event, plugin)"></div>
-            <div class="icon fa {{plugin.icon}}"></div>
+                 ng-click="MyDAGController.onNodeDelete($event, node)"></div>
+            <div class="icon fa {{node.icon}}"></div>
           </div>
-          <div class="plugin-name" ng-bind="plugin.label | myEllipsis: 25"></div>
+          <div class="plugin-name" ng-bind="node.plugin.label | myEllipsis: 25"></div>
         </div>
 
       </div>
