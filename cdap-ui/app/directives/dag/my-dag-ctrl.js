@@ -174,7 +174,7 @@ angular.module(PKG.name + '.commons')
       });
     }
 
-    vm.nodeMouseEnter = _.throttle(function (node) {
+    vm.nodeMouseEnter = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
       var nodeInfo = nodePopovers[node.id];
 
@@ -193,7 +193,7 @@ angular.module(PKG.name + '.commons')
           });
         });
 
-    }, 300);
+    };
 
     vm.nodeMouseLeave = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
