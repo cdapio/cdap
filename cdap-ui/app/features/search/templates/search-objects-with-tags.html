@@ -20,7 +20,8 @@
   <div class="col-xs-12">
     <p class="results-count" ng-if="SearchController.filteredTObjects.length">
       <span>{{SearchController.filteredTObjects.length}}</span>
-      <span> result<span ng-if="SearchController.filteredTObjects.length > 1">s</span> </span>
+      <ng-pluralize data-count="SearchController.filteredTObjects.length"
+                    data-when="{'one': 'result', 'other': 'results'}"></ng-pluralize>
       <span>for "{{SearchObjectWithTagsController.$stateParams.tag}}"</span>
     </p>
     <div ng-repeat="tObject in SearchController.filteredTObjects = (SearchObjectWithTagsController.taggedObjects | filter: SearchObjectWithTagsController.searchTxt ) ">

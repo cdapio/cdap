@@ -51,8 +51,6 @@ body {
 
           div.error-button {
             float: left;
-            min-width: 140px;
-            text-align: center;
             visibility: visible;
           }
         }
@@ -95,6 +93,10 @@ body {
       > ul.navbar-right {
 
         // Settings dropdown
+        @media (max-width: @screen-xs-max) {
+          padding-right: 15px;
+          padding-left: 15px;
+        }
         @media (min-width: @screen-sm-min) {
           float: left;
           padding-left: 20px;
@@ -103,6 +105,29 @@ body {
           padding-left: 0;
           span.caret {
             display: none;
+          }
+        }
+        span.fa:not(.fa-circle) {
+          font-size: 21px;
+          &:hover {
+            cursor: pointer;
+          }
+        }
+        > li {
+          float: left;
+          &.navbar-search {
+            @media (max-width: @screen-xs-max)  {
+              width: 100%;
+            }
+          }
+          &.dropdown {
+            @media (max-width: @screen-xs-max)  {
+              float: right;
+            }
+          }
+
+          @media (min-width: @screen-sm-min) {
+            margin-right: 15px;
           }
         }
         li.dropdown {
@@ -151,6 +176,9 @@ body {
 
           &.open {
             a.dropdown-toggle {
+              @media (max-width: @screen-xs-max) {
+                text-align: right;
+              }
               @media (min-width: @screen-lg-min) {
                 .border-radius(4px 4px 0 0);
                 font-size: 14px;
@@ -160,7 +188,9 @@ body {
 
           a.dropdown-toggle {
             height: auto;
-            .fa-cog:before { font-size: 17px; }
+            @media (max-width: @screen-xs-max) {
+              text-align: right;
+            }
             @media (max-width: @screen-md-max) {
               padding-top: 0;
               padding-left: 15px;
@@ -205,10 +235,16 @@ body {
           }
         }
         form.navbar-form {
+          padding: 0;
           @media (max-width: @screen-md-max) {
             margin-right: 0;
-            margin-left: 15px;
+            margin-bottom: 18px;
+            margin-left: 0;
             padding: 0;
+          }
+          @media (min-width: @screen-lg-min) {
+            line-height: 51px;
+            margin: 0 0 0 15px;
           }
         }
       }
@@ -364,7 +400,10 @@ body {
                   color: @cdap-header;
                 }
               }
-              a.dropdown-toggle { color: white; }
+              a.dropdown-toggle {
+                color: @cdap-header-icons;
+                font-size: 24px;
+              }
               ul.dropdown-menu {
                 background-color: @brand-primary;
                 li:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.1); }
