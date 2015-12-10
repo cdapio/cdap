@@ -127,6 +127,7 @@ class NodesStore {
     this.emitChange();
   }
   removeNode(node) {
+    let match = this.state.nodes.filter(n => n.name === node);
     switch (this.GLOBALS.pluginConvert[match[0].type]) {
       case 'source':
         this.resetSourceCount();
@@ -138,7 +139,6 @@ class NodesStore {
         this.resetSinkCount();
         break;
     }
-    let match = this.state.nodes.filter(n => n.name === node);
     this.state.nodes.splice(this.state.nodes.indexOf(match[0]), 1);
     this.state.activeNodeId = null;
     this.emitChange();
