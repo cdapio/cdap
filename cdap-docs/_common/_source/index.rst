@@ -65,7 +65,7 @@ on the installation, monitoring and diagnosing fully distributed CDAP in a Hadoo
   - **Security:** Perimeter security, configuration and client authentication
   - **Testing and Debugging:** Test framework plus tools and practices for debugging your applications
   - **Ingesting Data:** Different techniques for ingesting data into CDAP
-  - **Advanced Topics:** Class loading in CDAP, best practices for CDAP development, adding a custom logback
+  - **Advanced Topics:** Best practices for CDAP development, class loading in CDAP, adding a custom logback
 
 
 .. |cdap-apps| replace:: **CDAP Applications:**
