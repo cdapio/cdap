@@ -15,9 +15,11 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory, $rootScope, HydratorService, $popover) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory, $rootScope, HydratorService, $popover, $filter) {
 
     var vm = this;
+
+    var numberFilter = $filter('number');
 
     var endpoints = [];
     var sourceSettings = angular.copy(MyDAGFactory.getSettings(false).source);
@@ -132,21 +134,14 @@ angular.module(PKG.name + '.commons')
             var scope = $rootScope.$new();
 
             scope.data = {
-              nodeName: node.name
+              nodeName: node.label
             };
-
-            var popover = $popover(elem, {
-              trigger: 'manual',
-              placement: 'auto right',
-              target: angular.element(elem[0]),
-              templateUrl: $scope.nodePopoverTemplate,
-              container: 'body',
-              scope: scope
-            });
 
             nodePopovers[node.id] = {
               scope: scope,
-              popover: popover
+              element: elem,
+              popover: null,
+              isShowing: false
             };
 
             $scope.$on('$destroy', function () {
@@ -171,7 +166,7 @@ angular.module(PKG.name + '.commons')
               }
 
               angular.element(label.getElement())
-                .text($scope.metricsData[endpoint.elementId].recordsOut);
+                .text(numberFilter($scope.metricsData[endpoint.elementId].recordsOut, 0));
             });
           }, true);
         }
@@ -179,14 +174,36 @@ angular.module(PKG.name + '.commons')
       });
     }
 
-    vm.nodeMouseEnter = _.debounce(function (node) {
+    vm.nodeMouseEnter = _.throttle(function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
-      nodePopovers[node.id].popover.show();
+      var nodeInfo = nodePopovers[node.id];
+
+      nodeInfo.popover = $popover(nodeInfo.element, {
+        trigger: 'manual',
+        placement: 'auto right',
+        target: angular.element(nodeInfo.element[0]),
+        templateUrl: $scope.nodePopoverTemplate,
+        container: 'main',
+        scope: nodeInfo.scope
+      });
+      nodeInfo.popover.$promise
+        .then(function () {
+          $timeout(function () {
+            nodeInfo.popover.show();
+          });
+        });
+
     }, 300);
 
     vm.nodeMouseLeave = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
-      nodePopovers[node.id].popover.hide();
+
+      var nodeInfo = nodePopovers[node.id];
+      if (!nodeInfo.popover) { return; }
+
+      nodeInfo.popover.hide();
+      nodeInfo.popover.destroy();
+      nodeInfo.popover = null;
     };
 
     vm.zoomIn = function () {

@@ -25,10 +25,12 @@
 
     <div class="well metrics-popover">
       <h5>Records In</h5>
-      <p>{{ data.metrics.recordsIn || "Not Available" }}</p>
+      <p ng-if="data.metrics.recordsIn">{{ data.metrics.recordsIn | number: 0 }}</p>
+      <p ng-if="!data.metrics.recordsIn">Not Available</p>
 
       <h5>Records Out</h5>
-      <p>{{ data.metrics.recordsOut || "Not Available"  }}</p>
+      <p ng-if="data.metrics.recordsOut">{{ data.metrics.recordsOut | number: 0 }}</p>
+      <p ng-if="!data.metrics.recordsOut">Not Available</p>
     </div>
 
   </div>
