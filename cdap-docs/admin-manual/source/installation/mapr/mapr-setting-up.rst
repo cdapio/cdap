@@ -8,7 +8,7 @@
 Setting-up MapR Clients
 =======================
 
-As described in the :ref:`Software Prerequisites <admin-manual-install-software-requirements>`, 
+As described in the :ref:`Software Prerequisites <admin-manual-software-requirements>`, 
 a configured Hadoop and HBase (plus an optional Hive client) needs to be configured on the
 node(s) where CDAP will run.
 

@@ -32,8 +32,8 @@ The CDAP Router service starts a router instance on each of the local boxes and 
 one or more gateway instances on YARN as determined by the gateway service configuration.
 
 We have specific
-`hardware <#hardware-requirements>`_,
-`network <#network-requirements>`_ and
-`prerequisite software <#software-prerequisites>`_ requirements detailed under
-`system requirements <#system-requirements>`__
+:ref:`hardware <admin-manual-hardware-requirements>`,
+:ref:`network <admin-manual-network-requirements>`, and
+:ref:`prerequisite software <admin-manual-software-requirements>` requirements detailed under
+:ref:`system requirements <admin-manual-system-requirements>`
 that need to be met and completed before installation of the CDAP components.

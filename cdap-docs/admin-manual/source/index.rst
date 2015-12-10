@@ -4,47 +4,90 @@
 
 .. _admin-index:
 
-==================================================
+==========================
 CDAP Administration Manual
-==================================================
+==========================
 
-Covers putting CDAP into production, with **installation and configuration, security
-setup, operations,** and **troubleshooting.** Appendices describe the **XML files** used to configure
-the CDAP installation and its security configuration.
+Covers putting CDAP into production, with **components, system requirements, deployment
+architectures, Hadoop compatibility, installation, configuration, security setup, and
+operations.** Appendices describe the **XML files** used to configure the CDAP
+installation and its security configuration.
 
 
-.. rubric:: Installation and Configuration
+.. rubric:: CDAP Components, System Requirements, Deployment Architectures, and Hadoop Compatibility
 
-**Distribution-specific** instructions are available, plus instructions for **generic Apache Hadoop** clusters:
+.. |cdap-components| replace:: **CDAP Components:**
+.. _cdap-components: cdap-components.html
 
-.. |ambari| replace:: **Apache Ambari (HDP):**
-.. _ambari: installation/ambari/index.html
+- |cdap-components|_ Introduction to the **main components** of CDAP.
 
-- |ambari|_ Installing CDAP on `HDP (Hortonworks Data Platform) <http://hortonworks.com/>`__ clusters
-  managed with `Apache Ambari <https://ambari.apache.org/>`__.
+
+.. |system-requirements| replace:: **System Requirements:**
+.. _system-requirements: system-requirements.html
+
+- |system-requirements|_ Hardware, memory, core, and network **requirements** and software **prerequisites**.
+
+
+.. |deployment-architectures| replace:: **Deployment Architectures:**
+.. _deployment-architectures: deployment-architectures.html
+
+- |deployment-architectures|_ Two architectures are described: a **minimal** and a **high availability, highly
+  scalable** deployment.
+
+.. |hadoop-compatibility| replace:: **Hadoop Compatibility:**
+.. _hadoop-compatibility: hadoop-compatibility.html
+
+- |hadoop-compatibility|_ The **Hadoop/HBase environment** that CDAP requires.
+
+
+.. rubric:: Installation and Verification
+
+Installation, configuration, and verification instructions for either **specific
+distributions** or **generic Apache Hadoop** clusters using RPM or Debian Package
+Managers:
 
 .. |cloudera| replace:: **Cloudera Manager (CDH):**
 .. _cloudera: installation/cloudera/index.html
 
-- |cloudera|_ Installing CDAP on `CDH (Cloudera Data Hub) <http://www.cloudera.com/>`__ clusters
-  managed with `Cloudera Manager
+- |cloudera|_ Installing CDAP on `CDH (Cloudera Data Hub) <http://www.cloudera.com/>`__ 
+  clusters managed with `Cloudera Manager
   <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__.
 
-.. |hadoop| replace:: **Hadoop:**
-.. _hadoop: installation/hadoop/index.html
 
-- |hadoop|_ Installing CDAP on Hadoop systems, either **generic Apache Hadoop** distributions, 
-  CDH clusters *not* managed with Cloudera Manager, or HDP clusters *not* managed with Apache Ambari.
+.. |ambari| replace:: **Apache Ambari (HDP):**
+.. _ambari: installation/ambari/index.html
+
+- |ambari|_ Installing CDAP on `HDP (Hortonworks Data Platform)
+  <http://hortonworks.com/>`__ clusters managed with `Apache Ambari
+  <https://ambari.apache.org/>`__.
+
 
 .. |mapr| replace:: **MapR:**
 .. _mapr: installation/mapr/index.html
 
 - |mapr|_ Installing CDAP on `MapR systems <https://www.mapr.com>`__.
 
+
+.. |package-managers| replace:: **Package Managers (RPM/Debian):**
+.. _package-managers: installation/package-managers/index.html
+
+- |package-managers|_ Installing CDAP on Hadoop systems that are **generic Apache Hadoop**
+  distributions, CDH clusters *not managed* with Cloudera Manager, or HDP clusters *not
+  managed* with Apache Ambari.
+
+
 .. |sdk| replace:: **CDAP Standalone SDK:**
 .. _sdk: ../developers-manual/getting-started/standalone/index.html
 
-- |sdk|_ Installing the CDAP Standalone SDK on Linux, MacOS, and Windows systems. *(Developers' Manual)*
+- |sdk|_ Installing the CDAP Standalone SDK on **Linux, MacOS, and Windows** systems.
+  *(Developers' Manual)*
+
+
+.. |verification| replace:: **Verification:**
+.. _verification: verification.html
+
+- |verification|_ How to verify your CDAP installation on your Hadoop cluster by using an
+  **example application**.
 
 
 .. rubric:: Security

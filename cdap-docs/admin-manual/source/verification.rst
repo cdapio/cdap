@@ -2,16 +2,11 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014-2015 Cask Data, Inc.
 
-=============================
-Verification and Health Check
-=============================
-
 .. _admin-manual-verification:
 
+============
 Verification
-------------
-
-.. _admin-manual-verification-text:
+============
 
 To verify that the CDAP software is successfully installed and you are able to use your
 Hadoop cluster, run an example application.
@@ -37,8 +32,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 .. _admin-manual-health-check:
 
-Getting a Health Check
-----------------------
+.. rubric:: Getting a Health Check
 
 .. include:: operations/index.rst 
    :start-after: .. _operations-health-check:

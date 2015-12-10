@@ -11,7 +11,7 @@ CDAP UI
 
 The **CDAP UI** is available for deploying, querying and managing the Cask Data
 Application Platform in all modes of CDAP except an 
-:ref:`In-memory CDAP. <in-memory-data-application-platform>`
+in-memory CDAP.
 
 Here is a screen-capture of the CDAP UI running on a Distributed CDAP.
 
@@ -35,7 +35,3 @@ with access to the main Cask Website and Support.
 On the **Development** page, data and applications are displayed. The **Operations** page
 gives you views of current system and user metrics, with customizable dashboards. The
 **Management** page provides features and controls for administering the CDAP installation.
-
-.. A detailed *How-To Guide* covering using the CDAP UI will be available
-.. at `Guides and Tutorials for CDAP. <http://cask.co/guides/>`__
-.. is available

@@ -1,0 +1,37 @@
+.. _|distribution|-starting-services:
+
+=============================================================
+|display-distribution|: Starting Services
+=============================================================
+
+.. highlight:: console
+
+When all the packages and dependencies have been installed, and the configuration
+parameters set, you can start the services on each of the CDAP boxes by running the
+command::
+
+  $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
+
+When all the services have completed starting, the CDAP UI should then be
+accessible through a browser at port ``9999``. 
+
+The URL will be ``http://<host>:9999`` where ``<host>`` is the IP address of
+one of the machines where you installed the packages and started the services.
+
+
+.. _|distribution|-highly-available:
+
+.. rubric:: Making CDAP Highly-Available
+
+Repeat these steps on additional boxes.  The configurations needed to support high-availability are:
+
+- ``kafka.seed.brokers``: ``127.0.0.1:9092,...`` 
+  
+  - Kafka brokers list (comma separated)
+  
+- ``kafka.default.replication.factor``: 2
+
+  - Used to replicate Kafka messages across multiple machines to prevent data loss in 
+    the event of a hardware failure.
+  - The recommended setting is to run at least two Kafka servers.
+  - Set this to the number of Kafka servers.

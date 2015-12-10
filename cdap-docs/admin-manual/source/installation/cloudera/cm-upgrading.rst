@@ -68,13 +68,13 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 **Upgrade Steps**
 
 1. If using Cloudera Manager, :ref:`stop all CDAP application and services
-   <hadoop-upgrading>`, as Cloudera Manager will have auto-started CDAP
+   <pm-upgrading>`, as Cloudera Manager will have auto-started CDAP
 #. Disable all CDAP tables; from an HBase shell, run this command::
 
     > disable_all 'cdap.*'
     
 #. Upgrade to CDH 5.4
-#. :ref:`Stop all CDAP services <hadoop-upgrading>`, as CDH will have auto-started CDAP
+#. :ref:`Stop all CDAP services <pm-upgrading>`, as CDH will have auto-started CDAP
 #. Run the CDAP Upgrade Tool, as the user that runs CDAP Master (the CDAP user)::
 
     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase

@@ -1,9 +1,11 @@
-.. _distribution-preparing-cluster:
+.. _|distribution|-preparing-cluster:
 
 .. rubric:: Preparing the Cluster
 
-.. _distribution-install-preparing-the-cluster:
+.. _|distribution|-install-preparing-the-cluster:
 
+.. highlight:: console
+   
 To prepare your cluster so that CDAP can write to its default namespace,
 create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
 
@@ -20,7 +22,7 @@ Also, create a ``tx.snapshot`` subdirectory::
 
 If you set up your cluster as above, no further changes are required.
 
-.. _distribution-install-preparing-the-cluster-defaults:
+.. _|distribution|-install-preparing-the-cluster-defaults:
 
 .. |edit-your-cdap-configuration| replace:: edit your CDAP configuration
 .. _edit-your-cdap-configuration: configuration.html
@@ -28,12 +30,14 @@ If you set up your cluster as above, no further changes are required.
 If your cluster is not setup with these defaults, you'll need to |edit-your-cdap-configuration|_ 
 once you have downloaded and installed the packages, and prior to starting services.
 
-.. _distribution-install-packaging:
+.. _|distribution|-install-packaging:
 
 .. rubric:: Preparing Package Managers
 
-.. _distribution-preparing-package-managers:
+.. _|distribution|-preparing-package-managers:
 
+.. highlight:: console
+   
 CDAP components are available as either Yum ``.rpm`` or APT ``.deb`` packages. There is
 one package for each CDAP component, and each component may have multiple services.
 Additionally, there is a base CDAP package with three utility packages (for HBase
@@ -49,7 +53,7 @@ Available packaging types:
 **Note:** If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an
 `official cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
 
-.. _distribution-install-rpm-using-yum:
+.. _|distribution|-install-rpm-using-yum:
 
 .. rubric:: RPM using Yum
 
@@ -112,8 +116,10 @@ Update your APT-cache::
 
 .. rubric:: Package Installation
 
-.. _distribution-install-package-installation:
+.. _|distribution|-install-package-installation:
 
+.. highlight:: console
+   
 Install the CDAP packages by using one of the following methods. Do this on each of the
 boxes that are being used for the CDAP components; our recommended installation is a
 minimum of two boxes.

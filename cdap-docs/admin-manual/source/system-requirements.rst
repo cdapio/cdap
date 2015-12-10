@@ -8,6 +8,8 @@
 System Requirements
 ===================
 
+.. _admin-manual-hardware-requirements:
+
 Hardware Requirements
 =====================
 Systems hosting the CDAP components must meet these hardware specifications,
@@ -51,7 +53,7 @@ MB, so containers will be allocated with 1024 MB, even if the CDAP settings are 
 With the default YARN and CDAP settings of memory, having 14 to 16 CPU cores 
 (and a total of 14 to 16 GB of memory) available to YARN can be required just to start.
 
-.. _admin-manual-install-network-requirements:
+.. _admin-manual-network-requirements:
 
 Network Requirements
 ====================
@@ -60,7 +62,7 @@ For the best performance, CDAP components should be located on the same LAN,
 ideally running at 1 Gbps or faster. A good rule of thumb is to treat CDAP
 components as you would *Hadoop DataNodes*.  
 
-.. _admin-manual-install-software-requirements:
+.. _admin-manual-software-requirements:
 
 Software Prerequisites
 ======================

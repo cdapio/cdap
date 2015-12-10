@@ -16,10 +16,10 @@ Installation
     Cloudera Manager (CDH) <cloudera/index>
     Apache Ambari (HDP) <ambari/index>
     MapR <mapr/index>
-    Package Managers (RPM/Debian) <hadoop/index>
+    Package Managers (RPM/Debian) <package-managers/index>
 
-**Distribution-specific** instructions are available, plus instructions for installing on
-**generic Apache Hadoop** clusters using RPM or Debian Package Managers:
+Installation, configuration, and verification instructions for either **specific
+distributions** or **generic Apache Hadoop** clusters using RPM or Debian Package Managers:
 
 .. |cloudera| replace:: **Cloudera Manager (CDH):**
 .. _cloudera: cloudera/index.html
@@ -39,14 +39,13 @@ Installation
 
 - |mapr|_ Installing CDAP on `MapR systems <https://www.mapr.com>`__.
 
-.. |hadoop| replace:: **Package Managers (RPM/Debian):**
-.. _hadoop: hadoop/index.html
+.. |package-managers| replace:: **Package Managers (RPM/Debian):**
+.. _package-managers: package-managers/index.html
 
-- |hadoop|_ Installing CDAP on Hadoop systems, either **generic Apache Hadoop** distributions, 
-  CDH clusters *not* managed with Cloudera Manager, or HDP clusters *not* managed with Apache Ambari.
+- |package-managers|_ Installing CDAP on Hadoop systems that are **generic Apache Hadoop** distributions, 
+  CDH clusters *not managed* with Cloudera Manager, or HDP clusters *not managed* with Apache Ambari.
 
 .. |sdk| replace:: **installing the CDAP Standalone SDK**
 .. _sdk: ../developers-manual/getting-started/standalone/index.html
 
-There are separate instructions on |sdk|_ on Linux, MacOS, and Windows systems. *(Developers' Manual)*
-
+There are separate instructions for |sdk|_ *(Developers' Manual)* on Linux, MacOS, and Windows systems. 

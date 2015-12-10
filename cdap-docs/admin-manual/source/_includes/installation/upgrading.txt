@@ -1,8 +1,8 @@
-.. _distribution-upgrading:
+.. _|distribution|-upgrading:
 
-==============================================================
-|hadoop-distribution|: Upgrading an Existing CDAP Installation
-==============================================================
+===============================================================
+|display-distribution|: Upgrading an Existing CDAP Installation
+===============================================================
 
 When upgrading an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.

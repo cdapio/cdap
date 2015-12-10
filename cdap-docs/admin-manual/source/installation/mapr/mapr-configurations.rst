@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. |hadoop-distribution| replace:: MapR
+.. |display-distribution| replace:: MapR
 
 .. include:: /../target/_includes/mapr-configuration.rst
     :end-before: #. Depending on your installation, you may want to set these properties:

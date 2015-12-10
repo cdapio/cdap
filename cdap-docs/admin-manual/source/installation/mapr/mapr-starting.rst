@@ -2,6 +2,6 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-.. |hadoop-distribution| replace:: MapR
+.. |display-distribution| replace:: MapR
 
-.. include:: /../target/_includes/mapr-starting-verification.rst
+.. include:: /../target/_includes/mapr-starting.rst

@@ -1,18 +1,19 @@
-.. _distribution-configuration:
+.. _|distribution|-configuration:
 
-================================================
-|hadoop-distribution|: Additional Configurations
-================================================
+=================================================
+|display-distribution|: Additional Configurations
+=================================================
 
 This page is to help you configure Cask Data Application Platform (CDAP). It provides the
-instructions for `configuring <#configuration>`__ the CDAP components so they work with
-your existing |hadoop-distribution| cluster. 
+instructions for `configuring <#cdap-configuration>`__ the CDAP components so they work with
+your existing cluster. 
 
 It's assumed that you have already followed the installation steps.
 
-After completing the configuration, you can `start and verify <starting-verification.html>`__ your installation.
+After completing the configuration, you can :ref:`start <|distribution|-starting-services>` and then 
+:ref:`verify <admin-manual-verification>` your installation.
 
-.. _distribution-configuration-central:
+.. _|distribution|-configuration-central:
 
 CDAP Configuration
 ------------------
@@ -25,7 +26,7 @@ CDAP Configuration
    The ``cdap-site.xml.example`` file shows the properties that usually require customization
    for all installations.
  
-   .. _distribution-configuration-alternatives:
+   .. _|distribution|-configuration-alternatives:
  
    Similar to Hadoop, CDAP utilizes the ``alternatives`` framework to allow you to
    easily switch between multiple configurations. The ``alternatives`` system is used for ease of
@@ -37,7 +38,7 @@ CDAP Configuration
    Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
    to your custom directory.
  
-   .. _distribution-configuration-options:
+   .. _|distribution|-configuration-options:
 
 #. Configure the ``cdap-site.xml`` after you have installed the CDAP packages.
 
@@ -94,7 +95,7 @@ CDAP Configuration
  
      #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
   
-   .. _distribution-configuration-explore-service:
+   .. _|distribution|-configuration-explore-service:
  
    - To use the **ad-hoc querying capabilities of CDAP,** enable the CDAP Explore Service in
      ``conf/cdap-site.xml`` (by default, it is disabled)::
@@ -127,7 +128,7 @@ CDAP Configuration
 
 .. highlight:: console
 
-.. _distribution-configuration-for-secure-hadoop:
+.. _|distribution|-configuration-for-secure-hadoop:
 
 Secure Hadoop
 -------------
@@ -209,7 +210,7 @@ In order to configure **CDAP Explore Service for secure Hadoop:**
 
 With all these properties set, the CDAP Explore Service will run on secure Hadoop clusters.
 
-.. _distribution-configuration-ulimit:
+.. _|distribution|-configuration-ulimit:
 
 ULIMIT Configuration
 --------------------
@@ -222,7 +223,7 @@ Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
 .. highlight:: console
 
-.. _distribution-configuration-tmp-files:
+.. _|distribution|-configuration-tmp-files:
 
 Writing to Temp Files
 ---------------------
@@ -239,7 +240,7 @@ are specified in :ref:`appendix-cdap-site.xml`):
 The CDAP user (the CDAP UNIX user) **must** be able to write to these directories, as they
 are used for deploying applications and for operating CDAP.
 
-.. _distribution-configuration-security:
+.. _|distribution|-configuration-security:
 
 Configuring Security
 --------------------
@@ -247,7 +248,7 @@ For instructions on enabling CDAP Security, see :ref:`CDAP Security <admin-secur
 and in particular, see the instructions for 
 :ref:`configuring the properties of cdap-site.xml <enabling-security>`.
 
-.. _distribution-configuration-hdp:
+.. _|distribution|-configuration-hdp:
 
 Configuring Hortonworks Data Platform
 -------------------------------------
