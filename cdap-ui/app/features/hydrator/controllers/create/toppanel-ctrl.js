@@ -126,12 +126,12 @@ class TopPanelController{
   }
   onValidate() {
     this.ConsoleActionsFactory.resetMessages();
-    // this.ConsoleActionsFactory.addMessage({
-    //   type: 'success',
-    //   content: 'This is a validate test'
-    // });
-
-    this.HydratorErrorFactory.isModelValid();
+    if (this.HydratorErrorFactory.isModelValid()) {
+      this.ConsoleActionsFactory.addMessage({
+        type: 'success',
+        content: 'Validation success! Pipeline ' + this.ConfigStore.getName() + ' is valid.'
+      });
+    }
 
   }
   onPublish() {
