@@ -66,6 +66,12 @@ public interface NamespaceStore {
   NamespaceMeta delete(Id.Namespace id);
 
   /**
+   * @param id the namespace
+   * @return true if the namespace exists
+   */
+  boolean exists(Id.Namespace id);
+
+  /**
    * Lists all registered namespaces.
    *
    * @return a list of all registered namespaces

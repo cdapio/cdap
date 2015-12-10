@@ -156,6 +156,17 @@ public class DefaultNamespaceStore implements NamespaceStore {
   }
 
   @Override
+  public boolean exists(final Id.Namespace id) {
+    return appsTx.get().executeUnchecked(
+      new TransactionExecutor.Function<NamespaceMDS, Boolean>() {
+        @Override
+        public Boolean apply(NamespaceMDS mds) throws Exception {
+          return mds.get(id) != null;
+        }
+      }, apps.get());
+  }
+
+  @Override
   public List<NamespaceMeta> list() {
     return appsTx.get().executeUnchecked(
       new TransactionExecutor.Function<NamespaceMDS, List<NamespaceMeta>>() {

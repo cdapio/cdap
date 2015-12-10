@@ -195,6 +195,11 @@ public class LineageWriterDatasetFramework implements DatasetFramework, ProgramC
   }
 
   @Override
+  public boolean namespaceExists(Id.Namespace namespace) throws DatasetManagementException {
+    return delegate.namespaceExists(namespace);
+  }
+
+  @Override
   public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
     delegate.createNamespace(namespaceId);
   }

@@ -420,6 +420,16 @@ public class InMemoryDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public boolean namespaceExists(Id.Namespace namespace) throws DatasetManagementException {
+    readLock.lock();
+    try {
+      return namespaces.contains(namespace);
+    } finally {
+      readLock.unlock();
+    }
+  }
+
+  @Override
   public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
     writeLock.lock();
     try {

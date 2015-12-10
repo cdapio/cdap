@@ -60,6 +60,11 @@ public class InMemoryNamespaceStore implements NamespaceStore {
   }
 
   @Override
+  public boolean exists(Id.Namespace id) {
+    return namespaces.containsKey(id);
+  }
+
+  @Override
   public List<NamespaceMeta> list() {
     return new ArrayList<>(namespaces.values());
   }

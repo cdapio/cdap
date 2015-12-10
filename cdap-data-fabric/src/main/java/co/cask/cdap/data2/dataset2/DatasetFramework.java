@@ -300,6 +300,11 @@ public interface DatasetFramework {
     throws DatasetManagementException, IOException;
 
   /**
+   * @return true if the namespace exists
+   */
+  boolean namespaceExists(Id.Namespace namespace) throws DatasetManagementException;
+
+  /**
    * Creates a namespace in the Storage Providers - HBase/LevelDB, Hive and HDFS/Local File System.
    *
    * @param namespaceId the {@link Id.Namespace} to create
