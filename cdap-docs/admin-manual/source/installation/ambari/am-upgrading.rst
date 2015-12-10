@@ -14,4 +14,4 @@ To upgrade CDAP installations that were installed and managed with Apache Ambari
 follow our instructions for upgrading CDAP installations that were installed with a
 Package Manager, either RPM or Debian:
 
-  :ref:`pm-upgrading`
+  :ref:`package-managers-upgrading`

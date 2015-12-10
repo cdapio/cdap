@@ -28,5 +28,5 @@ node(s) where CDAP will run.
 .. packages installed, and can be configured using the MapR `configure.sh
 .. <http://doc.mapr.com/display/MapR/configure.sh>`__ utility.
 
-.. include:: /../target/_includes/pm-installation.rst
-  :end-before: .. _pm-install-packaging:
+.. include:: /../target/_includes/package-managers-installation.rst
+  :end-before: .. _package-managers-install-packaging:

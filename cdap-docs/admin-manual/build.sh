@@ -45,22 +45,16 @@ function download_includes() {
   
   echo "Copying files, changing references..."
   local source_rst="${target_includes_dir}/../../source/_includes/installation"
+  local pattern="\|distribution\|"  
+  local distributions="ambari mapr package-managers"
+  local types="configuration installation starting upgrading"
+  for dist in ${distributions}; do
+    for type in ${types}; do
+      rewrite_references_sed "${source_rst}/${type}.txt" "${target_includes_dir}/${dist}-${type}.rst" "${pattern}" "${dist}"
+    done
+    echo
+  done
   
-  local pattern="\|distribution\|"
-  local distribution="ambari"
-  rewrite_references_sed "${source_rst}/installation.txt"  "${target_includes_dir}/${distribution}-installation.rst"  "${pattern}" "${distribution}"
-  echo
-  distribution="pm"
-  rewrite_references_sed "${source_rst}/configuration.txt" "${target_includes_dir}/${distribution}-configuration.rst" "${pattern}" "${distribution}"
-  rewrite_references_sed "${source_rst}/installation.txt"   "${target_includes_dir}/${distribution}-installation.rst" "${pattern}" "${distribution}"
-  rewrite_references_sed "${source_rst}/starting.txt"       "${target_includes_dir}/${distribution}-starting.rst"     "${pattern}" "${distribution}"
-  rewrite_references_sed "${source_rst}/upgrading.txt"      "${target_includes_dir}/${distribution}-upgrading.rst"    "${pattern}" "${distribution}"
-  echo
-  distribution="mapr"
-  rewrite_references_sed "${source_rst}/configuration.txt"  "${target_includes_dir}/${distribution}-configuration.rst"  "${pattern}" "${distribution}"
-  rewrite_references_sed "${source_rst}/installation.txt"   "${target_includes_dir}/${distribution}-installation.rst"   "${pattern}" "${distribution}"
-  rewrite_references_sed "${source_rst}/starting.txt"       "${target_includes_dir}/${distribution}-starting.rst"       "${pattern}" "${distribution}"
-  rewrite_references_sed "${source_rst}/upgrading.txt"      "${target_includes_dir}/${distribution}-upgrading.rst"      "${pattern}" "${distribution}"
 }
 
 run_command ${1}

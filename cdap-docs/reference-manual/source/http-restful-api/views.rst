@@ -19,10 +19,10 @@ A view has a specific read format. Read formats consist of a :ref:`format <strea
 Some formats (:ref:`CSV, TSV <stream-exploration-stream-format_csv_tsv>`) use an additional *settings* 
 attribute to complete the mapping of data to fields.
 
-:ref:`CDAP Explore <data-exploration>` needs to be :ref:`enabled <hadoop-configuration-explore-service>` 
-before any views are created so that a Hive table can be created for each view. (See the
-:ref:`CDAP installation instructions <installation-index>` for your particular Hadoop
-distribution for details.)
+:ref:`CDAP Explore <data-exploration>` needs to be :ref:`enabled 
+<package-managers-configuration-explore-service>` before any views are created so that a
+Hive table can be created for each view. (See the :ref:`CDAP installation instructions 
+<installation-index>` for your particular Hadoop distribution for details.)
 
 Currently, views are only supported for streams. Support for datasets will be added in a
 later version of CDAP.

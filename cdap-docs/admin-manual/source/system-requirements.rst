@@ -36,7 +36,7 @@ in addition to having CPUs with a minimum speed of 2 GHz:
 | **CDAP Authentication Server**        | RAM                | 1 GB minimum, 2 GB recommended                |
 +---------------------------------------+--------------------+-----------------------------------------------+
 
-.. _admin-manual-install-hardware-memory-core-requirements:
+.. _admin-manual-memory-core-requirements:
 
 Memory and Core Requirements
 ============================

@@ -4,6 +4,6 @@
 
 .. |display-distribution| replace:: Package Managers (RPM/Debian)
 
-.. .. _pm-upgrading:
+.. .. _package-managers-upgrading:
 
-.. include:: /../target/_includes/pm-upgrading.rst
+.. include:: /../target/_includes/package-managers-upgrading.rst
