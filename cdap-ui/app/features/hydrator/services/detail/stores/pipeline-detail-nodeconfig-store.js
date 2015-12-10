@@ -15,13 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('NodeConfigStore', function(PipelineNodeConfigDispatcher, $q, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, ConfigStore, DetailNonRunsStore, ConfigActionsFactory) {
+  .service('NodeConfigStore', function(PipelineNodeConfigDispatcher, $q, $filter, IMPLICIT_SCHEMA, GLOBALS, myPipelineApi, $state, $rootScope, ConfigStore, DetailNonRunsStore, ConfigActionsFactory, HydratorService) {
 
     var dispatcher;
     this.changeListeners = [];
     this.setDefaults = function() {
       this.state = {
-        plugin: {},
+        node: {},
         isValidPlugin: false,
         isSource: false,
         isSink: false,
@@ -29,7 +29,7 @@ angular.module(PKG.name + '.feature.hydrator')
       };
     };
     this.setDefaults();
-
+    this.HydratorService = HydratorService;
     this.getState = function() {
       return this.state;
     };
@@ -80,17 +80,17 @@ angular.module(PKG.name + '.feature.hydrator')
       dispatcher.register('onPluginSave', this.setPlugin.bind(this));
     };
 
-    function onPluginChange(plugin) {
-      if (plugin && this.state.plugin && plugin.id === this.state.plugin.id) {
+    function onPluginChange(node) {
+      if (node && this.state.node && node.name === this.state.node.name) {
         return;
       }
-      switchPlugin.call(this, plugin)
+      switchPlugin.call(this, node)
         .then(this.emitChange.bind(this));
     }
 
-    function switchPlugin(plugin) {
+    function switchPlugin(node) {
       // This is super wrong. While re-writing this in flux architecture this should go away.
-      this.state.plugin = plugin;
+      this.state.node = node;
       this.state.isValidPlugin = false;
       return setPluginInfo
               .call(this)
@@ -104,16 +104,15 @@ angular.module(PKG.name + '.feature.hydrator')
       this.state.isSource = false;
       this.state.isTransform = false;
       this.state.isSink = false;
-      if (this.state.plugin._backendProperties) {
+      if (this.state.node._backendProperties) {
         return $q.when(true);
       } else {
-        return fetchPluginDetails
-              .call(this, this.state.plugin);
+        return this.HydratorService.fetchBackendProperties(this.state.node, this.ConfigStore.getAppType());
       }
     }
 
     function configurePluginInfo(pluginDetails) {
-      var pluginId = this.state.plugin.id;
+      var pluginId = this.state.node.name;
       var input;
       var sourceConn = $filter('filter')(this.ConfigStore.getConnections(), { to: pluginId });
       var sourceSchema = null;
@@ -132,9 +131,9 @@ angular.module(PKG.name + '.feature.hydrator')
           isStreamSource = true;
         }
 
-        if (source.properties.format && source.properties.format === 'clf') {
+        if (source.plugin.properties.format && source.plugin.properties.format === 'clf') {
           sourceSchema = clfSchema;
-        } else if (source.properties.format && source.properties.format === 'syslog') {
+        } else if (source.plugin.properties.format && source.plugin.properties.format === 'syslog') {
           sourceSchema = syslogSchema;
         }
 
@@ -171,8 +170,8 @@ angular.module(PKG.name + '.feature.hydrator')
         });
       }
 
-      this.state.plugin.inputSchema = input ? input.fields : null;
-      angular.forEach(this.state.plugin.inputSchema, function (field) {
+      this.state.node.inputSchema = input ? input.fields : null;
+      angular.forEach(this.state.node.inputSchema, function (field) {
         if (angular.isArray(field.type)) {
           field.type = field.type[0];
           field.nullable = true;
@@ -181,60 +180,25 @@ angular.module(PKG.name + '.feature.hydrator')
         }
       });
 
-      if (!this.state.plugin.outputSchema && input) {
-        this.state.plugin.outputSchema = JSON.stringify(input) || null;
+      if (!this.state.node.outputSchema && input) {
+        this.state.node.outputSchema = JSON.stringify(input) || null;
       }
 
-      this.state.plugin._backendProperties = pluginDetails._backendProperties || this.state.plugin._backendProperties;
-      this.state.plugin.description = pluginDetails.description || this.state.plugin.description;
-      this.state.isValidPlugin = Object.keys(this.state.plugin).length;
+      this.state.node._backendProperties = pluginDetails._backendProperties || this.state.node._backendProperties;
+      this.state.node.description = pluginDetails.description || this.state.node.description;
+      this.state.isValidPlugin = Object.keys(this.state.node).length;
 
       var artifactTypeExtension = GLOBALS.pluginTypes[this.ConfigStore.getAppType()];
-      if (this.state.plugin.type === artifactTypeExtension.source) {
+      if (this.state.node.type === artifactTypeExtension.source) {
         this.state.isSource = true;
       }
 
-      if (this.state.plugin.type === artifactTypeExtension.sink) {
+      if (this.state.node.type === artifactTypeExtension.sink) {
         this.state.isSink = true;
       }
-      if (this.state.plugin.type === 'transform') {
+      if (this.state.node.type === 'transform') {
         this.state.isTransform = true;
       }
-    }
-
-    function fetchPluginDetails(plugin) {
-      var defer = $q.defer();
-      var sourceType = GLOBALS.pluginTypes[this.ConfigStore.getAppType()].source,
-          sinkType = GLOBALS.pluginTypes[this.ConfigStore.getAppType()].sink;
-
-      var propertiesApiMap = {
-        'transform': myPipelineApi.fetchTransformProperties
-      };
-      propertiesApiMap[sourceType] = myPipelineApi.fetchSourceProperties;
-      propertiesApiMap[sinkType] = myPipelineApi.fetchSinkProperties;
-
-      // This needs to pass on a scope always. Right now there is no cleanup
-      // happening
-      var params = {
-        namespace: $state.params.namespace,
-        pipelineType: this.ConfigStore.getAppType(),
-        version: $rootScope.cdapVersion,
-        extensionType: plugin.type,
-        pluginName: plugin.name
-      };
-
-      return propertiesApiMap[plugin.type](params)
-        .$promise
-        .then( (res) => {
-          var pluginDetails = {};
-          var pluginProperties = (res.length? res[0].properties: {});
-          if (res.length && (!plugin.description || (plugin.description && !plugin.description.length))) {
-            pluginDetails.description = res[0].description;
-          }
-          pluginDetails._backendProperties = pluginProperties;
-          defer.resolve(pluginDetails);
-          return defer.promise;
-        });
     }
 
   });
