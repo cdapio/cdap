@@ -27,19 +27,19 @@ import java.util.Set;
 /**
  * Represents the complete metadata of a {@link Id.NamespacedId} including its properties and tags.
  */
-public class MetadataHistoryEntry {
+public class Metadata {
   private final Id.NamespacedId entityId;
   private final Map<String, String> properties;
   private final Set<String> tags;
 
   /**
-   * Returns an empty {@link MetadataHistoryEntry}
+   * Returns an empty {@link Metadata}
    */
-  public MetadataHistoryEntry(Id.NamespacedId entityId) {
+  public Metadata(Id.NamespacedId entityId) {
     this(entityId, ImmutableMap.<String, String>of(), ImmutableSet.<String>of());
   }
 
-  public MetadataHistoryEntry(Id.NamespacedId entityId, Map<String, String> properties, Set<String> tags) {
+  public Metadata(Id.NamespacedId entityId, Map<String, String> properties, Set<String> tags) {
     this.entityId = entityId;
     this.properties = properties;
     this.tags = tags;
@@ -66,7 +66,7 @@ public class MetadataHistoryEntry {
       return false;
     }
 
-    MetadataHistoryEntry that = (MetadataHistoryEntry) o;
+    Metadata that = (Metadata) o;
 
     return Objects.equals(entityId, that.entityId) &&
       Objects.equals(properties, that.properties) &&
@@ -80,7 +80,7 @@ public class MetadataHistoryEntry {
 
   @Override
   public String toString() {
-    return "MetadataRecord{" +
+    return "Metadata{" +
       "entityId=" + entityId +
       ", properties=" + properties +
       ", tags=" + tags +

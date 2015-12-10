@@ -247,6 +247,8 @@ angular.module(PKG.name + '.commons')
           e.el.style.left = '0px';
           e.el.style.top = '0px';
           transformCanvas(e.pos[1], e.pos[0]);
+          NodesActionsFactory.resetPluginCount();
+          NodesActionsFactory.setCanvasPanning(vm.panning);
         },
         start: function () {
           canvasDragged = true;
@@ -376,7 +378,6 @@ angular.module(PKG.name + '.commons')
       if ($scope.nodes.length === 0) { return; }
 
       var graphNodes = MyDAGFactory.getGraphLayout($scope.nodes, $scope.connections)._nodes;
-
       angular.forEach($scope.nodes, function (node) {
         var location = graphNodes[node.id];
         node._uiPosition = {
@@ -385,6 +386,8 @@ angular.module(PKG.name + '.commons')
         };
       });
 
+      $scope.getGraphMargins($scope.nodes);
+
       vm.panning.top = 0;
       vm.panning.left = 0;
 
@@ -393,52 +396,92 @@ angular.module(PKG.name + '.commons')
         'left': vm.panning.left + 'px'
       };
 
-      var margins = $scope.getGraphMargins($scope.nodes);
-      vm.scale = margins.scale;
       $timeout(function () { vm.instance.repaintEverything(); });
-      setZoom(vm.scale, vm.instance);
+
+      NodesActionsFactory.resetPluginCount();
+      NodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
-    vm.locateNodes = function () {
-      var minLeft = null;
-      var leftMostNode = null;
+    // This algorithm is f* up
+    vm.fitToScreen = function () {
 
-      angular.forEach($scope.nodes, function (node) {
-        var left = parseInt(node._uiPosition.left, 10);
-
+      /**
+       * Need to find the furthest nodes:
+       * 1. Left most nodes
+       * 2. Right most nodes
+       * 3. Top most nodes
+       * 4. Bottom most nodes
+       **/
+      var minLeft = _.min($scope.nodes, function (node) {
         if (node._uiPosition.left.includes('vw')) {
-          left = parseInt(left, 10)/100 * document.documentElement.clientWidth;
+          var left = parseInt(node._uiPosition.left, 10)/100 * document.documentElement.clientWidth;
           node._uiPosition.left = left + 'px';
         }
-
-        if (minLeft === null || left < minLeft) {
-          minLeft = left;
-          leftMostNode = node;
+        return parseInt(node._uiPosition.left, 10);
+      });
+      var maxLeft = _.max($scope.nodes, function (node) {
+        if (node._uiPosition.left.includes('vw')) {
+          var left = parseInt(node._uiPosition.left, 10)/100 * document.documentElement.clientWidth;
+          node._uiPosition.left = left + 'px';
         }
+        return parseInt(node._uiPosition.left, 10);
       });
 
-      var offsetLeft = parseInt(leftMostNode._uiPosition.left, 10);
-      var offsetTop = parseInt(leftMostNode._uiPosition.top, 10);
+      var minTop = _.min($scope.nodes, function (node) {
+        return parseInt(node._uiPosition.top, 10);
+      });
 
+      var maxTop = _.max($scope.nodes, function (node) {
+        return parseInt(node._uiPosition.top, 10);
+      });
+
+      /**
+       * Calculate the max width and height of the actual diagram by calculating the difference
+       * between the furthest nodes + margins ( 50 on each side ).
+       **/
+      var width = parseInt(maxLeft._uiPosition.left, 10) - parseInt(minLeft._uiPosition.left, 10) + 100;
+      var height = parseInt(maxTop._uiPosition.top, 10) - parseInt(minTop._uiPosition.top, 10) + 100;
+
+      var parent = $scope.element[0].parentElement.getBoundingClientRect();
+
+      // calculating the scales and finding the minimum scale
+      var widthScale = (parent.width - 100) / width;
+      var heightScale = (parent.height - 100) / height;
+
+      vm.scale = Math.min(widthScale, heightScale);
+
+      if (vm.scale > 1) {
+        vm.scale = 1;
+      }
+      setZoom(vm.scale, vm.instance);
+
+
+      // This will move all nodes by the minimum left and minimum top by the container
+      // with margin of 50px
+      var offsetLeft = parseInt(minLeft._uiPosition.left, 10);
       angular.forEach($scope.nodes, function (node) {
-        var left = parseInt(node._uiPosition.left, 10);
-        var top = parseInt(node._uiPosition.top, 10);
-
-        node._uiPosition = {
-          left: (left - offsetLeft + 50) + 'px',
-          top: (top - offsetTop + 150) + 'px'
-        };
+        node._uiPosition.left = (parseInt(node._uiPosition.left, 10) - offsetLeft + 50) + 'px';
       });
+
+      var offsetTop = parseInt(minTop._uiPosition.top, 10);
+      angular.forEach($scope.nodes, function (node) {
+        node._uiPosition.top = (parseInt(node._uiPosition.top, 10) - offsetTop + 50) + 'px';
+      });
+
+      $scope.getGraphMargins($scope.nodes);
 
       $timeout(function () { vm.instance.repaintEverything(); });
 
-      vm.panning.top = 0;
       vm.panning.left = 0;
+      vm.panning.top = 0;
 
       vm.panning.style = {
         'top': vm.panning.top + 'px',
         'left': vm.panning.left + 'px'
       };
+
+      NodesActionsFactory.resetPluginCount();
+      NodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
 

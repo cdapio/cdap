@@ -93,7 +93,7 @@ Managers:
 .. rubric:: Security
 
 .. |security| replace:: **Security:**
-.. _security: installation/security.html
+.. _security: security.html
 
 |security|_ CDAP supports **securing clusters using a perimeter security model.** This
 section describes enabling security, configuring authentication, testing security, and includes an
@@ -103,10 +103,10 @@ example configuration file.
 .. rubric:: Operations
 
 .. |operations| replace:: **Operations:**
-.. _operations: installation/index.html
+.. _operations: operations/index.html
 
 |operations|_ Covers **logging, metrics, monitoring, preferences, scaling instances, resource guarantees, 
-transaction service maintenance, troubleshooting, and introduces the CDAP UI.** 
+transaction service maintenance,** and **introduces the CDAP UI.** 
 
 .. |logging| replace:: **Logging:**
 .. _logging: operations/logging.html

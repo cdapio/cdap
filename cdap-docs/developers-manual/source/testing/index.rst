@@ -22,15 +22,16 @@ help with testing and debugging CDAP applications:
 .. |test-framework| replace:: **Test Framework:**
 .. _test-framework: testing.html#test-framework
 
-- |test-framework|_ How you can take advantage of the **test framework** to test your CDAP
-  applications before deploying. This makes catching bugs early and easy.
+- |test-framework|_ How you can take advantage of the **test framework** and the in-memory
+  CDAP mode to test your CDAP applications before deploying. This makes catching bugs early
+  and easy.
 
 
 .. |debugging| replace:: **Debugging:**
 .. _debugging: debugging.html
 
-- |debugging|_ How you can **debug CDAP applications** in Standalone mode and app
-  containers in Distributed mode.
+- |debugging|_ How you can **debug CDAP applications** in Standalone CDAP mode and application
+  containers in Distributed CDAP mode.
 
 
 .. |debugging-tx| replace:: **Debugging the Transactions Manager:**
