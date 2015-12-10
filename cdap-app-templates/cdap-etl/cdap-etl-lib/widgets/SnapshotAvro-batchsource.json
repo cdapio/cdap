@@ -1,13 +1,10 @@
 {
   "metadata": {
-    "spec-version": "1.0",
-    "artifact-version": "3.3.0-SNAPSHOT",
-    "name": "SnapshotParquet",
-    "type": ["batchsource", "batchsink"]
+    "spec-version": "1.0"
   },
   "configuration-groups": [
     {
-      "label": "Snapshot Fileset - Parquet",
+      "label": "Snapshot Fileset - AVRO",
       "properties": [
         {
           "widget-type": "dataset-selector",
@@ -16,7 +13,7 @@
         },
         {
           "widget-type": "textbox",
-          "label": "Snapshot Target Path",
+          "label": "Snapshot Base Path",
           "name": "basePath"
         }
       ]

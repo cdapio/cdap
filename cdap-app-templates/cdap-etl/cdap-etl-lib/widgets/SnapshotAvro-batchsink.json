@@ -1,13 +1,10 @@
 {
   "metadata": {
-    "spec-version": "1.0",
-    "artifact-version": "3.3.0-SNAPSHOT",
-    "name": "TPFSParquet",
-    "type": ["batchsource", "batchsink"]
+    "spec-version": "1.0"
   },
   "configuration-groups": [
     {
-      "label": "Time Partitioned Fileset - Parquet",
+      "label": "Snapshot Fileset - AVRO",
       "properties": [
         {
           "widget-type": "dataset-selector",
@@ -16,18 +13,8 @@
         },
         {
           "widget-type": "textbox",
-          "label": "Dataset Base Path",
+          "label": "Snapshot Base Path",
           "name": "basePath"
-        },
-        {
-          "widget-type": "textbox",
-          "label": "Partition Directory Format",
-          "name": "filePathFormat"
-        },
-        {
-          "widget-type": "textbox",
-          "label": "Time Zone",
-          "name": "timeZone"
         }
       ]
     }
@@ -43,6 +30,7 @@
           "long",
           "float",
           "double",
+          "bytes",
           "string",
           "map<string, string>"
         ],

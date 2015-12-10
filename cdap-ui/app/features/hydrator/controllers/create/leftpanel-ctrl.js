@@ -71,7 +71,7 @@ class LeftPanelController {
     event.stopPropagation();
     var item = this.LeftPanelStore.getSpecificPluginVersion(node);
     let config;
-    if (plugin.pluginTemplate) {
+    if (item.pluginTemplate) {
       config = {
         plugin: {
           label: item.name,

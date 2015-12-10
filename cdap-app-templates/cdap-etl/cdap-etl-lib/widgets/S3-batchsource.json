@@ -1,14 +1,21 @@
 {
   "metadata": {
-    "spec-version": "1.0",
-    "artifact-version": "3.3.0-SNAPSHOT",
-    "name": "File",
-    "type": ["batchsource"]
+    "spec-version": "1.0"
   },
   "configuration-groups": [
     {
-      "label": "File Batch Source Properties",
+      "label": "S3 Batch Source",
       "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Access ID",
+          "name": "accessID"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Access Key",
+          "name": "accessKey"
+        },
         {
           "widget-type": "textbox",
           "label": "Path",
@@ -42,13 +49,5 @@
       ]
     }
   ],
-  "outputs": [
-    {
-      "widget-type": "non-editable-schema-editor",
-      "schema": {
-        "ts": "long",
-        "body": "string"
-      }
-    }
-  ]
+  "outputs": []
 }

@@ -4,14 +4,17 @@
   },
   "configuration-groups": [
     {
+      "label": "General",
       "properties": [
         {
-          "widget-type": "javascript-editor",
-          "label": "Script",
-          "name": "script",
-          "widget-attributes": {
-            "default": "function transform(input, context) {\n  return input;\n}"
-          }
+          "widget-type": "dataset-selector",
+          "label": "Name",
+          "name": "name"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Row Field",
+          "name": "schema.row.field"
         }
       ]
     }

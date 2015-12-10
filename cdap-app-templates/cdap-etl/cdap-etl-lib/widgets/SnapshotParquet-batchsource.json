@@ -4,14 +4,17 @@
   },
   "configuration-groups": [
     {
+      "label": "Snapshot Fileset - Parquet",
       "properties": [
         {
-          "widget-type": "javascript-editor",
-          "label": "Script",
-          "name": "script",
-          "widget-attributes": {
-            "default": "function transform(input, context) {\n  return input;\n}"
-          }
+          "widget-type": "dataset-selector",
+          "label": "Dataset Name",
+          "name": "name"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Snapshot Target Path",
+          "name": "basePath"
         }
       ]
     }

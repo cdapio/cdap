@@ -1,23 +1,20 @@
 {
   "metadata": {
-    "spec-version": "1.0",
-    "artifact-version": "3.3.0-SNAPSHOT",
-    "name": "Table",
-    "type": ["realtimesink", "batchsource", "batchsink"]
+    "spec-version": "1.0"
   },
   "configuration-groups": [
     {
-      "label": "General",
+      "label": "Snapshot Fileset - Parquet",
       "properties": [
         {
           "widget-type": "dataset-selector",
-          "label": "Name",
+          "label": "Dataset Name",
           "name": "name"
         },
         {
           "widget-type": "textbox",
-          "label": "Row Field",
-          "name": "schema.row.field"
+          "label": "Snapshot Target Path",
+          "name": "basePath"
         }
       ]
     }
