@@ -24,7 +24,7 @@
   </div>
 </div>
 
-<div class="config-table transform-table" ng-if="NodeConfigController.state.isTransform && NodeConfigController.state.plugin.name !== 'Validator'">
+<div class="config-table transform-table" ng-if="NodeConfigController.state.isTransform && NodeConfigController.state.node.plugin.name !== 'Validator'">
   <div>
     <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-input-schema.html'"></div>
   </div>
@@ -38,7 +38,7 @@
   </div>
 </div>
 
-<div class="validator-plugin" ng-if="NodeConfigController.state.isTransform && NodeConfigController.state.plugin.name === 'Validator'">
+<div class="validator-plugin" ng-if="NodeConfigController.state.isTransform && NodeConfigController.state.node.plugin.name === 'Validator'">
   <div>
     <div ng-include="'/assets/features/hydrator/templates/create/popovers/plugin-edit-validator-transform.html'"></div>
   </div>

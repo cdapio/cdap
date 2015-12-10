@@ -19,7 +19,7 @@
       <h4>Configuration</h4>
       <div class="form-group">
         <label class="control-label">Label</label>
-        <input type="text" class="form-control" ng-model="NodeConfigController.state.plugin.label"/>
+        <input type="text" class="form-control" ng-model="NodeConfigController.state.node.plugin.label"/>
       </div>
 
       <div ng-repeat="group in NodeConfigController.state.groupsConfig.groups">
@@ -36,17 +36,17 @@
                         tooltip-placement="right"
                         tooltip-append-to-body="true">
                   </span>
-                  <span class="fa fa-asterisk" ng-if="NodeConfigController.state.plugin._backendProperties[field.name].required"></span>
+                  <span class="fa fa-asterisk" ng-if="NodeConfigController.state.node._backendProperties[field.name].required"></span>
                 </label>
 
                 <div>
                   <div data-name="field"
                        class="my-widget-container"
                        ng-class="{'select-wrapper': field.widget === 'select'}"
-                       data-model="NodeConfigController.state.plugin.properties[field.name]"
+                       data-model="NodeConfigController.state.node.plugin.properties[field.name]"
                        data-myconfig="field"
-                       data-properties="NodeConfigController.state.plugin.properties"
-                       widget-disabled="NodeConfigController.state.plugin.pluginTemplate && NodeConfigController.state.plugin.lock[field.name]"
+                       data-properties="NodeConfigController.state.node.plugin.properties"
+                       widget-disabled="NodeConfigController.state.node.pluginTemplate && NodeConfigController.state.node.lock[field.name]"
                        widget-container>
                   </div>
                 </div>
