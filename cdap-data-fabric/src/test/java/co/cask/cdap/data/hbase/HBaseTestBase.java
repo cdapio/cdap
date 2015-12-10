@@ -80,22 +80,24 @@ public abstract class HBaseTestBase extends ExternalResource {
     // Tunn down handler threads in regionserver
     getConfiguration().setInt("hbase.regionserver.handler.count", 10);
 
-    // Set to random port
-    getConfiguration().setInt("hbase.master.port", Networks.getRandomPort());
-    getConfiguration().setInt("hbase.master.info.port", Networks.getRandomPort());
-    getConfiguration().setInt("hbase.regionserver.port", Networks.getRandomPort());
-    getConfiguration().setInt("hbase.regionserver.info.port", Networks.getRandomPort());
-
     for (int startAttempt = 0; startAttempt < MAX_START_ATTEMPTS; startAttempt++) {
+      // Set to random port
+      getConfiguration().setInt("hbase.master.port", Networks.getRandomPort());
+      getConfiguration().setInt("hbase.master.info.port", Networks.getRandomPort());
+      getConfiguration().setInt("hbase.regionserver.port", Networks.getRandomPort());
+      getConfiguration().setInt("hbase.regionserver.info.port", Networks.getRandomPort());
+
       try {
         doStartHBase();
         LOG.info("Successfully started HBase");
         break;
       } catch (IOException e) {
-        LOG.error("Failed to start HBase", e);
         if (startAttempt + 1 == MAX_START_ATTEMPTS) {
+          LOG.error("Failed to start HBase.", e);
           throw e;
         }
+
+        LOG.error("Failed to start HBase. Retrying.", e);
       }
     }
   }
