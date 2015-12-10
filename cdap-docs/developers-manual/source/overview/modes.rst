@@ -51,9 +51,6 @@ Machine on your local machine and includes a local version of the CDAP UI. The
 underlying Big Data infrastructure is emulated on top of your local file system. All data
 is persisted.
 
-The Standalone CDAP by default binds to the localhost address, and is not available for
-remote access by any outside process or application outside of the local machine.
-
 See :ref:`Getting Started Developing <getting-started-index>` and the *Cask Data Application Platform
 SDK* for information on how to start and manage your Standalone CDAP.
 
