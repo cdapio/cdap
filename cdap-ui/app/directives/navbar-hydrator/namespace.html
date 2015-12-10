@@ -14,15 +14,14 @@
   the License.
 -->
 
-<div class="error-button"
-     ng-if="!emptyError()"
-     data-placement="bottom"
-     data-auto-close="true"
-     data-template="error/error-popover.html"
-     bs-popover>
-  <span class="fa fa-bolt">
-    <sup>
-      <span class="fa fa-circle text-success"></span>
-    </sup>
-  </span>
-</div>
+<ul class="dropdown-menu" role="menu" ng-show="currentUser">
+  <li ng-repeat="ns in namespaces | orderBy : 'name'" ng-show="namespaces.length > 1 && ns.name !== $state.params.namespace">
+    <a role="menuitem" ui-sref="hydrator.list({namespace: ns.name})" tabindex="-1">
+      <span ng-bind="ns.name | myEllipsis: 24"></span>
+    </a>
+  </li>
+  <li role="menuitem" ng-show="namespaces.length === 1" class="disabled">
+    <a href="">No other namespaces</a>
+  </li>
+</ul>
+

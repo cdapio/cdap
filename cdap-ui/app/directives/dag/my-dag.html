@@ -35,23 +35,23 @@
   </button>
 
   <button class="btn btn-default"
-          ng-click="MyDAGController.locateNodes()"
+          ng-click="MyDAGController.fitToScreen()"
           ng-if="!MyDAGController.isDisabled"
-          tooltip="Locate"
+          tooltip="Fit to screen"
           tooltip-append-to-body="true"
           tooltip-placement="left"
           tooltip-popup-delay="500">
-    <i class="fa fa-desktop"></i>
+    <i class="icon-fit"></i>
   </button>
 
   <button class="btn btn-default"
           ng-click="MyDAGController.cleanUpGraph()"
           ng-if="!MyDAGController.isDisabled"
-          tooltip="Clean Up"
+          tooltip="Align"
           tooltip-append-to-body="true"
           tooltip-placement="left"
           tooltip-popup-delay="500">
-    <i class="fa fa-magic"></i>
+    <i class="icon-clean"></i>
   </button>
 </div>
 

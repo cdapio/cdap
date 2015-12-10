@@ -64,6 +64,7 @@ body {
     }
 
     nav {
+      position: relative;
       text-align: center;
       ul.navbar-nav {
         float: none;
@@ -99,6 +100,65 @@ body {
           }
         }
       }
+      ul.navbar-namespace {
+        @media (max-width: @screen-xs-max) {
+          display: none;
+        }
+        margin: 0;
+        padding: 0;
+        position: absolute;
+        top: 15px;
+        right: 100px;
+        li.dropdown {
+          list-style-type: none;
+          .transition(all 0.2s ease);
+          &:hover {
+            cursor: pointer;
+          }
+          a.hy-dropdown-toggle {
+            display: block;
+            padding: 5px;
+            .border-radius(4px);
+            span:first-child {
+              font-weight: 500;
+              padding-right: 15px;
+            }
+            span.fa-caret-down {
+              line-height: 18px;
+            }
+          }
+          &.open {
+            min-width: 160px;
+            a.hy-dropdown-toggle {
+              padding-top: 8px;
+              padding-bottom: 8px;
+              padding-left: 14px;
+              .border-radius(0);
+            }
+            span.fa-caret-down {
+              display: none;
+            }
+            ul.dropdown-menu {
+              .border-radius(0);
+            }
+          }
+        }
+
+        ul.dropdown-menu {
+          float: none;
+          margin-top: 8px;
+          padding: 0;
+          z-index: 9999;
+          li a {
+            font-weight: 500;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            &:focus {
+              outline: 0;
+            }
+          }
+        }
+      }
     }
 
     // TODO: Remove?
@@ -124,6 +184,37 @@ body {
               a {
                 background-color: transparent;
                 border-bottom: 4px solid #397cf1;
+                color: white;
+              }
+            }
+          }
+        }
+        ul.navbar-namespace {
+          li.dropdown {
+            a.hy-dropdown-toggle {
+              background-color: white;
+              color: #666;
+              &:hover, &:focus {
+                text-decoration: none;
+              }
+            }
+            &.open {
+              a.hy-dropdown-toggle {
+                background-color: rgb(111, 111, 113);
+                border: 1px solid rgb(111, 111, 113);
+                color: white;
+              }
+            }
+          }
+
+          ul.dropdown-menu {
+            border: 0;
+            li a {
+              border: 1px solid transparent;
+              border-top: 1px solid #ddd;
+              &:hover {
+                background-color: @cdap-header;
+                border: 1px solid @cdap-header;
                 color: white;
               }
             }
