@@ -32,7 +32,7 @@ public interface NamespaceStore {
    *
    * @param metadata {@link NamespaceMeta} representing the namespace metadata
    * @return existing {@link NamespaceMeta} if a namespace with the specified name existed already, null if the
-   * a namespace with the specified name did not exist, and was created successfully
+   * a namespace with the specifhied name did not exist, and was created successfully
    * These semantics of return type are borrowed from {@link java.util.concurrent.ConcurrentHashMap#putIfAbsent}
    */
   @Nullable
