@@ -58,20 +58,29 @@ my-dag {
         &.realtimesource, &.batchsource {
           .node {
             background-color: #48c038;
+            border-width: 6px;
           }
         }
         &.transform {
           .node {
             background-color: #4586f3;
+            border-width: 6px;
           }
         }
         &.realtimesink, &.batchsink {
           .node {
             background-color: #8367df;
+            border-width: 6px;
           }
         }
         .icon.fa, .fa.fa-close {
           color: white;
+        }
+        .icon.fa {
+          line-height: 34px;
+        }
+        .fa.fa-close {
+          top: 3px;
         }
       }
       .node {
@@ -81,6 +90,7 @@ my-dag {
         width: 56px;
         .border-radius(6px);
         .box-shadow(0 10px 18px -9px fade(black, 50%));
+        .transition(all 50ms linear);
         &:hover, &:focus {
           .fa.fa-close {
             .opacity(1);
