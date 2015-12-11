@@ -65,7 +65,7 @@ angular.module(PKG.name + '.commons')
             title: scope.title,
             contentTemplate: scope.template,
             show: false,
-            placement: 'right',
+            placement: scope.placement || 'right',
             trigger: 'manual',
             container: 'body',
             customClass: 'my-cdap-popover'
