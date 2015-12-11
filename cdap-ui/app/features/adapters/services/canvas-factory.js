@@ -27,6 +27,7 @@ angular.module(PKG.name + '.feature.adapters')
         type: GLOBALS.pluginTypes[type].source,
         properties: config.source.properties
       });
+      config.transforms = config.transforms || [];
       config.transforms.forEach(function(transform) {
         nodes.push({
           id: transform.name + '-transform-' + (++i),
