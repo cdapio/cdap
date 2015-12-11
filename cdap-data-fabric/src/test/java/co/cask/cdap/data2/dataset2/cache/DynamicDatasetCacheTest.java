@@ -47,13 +47,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 public abstract class DynamicDatasetCacheTest {
 
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+
+  private static final Map<String, String> ARGUMENTS = ImmutableMap.of("key", "k", "value", "v");
+  private static final Map<String, String> NO_ARGUMENTS = ImmutableMap.of();
+  private static final Map<String, String> A_ARGUMENTS = NO_ARGUMENTS;
+  private static final Map<String, String> B_ARGUMENTS = ImmutableMap.of("value", "b");
+  private static final Map<String, String> C_ARGUMENTS = ImmutableMap.of("key", "c", "value", "c");
+  private static final Map<String, String> X_ARGUMENTS = ImmutableMap.of("value", "x");
 
   protected static final Id.Namespace NAMESPACE = DatasetFrameworkTestUtil.NAMESPACE_ID;
   protected static final NamespaceId NAMESPACE_ID = new NamespaceId(NAMESPACE.getId());
@@ -77,12 +84,6 @@ public abstract class DynamicDatasetCacheTest {
     dsFrameworkUtil.deleteInstance(Id.DatasetInstance.from(NAMESPACE, "b"));
     dsFrameworkUtil.deleteModule(Id.DatasetModule.from(NAMESPACE, "testDataset"));
   }
-
-  private static final Map<String, String> ARGUMENTS = ImmutableMap.of("key", "k", "value", "v");
-  private static final Map<String, String> NO_ARGUMENTS = ImmutableMap.of();
-  private static final Map<String, String> A_ARGUMENTS = NO_ARGUMENTS;
-  private static final Map<String, String> B_ARGUMENTS = ImmutableMap.of("value", "b");
-  private static final Map<String, String> C_ARGUMENTS = ImmutableMap.of("key", "c", "value", "c");
 
   @Before
   public void initCache() {
@@ -258,28 +259,27 @@ public abstract class DynamicDatasetCacheTest {
 
   @Test
   public void testThatDatasetsStayInTransaction() throws TransactionFailureException {
-    final AtomicInteger hash = new AtomicInteger();
+    final AtomicReference<Object> ref = new AtomicReference<>();
     Transactions.execute(cache.newTransactionContext(), "foo", new Runnable() {
       @Override
       public void run() {
         try {
           // this writes the value "x" to row "key"
-          TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
+          TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
           ds.write();
-          // the dataset will go out of scope; remember the dataset's hashcode for later comparison
-          hash.set(System.identityHashCode(ds));
           // this would close and discard ds, but the transaction is going on, so we should get the
           // identical instance of the dataset again
           cache.discardDataset(ds);
-          ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
-          Assert.assertEquals(hash.get(), System.identityHashCode(ds));
+          TestDataset ds2 = cache.getDataset("a", X_ARGUMENTS);
+          Assert.assertSame(ds, ds2);
+          ref.set(ds);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
         try {
           // get the same dataset again. It should be the same object
-          TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
-          Assert.assertEquals(hash.get(), System.identityHashCode(ds));
+          TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
+          Assert.assertSame(ref.get(), ds);
           cache.discardDataset(ds);
         } catch (Exception e) {
           throw Throwables.propagate(e);
@@ -292,10 +292,10 @@ public abstract class DynamicDatasetCacheTest {
       @Override
       public void run() {
         try {
-          TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
+          TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
           Assert.assertEquals("x", ds.read());
           // validate that we now have a different instance because the old one was discarded
-          Assert.assertNotEquals(hash.get(), System.identityHashCode(ds));
+          Assert.assertNotSame(ref.get(), ds);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }

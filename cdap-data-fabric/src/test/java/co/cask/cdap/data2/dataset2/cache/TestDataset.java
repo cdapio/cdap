@@ -33,7 +33,7 @@ public class TestDataset extends AbstractDataset implements Comparable<TestDatas
   private final String value;
 
   public static String generateSystemProperty(String name, String key, String value, String operation) {
-    return String.format("TestDataset.%s.%s.%s.%s", name, key, value, operation);
+    return String.format("TestDataset.%s.%s.%s.%s.%d", name, key, value, operation, Thread.currentThread().getId());
   }
 
   private void setSystemProperty(String operation, String valueToSet) {
