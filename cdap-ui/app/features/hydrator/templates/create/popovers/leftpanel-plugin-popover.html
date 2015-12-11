@@ -40,7 +40,7 @@
         class="list-group-item"
         ng-repeat="version in contentData.allVersions track by $index"
         ng-class="{'active': version === contentData.defaultVersion}"
-        ng-click="(contentData.defaultVersion = version) && popoverContext.onItemClicked($event, contentData)">
+        ng-click="(contentData.defaultVersion = version) && delayClose(1) && popoverContext.onItemClicked($event, contentData)">
       {{::version}}
     </a>
   </ul>

@@ -52,8 +52,8 @@ angular.module(PKG.name + '.commons')
             mypopover.hide();
             destroyPopover();
           }, delay);
+          return delayCloseTimer;
         }
-
         function destroyPopover() {
           if (mypopover) {
             mypopover.destroy();
@@ -76,6 +76,7 @@ angular.module(PKG.name + '.commons')
           if (scope.popoverContext) {
             mypopover.$scope.popoverContext = scope.popoverContext;
           }
+          mypopover.$scope.delayClose = delayClose;
           return mypopover.$promise;
         }
         function initPopover() {
