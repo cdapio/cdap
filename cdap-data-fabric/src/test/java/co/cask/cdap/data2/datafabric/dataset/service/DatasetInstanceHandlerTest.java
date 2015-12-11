@@ -50,6 +50,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -395,4 +396,95 @@ public class DatasetInstanceHandlerTest extends DatasetServiceTestBase {
   private DatasetSpecificationSummary spec2Summary(DatasetSpecification spec) {
     return new DatasetSpecificationSummary(spec.getName(), spec.getType(), spec.getProperties());
   }
+
+  @Test
+  public void testErrorResponses() throws Exception {
+    try {
+      // we need at least one valid type to test
+      deployModule("default-table", InMemoryTableModule.class);
+
+      validateGet(getUrl("/data/datasets"), 200);
+      validateGet(getUrl("nosuchnamespace", "/data/datasets"), 404);
+      validateGet(getUrl("inval+d", "/data/datasets"), 400);
+      validatePut(getUrl("/data/datasets"), "", 405);
+      validatePost(getUrl("/data/datasets"), "", 405);
+      validateDelete(getUrl("/data/datasets"), 405);
+
+      validateGet(getUrl("/data/datasets/nusuch"), 404);
+      validateGet(getUrl("/data/datasets/nusüch"), 400);
+      validateGet(getUrl("nosuchnamespace", "/data/datasets/nusuch"), 404);
+      validateGet(getUrl("nosuchnamespace", "/data/datasets/nusüch"), 400, 404);
+      validateGet(getUrl("inval+d", "/data/datasets/nusuch"), 400);
+      validatePost(getUrl("/data/datasets/nusuch"), "", 405);
+      validatePost(getUrl("/data/datasets/nusüch"), "", 405);
+      validatePost(getUrl("nosuchnamespace", "/data/datasets/nusuch"), "", 405);
+      validatePost(getUrl("inval+d", "/data/datasets/nusuch"), "", 405);
+      validateDelete(getUrl("/data/datasets/nusuch"), 404);
+      validateDelete(getUrl("/data/datasets/nusüch"), 400);
+      validateDelete(getUrl("nosuchnamespace", "/data/datasets/nusuch"), 404);
+      validateDelete(getUrl("inval+d", "/data/datasets/nusuch"), 400);
+      validatePut(getUrl("/data/datasets/xü"), "{'typeName':'table'}", 400);
+      validatePut(getUrl("/data/datasets/x"), "{'typeName':'tablü'}", 400);
+      validatePut(getUrl("/data/datasets/x"), "{'type':'table'}", 400);
+      validatePut(getUrl("/data/datasets/x"), "{'type':'tab", 400);
+      validatePut(getUrl("/data/datasets/x"), "", 400);
+      validatePut(getUrl("nusuchns", "/data/datasets/xü"), "{'typeName':'table'}", 400, 404);
+      validatePut(getUrl("nusuchns", "/data/datasets/x"), "{'typeName':'tablü'}", 400, 404);
+      validatePut(getUrl("nusuchns", "/data/datasets/x"), "{'type':'table'}", 400, 404);
+      validatePut(getUrl("nusuchns", "/data/datasets/x"), "{'type':'tab", 400, 404);
+      validatePut(getUrl("nusuchns", "/data/datasets/x"), "", 400, 404);
+      validatePut(getUrl("inval+d", "/data/datasets/xü"), "{'typeName':'table'}", 400);
+      validatePut(getUrl("inval+d", "/data/datasets/x"), "{'typeName':'tablü'}", 400);
+      validatePut(getUrl("inval+d", "/data/datasets/x"), "{'type':'table'}", 400);
+      validatePut(getUrl("inval+d", "/data/datasets/x"), "{'type':'tab", 400);
+      validatePut(getUrl("inval+d", "/data/datasets/x"), "", 400);
+
+      // create one dataset to test PUT .../properties on it
+      validatePut(getUrl("/data/datasets/x"), "{'typeName':'table'}", 200);
+
+      // TODO (CDAP-4420): commented because netty-http throws "response already sent" for these and request times out
+      // TODO: debug this in netty-http (this is not an issue with DatasetInstanceHandler, it never gets called)
+      //validateGet(getUrl("/data/datasets/y/properties"), 405);
+      //validatePost(getUrl("/data/datasets/x/properties"), "", 405);
+      //validateDelete(getUrl("/data/datasets/x/properties"), 405);
+
+      validatePut(getUrl("/data/datasets/y/properties"), "{'x':'y'}", 404);
+      validatePut(getUrl("/data/datasets/y/properties"), "{'x':'}", 400, 404);
+      validatePut(getUrl("/data/datasets/ü/properties"), "{'x':'y'}", 400);
+      validatePut(getUrl("/data/datasets/ü/properties"), "{'x':'y", 400);
+      validatePut(getUrl("nosuchns", "/data/datasets/x/properties"), "{}", 404);
+      validatePut(getUrl("nosuchns", "/data/datasets/x/properties"), "{", 400, 404);
+      validatePut(getUrl("inval+dns", "/data/datasets/x/properties"), "{'x':'y'}", 400);
+    } finally {
+      // cleanup
+      deleteInstance("x");
+      Assert.assertEquals(HttpStatus.SC_OK, deleteModules().getResponseCode());
+    }
+  }
+
+  private void validateGet(URL url, Integer ... expected) throws IOException {
+    HttpRequest request = HttpRequest.get(url).build();
+    assertStatus(HttpRequests.execute(request).getResponseCode(), url, expected);
+  }
+
+  private void validateDelete(URL url, Integer ... expected) throws IOException {
+    HttpRequest request = HttpRequest.delete(url).build();
+    assertStatus(HttpRequests.execute(request).getResponseCode(), url, expected);
+  }
+
+  private void validatePut(URL url, String body, Integer ... expected) throws IOException {
+    HttpRequest request = HttpRequest.put(url).withBody(body).build();
+    assertStatus(HttpRequests.execute(request).getResponseCode(), url, expected);
+  }
+
+  private void validatePost(URL url, String body, Integer ... expected) throws IOException {
+    HttpRequest request = HttpRequest.post(url).withBody(body).build();
+    assertStatus(HttpRequests.execute(request).getResponseCode(), url, expected);
+  }
+
+  private void assertStatus(int status, URL url, Integer ... expected) {
+    Assert.assertTrue(String.format("Expected %s for %s but got %d", Arrays.toString(expected), url, status),
+                      Arrays.asList(expected).contains(status));
+  }
+
 }
