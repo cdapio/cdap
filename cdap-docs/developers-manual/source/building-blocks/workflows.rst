@@ -48,7 +48,7 @@ Executing MapReduce or Spark Programs
 -------------------------------------
 To execute MapReduce or Spark programs in a workflow, you will need to add them in your
 application along with the workflow. You can optionally add a :ref:`schedule <schedules>` 
-to the workflow using the `java api 
+to the workflow using the `Java API 
 <../../reference-manual/javadocs/co/cask/cdap/api/app/AbstractApplication.html#scheduleWorkflow(co.cask.cdap.api.schedule.Schedule,%20java.lang.String)>`__::
 
   public void configure() {
@@ -305,21 +305,35 @@ In this code sample, we show how to update the WorkflowToken in a MapReduce prog
     ...
   }
 
+In this code sample, taken from the :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` 
+example's ``WikipediaPipelineWorkflow.java``, the class ``EnoughDataToProceed`` sets the
+workflow token with the key ``ONLINE_MODE``; that value is then retrieved in the class
+``IsWikipediaSourceOnline`` to determine the branching of the workflow execution (as
+described below in :ref:`Parallelizing Workflow Execution <workflow_parallel>`). Note the
+use of the ``Scope.USER``, as the key is being added by a user program:
+
+.. literalinclude:: /../../../cdap-examples/WikipediaPipeline/src/main/java/co/cask/cdap/examples/wikipedia/WikipediaPipelineWorkflow.java
+   :language: java
+   :lines: 65-99
+   :emphasize-lines: 21,32
+   :dedent: 2
+   
+..   :linenos:
+
 **A token can only be updated** in:
 
 - ``beforeSubmit`` and ``onFinish`` methods of a MapReduce program;
 - Driver of a Spark program;
 - ``initialize`` and ``destroy`` methods of a custom action; and 
-- predicates of condition nodes.
+- :ref:`predicates of condition nodes <workflow_parallel-conditional-node>`.
 
 **You will get an exception** if you try to update the workflow token in:
 
 - map or reduce methods; or
 - Executors in Spark programs.
 
-You can always read the workflow token in any of the above situations. The :ref:`Wikipedia
+**You can always read the workflow token** in any of the above situations. The :ref:`Wikipedia
 Pipeline example <examples-wikipedia-data-pipeline>` demonstrates some of these techniques.
-
 
 .. _workflow_parallel:
 
@@ -413,6 +427,8 @@ The diagram for this code would be:
 .. image:: /_images/complex-parallelized-workflow.png
    :width: 8in
    :align: center
+
+.. _workflow_parallel-conditional-node:
 
 Conditional Node
 ----------------
@@ -605,6 +621,7 @@ and from within a workflow with a predicate, fork and joins::
 
 Workflow Examples
 =================
-- For an example of the use of **a workflow,** see the :ref:`Purchase
-  <examples-purchase>` example.
-- The :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example is another workflow example.
+- For an example of the use of **a workflow,** see the :ref:`Purchase <examples-purchase>`
+  example.
+- The :ref:`Wikipedia Pipeline <examples-wikipedia-data-pipeline>` example demonstrates a
+  workflow with **forks, joins, and conditional branching**.
