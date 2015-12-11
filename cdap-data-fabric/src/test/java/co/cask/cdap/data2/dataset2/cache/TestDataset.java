@@ -32,19 +32,8 @@ public class TestDataset extends AbstractDataset implements Comparable<TestDatas
   private final String key;
   private final String value;
 
-  public static String generateSystemProperty(String name, String key, String value, String operation) {
-    return String.format("TestDataset.%s.%s.%s.%s.%d", name, key, value, operation, Thread.currentThread().getId());
-  }
-
-  private void setSystemProperty(String operation, String valueToSet) {
-    String prop = generateSystemProperty(getName(), key, value, operation);
-    System.setProperty(prop, valueToSet);
-  }
-
-  private void clearSystemProperty(String operation) {
-    String prop = generateSystemProperty(getName(), key, value, operation);
-    System.clearProperty(prop);
-  }
+  private Transaction currentTx = null;
+  private boolean isClosed = false;
 
   public TestDataset(DatasetSpecification spec, KeyValueTable kv, Map<String, String> args) {
     super(spec.getName(), kv);
@@ -52,8 +41,6 @@ public class TestDataset extends AbstractDataset implements Comparable<TestDatas
     this.arguments = ImmutableSortedMap.copyOf(args);
     this.key = arguments.get("key") == null ? "key" : arguments.get("key");
     this.value = arguments.get("value") == null ? "value" : arguments.get("value");
-    clearSystemProperty("tx");
-    clearSystemProperty("close");
   }
 
   public void write() throws Exception {
@@ -78,19 +65,19 @@ public class TestDataset extends AbstractDataset implements Comparable<TestDatas
 
   @Override
   public void startTx(Transaction tx) {
-    setSystemProperty("tx", Long.toString(tx.getWritePointer()));
+    currentTx = tx;
     super.startTx(tx);
   }
 
   @Override
   public boolean commitTx() throws Exception {
-    clearSystemProperty("tx");
+    currentTx = null;
     return super.commitTx();
   }
 
   @Override
   public boolean rollbackTx() throws Exception {
-    clearSystemProperty("tx");
+    currentTx = null;
     return super.rollbackTx();
   }
 
@@ -118,6 +105,14 @@ public class TestDataset extends AbstractDataset implements Comparable<TestDatas
 
   @Override
   public void close() {
-    setSystemProperty("close", Integer.toString(System.identityHashCode(this)));
+    isClosed = true;
+  }
+
+  public Transaction getCurrentTransaction() {
+    return currentTx;
+  }
+
+  public boolean isClosed() {
+    return isClosed;
   }
 }
