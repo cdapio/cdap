@@ -251,7 +251,7 @@ angular.module(PKG.name + '.feature.adapters')
         config: {
           source: rAdapterDetail.config.source,
           sinks: rAdapterDetail.config.sinks,
-          transforms: rAdapterDetail.config.transforms,
+          transforms: rAdapterDetail.config.transforms || [],
           instances: rAdapterDetail.instance,
           schedule: rAdapterDetail.config.schedule
         }

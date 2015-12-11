@@ -47,6 +47,7 @@ module.run(function ($location, $state, $rootScope, myAuth, MYAUTH_EVENT, MYAUTH
 
     var user = myAuth.isAuthenticated();
     if (user) { // user is logged in
+      // $rootScope.$broadcast(MYAUTH_EVENT.loginSuccess);
       if (authorizedRoles === MYAUTH_ROLE.all) { return; } // any logged-in user is welcome
       if (user.hasRole(authorizedRoles)) { return; } // user is legit
     }

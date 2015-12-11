@@ -42,7 +42,8 @@ angular.module(PKG.name + '.feature.adapters')
       }
 
       publicObj.source = config.source.name;
-      publicObj.transforms = config.transforms.map(function (n) { return n.name; });
+      publicObj.transforms = config.transforms || [];
+      publicObj.transforms = publicObj.transforms.map(function (n) { return n.name; });
       publicObj.sinks = config.sinks.map(function (n) { return n.name; });
 
       if (publicObj.programType === 'WORKFLOWS') {

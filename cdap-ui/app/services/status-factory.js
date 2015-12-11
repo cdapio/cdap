@@ -17,11 +17,16 @@
 angular.module(PKG.name + '.services')
   .service('StatusFactory', function($http, EventPipe, myAuth, $rootScope, MYAUTH_EVENT, MY_CONFIG, $alert, $timeout) {
 
+    this.toPoll = true;
     this.startPolling = function () {
+      $rootScope.$on(MYAUTH_EVENT.logoutSuccess, this.stopPolling.bind(this));
       beginPolling.bind(this)();
     };
-    function beginPolling() {
+    this.stopPolling = function() {
+      this.toPoll = false;
+    };
 
+    function beginPolling() {
       _.debounce(function() {
         $http.get(
           (MY_CONFIG.sslEnabled? 'https://': 'http://') + window.location.host + '/backendstatus',
@@ -30,16 +35,17 @@ angular.module(PKG.name + '.services')
              .success(success.bind(this))
              .error(error.bind(this));
       }.bind(this), 2000)();
-
     }
 
     function success() {
-      EventPipe.emit('backendUp');
-      this.startPolling();
+      if (this.toPoll) {
+        EventPipe.emit('backendUp');
+        this.startPolling();
+      }
     }
 
     function error(err) {
-      if (!reAuthenticate(err)) {
+      if (this.stopPoll && !reAuthenticate(err)) {
         this.startPolling();
         EventPipe.emit('backendDown');
       }
