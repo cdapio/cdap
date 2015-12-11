@@ -45,6 +45,9 @@ class LeftPanelController {
         plugins: []
       }
     ];
+    this.sourcesToVersionMap = {};
+    this.transformsToVersionMap = {};
+    this.sinksToVersionMap = {};
 
     this.LeftPanelStore.registerOnChangeListener(() => {
       this.pluginTypes[0].plugins = this.LeftPanelStore.getSources();
@@ -66,27 +69,28 @@ class LeftPanelController {
 
   onLeftSidePanelItemClicked(event, item) {
     event.stopPropagation();
-
+    var plugin = this.LeftPanelStore.getSpecificPluginVersion(item);
     let config;
-
-    if (item.pluginTemplate) {
+    if (plugin.pluginTemplate) {
       config = {
-        label: item.name,
-        name: item.pluginName,
-        icon: this.MyDAGFactory.getIcon(item.pluginName),
-        type: item.pluginType,
-        properties: item.properties,
-        outputSchema: item.outputSchema,
-        pluginTemplate: item.pluginTemplate,
-        lock: item.lock
+        label: plugin.name,
+        name: plugin.pluginName,
+        artifact: plugin.artifact,
+        icon: this.MyDAGFactory.getIcon(plugin.pluginName),
+        type: plugin.pluginType,
+        properties: plugin.properties,
+        outputSchema: plugin.outputSchema,
+        pluginTemplate: plugin.pluginTemplate,
+        lock: plugin.lock
       };
     } else {
       config = {
-        label: item.name,
-        name: item.name,
-        icon: item.icon,
-        description: item.description,
-        type: item.type,
+        label: plugin.name,
+        artifact: plugin.artifact,
+        name: plugin.name,
+        icon: plugin.icon,
+        description: plugin.description,
+        type: plugin.type,
         properties: {},
         warning: true
       };

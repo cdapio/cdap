@@ -81,6 +81,8 @@ class HydratorService {
     var params = {
       namespace: this.$state.params.namespace,
       pipelineType: this.ConfigStore.getAppType(),
+      // version: plugin.artifact.version || this.$rootScope.cdapVersion,
+      // TODO: Should this be plugin's artifact version? 
       version: this.$rootScope.cdapVersion,
       extensionType: plugin.type,
       pluginName: plugin.name
