@@ -9,13 +9,16 @@ CDAP Administration Manual
 ==================================================
 
 Covers putting CDAP into production, with **installation and configuration, security
-setup, operations,** and **troubleshooting.** Appendices describe the **XML files** used to configure
+setup,** and **operations.** Appendices describe the **XML files** used to configure
 the CDAP installation and its security configuration.
 
 
 .. rubric:: Installation and Configuration
 
-**Distribution-specific** instructions are available, plus instructions for **generic Apache Hadoop** clusters:
+.. |installation| replace:: **Installation and Configuration:**
+.. _installation: installation/index.html
+
+|installation|_ **Distribution-specific** instructions are available, plus instructions for **generic Apache Hadoop** clusters.
 
 .. |ambari| replace:: **Apache Ambari (HDP):**
 .. _ambari: installation/ambari/index.html
@@ -50,7 +53,7 @@ the CDAP installation and its security configuration.
 .. rubric:: Security
 
 .. |security| replace:: **Security:**
-.. _security: installation/security.html
+.. _security: security.html
 
 |security|_ CDAP supports **securing clusters using a perimeter security model.** This
 section describes enabling security, configuring authentication, testing security, and includes an
@@ -60,10 +63,10 @@ example configuration file.
 .. rubric:: Operations
 
 .. |operations| replace:: **Operations:**
-.. _operations: installation/index.html
+.. _operations: operations/index.html
 
 |operations|_ Covers **logging, metrics, monitoring, preferences, scaling instances, resource guarantees, 
-transaction service maintenance, troubleshooting, and introduces the CDAP UI.** 
+transaction service maintenance,** and **introduces the CDAP UI.** 
 
 .. |logging| replace:: **Logging:**
 .. _logging: operations/logging.html

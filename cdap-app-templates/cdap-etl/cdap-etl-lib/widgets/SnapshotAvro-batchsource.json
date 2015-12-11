@@ -1,0 +1,41 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "Snapshot Fileset - AVRO",
+      "properties": [
+        {
+          "widget-type": "dataset-selector",
+          "label": "Dataset Name",
+          "name": "name"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Snapshot Base Path",
+          "name": "basePath"
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "schema",
+      "widget-type": "schema",
+      "widget-attributes": {
+        "schema-types": [
+          "boolean",
+          "int",
+          "long",
+          "float",
+          "double",
+          "bytes",
+          "string",
+          "map<string, string>"
+        ],
+        "schema-default-type": "string"
+      }
+    }
+  ]
+}

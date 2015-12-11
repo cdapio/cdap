@@ -31,31 +31,31 @@
       class="btn btn-sm btn-default pull-right"
       ng-click="NodeConfigController.schemaClear()"
       ng-if="(!NodeConfigController.state.groupsConfig.outputSchema.implicitSchema && !isDisabled)"
-      ng-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema || NodeConfigController.state.plugin.properties.format === 'clf' || NodeConfigController.state.plugin.properties.format === 'syslog'">
+      ng-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema || NodeConfigController.state.node.plugin.properties.format === 'clf' || NodeConfigController.state.node.plugin.properties.format === 'syslog'">
       Clear
     </button>
   </h4>
   <fieldset class="clearfix" ng-disabled="isDisabled">
     <div ng-if="isDisabled">
       <my-schema-editor
-        ng-model="NodeConfigController.state.plugin.outputSchema"
-        ng-if="NodeConfigController.state.plugin.outputSchema"
+        ng-model="NodeConfigController.state.node.outputSchema"
+        ng-if="NodeConfigController.state.node.outputSchema"
         data-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema || isDisabled"
-        plugin-properties="NodeConfigController.state.plugin.properties"
+        plugin-properties="NodeConfigController.state.node.plugin.properties"
         config="NodeConfigController.state.groupsConfig.outputSchema.schemaProperties">
       </my-schema-editor>
     </div>
     <div ng-if="!isDisabled">
       <my-schema-editor
-        ng-model="NodeConfigController.state.plugin.outputSchema"
+        ng-model="NodeConfigController.state.node.outputSchema"
         data-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema"
-        plugin-properties="NodeConfigController.state.plugin.properties"
+        plugin-properties="NodeConfigController.state.node.plugin.properties"
         config="NodeConfigController.state.groupsConfig.outputSchema.schemaProperties">
       </my-schema-editor>
     </div>
   </fieldset>
 
-  <div ng-if="!NodeConfigController.state.plugin.outputSchema && isDisabled && NodeConfigController.state.plugin.properties.format !== 'clf' && NodeConfigController.state.plugin.properties.format !== 'syslog'">
+  <div ng-if="!NodeConfigController.state.node.outputSchema && isDisabled && NodeConfigController.state.node.plugin.properties.format !== 'clf' && NodeConfigController.state.node.plugin.properties.format !== 'syslog'">
     <div class="well well-lg">
       <h4>There is no output schema</h4>
     </div>

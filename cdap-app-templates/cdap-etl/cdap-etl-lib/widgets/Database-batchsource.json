@@ -1,0 +1,89 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "General",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Username",
+          "name": "user"
+        },
+        {
+          "widget-type": "password",
+          "label": "Password",
+          "name": "password"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Table Name",
+          "name": "tableName"
+        }
+      ]
+    },
+    {
+      "label": "JDBC Information",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Plugin Name",
+          "name": "jdbcPluginName"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Plugin Type",
+          "name": "jdbcPluginType"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Driver Class",
+          "name": "driverClass"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Connection String",
+          "name": "connectionString"
+        }
+      ]
+    },
+    {
+      "label": "Table Properties",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Import SQL",
+          "name": "importQuery"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Count SQL",
+          "name": "countQuery"
+        },
+        {
+          "widget-type": "select",
+          "label": "Column Case",
+          "name": "columnNameCase",
+          "widget-attributes": {
+            "values": [
+              "UPPER",
+              "lower",
+              "No change"
+            ],
+            "default": "No change"
+          }
+        },
+        {
+          "widget-type": "csv",
+          "label": "Columns",
+          "name": "columns",
+          "widget-attributes": {
+            "delimiter": ","
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}

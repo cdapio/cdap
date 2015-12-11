@@ -34,14 +34,14 @@
 <div class="bottompanel-header clearfix" ng-init="showinfo = false">
   <div class="pull-left">
     <h3>
-      {{NodeConfigController.state.plugin.name}} Properties
+      {{NodeConfigController.state.node.plugin.name}} Properties
       <small class="text-danger" ng-if="NodeConfigController.state.noConfigMessage">({{NodeConfigController.state.noConfigMessage}})</small>
     </h3>
-    <p>{{NodeConfigController.state.plugin.description}}</p>
+    <p>{{NodeConfigController.state.node.description}}</p>
   </div>
 </div>
 
-<div class="bottompanel-body" ng-class="{'modal-sink': NodeConfigController.state.plugin.type === 'sink'}">
+<div class="bottompanel-body" ng-class="{'modal-sink': NodeConfigController.state.node.type === 'sink'}">
   <div ng-show="!showinfo">
     <div ng-if="NodeConfigController.state.configfetched">
 

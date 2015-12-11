@@ -114,6 +114,10 @@ body.theme-cdap {
   }
 
   &.state-hydrator-detail {
+    .detail-canvas-container {
+      position: relative;
+    }
+
     my-program-history {
       ul.pagination {
         margin-right: 15px;
@@ -355,6 +359,23 @@ body.theme-cdap {
       .well {
         margin-top: 10px;
       }
+    }
+  }
+}
+
+.popover {
+  .well.metrics-popover {
+    background-color: white;
+    padding-top: 0;
+    padding-bottom: 5px;
+
+    h5 {
+      margin-top: 15px;
+      font-weight: 600;
+    }
+
+    p {
+      color: #397cf1;
     }
   }
 }

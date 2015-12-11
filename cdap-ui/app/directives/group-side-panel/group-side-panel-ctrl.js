@@ -35,6 +35,8 @@ angular.module(PKG.name + '.commons')
     };
 
     this.onItemClicked = function(event, item) {
+      event.stopPropagation();
+      event.preventDefault();
       var fn = $scope.onPanelItemClick();
       if ('undefined' !== typeof fn) {
         fn.call($scope.onPanelItemClickContext, event, item);
