@@ -67,31 +67,35 @@ class LeftPanelController {
 
   }
 
-  onLeftSidePanelItemClicked(event, item) {
+  onLeftSidePanelItemClicked(event, node) {
     event.stopPropagation();
-    var plugin = this.LeftPanelStore.getSpecificPluginVersion(item);
+    var item = this.LeftPanelStore.getSpecificPluginVersion(node);
     let config;
-    if (plugin.pluginTemplate) {
+    if (item.pluginTemplate) {
       config = {
-        label: plugin.name,
-        name: plugin.pluginName,
-        artifact: plugin.artifact,
-        icon: this.MyDAGFactory.getIcon(plugin.pluginName),
-        type: plugin.pluginType,
-        properties: plugin.properties,
-        outputSchema: plugin.outputSchema,
-        pluginTemplate: plugin.pluginTemplate,
-        lock: plugin.lock
+        plugin: {
+          label: item.name,
+          name: item.pluginName,
+          artifact: item.artifact,
+          properties: item.properties,
+        },
+        icon: this.MyDAGFactory.getIcon(item.pluginName),
+        type: item.pluginType,
+        outputSchema: item.outputSchema,
+        pluginTemplate: item.pluginTemplate,
+        lock: item.lock
       };
     } else {
       config = {
-        label: plugin.name,
-        artifact: plugin.artifact,
-        name: plugin.name,
-        icon: plugin.icon,
-        description: plugin.description,
-        type: plugin.type,
-        properties: {},
+        plugin: {
+          label: item.name,
+          artifact: item.artifact,
+          name: item.name,
+          properties: {}
+        },
+        icon: item.icon,
+        description: item.description,
+        type: item.type,
         warning: true
       };
     }

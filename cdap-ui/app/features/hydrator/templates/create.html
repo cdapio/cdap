@@ -117,8 +117,8 @@
                 <p>{{ template.description }}</p>
                 <hr/>
                 <div class="template-properties">
-                  <p>Source: {{ template._properties.config.source.name }}</p>
-                  <p>Sinks: {{ template._properties.config.sinks[0].name }}<span ng-if="template._properties.config.sinks.length > 1">, ...</span> </p>
+                  <p>Source: {{ template._properties.config.source.plugin.name }}</p>
+                  <p>Sinks: {{ template._properties.config.sinks[0].plugin.name }}<span ng-if="template._properties.config.sinks.length > 1">, ...</span> </p>
                 </div>
               </div>
             </div>

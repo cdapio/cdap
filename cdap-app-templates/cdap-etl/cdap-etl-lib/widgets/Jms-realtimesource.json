@@ -1,0 +1,72 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "JMS Configuration",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Destination Queue",
+          "name": "jms.destination.name",
+          "widget-attributes": {
+            "width": "medium"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Message Count",
+          "name": "jms.messages.receive",
+          "widget-attributes": {
+            "width": "extra-small",
+            "default": 1
+          }
+        }
+      ]
+    },
+    {
+      "label": "JMS Connection Factory",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Connection Factory Name",
+          "name": "jms.jndi.connectionfactory.name"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Factory Class Name",
+          "name": "jms.factory.initial"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Provider URL",
+          "name": "jms.provider.url"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "JMS Provider Plugin Name",
+          "name": "jms.plugin.name"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "JMS Provider Plugin Type",
+          "name": "jms.plugin.type"
+        },
+        {
+          "widget-type": "json-editor",
+          "label": "JMS Provider Plugin Custom Properties",
+          "name": "jms.plugin.custom.properties"
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "widget-type": "non-editable-schema-editor",
+      "schema": {
+        "message": "string"
+      }
+    }
+  ]
+}

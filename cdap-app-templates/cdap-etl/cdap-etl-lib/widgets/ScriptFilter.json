@@ -1,0 +1,21 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "Script Filter Properties",
+      "properties": [
+        {
+          "widget-type": "javascript-editor",
+          "label": "Filter",
+          "name": "script",
+          "widget-attributes": {
+            "default": "function shouldFilter(input, context) {\n  return false;\n}"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}

@@ -106,8 +106,8 @@ angular.module(PKG.name + '.commons')
         addEndpoints();
 
         angular.forEach($scope.connections, function (conn) {
-          var sourceNode = $scope.nodes.filter( node => node.id === conn.from);
-          var targetNode = $scope.nodes.filter( node => node.id === conn.to);
+          var sourceNode = $scope.nodes.filter( node => node.name === conn.from);
+          var targetNode = $scope.nodes.filter( node => node.name === conn.to);
           if (!sourceNode.length || !targetNode.length) {
             return;
           }
@@ -272,23 +272,23 @@ angular.module(PKG.name + '.commons')
 
     function addEndpoints() {
       angular.forEach($scope.nodes, function (node) {
-        if (endpoints.indexOf(node.id) !== -1) {
+        if (endpoints.indexOf(node.name) !== -1) {
           return;
         }
-        endpoints.push(node.id);
+        endpoints.push(node.name);
 
         var type = GLOBALS.pluginConvert[node.type];
         switch(type) {
           case 'source':
-            vm.instance.addEndpoint(node.id, sourceSettings, {uuid: node.id});
+            vm.instance.addEndpoint(node.name, sourceSettings, {uuid: node.name});
             break;
           case 'sink':
-            vm.instance.addEndpoint(node.id, sinkSettings, {uuid: node.id});
+            vm.instance.addEndpoint(node.name, sinkSettings, {uuid: node.name});
             break;
           case 'transform':
             // Need to id each end point so that it can be used later to make connections.
-            vm.instance.addEndpoint(node.id, transformSourceSettings, {uuid: 'Left' + node.id});
-            vm.instance.addEndpoint(node.id, transformSinkSettings, {uuid: 'Right' + node.id});
+            vm.instance.addEndpoint(node.name, transformSourceSettings, {uuid: 'Left' + node.name});
+            vm.instance.addEndpoint(node.name, transformSinkSettings, {uuid: 'Right' + node.name});
             break;
         }
       });
@@ -455,7 +455,7 @@ angular.module(PKG.name + '.commons')
       var selected = [];
       angular.forEach($scope.nodes, function (node) {
         if (node.selected) {
-          selected.push(node.id);
+          selected.push(node.name);
         }
       });
 
@@ -477,12 +477,12 @@ angular.module(PKG.name + '.commons')
         if (node.selected) {
           checkSelection();
         } else {
-          vm.instance.removeFromDragSelection(node.id);
+          vm.instance.removeFromDragSelection(node.name);
         }
       } else {
         vm.clearNodeSelection();
         node.selected = true;
-        NodesActionsFactory.selectNode(node.id);
+        NodesActionsFactory.selectNode(node.name);
       }
 
       // $scope.nodeClick.call($scope.context, node);
@@ -491,8 +491,8 @@ angular.module(PKG.name + '.commons')
     vm.onNodeDelete = function (event, node) {
       event.stopPropagation();
       closeAllPopovers();
-      NodesActionsFactory.removeNode(node.id);
-      vm.instance.remove(node.id);
+      NodesActionsFactory.removeNode(node.name);
+      vm.instance.remove(node.name);
     };
 
     vm.cleanUpGraph = function () {
@@ -500,7 +500,7 @@ angular.module(PKG.name + '.commons')
 
       var graphNodes = MyDAGFactory.getGraphLayout($scope.nodes, $scope.connections)._nodes;
       angular.forEach($scope.nodes, function (node) {
-        var location = graphNodes[node.id];
+        var location = graphNodes[node.name];
         node._uiPosition = {
           left: location.x + 'px',
           top: location.y + 'px'
