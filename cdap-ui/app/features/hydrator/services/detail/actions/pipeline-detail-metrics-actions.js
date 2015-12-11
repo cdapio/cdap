@@ -51,7 +51,6 @@ angular.module(PKG.name + '.feature.hydrator')
         var transforms = config.transforms.map(function (n) { return n.name; });
         var sinks = config.sinks.map(function (n) { return n.name; });
         var stagesArray = [source].concat(transforms, sinks);
-        stagesArray = stagesArray.map(function (n, i) { return n + '.' + (i+1); });
         var metricQuery = [];
 
         if (res.length > 0) {
