@@ -107,46 +107,31 @@ body {
         margin: 0;
         padding: 0;
         position: absolute;
-        top: 15px;
+        top: 14px;
         right: 100px;
         li.dropdown {
           list-style-type: none;
-          .transition(all 0.2s ease);
           &:hover {
             cursor: pointer;
           }
           a.hy-dropdown-toggle {
             display: block;
-            padding: 5px;
-            .border-radius(4px);
+            min-width: 125px;
+            padding: 6px 10px;
             span:first-child {
               font-weight: 500;
               padding-right: 15px;
             }
-            span.fa-caret-down {
+            span.fa-angle-down {
               line-height: 18px;
-            }
-          }
-          &.open {
-            min-width: 160px;
-            a.hy-dropdown-toggle {
-              padding-top: 8px;
-              padding-bottom: 8px;
-              padding-left: 14px;
-              .border-radius(0);
-            }
-            span.fa-caret-down {
-              display: none;
-            }
-            ul.dropdown-menu {
-              .border-radius(0);
             }
           }
         }
 
         ul.dropdown-menu {
-          float: none;
-          margin-top: 8px;
+          margin-top: 2px;
+          max-height: 360px;
+          overflow-y: scroll;
           padding: 0;
           z-index: 9999;
           li a {
@@ -194,6 +179,8 @@ body {
             a.hy-dropdown-toggle {
               background-color: white;
               color: #666;
+              .border-radius(4px);
+              .transition(all 0.2s ease);
               &:hover, &:focus {
                 text-decoration: none;
               }
@@ -201,8 +188,12 @@ body {
             &.open {
               a.hy-dropdown-toggle {
                 background-color: rgb(111, 111, 113);
-                border: 1px solid rgb(111, 111, 113);
                 color: white;
+              }
+              ul.dropdown-menu {
+                .border-radius(0);
+                @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+                .box-shadow(@box-shadow);
               }
             }
           }

@@ -30,6 +30,7 @@ function myNavbarHydratorDirective (myAuth, MY_CONFIG, $dropdown) {
       $dropdown(angular.element(toggles), {
         template: 'navbar-hydrator/namespace.html',
         animation: 'none',
+        placement: 'bottom-right',
         scope: scope
       });
 
