@@ -14,9 +14,11 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-# Parcel name vars 
+# Parcel name vars
+# Version can be overridden here, otherwise it uses the detected CDAP version
 PARCEL_BASE=${PARCEL_BASE:-CDAP}
 PARCEL_SUFFIX=${PARCEL_SUFFIX:-el6}
+PARCEL_VERSION=${PARCEL_VERSION}
 PARCEL_ITERATION=${PARCEL_ITERATION:-1}
 
 # Components should map to top-level directories: "cdap-${COMPONENT}"
@@ -121,7 +123,7 @@ function stage_parcel_bits {
   cp -fpPR ${__meta_dir} ${STAGE_DIR}/${PARCEL_ROOT_DIR}/.
 
   # Substitute our version
-  sed -i -e "s#{{VERSION}}#${PARCEL_VERSION}#" ${STAGE_DIR}/${PARCEL_ROOT_DIR}/meta/parcel.json
+  sed -i -e "s#{{VERSION}}#${PARCEL_VERSION_ITERATION}#" ${STAGE_DIR}/${PARCEL_ROOT_DIR}/meta/parcel.json
 }
 
 # Create the parcel via tar
@@ -167,10 +169,10 @@ echo "Starting Parcel Build"
 
 validate_env
 
-PARCEL_VERSION="${VERSION}-${PARCEL_ITERATION}"
-echo "Using version: ${PARCEL_VERSION}"
-PARCEL_ROOT_DIR="${PARCEL_BASE}-${PARCEL_VERSION}"
-PARCEL_NAME="${PARCEL_BASE}-${PARCEL_VERSION}-${PARCEL_SUFFIX}.parcel"
+PARCEL_VERSION_ITERATION="${PARCEL_VERSION:-${VERSION}}-${PARCEL_ITERATION}"
+echo "Using version: ${PARCEL_VERSION_ITERATION}"
+PARCEL_ROOT_DIR="${PARCEL_BASE}-${PARCEL_VERSION_ITERATION}"
+PARCEL_NAME="${PARCEL_BASE}-${PARCEL_VERSION_ITERATION}-${PARCEL_SUFFIX}.parcel"
 
 stage_artifacts
 
