@@ -125,10 +125,9 @@ angular.module(PKG.name + '.feature.hydrator')
         if (node.requiredFieldCount > 0) {
           plugins.push(node.label);
           node.warning = false;
-
           ConsoleActionsFactory.addMessage({
             type: 'error',
-            content: node.label + ERROR_MESSAGES.pluginNameMissingRequiredFieldsError
+            content: node.plugin.label + ERROR_MESSAGES.pluginNameMissingRequiredFieldsError
           });
         }
       });
@@ -166,31 +165,19 @@ angular.module(PKG.name + '.feature.hydrator')
       return plugin.valid;
     }
 
-    function countRequiredFields(plugin) {
+    function countRequiredFields(node) {
       var requiredFieldCount = 0;
-      var i;
-      var keys;
-      if (angular.isObject(plugin._backendProperties) && Object.keys(plugin._backendProperties).length) {
-        keys = Object.keys(plugin._backendProperties);
-        if (angular.isObject(plugin.properties)) {
-          if (!Object.keys(plugin.properties).length) {
-            for (i =0; i<keys.length; i++) {
-              if (plugin._backendProperties[keys[i]] && plugin._backendProperties[keys[i]].required) {
-                requiredFieldCount += 1;
-              }
+      if (angular.isObject(node._backendProperties) && Object.keys(node._backendProperties).length) {
+
+        angular.forEach(node._backendProperties, function (value, key) {
+          if (value.required) {
+            if (!node.plugin.properties || !node.plugin.properties[key] || node.plugin.properties[key] === '') {
+              requiredFieldCount++;
             }
-            return requiredFieldCount;
-          } else {
-            for (i=0; i< keys.length; i++) {
-              var property = plugin.properties[keys[i]];
-              if (plugin._backendProperties[keys[i]] && plugin._backendProperties[keys[i]].required && (!property || property === '')) {
-                requiredFieldCount += 1;
-              }
-            }
-            return requiredFieldCount;
           }
-        }
+        });
       }
+      return requiredFieldCount;
     }
 
     return {

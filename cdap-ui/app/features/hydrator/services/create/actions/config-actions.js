@@ -60,7 +60,7 @@ class ConfigActionsFactory {
     this.dispatcher.dispatch('onSetInstance', instance);
   }
   publishPipeline() {
-
+    this.ConsoleActionsFactory.resetMessages();
     var error = this.HydratorErrorFactory.isModelValid();
 
     if (!error) { return; }
