@@ -55,7 +55,6 @@ import java.util.concurrent.TimeUnit;
 public abstract class HBaseTestBase extends ExternalResource {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTestBase.class);
-  private static final int MAX_START_ATTEMPTS = 3;
 
   // Accessors for test implementations
 
@@ -84,20 +83,7 @@ public abstract class HBaseTestBase extends ExternalResource {
     getConfiguration().setInt("hbase.regionserver.port", 0);
     getConfiguration().setInt("hbase.regionserver.info.port", 0);
 
-    for (int startAttempt = 0; startAttempt < MAX_START_ATTEMPTS; startAttempt++) {
-      try {
-        doStartHBase();
-        LOG.info("Successfully started HBase");
-        break;
-      } catch (IOException e) {
-        if (startAttempt + 1 == MAX_START_ATTEMPTS) {
-          LOG.error("Failed to start HBase.", e);
-          throw e;
-        }
-
-        LOG.error("Failed to start HBase. Retrying.", e);
-      }
-    }
+    doStartHBase();
   }
 
   protected abstract void doStartHBase() throws Exception;
