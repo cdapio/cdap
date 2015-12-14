@@ -171,7 +171,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
         angular.forEach(node._backendProperties, function (value, key) {
           if (value.required) {
-            if (!node.plugin.properties || !node.plugin.properties[key] || node.plugin.properties[key] === '') {
+            if (!node.plugin.properties || !node.plugin.properties[key]) {
               requiredFieldCount++;
             }
           }
