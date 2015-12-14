@@ -497,3 +497,9 @@ div.documentwrapper-hidden {
 div.bodywrapper-hidden {
     margin: 0 0 0 0;
 }
+
+/* -- Styles to highlight code samples ---------------------------------------- */
+
+.highlight .hll {
+    background-color: #E0E0E0
+}
