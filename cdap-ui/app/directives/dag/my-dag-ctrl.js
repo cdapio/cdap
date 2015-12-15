@@ -393,7 +393,19 @@ angular.module(PKG.name + '.commons')
 
           if (!vm.isDisabled) {
             vm.instance.draggable(nodes, {
-              start: function () {
+              start: function (a) {
+                console.log('test', a );
+                // var selected = [];
+                // angular.forEach($scope.nodes, function (node) {
+                //   if (node.selected) {
+                //     selected.push(node.name);
+                //   }
+                // });
+
+                // if (selected.indexOf(a.el.id) === -1) {
+                //   vm.clearNodeSelection();
+                // }
+
                 dragged = true;
                 closeAllPopovers();
               },
@@ -435,8 +447,6 @@ angular.module(PKG.name + '.commons')
 
     });
 
-    // var selectedNode = null;
-
     vm.clearNodeSelection = function () {
       if (canvasDragged) {
         canvasDragged = false;
@@ -464,7 +474,7 @@ angular.module(PKG.name + '.commons')
 
     vm.onNodeClick = function(event, node) {
       event.stopPropagation();
-
+console.log('node', node);
       if (dragged) {
         dragged = false;
         return;
