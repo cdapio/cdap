@@ -129,15 +129,14 @@ angular.module(PKG.name + '.commons')
         if ($scope.showMetrics) {
 
           angular.forEach($scope.nodes, function (node) {
-            var elem = angular.element(document.getElementById(node.id)).children();
+            var elem = angular.element(document.getElementById(node.name)).children();
 
             var scope = $rootScope.$new();
-
             scope.data = {
-              nodeName: node.label
+              nodeName: node.name
             };
 
-            nodePopovers[node.id] = {
+            nodePopovers[node.name] = {
               scope: scope,
               element: elem,
               popover: null,
@@ -176,7 +175,7 @@ angular.module(PKG.name + '.commons')
 
     vm.nodeMouseEnter = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
-      var nodeInfo = nodePopovers[node.id];
+      var nodeInfo = nodePopovers[node.name];
 
       nodeInfo.popover = $popover(nodeInfo.element, {
         trigger: 'manual',
@@ -198,7 +197,7 @@ angular.module(PKG.name + '.commons')
     vm.nodeMouseLeave = function (node) {
       if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
 
-      var nodeInfo = nodePopovers[node.id];
+      var nodeInfo = nodePopovers[node.name];
       if (!nodeInfo.popover) { return; }
 
       nodeInfo.popover.hide();
