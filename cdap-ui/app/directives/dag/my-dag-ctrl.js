@@ -28,7 +28,7 @@ angular.module(PKG.name + '.commons')
     var transformSinkSettings = angular.copy(MyDAGFactory.getSettings(false).transformSink);
 
     var SHOW_METRICS_THRESHOLD = 0.8;
-
+    var selected = [];
     var labels = [];
 
     var metricsLabel = [
@@ -393,18 +393,11 @@ angular.module(PKG.name + '.commons')
 
           if (!vm.isDisabled) {
             vm.instance.draggable(nodes, {
-              start: function (a) {
-                console.log('test', a );
-                // var selected = [];
-                // angular.forEach($scope.nodes, function (node) {
-                //   if (node.selected) {
-                //     selected.push(node.name);
-                //   }
-                // });
+              start: function (drag) {
 
-                // if (selected.indexOf(a.el.id) === -1) {
-                //   vm.clearNodeSelection();
-                // }
+                if (selected.indexOf(drag.el.id) === -1) {
+                  vm.clearNodeSelection();
+                }
 
                 dragged = true;
                 closeAllPopovers();
@@ -453,7 +446,9 @@ angular.module(PKG.name + '.commons')
         return;
       }
       closeAllPopovers();
+      selected = [];
       vm.instance.clearDragSelection();
+      NodesActionsFactory.resetSelectedNode();
       angular.forEach($scope.nodes, function (node) {
         node.selected = false;
       });
@@ -462,7 +457,7 @@ angular.module(PKG.name + '.commons')
     function checkSelection() {
       vm.instance.clearDragSelection();
 
-      var selected = [];
+      selected = [];
       angular.forEach($scope.nodes, function (node) {
         if (node.selected) {
           selected.push(node.name);
@@ -474,7 +469,7 @@ angular.module(PKG.name + '.commons')
 
     vm.onNodeClick = function(event, node) {
       event.stopPropagation();
-console.log('node', node);
+
       if (dragged) {
         dragged = false;
         return;
@@ -494,8 +489,6 @@ console.log('node', node);
         node.selected = true;
         NodesActionsFactory.selectNode(node.name);
       }
-
-      // $scope.nodeClick.call($scope.context, node);
     };
 
     vm.onNodeDelete = function (event, node) {
