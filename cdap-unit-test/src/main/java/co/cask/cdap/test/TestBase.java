@@ -27,7 +27,6 @@ import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.InMemoryProgramRunnerModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
-import co.cask.cdap.common.NamespaceAlreadyExistsException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -252,13 +251,7 @@ public class TestBase {
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
     metricsManager = injector.getInstance(MetricsManager.class);
     namespaceAdmin = injector.getInstance(NamespaceAdmin.class);
-
-    try {
-      namespaceAdmin.create(NamespaceMeta.DEFAULT);
-    } catch (NamespaceAlreadyExistsException e) {
-      // ignore, just want default namespace to exist
-      throw e;
-    }
+    namespaceAdmin.create(NamespaceMeta.DEFAULT);
   }
 
   private static TestManager getTestManager() {
