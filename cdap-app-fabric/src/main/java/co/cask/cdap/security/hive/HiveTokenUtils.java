@@ -14,9 +14,9 @@
  * the License.
  */
 
-package co.cask.cdap.explore.security;
+package co.cask.cdap.security.hive;
 
-import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.hive.ExploreUtils;
 import com.google.common.base.Throwables;
 import org.apache.hadoop.hive.thrift.DelegationTokenIdentifier;
 import org.apache.hadoop.io.Text;
@@ -36,7 +36,7 @@ public final class HiveTokenUtils {
   private static final Logger LOG = LoggerFactory.getLogger(HiveTokenUtils.class);
 
   public static Credentials obtainToken(Credentials credentials) {
-    ClassLoader hiveClassloader = ExploreServiceUtils.getExploreClassLoader();
+    ClassLoader hiveClassloader = ExploreUtils.getExploreClassloader();
     ClassLoader contextClassloader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(hiveClassloader);
 

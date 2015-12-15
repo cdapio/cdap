@@ -123,6 +123,10 @@
       <artifactId>spark-core_2.10</artifactId>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-service</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
