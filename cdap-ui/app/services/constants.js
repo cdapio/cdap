@@ -77,7 +77,7 @@ angular.module(PKG.name + '.services')
           pluginDoesNotExist: 'This plugin does not exist: ',
           unsavedPluginMessage1: 'There are unsaved changes for node \'',
           unsavedPluginMessage2: '\'. Please save them before publishing the pipeline.',
-          pipelineNameAlreadyExistError: 'This pipeline name already exist. Please choose a different name.'
+          pipelineNameAlreadyExistError: 'A pipeline with this name already exists. Please choose a different name.'
         },
         wizard: {
           welcomeMessage1: 'Hydrator makes it easy to prepare data so you ',
