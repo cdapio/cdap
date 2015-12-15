@@ -21,6 +21,7 @@ import co.cask.cdap.etl.common.Connection;
 import co.cask.cdap.etl.common.ETLConfig;
 import co.cask.cdap.etl.common.ETLStage;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,26 +32,46 @@ import javax.annotation.Nullable;
  * ETL Batch Configuration.
  */
 public final class ETLBatchConfig extends ETLConfig {
+
+  /**
+   * Enum for the execution engine to use.
+   */
+  public enum Engine {
+    MAPREDUCE, SPARK
+  }
+
+  private final Engine engine;
   private final String schedule;
   private final List<ETLStage> actions;
 
-  public ETLBatchConfig(String schedule, ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
+  public ETLBatchConfig(Engine engine, String schedule,
+                        ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
                         List<Connection> connections, @Nullable Resources resources, @Nullable List<ETLStage> actions) {
     super(source, sinks, transforms, connections, resources);
+    this.engine = engine;
     this.schedule = schedule;
     this.actions = actions;
   }
 
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms,
                         List<Connection> connections, @Nullable Resources resources, @Nullable List<ETLStage> actions) {
-    super(source, sink, transforms, connections, resources);
-    this.schedule = schedule;
-    this.actions = actions;
+    this(Engine.MAPREDUCE, schedule, source, ImmutableList.of(sink), transforms, connections, resources, actions);
   }
+
+  public ETLBatchConfig(String schedule, ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
+                        List<Connection> connections, @Nullable Resources resources, @Nullable List<ETLStage> actions) {
+    this(Engine.MAPREDUCE, schedule, source, sinks, transforms, connections, resources, actions);
+  }
+
 
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink,
                         List<ETLStage> transforms, List<ETLStage> actions) {
     this(schedule, source, sink, transforms, new ArrayList<Connection>(), null, actions);
+  }
+
+  @VisibleForTesting
+  public ETLBatchConfig(Engine engine, String schedule, ETLStage source, ETLStage sink, List<ETLStage> transforms) {
+    this(engine, schedule, source, ImmutableList.of(sink), transforms, new ArrayList<Connection>(), null, null);
   }
 
   @VisibleForTesting
@@ -61,6 +82,10 @@ public final class ETLBatchConfig extends ETLConfig {
   @VisibleForTesting
   public ETLBatchConfig(String schedule, ETLStage source, ETLStage sink) {
     this(schedule, source, sink, null);
+  }
+
+  public Engine getEngine() {
+    return engine == null ? Engine.MAPREDUCE : engine;
   }
 
   public String getSchedule() {

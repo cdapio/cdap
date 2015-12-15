@@ -435,6 +435,16 @@ public class HttpHandlerGeneratorTest {
     }
 
     @Override
+    public void releaseDataset(Dataset dataset) {
+      // no-op
+    }
+
+    @Override
+    public void discardDataset(Dataset dataset) {
+      // nop-op
+    }
+
+    @Override
     public TransactionContext newTransactionContext() {
       return new TransactionContext(null, ImmutableList.<TransactionAware>of()) {
 

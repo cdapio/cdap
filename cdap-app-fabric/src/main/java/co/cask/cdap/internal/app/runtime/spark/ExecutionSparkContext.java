@@ -55,6 +55,7 @@ import co.cask.cdap.internal.app.runtime.batch.dataset.DatasetOutputFormatProvid
 import co.cask.cdap.internal.app.runtime.batch.dataset.ForwardingSplitReader;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionSystemClient;
@@ -150,7 +151,7 @@ public class ExecutionSparkContext extends AbstractSparkContext {
     this.streamAdmin = streamAdmin;
     this.datasetCache = new SingleThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework, programClassLoader, getOwners()),
-      txClient, programId.getNamespace(), runtimeArguments, getMetricsContext(), null);
+      txClient, new NamespaceId(programId.getNamespace().getId()), runtimeArguments, getMetricsContext(), null);
     this.localizedResources = localizedResources;
   }
 
@@ -281,6 +282,16 @@ public class ExecutionSparkContext extends AbstractSparkContext {
       datasets.put(key, dataset);
     }
     return dataset;
+  }
+
+  @Override
+  public void releaseDataset(Dataset dataset) {
+    // nop-op: all datasets have to participate until the transaction (that is, the program) finishes
+  }
+
+  @Override
+  public void discardDataset(Dataset dataset) {
+    // nop-op: all datasets have to participate until the transaction (that is, the program) finishes
   }
 
   @Override

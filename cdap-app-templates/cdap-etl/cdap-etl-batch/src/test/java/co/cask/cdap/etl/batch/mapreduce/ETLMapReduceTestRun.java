@@ -28,6 +28,7 @@ import co.cask.cdap.etl.batch.ETLBatchTestBase;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.source.FileBatchSource;
 import co.cask.cdap.etl.common.Connection;
+import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.etl.common.Properties;
@@ -332,7 +333,7 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
 
     DataSetManager<TimePartitionedFileSet> fileSetManager = getDataset("keyErrors");
     try (TimePartitionedFileSet fileSet = fileSetManager.get()) {
-      List<GenericRecord> records = readOutput(fileSet, ETLMapReduce.ERROR_SCHEMA);
+      List<GenericRecord> records = readOutput(fileSet, Constants.ERROR_SCHEMA);
       Assert.assertEquals(1, records.size());
     }
   }

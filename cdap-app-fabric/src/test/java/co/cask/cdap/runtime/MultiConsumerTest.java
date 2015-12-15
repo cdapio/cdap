@@ -28,12 +28,12 @@ import co.cask.cdap.data2.dataset2.DynamicDatasetCache;
 import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.internal.AppFabricTestHelper;
-import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import co.cask.cdap.internal.app.runtime.BasicArguments;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.ProgramRunnerFactory;
 import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.runtime.app.MultiApp;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
@@ -95,7 +95,7 @@ public class MultiConsumerTest {
     DynamicDatasetCache datasetCache = new SingleThreadDatasetCache(
       new SystemDatasetInstantiator(datasetFramework, getClass().getClassLoader(), null),
       AppFabricTestHelper.getInjector().getInstance(TransactionSystemClient.class),
-      DefaultId.NAMESPACE, DatasetDefinition.NO_ARGUMENTS, null, null);
+      NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
 
     final KeyValueTable accumulated = datasetCache.getDataset("accumulated");
     TransactionExecutorFactory txExecutorFactory =

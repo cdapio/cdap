@@ -35,7 +35,8 @@ import org.junit.runners.Suite;
   ETLMapReduceTestRun.class,
   ETLSnapshotTestRun.class,
   ETLStreamConversionTestRun.class,
-  ETLTPFSTestRun.class
+  ETLTPFSTestRun.class,
+  ETLSparkTestRun.class
 })
 public class ETLBatchTestSuite extends ETLBatchTestBase {
 }

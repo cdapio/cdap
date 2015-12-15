@@ -85,27 +85,10 @@ There are two ways to use a dataset in a program:
   executed by the program. If the program is multi-threaded (for example, an HTTP service handler), CDAP will make
   sure that every thread has its own instance of the dataset.
 
-- **Dynamic Instantiation:** If you don't know the name of the dataset at compile time (and hence you cannot use it in
-  a ``UseDataSet`` annotation), or if you want to use a dataset only for a short time, you can dynamically
-  request an instance of the dataset through the program context::
-
-    class MyFlowlet extends AbstractFlowlet {
-      ...
-      void process(String key) {
-        KeyValueTable counters = getContext().getDataset("myCounters");
-        counters.increment(key.getBytes(), 1L);
-      }
-
-  This dataset is instantiated at runtime, in this case every time the method ``process`` is invoked. To reduce the
-  overhead of repeatedly instantiating the same dataset, the CDAP runtime system caches dynamic datasets internally.
-  How long a dataset is cached before it expires (and the next ``getDataset`` call needs to
-  create a new instance) varies from case to case, with the guarantee that as long as you keep
-  a reference to a particular instance, that instance will not expire, and it will participate
-  in all transactions initiated by the program.
-
-  Contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes
-  after you are done using them. If you want to hold on to the dataset, because you know that you will be using
-  it over and over again, you can indicate that in the ``configure()`` method of the program::
+  The ``@UseDataSet`` annotation is evaluated when your program is compiled. If you don't know the name of the
+  dataset at compile time |---| perhaps because it is given by the application configuration |---| you can still use the
+  ``useDatasets`` method in the ``configure`` method of your program. Note that this will then require knowledge of
+  the dataset at the time that the application is deployed, as that is when the ``configure`` method is executed::
 
     class MyFlowlet extends AbstractFlowlet {
 
@@ -125,8 +108,29 @@ There are two ways to use a dataset in a program:
   to be instantiated again. Note that you still need to call ``getDataset()`` every time you
   access it.
 
-  Alternatively, you can store a reference to the dataset in a member variable (similar to static
-  datasets, but assigned explicitly by you). That reference will protect the dataset from expiry::
+- **Dynamic Instantiation:** If you don't know the name of the dataset at deploy time (and hence you cannot use
+  static instantiation), or if you want to use a dataset only for a short time, you can dynamically
+  request an instance of the dataset through the program context::
+
+    class MyFlowlet extends AbstractFlowlet {
+      ...
+      void process(String key) {
+        KeyValueTable counters = getContext().getDataset("myCounters");
+        counters.increment(key.getBytes(), 1L);
+      }
+
+  This dataset is instantiated at runtime, in this case every time the method ``process`` is invoked. To reduce the
+  overhead of repeatedly instantiating the same dataset, the CDAP runtime system caches dynamic datasets internally.
+  By default, the cached instance of a dataset will not expire, and it will participate in all transactions initiated
+  by the program.
+
+  However, contrary to static datasets, dynamic datasets allow the release of the resources held by their Java classes
+  after you are done using them. You can do that by calling the ``discardDataset()`` method of the program context:
+  it marks the dataset to be closed and removed from all transactions as soon as the current transaction completes,
+  thereby releasing its resources.
+
+  If you know the dataset name at the time the program starts, you can store a reference to the dataset in a member
+  variable at that time (similar to static datasets, but assigned explicitly by you)::
 
     class MyFlowlet extends AbstractFlowlet {
 

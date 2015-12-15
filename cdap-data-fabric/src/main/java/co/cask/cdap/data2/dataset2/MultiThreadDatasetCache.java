@@ -20,7 +20,7 @@ import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.MetricsContext;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
-import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionContext;
 import co.cask.tephra.TransactionSystemClient;
@@ -57,7 +57,7 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
    */
   public MultiThreadDatasetCache(final SystemDatasetInstantiator instantiator,
                                  final TransactionSystemClient txClient,
-                                 final Id.Namespace namespace,
+                                 final NamespaceId namespace,
                                  final Map<String, String> runtimeArguments,
                                  @Nullable final MetricsContext metricsContext,
                                  @Nullable final Map<String, Map<String, String>> staticDatasets) {
@@ -101,6 +101,11 @@ public class MultiThreadDatasetCache extends DynamicDatasetCache {
   public <T extends Dataset> T getDataset(DatasetCacheKey key, boolean bypass)
     throws DatasetInstantiationException {
     return entryForCurrentThread().getDataset(key, bypass);
+  }
+
+  @Override
+  public void discardDataset(Dataset dataset) {
+    entryForCurrentThread().discardDataset(dataset);
   }
 
   @Override

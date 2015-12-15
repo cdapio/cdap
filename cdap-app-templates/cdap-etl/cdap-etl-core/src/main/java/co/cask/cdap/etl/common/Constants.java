@@ -16,6 +16,8 @@
 
 package co.cask.cdap.etl.common;
 
+import co.cask.cdap.api.data.schema.Schema;
+
 /**
  * Constants used in ETL Adapter.
  */
@@ -24,6 +26,13 @@ public final class Constants {
   public static final String ID_SEPARATOR = ":";
   public static final String PIPELINEID = "pipeline";
   public static final String STAGE_LOGGING_ENABLED = "stage.logging.enabled";
+  public static final Schema ERROR_SCHEMA = Schema.recordOf(
+    "error",
+    Schema.Field.of(ErrorDataset.ERRCODE, Schema.of(Schema.Type.INT)),
+    Schema.Field.of(ErrorDataset.ERRMSG, Schema.unionOf(Schema.of(Schema.Type.STRING),
+                                                                  Schema.of(Schema.Type.NULL))),
+    Schema.Field.of(ErrorDataset.INVALIDENTRY, Schema.of(Schema.Type.STRING))
+  );
 
   private Constants() {
     throw new AssertionError("Suppress default constructor for noninstantiability");

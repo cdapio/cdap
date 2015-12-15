@@ -58,6 +58,7 @@ import co.cask.cdap.internal.app.runtime.SimpleProgramOptions;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.cdap.test.XSlowTests;
 import co.cask.tephra.TransactionAware;
 import co.cask.tephra.TransactionExecutor;
@@ -148,7 +149,7 @@ public class MapReduceProgramRunnerTest {
     datasetCache = new SingleThreadDatasetCache(
       new SystemDatasetInstantiator(dsFramework, MapReduceProgramRunnerTest.class.getClassLoader(), null),
       injector.getInstance(TransactionSystemClient.class),
-      DefaultId.NAMESPACE, DatasetDefinition.NO_ARGUMENTS, null, null);
+      NamespaceId.DEFAULT, DatasetDefinition.NO_ARGUMENTS, null, null);
     metricStore = injector.getInstance(MetricStore.class);
 
     txService.startAndWait();

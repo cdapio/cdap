@@ -18,14 +18,14 @@ package co.cask.cdap.api.service.http;
 
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.ServiceDiscoverer;
-import co.cask.cdap.api.data.DatasetContext;
+import co.cask.cdap.api.data.DatasetProvider;
 import co.cask.cdap.api.plugin.PluginContext;
 
 /**
  * The context for a {@link HttpServiceHandler}. Currently contains methods to receive the
  * {@link HttpServiceHandlerSpecification} and the runtime arguments passed by the user.
  */
-public interface HttpServiceContext extends RuntimeContext, DatasetContext, ServiceDiscoverer, PluginContext {
+public interface HttpServiceContext extends RuntimeContext, DatasetProvider, ServiceDiscoverer, PluginContext {
 
   /**
    * @return the specification bound to this HttpServiceContext

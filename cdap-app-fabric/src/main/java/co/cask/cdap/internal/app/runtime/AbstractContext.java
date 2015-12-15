@@ -19,8 +19,8 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
+import co.cask.cdap.api.data.DatasetProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -39,6 +39,7 @@ import co.cask.cdap.data2.dataset2.SingleThreadDatasetCache;
 import co.cask.cdap.internal.app.program.ProgramTypeMetricTag;
 import co.cask.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.id.NamespaceId;
 import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -56,7 +57,7 @@ import javax.annotation.Nullable;
  * Base class for program runtime context
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
-  implements DatasetContext, RuntimeContext, PluginContext {
+  implements DatasetProvider, RuntimeContext, PluginContext {
 
   private final Program program;
   private final RunId runId;
@@ -103,9 +104,9 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     SystemDatasetInstantiator instantiator =
       new SystemDatasetInstantiator(dsFramework, program.getClassLoader(), owners);
     this.datasetCache = multiThreaded
-      ? new MultiThreadDatasetCache(instantiator, txClient, Id.Namespace.from(namespaceId),
+      ? new MultiThreadDatasetCache(instantiator, txClient, new NamespaceId(namespaceId),
                                     runtimeArguments, programMetrics, staticDatasets)
-      : new SingleThreadDatasetCache(instantiator, txClient, Id.Namespace.from(namespaceId),
+      : new SingleThreadDatasetCache(instantiator, txClient, new NamespaceId(namespaceId),
                                      runtimeArguments, programMetrics, staticDatasets);
     this.pluginInstantiator = pluginInstantiator;
     this.pluginContext = new DefaultPluginContext(pluginInstantiator, program.getId(),
@@ -165,6 +166,16 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   public <T extends Dataset> T getDataset(String name, Map<String, String> arguments)
     throws DatasetInstantiationException {
     return datasetCache.getDataset(name, arguments);
+  }
+
+  @Override
+  public void releaseDataset(Dataset dataset) {
+    datasetCache.releaseDataset(dataset);
+  }
+
+  @Override
+  public void discardDataset(Dataset dataset) {
+    datasetCache.discardDataset(dataset);
   }
 
   public String getNamespaceId() {

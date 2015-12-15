@@ -40,6 +40,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -129,9 +131,28 @@ public class FileSetWordCountTest extends TestBase {
     counts.clear();
     Location resultLocation = countsManager.get().getLocation("out.2");
     Assert.assertTrue(resultLocation.isDirectory());
+    List<String> parts = new LinkedList<>();
     for (Location child : resultLocation.list()) {
       if (child.getName().startsWith("part-")) { // only read part files, no check sums or done files
+        parts.add(child.getName());
         readCounts(child.getInputStream(), counts);
+      }
+    }
+    // "a b a" and "b a b" should yield "a":3, "b":3
+    Assert.assertEquals(2, counts.size());
+    Assert.assertEquals(new Integer(3), counts.get("a"));
+    Assert.assertEquals(new Integer(3), counts.get("b"));
+
+    // retrieve the counts through the service
+    counts.clear();
+    for (String part : parts) {
+      connection = (HttpURLConnection) new URL(serviceURL, "counts?path=out.2/" + part).openConnection();
+      try {
+        connection.setRequestMethod("GET");
+        Assert.assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
+        readCounts(connection.getInputStream(), counts);
+      } finally {
+        connection.disconnect();
       }
     }
     // "a b a" and "b a b" should yield "a":3, "b":3
