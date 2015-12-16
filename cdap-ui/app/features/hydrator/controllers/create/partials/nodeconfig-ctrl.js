@@ -70,11 +70,11 @@ class NodeConfigController {
     if (this.state.noproperty) {
       var artifactName = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name') || this.GLOBALS.artifact.default.name;
       var artifactVersion = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version') || this.GLOBALS.artifact.default.version;
-
+      var key = this.state.node.plugin.name + (this.GLOBALS.pluginConvert[this.state.node.type] !== this.GLOBALS.pluginConvert['transform']? '-' + this.state.node.type: '');
       this.PluginConfigFactory.fetch(
         artifactName,
         artifactVersion,
-        this.state.node.plugin.name
+        key
       )
         .then(
           (res) => {

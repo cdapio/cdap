@@ -111,12 +111,12 @@ class PluginConfigFactory {
           groupsConfig.outputSchema.implicitSchema = output.schema;
         } else {
           index = propertiesFromBackend.indexOf(output.name);
-          groupsConfig.outputSchema.isOutputSchemaExists = true;
-          groupsConfig.outputSchema.outputSchemaProperty = [output.name];
-          groupsConfig.outputSchema.schemaProperties = output['widget-attributes'];
-          groupsConfig.outputSchema.isOutputSchemaRequired = backendProperties[output.name].required;
           if (index !== -1) {
             propertiesFromBackend.splice(index, 1);
+            groupsConfig.outputSchema.isOutputSchemaExists = true;
+            groupsConfig.outputSchema.outputSchemaProperty = [output.name];
+            groupsConfig.outputSchema.schemaProperties = output['widget-attributes'];
+            groupsConfig.outputSchema.isOutputSchemaRequired = backendProperties[output.name].required;
           }
         }
       });
