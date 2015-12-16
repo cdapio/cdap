@@ -53,7 +53,7 @@
     </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
-      <artifactId>cdap-etl-common</artifactId>
+      <artifactId>cdap-formats</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

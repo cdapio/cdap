@@ -17,23 +17,36 @@
 {# Code to control sidebar table-of-contents on pages by settings in the field list at the top of the page:
 
 :hide-global-toc: true
-:titles_only-toc: true
-
+    This hides the table of contents completely from the left sidebar; default false
+    
+:titles-only-global-toc: true
+    This puts in the table of contents, but with titles only; no lower-level links; default false
+    
+:link-only-global-toc: true
+    This puts in the link to the Table of Contents page only; default false; works only if :hide-global-toc: true
 #}
 
-{%- set hideglobal_toc = '' %}
-{%- set hideglobal_toc_key = 'hide-global-toc' %}
-{%- set titles_only_toc = false %}
-{%- set titles_only_toc_key = 'titles-only-toc' %}
+{%- set hide_global_toc = false %}
+{%- set hide_global_toc_key = 'hide-global-toc' %}
+
+{%- set titles_only_global_toc = false %}
+{%- set titles_only_global_toc_key = 'titles-only-global-toc' %}
+
+{%- set link_only_global_toc = false %}
+{%- set link_only_global_toc_key = 'link-only-global-toc' %}
+
 {%- if meta is defined %}
-    {%- if hideglobal_toc_key in meta %}
-      {%- set hideglobal_toc = meta[hideglobal_toc_key] %}
+    {%- if hide_global_toc_key in meta %}
+      {%- set hide_global_toc = meta[hide_global_toc_key] == 'true' %}
     {%- endif %}
-    {%- if titles_only_toc_key in meta %}
-      {%- set titles_only_toc = meta[titles_only_toc_key] == 'true' %}
+    {%- if titles_only_global_toc_key in meta %}
+      {%- set titles_only_global_toc = meta[titles_only_global_toc_key] == 'true' %}
+    {%- endif %}
+    {%- if link_only_global_toc_key in meta %}
+      {%- set link_only_global_toc = meta[link_only_global_toc_key] == 'true' %}
     {%- endif %}
 {%- endif %}
-{%- if not hideglobal_toc %}
+{%- if not hide_global_toc or link_only_global_toc %}
   {%- if html_short_title_toc|length == 0 %}
     {% set title_br = '' %}
   {%- elif html_short_title_toc|length >= 20 %}
@@ -41,8 +54,12 @@
   {%- else %}
     {% set title_br = ':' %}
   {%- endif %}
-<h3 class="pagenavtitle"><a href="{{ pathto(master_doc) }}">{{ html_short_title_toc }}{{ title_br }} Table&nbsp;of&nbsp;Contents</a></h3>
-<nav class="pagenav">
-{{ toctree(titles_only=titles_only_toc) }} 
-</nav>
+  <h3 class="pagenavtitle"><a href="{{ pathto(master_doc) }}">{{ html_short_title_toc }}{{ title_br }} Table&nbsp;of&nbsp;Contents</a></h3>
+  {%- if link_only_global_toc %}
+    <br>    
+  {%- else %}
+    <nav class="pagenav">
+    {{ toctree(titles_only=titles_only_global_toc) }} 
+    </nav>
+  {%- endif %}
 {%- endif %}

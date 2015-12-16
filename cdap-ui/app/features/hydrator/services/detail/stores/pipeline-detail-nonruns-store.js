@@ -95,8 +95,7 @@ angular.module(PKG.name + '.feature.hydrator')
       var nodes = this.getNodes();
       var match = nodes.filter( node => node.name === nodeId);
       match = (match.length? match[0]: null);
-      match.plugin.type = match.type;
-      return match.plugin;
+      return match;
     };
     this.getNode = this.getPluginObject;
     this.init = function(app) {

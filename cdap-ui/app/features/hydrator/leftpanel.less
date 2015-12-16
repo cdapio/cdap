@@ -235,4 +235,26 @@ body.theme-cdap.state-hydrator-create {
       vertical-align: text-bottom;
     }
   }
+
+  .my-cdap-popover {
+    padding: 0;
+    // This is for having the arrow always on the top left corner of the tooltip.
+    // We need this because the tooltip is a dynamic one and the heigh of it will change.
+    .arrow {
+      top: 30px !important;
+    }
+    .popover-content {
+      padding: 5px;
+      .list-group {
+        margin: 0;
+        .list-group-item {
+          padding: 4px 4px;
+          border: 0;
+          h5,h6 {
+            margin:0;
+          }
+        }
+      }
+    }
+  }
 }

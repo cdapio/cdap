@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "SQS realtime source",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Region",
+          "name": "region"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Access ID",
+          "name": "accessID"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Access Key",
+          "name": "accessKey"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Queue Name",
+          "name": "queueName"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Endpoint",
+          "name": "endpoint"
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}

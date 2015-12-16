@@ -1,0 +1,37 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "Projection Configuration",
+      "properties": [
+        {
+          "widget-type": "keyvalue",
+          "label": "Convert",
+          "name": "convert",
+          "widget-attributes": {
+            "showDelimiter": "false"
+          }
+        },
+        {
+          "widget-type": "csv",
+          "label": "Fields to drop",
+          "name": "drop",
+          "widget-attributes": {
+            "delimiter": ","
+          }
+        },
+        {
+          "widget-type": "keyvalue",
+          "label": "Fields to rename",
+          "name": "rename",
+          "widget-attributes": {
+            "showDelimiter": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}

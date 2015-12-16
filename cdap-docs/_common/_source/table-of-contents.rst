@@ -21,4 +21,3 @@ CDAP Documentation Table of Contents
     Examples, Guides, and Tutorials </examples-manual/index>
     Reference Manual </reference-manual/index>
     FAQs </faqs/index>
-    

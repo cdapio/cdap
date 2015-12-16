@@ -60,16 +60,16 @@ class HydratorCreateCanvasController {
     if (!nodeId) {
       return;
     }
-    var plugin;
+    var pluginNode;
     var nodeFromNodesStore;
-    var nodeFromConfigStore = this.ConfigStore.getNodes().filter( node => node.id === nodeId );
+    var nodeFromConfigStore = this.ConfigStore.getNodes().filter( node => node.name === nodeId );
     if (nodeFromConfigStore.length) {
-      plugin = nodeFromConfigStore[0];
+      pluginNode = nodeFromConfigStore[0];
     } else {
-      nodeFromNodesStore = this.NodesStore.getNodes().filter(node => node.id === nodeId);
-      plugin = nodeFromNodesStore[0];
+      nodeFromNodesStore = this.NodesStore.getNodes().filter(node => node.name === nodeId);
+      pluginNode = nodeFromNodesStore[0];
     }
-    this.PipelineNodeConfigActionFactory.choosePlugin(plugin);
+    this.PipelineNodeConfigActionFactory.choosePlugin(pluginNode);
   }
 
   deleteNode() {

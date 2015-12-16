@@ -15,12 +15,14 @@
  */
 
 class ConfigActionsFactory {
-  constructor(ConfigDispatcher, myPipelineApi, $state, ConfigStore, mySettings, ConsoleActionsFactory) {
+  constructor(ConfigDispatcher, myPipelineApi, $state, ConfigStore, mySettings, ConsoleActionsFactory, HydratorErrorFactory, EventPipe) {
     this.ConfigStore = ConfigStore;
     this.mySettings = mySettings;
     this.$state = $state;
     this.myPipelineApi = myPipelineApi;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
+    this.HydratorErrorFactory = HydratorErrorFactory;
+    this.EventPipe = EventPipe;
 
     this.dispatcher = ConfigDispatcher.getDispatcher();
   }
@@ -58,6 +60,11 @@ class ConfigActionsFactory {
     this.dispatcher.dispatch('onSetInstance', instance);
   }
   publishPipeline() {
+    this.ConsoleActionsFactory.resetMessages();
+    var error = this.HydratorErrorFactory.isModelValid();
+
+    if (!error) { return; }
+    this.EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
 
     let removeFromUserDrafts = (adapterName) => {
       this.mySettings
@@ -78,7 +85,10 @@ class ConfigActionsFactory {
             }
           )
           .then(
-            () => this.$state.go('hydrator.list')
+            () => {
+              this.EventPipe.emit('hideLoadingIcon.immediate');
+              this.$state.go('hydrator.list');
+            }
           );
     };
 
@@ -94,6 +104,7 @@ class ConfigActionsFactory {
       .then(
         removeFromUserDrafts.bind(this, config.name),
         (err) => {
+          this.EventPipe.emit('hideLoadingIcon.immediate');
           this.ConsoleActionsFactory.addMessage({
             type: 'error',
             content: err
@@ -106,6 +117,6 @@ class ConfigActionsFactory {
   }
 }
 
-ConfigActionsFactory.$inject = ['ConfigDispatcher', 'myPipelineApi', '$state', 'ConfigStore', 'mySettings', 'ConsoleActionsFactory'];
+ConfigActionsFactory.$inject = ['ConfigDispatcher', 'myPipelineApi', '$state', 'ConfigStore', 'mySettings', 'ConsoleActionsFactory', 'HydratorErrorFactory', 'EventPipe'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigActionsFactory', ConfigActionsFactory);

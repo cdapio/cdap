@@ -64,6 +64,7 @@ body {
     }
 
     nav {
+      position: relative;
       text-align: center;
       ul.navbar-nav {
         float: none;
@@ -99,6 +100,50 @@ body {
           }
         }
       }
+      ul.navbar-namespace {
+        @media (max-width: @screen-xs-max) {
+          display: none;
+        }
+        margin: 0;
+        padding: 0;
+        position: absolute;
+        top: 14px;
+        right: 100px;
+        li.dropdown {
+          list-style-type: none;
+          &:hover {
+            cursor: pointer;
+          }
+          a.hy-dropdown-toggle {
+            display: block;
+            min-width: 125px;
+            padding: 6px 10px;
+            span:first-child {
+              font-weight: 500;
+              padding-right: 15px;
+            }
+            span.fa-angle-down {
+              line-height: 18px;
+            }
+          }
+        }
+
+        ul.dropdown-menu {
+          margin-top: 2px;
+          max-height: 360px;
+          overflow-y: scroll;
+          padding: 0;
+          z-index: 9999;
+          li a {
+            font-weight: 500;
+            padding-top: 8px;
+            padding-bottom: 8px;
+            &:focus {
+              outline: 0;
+            }
+          }
+        }
+      }
     }
 
     // TODO: Remove?
@@ -124,6 +169,43 @@ body {
               a {
                 background-color: transparent;
                 border-bottom: 4px solid #397cf1;
+                color: white;
+              }
+            }
+          }
+        }
+        ul.navbar-namespace {
+          li.dropdown {
+            a.hy-dropdown-toggle {
+              background-color: white;
+              color: #666;
+              .border-radius(4px);
+              .transition(all 0.2s ease);
+              &:hover, &:focus {
+                text-decoration: none;
+              }
+            }
+            &.open {
+              a.hy-dropdown-toggle {
+                background-color: rgb(111, 111, 113);
+                color: white;
+              }
+              ul.dropdown-menu {
+                .border-radius(0);
+                @box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+                .box-shadow(@box-shadow);
+              }
+            }
+          }
+
+          ul.dropdown-menu {
+            border: 0;
+            li a {
+              border: 1px solid transparent;
+              border-top: 1px solid #ddd;
+              &:hover {
+                background-color: @cdap-header;
+                border: 1px solid @cdap-header;
                 color: white;
               }
             }

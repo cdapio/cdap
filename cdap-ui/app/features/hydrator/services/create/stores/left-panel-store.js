@@ -15,11 +15,18 @@
  */
 
 class LeftPanelStore {
-  constructor(LeftPanelDispatcher, PluginsDispatcher, MyDAGFactory) {
+  constructor(LeftPanelDispatcher, PluginsDispatcher, MyDAGFactory, GLOBALS, ConfigStore) {
     this.state = {};
     this.setDefaults();
     this.MyDAGFactory = MyDAGFactory;
     this.changeListeners = [];
+    this.sourcesToVersionMap = {};
+    this.transformsToVersionMap = {};
+    this.sinksToVersionMap = {};
+    this.popoverTemplate = '/assets/features/hydrator/templates/create/popovers/leftpanel-plugin-popover.html';
+    this.GLOBALS = GLOBALS;
+    this.ConfigStore = ConfigStore;
+
     let dispatcher = LeftPanelDispatcher.getDispatcher();
     dispatcher.register('onLeftPanelToggled', this.setState.bind(this));
     dispatcher.register('toggleLeftPanelState', this.togglePanelState.bind(this));
@@ -55,12 +62,33 @@ class LeftPanelStore {
     this.emitChange();
   }
 
-  setSources(plugins, type) {
-    this.state.plugins.sources = plugins.map( plugin => {
+  uniquePluginFilter(typeMap) {
+    return (plugin) => {
+      typeMap[plugin.name] = typeMap[plugin.name] || [];
+      if (typeMap[plugin.name].length) {
+        typeMap[plugin.name].push(plugin);
+        return false;
+      }
+      typeMap[plugin.name].push(plugin);
+      return true;
+    };
+  }
+
+  mapPluginsWithMoreInfo(type, typeMap) {
+    return (plugin) => {
       plugin.type = type;
       plugin.icon = this.MyDAGFactory.getIcon(plugin.name);
+      plugin.template = this.popoverTemplate;
+      plugin.defaultVersion = typeMap[plugin.name][0].artifact.version;
+      plugin.allVersions = typeMap[plugin.name].map( (plugin) => plugin.artifact.version);
       return plugin;
-    });
+    };
+  }
+  setSources(plugins, type) {
+    this.sourcesToVersionMap = {};
+    this.state.plugins.sources = plugins.
+      filter(this.uniquePluginFilter(this.sourcesToVersionMap))
+      .map(this.mapPluginsWithMoreInfo(type, this.sourcesToVersionMap));
     this.emitChange();
   }
   getSources() {
@@ -68,11 +96,8 @@ class LeftPanelStore {
   }
 
   setTransforms(plugins, type) {
-    this.state.plugins.transforms = plugins.map( plugin => {
-      plugin.type = type;
-      plugin.icon = this.MyDAGFactory.getIcon(plugin.name);
-      return plugin;
-    });
+    this.transformsToVersionMap = {};
+    this.state.plugins.transforms = plugins.filter(this.uniquePluginFilter(this.transformsToVersionMap)).map(this.mapPluginsWithMoreInfo(type, this.transformsToVersionMap));
     this.emitChange();
   }
   getTransforms() {
@@ -80,18 +105,41 @@ class LeftPanelStore {
   }
 
   setSinks(plugins, type) {
-    this.state.plugins.sinks = plugins.map( plugin => {
-      plugin.type = type;
-      plugin.icon = this.MyDAGFactory.getIcon(plugin.name);
-      return plugin;
-    });
+    this.sinksToVersionMap = {};
+    this.state.plugins.sinks = plugins.filter(this.uniquePluginFilter(this.sinksToVersionMap)).map(this.mapPluginsWithMoreInfo(type, this.sinksToVersionMap));
     this.emitChange();
   }
   getSinks() {
     return this.state.plugins.sinks;
   }
+  getSpecificPluginVersion(plugin) {
+    var typeMap;
+    var pluginTypes = this.GLOBALS.pluginTypes[this.ConfigStore.getAppType()];
+    switch(plugin.type) {
+      case pluginTypes.source:
+        typeMap = this.sourcesToVersionMap;
+        break;
+      case pluginTypes.sink:
+        typeMap = this.sinksToVersionMap;
+        break;
+      case pluginTypes.transform:
+        typeMap = this.transformsToVersionMap;
+        break;
+    }
+    if (!typeMap) {
+      return;
+    }
+    return typeMap[plugin.name].filter( plug => {
+      if (plugin.defaultVersion === plug.artifact.version) {
+        plug.icon = plugin.icon;
+        plug.type = plugin.type;
+        return true;
+      }
+      return false;
+    })[0];
+  }
 }
 
-LeftPanelStore.$inject = ['LeftPanelDispatcher', 'PluginsDispatcher', 'MyDAGFactory'];
+LeftPanelStore.$inject = ['LeftPanelDispatcher', 'PluginsDispatcher', 'MyDAGFactory', 'GLOBALS', 'ConfigStore'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('LeftPanelStore', LeftPanelStore);
