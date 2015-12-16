@@ -113,6 +113,7 @@ import java.util.concurrent.TimeoutException;
 @Category(SlowTests.class)
 public class TestFrameworkTestRun extends TestFrameworkTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestFrameworkTestRun.class);
+  private static final int MAX_SERVICE_CALL_ATTEMPTS = 5;
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -1251,28 +1252,52 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     Assert.assertTrue(count == Bytes.toLong(records.read("PUBLIC")));
   }
 
-  private String callServiceGet(URL serviceURL, String path) throws IOException {
-    HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
-    try (
-      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
-    ) {
-      Assert.assertEquals(200, connection.getResponseCode());
-      return reader.readLine();
+  private String callServiceGet(URL serviceURL, String path) throws IOException, InterruptedException {
+    int attempts = 0;
+    while (attempts < MAX_SERVICE_CALL_ATTEMPTS) {
+
+      HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
+      try (
+        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
+      ) {
+        LOG.warn("Received {}", connection.getResponseCode());
+        if (connection.getResponseCode() == 200) {
+          return reader.readLine();
+        }
+
+        attempts++;
+        Thread.sleep(1000);
+      }
     }
+
+    Assert.fail(String.format("Failed to successfully call service GET within %d attempts", MAX_SERVICE_CALL_ATTEMPTS));
+    return null;
   }
 
-  private String callServicePut(URL serviceURL, String path, String body) throws IOException {
-    HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
-    connection.setDoOutput(true);
-    connection.setRequestMethod("PUT");
-    try (OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream())) {
-      out.write(body);
+  private String callServicePut(URL serviceURL, String path, String body) throws IOException, InterruptedException {
+    int attempts = 0;
+    while (attempts < MAX_SERVICE_CALL_ATTEMPTS) {
+
+      HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
+      connection.setDoOutput(true);
+      connection.setRequestMethod("PUT");
+      try (OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream())) {
+        out.write(body);
+      }
+      try (
+        BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
+      ) {
+        LOG.warn("Received {}", connection.getResponseCode());
+        if (connection.getResponseCode() == 200) {
+          return reader.readLine();
+        }
+
+        attempts++;
+        Thread.sleep(1000);
+      }
     }
-    try (
-      BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), Charsets.UTF_8))
-    ) {
-      Assert.assertEquals(200, connection.getResponseCode());
-      return reader.readLine();
-    }
+
+    Assert.fail(String.format("Failed to successfully call service PUT within %d attempts", MAX_SERVICE_CALL_ATTEMPTS));
+    return null;
   }
 }
