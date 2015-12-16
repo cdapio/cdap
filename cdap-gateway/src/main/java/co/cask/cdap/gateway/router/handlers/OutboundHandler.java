@@ -48,7 +48,17 @@ public class OutboundHandler extends SimpleChannelUpstreamHandler {
     Channels.write(inboundChannel, msg).addListener(new ChannelFutureListener() {
       @Override
       public void operationComplete(ChannelFuture future) throws Exception {
-        OutboundHandler.super.messageReceived(ctx, e);
+        ctx.getPipeline().execute(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              OutboundHandler.super.messageReceived(ctx, e);
+            } catch (Exception ex) {
+              LOG.error("Exception while writing to pipeline {}", ctx.getChannel(), ex);
+              HttpRequestHandler.closeOnFlush(e.getChannel());
+            }
+          }
+        });
       }
     });
   }
