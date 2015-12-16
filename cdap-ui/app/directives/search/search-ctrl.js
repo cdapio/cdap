@@ -25,8 +25,9 @@ angular.module(PKG.name + '.commons')
       }
     };
     this.escapeSearch = function () {
-      this.searchTxt = '';
-      this.displaySearchBox = false;
+      if (this.searchTxt === '') {
+        this.displaySearchBox = false;
+      }
     };
 
   });
