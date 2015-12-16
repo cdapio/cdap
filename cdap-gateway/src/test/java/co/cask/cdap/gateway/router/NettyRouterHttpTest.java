@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,11 +28,13 @@ import com.google.common.collect.Maps;
 import com.google.common.net.InetAddresses;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.apache.commons.net.DefaultSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Map;
+import javax.net.SocketFactory;
 
 /**
  * Tests Netty Router running on HTTP.
@@ -57,6 +59,11 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
   @Override
   protected DefaultHttpClient getHTTPClient() throws Exception {
     return new DefaultHttpClient();
+  }
+
+  @Override
+  protected SocketFactory getSocketFactory() throws Exception {
+    return new DefaultSocketFactory();
   }
 
   private static class HttpRouterService extends RouterService {
@@ -84,6 +91,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
       cConf.setInt(Constants.Router.ROUTER_PORT, 0);
       cConf.setBoolean(Constants.Router.WEBAPP_ENABLED, true);
       cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
+      cConf.setInt(Constants.Router.CONNECTION_TIMEOUT_SECS, CONNECTION_IDLE_TIMEOUT_SECS);
       router =
         new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
                         new RouterServiceLookup((DiscoveryServiceClient) discoveryService,

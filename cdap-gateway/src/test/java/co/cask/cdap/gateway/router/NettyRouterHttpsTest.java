@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,7 +43,9 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.Map;
+import javax.net.SocketFactory;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -106,6 +108,28 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
     return new DefaultHttpClient(cm);
   }
 
+  @Override
+  protected SocketFactory getSocketFactory() throws Exception {
+    SSLContext sc = SSLContext.getInstance("TLS");
+    sc.init(null, new TrustManager[]{new X509TrustManager() {
+      @Override
+      public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+      }
+
+      @Override
+      public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+      }
+
+      @Override
+      public X509Certificate[] getAcceptedIssuers() {
+        return new X509Certificate[0];
+      }
+    }}, new java.security.SecureRandom());
+    return sc.getSocketFactory();
+  }
+
   private static class HttpsRouterService extends RouterService {
     private final String hostname;
     private final DiscoveryService discoveryService;
@@ -116,7 +140,6 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
     private HttpsRouterService(String hostname, DiscoveryService discoveryService) {
       this.hostname = hostname;
       this.discoveryService = discoveryService;
-
     }
 
     @Override
@@ -137,6 +160,7 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
       cConf.setInt(Constants.Router.ROUTER_PORT, 0);
       cConf.setBoolean(Constants.Router.WEBAPP_ENABLED, true);
       cConf.setInt(Constants.Router.WEBAPP_PORT, 0);
+      cConf.setInt(Constants.Router.CONNECTION_TIMEOUT_SECS, CONNECTION_IDLE_TIMEOUT_SECS);
 
       sConf.set(Constants.Security.Router.SSL_KEYSTORE_PATH, certUrl.getPath());
 
