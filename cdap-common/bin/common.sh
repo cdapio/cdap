@@ -45,7 +45,7 @@ get_conf() {
       UBUNTU) die "Cannot locate xmllint, is libxml2-utils installed?" ;;
     esac
     # If we get here, die
-    die "Cannot locate xmllint, are XML tools installed?" ;;
+    die "Cannot locate xmllint, are XML tools installed?"
   }
   # Get property from file, return last result, if multiple are returned
   __property="cat //configuration/property[name='${__pn}']/value[text()]"
