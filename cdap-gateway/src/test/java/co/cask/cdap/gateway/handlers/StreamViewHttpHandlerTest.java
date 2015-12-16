@@ -65,9 +65,8 @@ public class StreamViewHttpHandlerTest extends GatewayTestBase {
 
     List<String> views = execute(
       200, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views")).build(),
-      new TypeToken<List<String>>() {
-      }.getType());
-    Assert.assertEquals(ImmutableList.of(), views);
+      new TypeToken<List<String>>() { }.getType());
+    Assert.assertEquals(ImmutableList.<String>of(), views);
 
     Schema schema = Schema.recordOf("foo", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
     FormatSpecification formatSpec = new FormatSpecification(
@@ -120,7 +119,7 @@ public class StreamViewHttpHandlerTest extends GatewayTestBase {
     views = execute(
       200, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views")).build(),
       new TypeToken<List<String>>() { }.getType());
-    Assert.assertEquals(ImmutableList.of(), views);
+    Assert.assertEquals(ImmutableList.<String>of(), views);
 
     // Deleting a stream should also delete the associated views
     execute(200, HttpRequest.delete(resolve("/v3/namespaces/default/streams/foo")).build());
