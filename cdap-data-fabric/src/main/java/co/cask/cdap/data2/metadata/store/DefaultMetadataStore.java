@@ -23,9 +23,9 @@ import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
+import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
-import co.cask.cdap.data2.metadata.dataset.MetadataHistoryEntry;
 import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
@@ -467,18 +467,18 @@ public class DefaultMetadataStore implements MetadataStore {
   @Override
   public Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope, final Set<Id.NamespacedId> entityIds,
                                                    final long timeMillis) {
-    Set<MetadataHistoryEntry> metadataHistoryEntries =
-      execute(new TransactionExecutor.Function<MetadataDataset, Set<MetadataHistoryEntry>>() {
+    Set<Metadata> metadataHistoryEntries =
+      execute(new TransactionExecutor.Function<MetadataDataset, Set<Metadata>>() {
         @Override
-        public Set<MetadataHistoryEntry> apply(MetadataDataset input) throws Exception {
+        public Set<Metadata> apply(MetadataDataset input) throws Exception {
           return input.getSnapshotBeforeTime(entityIds, timeMillis);
         }
       }, scope);
 
     ImmutableSet.Builder<MetadataRecord> builder = ImmutableSet.builder();
-    for (MetadataHistoryEntry metadataHistoryEntry : metadataHistoryEntries) {
-      builder.add(new MetadataRecord(metadataHistoryEntry.getEntityId(), scope,
-                                     metadataHistoryEntry.getProperties(), metadataHistoryEntry.getTags()));
+    for (Metadata metadata : metadataHistoryEntries) {
+      builder.add(new MetadataRecord(metadata.getEntityId(), scope,
+                                     metadata.getProperties(), metadata.getTags()));
     }
     return builder.build();
   }

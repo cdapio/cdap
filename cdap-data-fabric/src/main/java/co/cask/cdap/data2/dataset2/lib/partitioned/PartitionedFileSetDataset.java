@@ -40,9 +40,6 @@ import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSetArguments;
 import co.cask.cdap.api.dataset.lib.Partitioning;
 import co.cask.cdap.api.dataset.lib.Partitioning.FieldType;
-import co.cask.cdap.api.dataset.lib.partitioned.ConcurrentPartitionConsumer;
-import co.cask.cdap.api.dataset.lib.partitioned.ConsumerConfiguration;
-import co.cask.cdap.api.dataset.lib.partitioned.StatePersistor;
 import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
@@ -65,6 +62,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -275,7 +274,9 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
     List<PartitionDetail> partitions = Lists.newArrayList();
 
-    for (Long txId : noLongerInProgress) {
+    Iterator<Long> iter = noLongerInProgress.iterator();
+    while (iter.hasNext()) {
+      Long txId = iter.next();
       if (partitions.size() >= limit) {
         break;
       }
@@ -287,7 +288,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
       }
       // remove the txIds as they are added to the partitions list already
       // if they're not removed, they will be persisted in the state for the next scan
-      noLongerInProgress.remove(txId);
+      iter.remove();
     }
 
     // exclusive scan end, to be used as the start for a next call to consumePartitions
@@ -327,7 +328,7 @@ public class PartitionedFileSetDataset extends AbstractDataset implements Partit
 
   // returns the set of Longs that are in oldLongs, but not in newLongs (oldLongs - newLongs)
   private Set<Long> setDiff(List<Long> oldLongs, long[] newLongs) {
-    Set<Long> oldLongsSet = Sets.newHashSet(oldLongs);
+    Set<Long> oldLongsSet = new HashSet<>(oldLongs);
     for (long newLong : newLongs) {
       oldLongsSet.remove(newLong);
     }

@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "Log Parser Transform",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Log Format",
+          "name": "logFormat"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Input Name",
+          "name": "inputName"
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}

@@ -15,12 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailMetricsController', function(DetailRunsStore, MetricsStore, PipelineDetailMetricsActionFactory, $scope) {
+  .controller('HydratorDetailMetricsController', function(DetailRunsStore, MetricsStore, PipelineDetailMetricsActionFactory, $scope, NodesStore) {
 
     var currentRunId;
     this.setState = function() {
       this.state = {
-        metrics: MetricsStore.getMetrics()
+        metrics: MetricsStore.getMetrics(),
+        nodes: NodesStore.getNodesAsObjects()
       };
     };
 

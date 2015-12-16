@@ -6,39 +6,72 @@
   },
   "config": {
     "source": {
-      "name": "Twitter",
-      "label": "Twitter",
-      "properties": {
-        "AccessToken": "",
-        "AccessTokenSecret": "",
-        "ConsumerSecret": "",
-        "ConsumerKey": ""
+      "name": "Twitter-5339cbf1-0f54-47ff-bd0a-8110b0cc1c4f",
+      "plugin": {
+        "name": "Twitter",
+        "label": "Twitter",
+        "properties": {
+          "AccessToken": "",
+          "AccessTokenSecret": "",
+          "ConsumerSecret": "",
+          "ConsumerKey": ""
+        },
+        "artifact": {
+          "name": "cdap-etl-lib",
+          "scope": "SYSTEM",
+          "version": "3.3.0-SNAPSHOT"
+        }
       }
     },
     "sinks": [
       {
-        "name": "Stream",
-        "label": "Stream",
-        "properties": {
-          "name": "",
-          "headers.field": "header",
-          "body.field": "body"
+        "name": "Stream-1afa36c2-20a8-44a6-b582-2aea9496578e",
+        "plugin": {
+          "name": "Stream",
+          "label": "Stream",
+          "properties": {
+            "name": "",
+            "headers.field": "header",
+            "body.field": "body"
+          },
+          "artifact": {
+            "name": "cdap-etl-lib",
+            "scope": "SYSTEM",
+            "version": "3.3.0-SNAPSHOT"
+          }
         }
       }
     ],
     "transforms": [
       {
-        "name": "Script",
-        "label": "Transform to Stream",
-        "properties": {
-          "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"body\",\"type\":\"string\"}]}",
-          "script": "function transform(input) {\n   if (input.source !== null) {\n     input.source = 'No-Source';     \n   }\n   \n   var body = [ input.id, input.message, input.lang, input.favCount, input.rtCount, input.source]\n   \n   return {\n       headers : { id : input.id + '' , lang : input.lang},\n       body : body.join('\\t')\n   } \n}"
+        "name": "Script-274c4151-f080-41f8-a50d-58a4299794f2",
+        "plugin": {
+          "name": "Script",
+          "label": "Transform to Stream",
+          "properties": {
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"headers\",\"type\":{\"type\":\"map\",\"keys\":\"string\",\"values\":\"string\"}},{\"name\":\"body\",\"type\":\"string\"}]}",
+            "script": "function transform(input) {\n   if (input.source !== null) {\n     input.source = 'No-Source';     \n   }\n   \n   var body = [ input.id, input.message, input.lang, input.favCount, input.rtCount, input.source]\n   \n   return {\n       headers : { id : input.id + '' , lang : input.lang},\n       body : body.join('\\t')\n   } \n}"
+          },
+          "artifact": {
+            "name": "cdap-etl-lib",
+            "scope": "SYSTEM",
+            "version": "3.3.0-SNAPSHOT"
+          }
         }
       }
     ],
-    "instances": 1
+    "instances": 1,
+    "connections": [
+      {
+        "from": "Twitter-5339cbf1-0f54-47ff-bd0a-8110b0cc1c4f",
+        "to": "Script-274c4151-f080-41f8-a50d-58a4299794f2"
+      },
+      {
+        "from": "Script-274c4151-f080-41f8-a50d-58a4299794f2",
+        "to": "Stream-1afa36c2-20a8-44a6-b582-2aea9496578e"
+      }
+    ]
   },
   "description": "Ingest real-time Twitter Stream into a stream",
   "name": "TwitterToStream"
 }
-

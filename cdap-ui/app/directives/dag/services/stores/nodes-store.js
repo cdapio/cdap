@@ -15,11 +15,12 @@
  */
 
 class NodesStore {
-  constructor(NodesDispatcher, uuid) {
+  constructor(NodesDispatcher, uuid, GLOBALS) {
     this.state = {};
     this.setDefaults();
     this.changeListeners = [];
     this.uuid = uuid;
+    this.GLOBALS = GLOBALS;
 
     let dispatcher = NodesDispatcher.getDispatcher();
     dispatcher.register('onNodeAdd', this.addNode.bind(this));
@@ -32,13 +33,25 @@ class NodesStore {
     dispatcher.register('onCreateGraphFromConfig', this.setNodesAndConnections.bind(this));
     dispatcher.register('onNodeSelectReset', this.resetActiveNode.bind(this));
     dispatcher.register('onNodeUpdate', this.updateNode.bind(this));
+    dispatcher.register('onAddSourceCount', this.addSourceCount.bind(this));
+    dispatcher.register('onAddSinkCount', this.addSinkCount.bind(this));
+    dispatcher.register('onAddTransformCount', this.addTransformCount.bind(this));
+    dispatcher.register('onResetPluginCount', this.resetPluginCount.bind(this));
+    dispatcher.register('onSetCanvasPanning', this.setCanvasPanning.bind(this));
   }
 
   setDefaults() {
     this.state = {
       nodes: [],
       connections: [],
-      activeNodeId: null
+      activeNodeId: null,
+      currentSourceCount: 0,
+      currentTransformCount: 0,
+      currentSinkCount: 0,
+      canvasPanning: {
+        top: 0,
+        left: 0
+      }
     };
   }
 
@@ -54,15 +67,58 @@ class NodesStore {
     this.changeListeners.forEach( callback => callback() );
   }
 
-  addNode(config) {
-    if (!config.id) {
-      config.id = (config.label || config.name) + '-' + this.uuid.v4();
+  addSourceCount() {
+    this.state.currentSourceCount++;
+  }
+  addTransformCount() {
+    this.state.currentTransformCount++;
+  }
+  addSinkCount() {
+    this.state.currentSinkCount++;
+  }
+  resetSourceCount() {
+    this.state.currentSourceCount = 0;
+  }
+  resetTransformCount() {
+    this.state.currentTransformCount = 0;
+  }
+  resetSinkCount() {
+    this.state.currentSinkCount = 0;
+  }
+
+  resetPluginCount() {
+    this.state.currentSourceCount = 0;
+    this.state.currentTransformCount = 0;
+    this.state.currentSinkCount = 0;
+  }
+
+  setCanvasPanning(panning) {
+    this.state.canvasPanning.top = panning.top;
+    this.state.canvasPanning.left = panning.left;
+  }
+
+  getSourceCount() {
+    return this.state.currentSourceCount;
+  }
+  getTransformCount() {
+    return this.state.currentTransformCount;
+  }
+  getSinkCount() {
+    return this.state.currentSinkCount;
+  }
+  getCanvasPanning() {
+    return this.state.canvasPanning;
+  }
+
+  addNode(nodeConfig) {
+    if (!nodeConfig.name) {
+      nodeConfig.name = nodeConfig.plugin.label + '-' + this.uuid.v4();
     }
-    this.state.nodes.push(config);
+    this.state.nodes.push(nodeConfig);
     this.emitChange();
   }
   updateNode(nodeId, config) {
-    var matchNode = this.state.nodes.filter( node => node.id === nodeId);
+    var matchNode = this.state.nodes.filter( node => node.name === nodeId);
     if (!matchNode.length) {
       return;
     }
@@ -71,7 +127,18 @@ class NodesStore {
     this.emitChange();
   }
   removeNode(node) {
-    let match = this.state.nodes.filter(n => n.id === node);
+    let match = this.state.nodes.filter(n => n.name === node);
+    switch (this.GLOBALS.pluginConvert[match[0].type]) {
+      case 'source':
+        this.resetSourceCount();
+        break;
+      case 'transform':
+        this.resetTransformCount();
+        break;
+      case 'sink':
+        this.resetSinkCount();
+        break;
+    }
     this.state.nodes.splice(this.state.nodes.indexOf(match[0]), 1);
     this.state.activeNodeId = null;
     this.emitChange();
@@ -79,10 +146,18 @@ class NodesStore {
   getNodes() {
     return this.state.nodes;
   }
+  getNodesAsObjects() {
+    var obj = {};
+    angular.forEach(this.state.nodes, function (node) {
+      obj[node.id] = node;
+    });
+    return obj;
+  }
+
   setNodes(nodes) {
     nodes.forEach(node => {
-      if (!node.id) {
-        node.id = node.name || (node.label + '-' + this.uuid.v4());
+      if (!node.name) {
+        node.name = node.label + '-' + this.uuid.v4();
       }
     });
     this.state.nodes = nodes;
@@ -129,6 +204,6 @@ class NodesStore {
 
 }
 
-NodesStore.$inject = ['NodesDispatcher', 'uuid'];
+NodesStore.$inject = ['NodesDispatcher', 'uuid', 'GLOBALS'];
 angular.module(`${PKG.name}.commons`)
   .service('NodesStore', NodesStore);

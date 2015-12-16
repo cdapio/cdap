@@ -23,6 +23,8 @@ import co.cask.cdap.proto.ProgramType;
 /**
  * Helper methods for keys of {@link MetadataDataset}.
  */
+// Note: these methods were refactored from MetadataDataset class. Once CDAP-3657 is fixed, these methods will need
+// to be cleaned up CDAP-4291
 public class KeyHelper {
   public static void addNamespaceIdToKey(MDSKey.Builder builder, Id.NamespacedId namespacedId) {
     String type = getTargetType(namespacedId);

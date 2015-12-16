@@ -23,7 +23,9 @@ angular.module(PKG.name + '.services')
 
         pluginFetchBase = '/namespaces/:namespace/artifacts/:pipelineType/versions/:version/extensions/:extensionType',
         pluginsFetchPath = pluginFetchBase + '?scope=system',
-        pluginDetailFetch = pluginFetchBase + '/plugins/:pluginName?scope=system';
+        pluginDetailFetch = pluginFetchBase + '/plugins/:pluginName?scope=system',
+        artifactPropertiesPath = '/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties?scope=system';
+
 
     return $resource(
       '',
@@ -40,6 +42,8 @@ angular.module(PKG.name + '.services')
         fetchSourceProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
         fetchSinkProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
         fetchTransformProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),
+
+        fetchArtifactProperties: myHelpers.getConfig('GET', 'REQUEST', artifactPropertiesPath),
 
         // The above three could be replaced by this one.
         fetchPluginProperties: myHelpers.getConfig('GET', 'REQUEST', pluginDetailFetch, true),

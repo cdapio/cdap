@@ -260,6 +260,7 @@ angular.module(PKG.name + '.feature.admin')
       };
 
       vm.groups = {};
+      // FIXME: This is no longer valid. We need to fix this. The fundamental API is wrong. It shouldn't be using PluginConfigFactory.fetch.
       PluginConfigFactory.fetch(
         $scope,
         vm.templateType,

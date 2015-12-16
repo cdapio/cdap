@@ -1,0 +1,56 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "General",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Name",
+          "name": "name"
+        }
+      ]
+    },
+    {
+      "label": "Cube Dataset Properties (if creating new dataset)",
+      "properties": [
+        {
+          "widget-type": "csv",
+          "label": "Cube Resolution",
+          "name": "dataset.cube.resolutions",
+          "widget-attributes": {
+            "delimiter": ","
+          }
+        },
+        {
+          "widget-type": "json-editor",
+          "label": "Other Dataset Properties",
+          "name": "dataset.cube.properties"
+        }
+      ]
+    },
+    {
+      "label": "CubeFact Mapping",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Timestamp Field",
+          "name": "cubeFact.timestamp.field"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Timestamp Format",
+          "name": "cubeFact.timestamp.format"
+        },
+        {
+          "widget-type": "json-editor",
+          "label": "Measurements",
+          "name": "cubeFact.measurements"
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}

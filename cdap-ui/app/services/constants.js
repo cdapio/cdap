@@ -19,6 +19,17 @@ angular.module(PKG.name + '.services')
     // Should be under property called 'artifactTypes' to be consistent. GLOBALS.etlBatch doesn't make much sense.
     etlBatch: 'cdap-etl-batch',
     etlRealtime: 'cdap-etl-realtime',
+    // This is here because until now we don't store the aritfact information for each plugin anywhere.
+    // From now we need this information to ask for backend widgets json. So if there are any published pipelines/drafts that
+    // does not have artifact info of a plugin we default it to here.
+
+    artifact: {
+      default: {
+        name: 'cdap-etl-lib',
+        version: '3.3.0-SNAPSHOT',
+        scope: 'SYSTEM'
+      }
+    },
     pluginTypes: {
       'cdap-etl-batch': {
         'source': 'batchsource',
@@ -51,11 +62,13 @@ angular.module(PKG.name + '.services')
           sinkRequiredFieldsError: 'Please provide required fields for the sink.',
           transformRequiredFieldsError: 'Please provide required fields for the transform.',
           genericMissingRequiredFieldsError: 'Missing required fields.',
+          pluginNameMissingRequiredFieldsError: ' is missing required fields',
           oneSourceError: 'Pipelines can only have one source. Please remove any additional sources.',
           noSourceError: 'Please add a source to your pipeline',
           nameError: 'Please name your pipeline.',
           nameValidationError: 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\') and underscore ( \'_\') characters. Please remove any other characters.',
           sinkBranchNodeError: 'Please connect multiple sinks to the same node.',
+          atLeastOneSinkError: 'Please add a sink to your pipeline',
           branchError: 'Please remove branched connections.',
           unconnectedNodesError: 'Please connect all nodes.',
           circularConnectionError: 'Please remove the circular connection in this pipeline.',
@@ -63,7 +76,8 @@ angular.module(PKG.name + '.services')
           parallelConnectionError: 'Please remove parallel connections in this pipeline.',
           pluginDoesNotExist: 'This plugin does not exist: ',
           unsavedPluginMessage1: 'There are unsaved changes for node \'',
-          unsavedPluginMessage2: '\'. Please save them before publishing the pipeline.'
+          unsavedPluginMessage2: '\'. Please save them before publishing the pipeline.',
+          pipelineNameAlreadyExistError: 'A pipeline with this name already exists. Please choose a different name.'
         },
         wizard: {
           welcomeMessage1: 'Hydrator makes it easy to prepare data so you ',

@@ -73,17 +73,17 @@ class HydratorService {
     };
   }
 
-  fetchBackendProperties(plugin) {
+  fetchBackendProperties(node, appType) {
     var defer = this.$q.defer();
 
     // This needs to pass on a scope always. Right now there is no cleanup
     // happening
     var params = {
       namespace: this.$state.params.namespace,
-      pipelineType: this.ConfigStore.getAppType(),
-      version: this.$rootScope.cdapVersion,
-      extensionType: plugin.type,
-      pluginName: plugin.name
+      pipelineType: appType || this.ConfigStore.getAppType(),
+      version: (node.artifact && node.artifact.version ) || this.$rootScope.cdapVersion,
+      extensionType: node.type,
+      pluginName: node.plugin.name
     };
 
     return this.myPipelineApi.fetchPluginProperties(params)
@@ -91,11 +91,11 @@ class HydratorService {
       .then(function(res) {
 
         var pluginProperties = (res.length? res[0].properties: {});
-        if (res.length && (!plugin.description || (plugin.description && !plugin.description.length))) {
-          plugin.description = res[0].description;
+        if (res.length && (!node.description || (node.description && !node.description.length))) {
+          node.description = res[0].description;
         }
-        plugin._backendProperties = pluginProperties;
-        defer.resolve(plugin);
+        node._backendProperties = pluginProperties;
+        defer.resolve(node);
         return defer.promise;
       });
   }

@@ -106,41 +106,41 @@ class ConfigStore {
     var artifactTypeExtension = this.GLOBALS.pluginTypes[this.state.artifact.name];
     var nodesMap = {};
     this.state.__ui__.nodes.forEach(function(n) {
-      nodesMap[n.id] = n;
+      nodesMap[n.name] = n;
     });
 
-    function addPluginToConfig(plugin, id) {
+    function addPluginToConfig(node, id) {
       var pluginConfig =  {
         // Solely adding id and _backendProperties for validation.
         // Should be removed while saving it to backend.
-        id: plugin.id,
-        name: plugin.name,
-        label: plugin.label,
-        properties: plugin.properties,
-        _backendProperties: plugin._backendProperties,
-        outputSchema: plugin.outputSchema
+        name: node.plugin.name,
+        label: node.plugin.label,
+        artifact: node.plugin.artifact,
+        properties: node.plugin.properties,
+        _backendProperties: node._backendProperties,
+        outputSchema: node.outputSchema
       };
 
-      if (plugin.type === artifactTypeExtension.source) {
+      if (node.type === artifactTypeExtension.source) {
         config['source'] = {
-          name: pluginConfig.id,
+          name: node.name,
           plugin: pluginConfig
         };
-      } else if (plugin.type === 'transform') {
-        if (plugin.errorDatasetName && plugin.errorDatasetName.length > 0) {
-          pluginConfig.errorDatasetName = plugin.errorDatasetName;
+      } else if (node.type === 'transform') {
+        if (node.errorDatasetName && node.errorDatasetName.length > 0) {
+          pluginConfig.errorDatasetName = node.errorDatasetName;
         }
-        if (plugin.validationFields) {
-          pluginConfig.validationFields = plugin.validationFields;
+        if (node.validationFields) {
+          pluginConfig.validationFields = node.validationFields;
         }
         pluginConfig = {
-          name: pluginConfig.id,
+          name: node.name,
           plugin: pluginConfig
         };
         config['transforms'].push(pluginConfig);
-      } else if (plugin.type === artifactTypeExtension.sink) {
+      } else if (node.type === artifactTypeExtension.sink) {
         pluginConfig = {
-          name: pluginConfig.id,
+          name: node.name,
           plugin: pluginConfig
         };
         config['sinks'].push(pluginConfig);
@@ -261,7 +261,7 @@ class ConfigStore {
   }
   getNode(nodeId) {
     let nodes = this.state.__ui__.nodes;
-    let match = nodes.filter( node => node.id === nodeId);
+    let match = nodes.filter( node => node.name === nodeId);
     if (match.length) {
       match = match[0];
     } else {
@@ -271,7 +271,7 @@ class ConfigStore {
   }
   editNodeProperties(nodeId, nodeConfig) {
     let nodes = this.state.__ui__.nodes;
-    let match = nodes.filter( node => node.id === nodeId);
+    let match = nodes.filter( node => node.name === nodeId);
     if (match.length) {
       match = match[0];
       angular.forEach(nodeConfig, (pValue, pName) => match[pName] = pValue);
