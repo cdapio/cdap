@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import co.cask.http.AbstractHttpHandler;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import co.cask.http.NettyHttpService;
+import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMultimap;
@@ -50,6 +51,10 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelPipeline;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.SimpleChannelHandler;
 import org.jboss.netty.handler.codec.http.HttpHeaders;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -60,12 +65,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -74,6 +84,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import javax.annotation.Nullable;
+import javax.net.SocketFactory;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -89,6 +101,7 @@ public abstract class NettyRouterTestBase {
   protected static final String WEBAPP_SERVICE = Constants.Router.WEBAPP_DISCOVERY_NAME;
   protected static final String APP_FABRIC_SERVICE = Constants.Service.APP_FABRIC_HTTP;
   protected static final String WEB_APP_SERVICE_PREFIX = "webapp/";
+  protected static final int CONNECTION_IDLE_TIMEOUT_SECS = 2;
 
   private static final Logger LOG = LoggerFactory.getLogger(NettyRouterTestBase.class);
   private static final int MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -152,6 +165,7 @@ public abstract class NettyRouterTestBase {
   protected abstract RouterService createRouterService();
   protected abstract String getProtocol();
   protected abstract DefaultHttpClient getHTTPClient() throws Exception;
+  protected abstract SocketFactory getSocketFactory() throws Exception;
 
   protected int lookupService(String serviceName) {
     return routerService.lookupService(serviceName);
@@ -170,12 +184,9 @@ public abstract class NettyRouterTestBase {
   public void startUp() throws Exception {
     routerService.startAndWait();
     for (ServerService server : allServers) {
+      server.clearState();
       server.startAndWait();
     }
-
-    defaultServer1.clearNumRequests();
-    defaultServer2.clearNumRequests();
-    webappServer.clearNumRequests();
 
     // Wait for both servers of defaultService to be registered
     Iterable<Discoverable> discoverables = ((DiscoveryServiceClient) DISCOVERY_SERVICE).discover(
@@ -388,6 +399,86 @@ public abstract class NettyRouterTestBase {
     Assert.assertEquals(times, defaultServer1.getNumRequests() + defaultServer2.getNumRequests());
   }
 
+  // have a timeout of 10 seconds, in case the final call to reader.read hangs (in the case that connection isn't
+  // disconnected)
+  @Test(timeout = 10000)
+  public void testConnectionIdleTimeout() throws Exception {
+    String path = "/v2/ping";
+    URI uri = new URI(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, path));
+    Socket socket = getSocketFactory().createSocket(uri.getHost(), uri.getPort());
+    PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+    //Send request
+    out.print("GET " + path + " HTTP/1.1\r\n" +
+                "Host: " + uri.getHost() + "\r\n" +
+                "Connection: keep-alive\r\n\r\n");
+    out.flush();
+
+
+    InputStream inputStream = socket.getInputStream();
+    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+    String firstLine = reader.readLine();
+    Assert.assertTrue(firstLine.contains("200 OK"));
+
+    while (reader.readLine() != null) {
+    }
+
+    // sleep for 500 ms over the configured idle timeout; the connection on server side should get closed by then
+    TimeUnit.MILLISECONDS.sleep(TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 500);
+
+    // assert that the connection is closed on the client side
+    Assert.assertEquals(-1, reader.read());
+
+    // assert that the connection is closed on the server side
+    Assert.assertEquals(1, defaultServer1.getNumConnectionsOpened() + defaultServer2.getNumConnectionsOpened());
+    Assert.assertEquals(1, defaultServer1.getNumConnectionsClosed() + defaultServer2.getNumConnectionsClosed());
+  }
+
+  @Test
+  public void testConnectionIdleTimeoutWithMultipleServers() throws Exception {
+    defaultServer2.cancelRegistration();
+
+    URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v2/ping"));
+    HttpURLConnection urlConnection = openURL(url);
+    urlConnection.getResponseCode();
+    urlConnection.getInputStream().close();
+    urlConnection.disconnect();
+
+    // requests past this point will go to defaultServer2
+    defaultServer1.cancelRegistration();
+    defaultServer2.registerServer();
+
+    for (int i = 0; i < 3; i++) {
+      // this is an assumption that CONNECTION_IDLE_TIMEOUT_SECS is more than 1 second
+      TimeUnit.SECONDS.sleep(1);
+      url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/ping/" + i));
+      urlConnection = openURL(url);
+      urlConnection.getResponseCode();
+      urlConnection.getInputStream().close();
+      urlConnection.disconnect();
+    }
+
+    // for the past 3 seconds, we've been making requests to defaultServer2; therefore, defaultServer1 will have closed
+    // its single connection
+    Assert.assertEquals(1, defaultServer1.getNumConnectionsOpened());
+    Assert.assertEquals(1, defaultServer1.getNumConnectionsClosed());
+
+    // however, the connection to defaultServer2 is not timed out, because we've been making requests to it
+    Assert.assertEquals(1, defaultServer2.getNumConnectionsOpened());
+    Assert.assertEquals(0, defaultServer2.getNumConnectionsClosed());
+  }
+
+  @Test
+  public void testConnectionNoIdleTimeout() throws Exception {
+    // even though the handler will sleep for 500ms over the configured idle timeout before responding, the connection
+    // is not closed because the http request is in progress
+    long timeoutMillis = TimeUnit.SECONDS.toMillis(CONNECTION_IDLE_TIMEOUT_SECS) + 500;
+    URL url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v1/timeout/" + timeoutMillis));
+    HttpURLConnection urlConnection = openURL(url);
+    urlConnection.getResponseCode();
+    urlConnection.disconnect();
+  }
+
   protected HttpURLConnection openURL(URL url) throws Exception {
     return (HttpURLConnection) url.openConnection();
   }
@@ -464,6 +555,8 @@ public abstract class NettyRouterTestBase {
     private final DiscoveryService discoveryService;
     private final Supplier<String> serviceNameSupplier;
     private final AtomicInteger numRequests = new AtomicInteger(0);
+    private final AtomicInteger numConnectionsOpened = new AtomicInteger(0);
+    private final AtomicInteger numConnectionsClosed = new AtomicInteger(0);
 
     private NettyHttpService httpService;
     private Cancellable cancelDiscovery;
@@ -480,6 +573,26 @@ public abstract class NettyRouterTestBase {
       builder.addHttpHandlers(ImmutableSet.of(new ServerHandler()));
       builder.setHost(hostname);
       builder.setPort(0);
+      builder.modifyChannelPipeline(new Function<ChannelPipeline, ChannelPipeline>() {
+        @Nullable
+        @Override
+        public ChannelPipeline apply(ChannelPipeline input) {
+          input.addLast("connection-counter", new SimpleChannelHandler() {
+            @Override
+            public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+              numConnectionsOpened.incrementAndGet();
+              super.channelOpen(ctx, e);
+            }
+
+            @Override
+            public void channelClosed(ChannelHandlerContext ctx, ChannelStateEvent e) throws Exception {
+              numConnectionsClosed.incrementAndGet();
+              super.channelClosed(ctx, e);
+            }
+          });
+          return input;
+        }
+      });
       httpService = builder.build();
       httpService.startAndWait();
 
@@ -498,8 +611,18 @@ public abstract class NettyRouterTestBase {
       return numRequests.get();
     }
 
-    public void clearNumRequests() {
+    public int getNumConnectionsOpened() {
+      return numConnectionsOpened.get();
+    }
+
+    public int getNumConnectionsClosed() {
+      return numConnectionsClosed.get();
+    }
+
+    public void clearState() {
       numRequests.set(0);
+      numConnectionsOpened.set(0);
+      numConnectionsClosed.set(0);
     }
 
     public void registerServer() {
@@ -580,9 +703,18 @@ public abstract class NettyRouterTestBase {
         responder.sendStatus(HttpResponseStatus.OK);
       }
 
+      @GET
+      @Path("/v1/timeout/{timeout-millis}")
+      public void timeout(HttpRequest request, HttpResponder responder,
+                          @PathParam("timeout-millis") int timeoutMillis) throws InterruptedException {
+        numRequests.incrementAndGet();
+        TimeUnit.MILLISECONDS.sleep(timeoutMillis);
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
+
       @POST
       @Path("/v1/upload")
-      public void upload(HttpRequest request, final HttpResponder responder) throws InterruptedException, IOException {
+      public void upload(HttpRequest request, HttpResponder responder) throws IOException {
         ChannelBuffer content = request.getContent();
 
         int readableBytes;
