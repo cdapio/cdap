@@ -93,12 +93,6 @@ angular.module(PKG.name+'.commons')
         .offset([-10, 0]);
       svg.call(tip);
 
-      // initializing value
-      scope.translateX = 0;
-      scope.translateY = 0;
-      scope.currentScale = 1.1;
-
-
       // only being used to center and fit diagram
       var zoom = d3.behavior.zoom();
       zoom.on('zoom', function() {
@@ -222,8 +216,6 @@ angular.module(PKG.name+'.commons')
           .event(svg);
         svg.attr('height', g.graph().height * initialScale + 40);
       };
-
-      scope.centerImage();
 
     }
 
