@@ -43,8 +43,9 @@ get_conf() {
     case ${PLATFORM} in
       RHEL) die "Cannot locate xmllint, is libxml2 installed?" ;;
       UBUNTU) die "Cannot locate xmllint, is libxml2-utils installed?" ;;
-      *) die "Cannot locate xmllint, are XML tools installed?" ;;
     esac
+    # If we get here, die
+    die "Cannot locate xmllint, are XML tools installed?" ;;
   }
   # Get property from file, return last result, if multiple are returned
   __property="cat //configuration/property[name='${__pn}']/value[text()]"
@@ -73,8 +74,8 @@ rotate_log () {
 
 # CDAP kinit using properties from cdap-site.xml
 cdap_kinit() {
-  local __principal=$(get_conf "cdap.master.kerberos.principal" "${CDAP_CONF}"/cdap-site.xml)
-  local __keytab=$(get_conf "cdap.master.kerberos.keytab" "${CDAP_CONF}"/cdap-site.xml)
+  local __principal=${CDAP_PRINCIPAL:-$(get_conf "cdap.master.kerberos.principal" "${CDAP_CONF}"/cdap-site.xml)}
+  local __keytab=${CDAP_KEYTAB:-$(get_conf "cdap.master.kerberos.keytab" "${CDAP_CONF}"/cdap-site.xml)}
   if [ -z "${__principal}" -o -z "${__keytab}" ]; then
     echo "ERROR: Both cdap.master.kerberos.principal and cdap.master.kerberos.keytab must be configured for Kerberos-enabled clusters!"
     return 1
@@ -222,10 +223,10 @@ set_classpath() {
 #   https://github.com/caskdata/cm_csd/blob/develop/src/scripts/cdap-control.sh
 #   Any changes to this function must be compatible with the CSD's invocation
 set_hive_classpath() {
-  local __explore=$(get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml false)
+  local __explore=${EXPLORE_ENABLED:-$(get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml false)}
   if [[ "${__explore}" == "true" ]]; then
     if [ -z "${HIVE_HOME}" -o -z "${HIVE_CONF_DIR}" -o -z "${HADOOP_CONF_DIR}" ]; then
-      __secure=$(get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)
+      __secure=${KERBEROS_ENABLED:-$(get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)}
       if [[ "${__secure}" == "true" ]]; then
         cdap_kinit || return 1
       fi
@@ -234,7 +235,7 @@ set_hive_classpath() {
         HIVE_VAR_OUT=$(hive -e 'set -v' 2>/dev/null)
         __ret=$?
         if [ ${__ret} -ne 0 ]; then
-          echo "ERROR - Problem running: hive -e 'set -v'"
+          echo "ERROR - Failed getting Hive settings using: hive -e 'set -v'"
           return 1
         fi
         HIVE_VARS=$(echo ${HIVE_VAR_OUT} | tr ' ' '\n')
