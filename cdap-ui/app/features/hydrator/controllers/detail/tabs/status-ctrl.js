@@ -15,33 +15,10 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailStatusController', function(DetailRunsStore, GLOBALS, PipelineDetailActionFactory, $scope, DetailNonRunsStore) {
-    var params;
+  .controller('HydratorDetailStatusController', function(DetailNonRunsStore) {
     this.setState = function() {
-      this.runsCount = DetailRunsStore.getRunsCount();
-      var runs = DetailRunsStore.getRuns();
-      var status, i;
-      for (i=0 ; i<runs.length; i++) {
-        status = runs[i].status;
-        if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
-          this.lastFinished = runs[i];
-          break;
-        }
-      }
-      this.lastRunTime = runs.length > 0 && runs[0].end ? runs[0].end - runs[0].start : 'N/A';
-      this.averageRunTime = DetailRunsStore.getStatistics().avgRunTime || 'N/A';
       this.config = DetailNonRunsStore.getConfigJson();
     };
     this.setState();
-    this.GLOBALS = GLOBALS;
-    this.pipelineType = DetailNonRunsStore.getPipelineType();
-    if (this.pipelineType === GLOBALS.etlBatch) {
-      params = angular.copy(DetailRunsStore.getParams());
-      params.scope = $scope;
-      PipelineDetailActionFactory.pollStatistics(
-        DetailRunsStore.getApi(),
-        params
-      );
-    }
-    DetailRunsStore.registerOnChangeListener(this.setState.bind(this));
+    DetailNonRunsStore.registerOnChangeListener(this.setState.bind(this));
   });

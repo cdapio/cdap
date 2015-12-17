@@ -47,15 +47,6 @@ class ConfigStore {
         scope: 'SYSTEM',
         version: ''
       },
-      config: {
-        source: {
-          name: '',
-          plugin: {}
-        },
-        sinks: [],
-        transforms: [],
-        connections: []
-      },
       __ui__: {
         nodes: [],
         isEditing: true
@@ -63,9 +54,11 @@ class ConfigStore {
       description: '',
       name: ''
     };
+    angular.extend(this.state, {config: this.getDefaultConfig()});
     // This will be eventually used when we just pass on a config to the store to draw the dag.
     if (config) {
       angular.extend(this.state, config);
+      this.setArtifact(this.state.artifact);
     }
   }
   init(config) {
