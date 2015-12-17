@@ -14,8 +14,6 @@ operations.** Appendices describe the **XML files** used to configure the CDAP
 installation and its security configuration.
 
 
-.. rubric:: CDAP Components, System Requirements, Deployment Architectures, and Hadoop Compatibility
-
 .. |cdap-components| replace:: **CDAP Components:**
 .. _cdap-components: cdap-components.html
 
@@ -40,47 +38,47 @@ installation and its security configuration.
 - |hadoop-compatibility|_ The **Hadoop/HBase environment** that CDAP requires.
 
 
-.. rubric:: Installation and Verification
+.. |installation| replace:: **Installation:**
+.. _installation: installation/index.html
 
-Installation, configuration, and verification instructions for either **specific
-distributions** or **generic Apache Hadoop** clusters using RPM or Debian Package
-Managers:
+- |installation|_ Installation and configuration instructions for either **specific
+  distributions** or **generic Apache Hadoop** clusters using RPM or Debian Package Managers:
 
-.. |cloudera| replace:: **Cloudera Manager (CDH):**
-.. _cloudera: installation/cloudera/index.html
+    .. |cloudera| replace:: **Cloudera Manager (CDH):**
+    .. _cloudera: installation/cloudera/index.html
 
-- |cloudera|_ Installing CDAP on `CDH (Cloudera Data Hub) <http://www.cloudera.com/>`__ 
-  clusters managed with `Cloudera Manager
-  <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__.
-
-
-.. |ambari| replace:: **Apache Ambari (HDP):**
-.. _ambari: installation/ambari/index.html
-
-- |ambari|_ Installing CDAP on `HDP (Hortonworks Data Platform)
-  <http://hortonworks.com/>`__ clusters managed with `Apache Ambari
-  <https://ambari.apache.org/>`__.
+    - |cloudera|_ Installing CDAP on `CDH (Cloudera Data Hub) <http://www.cloudera.com/>`__ 
+      clusters managed with `Cloudera Manager
+      <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__.
 
 
-.. |mapr| replace:: **MapR:**
-.. _mapr: installation/mapr/index.html
+    .. |ambari| replace:: **Apache Ambari (HDP):**
+    .. _ambari: installation/ambari/index.html
 
-- |mapr|_ Installing CDAP on `MapR systems <https://www.mapr.com>`__.
-
-
-.. |package-managers| replace:: **Package Managers (RPM/Debian):**
-.. _package-managers: installation/package-managers/index.html
-
-- |package-managers|_ Installing CDAP on Hadoop systems that are **generic Apache Hadoop**
-  distributions, CDH clusters *not managed* with Cloudera Manager, or HDP clusters *not
-  managed* with Apache Ambari.
+    - |ambari|_ Installing CDAP on `HDP (Hortonworks Data Platform)
+      <http://hortonworks.com/>`__ clusters managed with `Apache Ambari
+      <https://ambari.apache.org/>`__.
 
 
-.. |sdk| replace:: **CDAP Standalone SDK:**
-.. _sdk: ../developers-manual/getting-started/standalone/index.html
+    .. |mapr| replace:: **MapR:**
+    .. _mapr: installation/mapr/index.html
 
-- |sdk|_ Installing the CDAP Standalone SDK on **Linux, MacOS, and Windows** systems.
-  *(Developers' Manual)*
+    - |mapr|_ Installing CDAP on `MapR systems <https://www.mapr.com>`__.
+
+
+    .. |package-managers| replace:: **Package Managers (RPM/Debian):**
+    .. _package-managers: installation/package-managers/index.html
+
+    - |package-managers|_ Installing CDAP on Hadoop systems that are either **generic Apache Hadoop**
+      distributions, CDH clusters *not managed* with Cloudera Manager, or HDP clusters *not
+      managed* with Apache Ambari.
+
+
+    .. |sdk| replace:: **CDAP Standalone SDK:**
+    .. _sdk: ../developers-manual/getting-started/standalone/index.html
+
+    - |sdk|_ Installing the CDAP Standalone SDK on **Linux, MacOS, and Windows** systems.
+      *(Developers' Manual)*
 
 
 .. |verification| replace:: **Verification:**
@@ -90,67 +88,61 @@ Managers:
   **example application**.
 
 
-.. rubric:: Security
-
 .. |security| replace:: **Security:**
 .. _security: security.html
 
-|security|_ CDAP supports **securing clusters using a perimeter security model.** This
-section describes enabling security, configuring authentication, testing security, and includes an
-example configuration file.
+- |security|_ CDAP supports **securing clusters using a perimeter security model.** This
+  section describes enabling security, configuring authentication, testing security, and 
+  includes an example configuration file.
 
-
-.. rubric:: Operations
 
 .. |operations| replace:: **Operations:**
 .. _operations: operations/index.html
 
-|operations|_ Covers **logging, metrics, monitoring, preferences, scaling instances, resource guarantees, 
-transaction service maintenance,** and **introduces the CDAP UI.** 
+- |operations|_ Covers **logging, metrics, monitoring, preferences, scaling instances, resource guarantees, 
+  transaction service maintenance,** and **introduces the CDAP UI**:
 
-.. |logging| replace:: **Logging:**
-.. _logging: operations/logging.html
+    .. |logging| replace:: **Logging:**
+    .. _logging: operations/logging.html
 
-- |logging|_ Covers **CDAP support for logging** through standard SLF4J (Simple Logging Facade for Java) APIs.
+    - |logging|_ Covers **CDAP support for logging** through standard SLF4J (Simple Logging Facade for Java) APIs.
 
-.. |metrics| replace:: **Metrics:**
-.. _metrics: operations/metrics.html
+    .. |metrics| replace:: **Metrics:**
+    .. _metrics: operations/metrics.html
 
-- |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
+    - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
   
-.. |monitoring| replace:: **Monitoring:**
-.. _monitoring: operations/monitoring.html
+    .. |monitoring| replace:: **Monitoring:**
+    .. _monitoring: operations/monitoring.html
 
-- |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
-  This section provides links to the relevant APIs for accessing these logs and metrics.
+    - |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
+      This section provides links to the relevant APIs for accessing these logs and metrics.
 
-.. |preferences| replace:: **Preferences and Runtime Arguments:**
-.. _preferences: operations/preferences.html
+    .. |preferences| replace:: **Preferences and Runtime Arguments:**
+    .. _preferences: operations/preferences.html
 
-- |preferences|_ Flows, MapReduce programs, services, workflows, and workers can receive **runtime arguments.**
+    - |preferences|_ Flows, MapReduce programs, services, workflows, and workers can receive **runtime arguments.**
 
-.. |scaling-instances| replace:: **Scaling Instances:**
-.. _scaling-instances: operations/scaling-instances.html
+    .. |scaling-instances| replace:: **Scaling Instances:**
+    .. _scaling-instances: operations/scaling-instances.html
 
-- |scaling-instances|_ Covers **querying and setting the number of instances of flowlets and services.** 
+    - |scaling-instances|_ Covers **querying and setting the number of instances of flowlets and services.** 
 
-.. |resource-guarantees| replace:: **Resource Guarantees:**
-.. _resource-guarantees: operations/resource-guarantees.html
+    .. |resource-guarantees| replace:: **Resource Guarantees:**
+    .. _resource-guarantees: operations/resource-guarantees.html
 
-- |resource-guarantees|_ Providing resource guarantees **for CDAP programs in YARN.**
+    - |resource-guarantees|_ Providing resource guarantees **for CDAP programs in YARN.**
 
-.. |tx-maintenance| replace:: **Transaction Service Maintenance:**
-.. _tx-maintenance: operations/tx-maintenance.html
+    .. |tx-maintenance| replace:: **Transaction Service Maintenance:**
+    .. _tx-maintenance: operations/tx-maintenance.html
 
-- |tx-maintenance|_ Periodic maintenance of the **Transaction Service.**
+    - |tx-maintenance|_ Periodic maintenance of the **Transaction Service.**
 
-.. |cdap-ui| replace:: **CDAP UI:**
-.. _cdap-ui: operations/cdap-ui.html
+    .. |cdap-ui| replace:: **CDAP UI:**
+    .. _cdap-ui: operations/cdap-ui.html
 
-- |cdap-ui|_ The CDAP UI is available for **deploying, querying, and managing CDAP.** 
+    - |cdap-ui|_ The CDAP UI is available for **deploying, querying, and managing CDAP.** 
 
-
-.. rubric:: Appendices
 
 .. |appendices| replace:: **Appendices:**
 .. _appendices: appendices/index.html

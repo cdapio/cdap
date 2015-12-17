@@ -66,7 +66,7 @@ CDAP Configuration
        <description>Router address to which CDAP UI connects</description>
      </property>
 
-#. Depending on your installation, you may want to set these properties:
+#. Depending on your installation, you may need to set these properties:
 
    .. highlight:: xml
 
@@ -109,7 +109,7 @@ CDAP Configuration
        </property>
  
      This feature cannot be used unless the cluster has a compatible version of Hive installed.
-     See the section on `Hadoop/HBase Environment <installation.html#hadoop-hbase-environment>`__.
+     See the section on ref:`Hadoop/HBase Environment <admin-manual-hadoop-compatibility-matrix>`.
      To use this feature on secure Hadoop clusters, please see these instructions on
      `configuring secure Hadoop <configuration.html#secure-hadoop>`__.
  

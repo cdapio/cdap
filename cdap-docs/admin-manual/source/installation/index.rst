@@ -18,8 +18,8 @@ Installation
     MapR <mapr/index>
     Package Managers (RPM/Debian) <package-managers/index>
 
-Installation, configuration, and verification instructions for either **specific
-distributions** or **generic Apache Hadoop** clusters using RPM or Debian Package Managers:
+Installation and configuration instructions for either **specific distributions** or
+**generic Apache Hadoop** clusters using RPM or Debian Package Managers:
 
 .. |cloudera| replace:: **Cloudera Manager (CDH):**
 .. _cloudera: cloudera/index.html
@@ -42,7 +42,7 @@ distributions** or **generic Apache Hadoop** clusters using RPM or Debian Packag
 .. |package-managers| replace:: **Package Managers (RPM/Debian):**
 .. _package-managers: package-managers/index.html
 
-- |package-managers|_ Installing CDAP on Hadoop systems that are **generic Apache Hadoop** distributions, 
+- |package-managers|_ Installing CDAP on Hadoop systems that are either **generic Apache Hadoop** distributions, 
   CDH clusters *not managed* with Cloudera Manager, or HDP clusters *not managed* with Apache Ambari.
 
 .. |sdk| replace:: **installing the CDAP Standalone SDK**

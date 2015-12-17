@@ -46,7 +46,8 @@ by adding the `CDAP Ambari Services <https://github.com/caskdata/cdap-ambari-ser
 to your Ambari server. Once you have restarted your Ambari server, you will able to
 use the Ambari UI (Ambari Dashboard) to install, start, and manage CDAP on Hadoop clusters.
 
-These instructions cover the steps to install CDAP using Apache Ambari:
+These instructions cover the steps to install CDAP using Apache Ambari. It's assumed that
+you are familiar with Ambari and HDP, and have a cluster with them installed and running.
 
 .. |am-setting-up| replace:: **Setting-up CDAP Repos:**
 .. _am-setting-up: am-setting-up.html

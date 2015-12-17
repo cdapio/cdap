@@ -34,7 +34,9 @@ to integrate CDAP into a Hadoop cluster by downloading and installing a CDAP CSD
 Service Descriptor). Once the CSD is installed, you will able to use Cloudera Manager to
 install, start, and manage CDAP on Hadoop clusters.
 
-These instructions cover the steps to install CDAP using Cloudera Manager:
+These instructions cover the steps to install CDAP using Cloudera Manager. It's assumed
+that you are familiar with Cloudera Manager, and have a cluster with it installed and
+running.
 
 .. |cm-preparing-roles| replace:: **Preparing Roles:**
 .. _cm-preparing-roles: cm-preparing-roles.html

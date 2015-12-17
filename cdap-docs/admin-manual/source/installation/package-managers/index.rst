@@ -28,7 +28,8 @@ systems that are:
 
 Other distributions should be installed with our other :ref:`instructions <installation-index>`.
 
-These instructions cover the steps to install, configure, and start CDAP:
+These instructions cover the steps to install, configure, and start CDAP. It's assumed
+that you are familiar with Hadoop, and have a cluster with it installed and running.
 
 .. |pm-setting-up| replace:: **Setting-up the Cluster:**
 .. _pm-setting-up: pm-setting-up.html

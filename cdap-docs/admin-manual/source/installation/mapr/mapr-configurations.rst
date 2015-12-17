@@ -5,13 +5,12 @@
 .. |display-distribution| replace:: MapR
 
 .. include:: /../target/_includes/mapr-configuration.rst
-    :end-before: #. Depending on your installation, you may want to set these properties:
+    :end-before: #. Depending on your installation, you may need to set these properties:
 
-#. MapR does not provide a configured ``yarn.application.classpath`` by default. CDAP
-   requires that an additional entry |---| ``/opt/mapr/lib/*`` |---| be appended to the
-   ``yarn.application.classpath`` setting in ``yarn-site.xml``. The default
-   ``yarn.application.classpath`` for Linux with this additional entry appended is
-   (reformatted to fit)::
+#. CDAP requires a ``yarn.application.classpath`` with an additional  entry |---|
+   ``/opt/mapr/lib/*`` |---| appended to it in the ``yarn.application.classpath`` setting
+   in ``yarn-site.xml``. The default ``yarn.application.classpath`` for Linux with this
+   additional entry appended is (reformatted to fit)::
 
      $HADOOP_CONF_DIR, 
      $HADOOP_COMMON_HOME/share/hadoop/common/*, 
@@ -23,14 +22,19 @@
      $HADOOP_COMMON_HOME/share/hadoop/mapreduce/*, 
      $HADOOP_COMMON_HOME/share/hadoop/mapreduce/lib/*, 
      /opt/mapr/lib/*
-
+    
    **Note:** Since MapR might not dereference the Hadoop variables (such as
    ``$HADOOP_CONF_DIR``) correctly, we recommend specifying their full paths instead.
 
-#. Depending on your installation, you may want to set these properties:
+   MapR does not, by default, provide a configured ``yarn.application.classpath``, and you
+   will need to add this entry to ``yarn-site.xml``. If you install using `Chef
+   <https://www.getchef.com>`__, that file and entry is created automatically, but not
+   with dereferenced Hadoop variables.
+
+#. Depending on your installation, you may need to set these properties:
 
 .. include:: /../target/_includes/mapr-configuration.rst
-    :start-after: #. Depending on your installation, you may want to set these properties:
+    :start-after: #. Depending on your installation, you may need to set these properties:
     :end-before: .. _mapr-configuration-security:
     
 As in all installations, the ``kafka.log.dir`` may need to be created locally. If you

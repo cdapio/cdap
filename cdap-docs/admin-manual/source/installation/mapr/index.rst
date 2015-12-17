@@ -21,7 +21,8 @@ MapR
 
 This section is to help you install the Cask Data Application Platform (CDAP) on `MapR
 systems <https://www.mapr.com>`__. These instructions cover the steps to install,
-configure, and start CDAP:
+configure, and start CDAP on existing MapR clusters. It's assumed that you are familiar with
+MapR, and have a cluster with it installed and running.
 
 .. |mapr-setting-up| replace:: **Setting-up MapR Clients:**
 .. _mapr-setting-up: mapr-setting-up.html
