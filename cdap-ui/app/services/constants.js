@@ -54,6 +54,8 @@ angular.module(PKG.name + '.services')
       hydrator: {
         appLabel: 'Hydrator Pipeline',
         studio: {
+          defaultReferenceInfo: 'Please select a plugin to view reference information',
+          noReferenceInfo: 'Currently, no reference information is available for this plugin.',
           noConfigMessage: 'No configuration found for the plugin.',
           syntaxConfigJsonError: 'Syntax error in the configuration JSON for the plugin.',
           semanticConfigJsonError: 'Semantic error in the configuration JSON for the plugin.',
