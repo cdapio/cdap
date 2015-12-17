@@ -74,11 +74,16 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.tephra.Transaction;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import co.cask.tephra.TransactionFailureException;
+import co.cask.tephra.TransactionNotInProgressException;
 import co.cask.tephra.TxConstants;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicates;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.PeekingIterator;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.AbstractIdleService;
@@ -191,7 +196,10 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     printProgress("Got %d barriers\n", barriers.size());
 
     QueueStatistics stats = new QueueStatistics();
-    int currentSection = 1;
+
+    if (consumerGroupId != null) {
+      barriers = Multimaps.filterKeys(barriers, Predicates.equalTo(consumerGroupId));
+    }
 
     for (Map.Entry<Long, Collection<QueueBarrier>> entry : barriers.asMap().entrySet()) {
       long groupId = entry.getKey();
@@ -199,6 +207,7 @@ public class HBaseQueueDebugger extends AbstractIdleService {
 
       printProgress("Scanning barriers for group %d\n", groupId);
 
+      int currentSection = 1;
       PeekingIterator<QueueBarrier> barrierIterator = Iterators.peekingIterator(groupBarriers.iterator());
       while (barrierIterator.hasNext()) {
         QueueBarrier start = barrierIterator.next();
@@ -254,10 +263,15 @@ public class HBaseQueueDebugger extends AbstractIdleService {
     scan.setStartRow(start.getStartRow());
     if (end != null) {
       scan.setStopRow(end.getStartRow());
+    } else {
+      scan.setStopRow(QueueEntryRow.getQueueEntryRowKey(queueName, Long.MAX_VALUE, Integer.MAX_VALUE));
     }
-    scan.addColumn(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.DATA_COLUMN);
+
+    // Needs to include meta column for row that doesn't have state yet.
     scan.addColumn(QueueEntryRow.COLUMN_FAMILY, QueueEntryRow.META_COLUMN);
     scan.addColumn(QueueEntryRow.COLUMN_FAMILY, stateColumnName);
+    // Don't do block cache for debug tool. We don't want old blocks get cached
+    scan.setCacheBlocks(false);
     scan.setMaxVersions(1);
 
     printProgress("Scanning section with scan: %s\n", scan.toString());
@@ -277,21 +291,30 @@ public class HBaseQueueDebugger extends AbstractIdleService {
       ConsumerConfig consConfig = new ConsumerConfig(groupConfig, instanceId);
       final QueueScanner scanner = queueStrategy.createScanner(consConfig, hTable, scan, rowsCache);
 
-      txExecutor.execute(new TransactionExecutor.Procedure<HBaseConsumerStateStore>() {
-        @Override
-        public void apply(HBaseConsumerStateStore input) throws Exception {
-          ImmutablePair<byte[], Map<byte[], byte[]>> result;
-          while ((result = scanner.next()) != null) {
-            byte[] rowKey = result.getFirst();
-            Map<byte[], byte[]> columns = result.getSecond();
-            visitRow(outStats, input.getTransaction(), rowKey, columns.get(stateColumnName), queueRowPrefix.length);
+      try {
+        txExecutor.execute(new TransactionExecutor.Procedure<HBaseConsumerStateStore>() {
+          @Override
+          public void apply(HBaseConsumerStateStore input) throws Exception {
+            ImmutablePair<byte[], Map<byte[], byte[]>> result;
+            while ((result = scanner.next()) != null) {
+              byte[] rowKey = result.getFirst();
+              Map<byte[], byte[]> columns = result.getSecond();
+              visitRow(outStats, input.getTransaction(), rowKey, columns.get(stateColumnName), queueRowPrefix.length);
 
-            if (showProgress() && outStats.getTotal() % rowsCache == 0) {
-              printProgress("\rProcessing instance %d: %s", instanceId, outStats.getReport(showTxTimestampOnly()));
+              if (showProgress() && outStats.getTotal() % rowsCache == 0) {
+                System.out.printf("\rProcessing instance %d: %s",
+                                  instanceId, outStats.getReport(showTxTimestampOnly()));
+              }
             }
           }
+        }, stateStore);
+      } catch (TransactionFailureException e) {
+        // Ignore transaction not in progress exception as it's caued by short TX timeout on commit
+        if (!(Throwables.getRootCause(e) instanceof TransactionNotInProgressException)) {
+          throw Throwables.propagate(e);
         }
-      }, stateStore);
+      }
+      printProgress("\rProcessing instance %d: %s\n", instanceId, outStats.getReport(showTxTimestampOnly()));
     }
   }
 
