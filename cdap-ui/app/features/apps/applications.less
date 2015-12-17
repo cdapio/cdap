@@ -28,9 +28,9 @@ body {
         }
       }
 
-      .dag-link {
-        width: 100%;
-        display: inline-block;
+      .dag-view {
+        // width: 100%;
+        // display: inline-block;
         position: relative;
       }
 
@@ -53,6 +53,12 @@ body {
         &.status-green { background-color: @brand-success; }
         &.status-grey { background-color: @cdap-gray; }
         &.status-yellow { background-color: @brand-warning; }
+      }
+
+      a.btn {
+        span {
+          vertical-align: middle;
+        }
       }
     }
   }

@@ -320,14 +320,5 @@ angular
     $rootScope.$on('$stateChangeError', function () {
       $state.go('login');
     });
-
-    $scope.onSearch = _.debounce(function(event) {
-      if (event.keyCode === 70 && event.target.nodeName === 'BODY') {
-        $state.go('search.list');
-      } else if (event.keyCode === 80 && event.target.nodeName === 'BODY') {
-        $state.go('pins.list');
-      }
-      console.info('pressed');
-    }, 500);
     console.timeEnd(PKG.name);
   });

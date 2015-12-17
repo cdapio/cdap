@@ -35,34 +35,6 @@ angular.module(PKG.name + '.feature.hydrator')
       return returnConfig;
     }
 
-    function getConnectionsBasedOnNodes(nodes, type) {
-      var j;
-      var connections = [];
-      var lastTransform;
-
-      for (j=0; j<nodes.length-1; j++) {
-        var nextNode = nodes[j+1];
-        if (!lastTransform && nextNode.type === GLOBALS.pluginTypes[type].sink) {
-          lastTransform = nodes[j];
-        }
-
-        if (nextNode.type === GLOBALS.pluginTypes[type].sink) {
-          connections.push({
-            source: lastTransform.id,
-            target: nextNode.id
-          });
-        } else {
-          connections.push({
-            source: nodes[j].id,
-            target: nextNode.id
-          });
-        }
-
-      }
-
-      return connections;
-    }
-
     function parseImportedJson(configJson, type) {
       var result;
       try {
@@ -179,7 +151,7 @@ angular.module(PKG.name + '.feature.hydrator')
       var parallelConnections = [];
       var nodesMap = {};
       nodes.forEach(function(n) {
-        nodesMap[n.id] = n;
+        nodesMap[n.name] = n;
       });
       var source = connections.filter(function(conn) {
         if (nodesMap[conn.from].type === GLOBALS.pluginTypes[appType].source) {
@@ -273,7 +245,6 @@ angular.module(PKG.name + '.feature.hydrator')
 
     return {
       extractMetadataFromDraft: extractMetadataFromDraft,
-      getConnectionsBasedOnNodes: getConnectionsBasedOnNodes,
       importPipeline: importPipeline,
       parseImportedJson: parseImportedJson,
       orderConnections: orderConnections,

@@ -20,7 +20,6 @@
       <thead>
         <tr>
           <th>Node Name</th>
-          <th>Stage</th>
           <th>Node Type</th>
           <th>Metric</th>
         </tr>
@@ -29,8 +28,7 @@
       <tbody>
         <tr ng-repeat="metric in MetricsCtrl.state.metrics | orderBy:'stage'">
           <td>{{ metric.nodeName }}</td>
-          <td>{{ metric.stage }}</td>
-          <td>{{ metric.nodeType }}</td>
+          <td>{{ MetricsCtrl.state.nodes[metric.nodeName].type }}</td>
           <td class="metric-cell">
             <table class="table metric-table">
               <tr ng-if="metric.nodeType !== 'sink'">

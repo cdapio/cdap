@@ -14,17 +14,42 @@
  * the License.
  */
 class PluginConfigFactory {
-  constructor (MyCDAPDataSource, $q, myHelpers) {
-    this.dataSrc = new MyCDAPDataSource();
+  constructor ($q, myHelpers, myPipelineApi, $state) {
     this.$q = $q;
     this.myHelpers = myHelpers;
+    this.myPipelineApi = myPipelineApi;
+    this.$state = $state;
   }
   // Seems super lame. Need to remove this.
-  fetch(templateid, pluginid) {
-    return this.dataSrc.config({
-      templateid: templateid, //'etlRealtime',
-      pluginid: pluginid //'TwitterSource'
-    });
+  fetch(artifactName, artifactVersion, pluginName) {
+    var defer = this.$q.defer();
+    var key = `widgets.${pluginName}`;
+    this.myPipelineApi.fetchArtifactProperties({
+      namespace: this.$state.params.namespace,
+      artifactName,
+      artifactVersion,
+      keys: key
+    })
+      .$promise
+      .then(
+        (res) => {
+          try {
+            let config = res[key];
+            if (config) {
+              config = JSON.parse(config);
+              defer.resolve(config);
+            } else {
+              defer.reject('NO_JSON_FOUND');
+            }
+          } catch(e) {
+            defer.reject('CONFIG_SYNTAX_JSON_ERROR');
+          }
+        },
+        () => {
+          defer.reject('NO_JSON_FOUND');
+        }
+      );
+    return defer.promise;
   }
 
   generateNodeConfig(backendProperties, nodeConfig) {
@@ -86,12 +111,12 @@ class PluginConfigFactory {
           groupsConfig.outputSchema.implicitSchema = output.schema;
         } else {
           index = propertiesFromBackend.indexOf(output.name);
-          groupsConfig.outputSchema.isOutputSchemaExists = true;
-          groupsConfig.outputSchema.outputSchemaProperty = [output.name];
-          groupsConfig.outputSchema.schemaProperties = output['widget-attributes'];
-          groupsConfig.outputSchema.isOutputSchemaRequired = backendProperties[output.name].required;
           if (index !== -1) {
             propertiesFromBackend.splice(index, 1);
+            groupsConfig.outputSchema.isOutputSchemaExists = true;
+            groupsConfig.outputSchema.outputSchemaProperty = [output.name];
+            groupsConfig.outputSchema.schemaProperties = output['widget-attributes'];
+            groupsConfig.outputSchema.isOutputSchemaRequired = backendProperties[output.name].required;
           }
         }
       });
@@ -207,6 +232,6 @@ class PluginConfigFactory {
   }
 }
 
-PluginConfigFactory.$inject = ['MyCDAPDataSource', '$q', 'myHelpers'];
+PluginConfigFactory.$inject = ['$q', 'myHelpers', 'myPipelineApi', '$state'];
 angular.module(PKG.name + '.feature.hydrator')
   .service('PluginConfigFactory', PluginConfigFactory);

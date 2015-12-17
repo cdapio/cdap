@@ -21,8 +21,8 @@ CDAP Developers’ Manual
 .. _overview: overview/index.html
 
 - |overview|_ Covers the **overall architecture and technology behind CDAP,** including
-  the abstraction of *Data* and *Applications*, CDAP concepts, components and their
-  interactions, and the anatomy of a Big Data application.
+  the abstraction of *Data* and *Applications*, CDAP modes and components, and the anatomy
+  of a Big Data application.
 
 
 .. |building-blocks| replace:: **Building Blocks:**
@@ -68,6 +68,6 @@ CDAP Developers’ Manual
 .. _advanced: advanced/index.html
 
 - |advanced|_ Covers **advanced topics on CDAP** that will be of interest to
-  developers who want a deeper dive into CDAP, including **class loading in
-  CDAP**, suggested **best practices for CDAP development**, and on **adding a custom
-  logback** to a CDAP application.
+  developers who want a deeper dive into CDAP, including suggested **best practices for
+  CDAP development**, **class loading in CDAP**, and on **adding a custom logback** to a
+  CDAP application.

@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "KV Table Properties",
+      "properties": [
+        {
+          "widget-type": "dataset-selector",
+          "label": "Table Name",
+          "name": "name"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Key",
+          "name": "key"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Value",
+          "name": "value"
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "widget-type": "non-editable-schema-editor",
+      "schema": {
+        "key": "bytes",
+        "value": "bytes"
+      }
+    }
+  ]
+}

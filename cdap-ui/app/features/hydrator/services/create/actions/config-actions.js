@@ -15,12 +15,16 @@
  */
 
 class ConfigActionsFactory {
-  constructor(ConfigDispatcher, myPipelineApi, $state, ConfigStore, mySettings, ConsoleActionsFactory) {
+  constructor(ConfigDispatcher, myPipelineApi, $state, ConfigStore, mySettings, ConsoleActionsFactory, HydratorErrorFactory, EventPipe, myAppsApi, GLOBALS) {
     this.ConfigStore = ConfigStore;
     this.mySettings = mySettings;
     this.$state = $state;
     this.myPipelineApi = myPipelineApi;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
+    this.HydratorErrorFactory = HydratorErrorFactory;
+    this.EventPipe = EventPipe;
+    this.myAppsApi = myAppsApi;
+    this.GLOBALS = GLOBALS;
 
     this.dispatcher = ConfigDispatcher.getDispatcher();
   }
@@ -58,54 +62,83 @@ class ConfigActionsFactory {
     this.dispatcher.dispatch('onSetInstance', instance);
   }
   publishPipeline() {
+    this.ConsoleActionsFactory.resetMessages();
+    let error = this.HydratorErrorFactory.isModelValid();
+
+    if (!error) { return; }
+    this.EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
 
     let removeFromUserDrafts = (adapterName) => {
       this.mySettings
-          .get('adapterDrafts')
-          .then(
-            (res) => {
-              if (angular.isObject(res)) {
-                delete res[adapterName];
-                return this.mySettings.set('adapterDrafts', res);
-              }
-            },
-            (err) => {
-              this.ConsoleActionsFactory.addMessage({
-                type: 'error',
-                content: err
-              });
-              return this.$q.reject(false);
+        .get('adapterDrafts')
+        .then(
+          (res) => {
+            if (angular.isObject(res)) {
+              delete res[adapterName];
+              return this.mySettings.set('adapterDrafts', res);
             }
-          )
-          .then(
-            () => this.$state.go('hydrator.list')
-          );
+          },
+          (err) => {
+            this.ConsoleActionsFactory.addMessage({
+              type: 'error',
+              content: err
+            });
+            return this.$q.reject(false);
+          }
+        )
+        .then(
+          () => {
+            this.EventPipe.emit('hideLoadingIcon.immediate');
+            this.$state.go('hydrator.detail', { pipelineId: adapterName });
+          }
+        );
     };
 
-    var config = this.ConfigStore.getConfigForExport();
-    this.myPipelineApi.save(
-      {
-        namespace: this.$state.params.namespace,
-        pipeline: config.name
-      },
-      config
-    )
+    let publish = (pipelineName) => {
+      this.myPipelineApi.save(
+        {
+          namespace: this.$state.params.namespace,
+          pipeline: pipelineName
+        },
+        config
+      )
       .$promise
       .then(
-        removeFromUserDrafts.bind(this, config.name),
+        removeFromUserDrafts.bind(this, pipelineName),
         (err) => {
+          this.EventPipe.emit('hideLoadingIcon.immediate');
           this.ConsoleActionsFactory.addMessage({
             type: 'error',
             content: err
           });
-          // this.notifyError({
-          //   canvas: [err.data]
-          // });
         }
       );
+    };
+
+
+    var config = this.ConfigStore.getConfigForExport();
+
+    // Checking if Pipeline name already exist
+    this.myAppsApi
+      .list({ namespace: this.$state.params.namespace })
+      .$promise
+      .then( (apps) => {
+        var appNames = apps.map( (app) => { return app.name; } );
+
+        if (appNames.indexOf(config.name) !== -1) {
+          this.ConsoleActionsFactory.addMessage({
+            type: 'error',
+            content: this.GLOBALS.en.hydrator.studio.pipelineNameAlreadyExistError
+          });
+          this.EventPipe.emit('hideLoadingIcon.immediate');
+        } else {
+          publish(config.name);
+        }
+      });
+
   }
 }
 
-ConfigActionsFactory.$inject = ['ConfigDispatcher', 'myPipelineApi', '$state', 'ConfigStore', 'mySettings', 'ConsoleActionsFactory'];
+ConfigActionsFactory.$inject = ['ConfigDispatcher', 'myPipelineApi', '$state', 'ConfigStore', 'mySettings', 'ConsoleActionsFactory', 'HydratorErrorFactory', 'EventPipe', 'myAppsApi', 'GLOBALS'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigActionsFactory', ConfigActionsFactory);

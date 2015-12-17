@@ -15,7 +15,7 @@
  */
 
 class NodeConfigController {
-  constructor(NodeConfigStore, $scope, $timeout, $state, DetailNonRunsStore, PluginConfigFactory, EventPipe, GLOBALS, ConfigActionsFactory) {
+  constructor(NodeConfigStore, $scope, $timeout, $state, DetailNonRunsStore, PluginConfigFactory, EventPipe, GLOBALS, ConfigActionsFactory, myHelpers) {
 
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -24,6 +24,7 @@ class NodeConfigController {
     this.DetailNonRunsStore = DetailNonRunsStore;
     this.PluginConfigFactory = PluginConfigFactory;
     this.GLOBALS = GLOBALS;
+    this.myHelpers = myHelpers;
     this.NodeConfigStore = NodeConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
 
@@ -50,7 +51,7 @@ class NodeConfigController {
       config: {},
 
       isValidPlugin: config.isValidPlugin || false,
-      plugin: config.plugin || {},
+      node: config.node || {},
 
       isSource: config.isSource || false,
       isSink: config.isSink || false,
@@ -63,22 +64,25 @@ class NodeConfigController {
   loadNewPlugin() {
 
     this.state.noproperty = Object.keys(
-      this.state.plugin._backendProperties || {}
+      this.state.node._backendProperties || {}
     ).length;
 
     if (this.state.noproperty) {
+      var artifactName = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name') || this.GLOBALS.artifact.default.name;
+      var artifactVersion = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version') || this.GLOBALS.artifact.default.version;
       this.PluginConfigFactory.fetch(
-        this.state.type,
-        this.state.plugin.name
+        artifactName,
+        artifactVersion,
+        this.state.node.plugin.name + '-' + this.state.node.type
       )
         .then(
           (res) => {
 
-            this.state.groupsConfig = this.PluginConfigFactory.generateNodeConfig(this.state.plugin._backendProperties, res);
+            this.state.groupsConfig = this.PluginConfigFactory.generateNodeConfig(this.state.node._backendProperties, res);
             angular.forEach(this.state.groupsConfig.groups, (group) => {
               angular.forEach(group.fields, (field) => {
                 if (field.defaultValue) {
-                  this.state.plugin.properties[field.name] = this.state.plugin.properties[field.name] || field.defaultValue;
+                  this.state.node.plugin.properties[field.name] = this.state.node.plugin.properties[field.name] || field.defaultValue;
                 }
               });
             });
@@ -94,37 +98,37 @@ class NodeConfigController {
                 });
               });
 
-              this.state.plugin.outputSchema = JSON.stringify({ fields: formattedSchema });
-              this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin);
+              this.state.node.outputSchema = JSON.stringify({ fields: formattedSchema });
+              this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
             } else {
               // If not an implcit schema check if an schema property exists in the node config.
               // What this means is, has the plugin developer specified a plugin property in 'outputs' array of node config.
               // If yes then set it as output schema and everytime when a user edits the output schema the value has to
               // be transitioned to the respective plugin property.
               if (configOutputSchema.isOutputSchemaExists) {
-                if (this.state.plugin.properties[configOutputSchema.outputSchemaProperty[0]] !== this.state.plugin.outputSchema) {
-                  this.state.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.plugin.outputSchema;
+                if (this.state.node.plugin.properties[configOutputSchema.outputSchemaProperty[0]] !== this.state.node.outputSchema) {
+                  this.state.node.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.node.outputSchema;
                 }
                 this.state.watchers.push(
-                  this.$scope.$watch('NodeConfigController.state.plugin.outputSchema', () => {
+                  this.$scope.$watch('NodeConfigController.state.node.outputSchema', () => {
                     if(this.validateSchema()) {
-                      this.state.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.plugin.outputSchema;
+                      this.state.node.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.node.outputSchema;
                     }
                   })
                 );
-              } else if (this.state.plugin.inputSchema) {
+              } else if (this.state.node.inputSchema) {
                 // If there is no information of output schema in the node config then just mantain an output schema for UI purposes.
                 configOutputSchema.isOutputSchemaExists = true;
-                this.state.plugin.outputSchema = this.state.plugin.outputSchema || this.state.plugin.inputSchema;
-                this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin);
+                this.state.node.outputSchema = this.state.node.outputSchema || this.state.node.inputSchema;
+                this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
               }
             }
             if (!this.$scope.isDisabled) {
               this.state.watchers.push(
                 this.$scope.$watch(
-                  'NodeConfigController.state.plugin',
+                  'NodeConfigController.state.node',
                   _.debounce( () => {
-                    this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin);
+                    this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
                   }, 1000),
                   true
                 )
@@ -138,7 +142,7 @@ class NodeConfigController {
 
           },
           (err) => {
-            var propertiesFromBackend = Object.keys(this.state.plugin._backendProperties);
+            var propertiesFromBackend = Object.keys(this.state.node._backendProperties);
             // Didn't receive a configuration from the backend. Fallback to all textboxes.
             switch(err) {
               case 'NO_JSON_FOUND':
@@ -154,12 +158,12 @@ class NodeConfigController {
             this.state.noconfig = true;
             this.state.configfetched = true;
             propertiesFromBackend.forEach( (property) => {
-              this.state.plugin.properties[property] = this.state.plugin.properties[property] || '';
+              this.state.node.plugin.properties[property] = this.state.node.plugin.properties[property] || '';
             });
             this.state.watchers.push(
               this.$scope.$watch(
-                'NodeConfigController.state.plugin.properties',
-                _.debounce(() => this.ConfigActionsFactory.editPlugin(this.state.plugin.id, this.state.plugin), 1000),
+                'NodeConfigController.state.node.plugin.properties',
+                _.debounce(() => this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node), 1000),
                 true
               )
             );
@@ -176,7 +180,7 @@ class NodeConfigController {
     this.state.errors = [];
     var schema;
     try {
-      schema = JSON.parse(this.state.plugin.outputSchema);
+      schema = JSON.parse(this.state.node.outputSchema);
       schema = schema.fields;
     } catch (e) {
       schema = null;
@@ -210,7 +214,7 @@ class NodeConfigController {
   }
 }
 
-NodeConfigController.$inject = ['NodeConfigStore', '$scope', '$timeout', '$state', 'DetailNonRunsStore', 'PluginConfigFactory', 'EventPipe', 'GLOBALS', 'ConfigActionsFactory'];
+NodeConfigController.$inject = ['NodeConfigStore', '$scope', '$timeout', '$state', 'DetailNonRunsStore', 'PluginConfigFactory', 'EventPipe', 'GLOBALS', 'ConfigActionsFactory', 'myHelpers'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('NodeConfigController', NodeConfigController);

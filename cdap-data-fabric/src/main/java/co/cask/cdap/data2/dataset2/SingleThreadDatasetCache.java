@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.dataset2;
 
-import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
 import co.cask.cdap.api.data.DatasetProvider;
 import co.cask.cdap.api.dataset.Dataset;
@@ -53,7 +52,7 @@ import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
- * Implementation of {@link DatasetContext} that allows to dynamically load datasets
+ * Implementation of {@link DatasetProvider} that allows to dynamically load datasets
  * into a started {@link TransactionContext}. Datasets acquired from this context are distinct from any
  * Datasets instantiated outside this class.
  */

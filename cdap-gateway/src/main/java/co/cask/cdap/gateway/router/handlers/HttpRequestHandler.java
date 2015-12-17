@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,6 @@ import co.cask.cdap.common.HandlerException;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.gateway.router.ProxyRule;
 import co.cask.cdap.gateway.router.RouterServiceLookup;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import com.google.common.io.Closeables;
 import org.apache.twill.discovery.Discoverable;
@@ -47,6 +46,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -76,7 +76,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
                             List<ProxyRule> proxyRules) {
     this.clientBootstrap = clientBootstrap;
     this.serviceLookup = serviceLookup;
-    this.discoveryLookup = Maps.newHashMap();
+    this.discoveryLookup = new HashMap<>();
     this.proxyRules = proxyRules;
   }
 

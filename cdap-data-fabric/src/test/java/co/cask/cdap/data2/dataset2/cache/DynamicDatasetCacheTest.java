@@ -47,13 +47,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 public abstract class DynamicDatasetCacheTest {
 
   @ClassRule
   public static DatasetFrameworkTestUtil dsFrameworkUtil = new DatasetFrameworkTestUtil();
+
+  private static final Map<String, String> ARGUMENTS = ImmutableMap.of("key", "k", "value", "v");
+  private static final Map<String, String> NO_ARGUMENTS = ImmutableMap.of();
+  private static final Map<String, String> A_ARGUMENTS = NO_ARGUMENTS;
+  private static final Map<String, String> B_ARGUMENTS = ImmutableMap.of("value", "b");
+  private static final Map<String, String> C_ARGUMENTS = ImmutableMap.of("key", "c", "value", "c");
+  private static final Map<String, String> X_ARGUMENTS = ImmutableMap.of("value", "x");
 
   protected static final Id.Namespace NAMESPACE = DatasetFrameworkTestUtil.NAMESPACE_ID;
   protected static final NamespaceId NAMESPACE_ID = new NamespaceId(NAMESPACE.getId());
@@ -77,12 +84,6 @@ public abstract class DynamicDatasetCacheTest {
     dsFrameworkUtil.deleteInstance(Id.DatasetInstance.from(NAMESPACE, "b"));
     dsFrameworkUtil.deleteModule(Id.DatasetModule.from(NAMESPACE, "testDataset"));
   }
-
-  private static final Map<String, String> ARGUMENTS = ImmutableMap.of("key", "k", "value", "v");
-  private static final Map<String, String> NO_ARGUMENTS = ImmutableMap.of();
-  private static final Map<String, String> A_ARGUMENTS = NO_ARGUMENTS;
-  private static final Map<String, String> B_ARGUMENTS = ImmutableMap.of("value", "b");
-  private static final Map<String, String> C_ARGUMENTS = ImmutableMap.of("key", "c", "value", "c");
 
   @Before
   public void initCache() {
@@ -138,22 +139,15 @@ public abstract class DynamicDatasetCacheTest {
     Assert.assertSame(a, txAwares.get(0));
     Assert.assertSame(b, txAwares.get(1));
 
-    // verify that the tx-aware is actually part of the tx context
+    // verify that the tx-aware is actually part of the tx context and that they are in the same tx
     txContext.start();
-    String sysPropA = System.getProperty(TestDataset.generateSystemProperty("a", "k", "v", "tx"));
-    Assert.assertNotNull(sysPropA);
-    String sysPropB = System.getProperty(TestDataset.generateSystemProperty("b", "k", "b", "tx"));
-    Assert.assertNotNull(sysPropB);
-
-    // and validate that they are in the same tx
-    Assert.assertNotEquals(0L, Long.parseLong(sysPropA));
-    Assert.assertEquals(sysPropA, sysPropB);
+    Assert.assertNotNull(a.getCurrentTransaction());
+    Assert.assertNotEquals(0L, a.getCurrentTransaction().getWritePointer());
+    Assert.assertEquals(a.getCurrentTransaction(), b.getCurrentTransaction());
 
     // get another dataset, validate that it participates in the same tx
     TestDataset c = cache.getDataset("c", C_ARGUMENTS);
-    String sysPropC = System.getProperty(TestDataset.generateSystemProperty("c", "c", "c", "tx"));
-    Assert.assertNotNull(sysPropC);
-    Assert.assertEquals(sysPropA, sysPropC);
+    Assert.assertEquals(a.getCurrentTransaction(), c.getCurrentTransaction());
 
     // validate runtime arguments of c
     // validate that arguments for b did override the global runtime args of the cache
@@ -170,8 +164,8 @@ public abstract class DynamicDatasetCacheTest {
     // discard b and c, validate that they are not closed yet
     cache.discardDataset(b);
     cache.discardDataset(c);
-    Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("b", "k", "b", "close")));
-    Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("c", "c", "c", "close")));
+    Assert.assertFalse(b.isClosed());
+    Assert.assertFalse(c.isClosed());
 
     // validate that static dataset b is still in the tx-awares, whereas c was dropped
     txAwares = getTxAwares();
@@ -195,8 +189,8 @@ public abstract class DynamicDatasetCacheTest {
     // discard b and c, validate that they are not closed yet
     cache.discardDataset(b);
     cache.discardDataset(c);
-    Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("b", "k", "b", "close")));
-    Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("c", "c", "c", "close")));
+    Assert.assertFalse(b.isClosed());
+    Assert.assertFalse(c.isClosed());
 
     // validate that static dataset b is still in the tx-awares, whereas c was dropped
     txAwares = getTxAwares();
@@ -206,25 +200,25 @@ public abstract class DynamicDatasetCacheTest {
 
     // validate that all datasets participate in abort of tx
     txContext.abort();
-    Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("a", "k", "v", "tx")));
-    Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("b", "k", "b", "tx")));
-    Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("c", "c", "c", "tx")));
+    Assert.assertNull(a.getCurrentTransaction());
+    Assert.assertNull(b.getCurrentTransaction());
+    Assert.assertNull(c.getCurrentTransaction());
 
     // validate that c disappears from the txAwares after tx aborted, and that it was closed
     txAwares = getTxAwares();
     Assert.assertEquals(2, txAwares.size());
     Assert.assertSame(a, txAwares.get(0));
     Assert.assertSame(b, txAwares.get(1));
-    Assert.assertNotNull(System.getProperty(TestDataset.generateSystemProperty("c", "c", "c", "close")));
+    Assert.assertTrue(c.isClosed());
 
     // but also that b (a static dataset) remains and was not closed
-    Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("b", "k", "b", "close")));
+    Assert.assertFalse(b.isClosed());
 
     // validate the tx context does not include c in the next transaction
     txContext.start();
-    Assert.assertNotNull(System.getProperty(TestDataset.generateSystemProperty("a", "k", "v", "tx")));
-    Assert.assertNotNull(System.getProperty(TestDataset.generateSystemProperty("b", "k", "b", "tx")));
-    Assert.assertNull(System.getProperty(TestDataset.generateSystemProperty("c", "c", "c", "tx")));
+    Assert.assertNotNull(a.getCurrentTransaction());
+    Assert.assertEquals(a.getCurrentTransaction(), b.getCurrentTransaction());
+    Assert.assertNull(c.getCurrentTransaction());
 
     // validate that discarding a dataset that is not in the tx does not cause errors
     cache.discardDataset(c);
@@ -245,9 +239,8 @@ public abstract class DynamicDatasetCacheTest {
     txContext = cache.newTransactionContext();
     txContext.start();
     Assert.assertNotNull(txContext.getCurrentTransaction());
-    String currentTx = Long.toString(txContext.getCurrentTransaction().getWritePointer());
-    Assert.assertEquals(currentTx, System.getProperty(TestDataset.generateSystemProperty("a", "k", "v", "tx")));
-    Assert.assertEquals(currentTx, System.getProperty(TestDataset.generateSystemProperty("b", "k", "b", "tx")));
+    Assert.assertEquals(txContext.getCurrentTransaction(), a.getCurrentTransaction());
+    Assert.assertEquals(txContext.getCurrentTransaction(), b.getCurrentTransaction());
     txContext.abort();
 
     if (datasetMap != null) {
@@ -258,28 +251,27 @@ public abstract class DynamicDatasetCacheTest {
 
   @Test
   public void testThatDatasetsStayInTransaction() throws TransactionFailureException {
-    final AtomicInteger hash = new AtomicInteger();
+    final AtomicReference<Object> ref = new AtomicReference<>();
     Transactions.execute(cache.newTransactionContext(), "foo", new Runnable() {
       @Override
       public void run() {
         try {
           // this writes the value "x" to row "key"
-          TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
+          TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
           ds.write();
-          // the dataset will go out of scope; remember the dataset's hashcode for later comparison
-          hash.set(System.identityHashCode(ds));
           // this would close and discard ds, but the transaction is going on, so we should get the
           // identical instance of the dataset again
           cache.discardDataset(ds);
-          ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
-          Assert.assertEquals(hash.get(), System.identityHashCode(ds));
+          TestDataset ds2 = cache.getDataset("a", X_ARGUMENTS);
+          Assert.assertSame(ds, ds2);
+          ref.set(ds);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }
         try {
           // get the same dataset again. It should be the same object
-          TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
-          Assert.assertEquals(hash.get(), System.identityHashCode(ds));
+          TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
+          Assert.assertSame(ref.get(), ds);
           cache.discardDataset(ds);
         } catch (Exception e) {
           throw Throwables.propagate(e);
@@ -292,10 +284,10 @@ public abstract class DynamicDatasetCacheTest {
       @Override
       public void run() {
         try {
-          TestDataset ds = cache.getDataset("a", ImmutableMap.of("value", "x"));
+          TestDataset ds = cache.getDataset("a", X_ARGUMENTS);
           Assert.assertEquals("x", ds.read());
           // validate that we now have a different instance because the old one was discarded
-          Assert.assertNotEquals(hash.get(), System.identityHashCode(ds));
+          Assert.assertNotSame(ref.get(), ds);
         } catch (Exception e) {
           throw Throwables.propagate(e);
         }

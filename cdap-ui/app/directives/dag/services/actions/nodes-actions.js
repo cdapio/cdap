@@ -24,6 +24,52 @@ class NodesActionsFactory {
   }
 
   addNode(config) {
+    let canvasPanning = this.NodesStore.getCanvasPanning();
+
+    let sourcePosition = {
+      top: 150 - canvasPanning.top,
+      left: (10/100 * document.documentElement.clientWidth) - canvasPanning.left
+    };
+    let transformPosition = {
+      top: 150 - canvasPanning.top,
+      left: (30/100 * document.documentElement.clientWidth) - canvasPanning.left
+    };
+    let sinkPosition = {
+      top: 150 - canvasPanning.top,
+      left: (50/100 * document.documentElement.clientWidth) - canvasPanning.left
+    };
+
+    let offset = 35;
+
+
+    // set initial position
+    switch (this.GLOBALS.pluginConvert[config.type]) {
+      case 'source':
+        let sourceOffset = this.NodesStore.getSourceCount() * offset;
+        config._uiPosition = {
+          top: (sourcePosition.top + sourceOffset) + 'px',
+          left: (sourcePosition.left + sourceOffset) + 'px'
+        };
+        this.nodesDispatcher.dispatch('onAddSourceCount');
+        break;
+      case 'transform':
+        let transformOffset = this.NodesStore.getTransformCount() * offset;
+        config._uiPosition = {
+          top: (transformPosition.top + transformOffset) + 'px',
+          left: (transformPosition.left + transformOffset) + 'px'
+        };
+        this.nodesDispatcher.dispatch('onAddTransformCount');
+        break;
+      case 'sink':
+        let sinkOffset = this.NodesStore.getSinkCount() * offset;
+        config._uiPosition = {
+          top: (sinkPosition.top + sinkOffset) + 'px',
+          left: (sinkPosition.left + sinkOffset) + 'px'
+        };
+        this.nodesDispatcher.dispatch('onAddSinkCount');
+        break;
+    }
+
     this.nodesDispatcher.dispatch('onNodeAdd', config);
   }
   updateNode(nodeId, config) {
@@ -52,11 +98,19 @@ class NodesActionsFactory {
     this.nodesDispatcher.dispatch('onReset');
   }
 
-  selectNode(nodeId) {
-    this.nodesDispatcher.dispatch('onNodeSelect', nodeId);
+  selectNode(nodeName) {
+    this.nodesDispatcher.dispatch('onNodeSelect', nodeName);
   }
   resetSelectedNode() {
     this.nodesDispatcher.dispatch('onNodeSelectReset');
+  }
+
+  resetPluginCount() {
+    this.nodesDispatcher.dispatch('onResetPluginCount');
+  }
+
+  setCanvasPanning(panning) {
+    this.nodesDispatcher.dispatch('onSetCanvasPanning', panning);
   }
 
   createGraphFromConfig(nodes, connections) {
