@@ -52,8 +52,7 @@ function download_md_doc_file() {
   fi
 
   if curl --output /dev/null --silent --head --fail "${source_url}"; then
-    echo "Downloading using curl ${source_file_name}"
-    echo "from ${base_source}/${source_dir} to ${type}/${target_file_name}"
+    echo "Downloading using curl ${source_file_name} from ${source_dir} to ${type}/${target_file_name}"
     curl --silent ${source_url} --output ${target}
   else
     echo_red_bold "URL does not exist: ${source_url}"
