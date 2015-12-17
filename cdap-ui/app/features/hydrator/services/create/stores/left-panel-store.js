@@ -92,7 +92,7 @@ class LeftPanelStore {
     this.emitChange();
   }
   getSources() {
-    return this.state.plugins.sources;
+    return angular.copy(this.state.plugins.sources);
   }
 
   setTransforms(plugins, type) {
@@ -101,7 +101,7 @@ class LeftPanelStore {
     this.emitChange();
   }
   getTransforms() {
-    return this.state.plugins.transforms;
+    return angular.copy(this.state.plugins.transforms);
   }
 
   setSinks(plugins, type) {
@@ -110,7 +110,7 @@ class LeftPanelStore {
     this.emitChange();
   }
   getSinks() {
-    return this.state.plugins.sinks;
+    return angular.copy(this.state.plugins.sinks);
   }
   getSpecificPluginVersion(plugin) {
     var typeMap;
