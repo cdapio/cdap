@@ -8,6 +8,11 @@
 ETL Overview 
 ============
 
+.. toctree::
+    :hidden:
+    :glob:
+
+    **
 
 A Quick Intro to ETL
 ====================
@@ -52,6 +57,7 @@ This lists the available sources, sinks, and transformations (transforms):
      - Sinks
    * - - **Batch Sources**
 
+         - :doc:`Cassandra <hydrator-plugins/batchsources/cassandra>`
          - :ref:`Database <cdap-apps-etl-plugins-batch-sources-database>`
          - :ref:`File <cdap-apps-etl-plugins-batch-sources-file>`
          - :ref:`KVTable <cdap-apps-etl-plugins-batch-sources-kvtable>`
@@ -71,6 +77,7 @@ This lists the available sources, sinks, and transformations (transforms):
 
      - - **Batch Sinks**
 
+         - :doc:`Cassandra <hydrator-plugins/batchsinks/cassandra>`
          - :ref:`Cube <cdap-apps-etl-plugins-batch-sinks-cube>`
          - :ref:`Database <cdap-apps-etl-plugins-batch-sinks-database>`
          - :ref:`KVTable <cdap-apps-etl-plugins-batch-sinks-kvtable>`
@@ -101,6 +108,7 @@ This lists the available sources, sinks, and transformations (transforms):
 
      - - **Real-time Sinks**
 
+         - :doc:`Cassandra <hydrator-plugins/realtimesinks/cassandra>`
          - :ref:`Cube <cdap-apps-etl-plugins-real-time-sinks-cube>`
          - :ref:`Stream <cdap-apps-etl-plugins-real-time-sinks-stream>`
          - :ref:`Table <cdap-apps-etl-plugins-real-time-sinks-table>`

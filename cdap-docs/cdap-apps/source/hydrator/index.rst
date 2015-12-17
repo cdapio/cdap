@@ -17,7 +17,7 @@ Cask Hydrator and ETL Pipelines
     Overview <overview>
     Creating an ETL Application <creating>
     Creating Custom ETL Plugins <custom>
-    ETL Plugins <plugins/index>
+    ETL Plugins <hydrator-plugins/index>
     
     
 .. _cdap-apps-intro-hydrator:
