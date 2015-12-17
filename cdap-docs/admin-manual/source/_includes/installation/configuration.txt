@@ -36,7 +36,9 @@ CDAP Configuration
    Simply copy the contents of ``/etc/cdap/conf.dist`` into a directory of your choice
    (such as ``/etc/cdap/conf.mycdap``) and make all of your customizations there.
    Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
-   to your custom directory.
+   to your custom directory ``/etc/cdap/conf.mycdap``::
+   
+     update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/conf.mycdap 10
  
    .. _|distribution|-configuration-options:
 
