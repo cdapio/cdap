@@ -22,9 +22,28 @@ systems that are `HDP (Hortonworks Data Platform) <http://hortonworks.com/>`__ c
 managed with `Apache Ambari <https://ambari.apache.org/>`__, the open source provisioning
 system for HDP.
 
+**Note:** 
+
+- Apache Ambari can only be used to add CDAP to an *existing* Hadoop cluster, one
+  that already has that the correct services (Hadoop, Hive, etc.) are installed.
+- Ambari is for setting up HDP on bare clusters; it's not used for those with HDP already installed, where the
+  original installation was **not** with Ambari.
+- Though you can install CDAP with Apache Ambari, you currently cannot use Ambari to upgrade CDAP. 
+  Instead, please see :ref:`package-managers-upgrading`.
+- A number of features are planned for the future, but currently **not** included in the
+  CDAP Apache Ambari Service:
+  
+  - `a full smoke test of CDAP functionality after installation <https://issues.cask.co/browse/CDAP-4105>`__; 
+  - `pre-defined alerts for CDAP services <https://issues.cask.co/browse/CDAP-4106>`__;
+  - `CDAP component high-availability support <https://issues.cask.co/browse/CDAP-4107>`__;
+  - `select CDAP metrics <https://issues.cask.co/browse/CDAP-4108>`__;
+  - `support for Kerberos-enabled clusters <https://issues.cask.co/browse/CDAP-4109>`__; and
+  - `integration with the CDAP Authentication Server <https://issues.cask.co/browse/CDAP-4110>`__.
+
+
 You can use Ambari to integrate CDAP into a Hadoop cluster
 by adding the `CDAP Ambari Services <https://github.com/caskdata/cdap-ambari-service>`__
-to your Ambari server. Once you have restarted your server, you will able to
+to your Ambari server. Once you have restarted your Ambari server, you will able to
 use the Ambari UI (Ambari Dashboard) to install, start, and manage CDAP on Hadoop clusters.
 
 These instructions cover the steps to install CDAP using Apache Ambari:
