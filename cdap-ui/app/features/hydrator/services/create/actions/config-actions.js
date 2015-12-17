@@ -15,7 +15,7 @@
  */
 
 class ConfigActionsFactory {
-  constructor(ConfigDispatcher, myPipelineApi, $state, ConfigStore, mySettings, ConsoleActionsFactory, HydratorErrorFactory, EventPipe, myAppsApi, GLOBALS) {
+  constructor(ConfigDispatcher, myPipelineApi, $state, ConfigStore, mySettings, ConsoleActionsFactory, HydratorErrorFactory, EventPipe, myAppsApi, GLOBALS, myHelpers, $stateParams) {
     this.ConfigStore = ConfigStore;
     this.mySettings = mySettings;
     this.$state = $state;
@@ -25,6 +25,8 @@ class ConfigActionsFactory {
     this.EventPipe = EventPipe;
     this.myAppsApi = myAppsApi;
     this.GLOBALS = GLOBALS;
+    this.myHelpers = myHelpers;
+    this.$stateParams = $stateParams;
 
     this.dispatcher = ConfigDispatcher.getDispatcher();
   }
@@ -73,8 +75,9 @@ class ConfigActionsFactory {
         .get('adapterDrafts')
         .then(
           (res) => {
-            if (angular.isObject(res)) {
-              delete res[adapterName];
+            var savedDraft = this.myHelpers.objectQuery(res, this.$stateParams.namespace, adapterName);
+            if (savedDraft) {
+              delete res[this.$stateParams.namespace][adapterName];
               return this.mySettings.set('adapterDrafts', res);
             }
           },
@@ -139,6 +142,6 @@ class ConfigActionsFactory {
   }
 }
 
-ConfigActionsFactory.$inject = ['ConfigDispatcher', 'myPipelineApi', '$state', 'ConfigStore', 'mySettings', 'ConsoleActionsFactory', 'HydratorErrorFactory', 'EventPipe', 'myAppsApi', 'GLOBALS'];
+ConfigActionsFactory.$inject = ['ConfigDispatcher', 'myPipelineApi', '$state', 'ConfigStore', 'mySettings', 'ConsoleActionsFactory', 'HydratorErrorFactory', 'EventPipe', 'myAppsApi', 'GLOBALS', 'myHelpers', '$stateParams'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigActionsFactory', ConfigActionsFactory);

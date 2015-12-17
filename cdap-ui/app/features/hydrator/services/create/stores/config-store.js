@@ -15,12 +15,15 @@
  */
 
 class ConfigStore {
-  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory){
+  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers){
     this.state = {};
     this.mySettings = mySettings;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
     this.CanvasFactory = CanvasFactory;
     this.GLOBALS = GLOBALS;
+    this.$stateParams = $stateParams;
+    this.myHelpers = myHelpers;
+
     this.changeListeners = [];
     this.setDefaults();
     this.configDispatcher = ConfigDispatcher.getDispatcher();
@@ -288,10 +291,10 @@ class ConfigStore {
     this.state.__ui__.isEditing = false;
     this.mySettings.get('adapterDrafts')
        .then(res => {
-         if (!angular.isObject(res)) {
-           res = {};
+         if (!angular.isObject(this.myHelpers.objectQuery(res, this.$stateParams.namespace))) {
+           res[this.$stateParams.namespace] = {};
          }
-         res[config.name] = config;
+         res[this.$stateParams.namespace][config.name] = config;
          return this.mySettings.set('adapterDrafts', res);
        })
        .then(
@@ -312,6 +315,6 @@ class ConfigStore {
   }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory'];
+ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);

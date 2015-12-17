@@ -173,11 +173,13 @@ angular.module(PKG.name + '.feature.hydrator')
     function fetchDrafts() {
       mySettings.get('adapterDrafts')
         .then(function(res) {
-          if (res && Object.keys(res).length) {
-            angular.forEach(res, function(value, key) {
-
+          let draftsList = myHelpers.objectQuery(res, $stateParams.namespace);
+          if (!angular.isObject(draftsList)) {
+            return;
+          }
+          if (draftsList.length) {
+            angular.forEach(res[$stateParams.namespace], function(value, key) {
               vm.statusCount.draft++;
-
               vm.pipelineList.push({
                 isDraft: true,
                 name: key,
@@ -190,7 +192,6 @@ angular.module(PKG.name + '.feature.hydrator')
                   lastStartTime: 'N/A'
                 }
               });
-
             });
           }
         });
@@ -199,8 +200,8 @@ angular.module(PKG.name + '.feature.hydrator')
     vm.deleteDraft = function(draftName) {
       mySettings.get('adapterDrafts')
         .then(function(res) {
-          if (res[draftName]) {
-            delete res[draftName];
+          if (myHelpers.objectQuery(res, $stateParams.namespace, draftName)) {
+            delete res[$stateParams.namespace][draftName];
           }
           return mySettings.set('adapterDrafts', res);
         })
