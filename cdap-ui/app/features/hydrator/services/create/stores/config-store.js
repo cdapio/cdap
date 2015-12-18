@@ -62,6 +62,7 @@ class ConfigStore {
     if (config) {
       angular.extend(this.state, config);
       this.setArtifact(this.state.artifact);
+      this.setEngine(this.state.config.engine);
     }
   }
   init(config) {
@@ -159,9 +160,10 @@ class ConfigStore {
     });
     let appType = this.getAppType();
     if ( appType=== this.GLOBALS.etlBatch) {
-      config.schedule = this.state.config.schedule;
+      config.schedule = this.getSchedule();
+      config.engine = this.getEngine();
     } else if (appType === this.GLOBALS.etlRealtime) {
-      config.instance = this.state.config.instance;
+      config.instance = this.getInstance();
     }
     config.connections = connections.map(conn => {
       delete conn.visited;
@@ -230,6 +232,14 @@ class ConfigStore {
     }
     this.emitChange();
   }
+  setEngine(engine) {
+    if (this.state.config.artifact === this.GLOBALS.etlBatch) {
+      this.state.config.engine = engine || 'mapreduce';
+    }
+  }
+  getEngine() {
+    return this.state.config.engine || 'mapreduce';
+  }
   setArtifact(artifact) {
     this.state.artifact.name = artifact.name;
     this.state.artifact.version = artifact.version;
@@ -243,6 +253,7 @@ class ConfigStore {
 
     this.emitChange();
   }
+
   setNodes(nodes) {
     this.state.__ui__.nodes = nodes;
   }

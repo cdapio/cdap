@@ -177,7 +177,7 @@ angular.module(PKG.name + '.feature.hydrator')
           if (!angular.isObject(draftsList)) {
             return;
           }
-          if (draftsList.length) {
+          if (Object.keys(draftsList).length) {
             angular.forEach(res[$stateParams.namespace], function(value, key) {
               vm.statusCount.draft++;
               vm.pipelineList.push({
