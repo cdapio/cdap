@@ -18,8 +18,6 @@ package co.cask.cdap.gateway.router.handlers;
 
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelFuture;
-import org.jboss.netty.channel.ChannelFutureListener;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.Channels;
@@ -42,25 +40,14 @@ public class OutboundHandler extends SimpleChannelUpstreamHandler {
   }
 
   @Override
-  public void messageReceived(final ChannelHandlerContext ctx, final MessageEvent e) throws Exception {
-    ChannelBuffer msg = (ChannelBuffer) e.getMessage();
-
-    Channels.write(inboundChannel, msg).addListener(new ChannelFutureListener() {
-      @Override
-      public void operationComplete(ChannelFuture future) throws Exception {
-        ctx.getPipeline().execute(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              OutboundHandler.super.messageReceived(ctx, e);
-            } catch (Exception ex) {
-              LOG.error("Exception while writing to pipeline {}", ctx.getChannel(), ex);
-              HttpRequestHandler.closeOnFlush(e.getChannel());
-            }
-          }
-        });
-      }
-    });
+  public void messageReceived(ChannelHandlerContext ctx, MessageEvent event) throws Exception {
+    ChannelBuffer msg = (ChannelBuffer) event.getMessage();
+    int readerIndex = msg.readerIndex();
+    int writerIndex = msg.writerIndex();
+    super.messageReceived(ctx, event);
+    // write the same channel buffer to inbound channel
+    msg.setIndex(readerIndex, writerIndex);
+    Channels.write(inboundChannel, msg);
   }
 
   @Override
