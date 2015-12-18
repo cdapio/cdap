@@ -32,7 +32,6 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.hadoop.hbase.util.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
@@ -165,7 +164,8 @@ public class NettyRouter extends AbstractIdleService {
     };
 
     tokenValidator.startAndWait();
-    timer = new HashedWheelTimer(Threads.newDaemonThreadFactory("router-idle-event-generator-timer"));
+    timer = new HashedWheelTimer(
+      new ThreadFactoryBuilder().setDaemon(true).setNameFormat("router-idle-event-generator-timer").build());
     bootstrapClient(connectionTracker);
 
     bootstrapServer(connectionTracker);
