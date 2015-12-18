@@ -14,7 +14,15 @@
   the License.
 -->
 
-<div>
+<!--
+  Why ng-init. Helps in resetting showAllVersion whenever the popover is shown.
+  -> When the user hovers over the popover
+  -> clicks on the 'change' link
+  -> and leaves the popover with version list
+  -> comesback
+  -> should see the description not where he left
+-->
+<div ng-init="contentData.showAllVersion=false;">
   <ul class="list-group">
     <li class="list-group-item">
       <h5>
@@ -35,6 +43,7 @@
     <li class="list-group-item" ng-if="!contentData.showAllVersion">
       {{::contentData.description}}
     </li>
+    <!-- on click is a little f**&ed up. Have to revisit this -->
     <a  ng-if="contentData.showAllVersion"
         href="#"
         class="list-group-item"

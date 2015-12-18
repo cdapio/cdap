@@ -70,14 +70,13 @@ class NodeConfigController {
     if (this.state.noproperty) {
       var artifactName = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name') || this.GLOBALS.artifact.default.name;
       var artifactVersion = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version') || this.GLOBALS.artifact.default.version;
-      this.PluginConfigFactory.fetch(
+      this.PluginConfigFactory.fetchWidgetJson(
         artifactName,
         artifactVersion,
-        this.state.node.plugin.name + '-' + this.state.node.type
+        `widgets.${this.state.node.plugin.name}-${this.state.node.type}`
       )
         .then(
           (res) => {
-
             this.state.groupsConfig = this.PluginConfigFactory.generateNodeConfig(this.state.node._backendProperties, res);
             angular.forEach(this.state.groupsConfig.groups, (group) => {
               angular.forEach(group.fields, (field) => {
@@ -101,7 +100,7 @@ class NodeConfigController {
               this.state.node.outputSchema = JSON.stringify({ fields: formattedSchema });
               this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
             } else {
-              // If not an implcit schema check if an schema property exists in the node config.
+              // If not an implcit schema check if a schema property exists in the node config.
               // What this means is, has the plugin developer specified a plugin property in 'outputs' array of node config.
               // If yes then set it as output schema and everytime when a user edits the output schema the value has to
               // be transitioned to the respective plugin property.
@@ -139,7 +138,6 @@ class NodeConfigController {
             this.state.configfetched = true;
             this.state.config = res;
             this.state.noconfig = false;
-
           },
           (err) => {
             var propertiesFromBackend = Object.keys(this.state.node._backendProperties);

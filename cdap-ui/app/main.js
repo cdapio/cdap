@@ -86,7 +86,8 @@ angular
       'ui.ace',
       'gridster',
       'angular-cron-jobs',
-      'angularjs-dropdown-multiselect'
+      'angularjs-dropdown-multiselect',
+      'hc.marked'
 
     ]).name,
 
@@ -218,6 +219,13 @@ angular
       'cdap'  // customized theme
     ]);
   })
+
+  .config(['markedProvider', function (markedProvider) {
+    markedProvider.setOptions({
+      gfm: true,
+      tables: true
+    });
+  }])
 
   .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
     EventPipe.on(MYSOCKET_EVENT.closed, function (angEvent, data) {
