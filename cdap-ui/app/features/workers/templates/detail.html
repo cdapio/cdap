@@ -22,6 +22,11 @@
       <div class="row" cdap-object-heading>
         <div class="col-sm-4 col-md-6">
           <div class="type-block">
+            <span class="icon-worker pull-left"
+                  tooltip="Type: Worker"
+                  tooltip-placement="top"
+                  tooltip-append-to-body="true">
+            </span>
             <h2 ng-bind="$state.params.programId"></h2>
           </div>
           <p ng-bind="RunsController.description | myEllipsis: 144"></p>

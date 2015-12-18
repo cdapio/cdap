@@ -15,12 +15,15 @@
  */
 
 class ConfigStore {
-  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory){
+  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers){
     this.state = {};
     this.mySettings = mySettings;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
     this.CanvasFactory = CanvasFactory;
     this.GLOBALS = GLOBALS;
+    this.$stateParams = $stateParams;
+    this.myHelpers = myHelpers;
+
     this.changeListeners = [];
     this.setDefaults();
     this.configDispatcher = ConfigDispatcher.getDispatcher();
@@ -47,15 +50,6 @@ class ConfigStore {
         scope: 'SYSTEM',
         version: ''
       },
-      config: {
-        source: {
-          name: '',
-          plugin: {}
-        },
-        sinks: [],
-        transforms: [],
-        connections: []
-      },
       __ui__: {
         nodes: [],
         isEditing: true
@@ -63,9 +57,12 @@ class ConfigStore {
       description: '',
       name: ''
     };
+    angular.extend(this.state, {config: this.getDefaultConfig()});
     // This will be eventually used when we just pass on a config to the store to draw the dag.
     if (config) {
       angular.extend(this.state, config);
+      this.setArtifact(this.state.artifact);
+      this.setEngine(this.state.config.engine);
     }
   }
   init(config) {
@@ -106,41 +103,41 @@ class ConfigStore {
     var artifactTypeExtension = this.GLOBALS.pluginTypes[this.state.artifact.name];
     var nodesMap = {};
     this.state.__ui__.nodes.forEach(function(n) {
-      nodesMap[n.id] = n;
+      nodesMap[n.name] = n;
     });
 
-    function addPluginToConfig(plugin, id) {
+    function addPluginToConfig(node, id) {
       var pluginConfig =  {
         // Solely adding id and _backendProperties for validation.
         // Should be removed while saving it to backend.
-        id: plugin.id,
-        name: plugin.name,
-        label: plugin.label,
-        properties: plugin.properties,
-        _backendProperties: plugin._backendProperties,
-        outputSchema: plugin.outputSchema
+        name: node.plugin.name,
+        label: node.plugin.label,
+        artifact: node.plugin.artifact,
+        properties: node.plugin.properties,
+        _backendProperties: node._backendProperties,
+        outputSchema: node.outputSchema
       };
 
-      if (plugin.type === artifactTypeExtension.source) {
+      if (node.type === artifactTypeExtension.source) {
         config['source'] = {
-          name: pluginConfig.id,
+          name: node.name,
           plugin: pluginConfig
         };
-      } else if (plugin.type === 'transform') {
-        if (plugin.errorDatasetName && plugin.errorDatasetName.length > 0) {
-          pluginConfig.errorDatasetName = plugin.errorDatasetName;
+      } else if (node.type === 'transform') {
+        if (node.errorDatasetName && node.errorDatasetName.length > 0) {
+          pluginConfig.errorDatasetName = node.errorDatasetName;
         }
-        if (plugin.validationFields) {
-          pluginConfig.validationFields = plugin.validationFields;
+        if (node.validationFields) {
+          pluginConfig.validationFields = node.validationFields;
         }
         pluginConfig = {
-          name: pluginConfig.id,
+          name: node.name,
           plugin: pluginConfig
         };
         config['transforms'].push(pluginConfig);
-      } else if (plugin.type === artifactTypeExtension.sink) {
+      } else if (node.type === artifactTypeExtension.sink) {
         pluginConfig = {
-          name: pluginConfig.id,
+          name: node.name,
           plugin: pluginConfig
         };
         config['sinks'].push(pluginConfig);
@@ -163,9 +160,10 @@ class ConfigStore {
     });
     let appType = this.getAppType();
     if ( appType=== this.GLOBALS.etlBatch) {
-      config.schedule = this.state.config.schedule;
+      config.schedule = this.getSchedule();
+      config.engine = this.getEngine();
     } else if (appType === this.GLOBALS.etlRealtime) {
-      config.instance = this.state.config.instance;
+      config.instance = this.getInstance();
     }
     config.connections = connections.map(conn => {
       delete conn.visited;
@@ -234,6 +232,14 @@ class ConfigStore {
     }
     this.emitChange();
   }
+  setEngine(engine) {
+    if (this.state.config.artifact === this.GLOBALS.etlBatch) {
+      this.state.config.engine = engine || 'mapreduce';
+    }
+  }
+  getEngine() {
+    return this.state.config.engine || 'mapreduce';
+  }
   setArtifact(artifact) {
     this.state.artifact.name = artifact.name;
     this.state.artifact.version = artifact.version;
@@ -247,6 +253,7 @@ class ConfigStore {
 
     this.emitChange();
   }
+
   setNodes(nodes) {
     this.state.__ui__.nodes = nodes;
   }
@@ -261,7 +268,7 @@ class ConfigStore {
   }
   getNode(nodeId) {
     let nodes = this.state.__ui__.nodes;
-    let match = nodes.filter( node => node.id === nodeId);
+    let match = nodes.filter( node => node.name === nodeId);
     if (match.length) {
       match = match[0];
     } else {
@@ -271,7 +278,7 @@ class ConfigStore {
   }
   editNodeProperties(nodeId, nodeConfig) {
     let nodes = this.state.__ui__.nodes;
-    let match = nodes.filter( node => node.id === nodeId);
+    let match = nodes.filter( node => node.name === nodeId);
     if (match.length) {
       match = match[0];
       angular.forEach(nodeConfig, (pValue, pName) => match[pName] = pValue);
@@ -294,31 +301,32 @@ class ConfigStore {
   saveAsDraft(config) {
     this.state.__ui__.isEditing = false;
     this.mySettings.get('adapterDrafts')
-       .then(res => {
-         if (!angular.isObject(res)) {
-           res = {};
-         }
-         res[config.name] = config;
-         return this.mySettings.set('adapterDrafts', res);
-       })
-       .then(
-          () => {
-            this.ConsoleActionsFactory.addMessage({
-              type: 'success',
-              content: `Draft ${config.name} saved successfully.`
-            });
-          },
-          err => {
-            this.state.__ui__.isEditing = true;
-            this.ConsoleActionsFactory.addMessage({
-              type: 'error',
-              content: err
-            });
-          }
-        );
+      .then(res => {
+        res = res || {isMigrated: true};
+        if (!angular.isObject(this.myHelpers.objectQuery(res, this.$stateParams.namespace))) {
+          res[this.$stateParams.namespace] = {};
+        }
+        res[this.$stateParams.namespace][config.name] = config;
+        return this.mySettings.set('adapterDrafts', res);
+      })
+      .then(
+        () => {
+          this.ConsoleActionsFactory.addMessage({
+            type: 'success',
+            content: `Draft ${config.name} saved successfully.`
+          });
+        },
+        err => {
+          this.state.__ui__.isEditing = true;
+          this.ConsoleActionsFactory.addMessage({
+            type: 'error',
+            content: err
+          });
+        }
+      );
   }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory'];
+ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);

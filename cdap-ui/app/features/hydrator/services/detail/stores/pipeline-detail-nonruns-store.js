@@ -95,8 +95,7 @@ angular.module(PKG.name + '.feature.hydrator')
       var nodes = this.getNodes();
       var match = nodes.filter( node => node.name === nodeId);
       match = (match.length? match[0]: null);
-      match.plugin.type = match.type;
-      return match.plugin;
+      return match;
     };
     this.getNode = this.getPluginObject;
     this.init = function(app) {
@@ -115,23 +114,22 @@ angular.module(PKG.name + '.feature.hydrator')
         app.config = appConfig.configJson;
         uiConfig = this.HydratorService.getNodesAndConnectionsFromConfig(app);
         appConfig.DAGConfig = {
-          nodes: uiConfig.nodes,
-          connections: uiConfig.connections
+          nodes: uiConfig.nodes
         };
       }
       appConfig.type = app.artifact.name;
       appConfig.cloneConfig = {
         name: app.name,
         artifact: app.artifact,
-        template: app.artifact.name,
         description: app.description,
-        ui: appConfig.DAGConfig,
+        __ui__: appConfig.DAGConfig,
         config: {
           source: appConfig.configJson.source,
           sinks: appConfig.configJson.sinks,
           transforms: appConfig.configJson.transforms,
-          instances: app.instance,
-          schedule: appConfig.configJson.schedule
+          instances: appConfig.configJson.instance,
+          schedule: appConfig.configJson.schedule,
+          connections: uiConfig.connections
         }
       };
       appConfig.streams = app.streams.map(function (stream) {

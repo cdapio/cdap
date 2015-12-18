@@ -14,8 +14,9 @@ Strategies in Testing Applications: Test Framework
 ==================================================
 
 CDAP comes with a convenient way to unit-test your applications with CDAP’s *Test Framework.*
-This framework lets you deploy an application; start, stop and monitor programs; access
-datasets to validate processing results; and retrieve metrics from the application.
+This framework starts an :ref:`in-memory CDAP runtime <in-memory-data-application-platform>` 
+and lets you deploy an application; start, stop and monitor programs; access datasets to
+validate processing results; and retrieve metrics from the application.
 
 The base class for such tests is ``TestBase``, which is packaged
 separately from the API in its own artifact because it depends on the

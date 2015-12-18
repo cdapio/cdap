@@ -79,14 +79,16 @@ public class MdsValueKey {
     return keySplitter.getString();
   }
 
-  public static MDSKey getMDSKey(Id.NamespacedId targetId, MetadataDataset.MetadataType type,
+  public static MDSKey getMDSKey(Id.NamespacedId targetId, @Nullable MetadataDataset.MetadataType type,
                                  @Nullable String key) {
     String targetType = KeyHelper.getTargetType(targetId);
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(ROW_PREFIX);
     builder.add(targetType);
     KeyHelper.addNamespaceIdToKey(builder, targetId);
-    builder.add(type.toString());
+    if (type != null) {
+      builder.add(type.toString());
+    }
     if (key != null) {
       builder.add(key);
     }
@@ -94,8 +96,8 @@ public class MdsValueKey {
     return builder.build();
   }
 
-  public static Id.NamespacedId getNamespaceIdFromKey(String type, MDSKey key) {
-    MDSKey.Splitter keySplitter = key.split();
+  public static Id.NamespacedId getNamespaceIdFromKey(String type, byte[] rowKey) {
+    MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
 
     // The rowkey is [rowPrefix][targetType][targetId][metadata-type][key], so skip the first two.
     keySplitter.skipBytes();

@@ -51,13 +51,6 @@
     <module>WordCount</module>
   </modules>
 
-  <repositories>
-    <repository>
-      <id>continuuity-public</id>
-      <url>https://repository.continuuity.com/content/groups/public</url>
-    </repository>
-  </repositories>
-
   <properties>
     <power.pack.version>[2.0.0,)</power.pack.version>
   </properties>

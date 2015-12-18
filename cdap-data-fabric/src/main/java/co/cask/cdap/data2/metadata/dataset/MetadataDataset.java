@@ -369,15 +369,15 @@ public class MetadataDataset extends AbstractDataset {
    * @param timeMillis time in milliseconds
    * @return the snapshot of the metadata for entities on or before the given time
    */
-  public Set<MetadataHistoryEntry> getSnapshotBeforeTime(Set<Id.NamespacedId> targetIds, long timeMillis) {
-    ImmutableSet.Builder<MetadataHistoryEntry> builder = ImmutableSet.builder();
+  public Set<Metadata> getSnapshotBeforeTime(Set<Id.NamespacedId> targetIds, long timeMillis) {
+    ImmutableSet.Builder<Metadata> builder = ImmutableSet.builder();
     for (Id.NamespacedId entityId : targetIds) {
       builder.add(getSnapshotBeforeTime(entityId, timeMillis));
     }
     return builder.build();
   }
 
-  private MetadataHistoryEntry getSnapshotBeforeTime(Id.NamespacedId targetId, long timeMillis) {
+  private Metadata getSnapshotBeforeTime(Id.NamespacedId targetId, long timeMillis) {
     byte[] scanStartKey = MdsHistoryKey.getMdsScanStartKey(targetId, timeMillis).getKey();
     byte[] scanEndKey = MdsHistoryKey.getMdsScanEndKey(targetId).getKey();
     // TODO: add limit to scan, we need only one row
@@ -385,9 +385,9 @@ public class MetadataDataset extends AbstractDataset {
     try {
       Row next = scanner.next();
       if (next != null) {
-        return GSON.fromJson(next.getString(HISTORY_COLUMN), MetadataHistoryEntry.class);
+        return GSON.fromJson(next.getString(HISTORY_COLUMN), Metadata.class);
       } else {
-        return new MetadataHistoryEntry(targetId);
+        return new Metadata(targetId);
       }
     } finally {
       scanner.close();
@@ -467,7 +467,7 @@ public class MetadataDataset extends AbstractDataset {
           }
         }
 
-        Id.NamespacedId targetId = MdsValueKey.getNamespaceIdFromKey(targetType, new MDSKey(rowKey));
+        Id.NamespacedId targetId = MdsValueKey.getNamespaceIdFromKey(targetType, rowKey);
         String key = MdsValueKey.getMetadataKey(targetType, rowKey);
         String value = Bytes.toString(next.get(Bytes.toBytes(MetadataDataset.VALUE_COLUMN)));
         MetadataEntry entry = new MetadataEntry(targetId, key, value);
@@ -511,8 +511,8 @@ public class MetadataDataset extends AbstractDataset {
   private void writeHistory(Id.NamespacedId targetId) {
     Map<String, String> properties = getProperties(targetId);
     Set<String> tags = getTags(targetId);
-    MetadataHistoryEntry metadataHistoryEntry = new MetadataHistoryEntry(targetId, properties, tags);
+    Metadata metadata = new Metadata(targetId, properties, tags);
     byte[] row = MdsHistoryKey.getMdsKey(targetId, System.currentTimeMillis()).getKey();
-    indexedTable.put(row, Bytes.toBytes(HISTORY_COLUMN), Bytes.toBytes(GSON.toJson(metadataHistoryEntry)));
+    indexedTable.put(row, Bytes.toBytes(HISTORY_COLUMN), Bytes.toBytes(GSON.toJson(metadata)));
   }
 }

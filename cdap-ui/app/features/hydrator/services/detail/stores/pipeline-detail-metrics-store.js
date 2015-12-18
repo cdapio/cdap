@@ -39,22 +39,19 @@ angular.module(PKG.name + '.feature.hydrator')
 
     this.setState = function(metrics) {
       var metricObj = {};
-
       angular.forEach(metrics.series, function (metric) {
         var split = metric.metricName.split('.');
-        var key = split[2] + '.' + split[3];
+        var key = split[1];
 
         if (!metricObj[key]) {
           metricObj[key] = {
-            nodeType: split[1],
-            nodeName: split[2],
-            stage: +split[3]
+            nodeName: split[1]
           };
         }
 
-        if (split[5] === 'in') {
+        if (split[split.length - 1] === 'in') {
           metricObj[key].recordsIn = metric.data[0].value;
-        } else if (split[5] === 'out') {
+        } else if (split[split.length - 1] === 'out') {
           metricObj[key].recordsOut = metric.data[0].value;
         }
 

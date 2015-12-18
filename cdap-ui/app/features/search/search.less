@@ -15,14 +15,31 @@
  */
 
 @import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+@import '../../styles/themes/cdap/mixins.less';
+
 body.theme-cdap {
   &.state-search {
     main.container {
       .main-search {
-        .btn.btn-default {
-          &:focus {
-            background-color: @cdap-orange;
-            color: white;
+        margin-top: 20px;
+        p.results-count {
+          color: @program-text;
+          font-size: 14px;
+          margin-bottom: 30px;
+        }
+        div.tobject {
+          margin-bottom: 30px;
+          a {
+            display: inline-block;
+            font-size: 15px;
+            margin-bottom: 10px;
+          }
+        }
+        p.tobject-type {
+          margin: 0;
+          span:last-child {
+            padding-left: 5px;
           }
         }
       }

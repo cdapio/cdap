@@ -54,11 +54,14 @@
   </nav>
 
   <ul class="nav navbar-nav navbar-right">
-    <!-- <li id="navbar-search" ng-if="!$state.includes('search.**')">
+    <li id="navbar-search" class="navbar-search">
       <form class="navbar-form">
         <my-search></my-search>
       </form>
-    </li> -->
+    </li>
+    <li>
+      <my-error></my-error>
+    </li>
     <li class="dropdown">
       <a href="" class="dropdown-toggle">
         <span class="fa fa-cog"></span>
@@ -67,5 +70,4 @@
     </li>
   </ul>
 
-  <my-error></my-error>
 </div>
