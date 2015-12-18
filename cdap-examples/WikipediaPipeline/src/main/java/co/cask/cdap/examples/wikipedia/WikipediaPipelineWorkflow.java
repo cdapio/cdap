@@ -93,7 +93,7 @@ public class WikipediaPipelineWorkflow extends AbstractWorkflow {
     @Override
     public boolean apply(WorkflowContext context) {
       WorkflowToken token = context.getToken();
-      Value online = token.get("online", EnoughDataToProceed.class.getSimpleName(), WorkflowToken.Scope.USER);
+      Value online = token.get(ONLINE_MODE, EnoughDataToProceed.class.getSimpleName(), WorkflowToken.Scope.USER);
       return online != null && online.getAsBoolean();
     }
   }
