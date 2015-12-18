@@ -318,4 +318,12 @@ public class QueueEntryRow {
     byte state = stateBytes[Longs.BYTES + Ints.BYTES];
     return state == ConsumerEntryState.PROCESSED.getState();
   }
+
+  /**
+   * Gets the write pointer for a row.
+   */
+  public static long getWritePointer(byte[] rowKey, int queueRowPrefixLength) {
+    // Row key is queue_name + writePointer + counter
+    return Bytes.toLong(rowKey, queueRowPrefixLength, Longs.BYTES);
+  }
 }

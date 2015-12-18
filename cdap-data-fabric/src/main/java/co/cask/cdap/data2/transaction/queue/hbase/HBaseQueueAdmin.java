@@ -274,7 +274,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     }
   }
 
-  HBaseConsumerStateStore getConsumerStateStore(QueueName queueName) throws Exception {
+  public HBaseConsumerStateStore getConsumerStateStore(QueueName queueName) throws Exception {
     Id.DatasetInstance stateStoreId = getStateStoreId(queueName.getFirstComponent());
     Map<String, String> args = ImmutableMap.of(HBaseQueueDatasetModule.PROPERTY_QUEUE_NAME, queueName.toString());
     HBaseConsumerStateStore stateStore = datasetFramework.getDataset(stateStoreId, args, null);
@@ -381,7 +381,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
     return getDataTableId(queueName, type);
   }
 
-  TableId getDataTableId(QueueName queueName, QueueConstants.QueueType queueType) {
+  public TableId getDataTableId(QueueName queueName, QueueConstants.QueueType queueType) {
     if (!queueName.isQueue()) {
       throw new IllegalArgumentException("'" + queueName + "' is not a valid name for a queue.");
     }
@@ -391,7 +391,7 @@ public class HBaseQueueAdmin extends AbstractQueueAdmin {
                           queueType);
   }
 
-  TableId getDataTableId(String namespaceId, String app, String flow, QueueConstants.QueueType queueType) {
+  public TableId getDataTableId(String namespaceId, String app, String flow, QueueConstants.QueueType queueType) {
     String tableName = String.format("%s.%s.%s.%s", Constants.SYSTEM_NAMESPACE, queueType, app, flow);
     return TableId.from(namespaceId, tableName);
   }
