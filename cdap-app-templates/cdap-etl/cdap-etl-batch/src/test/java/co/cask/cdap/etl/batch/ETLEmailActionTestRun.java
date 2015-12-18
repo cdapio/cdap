@@ -16,16 +16,15 @@
 
 package co.cask.cdap.etl.batch;
 
-import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.etl.batch.config.ETLBatchConfig;
+import co.cask.cdap.etl.batch.mock.MockSink;
+import co.cask.cdap.etl.batch.mock.MockSource;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Plugin;
-import co.cask.cdap.etl.common.Properties;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.test.ApplicationManager;
-import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.WorkflowManager;
 import com.dumbster.smtp.SimpleSmtpServer;
 import com.dumbster.smtp.SmtpMessage;
@@ -35,6 +34,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -55,15 +55,10 @@ public class ETLEmailActionTestRun extends ETLBatchTestBase {
 
   @Test
   public void testEmailAction() throws Exception {
-    // kv table to kv table pipeline
-    Plugin sourceConfig = new Plugin("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table1"));
-    Plugin sinkConfig = new Plugin("KVTable", ImmutableMap.of(Properties.BatchReadableWritable.NAME, "table2"));
-    Plugin transformConfig = new Plugin("Projection", ImmutableMap.<String, String>of());
 
-    ETLStage source = new ETLStage("source", sourceConfig);
-    ETLStage sink = new ETLStage("sink", sinkConfig);
-    ETLStage transform = new ETLStage("transform", transformConfig);
-    List<ETLStage> transformList = Lists.newArrayList(transform);
+    ETLStage source = new ETLStage("source", MockSource.getPlugin("inputTable"));
+    ETLStage sink = new ETLStage("sink", MockSink.getPlugin("outputTable"));
+    List<ETLStage> transforms = new ArrayList<>();
 
     Plugin actionConfig = new Plugin("Email", ImmutableMap.of(EmailAction.RECIPIENT_EMAIL_ADDRESS, "to@test.com",
                                                               EmailAction.FROM_ADDRESS, "from@test.com",
@@ -73,17 +68,11 @@ public class ETLEmailActionTestRun extends ETLBatchTestBase {
 
     ETLStage action = new ETLStage("action", actionConfig);
     List<ETLStage> actionList = Lists.newArrayList(action);
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transformList, actionList);
+    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transforms, actionList);
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "actionTest");
     ApplicationManager appManager = deployApplication(appId, appRequest);
-
-    // add some data to the input table
-    DataSetManager<KeyValueTable> table1 = getDataset("table1");
-    KeyValueTable inputTable = table1.get();
-    inputTable.write("hello", "world");
-    table1.flush();
 
     WorkflowManager manager = appManager.getWorkflowManager(ETLWorkflow.NAME);
     manager.start();

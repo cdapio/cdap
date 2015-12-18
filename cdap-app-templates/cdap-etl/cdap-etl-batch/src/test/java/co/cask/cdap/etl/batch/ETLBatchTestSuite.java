@@ -16,7 +16,6 @@
 
 package co.cask.cdap.etl.batch;
 
-import co.cask.cdap.etl.batch.mapreduce.ETLMapReduceTestRun;
 import co.cask.cdap.test.XSlowTests;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -29,13 +28,8 @@ import org.junit.runners.Suite;
 @Category(XSlowTests.class)
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-  BatchCubeSinkTestRun.class,
-  BatchETLDBTestRun.class,
   ETLEmailActionTestRun.class,
   ETLMapReduceTestRun.class,
-  ETLSnapshotTestRun.class,
-  ETLStreamConversionTestRun.class,
-  ETLTPFSTestRun.class,
   ETLSparkTestRun.class
 })
 public class ETLBatchTestSuite extends ETLBatchTestBase {
