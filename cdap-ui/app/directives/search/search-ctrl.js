@@ -23,6 +23,7 @@ angular.module(PKG.name + '.commons')
       if (event.keyCode === 13) {
         $state.go('search.objectswithtags', {tag: this.searchTxt});
         this.searchTxt = '';
+        this.displaySearchBox = false;
       }
     };
     this.escapeSearch = function () {
