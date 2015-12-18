@@ -301,28 +301,29 @@ class ConfigStore {
   saveAsDraft(config) {
     this.state.__ui__.isEditing = false;
     this.mySettings.get('adapterDrafts')
-       .then(res => {
-         if (!angular.isObject(this.myHelpers.objectQuery(res, this.$stateParams.namespace))) {
-           res[this.$stateParams.namespace] = {};
-         }
-         res[this.$stateParams.namespace][config.name] = config;
-         return this.mySettings.set('adapterDrafts', res);
-       })
-       .then(
-          () => {
-            this.ConsoleActionsFactory.addMessage({
-              type: 'success',
-              content: `Draft ${config.name} saved successfully.`
-            });
-          },
-          err => {
-            this.state.__ui__.isEditing = true;
-            this.ConsoleActionsFactory.addMessage({
-              type: 'error',
-              content: err
-            });
-          }
-        );
+      .then(res => {
+        res = res || {isMigrated: true};
+        if (!angular.isObject(this.myHelpers.objectQuery(res, this.$stateParams.namespace))) {
+          res[this.$stateParams.namespace] = {};
+        }
+        res[this.$stateParams.namespace][config.name] = config;
+        return this.mySettings.set('adapterDrafts', res);
+      })
+      .then(
+        () => {
+          this.ConsoleActionsFactory.addMessage({
+            type: 'success',
+            content: `Draft ${config.name} saved successfully.`
+          });
+        },
+        err => {
+          this.state.__ui__.isEditing = true;
+          this.ConsoleActionsFactory.addMessage({
+            type: 'error',
+            content: err
+          });
+        }
+      );
   }
 }
 

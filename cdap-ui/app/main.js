@@ -253,7 +253,7 @@ angular
         function showAlert() {
           $alert({
             type: 'info',
-            content: 'All your global drafts have been moved to default namespace. Going forward all pipeline drafts will be namespaced.'
+            content: 'All current drafts can be found in Default namespace.'
           });
         }
       );

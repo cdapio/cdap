@@ -121,7 +121,6 @@ angular.module(PKG.name + '.feature.hydrator')
       appConfig.cloneConfig = {
         name: app.name,
         artifact: app.artifact,
-        template: app.artifact.name,
         description: app.description,
         __ui__: appConfig.DAGConfig,
         config: {
