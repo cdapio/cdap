@@ -24,17 +24,14 @@ angular.module(PKG.name+'.commons')
   })
 
   .factory('FlowFactories', function () {
-    function genericRender(scope, filter, location, tip, isWorkflow) {
-      var nodes = scope.model.nodes;
-      var edges = scope.model.edges;
-      if (tip) {
-        tip.destroy();
-      }
+    function prepareGraph (scope) {
+      scope.translateX = 0;
+      scope.translateY = 0;
+      scope.currentScale = 1.1;
+      scope.renderer = new dagreD3.render();
+      scope.g = new dagreD3.graphlib.Graph();
 
-      var renderer = new dagreD3.render();
-      var g = new dagreD3.graphlib.Graph();
-
-      g.setGraph({
+      scope.g.setGraph({
         nodesep: 90,
         ranksep: 100,
         rankdir: 'LR',
@@ -42,6 +39,137 @@ angular.module(PKG.name+'.commons')
         marginy: 50
       })
         .setDefaultEdgeLabel(function () { return {}; });
+
+      angular.extend(scope.renderer.shapes(), scope.getShapes());
+
+      scope.selector = '';
+      // Making the query to be more specific instead of doing
+      // it under the entire DOM. This allows us to draw the diagram
+      // in multiple places.
+      if (scope.parentSelector) {
+        scope.selector += scope.parentSelector;
+      }
+      scope.selector += ' svg';
+
+
+      scope.svg = d3.select(scope.selector).attr('fill', 'white');
+      scope.svgGroup = d3.select(scope.selector + ' g');
+
+      scope.tip = d3.tip()
+        .attr('class', 'd3-tip')
+        .offset([-10, 0]);
+
+
+      scope.drag = d3.behavior.drag();
+      scope.drag.on('drag', function () {
+        d3.event.sourceEvent.stopPropagation();
+        scope.translateX = scope.translateX + d3.event.dx;
+        scope.translateY = scope.translateY + d3.event.dy;
+
+        var boundingClient = scope.svg.node().getBoundingClientRect(),
+            gGraph = scope.g.graph();
+
+        if (scope.translateX > boundingClient.width) {
+          scope.translateX = boundingClient.width;
+        }
+        if (scope.translateX < -(gGraph.width * scope.currentScale)) {
+          scope.translateX = -(gGraph.width * scope.currentScale);
+        }
+
+        if (scope.translateY > boundingClient.height) {
+          scope.translateY = boundingClient.height;
+        }
+        if (scope.translateY < -(gGraph.height * scope.currentScale)) {
+          scope.translateY = -(gGraph.height * scope.currentScale);
+        }
+
+        var arr = [scope.translateX, scope.translateY];
+
+        scope.svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
+      });
+
+
+      scope.zoomIn = function() {
+        scope.currentScale += 0.1;
+
+        if (scope.currentScale > 2.5) {
+          scope.currentScale = 2.5;
+        }
+
+        scope.translateX = scope.translateX - (scope.translateX * 0.1);
+        scope.translateY = scope.translateY - (scope.translateY * 0.1);
+
+        var arr = [scope.translateX, scope.translateY];
+        scope.svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
+      };
+
+      scope.zoomOut = function() {
+        scope.currentScale -= 0.1;
+
+        if (scope.currentScale < 0.1) {
+          scope.currentScale = 0.1;
+        }
+
+        var arr = [scope.translateX, scope.translateY];
+        scope.svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
+      };
+
+      /**
+       * Handles showing tooltip on mouseover of node name.
+       */
+      scope.handleShowTip = scope.handleTooltip.bind(null);
+
+      /**
+       * Handles hiding tooltip on mouseout of node name.
+       */
+      scope.handleHideTip = function() {
+        scope.tip.hide();
+      };
+
+      scope.$on('$destroy', function () {
+        scope.handleHideTip();
+        scope.tip.destroy();
+      });
+
+      // only being used to center and fit diagram
+      var zoom = d3.behavior.zoom();
+      zoom.on('zoom', function() {
+        scope.svgGroup.attr('transform', 'translate(' + d3.event.translate + ')' + ' scale(' + scope.currentScale + ')');
+      });
+
+      scope.centerImage = function() {
+        // Center svg.
+        var initialScale = 1;
+        var svgWidth = scope.svg.node().getBoundingClientRect().width;
+        var svgHeight = scope.svg.node().getBoundingClientRect().height;
+        if (svgWidth - scope.g.graph().width <= 0) {
+          scope.currentScale = svgWidth / scope.g.graph().width;
+          scope.translateX = 0;
+          scope.translateY = ((svgHeight - scope.g.graph().height) * scope.currentScale)/2;
+        } else {
+          scope.translateX = (svgWidth - scope.g.graph().width * initialScale) / 2 + 10;
+          scope.translateY = 20;
+          scope.currentScale = initialScale;
+        }
+
+        zoom
+          .translate([scope.translateX, scope.translateY])
+          .scale(scope.currentScale)
+          .event(scope.svg);
+        scope.svg.attr('height', scope.g.graph().height * initialScale + 40);
+      };
+
+
+    }
+
+    function genericRender(scope, filter, location, isWorkflow) {
+      var nodes = scope.model.nodes;
+      var edges = scope.model.edges;
+
+      scope.svg = d3.select(scope.selector);
+      scope.svgGroup = d3.select(scope.selector + ' g');
+      scope.svg.call(scope.tip);
+      scope.svg.call(scope.drag);
 
       // First set nodes and edges.
       angular.forEach(nodes, function (node) {
@@ -63,164 +191,52 @@ angular.module(PKG.name+'.commons')
 
         scope.instanceMap[node.name] = node;
         scope.labelMap[node.label || node.name] = node;
-        g.setNode(node.name, { shape: scope.getShape(node.type), label: nodeLabel});
+        scope.g.setNode(node.name, { shape: scope.getShape(node.type), label: nodeLabel});
       });
 
       angular.forEach(edges, function (edge) {
         if (scope.arrowheadRule(edge)) {
-          g.setEdge(edge.sourceName, edge.targetName);
+          scope.g.setEdge(edge.sourceName, edge.targetName);
         } else {
-          g.setEdge(edge.sourceName, edge.targetName, { arrowhead: 'undirected' });
+          scope.g.setEdge(edge.sourceName, edge.targetName, { arrowhead: 'undirected' });
         }
       });
-
-      angular.extend(renderer.shapes(), scope.getShapes());
-
-      var selector = '';
-      // Making the query to be more specific instead of doing
-      // it under the entire DOM. This allows us to draw the diagram
-      // in multiple places.
-      if (scope.parentSelector) {
-        selector += scope.parentSelector;
-      }
-      selector += ' svg';
-
-      // Set up an SVG group so that we can translate the final graph and tooltip.
-      var svg = d3.select(selector).attr('fill', 'white');
-      var svgGroup = d3.select(selector + ' g');
-      tip = d3.tip()
-        .attr('class', 'd3-tip')
-        .offset([-10, 0]);
-      svg.call(tip);
-
-      // only being used to center and fit diagram
-      var zoom = d3.behavior.zoom();
-      zoom.on('zoom', function() {
-        svgGroup.attr('transform', 'translate(' + d3.event.translate + ')' + ' scale(' + scope.currentScale + ')');
-      });
-
-      var drag = d3.behavior.drag();
-      drag.on('drag', function () {
-        d3.event.sourceEvent.stopPropagation();
-        scope.translateX = scope.translateX + d3.event.dx;
-        scope.translateY = scope.translateY + d3.event.dy;
-
-        var boundingClient = svg.node().getBoundingClientRect(),
-            gGraph = g.graph();
-
-        if (scope.translateX > boundingClient.width) {
-          scope.translateX = boundingClient.width;
-        }
-        if (scope.translateX < -(gGraph.width * scope.currentScale)) {
-          scope.translateX = -(gGraph.width * scope.currentScale);
-        }
-
-        if (scope.translateY > boundingClient.height) {
-          scope.translateY = boundingClient.height;
-        }
-        if (scope.translateY < -(gGraph.height * scope.currentScale)) {
-          scope.translateY = -(gGraph.height * scope.currentScale);
-        }
-
-        var arr = [scope.translateX, scope.translateY];
-
-        svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
-      });
-      svg.call(drag);
-
-      scope.zoomIn = function() {
-        scope.currentScale += 0.1;
-
-        if (scope.currentScale > 2.5) {
-          scope.currentScale = 2.5;
-        }
-
-        scope.translateX = scope.translateX - (scope.translateX * 0.1);
-        scope.translateY = scope.translateY - (scope.translateY * 0.1);
-
-        var arr = [scope.translateX, scope.translateY];
-        svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
-      };
-
-      scope.zoomOut = function() {
-        scope.currentScale -= 0.1;
-
-        if (scope.currentScale < 0.1) {
-          scope.currentScale = 0.1;
-        }
-
-        var arr = [scope.translateX, scope.translateY];
-        svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
-      };
 
       // Run the renderer. This is what draws the final graph.
-      renderer(d3.select(selector + ' g'), g);
+      scope.renderer(d3.select(scope.selector + ' g'), scope.g);
 
       /**
        * We need to specify the full URL for the arrowhead.
        * http://stackoverflow.com/questions/19742805/angular-and-svg-filters
        */
-      var paths = svgGroup.selectAll('g.edgePath > path.path');
+      var paths = scope.svgGroup.selectAll('g.edgePath > path.path');
       angular.forEach(paths[0], function(p) {
         p.attributes['marker-end'].nodeValue = 'url(' + location.absUrl() + p.attributes['marker-end'].nodeValue.substr(4);
       });
 
-      /**
-       * Handles showing tooltip on mouseover of node name.
-       */
-      scope.handleShowTip = scope.handleTooltip.bind(null, tip);
-
-      /**
-       * Handles hiding tooltip on mouseout of node name.
-       */
-      scope.handleHideTip = function() {
-        tip.hide();
-      };
 
       // Set up onclick after rendering.
-      svg
+      scope.svg
         .selectAll('g.node')
         .on('dblclick', scope.handleNodeClick);
 
       if (isWorkflow) {
-        svg
+        scope.svg
           .selectAll('text.token-label')
           .on('click', scope.toggleToken);
       }
 
-      svg
+      scope.svg
         .selectAll('g.node text')
         .on('mouseover', scope.handleShowTip)
         .on('mouseout', scope.handleHideTip);
 
-      scope.$on('$destroy', scope.handleHideTip);
-
-      scope.centerImage = function() {
-        // Center svg.
-        var initialScale = 1;
-        var svgWidth = svg.node().getBoundingClientRect().width;
-        var svgHeight = svg.node().getBoundingClientRect().height;
-        if (svgWidth - g.graph().width <= 0) {
-          scope.currentScale = svgWidth / g.graph().width;
-          scope.translateX = 0;
-          scope.translateY = ((svgHeight - g.graph().height) * scope.currentScale)/2;
-        } else {
-          scope.translateX = (svgWidth - g.graph().width * initialScale) / 2 + 10;
-          scope.translateY = 20;
-          scope.currentScale = initialScale;
-        }
-
-        zoom
-          .translate([scope.translateX, scope.translateY])
-          .scale(scope.currentScale)
-          .event(svg);
-        svg.attr('height', g.graph().height * initialScale + 40);
-      };
 
     }
 
 
     return {
-      genericRender: genericRender
+      genericRender: genericRender,
+      prepareGraph: prepareGraph
     };
   });
