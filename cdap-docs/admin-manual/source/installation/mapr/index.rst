@@ -17,7 +17,7 @@ MapR
     Component Installation <mapr-installation>
     Additional Configurations <mapr-configurations>
     Starting Services <mapr-starting>
-    Upgrading CDAP on MapR <mapr-upgrading>
+    Upgrading CDAP <mapr-upgrading>
 
 This section is to help you install the Cask Data Application Platform (CDAP) on `MapR
 systems <https://www.mapr.com>`__. These instructions cover the steps to install,
@@ -50,7 +50,7 @@ MapR, and have a cluster with it installed and running.
 
 - |mapr-starting|_ Once installation is complete, how to start CDAP on the cluster and make it highly-available.
 
-.. |mapr-upgrading| replace:: **Upgrading CDAP on MapR:**
+.. |mapr-upgrading| replace:: **Upgrading CDAP:**
 .. _mapr-upgrading: mapr-upgrading.html
 
 - |mapr-upgrading|_ Specific steps for upgrading existing CDAP installations.

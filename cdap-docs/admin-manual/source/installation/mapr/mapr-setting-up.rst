@@ -4,9 +4,9 @@
 
 .. _mapr-setting-up:
 
-=======================
-Setting-up MapR Clients
-=======================
+========================
+MapR: Setting-up Clients
+========================
 
 As described in the :ref:`Software Prerequisites <admin-manual-software-requirements>`, 
 a configured Hadoop and HBase (plus an optional Hive client) needs to be configured on the
@@ -28,5 +28,34 @@ A typical client node should have the ``mapr-client``, ``mapr-hbase``, and ``map
 packages installed, and can be configured using the MapR `configure.sh
 <http://doc.mapr.com/display/MapR/configure.sh>`__ utility.
 
-.. include:: /../target/_includes/mapr-installation.rst
-  :end-before: .. _mapr-install-packaging:
+
+.. rubric:: Preparing the Cluster
+
+.. _mapr-install-preparing-the-cluster:
+
+.. highlight:: console
+   
+To prepare your cluster so that CDAP can write to its default namespace,
+create a top-level ``/cdap`` directory in MapRFS, owned by a MapRFS user ``cdap``::
+
+  $ sudo -u maprfs hadoop fs -mkdir /cdap 
+  $ sudo -u maprfs hadoop fs -chown cdap /cdap
+
+In the CDAP packages, the default property ``hdfs.namespace`` is ``/cdap`` and the default property
+``hdfs.user`` is ``yarn``.
+
+Also, create a ``tx.snapshot`` subdirectory::
+
+  $ sudo -u hdfs hadoop fs -mkdir /cdap/tx.snapshot 
+  $ sudo -u hdfs hadoop fs -chown yarn /cdap/tx.snapshot
+
+**Note:** If you have customized the property ``data.tx.snapshot.dir`` in your 
+:ref:`CDAP configuration <appendix-cdap-site.xml>`, use that value instead.
+
+.. _mapr-install-preparing-the-cluster-defaults:
+
+.. |edit-your-cdap-configuration| replace:: edit your CDAP configuration
+.. _edit-your-cdap-configuration: mapr-configurations.html
+
+Once you have downloaded and installed the packages, you'll need to |edit-your-cdap-configuration|_,
+prior to starting services.

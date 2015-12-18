@@ -33,12 +33,14 @@ CDAP Configuration
    management and allows you to to choose between different directories to fulfill the
    same purpose.
  
+   .. highlight:: console
+ 
    Simply copy the contents of ``/etc/cdap/conf.dist`` into a directory of your choice
    (such as ``/etc/cdap/conf.mycdap``) and make all of your customizations there.
    Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
    to your custom directory ``/etc/cdap/conf.mycdap``::
    
-     update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/conf.mycdap 10
+     $ update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/conf.mycdap 10
  
    .. _|distribution|-configuration-options:
 
@@ -51,7 +53,7 @@ CDAP Configuration
 
    These properties are the minimal required configuration for the ``cdap-site.xml`` file:
    
-   .. literalinclude:: ../../../../../cdap-distributions/src/etc/cdap/conf.dist/cdap-site.xml.example
+   .. literalinclude:: /../target/_includes/|distribution|-cdap-site.xml.example
       :language: xml
       :lines: 18-
 
@@ -81,9 +83,9 @@ CDAP Configuration
             <description>Default HDFS namespace</description>
           </property>
  
-     #. Ensure that the default HDFS user ``yarn`` owns that HDFS directory.
+     #. Ensure that the default HDFS user |hdfs-user| owns that HDFS directory.
  
-   - If you want to use **a different HDFS user** than ``yarn``:
+   - If you want to use **a different HDFS user** than |hdfs-user|:
  
      1. Check that there is |---| and create if necessary |---| a corresponding user on all machines
         in the cluster on which YARN is running (typically, all of the machines).

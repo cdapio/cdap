@@ -55,6 +55,16 @@ function download_includes() {
     echo
   done
   
+  echo "Providing distribution-specific cdap-site.xml.example files"
+  local source_xml="../../cdap-distributions/src/etc/cdap/conf.dist/cdap-site.xml.example"
+  local distributions="mapr package-managers"
+  for dist in ${distributions}; do
+    case "${dist}" in
+      mapr             ) local hdfs_user="cdap";;
+      package-managers ) local hdfs_user="yarn";;
+    esac
+    rewrite_references_sed "${source_xml}" "${target_includes_dir}/${dist}-cdap-site.xml.example" "<value>yarn</value>" "<value>${hdfs_user}</value>"
+  done
 }
 
 run_command ${1}

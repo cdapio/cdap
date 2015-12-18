@@ -4,9 +4,9 @@
 
 .. _mapr-preparing:
 
-==========================
-Preparing Package Managers
-==========================
+================================
+MapR: Preparing Package Managers
+================================
 
 .. include:: /../target/_includes/mapr-installation.rst
     :start-after: .. _mapr-preparing-package-managers:

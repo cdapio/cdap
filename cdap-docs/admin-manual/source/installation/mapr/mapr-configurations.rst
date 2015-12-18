@@ -4,13 +4,15 @@
 
 .. |display-distribution| replace:: MapR
 
+.. |hdfs-user| replace:: ``cdap``
+
 .. include:: /../target/_includes/mapr-configuration.rst
     :end-before: #. Depending on your installation, you may need to set these properties:
 
-#. CDAP requires a ``yarn.application.classpath`` with an additional  entry |---|
-   ``/opt/mapr/lib/*`` |---| appended to it in the ``yarn.application.classpath`` setting
-   in ``yarn-site.xml``. The default ``yarn.application.classpath`` for Linux with this
-   additional entry appended is (reformatted to fit)::
+#. CDAP requires a classpath with an additional entry |---| ``/opt/mapr/lib/*`` |---| 
+   appended to the ``yarn.application.classpath`` setting of ``yarn-site.xml``. The
+   default ``yarn.application.classpath`` for Linux with this additional entry appended is
+   (reformatted to fit)::
 
      $HADOOP_CONF_DIR, 
      $HADOOP_COMMON_HOME/share/hadoop/common/*, 
