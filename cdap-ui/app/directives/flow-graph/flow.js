@@ -16,7 +16,6 @@
 
 var module = angular.module(PKG.name+'.commons');
 
-var tip;
 var baseDirective = {
   restrict: 'E',
   templateUrl: 'flow-graph/flow.html',
@@ -32,7 +31,7 @@ var baseDirective = {
 module.directive('myFlowGraph', function ($filter, $state, myStreamService, $location, FlowFactories) {
   return angular.extend({
     link: function (scope, elem, attr) {
-      scope.render = FlowFactories.genericRender.bind(null, scope, $filter, $location, tip);
+      scope.render = FlowFactories.genericRender.bind(null, scope, $filter, $location);
       scope.parentSelector = attr.parent;
 
       /**
@@ -184,8 +183,8 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
         }
       };
 
-      scope.handleTooltip = function(tip, nodeId) {
-        tip
+      scope.handleTooltip = function(nodeId) {
+        scope.tip
           .html(function() {
             return '<span>' + nodeId + '</span>';
           })
@@ -246,6 +245,8 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
         var w = parent.select('.leaf-shape').node().getBBox().width;
         return - nodeOptions.circleRadius - w / 2 + leafBuffer / 2;
       }
+
+      FlowFactories.prepareGraph(scope);
 
     }
   }, baseDirective);
