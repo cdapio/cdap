@@ -19,8 +19,8 @@ class AppDetailStatusController {
     DetailNonRunsStore.init(rPipelineDetail);
     NodeConfigStore.init();
 
-    var obj = DetailNonRunsStore.getDAGConfig();
-    NodesActionsFactory.createGraphFromConfig(obj.nodes, obj.connections);
+    var obj = DetailNonRunsStore.getCloneConfig();
+    NodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections);
 
     $scope.$on('$destroy', function() {
       // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view

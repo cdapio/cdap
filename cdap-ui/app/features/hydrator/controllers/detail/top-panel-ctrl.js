@@ -54,7 +54,7 @@ angular.module(PKG.name + '.feature.hydrator')
       } else {
         this.avgRunTime = 'N/A';
       }
-      this.config = DetailNonRunsStore.getConfigJson();
+      this.config = DetailNonRunsStore.getCloneConfig();
     };
     this.setState();
 
