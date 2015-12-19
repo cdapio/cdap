@@ -16,5 +16,5 @@ depends 'krb5_utils'
   supports os
 end
 
-source_url 'https://github.com/caskdata/cdap_cookbook'
-issues_url 'https://issues.cask.co/browse/COOK/component/10603'
+source_url 'https://github.com/caskdata/cdap_cookbook' if respond_to?(:source_url)
+issues_url 'https://issues.cask.co/browse/COOK/component/10603' if respond_to?(:issues_url)
