@@ -427,11 +427,6 @@ angular.module(PKG.name + '.commons')
         });
 
       }, true);
-
-      $scope.$watchCollection('connections', function () {
-        console.log('ChangeConnection', $scope.connections);
-      });
-
       // This is needed to redraw connections and endpoints on browser resize
       angular.element($window).on('resize', function() {
         vm.instance.repaintEverything();

@@ -86,7 +86,8 @@ angular
       'ui.ace',
       'gridster',
       'angular-cron-jobs',
-      'angularjs-dropdown-multiselect'
+      'angularjs-dropdown-multiselect',
+      'hc.marked'
 
     ]).name,
 
@@ -217,6 +218,45 @@ angular
     caskThemeProvider.setThemes([
       'cdap'  // customized theme
     ]);
+  })
+
+  .config(['markedProvider', function (markedProvider) {
+    markedProvider.setOptions({
+      gfm: true,
+      tables: true
+    });
+  }])
+  /*
+    FIXME: This is a one time only thing. Once all old users who migrated to 3.3 have their drafts moved from global level to
+          namespace level this snippet can be removed. Ideally in 4.* we should be able to remove this.
+  */
+  .run(function(mySettings, EventPipe, $state, $alert, $q) {
+    mySettings.get('adapterDrafts')
+      .then(
+        function success(res) {
+          var namespacedDrafts = {
+            default: {}
+          };
+          if (res && !res.isMigrated) {
+            angular.forEach(res, function(draft, name) {
+               namespacedDrafts.default[name] = draft;
+            });
+
+            namespacedDrafts.isMigrated = true;
+            return mySettings.set('adapterDrafts', namespacedDrafts);
+          } else {
+            return $q.reject(false);
+          }
+        }
+      )
+      .then(
+        function showAlert() {
+          $alert({
+            type: 'info',
+            content: 'All current drafts can be found in Default namespace.'
+          });
+        }
+      );
   })
 
   .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
