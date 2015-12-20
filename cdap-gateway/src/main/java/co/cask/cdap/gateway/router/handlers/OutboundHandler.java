@@ -17,6 +17,7 @@
 package co.cask.cdap.gateway.router.handlers;
 
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelStateEvent;
@@ -41,13 +42,10 @@ public class OutboundHandler extends SimpleChannelUpstreamHandler {
 
   @Override
   public void messageReceived(ChannelHandlerContext ctx, MessageEvent event) throws Exception {
-    ChannelBuffer msg = (ChannelBuffer) event.getMessage();
-    int readerIndex = msg.readerIndex();
-    int writerIndex = msg.writerIndex();
+    // write the channel buffer to inbound channel
+    ChannelBuffer wrappedMessage = ChannelBuffers.wrappedBuffer((ChannelBuffer) event.getMessage());
+    Channels.write(inboundChannel, wrappedMessage);
     super.messageReceived(ctx, event);
-    // write the same channel buffer to inbound channel
-    msg.setIndex(readerIndex, writerIndex);
-    Channels.write(inboundChannel, msg);
   }
 
   @Override
