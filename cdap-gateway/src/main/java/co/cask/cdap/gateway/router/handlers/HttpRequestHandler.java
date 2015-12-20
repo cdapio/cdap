@@ -81,7 +81,7 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
   }
 
   @Override
-  public void messageReceived(ChannelHandlerContext ctx,
+  public void messageReceived(final ChannelHandlerContext ctx,
                               MessageEvent event) throws Exception {
 
     if (channelClosed) {
@@ -125,10 +125,16 @@ public class HttpRequestHandler extends SimpleChannelUpstreamHandler {
         outboundChannel.getCloseFuture().addListener(new ChannelFutureListener() {
           @Override
           public void operationComplete(ChannelFuture future) throws Exception {
-            // When the outbound channel closed, close the inbound channel as well if it carries the in-flight request
-            if (outboundChannel.equals(inboundChannel.getAttachment())) {
-              closeOnFlush(inboundChannel);
-            }
+            inboundChannel.getPipeline().execute(new Runnable() {
+              @Override
+              public void run() {
+                // When the outbound channel closed,
+                // close the inbound channel as well if it carries the in-flight request
+                if (outboundChannel.equals(inboundChannel.getAttachment())) {
+                  closeOnFlush(inboundChannel);
+                }
+              }
+            });
           }
         });
       }
