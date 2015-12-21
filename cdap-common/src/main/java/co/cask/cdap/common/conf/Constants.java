@@ -699,6 +699,9 @@ public final class Constants {
 
       /** Default SSL keystore type */
       public static final String DEFAULT_SSL_KEYSTORE_TYPE = "JKS";
+
+      /** Paths to exclude from authentication, given by a single regular expression */
+      public static final String BYPASS_AUTHENTICATION_REGEX = "router.bypass.auth.regex";
     }
 
     /**
