@@ -168,7 +168,7 @@ class HydratorService {
     var sourceNode;
 
     for (var i = 0; i<nodes.length; i++) {
-      if (nodes[i].id === sourceId) {
+      if (nodes[i].name === sourceId) {
         sourceNode = nodes[i];
         break;
       }

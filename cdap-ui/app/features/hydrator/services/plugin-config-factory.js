@@ -20,11 +20,8 @@ class PluginConfigFactory {
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
   }
-  // Seems super lame. Need to remove this.
-  fetch(artifactName, artifactVersion, pluginName) {
-    var defer = this.$q.defer();
-    var key = `widgets.${pluginName}`;
-    this.myPipelineApi.fetchArtifactProperties({
+  fetchWidgetJson(artifactName, artifactVersion, key) {
+    return this.myPipelineApi.fetchArtifactProperties({
       namespace: this.$state.params.namespace,
       artifactName,
       artifactVersion,
@@ -37,19 +34,26 @@ class PluginConfigFactory {
             let config = res[key];
             if (config) {
               config = JSON.parse(config);
-              defer.resolve(config);
+              return config;
             } else {
-              defer.reject('NO_JSON_FOUND');
+              throw 'NO_JSON_FOUND';
             }
           } catch(e) {
-            defer.reject('CONFIG_SYNTAX_JSON_ERROR');
+            throw 'CONFIG_SYNTAX_JSON_ERROR';
           }
         },
         () => {
-          defer.reject('NO_JSON_FOUND');
+          throw 'NO_JSON_FOUND';
         }
       );
-    return defer.promise;
+  }
+  fetchDocJson(artifactName, artifactVersion, key) {
+    return this.myPipelineApi.fetchArtifactProperties({
+      namespace: this.$state.params.namespace,
+      artifactName,
+      artifactVersion,
+      keys: key
+    }).$promise;
   }
 
   generateNodeConfig(backendProperties, nodeConfig) {
@@ -111,12 +115,12 @@ class PluginConfigFactory {
           groupsConfig.outputSchema.implicitSchema = output.schema;
         } else {
           index = propertiesFromBackend.indexOf(output.name);
-          groupsConfig.outputSchema.isOutputSchemaExists = true;
-          groupsConfig.outputSchema.outputSchemaProperty = [output.name];
-          groupsConfig.outputSchema.schemaProperties = output['widget-attributes'];
-          groupsConfig.outputSchema.isOutputSchemaRequired = backendProperties[output.name].required;
           if (index !== -1) {
             propertiesFromBackend.splice(index, 1);
+            groupsConfig.outputSchema.isOutputSchemaExists = true;
+            groupsConfig.outputSchema.outputSchemaProperty = [output.name];
+            groupsConfig.outputSchema.schemaProperties = output['widget-attributes'];
+            groupsConfig.outputSchema.isOutputSchemaRequired = backendProperties[output.name].required;
           }
         }
       });

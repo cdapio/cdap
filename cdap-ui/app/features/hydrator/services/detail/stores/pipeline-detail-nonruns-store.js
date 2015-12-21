@@ -114,8 +114,7 @@ angular.module(PKG.name + '.feature.hydrator')
         app.config = appConfig.configJson;
         uiConfig = this.HydratorService.getNodesAndConnectionsFromConfig(app);
         appConfig.DAGConfig = {
-          nodes: uiConfig.nodes,
-          connections: uiConfig.connections
+          nodes: uiConfig.nodes
         };
 
         appConfig.description = appConfig.configJson.description ? appConfig.configJson.description : appConfig.description;
@@ -126,13 +125,14 @@ angular.module(PKG.name + '.feature.hydrator')
         artifact: app.artifact,
         template: app.artifact.name,
         description: appConfig.configJson.description,
-        ui: appConfig.DAGConfig,
+        __ui__: appConfig.DAGConfig,
         config: {
           source: appConfig.configJson.source,
           sinks: appConfig.configJson.sinks,
           transforms: appConfig.configJson.transforms,
-          instances: app.instance,
-          schedule: appConfig.configJson.schedule
+          instances: appConfig.configJson.instance,
+          schedule: appConfig.configJson.schedule,
+          connections: uiConfig.connections
         }
       };
       appConfig.streams = app.streams.map(function (stream) {

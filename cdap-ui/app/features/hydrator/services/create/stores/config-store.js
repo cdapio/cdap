@@ -15,12 +15,15 @@
  */
 
 class ConfigStore {
-  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory){
+  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers){
     this.state = {};
     this.mySettings = mySettings;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
     this.CanvasFactory = CanvasFactory;
     this.GLOBALS = GLOBALS;
+    this.$stateParams = $stateParams;
+    this.myHelpers = myHelpers;
+
     this.changeListeners = [];
     this.setDefaults();
     this.configDispatcher = ConfigDispatcher.getDispatcher();
@@ -47,15 +50,6 @@ class ConfigStore {
         scope: 'SYSTEM',
         version: ''
       },
-      config: {
-        source: {
-          name: '',
-          plugin: {}
-        },
-        sinks: [],
-        transforms: [],
-        connections: []
-      },
       __ui__: {
         nodes: [],
         isEditing: true
@@ -63,9 +57,12 @@ class ConfigStore {
       description: '',
       name: ''
     };
+    angular.extend(this.state, {config: this.getDefaultConfig()});
     // This will be eventually used when we just pass on a config to the store to draw the dag.
     if (config) {
       angular.extend(this.state, config);
+      this.setArtifact(this.state.artifact);
+      this.setEngine(this.state.config.engine);
     }
   }
   init(config) {
@@ -163,9 +160,10 @@ class ConfigStore {
     });
     let appType = this.getAppType();
     if ( appType=== this.GLOBALS.etlBatch) {
-      config.schedule = this.state.config.schedule;
+      config.schedule = this.getSchedule();
+      config.engine = this.getEngine();
     } else if (appType === this.GLOBALS.etlRealtime) {
-      config.instance = this.state.config.instance;
+      config.instance = this.getInstance();
     }
     config.connections = connections.map(conn => {
       delete conn.visited;
@@ -239,6 +237,14 @@ class ConfigStore {
     }
     this.emitChange();
   }
+  setEngine(engine) {
+    if (this.state.config.artifact === this.GLOBALS.etlBatch) {
+      this.state.config.engine = engine || 'mapreduce';
+    }
+  }
+  getEngine() {
+    return this.state.config.engine || 'mapreduce';
+  }
   setArtifact(artifact) {
     this.state.artifact.name = artifact.name;
     this.state.artifact.version = artifact.version;
@@ -252,6 +258,7 @@ class ConfigStore {
 
     this.emitChange();
   }
+
   setNodes(nodes) {
     this.state.__ui__.nodes = nodes;
   }
@@ -299,31 +306,32 @@ class ConfigStore {
   saveAsDraft(config) {
     this.state.__ui__.isEditing = false;
     this.mySettings.get('adapterDrafts')
-       .then(res => {
-         if (!angular.isObject(res)) {
-           res = {};
-         }
-         res[config.name] = config;
-         return this.mySettings.set('adapterDrafts', res);
-       })
-       .then(
-          () => {
-            this.ConsoleActionsFactory.addMessage({
-              type: 'success',
-              content: `Draft ${config.name} saved successfully.`
-            });
-          },
-          err => {
-            this.state.__ui__.isEditing = true;
-            this.ConsoleActionsFactory.addMessage({
-              type: 'error',
-              content: err
-            });
-          }
-        );
+      .then(res => {
+        res = res || {isMigrated: true};
+        if (!angular.isObject(this.myHelpers.objectQuery(res, this.$stateParams.namespace))) {
+          res[this.$stateParams.namespace] = {};
+        }
+        res[this.$stateParams.namespace][config.name] = config;
+        return this.mySettings.set('adapterDrafts', res);
+      })
+      .then(
+        () => {
+          this.ConsoleActionsFactory.addMessage({
+            type: 'success',
+            content: `Draft ${config.name} saved successfully.`
+          });
+        },
+        err => {
+          this.state.__ui__.isEditing = true;
+          this.ConsoleActionsFactory.addMessage({
+            type: 'error',
+            content: err
+          });
+        }
+      );
   }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory'];
+ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);

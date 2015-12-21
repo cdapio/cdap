@@ -14,22 +14,11 @@
  * the License.
  */
 
-angular.module(PKG.name + '.commons')
-  .controller('MySearchCtrl', function($state) {
-    this.searchTxt = '';
-    this.displaySearchBox = false;
-
-    this.onSearch = function(event) {
-      if (event.keyCode === 13) {
-        $state.go('search.objectswithtags', {tag: this.searchTxt});
-        this.searchTxt = '';
-        this.displaySearchBox = false;
-      }
+angular.module(PKG.name + '.feature.hydrator')
+  .controller('HydratorDetailPipelineConfigController', function(DetailNonRunsStore) {
+    this.setState = function() {
+      this.config = DetailNonRunsStore.getConfigJson();
     };
-    this.escapeSearch = function () {
-      if (this.searchTxt === '') {
-        this.displaySearchBox = false;
-      }
-    };
-
+    this.setState();
+    DetailNonRunsStore.registerOnChangeListener(this.setState.bind(this));
   });

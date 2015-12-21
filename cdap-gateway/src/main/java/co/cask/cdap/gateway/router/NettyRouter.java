@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,13 +21,13 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.conf.SConfiguration;
 import co.cask.cdap.gateway.router.handlers.HttpRequestHandler;
 import co.cask.cdap.gateway.router.handlers.HttpStatusRequestHandler;
+import co.cask.cdap.gateway.router.handlers.IdleEventProcessor;
 import co.cask.cdap.gateway.router.handlers.SecurityAuthenticationHttpHandler;
 import co.cask.cdap.security.auth.AccessTokenTransformer;
 import co.cask.cdap.security.auth.TokenValidator;
 import co.cask.cdap.security.tools.SSLHandlerFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -37,10 +37,10 @@ import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.DirectChannelBufferFactory;
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ChannelUpstreamHandler;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -52,13 +52,18 @@ import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
 import org.jboss.netty.channel.socket.nio.NioWorkerPool;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpRequestEncoder;
+import org.jboss.netty.handler.codec.http.HttpResponseDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
+import org.jboss.netty.handler.timeout.IdleStateHandler;
+import org.jboss.netty.util.HashedWheelTimer;
+import org.jboss.netty.util.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -74,52 +79,38 @@ public class NettyRouter extends AbstractIdleService {
   private final int serverBossThreadPoolSize;
   private final int serverWorkerThreadPoolSize;
   private final int serverConnectionBacklog;
-
   private final int clientBossThreadPoolSize;
   private final int clientWorkerThreadPoolSize;
   private final InetAddress hostname;
   private final Map<String, Integer> serviceToPortMap;
-
   private final ChannelGroup channelGroup = new DefaultChannelGroup("server channels");
   private final RouterServiceLookup serviceLookup;
-
   private final boolean securityEnabled;
   private final TokenValidator tokenValidator;
   private final AccessTokenTransformer accessTokenTransformer;
   private final CConfiguration configuration;
-  private final SConfiguration sConfiguration;
   private final String realm;
+  private final boolean sslEnabled;
+  private final SSLHandlerFactory sslHandlerFactory;
+  private final int connectionTimeout;
 
+  private Timer timer;
   private ServerBootstrap serverBootstrap;
   private ClientBootstrap clientBootstrap;
-
   private DiscoveryServiceClient discoveryServiceClient;
-
-  private final boolean sslEnabled;
-  private final boolean webAppEnabled;
-  private final SSLHandlerFactory sslHandlerFactory;
 
   @Inject
   public NettyRouter(CConfiguration cConf, SConfiguration sConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
                      RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
                      AccessTokenTransformer accessTokenTransformer,
                      DiscoveryServiceClient discoveryServiceClient) {
-
-    this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS,
-                                                 Constants.Router.DEFAULT_SERVER_BOSS_THREADS);
-    this.serverWorkerThreadPoolSize = cConf.getInt(Constants.Router.SERVER_WORKER_THREADS,
-                                                   Constants.Router.DEFAULT_SERVER_WORKER_THREADS);
-    this.serverConnectionBacklog = cConf.getInt(Constants.Router.BACKLOG_CONNECTIONS,
-                                                Constants.Router.DEFAULT_BACKLOG);
-
-    this.clientBossThreadPoolSize = cConf.getInt(Constants.Router.CLIENT_BOSS_THREADS,
-                                                 Constants.Router.DEFAULT_CLIENT_BOSS_THREADS);
-    this.clientWorkerThreadPoolSize = cConf.getInt(Constants.Router.CLIENT_WORKER_THREADS,
-                                                   Constants.Router.DEFAULT_CLIENT_WORKER_THREADS);
-
+    this.serverBossThreadPoolSize = cConf.getInt(Constants.Router.SERVER_BOSS_THREADS);
+    this.serverWorkerThreadPoolSize = cConf.getInt(Constants.Router.SERVER_WORKER_THREADS);
+    this.serverConnectionBacklog = cConf.getInt(Constants.Router.BACKLOG_CONNECTIONS);
+    this.clientBossThreadPoolSize = cConf.getInt(Constants.Router.CLIENT_BOSS_THREADS);
+    this.clientWorkerThreadPoolSize = cConf.getInt(Constants.Router.CLIENT_WORKER_THREADS);
     this.hostname = hostname;
-    this.serviceToPortMap = Maps.newHashMap();
-
+    this.serviceToPortMap = new HashMap<>();
     this.serviceLookup = serviceLookup;
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED, false);
     this.realm = cConf.get(Constants.Security.CFG_REALM);
@@ -127,18 +118,14 @@ public class NettyRouter extends AbstractIdleService {
     this.accessTokenTransformer = accessTokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
     this.configuration = cConf;
-    this.sConfiguration = sConf;
-
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL_ENABLED);
-    this.webAppEnabled = cConf.getBoolean(Constants.Router.WEBAPP_ENABLED);
+    boolean webAppEnabled = cConf.getBoolean(Constants.Router.WEBAPP_ENABLED);
     if (isSSLEnabled()) {
       this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
-                                Integer.parseInt(cConf.get(Constants.Router.ROUTER_SSL_PORT,
-                                                           Constants.Router.DEFAULT_ROUTER_SSL_PORT)));
+                                cConf.getInt(Constants.Router.ROUTER_SSL_PORT));
       if (webAppEnabled) {
         this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
-                                  Integer.parseInt(cConf.get(Constants.Router.WEBAPP_SSL_PORT,
-                                                             Constants.Router.DEFAULT_WEBAPP_SSL_PORT)));
+                                  cConf.getInt(Constants.Router.WEBAPP_SSL_PORT));
       }
 
       File keystore;
@@ -154,31 +141,31 @@ public class NettyRouter extends AbstractIdleService {
                                                      sConf.get(Constants.Security.Router.SSL_KEYSTORE_PASSWORD),
                                                      sConf.get(Constants.Security.Router.SSL_KEYPASSWORD));
     } else {
-      this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME,
-                        Integer.parseInt(cConf.get(Constants.Router.ROUTER_PORT,
-                                                   Constants.Router.DEFAULT_ROUTER_PORT)));
+      this.serviceToPortMap.put(Constants.Router.GATEWAY_DISCOVERY_NAME, cConf.getInt(Constants.Router.ROUTER_PORT));
       if (webAppEnabled) {
-        this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME,
-                                  Integer.parseInt(cConf.get(Constants.Router.WEBAPP_PORT,
-                                                             Constants.Router.DEFAULT_WEBAPP_PORT)));
+        this.serviceToPortMap.put(Constants.Router.WEBAPP_DISCOVERY_NAME, cConf.getInt(Constants.Router.WEBAPP_PORT));
       }
       this.sslHandlerFactory = null;
     }
+    this.connectionTimeout = cConf.getInt(Constants.Router.CONNECTION_TIMEOUT_SECS);
+    LOG.info("Using connection timeout: {}", connectionTimeout);
     LOG.info("Service to Port Mapping - {}", this.serviceToPortMap);
   }
 
   @Override
   protected void startUp() throws Exception {
-    ChannelUpstreamHandler connectionTracker =  new SimpleChannelUpstreamHandler() {
+    ChannelUpstreamHandler connectionTracker = new SimpleChannelUpstreamHandler() {
       @Override
-      public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e)
+      public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e)
         throws Exception {
         channelGroup.add(e.getChannel());
-        super.handleUpstream(ctx, e);
+        super.channelOpen(ctx, e);
       }
     };
 
     tokenValidator.startAndWait();
+    timer = new HashedWheelTimer(
+      new ThreadFactoryBuilder().setDaemon(true).setNameFormat("router-idle-event-generator-timer").build());
     bootstrapClient(connectionTracker);
 
     bootstrapServer(connectionTracker);
@@ -198,6 +185,7 @@ public class NettyRouter extends AbstractIdleService {
       clientBootstrap.releaseExternalResources();
       serverBootstrap.releaseExternalResources();
       tokenValidator.stopAndWait();
+      timer.stop();
     }
 
     LOG.info("Stopped Netty Router.");
@@ -289,12 +277,19 @@ public class NettyRouter extends AbstractIdleService {
         new NioClientBossPool(clientBossExecutor, clientBossThreadPoolSize),
         new NioWorkerPool(clientWorkerExecutor, clientWorkerThreadPoolSize)));
 
+
     clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       @Override
       public ChannelPipeline getPipeline() throws Exception {
         ChannelPipeline pipeline = Channels.pipeline();
         pipeline.addLast("tracker", connectionTracker);
         pipeline.addLast("request-encoder", new HttpRequestEncoder());
+        // outbound handler gets dynamically added here (after 'request-encoder')
+        pipeline.addLast("response-decoder", new HttpResponseDecoder());
+        // disable the read-specific and write-specific timeouts; we only utilize IdleState#ALL_IDLE
+        pipeline.addLast("idle-event-generator",
+                         new IdleStateHandler(timer, 0, 0, connectionTimeout));
+        pipeline.addLast("idle-event-processor", new IdleEventProcessor());
         return pipeline;
       }
     });

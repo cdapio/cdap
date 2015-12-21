@@ -15,14 +15,13 @@
 -->
 
 <div class="error-button"
-     ng-if="!emptyError()"
      data-placement="bottom"
      data-auto-close="true"
      data-template="error/error-popover.html"
      bs-popover>
   <span class="fa fa-bolt">
-    <sup>
-      <span class="fa fa-circle text-success"></span>
+    <sup ng-if="!emptyError()">
+      <span class="fa fa-circle text-danger"></span>
     </sup>
   </span>
 </div>

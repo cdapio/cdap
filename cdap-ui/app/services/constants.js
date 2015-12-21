@@ -22,7 +22,7 @@ angular.module(PKG.name + '.services')
     // This is here because until now we don't store the aritfact information for each plugin anywhere.
     // From now we need this information to ask for backend widgets json. So if there are any published pipelines/drafts that
     // does not have artifact info of a plugin we default it to here.
-    
+
     artifact: {
       default: {
         name: 'cdap-etl-lib',
@@ -54,6 +54,8 @@ angular.module(PKG.name + '.services')
       hydrator: {
         appLabel: 'Hydrator Pipeline',
         studio: {
+          defaultReferenceInfo: 'Please select a plugin to view reference information',
+          noReferenceInfo: 'Currently, no reference information is available for this plugin.',
           noConfigMessage: 'No configuration found for the plugin.',
           syntaxConfigJsonError: 'Syntax error in the configuration JSON for the plugin.',
           semanticConfigJsonError: 'Semantic error in the configuration JSON for the plugin.',
@@ -76,7 +78,8 @@ angular.module(PKG.name + '.services')
           parallelConnectionError: 'Please remove parallel connections in this pipeline.',
           pluginDoesNotExist: 'This plugin does not exist: ',
           unsavedPluginMessage1: 'There are unsaved changes for node \'',
-          unsavedPluginMessage2: '\'. Please save them before publishing the pipeline.'
+          unsavedPluginMessage2: '\'. Please save them before publishing the pipeline.',
+          pipelineNameAlreadyExistError: 'A pipeline with this name already exists. Please choose a different name.'
         },
         wizard: {
           welcomeMessage1: 'Hydrator makes it easy to prepare data so you ',
