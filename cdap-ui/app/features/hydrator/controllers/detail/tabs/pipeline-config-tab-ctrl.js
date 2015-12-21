@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailPipelineConfigController', function(DetailNonRunsStore, ConfigStore, $timeout, $scope) {
+  .controller('HydratorDetailPipelineConfigController', function(DetailNonRunsStore, $timeout, $scope) {
     this.setState = function() {
       this.config = DetailNonRunsStore.getConfigJson();
     };
