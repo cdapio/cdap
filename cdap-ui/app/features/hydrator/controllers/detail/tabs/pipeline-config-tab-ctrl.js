@@ -15,10 +15,24 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailPipelineConfigController', function(DetailNonRunsStore) {
+  .controller('HydratorDetailPipelineConfigController', function(DetailNonRunsStore, ConfigStore, $timeout, $scope) {
     this.setState = function() {
       this.config = DetailNonRunsStore.getConfigJson();
     };
     this.setState();
+
+    this.exportConfig = function () {
+      var exportConfigJson = angular.copy(DetailNonRunsStore.getCloneConfig());
+      var blob = new Blob([JSON.stringify(exportConfigJson, null, 4)], { type: 'application/json'});
+      this.url = URL.createObjectURL(blob);
+      this.exportFileName = (exportConfigJson.name ? exportConfigJson.name : 'noname') + '-' + exportConfigJson.artifact.name;
+      $scope.$on('$destroy', function () {
+        URL.revokeObjectURL(this.url);
+      }.bind(this));
+      $timeout(function() {
+        document.getElementById('pipeline-export-config-link').click();
+      });
+    };
+
     DetailNonRunsStore.registerOnChangeListener(this.setState.bind(this));
   });
