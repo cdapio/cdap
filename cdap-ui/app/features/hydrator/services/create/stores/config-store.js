@@ -169,6 +169,11 @@ class ConfigStore {
       delete conn.visited;
       return conn;
     });
+
+    if (this.state.description) {
+      config.description = this.state.description;
+    }
+
     return config;
   }
   getConfigForExport() {

@@ -14,13 +14,13 @@
  * the License.
  */
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, rPipelineDetail, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope, moment) {
+  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope, moment) {
     this.GLOBALS = GLOBALS;
     this.config = DetailNonRunsStore.getCloneConfig();
     this.app = {
-      name: rPipelineDetail.name,
-      description: rPipelineDetail.description,
-      type: rPipelineDetail.artifact.name
+      name: this.config.name,
+      description: this.config.description,
+      type: this.config.artifact.name
     };
 
     var params;
