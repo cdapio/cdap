@@ -77,7 +77,7 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
 
   private final ExecutorService scansExecutor;
 
-  ShardedHBaseQueueStrategy() {
+  public ShardedHBaseQueueStrategy() {
     // Using the "direct handoff" approach, new threads will only be created
     // if it is necessary and will grow unbounded. This could be bad but in DistributedScanner
     // we only create as many Runnables as there are buckets data is distributed to. It means
@@ -93,6 +93,11 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
   @Override
   public QueueScanner createScanner(ConsumerConfig consumerConfig,
                                     HTable hTable, Scan scan, int numRows) throws IOException {
+    ResultScanner scanner = createHBaseScanner(consumerConfig, hTable, scan);
+    return new HBaseQueueScanner(scanner, numRows, ROW_KEY_CONVERTER);
+  }
+
+  private ResultScanner createHBaseScanner(ConsumerConfig consumerConfig, HTable hTable, Scan scan) throws IOException {
     // Modify the scan with sharded key prefix
     Scan shardedScan = new Scan(scan);
     shardedScan.setStartRow(getShardedKey(consumerConfig, consumerConfig.getInstanceId(), scan.getStartRow()));
@@ -100,7 +105,7 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
 
     ResultScanner scanner = DistributedScanner.create(hTable, shardedScan,
                                                       HBaseQueueAdmin.ROW_KEY_DISTRIBUTOR, scansExecutor);
-    return new HBaseQueueScanner(scanner, numRows, ROW_KEY_CONVERTER);
+    return scanner;
   }
 
   @Override
@@ -145,15 +150,16 @@ public final class ShardedHBaseQueueStrategy implements HBaseQueueStrategy, Clos
     scansExecutor.shutdownNow();
   }
 
-  private byte[] getShardedKey(ConsumerGroupConfig groupConfig, int instanceId, byte[] originalRowKey) {
+  private byte[] getShardedKey(ConsumerGroupConfig groupConfig, int instanceId,
+                               byte[] originalRowKey) {
     // Need to subtract the SALT_BYTES as the row key distributor will prefix the key with salted bytes
     byte[] result = new byte[PREFIX_BYTES - SaltedHBaseQueueStrategy.SALT_BYTES + originalRowKey.length];
     Bytes.putBytes(result, PREFIX_BYTES - SaltedHBaseQueueStrategy.SALT_BYTES,
                    originalRowKey, 0, originalRowKey.length);
+    Bytes.putLong(result, 0, groupConfig.getGroupId());
 
     // Default for FIFO case.
     int shardId = groupConfig.getDequeueStrategy() == DequeueStrategy.FIFO ? -1 : instanceId;
-    Bytes.putLong(result, 0, groupConfig.getGroupId());
     Bytes.putInt(result, Bytes.SIZEOF_LONG, shardId);
 
     return result;
