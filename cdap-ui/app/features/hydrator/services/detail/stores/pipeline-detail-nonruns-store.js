@@ -117,13 +117,15 @@ angular.module(PKG.name + '.feature.hydrator')
           nodes: uiConfig.nodes,
           connections: uiConfig.connections
         };
+
+        appConfig.description = appConfig.configJson.description ? appConfig.configJson.description : appConfig.description;
       }
       appConfig.type = app.artifact.name;
       appConfig.cloneConfig = {
         name: app.name,
         artifact: app.artifact,
         template: app.artifact.name,
-        description: app.description,
+        description: appConfig.configJson.description,
         ui: appConfig.DAGConfig,
         config: {
           source: appConfig.configJson.source,
