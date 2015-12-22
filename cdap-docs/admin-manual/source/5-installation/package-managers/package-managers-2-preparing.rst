@@ -8,6 +8,6 @@
 Preparing Package Managers
 ==========================
 
-.. include:: /../target/_includes/package-managers-installation.rst
+.. include:: /../target/_includes/package-managers-1-installation.rst
     :start-after: .. _package-managers-preparing-package-managers:
     :end-before: .. end_install-debian-using-apt

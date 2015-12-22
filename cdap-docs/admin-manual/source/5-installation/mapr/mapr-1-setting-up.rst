@@ -55,7 +55,7 @@ Also, create a ``tx.snapshot`` subdirectory::
 .. _mapr-install-preparing-the-cluster-defaults:
 
 .. |edit-your-cdap-configuration| replace:: edit your CDAP configuration
-.. _edit-your-cdap-configuration: mapr-configurations.html
+.. _edit-your-cdap-configuration: mapr-4-configurations.html
 
 Once you have downloaded and installed the packages, you'll need to |edit-your-cdap-configuration|_,
 prior to starting services.

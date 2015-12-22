@@ -24,8 +24,9 @@ Installation and configuration instructions for either **specific distributions*
 .. |cloudera| replace:: **Cloudera Manager (CDH):**
 .. _cloudera: cloudera/index.html
 
-- |cloudera|_ Installing CDAP on `CDH (Cloudera Data Hub) <http://www.cloudera.com/>`__ clusters
-  managed with `Cloudera Manager
+- |cloudera|_ Installing CDAP on `CDH (Cloudera Data Hub) 
+  <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cdh_intro.html>`__ 
+  clusters managed with `Cloudera Manager
   <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__.
 
 .. |ambari| replace:: **Apache Ambari (HDP):**

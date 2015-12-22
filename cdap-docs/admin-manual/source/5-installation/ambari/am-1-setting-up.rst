@@ -40,7 +40,7 @@ widest compatibility with Ambari-supported Hadoop distributions.
 **Note:** The CDAP Ambari service has been tested on Ambari Server 2.0 and 2.1, as
 supplied from Hortonworks.
 
-.. include:: /../target/_includes/ambari-installation.rst
+.. include:: /../target/_includes/ambari-1-installation.rst
   :start-after: .. _ambari-install-rpm-using-yum:
   :end-before: .. _ambari-install-package-installation:
 

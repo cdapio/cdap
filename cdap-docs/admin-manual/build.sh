@@ -47,7 +47,7 @@ function download_includes() {
   local source_rst="${target_includes_dir}/../../source/_includes/installation"
   local pattern="\|distribution\|"  
   local distributions="ambari mapr package-managers"
-  local types="configuration installation starting upgrading"
+  local types="1-installation 2-configuration 3-starting 4-upgrading"
   for dist in ${distributions}; do
     for type in ${types}; do
       rewrite_references_sed "${source_rst}/${type}.txt" "${target_includes_dir}/${dist}-${type}.rst" "${pattern}" "${dist}"

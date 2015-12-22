@@ -8,6 +8,6 @@
 MapR: Preparing Package Managers
 ================================
 
-.. include:: /../target/_includes/mapr-installation.rst
+.. include:: /../target/_includes/mapr-1-installation.rst
     :start-after: .. _mapr-preparing-package-managers:
     :end-before: .. end_install-debian-using-apt

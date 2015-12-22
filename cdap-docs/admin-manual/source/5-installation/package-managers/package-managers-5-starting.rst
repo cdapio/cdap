@@ -4,4 +4,4 @@
 
 .. |display-distribution| replace:: Package Managers (RPM/Debian)
 
-.. include:: /../target/_includes/package-managers-starting.rst
+.. include:: /../target/_includes/package-managers-3-starting.rst

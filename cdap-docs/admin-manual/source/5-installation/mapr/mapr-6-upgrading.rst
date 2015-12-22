@@ -4,4 +4,4 @@
 
 .. |display-distribution| replace:: MapR
 
-.. include:: /../target/_includes/mapr-starting.rst
+.. include:: /../target/_includes/mapr-4-upgrading.rst

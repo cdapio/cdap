@@ -22,7 +22,8 @@ Details on CSDs and Cloudera Manager Extensions are `available online
 
 Install the CSD
 ===============
-Following the instructions at Cloudera's website, `install the CSD <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__.
+Following the instructions at Cloudera's website, 
+`install the CSD <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__.
 
 .. _cloudera-installation-download-distribute-parcel:
 

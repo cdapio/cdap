@@ -10,12 +10,12 @@ CDAP Administration Manual Table of Contents
    :maxdepth: 4
 
     Introduction <index>
-    CDAP Components <cdap-components>
-    System Requirements <system-requirements>
-    Deployment Architectures <deployment-architectures>
-    Hadoop Compatibility <hadoop-compatibility>
-    Installation <installation/index>
-    Verification <verification>
-    Security <security>
-    Operations <operations/index>
+    CDAP Components <1-cdap-components>
+    System Requirements <2-system-requirements>
+    Deployment Architectures <3-deployment-architectures>
+    Hadoop Compatibility <4-hadoop-compatibility>
+    Installation <5-installation/index>
+    Verification <6-verification>
+    Security <7-security>
+    Operations <8-operations/index>
     Appendices <appendices/index>

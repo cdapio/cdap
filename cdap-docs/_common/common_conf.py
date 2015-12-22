@@ -30,7 +30,8 @@
 
 cdap_apps_version = '0.4.0'
 
-node_js_version = 'greater than v0.10.0'
+node_js_version = 'greater than v0.10.0 through v0.12.*'
+recommended_node_js_version = 'v0.12.9'
 
 import sys
 import os
@@ -210,6 +211,9 @@ if node_js_version:
     rst_epilog = rst_epilog + """
 .. |node-js-version| replace:: %(node_js_version)s
 """ % {'node_js_version': node_js_version}
+    rst_epilog = rst_epilog + """
+.. |recommended_node_js_version| replace:: %(recommended_node_js_version)s
+""" % {'recommended_node_js_version': recommended_node_js_version}
 
 if version:
     rst_epilog = rst_epilog + """

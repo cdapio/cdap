@@ -4,6 +4,6 @@
 
 .. |display-distribution| replace:: Package Managers (RPM/Debian)
 
-.. .. _package-managers-upgrading:
+.. |hdfs-user| replace:: ``yarn``
 
-.. include:: /../target/_includes/package-managers-upgrading.rst
+.. include:: /../target/_includes/package-managers-2-configuration.rst

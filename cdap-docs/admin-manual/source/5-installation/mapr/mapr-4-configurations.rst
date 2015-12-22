@@ -6,7 +6,7 @@
 
 .. |hdfs-user| replace:: ``cdap``
 
-.. include:: /../target/_includes/mapr-configuration.rst
+.. include:: /../target/_includes/mapr-2-configuration.rst
     :end-before: #. Depending on your installation, you may need to set these properties:
 
 #. CDAP requires a classpath with an additional entry |---| ``/opt/mapr/lib/*`` |---| 
@@ -35,7 +35,7 @@
 
 #. Depending on your installation, you may need to set these properties:
 
-.. include:: /../target/_includes/mapr-configuration.rst
+.. include:: /../target/_includes/mapr-2-configuration.rst
     :start-after: #. Depending on your installation, you may need to set these properties:
     :end-before: .. _mapr-configuration-security:
     
@@ -46,6 +46,6 @@ by the CDAP user.
 
 .. _mapr-configuration-security:
 
-.. include:: /../target/_includes/mapr-configuration.rst
+.. include:: /../target/_includes/mapr-2-configuration.rst
     :start-after: .. _mapr-configuration-security:
     :end-before: .. _mapr-configuration-hdp:

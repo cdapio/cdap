@@ -34,7 +34,7 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 .. rubric:: Getting a Health Check
 
-.. include:: operations/index.rst 
+.. include:: 8-operations/index.rst 
    :start-after: .. _operations-health-check:
 
 

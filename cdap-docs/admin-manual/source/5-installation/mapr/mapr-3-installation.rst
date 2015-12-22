@@ -8,5 +8,5 @@
 MapR: Component Installation using RPM/Debian
 =============================================
 
-.. include:: /../target/_includes/mapr-installation.rst
+.. include:: /../target/_includes/mapr-1-installation.rst
     :start-after: .. _mapr-install-package-installation:
