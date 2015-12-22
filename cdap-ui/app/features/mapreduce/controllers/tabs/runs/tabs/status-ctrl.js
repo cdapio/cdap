@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.mapreduce')
-  .controller('MapreduceStatusController', function ($filter, $scope, $state, myMapreduceApi, MyCDAPDataSource) {
+  .controller('MapreduceStatusController', function ($filter, $scope, $state, MyCDAPDataSource) {
     var myNumber = $filter('myNumber');
     if ($scope.RunsController.runs.length > 0) {
       var runid = $scope.RunsController.runs.selected.runid;
