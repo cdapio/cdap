@@ -35,6 +35,7 @@
   <div class="pull-left">
     <h3>
       {{NodeConfigController.state.node.plugin.name}} Properties
+      <small>{{ NodeConfigController.state.node.plugin.artifact.version }}</small>
       <small class="text-danger" ng-if="NodeConfigController.state.noConfigMessage">({{NodeConfigController.state.noConfigMessage}})</small>
     </h3>
     <p>{{NodeConfigController.state.node.description}}</p>
