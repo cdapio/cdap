@@ -80,20 +80,7 @@ body.theme-cdap.state-hydrator {
       }
     }
   }
-  &.state-hydrator-create-studio {
-    div.console {
-      &.maximized {
-        top: 120px;
-        .node-config .bottompanel-body {
-          div.config-table {
-            height: ~"-moz-calc(100vh - 284px)";
-            height: ~"-webkit-calc(100vh - 284px)";
-            height: ~"calc(100vh - 284px)";
-          }
-        }
-      }
-    }
-  }
+
   div.console {
     background-color: white;
     position: relative;
@@ -141,6 +128,13 @@ body.theme-cdap.state-hydrator {
       div.console-tabs {
         border-top: 0;
         .box-shadow(0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 25%););
+      }
+      .node-config .bottompanel-body {
+        div.config-table {
+          height: ~"-moz-calc(100vh - 284px)";
+          height: ~"-webkit-calc(100vh - 284px)";
+          height: ~"calc(100vh - 284px)";
+        }
       }
     }
   }
