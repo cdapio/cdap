@@ -15,14 +15,7 @@ Cloudera Manager (CDH)
     Preparing Roles <cm-1-preparing-roles>
     Adding Parcels <cm-2-adding-parcels>
     Installing CDAP Service <cm-3-step-by-step>
-    Upgrading using CM <cm-4-upgrading>
-
-..     Prerequisites <prerequisites>
-..     Installation <installation>
-..     Add Service Wizard <step-by-step-cloudera>
-..     Verification <verification>
-..     Upgrading CDAP <upgrading>
-
+    Upgrading CDAP <cm-4-upgrading>
 
 This section is to help you install the Cask Data Application Platform (CDAP) on Hadoop
 systems that are `CDH (Cloudera Data Hub) 

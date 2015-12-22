@@ -15,7 +15,7 @@ Apache Ambari (HDP)
     Setting-up CDAP Repos <am-1-setting-up>
     Adding Dependencies for CDAP <am-2-dependencies>
     Installing using Service Wizard <am-3-service-wizard>
-    Upgrading using Apache Ambari <am-4-upgrading>
+    Upgrading CDAP <am-4-upgrading>
    
 This section is to help you install the Cask Data Application Platform (CDAP) on Hadoop
 systems that are `HDP (Hortonworks Data Platform) <http://hortonworks.com/>`__ clusters

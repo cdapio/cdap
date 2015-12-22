@@ -4,9 +4,9 @@
 
 .. _cloudera-upgrading:
 
-=========================================================
-Cloudera Manager: Upgrading an Existing CDAP Installation
-=========================================================
+================================
+Cloudera Manager: Upgrading CDAP
+================================
 
 Upgrading Patch Releases
 ------------------------
@@ -20,9 +20,9 @@ When a new compatible CDAP parcel is released, it will be available via the Parc
 
 #. Start CDAP services.
 
-Upgrading Major/Minor Releases
+Upgrading Major/Minor Versions
 ------------------------------
-Upgrading between major versions of CDAP involves the additional steps of upgrading the CSD, and running the included
+Upgrading between major versions of CDAP involves the additional steps of upgrading the CDAP CSD, and running the included
 CDAP Upgrade Tool. Upgrades between multiple Major/Minor versions must be done consecutively, and a version cannot be
 skipped unless otherwise noted.
 
@@ -32,21 +32,24 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 #. Stop CDAP services.
 
-#. Ensure your installed version of the CSD matches the target version of CDAP. For example, CSD version 3.0.* is compatible
-   with CDAP version 3.0.*.  Download the latest version of the CSD `here <http://cask.co/resources/#cdap-integrations>`__.
+#. Ensure your installed version of the CDAP CSD matches the target version of CDAP. For
+   example, CDAP CSD version 3.0.* is compatible with CDAP version 3.0.*.  `Download the
+   latest version of the CDAP CSD <http://cask.co/resources/#cdap-integrations>`__.
 
 #. Use the Cloudera Manager UI to download, distribute, and activate the corresponding CDAP parcel version on all cluster
    hosts.
 
-#. Before starting services, run the Upgrade Tool to update any necessary CDAP table definitions. From the CDAP Service
+#. Before starting services, run the CDAP Upgrade Tool to update any necessary CDAP table definitions. From the CDAP Service
    page, select "Run CDAP Upgrade Tool" from the Actions menu.
 
-#. Start the CDAP services.  At this point it may be necessary to correct for any changes in the CSD.  For example, if new CDAP services
-   were added or removed, you must add or remove role instances as necessary. Check the
-   :ref:`release-specific upgrade notes <cloudera-release-specific-upgrade-notes>` below for any specific instructions.
+#. Start the CDAP services. At this point, it may be necessary to correct for any changes in
+   the CDAP CSD. For example, if new CDAP services were added or removed, you must add or
+   remove role instances as necessary. Check the :ref:`release-specific upgrade notes 
+   <cloudera-release-specific-upgrade-notes>` below for any specific instructions.
 
-#. After CDAP services have started, run the Post-Upgrade tool to perform any necessary upgrade steps against the running services.  From the
-   CDAP Service page, select "Run CDAP Post-Upgrade Tasks."
+#. After CDAP services have started, run the Post-Upgrade tool to perform any necessary
+   upgrade steps against the running services.  From the CDAP Service page, select "Run
+   CDAP Post-Upgrade Tasks."
 
 #. You must recompile and then redeploy your applications.
 
@@ -55,13 +58,13 @@ The following is the generic procedure for Major/Minor version upgrades:
 Upgrading CDH 5.3 to 5.4
 ------------------------
 **Background:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
-CDH 5.4 as of CDAP 3.1.0 - however, upgrading the underlying CDH version is only supported
+CDH 5.4 as of CDAP 3.1.0 |---| however, upgrading the underlying CDH version is only supported
 since CDAP 3.2.0. Therefore, before upgrading from CDH 5.3 to CDH 5.4, upgrade CDAP to version
 3.2.0 or greater, following the normal upgrade procedure. Start CDAP at least once to make sure
 it works properly, before you upgrade to CDH 5.4.
 
 **It is important to perform these steps as described, otherwise the coprocessors may not
-get upgraded correctly and HBase regionservers may crash.** In the case where something
+get upgraded correctly and the HBase regionservers may crash.** In the case where something
 goes wrong, see these troubleshooting instructions for :ref:`problems while upgrading CDH
 <faqs-cloudera-troubleshooting-upgrade-cdh>`.
 
@@ -109,9 +112,9 @@ Upgrading CDAP 2.8 to 3.0
 -------------------------
 **Note:** Apps need to be both recompiled and re-deployed.
 
-When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI
+When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP UI
 role.  After starting the 3.0 services for the first time:
 
-   - From the CDAP Instances page, select "Add Role Instances", and choose a host for the CDAP-UI role.
+   - From the CDAP Instances page, select "Add Role Instances", and choose a host for the CDAP UI role.
 
    - From the CDAP Instances page, check the CDAP-Web-App role, and select "Delete" from the Actions menu.
