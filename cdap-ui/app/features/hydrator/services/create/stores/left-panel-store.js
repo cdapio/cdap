@@ -14,6 +14,41 @@
  * the License.
  */
 
+var uniquePluginFilter = (typeMap) => {
+  return (plugin) => {
+    typeMap[plugin.name] = typeMap[plugin.name] || [];
+    if (typeMap[plugin.name].length) {
+      typeMap[plugin.name].push(plugin);
+      return false;
+    }
+    typeMap[plugin.name].push(plugin);
+    return true;
+  };
+};
+
+var updateDefaultVersion = (pluginsList, defaultVersionMap = {}) => {
+  if (!Object.keys(defaultVersionMap).length) {
+    return;
+  }
+  pluginsList.forEach((plugin) => {
+    let key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
+    if(defaultVersionMap.hasOwnProperty(key)) {
+      plugin.defaultVersion = defaultVersionMap[key];
+    }
+  });
+};
+
+var mapPluginsWithMoreInfo = (type, typeMap, MyDAGFactory, popoverTemplate) => {
+  return (plugin) => {
+    plugin.type = type;
+    plugin.icon = MyDAGFactory.getIcon(plugin.name);
+    plugin.template = popoverTemplate;
+    plugin.defaultVersion = typeMap[plugin.name][0].artifact.version;
+    plugin.allVersions = typeMap[plugin.name].map( (plugin) => plugin.artifact.version);
+    return plugin;
+  };
+};
+
 class LeftPanelStore {
   constructor(LeftPanelDispatcher, PluginsDispatcher, MyDAGFactory, GLOBALS, ConfigStore, mySettings, $q, $timeout) {
     this.state = {};
@@ -74,34 +109,9 @@ class LeftPanelStore {
     this.emitChange();
   }
 
-  uniquePluginFilter(typeMap) {
-    return (plugin) => {
-      typeMap[plugin.name] = typeMap[plugin.name] || [];
-      if (typeMap[plugin.name].length) {
-        typeMap[plugin.name].push(plugin);
-        return false;
-      }
-      typeMap[plugin.name].push(plugin);
-      return true;
-    };
-  }
-
-  mapPluginsWithMoreInfo(type, typeMap) {
-    return (plugin) => {
-      plugin.type = type;
-      plugin.icon = this.MyDAGFactory.getIcon(plugin.name);
-      plugin.template = this.popoverTemplate;
-      plugin.defaultVersion = typeMap[plugin.name][0].artifact.version;
-      plugin.allVersions = typeMap[plugin.name].map( (plugin) => plugin.artifact.version);
-      return plugin;
-    };
-  }
-
   setSources(plugins, type) {
     this.sourcesToVersionMap = {};
-    this.state.plugins.sources = plugins
-      .filter(this.uniquePluginFilter(this.sourcesToVersionMap))
-      .map(this.mapPluginsWithMoreInfo(type, this.sourcesToVersionMap));
+    this.state.plugins.sources = plugins.filter(uniquePluginFilter(this.sourcesToVersionMap)).map(mapPluginsWithMoreInfo(type, this.sourcesToVersionMap, this.MyDAGFactory, this.popoverTemplate));
     this.checkAndUpdateDefaultVersion(this.state.plugins.sources);
     this.emitChange();
   }
@@ -111,7 +121,7 @@ class LeftPanelStore {
 
   setTransforms(plugins, type) {
     this.transformsToVersionMap = {};
-    this.state.plugins.transforms = plugins.filter(this.uniquePluginFilter(this.transformsToVersionMap)).map(this.mapPluginsWithMoreInfo(type, this.transformsToVersionMap));
+    this.state.plugins.transforms = plugins.filter(uniquePluginFilter(this.transformsToVersionMap)).map(mapPluginsWithMoreInfo(type, this.transformsToVersionMap, this.MyDAGFactory, this.popoverTemplate));
     this.checkAndUpdateDefaultVersion(this.state.plugins.transforms);
     this.emitChange();
   }
@@ -121,13 +131,14 @@ class LeftPanelStore {
 
   setSinks(plugins, type) {
     this.sinksToVersionMap = {};
-    this.state.plugins.sinks = plugins.filter(this.uniquePluginFilter(this.sinksToVersionMap)).map(this.mapPluginsWithMoreInfo(type, this.sinksToVersionMap));
+    this.state.plugins.sinks = plugins.filter(uniquePluginFilter(this.sinksToVersionMap)).map(mapPluginsWithMoreInfo(type, this.sinksToVersionMap, this.MyDAGFactory, this.popoverTemplate));
     this.checkAndUpdateDefaultVersion(this.state.plugins.sinks);
     this.emitChange();
   }
   getSinks() {
     return angular.copy(this.state.plugins.sinks);
   }
+
   checkAndUpdateDefaultVersion(pluginsList) {
     if (!angular.isObject(this.state.defaultVersionsMap)) {
       this.mySettings
@@ -137,7 +148,7 @@ class LeftPanelStore {
             this.updateDefaultVersion(pluginsList, this.state.defaultVersionsMap);
           });
     } else {
-      this.updateDefaultVersion(pluginsList, this.state.defaultVersionsMap);
+      updateDefaultVersion(pluginsList, this.state.defaultVersionsMap);
     }
   }
   updatePluginDefaultVersion(plugin) {
@@ -145,23 +156,12 @@ class LeftPanelStore {
     if (this.state.defaultVersionsMap.hasOwnProperty(key)) {
       if (this.state.defaultVersionsMap[key] !== plugin.defaultVersion) {
         this.state.defaultVersionsMap[key] = plugin.defaultVersion;
-        this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap).then( () => {console.log('Map: ', this.state.defaultVersionsMap);});
+        this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap);
       }
     } else {
       this.state.defaultVersionsMap[key] = plugin.defaultVersion;
-      this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap).then(() => {console.log('Map: ', this.state.defaultVersionsMap);});
+      this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap);
     }
-  }
-  updateDefaultVersion (pluginsList, defaultVersionMap = {}) {
-    if (!Object.keys(defaultVersionMap).length) {
-      return;
-    }
-    pluginsList.forEach((plugin) => {
-      let key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
-      if(defaultVersionMap.hasOwnProperty(key)) {
-        plugin.defaultVersion = defaultVersionMap[key];
-      }
-    });
   }
   getSpecificPluginVersion(plugin) {
     var typeMap;
