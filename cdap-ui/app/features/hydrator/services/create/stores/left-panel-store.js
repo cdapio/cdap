@@ -15,7 +15,7 @@
  */
 
 class LeftPanelStore {
-  constructor(LeftPanelDispatcher, PluginsDispatcher, MyDAGFactory, GLOBALS, ConfigStore) {
+  constructor(LeftPanelDispatcher, PluginsDispatcher, MyDAGFactory, GLOBALS, ConfigStore, mySettings, $q, $timeout) {
     this.state = {};
     this.setDefaults();
     this.MyDAGFactory = MyDAGFactory;
@@ -26,6 +26,17 @@ class LeftPanelStore {
     this.popoverTemplate = '/assets/features/hydrator/templates/create/popovers/leftpanel-plugin-popover.html';
     this.GLOBALS = GLOBALS;
     this.ConfigStore = ConfigStore;
+    this.mySettings = mySettings;
+    this.$q = $q;
+    this.$timeout = $timeout;
+
+    this.mySettings
+        .get('plugin-default-version')
+        .then((res = {}) => {
+          this.state.defaultVersionsMap = res;
+          return this.$q.resolve;
+        })
+        .then(this.cleanupNonExistantPlugins.bind(this));
 
     let dispatcher = LeftPanelDispatcher.getDispatcher();
     dispatcher.register('onLeftPanelToggled', this.setState.bind(this));
@@ -39,7 +50,8 @@ class LeftPanelStore {
   setDefaults() {
     this.state = {
       panelState: true,
-      plugins: {}
+      plugins: {},
+      defaultVersionsMap: null
     };
   }
 
@@ -84,11 +96,13 @@ class LeftPanelStore {
       return plugin;
     };
   }
+
   setSources(plugins, type) {
     this.sourcesToVersionMap = {};
-    this.state.plugins.sources = plugins.
-      filter(this.uniquePluginFilter(this.sourcesToVersionMap))
+    this.state.plugins.sources = plugins
+      .filter(this.uniquePluginFilter(this.sourcesToVersionMap))
       .map(this.mapPluginsWithMoreInfo(type, this.sourcesToVersionMap));
+    this.checkAndUpdateDefaultVersion(this.state.plugins.sources);
     this.emitChange();
   }
   getSources() {
@@ -98,6 +112,7 @@ class LeftPanelStore {
   setTransforms(plugins, type) {
     this.transformsToVersionMap = {};
     this.state.plugins.transforms = plugins.filter(this.uniquePluginFilter(this.transformsToVersionMap)).map(this.mapPluginsWithMoreInfo(type, this.transformsToVersionMap));
+    this.checkAndUpdateDefaultVersion(this.state.plugins.transforms);
     this.emitChange();
   }
   getTransforms() {
@@ -107,10 +122,46 @@ class LeftPanelStore {
   setSinks(plugins, type) {
     this.sinksToVersionMap = {};
     this.state.plugins.sinks = plugins.filter(this.uniquePluginFilter(this.sinksToVersionMap)).map(this.mapPluginsWithMoreInfo(type, this.sinksToVersionMap));
+    this.checkAndUpdateDefaultVersion(this.state.plugins.sinks);
     this.emitChange();
   }
   getSinks() {
     return angular.copy(this.state.plugins.sinks);
+  }
+  checkAndUpdateDefaultVersion(pluginsList) {
+    if (!angular.isObject(this.state.defaultVersionsMap)) {
+      this.mySettings
+          .get('plugin-default-version')
+          .then( res => {
+            this.state.defaultVersionsMap = res;
+            this.updateDefaultVersion(pluginsList, this.state.defaultVersionsMap);
+          });
+    } else {
+      this.updateDefaultVersion(pluginsList, this.state.defaultVersionsMap);
+    }
+  }
+  updatePluginDefaultVersion(plugin) {
+    var key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
+    if (this.state.defaultVersionsMap.hasOwnProperty(key)) {
+      if (this.state.defaultVersionsMap[key] !== plugin.defaultVersion) {
+        this.state.defaultVersionsMap[key] = plugin.defaultVersion;
+        this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap).then( () => {console.log('Map: ', this.state.defaultVersionsMap);});
+      }
+    } else {
+      this.state.defaultVersionsMap[key] = plugin.defaultVersion;
+      this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap).then(() => {console.log('Map: ', this.state.defaultVersionsMap);});
+    }
+  }
+  updateDefaultVersion (pluginsList, defaultVersionMap = {}) {
+    if (!Object.keys(defaultVersionMap).length) {
+      return;
+    }
+    pluginsList.forEach((plugin) => {
+      let key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
+      if(defaultVersionMap.hasOwnProperty(key)) {
+        plugin.defaultVersion = defaultVersionMap[key];
+      }
+    });
   }
   getSpecificPluginVersion(plugin) {
     var typeMap;
@@ -138,8 +189,30 @@ class LeftPanelStore {
       return false;
     })[0];
   }
+  cleanupNonExistantPlugins() {
+    let defaultVersionsMap = angular.copy(this.state.defaultVersionsMap);
+    if (!angular.isArray(this.state.plugins.sources) && !angular.isArray(this.state.plugins.sinks) && !angular.isArray(this.state.plugins.transforms)) {
+      this.$timeout(this.cleanupNonExistantPlugins.bind(this));
+      return;
+    }
+    this.state.plugins.sources
+        .concat(this.state.plugins.sinks)
+        .concat(this.state.plugins.transforms)
+        .forEach( plugin => {
+          let key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
+          if (defaultVersionsMap.hasOwnProperty(key)) {
+            delete defaultVersionsMap[key];
+          }
+        });
+    if (Object.keys(defaultVersionsMap).length) {
+      angular.forEach(defaultVersionsMap, (pluginVersion, pluginKey) => {
+        delete this.state.defaultVersionsMap[pluginKey];
+      });
+      this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap);
+    }
+  }
 }
 
-LeftPanelStore.$inject = ['LeftPanelDispatcher', 'PluginsDispatcher', 'MyDAGFactory', 'GLOBALS', 'ConfigStore'];
+LeftPanelStore.$inject = ['LeftPanelDispatcher', 'PluginsDispatcher', 'MyDAGFactory', 'GLOBALS', 'ConfigStore', 'mySettings', '$q', '$timeout'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('LeftPanelStore', LeftPanelStore);
