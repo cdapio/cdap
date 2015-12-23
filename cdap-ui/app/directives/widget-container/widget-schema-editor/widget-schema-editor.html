@@ -37,17 +37,17 @@
           </thead>
           <tbody>
             <tr ng-repeat="property in properties" ng-keypress="enter($event, $index)" ng-click="emptyRowClick(property, $index)">
-              <td class="name" ng-if="!property.empty">
-                <input type="text" class="form-control" ng-model="property.name" placeholder="name" my-focus-watch="property.newField" />
+              <td class="name" ng-if="!property.empty" ng-class="{'active-cell': activeCell === true}">
+                <input ng-focus="activeCell = true" ng-blur="activeCell = false" type="text" class="form-control" ng-model="property.name" placeholder="name" my-focus-watch="property.newField" />
               </td>
-              <td class="type" ng-if="!property.empty">
+              <td class="type" ng-if="!property.empty" ng-class="{'active-cell': activeCell === true}">
                 <div class="select-wrapper">
                   <select ng-model="property.type" class="form-control col-xs-4"
-                      ng-options="option as option for option in options"></select>
+                      ng-options="option as option for option in options" ng-focus="activeCell = true" ng-blur="activeCell = false"></select>
                 </div>
               </td>
-              <td class="text-center nullable" ng-if="!property.empty">
-                <input type="checkbox" ng-model="property.nullable" />
+              <td class="text-center nullable" ng-if="!property.empty" ng-class="{'active-cell': activeCell === true}">
+                <input type="checkbox" ng-model="property.nullable" ng-focus="activeCell = true" ng-blur="activeCell = false" />
               </td>
               <td class="text-center trash" ng-if="!property.empty">
                 <a href="" class="btn" ng-click="removeProperty(property)">
