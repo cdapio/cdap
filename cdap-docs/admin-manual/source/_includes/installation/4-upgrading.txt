@@ -23,13 +23,13 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 
 #. Update the CDAP file definition lists by running either of these methods:
  
-   - Using Yum:
+   - On RPM using Yum:
 
      .. include:: ../../_includes/installation/1-installation.txt 
         :start-after: Download the Cask Yum repo definition file:
         :end-before:  .. end_install-rpm-using-yum
 
-   - Using APT:
+   - On Debian using APT:
 
      .. include:: ../../_includes/installation/1-installation.txt 
         :start-after: Download the Cask APT repo definition file:
@@ -37,14 +37,14 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 
 #. Update the CDAP packages by running either of these methods:
 
-   - Using Yum (on one line)::
+   - On RPM using Yum (on one line)::
 
        $ sudo yum install cdap cdap-gateway \
              cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 cdap-hbase-compat-1.0 \
              cdap-hbase-compat-1.0-cdh cdap-hbase-compat-1.1 \
              cdap-kafka cdap-master cdap-security cdap-ui
 
-   - Using APT (on one line)::
+   - On Debian using APT (on one line)::
 
        $ sudo apt-get install cdap cdap-gateway \
              cdap-hbase-compat-0.96 cdap-hbase-compat-0.98 cdap-hbase-compat-1.0 \

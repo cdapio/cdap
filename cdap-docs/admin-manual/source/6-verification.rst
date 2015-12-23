@@ -9,8 +9,8 @@ Verification
 ============
 
 To verify that the CDAP software is successfully installed and you are able to use your
-Hadoop cluster, run an example application.
-We provide in our SDK pre-built ``.JAR`` files for convenience.
+Hadoop cluster, run an example application. We provide in our SDK pre-built JAR files for
+convenience.
 
 #. Download and install the latest `CDAP Software Development Kit (SDK)
    <http://cask.co/downloads/#cdap>`__.
@@ -36,5 +36,3 @@ We provide in our SDK pre-built ``.JAR`` files for convenience.
 
 .. include:: 8-operations/index.rst 
    :start-after: .. _operations-health-check:
-
-

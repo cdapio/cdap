@@ -8,6 +8,15 @@
 System Requirements
 ===================
 
+In this section, we list the specific
+:ref:`hardware <admin-manual-hardware-requirements>`,
+:ref:`memory, core <admin-manual-memory-core-requirements>`, and
+:ref:`network requirements <admin-manual-network-requirements>`, and the
+:ref:`software prerequisites <admin-manual-software-requirements>`
+that need to be met and completed before installation of the CDAP components.
+
+Follow the instructions described below prior to installing the CDAP components.
+
 .. _admin-manual-hardware-requirements:
 
 Hardware Requirements
@@ -52,8 +61,9 @@ The **YARN settings will override these**; for instance, the minimum YARN contai
 determined by ``yarn.scheduler.minimum-allocation-mb``. The YARN default in Hadoop is 1024
 MB, so containers will be allocated with 1024 MB, even if the CDAP settings are for 512 MB.
 
-With the default YARN and CDAP settings of memory, having 14 to 16 CPU cores 
-(and a total of 14 to 16 GB of memory) available to YARN can be required just to start.
+With these default YARN and CDAP memory settings, just starting CDAP can require having 14
+to 16 CPU cores (and a total of 14 to 16 GB of memory) available to YARN.
+
 
 .. _admin-manual-network-requirements:
 
@@ -62,7 +72,8 @@ Network Requirements
 CDAP components communicate over your network with *HBase*, *HDFS*, and *YARN*.
 For the best performance, CDAP components should be located on the same LAN,
 ideally running at 1 Gbps or faster. A good rule of thumb is to treat CDAP
-components as you would *Hadoop DataNodes*.  
+components as you would *Hadoop datanodes*.  
+
 
 .. _admin-manual-software-requirements:
 
@@ -70,14 +81,13 @@ Software Prerequisites
 ======================
 You'll need this software installed:
 
-- :ref:`Java runtime <admin-manual-install-java-runtime>` (on CDAP and Hadoop DataNodes)
-- :ref:`Node.js runtime <admin-manual-install-node.js>` (on CDAP nodes)
-- Hadoop and HBase (and optionally Hive) environment to run against
+- A :ref:`Java runtime <admin-manual-install-java-runtime>` on each CDAP node and Hadoop datanode.
+- A :ref:`Node.js runtime <admin-manual-install-node.js>` on each CDAP node.
+- A Hadoop and HBase (and optionally Hive) environment to run against.
 - CDAP nodes require Hadoop and HBase client installation and configuration. 
   *Note:* No Hadoop services need be running.
-- We recommend installing a :ref:`NTP (Network Time Protocol) <admin-manual-install-ntp>`
-  daemon on all nodes of the cluster, including those with CDAP components
-
+- We recommend installing an :ref:`NTP (Network Time Protocol) <admin-manual-install-ntp>`
+  daemon on all nodes of the cluster, including those with CDAP components.
 
 .. _admin-manual-install-java-runtime:
 
@@ -101,7 +111,7 @@ Once you have installed the JDK, you'll need to set the JAVA_HOME environment va
 
 Node.js Runtime
 ---------------
-You can download the appropriate version of Node.js from `nodejs.org
+You can download an appropriate version of Node.js from `nodejs.org
 <http://nodejs.org>`__. We recommend any version of `Node.js <https://nodejs.org/>`__
 |node-js-version|; in particular, we recommend |recommended_node_js_version|.
    
@@ -109,9 +119,9 @@ You can download the appropriate version of Node.js from `nodejs.org
 
 #. Run as root (note that running under sudo will not work)::
 
-    # su root
-    # curl --silent --location https://rpm.nodesource.com/setup | bash -
-    # yum -y install nodejs
+    $ su root
+    $ curl --silent --location https://rpm.nodesource.com/setup | bash -
+    $ yum -y install nodejs
 
 #. Check the Node.js installation and version using::
 
@@ -139,32 +149,31 @@ You can download the appropriate version of Node.js from `nodejs.org
 
 NTP (Network Time Protocol)
 ---------------------------
-- We recommend installing a NTP (Network Time Protocol) daemon on all nodes of the
-  cluster, including those with CDAP components.
-- This should be installed on all nodes of the cluster, including those with CDAP components.
+- We recommend installing an NTP (`Network Time Protocol <http://www.ntp.org>`__) daemon
+  on all nodes of the cluster, including those with CDAP components.
 - NTP requires that port 123 be open.
 
 **Installing NTP on RPM using Yum**
 
 #. Synchronize the system clock with the ``0.pool.ntp.org`` server. You should use this command only once::
 
-    # sudo ntpdate -u pool.ntp.org
+    $ sudo ntpdate -u pool.ntp.org
 
 #. Install the NTP service and dependencies::
 
-    # sudo yum install ntp ntpdate ntp-doc
+    $ sudo yum install ntp ntpdate ntp-doc
 
 #. Set the service to start at reboot::
 
-    # sudo chkconfig ntpd on
+    $ sudo chkconfig ntpd on
 
 #. Start the NTP server. This will continuously adjust the system time from an upstream NTP server::
 
-   # sudo /etc/init.d/ntpd start
+   $ sudo /etc/init.d/ntpd start
 
 #. Synchronize the hardware clock (to prevent synchronization problems)::
 
-   # hwclock --systohc
+   $ hwclock --systohc
   
 **Installing NTP on Debian using APT**
 
@@ -197,6 +206,6 @@ NTP (Network Time Protocol)
     +services.quadra 198.60.22.240    2 u    6   64    1   21.805    3.040   1.033
     -hydrogen.consta 200.98.196.212   2 u    7   64    1  114.250   16.011   0.873
 
-- If you need to adjust the configuration (add or delete servers, use servers closer to you)::
+- If you need to adjust the configuration (add or delete servers, use servers closer to you, etc.)::
 
     $ vi /etc/ntp.conf

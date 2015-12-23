@@ -4,9 +4,16 @@
 
 .. _admin-manual-hadoop-compatibility-matrix:
 
-========================
-Hadoop/HBase Environment
-========================
+====================
+Hadoop Compatibility
+====================
+
+Before installing the CDAP components, you must first install (or have access to) a Hadoop cluster
+with *HDFS*, *YARN*, *HBase*, and *ZooKeeper*. In order to use the ad-hoc querying capabilities
+of CDAP, you will also need *Hive*. All CDAP components can be installed on the
+same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop services.
+
+.. rubric:: Hadoop/HBase Environment
 
 For a Distributed CDAP cluster, version |release|, you must install these Hadoop components:
 
@@ -59,10 +66,12 @@ confident of their suitability and compatibility. Later versions of components m
 but have not necessarily have been either tested or confirmed compatible.
 
 **Note:** Certain CDAP components need to reference your *Hadoop*, *HBase*, *YARN* (and
-possibly *Hive*) cluster configurations by adding your configuration to their class paths.
+possibly *Hive*) cluster configurations by adding those configurations to their class paths.
+
+**Note:** *Hive 0.12* is not supported for :ref:`secure cluster configurations <admin-security>`.
+
+To be moved:
 
 **Note:** ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
 (unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
 the number of connections required is a function of usage.
-
-**Note:** *Hive 0.12* is not supported for :ref:`secure cluster configurations <admin-security>`.

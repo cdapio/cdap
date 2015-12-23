@@ -58,7 +58,7 @@ Available packaging types:
 
 .. _|distribution|-install-rpm-using-yum:
 
-.. rubric:: RPM using Yum
+.. rubric:: On RPM using Yum
 
 Download the Cask Yum repo definition file:
    
@@ -89,7 +89,7 @@ Update your Yum cache::
 
 .. end_install-rpm-using-yum
 
-.. rubric:: Debian using APT
+.. rubric:: On Debian using APT
 
 Download the Cask APT repo definition file:
 
@@ -136,14 +136,14 @@ If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an `officia
 cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
 
 
-.. rubric:: RPM using Yum
+.. rubric:: On RPM using Yum
 
 ::
 
   $ sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
 
 
-.. rubric:: Debian using APT
+.. rubric:: On Debian using APT
 
 ::
 
