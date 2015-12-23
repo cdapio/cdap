@@ -440,19 +440,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
   private void stopProgramIfRunning(Id.Program programId)
     throws InterruptedException, ExecutionException {
-    ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId.getNamespaceId(),
-                                                                       programId.getApplicationId(),
-                                                                       programId.getId(),
-                                                                       programId.getType(),
-                                                                       runtimeService);
+    ProgramRuntimeService.RuntimeInfo programRunInfo = findRuntimeInfo(programId, runtimeService);
     if (programRunInfo != null) {
-      doStop(programRunInfo);
+      doStop(programRunInfo, programId);
     }
   }
 
-  private void doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo)
-    throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND));
+  private void doStop(ProgramRuntimeService.RuntimeInfo runtimeInfo,
+                      Id.Program programId) throws ExecutionException, InterruptedException {
+    Preconditions.checkNotNull(runtimeInfo, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), programId);
     ProgramController controller = runtimeInfo.getController();
     controller.stop().get();
   }
