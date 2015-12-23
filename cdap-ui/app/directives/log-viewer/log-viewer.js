@@ -60,6 +60,7 @@ angular.module(PKG.name + '.commons')
         var params = {};
 
         function initialize() {
+          params = {};
           angular.copy($scope.params, params);
           params.max = 50;
           params.scope = $scope;
@@ -85,7 +86,9 @@ angular.module(PKG.name + '.commons')
           }
 
           $scope.loadingNext = true;
-          params.fromOffset = $scope.model[$scope.model.length-1].offset;
+          if ($scope.model.length >= params.max) {
+            params.fromOffset = $scope.model[$scope.model.length-1].offset;
+          }
 
           myLogsApi.nextLogs(params)
             .$promise
