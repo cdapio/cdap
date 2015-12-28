@@ -17,8 +17,6 @@
 angular.module(PKG.name + '.feature.hydrator')
   .service('PipelineDetailMetricsActionFactory', function(DetailRunsStore, PipelineDetailMetricslDispatcher, MyCDAPDataSource, MetricsStore, $filter, MyMetricsQueryHelper, DetailNonRunsStore) {
 
-    // var pipelineDispatcher = PipelineDetailDispatcher.getDispatcher();
-
     var dispatcher = PipelineDetailMetricslDispatcher.getDispatcher();
     var metricsPollId;
     // FIXME: This is a memory leak. We need to fix this.
