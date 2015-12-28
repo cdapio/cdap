@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('PipelineDetailActionFactory', function(PipelineDetailDispatcher, myPipelineApi) {
+  .service('PipelineDetailActionFactory', function(PipelineDetailDispatcher,PipelineDetailMetricsActionFactory, myPipelineApi) {
     var dispatcher = PipelineDetailDispatcher.getDispatcher();
     this.startPipeline = function (api, params) {
       return api.start(params).$promise;
