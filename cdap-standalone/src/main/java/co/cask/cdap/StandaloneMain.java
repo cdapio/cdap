@@ -58,6 +58,7 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
+import co.cask.cdap.startup.ConfigurationLogger;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
@@ -164,6 +165,8 @@ public class StandaloneMain {
     URLConnections.setDefaultUseCaches(false);
 
     cleanupTempDir();
+
+    ConfigurationLogger.logImportantConfig(configuration);
 
     // Start all the services.
     txService.startAndWait();

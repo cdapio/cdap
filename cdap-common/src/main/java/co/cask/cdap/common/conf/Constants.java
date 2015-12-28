@@ -23,6 +23,21 @@ import java.util.concurrent.TimeUnit;
  */
 public final class Constants {
 
+  public static final String[] FEATURE_TOGGLE_PROPS = {
+    Security.SSL_ENABLED,
+    Security.ENABLED,
+    Explore.EXPLORE_ENABLED,
+  };
+
+  public static final String[] PORT_PROPS = {
+    Router.ROUTER_PORT,
+    Router.ROUTER_SSL_PORT,
+    Dashboard.BIND_PORT,
+    Dashboard.SSL_BIND_PORT,
+    Security.AUTH_SERVER_BIND_PORT,
+    Security.AuthenticationServer.SSL_PORT,
+  };
+
   public static final String ARCHIVE_DIR = "archive";
   public static final String ROOT_NAMESPACE = "root.namespace";
   public static final String COLLECT_CONTAINER_LOGS = "master.collect.containers.log";

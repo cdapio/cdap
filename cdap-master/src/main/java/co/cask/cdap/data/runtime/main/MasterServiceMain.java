@@ -56,6 +56,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.startup.ConfigurationLogger;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -181,6 +182,7 @@ public class MasterServiceMain extends DaemonMain {
       LOG.error("Could not disable caching of URLJarFiles. This may lead to 'too many open files` exception.", e);
     }
 
+    ConfigurationLogger.logImportantConfig(cConf);
     createSystemHBaseNamespace();
     updateConfigurationTable();
 
