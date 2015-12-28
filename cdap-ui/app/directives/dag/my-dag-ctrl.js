@@ -417,15 +417,29 @@ angular.module(PKG.name + '.commons')
             });
           }
         });
+        var nodesIdMap = {};
 
-        angular.forEach($scope.nodes, function (plugin) {
-          plugin.requiredFieldCount = HydratorErrorFactory.countRequiredFields(plugin);
-          if (plugin.requiredFieldCount > 0) {
-            plugin.error = {
+        angular.forEach($scope.nodes, function (node) {
+          node.requiredFieldCount = HydratorErrorFactory.countRequiredFields(node);
+          if (node.requiredFieldCount > 0) {
+            node.error = {
               message: GLOBALS.en.hydrator.studio.genericMissingRequiredFieldsError
             };
           } else {
-            plugin.error = false;
+            node.error = false;
+          }
+          if (!nodesIdMap[node.plugin.label]) {
+            nodesIdMap[node.plugin.label] = [];
+          }
+          nodesIdMap[node.plugin.label].push(node);
+        });
+        angular.forEach(nodesIdMap, function(nodeArray) {
+          if(nodeArray.length > 1) {
+            nodeArray.forEach( function(n) {
+              n.error = n.error || {};
+              n.error.message = `Node with name already exists`;
+              n.requiredFieldCount = '!';
+            });
           }
         });
 
