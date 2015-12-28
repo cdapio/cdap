@@ -232,10 +232,14 @@ set_hive_classpath() {
       fi
 
       if [[ $(which hive 2>/dev/null) ]]; then
-        HIVE_VAR_OUT=$(hive -e 'set -v' 2>/dev/null)
+        ERR_FILE=$(mktemp)
+        HIVE_VAR_OUT=$(hive -e 'set -v' 2>${ERR_FILE})
         __ret=$?
+        HIVE_ERR_MSG=$(< ${ERR_FILE})
+        rm ${ERR_FILE}
         if [ ${__ret} -ne 0 ]; then
-          echo "ERROR - Failed getting Hive settings using: hive -e 'set -v'"
+          echo "ERROR - Failed getting Hive settings using: hive -e 'set -v':"
+          echo "${HIVE_ERR_MSG}"
           return 1
         fi
         HIVE_VARS=$(echo ${HIVE_VAR_OUT} | tr ' ' '\n')
