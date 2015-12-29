@@ -238,7 +238,10 @@ cdap_set_hive_classpath() {
         HIVE_ERR_MSG=$(< ${ERR_FILE})
         rm ${ERR_FILE}
         if [ ${__ret} -ne 0 ]; then
-          echo "ERROR - Failed getting Hive settings using: hive -e 'set -v':"
+          echo "ERROR - While determining Hive classpath, failed to get Hive settings using: hive -e 'set -v'"
+          echo "If you do not want run CDAP with Hive functionality, set the 'explore.enabled' property in cdap-site.xml to 'false'"
+          echo "Otherwise, check that the Hive client is installed, and that Hive and HDFS are running."
+          echo "stderr:"
           echo "${HIVE_ERR_MSG}"
           return 1
         fi
