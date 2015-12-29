@@ -327,9 +327,6 @@ angular
       }
     });
 
-
-
-
     $scope.$on('$stateChangeSuccess', function (event, state) {
       var classes = [];
       if(state.data && state.data.bodyClass) {
@@ -347,6 +344,12 @@ angular
 
       $scope.bodyClass = classes.join(' ');
 
+
+      /**
+       *  This is to make sure that the sroll position goes back to the top when user
+       *  change state. UI Router has this function ($anchorScroll), but for some
+       *  reason it is not working.
+       **/
       $window.scrollTo(0, 0);
     });
 
