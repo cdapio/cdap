@@ -113,7 +113,7 @@ class ConfigStore {
       var pluginConfig =  {
         // Solely adding id and _backendProperties for validation.
         // Should be removed while saving it to backend.
-        name: node.plugin.label,
+        name: node.plugin.name,
         label: node.plugin.label,
         artifact: node.plugin.artifact,
         properties: node.plugin.properties,
