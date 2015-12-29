@@ -352,7 +352,13 @@ body.theme-cdap.state-hydrator {
       .box-shadow(none);
       &:focus {
         border-color: @table-border-color;
+        outline: 1px solid @cdap-orange;
         .box-shadow(none);
+      }
+    }
+    td.active-cell {
+      input:focus, select:focus {
+        outline: 0;
       }
     }
     .bottompanel-header {
