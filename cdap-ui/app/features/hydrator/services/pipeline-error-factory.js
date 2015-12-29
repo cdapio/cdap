@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .factory('HydratorErrorFactory', function (GLOBALS, ConfigStore, NodesStore, ConsoleActionsFactory) {
+  .factory('HydratorErrorFactory', function (GLOBALS, ConfigStore, NodesStore, ConsoleActionsFactory, NonStorePipelineErrorFactory) {
 
     var ERROR_MESSAGES = GLOBALS.en.hydrator.studio;
 
@@ -25,7 +25,8 @@ angular.module(PKG.name + '.feature.hydrator')
         hasName,
         hasOnlyOneSource,
         hasAtLeastOneSink,
-        requiredFieldsHaveContent
+        requiredFieldsHaveContent,
+        hasUniqueNodeNames
       ];
 
       var isValid = true;
@@ -165,25 +166,21 @@ angular.module(PKG.name + '.feature.hydrator')
       return plugin.valid;
     }
 
-    function countRequiredFields(node) {
-      var requiredFieldCount = 0;
-      if (angular.isObject(node._backendProperties) && Object.keys(node._backendProperties).length) {
-
-        angular.forEach(node._backendProperties, function (value, key) {
-          if (value.required) {
-            if (!node.plugin.properties || !node.plugin.properties[key]) {
-              requiredFieldCount++;
-            }
-          }
+    function hasUniqueNodeNames() {
+      let nodes = ConfigStore.getNodes();
+      let isRuleValid = NonStorePipelineErrorFactory.checkAndUpdateUniqueNodeNames(nodes);
+      if (!isRuleValid) {
+        ConsoleActionsFactory.addMessage({
+          type: 'error',
+          content: ERROR_MESSAGES.uniqueNodeNames
         });
       }
-      return requiredFieldCount;
+      return isRuleValid;
     }
 
     return {
       isModelValid: isModelValid,
-      isValidPlugin: isValidPlugin,
-      countRequiredFields: countRequiredFields
+      isValidPlugin: isValidPlugin
     };
 
   });
