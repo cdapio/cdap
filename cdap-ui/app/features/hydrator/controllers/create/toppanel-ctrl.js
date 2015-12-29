@@ -117,7 +117,7 @@ class TopPanelController{
     });
   }
   onSaveDraft() {
-    var config = this.ConfigStore.getConfigForExport();
+    var config = this.ConfigStore.getState();
     if (!config.name) {
       this.ConsoleActionsFactory.addMessage({
         type: 'error',
