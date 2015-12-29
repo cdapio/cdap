@@ -296,7 +296,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window) {
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyCDAPDataSource($scope);
@@ -327,9 +327,6 @@ angular
       }
     });
 
-
-
-
     $scope.$on('$stateChangeSuccess', function (event, state) {
       var classes = [];
       if(state.data && state.data.bodyClass) {
@@ -346,6 +343,14 @@ angular
       classes.push(activeThemeClass);
 
       $scope.bodyClass = classes.join(' ');
+
+
+      /**
+       *  This is to make sure that the sroll position goes back to the top when user
+       *  change state. UI Router has this function ($anchorScroll), but for some
+       *  reason it is not working.
+       **/
+      $window.scrollTo(0, 0);
     });
 
     EventPipe.on(MYSOCKET_EVENT.reconnected, function () {
