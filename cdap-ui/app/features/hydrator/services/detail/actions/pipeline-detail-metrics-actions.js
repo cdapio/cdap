@@ -15,11 +15,10 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('PipelineDetailMetricsActionFactory', function(DetailRunsStore, PipelineDetailMetricslDispatcher, MyCDAPDataSource, $filter, MyMetricsQueryHelper, DetailNonRunsStore) {
+  .service('PipelineDetailMetricsActionFactory', function(DetailRunsStore, PipelineDetailMetricslDispatcher, MyCDAPDataSource, MetricsStore, $filter, MyMetricsQueryHelper, DetailNonRunsStore) {
 
     var dispatcher = PipelineDetailMetricslDispatcher.getDispatcher();
     var metricsPollId;
-    var metricValuesPollId;
     // FIXME: This is a memory leak. We need to fix this.
     var dataSrc = new MyCDAPDataSource();
     var filter = $filter('filter');
@@ -58,17 +57,22 @@ angular.module(PKG.name + '.feature.hydrator')
             metricQuery = metricQuery.concat(filter(res, node));
           });
 
-          if (metricQuery.length === 0) { return; }
-          this.stopMetricValuesPoll();
+          if (metricQuery.length === 0) {
+            dispatcher.dispatch('onEmptyMetrics');
+            return;
+          }
 
-          metricValuesPollId = api({
+          /**
+           *  Since the parent block is already a poll, we don't need another poll for
+           *  the values of each metrics.
+           **/
+          dataSrc.request({
             method: 'POST',
             _cdapPath: '/metrics/query?' + metricParams + '&metric=' + metricQuery.join('&metric=')
-          }, function(metrics) {
+          }).then(function(metrics) {
             dispatcher.dispatch('onMetricsFetch', metrics);
           });
 
-          metricValuesPollId = metricValuesPollId.__pollId__;
         }
       }.bind(this));
 
@@ -82,16 +86,8 @@ angular.module(PKG.name + '.feature.hydrator')
       }
     };
 
-    this.stopMetricValuesPoll = function() {
-      if (metricValuesPollId) {
-        dataSrc.stopPoll(metricValuesPollId);
-        metricValuesPollId = null;
-      }
-    };
-
     this.reset = function() {
       this.stopMetricsPoll();
-      this.stopMetricValuesPoll();
       dispatcher.dispatch('onReset');
     };
 

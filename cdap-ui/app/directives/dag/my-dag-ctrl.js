@@ -144,6 +144,12 @@ angular.module(PKG.name + '.commons')
           }
 
           $scope.$watch('metricsData', function () {
+            if (Object.keys($scope.metricsData).length === 0) {
+              angular.forEach(nodePopovers, function (value) {
+                value.scope.data.metrics = 0;
+              });
+            }
+
             angular.forEach($scope.metricsData, function (value, key) {
               nodePopovers[key].scope.data.metrics = value;
             });
@@ -151,6 +157,8 @@ angular.module(PKG.name + '.commons')
             angular.forEach(labels, function (endpoint) {
               var label = endpoint.getOverlay('metricLabel');
               if ($scope.metricsData[endpoint.elementId] === null || $scope.metricsData[endpoint.elementId] === undefined) {
+                angular.element(label.getElement())
+                  .text(0);
                 return;
               }
 
