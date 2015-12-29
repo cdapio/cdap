@@ -15,7 +15,7 @@
  */
 
 class ConfigStore {
-  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers){
+  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory, $alert){
     this.state = {};
     this.mySettings = mySettings;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
@@ -23,6 +23,8 @@ class ConfigStore {
     this.GLOBALS = GLOBALS;
     this.$stateParams = $stateParams;
     this.myHelpers = myHelpers;
+    this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
+    this.$alert = $alert;
 
     this.changeListeners = [];
     this.setDefaults();
@@ -111,7 +113,7 @@ class ConfigStore {
       var pluginConfig =  {
         // Solely adding id and _backendProperties for validation.
         // Should be removed while saving it to backend.
-        name: node.plugin.name,
+        name: node.plugin.label,
         label: node.plugin.label,
         artifact: node.plugin.artifact,
         properties: node.plugin.properties,
@@ -121,7 +123,7 @@ class ConfigStore {
 
       if (node.type === artifactTypeExtension.source) {
         config['source'] = {
-          name: node.name,
+          name: node.plugin.label,
           plugin: pluginConfig
         };
       } else if (node.type === 'transform') {
@@ -132,19 +134,20 @@ class ConfigStore {
           pluginConfig.validationFields = node.validationFields;
         }
         pluginConfig = {
-          name: node.name,
+          name: node.plugin.label,
           plugin: pluginConfig
         };
         config['transforms'].push(pluginConfig);
       } else if (node.type === artifactTypeExtension.sink) {
         pluginConfig = {
-          name: node.name,
+          name: node.plugin.label,
           plugin: pluginConfig
         };
         config['sinks'].push(pluginConfig);
       }
       delete nodesMap[id];
     }
+
     var connections = this.CanvasFactory.orderConnections(
       angular.copy(this.state.config.connections),
       this.state.artifact.name,
@@ -152,13 +155,27 @@ class ConfigStore {
     );
 
     connections.forEach( connection => {
+      let fromConnectionName, toConnectionName;
+
       if (nodesMap[connection.from]) {
-          addPluginToConfig(nodesMap[connection.from], connection.from);
+        fromConnectionName = nodesMap[connection.from].plugin.label;
+        addPluginToConfig(nodesMap[connection.from], connection.from);
+      } else {
+        fromConnectionName = this.state.__ui__.nodes.filter( n => n.name === connection.from)[0];
+        fromConnectionName = fromConnectionName.plugin.label;
       }
       if (nodesMap[connection.to]) {
+        toConnectionName = nodesMap[connection.to].plugin.label;
         addPluginToConfig(nodesMap[connection.to], connection.to);
+      } else {
+        toConnectionName = this.state.__ui__.nodes.filter( n => n.name === connection.to)[0];
+        toConnectionName = toConnectionName.plugin.label;
       }
+      connection.from = fromConnectionName;
+      connection.to = toConnectionName;
     });
+    config.connections = connections;
+
     let appType = this.getAppType();
     if ( appType=== this.GLOBALS.etlBatch) {
       config.schedule = this.getSchedule();
@@ -166,10 +183,6 @@ class ConfigStore {
     } else if (appType === this.GLOBALS.etlRealtime) {
       config.instance = this.getInstance();
     }
-    config.connections = connections.map(conn => {
-      delete conn.visited;
-      return conn;
-    });
 
     if (this.state.description) {
       config.description = this.state.description;
@@ -180,12 +193,30 @@ class ConfigStore {
     return config;
   }
   getConfigForExport() {
+    var state = this.getState();
+    // Stripping of uuids and generating configs is what is going on here.
+
     var config = angular.copy(this.generateConfigFromState());
     this.CanvasFactory.pruneProperties(config);
-    this.state.config = angular.copy(config);
-    return angular.copy(this.state);
+    state.config = angular.copy(config);
+
+    var nodes = angular.copy(this.getNodes()).map( node => {
+      node.name = node.plugin.label;
+      return node;
+    });
+    state.__ui__.nodes = nodes;
+
+    return angular.copy(state);
   }
   getDisplayConfig() {
+    if (!this.NonStorePipelineErrorFactory.checkAndUpdateUniqueNodeNames(this.getNodes())) {
+      this.$alert({
+        type: 'danger',
+        title: 'Unique Node names',
+        content: this.GLOBALS.en.hydrator.studio.uniqueNodeNames
+      });
+      return;
+    }
     var stateCopy = this.getConfigForExport();
     var source = stateCopy.config.source;
     var sinks = stateCopy.config.sinks;
@@ -349,6 +380,6 @@ class ConfigStore {
   }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers'];
+ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', '$alert'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);

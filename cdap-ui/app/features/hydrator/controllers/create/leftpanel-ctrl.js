@@ -15,7 +15,7 @@
  */
 
 class LeftPanelController {
-  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore, ConfigActionsFactory, MyDAGFactory, NodesActionsFactory, HydratorErrorFactory, HydratorService) {
+  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore, ConfigActionsFactory, MyDAGFactory, NodesActionsFactory, NonStorePipelineErrorFactory, HydratorService) {
     this.$scope = $scope;
     this.$stateParams = $stateParams;
     this.LeftPanelStore = LeftPanelStore;
@@ -25,7 +25,7 @@ class LeftPanelController {
     this.GLOBALS = GLOBALS;
     this.MyDAGFactory = MyDAGFactory;
     this.NodesActionsFactory = NodesActionsFactory;
-    this.HydratorErrorFactory = HydratorErrorFactory;
+    this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.HydratorService = HydratorService;
 
     this.pluginTypes = [
@@ -104,7 +104,7 @@ class LeftPanelController {
     // this.ConfigActionsFactory.addPlugin(config, this.GLOBALS.pluginConvert[config.type]);
     this.HydratorService.fetchBackendProperties(config)
       .then( () => {
-        config.requiredFieldCount = this.HydratorErrorFactory.countRequiredFields(config);
+        config.requiredFieldCount = this.NonStorePipelineErrorFactory.countRequiredFields(config);
         if (config.requiredFieldCount > 0) {
           config.error = {
             message: this.GLOBALS.en.hydrator.studio.genericMissingRequiredFieldsError
@@ -116,6 +116,6 @@ class LeftPanelController {
   }
 }
 
-LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore', 'ConfigActionsFactory', 'MyDAGFactory', 'NodesActionsFactory', 'HydratorErrorFactory', 'HydratorService'];
+LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore', 'ConfigActionsFactory', 'MyDAGFactory', 'NodesActionsFactory', 'NonStorePipelineErrorFactory', 'HydratorService'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('LeftPanelController', LeftPanelController);

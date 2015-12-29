@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory, $rootScope, HydratorService, $popover, $filter, uuid) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, NonStorePipelineErrorFactory, $rootScope, HydratorService, $popover, $filter, uuid) {
 
     var vm = this;
 
@@ -417,32 +417,8 @@ angular.module(PKG.name + '.commons')
             });
           }
         });
-        var nodesIdMap = {};
-
-        angular.forEach($scope.nodes, function (node) {
-          node.requiredFieldCount = HydratorErrorFactory.countRequiredFields(node);
-          if (node.requiredFieldCount > 0) {
-            node.error = {
-              message: GLOBALS.en.hydrator.studio.genericMissingRequiredFieldsError
-            };
-          } else {
-            node.error = false;
-          }
-          if (!nodesIdMap[node.plugin.label]) {
-            nodesIdMap[node.plugin.label] = [];
-          }
-          nodesIdMap[node.plugin.label].push(node);
-        });
-        angular.forEach(nodesIdMap, function(nodeArray) {
-          if(nodeArray.length > 1) {
-            nodeArray.forEach( function(n) {
-              n.error = n.error || {};
-              n.error.message = `Node with name already exists`;
-              n.requiredFieldCount = '!';
-            });
-          }
-        });
-
+        NonStorePipelineErrorFactory.updatePluginsWithRequiredFieldsCount($scope.nodes);
+        NonStorePipelineErrorFactory.checkAndUpdateUniqueNodeNames($scope.nodes);
       }, true);
       // This is needed to redraw connections and endpoints on browser resize
       angular.element($window).on('resize', function() {
