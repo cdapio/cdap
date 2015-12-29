@@ -32,11 +32,8 @@
     <li class="list-group-item">
       <h6>
         {{contentData.defaultVersion}}
-        <small ng-if="!contentData.showAllVersion">
+        <small ng-if="!contentData.showAllVersion && contentData.allVersions.length > 1">
           <a href="#" ng-click="contentData.showAllVersion = !contentData.showAllVersion">Change</a>
-        </small>
-        <small ng-if="contentData.showAllVersion">
-          <a href="#" ng-click="contentData.showAllVersion=!contentData.showAllVersion">Back</a>
         </small>
       </h6>
     </li>
