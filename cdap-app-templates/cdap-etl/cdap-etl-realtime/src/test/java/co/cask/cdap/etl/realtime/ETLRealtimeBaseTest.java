@@ -18,19 +18,8 @@ package co.cask.cdap.etl.realtime;
 
 import co.cask.cdap.etl.api.PipelineConfigurable;
 import co.cask.cdap.etl.api.realtime.RealtimeSource;
-import co.cask.cdap.etl.realtime.sink.RealtimeCubeSink;
-import co.cask.cdap.etl.realtime.sink.RealtimeTableSink;
-import co.cask.cdap.etl.realtime.sink.StreamSink;
-import co.cask.cdap.etl.realtime.source.DataGeneratorSource;
-import co.cask.cdap.etl.realtime.source.JmsSource;
-import co.cask.cdap.etl.realtime.source.KafkaSource;
-import co.cask.cdap.etl.realtime.source.SqsSource;
-import co.cask.cdap.etl.realtime.source.TwitterSource;
-import co.cask.cdap.etl.transform.ProjectionTransform;
-import co.cask.cdap.etl.transform.ScriptFilterTransform;
-import co.cask.cdap.etl.transform.ScriptTransform;
-import co.cask.cdap.etl.transform.StructuredRecordToGenericRecordTransform;
-import co.cask.cdap.etl.transform.ValidatorTransform;
+import co.cask.cdap.etl.realtime.mock.MockSink;
+import co.cask.cdap.etl.realtime.mock.MockSource;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.test.TestBase;
@@ -49,14 +38,7 @@ public class ETLRealtimeBaseTest extends TestBase {
                    RealtimeSource.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName());
 
-    addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "realtime-sources", "1.0.0"), APP_ARTIFACT_ID,
-                      DataGeneratorSource.class, JmsSource.class, KafkaSource.class,
-                      TwitterSource.class, SqsSource.class);
-    addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "realtime-sinks", "1.0.0"), APP_ARTIFACT_ID,
-      RealtimeCubeSink.class, RealtimeTableSink.class,
-      StreamSink.class);
-    addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "transforms", "1.0.0"), APP_ARTIFACT_ID,
-      ProjectionTransform.class, ScriptTransform.class, ScriptFilterTransform.class, ValidatorTransform.class,
-      StructuredRecordToGenericRecordTransform.class);
+    addPluginArtifact(Id.Artifact.from(Id.Namespace.DEFAULT, "mock-plugins", "1.0.0"), APP_ARTIFACT_ID,
+                      MockSink.class, MockSource.class);
   }
 }
