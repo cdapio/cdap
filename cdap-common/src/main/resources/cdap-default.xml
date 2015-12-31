@@ -136,14 +136,6 @@
   </property>
 
   <property>
-    <name>yarn.user</name>
-    <value>yarn</value>
-    <description>
-      User name for running applications in YARN
-    </description>
-  </property>
-
-  <property>
     <name>zookeeper.quorum</name>
     <value>127.0.0.1:2181/${root.namespace}</value>
     <description>
