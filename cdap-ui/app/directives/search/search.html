@@ -16,14 +16,14 @@
 
 <div class="search-box">
   <div class="input-group"
-       ng-class="{'search-active': MySearchCtrl.displaySearchBox}"
+       ng-class="{'search-active': MySearchCtrl.displaySearchBox || MySearchCtrl.searchTxt.length}"
        ng-mouseover="MySearchCtrl.displaySearchBox = true"
        ng-mouseleave="MySearchCtrl.escapeSearch()">
     <input ng-model="MySearchCtrl.searchTxt"
            ng-keyup="MySearchCtrl.onSearch($event)"
            type="text"
            class="form-control"
-           placeholder="Search Tags"
+           placeholder="Search Metadata"
            my-escape-close="MySearchCtrl.escapeSearch()" />
     <div class="input-group-addon">
       <span class="fa fa-search"></span>

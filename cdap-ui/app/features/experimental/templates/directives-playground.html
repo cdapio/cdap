@@ -14,10 +14,32 @@
   the License.
 -->
 
-<div class="btn btn-primary"
-  data-title="My Title"
-  data-template="'/assets/features/experimental/templates/popover/popover-template.html'"
-  data-placement="right"
-  my-popover>
-  Sup
+<br/>
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <div class="panel-title">
+      My Popover Demo
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="btn btn-primary"
+      data-title="My Title"
+      data-template="'/assets/features/experimental/templates/popover/popover-template.html'"
+      data-placement="right"
+      my-popover>
+      Sup
+    </div>
+  </div>
+</div>
+
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <div class="panel-title">
+      Marked down directive Demo
+    </div>
+  </div>
+  <div class="panel-body">
+    <textarea style="resize:vertical" rows="20" class="form-control" ng-model=markdown></textarea>
+    <div marked="markdown"></div>
+  </div>
 </div>

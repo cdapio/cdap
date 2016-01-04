@@ -27,10 +27,8 @@ import co.cask.cdap.internal.flow.DefaultFlowletConfigurer;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
 import co.cask.cdap.internal.io.SchemaGenerator;
 import co.cask.cdap.internal.lang.Reflections;
-import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.OutputEmitterFieldExtractor;
 import co.cask.cdap.internal.specification.ProcessMethodExtractor;
-import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 
 import java.lang.reflect.Type;
 import java.util.Collections;
@@ -67,23 +65,19 @@ public final class FlowletDefinition {
 
     this.instances = instances;
 
-    Set<String> datasets = new HashSet<>(flowletSpec.getDataSets());
     Map<String, Set<Type>> inputTypes = new HashMap<>();
     Map<String, Set<Type>> outputTypes = new HashMap<>();
-    Map<String, String> properties = new HashMap<>(flowletSpec.getProperties());
     Reflections.visit(flowlet, flowlet.getClass(),
-                      new DataSetFieldExtractor(datasets),
-                      new PropertyFieldExtractor(properties),
                       new OutputEmitterFieldExtractor(outputTypes),
                       new ProcessMethodExtractor(inputTypes));
 
-    this.datasets = Collections.unmodifiableSet(new HashSet<>(datasets));
+    this.datasets = Collections.unmodifiableSet(new HashSet<>(flowletSpec.getDataSets()));
     this.inputTypes = immutableCopyOf(inputTypes);
     this.outputTypes = immutableCopyOf(outputTypes);
     this.flowletSpec = new DefaultFlowletSpecification(flowlet.getClass().getName(),
                                                        flowletName == null ? flowletSpec.getName() : flowletName,
                                                        flowletSpec.getDescription(), flowletSpec.getFailurePolicy(),
-                                                       datasets, properties,
+                                                       flowletSpec.getDataSets(), flowletSpec.getProperties(),
                                                        flowletSpec.getResources());
     this.streams = Collections.unmodifiableMap(flowletConfigurer.getStreams());
     this.datasetModules = Collections.unmodifiableMap(flowletConfigurer.getDatasetModules());

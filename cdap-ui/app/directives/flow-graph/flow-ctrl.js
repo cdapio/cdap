@@ -15,26 +15,23 @@
  */
 
 angular.module(PKG.name+'.commons')
-  .controller('myFlowController', function($scope, myHelpers, $timeout) {
+  .controller('myFlowController', function($scope, myHelpers) {
+    var firstRender = true;
+
     function update(newVal) {
       // Avoid rendering the graph without nodes and edges.
       if (myHelpers.objectQuery(newVal, 'nodes') && myHelpers.objectQuery(newVal, 'edges')) {
         $scope.render();
+
+        if (firstRender) {
+          firstRender = false;
+          $scope.centerImage();
+        }
       }
     }
 
     $scope.instanceMap = {};
     $scope.labelMap = {};
-
-
-    // initializing value
-    $scope.translateX = 0;
-    $scope.translateY = 0;
-    $scope.currentScale = 1.1;
-
-    // The reason for the timeout is because centerImage() should be called after the render
-    // of the DAG is completed.
-    $timeout(function () { $scope.centerImage(); });
 
 
     // This is done because of performance reasons.

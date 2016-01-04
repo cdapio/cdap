@@ -18,7 +18,6 @@ package co.cask.cdap.gateway.router.handlers;
 
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.ChannelHandlerContext;
-import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.MessageEvent;
 import org.jboss.netty.handler.codec.http.HttpChunk;
 import org.jboss.netty.handler.codec.http.HttpRequest;
@@ -46,7 +45,7 @@ public class IdleEventProcessor extends IdleStateAwareChannelHandler {
         // No data has been sent or received for a while. Close channel.
         Channel channel = ctx.getChannel();
         channel.close();
-        LOG.debug("No data has been sent or received for channel '{}' for more than the configured idle timeout. " +
+        LOG.trace("No data has been sent or received for channel '{}' for more than the configured idle timeout. " +
                     "Closing the channel. Local Address: {}, Remote Address: {}",
                   channel, channel.getLocalAddress(), channel.getRemoteAddress());
       }

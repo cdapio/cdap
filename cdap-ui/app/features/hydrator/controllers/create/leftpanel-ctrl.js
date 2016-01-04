@@ -70,6 +70,7 @@ class LeftPanelController {
   onLeftSidePanelItemClicked(event, node) {
     event.stopPropagation();
     var item = this.LeftPanelStore.getSpecificPluginVersion(node);
+    this.LeftPanelStore.updatePluginDefaultVersion(node);
     let config;
     if (item.pluginTemplate) {
       config = {

@@ -136,14 +136,6 @@
   </property>
 
   <property>
-    <name>yarn.user</name>
-    <value>yarn</value>
-    <description>
-      User name for running applications in YARN
-    </description>
-  </property>
-
-  <property>
     <name>zookeeper.quorum</name>
     <value>127.0.0.1:2181/${root.namespace}</value>
     <description>
@@ -1028,8 +1020,8 @@
     <name>metrics.processor.max.instances</name>
     <value>${master.service.max.instances}</value>
     <description>
-      Maximum number of instances for Metrics Processor Service Apache Twill
-      Runnable
+      Maximum number of instances for metrics processor service Apache Twill
+      runnable
     </description>
   </property>
 
@@ -1037,8 +1029,8 @@
     <name>metrics.processor.memory.mb</name>
     <value>512</value>
     <description>
-      Size of Memory in megabytes for Metrics Processor Service Apache Twill
-      Runnable
+      Size of memory in megabytes for metrics processor service Apache Twill
+      runnable
     </description>
   </property>
 
@@ -1046,7 +1038,7 @@
     <name>metrics.processor.num.cores</name>
     <value>1</value>
     <description>
-      Number of cores for Metrics Processor Service Apache Twill Runnable
+      Number of cores for metrics processor service Apache Twill runnable
     </description>
   </property>
 
@@ -1054,8 +1046,8 @@
     <name>metrics.processor.num.instances</name>
     <value>1</value>
     <description>
-      Number of instances for Metrics Processor Service Apache Twill
-      Runnable
+      Number of instances for metrics processor service Apache Twill
+      runnable
     </description>
   </property>
 
@@ -1063,7 +1055,7 @@
     <name>metrics.processor.status.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Default inet address for binding metrics processor HTTP service
+      Default iNet address for binding metrics processor HTTP service
     </description>
   </property>
 
@@ -1098,8 +1090,8 @@
     <name>monitor.handler.service.discovery.timeout.seconds</name>
     <value>1</value>
     <description>
-      Timeout in seconds for service discovery used in Monitor Handler
-      Service Status check
+      Timeout in seconds for service discovery used in monitor handler
+      service status check
     </description>
   </property>
 
@@ -1110,7 +1102,7 @@
     <name>notification.transport.system</name>
     <value>kafka</value>
     <description>
-      Transport system used by the Notification system: can be kafka/stream
+      Transport system used by the notification system; can be either kafka or stream
     </description>
   </property>
 
@@ -1158,7 +1150,7 @@
     <name>router.bind.port</name>
     <value>10000</value>
     <description>
-      Port number that the CDAP router should bind to for HTTP connections
+      Port number that the CDAP Router should bind to for HTTP connections
     </description>
   </property>
 
@@ -1177,21 +1169,21 @@
   <property>
     <name>router.connection.backlog</name>
     <value>20000</value>
-    <description>The connection backlog in the router server</description>
+    <description>The connection backlog in the CDAP Router</description>
   </property>
 
   <property>
     <name>router.connection.idle.timeout.secs</name>
     <value>15</value>
     <description>
-      The number of seconds after an http request completes that idle router connections are closed
+      The number of seconds after an HTTP request completes that idle router connections are closed
     </description>
   </property>
 
   <property>
     <name>router.server.boss.threads</name>
     <value>1</value>
-    <description>The number of boss threads in the router server</description>
+    <description>The number of boss threads in the CDAP Router</description>
   </property>
 
   <property>
@@ -1205,14 +1197,14 @@
   <property>
     <name>router.server.worker.threads</name>
     <value>10</value>
-    <description>The number of worker threads in the Router server</description>
+    <description>The number of worker threads in the CDAP Router</description>
   </property>
 
   <property>
     <name>router.ssl.bind.port</name>
     <value>10443</value>
     <description>
-      Port number that the CDAP router should bind to for HTTPS connections
+      Port number that the CDAP Router should bind to for HTTPS connections
     </description>
   </property>
 
@@ -1243,7 +1235,7 @@
     <name>router.webapp.enabled</name>
     <value>false</value>
     <description>
-      Determines if the webapp listening service should be started at router
+      Determines if the webapp listening service should be started at the CDAP Router
     </description>
   </property>
 
