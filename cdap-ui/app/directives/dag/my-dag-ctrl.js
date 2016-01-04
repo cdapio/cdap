@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory, $rootScope, HydratorService, $popover, $filter) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory, $rootScope, HydratorService, $popover, $filter, uuid) {
 
     var vm = this;
 
@@ -446,6 +446,9 @@ angular.module(PKG.name + '.commons')
       angular.forEach($scope.nodes, function (node) {
         node.selected = false;
       });
+      angular.forEach(vm.comments, function (comment) {
+        comment.isActive = false;
+      });
     };
 
     function checkSelection() {
@@ -603,6 +606,50 @@ angular.module(PKG.name + '.commons')
       NodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
+    vm.comments = [];
+
+    vm.addComment = function () {
+      var canvasPanning = NodesStore.getCanvasPanning();
+
+      console.log('panning', canvasPanning);
+
+      var config = {
+        content: '',
+        isActive: false,
+        id: 'comment-' + uuid.v4(),
+        _uiPosition: {
+          'top': 200 - canvasPanning.top + 'px',
+          'left': (10/100 * document.documentElement.clientWidth) - canvasPanning.left + 'px'
+        }
+      };
+
+      vm.comments.push(config);
+
+      $timeout(function () {
+        var comments = document.querySelectorAll('.comment-box');
+        vm.instance.draggable(comments, {
+          start: function () {
+            dragged = true;
+          }
+        });
+      });
+    };
+
+    vm.commentSelect = function (event, comment) {
+      event.stopPropagation();
+
+      if (dragged) {
+        dragged = false;
+        return;
+      }
+
+      comment.isActive = true;
+    };
+
+    vm.deleteComment = function (comment) {
+      var index = vm.comments.indexOf(comment);
+      vm.comments.splice(index, 1);
+    };
 
     $scope.$on('$destroy', function () {
       closeAllPopovers();

@@ -159,6 +159,34 @@ my-dag {
       }
     }
 
+    .comment-box {
+      position: absolute;
+      width: 250px;
+      min-height: 50px;
+      background-color: white;
+      border-radius: 4px;
+      border: 2px solid #4f5464;
+
+      div.comment-content {
+        padding: 15px;
+        word-break: break-all;
+      }
+
+      .fa.fa-close {
+        position: absolute;
+        right: 3px;
+        top: 3px;
+        cursor: pointer;
+        .opacity(0);
+        .transition(opacity 0.2s ease);
+      }
+      &:hover {
+        .fa.fa-close {
+          .opacity(1);
+        }
+      }
+    }
+
     .error-container {
       position: fixed;
       bottom: 50px;
