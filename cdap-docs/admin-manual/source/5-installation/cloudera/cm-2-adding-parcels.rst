@@ -38,19 +38,19 @@ available at `Cloudera's website
 <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/
 cm_ig_parcels.html>`__, but in summary these are the steps:
    
-1. Add the repository (installing the CSD adds the corresponding CDAP repository for you, but you can 
+1. Add the repository (installing the CSD adds the corresponding Cask parcel repository for you, but you can 
    `customize the list of repositories 
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#cmug_topic_7_11_5_unique_1>`__
    searched by Cloudera Manager if you need to);
 #. `Download 
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_cnx_b3y_bm_unique_1>`__
-   the parcel to the Cloudera Manager server;
+   the parcel to your Cloudera Manager server;
 #. `Distribute 
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_sty_b3y_bm_unique_1>`__
-   the parcel to all the servers in the cluster; and
+   the parcel to all the servers in your cluster; and
 #. `Activate 
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_ug1_c3y_bm_unique_1>`__
    the parcel.
 
-If the Cask parcel repo is inaccessible to your cluster, please see :ref:`these
+If the Cask parcel repository is inaccessible to your cluster, please see :ref:`these
 suggestions <faqs-cloudera-direct-parcel-access>`.

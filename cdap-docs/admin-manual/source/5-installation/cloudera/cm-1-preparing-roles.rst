@@ -49,6 +49,12 @@ Prerequisites
 #. Ensure that YARN has sufficient memory capacity by lowering the default minimum container 
    size (controlled by the property ``yarn.scheduler.minimum-allocation-mb``). Lack of
    YARN memory capacity is the leading cause of apparent failures that we see reported.
+   We recommend starting with these settings:
+   
+   - ``yarn.nodemanager.delete.debug-delay-sec``: 43200
+   - ``yarn.scheduler.minimum-allocation-mb``: 512 mb
+   - ``yarn.nodemanager.resource.memory-mb``: Adjust if you need to raise memory per nodemanager
+   - ``yarn.nodemanager.resource.cpu-vcores``: Adjust if you need to raise vcores per nodemanager
     
 #. For Kerberos-enabled Hadoop clusters:
 

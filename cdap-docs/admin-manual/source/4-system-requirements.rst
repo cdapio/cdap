@@ -15,7 +15,7 @@ In this section, we list the specific
 :ref:`software prerequisites <admin-manual-software-requirements>`
 that need to be met and completed before installation of the CDAP components.
 
-Follow the instructions described below prior to installing the CDAP components.
+Complete the requirements and instructions below prior to installing the CDAP components.
 
 .. _admin-manual-hardware-requirements:
 
@@ -25,26 +25,26 @@ Systems hosting the :ref:`CDAP components <admin-manual-cdap-components>`
 must meet these hardware specifications, in addition to having 
 **CPUs with a minimum speed of 2 GHz**:
 
-+----------------------------+-------------------+--------------------+-----------------------------------------------+
-| CDAP Component             | Package           | Hardware Component | Specifications                                |
-+============================+===================+====================+===============================================+
-| CDAP Master                | ``cdap-master``   | RAM                | 2 GB minimum, 4 GB recommended                |
-+----------------------------+-------------------+--------------------+-----------------------------------------------+
-| CDAP Router                | ``cdap-gateway``  | RAM                | 2 GB minimum, 4 GB recommended                |
-+----------------------------+-------------------+--------------------+-----------------------------------------------+
-| CDAP UI                    | ``cdap-ui``       | RAM                | 1 GB minimum, 2 GB recommended                |
-+----------------------------+-------------------+--------------------+-----------------------------------------------+
-| CDAP Kafka                 | ``cdap-kafka``    | RAM                | 1 GB minimum, 2 GB recommended                |
-+                            +-------------------+--------------------+-----------------------------------------------+
-|                            |                   | Disk Space         | *CDAP Kafka* maintains a data cache in        |
-|                            |                   |                    | a configurable data directory.                |
-|                            |                   |                    | Required space depends on the number of       |
-|                            |                   |                    | CDAP applications deployed and running        |
-|                            |                   |                    | in the CDAP and the quantity                  |
-|                            |                   |                    | of logs and metrics that they generate.       |
-+----------------------------+-------------------+--------------------+-----------------------------------------------+
-| CDAP Authentication Server | ``cdap-security`` | RAM                | 1 GB minimum, 2 GB recommended                |
-+----------------------------+-------------------+--------------------+-----------------------------------------------+
++----------------------------+-------------------+--------------------+-----------------------------------------+
+| CDAP Component             | Package           | Hardware Component | Specifications                          |
++============================+===================+====================+=========================================+
+| CDAP Master                | ``cdap-master``   | RAM                | 2 GB minimum, 4 GB recommended          |
++----------------------------+-------------------+--------------------+-----------------------------------------+
+| CDAP Router                | ``cdap-gateway``  | RAM                | 2 GB minimum, 4 GB recommended          |
++----------------------------+-------------------+--------------------+-----------------------------------------+
+| CDAP UI                    | ``cdap-ui``       | RAM                | 1 GB minimum, 2 GB recommended          |
++----------------------------+-------------------+--------------------+-----------------------------------------+
+| CDAP Kafka                 | ``cdap-kafka``    | RAM                | 1 GB minimum, 2 GB recommended          |
++                            +-------------------+--------------------+-----------------------------------------+
+|                            |                   | Disk Space         | *CDAP Kafka* maintains a data cache in  |
+|                            |                   |                    | a configurable data directory.          |
+|                            |                   |                    | Required space depends on the number of |
+|                            |                   |                    | CDAP applications deployed and running  |
+|                            |                   |                    | in CDAP and the quantity of logs and    |
+|                            |                   |                    | metrics that they generate.             |
++----------------------------+-------------------+--------------------+-----------------------------------------+
+| CDAP Authentication Server | ``cdap-security`` | RAM                | 1 GB minimum, 2 GB recommended          |
++----------------------------+-------------------+--------------------+-----------------------------------------+
 
 .. _admin-manual-memory-core-requirements:
 
@@ -120,8 +120,8 @@ You can download an appropriate version of Node.js from `nodejs.org
 #. Run as root (note that running under sudo will not work)::
 
     $ su root
-    $ curl --silent --location https://rpm.nodesource.com/setup | bash -
-    $ yum -y install nodejs
+    # curl --silent --location https://rpm.nodesource.com/setup | bash -
+    # yum -y install nodejs
 
 #. Check the Node.js installation and version using::
 
@@ -132,17 +132,17 @@ You can download an appropriate version of Node.js from `nodejs.org
 #. Run as root (note that running under sudo will not work)::
 
     $ su root
-    $ curl -sL https://deb.nodesource.com/setup_5.x | bash -
-    $ apt-get install --yes nodejs
+    # curl -sL https://deb.nodesource.com/setup_5.x | bash -
+    # apt-get install --yes nodejs
 
-#. *Note:* If there is no root password, set one using these commands, following the prompts
+#. *Note:* If there is no root account or root password, set one using these commands, following the prompts
    to enter a new UNIX password (which will become the password for root)::
 
     $ sudo usermod root -p password; sudo passwd root
  
 #. Check the Node.js installation and version using::
 
-    $ node --version
+    # node --version
 
    
 .. _admin-manual-install-ntp:
@@ -152,34 +152,32 @@ NTP (Network Time Protocol)
 - We recommend installing an NTP (`Network Time Protocol <http://www.ntp.org>`__) daemon
   on all nodes of the cluster, including those with CDAP components.
 - NTP requires that port 123 be open.
+- If your cluster does not have access to the internet, you can run a local version of NTP
+  by `setting up a master node as an NTP server <http://www.borngeek.com/2008/04/03/using-ntp-on-a-private-network/>`__.
 
 **Installing NTP on RPM using Yum**
 
-#. Synchronize the system clock with the ``0.pool.ntp.org`` server. You should use this command only once::
-
-    $ sudo ntpdate -u pool.ntp.org
-
 #. Install the NTP service and dependencies::
 
-    $ sudo yum install ntp ntpdate ntp-doc
+    # sudo yum install ntp ntpdate ntp-doc
 
 #. Set the service to start at reboot::
 
-    $ sudo chkconfig ntpd on
+    # sudo chkconfig ntpd on
 
 #. Start the NTP server. This will continuously adjust the system time from an upstream NTP server::
 
-   $ sudo /etc/init.d/ntpd start
-
-#. Synchronize the hardware clock (to prevent synchronization problems)::
-
-   $ hwclock --systohc
-  
-**Installing NTP on Debian using APT**
+   # sudo /etc/init.d/ntpd start
 
 #. Synchronize the system clock with the ``0.pool.ntp.org`` server. You should use this command only once::
 
-    $ sudo ntpdate -u pool.ntp.org
+    # sudo ntpdate -u pool.ntp.org
+
+#. Synchronize the hardware clock (to prevent synchronization problems), unless on a virtual server::
+
+   # hwclock --systohc
+  
+**Installing NTP on Debian using APT**
 
 #. Install the NTP service and dependencies::
 
@@ -189,7 +187,11 @@ NTP (Network Time Protocol)
 
     $ sudo service ntp start
 
-#. Synchronize the hardware clock (to prevent synchronization problems)::
+#. Synchronize the system clock with the ``0.pool.ntp.org`` server. You should use this command only once::
+
+    $ sudo ntpdate -u pool.ntp.org
+
+#. Synchronize the hardware clock (to prevent synchronization problems), unless on a virtual server::
 
     $ hwclock --systohc
 
