@@ -42,7 +42,8 @@ import java.util.UUID;
 /**
  * A concrete implementation of {@link Location} for the Local filesystem.
  */
-// TODO: This is a copy of twill class, Remove this class after updating twill version to 0.7.0 - CDAP-4408
+// TODO: This is a copy of twill class for TWILL-156 and TWILL-160
+// TODO: Remove this class after updating twill version to 0.7.0 - CDAP-4408
 final class LocalLocation implements Location {
   private final File file;
   private final LocalLocationFactory locationFactory;
@@ -75,10 +76,6 @@ final class LocalLocation implements Location {
    */
   @Override
   public InputStream getInputStream() throws IOException {
-    File parent = file.getParentFile();
-    if (!parent.exists()) {
-      parent.mkdirs();
-    }
     return new FileInputStream(file);
   }
 
