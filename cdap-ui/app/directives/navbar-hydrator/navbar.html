@@ -25,16 +25,26 @@
 <nav>
   <ul class="nav navbar-nav">
     <li ng-class="{active: highlightTab == 'hydratorList'}">
-      <a ui-sref="hydrator.list">
+      <a ui-sref="hydrator.list({namespace: getDisplayName($state.params.namespace)})">
         <span> My Pipelines </span>
       </a>
     </li>
     <li ng-class="{active: highlightTab == 'hydratorStudio'}">
-      <a ui-sref="hydrator.create">
+      <a ui-sref="hydrator.create({namespace: getDisplayName($state.params.namespace)})">
         <span> Create Pipeline </span>
       </a>
     </li>
   </ul>
+
+  <ul class="navbar-namespace" id="navbar-namespace">
+    <li class="dropdown">
+      <a href="" class="hy-dropdown-toggle clearfix" title="{{getDisplayName($state.params.namespace)}}">
+        <span class="pull-left" ng-bind="$state.params.namespace && getDisplayName($state.params.namespace) | myEllipsis: 12"></span>
+        <span class="fa fa-angle-down pull-right"></span>
+      </a>
+    </li>
+  </ul>
+
 </nav>
 
 <my-error></my-error>

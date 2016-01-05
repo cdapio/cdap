@@ -82,6 +82,9 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
 
     try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()))) {
       ViewSpecification spec = GSON.fromJson(reader, ViewSpecification.class);
+      if (spec == null) {
+        throw new BadRequestException("Missing ViewSpecification in request body");
+      }
       boolean created = admin.createOrUpdateView(viewId, spec);
       responder.sendStatus(created ? HttpResponseStatus.CREATED : HttpResponseStatus.OK);
     } catch (IllegalArgumentException e) {

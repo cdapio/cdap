@@ -39,7 +39,11 @@ class BottomPanelController {
     this.BottomPanelStore = BottomPanelStore;
 
     this.BottomPanelStore.registerOnChangeListener(this.setIsCollapsed.bind(this));
-    NodeConfigStore.registerOnChangeListener( () => { this.selectTab(2); } );
+    NodeConfigStore.registerOnChangeListener( () => {
+      if (this.NodeConfigStore.getState().isValidPlugin) {
+        this.selectTab(2);
+      }
+    } );
     ConsoleStore.registerOnChangeListener( () => { this.selectTab(0); } );
 
     this.selectTab(0);

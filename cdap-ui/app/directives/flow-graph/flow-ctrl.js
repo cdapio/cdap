@@ -16,15 +16,23 @@
 
 angular.module(PKG.name+'.commons')
   .controller('myFlowController', function($scope, myHelpers) {
+    var firstRender = true;
+
     function update(newVal) {
       // Avoid rendering the graph without nodes and edges.
       if (myHelpers.objectQuery(newVal, 'nodes') && myHelpers.objectQuery(newVal, 'edges')) {
         $scope.render();
+
+        if (firstRender) {
+          firstRender = false;
+          $scope.centerImage();
+        }
       }
     }
 
     $scope.instanceMap = {};
     $scope.labelMap = {};
+
 
     // This is done because of performance reasons.
     // Earlier we used to have scope.$watch('model', function, true); which becomes slow with large set of

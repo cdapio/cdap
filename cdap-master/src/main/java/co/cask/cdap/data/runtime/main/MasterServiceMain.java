@@ -56,6 +56,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.startup.ConfigurationLogger;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -180,6 +181,13 @@ public class MasterServiceMain extends DaemonMain {
     } catch (IOException e) {
       LOG.error("Could not disable caching of URLJarFiles. This may lead to 'too many open files` exception.", e);
     }
+
+    ConfigurationLogger.logImportantConfig(cConf);
+
+    LOG.info("Client Hadoop version: {}", ClientVersions.getHadoopVersion());
+    LOG.info("Client ZooKeeper version: {}", ClientVersions.getZooKeeperVersion());
+    LOG.info("Client Kafka version: {}", ClientVersions.getKafkaVersion());
+    LOG.info("Client Hive version: {}", ExploreServiceUtils.getHiveVersion());
 
     createSystemHBaseNamespace();
     updateConfigurationTable();

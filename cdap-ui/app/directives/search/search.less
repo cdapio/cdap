@@ -14,27 +14,58 @@
  * the License.
  */
 
+ @import "../../styles/variables.less";
+ @import "../../styles/themes/cdap/mixins.less";
+ @import "../../../bower_components/bootstrap/less/mixins.less";
+
 my-search{
   .search-box {
-    .input-group {
-      .input-group-btn {
-        &.dropdown-right {
-          border: 1px solid #eee;
-          border-radius: 0;
-          border-left: 0;
-
-          &:last-child{
-            > .btn {
-              margin-left: 0;
-            }
-            &:focus, &:active, &:hover {
-
-            }
-          }
-        }
+    @media (min-width: @screen-lg-min) {
+      height: 32px;
+    }
+    div.input-group {
+      background-color: rgb(39, 43, 52);
+      padding: 0 12px;
+      .transition(all 0.2s ease-in);
+      .border-radius(12px);
+      @media (min-width: @screen-lg-min) {
+        background-color: transparent;
+        line-height: 32px;
+        text-align: right;
       }
       .form-control {
-        border-right: 0;
+        color: white;
+        background-color: transparent;
+        border: 0;
+        padding: 0 6px 0 0;
+        .placeholder-color(@color: white, @font-weight: 400);
+        .box-shadow(none);
+        .transition(all 100ms ease-in);
+        @media (min-width: @screen-lg-min) {
+          float: none;
+          width: 1px;
+          .appearance(none);
+          .opacity(0);
+        }
+        &:focus {
+          outline: 0;
+          .box-shadow(none);
+        }
+      }
+      .input-group-addon {
+        background-color: transparent;
+        border: 0;
+        color: @cdap-header-icons;
+        padding: 0;
+      }
+      &.search-active {
+        background-color: rgb(39, 43, 52);
+        .form-control {
+          width: 100%;
+          @media (min-width: @screen-lg-min) {
+            .opacity(1);
+          }
+        }
       }
     }
   }

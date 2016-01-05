@@ -206,6 +206,12 @@ public class ProgramClientTestRun extends ClientTestBase {
 
     programClient.start(workflow, false, ImmutableMap.of("done.file", doneFile.getAbsolutePath()));
     assertProgramRunning(programClient, workflow);
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return programClient.getProgramRuns(workflow, "running", Long.MIN_VALUE, Long.MAX_VALUE, 100).size();
+      }
+    }, 5, TimeUnit.SECONDS);
     List<RunRecord> runRecords = programClient.getProgramRuns(workflow, "running", Long.MIN_VALUE, Long.MAX_VALUE, 100);
     Assert.assertEquals(1, runRecords.size());
 

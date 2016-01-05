@@ -67,12 +67,12 @@ of the application are tied together by the class ``WikipediaPipelineApp``:
 
 This application demonstrates:
 
-- The use of assigning unique names, as the same MapReduce (*StreamToDataset*) is used twice in the workflow
+- **The use of assigning unique names,** as the same MapReduce (*StreamToDataset*) is used twice in the workflow
   (*WikipediaPipelineWorkflow*) under two different names. Also, depending on the chosen *clusteringAlgorithm*, the
   name of the *SparkWikipediaClustering* will either be *SparkWikipediaClustering-LDA* or
   *SparkWikipediaClustering-KMEANS*.
   
-- The use of Workflow Tokens in:
+- **The use of Workflow Tokens** in:
 
   - Condition Predicates
   - Setting MapReduce program configuration (setting it based on values in the token)
@@ -81,7 +81,7 @@ This application demonstrates:
     Spark Accumulators to the workflow token)
   - Assertions in application unit tests
 
-- The use of application configs to create from the same artifact different applications. Depending on the
+- **The use of application configs** to create |---| from the same artifact |---| different applications. Depending on the
   value chosen for the *clusteringAlgorithm*, there can be two different applications, one using LDA for clustering,
   and the other using K-Means. The application is packaged with the two possible application config JSON files at
   *resources/wikipedia-kmeans.json* and *resources/wikipedia-lda.json* in the application directory.
@@ -98,24 +98,35 @@ This application demonstrates:
 
 Deploying the Example
 =====================
-Since deploying the WikipediaPipelineApp involves loading an artifact and creating an application from it, the
+Since deploying the WikipediaPipelineApp involves loading an artifact and creating two applications from it, the
 preferred method of deploying it is to use the CDAP CLI.
 
-- Load the Artifact::
+- Load the Artifact:
 
-    $ cdap-cli.sh load artifact target/WikipediaPipeline-3.3.0-SNAPSHOT.jar name WikipediaPipelineApp version
-    3.3.0-SNAPSHOT
-    Successfully added artifact with name 'WikipediaPipelineApp'
+  .. container:: highlight
 
-- Create an application using LDA as the clustering algorithm::
+    .. parsed-literal::
+    
+      |$| cdap-cli.sh load artifact examples/WikipediaPipeline/target/WikipediaPipeline-|release|.jar name WikipediaPipelineApp version |release|
+      Successfully added artifact with name 'WikipediaPipelineApp'
 
-    $ cdap-cli.sh create app wiki-lda WikipediaPipelineApp 3.3.0-SNAPSHOT user resources/wikipedia-lda.json
-    Successfully created application
+- Create an application using LDA as the clustering algorithm:
 
-- Create an application using K-Means as the clustering algorithm::
+  .. container:: highlight
 
-    $ cdap-cli.sh create app wiki-kmeans WikipediaPipelineApp 3.3.0-SNAPSHOT user resources/wikipedia-kmeans.json
-    Successfully created application
+    .. parsed-literal::
+    
+      |$| cdap-cli.sh create app wiki-lda WikipediaPipelineApp |release| user examples/|example|/resources/wikipedia-lda.json
+      Successfully created application
+
+- Create an application using K-Means as the clustering algorithm:
+
+  .. container:: highlight
+
+    .. parsed-literal::
+    
+      |$| cdap-cli.sh create app wiki-kmeans WikipediaPipelineApp |release| user examples/|example|/resources/wikipedia-kmeans.json
+      Successfully created application
 
 
 Running the Example
@@ -206,8 +217,6 @@ The service exposes these REST APIs, which can be accessed either with the CDAP-
 
     .. parsed-literal::
     
-      |$| cdap-cli.sh call service |example|.\ |example-service| GET /v1/functions/lda/topics/{topic}
-
       |$| cdap-cli.sh call service |example|.\ |example-service| GET /v1/functions/lda/topics/0
       
       |$| curl -w'\\n' -v 'localhost:10000/v3/namespaces/default/apps/|example|/services/|example-service|/methods/v1/functions/lda/topics/0'

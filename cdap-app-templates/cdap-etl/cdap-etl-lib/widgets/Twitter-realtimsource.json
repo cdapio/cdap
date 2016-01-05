@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "OAuth Access Tokens",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Access Token",
+          "name": "AccessToken",
+          "widget-attributes": {
+            "width": "medium"
+          }
+        },
+        {
+          "widget-type": "password",
+          "label": "Access Token Secret",
+          "name": "AccessTokenSecret",
+          "widget-attributes": {
+            "width": "medium"
+          }
+        }
+      ]
+    },
+    {
+      "label": "OAuth Consumer Settings",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Consumer Key",
+          "name": "ConsumerKey",
+          "widget-attributes": {
+            "width": "medium"
+          }
+        },
+        {
+          "widget-type": "password",
+          "label": "Consumer Secret",
+          "name": "ConsumerSecret",
+          "widget-attributes": {
+            "width": "medium"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "widget-type": "non-editable-schema-editor",
+      "schema": {
+        "id": "long",
+        "message": "string",
+        "lang": [
+          "string",
+          "null"
+        ],
+        "time": [
+          "long",
+          "null"
+        ],
+        "favCount": "int",
+        "rtCount": "int",
+        "source": [
+          "string",
+          "null"
+        ],
+        "geoLat": [
+          "double",
+          "null"
+        ],
+        "geoLong": [
+          "double",
+          "null"
+        ],
+        "isRetweet": "boolean"
+      }
+    }
+  ]
+}

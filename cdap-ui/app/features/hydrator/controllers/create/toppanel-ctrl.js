@@ -15,12 +15,14 @@
  */
 
 class TopPanelController{
-  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory) {
+  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory, HydratorErrorFactory) {
     this.GLOBALS = GLOBALS;
     this.ConfigStore = ConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
     this.$bootstrapModal = $bootstrapModal;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
+    this.HydratorErrorFactory = HydratorErrorFactory;
+
     this.canvasOperations = [
       {
         name: 'Export',
@@ -124,17 +126,20 @@ class TopPanelController{
   }
   onValidate() {
     this.ConsoleActionsFactory.resetMessages();
-    this.ConsoleActionsFactory.addMessage({
-      type: 'success',
-      content: 'This is a validate test'
-    });
+    if (this.HydratorErrorFactory.isModelValid()) {
+      this.ConsoleActionsFactory.addMessage({
+        type: 'success',
+        content: 'Validation success! Pipeline ' + this.ConfigStore.getName() + ' is valid.'
+      });
+    }
+
   }
   onPublish() {
     this.ConfigActionsFactory.publishPipeline();
   }
 }
 
-TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory'];
+TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory', 'HydratorErrorFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('TopPanelController', TopPanelController);

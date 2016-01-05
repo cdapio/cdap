@@ -45,6 +45,9 @@ class LeftPanelController {
         plugins: []
       }
     ];
+    this.sourcesToVersionMap = {};
+    this.transformsToVersionMap = {};
+    this.sinksToVersionMap = {};
 
     this.LeftPanelStore.registerOnChangeListener(() => {
       this.pluginTypes[0].plugins = this.LeftPanelStore.getSources();
@@ -64,54 +67,38 @@ class LeftPanelController {
 
   }
 
-  onLeftSidePanelItemClicked(event, item) {
+  onLeftSidePanelItemClicked(event, node) {
     event.stopPropagation();
-
+    var item = this.LeftPanelStore.getSpecificPluginVersion(node);
+    this.LeftPanelStore.updatePluginDefaultVersion(node);
     let config;
-
     if (item.pluginTemplate) {
       config = {
-        label: item.name,
-        name: item.pluginName,
+        plugin: {
+          label: item.name,
+          name: item.pluginName,
+          artifact: item.artifact,
+          properties: item.properties,
+        },
         icon: this.MyDAGFactory.getIcon(item.pluginName),
         type: item.pluginType,
-        properties: item.properties,
         outputSchema: item.outputSchema,
         pluginTemplate: item.pluginTemplate,
         lock: item.lock
       };
     } else {
       config = {
-        label: item.name,
-        name: item.name,
+        plugin: {
+          label: item.name,
+          artifact: item.artifact,
+          name: item.name,
+          properties: {}
+        },
         icon: item.icon,
         description: item.description,
         type: item.type,
-        properties: {},
         warning: true
       };
-    }
-
-    // set initial position
-    switch (this.GLOBALS.pluginConvert[config.type]) {
-      case 'source':
-        config._uiPosition = {
-          top: '150px',
-          left: '10vw'
-        };
-        break;
-      case 'transform':
-        config._uiPosition = {
-          top: '150px',
-          left: '30vw'
-        };
-        break;
-      case 'sink':
-        config._uiPosition = {
-          top: '150px',
-          left: '50vw'
-        };
-        break;
     }
 
     // this.ConfigActionsFactory.addPlugin(config, this.GLOBALS.pluginConvert[config.type]);

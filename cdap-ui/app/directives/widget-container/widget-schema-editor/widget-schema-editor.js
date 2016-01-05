@@ -151,6 +151,8 @@ angular.module(PKG.name + '.commons')
 
           schema = myHelpers.objectQuery(schema, 'fields');
           $scope.properties = [];
+          $scope.activeCell = false;
+
           angular.forEach(schema, function(p) {
             if (angular.isArray(p.type)) {
               $scope.properties.push({

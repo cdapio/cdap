@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "S3 Batch Source",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Access ID",
+          "name": "accessID"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Access Key",
+          "name": "accessKey"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Path",
+          "name": "path"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "File Regex",
+          "name": "fileRegex"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Time Table",
+          "name": "timeTable"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Input Format Class",
+          "name": "inputFormatClass"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Maximum Split Size",
+          "name": "maxSplitSize"
+        },
+        {
+          "widget-type": "json-editor",
+          "label": "File System Properties",
+          "name": "fileSystemProperties"
+        }
+      ]
+    }
+  ],
+  "outputs": []
+}

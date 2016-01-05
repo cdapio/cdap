@@ -16,6 +16,7 @@
 
 package co.cask.cdap.proto;
 
+import com.google.gson.Gson;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -23,6 +24,8 @@ import org.junit.Test;
  *
  */
 public class IdTest {
+
+  private static final Gson GSON = new Gson();
 
   @Test
   public void testFlow() {
@@ -38,6 +41,22 @@ public class IdTest {
     Id.Program notSame = Id.Program.from("ns1", "app1", ProgramType.MAPREDUCE, "flow1");
     Assert.assertNotEquals(flow, notSame);
     Assert.assertNotEquals(flow.toString(), notSame.toString());
+  }
+
+  @Test
+  public void testJsonHashCode() {
+    Id.Flow flow = Id.Flow.from("ns1", "app1", "flow1");
+    int hashCode = flow.hashCode();
+    String toString = flow.toString();
+
+    String json = GSON.toJson(flow);
+    Assert.assertFalse(json.contains(Integer.toString(hashCode)));
+    Assert.assertFalse(json.contains(toString));
+
+    Id.Flow sameFlow = GSON.fromJson(json, Id.Flow.class);
+    Assert.assertEquals(hashCode, sameFlow.hashCode());
+    Assert.assertEquals(toString, sameFlow.toString());
+    Assert.assertEquals(flow, sameFlow);
   }
 
 }

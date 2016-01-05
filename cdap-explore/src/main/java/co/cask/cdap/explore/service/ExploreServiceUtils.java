@@ -190,20 +190,11 @@ public class ExploreServiceUtils {
     return checkHiveSupport(getExploreClassLoader());
   }
 
-  /**
-   * Check that Hive is in the class path - with a right version.
-   */
-  public static HiveSupport checkHiveSupport(ClassLoader hiveClassLoader) {
-    // First try to figure which hive support is relevant based on Hadoop distribution name
-    String hadoopVersion = VersionInfo.getVersion();
-    LOG.info("Hadoop version is: {}", hadoopVersion);
-    for (HiveSupport hiveSupport : HiveSupport.values()) {
-      if (hiveSupport.getHadoopVersionPattern() != null &&
-        hiveSupport.getHadoopVersionPattern().matcher(hadoopVersion).matches()) {
-        return hiveSupport;
-      }
-    }
+  public static String getHiveVersion() {
+    return getHiveVersion(getExploreClassLoader());
+  }
 
+  public static String getHiveVersion(@Nullable ClassLoader hiveClassLoader) {
     ClassLoader usingCL = hiveClassLoader;
     if (usingCL == null) {
       usingCL = ExploreServiceUtils.class.getClassLoader();
@@ -211,20 +202,37 @@ public class ExploreServiceUtils {
 
     try {
       Class<?> hiveVersionInfoClass = usingCL.loadClass("org.apache.hive.common.util.HiveVersionInfo");
-      String hiveVersion = (String) hiveVersionInfoClass.getDeclaredMethod("getVersion").invoke(null);
-      if (hiveVersion.startsWith("0.12.")) {
-        return HiveSupport.HIVE_12;
-      } else if (hiveVersion.startsWith("0.13.")) {
-        return HiveSupport.HIVE_13;
-      } else if (hiveVersion.startsWith("0.14.") || hiveVersion.startsWith("1.0.")) {
-        return HiveSupport.HIVE_14;
-      } else if (hiveVersion.startsWith("1.1.")) {
-        return HiveSupport.HIVE_1_1;
-      }  else if (hiveVersion.startsWith(("1.2"))) {
-        return HiveSupport.HIVE_1_2;
-      }
+      return (String) hiveVersionInfoClass.getDeclaredMethod("getVersion").invoke(null);
     } catch (Exception e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Check that Hive is in the class path - with a right version.
+   */
+  public static HiveSupport checkHiveSupport(@Nullable ClassLoader hiveClassLoader) {
+    // First try to figure which hive support is relevant based on Hadoop distribution name
+    String hadoopVersion = VersionInfo.getVersion();
+    for (HiveSupport hiveSupport : HiveSupport.values()) {
+      if (hiveSupport.getHadoopVersionPattern() != null &&
+        hiveSupport.getHadoopVersionPattern().matcher(hadoopVersion).matches()) {
+        return hiveSupport;
+      }
+    }
+
+    String hiveVersion = getHiveVersion(hiveClassLoader);
+    LOG.info("Client Hive version: {}", hiveVersion);
+    if (hiveVersion.startsWith("0.12.")) {
+      return HiveSupport.HIVE_12;
+    } else if (hiveVersion.startsWith("0.13.")) {
+      return HiveSupport.HIVE_13;
+    } else if (hiveVersion.startsWith("0.14.") || hiveVersion.startsWith("1.0.")) {
+      return HiveSupport.HIVE_14;
+    } else if (hiveVersion.startsWith("1.1.")) {
+      return HiveSupport.HIVE_1_1;
+    }  else if (hiveVersion.startsWith(("1.2"))) {
+      return HiveSupport.HIVE_1_2;
     }
 
     throw new RuntimeException("Hive distribution not supported. Set the configuration '" +

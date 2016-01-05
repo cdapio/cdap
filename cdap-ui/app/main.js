@@ -86,7 +86,8 @@ angular
       'ui.ace',
       'gridster',
       'angular-cron-jobs',
-      'angularjs-dropdown-multiselect'
+      'angularjs-dropdown-multiselect',
+      'hc.marked'
 
     ]).name,
 
@@ -219,6 +220,45 @@ angular
     ]);
   })
 
+  .config(['markedProvider', function (markedProvider) {
+    markedProvider.setOptions({
+      gfm: true,
+      tables: true
+    });
+  }])
+  /*
+    FIXME: This is a one time only thing. Once all old users who migrated to 3.3 have their drafts moved from global level to
+          namespace level this snippet can be removed. Ideally in 4.* we should be able to remove this.
+  */
+  .run(function(mySettings, EventPipe, $state, $alert, $q) {
+    mySettings.get('adapterDrafts')
+      .then(
+        function success(res) {
+          var namespacedDrafts = {
+            default: {}
+          };
+          if (res && !res.isMigrated) {
+            angular.forEach(res, function(draft, name) {
+               namespacedDrafts.default[name] = draft;
+            });
+
+            namespacedDrafts.isMigrated = true;
+            return mySettings.set('adapterDrafts', namespacedDrafts);
+          } else {
+            return $q.reject(false);
+          }
+        }
+      )
+      .then(
+        function showAlert() {
+          $alert({
+            type: 'info',
+            content: 'All current drafts can be found in Default namespace.'
+          });
+        }
+      );
+  })
+
   .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
     EventPipe.on(MYSOCKET_EVENT.closed, function (angEvent, data) {
       myAlert({
@@ -256,7 +296,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window) {
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyCDAPDataSource($scope);
@@ -287,9 +327,6 @@ angular
       }
     });
 
-
-
-
     $scope.$on('$stateChangeSuccess', function (event, state) {
       var classes = [];
       if(state.data && state.data.bodyClass) {
@@ -306,6 +343,14 @@ angular
       classes.push(activeThemeClass);
 
       $scope.bodyClass = classes.join(' ');
+
+
+      /**
+       *  This is to make sure that the sroll position goes back to the top when user
+       *  change state. UI Router has this function ($anchorScroll), but for some
+       *  reason it is not working.
+       **/
+      $window.scrollTo(0, 0);
     });
 
     EventPipe.on(MYSOCKET_EVENT.reconnected, function () {
@@ -320,14 +365,5 @@ angular
     $rootScope.$on('$stateChangeError', function () {
       $state.go('login');
     });
-
-    $scope.onSearch = _.debounce(function(event) {
-      if (event.keyCode === 70 && event.target.nodeName === 'BODY') {
-        $state.go('search.list');
-      } else if (event.keyCode === 80 && event.target.nodeName === 'BODY') {
-        $state.go('pins.list');
-      }
-      console.info('pressed');
-    }, 500);
     console.timeEnd(PKG.name);
   });

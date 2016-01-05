@@ -384,8 +384,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     private org.quartz.Scheduler getScheduler(JobStore store,
                                               CConfiguration cConf) throws SchedulerException {
 
-      int threadPoolSize = cConf.getInt(Constants.Scheduler.CFG_SCHEDULER_MAX_THREAD_POOL_SIZE,
-                                        Constants.Scheduler.DEFAULT_THREAD_POOL_SIZE);
+      int threadPoolSize = cConf.getInt(Constants.Scheduler.CFG_SCHEDULER_MAX_THREAD_POOL_SIZE);
       ExecutorThreadPool threadPool = new ExecutorThreadPool(threadPoolSize);
       threadPool.initialize();
       String schedulerName = DirectSchedulerFactory.DEFAULT_SCHEDULER_NAME;

@@ -37,6 +37,7 @@ import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionManager;
 import co.cask.tephra.inmemory.InMemoryTxSystemClient;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -55,6 +56,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -162,8 +164,11 @@ public class PartitionedFileSetTest {
     // exercises the edge case of partition consumption, when partitions are being consumed, while another in-progress
     // transaction has added a partition, but it has not yet committed, so the partition is not available for the
     // consumer
+    // note: each concurrent transaction needs its own instance of the dataset because the dataset holds the txId
+    // as an instance variable
     PartitionedFileSet dataset1 = dsFrameworkUtil.getInstance(pfsInstance);
     PartitionedFileSet dataset2 = dsFrameworkUtil.getInstance(pfsInstance);
+    PartitionedFileSet dataset3 = dsFrameworkUtil.getInstance(pfsInstance);
     TransactionManager txManager = dsFrameworkUtil.getTxManager();
     InMemoryTxSystemClient txClient = new InMemoryTxSystemClient(txManager);
 
@@ -178,15 +183,26 @@ public class PartitionedFileSetTest {
     TransactionContext txContext2 = new TransactionContext(txClient, (TransactionAware) dataset2);
     txContext2.start();
     SimplePartitionConsumer partitionConsumer = new SimplePartitionConsumer(dataset2);
-    List<PartitionDetail> partitionIterator = partitionConsumer.consumePartitions();
-    Assert.assertEquals(1, partitionIterator.size());
-    Assert.assertEquals(partitionKey1, partitionIterator.get(0).getPartitionKey());
+    List<PartitionDetail> partitions = partitionConsumer.consumePartitions();
+    Assert.assertEquals(1, partitions.size());
+    Assert.assertEquals(partitionKey1, partitions.get(0).getPartitionKey());
     txContext2.finish();
 
-    // producer adds a second partition, but does not yet commit the transaction
+    // producer adds a 2nd partition but does not yet commit the transaction
     txContext1.start();
     PartitionKey partitionKey2 = generateUniqueKey();
     dataset1.getPartitionOutput(partitionKey2).addPartition();
+
+    // another producer adds a 3rd partition, but does not yet commit the transaction
+    TransactionContext txContext3 = new TransactionContext(txClient, (TransactionAware) dataset3);
+    txContext3.start();
+    PartitionKey partitionKey3 = generateUniqueKey();
+    dataset3.getPartitionOutput(partitionKey3).addPartition();
+
+    // simply start and commit a transaction so the next transaction's read pointer is higher than the previous
+    // transaction's write pointer. Otherwise, the previous transaction may not get included in the in-progress list
+    txContext2.start();
+    txContext2.finish();
 
     // consumer attempts to consume at a time after the partition was added, but before it committed. Because of this,
     // the partition is not visible and will not be consumed
@@ -194,14 +210,17 @@ public class PartitionedFileSetTest {
     Assert.assertTrue(partitionConsumer.consumePartitions().isEmpty());
     txContext2.finish();
 
-    // producer commits the transaction in which the second partition was added
+    // both producers commit the transaction in which the second partition was added
     txContext1.finish();
+    txContext3.finish();
 
     // the next time the consumer runs, it processes the second partition
     txContext2.start();
-    partitionIterator = partitionConsumer.consumePartitions();
-    Assert.assertEquals(1, partitionIterator.size());
-    Assert.assertEquals(partitionKey2, partitionIterator.get(0).getPartitionKey());
+    partitions = partitionConsumer.consumePartitions();
+    Assert.assertEquals(2, partitions.size());
+    // ordering may be different
+    Assert.assertEquals(ImmutableSet.of(partitionKey2, partitionKey3),
+                        ImmutableSet.of(partitions.get(0).getPartitionKey(), partitions.get(1).getPartitionKey()));
     txContext2.finish();
   }
 

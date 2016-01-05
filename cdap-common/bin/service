@@ -94,11 +94,16 @@ _start_java() {
   cdap_check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
   cdap_set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
-  cdap_set_hive_classpath || exit 1
   # Setup Java
   cdap_set_java || exit 1
-  # Add proper HBase compatibility to CLASSPATH
-  cdap_set_hbase || exit 1
+  if [ "${PKGNAME}" == "master" ]; then
+    # Master requires setting hive classpath
+    cdap_set_hive_classpath || exit 1
+    # Add proper HBase compatibility to CLASSPATH
+    cdap_set_hbase || exit 1
+    # Master requires this local directory
+    cdap_check_or_create_master_local_dir || die "Could not create Master local directory"
+  fi
   cdap_check_before_start || exit 1
   cdap_create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
   logecho "$(date) Starting Java ${APP} service on ${HOSTNAME}"
