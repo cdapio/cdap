@@ -180,8 +180,7 @@ In order to configure **CDAP for Kerberos authentication:**
 - The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
   that by running the following commands as the ``hdfs`` user::
   
-    $ hadoop fs -mkdir /cdap 
-    $ hadoop fs -chown cdap /cdap
+    $ su hdfs && hadoop fs -mkdir -p /cdap && hadoop fs -chown cdap /cdap
     
 - When running on a secure HBase cluster, as the ``hbase`` user, issue the command::
 
