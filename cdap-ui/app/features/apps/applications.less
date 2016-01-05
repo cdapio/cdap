@@ -15,6 +15,7 @@
  */
 
 @import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
 @import '../../styles/themes/cdap/mixins.less';
 
 body {
@@ -57,7 +58,19 @@ body {
 
       a.btn {
         span {
-          vertical-align: middle;
+          &.icon-hydrator {
+            font-size: 13px;
+            position: relative;
+            top: 1px;
+          }
+        }
+        &.btn-hydrator {
+          margin-right: 5px;
+          .cask-btn(@background: @brand-primary, @border: 0, @border-radius: 4px, @color: white, @font-size: 13px, @padding: 6px 12px);
+          .transition(all 0.2s ease-in);
+          &:hover {
+            background-color: darken(@brand-primary, 10%);
+          }
         }
       }
     }

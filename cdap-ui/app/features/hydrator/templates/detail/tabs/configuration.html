@@ -14,6 +14,12 @@
   the License.
 -->
 
-<pre ng-controller="HydratorDetailStatusController as StatusCtrl">
-  {{ StatusCtrl.config | json: 4 }}
-</pre>
+<div ng-controller="HydratorDetailPipelineConfigController as PipelineConfigCtrl">
+  <button class="btn btn-grey pull-right"
+          ng-click="PipelineConfigCtrl.exportConfig()">Export</button>
+  <pre>
+    {{ PipelineConfigCtrl.config | json: 4 }}
+  </pre>
+
+  <a class="sr-only" id="pipeline-export-config-link" href="{{PipelineConfigCtrl.url}}" download="{{PipelineConfigCtrl.exportFileName}}.json">Export</a>
+</div>

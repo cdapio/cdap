@@ -37,7 +37,6 @@ angular.module(PKG.name + '.services')
 
       nextLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/next', true),
       prevLogs: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId/logs/prev', true),
-      pollInfo: myHelpers.getConfig('GET', 'POLL', basepath + '/runs/:runId/info'),
       runDetail: myHelpers.getConfig('GET', 'REQUEST', basepath + '/runs/:runId')
     });
   });

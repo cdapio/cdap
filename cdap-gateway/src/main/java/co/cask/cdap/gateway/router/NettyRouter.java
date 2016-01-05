@@ -32,16 +32,15 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.hadoop.hbase.util.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.bootstrap.ClientBootstrap;
 import org.jboss.netty.bootstrap.ServerBootstrap;
 import org.jboss.netty.buffer.DirectChannelBufferFactory;
 import org.jboss.netty.channel.Channel;
-import org.jboss.netty.channel.ChannelEvent;
 import org.jboss.netty.channel.ChannelHandlerContext;
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
+import org.jboss.netty.channel.ChannelStateEvent;
 import org.jboss.netty.channel.ChannelUpstreamHandler;
 import org.jboss.netty.channel.Channels;
 import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
@@ -157,15 +156,16 @@ public class NettyRouter extends AbstractIdleService {
   protected void startUp() throws Exception {
     ChannelUpstreamHandler connectionTracker = new SimpleChannelUpstreamHandler() {
       @Override
-      public void handleUpstream(ChannelHandlerContext ctx, ChannelEvent e)
+      public void channelOpen(ChannelHandlerContext ctx, ChannelStateEvent e)
         throws Exception {
         channelGroup.add(e.getChannel());
-        super.handleUpstream(ctx, e);
+        super.channelOpen(ctx, e);
       }
     };
 
     tokenValidator.startAndWait();
-    timer = new HashedWheelTimer(Threads.newDaemonThreadFactory("router-idle-event-generator-timer"));
+    timer = new HashedWheelTimer(
+      new ThreadFactoryBuilder().setDaemon(true).setNameFormat("router-idle-event-generator-timer").build());
     bootstrapClient(connectionTracker);
 
     bootstrapServer(connectionTracker);

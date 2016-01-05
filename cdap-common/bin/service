@@ -94,13 +94,14 @@ _start_java() {
   check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
   set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
-  set_hive_classpath || exit 1
   # Setup Java
   set_java || exit 1
-  # Add proper HBase compatibility to CLASSPATH
-  set_hbase || exit 1
-  # Master requires this local directory
   if [ "${PKGNAME}" == "master" ]; then
+    # Master requires setting hive classpath
+    set_hive_classpath || exit 1
+    # Add proper HBase compatibility to CLASSPATH
+    set_hbase || exit 1
+    # Master requires this local directory
     check_or_create_master_local_dir || die "Could not create Master local directory"
   fi
   check_before_start || exit 1

@@ -95,14 +95,6 @@ angular.module(PKG.name + '.commons')
       $scope.connections = NodesStore.getConnections();
 
       $timeout(function () {
-        // centering DAG
-        if ($scope.nodes.length) {
-          var margins = $scope.getGraphMargins($scope.nodes);
-          $timeout(function () { vm.instance.repaintEverything(); });
-
-          vm.scale = margins.scale;
-        }
-
         addEndpoints();
 
         angular.forEach($scope.connections, function (conn) {
@@ -122,8 +114,6 @@ angular.module(PKG.name + '.commons')
 
           vm.instance.connect(connObj);
         });
-
-        setZoom(vm.scale, vm.instance);
 
         // Process metrics data
         if ($scope.showMetrics) {
@@ -154,6 +144,12 @@ angular.module(PKG.name + '.commons')
           }
 
           $scope.$watch('metricsData', function () {
+            if (Object.keys($scope.metricsData).length === 0) {
+              angular.forEach(nodePopovers, function (value) {
+                value.scope.data.metrics = 0;
+              });
+            }
+
             angular.forEach($scope.metricsData, function (value, key) {
               nodePopovers[key].scope.data.metrics = value;
             });
@@ -161,6 +157,8 @@ angular.module(PKG.name + '.commons')
             angular.forEach(labels, function (endpoint) {
               var label = endpoint.getOverlay('metricLabel');
               if ($scope.metricsData[endpoint.elementId] === null || $scope.metricsData[endpoint.elementId] === undefined) {
+                angular.element(label.getElement())
+                  .text(0);
                 return;
               }
 
@@ -169,6 +167,8 @@ angular.module(PKG.name + '.commons')
             });
           }, true);
         }
+
+        vm.fitToScreen();
 
       });
     }
@@ -427,11 +427,6 @@ angular.module(PKG.name + '.commons')
         });
 
       }, true);
-
-      $scope.$watchCollection('connections', function () {
-        console.log('ChangeConnection', $scope.connections);
-      });
-
       // This is needed to redraw connections and endpoints on browser resize
       angular.element($window).on('resize', function() {
         vm.instance.repaintEverything();
@@ -527,6 +522,7 @@ angular.module(PKG.name + '.commons')
 
     // This algorithm is f* up
     vm.fitToScreen = function () {
+      if ($scope.nodes.length === 0) { return; }
 
       /**
        * Need to find the furthest nodes:

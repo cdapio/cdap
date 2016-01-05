@@ -16,7 +16,6 @@
 
 var module = angular.module(PKG.name+'.commons');
 
-var tip;
 var baseDirective = {
   restrict: 'E',
   templateUrl: 'flow-graph/flow.html',
@@ -35,7 +34,7 @@ var baseDirective = {
 module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories) {
   return angular.extend({
     link: function (scope) {
-      scope.render = FlowFactories.genericRender.bind(null, scope, $filter, $location, tip, true);
+      scope.render = FlowFactories.genericRender.bind(null, scope, $filter, $location, true);
 
       var defaultRadius = 30;
       scope.getShapes = function() {
@@ -265,11 +264,11 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories)
         });
       };
 
-      scope.handleTooltip = function(tip, nodeId) {
+      scope.handleTooltip = function(nodeId) {
         if (['Start', 'End'].indexOf(nodeId) === -1) {
           var text = scope.instanceMap[nodeId].program.programType || scope.instanceMap[nodeId].program.programName;
 
-          tip
+          scope.tip
             .html(function() {
               return '<span>'+ scope.instanceMap[nodeId].nodeId + ' : ' + text +'</span>';
             })
@@ -285,6 +284,8 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories)
           return true;
         }
       };
+
+      FlowFactories.prepareGraph(scope);
     }
   }, baseDirective);
 });

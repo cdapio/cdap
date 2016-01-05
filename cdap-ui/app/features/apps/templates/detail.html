@@ -43,9 +43,12 @@
       <my-metadata-tags tag-limit="5" params="DetailController.metadataParams" type="apps"></my-metadata-tags>
     </div>
     <div class="col-sm-6 text-right">
-      <a ui-sref="hydrator.detail({ pipelineId: $state.params.appId })" class="btn btn-default" ng-if="DetailController.isHydrator">
+      <a ui-sref="hydrator.detail({ pipelineId: $state.params.appId })"
+        class="btn btn-hydrator"
+        ng-if="DetailController.isHydrator"
+        title="View in Hydrator">
         <span class="icon-hydrator"></span>
-        <span>View in Hydrator</span>
+        <span>Hydrator</span>
       </a>
       <div class="btn-group dropdown-right" dropdown>
         <button type="button" class="btn btn-default dropdown-toggle" dropdown-toggle>
