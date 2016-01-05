@@ -20,12 +20,20 @@ angular.module(PKG.name + '.services')
     return new MyPersistentStorage('user');
   })
 
-  .factory('MyPersistentStorage', function MyPersistentStorageFactory($q, MyCDAPDataSource, myHelpers) {
+  .factory('MyPersistentStorage', function MyPersistentStorageFactory($q, MyCDAPDataSource, myHelpers, $rootScope, myAuth, MYAUTH_EVENT, MY_CONFIG) {
 
     var data = new MyCDAPDataSource();
-
     function MyPersistentStorage (type) {
-      this.endpoint = '/configuration/'+type;
+      this.endpoint = '/configuration/' + type;
+      this.headers = {
+        'Content-Type': 'application/json'
+      };
+      if (MY_CONFIG.securityEnabled) {
+        $rootScope.$on (MYAUTH_EVENT.logoutSuccess, function () {
+          this.data = [];
+          delete this.headers['Authorization'];
+        }.bind(this));
+      }
 
       // our cache of the server-side data
       this.data = {};
@@ -43,11 +51,14 @@ angular.module(PKG.name + '.services')
     MyPersistentStorage.prototype.set = function (key, value) {
 
       myHelpers.deepSet(this.data, key, value);
-
+      if (myAuth.isAuthenticated()) {
+        this.headers['Authorization'] = ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null);
+      }
       return data.request(
         {
           method: 'PUT',
           _cdapPath: this.endpoint,
+          headers: this.headers,
           body: this.data
         }
       );
@@ -64,6 +75,9 @@ angular.module(PKG.name + '.services')
     MyPersistentStorage.prototype.get = function (key, force) {
 
       var val = myHelpers.deepGet(this.data, key, true);
+      if (myAuth.isAuthenticated()) {
+        this.headers['Authorization'] = ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null);
+      }
 
       if (!force && val) {
         return $q.when(val);
@@ -86,6 +100,7 @@ angular.module(PKG.name + '.services')
       data.request(
         {
           method: 'GET',
+          headers: this.headers,
           _cdapPath: this.endpoint
         },
         function (res) {
@@ -93,6 +108,9 @@ angular.module(PKG.name + '.services')
           self.pending.resolve(
             myHelpers.deepGet(self.data, key, true)
           );
+        },
+        function () {
+          self.pending = null;
         }
       );
 
