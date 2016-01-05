@@ -23,6 +23,7 @@
             <label class="control-label">
               <span>Label</span>
               <span class="fa fa-asterisk"></span>
+              <small class="text-danger" ng-if="NodeConfigController.state.nodeLabelError">{{::NodeConfigController.state.nodeLabelError}}</small>
             </label>
             <input type="text"
                     class="form-control"
@@ -39,6 +40,7 @@
                       tooltip-append-to-body="true">
                 </span>
                 <span class="fa fa-asterisk" ng-if="NodeConfigController.state.node._backendProperties[name].required"></span>
+                <small class="text-danger" ng-if="NodeConfigController.state.node._backendProperties[name].required && !NodeConfigController.state.node.plugin.properties[name]">{{::NodeConfigController.requiredPropertyError}}</small>
               </label>
               <input type="text"
                       class="form-control"
