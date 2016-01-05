@@ -1100,13 +1100,19 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
   public void testWorkflowToken() throws Exception {
     Assert.assertEquals(200, deploy(AppWithWorkflow.class).getStatusLine().getStatusCode());
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, AppWithWorkflow.NAME);
-    Id.Workflow workflowId = Id.Workflow.from(appId, AppWithWorkflow.SampleWorkflow.NAME);
+    final Id.Workflow workflowId = Id.Workflow.from(appId, AppWithWorkflow.SampleWorkflow.NAME);
     String outputPath = new File(tmpFolder.newFolder(), "output").getAbsolutePath();
     startProgram(workflowId, ImmutableMap.of("inputPath", createInput("input"),
                                              "outputPath", outputPath));
     waitState(workflowId, ProgramStatus.RUNNING.name());
     waitState(workflowId, ProgramStatus.STOPPED.name());
 
+    Tasks.waitFor(1, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        return getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name()).size();
+      }
+    }, 5, TimeUnit.SECONDS);
     List<RunRecord> programRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
     Assert.assertEquals(1, programRuns.size());
     RunRecord runRecord = programRuns.get(0);
