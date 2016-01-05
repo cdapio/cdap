@@ -38,6 +38,7 @@ import co.cask.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHel
 import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
+import com.clearspring.analytics.util.Lists;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -50,9 +51,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A {@link ProgramRunner} to start a {@link Workflow} program in distributed mode.
@@ -82,19 +83,20 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
     WorkflowSpecification workflowSpec = appSpec.getWorkflows().get(program.getName());
     Preconditions.checkNotNull(workflowSpec, "Missing WorkflowSpecification for %s", program.getName());
 
-    // It the workflow has Spark, localize the spark-assembly jar
-    List<String> extraClassPaths = new ArrayList<>();
-
     // See if the Workflow has Spark or MapReduce in it
     DriverMeta driverMeta = findDriverResources(program.getApplicationSpecification().getSpark(),
                                                 program.getApplicationSpecification().getMapReduce(), workflowSpec);
 
+    Set<String> extraClassPaths = new HashSet<>();
+    // If the workflow has Spark, localize the spark-assembly jar and its dependency jars
     if (driverMeta.hasSpark) {
-      File sparkAssemblyJar = SparkUtils.locateSparkAssemblyJar();
-      localizeResources.put(sparkAssemblyJar.getName(), new LocalizeResource(sparkAssemblyJar));
-      extraClassPaths.add(sparkAssemblyJar.getName());
+      Set<File> sparkAssemblyJar = SparkUtils.locateSparkDependencyJars();
+      for (File file : sparkAssemblyJar) {
+        localizeResources.put(file.getName(), new LocalizeResource(file));
+        extraClassPaths.add(file.getName());
+      }
     }
-    
+
     // Add classpaths for MR framework
     extraClassPaths.addAll(MapReduceContainerHelper.localizeFramework(hConf, localizeResources));
 
@@ -106,7 +108,7 @@ public final class DistributedWorkflowProgramRunner extends AbstractDistributedP
       tempDir.mkdirs();
       try {
         launcherFile = File.createTempFile("launcher", ".jar", tempDir);
-        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, extraClassPaths);
+        MapReduceContainerHelper.saveLauncher(hConf, launcherFile, Lists.newArrayList(extraClassPaths));
         localizeResources.put("launcher.jar", new LocalizeResource(launcherFile));
       } catch (Exception e) {
         LOG.warn("Failed to create twill container launcher.jar for TWILL-144 hack. " +

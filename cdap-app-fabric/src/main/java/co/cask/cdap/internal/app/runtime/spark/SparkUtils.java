@@ -18,6 +18,7 @@ package co.cask.cdap.internal.app.runtime.spark;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Set;
 
 /**
  * A utility class to help determine Spark supports and locating Spark jar.
@@ -45,8 +47,30 @@ public final class SparkUtils {
   private static final String SPARK_ASSEMBLY_JAR = "SPARK_ASSEMBLY_JAR";
   // Environment variable name for locating spark home directory
   private static final String SPARK_HOME = "SPARK_HOME";
+  // Environment variable name for locating hadoop and other spark dependencies for hadoop less spark
+  private static final String SPARK_DIST_CLASSPATH = "SPARK_DIST_CLASSPATH";
 
   private static File sparkAssemblyJar;
+
+
+  /**
+   * Locate the spark assembly and its hadoop dependency jars (if hadoop less build) from the local filesystem.
+   *
+   * @return jar location of spark assembly and hadoop dependencies (if hadoop less build)
+   */
+  public static synchronized Set<File> locateSparkDependencyJars() {
+    Set<File> sparkDepdencies = Sets.newHashSet(locateSparkAssemblyJar());
+    // SPARK_DIST_CLASSPATH is set for hadoop less spark builds and should contain all hadoop dependencies jars
+    // For example CDH deployed through Cloudera Manager has hadoop less spark
+    String sparkDistClassPath = System.getenv(SPARK_DIST_CLASSPATH);
+    if (sparkDistClassPath != null) {
+      for (String path : sparkDistClassPath.split(File.pathSeparator)) {
+        File file = new File(path).getAbsoluteFile();
+        sparkDepdencies.add(file);
+      }
+    }
+    return sparkDepdencies;
+  }
 
   /**
    * Locates the spark-assembly jar from the local file system.
@@ -54,7 +78,7 @@ public final class SparkUtils {
    * @return the spark-assembly jar location
    * @throws IllegalStateException if cannot locate the spark assembly jar
    */
-  public static synchronized File locateSparkAssemblyJar() {
+  private static synchronized File locateSparkAssemblyJar() {
     if (sparkAssemblyJar != null) {
       return sparkAssemblyJar;
     }
