@@ -58,6 +58,7 @@
   <!-- Adding Comments -->
   <button class="btn btn-default"
           ng-click="MyDAGController.addComment()"
+          ng-if="!MyDAGController.isDisabled"
           tooltip="Add Comments"
           tooltip-append-to-body="true"
           tooltip-placement="left"
@@ -104,7 +105,8 @@
         <div ng-repeat="comment in MyDAGController.comments"
               class="comment-box"
               ng-click="!MyDAGController.isDisabled && MyDAGController.commentSelect($event, comment)"
-              ng-style="comment._uiPosition">
+              ng-style="comment._uiPosition"
+              id="{{comment.id}}">
           <div ng-if="comment.isActive">
             <textarea
               ng-model="comment.content"

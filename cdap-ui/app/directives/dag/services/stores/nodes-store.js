@@ -41,6 +41,7 @@ class NodesStore {
     dispatcher.register('onAddComment', this.addComment.bind(this));
     dispatcher.register('onSetComments', this.setComments.bind(this));
     dispatcher.register('onDeleteComment', this.deleteComment.bind(this));
+    dispatcher.register('onUpdateComment', this.updateComment.bind(this));
   }
 
   setDefaults() {

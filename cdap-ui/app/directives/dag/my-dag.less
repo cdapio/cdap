@@ -18,7 +18,7 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import "../../styles/themes/cdap/mixins.less";
 
-@light-yellow: #ffff99;
+@light-yellow: lighten(#ffff99, 10%);
 
 my-dag {
   .zoom-control {
@@ -167,7 +167,7 @@ my-dag {
       min-height: 50px;
       background-color: @light-yellow;
       border-radius: 4px;
-      border: 2px dotted #4f5464;
+      // border: 2px dotted #4f5464;
       cursor: move;
 
       div.comment-content {
