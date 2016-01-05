@@ -43,6 +43,7 @@ class HydratorCreateCanvasController {
     this.connections = this.NodesStore.getConnections();
     this.ConfigStore.setNodes(this.nodes);
     this.ConfigStore.setConnections(this.connections);
+    this.ConfigStore.setComments(this.NodesStore.getComments());
   }
 
   updateNodesAndConnections() {

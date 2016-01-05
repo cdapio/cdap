@@ -57,7 +57,8 @@ class HydratorCreateStudioController {
           connections : configJson.connections
         };
       }
-      NodesActionsFactory.createGraphFromConfig(configJson.__ui__.nodes, configJson.config.connections);
+
+      NodesActionsFactory.createGraphFromConfig(configJson.__ui__.nodes, configJson.config.connections, configJson.config.comments);
     }
   }
 

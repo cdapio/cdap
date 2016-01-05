@@ -43,7 +43,6 @@ class ConfigStore {
     this.changeListeners.forEach( callback => callback() );
   }
   setDefaults(config) {
-
     this.state = {
       artifact: {
         name: '',
@@ -58,6 +57,7 @@ class ConfigStore {
       name: ''
     };
     angular.extend(this.state, {config: this.getDefaultConfig()});
+
     // This will be eventually used when we just pass on a config to the store to draw the dag.
     if (config) {
       angular.extend(this.state, config);
@@ -76,7 +76,8 @@ class ConfigStore {
       },
       sinks: [],
       transforms: [],
-      connections: []
+      connections: [],
+      comments: []
     };
   }
 
@@ -173,6 +174,8 @@ class ConfigStore {
     if (this.state.description) {
       config.description = this.state.description;
     }
+
+    config.comments = this.getComments();
 
     return config;
   }
@@ -301,6 +304,13 @@ class ConfigStore {
   }
   setInstance(instance) {
     this.state.config.instance = instance;
+  }
+
+  setComments(comments) {
+    this.state.config.comments = comments;
+  }
+  getComments() {
+    return this.getState().config.comments;
   }
 
   saveAsDraft(config) {

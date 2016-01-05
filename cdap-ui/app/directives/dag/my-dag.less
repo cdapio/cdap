@@ -18,6 +18,8 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import "../../styles/themes/cdap/mixins.less";
 
+@light-yellow: #ffff99;
+
 my-dag {
   .zoom-control {
     z-index: 1023;
@@ -161,15 +163,26 @@ my-dag {
 
     .comment-box {
       position: absolute;
-      width: 250px;
+      width: 200px;
       min-height: 50px;
-      background-color: white;
+      background-color: @light-yellow;
       border-radius: 4px;
-      border: 2px solid #4f5464;
+      border: 2px dotted #4f5464;
+      cursor: move;
 
       div.comment-content {
         padding: 15px;
         word-break: break-all;
+      }
+
+      textarea.form-control {
+        height: 100px;
+        background-color: @light-yellow;
+        resize: none;
+
+        &:focus {
+          border: none;
+        }
       }
 
       .fa.fa-close {

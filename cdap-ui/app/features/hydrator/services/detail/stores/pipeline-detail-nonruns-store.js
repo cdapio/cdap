@@ -119,6 +119,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
         appConfig.description = appConfig.configJson.description ? appConfig.configJson.description : appConfig.description;
       }
+
       appConfig.type = app.artifact.name;
       appConfig.cloneConfig = {
         name: app.name,
@@ -131,7 +132,8 @@ angular.module(PKG.name + '.feature.hydrator')
           transforms: appConfig.configJson.transforms,
           instances: appConfig.configJson.instance,
           schedule: appConfig.configJson.schedule,
-          connections: uiConfig.connections
+          connections: uiConfig.connections,
+          comments: appConfig.configJson.comments
         }
       };
       appConfig.streams = app.streams.map(function (stream) {
