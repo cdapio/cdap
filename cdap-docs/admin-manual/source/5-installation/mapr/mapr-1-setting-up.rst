@@ -38,16 +38,15 @@ packages installed, and can be configured using the MapR `configure.sh
 To prepare your cluster so that CDAP can write to its default namespace,
 create a top-level ``/cdap`` directory in MapRFS, owned by a MapRFS user ``cdap``::
 
-  $ sudo -u maprfs hadoop fs -mkdir /cdap 
-  $ sudo -u maprfs hadoop fs -chown cdap /cdap
+  $ su maprfs && hadoop fs -mkdir -p /cdap && hadoop fs -chown cdap /cdap
 
 In the CDAP packages, the default property ``hdfs.namespace`` is ``/cdap`` and the default property
 ``hdfs.user`` is ``yarn``.
 
 Also, create a ``tx.snapshot`` subdirectory::
 
-  $ sudo -u hdfs hadoop fs -mkdir /cdap/tx.snapshot 
-  $ sudo -u hdfs hadoop fs -chown yarn /cdap/tx.snapshot
+  $ su maprfs 
+  $ hadoop fs -mkdir -p /cdap/tx.snapshot && hadoop fs -chown yarn /cdap/tx.snapshot
 
 **Note:** If you have customized the property ``data.tx.snapshot.dir`` in your 
 :ref:`CDAP configuration <appendix-cdap-site.xml>`, use that value instead.
