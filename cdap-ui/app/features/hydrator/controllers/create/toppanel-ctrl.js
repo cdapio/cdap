@@ -121,7 +121,7 @@ class TopPanelController{
     if (!config.name) {
       this.ConsoleActionsFactory.addMessage({
         type: 'error',
-        content: this.GLOBALS.en.hydrator.studio.nameError
+        content: this.GLOBALS.en.hydrator.studio.error['MISSING-NAME']
       });
       return;
     }
@@ -129,13 +129,13 @@ class TopPanelController{
   }
   onValidate() {
     this.ConsoleActionsFactory.resetMessages();
-    if (this.HydratorErrorFactory.isModelValid()) {
+    let isStateValid = this.ConfigStore.validateState(true);
+    if (isStateValid) {
       this.ConsoleActionsFactory.addMessage({
         type: 'success',
         content: 'Validation success! Pipeline ' + this.ConfigStore.getName() + ' is valid.'
       });
     }
-
   }
   onPublish() {
     this.ConfigActionsFactory.publishPipeline();

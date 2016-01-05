@@ -104,14 +104,8 @@ class LeftPanelController {
     // this.ConfigActionsFactory.addPlugin(config, this.GLOBALS.pluginConvert[config.type]);
     this.HydratorService.fetchBackendProperties(config)
       .then( () => {
-        config.requiredFieldCount = this.NonStorePipelineErrorFactory.countRequiredFields(config);
-        if (config.requiredFieldCount > 0) {
-          config.error = {
-            message: this.GLOBALS.en.hydrator.studio.genericMissingRequiredFieldsError
-          };
-        }
         this.NodesActionsFactory.addNode(config);
-      } );
+      });
 
   }
 }
