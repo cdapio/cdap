@@ -15,13 +15,12 @@
  */
 
 class TopPanelController{
-  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory, HydratorErrorFactory) {
+  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory) {
     this.GLOBALS = GLOBALS;
     this.ConfigStore = ConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
     this.$bootstrapModal = $bootstrapModal;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
-    this.HydratorErrorFactory = HydratorErrorFactory;
 
     this.canvasOperations = [
       {
@@ -142,7 +141,7 @@ class TopPanelController{
   }
 }
 
-TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory', 'HydratorErrorFactory'];
+TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('TopPanelController', TopPanelController);

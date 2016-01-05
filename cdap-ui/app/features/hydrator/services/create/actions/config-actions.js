@@ -15,13 +15,12 @@
  */
 
 class ConfigActionsFactory {
-  constructor(ConfigDispatcher, myPipelineApi, $state, ConfigStore, mySettings, ConsoleActionsFactory, HydratorErrorFactory, EventPipe, myAppsApi, GLOBALS, myHelpers, $stateParams) {
+  constructor(ConfigDispatcher, myPipelineApi, $state, ConfigStore, mySettings, ConsoleActionsFactory, EventPipe, myAppsApi, GLOBALS, myHelpers, $stateParams) {
     this.ConfigStore = ConfigStore;
     this.mySettings = mySettings;
     this.$state = $state;
     this.myPipelineApi = myPipelineApi;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
-    this.HydratorErrorFactory = HydratorErrorFactory;
     this.EventPipe = EventPipe;
     this.myAppsApi = myAppsApi;
     this.GLOBALS = GLOBALS;
@@ -65,7 +64,7 @@ class ConfigActionsFactory {
   }
   publishPipeline() {
     this.ConsoleActionsFactory.resetMessages();
-    let error = this.HydratorErrorFactory.isModelValid();
+    let error = this.ConfigStore.validateState();
 
     if (!error) { return; }
     this.EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
@@ -131,7 +130,7 @@ class ConfigActionsFactory {
         if (appNames.indexOf(config.name) !== -1) {
           this.ConsoleActionsFactory.addMessage({
             type: 'error',
-            content: this.GLOBALS.en.hydrator.studio.pipelineNameAlreadyExistError
+            content: this.GLOBALS.en.hydrator.studio.error['NAME-ALREADY-EXISTS']
           });
           this.EventPipe.emit('hideLoadingIcon.immediate');
         } else {
@@ -142,6 +141,6 @@ class ConfigActionsFactory {
   }
 }
 
-ConfigActionsFactory.$inject = ['ConfigDispatcher', 'myPipelineApi', '$state', 'ConfigStore', 'mySettings', 'ConsoleActionsFactory', 'HydratorErrorFactory', 'EventPipe', 'myAppsApi', 'GLOBALS', 'myHelpers', '$stateParams'];
+ConfigActionsFactory.$inject = ['ConfigDispatcher', 'myPipelineApi', '$state', 'ConfigStore', 'mySettings', 'ConsoleActionsFactory', 'EventPipe', 'myAppsApi', 'GLOBALS', 'myHelpers', '$stateParams'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigActionsFactory', ConfigActionsFactory);

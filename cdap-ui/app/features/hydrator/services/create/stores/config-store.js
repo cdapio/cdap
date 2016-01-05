@@ -15,7 +15,7 @@
  */
 
 class ConfigStore {
-  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory, $alert){
+  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory){
     this.state = {};
     this.mySettings = mySettings;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
@@ -24,7 +24,6 @@ class ConfigStore {
     this.$stateParams = $stateParams;
     this.myHelpers = myHelpers;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
-    this.$alert = $alert;
 
     this.changeListeners = [];
     this.setDefaults();
@@ -209,13 +208,23 @@ class ConfigStore {
     return angular.copy(state);
   }
   getDisplayConfig() {
-    if (!this.NonStorePipelineErrorFactory.checkAndUpdateUniqueNodeNames(this.getNodes())) {
-      this.$alert({
-        type: 'danger',
-        title: 'Unique Node names',
-        content: this.GLOBALS.en.hydrator.studio.uniqueNodeNames
+    let uniqueNodeNames = {};
+    let ERROR_MESSAGES = this.GLOBALS.en.hydrator.studio.error;
+    this.ConsoleActionsFactory.resetMessages();
+    this.NonStorePipelineErrorFactory.isUniqueNodeNames(this.getNodes(), (err, node) => {
+      if (err) {
+        uniqueNodeNames[node.plugin.label] = err;
+      }
+    });
+
+    if (Object.keys(uniqueNodeNames).length > 0) {
+      angular.forEach(uniqueNodeNames, (err, nodeName) => {
+        this.ConsoleActionsFactory.addMessage({
+          type: 'error',
+          content: nodeName + ': ' + ERROR_MESSAGES[err]
+        });
       });
-      return;
+      return false;
     }
     var stateCopy = this.getConfigForExport();
     var source = stateCopy.config.source;
@@ -302,6 +311,7 @@ class ConfigStore {
 
   setNodes(nodes) {
     this.state.__ui__.nodes = nodes;
+    this.validateState();
   }
   setConnections(connections) {
     this.state.config.connections = connections;
@@ -328,6 +338,7 @@ class ConfigStore {
     if (match.length) {
       match = match[0];
       angular.forEach(nodeConfig, (pValue, pName) => match[pName] = pValue);
+      this.validateState();
     }
   }
   getSchedule() {
@@ -337,6 +348,89 @@ class ConfigStore {
     this.state.config.schedule = schedule;
   }
 
+  validateState(isShowConsoleMessage) {
+    let isStateValid = true;
+    let name = this.getName();
+    let errorFactory = this.NonStorePipelineErrorFactory;
+    let daglevelvalidation = [
+      errorFactory.hasOnlyOneSource,
+      errorFactory.hasAtLeastOneSink
+    ];
+    let nodes = this.state.__ui__.nodes;
+    nodes.forEach( node => { node.errorCount = 0;});
+    let ERROR_MESSAGES = this.GLOBALS.en.hydrator.studio.error;
+    let showConsoleMessage = (errObj) => {
+      if (isShowConsoleMessage) {
+        this.ConsoleActionsFactory.addMessage(errObj);
+      }
+    };
+    let setErrorWarningFlagOnNode = (node) => {
+      if (isShowConsoleMessage) {
+        node.error = true;
+        delete node.warning;
+      } else {
+        node.warning = true;
+        delete node.error;
+      }
+    };
+
+    daglevelvalidation.forEach( validationFn => {
+      validationFn(nodes, (err, node) => {
+        let content;
+        if (err) {
+          isStateValid = false;
+          if (node) {
+            node.errorCount += 1;
+            setErrorWarningFlagOnNode(node);
+            content = node.plugin.label + ' ' + ERROR_MESSAGES[err];
+          } else {
+            content = ERROR_MESSAGES[err];
+          }
+          showConsoleMessage({
+            type: 'error',
+            content: content
+          });
+        }
+      });
+    });
+    errorFactory.hasValidName(name, (err) => {
+      if (err) {
+        showConsoleMessage({
+          type: 'error',
+          content: ERROR_MESSAGES[err]
+        });
+      }
+    });
+    errorFactory.isRequiredFieldsFilled(nodes, (err, node, unFilledRequiredFields) => {
+      if (err) {
+        node.errorCount += unFilledRequiredFields;
+        setErrorWarningFlagOnNode(node);
+        showConsoleMessage({
+          type: 'error',
+          content: node.plugin.label + ' ' + ERROR_MESSAGES[err]
+        });
+      }
+    });
+
+    let uniqueNodeNames = {};
+    errorFactory.isUniqueNodeNames(nodes, (err, node) => {
+      if (err) {
+        isStateValid = false;
+        node.errorCount += 1;
+        setErrorWarningFlagOnNode(node);
+        uniqueNodeNames[node.plugin.label] = node.plugin.label + ' ' + ERROR_MESSAGES[err];
+      }
+    });
+    if (Object.keys(uniqueNodeNames).length) {
+      angular.forEach(uniqueNodeNames, err => {
+        showConsoleMessage({
+          type: 'error',
+          content: err
+        });
+      });
+    }
+    return isStateValid;
+  }
   getInstance() {
     return this.getState().config.instance;
   }
@@ -380,6 +474,6 @@ class ConfigStore {
   }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', '$alert'];
+ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);
