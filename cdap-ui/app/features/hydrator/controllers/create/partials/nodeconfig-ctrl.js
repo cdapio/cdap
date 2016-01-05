@@ -48,7 +48,10 @@ class NodeConfigController {
     }
     // This is common whether there is a config or not for a plugin.
     this.state.watchers.push(
-      this.$scope.$watch('NodeConfigController.state.node.plugin.label', this.validateNodeLabel.bind(this))
+      this.$scope.$watch('NodeConfigController.state.node.plugin.label', () => {
+        this.validateNodeLabel(this);
+        this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
+      })
     );
   }
   validateNodeLabel() {

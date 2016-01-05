@@ -64,7 +64,7 @@ class ConfigActionsFactory {
   }
   publishPipeline() {
     this.ConsoleActionsFactory.resetMessages();
-    let error = this.ConfigStore.validateState();
+    let error = this.ConfigStore.validateState(true);
 
     if (!error) { return; }
     this.EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');

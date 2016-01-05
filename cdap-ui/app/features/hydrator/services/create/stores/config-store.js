@@ -365,12 +365,14 @@ class ConfigStore {
       }
     };
     let setErrorWarningFlagOnNode = (node) => {
-      if (isShowConsoleMessage) {
-        node.error = true;
+      if (node.error) {
         delete node.warning;
       } else {
         node.warning = true;
-        delete node.error;
+      }
+      if (isShowConsoleMessage) {
+        node.error = true;
+        delete node.warning;
       }
     };
 
@@ -395,6 +397,7 @@ class ConfigStore {
     });
     errorFactory.hasValidName(name, (err) => {
       if (err) {
+        isStateValid = false;
         showConsoleMessage({
           type: 'error',
           content: ERROR_MESSAGES[err]
@@ -403,6 +406,7 @@ class ConfigStore {
     });
     errorFactory.isRequiredFieldsFilled(nodes, (err, node, unFilledRequiredFields) => {
       if (err) {
+        isStateValid = false;
         node.errorCount += unFilledRequiredFields;
         setErrorWarningFlagOnNode(node);
         showConsoleMessage({

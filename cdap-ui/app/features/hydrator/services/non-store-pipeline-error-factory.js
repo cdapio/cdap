@@ -37,7 +37,7 @@
 
 let countUnFilledRequiredFields = (node) => {
   var requiredFieldCount = 0;
-  if (Object.keys(node._backendProperties).length) {
+  if (angular.isObject(node._backendProperties) && Object.keys(node._backendProperties).length) {
     angular.forEach(node._backendProperties, (value, key) => {
       if (value.required) {
         if (!node.plugin.properties || !node.plugin.properties[key]) {

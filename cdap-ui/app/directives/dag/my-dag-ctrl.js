@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, NonStorePipelineErrorFactory, $rootScope, HydratorService, $popover, $filter, uuid) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, $rootScope, HydratorService, $popover, $filter, uuid) {
 
     var vm = this;
 
