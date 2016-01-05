@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2015 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -96,7 +96,6 @@ public class NettyRouterPipelineTests {
   private static final DiscoveryService discoveryService = new InMemoryDiscoveryService();
   private static final String gatewayService = Constants.Service.APP_FABRIC_HTTP;
   private static final String GATEWAY_LOOKUP = Constants.Router.GATEWAY_DISCOVERY_NAME;
-  private static final String webappService = "$HOST";
   private static final int maxUploadBytes = 10 * 1024 * 1024;
   private static final int chunkSize = 1024 * 1024;      // NOTE: maxUploadBytes % chunkSize == 0
   private static byte[] applicationJarInBytes;
@@ -173,9 +172,7 @@ public class NettyRouterPipelineTests {
   //Deploy word count app n times.
   private void deploy(int num) throws Exception {
 
-    String path = String.format("http://%s:%d/v1/deploy",
-                                hostname,
-                                ROUTER.getServiceMap().get(GATEWAY_LOOKUP));
+    String path = String.format("http://%s:%d/v1/deploy", hostname, ROUTER.getServiceMap().get(GATEWAY_LOOKUP));
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.MANIFEST_VERSION, "1.0");
     manifest.getMainAttributes().put(ManifestFields.MAIN_CLASS, AllProgramsApp.class.getName());
@@ -194,6 +191,7 @@ public class NettyRouterPipelineTests {
 
       Files.copy(file, urlConn.getOutputStream());
       Assert.assertEquals(200, urlConn.getResponseCode());
+      urlConn.getInputStream().close();
       urlConn.disconnect();
     }
   }
@@ -357,8 +355,8 @@ public class NettyRouterPipelineTests {
               responder.sendStatus(HttpResponseStatus.OK);
               return;
             }
-              responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-            }
+            responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
+          }
 
           @Override
           public void handleError(Throwable cause) {
@@ -366,7 +364,6 @@ public class NettyRouterPipelineTests {
           }
         };
       }
-
     }
   }
 
