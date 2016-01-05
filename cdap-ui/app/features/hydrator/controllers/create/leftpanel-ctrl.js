@@ -23,6 +23,7 @@ class LeftPanelController {
     this.PluginActionsFactory = PluginActionsFactory;
     this.ConfigActionsFactory = ConfigActionsFactory;
     this.GLOBALS = GLOBALS;
+    this.ConfigStore = ConfigStore;
     this.MyDAGFactory = MyDAGFactory;
     this.NodesActionsFactory = NodesActionsFactory;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
@@ -71,11 +72,14 @@ class LeftPanelController {
     event.stopPropagation();
     var item = this.LeftPanelStore.getSpecificPluginVersion(node);
     this.LeftPanelStore.updatePluginDefaultVersion(node);
+    let filteredNodes = this.ConfigStore
+                    .getNodes()
+                    .filter( node => node.plugin.label.includes(item.name) );
     let config;
     if (item.pluginTemplate) {
       config = {
         plugin: {
-          label: item.name,
+          label: (filteredNodes.length > 0 ? item.name + (filteredNodes.length+1): item.name),
           name: item.pluginName,
           artifact: item.artifact,
           properties: item.properties,
@@ -89,7 +93,7 @@ class LeftPanelController {
     } else {
       config = {
         plugin: {
-          label: item.name,
+          label: (filteredNodes.length > 0 ? item.name + (filteredNodes.length+1): item.name),
           artifact: item.artifact,
           name: item.name,
           properties: {}
