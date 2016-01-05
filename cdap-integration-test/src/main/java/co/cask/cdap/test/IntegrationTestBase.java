@@ -235,6 +235,11 @@ public abstract class IntegrationTestBase {
       builder.setAccessToken(accessToken);
     }
 
+    String verifySSL = System.getProperty("verifySSL");
+    if (verifySSL != null) {
+      builder.setVerifySSLCert(Boolean.valueOf(verifySSL));
+    }
+
     builder.setDefaultConnectTimeout(120000);
     builder.setDefaultReadTimeout(120000);
     builder.setUploadConnectTimeout(0);
