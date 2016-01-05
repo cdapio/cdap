@@ -52,17 +52,22 @@ Prerequisites
    We recommend starting with these settings:
    
    - ``yarn.nodemanager.delete.debug-delay-sec``: 43200
-   - ``yarn.scheduler.minimum-allocation-mb``: 512 mb
    - ``yarn.nodemanager.resource.memory-mb``: Adjust if you need to raise memory per nodemanager
    - ``yarn.nodemanager.resource.cpu-vcores``: Adjust if you need to raise vcores per nodemanager
+   - ``yarn.scheduler.minimum-allocation-mb``: 512 mb
+   
+   You can make these changes `using Cloudera Manager <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
+   You will be prompted to restart the stale services after making changes.
     
 #. For Kerberos-enabled Hadoop clusters:
 
    - The ``'cdap'`` user needs to be granted HBase permissions to create tables.
-     In an HBase shell, enter::
+     In an HBase shell (``$ hbase shell``), enter::
      
-      > grant 'cdap', 'ACRW'
+      > grant 'cdap', 'RWCA'
 
    - The ``'cdap'`` user must be able to launch YARN containers, either by adding it to the YARN
-     ``allowed.system.users`` or by adjusting ``min.user.id``.
+     ``allowed.system.users`` or by adjusting the YARN ``min.user.id`` to include the ``cdap`` user.
+     (Search for the YARN configuration ``allowed.system.users`` in Cloudera Manager, and then add
+     the ``cdap`` user to the whitelist.)
 
