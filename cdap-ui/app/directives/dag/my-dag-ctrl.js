@@ -417,8 +417,6 @@ angular.module(PKG.name + '.commons')
             });
           }
         });
-        NonStorePipelineErrorFactory.updatePluginsWithRequiredFieldsCount($scope.nodes);
-        NonStorePipelineErrorFactory.checkAndUpdateUniqueNodeNames($scope.nodes);
       }, true);
       // This is needed to redraw connections and endpoints on browser resize
       angular.element($window).on('resize', function() {
