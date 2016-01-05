@@ -203,7 +203,7 @@ class NodesStore {
   setNodesAndConnections(nodes, connections, comments) {
     this.setNodes(nodes);
     this.state.connections = connections;
-    this.state.comments = comments;
+    this.state.comments = comments ? comments : [];
     this.emitChange();
   }
 
