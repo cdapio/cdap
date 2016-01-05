@@ -236,7 +236,7 @@
 
   <property>
     <name>scheduler.max.thread.pool.size</name>
-    <value>30</value>
+    <value>100</value>
     <description>
       Size of the scheduler thread pool
     </description>
