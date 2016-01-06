@@ -260,6 +260,21 @@ set_hive_classpath() {
   fi
 }
 
+# Set SPARK_DIST_CLASSPATH by sourcing spark-env.sh
+# NOTE: this function is also sourced and invoked by the CSD control script, found here:
+#   https://github.com/caskdata/cm_csd/blob/develop/src/scripts/cdap-control.sh
+#   Any changes to this function must be compatible with the CSD's invocation
+cdap_set_spark_env() {
+  if [ -n "${SPARK_HOME}" ]; then
+    if [ -f "${SPARK_HOME}"/conf/spark-env.sh ]; then
+      source "${SPARK_HOME}"/conf/spark-env.sh
+    else
+      echo "ERROR - Failed to locate ${SPARK_HOME}/conf/spark-env.sh"
+      return 1
+    fi
+  fi
+}
+
 # Check that directory /var/tmp/cdap exists in the master node, or create it
 check_or_create_master_local_dir() {
   mkdir -p "${LOCAL_DIR}"

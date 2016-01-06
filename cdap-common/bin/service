@@ -101,6 +101,8 @@ _start_java() {
     set_hive_classpath || exit 1
     # Add proper HBase compatibility to CLASSPATH
     set_hbase || exit 1
+    # Set Spark environment variables
+    cdap_set_spark_env || exit 1
     # Master requires this local directory
     check_or_create_master_local_dir || die "Could not create Master local directory"
   fi
