@@ -16,6 +16,7 @@
 
 package co.cask.cdap.security.runtime;
 
+import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -26,6 +27,7 @@ import co.cask.cdap.common.kerberos.SecurityUtil;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -71,7 +73,12 @@ public class AuthenticationServerMain extends DaemonMain {
 
         Services.chainStart(zkClientService, authServer);
       } catch (Exception e) {
-        LOG.error("Got exception while starting authenticaion server", e);
+        Throwable rootCause = Throwables.getRootCause(e);
+        if (rootCause instanceof ServiceBindException) {
+          LOG.error("Failed to start Authentication Server: {}", rootCause.getMessage());
+        } else {
+          LOG.error("Failed to start Authentication Server", e);
+        }
       }
     } else {
       String warning = "AuthenticationServer not started since security is disabled." +
