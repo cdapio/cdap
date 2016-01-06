@@ -64,6 +64,7 @@ class ConfigStore {
       angular.extend(this.state, config);
       this.setArtifact(this.state.artifact);
       this.setEngine(this.state.config.engine);
+      this.propagateIOSchemas();
     }
   }
   init(config) {
@@ -312,9 +313,35 @@ class ConfigStore {
   setNodes(nodes) {
     this.state.__ui__.nodes = nodes;
     this.validateState();
+    this.propagateIOSchemas();
   }
   setConnections(connections) {
     this.state.config.connections = connections;
+    this.propagateIOSchemas();
+  }
+  propagateIOSchemas() {
+    var nodesMap = {};
+    this.state.__ui__.nodes.forEach(function(n) {
+      nodesMap[n.name] = n;
+    });
+    this.CanvasFactory
+        .orderConnections(
+          angular.copy(this.state.config.connections),
+          this.state.artifact.name,
+          this.state.__ui__.nodes
+        )
+        .forEach( connection => {
+          let from = connection.from;
+          let to = connection.to;
+
+          if (!nodesMap[from].outputSchema) {
+            return;
+          }
+          nodesMap[to].inputSchema = nodesMap[from].outputSchema;
+          if (!nodesMap[to].outputSchema) {
+            nodesMap[to].outputSchema = nodesMap[to].inputSchema;
+          }
+        });
   }
   addNode(node) {
     this.state.__ui__.nodes.push(node);
