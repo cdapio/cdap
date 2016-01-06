@@ -34,7 +34,7 @@ class NodeConfigController {
     NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
   }
   setState() {
-    var appType = this.$state.params.type || this.NodeConfigStore.getAppType();
+    var appType = this.$state.params.type || this.NodeConfigStore.ConfigStore.getAppType();
     var nodeState = this.NodeConfigStore.getState();
     nodeState.appType = appType;
     if (angular.isArray(this.state.watchers)) {
@@ -46,13 +46,6 @@ class NodeConfigController {
       this.loadNewPlugin();
       this.validateNodeLabel();
     }
-    // This is common whether there is a config or not for a plugin.
-    this.state.watchers.push(
-      this.$scope.$watch('NodeConfigController.state.node.plugin.label', () => {
-        this.validateNodeLabel(this);
-        this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
-      })
-    );
   }
   validateNodeLabel() {
     let nodes = this.NodeConfigStore.ConfigStore.getNodes();
@@ -151,8 +144,11 @@ class NodeConfigController {
             if (!this.$scope.isDisabled) {
               this.state.watchers.push(
                 this.$scope.$watch(
-                  'NodeConfigController.state.node.plugin.properties',
-                  _.debounce( () => this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node), 1000),
+                  'NodeConfigController.state.node',
+                  () => {
+                    this.validateNodeLabel(this);
+                    this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
+                  },
                   true
                 )
               );
@@ -184,8 +180,11 @@ class NodeConfigController {
             });
             this.state.watchers.push(
               this.$scope.$watch(
-                'NodeConfigController.state.node.plugin.properties',
-                _.debounce(() => this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node), 1000),
+                'NodeConfigController.state.node',
+                () => {
+                  this.validateNodeLabel(this);
+                  this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
+                },
                 true
               )
             );
