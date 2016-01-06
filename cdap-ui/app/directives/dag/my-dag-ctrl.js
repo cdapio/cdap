@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory, $rootScope, HydratorService, $popover, $filter) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory, $rootScope, HydratorService, $popover, $filter, uuid) {
 
     var vm = this;
 
@@ -66,6 +66,8 @@ angular.module(PKG.name + '.commons')
       left: 0
     };
 
+    vm.comments = [];
+
     /*
     FIXME: This should be fixed. Right now the assumption is to update
      the store before my-dag directive is rendered. What happens if we get the
@@ -93,6 +95,7 @@ angular.module(PKG.name + '.commons')
     function init() {
       $scope.nodes = NodesStore.getNodes();
       $scope.connections = NodesStore.getConnections();
+      vm.comments = NodesStore.getComments();
 
       $timeout(function () {
         addEndpoints();
@@ -432,6 +435,30 @@ angular.module(PKG.name + '.commons')
         vm.instance.repaintEverything();
       });
 
+      NodesStore.registerOnChangeListener(function () {
+        vm.comments = NodesStore.getComments();
+
+        if (!vm.isDisabled) {
+          $timeout(function () {
+            var comments = document.querySelectorAll('.comment-box');
+            vm.instance.draggable(comments, {
+              start: function () {
+                dragged = true;
+              },
+              stop: function (dragEndEvent) {
+                var config = {
+                  _uiPosition: {
+                    top: dragEndEvent.el.style.top,
+                    left: dragEndEvent.el.style.left
+                  }
+                };
+                NodesActionsFactory.updateComment(dragEndEvent.el.id, config);
+              }
+            });
+          });
+        }
+      });
+
     });
 
     vm.clearNodeSelection = function () {
@@ -446,6 +473,7 @@ angular.module(PKG.name + '.commons')
       angular.forEach($scope.nodes, function (node) {
         node.selected = false;
       });
+      clearCommentSelection();
     };
 
     function checkSelection() {
@@ -603,6 +631,43 @@ angular.module(PKG.name + '.commons')
       NodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
+    vm.addComment = function () {
+      var canvasPanning = NodesStore.getCanvasPanning();
+
+      var config = {
+        content: '',
+        isActive: false,
+        id: 'comment-' + uuid.v4(),
+        _uiPosition: {
+          'top': 250 - canvasPanning.top + 'px',
+          'left': (10/100 * document.documentElement.clientWidth) - canvasPanning.left + 'px'
+        }
+      };
+
+      NodesActionsFactory.addComment(config);
+    };
+
+    function clearCommentSelection() {
+      angular.forEach(vm.comments, function (comment) {
+        comment.isActive = false;
+      });
+    }
+
+    vm.commentSelect = function (event, comment) {
+      event.stopPropagation();
+      clearCommentSelection();
+
+      if (dragged) {
+        dragged = false;
+        return;
+      }
+
+      comment.isActive = true;
+    };
+
+    vm.deleteComment = function (comment) {
+      NodesActionsFactory.deleteComment(comment);
+    };
 
     $scope.$on('$destroy', function () {
       closeAllPopovers();

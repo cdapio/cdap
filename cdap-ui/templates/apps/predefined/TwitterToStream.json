@@ -17,9 +17,9 @@
           "ConsumerKey": ""
         },
         "artifact": {
-          "name": "cdap-etl-lib",
+          "name": "core-plugins",
           "scope": "SYSTEM",
-          "version": "3.3.0-SNAPSHOT"
+          "version": "1.2.0-SNAPSHOT"
         }
       }
     },
@@ -35,9 +35,9 @@
             "body.field": "body"
           },
           "artifact": {
-            "name": "cdap-etl-lib",
+            "name": "core-plugins",
             "scope": "SYSTEM",
-            "version": "3.3.0-SNAPSHOT"
+            "version": "1.2.0-SNAPSHOT"
           }
         }
       }
@@ -53,9 +53,9 @@
             "script": "function transform(input) {\n   if (input.source !== null) {\n     input.source = 'No-Source';     \n   }\n   \n   var body = [ input.id, input.message, input.lang, input.favCount, input.rtCount, input.source]\n   \n   return {\n       headers : { id : input.id + '' , lang : input.lang},\n       body : body.join('\\t')\n   } \n}"
           },
           "artifact": {
-            "name": "cdap-etl-lib",
+            "name": "core-plugins",
             "scope": "SYSTEM",
-            "version": "3.3.0-SNAPSHOT"
+            "version": "1.2.0-SNAPSHOT"
           }
         }
       }

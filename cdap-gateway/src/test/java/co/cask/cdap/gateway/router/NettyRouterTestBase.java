@@ -485,6 +485,14 @@ public abstract class NettyRouterTestBase {
     // however, the connection to defaultServer2 is not timed out, because we've been making requests to it
     Assert.assertEquals(1, defaultServer2.getNumConnectionsOpened());
     Assert.assertEquals(0, defaultServer2.getNumConnectionsClosed());
+
+    defaultServer2.registerServer();
+    defaultServer1.cancelRegistration();
+    url = new URL(resolveURI(Constants.Router.GATEWAY_DISCOVERY_NAME, "/v2/ping"));
+    urlConnection = openURL(url);
+    Assert.assertEquals(200, urlConnection.getResponseCode());
+    urlConnection.getInputStream().close();
+    urlConnection.disconnect();
   }
 
   @Test

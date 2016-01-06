@@ -183,6 +183,12 @@ public class MasterServiceMain extends DaemonMain {
     }
 
     ConfigurationLogger.logImportantConfig(cConf);
+
+    LOG.info("Client Hadoop version: {}", ClientVersions.getHadoopVersion());
+    LOG.info("Client ZooKeeper version: {}", ClientVersions.getZooKeeperVersion());
+    LOG.info("Client Kafka version: {}", ClientVersions.getKafkaVersion());
+    LOG.info("Client Hive version: {}", ExploreServiceUtils.getHiveVersion());
+
     createSystemHBaseNamespace();
     updateConfigurationTable();
 

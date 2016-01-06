@@ -523,6 +523,8 @@ public class CLIMainTest {
       cli, String.format("get workflow token %s %s at node %s scope user key %s", workflow, runId,
                          FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME, FakeWorkflow.FakeAction.TOKEN_KEY), fakeNodeValue);
 
+    testCommandOutputContains(cli, "get workflow logs " + workflow, "Starting Workflow");
+
     // stop workflow
     testCommandOutputContains(cli, "stop workflow " + workflow,
                               String.format("400: Program '%s' is not running", fakeWorkflowId));
