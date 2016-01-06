@@ -87,8 +87,6 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
       }
       boolean created = admin.createOrUpdateView(viewId, spec);
       responder.sendStatus(created ? HttpResponseStatus.CREATED : HttpResponseStatus.OK);
-    } catch (IllegalArgumentException e) {
-      throw new NotFoundException(e);
     } catch (JsonSyntaxException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, "Couldn't decode body as view config JSON");
     } catch (IOException e) {
@@ -103,13 +101,9 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
                      @PathParam("stream") String stream,
                      @PathParam("view") String view) throws Exception {
 
-    try {
-      Id.Stream.View viewId = Id.Stream.View.from(namespace, stream, view);
-      admin.deleteView(viewId);
-      responder.sendStatus(HttpResponseStatus.OK);
-    } catch (IllegalArgumentException e) {
-      throw new NotFoundException(e);
-    }
+    Id.Stream.View viewId = Id.Stream.View.from(namespace, stream, view);
+    admin.deleteView(viewId);
+    responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @GET
@@ -118,19 +112,15 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
                    @PathParam("namespace") String namespace,
                    @PathParam("stream") String stream) throws Exception {
 
-    try {
-      Id.Stream streamId = Id.Stream.from(namespace, stream);
-      Collection<String> list = Collections2.transform(
-        admin.listViews(streamId), new Function<Id.Stream.View, String>() {
-          @Override
-          public String apply(Id.Stream.View input) {
-            return input.getId();
-          }
-        });
-      responder.sendJson(HttpResponseStatus.OK, list);
-    } catch (IllegalArgumentException e) {
-      throw new NotFoundException(e);
-    }
+    Id.Stream streamId = Id.Stream.from(namespace, stream);
+    Collection<String> list = Collections2.transform(
+      admin.listViews(streamId), new Function<Id.Stream.View, String>() {
+        @Override
+        public String apply(Id.Stream.View input) {
+          return input.getId();
+        }
+      });
+    responder.sendJson(HttpResponseStatus.OK, list);
   }
 
   @GET
@@ -140,12 +130,8 @@ public class StreamViewHttpHandler extends AbstractHttpHandler {
                   @PathParam("stream") String stream,
                   @PathParam("view") String view) throws Exception {
 
-    try {
-      Id.Stream.View viewId = Id.Stream.View.from(namespace, stream, view);
-      ViewDetail detail = new ViewDetail(viewId.getId(), admin.getView(viewId));
-      responder.sendJson(HttpResponseStatus.OK, detail, ViewDetail.class, GSON);
-    } catch (IllegalArgumentException e) {
-      throw new NotFoundException(e);
-    }
+    Id.Stream.View viewId = Id.Stream.View.from(namespace, stream, view);
+    ViewDetail detail = new ViewDetail(viewId.getId(), admin.getView(viewId));
+    responder.sendJson(HttpResponseStatus.OK, detail, ViewDetail.class, GSON);
   }
 }
