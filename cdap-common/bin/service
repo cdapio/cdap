@@ -102,7 +102,7 @@ _start_java() {
     # Add proper HBase compatibility to CLASSPATH
     set_hbase || exit 1
     # Set Spark environment variables
-    cdap_set_spark_env || exit 1
+    cdap_set_spark_env
     # Master requires this local directory
     check_or_create_master_local_dir || die "Could not create Master local directory"
   fi
@@ -209,6 +209,8 @@ run() {
   set_java || exit 1
   # Add proper HBase compatibility to CLASSPATH
   set_hbase || exit 1
+  # Set Spark environment variables
+  cdap_set_spark_env
   # Master requires this local directory
   if [ "${PKGNAME}" == "master" ]; then
     check_or_create_master_local_dir || die "Could not create Master local directory"
@@ -231,6 +233,7 @@ case ${1} in
     set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
     set_java || exit 1
     set_hbase || exit 1
+    cdap_set_spark_env
     echo "${CLASSPATH}"
   ;;
 
