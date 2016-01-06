@@ -128,17 +128,29 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       ClientSparkContext clientContext = sparkContextFactory.getClientContext();
 
       final File jobJar = generateJobJar(tempDir);
-      File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties", tempDir));
       final List<LocalizeResource> localizeResources = new ArrayList<>();
       File pluginJar = clientContext.getPluginArchive();
 
-      if (!contextConfig.isLocal()) {
+      String metricsConfPath;
+      if (contextConfig.isLocal()) {
+        File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties", tempDir));
+        metricsConfPath = metricsConf.getAbsolutePath();
+      } else {
+        // Localize files in distributed mode
         localizeResources.add(new LocalizeResource(copyProgramJar(programJarLocation, tempDir), true));
         localizeResources.add(new LocalizeResource(buildDependencyJar(tempDir), true));
         localizeResources.add(new LocalizeResource(saveCConf(cConf, tempDir)));
         if (pluginJar != null) {
           localizeResources.add(new LocalizeResource(pluginJar, true));
         }
+
+        // Create metrics conf file in the current directory since
+        // the same value for the "spark.metrics.conf" config needs to be used for both driver and executor processes
+        // Also localize the metrics conf file to the executor nodes
+        File metricsConf = SparkMetricsSink.writeConfig(File.createTempFile("metrics", ".properties",
+                                                                            new File(System.getProperty("user.dir"))));
+        metricsConfPath = metricsConf.getName();
+        localizeResources.add(new LocalizeResource(metricsConf));
       }
 
       // Create a long running transaction
@@ -163,8 +175,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
         localizeResources.add(new LocalizeResource(saveHConf(hConf, tempDir)));
       }
 
-      final Map<String, String> configs = createSubmitConfigs(clientContext,
-                                                              tempDir, metricsConf);
+      final Map<String, String> configs = createSubmitConfigs(clientContext, tempDir, metricsConfPath);
       submitSpark = new Callable<ExecutionFuture<RunId>>() {
         @Override
         public ExecutionFuture<RunId> call() throws Exception {
@@ -318,7 +329,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
   /**
    * Creates the configurations for the spark submitter.
    */
-  private Map<String, String> createSubmitConfigs(ClientSparkContext context, File localDir, File metricsConf) {
+  private Map<String, String> createSubmitConfigs(ClientSparkContext context, File localDir, String metricsConfPath) {
     Map<String, String> configs = new HashMap<>();
 
     // Add user specified configs first. CDAP specifics config will override them later if there are duplicates.
@@ -327,7 +338,7 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
     }
 
     configs.put("spark.executor.extraClassPath", "$PWD/" + CDAP_SPARK_JAR + "/lib/*");
-    configs.put("spark.metrics.conf", metricsConf.getAbsolutePath());
+    configs.put("spark.metrics.conf", metricsConfPath);
     configs.put("spark.local.dir", localDir.getAbsolutePath());
     configs.put("spark.executor.memory", context.getExecutorResources().getMemoryMB() + "m");
     configs.put("spark.executor.cores", String.valueOf(context.getExecutorResources().getVirtualCores()));
