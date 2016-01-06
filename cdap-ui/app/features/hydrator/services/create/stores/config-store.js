@@ -205,6 +205,13 @@ class ConfigStore {
       }
     });
     delete stateCopy.__ui__;
+
+    angular.forEach(stateCopy.config.comments, (comment) => {
+      delete comment.isActive;
+      delete comment.id;
+      delete comment._uiPosition;
+    });
+
     return stateCopy;
   }
   getDescription() {
