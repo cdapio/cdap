@@ -270,7 +270,6 @@ cdap_set_spark_env() {
       source "${SPARK_HOME}"/conf/spark-env.sh
     else
       echo "ERROR - Failed to locate ${SPARK_HOME}/conf/spark-env.sh"
-      return 1
     fi
   fi
 }
