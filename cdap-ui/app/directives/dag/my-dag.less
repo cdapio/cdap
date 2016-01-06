@@ -18,6 +18,8 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import "../../styles/themes/cdap/mixins.less";
 
+@light-yellow: lighten(#ffff99, 10%);
+
 my-dag {
   .zoom-control {
     z-index: 1023;
@@ -155,6 +157,44 @@ my-dag {
         }
         .badge-danger {
           background-color: #e33d3d;
+        }
+      }
+    }
+
+    .comment-box {
+      position: absolute;
+      width: 200px;
+      min-height: 50px;
+      background-color: @light-yellow;
+      border-radius: 4px;
+      cursor: move;
+
+      div.comment-content {
+        padding: 15px;
+        word-break: break-all;
+      }
+
+      textarea.form-control {
+        height: 100px;
+        background-color: @light-yellow;
+        resize: none;
+
+        &:focus {
+          border: none;
+        }
+      }
+
+      .fa.fa-close {
+        position: absolute;
+        right: 3px;
+        top: 3px;
+        cursor: pointer;
+        .opacity(0);
+        .transition(opacity 0.2s ease);
+      }
+      &:hover {
+        .fa.fa-close {
+          .opacity(1);
         }
       }
     }

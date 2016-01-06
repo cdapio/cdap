@@ -53,6 +53,18 @@
           tooltip-popup-delay="500">
     <i class="icon-clean"></i>
   </button>
+
+
+  <!-- Adding Comments -->
+  <button class="btn btn-default"
+          ng-click="MyDAGController.addComment()"
+          ng-if="!MyDAGController.isDisabled"
+          tooltip="Add Comments"
+          tooltip-append-to-body="true"
+          tooltip-placement="left"
+          tooltip-popup-delay="500">
+    <i class="fa fa-commenting"></i>
+  </button>
 </div>
 
 <div class="my-js-dag"
@@ -88,6 +100,31 @@
             <div class="icon fa {{node.icon}}"></div>
           </div>
           <div class="plugin-name" ng-bind="node.plugin.label | myEllipsis: 25"></div>
+        </div>
+
+        <div ng-repeat="comment in MyDAGController.comments"
+              class="comment-box"
+              ng-click="!MyDAGController.isDisabled && MyDAGController.commentSelect($event, comment)"
+              ng-style="comment._uiPosition"
+              id="{{comment.id}}">
+          <div ng-if="comment.isActive">
+            <textarea
+              ng-model="comment.content"
+              class="form-control"
+              my-focus-watch="comment.isActive">
+            </textarea>
+          </div>
+
+          <div class="comment-content"
+               ng-if="!comment.isActive"
+               marked="comment.content">
+          </div>
+
+          <div class="fa fa-close"
+               ng-click="MyDAGController.deleteComment(comment)"
+               ng-if="!MyDAGController.isDisabled">
+          </div>
+
         </div>
 
       </div>
