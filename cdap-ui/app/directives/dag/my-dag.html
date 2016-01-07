@@ -86,12 +86,12 @@
                 ng-mouseenter="MyDAGController.nodeMouseEnter(node)"
                 ng-mouseleave="MyDAGController.nodeMouseLeave(node)">
             <div class="error-node-notification"
-                 ng-if="node.error"
-                 tooltip="{{node.error.message}}"
+                 ng-if="node.errorCount > 0"
+                 tooltip="Please see node configuration panel"
                  tooltip-append-to-body="true"
                  tooltip-class="tooltip-error">
-              <span class="badge" ng-class="{'badge-danger': node.warning !== true, 'badge-warning': node.warning === true}">
-                <span>{{node.requiredFieldCount}}</span>
+              <span class="badge" ng-class="{'badge-danger': node.error === true, 'badge-warning': node.warning === true}">
+                <span>{{node.errorCount}}</span>
               </span>
             </div>
             <div class="fa fa-close"

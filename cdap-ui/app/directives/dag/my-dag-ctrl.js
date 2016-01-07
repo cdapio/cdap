@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory, $rootScope, HydratorService, $popover, $filter, uuid) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, $rootScope, HydratorService, $popover, $filter, uuid) {
 
     var vm = this;
 
@@ -417,18 +417,6 @@ angular.module(PKG.name + '.commons')
             });
           }
         });
-
-        angular.forEach($scope.nodes, function (plugin) {
-          plugin.requiredFieldCount = HydratorErrorFactory.countRequiredFields(plugin);
-          if (plugin.requiredFieldCount > 0) {
-            plugin.error = {
-              message: GLOBALS.en.hydrator.studio.genericMissingRequiredFieldsError
-            };
-          } else {
-            plugin.error = false;
-          }
-        });
-
       }, true);
       // This is needed to redraw connections and endpoints on browser resize
       angular.element($window).on('resize', function() {

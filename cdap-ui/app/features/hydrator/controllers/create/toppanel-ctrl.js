@@ -15,13 +15,12 @@
  */
 
 class TopPanelController{
-  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory, HydratorErrorFactory) {
+  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory) {
     this.GLOBALS = GLOBALS;
     this.ConfigStore = ConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
     this.$bootstrapModal = $bootstrapModal;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
-    this.HydratorErrorFactory = HydratorErrorFactory;
 
     this.canvasOperations = [
       {
@@ -89,6 +88,9 @@ class TopPanelController{
 
   onExport() {
     let config = angular.copy(this.ConfigStore.getDisplayConfig());
+    if (!config) {
+      return;
+    }
     this.$bootstrapModal.open({
       templateUrl: '/assets/features/hydrator/templates/create/popovers/viewconfig.html',
       size: 'lg',
@@ -114,11 +116,11 @@ class TopPanelController{
     });
   }
   onSaveDraft() {
-    var config = this.ConfigStore.getConfigForExport();
+    var config = this.ConfigStore.getState();
     if (!config.name) {
       this.ConsoleActionsFactory.addMessage({
         type: 'error',
-        content: this.GLOBALS.en.hydrator.studio.nameError
+        content: this.GLOBALS.en.hydrator.studio.error['MISSING-NAME']
       });
       return;
     }
@@ -126,20 +128,20 @@ class TopPanelController{
   }
   onValidate() {
     this.ConsoleActionsFactory.resetMessages();
-    if (this.HydratorErrorFactory.isModelValid()) {
+    let isStateValid = this.ConfigStore.validateState(true);
+    if (isStateValid) {
       this.ConsoleActionsFactory.addMessage({
         type: 'success',
         content: 'Validation success! Pipeline ' + this.ConfigStore.getName() + ' is valid.'
       });
     }
-
   }
   onPublish() {
     this.ConfigActionsFactory.publishPipeline();
   }
 }
 
-TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory', 'HydratorErrorFactory'];
+TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('TopPanelController', TopPanelController);
