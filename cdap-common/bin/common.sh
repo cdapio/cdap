@@ -98,7 +98,7 @@ cdap_kinit() {
   return 0
 }
 
-# Attempts to find JAVA in few ways.
+# Attempts to find JAVA in few ways. This is used by UI's config-tool, so verify that changes here do not break that
 cdap_set_java () {
   # Determine the Java command to use to start the JVM.
   if [ -n "${JAVA_HOME}" ] ; then
