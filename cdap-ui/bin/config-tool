@@ -36,7 +36,7 @@ fi
 source ${bin}/common.sh
 
 # Find java and set $JAVA
-set_java
+cdap_set_java || (echo "Failed to setup Java" && exit 1)
 
 # Load the configuration too.
 if [ -d ${CDAP_CONF} ]; then
