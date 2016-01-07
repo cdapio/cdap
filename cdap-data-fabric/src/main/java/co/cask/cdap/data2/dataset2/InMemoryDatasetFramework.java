@@ -120,7 +120,7 @@ public class InMemoryDatasetFramework implements DatasetFramework {
     namespaces.add(Id.Namespace.SYSTEM);
     DatasetDefinitionRegistry systemRegistry = registryFactory.create();
     for (Map.Entry<String, DatasetModule> entry : defaultModules.entrySet()) {
-      LOG.info("Adding Default module {} to system namespace", entry.getKey());
+      LOG.debug("Adding Default module {} to system namespace", entry.getKey());
       String moduleName = entry.getKey();
       DatasetModule module = entry.getValue();
       entry.getValue().register(systemRegistry);

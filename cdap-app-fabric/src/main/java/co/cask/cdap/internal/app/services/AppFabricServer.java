@@ -37,6 +37,7 @@ import co.cask.http.NettyHttpService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.twill.common.Cancellable;
@@ -120,13 +121,17 @@ public class AppFabricServer extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(Id.Namespace.SYSTEM.getId(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.APP_FABRIC_HTTP));
-    notificationService.start();
-    schedulerService.start();
-    applicationLifecycleService.start();
-    systemArtifactLoader.start();
-    programRuntimeService.start();
-    streamCoordinatorClient.start();
-    programLifecycleService.start();
+    Futures.allAsList(
+      ImmutableList.of(
+        notificationService.start(),
+        schedulerService.start(),
+        applicationLifecycleService.start(),
+        systemArtifactLoader.start(),
+        programRuntimeService.start(),
+        streamCoordinatorClient.start(),
+        programLifecycleService.start()
+      )
+    ).get();
 
     // Create handler hooks
     ImmutableList.Builder<HandlerHook> builder = ImmutableList.builder();
