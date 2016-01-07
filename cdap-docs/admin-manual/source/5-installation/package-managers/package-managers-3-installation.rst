@@ -9,4 +9,4 @@ Component Installation using Package Managers (RPM/Debian)
 ==========================================================
 
 .. include:: /../target/_includes/package-managers-1-installation.rst
-    :start-after: .. _package-managers-install-package-installation:
+    :start-after: .. _package-managers-package-installation-text:

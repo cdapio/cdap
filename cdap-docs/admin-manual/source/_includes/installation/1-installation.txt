@@ -116,9 +116,11 @@ Update your APT-cache::
 .. end_install-debian-using-apt
 
 
+.. _|distribution|-package-installation-title:
+
 .. rubric:: Package Installation
 
-.. _|distribution|-install-package-installation:
+.. _|distribution|-package-installation-text:
 
 .. highlight:: console
    

@@ -15,37 +15,38 @@ installation and its security configuration.
 
 
 .. |cdap-components| replace:: **CDAP Components:**
-.. _cdap-components: cdap-components.html
+.. _cdap-components: 1-cdap-components.html
 
 - |cdap-components|_ Introduction to the **main components** of CDAP.
 
 
-.. |system-requirements| replace:: **System Requirements:**
-.. _system-requirements: system-requirements.html
-
-- |system-requirements|_ Hardware, memory, core, and network **requirements** and software **prerequisites**.
-
-
 .. |deployment-architectures| replace:: **Deployment Architectures:**
-.. _deployment-architectures: deployment-architectures.html
+.. _deployment-architectures: 2-deployment-architectures.html
 
 - |deployment-architectures|_ Two architectures are described: a **minimal** and a **high availability, highly
   scalable** deployment.
 
+
 .. |hadoop-compatibility| replace:: **Hadoop Compatibility:**
-.. _hadoop-compatibility: hadoop-compatibility.html
+.. _hadoop-compatibility: 3-hadoop-compatibility.html
 
 - |hadoop-compatibility|_ The **Hadoop/HBase environment** that CDAP requires.
 
 
+.. |system-requirements| replace:: **System Requirements:**
+.. _system-requirements: 4-system-requirements.html
+
+- |system-requirements|_ Hardware, memory, core, and network **requirements** and software **prerequisites**.
+
+
 .. |installation| replace:: **Installation:**
-.. _installation: installation/index.html
+.. _installation: 5-installation/index.html
 
 - |installation|_ Installation and configuration instructions for either **specific
   distributions** or **generic Apache Hadoop** clusters using RPM or Debian Package Managers:
 
     .. |cloudera| replace:: **Cloudera Manager (CDH):**
-    .. _cloudera: installation/cloudera/index.html
+    .. _cloudera: 5-installation/cloudera/index.html
 
     - |cloudera|_ Installing CDAP on `CDH (Cloudera Data Hub) <http://www.cloudera.com/>`__ 
       clusters managed with `Cloudera Manager
@@ -53,7 +54,7 @@ installation and its security configuration.
 
 
     .. |ambari| replace:: **Apache Ambari (HDP):**
-    .. _ambari: installation/ambari/index.html
+    .. _ambari: 5-installation/ambari/index.html
 
     - |ambari|_ Installing CDAP on `HDP (Hortonworks Data Platform)
       <http://hortonworks.com/>`__ clusters managed with `Apache Ambari
@@ -61,13 +62,13 @@ installation and its security configuration.
 
 
     .. |mapr| replace:: **MapR:**
-    .. _mapr: installation/mapr/index.html
+    .. _mapr: 5-installation/mapr/index.html
 
     - |mapr|_ Installing CDAP on `MapR systems <https://www.mapr.com>`__.
 
 
     .. |package-managers| replace:: **Package Managers (RPM/Debian):**
-    .. _package-managers: installation/package-managers/index.html
+    .. _package-managers: 5-installation/package-managers/index.html
 
     - |package-managers|_ Installing CDAP on Hadoop systems that are either **generic Apache Hadoop**
       distributions, CDH clusters *not managed* with Cloudera Manager, or HDP clusters *not
@@ -82,14 +83,14 @@ installation and its security configuration.
 
 
 .. |verification| replace:: **Verification:**
-.. _verification: verification.html
+.. _verification: 6-verification.html
 
 - |verification|_ How to verify your CDAP installation on your Hadoop cluster by using an
   **example application**.
 
 
 .. |security| replace:: **Security:**
-.. _security: security.html
+.. _security: 7-security.html
 
 - |security|_ CDAP supports **securing clusters using a perimeter security model.** This
   section describes enabling security, configuring authentication, testing security, and 
@@ -97,49 +98,49 @@ installation and its security configuration.
 
 
 .. |operations| replace:: **Operations:**
-.. _operations: operations/index.html
+.. _operations: 8-operations/index.html
 
 - |operations|_ Covers **logging, metrics, monitoring, preferences, scaling instances, resource guarantees, 
   transaction service maintenance,** and **introduces the CDAP UI**:
 
     .. |logging| replace:: **Logging:**
-    .. _logging: operations/logging.html
+    .. _logging: 8-operations/logging.html
 
     - |logging|_ Covers **CDAP support for logging** through standard SLF4J (Simple Logging Facade for Java) APIs.
 
     .. |metrics| replace:: **Metrics:**
-    .. _metrics: operations/metrics.html
+    .. _metrics: 8-operations/metrics.html
 
     - |metrics|_ CDAP collects **metrics about the application’s behavior and performance**.
   
     .. |monitoring| replace:: **Monitoring:**
-    .. _monitoring: operations/monitoring.html
+    .. _monitoring: 8-operations/monitoring.html
 
     - |monitoring|_ CDAP collects **logs and metrics** for all of its internal services. 
       This section provides links to the relevant APIs for accessing these logs and metrics.
 
     .. |preferences| replace:: **Preferences and Runtime Arguments:**
-    .. _preferences: operations/preferences.html
+    .. _preferences: 8-operations/preferences.html
 
     - |preferences|_ Flows, MapReduce programs, services, workflows, and workers can receive **runtime arguments.**
 
     .. |scaling-instances| replace:: **Scaling Instances:**
-    .. _scaling-instances: operations/scaling-instances.html
+    .. _scaling-instances: 8-operations/scaling-instances.html
 
     - |scaling-instances|_ Covers **querying and setting the number of instances of flowlets and services.** 
 
     .. |resource-guarantees| replace:: **Resource Guarantees:**
-    .. _resource-guarantees: operations/resource-guarantees.html
+    .. _resource-guarantees: 8-operations/resource-guarantees.html
 
     - |resource-guarantees|_ Providing resource guarantees **for CDAP programs in YARN.**
 
     .. |tx-maintenance| replace:: **Transaction Service Maintenance:**
-    .. _tx-maintenance: operations/tx-maintenance.html
+    .. _tx-maintenance: 8-operations/tx-maintenance.html
 
     - |tx-maintenance|_ Periodic maintenance of the **Transaction Service.**
 
     .. |cdap-ui| replace:: **CDAP UI:**
-    .. _cdap-ui: operations/cdap-ui.html
+    .. _cdap-ui: 8-operations/cdap-ui.html
 
     - |cdap-ui|_ The CDAP UI is available for **deploying, querying, and managing CDAP.** 
 

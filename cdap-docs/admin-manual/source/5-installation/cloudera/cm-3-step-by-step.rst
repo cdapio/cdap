@@ -8,15 +8,16 @@
 Cloudera Manager: Installing CDAP Service
 =========================================
 
-As described in :ref:`cloudera-installation`, you can use `Cloudera Manager
-<http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__ 
-to integrate CDAP into a Hadoop cluster by:
+The following instructions show how to use the Cloudera Manager Admin Console *Add
+Service* Wizard to install and start CDAP.
 
-- :ref:`downloading and installing a CDAP CSD (Custom Service Descriptor) <cloudera-installation-csd>`; and
-- :ref:`download and distributing the CDAP parcel <cloudera-installation-download-distribute-parcel>`.
+These steps can be followed once the CDAP CSD (Custom Service Descriptor) has been
+:ref:`downloaded and installed <cloudera-installation-csd>` and the CDAP Parcel has been
+:ref:`downloaded and distributed <cloudera-installation-download-distribute-parcel>`.
 
-Once you have done those two steps, the instructions below show you how to use that CSD with
-the Cloudera Manager Admin Console *Add Service* Wizard to install and start CDAP.
+Once you have completed the installation and :ref:`started CDAP
+<step-by-step-cloudera-add-service-startup>`, you can then 
+:ref:`verify the installation <admin-manual-verification>`.
 
 .. _cloudera-installation-setup-startup:
 
@@ -60,6 +61,7 @@ Once you have completed the installation and :ref:`started CDAP
 
 Add A Service
 =============
+Start from the Cloudera Manager Admin Console's *Home* page, selecting *Add a Service* from the menu for your cluster:
 
 .. figure:: ../../_images/cloudera/cloudera-csd-01.png
    :figwidth: 100%
@@ -75,6 +77,8 @@ Add A Service
 Add Service Wizard
 ==================
 
+Use the *Add Service* Wizard and select *Cask DAP*.
+
 .. figure:: ../../_images/cloudera/cloudera-csd-02.png
    :figwidth: 100%
    :height: 526px
@@ -84,6 +88,8 @@ Add Service Wizard
 
    **Add Service Wizard, Page 1:** Selecting CDAP (Cask DAP) as the service to be added.
 
+
+The **Hive dependency** is for the optional CDAP "Explore" component, which can be enabled later.
 
 .. figure:: ../../_images/cloudera/cloudera-csd-03.png
    :figwidth: 100%
@@ -95,6 +101,9 @@ Add Service Wizard
    **Add Service Wizard, Page 2:** Setting the dependencies (in this case, including Hive).
    
 
+**Choosing Role Assignments:** Ensure CDAP roles are assigned to hosts colocated
+with service or gateway roles for HBase, HDFS, Yarn, and (optionally) Hive.
+
 .. figure:: ../../_images/cloudera/cloudera-csd-04.png
    :figwidth: 100%
    :height: 526px
@@ -102,9 +111,20 @@ Add Service Wizard
    :align: center
    :class: bordered-image
 
-   **Add Service Wizard, Page 3:** When customizing Role Assignments, CDAP **Security
-   Auth** service can be added later.
+   **Add Service Wizard, Page 3:** When customizing Role Assignments, the *CDAP Security
+   Auth Service* can be added later.
+   
+   
+   
+**Kerberos Auth Enabled** is needed if running against a secure Hadoop cluster.
 
+**Router Server Port:** This should match the "Router Bind Port"; it’s used by the CDAP UI
+to connect to the Router service.
+
+**App Artifact Dir:** This should initially point to the bundled system artifacts included
+in the CDAP parcel directory. If you have modified ``${PARCELS_ROOT}``, please update this
+setting to match. Users will want to customize this directory to a location outside of the
+CDAP Parcel.
 
 .. figure:: ../../_images/cloudera/cloudera-csd-06.png
    :figwidth: 100%
@@ -114,6 +134,13 @@ Add Service Wizard
    :class: bordered-image
 
    **Add Service Wizard, Pages 4 & 5:** Reviewing configurations; as Hive was included, CDAP Explore can be enabled.
+
+**Additional CDAP configuration properties** can be added using the Cloudera Manager's 
+*Safety Valve* Advanced Configuration Snippets. Documentation of the available CDAP
+properties is in the :ref:`appendix-cdap-site.xml`.
+
+At this point, the CDAP installation is configured and is ready to be installed. Review
+your settings before continuing to the next step, which will install CDAP.
 
 
 .. figure:: ../../_images/cloudera/cloudera-csd-07.png

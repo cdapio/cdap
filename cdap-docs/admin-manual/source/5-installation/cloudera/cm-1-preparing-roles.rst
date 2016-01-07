@@ -4,9 +4,9 @@
 
 .. _cloudera-configuring:
 
-===================
-Preparing the Roles
-===================
+=================================
+Cloudera Manager: Preparing Roles
+=================================
 
 Roles and Dependencies
 ======================
@@ -36,7 +36,7 @@ Prerequisites
    We recommend any version of `Node.js <https://nodejs.org/>`__ |node-js-version|; in
    particular, we recommend |recommended_node_js_version|. You can download an appropriate
    version of Node.js from `nodejs.org <http://nodejs.org/dist/>`__. Detailed
-   instructions on installing Node.js :ref:are available <admin-manual-install-node.js>`.
+   instructions on installing Node.js :ref:`are available <admin-manual-install-node.js>`.
 
 #. ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
    (unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 

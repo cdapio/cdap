@@ -23,7 +23,7 @@ Start the Wizard
 
  
 #. Select CDAP from the list and click *Next*. If there are core dependencies which are not
-   installed on the cluster, Ambari will prompt you to install them.
+   currently installed on the cluster, Ambari will prompt you to install them.
  
    .. figure:: ../../_images/ambari/ss02-select-cdap.png
       :figwidth: 100%
@@ -44,7 +44,7 @@ Assign CDAP Services to Hosts
    - **Router:** serves HTTP endpoints for CDAP applications and REST API
    - **Kafka Server:** used for storing CDAP metrics and CDAP system service log data
    - **UI:** web interface to CDAP and :ref:`Cask Hydrator <cdap-apps-intro-hydrator>`
-     (for CDAP 3.2.x installations)
+     (for CDAP 3.2.x and later installations)
  
    .. figure:: ../../_images/ambari/ss03-assign-masters.png
       :figwidth: 100%
@@ -55,11 +55,11 @@ Assign CDAP Services to Hosts
       **Ambari Dashboard:** Assigning Masters
  
    It is recommended to install all CDAP services onto an edge node (or the NameNode, for
-   smaller clusters) such as in our example above. After selecting the master nodes, click
+   smaller clusters), such as in our example above. After selecting the master nodes, click
    *Next*.
 
 #. Select hosts for the CDAP CLI client. This should be installed on every edge node on
-   the cluster, or the same node as CDAP for smaller clusters.
+   the cluster, or the same node as the CDAP services for smaller clusters.
 
    .. figure:: ../../_images/ambari/ss04-choose-clients.png
       :figwidth: 100%
@@ -75,8 +75,8 @@ Customize CDAP
 ==============
 
 6. On the **Customize Services** screen, click *Advanced* to bring up the CDAP configuration.
-   Under *Advanced cdap-env*, you can configure heap sizes, and log and pid directories for the
-   CDAP services which run on the edge nodes.
+   Under *Advanced cdap-env*, you can configure environment settings such as heap sizes
+   and the directories for logs and pids for the CDAP services which run on the edge nodes.
 
    .. figure:: ../../_images/ambari/ss05-config-cdap-env.png
       :figwidth: 100%
@@ -97,9 +97,9 @@ Customize CDAP
  
       **Ambari Dashboard:** Customizing Services 2
 
-#. If you wish to use the CDAP Explore service (to use SQL to query CDAP data), you must: have
-   Hive installed on the cluster; have the Hive client on the same host as CDAP; and set the
-   ``explore.enabled`` option to true.
+#. If you wish to use the CDAP Explore service (to use SQL to query CDAP data), you must have
+   Hive installed on the cluster, have the Hive client libraries installed on the same host as 
+   the CDAP services, and set the *Advanced cdap-site* ``explore.enabled`` option to true.
 
    .. figure:: ../../_images/ambari/ss07-config-enable-explore.png
       :figwidth: 100%
@@ -152,8 +152,8 @@ Deploy CDAP
 
 #. Click *Complete* to complete the CDAP installation.
 
-CDAP Listed
-===========
+CDAP Started
+============
 
 14. Now, you should see **CDAP** listed on the main summary screen for your cluster.
 
@@ -165,7 +165,7 @@ CDAP Listed
  
       **Ambari Dashboard:** Selecting *CDAP*
 
-#. Selecting *CDAP* from the left, or choosing it from the Services drop-down menu, will take
+#. Selecting *CDAP* from the left sidebar, or choosing it from the Services drop-down menu, will take
    you to the CDAP service screen.
 
    .. figure:: ../../_images/ambari/ss12-cdap-screen.png
@@ -176,4 +176,5 @@ CDAP Listed
  
       **Ambari Dashboard:** *CDAP* Service Screen
  
-Congratulations! CDAP is now running on your cluster, managed by Ambari.
+Congratulations! CDAP is now running on your cluster, managed by Ambari. You can login to the CDAP UI
+at the address of the node running the CDAP-UI, port 9999.

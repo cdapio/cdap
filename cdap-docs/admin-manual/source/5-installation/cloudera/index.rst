@@ -29,7 +29,7 @@ for CDAP. Once the CDAP CSD is installed and you have restarted your Cloudera Ma
 will able to use Cloudera Manager to install, start, and manage CDAP on CDH clusters.
 
 These instructions assume that you are familiar with Cloudera Manager and CDH, and already
-have a cluster with them installed and running. The cluster must meet CDAP's
+have a cluster managed by Cloudera Manager with CDH installed and running. The cluster must meet CDAP's
 :ref:`hardware, network, and software requirements <admin-manual-system-requirements>`
 before you install CDAP.
 
