@@ -294,7 +294,7 @@ public class FlowTest {
       // source emits 4, then forward-one reads 1, hence 3 should be pending
       waitForPending(tagsForSourceToOne, 3, 5000); // wait a little longer as flow needs to start
       waitForPending(tagsForAllToOne, 3, 100); // wait a little longer as flow needs to start
-      // forward-two receives each of the 4 as a sting and an int, but could have read 1 per each queue
+      // forward-two receives each of the 4 as a string and an int, but could have read 1 per each queue
       // so there should be either 3 + 4 = 7 pending or 3 + 3 = 6 pending,
       // but we don't know whether the queue pending count will be 4, 3 or 3, 4 or 3, 3
       long intPending = waitForPending(tagsForSourceToTwoInts, 3, 4L, 1000);
