@@ -258,6 +258,11 @@ public class RemoteDatasetFramework implements DatasetFramework {
   }
 
   @Override
+  public boolean namespaceExists(Id.Namespace namespace) throws DatasetManagementException {
+    return clientCache.getUnchecked(namespace).namespaceExists();
+  }
+
+  @Override
   public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
     clientCache.getUnchecked(namespaceId).createNamespace();
   }

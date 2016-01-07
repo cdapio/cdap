@@ -22,6 +22,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.http.AbstractHttpHandler;
 import co.cask.http.HttpHandler;
 import co.cask.http.HttpResponder;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import org.jboss.netty.handler.codec.http.HttpRequest;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -29,6 +30,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import java.io.IOException;
 import java.sql.SQLException;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -44,6 +46,20 @@ public class StorageProviderNamespaceHandler extends AbstractHttpHandler {
   @Inject
   public StorageProviderNamespaceHandler(StorageProviderNamespaceAdmin storageProviderNamespaceAdmin) {
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
+  }
+
+  @GET
+  @Path("data/admin/exists")
+  public void namespaceExists(
+    HttpRequest request, HttpResponder responder, @PathParam("namespace-id") String namespaceId) {
+
+    try {
+      boolean exists = storageProviderNamespaceAdmin.exists(Id.Namespace.from(namespaceId));
+      responder.sendJson(HttpResponseStatus.OK, ImmutableMap.of("exists", exists));
+    } catch (IOException e) {
+      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+                           "Error while checking namespace existence - " + e.getMessage());
+    }
   }
 
   @PUT

@@ -108,6 +108,12 @@ public class StaticDatasetFramework extends InMemoryDatasetFramework implements 
   }
 
   @Override
+  public boolean namespaceExists(Id.Namespace namespace) throws DatasetManagementException {
+    throw new UnsupportedOperationException("Cannot change modules of "
+                                              + StaticDatasetFramework.class.getSimpleName());
+  }
+
+  @Override
   public void createNamespace(Id.Namespace namespaceId) throws DatasetManagementException {
     throw new UnsupportedOperationException("Cannot change modules of "
                                               + StaticDatasetFramework.class.getSimpleName());

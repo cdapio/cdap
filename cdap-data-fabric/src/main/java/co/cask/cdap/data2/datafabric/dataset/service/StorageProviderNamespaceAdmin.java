@@ -46,6 +46,11 @@ public class StorageProviderNamespaceAdmin {
     this.exploreFacade = exploreFacade;
   }
 
+  protected boolean exists(Id.Namespace namespace) throws IOException {
+    Location namespaceHome = namespacedLocationFactory.get(namespace);
+    return namespaceHome.exists();
+  }
+
   /**
    * Create a namespace in the underlying system.
    * Can perform operations such as creating directories, creating namespaces, etc.

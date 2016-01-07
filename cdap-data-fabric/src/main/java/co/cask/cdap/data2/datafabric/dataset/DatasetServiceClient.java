@@ -44,6 +44,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import com.google.common.io.InputSupplier;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -57,6 +58,7 @@ import java.net.InetSocketAddress;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -224,6 +226,16 @@ class DatasetServiceClient {
     if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Failed to delete modules, details: %s", response));
     }
+  }
+
+  public boolean namespaceExists() throws DatasetManagementException {
+    HttpResponse response = doGet("admin/exists");
+    if (HttpResponseStatus.OK.getCode() != response.getResponseCode()) {
+      throw new DatasetManagementException(String.format("Failed to check namespace existence, details: %s", response));
+    }
+
+    JsonObject jsonResponse = GSON.fromJson(response.getResponseBodyAsString(), JsonObject.class);
+    return jsonResponse.get("exists").getAsBoolean();
   }
 
   public void createNamespace() throws DatasetManagementException {
