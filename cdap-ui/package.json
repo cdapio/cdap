@@ -36,7 +36,7 @@
     "gulp-uglify": "^1.1.0",
     "gulp-util": "^3.0.4",
     "gulp-wrapper": "^0.1.5",
-    "main-bower-files": "^2.6.2",
+    "main-bower-files": "2.11.0",
     "merge-stream": "^0.1.7"
   },
   "dependencies": {
