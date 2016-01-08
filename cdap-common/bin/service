@@ -222,7 +222,16 @@ run() {
 
 case ${1} in
   start|stop|restart) ${1} ;;
-  status) _status && echo "CDAP ${APP} ($(<${pid})) is running" ;;
+  status)
+    _status
+    statuscode=$?
+    if [ ${statuscode} -eq 0 ]; then
+      echo "CDAP ${APP} ($(<${pid})) is running"
+    else
+      echo "CDAP ${APP} is stopped"
+      exit $statuscode
+    fi
+    ;;
   condrestart) _status && restart ;;  
   run) shift; run ${@} ;;
   classpath)
