@@ -43,6 +43,16 @@ public final class Constants {
   public static final String COLLECT_CONTAINER_LOGS = "master.collect.containers.log";
 
   /**
+   * Configuration for Master startup.
+   */
+  public static final class Startup {
+    public static final String CHECKS_ENABLED = "master.startup.checks.enabled";
+    public static final String CHECK_PACKAGES = "master.startup.checks.packages";
+    public static final String CHECK_CLASSES = "master.startup.checks.classes";
+    public static final String YARN_CONNECT_TIMEOUT_SECONDS = "master.startup.checks.yarn.connect.timeout.seconds";
+  }
+
+  /**
    * Global Service names.
    */
   public static final class Service {
@@ -587,6 +597,7 @@ public final class Constants {
   public static final class LogSaver {
     public static final String NUM_INSTANCES = "log.saver.num.instances";
     public static final String MEMORY_MB = "log.saver.run.memory.megs";
+    public static final String NUM_CORES = "log.saver.run.num.cores";
     public static final String MAX_INSTANCES = "log.saver.max.instances";
 
     public static final String LOG_SAVER_STATUS_HANDLER = "log.saver.status.handler";

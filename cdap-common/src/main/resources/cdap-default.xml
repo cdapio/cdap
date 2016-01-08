@@ -90,6 +90,36 @@
   </property>
 
   <property>
+    <name>master.startup.checks.enabled</name>
+    <value>true</value>
+    <description>
+      Whether checks should be run before start up to determine if the master can be correctly run.
+      Which checks are run are determined by the master.startup.checks.packages and master.startup.checks.classes
+      settings. If any check fails, the CDAP master will fail to start instead of waiting for the problem to be fixed.
+      This setting only affects distributed CDAP. It does not apply to CDAP standalone.
+    </description>
+  </property>
+
+  <property>
+    <name>master.startup.checks.packages</name>
+    <value>co.cask.cdap.master.startup</value>
+    <description>
+      Comma separated list of packages containing checks that will be run before the master starts up.
+      If any of the checks fails, the master will not start up.
+      Checks will only be run if master.startup.checks.enabled is set to true.
+    </description>
+  </property>
+
+  <property>
+    <name>master.startup.checks.classes</name>
+    <description>
+      Comma separated list of classnames for checks that will be run before the master starts up.
+      If any of the checks fails, the master will not start up.
+      Checks will only be run if master.startup.checks.enabled is set to true.
+    </description>
+  </property>
+
+  <property>
     <name>thrift.max.read.buffer</name>
     <value>16777216</value>
     <description>
@@ -469,6 +499,22 @@
   </property>
 
   <property>
+    <name>dataset.executor.container.memory.mb</name>
+    <value>512</value>
+    <description>
+      Size of Memory in megabytes for each dataset executor instance
+    </description>
+  </property>
+
+  <property>
+    <name>dataset.executor.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for each dataset executor instance
+    </description>
+  </property>
+
+  <property>
     <name>dataset.executor.max.instances</name>
     <value>${master.service.max.instances}</value>
     <description>
@@ -541,6 +587,22 @@
     <value>1</value>
     <description>
       Number of explore executor instances
+    </description>
+  </property>
+
+  <property>
+    <name>explore.executor.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for each explore executor instance
+    </description>
+  </property>
+
+  <property>
+    <name>explore.executor.container.memory.mb</name>
+    <value>1024</value>
+    <description>
+      Size of Memory in megabytes for each explore executor instance
     </description>
   </property>
 
@@ -751,6 +813,14 @@
     <value>1024</value>
     <description>
       Memory in megabytes allocated for log saver instances to run in YARN
+    </description>
+  </property>
+
+  <property>
+    <name>log.saver.run.num.cores</name>
+    <value>2</value>
+    <description>
+      Number of cores for each log saver instance in YARN
     </description>
   </property>
 

@@ -29,6 +29,7 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -58,7 +59,6 @@ import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModu
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
-import co.cask.cdap.startup.ConfigurationLogger;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
