@@ -36,6 +36,13 @@
     </button>
   </h4>
   <fieldset class="clearfix" ng-disabled="isDisabled">
+    <button class="btn btn-default"
+             tooltip="Propagates schema to all down-stream nodes."
+             tooltip-popup-delay="500"
+             ng-click="NodeConfigController.propagateSchemaDownStream()">
+      Propagate
+    </button>
+    aa: {{NodeConfigController.state.node.outputSchema}}
     <div ng-if="isDisabled">
       <my-schema-editor
         ng-model="NodeConfigController.state.node.outputSchema"
@@ -48,6 +55,7 @@
     <div ng-if="!isDisabled">
       <my-schema-editor
         ng-model="NodeConfigController.state.node.outputSchema"
+        data-on-model-update="NodeConfigController.state.outputSchemaUpdate"
         data-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema"
         plugin-properties="NodeConfigController.state.node.plugin.properties"
         config="NodeConfigController.state.groupsConfig.outputSchema.schemaProperties">
