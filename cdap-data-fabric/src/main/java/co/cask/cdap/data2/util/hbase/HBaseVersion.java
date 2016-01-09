@@ -34,6 +34,7 @@ public class HBaseVersion {
   private static final String HBASE_98_VERSION = "0.98";
   private static final String HBASE_10_VERSION = "1.0";
   private static final String HBASE_11_VERSION = "1.1";
+  private static final String CDH55_CLASSIFIER = "cdh5.5";
   private static final String CDH_CLASSIFIER = "cdh";
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseVersion.class);
@@ -47,6 +48,7 @@ public class HBaseVersion {
     HBASE_98("0.98"),
     HBASE_10("1.0"),
     HBASE_10_CDH("1.0-cdh"),
+    HBASE_10_CDH55("1.0-cdh5.5"),
     HBASE_11("1.1"),
     UNKNOWN("unknown");
 
@@ -76,7 +78,9 @@ public class HBaseVersion {
         currentVersion = Version.HBASE_98;
       } else if (versionString.startsWith(HBASE_10_VERSION)) {
         VersionNumber ver = VersionNumber.create(versionString);
-        if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
+        if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH55_CLASSIFIER)) {
+          currentVersion = Version.HBASE_10_CDH55;
+        } else if (ver.getClassifier() != null && ver.getClassifier().startsWith(CDH_CLASSIFIER)) {
           currentVersion = Version.HBASE_10_CDH;
         } else {
           currentVersion = Version.HBASE_10;
