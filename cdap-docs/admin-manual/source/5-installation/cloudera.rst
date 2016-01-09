@@ -28,7 +28,7 @@ before you install CDAP.
 
 Follow these steps:
 
-#. **Preparing Roles and Nodes:** Prerequisite tasks prior to start CDAP
+#. **Preparing Roles and Nodes:** Prerequisite tasks prior to starting the installation
 #. **Adding the Parcels:** Download and install the CSD, then download and distribute the parcels
 #. **Installing CDAP Services:** Use the CM *Add Service* wizard to install CDAP
 #. **Starting CDAP Services:** The wizard will automatically start CDAP services, which you can then verify
