@@ -29,7 +29,7 @@ to installing a parcel:
 Start by clicking on the parcel icon (near the top-left corner of Cloudera Manager and looks
 like a gift-wrapped box) and ensure that the CDAP parcel is listed as *Active*.
 
-A :ref:`tutorial <step-by-step-cloudera-add-service>` is available with instructions on how to install CDAP on CDH 
+:ref:`Detailed instructions <admin-cloudera-index>` are available on how to install CDAP on CDH 
 (`Cloudera Data Hub <http://www.cloudera.com/content/www/en-us/resources/datasheet/cdh-datasheet.html>`__) 
 using `Cloudera Manager <http://www.cloudera.com/content/www/en-us/products/cloudera-manager.html>`__. 
 
