@@ -15,8 +15,8 @@ These are the CDAP components:
 
 - **CDAP Master:** Service for managing runtime, lifecycle and resources of CDAP applications (package *cdap-master*);
 - **CDAP Router:** Service supporting REST endpoints for CDAP (package *cdap-gateway*);
-- **CDAP UI:** User interface for managing CDAP applications (package *cdap-ui*);
-- **CDAP Kafka:** Metrics and logging transport service, using an embedded version of *Kafka* (package *cdap-kafka*); and
+- **CDAP Kafka:** Metrics and logging transport service, using an embedded version of *Kafka* (package *cdap-kafka*);
+- **CDAP UI:** User interface for managing CDAP applications (package *cdap-ui*); and
 - **CDAP Authentication Server:** Performs client authentication for CDAP when security is enabled (package *cdap-security*).
 
 Some CDAP components run on YARN, while others orchestrate “containers” in the Hadoop cluster.

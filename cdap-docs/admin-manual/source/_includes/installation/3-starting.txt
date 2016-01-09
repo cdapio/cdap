@@ -1,8 +1,7 @@
 .. _|distribution|-starting-services:
 
-=============================================================
-|display-distribution|: Starting Services
-=============================================================
+Starting Services
+=================
 
 .. highlight:: console
 

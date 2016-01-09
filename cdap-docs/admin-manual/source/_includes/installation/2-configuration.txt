@@ -1,14 +1,13 @@
 .. _|distribution|-configuration:
 
-=================================================
-|display-distribution|: Additional Configurations
-=================================================
+Additional Configurations
+=========================
 
-This page is to help you configure Cask Data Application Platform (CDAP). It provides the
+This section is to help you configure Cask Data Application Platform (CDAP). It provides the
 instructions for `configuring <#cdap-configuration>`__ the CDAP components so they work with
 your existing cluster. 
 
-It's assumed that you have already followed the installation steps.
+It's assumed that you have already followed the previous installation steps.
 
 After completing the configuration, you can :ref:`start <|distribution|-starting-services>` and then 
 :ref:`verify <admin-manual-verification>` your installation.
@@ -40,6 +39,7 @@ CDAP Configuration
    Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
    to your custom directory ``/etc/cdap/conf.mycdap``::
    
+     $ cp -r /etc/cdap/conf.dist /etc/cdap/conf.mycdap
      $ update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/conf.mycdap 10
  
    .. _|distribution|-configuration-options:
@@ -111,7 +111,7 @@ CDAP Configuration
        </property>
  
      This feature cannot be used unless the cluster has a compatible version of Hive installed.
-     See the section on ref:`Hadoop/HBase Environment <admin-manual-hadoop-compatibility-matrix>`.
+     See the section on :ref:`Hadoop/HBase Environment <admin-manual-hadoop-compatibility-matrix>`.
      To use this feature on secure Hadoop clusters, please see these instructions on
      `configuring secure Hadoop <configuration.html#secure-hadoop>`__.
  
@@ -178,7 +178,8 @@ In order to configure **CDAP for Kerberos authentication:**
   .. highlight:: console
 
 - The ``/cdap`` directory needs to be owned by the ``<cdap-principal>``; you can set
-  that by running the following commands as the ``hdfs`` user::
+  that by running the following command as the ``hdfs`` user (change the ownership in the 
+  command from ``cdap`` to whatever is the ``<cdap-principal>``)::
   
     $ su hdfs && hadoop fs -mkdir -p /cdap && hadoop fs -chown cdap /cdap
     
@@ -241,7 +242,7 @@ are specified in :ref:`appendix-cdap-site.xml`):
 - ``/var/run/cdap``
 - ``/var/tmp/cdap`` 
  
-The CDAP user (the CDAP UNIX user) **must** be able to write to these directories, as they
+The CDAP user (the ``cdap`` system user) **must** be able to write to these directories, as they
 are used for deploying applications and for operating CDAP.
 
 .. _|distribution|-configuration-security:

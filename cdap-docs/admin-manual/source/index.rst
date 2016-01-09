@@ -14,17 +14,16 @@ operations.** Appendices describe the **XML files** used to configure the CDAP
 installation and its security configuration.
 
 
-.. |cdap-components| replace:: **CDAP Components:**
+.. |cdap-components| replace:: **CDAP Components**
 .. _cdap-components: 1-cdap-components.html
 
-- |cdap-components|_ Introduction to the **main components** of CDAP.
+- |cdap-components|_
 
 
 .. |deployment-architectures| replace:: **Deployment Architectures:**
 .. _deployment-architectures: 2-deployment-architectures.html
 
-- |deployment-architectures|_ Two architectures are described: a **minimal** and a **high availability, highly
-  scalable** deployment.
+- |deployment-architectures|_ **Minimal** and **high availability, highly scalable** deployments.
 
 
 .. |hadoop-compatibility| replace:: **Hadoop Compatibility:**
@@ -46,47 +45,43 @@ installation and its security configuration.
   distributions** or **generic Apache Hadoop** clusters using RPM or Debian Package Managers:
 
     .. |cloudera| replace:: **Cloudera Manager (CDH):**
-    .. _cloudera: 5-installation/cloudera/index.html
+    .. _cloudera: 5-installation/cloudera.html
 
-    - |cloudera|_ Installing CDAP on `CDH (Cloudera Data Hub) <http://www.cloudera.com/>`__ 
+    - |cloudera|_ Installing on `CDH (Cloudera Data Hub) <http://www.cloudera.com/>`__ 
       clusters managed with `Cloudera Manager
       <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__.
 
-
     .. |ambari| replace:: **Apache Ambari (HDP):**
-    .. _ambari: 5-installation/ambari/index.html
+    .. _ambari: 5-installation/ambari.html
 
-    - |ambari|_ Installing CDAP on `HDP (Hortonworks Data Platform)
+    - |ambari|_ Installing on `HDP (Hortonworks Data Platform)
       <http://hortonworks.com/>`__ clusters managed with `Apache Ambari
       <https://ambari.apache.org/>`__.
 
-
     .. |mapr| replace:: **MapR:**
-    .. _mapr: 5-installation/mapr/index.html
+    .. _mapr: 5-installation/mapr.html
 
-    - |mapr|_ Installing CDAP on `MapR systems <https://www.mapr.com>`__.
-
+    - |mapr|_ Installing on the `MapR Converged Data Platform <https://www.mapr.com>`__.
 
     .. |package-managers| replace:: **Package Managers (RPM/Debian):**
-    .. _package-managers: 5-installation/package-managers/index.html
+    .. _package-managers: 5-installation/package-managers.html
 
-    - |package-managers|_ Installing CDAP on Hadoop systems that are either **generic Apache Hadoop**
+    - |package-managers|_ Installing on Hadoop systems that are either **generic Apache Hadoop**
       distributions, CDH clusters *not managed* with Cloudera Manager, or HDP clusters *not
       managed* with Apache Ambari.
-
-
-    .. |sdk| replace:: **CDAP Standalone SDK:**
-    .. _sdk: ../developers-manual/getting-started/standalone/index.html
-
-    - |sdk|_ Installing the CDAP Standalone SDK on **Linux, MacOS, and Windows** systems.
-      *(Developers' Manual)*
 
 
 .. |verification| replace:: **Verification:**
 .. _verification: 6-verification.html
 
-- |verification|_ How to verify your CDAP installation on your Hadoop cluster by using an
+- |verification|_ How to verify the CDAP installation on your Hadoop cluster by using an
   **example application**.
+
+
+.. |upgrading| replace:: **Upgrading CDAP:**
+.. _upgrading: 6-upgrading.html
+
+- |upgrading|_ How to upgrade an existing CDAP installation from an older version to the latest.
 
 
 .. |security| replace:: **Security:**
@@ -148,6 +143,8 @@ installation and its security configuration.
 .. |appendices| replace:: **Appendices:**
 .. _appendices: appendices/index.html
 
-- |appendices| Two appendices cover the XML files used to configure the 
-  :ref:`CDAP installation <appendix-cdap-site.xml>` and the :ref:`security configuration.
-  <appendix-cdap-security.xml>`
+- |appendices| Appendices cover the XML files used to configure the CDAP installation:
+
+  - :ref:`cdap-site.xml <appendix-cdap-site.xml>`
+  - :ref:`cdap-security.xml <appendix-cdap-security.xml>`
+

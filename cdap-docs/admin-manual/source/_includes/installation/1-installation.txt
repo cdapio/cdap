@@ -1,41 +1,7 @@
-.. _|distribution|-preparing-cluster:
-
-.. rubric:: Preparing the Cluster
-
-.. _|distribution|-install-preparing-the-cluster:
-
-.. highlight:: console
-   
-To prepare your cluster so that CDAP can write to its default namespace,
-create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
-
-  $ su hdfs && hadoop fs -mkdir -p /cdap && hadoop fs -chown yarn /cdap
-
-In the CDAP packages, the default property ``hdfs.namespace`` is ``/cdap`` and the default
-property ``hdfs.user`` is ``yarn``.
-
-Also, create a ``tx.snapshot`` subdirectory::
-
-  $ su hdfs
-  $ hadoop fs -mkdir -p /cdap/tx.snapshot && hadoop fs -chown yarn /cdap/tx.snapshot
-
-**Note:** If you have customized the property ``data.tx.snapshot.dir`` in your 
-:ref:`CDAP configuration <appendix-cdap-site.xml>`, use that value instead.
-
-If you set up your cluster as above, no further changes are required.
-
-.. _|distribution|-install-preparing-the-cluster-defaults:
-
-.. |edit-your-cdap-configuration| replace:: edit your CDAP configuration
-.. _edit-your-cdap-configuration: |distribution|-configurations.html
-
-If your cluster is not setup with these defaults, you'll need to |edit-your-cdap-configuration|_ 
-once you have downloaded and installed the packages, and prior to starting services.
-
 .. _|distribution|-install-packaging:
 
-.. rubric:: Preparing Package Managers
-
+Preparing Package Managers
+--------------------------
 .. _|distribution|-preparing-package-managers:
 
 .. highlight:: console
@@ -57,7 +23,8 @@ Available packaging types:
 
 .. _|distribution|-install-rpm-using-yum:
 
-.. rubric:: On RPM using Yum
+On RPM using Yum
+................
 
 Download the Cask Yum repo definition file:
    
@@ -88,8 +55,8 @@ Update your Yum cache::
 
 .. end_install-rpm-using-yum
 
-.. rubric:: On Debian using APT
-
+On Debian using APT
+...................
 Download the Cask APT repo definition file:
 
 .. container:: highlight
@@ -118,8 +85,8 @@ Update your APT-cache::
 
 .. _|distribution|-package-installation-title:
 
-.. rubric:: Package Installation
-
+Package Installation
+--------------------
 .. _|distribution|-package-installation-text:
 
 .. highlight:: console
@@ -131,21 +98,56 @@ minimum of two boxes.
 This will download and install the latest version of CDAP with all of its dependencies. 
 
 
-.. rubric:: Using Chef
-
+Using Chef
+..........
 If you are using `Chef <https://www.getchef.com>`__ to install CDAP, an `official
 cookbook is available <https://supermarket.getchef.com/cookbooks/cdap>`__.
 
 
-.. rubric:: On RPM using Yum
-
+On RPM using Yum
+................
 ::
 
   $ sudo yum install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
 
 
-.. rubric:: On Debian using APT
-
+On Debian using APT
+...................
 ::
 
   $ sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
+
+.. _|distribution|-preparing-cluster:
+
+Preparing the Cluster
+---------------------
+.. _|distribution|-install-preparing-the-cluster:
+
+.. highlight:: console
+   
+To prepare your cluster so that CDAP can write to its default namespace,
+create a top-level ``/cdap`` directory in HDFS, owned by an HDFS user ``yarn``::
+
+  $ su hdfs
+  $ hadoop fs -mkdir -p /cdap && hadoop fs -chown yarn /cdap
+
+In the CDAP packages, the default property ``hdfs.namespace`` is ``/cdap`` and the default
+property ``hdfs.user`` is ``yarn``.
+
+Also, create a ``tx.snapshot`` subdirectory::
+
+  $ su hdfs
+  $ hadoop fs -mkdir -p /cdap/tx.snapshot && hadoop fs -chown yarn /cdap/tx.snapshot
+
+**Note:** If you have customized the property ``data.tx.snapshot.dir`` in your 
+:ref:`CDAP configuration <appendix-cdap-site.xml>`, use that value instead.
+
+If you set up your cluster as above, no further changes are required.
+
+.. _|distribution|-install-preparing-the-cluster-defaults:
+
+.. |edit-your-cdap-configuration| replace:: edit your CDAP configuration
+.. _edit-your-cdap-configuration: |distribution|-configurations.html
+
+If your cluster is not setup with these defaults, you'll need to |edit-your-cdap-configuration|_ 
+prior to starting services.
