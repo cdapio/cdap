@@ -36,6 +36,7 @@ class ConfigStore {
     this.configDispatcher.register('onSetInstance', this.setInstance.bind(this));
     this.configDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
     this.configDispatcher.register('onInitialize', this.init.bind(this));
+    this.configDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
   }
   registerOnChangeListener(callback) {
     this.changeListeners.push(callback);
@@ -64,7 +65,6 @@ class ConfigStore {
       angular.extend(this.state, config);
       this.setArtifact(this.state.artifact);
       this.setEngine(this.state.config.engine);
-      this.propagateIOSchemas();
     }
   }
   init(config) {
@@ -117,14 +117,15 @@ class ConfigStore {
         label: node.plugin.label,
         artifact: node.plugin.artifact,
         properties: node.plugin.properties,
-        _backendProperties: node._backendProperties,
-        outputSchema: node.outputSchema
+        _backendProperties: node._backendProperties
       };
 
       if (node.type === artifactTypeExtension.source) {
         config['source'] = {
           name: node.plugin.label,
-          plugin: pluginConfig
+          plugin: pluginConfig,
+          outputSchema: node.outputSchema,
+          inputSchema: node.inputSchema
         };
       } else if (node.type === 'transform') {
         if (node.errorDatasetName && node.errorDatasetName.length > 0) {
@@ -135,13 +136,17 @@ class ConfigStore {
         }
         pluginConfig = {
           name: node.plugin.label,
-          plugin: pluginConfig
+          plugin: pluginConfig,
+          outputSchema: node.outputSchema,
+          inputSchema: node.inputSchema
         };
         config['transforms'].push(pluginConfig);
       } else if (node.type === artifactTypeExtension.sink) {
         pluginConfig = {
           name: node.plugin.label,
-          plugin: pluginConfig
+          plugin: pluginConfig,
+          outputSchema: node.outputSchema,
+          inputSchema: node.inputSchema
         };
         config['sinks'].push(pluginConfig);
       }
@@ -313,35 +318,37 @@ class ConfigStore {
   setNodes(nodes) {
     this.state.__ui__.nodes = nodes;
     this.validateState();
-    this.propagateIOSchemas();
   }
   setConnections(connections) {
     this.state.config.connections = connections;
-    this.propagateIOSchemas();
   }
-  propagateIOSchemas() {
-    var nodesMap = {};
-    this.state.__ui__.nodes.forEach(function(n) {
-      nodesMap[n.name] = n;
-    });
-    this.CanvasFactory
-        .orderConnections(
-          angular.copy(this.state.config.connections),
-          this.state.artifact.name,
-          this.state.__ui__.nodes
-        )
-        .forEach( connection => {
-          let from = connection.from;
-          let to = connection.to;
+  propagateIOSchemas(pluginId) {
+    let adjacencyMap = {},
+        nodesMap = {},
+        outputSchema,
+        connections = this.state.config.connections;
+    this.state.__ui__.nodes.forEach( node => nodesMap[node.name] = node );
 
-          if (!nodesMap[from].outputSchema) {
-            return;
-          }
-          nodesMap[to].inputSchema = nodesMap[from].outputSchema;
-          if (!nodesMap[to].outputSchema) {
-            nodesMap[to].outputSchema = nodesMap[to].inputSchema;
-          }
-        });
+    connections.forEach( conn => {
+      if (Array.isArray(adjacencyMap[conn.from])) {
+        adjacencyMap[conn.from].push(conn.to);
+      } else {
+        adjacencyMap[conn.from] = [conn.to];
+      }
+    });
+
+    let traverseMap = (node, outputSchema) => {
+      if (!node) {
+        return;
+      }
+      node.forEach( n => {
+        nodesMap[n].outputSchema = outputSchema;
+        nodesMap[n].inputSchema = outputSchema;
+        traverseMap(adjacencyMap[n], outputSchema);
+      });
+    };
+    outputSchema = nodesMap[pluginId].outputSchema;
+    traverseMap(adjacencyMap[pluginId], outputSchema);
   }
   addNode(node) {
     this.state.__ui__.nodes.push(node);
@@ -358,6 +365,11 @@ class ConfigStore {
       match = null;
     }
     return angular.copy(match);
+  }
+  getSourceNodes(nodeId) {
+    let nodesMap = {};
+    this.state.__ui__.nodes.forEach( node => nodesMap[node.name] = node );
+    return this.state.config.connections.filter( conn => conn.to === nodeId ).map( matchedConnection => nodesMap[matchedConnection.from] );
   }
   editNodeProperties(nodeId, nodeConfig) {
     let nodes = this.state.__ui__.nodes;

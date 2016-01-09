@@ -77,8 +77,24 @@ class NodeConfigController {
       isTransform: config.isTransform || false,
 
       type: config.appType || null,
-      watchers: []
+      watchers: [],
+      outputSchemaUpdate: 0
     };
+  }
+  copyInputToOutputSchema() {
+     // If there is no information of output schema in the node config then just mantain an output schema for UI purposes.
+     this.state.groupsConfig.outputSchema.isOutputSchemaExists = true;
+     this.state.node.outputSchema = angular.toJson({fields: this.state.node.inputSchema});
+     // FIXME: This is stupid and it is here because of 2-way binding. We bind the model of schema editor to the output schema
+     // The schema editor updates the schema from within and it should expect changes from outside (in this case copy to Output button).
+     // To differntiate editing from within and changes from outside we have to do this.
+     // And we need to differentiate because while editing we don't want to lose focus on the current textbox ($watch on the same property loses it)
+     // One more reason we should have used Flux/Redux so that we could have eliminated these hacks.
+     this.state.outputSchemaUpdate +=1;
+     this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
+  }
+  propagateSchemaDownStream() {
+    this.ConfigActionsFactory.propagateSchemaDownStream(this.state.node.name);
   }
   loadNewPlugin() {
 
@@ -134,11 +150,6 @@ class NodeConfigController {
                     }
                   })
                 );
-              } else if (this.state.node.inputSchema) {
-                // If there is no information of output schema in the node config then just mantain an output schema for UI purposes.
-                configOutputSchema.isOutputSchemaExists = true;
-                this.state.node.outputSchema = this.state.node.outputSchema || this.state.node.inputSchema;
-                this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
               }
             }
             if (!this.$scope.isDisabled) {
