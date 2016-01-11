@@ -15,7 +15,7 @@
  */
 
 class NodeConfigController {
-  constructor(NodeConfigStore, $scope, $timeout, $state, DetailNonRunsStore, PluginConfigFactory, EventPipe, GLOBALS, ConfigActionsFactory, myHelpers) {
+  constructor(NodeConfigStore, $scope, $timeout, $state, DetailNonRunsStore, PluginConfigFactory, EventPipe, GLOBALS, ConfigActionsFactory, myHelpers, NonStorePipelineErrorFactory) {
 
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -27,12 +27,14 @@ class NodeConfigController {
     this.myHelpers = myHelpers;
     this.NodeConfigStore = NodeConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
+    this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
+    this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
 
     this.setDefaults({});
     NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
   }
   setState() {
-    var appType = this.$state.params.type || this.DetailNonRunsStore.getAppType();
+    var appType = this.$state.params.type || this.NodeConfigStore.ConfigStore.getAppType();
     var nodeState = this.NodeConfigStore.getState();
     nodeState.appType = appType;
     if (angular.isArray(this.state.watchers)) {
@@ -40,7 +42,24 @@ class NodeConfigController {
       this.state.watchers = [];
     }
     this.setDefaults(nodeState);
-    this.loadNewPlugin();
+    if (Object.keys(nodeState.node).length) {
+      this.loadNewPlugin();
+      this.validateNodeLabel();
+    }
+  }
+  validateNodeLabel() {
+    let nodes = this.NodeConfigStore.ConfigStore.getNodes();
+    let nodeName = this.myHelpers.objectQuery(this.state, 'node', 'plugin', 'label');
+    if (!nodeName) {
+      return;
+    }
+    this.NonStorePipelineErrorFactory.isNodeNameUnique(nodeName, nodes, err => {
+      if (err) {
+        this.state.nodeLabelError = this.GLOBALS.en.hydrator.studio.error[err];
+      } else {
+        this.state.nodeLabelError = '';
+      }
+    });
   }
   setDefaults(config) {
     this.state = {
@@ -126,9 +145,10 @@ class NodeConfigController {
               this.state.watchers.push(
                 this.$scope.$watch(
                   'NodeConfigController.state.node',
-                  _.debounce( () => {
+                  () => {
+                    this.validateNodeLabel(this);
                     this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
-                  }, 1000),
+                  },
                   true
                 )
               );
@@ -144,13 +164,13 @@ class NodeConfigController {
             // Didn't receive a configuration from the backend. Fallback to all textboxes.
             switch(err) {
               case 'NO_JSON_FOUND':
-                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.noConfigMessage;
+                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.info['NO-CONFIG'];
                 break;
               case 'CONFIG_SYNTAX_JSON_ERROR':
-                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.syntaxConfigJsonError;
+                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.error['SYNTAX-CONFIG-JSON'];
                 break;
               case 'CONFIG_SEMANTICS_JSON_ERROR':
-                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.semanticConfigJsonError;
+                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.error['SEMANTIC-CONFIG-JSON'];
                 break;
             }
             this.state.noconfig = true;
@@ -160,8 +180,11 @@ class NodeConfigController {
             });
             this.state.watchers.push(
               this.$scope.$watch(
-                'NodeConfigController.state.node.plugin.properties',
-                _.debounce(() => this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node), 1000),
+                'NodeConfigController.state.node',
+                () => {
+                  this.validateNodeLabel(this);
+                  this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
+                },
                 true
               )
             );
@@ -212,7 +235,7 @@ class NodeConfigController {
   }
 }
 
-NodeConfigController.$inject = ['NodeConfigStore', '$scope', '$timeout', '$state', 'DetailNonRunsStore', 'PluginConfigFactory', 'EventPipe', 'GLOBALS', 'ConfigActionsFactory', 'myHelpers'];
+NodeConfigController.$inject = ['NodeConfigStore', '$scope', '$timeout', '$state', 'DetailNonRunsStore', 'PluginConfigFactory', 'EventPipe', 'GLOBALS', 'ConfigActionsFactory', 'myHelpers', 'NonStorePipelineErrorFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('NodeConfigController', NodeConfigController);

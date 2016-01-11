@@ -78,8 +78,8 @@ logecho() {
 
 # Start a non-Java application with arguments in the background
 _start_bin() {
-  check_before_start || exit 1 # Error output is done in function
-  create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
+  cdap_check_before_start || exit 1 # Error output is done in function
+  cdap_create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
   logecho "$(date) Starting ${APP} service on ${HOSTNAME}"
   ulimit -a >>${loglog} 2>&1
   nohup nice -n ${NICENESS} ${MAIN_CMD} ${MAIN_CMD_ARGS} </dev/null >>${loglog} 2>&1 &
@@ -91,21 +91,21 @@ _start_bin() {
 # Start a Java application from class name with arguments in the background
 _start_java() {
   # Check and set classpath if in development environment. 
-  check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
+  cdap_check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
-  set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
+  cdap_set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
   # Setup Java
-  set_java || exit 1
+  cdap_set_java || exit 1
   if [ "${PKGNAME}" == "master" ]; then
     # Master requires setting hive classpath
-    set_hive_classpath || exit 1
+    cdap_set_hive_classpath || exit 1
     # Add proper HBase compatibility to CLASSPATH
-    set_hbase || exit 1
+    cdap_set_hbase || exit 1
     # Master requires this local directory
-    check_or_create_master_local_dir || die "Could not create Master local directory"
+    cdap_check_or_create_master_local_dir || die "Could not create Master local directory"
   fi
-  check_before_start || exit 1
-  create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
+  cdap_check_before_start || exit 1
+  cdap_create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
   logecho "$(date) Starting Java ${APP} service on ${HOSTNAME}"
   "${JAVA}" -version 2>>${loglog}
   ulimit -a >>${loglog}
@@ -199,17 +199,17 @@ run() {
   # TODO: why can't we use _start_java and pass arguments?
 
   # Check and set classpath if in development environment. 
-  check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
+  cdap_check_and_set_classpath_for_dev_environment "${CDAP_HOME}"
   # Setup classpaths.
-  set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
-  set_hive_classpath || exit 1
+  cdap_set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
+  cdap_set_hive_classpath || exit 1
   # Setup Java
-  set_java || exit 1
+  cdap_set_java || exit 1
   # Add proper HBase compatibility to CLASSPATH
-  set_hbase || exit 1
+  cdap_set_hbase || exit 1
   # Master requires this local directory
   if [ "${PKGNAME}" == "master" ]; then
-    check_or_create_master_local_dir || die "Could not create Master local directory"
+    cdap_check_or_create_master_local_dir || die "Could not create Master local directory"
   fi
 
   if [ ${#@} -ne 0 ]; then
@@ -222,13 +222,22 @@ run() {
 
 case ${1} in
   start|stop|restart) ${1} ;;
-  status) _status && echo "CDAP ${APP} ($(<${pid})) is running" ;;
+  status)
+    _status
+    statuscode=$?
+    if [ ${statuscode} -eq 0 ]; then
+      echo "CDAP ${APP} ($(<${pid})) is running"
+    else
+      echo "CDAP ${APP} is stopped"
+      exit $statuscode
+    fi
+    ;;
   condrestart) _status && restart ;;  
   run) shift; run ${@} ;;
   classpath)
-    set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
-    set_java || exit 1
-    set_hbase || exit 1
+    cdap_set_classpath "${COMPONENT_HOME}" "${CDAP_CONF}"
+    cdap_set_java || exit 1
+    cdap_set_hbase || exit 1
     echo "${CLASSPATH}"
   ;;
 

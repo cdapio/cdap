@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,6 +55,7 @@ import org.quartz.utils.Key;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -240,8 +241,7 @@ final class TimeScheduler implements Scheduler {
   private List<ScheduledRuntime> getScheduledRuntime(Id.Program program, SchedulableProgramType programType,
                                                      boolean previousRuntimeRequested) throws SchedulerException {
     checkInitialized();
-
-    List<ScheduledRuntime> scheduledRuntimes = Lists.newArrayList();
+    List<ScheduledRuntime> scheduledRuntimes = new ArrayList<>();
     try {
       for (Trigger trigger : scheduler.getTriggersOfJob(jobKeyFor(program, programType))) {
         long time;
@@ -252,6 +252,10 @@ final class TimeScheduler implements Scheduler {
           }
           time = trigger.getPreviousFireTime().getTime();
         } else {
+          if (scheduler.getTriggerState(trigger.getKey()) == Trigger.TriggerState.PAUSED) {
+            // if the trigger is paused, then skip getting the next fire time
+            continue;
+          }
           time = trigger.getNextFireTime().getTime();
         }
 

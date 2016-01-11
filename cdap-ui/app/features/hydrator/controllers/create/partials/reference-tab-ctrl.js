@@ -27,7 +27,7 @@ class ReferenceTabController {
     this.state = this.state || {};
     this.state.node = this.NodeConfigStore.getState().node;
     if (!this.state.node.plugin) {
-      this.state.docReference = this.GLOBALS.en.hydrator.studio.defaultReferenceInfo;
+      this.state.docReference = this.GLOBALS.en.hydrator.studio.info['DEFAULT-REFERENCE'];
     } else {
       let key = `doc.${this.state.node.plugin.name}-${this.state.node.type}`;
       this.PluginConfigFactory.fetchDocJson(
@@ -39,10 +39,10 @@ class ReferenceTabController {
           if (res[key]) {
             this.state.docReference = res[key];
           } else {
-            this.state.docReference = this.GLOBALS.en.hydrator.studio.noReferenceInfo;
+            this.state.docReference = this.GLOBALS.en.hydrator.studio.info['NO-REFERENCE'];
           }
         },
-        () => this.state.docReference = this.GLOBALS.en.hydrator.studio.noReferenceInfo
+        () => this.state.docReference = this.GLOBALS.en.hydrator.studio.info['NO-REFERENCE']
       );
     }
   }

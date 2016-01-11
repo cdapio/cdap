@@ -173,7 +173,7 @@ angular.module(PKG.name + '.feature.hydrator')
         });
         finalConnections = finalConnections.concat(parallelConnections);
       }
-      return finalConnections;
+      return finalConnections.map(function (conn) { delete conn.visited; return conn; });
     }
 
     function pruneNonBackEndProperties(config) {
