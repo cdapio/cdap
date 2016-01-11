@@ -123,7 +123,7 @@ public class DatasetService extends AbstractExecutionThreadService {
     mdsDatasets.startAndWait();
     typeManager.startAndWait();
     opExecutorClient.startAndWait();
-    httpService.startAndWait();
+//    httpService.startAndWait();
 
     // setting watch for ops executor service that we need to be running to operate correctly
     ServiceDiscovered discover = discoveryServiceClient.discover(Constants.Service.DATASET_EXECUTOR);
