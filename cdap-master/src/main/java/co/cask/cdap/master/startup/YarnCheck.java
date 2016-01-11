@@ -22,6 +22,7 @@ import com.google.common.base.Joiner;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.api.records.NodeId;
 import org.apache.hadoop.yarn.api.records.NodeReport;
 import org.apache.hadoop.yarn.api.records.Resource;
 import org.apache.hadoop.yarn.client.api.YarnClient;
@@ -95,20 +96,38 @@ class YarnCheck extends AbstractMasterCheck {
 
   private void checkResources(List<NodeReport> nodeReports) {
     LOG.info("Checking that YARN has enough resources to run all system services.");
-    int availableMemoryMB = 0;
-    int availableVCores = 0;
+    int memoryCapacity = 0;
+    int vcoresCapacity = 0;
+    int memoryUsed = 0;
+    int vcoresUsed = 0;
     int availableNodes = 0;
     for (NodeReport nodeReport : nodeReports) {
+      NodeId nodeId = nodeReport.getNodeId();
+      LOG.debug("Got report for node {}", nodeId);
       if (!nodeReport.getNodeState().isUnusable()) {
         Resource nodeCapability = nodeReport.getCapability();
         Resource nodeUsed = nodeReport.getUsed();
-        availableMemoryMB += nodeCapability.getMemory() - nodeUsed.getMemory();
-        availableVCores += nodeCapability.getVirtualCores() - nodeUsed.getVirtualCores();
+
+        // some versions of hadoop return null, others do not
+        if (nodeCapability != null) {
+          LOG.debug("node {} resource capability: memory = {}, vcores = {}", nodeId,
+                    nodeCapability.getMemory(), nodeCapability.getVirtualCores());
+          memoryCapacity += nodeCapability.getMemory();
+          vcoresCapacity += nodeCapability.getVirtualCores();
+        }
+
+        if (nodeUsed != null) {
+          LOG.debug("node {} resources used: memory = {}, vcores = {}", nodeId,
+                    nodeUsed.getMemory(), nodeUsed.getVirtualCores());
+          memoryUsed += nodeUsed.getMemory();
+          vcoresUsed += nodeUsed.getVirtualCores();
+        }
+
         availableNodes++;
       }
     }
-    LOG.debug("YARN has {} MB of memory and {} virtual cores available from {} available nodemanagers.",
-              availableMemoryMB, availableVCores, availableNodes);
+    LOG.debug("YARN resource capacity: {} MB of memory and {} virtual cores.", memoryCapacity, vcoresCapacity);
+    LOG.debug("YARN resources used: {} MB of memory and {} virtual cores.", memoryUsed, vcoresUsed);
 
     // calculate memory and vcores required by CDAP
     int requiredMemoryMB = 0;
@@ -156,12 +175,25 @@ class YarnCheck extends AbstractMasterCheck {
     }
 
     LOG.debug("{} MB of memory and {} virtual cores are required.", requiredMemoryMB, requiredVCores);
-    boolean noErrors = true;
-    if (requiredMemoryMB > availableMemoryMB || requiredVCores > availableVCores) {
+    int availableMemoryMB = memoryCapacity - memoryUsed;
+    int availableVCores = vcoresCapacity - vcoresUsed;
+    boolean memoryOK = requiredMemoryMB <= availableMemoryMB;
+    // if this is negative or zero just assume its not using vcores
+    boolean vcoresOK = vcoresCapacity <= 0 || requiredVCores <= availableVCores;
+
+    if (!memoryOK && !vcoresOK) {
       throw new RuntimeException(String.format(
         "Services require %d MB of memory and %d vcores, " +
           "but the cluster only has %d MB of memory and %d vcores available.",
         requiredMemoryMB, requiredVCores, availableMemoryMB, availableVCores));
+    } else if (!memoryOK) {
+      throw new RuntimeException(String.format(
+        "Services require %d MB of memory but the cluster only has %d MB of memory available.",
+        requiredMemoryMB, availableMemoryMB));
+    } else if (!vcoresOK) {
+      throw new RuntimeException(String.format(
+        "Services require %d vcores but the cluster only has %d vcores available.",
+        requiredVCores, availableVCores));
     }
     LOG.info("  YARN resources successfully verified.");
   }
