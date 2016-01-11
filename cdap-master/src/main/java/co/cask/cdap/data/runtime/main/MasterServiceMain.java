@@ -70,6 +70,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -88,6 +89,7 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -167,6 +169,22 @@ public class MasterServiceMain extends DaemonMain {
     this.serviceStore = injector.getInstance(ServiceStore.class);
     this.secureStoreUpdater = baseInjector.getInstance(TokenSecureStoreUpdater.class);
     this.leaderElection = createLeaderElection();
+    // leader election will normally stay running. Will only stop if there was some issue starting up.
+    this.leaderElection.addListener(new ServiceListenerAdapter() {
+      @Override
+      public void terminated(Service.State from) {
+        if (!stopped) {
+          System.exit(1);
+        }
+      }
+
+      @Override
+      public void failed(Service.State from, Throwable failure) {
+        if (!stopped) {
+          System.exit(1);
+        }
+      }
+    }, MoreExecutors.sameThreadExecutor());
   }
 
   @Override
@@ -229,7 +247,11 @@ public class MasterServiceMain extends DaemonMain {
     LOG.info("Stopping {}", Constants.Service.MASTER_SERVICES);
     stopped = true;
 
-    stopQuietly(leaderElection);
+    // if leader election failed to start, its listener will stop the master.
+    // In that case, we don't want to try stopping it again, as it will log confusing exceptions
+    if (leaderElection.isRunning()) {
+      stopQuietly(leaderElection);
+    }
     stopQuietly(serviceStore);
     stopQuietly(metricsCollectionService);
     stopQuietly(kafkaClient);
@@ -447,13 +469,25 @@ public class MasterServiceMain extends DaemonMain {
         // Start app-fabric and dataset services
         for (Service service : services) {
           LOG.info("Starting service in master: {}", service);
-          service.startAndWait();
+          try {
+            service.startAndWait();
+          } catch (Throwable t) {
+            // shut down the executor and stop the twill app,
+            // then throw an exception to cause the leader election service to stop
+            // leaderelection's listener will then shutdown the master
+            stop(true);
+            throw new RuntimeException(String.format("Unable to start service %s: %s", service, t.getMessage()));
+          }
         }
       }
 
       @Override
       public void follower() {
         LOG.info("Became follower for master services");
+        stop(stopped);
+      }
+
+      private void stop(boolean shouldTerminateApp) {
         // Shutdown the retry executor so that no re-run of the twill app will be attempted
         if (executor != null) {
           executor.shutdownNow();
@@ -463,7 +497,7 @@ public class MasterServiceMain extends DaemonMain {
           secureStoreUpdateCancellable.cancel();
         }
         // If the master process has been explcitly stopped, stop the twill application as well.
-        if (stopped) {
+        if (shouldTerminateApp) {
           LOG.info("Stopping master twill application");
           TwillController twillController = controller.get();
           if (twillController != null) {
@@ -473,8 +507,11 @@ public class MasterServiceMain extends DaemonMain {
         // Stop local services last since DatasetService is running locally
         // and remote services need it to preserve states.
         for (Service service : Lists.reverse(services)) {
-          LOG.info("Stopping service in master: {}", service);
-          stopQuietly(service);
+          // service may not be running if there was an error in startup
+          if (service.isRunning()) {
+            LOG.info("Stopping service in master: {}", service);
+            stopQuietly(service);
+          }
         }
         services.clear();
 

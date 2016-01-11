@@ -87,7 +87,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     this.cConf = cConf;
     this.mdsDatasets = mdsDatasets;
     this.locationFactory = locationFactory;
-    this.defaultModules = new LinkedHashMap<String, DatasetModule>(defaultModules);
+    this.defaultModules = new LinkedHashMap<>(defaultModules);
     this.allowDatasetUncheckedUpgrade = cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
     this.extensionModules = getExtensionModules(this.cConf);
   }

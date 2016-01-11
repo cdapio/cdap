@@ -54,6 +54,7 @@ import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.data2.transaction.queue.QueueAdmin;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
@@ -67,7 +68,6 @@ import co.cask.cdap.metrics.store.MetricDatasetFactory;
 import co.cask.cdap.notifications.feeds.client.NotificationFeedClientModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionSystemClient;
 import co.cask.tephra.distributed.TransactionService;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -202,7 +202,7 @@ public class UpgradeTool {
         @Singleton
         @Named("mdsDatasetsRegistry")
         @SuppressWarnings("unused")
-        public MDSDatasetsRegistry getMDSDatasetsRegistry(TransactionSystemClient txClient,
+        public MDSDatasetsRegistry getMDSDatasetsRegistry(TransactionSystemClientService txClient,
                                                           @Named("datasetMDS") DatasetFramework framework) {
           return new MDSDatasetsRegistry(txClient, framework);
         }

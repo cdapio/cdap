@@ -50,6 +50,7 @@ public final class Constants {
     public static final String CHECK_PACKAGES = "master.startup.checks.packages";
     public static final String CHECK_CLASSES = "master.startup.checks.classes";
     public static final String YARN_CONNECT_TIMEOUT_SECONDS = "master.startup.checks.yarn.connect.timeout.seconds";
+    public static final String STARTUP_SERVICE_TIMEOUT = "master.startup.service.timeout.seconds";
   }
 
   /**
@@ -211,7 +212,6 @@ public final class Constants {
     }
 
     public static final String SERVICE_DESCRIPTION = "Service that maintains transaction states.";
-
   }
 
   /**
