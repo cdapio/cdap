@@ -103,6 +103,10 @@ _start_java() {
     cdap_set_hbase || exit 1
     # Master requires this local directory
     cdap_check_or_create_master_local_dir || die "Could not create Master local directory"
+    "${JAVA}" "${JAVA_HEAPMAX}" -Dhive.classpath=${HIVE_CLASSPATH} ${OPTS} -cp ${CLASSPATH} co.cask.cdap.master.startup.MasterStartupTool </dev/null >>${loglog} 2>&1
+    if [ $? -ne 0 ]; then
+      die "Master startup checks failed. Please check ${loglog} to address issues."
+    fi
   fi
   cdap_check_before_start || exit 1
   cdap_create_pid_dir || die "Could not create PID dir: ${PID_DIR}"
