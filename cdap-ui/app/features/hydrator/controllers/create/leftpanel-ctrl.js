@@ -105,13 +105,7 @@ class LeftPanelController {
         warning: true
       };
     }
-
-    // this.ConfigActionsFactory.addPlugin(config, this.GLOBALS.pluginConvert[config.type]);
-    this.HydratorService.fetchBackendProperties(config)
-      .then( () => {
-        this.NodesActionsFactory.addNode(config);
-      });
-
+    this.NodesActionsFactory.addNode(config);
   }
 }
 

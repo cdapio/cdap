@@ -140,7 +140,11 @@ class NodeConfigController {
               // If yes then set it as output schema and everytime when a user edits the output schema the value has to
               // be transitioned to the respective plugin property.
               if (configOutputSchema.isOutputSchemaExists) {
-                if (this.state.node.plugin.properties[configOutputSchema.outputSchemaProperty[0]] !== this.state.node.outputSchema) {
+                let schemaProperty = configOutputSchema.outputSchemaProperty[0];
+                let pluginProperties = this.state.node.plugin.properties;
+                if (pluginProperties[schemaProperty]) {
+                  this.state.node.outputSchema = pluginProperties[schemaProperty];
+                } else if (pluginProperties[schemaProperty] !== this.state.node.outputSchema) {
                   this.state.node.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.node.outputSchema;
                 }
                 this.state.watchers.push(
