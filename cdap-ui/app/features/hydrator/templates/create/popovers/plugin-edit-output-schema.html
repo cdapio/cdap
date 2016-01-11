@@ -39,9 +39,16 @@
     <button class="btn btn-default"
              tooltip="Propagates schema to all down-stream nodes."
              tooltip-popup-delay="500"
-             ng-click="NodeConfigController.propagateSchemaDownStream()">
+             ng-click="NodeConfigController.showPropagateConfirm = true">
       Propagate
     </button>
+    <div class="schema-propagation-confirm">
+      <div class="well well-xs" ng-if="NodeConfigController.showPropagateConfirm">
+        Existing schema will be over-written. Continue?
+        <button ng-click="NodeConfigController.propagateSchemaDownStream(); NodeConfigController.showPropagateConfirm=false;" class="btn btn-default">Yes</button>
+        <button ng-click="NodeConfigController.showPropagateConfirm = false" class="btn btn-default">No</button>
+      </div>
+    </div>
     <div ng-if="isDisabled">
       <my-schema-editor
         ng-model="NodeConfigController.state.node.outputSchema"

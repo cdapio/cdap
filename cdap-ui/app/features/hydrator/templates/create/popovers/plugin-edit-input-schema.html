@@ -19,7 +19,8 @@
       <h4>Input Schema</h4>
       <button class="btn btn-default"
               ng-if="!NodeConfigController.configOutputSchema.implicitSchema"
-              ng-click="NodeConfigController.copyInputToOutputSchema()">
+              ng-click="NodeConfigController.copyInputToOutputSchema()"
+              ng-disabled="isDisabled">
           Copy to Output
       </button>
       <table class="table">

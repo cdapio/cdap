@@ -29,6 +29,7 @@ class NodeConfigController {
     this.ConfigActionsFactory = ConfigActionsFactory;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
+    this.showPropagateConfirm = false; // confirmation dialog in node config for schema propagation.
 
     this.setDefaults({});
     NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
