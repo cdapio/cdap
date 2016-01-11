@@ -42,7 +42,6 @@
              ng-click="NodeConfigController.propagateSchemaDownStream()">
       Propagate
     </button>
-    aa: {{NodeConfigController.state.node.outputSchema}}
     <div ng-if="isDisabled">
       <my-schema-editor
         ng-model="NodeConfigController.state.node.outputSchema"

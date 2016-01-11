@@ -79,6 +79,11 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getNodes = function() {
       return this.state.DAGConfig.nodes;
     };
+    this.getSourceNodes = function(nodeId) {
+      let nodesMap = {};
+      this.state.DAGConfig.nodes.forEach( node => nodesMap[node.name] = node );
+      return this.state.DAGConfig.connections.filter( conn => conn.to === nodeId ).map( matchedConnection => nodesMap[matchedConnection.from] );
+    };
     this.getDatasets = function() {
       return this.state.datasets;
     };
@@ -114,7 +119,8 @@ angular.module(PKG.name + '.feature.hydrator')
         app.config = appConfig.configJson;
         uiConfig = this.HydratorService.getNodesAndConnectionsFromConfig(app);
         appConfig.DAGConfig = {
-          nodes: uiConfig.nodes
+          nodes: uiConfig.nodes,
+          connections: uiConfig.connections
         };
 
         appConfig.description = appConfig.configJson.description ? appConfig.configJson.description : appConfig.description;
