@@ -312,7 +312,7 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/directives/**/*.html'
     ])
-      .pipe(plug.htmlmin({loose: true, quotes: true}))
+      .pipe(plug.minifyHtml({loose: true, quotes: true}))
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.commons'
       })),
@@ -320,7 +320,7 @@ gulp.task('tpl', function() {
     gulp.src([
       './app/features/home/home.html'
     ])
-      .pipe(plug.htmlmin({loose: true, quotes: true}))
+      .pipe(plug.minifyHtml({loose: true, quotes: true}))
       .pipe(plug.angularTemplatecache({
         module: pkg.name + '.features',
         base: __dirname + '/app',
@@ -339,13 +339,13 @@ gulp.task('tpl', function() {
  */
 gulp.task('html:partials', function() {
   return gulp.src('./app/features/**/*.html')
-      .pipe(plug.htmlmin({loose: true, quotes: true}))
+      .pipe(plug.minifyHtml({loose: true, quotes: true}))
       .pipe(gulp.dest('./dist/assets/features'));
 });
 
 gulp.task('html:main', function() {
   return gulp.src('./app/*.html')
-      .pipe(plug.htmlmin({loose: true, quotes: true}))
+      .pipe(plug.minifyHtml({loose: true, quotes: true}))
       .pipe(gulp.dest('./dist'));
 });
 
@@ -399,7 +399,7 @@ gulp.task('js:minify', ['js'], function() {
 
 gulp.task('css:minify', ['css'], function() {
   return gulp.src('./dist/assets/bundle/*.css')
-    .pipe(plug.cssnano())
+    .pipe(plug.minifyCss({keepBreaks:true}))
     .pipe(gulp.dest('./dist/assets/bundle'));
 });
 
