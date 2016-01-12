@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesController', function ($scope, myPipelineApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS, $rootScope, myAlertOnValium) {
+  .controller('NamespaceTemplatesController', function ($scope, myPipelineApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS, $rootScope, myAlertOnValium, $filter) {
 
     var vm = this;
     var oldTemplateName;
@@ -89,6 +89,7 @@ angular.module(PKG.name + '.feature.admin')
 
     function initialize() {
       if (!vm.pluginName) { return; }
+      vm.configFetched = false;
 
       var fetchApi;
       switch (vm.pluginType) {
@@ -118,6 +119,11 @@ angular.module(PKG.name + '.feature.admin')
       fetchApi(params).$promise
         .then(function (res) {
           vm.pluginVersions = res;
+
+          if (vm.isEdit) {
+            vm.plugin = $filter('filter')(res, {artifact: vm.pluginConfig.artifact})[0];
+            vm.onPluginVersionSelect();
+          }
         });
     }
 
@@ -125,20 +131,25 @@ angular.module(PKG.name + '.feature.admin')
     vm.onPluginVersionSelect = function () {
       if (!vm.plugin) { return; }
 
+      if (!vm.pluginConfig) {
+        vm.pluginConfig = {
+          _backendProperties: vm.plugin.properties,
+          properties: {},
+          lock: {}
+        };
+      } else {
+        vm.pluginConfig._backendProperties = vm.plugin.properties;
+      }
+
       var artifact = {
         name: vm.plugin.artifact.name,
         version: vm.plugin.artifact.version,
         key: 'widgets.' + vm.plugin.name + '-' + vm.plugin.type
       };
 
-      vm.pluginConfig = {
-        _backendProperties: vm.plugin.properties,
-        properties: {}
-      };
 
       PluginConfigFactory.fetchWidgetJson(artifact.name, artifact.version, artifact.key)
         .then(function (res) {
-          console.log('CONFIG', res);
           vm.configFetched = true;
 
           vm.groupsConfig = PluginConfigFactory.generateNodeConfig(vm.pluginConfig._backendProperties, res);
@@ -165,9 +176,6 @@ angular.module(PKG.name + '.feature.admin')
 
             vm.pluginConfig.outputSchema = JSON.stringify({ fields: formattedSchema });
           }
-
-
-          console.log('groupsConfig', vm.groupsConfig);
         });
     };
 
@@ -181,11 +189,15 @@ angular.module(PKG.name + '.feature.admin')
         .then(function (res) {
           var template = res[$stateParams.nsadmin][$stateParams.templateType][$stateParams.pluginType][$stateParams.pluginTemplate];
 
+
+          console.log('template', template);
+
           vm.templateType = template.templateType;
           vm.pluginType = template.pluginType;
           vm.pluginName = template.pluginName;
 
           vm.pluginConfig = {
+            artifact: template.artifact,
             pluginTemplate: template.pluginTemplate,
             properties: template.properties,
             outputSchema: template.outputSchema,
@@ -230,6 +242,7 @@ angular.module(PKG.name + '.feature.admin')
       }
 
       var properties = {
+        artifact: vm.plugin.artifact,
         pluginTemplate: vm.pluginConfig.pluginTemplate,
         description: vm.pluginDescription,
         properties: vm.pluginConfig.properties,
