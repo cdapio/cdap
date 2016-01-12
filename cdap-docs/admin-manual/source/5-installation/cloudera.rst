@@ -4,13 +4,13 @@
 
 :hide-toc: true
 
-.. _admin-cloudera-index:
+.. _admin-cloudera:
 
 ======================
 Cloudera Manager (CDH)
 ======================
 
-This section is to help you install CDAP on Hadoop systems that are `CDH (Cloudera Data Hub)
+This section describes installing CDAP on Hadoop systems that are `CDH (Cloudera Data Hub)
 <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/
 cdh_intro.html>`__ clusters managed with `Cloudera Manager (CM)
 <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/
@@ -19,19 +19,23 @@ cloudera-manager.html>`__.
 You install CDAP into a CDH cluster by first downloading and installing a 
 CSD (`Custom Service Descriptor <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_addon_services.html#concept_qbv_3jk_bn_unique_1>`__) 
 for CDAP. Once the CDAP CSD is installed and you have restarted your Cloudera Manager Server, you
-will able to use Cloudera Manager to install, start, and manage CDAP on CDH clusters.
+will able to use CM to install, start, and manage CDAP on CDH clusters.
 
-These instructions assume that you are familiar with Cloudera Manager and CDH, and already
-have a cluster managed by Cloudera Manager with CDH installed and running. The cluster must meet CDAP's
+These instructions assume that you are familiar with CM and CDH, and already have a
+cluster managed by CM with CDH installed and running. The cluster must meet CDAP's
 :ref:`hardware, network, and software requirements <admin-manual-system-requirements>`
 before you install CDAP.
 
 Follow these steps:
 
-#. **Preparing Roles and Nodes:** Prerequisite tasks prior to starting the installation
+1. **Preparing Roles and Nodes:** Prerequisite tasks prior to starting the installation
 #. **Adding the Parcels:** Download and install the CSD, then download and distribute the parcels
 #. **Installing CDAP Services:** Use the CM *Add Service* wizard to install CDAP
 #. **Starting CDAP Services:** The wizard will automatically start CDAP services, which you can then verify
+
+.. figure:: ../_images/distributions/distributions-cm-1.gif
+   :height: 80px
+   :align: center
 
 Once you have completed the installation and started CDAP services,
 you can then :ref:`verify the installation <admin-manual-verification>`.
@@ -39,6 +43,10 @@ you can then :ref:`verify the installation <admin-manual-verification>`.
 
 Preparing Roles and Nodes
 =========================
+
+.. figure:: ../_images/distributions/distributions-cm-2.gif
+   :height: 80px
+   :align: center
 
 Roles and Dependencies
 ----------------------
@@ -110,6 +118,10 @@ Prerequisites
 Adding the Parcels
 ==================
 
+.. figure:: ../_images/distributions/distributions-cm-3.gif
+   :height: 80px
+   :align: center
+
 .. _cloudera-installation-download:
 
 Download
@@ -159,6 +171,10 @@ suggestions <faqs-cloudera-direct-parcel-access>`.
 
 Installing CDAP Services
 ========================
+
+.. figure:: ../_images/distributions/distributions-cm-4.gif
+   :height: 80px
+   :align: center
 
 These instructions show how to use the Cloudera Manager Admin Console *Add Service* Wizard
 to install and start CDAP. Note that the screens of the wizard will vary depending on
@@ -262,6 +278,10 @@ your settings before continuing to the next step, which will install and start C
 
 Starting CDAP Services
 ======================
+
+.. figure:: ../_images/distributions/distributions-cm-5.gif
+   :height: 80px
+   :align: center
 
 Add Service Wizard: First Run of Commands
 -----------------------------------------

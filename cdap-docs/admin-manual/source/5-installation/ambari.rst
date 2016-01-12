@@ -2,18 +2,13 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
 
-:hide-toc: true
-
 .. _ambari-index:
 
 ===================
 Apache Ambari (HDP)
 ===================
 
-.. .. section-numbering::
-.. ..    :depth: 3
-
-This section is to help you install CDAP on Hadoop systems that are `HDP (Hortonworks Data
+This section describes installing CDAP on Hadoop systems that are `HDP (Hortonworks Data
 Platform) <http://hortonworks.com/>`__ clusters managed with `Apache Ambari
 <https://ambari.apache.org/>`__, the open source provisioning system for HDP.
 
@@ -27,23 +22,19 @@ have a cluster with them installed and running. The cluster must meet CDAP's
 :ref:`hardware, network, and software requirements <admin-manual-system-requirements>`
 before you install CDAP.
 
-.. |am-setting-up| replace:: **Setting Up CDAP Repos:**
-.. _am-setting-up: am-1-setting-up.html
+Follow these steps:
 
-.. |am-dependencies| replace:: **Adding Dependencies for CDAP:**
-.. _am-dependencies: am-2-dependencies.html
-
-.. |am-service-wizard| replace:: **Installing CDAP:**
-.. _am-service-wizard: am-3-service-wizard.html
-
-.. |am-upgrading| replace:: **Upgrading CDAP:**
-.. _am-upgrading: am-4-upgrading.html
-
-.. - |am-setting-up|_ The prerequisite steps of preparing the Package Manager.
-.. - |am-dependencies|_ The dependencies, both core and optional, required by CDAP.
-.. - |am-service-wizard|_ Using the Ambari *Add Service* Wizard, and starting CDAP.
-.. - |am-upgrading|_ Upgrading a CDAP installation that was installed and managed with Apache Ambari.
 .. 
+.. .. figure:: ../_images/distributions/distributions-cm-1.gif
+..    :height: 80px
+..    :align: center
+
+
+1. **Setting Up the CDAP Repos:** Prerequisite tasks prior to starting the installation
+#. **CDAP Dependencies:** Core and optional dependencies of CDAP
+#. **Installing using the Wizard:** Use the Ambari *Start Service* wizard to install CDAP services
+#. **Deploying and Starting CDAP:** The wizard will deploy and automatically start CDAP services, which you can then verify
+
 
 .. rubric:: Notes
 
@@ -54,12 +45,14 @@ before you install CDAP.
   already installed, where the original installation was **not** with Ambari.
 - Though you can install CDAP with Apache Ambari, you **currently cannot use** Ambari to upgrade CDAP. 
   See :ref:`package-managers-upgrading` for how to upgrade CDAP servers managed with Ambari.
-- A number of features are planned for the future, but these are **currently not included** in the
-  CDAP Apache Ambari Service:
+- These features are **currently not included** in the CDAP Apache Ambari Service (though they may in the future):
   
-  - support for `Kerberos-enabled clusters <https://issues.cask.co/browse/CDAP-4109>`__;
-  - integration with the `CDAP Authentication Server <https://issues.cask.co/browse/CDAP-4110>`__;
-  - CDAP component `high-availability <https://issues.cask.co/browse/CDAP-4107>`__  support;
+  - `Kerberos-enabled clusters <https://issues.cask.co/browse/CDAP-4109>`__ are currently not supported;
+  - The CDAP Apache Ambari Service is not integrated with the `CDAP Authentication Server <https://issues.cask.co/browse/CDAP-4110>`__;
+  - CDAP component `high-availability <https://issues.cask.co/browse/CDAP-4107>`__  is not supported;
+
+- A number of features are currently planned to be added, including:
+
   - `pre-defined alerts <https://issues.cask.co/browse/CDAP-4106>`__  for CDAP services ;
   - select `CDAP metrics <https://issues.cask.co/browse/CDAP-4108>`__; and
   - a full `smoke test of CDAP functionality <https://issues.cask.co/browse/CDAP-4105>`__ after installation.
@@ -263,9 +256,11 @@ Customize CDAP
    cdap-site.xml <appendix-cdap-site.xml>`. When finished with configuration changes, click
    *Next*.
 
-Deploy CDAP
------------
+Deploying and Starting CDAP
+===========================
 
+Deploying CDAP
+--------------
 9. Review the desired service layout and click *Deploy* to begin the actual deployment of CDAP.
 
    .. figure:: ../_images/ambari/ss08-review-deploy.png
@@ -311,19 +306,19 @@ CDAP Started
       :width: 800px
       :align: center
       :class: bordered-image
- 
+
       **Ambari Dashboard:** Selecting *CDAP*
 
-#. Selecting *CDAP* from the left sidebar, or choosing it from the Services drop-down menu, will take
-   you to the CDAP service screen.
+15. Selecting *CDAP* from the left sidebar, or choosing it from the Services drop-down menu, will take
+    you to the CDAP service screen.
 
    .. figure:: ../_images/ambari/ss12-cdap-screen.png
       :figwidth: 100%
       :width: 800px
       :align: center
       :class: bordered-image
- 
+
       **Ambari Dashboard:** *CDAP* Service Screen
- 
+
 Congratulations! CDAP is now running on your cluster, managed by Ambari. You can login to the CDAP UI
 at the address of the node running the CDAP-UI service at port 9999.

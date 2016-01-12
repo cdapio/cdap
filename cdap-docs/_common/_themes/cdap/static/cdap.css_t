@@ -365,6 +365,10 @@ ul.first.last.simple {
   padding-left: 20px;
 }
 
+ul.simple {
+  margin-bottom: 1em;
+}
+
 /* -- Table styles used in Introduction page -------------------------------------- */
 
 div.table-block.container {

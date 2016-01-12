@@ -20,9 +20,10 @@ one of the machines where you installed the packages and started the services.
 
 .. _|distribution|-highly-available:
 
-.. rubric:: Making CDAP Highly-Available
-
-Repeat these steps on additional boxes.  The configurations needed to support high-availability are:
+Making CDAP Highly-Available
+----------------------------
+Repeat these steps on additional boxes.  The configuration settings (in ``cdap-site.xml``)
+needed to support high-availability are:
 
 - ``kafka.seed.brokers``: ``127.0.0.1:9092,...`` 
   

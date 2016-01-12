@@ -95,8 +95,7 @@ installation and its security configuration.
 .. |operations| replace:: **Operations:**
 .. _operations: 8-operations/index.html
 
-- |operations|_ Covers **logging, metrics, monitoring, preferences, scaling instances, resource guarantees, 
-  transaction service maintenance,** and **introduces the CDAP UI**:
+- |operations|_
 
     .. |logging| replace:: **Logging:**
     .. _logging: 8-operations/logging.html
@@ -143,8 +142,10 @@ installation and its security configuration.
 .. |appendices| replace:: **Appendices:**
 .. _appendices: appendices/index.html
 
-- |appendices| Appendices cover the XML files used to configure the CDAP installation:
+- |appendices|_ Two XML files are used to configure a CDAP installation: ``cdap-site.xml`` and
+  ``cdap-security.xml``:
 
-  - :ref:`cdap-site.xml <appendix-cdap-site.xml>`
-  - :ref:`cdap-security.xml <appendix-cdap-security.xml>`
+  - :ref:`Minimal cdap-site.xml <appendix-minimal-cdap-site.xml>`
+  - :ref:`Complete list of cdap-site.xml properties <appendix-cdap-site.xml>`
+  - :ref:`List of cdap-security.xml properties <appendix-cdap-security.xml>`
 

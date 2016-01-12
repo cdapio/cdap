@@ -9,5 +9,6 @@ Appendices
 .. toctree::
    :maxdepth: 1
 
+    Appendix: Minimal cdap-site.xml <minimal-cdap-site>
     Appendix: cdap-site.xml <cdap-site>
     Appendix: cdap-security.xml <cdap-security>
