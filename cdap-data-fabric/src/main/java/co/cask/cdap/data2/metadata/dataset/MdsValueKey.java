@@ -65,10 +65,6 @@ public class MdsValueKey {
     } else {
       throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
     }
-
-    // Skip metadata-type
-    keySplitter.skipString();
-
     return keySplitter.getString();
   }
 
@@ -79,16 +75,12 @@ public class MdsValueKey {
     return keySplitter.getString();
   }
 
-  public static MDSKey getMDSKey(Id.NamespacedId targetId, @Nullable MetadataDataset.MetadataType type,
-                                 @Nullable String key) {
+  public static MDSKey getMDSKey(Id.NamespacedId targetId, @Nullable String key) {
     String targetType = KeyHelper.getTargetType(targetId);
     MDSKey.Builder builder = new MDSKey.Builder();
     builder.add(ROW_PREFIX);
     builder.add(targetType);
     KeyHelper.addNamespaceIdToKey(builder, targetId);
-    if (type != null) {
-      builder.add(type.toString());
-    }
     if (key != null) {
       builder.add(key);
     }

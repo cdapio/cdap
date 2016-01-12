@@ -61,26 +61,6 @@ public class MetadataDataset extends AbstractDataset {
   static final String CASE_INSENSITIVE_VALUE_COLUMN = "civ";
 
   public static final String TAGS_KEY = "tags";
-
-  /**
-   * Identifies the type of metadata - property or tag
-   */
-  enum MetadataType {
-    PROPERTY("p"),
-    TAG("t");
-
-    private final String serializedForm;
-
-    MetadataType(String serializedForm) {
-      this.serializedForm = serializedForm;
-    }
-
-    @Override
-    public String toString() {
-      return serializedForm;
-    }
-  }
-
   public static final String KEYVALUE_SEPARATOR = ":";
 
   private final IndexedTable indexedTable;
@@ -94,13 +74,12 @@ public class MetadataDataset extends AbstractDataset {
    * Add new metadata.
    *
    * @param metadataRecord The value of the metadata to be saved.
-   * @param metadataType {@link MetadataType} indicating the type of metadata - property or tag
    */
-  private void setMetadata(MetadataEntry metadataRecord, MetadataType metadataType) {
+  private void setMetadata(MetadataEntry metadataRecord) {
     Id.NamespacedId targetId = metadataRecord.getTargetId();
 
     // Put to the default column.
-    write(targetId, metadataType, metadataRecord);
+    write(targetId, metadataRecord);
   }
 
   /**
@@ -112,7 +91,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param value The metadata value to be added
    */
   public void setProperty(Id.NamespacedId targetId, String key, String value) {
-    setMetadata(new MetadataEntry(targetId, key, value), MetadataType.PROPERTY);
+    setMetadata(new MetadataEntry(targetId, key, value));
   }
 
   /**
@@ -124,7 +103,7 @@ public class MetadataDataset extends AbstractDataset {
    */
   private void setTags(Id.NamespacedId targetId, String ... tags) {
     MetadataEntry tagsEntry = new MetadataEntry(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(tags));
-    setMetadata(tagsEntry, MetadataType.TAG);
+    setMetadata(tagsEntry);
   }
 
   /**
@@ -138,20 +117,19 @@ public class MetadataDataset extends AbstractDataset {
     Set<String> existingTags = getTags(targetId);
     Iterable<String> newTags = Iterables.concat(existingTags, Arrays.asList(tagsToAdd));
     MetadataEntry newTagsEntry = new MetadataEntry(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(newTags));
-    setMetadata(newTagsEntry, MetadataType.TAG);
+    setMetadata(newTagsEntry);
   }
 
   /**
-   * Return metadata based on type, target id, and key.
+   * Return metadata based on target id, and key.
    *
    * @param targetId The id of the target
-   * @param metadataType {@link MetadataType} indicating the type of metadata to retrieve - property or tag
    * @param key The metadata key to get
    * @return instance of {@link MetadataEntry} for the target type, id, and key
    */
   @Nullable
-  private MetadataEntry getMetadata(Id.NamespacedId targetId, MetadataType metadataType, String key) {
-    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, metadataType, key);
+  private MetadataEntry getMetadata(Id.NamespacedId targetId, String key) {
+    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, key);
     Row row = indexedTable.get(mdsKey.getKey());
     if (row.isEmpty()) {
       return null;
@@ -175,19 +153,18 @@ public class MetadataDataset extends AbstractDataset {
    */
   @Nullable
   public MetadataEntry getProperty(Id.NamespacedId targetId, String key) {
-    return getMetadata(targetId, MetadataType.PROPERTY, key);
+    return getMetadata(targetId, key);
   }
 
   /**
    * Retrieves the metadata for the specified {@link Id.NamespacedId}.
    *
    * @param targetId the specified {@link Id.NamespacedId}
-   * @param metadataType {@link MetadataType} indicating the type of metadata to retrieve - property or tag
    * @return a Map representing the metadata for the specified {@link Id.NamespacedId}
    */
-  private Map<String, String> getMetadata(Id.NamespacedId targetId, MetadataType metadataType) {
+  private Map<String, String> getMetadata(Id.NamespacedId targetId) {
     String targetType = KeyHelper.getTargetType(targetId);
-    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, metadataType, null);
+    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, null);
     byte[] startKey = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
 
@@ -216,7 +193,9 @@ public class MetadataDataset extends AbstractDataset {
    * @return the properties of the specified {@link Id.NamespacedId}
    */
   public Map<String, String> getProperties(Id.NamespacedId targetId) {
-    return getMetadata(targetId, MetadataType.PROPERTY);
+    Map<String, String> properties = getMetadata(targetId);
+    properties.remove(TAGS_KEY); // remove tags
+    return properties;
   }
 
   /**
@@ -226,7 +205,7 @@ public class MetadataDataset extends AbstractDataset {
    * @return the tags of the specified {@link Id.NamespacedId}
    */
   public Set<String> getTags(Id.NamespacedId targetId) {
-    MetadataEntry tags = getMetadata(targetId, MetadataType.TAG, TAGS_KEY);
+    MetadataEntry tags = getMetadata(targetId, TAGS_KEY);
     if (tags == null) {
       return new HashSet<>();
     }
@@ -237,22 +216,20 @@ public class MetadataDataset extends AbstractDataset {
    * Removes all metadata for the specified {@link Id.NamespacedId}.
    *
    * @param targetId the {@link Id.NamespacedId} for which metadata is to be removed
-   * @param metadataType {@link MetadataType} indicating the type of metadata to remove - property or tag
    */
-  private void removeMetadata(Id.NamespacedId targetId, MetadataType metadataType) {
-    removeMetadata(targetId, metadataType, Predicates.<String>alwaysTrue());
+  private void removeMetadata(Id.NamespacedId targetId) {
+    removeMetadata(targetId, Predicates.<String>alwaysTrue());
   }
 
   /**
    * Removes the specified keys from the metadata of the specified {@link Id.NamespacedId}.
    *
    * @param targetId the {@link Id.NamespacedId} for which the specified metadata keys are to be removed
-   * @param metadataType {@link MetadataType} indicating the type of metadata to remove - property or tag
    * @param keys the keys to remove from the metadata of the specified {@link Id.NamespacedId}
    */
-  private void removeMetadata(Id.NamespacedId targetId, MetadataType metadataType, String ... keys) {
+  private void removeMetadata(Id.NamespacedId targetId, String ... keys) {
     final Set<String> keySet = Sets.newHashSet(keys);
-    removeMetadata(targetId, metadataType, new Predicate<String>() {
+    removeMetadata(targetId, new Predicate<String>() {
       @Override
       public boolean apply(String input) {
         return keySet.contains(input);
@@ -264,12 +241,11 @@ public class MetadataDataset extends AbstractDataset {
    * Removes all keys that satisfy a given predicate from the metadata of the specified {@link Id.NamespacedId}.
    *
    * @param targetId the {@link Id.NamespacedId} for which keys are to be removed
-   * @param metadataType {@link MetadataType} indicating the type of metadata to remove - property or tag
    * @param filter the {@link Predicate} that should be satisfied to remove a key
    */
-  private void removeMetadata(Id.NamespacedId targetId, MetadataType metadataType, Predicate<String> filter) {
+  private void removeMetadata(Id.NamespacedId targetId, Predicate<String> filter) {
     String targetType = KeyHelper.getTargetType(targetId);
-    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, metadataType, null);
+    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, null);
     byte[] prefix = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
 
@@ -300,7 +276,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param keys the keys to remove
    */
   public void removeProperties(Id.NamespacedId targetId, String ... keys) {
-    removeMetadata(targetId, MetadataType.PROPERTY, keys);
+    removeMetadata(targetId, keys);
   }
 
   /**
@@ -309,7 +285,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param targetId the {@link Id.NamespacedId} from which to remove the specified tags
    * @param tagsToRemove the tags to remove
    */
-  public void removeTags(Id.NamespacedId targetId, String ... tagsToRemove) {
+  public void removeTags(Id.NamespacedId targetId, String... tagsToRemove) {
     Set<String> existingTags = getTags(targetId);
     if (existingTags.isEmpty()) {
       // nothing to remove
@@ -327,7 +303,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param targetId the {@link Id.NamespacedId} for which to remove the properties
    */
   public void removeProperties(Id.NamespacedId targetId) {
-    removeMetadata(targetId, MetadataType.PROPERTY);
+    removeMetadata(targetId);
   }
 
   /**
@@ -336,7 +312,7 @@ public class MetadataDataset extends AbstractDataset {
    * @param targetId the {@link Id.NamespacedId} for which to remove the tags
    */
   public void removeTags(Id.NamespacedId targetId) {
-    removeMetadata(targetId, MetadataType.TAG);
+    removeMetadata(targetId);
   }
 
   /**
@@ -480,9 +456,9 @@ public class MetadataDataset extends AbstractDataset {
     return results;
   }
 
-  private void write(Id.NamespacedId targetId, MetadataType metadataType, MetadataEntry entry) {
+  private void write(Id.NamespacedId targetId, MetadataEntry entry) {
     String key = entry.getKey();
-    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, metadataType, key);
+    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, key);
     Put put = new Put(mdsKey.getKey());
 
     // Now add the index columns. To support case insensitive we will store it as lower case for index columns.
