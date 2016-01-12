@@ -36,8 +36,6 @@ import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.startup.CheckRunner;
-import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -61,7 +59,6 @@ import co.cask.cdap.proto.Id;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -74,7 +71,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -203,28 +199,6 @@ public class MasterServiceMain extends DaemonMain {
       LOG.error("Could not disable caching of URLJarFiles. This may lead to 'too many open files` exception.", e);
     }
 
-    ConfigurationLogger.logImportantConfig(cConf);
-    LOG.info("Hadoop subsystem versions:");
-    LOG.info("  Hadoop version: {}", ClientVersions.getHadoopVersion());
-    LOG.info("  ZooKeeper version: {}", ClientVersions.getZooKeeperVersion());
-    LOG.info("  Kafka version: {}", ClientVersions.getKafkaVersion());
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      LOG.info("  Hive version: {}", ExploreServiceUtils.getHiveVersion());
-    }
-
-    CheckRunner startupCheckRunner = getStartupCheckRunner();
-    List<CheckRunner.Failure> failures = startupCheckRunner.runChecks();
-    if (!failures.isEmpty()) {
-      for (CheckRunner.Failure failure : failures) {
-        LOG.error("{} failed: {}", failure.getName(), failure.getException().getMessage());
-        if (failure.getException().getCause() != null) {
-          LOG.error("  Root cause: {}", ExceptionUtils.getRootCauseMessage(failure.getException().getCause()));
-        }
-      }
-      throw new RuntimeException("Errors detected while starting up master. " +
-                                   "Please check the logs, address all errors, then start the master service again.");
-    }
-
     createSystemHBaseNamespace();
     updateConfigurationTable();
 
@@ -295,46 +269,6 @@ public class MasterServiceMain extends DaemonMain {
       LOG.error("Error obtaining localhost address", e);
       throw Throwables.propagate(e);
     }
-  }
-
-  private CheckRunner getStartupCheckRunner() {
-    CheckRunner.Builder checkRunnerBuilder = CheckRunner.builder(baseInjector);
-
-    if (!cConf.getBoolean(Constants.Startup.CHECKS_ENABLED)) {
-      return checkRunnerBuilder.build();
-    }
-
-    // add all checks in the configured packages
-    String startupCheckPackages = cConf.get(Constants.Startup.CHECK_PACKAGES);
-    if (!Strings.isNullOrEmpty(startupCheckPackages)) {
-      for (String checkPackage : Splitter.on(',').trimResults().split(startupCheckPackages)) {
-        LOG.debug("Adding startup checks from package {}", checkPackage);
-        try {
-          checkRunnerBuilder.addChecksInPackage(checkPackage);
-        } catch (IOException e) {
-          // not expected unless something is weird with the local filesystem
-          LOG.error("Unable to examine classpath to look for startup checks in package {}.", checkPackage, e);
-          throw new RuntimeException(e);
-        }
-      }
-    }
-
-    // add all checks specified directly by name
-    String startupCheckClassnames = cConf.get(Constants.Startup.CHECK_CLASSES);
-    if (!Strings.isNullOrEmpty(startupCheckClassnames)) {
-      for (String className : Splitter.on(',').trimResults().split(startupCheckClassnames)) {
-        LOG.debug("Adding startup check {}.", className);
-        try {
-          checkRunnerBuilder.addClass(className);
-        } catch (ClassNotFoundException e) {
-          LOG.error("Startup check {} not found. " +
-                      "Please check for typos and ensure the class is available on the classpath.", className);
-          throw new RuntimeException(e);
-        }
-      }
-    }
-
-    return checkRunnerBuilder.build();
   }
 
   /**
