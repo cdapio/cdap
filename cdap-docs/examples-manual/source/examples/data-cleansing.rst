@@ -51,7 +51,7 @@ MapReduce over PartitionedFileSet
 ``DataCleansingMapReduce`` is a simple MapReduce that reads from the *rawRecords* ``PartitionedFileSet`` and writes to
 the *cleanRecords* ``PartitionedFileSet``. The ``beforeSubmit`` method prepares the MapReduce program:
 
-- It uses the ``BatchPartitionConsumer`` to specify the partitions to process as input, in order to only process new
+- It uses the ``PartitionBatchInput`` to specify the partitions to process as input, in order to only process new
   partitions since its last run.
 - It specifies the output partition that is written to, based upon the supplied runtime arguments.
 
