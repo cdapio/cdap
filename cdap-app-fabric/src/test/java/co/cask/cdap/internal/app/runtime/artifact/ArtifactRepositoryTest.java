@@ -88,18 +88,21 @@ public class ArtifactRepositoryTest {
 
   private static CConfiguration cConf;
   private static File tmpDir;
-  private static File systemArtifactsDir;
+  private static File systemArtifactsDir1;
+  private static File systemArtifactsDir2;
   private static ArtifactRepository artifactRepository;
   private static ClassLoader appClassLoader;
 
   @BeforeClass
   public static void setup() throws Exception {
-    systemArtifactsDir = TMP_FOLDER.newFolder();
+    systemArtifactsDir1 = TMP_FOLDER.newFolder();
+    systemArtifactsDir2 = TMP_FOLDER.newFolder();
     tmpDir = TMP_FOLDER.newFolder();
 
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR, systemArtifactsDir.getAbsolutePath());
+    cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR,
+              systemArtifactsDir1.getAbsolutePath() + ";" + systemArtifactsDir2.getAbsolutePath());
     artifactRepository = AppFabricTestHelper.getInjector(cConf).getInstance(ArtifactRepository.class);
   }
 
@@ -137,14 +140,14 @@ public class ArtifactRepositoryTest {
   @Test
   public void testAddSystemArtifacts() throws Exception {
     Id.Artifact systemAppArtifactId = Id.Artifact.from(Id.Namespace.SYSTEM, "PluginTest", "1.0.0");
-    createAppJar(PluginTestApp.class, new File(systemArtifactsDir, "PluginTest-1.0.0.jar"),
+    createAppJar(PluginTestApp.class, new File(systemArtifactsDir1, "PluginTest-1.0.0.jar"),
       createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
 
     // write plugins jar
     Id.Artifact pluginArtifactId1 = Id.Artifact.from(Id.Namespace.SYSTEM, "APlugin", "1.0.0");
 
     Manifest manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    createPluginJar(TestPlugin.class, new File(systemArtifactsDir, "APlugin-1.0.0.jar"), manifest);
+    createPluginJar(TestPlugin.class, new File(systemArtifactsDir1, "APlugin-1.0.0.jar"), manifest);
 
     // write plugins config file
     Map<String, PluginPropertyField> emptyMap = Collections.emptyMap();
@@ -152,7 +155,7 @@ public class ArtifactRepositoryTest {
       new PluginClass("typeA", "manual1", "desc", "co.cask.classname", null, emptyMap),
       new PluginClass("typeB", "manual2", "desc", "co.cask.otherclassname", null, emptyMap)
     );
-    File pluginConfigFile = new File(systemArtifactsDir, "APlugin-1.0.0.json");
+    File pluginConfigFile = new File(systemArtifactsDir1, "APlugin-1.0.0.json");
     ArtifactConfig pluginConfig1 = new ArtifactConfig(
       ImmutableSet.of(new ArtifactRange(
         Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0"))),
@@ -164,18 +167,18 @@ public class ArtifactRepositoryTest {
       writer.write(pluginConfig1.toString());
     }
 
-    // write another plugins jar
+    // write another plugins jar to a different directory, to test that plugins will get picked up from both directories
     Id.Artifact pluginArtifactId2 = Id.Artifact.from(Id.Namespace.SYSTEM, "BPlugin", "1.0.0");
 
     manifest = createManifest(ManifestFields.EXPORT_PACKAGE, TestPlugin.class.getPackage().getName());
-    createPluginJar(TestPlugin.class, new File(systemArtifactsDir, "BPlugin-1.0.0.jar"), manifest);
+    createPluginJar(TestPlugin.class, new File(systemArtifactsDir2, "BPlugin-1.0.0.jar"), manifest);
 
     // write plugins config file
     Set<PluginClass> manuallyAddedPlugins2 = ImmutableSet.of(
       new PluginClass("typeA", "manual1", "desc", "co.notcask.classname", null, emptyMap),
       new PluginClass("typeB", "manual2", "desc", "co.notcask.otherclassname", null, emptyMap)
     );
-    pluginConfigFile = new File(systemArtifactsDir, "BPlugin-1.0.0.json");
+    pluginConfigFile = new File(systemArtifactsDir2, "BPlugin-1.0.0.json");
     ArtifactConfig pluginConfig2 = new ArtifactConfig(
       ImmutableSet.of(new ArtifactRange(
         Id.Namespace.SYSTEM, "PluginTest", new ArtifactVersion("0.9.0"), new ArtifactVersion("2.0.0"))),

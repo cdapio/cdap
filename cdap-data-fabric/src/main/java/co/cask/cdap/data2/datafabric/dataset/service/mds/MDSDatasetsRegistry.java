@@ -21,7 +21,7 @@ import co.cask.cdap.data2.datafabric.dataset.DatasetMetaTableUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.tx.TransactionalDatasetRegistry;
-import co.cask.tephra.TransactionSystemClient;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
@@ -38,7 +38,7 @@ public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDataset
   private DatasetMetaTableUtil util;
 
   @Inject
-  public MDSDatasetsRegistry(TransactionSystemClient txClient,
+  public MDSDatasetsRegistry(TransactionSystemClientService txClient,
                              @Named("datasetMDS") DatasetFramework framework) {
     super(txClient);
     this.dsFramework = framework;
@@ -46,11 +46,13 @@ public class MDSDatasetsRegistry extends TransactionalDatasetRegistry<MDSDataset
 
   @Override
   public void startUp() throws Exception {
+    super.startUp();
     this.util = new DatasetMetaTableUtil(dsFramework);
   }
 
   @Override
   public void shutDown() throws Exception {
+
   }
 
   @Override

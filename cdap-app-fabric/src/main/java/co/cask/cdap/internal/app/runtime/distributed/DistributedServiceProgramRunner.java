@@ -27,6 +27,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.twill.AbortOnTimeoutEventHandler;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -49,8 +50,9 @@ public class DistributedServiceProgramRunner extends AbstractDistributedProgramR
 
   @Inject
   DistributedServiceProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                  YarnConfiguration hConf, CConfiguration cConf) {
-    super(twillRunner, locationFactory, hConf, cConf);
+                                  YarnConfiguration hConf, CConfiguration cConf,
+                                  TokenSecureStoreUpdater tokenSecureStoreUpdater) {
+    super(twillRunner, locationFactory, hConf, cConf, tokenSecureStoreUpdater);
   }
 
   @Override

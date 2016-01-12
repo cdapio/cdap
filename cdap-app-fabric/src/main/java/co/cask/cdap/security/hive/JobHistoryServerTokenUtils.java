@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.explore.security;
+package co.cask.cdap.security.hive;
 
 import co.cask.cdap.common.security.YarnTokenUtils;
 import com.google.common.base.Throwables;

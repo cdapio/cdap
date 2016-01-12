@@ -17,11 +17,11 @@
 package co.cask.cdap.notifications.service.inmemory;
 
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.service.AbstractNotificationService;
 import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -39,7 +39,8 @@ public class InMemoryNotificationService extends AbstractNotificationService {
   private ListeningExecutorService executorService;
 
   @Inject
-  public InMemoryNotificationService(DatasetFramework dsFramework, TransactionSystemClient transactionSystemClient,
+  public InMemoryNotificationService(DatasetFramework dsFramework,
+                                     TransactionSystemClientService transactionSystemClient,
                                      NotificationFeedManager feedManager) {
     super(dsFramework, transactionSystemClient, feedManager);
   }

@@ -29,6 +29,7 @@ import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.spark.SparkContextConfig;
 import co.cask.cdap.internal.app.runtime.spark.SparkUtils;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -53,8 +54,9 @@ public class DistributedSparkProgramRunner extends AbstractDistributedProgramRun
 
   @Inject
   public DistributedSparkProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory,
-                                       YarnConfiguration hConf, CConfiguration cConf) {
-    super(twillRunner, locationFactory, createConfiguration(hConf), cConf);
+                                       YarnConfiguration hConf, CConfiguration cConf,
+                                       TokenSecureStoreUpdater tokenSecureStoreUpdater) {
+    super(twillRunner, locationFactory, createConfiguration(hConf), cConf, tokenSecureStoreUpdater);
   }
 
   @Override

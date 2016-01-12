@@ -44,6 +44,8 @@ import co.cask.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import co.cask.cdap.data2.dataset2.DefaultDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetFramework;
 import co.cask.cdap.data2.metrics.DatasetMetricsReporter;
+import co.cask.cdap.data2.transaction.DelegatingTransactionSystemClientService;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.explore.client.DiscoveryExploreClient;
 import co.cask.cdap.explore.client.ExploreFacade;
 import co.cask.cdap.internal.test.AppJarHelper;
@@ -136,6 +138,7 @@ public abstract class DatasetServiceTestBase {
     txManager = new TransactionManager(txConf);
     txManager.startAndWait();
     InMemoryTxSystemClient txSystemClient = new InMemoryTxSystemClient(txManager);
+    TransactionSystemClientService txSystemClientService = new DelegatingTransactionSystemClientService(txSystemClient);
 
     final Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -173,7 +176,7 @@ public abstract class DatasetServiceTestBase {
     TransactionExecutorFactory txExecutorFactory = injector.getInstance(TransactionExecutorFactory.class);
 
     MDSDatasetsRegistry mdsDatasetsRegistry =
-      new MDSDatasetsRegistry(txSystemClient, new InMemoryDatasetFramework(registryFactory, modules, cConf));
+      new MDSDatasetsRegistry(txSystemClientService, new InMemoryDatasetFramework(registryFactory, modules, cConf));
 
     ExploreFacade exploreFacade = new ExploreFacade(new DiscoveryExploreClient(discoveryService), cConf);
     namespaceClient = new InMemoryNamespaceClient();

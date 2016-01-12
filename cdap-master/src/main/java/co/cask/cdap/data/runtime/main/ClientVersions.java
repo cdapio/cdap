@@ -38,10 +38,10 @@ public class ClientVersions {
 
   public static String getKafkaVersion() {
     URL kafkaJar = KafkaClient.class.getResource("/" + KafkaClient.class.getName().replace(".", "/") + ".class");
-    // kafkaJar.getPath() looks like jar:file:/a/b/c/d/kafka_2.10-0.8.2.2.jar
+    // kafkaJar.getPath() looks like jar:file:/a/b/c/d/kafka-clients-0.8.2.2.jar
     String[] tokens = kafkaJar.getPath().split("!")[0].split("/");
     String jarFilename = tokens[tokens.length - 1];
-    Matcher matcher = Pattern.compile("kafka_2.10-(\\d+\\.\\d+\\.\\d+\\.\\d+)\\.jar").matcher(jarFilename);
+    Matcher matcher = Pattern.compile("kafka-clients-(\\d+\\.\\d+\\.\\d+\\.\\d+)\\.jar").matcher(jarFilename);
     if (matcher.find()) {
       return matcher.group(1);
     }
@@ -50,7 +50,9 @@ public class ClientVersions {
   }
 
   public static void main(String[] args) {
-    ClientVersions.getKafkaVersion();
+    System.out.println("Hadoop version: " + ClientVersions.getHadoopVersion());
+    System.out.println("ZooKeeper version: " + ClientVersions.getZooKeeperVersion());
+    System.out.println("Kafka version: " + ClientVersions.getKafkaVersion());
   }
 
 }

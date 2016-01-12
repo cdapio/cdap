@@ -36,8 +36,6 @@ import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
 import co.cask.cdap.common.runtime.DaemonMain;
 import co.cask.cdap.common.service.RetryOnStartFailureService;
 import co.cask.cdap.common.service.RetryStrategies;
-import co.cask.cdap.common.startup.CheckRunner;
-import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -51,6 +49,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -58,10 +57,10 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
@@ -70,10 +69,10 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -88,6 +87,7 @@ import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.apache.twill.internal.zookeeper.LeaderElection;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -167,6 +167,22 @@ public class MasterServiceMain extends DaemonMain {
     this.serviceStore = injector.getInstance(ServiceStore.class);
     this.secureStoreUpdater = baseInjector.getInstance(TokenSecureStoreUpdater.class);
     this.leaderElection = createLeaderElection();
+    // leader election will normally stay running. Will only stop if there was some issue starting up.
+    this.leaderElection.addListener(new ServiceListenerAdapter() {
+      @Override
+      public void terminated(Service.State from) {
+        if (!stopped) {
+          System.exit(1);
+        }
+      }
+
+      @Override
+      public void failed(Service.State from, Throwable failure) {
+        if (!stopped) {
+          System.exit(1);
+        }
+      }
+    }, MoreExecutors.sameThreadExecutor());
   }
 
   @Override
@@ -183,28 +199,6 @@ public class MasterServiceMain extends DaemonMain {
       URLConnections.setDefaultUseCaches(false);
     } catch (IOException e) {
       LOG.error("Could not disable caching of URLJarFiles. This may lead to 'too many open files` exception.", e);
-    }
-
-    ConfigurationLogger.logImportantConfig(cConf);
-    LOG.info("Hadoop subsystem versions:");
-    LOG.info("  Hadoop version: {}", ClientVersions.getHadoopVersion());
-    LOG.info("  ZooKeeper version: {}", ClientVersions.getZooKeeperVersion());
-    LOG.info("  Kafka version: {}", ClientVersions.getKafkaVersion());
-    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
-      LOG.info("  Hive version: {}", ExploreServiceUtils.getHiveVersion());
-    }
-
-    CheckRunner startupCheckRunner = getStartupCheckRunner();
-    List<CheckRunner.Failure> failures = startupCheckRunner.runChecks();
-    if (!failures.isEmpty()) {
-      for (CheckRunner.Failure failure : failures) {
-        LOG.error("{} failed: {}", failure.getName(), failure.getException().getMessage());
-        if (failure.getException().getCause() != null) {
-          LOG.error("  Root cause: {}", ExceptionUtils.getRootCauseMessage(failure.getException().getCause()));
-        }
-      }
-      throw new RuntimeException("Errors detected while starting up master. " +
-                                   "Please check the logs, address all errors, then start the master service again.");
     }
 
     createSystemHBaseNamespace();
@@ -229,7 +223,11 @@ public class MasterServiceMain extends DaemonMain {
     LOG.info("Stopping {}", Constants.Service.MASTER_SERVICES);
     stopped = true;
 
-    stopQuietly(leaderElection);
+    // if leader election failed to start, its listener will stop the master.
+    // In that case, we don't want to try stopping it again, as it will log confusing exceptions
+    if (leaderElection.isRunning()) {
+      stopQuietly(leaderElection);
+    }
     stopQuietly(serviceStore);
     stopQuietly(metricsCollectionService);
     stopQuietly(kafkaClient);
@@ -273,46 +271,6 @@ public class MasterServiceMain extends DaemonMain {
       LOG.error("Error obtaining localhost address", e);
       throw Throwables.propagate(e);
     }
-  }
-
-  private CheckRunner getStartupCheckRunner() {
-    CheckRunner.Builder checkRunnerBuilder = CheckRunner.builder(baseInjector);
-
-    if (!cConf.getBoolean(Constants.Startup.CHECKS_ENABLED)) {
-      return checkRunnerBuilder.build();
-    }
-
-    // add all checks in the configured packages
-    String startupCheckPackages = cConf.get(Constants.Startup.CHECK_PACKAGES);
-    if (!Strings.isNullOrEmpty(startupCheckPackages)) {
-      for (String checkPackage : Splitter.on(',').trimResults().split(startupCheckPackages)) {
-        LOG.debug("Adding startup checks from package {}", checkPackage);
-        try {
-          checkRunnerBuilder.addChecksInPackage(checkPackage);
-        } catch (IOException e) {
-          // not expected unless something is weird with the local filesystem
-          LOG.error("Unable to examine classpath to look for startup checks in package {}.", checkPackage, e);
-          throw new RuntimeException(e);
-        }
-      }
-    }
-
-    // add all checks specified directly by name
-    String startupCheckClassnames = cConf.get(Constants.Startup.CHECK_CLASSES);
-    if (!Strings.isNullOrEmpty(startupCheckClassnames)) {
-      for (String className : Splitter.on(',').trimResults().split(startupCheckClassnames)) {
-        LOG.debug("Adding startup check {}.", className);
-        try {
-          checkRunnerBuilder.addClass(className);
-        } catch (ClassNotFoundException e) {
-          LOG.error("Startup check {} not found. " +
-                      "Please check for typos and ensure the class is available on the classpath.", className);
-          throw new RuntimeException(e);
-        }
-      }
-    }
-
-    return checkRunnerBuilder.build();
   }
 
   /**
@@ -447,13 +405,25 @@ public class MasterServiceMain extends DaemonMain {
         // Start app-fabric and dataset services
         for (Service service : services) {
           LOG.info("Starting service in master: {}", service);
-          service.startAndWait();
+          try {
+            service.startAndWait();
+          } catch (Throwable t) {
+            // shut down the executor and stop the twill app,
+            // then throw an exception to cause the leader election service to stop
+            // leaderelection's listener will then shutdown the master
+            stop(true);
+            throw new RuntimeException(String.format("Unable to start service %s: %s", service, t.getMessage()));
+          }
         }
       }
 
       @Override
       public void follower() {
         LOG.info("Became follower for master services");
+        stop(stopped);
+      }
+
+      private void stop(boolean shouldTerminateApp) {
         // Shutdown the retry executor so that no re-run of the twill app will be attempted
         if (executor != null) {
           executor.shutdownNow();
@@ -463,7 +433,7 @@ public class MasterServiceMain extends DaemonMain {
           secureStoreUpdateCancellable.cancel();
         }
         // If the master process has been explcitly stopped, stop the twill application as well.
-        if (stopped) {
+        if (shouldTerminateApp) {
           LOG.info("Stopping master twill application");
           TwillController twillController = controller.get();
           if (twillController != null) {
@@ -473,8 +443,11 @@ public class MasterServiceMain extends DaemonMain {
         // Stop local services last since DatasetService is running locally
         // and remote services need it to preserve states.
         for (Service service : Lists.reverse(services)) {
-          LOG.info("Stopping service in master: {}", service);
-          stopQuietly(service);
+          // service may not be running if there was an error in startup
+          if (service.isRunning()) {
+            LOG.info("Stopping service in master: {}", service);
+            stopQuietly(service);
+          }
         }
         services.clear();
 
@@ -766,7 +739,7 @@ public class MasterServiceMain extends DaemonMain {
     // Add all the conf files needed by hive as resources available to containers
     File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                    cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
-    Iterable<File> hiveConfFilesFiles = ExploreServiceUtils.getClassPathJarsFiles(hiveConfFiles);
+    Iterable<File> hiveConfFilesFiles = ExploreUtils.getClassPathJarsFiles(hiveConfFiles);
     Set<String> addedFiles = Sets.newHashSet();
     for (File file : hiveConfFilesFiles) {
       if (file.getName().matches(".*\\.xml") && !file.getName().equals("logback.xml")) {

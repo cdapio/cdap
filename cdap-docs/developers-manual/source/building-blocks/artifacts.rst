@@ -76,7 +76,8 @@ CDAP. In such scenarios, a :ref:`system artifact <plugins-deployment-system>` ca
 
 System artifacts cannot be added through the RESTful API, but must be added by placing the
 artifact in a special directory. For Distributed CDAP, this directory is defined by the
-``app.artifact.dir`` setting in :ref:`cdap-site.xml <appendix-cdap-site.xml>`. It defaults to
+``app.artifact.dir`` setting in :ref:`cdap-site.xml <appendix-cdap-site.xml>`. Multiple directories
+can be defined by separating them with a semicolon. It defaults to
 ``/opt/cdap/master/artifacts``. For the CDAP Standalone SDK, the directory is set to the
 ``artifacts`` directory.
 

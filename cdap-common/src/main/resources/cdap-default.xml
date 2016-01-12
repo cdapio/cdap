@@ -211,7 +211,7 @@
     <name>app.artifact.dir</name>
     <value>/opt/cdap/master/artifacts</value>
     <description>
-      Directory where all system artifacts and their corresponding config files are stored
+      Semicolon-separated list of directories where all system artifacts and their corresponding config files are stored
     </description>
   </property>
 
@@ -896,6 +896,18 @@
     <value>2</value>
     <description>
       Number of cores for Master Service instance
+    </description>
+  </property>
+
+  <property>
+    <name>master.startup.service.timeout.seconds</name>
+    <value>600</value>
+    <description>
+      Timeout in seconds for master services to wait for their dependent services to be available.
+      For example, the dataset executor master service requires the transaction service, and will wait for
+      the transaction service to become available while it is starting up.
+      If the timeout is hit, the service will fail to start and the master will shut itself down.
+      If set to 0 or below, master services will not wait for their dependent services to start before starting themselves.
     </description>
   </property>
 
