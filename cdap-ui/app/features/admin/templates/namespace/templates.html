@@ -27,45 +27,49 @@
   <label class="label-control">Choose Templates</label>
   <div class="select-wrapper">
     <select ng-model="TemplatesController.templateType"
-            data-ng-options="o for o in TemplatesController.templationoptions"
+            data-ng-options="o for o in TemplatesController.pipelineTypeOptions"
+            ng-change="TemplatesController.onPipelineTypeChange()"
             class="form-control">
     </select>
   </div>
 
   <div ng-if="TemplatesController.templateType">
     <label class="label-control">Choose Plugin Type</label>
-    <div ng-if="TemplatesController.templateType === TemplatesController.GLOBALS.etlBatch">
-      <div class="select-wrapper">
-        <select ng-model="TemplatesController.pluginType"
-                data-ng-options="o for o in TemplatesController.pluginoptionsBatch"
-                class="form-control">
-        </select>
-      </div>
+    <div class="select-wrapper">
+      <select ng-model="TemplatesController.pluginType"
+              data-ng-options="o for o in TemplatesController.pluginTypeOptions"
+              ng-change="TemplatesController.getPluginsList()"
+              class="form-control">
+      </select>
     </div>
-
-    <div ng-if="TemplatesController.templateType === TemplatesController.GLOBALS.etlRealtime">
-      <div class="select-wrapper">
-        <select ng-model="TemplatesController.pluginType"
-                data-ng-options="o for o in TemplatesController.pluginoptionsRealtime"
-                class="form-control">
-        </select>
-      </div>
-    </div>
-
   </div>
 
   <div ng-if="TemplatesController.pluginList.length > 0">
     <label class="label-control">Choose Plugin</label>
     <div class="select-wrapper">
-      <select ng-model="TemplatesController.pluginName" class="form-control">
-        <option ng-repeat="plugin in TemplatesController.pluginList" value="{{plugin.name}}">{{plugin.name}}</option>
+      <select ng-model="TemplatesController.pluginName"
+              ng-change="TemplatesController.onPluginSelect()"
+              class="form-control">
+        <option ng-repeat="plugin in TemplatesController.pluginList" value="{{plugin}}">{{plugin}}</option>
       </select>
     </div>
   </div>
+
+  <div ng-if="TemplatesController.pluginVersions.length > 0">
+    <label class="label-control">Choose Version</label>
+    <div class="select-wrapper">
+      <select ng-model="TemplatesController.plugin"
+              ng-change="TemplatesController.onPluginVersionSelect()"
+              ng-options="plugin.artifact.version for plugin in TemplatesController.pluginVersions"
+              class="form-control">
+      </select>
+    </div>
+  </div>
+
 </div>
 
 
-<div ng-if="TemplatesController.pluginName && TemplatesController.configFetched">
+<div ng-if="TemplatesController.configFetched">
   <h3>Plugin Properties</h3>
 
   <label class="label-control">Template Name</label>
@@ -74,7 +78,7 @@
   <label class="label-control">Template Description</label>
   <textarea class="form-control" ng-model="TemplatesController.pluginDescription"></textarea>
 
-  <div ng-repeat="group in TemplatesController.groups.position">
+  <!-- <div ng-repeat="group in TemplatesController.groups.position">
     <div class="widget-group-container">
       <h4>{{TemplatesController.groups[group].display}}</h4>
       <div ng-repeat="field in TemplatesController.groups[group].position">
@@ -106,6 +110,41 @@
         </div>
       </div>
     </div>
+  </div> -->
+
+  <div ng-repeat="group in TemplatesController.groupsConfig.groups">
+    <div class="widget-group-container">
+      <h4>{{::group.display}}</h4>
+      <div ng-repeat="field in group.fields">
+        <div ng-if="field.name !== TemplatesController.groupsConfig.outputSchema.schemaProperty">
+
+          <div class="form-group">
+            <label class="control-label">
+              <span>{{::field.label}}</span>
+              <span class="fa fa-info-circle"
+                    tooltip="{{::field.description}}"
+                    tooltip-placement="right"
+                    tooltip-append-to-body="true">
+              </span>
+              <span class="fa fa-asterisk" ng-if="TemplatesController.pluginConfig._backendProperties[field.name].required"></span>
+              <small class="text-danger" ng-if="TemplatesController.pluginConfig._backendProperties[field.name].required && !TemplatesController.pluginConfig.properties[field.name]">{{::NodeConfigController.requiredPropertyError}}</small>
+            </label>
+
+            <div>
+              <div data-name="field"
+                   class="my-widget-container"
+                   ng-class="{'select-wrapper': field.widget === 'select'}"
+                   data-model="TemplatesController.pluginConfig.properties[field.name]"
+                   data-myconfig="field"
+                   data-properties="TemplatesController.pluginConfig.properties"
+                   widget-container>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
   </div>
 
   <div>
@@ -113,15 +152,23 @@
       <h4>Output Schema</h4>
 
       <fieldset ng-disabled="TemplatesController.isDisabled">
+        <!-- <my-schema-editor
+          ng-model="TemplatesController.pluginConfig['outputSchema']"
+          data-disabled="TemplatesController.groupsConfig.outputSchema.implicitSchema"
+          plugin="TemplatesController.pluginConfig.properties"
+          config="TemplatesController.groupsConfig.outputSchema.schemaProperties"
+          ></my-schema-editor> -->
         <my-schema-editor
           ng-model="TemplatesController.pluginConfig['outputSchema']"
-          data-disabled="TemplatesController.pluginConfig.implicitSchema"
-          plugin="TemplatesController.pluginConfig.properties"
-          config="TemplatesController.schemaProperties"
-          ></my-schema-editor>
+          data-disabled="TemplatesController.groupsConfig.outputSchema.implicitSchema"
+          plugin-properties="TemplatesController.pluginConfig.properties"
+          config="TemplatesController.groupsConfig.outputSchema.schemaProperties">
+        </my-schema-editor>
       </fieldset>
 
     </div>
   </div>
+
+  <pre>{{ TemplatesController.pluginConfig | json: 4 }}</pre>
 
 </div>
