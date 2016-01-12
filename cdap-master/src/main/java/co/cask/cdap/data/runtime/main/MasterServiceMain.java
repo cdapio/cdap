@@ -641,6 +641,8 @@ public class MasterServiceMain extends DaemonMain {
 
         if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
           preparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+        } else {
+          preparer.addJVMOptions("-Dtwill.disable.kafka=true");
         }
 
         // Add logback xml

@@ -876,6 +876,14 @@
   </property>
 
   <property>
+    <name>master.collect.app.containers.log</name>
+    <value>false</value>
+    <description>
+      Determines if application container logs are streamed back to the CDAP Master process log
+    </description>
+  </property>
+
+  <property>
     <name>master.service.max.instances</name>
     <value>5</value>
     <description>
