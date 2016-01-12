@@ -71,7 +71,7 @@ public class ArtifactRepository {
   private final ArtifactStore artifactStore;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ArtifactInspector artifactInspector;
-  private final File systemArtifactDir;
+  private final List<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
 
   @Inject
@@ -81,7 +81,15 @@ public class ArtifactRepository {
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, baseUnpackDir);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory, baseUnpackDir);
-    this.systemArtifactDir = new File(cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR));
+    this.systemArtifactDirs = new ArrayList<>();
+    for (String dir : cConf.get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR).split(";")) {
+      File file = new File(dir);
+      if (!file.isDirectory()) {
+        LOG.warn("Ignoring {} because it is not a directory.", file);
+        continue;
+      }
+      systemArtifactDirs.add(file);
+    }
     this.configReader = new ArtifactConfigReader();
   }
 
@@ -493,31 +501,33 @@ public class ArtifactRepository {
 
     // scan the directory for artifact .jar files and config files for those artifacts
     List<SystemArtifactInfo> systemArtifacts = new ArrayList<>();
-    for (File jarFile : DirUtils.listFiles(systemArtifactDir, "jar")) {
-      // parse id from filename
-      Id.Artifact artifactId;
-      try {
-        artifactId = Id.Artifact.parse(Id.Namespace.SYSTEM, jarFile.getName());
-      } catch (IllegalArgumentException e) {
-        LOG.warn(String.format("Skipping system artifact '%s' because the name is invalid: ", e.getMessage()));
-        continue;
-      }
+    for (File systemArtifactDir : systemArtifactDirs) {
+      for (File jarFile : DirUtils.listFiles(systemArtifactDir, "jar")) {
+        // parse id from filename
+        Id.Artifact artifactId;
+        try {
+          artifactId = Id.Artifact.parse(Id.Namespace.SYSTEM, jarFile.getName());
+        } catch (IllegalArgumentException e) {
+          LOG.warn(String.format("Skipping system artifact '%s' because the name is invalid: ", e.getMessage()));
+          continue;
+        }
 
-      // check for a corresponding .json config file
-      String artifactFileName = jarFile.getName();
-      String configFileName = artifactFileName.substring(0, artifactFileName.length() - ".jar".length()) + ".json";
-      File configFile = new File(systemArtifactDir, configFileName);
+        // check for a corresponding .json config file
+        String artifactFileName = jarFile.getName();
+        String configFileName = artifactFileName.substring(0, artifactFileName.length() - ".jar".length()) + ".json";
+        File configFile = new File(systemArtifactDir, configFileName);
 
-      try {
-        // read and parse the config file if it exists. Otherwise use an empty config with the artifact filename
-        ArtifactConfig artifactConfig = configFile.isFile() ?
-          configReader.read(artifactId.getNamespace(), configFile) : new ArtifactConfig();
+        try {
+          // read and parse the config file if it exists. Otherwise use an empty config with the artifact filename
+          ArtifactConfig artifactConfig = configFile.isFile() ?
+            configReader.read(artifactId.getNamespace(), configFile) : new ArtifactConfig();
 
-        validateParentSet(artifactId, artifactConfig.getParents());
-        validatePluginSet(artifactConfig.getPlugins());
-        systemArtifacts.add(new SystemArtifactInfo(artifactId, jarFile, artifactConfig));
-      } catch (InvalidArtifactException e) {
-        LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", artifactFileName), e);
+          validateParentSet(artifactId, artifactConfig.getParents());
+          validatePluginSet(artifactConfig.getPlugins());
+          systemArtifacts.add(new SystemArtifactInfo(artifactId, jarFile, artifactConfig));
+        } catch (InvalidArtifactException e) {
+          LOG.warn(String.format("Could not add system artifact '%s' because it is invalid.", artifactFileName), e);
+        }
       }
     }
 
