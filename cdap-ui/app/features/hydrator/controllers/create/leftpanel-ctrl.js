@@ -65,6 +65,7 @@ class LeftPanelController {
     this.PluginActionsFactory.fetchSources(params);
     this.PluginActionsFactory.fetchTransforms(params);
     this.PluginActionsFactory.fetchSinks(params);
+    this.PluginActionsFactory.fetchTemplates(params);
 
   }
 

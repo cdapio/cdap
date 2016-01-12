@@ -15,11 +15,12 @@
  */
 
 class PluginActionsFactory {
-  constructor(PluginsDispatcher, myPipelineApi, PluginConfigFactory, GLOBALS) {
+  constructor(PluginsDispatcher, myPipelineApi, PluginConfigFactory, GLOBALS, mySettings) {
     this.dispatcher = PluginsDispatcher.getDispatcher();
     this.api = myPipelineApi;
     this.pluginConfigApi = PluginConfigFactory;
     this.GLOBALS = GLOBALS;
+    this.mySettings = mySettings;
   }
   fetchSources(params) {
     let type = this.GLOBALS.pluginTypes[params.pipelineType]['source'];
@@ -75,8 +76,16 @@ class PluginActionsFactory {
           err => this.dispatcher.dispatch('onPluginConfigFetch', {err: err, params: requiredParams})
         );
   }
+  fetchTemplates(params) {
+    this.mySettings
+        .get('pluginTemplates')
+        .then(res => {
+          this.dispatcher.dispatch('onPluginTemplatesFetch', res, params);
+        });
+
+  }
 }
 
-PluginActionsFactory.$inject = ['PluginsDispatcher', 'myPipelineApi', 'PluginConfigFactory', 'GLOBALS'];
+PluginActionsFactory.$inject = ['PluginsDispatcher', 'myPipelineApi', 'PluginConfigFactory', 'GLOBALS', 'mySettings'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('PluginActionsFactory', PluginActionsFactory);
