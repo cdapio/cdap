@@ -60,8 +60,8 @@ Complete instructions, step-by-step, for using the Admin Console *Add Service* W
 Run the Cloudera Manager Admin Console *Add Service* Wizard and select *CDAP*.
 When completing the Wizard, these notes may help:
 
-- *Add Service* Wizard, Page 2: **Optional Hive dependency** is for the optional CDAP
-  "Explore" component which can be enabled later.
+- *Add Service* Wizard, Page 2: **Hive dependency** is for the CDAP
+  "Explore" component which is enabled by default.
  
 - *Add Service* Wizard, Page 3: **Choosing Role Assignments**. Ensure CDAP roles are assigned to hosts colocated
   with service or gateway roles for HBase, HDFS, Yarn, and optionally Hive.

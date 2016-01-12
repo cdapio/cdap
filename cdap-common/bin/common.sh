@@ -35,7 +35,7 @@ die() {
   exit 1
 }
 
-# usage: cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml false
+# usage: cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml true
 cdap_get_conf() {
   local __pn=${1} __fn=${2} __default=${3} __result=
   # Check for xmllint
@@ -223,7 +223,7 @@ cdap_set_classpath() {
 #   https://github.com/caskdata/cm_csd/blob/develop/src/scripts/cdap-control.sh
 #   Any changes to this function must be compatible with the CSD's invocation
 cdap_set_hive_classpath() {
-  local __explore=${EXPLORE_ENABLED:-$(cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml false)}
+  local __explore=${EXPLORE_ENABLED:-$(cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
   if [[ "${__explore}" == "true" ]]; then
     if [ -z "${HIVE_HOME}" -o -z "${HIVE_CONF_DIR}" -o -z "${HADOOP_CONF_DIR}" ]; then
       __secure=${KERBEROS_ENABLED:-$(cdap_get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)}
