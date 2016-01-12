@@ -47,23 +47,12 @@ function download_includes() {
   local source_rst="${target_includes_dir}/../../source/_includes/installation"
   local pattern="\|distribution\|"  
   local distributions="ambari mapr package-managers"
-  local types="1-installation 2-configuration 3-starting 4-upgrading"
+  local types="1-installation 2-configuration 3-starting"
   for dist in ${distributions}; do
     for type in ${types}; do
       rewrite_references_sed "${source_rst}/${type}.txt" "${target_includes_dir}/${dist}-${type}.rst" "${pattern}" "${dist}"
     done
     echo
-  done
-  
-  echo "Providing distribution-specific cdap-site.xml.example files"
-  local source_xml="../../cdap-distributions/src/etc/cdap/conf.dist/cdap-site.xml.example"
-  local distributions="mapr package-managers"
-  for dist in ${distributions}; do
-    case "${dist}" in
-      mapr             ) local hdfs_user="cdap";;
-      package-managers ) local hdfs_user="yarn";;
-    esac
-    rewrite_references_sed "${source_xml}" "${target_includes_dir}/${dist}-cdap-site.xml.example" "<value>yarn</value>" "<value>${hdfs_user}</value>"
   done
 }
 
