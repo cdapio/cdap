@@ -101,7 +101,7 @@ To create this application, called *streamETLApp*, you can use either the HTTP R
 - Using the :ref:`Lifecycle RESTful API <http-restful-api-lifecycle-create-app>`::
 
     $ curl -w'\n' -X PUT localhost:10000/v3/namespaces/default/apps/streamETLApp \
-        -H 'Content-Type: application/json' -d @config.json 
+        -H 'Content-Type: application/json' -d @config.json
 
 - Using the :ref:`CDAP CLI <cli>`:
 
@@ -193,7 +193,290 @@ property replaces the ``schedule`` property of an ETL Batch Application.
 
 In the example code above, we will use a *ProjectionTransform* (a type of Transform) to drop certain
 columns in the incoming data. A *StreamSink* in the final step needs a data field property
-that it will use as the content for the data to be written. 
+that it will use as the content for the data to be written.
+
+Non-linear Executions in Pipelines
+----------------------------------
+
+ETL Applications support directed acyclic graphs in pipelines, which allows for the
+non-linear execution of pipeline stages.
+
+Fork in Pipeline
+................
+In this example, a pipeline reads from the stream ``purchaseStats``. It writes the stream events
+to the table ``replicaTable``, while at the same time it writes just the ``userIds`` to the ``usersTable``
+when a user's purchase price is greater than 1000. This filtering logic is applied using an included script
+``spendingUsersScript``:
+
+.. image:: ../_images/forkInPipeline.png
+   :width: 6in
+   :align: center
+
+.. container:: highlight
+
+  .. parsed-literal::
+  
+    {
+      "artifact": {
+        "name": "cdap-etl-batch",
+        "version": "|version|",
+        "scope": "SYSTEM"
+      },
+      "config": {
+        "source": {
+          "name": "purchaseStats",
+          "plugin": {
+            "name": "Stream",
+            "properties": {
+              "format": "csv",
+              "schema": "{
+                \"type\":\"record\",
+                \"name\":\"etlSchemaBody\",
+                \"fields\":[
+                  {\"name\":\"userId\",\"type\":\"string\"},
+                  {\"name\":\"purchaseItem\",\"type\":\"string\"},
+                  {\"name\":\"purchasePrice\",\"type\":\"long\"}
+                ]
+              }",
+              "name": "testStream",
+              "duration": "1d"
+            }
+          }
+        },
+        "sinks": [
+          {
+            "name": "replicaTable",
+            "plugin": {
+              "name": "Table",
+              "properties": {
+                "schema": "{
+                  \"type\":\"record\",
+                  \"name\":\"etlSchemaBody\",
+                  \"fields\":[
+                    {\"name\":\"userId\",\"type\":\"string\"},
+                    {\"name\":\"purchaseItem\",\"type\":\"string\"},
+                    {\"name\":\"purchasePrice\",\"type\":\"long\"}
+                  ]
+                }",
+                "name": "replicaTable",
+                "schema.row.field": "userId"
+              }
+            }
+          },
+          {
+            "name": "usersTable",
+            "plugin": {
+              "name": "Table",
+              "properties": {
+                "schema": "{
+                  \"type\":\"record\",
+                  \"name\":\"etlSchemaBody\",
+                  \"fields\":[
+                    {\"name\":\"userId\",\"type\":\"string\"}
+                  ]
+                }",
+                "name": "targetCustomers",
+                "schema.row.field": "userId"
+              }
+            }
+          }
+        ],
+        "transforms": [
+          {
+            "name": "spendingUsersScript",
+            "plugin": {
+              "name": "Script",
+              "properties": {
+                "script": "function transform(input, context) {
+                            if (input.purchasePrice > 1000) {
+                              return {'userId' : input.userId};
+                            }
+                          }",
+                "schema": "{
+                  \"type\":\"record\",
+                  \"name\":\"etlSchemaBody\",
+                  \"fields\":[
+                    {\"name\":\"userId\",\"type\":\"string\"}
+                  ]
+                }"
+              }
+            }
+          }
+        ],
+        "connections": [
+          {
+            "from": "purchaseStats",
+            "to": "replicaTable"
+          },
+          {
+            "from": "purchaseStats",
+            "to": "spendingUsersScript"
+          },
+          {
+            "from": "spendingUsersScript",
+            "to": "usersTable"
+          }
+        ],
+        "schedule": "\* \* \* \* \*",
+        "engine": "mapreduce"
+      }
+    }
+
+Pipeline connections can be configured to fork from a stage, with the output of the stage sent to
+two or more configured stages; in the above example,
+the output record from ``purchaseStats`` will be sent to both ``replicaTable`` and ``spendingUsersScript`` stages.
+
+Merging Stages in Pipeline
+..........................
+Forked transform stages can merge together at a transform or a sink stage.
+A merge does not join, or modify records in any way. It simply means that multiple stages can write to the same stage.
+The only requirement is that all stages must output records of the same schema to the merging stage. Note that
+the order of records sent from the forked stages to the merging stage will not be defined.
+
+In this next example, ``purchaseStream`` has purchase data with fields ``userid``, ``item``, ``count``, and ``price``.
+The stream events source stage ``purchaseStream`` forks, and records are sent to both of the
+transforms ``userRewards`` and ``itemRewards``.
+
+The ``userRewards`` transform script looks up valued customers in the table ``hvCustomers``,
+to check if ``userid`` is a valued customer and assigns higher rewards if they are.
+After calculating the rewards, this transform sends an output record in the format ``userid(string), rewards(double)``.
+
+The ``itemRewards`` transform script awards higher rewards for bulk purchases and sends output records in the 
+same format, ``userid(string), rewards(double)``.
+
+The rewards records are merged at the sink ``rewardsSink``; note that the incoming schema from the transforms
+``userRewards`` and ``itemRewards`` are the same, and that the order of received records will vary.
+
+.. image:: ../_images/mergeInPipeline.png
+   :width: 8in
+   :align: center
+
+.. container:: highlight
+
+  .. parsed-literal::
+  
+    {
+      "artifact": {
+          "name": "cdap-etl-batch",
+          "version": "|version|",
+          "scope": "SYSTEM"
+      },
+      "name": "RewardsPipeline",
+      "config": {
+        "source": {
+          "name": "purchaseStream",
+          "plugin": {
+            "name": "Stream",
+            "properties": {
+              "format": "csv",
+              "schema": "{
+                \"type\":\"record\",
+                \"name\":\"etlSchemaBody\",
+                \"fields\":[
+                  {\"name\":\"userid\",\"type\":\"string\"},
+                  {\"name\":\"item\",\"type\":\"string\"},
+                  {\"name\":\"count\",\"type\":\"int\"},
+                  {\"name\":\"price\",\"type\":\"long\"}
+                ]
+              }",
+              "name": "purchases",
+              "duration": "1d"
+            }
+          }
+        },
+        "sinks": [
+          {
+            "name": "rewardsSink",
+            "plugin": {
+              "name": "TPFSAvro",
+              "properties": {
+                "schema": "{
+                  \"type\":\"record\",
+                  \"name\":\"etlSchemaBody\",
+                  \"fields\":[
+                    {\"name\":\"userid\",\"type\":\"string\"},
+                    {\"name\":\"rewards\",\"type\":\"double\"}
+                  ]
+                }"
+              }
+            }
+          }
+        ],
+        "transforms": [
+          {
+            "name": "userRewards",
+            "plugin": {
+              "name": "Script",
+              "properties": {
+                "script": "function transform(input, context) {
+                  var rewards = 5;
+                  if (context.getLookup('hvCustomers').lookup(input.userid) !== null) {
+                    context.getLogger().info(\"user \" + input.userid + \" is a valued customer\");
+                    rewards = 100;
+                  } else {
+                    context.getLogger().info(\"user \" + input.userid + \" is not a valued customer\");
+                  }
+                  return {'userid': input.userid, 'rewards': rewards};
+                }",
+                "schema": "{
+                  \"type\":\"record\",
+                  \"name\":\"etlSchemaBody\",
+                  \"fields\":[
+                    {\"name\":\"userid\",\"type\":\"string\"},
+                    {\"name\":\"rewards\",\"type\":\"double\"}
+                  ]
+                }",
+                "lookup": "{\"tables\":{\"hvCustomers\":{\"type\":\"DATASET\",\"datasetProperties\":{}}}}"
+              }
+            }
+          },
+          {
+            "name": "itemRewards",
+            "plugin": {
+              "name": "Script",
+              "properties": {
+                "script": "function transform(input, context) {
+                  var rewards = 5;
+                  if (input.count > 20) {
+                    rewards = 50;
+                  }
+                  return {'userid':input.userid, 'rewards':rewards};
+                }",
+                "schema": "{
+                  \"type\":\"record\",
+                  \"name\":\"etlSchemaBody\",
+                  \"fields\":[
+                    {\"name\":\"userid\",\"type\":\"string\"},
+                    {\"name\":\"rewards\",\"type\":\"double\"}
+                  ]
+                }"
+              }
+            }
+          }
+        ],
+        "connections": [
+          {
+            "from": "purchaseStream",
+            "to": "userRewards"
+          },
+          {
+            "from": "userRewards",
+            "to": "rewardsSink"
+          },
+          {
+            "from": "purchaseStream",
+            "to": "itemRewards"
+          },
+          {
+            "from": "itemRewards",
+            "to": "rewardsSink"
+          }
+        ],
+        "comments": [],
+        "schedule": "\* \* \* \* \*",
+        "engine": "mapreduce"
+      }
+    }
 
 Sample Application Configurations
 ---------------------------------
