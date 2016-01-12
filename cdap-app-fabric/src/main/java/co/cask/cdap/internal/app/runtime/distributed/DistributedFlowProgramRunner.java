@@ -32,6 +32,7 @@ import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.ProgramOptionConstants;
 import co.cask.cdap.internal.app.runtime.flow.FlowUtils;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.security.TokenSecureStoreUpdater;
 import co.cask.tephra.TransactionExecutorFactory;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -62,8 +63,9 @@ public final class DistributedFlowProgramRunner extends AbstractDistributedProgr
   @Inject
   DistributedFlowProgramRunner(TwillRunner twillRunner, LocationFactory locationFactory, YarnConfiguration hConf,
                                CConfiguration cConfig, QueueAdmin queueAdmin, StreamAdmin streamAdmin,
-                               TransactionExecutorFactory txExecutorFactory) {
-    super(twillRunner, locationFactory, hConf, cConfig);
+                               TransactionExecutorFactory txExecutorFactory,
+                               TokenSecureStoreUpdater tokenSecureStoreUpdater) {
+    super(twillRunner, locationFactory, hConf, cConfig, tokenSecureStoreUpdater);
     this.queueAdmin = queueAdmin;
     this.streamAdmin = streamAdmin;
     this.txExecutorFactory = txExecutorFactory;

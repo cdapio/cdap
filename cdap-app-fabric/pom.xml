@@ -149,6 +149,10 @@
       <artifactId>MockFtpServer</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.hive</groupId>
+      <artifactId>hive-service</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

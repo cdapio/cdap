@@ -14,7 +14,7 @@
  * the License.
  */
 
-package co.cask.cdap.data.runtime.main;
+package co.cask.cdap.security;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
@@ -22,9 +22,9 @@ import co.cask.cdap.common.io.FileContextLocationFactory;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.security.YarnTokenUtils;
 import co.cask.cdap.data.security.HBaseTokenUtils;
-import co.cask.cdap.explore.security.HiveTokenUtils;
-import co.cask.cdap.explore.security.JobHistoryServerTokenUtils;
-import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.hive.ExploreUtils;
+import co.cask.cdap.security.hive.HiveTokenUtils;
+import co.cask.cdap.security.hive.JobHistoryServerTokenUtils;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -114,7 +114,7 @@ public final class TokenSecureStoreUpdater implements SecureStoreUpdater {
    * Call this method only if explore is enabled.
    */
   private Configuration getHiveConf() {
-    ClassLoader hiveClassloader = ExploreServiceUtils.getExploreClassLoader();
+    ClassLoader hiveClassloader = ExploreUtils.getExploreClassloader();
     ClassLoader contextClassloader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(hiveClassloader);
 

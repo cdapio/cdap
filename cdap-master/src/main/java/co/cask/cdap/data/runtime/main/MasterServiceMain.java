@@ -49,6 +49,7 @@ import co.cask.cdap.data2.util.hbase.HBaseTableUtil;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.service.ExploreServiceUtils;
+import co.cask.cdap.hive.ExploreUtils;
 import co.cask.cdap.internal.app.services.AppFabricServer;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.guice.LoggingModules;
@@ -56,6 +57,7 @@ import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.security.TokenSecureStoreUpdater;
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
@@ -737,7 +739,7 @@ public class MasterServiceMain extends DaemonMain {
     // Add all the conf files needed by hive as resources available to containers
     File tempDir = DirUtils.createTempDir(new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                                    cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
-    Iterable<File> hiveConfFilesFiles = ExploreServiceUtils.getClassPathJarsFiles(hiveConfFiles);
+    Iterable<File> hiveConfFilesFiles = ExploreUtils.getClassPathJarsFiles(hiveConfFiles);
     Set<String> addedFiles = Sets.newHashSet();
     for (File file : hiveConfFilesFiles) {
       if (file.getName().matches(".*\\.xml") && !file.getName().equals("logback.xml")) {
