@@ -24,6 +24,7 @@ pkgs = ['cdap-hbase-compat-0.96']
 pkgs += ['cdap-hbase-compat-0.98'] if node['cdap']['version'].to_f >= 2.6
 pkgs += ['cdap-hbase-compat-1.0', 'cdap-hbase-compat-1.0-cdh'] if node['cdap']['version'].to_f >= 3.1
 pkgs += ['cdap-hbase-compat-1.1'] if node['cdap']['version'].to_f >= 3.2
+pkgs += ['cdap-hbase-compat-1.0-cdh5.5.0'] if node['cdap']['version'].to_f >= 3.3
 pkgs += ['cdap-hbase-compat-0.94'] if node['cdap']['version'].to_f < 3.1
 
 pkgs.each do |pkg|
