@@ -588,6 +588,9 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
     // Start the workflow
     startProgram(programId);
     waitState(programId, ProgramStatus.RUNNING.name());
+
+    // Wait until we have a run record
+    verifyProgramRuns(programId, "running");
     List<RunRecord> workflowHistoryRuns = getProgramRuns(programId, "running");
     String workflowRunId = workflowHistoryRuns.get(0).getPid();
 
