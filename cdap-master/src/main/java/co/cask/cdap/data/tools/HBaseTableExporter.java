@@ -1,19 +1,17 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+/*
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package co.cask.cdap.data.tools;
 
@@ -43,12 +41,17 @@ import com.google.inject.Injector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.KeyValue;
+import org.apache.hadoop.hbase.KeyValueUtil;
 import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat2;
-import org.apache.hadoop.hbase.mapreduce.Import;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
+import org.apache.hadoop.hbase.mapreduce.TableMapper;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.slf4j.Logger;
@@ -65,7 +68,6 @@ public class HBaseTableExporter {
 
   private static final Logger LOG = LoggerFactory.getLogger(HBaseTableExporter.class);
 
-  private final CConfiguration cConf;
   private final Configuration hConf;
   private final TransactionService txService;
   private final ZKClientService zkClientService;
@@ -74,8 +76,7 @@ public class HBaseTableExporter {
 
   public HBaseTableExporter() throws Exception {
     this.hConf = HBaseConfiguration.create();
-    this.cConf = CConfiguration.create();
-    Injector injector = createInjector(cConf, hConf);
+    Injector injector = createInjector(CConfiguration.create(), hConf);
     this.txClient = injector.getInstance(TransactionSystemClient.class);
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
@@ -113,6 +114,19 @@ public class HBaseTableExporter {
   }
 
   /**
+   * A mapper that just writes KeyValues.
+   */
+  static class KeyValueImporter extends TableMapper<ImmutableBytesWritable, KeyValue> {
+    @Override
+    public void map(ImmutableBytesWritable row, Result value, Context context) throws IOException,
+      InterruptedException {
+      for (Cell kv : value.rawCells()) {
+        context.write(row, KeyValueUtil.ensureKeyValue(kv));
+      }
+    }
+  }
+
+  /**
    * Sets up the actual MapReduce job.
    * @param tx The transaction which needs to be passed to the Scan instance. This transaction is be used by
    *           coprocessors to filter out the data corresonding to the invalid transactions .
@@ -131,7 +145,7 @@ public class HBaseTableExporter {
     scan.setAttribute(TxConstants.TX_OPERATION_ATTRIBUTE_KEY, new TransactionCodec().encode(tx));
     job.setNumReduceTasks(0);
 
-    TableMapReduceUtil.initTableMapperJob(tableName, scan, Import.KeyValueImporter.class, null, null, job);
+    TableMapReduceUtil.initTableMapperJob(tableName, scan, KeyValueImporter.class, null, null, job);
 
     FileSystem fs = FileSystem.get(hConf);
     Random rand = new Random();
