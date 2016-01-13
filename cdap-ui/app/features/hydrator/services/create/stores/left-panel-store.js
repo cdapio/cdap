@@ -49,6 +49,16 @@ var mapPluginsWithMoreInfo = (type, typeMap, MyDAGFactory, popoverTemplate) => {
   };
 };
 
+var mapPluginTemplatesWithMoreInfo = (type, MyDAGFactory, popoverTemplate) => {
+  return (plugin) => {
+    plugin.type = type;
+    plugin.icon = MyDAGFactory.getIcon(plugin.pluginName);
+    plugin.template = popoverTemplate;
+
+    return plugin;
+  };
+};
+
 class LeftPanelStore {
   constructor(LeftPanelDispatcher, PluginsDispatcher, MyDAGFactory, GLOBALS, ConfigStore, mySettings, $q, $timeout) {
     this.state = {};
@@ -176,6 +186,10 @@ class LeftPanelStore {
     }
   }
   getSpecificPluginVersion(plugin) {
+    if (plugin.pluginTemplate) {
+      return plugin;
+    }
+
     var typeMap;
     var pluginTypes = this.GLOBALS.pluginTypes[this.ConfigStore.getAppType()];
     switch(plugin.type) {
@@ -230,7 +244,7 @@ class LeftPanelStore {
 
     let pluginsList = plugins[params.namespace][pipelineType];
     angular.forEach(pluginsList, (plugins, key) => {
-      this.state.pluginTemplates[this.GLOBALS.pluginConvert[key]] = _.values(plugins);
+      this.state.pluginTemplates[this.GLOBALS.pluginConvert[key]] = _.values(plugins).map(mapPluginTemplatesWithMoreInfo(key, this.MyDAGFactory, this.popoverTemplate));
     });
 
     this.emitChange();

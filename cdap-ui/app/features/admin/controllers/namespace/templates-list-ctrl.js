@@ -34,8 +34,6 @@ angular.module(PKG.name + '.feature.admin')
       if (response) {
         vm.list = [];
 
-        console.log('response', response);
-
         [ GLOBALS.etlBatch, GLOBALS.etlRealtime].forEach(function (templateType) {
           [
             GLOBALS.pluginTypes[templateType].source,
@@ -74,12 +72,6 @@ angular.module(PKG.name + '.feature.admin')
               });
             });
         });
-
-      /* CLEARING SETTINGS*/
-      // mySettings.set('pluginTemplates', {})
-      //   .then(function () {
-      //     console.log('test');
-      //   });
     };
 
   });

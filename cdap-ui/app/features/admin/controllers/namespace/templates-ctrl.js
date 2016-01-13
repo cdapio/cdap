@@ -189,9 +189,6 @@ angular.module(PKG.name + '.feature.admin')
         .then(function (res) {
           var template = res[$stateParams.nsadmin][$stateParams.templateType][$stateParams.pluginType][$stateParams.pluginTemplate];
 
-
-          console.log('template', template);
-
           vm.templateType = template.templateType;
           vm.pluginType = template.pluginType;
           vm.pluginName = template.pluginName;
@@ -309,8 +306,5 @@ angular.module(PKG.name + '.feature.admin')
             });
         });
     };
-
-
-
 
   });
