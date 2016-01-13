@@ -17,11 +17,15 @@
 package co.cask.cdap.master.startup;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -45,6 +49,7 @@ class ConfigurationCheck extends AbstractMasterCheck {
 
     Set<String> problemKeys = new HashSet<>();
     checkServiceResources(problemKeys);
+    checkPotentialPortConflicts();
 
     if (!problemKeys.isEmpty()) {
       throw new RuntimeException("Invalid configuration settings for keys: " + Joiner.on(',').join(problemKeys));
@@ -88,6 +93,27 @@ class ConfigurationCheck extends AbstractMasterCheck {
                     serviceResourceKeys.getMaxInstancesKey(), maxInstances);
           problemKeys.add(serviceResourceKeys.getInstancesKey());
         }
+      }
+    }
+  }
+
+  private void checkPotentialPortConflicts() {
+    // check for potential port conflicts
+    Multimap<Integer, String> services = HashMultimap.create();
+    if (cConf.getBoolean(Constants.Security.SSL_ENABLED)) {
+      services.put(cConf.getInt(Constants.Router.ROUTER_SSL_PORT), "Router");
+      services.put(cConf.getInt(Constants.Router.WEBAPP_SSL_PORT), "UI");
+      services.put(cConf.getInt(Constants.Security.AuthenticationServer.SSL_PORT), "Authentication Server");
+    } else {
+      services.put(cConf.getInt(Constants.Router.ROUTER_PORT), "Router");
+      services.put(cConf.getInt(Constants.Router.WEBAPP_PORT), "UI");
+      services.put(cConf.getInt(Constants.Security.AUTH_SERVER_BIND_PORT), "Authentication Server");
+    }
+    for (Integer port : services.keySet()) {
+      Collection<String> conflictingServices = services.get(port);
+      if (conflictingServices.size() > 1) {
+        LOG.warn("Potential conflict on port {} for the following services: {}",
+                 port, Joiner.on(", ").join(conflictingServices));
       }
     }
   }
