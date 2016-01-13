@@ -496,7 +496,7 @@ public class DefaultStoreTest {
   public void testServiceInstances() throws Exception {
     AppFabricTestHelper.deployApplication(AppWithServices.class);
     AbstractApplication app = new AppWithServices();
-    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
+    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(Id.Namespace.DEFAULT, app);
     app.configure(appConfigurer, new DefaultApplicationContext());
 
     ApplicationSpecification appSpec = appConfigurer.createSpecification();
