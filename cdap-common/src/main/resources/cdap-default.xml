@@ -871,13 +871,13 @@
     <name>master.collect.containers.log</name>
     <value>true</value>
     <description>
-      Determines if container logs are streamed back to the CDAP Master process log
+      Determines if master service container logs are streamed back to the CDAP Master process log
     </description>
   </property>
 
   <property>
     <name>master.collect.app.containers.log</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       Determines if application container logs are streamed back to the CDAP Master process log
     </description>
