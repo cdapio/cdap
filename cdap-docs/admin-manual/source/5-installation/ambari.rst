@@ -240,9 +240,10 @@ Customize CDAP
  
       **Ambari Dashboard:** Customizing Services 2
 
-#. If you wish to use the CDAP Explore service (to use SQL to query CDAP data), you must have
-   Hive installed on the cluster, have the Hive client libraries installed on the same host as 
-   the CDAP services, and must set the *Advanced cdap-site* ``explore.enabled`` option to *true*.
+#. To use the CDAP Explore service (to use SQL to query CDAP data), you must have Hive
+   installed on the cluster, have the Hive client libraries installed on the same host as
+   the CDAP services, and have the *Advanced cdap-site* ``explore.enabled`` option set to
+   *true* (the default).
 
    .. figure:: ../_images/ambari/ss07-config-enable-explore.png
       :figwidth: 100%

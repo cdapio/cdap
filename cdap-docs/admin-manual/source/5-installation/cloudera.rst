@@ -215,7 +215,7 @@ Use the *Add Service* Wizard and select *Cask DAP*.
 Add Service Wizard: Specifying Dependencies
 -------------------------------------------
 
-The **Hive dependency** is for the optional CDAP "Explore" component, which can be enabled later.
+The **Hive dependency** is for the CDAP "Explore" component, which is enabled by default.
 
 .. figure:: ../_images/cloudera/cloudera-csd-03.png
    :figwidth: 100%
@@ -264,7 +264,7 @@ CDAP Parcel.
    :align: center
    :class: bordered-image
 
-   **Add Service Wizard, Pages 4 & 5:** Reviewing configurations; as Hive was included, CDAP Explore can be enabled.
+   **Add Service Wizard, Pages 4 & 5:** Reviewing configurations.
 
 
 **Additional CDAP configuration properties** can be added using the Cloudera Manager's 

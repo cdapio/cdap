@@ -1,7 +1,7 @@
 .. _|distribution|-starting-services:
 
-Starting Services
-=================
+Starting CDAP Services
+======================
 
 .. highlight:: console
 

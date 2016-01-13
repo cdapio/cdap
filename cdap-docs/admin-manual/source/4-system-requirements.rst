@@ -83,7 +83,11 @@ You'll need this software installed:
 
 - A :ref:`Java runtime <admin-manual-install-java-runtime>` on each CDAP node and Hadoop datanode.
 - A :ref:`Node.js runtime <admin-manual-install-node.js>` on each CDAP node.
-- A Hadoop and HBase (and optionally Hive) environment to run against.
+- A Hadoop, HBase, Hive (and optionally Spark) environment to run against.
+- To use the **ad-hoc querying capabilities of CDAP,** ensure the cluster has a compatible version of
+  Hive installed. See the section on :ref:`Hadoop Compatibility <admin-manual-hadoop-compatibility-matrix>`.
+- If Hive is not going to be installed, you will need to disable the CDAP Explore
+  Service as by default it is enabled.
 - CDAP nodes require Hadoop and HBase client installation and configuration. 
   *Note:* No Hadoop services need be running.
 - We recommend installing an :ref:`NTP (Network Time Protocol) <admin-manual-install-ntp>`

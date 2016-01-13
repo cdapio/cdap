@@ -17,14 +17,28 @@ These instructions assume that you are familiar with MapR, and already have a cl
 it installed and running. The cluster must meet CDAP's :ref:`hardware, network, and
 software requirements <admin-manual-system-requirements>` before you install CDAP.
 
+Follow these steps:
+
+1. **Setting Up Clients:** Prerequisite tasks prior to starting the installation
+#. **Setting Up the CDAP Repos:** Download and install the CSD, then download and distribute the parcels
+#. **Component Installation:** Use the CM *Add Service* wizard to install CDAP
+#. **Additional Configurations:** Use the CM *Add Service* wizard to install CDAP
+#. **Starting CDAP Services:** The wizard will automatically start CDAP services, which you can then verify
+
+.. figure:: ../_images/distributions/distributions-cm-1.gif
+   :height: 80px
+   :align: center
+
+Once you have completed the installation and started CDAP services,
+you can then :ref:`verify the installation <admin-manual-verification>`.
+
 Setting Up Clients
 ==================
-
 As described in the :ref:`Software Prerequisites <admin-manual-software-requirements>`, 
-a configured Hadoop and HBase (plus an optional Hive client) needs to be configured on the
+a configured Hadoop, HBase, and Hive (plus an optional Spark client) needs to be configured on the
 node(s) where CDAP will run.
 
-If colocating CDAP on cluster hosts with actual services, such as the *MapR CLDB*, *Yarn
+If colocating CDAP on cluster hosts with actual services, such as the *MapR CLDB*, *YARN
 ResourceManager*, or *HBase Master*, then the client configurations will already be in place.
 
 - To configure a MapR client, see the MapR documentation on `Setting Up the Client
@@ -90,11 +104,13 @@ Also, create a ``tx.snapshot`` subdirectory::
 .. include:: /../target/_includes/mapr-2-configuration.rst
     :end-before: .. _mapr-configuration-hdp:
 
+.. highlight:: xml
 
 YARN Application Classpath
 --------------------------
 CDAP requires that an additional entry |---| ``/opt/mapr/lib/*`` |---| be appended to the
-``yarn.application.classpath`` setting of ``yarn-site.xml``. The default
+``yarn.application.classpath`` setting of ``yarn-site.xml``. (This file is usually in 
+``/data/mapr/hadoop/hadoop-<hadoop-version>/etc/hadoop/yarn-site.xml``.) The default
 ``yarn.application.classpath`` for Linux with this additional entry appended is
 (reformatted to fit)::
 

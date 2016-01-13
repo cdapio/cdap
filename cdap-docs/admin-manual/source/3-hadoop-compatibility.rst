@@ -23,7 +23,7 @@ For a Distributed CDAP cluster, version |release|, you must install these Hadoop
 +===============+=================================+=======================================+
 | **HDFS**      | Apache Hadoop                   | 2.0.2-alpha through 2.6.0             |
 +               +---------------------------------+---------------------------------------+
-|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.4.x                   |
+|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
 +               +---------------------------------+---------------------------------------+
 |               | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
 +               +---------------------------------+---------------------------------------+
@@ -31,15 +31,15 @@ For a Distributed CDAP cluster, version |release|, you must install these Hadoop
 +---------------+---------------------------------+---------------------------------------+
 | **YARN**      | Apache Hadoop                   | 2.0.2-alpha through 2.6.0             |
 +               +---------------------------------+---------------------------------------+
-|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.4.x                   |
+|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
 +               +---------------------------------+---------------------------------------+
 |               | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
 +               +---------------------------------+---------------------------------------+
 |               | MapR                            | 4.1 and 5.0                           |
 +---------------+---------------------------------+---------------------------------------+
-| **HBase**     | Apache                          | 0.96.x, 0.98.x, and 1.0.x             |
+| **HBase**     | Apache                          | 0.96.x, 0.98.x, and 1.0               |
 +               +---------------------------------+---------------------------------------+
-|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.4.x                   |
+|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0 (1.0-cdh5.5.0)    |
 +               +---------------------------------+---------------------------------------+
 |               | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
 +               +---------------------------------+---------------------------------------+
@@ -47,15 +47,15 @@ For a Distributed CDAP cluster, version |release|, you must install these Hadoop
 +---------------+---------------------------------+---------------------------------------+
 | **ZooKeeper** | Apache                          | Version 3.4.3 through 3.4.5           |
 +               +---------------------------------+---------------------------------------+
-|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.4.x                   |
+|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
 +               +---------------------------------+---------------------------------------+
 |               | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
 +               +---------------------------------+---------------------------------------+
 |               | MapR                            | 4.1 and 5.0                           |
 +---------------+---------------------------------+---------------------------------------+
-| **Hive**      | Apache                          | Version 0.12.0 through 0.13.1         |
+| **Hive**      | Apache                          | Version 0.12.0 through 1.1.0          |
 +               +---------------------------------+---------------------------------------+
-|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.4.x                   |
+|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
 +               +---------------------------------+---------------------------------------+
 |               | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
 +               +---------------------------------+---------------------------------------+
@@ -66,8 +66,8 @@ For a Distributed CDAP cluster, version |release|, you must install these Hadoop
 confident of their suitability and compatibility. Later versions of components may work,
 but have not necessarily have been either tested or confirmed compatible.
 
-**Note:** Certain CDAP components need to reference your *Hadoop*, *YARN*, *HBase* (and
-possibly *Hive*) cluster configurations by adding those configurations to their class paths.
+**Note:** Certain CDAP components need to reference your *Hadoop*, *YARN*, *HBase*, and
+*Hive* cluster configurations by adding those configurations to their class paths.
 
 **Note:** *Hive 0.12* is not supported for :ref:`secure cluster configurations <admin-security>`.
 

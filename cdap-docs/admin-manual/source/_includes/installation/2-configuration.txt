@@ -3,14 +3,9 @@
 Additional Configurations
 =========================
 
-This section is to help you configure Cask Data Application Platform (CDAP). It provides the
-instructions for `configuring <#cdap-configuration>`__ the CDAP components so they work with
-your existing cluster. 
-
-It's assumed that you have already followed the previous installation steps.
-
-After completing the configuration, you can :ref:`start <|distribution|-starting-services>` and then 
-:ref:`verify <admin-manual-verification>` your installation.
+This section describes how to configure the CDAP components so they work with your
+existing Hadoop cluster. Certain Hadoop components may need changes, as described below,
+for CDAP to run successfully.
 
 .. _|distribution|-configuration-central:
 
@@ -39,8 +34,8 @@ A. CDAP packages utilize a central configuration, stored by default in ``/etc/cd
    Then run the ``alternatives`` command to point the ``/etc/cdap/conf`` symlink
    to your custom directory ``/etc/cdap/conf.mycdap``::
    
-     $ cp -r /etc/cdap/conf.dist /etc/cdap/conf.mycdap
-     $ update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/conf.mycdap 10
+     $ sudo cp -r /etc/cdap/conf.dist /etc/cdap/conf.mycdap
+     $ sudo update-alternatives --install /etc/cdap/conf cdap-conf /etc/cdap/conf.mycdap 10
  
    .. _|distribution|-configuration-options:
 
@@ -52,13 +47,29 @@ A. CDAP packages utilize a central configuration, stored by default in ``/etc/cd
    the minimal ``cdap-site.xml`` file required.)
    
    Customize your configuration by creating (or editing if existing) an `.xml` file
-   ``conf/cdap-site.xml`` and set appropriate properties.
+   ``conf/cdap-site.xml`` and set appropriate properties::
+   
+     $ sudo cp -f /etc/cdap/conf.mycdap/cdap-site.xml.example /etc/cdap/conf.mycdap/cdap-site.xml
+     $ sudo vi /etc/cdap/conf.mycdap/cdap-site.xml
 
 #. Depending on your installation, you may need to set these properties:
 
    .. highlight:: xml
 
-   i. Check that the ``router.server.address`` property in ``conf/cdap-site.xml`` is set to the
+   i. Check that the ``zookeeper.quorum`` property in ``conf/cdap-site.xml`` is set to the
+      **ZooKeeper quorum string**, a comma-delimited list of fully-qualified domain names for 
+      the ZooKeeper quorum::
+
+         <property>
+           <name>zookeeper.quorum</name>
+           <value>FQDN1:2181,FQDN2:2181/${root.namespace}</value>
+           <description>
+             ZooKeeper quorum string; specifies the ZooKeeper host:port; 
+             substitute the quorum for the components shown here (FQDN1:2181,FQDN2:2181)
+           </description>
+         </property>
+  
+   #. Check that the ``router.server.address`` property in ``conf/cdap-site.xml`` is set to the
       **hostname of the CDAP Router**. The CDAP UI uses this property to connect to the Router::
 
          <property>
@@ -94,32 +105,34 @@ A. CDAP packages utilize a central configuration, stored by default in ``/etc/cd
   
       #. Check that the HDFS user owns the HDFS directory described by ``hdfs.namespace`` on all machines.
    
-   #. To use the **ad-hoc querying capabilities of CDAP,** enable the CDAP Explore Service in
-      ``conf/cdap-site.xml`` (by default, it is disabled)::
-  
-        <property>
-          <name>cdap.explore.enabled</name>
-          <value>true</value>
-          <description>Enable Explore functionality</description>
-        </property>
-  
+   #. To use the **ad-hoc querying capabilities of CDAP,** ensure the cluster has a
+      compatible version of Hive installed. See the section on :ref:`Hadoop Compatibility
+      <admin-manual-hadoop-compatibility-matrix>`.  To use this feature on secure Hadoop
+      clusters, please see these instructions on :ref:`configuring secure Hadoop
+      <|distribution|-configuration-for-secure-hadoop>`.
+
       .. _|distribution|-configuration-explore-service:
- 
-      This feature cannot be used unless the cluster has a compatible version of Hive installed.
-      See the section on :ref:`Hadoop/HBase Environment <admin-manual-hadoop-compatibility-matrix>`.
-      To use this feature on secure Hadoop clusters, please see these instructions on
-      `configuring secure Hadoop <configuration.html#secure-hadoop>`__.
   
       **Note:** Some versions of Hive contain a bug that may prevent the CDAP Explore Service from starting
       up. See `CDAP-1865 <https://issues.cask.co/browse/CDAP-1865>`__ for more information about the issue.
-      If the CDAP Explore Service fails to start and you see a ``javax.jdo.JDODataStoreException: Communications link failure``
-      in the log, try adding this property to the Hive ``hive-site.xml`` file::
+      If the CDAP Explore Service fails to start and you see a 
+      ``javax.jdo.JDODataStoreException: Communications link failure`` in the log, try
+      adding this property to the Hive ``hive-site.xml`` file::
   
         <property>
           <name>datanucleus.connectionPoolingType</name>
           <value>DBCP</value>
         </property>
+        
+   #. If Hive is **not** going to be installed, disable the CDAP Explore Service in 
+      ``conf/cdap-site.xml`` (by default, it is enabled)::
   
+        <property>
+          <name>cdap.explore.enabled</name>
+          <value>false</value>
+          <description>Enable Explore functionality</description>
+        </property>
+    
    #. If you'd like to publish metadata updates to an external Apache Kafka instance, 
       CDAP has the capability of publishing notifications upon metadata updates. Details on
       the configuration settings and an example output are shown in the :ref:`Metadata and
@@ -142,8 +155,9 @@ Guide <https://hbase.apache.org/book.html#ulimit>`__.
 
 Writing to Temp Files
 ---------------------
-Temp directories, depending on the distribution, are utilized by CDAP (the first two
-of these directories are specified as described in the :ref:`appendix-cdap-site.xml`):
+Temp directories, depending on the distribution, are utilized by CDAP (the first two of
+this set of directories are properties specified in the ``cdap-site.xml`` file, as
+described in the :ref:`appendix-cdap-site.xml`):
 
 - ``app.temp.dir`` (default: ``/tmp``)
 - ``kafka.log.dir`` (default: ``/tmp/kafka-logs``)

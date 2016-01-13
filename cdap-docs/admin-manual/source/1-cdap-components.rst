@@ -49,7 +49,7 @@ If you are installing on a generic Apache Hadoop cluster:
 #. Verify the CDAP installation by running an example application
 
 
-If, on the other hand, you are using a supported distribution and manager (CDH and
+If you are using a supported distribution and manager (CDH and
 Cloudera Manager, HDP and Apache Ambari, or MapR), the steps are:
 
 #. Determine your system architecture
