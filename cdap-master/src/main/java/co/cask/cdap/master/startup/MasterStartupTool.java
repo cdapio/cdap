@@ -149,5 +149,4 @@ public class MasterStartupTool {
       new DiscoveryRuntimeModule().getDistributedModules()
     );
   }
-
 }
