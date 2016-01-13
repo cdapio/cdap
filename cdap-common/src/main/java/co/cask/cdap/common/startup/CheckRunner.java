@@ -17,10 +17,12 @@
 package co.cask.cdap.common.startup;
 
 import co.cask.cdap.common.internal.guava.ClassPath;
+import com.google.common.base.Predicate;
 import com.google.inject.Injector;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -128,7 +130,16 @@ public class CheckRunner {
 
     private ClassPath getClassPath() throws IOException {
       if (classPath == null) {
-        classPath = ClassPath.from(classLoader);
+        classPath = ClassPath.from(classLoader, new Predicate<URI>() {
+          @Override
+          public boolean apply(URI input) {
+            // protect against cases where / is in the URLClassLoader uris.
+            // this can happen when the classpath contains empty entries,
+            // and the working directory is the root directory.
+            // this is a fairly common scenario in init scripts.
+            return !"/".equals(input.getPath());
+          }
+        });
       }
       return classPath;
     }
