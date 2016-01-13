@@ -464,6 +464,11 @@ public class MasterServiceMain extends DaemonMain {
   private void cleanupTempDir() {
     File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+
+    if (!tmpDir.isDirectory()) {
+      return;
+    }
+
     try {
       DirUtils.deleteDirectoryContents(tmpDir, true);
     } catch (IOException e) {
