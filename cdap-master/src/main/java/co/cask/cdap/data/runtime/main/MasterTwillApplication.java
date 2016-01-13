@@ -67,10 +67,10 @@ public class MasterTwillApplication implements TwillApplication {
         addDatasetOpExecutor(
             addLogSaverService(
                 addStreamService(
-                    addTransactionService(
+//                    addTransactionService(
                         addMetricsProcessor (
                             addMetricsService(
-                                TwillSpecification.Builder.with().setName(NAME).withRunnable()))))));
+                                TwillSpecification.Builder.with().setName(NAME).withRunnable())))));
 
     if (runHiveService) {
       LOG.info("Adding explore runnable.");
