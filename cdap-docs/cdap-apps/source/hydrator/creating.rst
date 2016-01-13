@@ -74,7 +74,7 @@ To create this application, called *streamETLApp*:
 - Using the :ref:`Lifecycle RESTful API <http-restful-api-lifecycle-create-app>`::
 
     $ curl -w'\n' -X PUT localhost:10000/v3/namespaces/default/apps/streamETLApp \
-        -H 'Content-Type: application/json' -d @config.json 
+        -H 'Content-Type: application/json' -d @config.json
 
 - Using :ref:`CDAP CLI <cli>`:
 
@@ -149,15 +149,16 @@ In the example code above, we will use a *ProjectionTransform* (a type of Transf
 columns in the incoming data. A *StreamSink* in the final step needs a data field property
 that it will use as the content for the data to be written.
 
-DAG in transform
-----------------
+Non-linear Executions in Pipeline
+---------------------------------
 
-ETLConfig support DAG in pipeline, which allows non-linear execution of pipeline stages.
+ETL Applications support directed acyclic graphs in pipelines, which allows for the
+non-linear execution of pipeline stages.
 
-Example :
-pipeline reads from the stream ``purchaseStats``. It replicates the stream events to the table ``replicaTable``,
-while it only writes the userIds to ``usersTable`` when a user's purchase price is greater that $1000,
-this filtering logic is applied using the script ``spendingUsersScript``.
+In this example, a pipeline reads from the stream ``purchaseStats``. It replicates the stream events
+to the table ``replicaTable``, while at the same time it writes just the ``userIds`` to the ``usersTable``
+when a user's purchase price is greater that 1000. This filtering logic is applied using the script
+``spendingUsersScript``:
 
 
 .. container:: highlight
@@ -268,6 +269,153 @@ this filtering logic is applied using the script ``spendingUsersScript``.
         "engine": "mapreduce"
       }
     }
+
+**Note**
+The pipeline connections can be configured to fork from a stage, where the output of that stage can be sent to
+two or more configured stages, in this case the same output record is sent to the next stages.
+Similarly the forked transform stages can merge at a transform or a sink stage.
+The output schema's from these stages should match before joining
+and the order of records sent from the forked stages to the joining stage are not defined.
+
+.. container:: highlight
+
+  .. parsed-literal::
+    {
+      "artifact": {
+          "name": "cdap-etl-batch",
+          "version": "|version|",
+          "scope": "SYSTEM"
+      },
+      "name": "RewardsPipeline",
+      "config": {
+        "source": {
+          "name": "purchaseStream",
+          "plugin": {
+            "name": "Stream",
+            "properties": {
+              "format": "csv",
+              "schema": "{
+                \"type\":\"record\",
+                \"name\":\"etlSchemaBody\",
+                \"fields\":[
+                  {\"name\":\"userid\",\"type\":\"string\"},
+                  {\"name\":\"item\",\"type\":\"string\"},
+                  {\"name\":\"count\",\"type\":\"int\"},
+                  {\"name\":\"price\",\"type\":\"long\"}
+                ]
+              }",
+              "name": "purchases",
+              "duration": "1d"
+            }
+          }
+        },
+        "sinks": [
+          {
+            "name": "rewardsSink",
+            "plugin": {
+              "name": "TPFSAvro",
+              "properties": {
+                "schema": "{
+                  \"type\":\"record\",
+                  \"name\":\"etlSchemaBody\",
+                  \"fields\":[
+                    {\"name\":\"userid\",\"type\":\"string\"},
+                    {\"name\":\"rewards\",\"type\":\"double\"}
+                  ]
+                }"
+              }
+            }
+          }
+        ],
+        "transforms": [
+          {
+            "name": "userRewards",
+            "plugin": {
+              "name": "Script",
+              "properties": {
+                "script": "function transform(input, context) {
+                  var rewards = 5;
+                  if (context.getLookup('hvCustomers').lookup(input.userid) !== null) {
+                    context.getLogger().info(\"user \" + input.userid + \" is a valued customer\");
+                    rewards = 100;
+                  } else {
+                    context.getLogger().info(\"user \" + input.userid + \" is not a valued customer\");
+                  }
+                  return {'userid': input.userid, 'rewards': rewards};
+                }",
+                "schema": "{
+                  \"type\":\"record\",
+                  \"name\":\"etlSchemaBody\",
+                  \"fields\":[
+                    {\"name\":\"userid\",\"type\":\"string\"},
+                    {\"name\":\"rewards\",\"type\":\"double\"}
+                  ]
+                }",
+                "lookup": "{\"tables\":{\"hvCustomers\":{\"type\":\"DATASET\",\"datasetProperties\":{}}}}"
+              }
+            }
+          },
+          {
+            "name": "itemRewards",
+            "plugin": {
+              "name": "Script",
+              "properties": {
+                "script": "function transform(input, context) {
+                  var rewards = 5;
+                  if (input.count > 20) {
+                    rewards = 50;
+                  }
+                  return {'userid':input.userid, 'rewards':rewards};
+                }",
+                "schema": "{
+                  \"type\":\"record\",
+                  \"name\":\"etlSchemaBody\",
+                  \"fields\":[
+                    {\"name\":\"userid\",\"type\":\"string\"},
+                    {\"name\":\"rewards\",\"type\":\"double\"}
+                  ]
+                }"
+              }
+            }
+          }
+        ],
+        "connections": [
+          {
+            "from": "purchaseStream",
+            "to": "userRewards"
+          },
+          {
+            "from": "userRewards",
+            "to": "rewardsSink"
+          },
+          {
+            "from": "purchaseStream",
+            "to": "itemRewards"
+          },
+          {
+            "from": "itemRewards",
+            "to": "rewardsSink"
+          }
+        ],
+        "comments": [],
+        "schedule": "* * * * *",
+        "engine": "mapreduce"
+      }
+    }
+
+In this Example, ``purchaseStream`` has purchase data with fields ``userid``, ``item``, ``count`` and ``price``.
+The stream events source stage forks and the records are sent to transforms ``userRewards`` and ``itemRewards``.
+
+``userRewards`` transform script looks up valued customers table ``hvCustomers``,
+to check if ``userid`` is a valued customer and assigns higher rewards if they are,
+this transform after calculating rewards sends output record in the format, ``userid(string), rewards(double)``
+
+``itemRewards`` transform script awards higher rewards for bulk purchases and sends output records in the format
+``userid(string), rewards(double)``.
+
+The rewards records are merged at the sink ``rewardsSink``, note that the incoming schema from the transforms
+``userRewards`` and ``itemRewards`` are same.
+
 
 Sample Application Configurations
 ---------------------------------
