@@ -21,7 +21,6 @@
       <li class="text-danger" ng-repeat="error in NodeConfigController.state.errors">{{ error }}</li>
     </ul>
   </div>
-
   <h4>
     <span ng-if="!NodeConfigController.state.isSink">Output Schema</span>
     <span ng-if="NodeConfigController.state.isSink">Schema</span>
@@ -61,7 +60,6 @@
     <div ng-if="!isDisabled">
       <my-schema-editor
         ng-model="NodeConfigController.state.node.outputSchema"
-        data-on-model-update="NodeConfigController.state.outputSchemaUpdate"
         data-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema"
         plugin-properties="NodeConfigController.state.node.plugin.properties"
         config="NodeConfigController.state.groupsConfig.outputSchema.schemaProperties">

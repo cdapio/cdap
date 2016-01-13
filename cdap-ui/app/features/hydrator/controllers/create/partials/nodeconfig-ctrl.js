@@ -30,8 +30,9 @@ class NodeConfigController {
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
     this.showPropagateConfirm = false; // confirmation dialog in node config for schema propagation.
+    this.$timeout = $timeout;
 
-    this.setDefaults({});
+    this.setDefaults();
     NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
   }
   setState() {
@@ -44,8 +45,11 @@ class NodeConfigController {
     }
     this.setDefaults(nodeState);
     if (Object.keys(nodeState.node).length) {
-      this.loadNewPlugin();
-      this.validateNodeLabel();
+      this.configfetched = false;
+      this.$timeout(() => {
+        this.loadNewPlugin();
+        this.validateNodeLabel();
+      }, 1000);
     }
   }
   validateNodeLabel() {
@@ -62,16 +66,17 @@ class NodeConfigController {
       }
     });
   }
-  setDefaults(config) {
+  setDefaults(config = {}) {
     this.state = {
       configfetched : false,
       properties : [],
       noconfig: null,
       noproperty: true,
       config: {},
+      groupsConfig: {},
 
       isValidPlugin: config.isValidPlugin || false,
-      node: config.node || {},
+      node: angular.copy(config.node) || {},
 
       isSource: config.isSource || false,
       isSink: config.isSink || false,
@@ -91,14 +96,15 @@ class NodeConfigController {
      // To differntiate editing from within and changes from outside we have to do this.
      // And we need to differentiate because while editing we don't want to lose focus on the current textbox ($watch on the same property loses it)
      // One more reason we should have used Flux/Redux so that we could have eliminated these hacks.
-     this.state.outputSchemaUpdate +=1;
+     // The side effects of 3-way-binding (user, external & copy to output) we have different event pipe events
+     // plugin.reset, schema.clear, dataset.selected, plugin-outputschema.update
+     this.EventPipe.emit('plugin-outputschema.update');
      this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
   }
   propagateSchemaDownStream() {
     this.ConfigActionsFactory.propagateSchemaDownStream(this.state.node.name);
   }
   loadNewPlugin() {
-
     this.state.noproperty = Object.keys(
       this.state.node._backendProperties || {}
     ).length;
@@ -132,7 +138,6 @@ class NodeConfigController {
                   type: configOutputSchema.implicitSchema[key]
                 });
               });
-
               this.state.node.outputSchema = JSON.stringify({ fields: formattedSchema });
               this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
             } else {
@@ -169,7 +174,6 @@ class NodeConfigController {
                 )
               );
             }
-
             // Mark the configfetched to show that configurations have been received.
             this.state.configfetched = true;
             this.state.config = res;
