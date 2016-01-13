@@ -22,8 +22,7 @@ angular.module(PKG.name + '.commons')
         model: '=ngModel',
         config: '=',
         pluginProperties: '=',
-        disabled: '=',
-        onModelUpdate: '='
+        disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
       controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA) {
@@ -216,7 +215,8 @@ angular.module(PKG.name + '.commons')
         }
 
         initialize($scope.model);
-        $scope.$watch('onModelUpdate', function() {
+        EventPipe.on('plugin-outputschema.update', function() {
+          console.log('And the model is: ', $scope.model);
           initialize($scope.model);
         });
 

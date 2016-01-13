@@ -85,14 +85,27 @@
           <div class="node"
                 ng-mouseenter="MyDAGController.nodeMouseEnter(node)"
                 ng-mouseleave="MyDAGController.nodeMouseLeave(node)">
-            <div class="error-node-notification"
-                 ng-if="node.errorCount > 0"
-                 tooltip="Please see node configuration panel"
-                 tooltip-append-to-body="true"
-                 tooltip-class="tooltip-error">
-              <span class="badge" ng-class="{'badge-danger': node.error === true, 'badge-warning': node.warning === true}">
-                <span>{{node.errorCount}}</span>
-              </span>
+            <div ng-if="node.error">
+              <div class="error-node-notification"
+                   ng-if="node.errorCount > 0"
+                   tooltip="Please see node configuration panel"
+                   tooltip-append-to-body="true"
+                   tooltip-class="tooltip-error">
+                <span class="badge badge-danger">
+                  <span>{{node.errorCount}}</span>
+                </span>
+              </div>
+            </div>
+            <div ng-if="!node.error">
+              <div class="error-node-notification"
+                   ng-if="node.errorCount > 0"
+                   tooltip="Please see node configuration panel"
+                   tooltip-append-to-body="true"
+                   tooltip-class="tooltip-warning">
+                <span class="badge badge-warning">
+                  <span>{{node.errorCount}}</span>
+                </span>
+              </div>
             </div>
             <div class="fa fa-close"
                  ng-if="!MyDAGController.isDisabled"
