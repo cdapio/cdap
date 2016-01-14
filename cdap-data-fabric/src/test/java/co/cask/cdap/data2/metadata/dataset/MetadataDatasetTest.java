@@ -50,6 +50,7 @@ public class MetadataDatasetTest {
   private MetadataDataset dataset;
 
   private final Id.Application app1 = Id.Application.from("ns1", "app1");
+  private final Id.Application appNs2 = Id.Application.from("ns2", "app1");
   // Have to use Id.Program for comparison here because the MetadataDataset APIs return Id.Program.
   private final Id.Program flow1 = Id.Program.from("ns1", "app1", ProgramType.FLOW, "flow1");
   private final Id.DatasetInstance dataset1 = Id.DatasetInstance.from("ns1", "ds1");
@@ -196,29 +197,53 @@ public class MetadataDatasetTest {
   @Test
   public void testSearchOnTags() throws Exception {
     Assert.assertEquals(0, dataset.getTags(app1).size());
+    Assert.assertEquals(0, dataset.getTags(appNs2).size());
     Assert.assertEquals(0, dataset.getTags(flow1).size());
     Assert.assertEquals(0, dataset.getTags(dataset1).size());
     Assert.assertEquals(0, dataset.getTags(stream1).size());
     dataset.addTags(app1, "tag1", "tag2", "tag3");
+    dataset.addTags(appNs2, "tag1", "tag2", "tag3_more");
     dataset.addTags(flow1, "tag1");
-    dataset.addTags(dataset1, "tag3", "tag2", "tag12");
+    dataset.addTags(dataset1, "tag3", "tag2", "tag12-tag33");
     dataset.addTags(stream1, "tag2, tag4");
 
     // Try to search on all tags
     List<MetadataEntry> results =
-      dataset.searchByKeyValue("ns1", "tags:*", MetadataSearchTargetType.ALL);
+      dataset.search("ns1", "tags:*", MetadataSearchTargetType.ALL);
     Assert.assertEquals(4, results.size());
 
     // Try to search for tag1*
-    results = dataset.searchByKeyValue("ns1", "tags:tag1*", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "tags:tag1*", MetadataSearchTargetType.ALL);
     Assert.assertEquals(3, results.size());
 
-    // Try to search for tag1
-    results = dataset.searchByKeyValue("ns1", "tags:tag1", MetadataSearchTargetType.ALL);
+    // Try to search for tag1 with spaces in search query and mixed case of tags keyword
+    results = dataset.search("ns1", "  tAGS  :  tag1  ", MetadataSearchTargetType.ALL);
     Assert.assertEquals(2, results.size());
 
     // Try to search for tag4
-    results = dataset.searchByKeyValue("ns1", "tags:tag4", MetadataSearchTargetType.ALL);
+    results = dataset.search("ns1", "tags:tag4", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(1, results.size());
+
+    // Try to search for tag33
+    results = dataset.search("ns1", "tags:tag33", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(1, results.size());
+
+    // Try to search for tag33 with spaces in query
+    results = dataset.search("ns1", "  tag33  ", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(1, results.size());
+
+    // Try to search for tag3
+    results = dataset.search("ns1", "tags:tag3*", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(2, results.size());
+
+    // try search in another namespace
+    results = dataset.search("ns2", "tags:tag1", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(1, results.size());
+
+    results = dataset.search("ns2", "tag3", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(1, results.size());
+
+    results = dataset.search("ns2", "tag*", MetadataSearchTargetType.APP);
     Assert.assertEquals(1, results.size());
 
     // cleanup
@@ -226,6 +251,9 @@ public class MetadataDatasetTest {
     dataset.removeTags(flow1);
     dataset.removeTags(dataset1);
     dataset.removeTags(stream1);
+    // Search should be empty after deleting tags
+    results = dataset.search("ns1", "tags:tag3*", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(0, results.size());
     Assert.assertEquals(0, dataset.getTags(app1).size());
     Assert.assertEquals(0, dataset.getTags(flow1).size());
     Assert.assertEquals(0, dataset.getTags(dataset1).size());
@@ -234,39 +262,90 @@ public class MetadataDatasetTest {
 
   @Test
   public void testSearchOnValue() throws Exception {
-    // Create record
-    MetadataEntry record = new MetadataEntry(flow1, "key1", "value1");
+    // Create entry
+    MetadataEntry entry = new MetadataEntry(flow1, "key1", "value1");
+    String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
+    MetadataEntry multiWordEntry = new MetadataEntry(flow1, "multiword", multiWordValue);
+
     // Save it
     dataset.setProperty(flow1, "key1", "value1");
 
     // Save it
     dataset.setProperty(flow1, "key2", "value2");
 
+    // Save a multi word key value
+    dataset.setProperty(flow1, "multiword", multiWordValue);
+
     // Search for it based on value
     List<MetadataEntry> results =
-      dataset.searchByValue("ns1", "value1", MetadataSearchTargetType.PROGRAM);
+      dataset.search("ns1", "value1", MetadataSearchTargetType.PROGRAM);
 
     // Assert check
     Assert.assertEquals(1, results.size());
 
     MetadataEntry result = results.get(0);
-    Assert.assertEquals(record, result);
+    Assert.assertEquals(entry, result);
 
-    // Case insensitive
-    results = dataset.searchByValue("ns1", "ValUe1", MetadataSearchTargetType.PROGRAM);
+    // Search for it based on a word in value with spaces in search query
+    results = dataset.search("ns1", "  aV1   ", MetadataSearchTargetType.PROGRAM);
+
+    // Assert check
+    Assert.assertEquals(1, results.size());
+    result = results.get(0);
+    Assert.assertEquals(multiWordEntry, result);
+
+    // Search for it based split patterns to make sure nothing is matched
+    results =
+      dataset.search("ns1", "-", MetadataSearchTargetType.ALL);
+    // Assert check
+    Assert.assertEquals(0, results.size());
+
+    results =
+      dataset.search("ns1", ",", MetadataSearchTargetType.ALL);
+    // Assert check
+    Assert.assertEquals(0, results.size());
+
+    results =
+      dataset.search("ns1", "_", MetadataSearchTargetType.ALL);
+    // Assert check
+    Assert.assertEquals(0, results.size());
+
+    results =
+      dataset.search("ns1", ", ,", MetadataSearchTargetType.ALL);
+    // Assert check
+    Assert.assertEquals(0, results.size());
+
+    results =
+      dataset.search("ns1", ", - ,", MetadataSearchTargetType.ALL);
+    // Assert check
+    Assert.assertEquals(0, results.size());
+
+
+    // Search for it based on a word in value
+    results =
+      dataset.search("ns1", "av5", MetadataSearchTargetType.PROGRAM);
 
     // Assert check
     Assert.assertEquals(1, results.size());
 
     result = results.get(0);
-    Assert.assertEquals(record, result);
+    Assert.assertEquals(multiWordEntry, result);
+
+    // Case insensitive
+    results = dataset.search("ns1", "ValUe1", MetadataSearchTargetType.PROGRAM);
+
+    // Assert check
+    Assert.assertEquals(1, results.size());
+
+    result = results.get(0);
+    Assert.assertEquals(entry, result);
 
     // Save it
     dataset.setProperty(flow1, "key3", "value1");
 
     // Search for it based on value
     List<MetadataEntry> results2 =
-      dataset.searchByValue("ns1", "value1", MetadataSearchTargetType.PROGRAM);
+      dataset.search("ns1", "value1", MetadataSearchTargetType.PROGRAM);
 
     // Assert check
     Assert.assertEquals(2, results2.size());
@@ -279,8 +358,7 @@ public class MetadataDatasetTest {
     dataset.setProperty(stream1, "key21", "value21");
 
     // Search for it based on value asterix
-    List<MetadataEntry> results3 = dataset.searchByValue("ns1", "value2*",
-                                                         MetadataSearchTargetType.ALL);
+    List<MetadataEntry> results3 = dataset.search("ns1", "value2*", MetadataSearchTargetType.ALL);
 
     // Assert check
     Assert.assertEquals(2, results3.size());
@@ -289,8 +367,7 @@ public class MetadataDatasetTest {
     }
 
     // Search for it based on value asterix
-    List<MetadataEntry> results4 = dataset.searchByValue("ns12", "value2*",
-                                                         MetadataSearchTargetType.ALL);
+    List<MetadataEntry> results4 = dataset.search("ns12", "value2*", MetadataSearchTargetType.ALL);
 
     // Assert check
     Assert.assertEquals(0, results4.size());
@@ -300,26 +377,54 @@ public class MetadataDatasetTest {
   public void testSearchOnKeyValue() throws Exception {
     // Create entry
     MetadataEntry entry = new MetadataEntry(flow1, "key1", "value1");
+    String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
+    MetadataEntry multiWordEntry = new MetadataEntry(flow1, "multiword", multiWordValue);
     // Save it
     dataset.setProperty(flow1, "key1", "value1");
 
     // Save it
     dataset.setProperty(flow1, "key2", "value2");
 
+    // save a multi word value
+    dataset.setProperty(flow1, "multiword", multiWordValue);
+
     // Search for it based on value
     List<MetadataEntry> results =
-      dataset.searchByKeyValue("ns1", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
+      dataset.search("ns1", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
                                MetadataSearchTargetType.PROGRAM);
 
     // Assert check
     Assert.assertEquals(1, results.size());
-
     MetadataEntry result = results.get(0);
     Assert.assertEquals(entry, result);
 
+    // Search for it based on a word in value with spaces in search query
+    results = dataset.search("ns1", "  multiword   " + MetadataDataset.KEYVALUE_SEPARATOR + "  aV1   ",
+                             MetadataSearchTargetType.PROGRAM);
+
+    // Assert check
+    Assert.assertEquals(1, results.size());
+    result = results.get(0);
+    Assert.assertEquals(multiWordEntry, result);
+
+    // Search for it based on a word in value
+    results =
+      dataset.search("ns1", "multiword" + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
+                     MetadataSearchTargetType.PROGRAM);
+    // Assert check
+    Assert.assertEquals(1, results.size());
+    result = results.get(0);
+    Assert.assertEquals(multiWordEntry, result);
+
+    dataset.removeProperties(flow1, "multiword");
+    results = dataset.search("ns1", "multiword" + MetadataDataset.KEYVALUE_SEPARATOR + "aV5",
+                   MetadataSearchTargetType.PROGRAM);
+    // search results should be empty after removing this key as the indexes are deleted
+    Assert.assertEquals(0, results.size());
+
     // Test wrong ns
     List<MetadataEntry> results2  =
-      dataset.searchByKeyValue("ns12", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
+      dataset.search("ns12", "key1" + MetadataDataset.KEYVALUE_SEPARATOR + "value1",
                                MetadataSearchTargetType.PROGRAM);
     // Assert check
     Assert.assertEquals(0, results2.size());
