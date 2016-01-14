@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesController', function ($scope, myPipelineApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS, $rootScope, myAlertOnValium, $filter) {
+  .controller('NamespaceTemplatesController', function ($scope, myPipelineApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS, $rootScope, myAlertOnValium) {
 
     var vm = this;
     var oldTemplateName;
@@ -121,7 +121,9 @@ angular.module(PKG.name + '.feature.admin')
           vm.pluginVersions = res;
 
           if (vm.isEdit) {
-            vm.plugin = $filter('filter')(res, {artifact: vm.pluginConfig.artifact})[0];
+            vm.plugin = res.filter(function (obj) {
+              return angular.equals(obj.artifact, vm.pluginConfig.artifact);
+            })[0];
             vm.onPluginVersionSelect();
           }
         });
@@ -234,8 +236,10 @@ angular.module(PKG.name + '.feature.admin')
 
       vm.loading = true;
 
-      if (vm.pluginConfig._backendProperties && vm.pluginConfig._backendProperties.schema) {
-        vm.pluginConfig.properties.schema = vm.pluginConfig.outputSchema;
+      var outputPropertyName = myHelpers.objectQuery(vm.groupsConfig, 'outputSchema', 'outputSchemaProperty', '0');
+
+      if (outputPropertyName && vm.pluginConfig._backendProperties && vm.pluginConfig._backendProperties[outputPropertyName]) {
+        vm.pluginConfig.properties[outputPropertyName] = vm.pluginConfig.outputSchema;
       }
 
       var properties = {
