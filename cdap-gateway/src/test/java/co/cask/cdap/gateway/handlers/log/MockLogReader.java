@@ -242,7 +242,7 @@ public class MockLogReader implements LogReader {
       // Add runid to logging context
       Map<String, String> tagMap = Maps.newHashMap(Maps.transformValues(loggingContext.getSystemTagsMap(),
                                                                          TAG_TO_STRING_FUNCTION));
-      if (runId != null && i % 2 == 0) {
+      if (runId != null && stopTs == null && i % 2 == 0) {
         tagMap.put(ApplicationLoggingContext.TAG_RUNID_ID, runId.getId());
       }
       event.setMDCPropertyMap(tagMap);
