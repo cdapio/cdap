@@ -734,6 +734,28 @@ public class DefaultStoreTest {
   }
 
   @Test
+  public void testRunsLimit() throws Exception {
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
+    Id.Application appId = Id.Application.from("testRunsLimit", spec.getName());
+    store.addApplication(appId, spec, new LocalLocationFactory().create("/allPrograms"));
+
+    Id.Program flowProgramId = Id.Program.from(appId, ProgramType.FLOW, "NoOpFlow");
+
+    Assert.assertNotNull(store.getApplication(appId));
+
+    long now = System.currentTimeMillis();
+    store.setStart(flowProgramId, "flowRun1", now - 3000);
+    store.setStop(flowProgramId, "flowRun1", now - 100, ProgramController.State.COMPLETED.getRunStatus());
+
+    store.setStart(flowProgramId, "flowRun2", now - 2000);
+
+    // even though there's two separate run records (one that's complete and one that's active), only one should be
+    // returned by the query, because the limit parameter of 1 is being passed in.
+    List<RunRecordMeta> history = store.getRuns(flowProgramId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 1);
+    Assert.assertEquals(1, history.size());
+  }
+
+  @Test
   public void testCheckDeletedProgramSpecs() throws Exception {
     //Deploy program with all types of programs.
     AppFabricTestHelper.deployApplication(AllProgramsApp.class);
