@@ -21,17 +21,31 @@ with our other :ref:`distribution instructions <installation-index>`.
 
 These instructions cover the steps to install, configure, and start CDAP. They assume
 that you are familiar with Hadoop, and already have a cluster with it installed and running.
-
 The cluster must meet CDAP's :ref:`hardware, network, and software requirements
 <admin-manual-system-requirements>` before you install CDAP.
+
+Follow these steps:
+
+1. **Setting Up the Cluster:** Prerequisite tasks prior to starting the installation
+#. **Setting Up the CDAP Repos:** Preparing the package mangers to obtain the CDAP parcels
+#. **Component Installation:** Installing the packages and then preparing the cluster for startup
+#. **Additional Configurations:** Configuration settings required before starting CDAP
+#. **Starting CDAP Services**
+
+.. figure:: ../_images/distributions/distributions-cm-1.gif
+   :height: 80px
+   :align: center
+
+Once you have completed the installation and started CDAP services,
+you can then :ref:`verify the installation <admin-manual-verification>`.
 
 
 Setting Up the Cluster
 ======================
-
-As described in the :ref:`Software Prerequisites <admin-manual-software-requirements>`, 
-a configured Hadoop and HBase (plus optional Hive and Spark clients) needs to be configured on the
-node(s) where CDAP will run.
+Please review the :ref:`Software Prerequisites <admin-manual-software-requirements>`, 
+as a configured Hadoop, HBase, and Hive (plus an optional Spark client) needs to be configured on the
+node(s) where CDAP will run. :ref:`Node.js <admin-manual-software-requirements>` is required on all
+nodes where CDAP services run.
 
 .. include:: /../target/_includes/package-managers-1-installation.rst
   :end-before: .. _package-managers-install-packaging:

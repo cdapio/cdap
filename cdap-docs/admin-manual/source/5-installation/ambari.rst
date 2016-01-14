@@ -127,7 +127,7 @@ dependencies,** which must be running for CDAP system services to operate correc
 **optional dependencies,** which may be required for certain functionality or program types.
 
 The host running the CDAP Master service must have the HDFS, YARN, and HBase clients
-installed, as CDAP uses the command line clients of these for initialization and their
+installed as CDAP uses the command line clients of these for initialization and their
 connectivity information for external service dependencies. Also, CDAP currently requires
 Internet access on the CDAP service nodes (or until the issues `CDAP-3957
 <https://issues.cask.co/browse/CDAP-3957>`__ or `AMBARI-13456

@@ -20,10 +20,10 @@ software requirements <admin-manual-system-requirements>` before you install CDA
 Follow these steps:
 
 1. **Setting Up Clients:** Prerequisite tasks prior to starting the installation
-#. **Setting Up the CDAP Repos:** Download and install the CSD, then download and distribute the parcels
-#. **Component Installation:** Use the CM *Add Service* wizard to install CDAP
-#. **Additional Configurations:** Use the CM *Add Service* wizard to install CDAP
-#. **Starting CDAP Services:** The wizard will automatically start CDAP services, which you can then verify
+#. **Setting Up the CDAP Repos:** Preparing the package mangers to obtain the CDAP parcels
+#. **Component Installation:** Installing the packages and then preparing the cluster for startup
+#. **Additional Configurations:** Configuration settings required before starting CDAP
+#. **Starting CDAP Services**
 
 .. figure:: ../_images/distributions/distributions-cm-1.gif
    :height: 80px
@@ -34,9 +34,10 @@ you can then :ref:`verify the installation <admin-manual-verification>`.
 
 Setting Up Clients
 ==================
-As described in the :ref:`Software Prerequisites <admin-manual-software-requirements>`, 
-a configured Hadoop, HBase, and Hive (plus an optional Spark client) needs to be configured on the
-node(s) where CDAP will run.
+Please review the :ref:`Software Prerequisites <admin-manual-software-requirements>`, 
+as a configured Hadoop, HBase, and Hive (plus an optional Spark client) needs to be configured on the
+node(s) where CDAP will run. :ref:`Node.js <admin-manual-software-requirements>` is required on all
+nodes where CDAP services run.
 
 If colocating CDAP on cluster hosts with actual services, such as the *MapR CLDB*, *YARN
 ResourceManager*, or *HBase Master*, then the client configurations will already be in place.

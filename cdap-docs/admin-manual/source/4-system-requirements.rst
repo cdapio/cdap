@@ -86,10 +86,10 @@ You'll need this software installed:
 - A Hadoop, HBase, Hive (and optionally Spark) environment to run against.
 - To use the **ad-hoc querying capabilities of CDAP,** ensure the cluster has a compatible version of
   Hive installed. See the section on :ref:`Hadoop Compatibility <admin-manual-hadoop-compatibility-matrix>`.
-- If Hive is not going to be installed, you will need to disable the CDAP Explore
-  Service as by default it is enabled.
+- If Hive is **not** going to be installed, you will need to disable the CDAP Explore
+  Service, as by default it is enabled. The installation instructions describe how to configure this.
 - CDAP nodes require Hadoop and HBase client installation and configuration. 
-  *Note:* No Hadoop services need be running.
+  *Note:* No Hadoop services need actually be running.
 - We recommend installing an :ref:`NTP (Network Time Protocol) <admin-manual-install-ntp>`
   daemon on all nodes of the cluster, including those with CDAP components.
 
