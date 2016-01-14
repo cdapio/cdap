@@ -87,6 +87,7 @@ class LeftPanelController {
         icon: this.MyDAGFactory.getIcon(item.pluginName),
         type: item.pluginType,
         outputSchema: item.outputSchema,
+        inputSchema: item.inputSchema,
         pluginTemplate: item.pluginTemplate,
         lock: item.lock
       };
@@ -104,13 +105,7 @@ class LeftPanelController {
         warning: true
       };
     }
-
-    // this.ConfigActionsFactory.addPlugin(config, this.GLOBALS.pluginConvert[config.type]);
-    this.HydratorService.fetchBackendProperties(config)
-      .then( () => {
-        this.NodesActionsFactory.addNode(config);
-      });
-
+    this.NodesActionsFactory.addNode(config);
   }
 }
 

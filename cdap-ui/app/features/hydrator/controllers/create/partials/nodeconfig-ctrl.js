@@ -29,8 +29,10 @@ class NodeConfigController {
     this.ConfigActionsFactory = ConfigActionsFactory;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
+    this.showPropagateConfirm = false; // confirmation dialog in node config for schema propagation.
+    this.$timeout = $timeout;
 
-    this.setDefaults({});
+    this.setDefaults();
     NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
   }
   setState() {
@@ -43,8 +45,11 @@ class NodeConfigController {
     }
     this.setDefaults(nodeState);
     if (Object.keys(nodeState.node).length) {
-      this.loadNewPlugin();
-      this.validateNodeLabel();
+      this.configfetched = false;
+      this.$timeout(() => {
+        this.loadNewPlugin();
+        this.validateNodeLabel();
+      }, 1000);
     }
   }
   validateNodeLabel() {
@@ -61,27 +66,47 @@ class NodeConfigController {
       }
     });
   }
-  setDefaults(config) {
+  setDefaults(config = {}) {
     this.state = {
       configfetched : false,
       properties : [],
       noconfig: null,
       noproperty: true,
       config: {},
+      groupsConfig: {},
 
       isValidPlugin: config.isValidPlugin || false,
-      node: config.node || {},
+      node: angular.copy(config.node) || {},
 
       isSource: config.isSource || false,
       isSink: config.isSink || false,
       isTransform: config.isTransform || false,
 
       type: config.appType || null,
-      watchers: []
+      watchers: [],
+      outputSchemaUpdate: 0
     };
   }
+  copyInputToOutputSchema() {
+     // If there is no information of output schema in the node config then just mantain an output schema for UI purposes.
+     this.state.groupsConfig.outputSchema.isOutputSchemaExists = true;
+     this.state.node.outputSchema = angular.toJson({fields: this.state.node.inputSchema});
+     // FIXME: This is stupid and it is here because of 2-way binding. We bind the model of schema editor to the output schema
+     // The schema editor updates the schema from within and it should expect changes from outside (in this case copy to Output button).
+     // To differntiate editing from within and changes from outside we have to do this.
+     // And we need to differentiate because while editing we don't want to lose focus on the current textbox ($watch on the same property loses it)
+     // One more reason we should have used Flux/Redux so that we could have eliminated these hacks.
+     // The side effects of 3-way-binding (user, external & copy to output) we have different event pipe events
+     // plugin.reset, schema.clear, dataset.selected, plugin-outputschema.update
+     this.$timeout(() => {
+       this.EventPipe.emit('plugin-outputschema.update');
+     });
+     this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
+  }
+  propagateSchemaDownStream() {
+    this.ConfigActionsFactory.propagateSchemaDownStream(this.state.node.name);
+  }
   loadNewPlugin() {
-
     this.state.noproperty = Object.keys(
       this.state.node._backendProperties || {}
     ).length;
@@ -115,7 +140,6 @@ class NodeConfigController {
                   type: configOutputSchema.implicitSchema[key]
                 });
               });
-
               this.state.node.outputSchema = JSON.stringify({ fields: formattedSchema });
               this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
             } else {
@@ -124,7 +148,11 @@ class NodeConfigController {
               // If yes then set it as output schema and everytime when a user edits the output schema the value has to
               // be transitioned to the respective plugin property.
               if (configOutputSchema.isOutputSchemaExists) {
-                if (this.state.node.plugin.properties[configOutputSchema.outputSchemaProperty[0]] !== this.state.node.outputSchema) {
+                let schemaProperty = configOutputSchema.outputSchemaProperty[0];
+                let pluginProperties = this.state.node.plugin.properties;
+                if (pluginProperties[schemaProperty]) {
+                  this.state.node.outputSchema = pluginProperties[schemaProperty];
+                } else if (pluginProperties[schemaProperty] !== this.state.node.outputSchema) {
                   this.state.node.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.node.outputSchema;
                 }
                 this.state.watchers.push(
@@ -134,11 +162,6 @@ class NodeConfigController {
                     }
                   })
                 );
-              } else if (this.state.node.inputSchema) {
-                // If there is no information of output schema in the node config then just mantain an output schema for UI purposes.
-                configOutputSchema.isOutputSchemaExists = true;
-                this.state.node.outputSchema = this.state.node.outputSchema || this.state.node.inputSchema;
-                this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
               }
             }
             if (!this.$scope.isDisabled) {
@@ -153,7 +176,6 @@ class NodeConfigController {
                 )
               );
             }
-
             // Mark the configfetched to show that configurations have been received.
             this.state.configfetched = true;
             this.state.config = res;

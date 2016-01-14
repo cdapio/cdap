@@ -56,6 +56,9 @@ class ConfigActionsFactory {
   editPlugin(pluginId, pluginProperties) {
     this.dispatcher.dispatch('onPluginEdit', pluginId, pluginProperties);
   }
+  propagateSchemaDownStream(pluginId) {
+    this.dispatcher.dispatch('onSchemaPropagationDownStream', pluginId);
+  }
   setSchedule(schedule) {
     this.dispatcher.dispatch('onSetSchedule', schedule);
   }

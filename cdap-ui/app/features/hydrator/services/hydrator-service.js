@@ -15,7 +15,7 @@
  */
 
 class HydratorService {
-  constructor(GLOBALS, MyDAGFactory, uuid, $state, $rootScope, myPipelineApi, $q, ConfigStore, IMPLICIT_SCHEMA, NodesStore) {
+  constructor(GLOBALS, MyDAGFactory, uuid, $state, $rootScope, myPipelineApi, $q, IMPLICIT_SCHEMA, NodesStore) {
     this.GLOBALS = GLOBALS;
     this.MyDAGFactory = MyDAGFactory;
     this.uuid = uuid;
@@ -23,7 +23,6 @@ class HydratorService {
     this.$rootScope = $rootScope;
     this.myPipelineApi = myPipelineApi;
     this.$q = $q;
-    this.ConfigStore = ConfigStore;
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
     this.NodesStore = NodesStore;
   }
@@ -80,7 +79,7 @@ class HydratorService {
     // happening
     var params = {
       namespace: this.$state.params.namespace,
-      pipelineType: appType || this.ConfigStore.getAppType(),
+      pipelineType: appType,
       version: (node.artifact && node.artifact.version ) || this.$rootScope.cdapVersion,
       extensionType: node.type,
       pluginName: node.plugin.name
@@ -178,6 +177,6 @@ class HydratorService {
   }
 
 }
-HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'ConfigStore', 'IMPLICIT_SCHEMA', 'NodesStore'];
+HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'NodesStore'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('HydratorService', HydratorService);
