@@ -139,8 +139,9 @@ Also, create a ``tx.snapshot`` subdirectory::
   $ su hdfs
   $ hadoop fs -mkdir -p /cdap/tx.snapshot && hadoop fs -chown yarn /cdap/tx.snapshot
 
-**Note:** If you have customized the property ``data.tx.snapshot.dir`` in your 
-:ref:`CDAP configuration <appendix-cdap-site.xml>`, use that value instead.
+**Note:** If you have customized (or will be customizing) the property
+``data.tx.snapshot.dir`` in your :ref:`CDAP configuration <appendix-cdap-site.xml>`, use
+that value instead for ``/cdap/tx.snapshot``.
 
 .. _|distribution|-install-preparing-the-cluster-defaults:
 

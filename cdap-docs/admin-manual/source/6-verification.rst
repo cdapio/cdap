@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 .. _admin-manual-verification:
 
@@ -19,7 +19,7 @@ convenience.
 #. Each example folder has a ``.jar`` file in its ``target`` directory.
    For verification, we will use the :ref:`WordCount example <examples-word-count>`.
 #. Open a web browser to the CDAP UI.
-   It is located on port ``9999`` of the box where you installed CDAP.
+   It is located on port ``9999`` of the box where you installed the CDAP UI service.
 #. On the UI, click the button *Add App*.
 #. Find the pre-built ``WordCount-``\ |literal-release|\ ``.jar`` using the dialog box to navigate to
    ``CDAP_HOME/examples/WordCount/target/``. 

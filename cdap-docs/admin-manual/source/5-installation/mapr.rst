@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2016 Cask Data, Inc.
 
 :hide-toc: true
 
@@ -94,8 +94,9 @@ Also, create a ``tx.snapshot`` subdirectory::
   $ su mapr
   $ hadoop fs -mkdir -p /cdap/tx.snapshot && hadoop fs -chown cdap /cdap/tx.snapshot
 
-**Note:** If you have customized the property ``data.tx.snapshot.dir`` in your 
-:ref:`CDAP configuration <appendix-cdap-site.xml>`, use that value instead.
+**Note:** If you have customized (or will be customizing) the property
+``data.tx.snapshot.dir`` in your :ref:`CDAP configuration <appendix-cdap-site.xml>`, use
+that value instead for ``/cdap/tx.snapshot``.
 
 
 .. |display-distribution| replace:: MapR
