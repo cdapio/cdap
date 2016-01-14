@@ -576,7 +576,7 @@
 
   <property>
     <name>explore.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       Determines if the CDAP Explore Service (ad-hoc SQL queries) is enabled
     </description>
