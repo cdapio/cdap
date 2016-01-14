@@ -38,18 +38,18 @@ class HydratorService {
       .map( node => {
         node.type = artifact.transform;
         node.label = node.label || node.name;
-        node.icon = this.MyDAGFactory.getIcon(node.name);
+        node.icon = this.MyDAGFactory.getIcon(node.plugin.name);
         return node;
       });
     let sinks = angular.copy(pipeline.config.sinks)
       .map( node => {
         node.type = artifact.sink;
-        node.icon = this.MyDAGFactory.getIcon(node.name);
+        node.icon = this.MyDAGFactory.getIcon(node.plugin.name);
         return node;
       });
 
     source.type = artifact.source;
-    source.icon = this.MyDAGFactory.getIcon(source.name);
+    source.icon = this.MyDAGFactory.getIcon(source.plugin.name);
     // replace with backend id
     nodes.push(source);
     nodes = nodes.concat(transforms);
