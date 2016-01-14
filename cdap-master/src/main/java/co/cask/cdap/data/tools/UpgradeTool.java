@@ -105,6 +105,12 @@ public class UpgradeTool {
   private final ZKClientService zkClientService;
   private final MDSDatasetsRegistry mdsDatasetsRegistry;
   private final DatasetFramework dsFramework;
+  private final DatasetBasedTimeScheduleStore datasetBasedTimeScheduleStore;
+  private final StreamStateStoreUpgrader streamStateStoreUpgrader;
+  private final DatasetUpgrader dsUpgrade;
+  private final QueueAdmin queueAdmin;
+  private final DatasetSpecificationUpgrader dsSpecUpgrader;
+  private final DatasetInstanceManager datasetInstanceManager;
 
   /**
    * Set of Action available in this tool.
@@ -115,6 +121,7 @@ public class UpgradeTool {
               "  1. User and System Datasets (upgrades the coprocessor jars)\n" +
               "  2. Upgrade Schedule Triggers\n" +
               "  3. Upgrade Business Metadata Dataset\n" +
+              "  4. Stream State Store\n" +
               "  Note: Once you run the upgrade tool you cannot rollback to the previous version."),
     UPGRADE_HBASE("After an HBase upgrade, updates the coprocessor jars of all user and \n" +
                     "system HBase tables to a version that is compatible with the new HBase \n" +
@@ -141,6 +148,13 @@ public class UpgradeTool {
     this.dsFramework = injector.getInstance(DatasetFramework.class);
     this.mdsDatasetsRegistry = injector.getInstance(Key.get(MDSDatasetsRegistry.class,
                                                             Names.named("mdsDatasetsRegistry")));
+    this.datasetBasedTimeScheduleStore = injector.getInstance(DatasetBasedTimeScheduleStore.class);
+    this.streamStateStoreUpgrader = injector.getInstance(StreamStateStoreUpgrader.class);
+    this.dsUpgrade = injector.getInstance(DatasetUpgrader.class);
+    this.dsSpecUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
+    this.queueAdmin = injector.getInstance(QueueAdmin.class);
+    this.datasetInstanceManager =
+      injector.getInstance(Key.get(DatasetInstanceManager.class, Names.named("datasetInstanceManager")));
 
     Runtime.getRuntime().addShutdownHook(new Thread() {
       @Override
@@ -360,10 +374,13 @@ public class UpgradeTool {
     performCoprocessorUpgrade();
 
     LOG.info("Upgrading schedules...");
-    injector.getInstance(DatasetBasedTimeScheduleStore.class).upgrade();
+    datasetBasedTimeScheduleStore.upgrade();
 
     LOG.info("Upgrading Business Metadata Dataset...");
     upgradeBusinessMetadataDatasetSpec();
+
+    LOG.info("Upgrading stream state store table ...");
+    streamStateStoreUpgrader.upgrade();
   }
 
   private void performHBaseUpgrade() throws Exception {
@@ -374,16 +391,13 @@ public class UpgradeTool {
   private void performCoprocessorUpgrade() throws Exception {
 
     LOG.info("Upgrading User and System HBase Tables ...");
-    DatasetUpgrader dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     dsUpgrade.upgrade();
 
     LOG.info("Upgrading QueueAdmin ...");
-    QueueAdmin queueAdmin = injector.getInstance(QueueAdmin.class);
     queueAdmin.upgrade();
 
     LOG.info("Upgrading Dataset Specification...");
-    DatasetSpecificationUpgrader dsUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
-    dsUpgrader.upgrade();
+    dsSpecUpgrader.upgrade();
   }
 
   public static void main(String[] args) {
@@ -427,8 +441,6 @@ public class UpgradeTool {
   }
 
   private void upgradeBusinessMetadataDatasetSpec() {
-    DatasetInstanceManager datasetInstanceManager =
-      injector.getInstance(Key.get(DatasetInstanceManager.class, Names.named("datasetInstanceManager")));
     DatasetSpecification oldBusinessMetadataSpec =
       datasetInstanceManager.get(DefaultMetadataStore.BUSINESS_METADATA_INSTANCE_ID);
     if (oldBusinessMetadataSpec == null) {
