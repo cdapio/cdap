@@ -516,7 +516,7 @@ final class HttpHandlerGenerator {
      *   public void|BodyConsumer handle(HttpRequest request, HttpResponder responder, ...) {
      *     T handler = getHandler();
      *     TransactionContext txContext = getTransactionContext();
-     *     DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder);
+     *     DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder, txContext);
      *     HttpContentConsumer contentConsumer = null;
      *     try {
      *       txContext.start();
@@ -536,17 +536,16 @@ final class HttpHandlerGenerator {
      *     } catch (TransactionFailureException e) {
      *        LOG.error("Transaction failure: ", e);
      *        wrappedResponder.setTransactionFailureResponse(e);
-     *        contentConsunmer = null;
+     *        contentConsumer = null;
      *     }
      *     if (contentConsumer == null) {
-     *       dismissTransactionContext();
      *       wrappedResponder.execute();
      *       // Only return null if handler method returns HttpContentConsumer
      *       [return null;]
      *     }
      *
      *     // Only generated if handler method returns HttpContentConsumer
-     *     [return wrapContentConsumer(wrappedResponder, httpContentConsumer, txContext);]
+     *     [return wrapContentConsumer(httpContentConsumer, wrappedResponder, txContext);]
      *   }
      * }
      * </pre>
@@ -588,12 +587,14 @@ final class HttpHandlerGenerator {
                        Methods.getMethod(TransactionContext.class, "getTransactionContext"));
       mg.storeLocal(txContext, txContextType);
 
-      // DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder);
+      // DelayedHttpServiceResponder wrappedResponder = wrapResponder(responder, txContext);
       int wrappedResponder = mg.newLocal(delayedHttpServiceResponderType);
       mg.loadThis();
       mg.loadArg(1);
+      mg.loadLocal(txContext);
       mg.invokeVirtual(classType,
-                       Methods.getMethod(DelayedHttpServiceResponder.class, "wrapResponder", HttpResponder.class));
+                       Methods.getMethod(DelayedHttpServiceResponder.class, "wrapResponder",
+                                         HttpResponder.class, TransactionContext.class));
       mg.storeLocal(wrappedResponder, delayedHttpServiceResponderType);
 
       // HttpContentConsumer contentConsumer = null;
@@ -687,14 +688,12 @@ final class HttpHandlerGenerator {
       // If body consumer is used, generates:
       //
       // if (httpContentConsumer == null) {
-      //   dismissTransactionContext();
       //   wrappedResponder.execute();
       //   return null;
       // }
-      // return wrapContentConsumer(wrappedResponder, httpContentConsumer, txContext);
+      // return wrapContentConsumer(httpContentConsumer, wrappedResponder, txContext);
       //
       // Otherwise, generates
-      // dismissTransactionContext();
       // wrappedResponder.execute();
       if (method.getReturnType().getSort() == Type.OBJECT) {
         Label hasContentConsumer = mg.newLabel();
@@ -702,11 +701,6 @@ final class HttpHandlerGenerator {
 
         // if contentConsumer != null, goto label hasContentConsumer
         mg.ifNonNull(hasContentConsumer);
-
-        // dismissTransactionContext();
-        mg.loadThis();
-        mg.invokeVirtual(classType,
-                         Methods.getMethod(void.class, "dismissTransactionContext"));
 
         //   wrappedResponder.execute();
         //   return null;
@@ -719,7 +713,7 @@ final class HttpHandlerGenerator {
 
         // IMPORTANT: If body consumer is used, calling wrapContentConsumer must be
         // the last thing to do in this generated method since the current context will be captured
-        // return wrapContentConsumer(wrappedResponder, httpContentConsumer, txContext);
+        // return wrapContentConsumer(httpContentConsumer, wrappedResponder, txContext);
         mg.loadThis();
         mg.loadLocal(contentConsumer);
         mg.loadLocal(wrappedResponder);
@@ -730,11 +724,6 @@ final class HttpHandlerGenerator {
                                                       TransactionContext.class));
         mg.returnValue();
       } else {
-        // dismissTransactionContext();
-        mg.loadThis();
-        mg.invokeVirtual(classType,
-                         Methods.getMethod(void.class, "dismissTransactionContext"));
-
         // wrappedResponder.execute()
         mg.loadLocal(wrappedResponder);
         mg.invokeVirtual(delayedHttpServiceResponderType, Methods.getMethod(void.class, "execute"));

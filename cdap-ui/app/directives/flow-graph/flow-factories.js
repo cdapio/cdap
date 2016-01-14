@@ -33,7 +33,7 @@ angular.module(PKG.name+'.commons')
 
       scope.g.setGraph({
         nodesep: 90,
-        ranksep: 100,
+        ranksep: 120,
         rankdir: 'LR',
         marginx: 30,
         marginy: 50
@@ -177,9 +177,9 @@ angular.module(PKG.name+'.commons')
 
         if (isWorkflow) {
           if (node.label && node.label.length) {
-            nodeLabel = node.label.length > 24? node.label.substr(0,22) + '...': node.label;
+            nodeLabel = node.label.length > 24? node.label.substr(0,20) + '...': node.label;
           } else {
-            nodeLabel = node.name.length > 24? node.name.substr(0,22) + '...': node.name;
+            nodeLabel = node.name.length > 24? node.name.substr(0,20) + '...': node.name;
           }
         } else {
           if (node.label && node.label.length) {

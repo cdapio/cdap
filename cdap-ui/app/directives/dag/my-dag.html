@@ -80,7 +80,7 @@
         <div ng-repeat="node in nodes" class="box {{node.type}}" ng-style="node._uiPosition"
                data-type="{{node.type}}"
                id="{{node.name}}"
-               ng-click="MyDAGController.onNodeClick($event, node)"
+               ng-click="!disableNodeClick && MyDAGController.onNodeClick($event, node)"
                ng-class="{'selected': node.selected}">
           <div class="node"
                 ng-mouseenter="MyDAGController.nodeMouseEnter(node)"

@@ -72,7 +72,7 @@ public abstract class HttpContentConsumer {
    * This method will get invoked when a new chunk of the request body is available to be consumed.
    * It is guaranteed that no concurrent calls to this method will be made.
    * <p>
-   * Access to transactional {@link Dataset Datasets} should be done through the
+   * Access to transactional {@link Dataset Datasets} must be done through the
    * {@link Transactional#execute(TxRunnable)} method.
    * </p>
    *

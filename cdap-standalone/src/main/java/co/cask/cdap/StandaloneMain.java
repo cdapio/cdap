@@ -257,6 +257,11 @@ public class StandaloneMain {
   private void cleanupTempDir() {
     File tmpDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+
+    if (!tmpDir.isDirectory()) {
+      return;
+    }
+
     try {
       DirUtils.deleteDirectoryContents(tmpDir, true);
     } catch (IOException e) {
