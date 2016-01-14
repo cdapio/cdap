@@ -41,7 +41,7 @@
                         tooltip-append-to-body="true">
                   </span>
                   <span class="fa fa-asterisk" ng-if="NodeConfigController.state.node._backendProperties[field.name].required"></span>
-                  <small class="text-danger" ng-if="NodeConfigController.state.node._backendProperties[field.name].required && !NodeConfigController.state.node.plugin.properties[field.name]">{{::NodeConfigController.requiredPropertyError}}</small>
+                  <small class="text-danger" ng-if="!NodeConfigController.state.node.warning && NodeConfigController.state.node._backendProperties[field.name].required && !NodeConfigController.state.node.plugin.properties[field.name]">{{::NodeConfigController.requiredPropertyError}}</small>
                 </label>
 
                 <div>
