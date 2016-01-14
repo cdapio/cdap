@@ -25,6 +25,7 @@ angular.module(PKG.name + '.feature.admin')
     vm.isEdit = false;
     vm.isDisabled = false;
     vm.configFetched = false;
+    vm.noConfig = false;
     vm.pipelineTypeOptions = [
       vm.GLOBALS.etlBatch,
       vm.GLOBALS.etlRealtime
@@ -149,10 +150,11 @@ angular.module(PKG.name + '.feature.admin')
         key: 'widgets.' + vm.plugin.name + '-' + vm.plugin.type
       };
 
-
       PluginConfigFactory.fetchWidgetJson(artifact.name, artifact.version, artifact.key)
-        .then(function (res) {
+        .then(function success (res) {
+
           vm.configFetched = true;
+          vm.noConfig = false;
 
           vm.groupsConfig = PluginConfigFactory.generateNodeConfig(vm.pluginConfig._backendProperties, res);
 
@@ -178,6 +180,12 @@ angular.module(PKG.name + '.feature.admin')
 
             vm.pluginConfig.outputSchema = JSON.stringify({ fields: formattedSchema });
           }
+        }, function error (err) {
+          // When there is no config
+
+          vm.noConfig = true;
+          vm.configFetched = true;
+
         });
     };
 

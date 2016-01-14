@@ -78,45 +78,68 @@
   <label class="label-control">Template Description</label>
   <textarea class="form-control" ng-model="TemplatesController.pluginDescription"></textarea>
 
-  <div ng-repeat="group in TemplatesController.groupsConfig.groups">
-    <div class="widget-group-container">
-      <h4>{{::group.display}}</h4>
-      <div ng-repeat="field in group.fields">
-        <div ng-if="field.name !== TemplatesController.groupsConfig.outputSchema.schemaProperty">
+  <!-- WHEN THERE IS CONFIG -->
+  <div ng-if="!TemplatesController.noConfig">
+    <div ng-repeat="group in TemplatesController.groupsConfig.groups">
+      <div class="widget-group-container">
+        <h4>{{::group.display}}</h4>
+        <div ng-repeat="field in group.fields">
+          <div ng-if="field.name !== TemplatesController.groupsConfig.outputSchema.schemaProperty">
 
-          <div class="form-group">
-            <label class="control-label">
-              <span>{{::field.label}}</span>
-              <span class="fa fa-info-circle"
-                    tooltip="{{::field.description}}"
-                    tooltip-placement="right"
-                    tooltip-append-to-body="true">
-              </span>
-              <span class="fa fa-asterisk" ng-if="TemplatesController.pluginConfig._backendProperties[field.name].required"></span>
-              <small class="text-danger" ng-if="TemplatesController.pluginConfig._backendProperties[field.name].required && !TemplatesController.pluginConfig.properties[field.name]">{{::NodeConfigController.requiredPropertyError}}</small>
-            </label>
+            <div class="form-group">
+              <label class="control-label">
+                <span>{{::field.label}}</span>
+                <span class="fa fa-info-circle"
+                      tooltip="{{::field.description}}"
+                      tooltip-placement="right"
+                      tooltip-append-to-body="true">
+                </span>
+                <span class="fa fa-asterisk" ng-if="TemplatesController.pluginConfig._backendProperties[field.name].required"></span>
+                <small class="text-danger" ng-if="TemplatesController.pluginConfig._backendProperties[field.name].required && !TemplatesController.pluginConfig.properties[field.name]">{{::NodeConfigController.requiredPropertyError}}</small>
+              </label>
 
-            <div>
-              <div data-name="field"
-                   class="my-widget-container"
-                   ng-class="{'select-wrapper': field.widget === 'select'}"
-                   data-model="TemplatesController.pluginConfig.properties[field.name]"
-                   data-myconfig="field"
-                   data-properties="TemplatesController.pluginConfig.properties"
-                   widget-container>
+              <div>
+                <div data-name="field"
+                     class="my-widget-container"
+                     ng-class="{'select-wrapper': field.widget === 'select'}"
+                     data-model="TemplatesController.pluginConfig.properties[field.name]"
+                     data-myconfig="field"
+                     data-properties="TemplatesController.pluginConfig.properties"
+                     widget-container>
+                </div>
+
+                <label class="label-control">Lock change?</label>
+                <input type="checkbox" ng-model="TemplatesController.pluginConfig.lock[field.name]">
               </div>
-
-              <label class="label-control">Lock change?</label>
-              <input type="checkbox" ng-model="TemplatesController.pluginConfig.lock[field.name]">
             </div>
-          </div>
 
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div>
+  <!-- WHEN THERE IS NO CONFIG -->
+  <div ng-if="TemplatesController.noConfig">
+    <div ng-repeat="(name, value) in TemplatesController.plugin.properties track by $index">
+      <div class="form-group">
+        <label class="control-label">
+          <span>{{name}}</span>
+          <span class="fa fa-info-circle"
+                tooltip="{{value.description}}"
+                tooltip-placement="right"
+                tooltip-append-to-body="true">
+          </span>
+          <span class="fa fa-asterisk" ng-if="value.required"></span>
+        </label>
+        <input type="text"
+                class="form-control"
+                ng-model="TemplatesController.pluginConfig.properties[name]" />
+      </div>
+    </div>
+  </div>
+
+  <div ng-if="!TemplatesController.noConfig">
     <div class="output-schema">
       <h4>Output Schema</h4>
 
