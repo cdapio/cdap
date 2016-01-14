@@ -63,6 +63,16 @@ public abstract class AbstractSparkBatchContext extends AbstractTransformContext
   }
 
   @Override
+  public void releaseDataset(Dataset dataset) {
+    sparkContext.releaseDataset(dataset);
+  }
+
+  @Override
+  public void discardDataset(Dataset dataset) {
+    sparkContext.discardDataset(dataset);
+  }
+
+  @Override
   public Map<String, String> getRuntimeArguments() {
     return Collections.unmodifiableMap(runtimeArguments);
   }

@@ -19,8 +19,8 @@ package co.cask.cdap.internal.app.runtime;
 import co.cask.cdap.api.RuntimeContext;
 import co.cask.cdap.api.app.ApplicationSpecification;
 import co.cask.cdap.api.common.RuntimeArguments;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.data.DatasetProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.metrics.Metrics;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -57,7 +57,7 @@ import javax.annotation.Nullable;
  * Base class for program runtime context
  */
 public abstract class AbstractContext extends AbstractServiceDiscoverer
-  implements DatasetProvider, RuntimeContext, PluginContext {
+  implements DatasetContext, RuntimeContext, PluginContext {
 
   private final Program program;
   private final RunId runId;
