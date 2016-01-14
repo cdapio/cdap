@@ -216,7 +216,6 @@ angular.module(PKG.name + '.commons')
 
         initialize($scope.model);
         EventPipe.on('plugin-outputschema.update', function() {
-          console.log('And the model is: ', $scope.model);
           initialize($scope.model);
         });
 
@@ -349,6 +348,7 @@ angular.module(PKG.name + '.commons')
           EventPipe.cancelEvent('schema.clear');
           EventPipe.cancelEvent('plugin.reset');
           EventPipe.cancelEvent('dataset.selected');
+          EventPipe.cancelEvent('plugin-outputschema.update');
         });
       }
     };

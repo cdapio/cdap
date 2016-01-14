@@ -98,7 +98,9 @@ class NodeConfigController {
      // One more reason we should have used Flux/Redux so that we could have eliminated these hacks.
      // The side effects of 3-way-binding (user, external & copy to output) we have different event pipe events
      // plugin.reset, schema.clear, dataset.selected, plugin-outputschema.update
-     this.EventPipe.emit('plugin-outputschema.update');
+     this.$timeout(() => {
+       this.EventPipe.emit('plugin-outputschema.update');
+     });
      this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
   }
   propagateSchemaDownStream() {

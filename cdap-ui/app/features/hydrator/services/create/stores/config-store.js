@@ -337,6 +337,17 @@ class ConfigStore {
       if (node.outputSchemaProperty) {
         node.outputSchema = node.plugin.properties[node.outputSchemaProperty];
       }
+      if (nodeConfig.outputSchema.implicitSchema) {
+        let keys = Object.keys(nodeConfig.outputSchema.implicitSchema);
+        let formattedSchema = [];
+        angular.forEach(keys, (key) => {
+          formattedSchema.push({
+            name: key,
+            type: nodeConfig.outputSchema.implicitSchema[key]
+          });
+        });
+        node.outputSchema = JSON.stringify({ fields: formattedSchema });
+      }
     };
     if (nodesWOutBackendProps) {
       nodesWOutBackendProps.forEach( n => {
