@@ -86,7 +86,7 @@ angular.module(PKG.name + '.commons')
           }
 
           $scope.loadingNext = true;
-          if ($scope.model.length >= params.max) {
+          if ($scope.model.length) {
             params.fromOffset = $scope.model[$scope.model.length-1].offset;
           }
 
@@ -104,7 +104,10 @@ angular.module(PKG.name + '.commons')
           }
 
           $scope.loadingPrev = true;
-          params.fromOffset = $scope.model[0].offset;
+
+          if ($scope.model.length) {
+            params.fromOffset = $scope.model[0].offset;
+          }
 
           myLogsApi.prevLogs(params)
             .$promise
