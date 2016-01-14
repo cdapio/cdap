@@ -75,13 +75,7 @@ installation and its security configuration.
 .. _verification: verification.html
 
 - |verification|_ How to verify the CDAP installation on your Hadoop cluster by using an
-  **example application**.
-
-
-.. |upgrading| replace:: **Upgrading CDAP:**
-.. _upgrading: upgrading.html
-
-- |upgrading|_ How to upgrade an existing CDAP installation from an older version to the latest.
+  **example application** and **health checks**.
 
 
 .. |security| replace:: **Security:**

@@ -5,7 +5,7 @@
 :hide-toc: true
 :section-numbering: true
 
-.. _mapr-index:
+.. _admin-installation-mapr:
 
 ====
 MapR

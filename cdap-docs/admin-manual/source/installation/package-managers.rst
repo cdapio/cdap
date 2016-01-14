@@ -5,7 +5,7 @@
 :hide-toc: true
 :section-numbering: true
 
-.. _package-managers-index:
+.. _admin-installation-package-managers:
 
 =============================
 Package Managers (RPM/Debian)

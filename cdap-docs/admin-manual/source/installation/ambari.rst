@@ -4,7 +4,7 @@
 
 :section-numbering: true
 
-.. _ambari-index:
+.. _admin-installation-ambari:
 
 ===================
 Apache Ambari (HDP)
