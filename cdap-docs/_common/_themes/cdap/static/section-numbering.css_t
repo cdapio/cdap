@@ -1,0 +1,9 @@
+
+body{
+    counter-reset: section-numbering;
+}
+
+h2:before {
+  counter-increment: section-numbering;
+  content: "Step " counter(section-numbering)": "; 
+}

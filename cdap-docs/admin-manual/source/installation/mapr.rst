@@ -3,6 +3,7 @@
     :copyright: Copyright © 2016 Cask Data, Inc.
 
 :hide-toc: true
+:section-numbering: true
 
 .. _mapr-index:
 
@@ -19,13 +20,7 @@ software requirements <admin-manual-system-requirements>` before you install CDA
 
 Follow these steps:
 
-1. **Setting Up Clients:** Prerequisite tasks prior to starting the installation
-#. **Setting Up the CDAP Repos:** Preparing the package mangers to obtain the CDAP parcels
-#. **Component Installation:** Installing the packages and then preparing the cluster for startup
-#. **Additional Configurations:** Configuration settings required before starting CDAP
-#. **Starting CDAP Services**
-
-.. figure:: ../_images/distributions/distributions-cm-1.gif
+.. figure:: ../_images/steps/mapr.png
    :height: 80px
    :align: center
 
@@ -62,7 +57,7 @@ Setting Up the CDAP Repos
 Preparing Package Managers
 --------------------------
 
-.. include:: /../target/_includes/mapr-1-installation.rst
+.. include:: /../target/_includes/mapr-installation.rst
     :start-after: .. _mapr-preparing-package-managers:
     :end-before: .. end_install-debian-using-apt
 
@@ -70,7 +65,7 @@ Preparing Package Managers
 Component Installation
 ======================
 
-.. include:: /../target/_includes/mapr-1-installation.rst
+.. include:: /../target/_includes/mapr-installation.rst
     :start-after: .. _mapr-package-installation-title:
     :end-before: .. _mapr-preparing-cluster:
 
@@ -103,7 +98,7 @@ that value instead for ``/cdap/tx.snapshot``.
 
 .. |hdfs-user| replace:: ``cdap``
 
-.. include:: /../target/_includes/mapr-2-configuration.rst
+.. include:: /../target/_includes/mapr-configuration.rst
     :end-before: .. _mapr-configuration-hdp:
 
 .. highlight:: xml
@@ -141,8 +136,8 @@ CDAP requires that an additional entry |---| ``/opt/mapr/lib/*`` |---| be append
 
 .. _mapr-configuration-for-secure-hadoop:
 
-.. include:: /../target/_includes/mapr-2-configuration.rst
+.. include:: /../target/_includes/mapr-configuration.rst
     :start-after: .. _mapr-configuration-for-secure-hadoop:
 
 
-.. include:: /../target/_includes/mapr-3-starting.rst
+.. include:: /../target/_includes/mapr-starting.rst

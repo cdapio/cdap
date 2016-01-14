@@ -3,6 +3,7 @@
     :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 :hide-toc: true
+:section-numbering: true
 
 .. _package-managers-index:
 
@@ -26,13 +27,7 @@ The cluster must meet CDAP's :ref:`hardware, network, and software requirements
 
 Follow these steps:
 
-1. **Setting Up the Cluster:** Prerequisite tasks prior to starting the installation
-#. **Setting Up the CDAP Repos:** Preparing the package mangers to obtain the CDAP parcels
-#. **Component Installation:** Installing the packages and then preparing the cluster for startup
-#. **Additional Configurations:** Configuration settings required before starting CDAP
-#. **Starting CDAP Services**
-
-.. figure:: ../_images/distributions/distributions-cm-1.gif
+.. figure:: ../_images/steps/package-managers.png
    :height: 80px
    :align: center
 
@@ -47,7 +42,7 @@ as a configured Hadoop, HBase, and Hive (plus an optional Spark client) needs to
 node(s) where CDAP will run. :ref:`Node.js <admin-manual-software-requirements>` is required on all
 nodes where CDAP services run.
 
-.. include:: /../target/_includes/package-managers-1-installation.rst
+.. include:: /../target/_includes/package-managers-installation.rst
   :end-before: .. _package-managers-install-packaging:
   
   
@@ -57,7 +52,7 @@ Setting Up the CDAP Repos
 Preparing Package Managers
 --------------------------
 
-.. include:: /../target/_includes/package-managers-1-installation.rst
+.. include:: /../target/_includes/package-managers-installation.rst
     :start-after: .. _package-managers-preparing-package-managers:
     :end-before: .. end_install-debian-using-apt
 
@@ -65,7 +60,7 @@ Preparing Package Managers
 Component Installation
 ======================
 
-.. include:: /../target/_includes/package-managers-1-installation.rst
+.. include:: /../target/_includes/package-managers-installation.rst
     :start-after: .. _package-managers-package-installation-title:
 
 
@@ -73,7 +68,7 @@ Component Installation
 
 .. |hdfs-user| replace:: ``yarn``
 
-.. include:: /../target/_includes/package-managers-2-configuration.rst
+.. include:: /../target/_includes/package-managers-configuration.rst
 
 
-.. include:: /../target/_includes/package-managers-3-starting.rst
+.. include:: /../target/_includes/package-managers-starting.rst

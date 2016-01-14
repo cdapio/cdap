@@ -2,6 +2,8 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
+:section-numbering: true
+
 .. _ambari-index:
 
 ===================
@@ -24,17 +26,10 @@ before you install CDAP.
 
 Follow these steps:
 
-.. 
-.. .. figure:: ../_images/distributions/distributions-cm-1.gif
-..    :height: 80px
-..    :align: center
-
-
-1. **Setting Up the CDAP Repos:** Prerequisite tasks prior to starting the installation
-#. **CDAP Dependencies:** Core and optional dependencies of CDAP
-#. **Installing using the Wizard:** Use the Ambari *Start Service* wizard to install CDAP services
-#. **Deploying and Starting CDAP:** The wizard will deploy and automatically start CDAP services, which you can then verify
-
+.. figure:: ../_images/steps/ambari.png
+   :height: 80px
+   :align: center
+   
 
 .. rubric:: Notes
 
@@ -96,7 +91,7 @@ with the CDAP Repository from the list below that you would like to use:
 **Note:** The CDAP Ambari service has been tested on Ambari Server 2.0 and 2.1, as
 supplied from Hortonworks.
 
-.. include:: /../target/_includes/ambari-1-installation.rst
+.. include:: /../target/_includes/ambari-installation.rst
   :start-after: .. _ambari-install-rpm-using-yum:
   :end-before: .. _ambari-package-installation-title:
 

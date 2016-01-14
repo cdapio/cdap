@@ -2,7 +2,7 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-:hide-toc: true
+:section-numbering: true
 
 .. _admin-cloudera:
 
@@ -28,25 +28,15 @@ before you install CDAP.
 
 Follow these steps:
 
-1. **Preparing Roles and Nodes:** Prerequisite tasks prior to starting the installation
-#. **Adding the Parcels:** Download and install the CSD, then download and distribute the parcels
-#. **Installing CDAP Services:** Use the CM *Add Service* wizard to install CDAP
-#. **Starting CDAP Services:** The wizard will automatically start CDAP services, which you can then verify
-
-.. figure:: ../_images/distributions/distributions-cm-1.gif
+.. figure:: ../_images/steps/cloudera-manager.png
    :height: 80px
    :align: center
 
 Once you have completed the installation and started CDAP services,
 you can then :ref:`verify the installation <admin-manual-verification>`.
 
-
 Preparing Roles and Nodes
 =========================
-
-.. figure:: ../_images/distributions/distributions-cm-2.gif
-   :height: 80px
-   :align: center
 
 Roles and Dependencies
 ----------------------
@@ -118,10 +108,6 @@ Prerequisites
 Adding the Parcels
 ==================
 
-.. figure:: ../_images/distributions/distributions-cm-3.gif
-   :height: 80px
-   :align: center
-
 .. _cloudera-installation-download:
 
 Download
@@ -171,10 +157,6 @@ suggestions <faqs-cloudera-direct-parcel-access>`.
 
 Installing CDAP Services
 ========================
-
-.. figure:: ../_images/distributions/distributions-cm-4.gif
-   :height: 80px
-   :align: center
 
 These instructions show how to use the Cloudera Manager Admin Console *Add Service* Wizard
 to install and start CDAP. Note that the screens of the wizard will vary depending on
@@ -278,10 +260,6 @@ your settings before continuing to the next step, which will install and start C
 
 Starting CDAP Services
 ======================
-
-.. figure:: ../_images/distributions/distributions-cm-5.gif
-   :height: 80px
-   :align: center
 
 Add Service Wizard: First Run of Commands
 -----------------------------------------

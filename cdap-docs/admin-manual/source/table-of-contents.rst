@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 ============================================
 CDAP Administration Manual Table of Contents
@@ -10,13 +10,13 @@ CDAP Administration Manual Table of Contents
    :maxdepth: 3
 
     Introduction <index>
-    CDAP Components <1-cdap-components>
-    Deployment Architectures <2-deployment-architectures>
-    Hadoop Compatibility <3-hadoop-compatibility>
-    System Requirements <4-system-requirements>
-    Installation <5-installation/index>
-    Verification <6-verification>
-    Upgrading <6-upgrading>
-    Security <7-security>
-    Operations <8-operations/index>
+    CDAP Components <cdap-components>
+    Deployment Architectures <deployment-architectures>
+    Hadoop Compatibility <hadoop-compatibility>
+    System Requirements <system-requirements>
+    Installation <installation/index>
+    Verification <verification>
+    Upgrading <upgrading>
+    Security <security>
+    Operations <operations/index>
     Appendices <appendices/index>

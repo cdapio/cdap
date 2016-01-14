@@ -195,13 +195,13 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
  
    - On RPM using Yum:
 
-     .. include:: _includes/installation/1-installation.txt 
+     .. include:: _includes/installation/installation.txt 
         :start-after: Download the Cask Yum repo definition file:
         :end-before:  .. end_install-rpm-using-yum
 
    - On Debian using APT:
 
-     .. include:: _includes/installation/1-installation.txt 
+     .. include:: _includes/installation/installation.txt 
         :start-after: Download the Cask APT repo definition file:
         :end-before:  .. end_install-debian-using-apt
 

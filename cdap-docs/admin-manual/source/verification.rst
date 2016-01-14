@@ -34,5 +34,5 @@ convenience.
 
 .. rubric:: Getting a Health Check
 
-.. include:: 8-operations/index.rst 
+.. include:: operations/index.rst 
    :start-after: .. _operations-health-check:
