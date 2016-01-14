@@ -285,14 +285,14 @@ angular.module(PKG.name + '.feature.admin')
             }
           }
 
-          var json = [
+          var chain = [
             namespace,
             properties.templateType,
             properties.pluginType,
             properties.pluginTemplate
-          ].join('.');
+          ];
 
-          myHelpers.deepSet(res, json, properties);
+          myHelpers.objectSetter(res, chain, properties);
 
           mySettings.set('pluginTemplates', res)
             .then(function () {
