@@ -44,14 +44,18 @@
     </div>
   </div>
 
-  <div ng-if="TemplatesController.pluginList.length > 0">
+  <div ng-if="TemplatesController.pluginType">
     <label class="label-control">Choose Plugin</label>
-    <div class="select-wrapper">
+    <div class="select-wrapper" ng-if="TemplatesController.pluginList.length > 0">
       <select ng-model="TemplatesController.pluginName"
               ng-change="TemplatesController.onPluginSelect()"
               class="form-control">
         <option ng-repeat="plugin in TemplatesController.pluginList" value="{{plugin}}">{{plugin}}</option>
       </select>
+    </div>
+
+    <div ng-if="TemplatesController.pluginList.length === 0">
+      <h4>There is no plugin for this template</h4>
     </div>
   </div>
 
