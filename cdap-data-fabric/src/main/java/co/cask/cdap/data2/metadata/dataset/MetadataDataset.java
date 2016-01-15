@@ -32,6 +32,7 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -43,6 +44,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /**
@@ -53,12 +55,14 @@ public class MetadataDataset extends AbstractDataset {
     .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
     .create();
 
-  private static final String HISTORY_COLUMN = "h";
-  private static final String VALUE_COLUMN = "v";
+  private static final Pattern VALUE_SPLIT_PATTERN = Pattern.compile("[-_\\s]+");
+  private static final Pattern TAGS_SEPARATOR_PATTERN = Pattern.compile("[,\\s]+");
+
+  private static final String HISTORY_COLUMN = "h"; // column for metadata history
+  private static final String VALUE_COLUMN = "v";  // column for metadata value
   private static final String TAGS_SEPARATOR = ",";
 
-  static final String KEYVALUE_COLUMN = "kv";
-  static final String CASE_INSENSITIVE_VALUE_COLUMN = "civ";
+  static final String INDEX_COLUMN = "i";          // column for metadata indexes
 
   public static final String TAGS_KEY = "tags";
   public static final String KEYVALUE_SEPARATOR = ":";
@@ -73,13 +77,13 @@ public class MetadataDataset extends AbstractDataset {
   /**
    * Add new metadata.
    *
-   * @param metadataRecord The value of the metadata to be saved.
+   * @param metadataEntry The value of the metadata to be saved.
    */
-  private void setMetadata(MetadataEntry metadataRecord) {
-    Id.NamespacedId targetId = metadataRecord.getTargetId();
+  private void setMetadata(MetadataEntry metadataEntry) {
+    Id.NamespacedId targetId = metadataEntry.getTargetId();
 
     // Put to the default column.
-    write(targetId, metadataRecord);
+    write(targetId, metadataEntry);
   }
 
   /**
@@ -129,7 +133,7 @@ public class MetadataDataset extends AbstractDataset {
    */
   @Nullable
   private MetadataEntry getMetadata(Id.NamespacedId targetId, String key) {
-    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, key);
+    MDSKey mdsKey = MdsKey.getMDSValueKey(targetId, key);
     Row row = indexedTable.get(mdsKey.getKey());
     if (row.isEmpty()) {
       return null;
@@ -164,7 +168,7 @@ public class MetadataDataset extends AbstractDataset {
    */
   private Map<String, String> getMetadata(Id.NamespacedId targetId) {
     String targetType = KeyHelper.getTargetType(targetId);
-    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, null);
+    MDSKey mdsKey = MdsKey.getMDSValueKey(targetId, null);
     byte[] startKey = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
 
@@ -173,7 +177,7 @@ public class MetadataDataset extends AbstractDataset {
     try {
       Row next;
       while ((next = scan.next()) != null) {
-        String key = MdsValueKey.getMetadataKey(targetType, next.getRow());
+        String key = MdsKey.getMetadataKey(targetType, next.getRow());
         byte[] value = next.get(VALUE_COLUMN);
         if (key == null || value == null) {
           continue;
@@ -245,28 +249,63 @@ public class MetadataDataset extends AbstractDataset {
    */
   private void removeMetadata(Id.NamespacedId targetId, Predicate<String> filter) {
     String targetType = KeyHelper.getTargetType(targetId);
-    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, null);
+    MDSKey mdsKey = MdsKey.getMDSValueKey(targetId, null);
     byte[] prefix = mdsKey.getKey();
     byte[] stopKey = Bytes.stopKeyForPrefix(prefix);
+
+    List<String> deletedMetadataKeys = new LinkedList<>();
 
     Scanner scan = indexedTable.scan(prefix, stopKey);
     try {
       Row next;
       while ((next = scan.next()) != null) {
-        String keyValue = next.getString(KEYVALUE_COLUMN);
         String value = next.getString(VALUE_COLUMN);
-        if (keyValue == null && value == null) {
+        if (value == null) {
           continue;
         }
-        if (filter.apply(MdsValueKey.getMetadataKey(targetType, next.getRow()))) {
+        String metadataKey = MdsKey.getMetadataKey(targetType, next.getRow());
+        if (filter.apply(metadataKey)) {
           indexedTable.delete(new Delete(next.getRow()));
+          // store the key to delete its indexes later
+          deletedMetadataKeys.add(metadataKey);
         }
       }
     } finally {
       scan.close();
     }
 
+    // delete all the indexes for all deleted metadata key
+    for (String deletedMetadataKey : deletedMetadataKeys) {
+      deleteIndexes(targetId, deletedMetadataKey);
+    }
+
     writeHistory(targetId);
+  }
+
+  /**
+   * Deletes all indexes associated with a metadata key
+   *
+   * @param targetId the {@link Id.NamespacedId} for which keys are to be removed
+   * @param metadataKey the key to remove from the metadata of the specified {@link Id.NamespacedId}
+   */
+  private void deleteIndexes(Id.NamespacedId targetId, String metadataKey) {
+    MDSKey mdsKey = MdsKey.getMDSIndexKey(targetId, metadataKey, null);
+    byte[] startKey = mdsKey.getKey();
+    byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+
+    Scanner scan = indexedTable.scan(startKey, stopKey);
+    try {
+      Row next;
+      while ((next = scan.next()) != null) {
+        String index = next.getString(INDEX_COLUMN);
+        if (index == null) {
+          continue;
+        }
+        indexedTable.delete(new Delete(next.getRow()));
+      }
+    } finally {
+      scan.close();
+    }
   }
 
   /**
@@ -294,6 +333,8 @@ public class MetadataDataset extends AbstractDataset {
 
     Iterables.removeAll(existingTags, Arrays.asList(tagsToRemove));
 
+    // call remove metadata for tags which will delete all the existing indexes for tags of this targetId
+    removeMetadata(targetId, TAGS_KEY);
     setTags(targetId, Iterables.toArray(existingTags, String.class));
   }
 
@@ -313,30 +354,6 @@ public class MetadataDataset extends AbstractDataset {
    */
   public void removeTags(Id.NamespacedId targetId) {
     removeMetadata(targetId);
-  }
-
-  /**
-   * Find the instance of {@link MetadataEntry} based on key.
-   *
-   * @param namespaceId The namespace id to filter
-   * @param value The metadata value to be found
-   * @param type The target type of objects to search from
-   * @return The {@link Iterable} of {@link MetadataEntry} that fit the value
-   */
-  public List<MetadataEntry> searchByValue(String namespaceId, String value, MetadataSearchTargetType type) {
-    return executeSearch(namespaceId, MetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN, value, type);
-  }
-
-  /**
-   * Find the instance of {@link MetadataEntry} for key:value pair
-   *
-   * @param namespaceId The namespace id to filter
-   * @param keyValue The metadata value to be found.
-   * @param type The target type of objects to search from.
-   * @return The {@link Iterable} of {@link MetadataEntry} that fit the key value pair.
-   */
-  public List<MetadataEntry> searchByKeyValue(String namespaceId, String keyValue, MetadataSearchTargetType type) {
-    return executeSearch(namespaceId, MetadataDataset.KEYVALUE_COLUMN, keyValue, type);
   }
 
   /**
@@ -370,114 +387,136 @@ public class MetadataDataset extends AbstractDataset {
     }
   }
 
-  // Helper method to execute IndexedTable search on target index column.
-  private List<MetadataEntry> executeSearch(final String namespaceId, final String column,
-                                            final String searchValue, final MetadataSearchTargetType type) {
-    List<MetadataEntry> results = new LinkedList<>();
-
+  /**
+   * Performs a search for the given search query in the given namespace for the given {@link MetadataSearchTargetType}
+   *
+   * @param namespaceId the namespace to search in
+   * @param searchQuery the search query, which could be of two forms: [key]:[value] or just [value] and can have '*'
+   * at the end for a prefixed search.
+   * @param type the {@link MetadataSearchTargetType} to restrict the search to
+   */
+  public List<MetadataEntry> search(final String namespaceId, final String searchQuery,
+                                    final MetadataSearchTargetType type) {
+    Set<MetadataEntry> results = new HashSet<>();
     Scanner scanner;
-    String namespacedSearchValue = namespaceId + KEYVALUE_SEPARATOR + searchValue.toLowerCase();
 
-    // Special case if the key is "tags:"
-    // Since the value is saved as comma separated Strings, we need to do String matching to filter the right keyword.
-    boolean modifiedTagsKVSearch = false;
-    final String unmodifiedTagKeyValue = searchValue.toLowerCase();
-    if (KEYVALUE_COLUMN.equals(column) && unmodifiedTagKeyValue.startsWith(TAGS_KEY + KEYVALUE_SEPARATOR)) {
-      // If it is search on "tags" but does not end with * then we need to add virtual one.
-      // Change the search to just search on namespace:tags: - we will do filter later.
-      namespacedSearchValue =
-        namespacedSearchValue.substring(0, namespacedSearchValue.lastIndexOf(KEYVALUE_SEPARATOR) + 1) + "*";
-      modifiedTagsKVSearch = true;
-    }
+    String namespacedSearchQuery = prepareSearchQuery(namespaceId, searchQuery);
 
-    if (namespacedSearchValue.endsWith("*")) {
-      byte[] startKey = Bytes.toBytes(namespacedSearchValue.substring(0, namespacedSearchValue.lastIndexOf("*")));
+    if (namespacedSearchQuery.endsWith("*")) {
+      // if prefixed search get start and stop key
+      byte[] startKey = Bytes.toBytes(namespacedSearchQuery.substring(0, namespacedSearchQuery.lastIndexOf("*")));
       byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-      scanner = indexedTable.scanByIndex(Bytes.toBytes(column), startKey, stopKey);
+      scanner = indexedTable.scanByIndex(Bytes.toBytes(INDEX_COLUMN), startKey, stopKey);
     } else {
-      byte[] value = Bytes.toBytes(namespacedSearchValue);
-      scanner = indexedTable.readByIndex(Bytes.toBytes(column), value);
+      byte[] value = Bytes.toBytes(namespacedSearchQuery);
+      scanner = indexedTable.readByIndex(Bytes.toBytes(INDEX_COLUMN), value);
     }
     try {
       Row next;
       while ((next = scanner.next()) != null) {
-        String rowValue = next.getString(VALUE_COLUMN);
+        String rowValue = next.getString(INDEX_COLUMN);
         if (rowValue == null) {
           continue;
         }
 
         final byte[] rowKey = next.getRow();
-        String targetType = MdsValueKey.getTargetType(rowKey);
+        String targetType = MdsKey.getTargetType(rowKey);
 
         // Filter on target type if not ALL
-        if ((type != MetadataSearchTargetType.ALL) && (!targetType.equals(type.getInternalName()))) {
+        if ((type != MetadataSearchTargetType.ALL) && (type !=
+          MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
           continue;
         }
 
-        // Deal with special case for search on specific keyword for "tags:"
-        if (modifiedTagsKVSearch) {
-          boolean isMatch = false;
-          if ((TAGS_KEY + KEYVALUE_SEPARATOR + "*").equals(unmodifiedTagKeyValue)) {
-            isMatch = true;
-          } else {
-            Iterable<String> tagValues = Splitter.on(TAGS_SEPARATOR).omitEmptyStrings().trimResults().split(rowValue);
-            for (String tagValue : tagValues) {
-              // compare with tags:value
-              String prefixedTagValue = TAGS_KEY + KEYVALUE_SEPARATOR + tagValue;
-              if (!unmodifiedTagKeyValue.endsWith("*")) {
-                if (prefixedTagValue.equals(unmodifiedTagKeyValue)) {
-                  isMatch = true;
-                  break;
-                }
-              } else {
-                int endAsteriskIndex = unmodifiedTagKeyValue.lastIndexOf("*");
-                if (prefixedTagValue.startsWith(unmodifiedTagKeyValue.substring(0, endAsteriskIndex))) {
-                  isMatch = true;
-                  break;
-                }
-              }
-            }
-          }
-          if (!isMatch) {
-            continue;
-          }
-        }
-
-        Id.NamespacedId targetId = MdsValueKey.getNamespaceIdFromKey(targetType, rowKey);
-        String key = MdsValueKey.getMetadataKey(targetType, rowKey);
-        String value = Bytes.toString(next.get(Bytes.toBytes(MetadataDataset.VALUE_COLUMN)));
-        MetadataEntry entry = new MetadataEntry(targetId, key, value);
+        Id.NamespacedId targetId = MdsKey.getNamespaceIdFromKey(targetType, rowKey);
+        String key = MdsKey.getMetadataKey(targetType, rowKey);
+        MetadataEntry entry = getMetadata(targetId, key);
         results.add(entry);
       }
     } finally {
       scanner.close();
     }
+    return Lists.newArrayList(results);
+  }
 
-    return results;
+  /**
+   * Prepares a search query by trimming and also removing whitespaces around the {@link #KEYVALUE_SEPARATOR} and
+   * appending the given namespaceId to perform search in a namespace.
+   *
+   * @param namespaceId the namespaceId to search in
+   * @param searchQuery the user specified search query
+   * @return formatted search query which is namespaced
+   */
+  private String prepareSearchQuery(String namespaceId, String searchQuery) {
+    String formattedSearchQuery = searchQuery.toLowerCase().trim();
+    // if this is a key:value search remove  spaces around the separator too
+    if (formattedSearchQuery.contains(KEYVALUE_SEPARATOR)) {
+      // split the search query in two parts on first occurrence of KEYVALUE_SEPARATOR and the trim the key and value
+      String[] split = formattedSearchQuery.split(KEYVALUE_SEPARATOR, 2);
+      formattedSearchQuery = split[0].trim() + KEYVALUE_SEPARATOR + split[1].trim();
+    }
+    return namespaceId + KEYVALUE_SEPARATOR + formattedSearchQuery;
   }
 
   private void write(Id.NamespacedId targetId, MetadataEntry entry) {
     String key = entry.getKey();
-    MDSKey mdsKey = MdsValueKey.getMDSKey(targetId, key);
-    Put put = new Put(mdsKey.getKey());
+    MDSKey mdsValueKey = MdsKey.getMDSValueKey(targetId, key);
+    Put put = new Put(mdsValueKey.getKey());
 
-    // Now add the index columns. To support case insensitive we will store it as lower case for index columns.
-    String lowerCaseKey = entry.getKey().toLowerCase();
-    String lowerCaseValue = entry.getValue().toLowerCase();
-
-    String nameSpacedKVIndexValue =
-      MdsValueKey.getNamespaceId(mdsKey) + KEYVALUE_SEPARATOR + lowerCaseKey + KEYVALUE_SEPARATOR + lowerCaseValue;
-    put.add(Bytes.toBytes(KEYVALUE_COLUMN), Bytes.toBytes(nameSpacedKVIndexValue));
-
-    String nameSpacedVIndexValue = MdsValueKey.getNamespaceId(mdsKey) + KEYVALUE_SEPARATOR + lowerCaseValue;
-    put.add(Bytes.toBytes(CASE_INSENSITIVE_VALUE_COLUMN), Bytes.toBytes(nameSpacedVIndexValue));
-
-    // Add to value column
+    // add the metadata value
     put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(entry.getValue()));
-
     indexedTable.put(put);
+    // index the metadata
+    storeIndexes(targetId, entry);
 
     writeHistory(targetId);
+  }
+
+  /**
+   * Store indexes for a {@link MetadataEntry}
+   *
+   * @param targetId the {@link Id.NamespacedId} from which the metadata indexes has to be stored
+   * @param entry the {@link MetadataEntry} which has to be indexed
+   */
+  private void storeIndexes(Id.NamespacedId targetId, MetadataEntry entry) {
+    Set<String> valueIndexes = new HashSet<>();
+    if (entry.getValue().contains(TAGS_SEPARATOR)) {
+      // if the entry is tag then each tag is an index
+      valueIndexes.addAll(Arrays.asList(TAGS_SEPARATOR_PATTERN.split(entry.getValue())));
+    } else {
+      // for key value the complete value is an index
+      valueIndexes.add(entry.getValue());
+    }
+    Set<String> indexes = Sets.newHashSet();
+    for (String index : valueIndexes) {
+      // split all value indexes on the VALUE_SPLIT_PATTERN
+      indexes.addAll(Arrays.asList(VALUE_SPLIT_PATTERN.split(index)));
+    }
+    // add all value indexes too
+    indexes.addAll(valueIndexes);
+
+    for (String index : indexes) {
+      // store the index with key of the metadata
+      indexedTable.put(getIndexPut(targetId, entry.getKey(), entry.getKey() + KEYVALUE_SEPARATOR + index));
+      // store just the index value
+      indexedTable.put(getIndexPut(targetId, entry.getKey(), index));
+    }
+  }
+
+  /**
+   * Creates a {@link Put} for the a metadata index
+   *
+   * @param targetId the {@link Id.NamespacedId} from which the metadata index has to be created
+   * @param metadataKey the key of the metadata entry
+   * @param index the index for this metadata
+   * @return {@link Put} which is a index row with the value to be indexed in the {@link #INDEX_COLUMN}
+   */
+  private Put getIndexPut(Id.NamespacedId targetId, String metadataKey, String index) {
+    MDSKey mdsIndexKey = MdsKey.getMDSIndexKey(targetId, metadataKey, index.toLowerCase());
+    String namespacedIndex = MdsKey.getNamespaceId(mdsIndexKey) + KEYVALUE_SEPARATOR + index.toLowerCase();
+    Put put = new Put(mdsIndexKey.getKey());
+    put.add(Bytes.toBytes(INDEX_COLUMN), Bytes.toBytes(namespacedIndex));
+    return put;
   }
 
   /**

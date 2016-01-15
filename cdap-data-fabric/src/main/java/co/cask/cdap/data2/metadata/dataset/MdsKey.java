@@ -22,14 +22,18 @@ import co.cask.cdap.proto.Id;
 import javax.annotation.Nullable;
 
 /**
- * Key used to store metadata values.
+ * Key used to store metadata values and indexes.
  */
-public class MdsValueKey {
-  private static final byte[] ROW_PREFIX = {'v'};
+public class MdsKey {
+  private static final byte[] VALUE_ROW_PREFIX = {'v'}; // value row prefix to store metadata value
+  private static final byte[] INDEX_ROW_PREFIX = {'i'}; // index row prefix used for metadata search
 
   public static String getMetadataKey(String type, byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
-    // The rowkey is [rowPrefix][targetType][targetId][metadata-type][key], so skip the first few strings.
+    // The rowkey is
+    // [rowPrefix][targetType][targetId][key] for value rows and
+    // [rowPrefix][targetType][targetId][key][index] for value index rows
+    // so skip the first few strings.
 
     // Skip rowType
     keySplitter.skipBytes();
@@ -70,37 +74,66 @@ public class MdsValueKey {
 
   public static String getTargetType(byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
-    // The rowkey is [rowPrefix][targetType][targetId][metadata-type][key]
+    // The rowkey is
+    // [rowPrefix][targetType][targetId][key] for value rows and
+    // [rowPrefix][targetType][targetId][key][index] for value index rows
     keySplitter.getBytes();
     return keySplitter.getString();
   }
 
-  public static MDSKey getMDSKey(Id.NamespacedId targetId, @Nullable String key) {
-    String targetType = KeyHelper.getTargetType(targetId);
-    MDSKey.Builder builder = new MDSKey.Builder();
-    builder.add(ROW_PREFIX);
-    builder.add(targetType);
-    KeyHelper.addNamespaceIdToKey(builder, targetId);
+  /**
+   * Creates a key for metadata value row in the format:
+   * [{@link #VALUE_ROW_PREFIX}][targetType][targetId][key] for value index rows
+   */
+  public static MDSKey getMDSValueKey(Id.NamespacedId targetId, @Nullable String key) {
+    MDSKey.Builder builder = getMDSKeyPrefix(targetId, VALUE_ROW_PREFIX);
     if (key != null) {
       builder.add(key);
     }
-
     return builder.build();
+  }
+
+  /**
+   * Creates a key for metadata index row in the format:
+   * [{@link #INDEX_ROW_PREFIX}][targetType][targetId][key][index] for value index rows
+   */
+  public static MDSKey getMDSIndexKey(Id.NamespacedId targetId, String key, @Nullable String index) {
+    MDSKey.Builder builder = getMDSKeyPrefix(targetId, INDEX_ROW_PREFIX);
+    builder.add(key);
+    if (index != null) {
+      builder.add(index);
+    }
+    return builder.build();
+  }
+
+  private static MDSKey.Builder getMDSKeyPrefix(Id.NamespacedId targetId, byte[] rowPrefix) {
+    String targetType = KeyHelper.getTargetType(targetId);
+    MDSKey.Builder builder = new MDSKey.Builder();
+    builder.add(rowPrefix);
+    builder.add(targetType);
+    KeyHelper.addTargetIdToKey(builder, targetId);
+    return builder;
   }
 
   public static Id.NamespacedId getNamespaceIdFromKey(String type, byte[] rowKey) {
     MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
 
-    // The rowkey is [rowPrefix][targetType][targetId][metadata-type][key], so skip the first two.
+    // The rowkey is
+    // [rowPrefix][targetType][targetId][key] for value rows and
+    // [rowPrefix][targetType][targetId][key][index] for value index rows
+    // so skip the first two.
     keySplitter.skipBytes();
     keySplitter.skipString();
-    return KeyHelper.getNamespaceIdFromKey(keySplitter, type);
+    return KeyHelper.getTargetIdIdFromKey(keySplitter, type);
   }
 
   public static String getNamespaceId(MDSKey key) {
     MDSKey.Splitter keySplitter = key.split();
 
-    // The rowkey is [rowPrefix][targetType][targetId][metadata-type][key], so skip the first two.
+    // The rowkey is
+    // [rowPrefix][targetType][targetId][key] for value rows and
+    // [rowPrefix][targetType][targetId][key][index] for value index rows
+    // so skip the first two.
     keySplitter.skipBytes();
     keySplitter.skipString();
     // We are getting the first part of [targetId] which always be the namespace id.
