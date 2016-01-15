@@ -310,6 +310,8 @@ angular
       getVersion();
     }
 
+    $scope.copyrightYear = new Date().getFullYear();
+
     function getVersion() {
       dataSource.request({
         _cdapPath: '/version'
