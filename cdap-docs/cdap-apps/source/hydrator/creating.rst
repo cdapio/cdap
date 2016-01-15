@@ -193,7 +193,127 @@ property replaces the ``schedule`` property of an ETL Batch Application.
 
 In the example code above, we will use a *ProjectionTransform* (a type of Transform) to drop certain
 columns in the incoming data. A *StreamSink* in the final step needs a data field property
-that it will use as the content for the data to be written. 
+that it will use as the content for the data to be written.
+
+DAG in transform
+----------------
+
+ETLConfig support DAG in pipeline, which allows non-linear execution of pipeline stages.
+
+Example :
+pipeline reads from the stream ``purchaseStats``. It replicates the stream events to the table ``replicaTable``,
+while it only writes the userIds to ``usersTable`` when a user's purchase price is greater that $1000,
+this filtering logic is applied using the script ``spendingUsersScript``.
+
+
+.. container:: highlight
+
+  .. parsed-literal::
+    {
+      "artifact": {
+        "name": "cdap-etl-batch",
+        "version": "|version|",
+        "scope": "SYSTEM"
+      },
+      "config": {
+        "source": {
+          "name": "purchaseStats",
+          "plugin": {
+            "name": "Stream",
+            "properties": {
+              "format": "csv",
+              "schema": "{
+                \"type\":\"record\",
+                \"name\":\"etlSchemaBody\",
+                \"fields\":[
+                  {\"name\":\"userId\",\"type\":\"string\"},
+                  {\"name\":\"purchaseItem\",\"type\":\"string\"},
+                  {\"name\":\"purchasePrice\",\"type\":\"long\"}
+                ]
+              }",
+              "name": "testStream",
+              "duration": "1d"
+            }
+          }
+        },
+        "sinks": [
+          {
+            "name": "replicaTable",
+            "plugin": {
+              "name": "Table",
+              "properties": {
+                "schema": "{
+                  \"type\":\"record\",
+                  \"name\":\"etlSchemaBody\",
+                  \"fields\":[
+                    {\"name\":\"userId\",\"type\":\"string\"},
+                    {\"name\":\"purchaseItem\",\"type\":\"string\"},
+                    {\"name\":\"purchasePrice\",\"type\":\"long\"}
+                  ]
+                }",
+                "name": "replicaTable",
+                "schema.row.field": "userId"
+              }
+            }
+          },
+          {
+            "name": "usersTable",
+            "plugin": {
+              "name": "Table",
+              "properties": {
+                "schema": "{
+                  \"type\":\"record\",
+                  \"name\":\"etlSchemaBody\",
+                  \"fields\":[
+                    {\"name\":\"userId\",\"type\":\"string\"}
+                  ]
+                }",
+                "name": "targetCustomers",
+                "schema.row.field": "userId"
+              }
+            }
+          }
+        ],
+        "transforms": [
+          {
+            "name": "spendingUsersScript",
+            "plugin": {
+              "name": "Script",
+              "properties": {
+                "script": "function transform(input, context) {
+                            if (input.purchasePrice > 1000) {
+                              return {'userId' : input.userId};
+                            }
+                          }",
+                "schema": "{
+                  \"type\":\"record\",
+                  \"name\":\"etlSchemaBody\",
+                  \"fields\":[
+                    {\"name\":\"userId\",\"type\":\"string\"}
+                  ]
+                }"
+              }
+            }
+          }
+        ],
+        "connections": [
+          {
+            "from": "purchaseStats",
+            "to": "replicaTable"
+          },
+          {
+            "from": "purchaseStats",
+            "to": "spendingUsersScript"
+          },
+          {
+            "from": "spendingUsersScript",
+            "to": "usersTable"
+          }
+        ],
+        "schedule": "* * * * *",
+        "engine": "mapreduce"
+      }
+    }
 
 Sample Application Configurations
 ---------------------------------
