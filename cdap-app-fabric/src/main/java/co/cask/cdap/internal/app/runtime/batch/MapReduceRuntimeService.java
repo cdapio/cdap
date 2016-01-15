@@ -545,8 +545,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     if (provider != null) {
       Configuration jobConf = job.getConfiguration();
-      jobConf.set(Job.INPUT_FORMAT_CLASS_ATTR, provider.getInputFormatClassName());
       ConfigurationUtil.setAll(provider.getInputFormatConfiguration(), jobConf);
+      jobConf.set(Job.INPUT_FORMAT_CLASS_ATTR, provider.getInputFormatClassName());
 
       // A bit hacky for stream.
       // For stream, we need to do two extra steps.
@@ -583,10 +583,10 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // If only one output is configured through the context, then set it as the root OutputFormat
       Map.Entry<String, OutputFormatProvider> next = outputFormatProviders.entrySet().iterator().next();
       OutputFormatProvider outputFormatProvider = next.getValue();
-      job.getConfiguration().set(Job.OUTPUT_FORMAT_CLASS_ATTR, outputFormatProvider.getOutputFormatClassName());
       for (Map.Entry<String, String> entry : outputFormatProvider.getOutputFormatConfiguration().entrySet()) {
         job.getConfiguration().set(entry.getKey(), entry.getValue());
       }
+      job.getConfiguration().set(Job.OUTPUT_FORMAT_CLASS_ATTR, outputFormatProvider.getOutputFormatClassName());
       return;
     }
     // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
