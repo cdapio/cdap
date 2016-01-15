@@ -17,18 +17,18 @@ Creating
 ========
 
 To create a project from the archetype, use this script as an example
-(substituting your version of CDAP for ${cdap.version} as appropriate)::
+(substituting for ${project.version} as appropriate)::
 
-  mvn archetype:generate
-    -DarchetypeGroupId=co.cask.cdap
-    -DarchetypeArtifactId=cdap-app-archetype
-    -DarchetypeVersion=${cdap.version}
+  mvn archetype:generate 					
+    -DarchetypeGroupId=co.cask.cdap 			
+    -DarchetypeArtifactId=cdap-app-archetype 	
+    -DarchetypeVersion=${project.version}
     -DgroupId=com.example
     -DartifactId=MyExample
-    -Dversion=1.0-SNAPSHOT
-
+    -Dversion=1.0						
 
 To confirm project creation, type Y and press ENTER.
+
 
 License and Trademarks
 ======================

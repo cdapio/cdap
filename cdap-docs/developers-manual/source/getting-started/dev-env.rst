@@ -31,12 +31,10 @@ The best way to start developing a CDAP application is by using the Maven archet
           -DarchetypeVersion=\ |release|
 
 This creates a Maven project with all required dependencies, Maven plugins, and a simple
-application template for the development of your application. You can import this Maven project
-into your preferred IDE |---| such as `IntelliJ <https://www.jetbrains.com/idea/>`__ or 
-`Eclipse <https://www.eclipse.org/>`__ |---| and start developing your first CDAP application.
-
-For an application that contains a MapReduce program, use ``-DarchetypeArtifactId=cdap-mapreduce-archetype``
-instead; for Spark, use either ``cdap-spark-java-archetype`` or ``cdap-spark-scala-archetype``.
+application template for the development of your application. You can import this Maven project into your preferred IDE—such as 
+`IntelliJ <https://www.jetbrains.com/idea/>`__ or 
+`Eclipse <https://www.eclipse.org/>`__—and start developing your first
+CDAP application.
 
 Using IntelliJ
 --------------

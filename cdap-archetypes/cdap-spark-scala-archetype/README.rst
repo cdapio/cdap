@@ -17,12 +17,12 @@ Creating
 ========
 
 To create a project from the archetype, use this script as an example
-(substituting your version of CDAP for ${cdap.version} as appropriate)::
+(substituting for ${project.version} as appropriate)::
 
   mvn archetype:generate 					
     -DarchetypeGroupId=co.cask.cdap 			
     -DarchetypeArtifactId=cdap-spark-scala-archetype 	
-    -DarchetypeVersion=${cdap.version}
+    -DarchetypeVersion=${project.version}
     -DgroupId=com.example 					
     -DartifactId=SparkKMeansExample
     -Dversion=1.0						
