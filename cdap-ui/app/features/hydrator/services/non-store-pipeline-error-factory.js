@@ -125,7 +125,7 @@ let hasValidName = (name, cb) => {
 
 let hasOnlyOneSource = (myHelpers, GLOBALS, nodes, cb) => {
   let error;
-  let countSource;
+  let countSource = 0;
   if (!myHelpers.objectQuery(nodes, 'length')) {
     cb(false);
   }
@@ -149,11 +149,12 @@ let hasOnlyOneSource = (myHelpers, GLOBALS, nodes, cb) => {
 
 let hasAtLeastOneSink = (myHelpers, GLOBALS, nodes, cb) => {
   let error;
-  let countSink;
+  let countSink = 0;
   if (!myHelpers.objectQuery(nodes, 'length')) {
     cb(false);
   }
   nodes.forEach( node => {
+    console.log('node', node);
     if (GLOBALS.pluginConvert[node.type] === 'sink') {
       countSink++;
     }
