@@ -14,16 +14,22 @@
  * the License.
  */
 
-package co.cask.cdap.dq;
+package co.cask.cdap.dq.test;
 
 import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.api.dataset.table.Table;
+import co.cask.cdap.dq.AggregationTypeValue;
+import co.cask.cdap.dq.DataQualityApp;
+import co.cask.cdap.dq.DataQualityService;
+import co.cask.cdap.dq.DataQualitySource;
+import co.cask.cdap.dq.FieldDetail;
+import co.cask.cdap.dq.TimestampValue;
 import co.cask.cdap.dq.functions.DiscreteValuesHistogram;
+import co.cask.cdap.dq.testclasses.StreamBatchSource;
 import co.cask.cdap.etl.api.PipelineConfigurer;
 import co.cask.cdap.etl.api.batch.BatchSource;
-import co.cask.cdap.etl.batch.source.StreamBatchSource;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
 import co.cask.cdap.proto.artifact.ArtifactSummary;

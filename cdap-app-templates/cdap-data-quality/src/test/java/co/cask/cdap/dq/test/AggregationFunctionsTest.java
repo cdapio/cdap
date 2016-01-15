@@ -14,9 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.dq;
+package co.cask.cdap.dq.test;
 
 import co.cask.cdap.api.common.Bytes;
+import co.cask.cdap.dq.DataQualityWritable;
 import co.cask.cdap.dq.functions.DiscreteValuesHistogram;
 import co.cask.cdap.dq.functions.HistogramWithBucketing;
 import co.cask.cdap.dq.functions.Mean;

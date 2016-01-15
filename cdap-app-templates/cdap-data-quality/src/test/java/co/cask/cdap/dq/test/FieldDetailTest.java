@@ -14,8 +14,10 @@
  * the License.
  */
 
-package co.cask.cdap.dq;
+package co.cask.cdap.dq.test;
 
+import co.cask.cdap.dq.AggregationTypeValue;
+import co.cask.cdap.dq.FieldDetail;
 import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
