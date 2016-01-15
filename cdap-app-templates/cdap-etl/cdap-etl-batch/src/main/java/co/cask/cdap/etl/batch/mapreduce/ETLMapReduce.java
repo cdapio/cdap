@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
@@ -134,8 +135,13 @@ public class ETLMapReduce extends AbstractMapReduce {
           .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
           .build(), true);
 
-    if (config.getResources() != null) {
+    Resources resources = config.getResources();
+    Resources driverResources = config.getDriverResources() == null ? resources : config.getDriverResources();
+    if (resources != null) {
       setMapperResources(config.getResources());
+    }
+    if (driverResources != null) {
+      setDriverResources(config.getDriverResources());
     }
 
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
@@ -143,7 +149,6 @@ public class ETLMapReduce extends AbstractMapReduce {
     properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
     properties.put(Constants.STAGE_LOGGING_ENABLED, String.valueOf(config.isStageLoggingEnabled()));
     setProperties(properties);
-    setDriverResources(config.getDriverResources());
   }
 
   @Override
