@@ -110,16 +110,22 @@ public class StreamClientTestRun extends ClientTestBase {
     streamClient.getEvents(streamId, 0, Long.MAX_VALUE, 5, events);
     Assert.assertEquals(5, events.size());
 
-    // Read 2nd and 3rd only
+    // Use the 2nd and the 3rd events time as start and end time respectively
     long startTime = events.get(1).getTimestamp();
     long endTime = events.get(2).getTimestamp() + 1;
     events.clear();
     streamClient.getEvents(streamId, startTime, endTime, Integer.MAX_VALUE, events);
 
-    Assert.assertEquals(2, events.size());
+    // At least read the 2nd and the 3rd event. It might read more than 2 events
+    // if events are written within the same timestamp.
+    Assert.assertTrue(events.size() >= 2);
 
-    for (int i = 1; i < 3; i++) {
+    int i = 1;
+    for (StreamEvent event : events) {
       Assert.assertEquals("Testing " + i, Charsets.UTF_8.decode(events.get(i - 1).getBody()).toString());
+      Assert.assertTrue(event.getTimestamp() >= startTime);
+      Assert.assertTrue(event.getTimestamp() < endTime);
+      i++;
     }
   }
 
