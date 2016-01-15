@@ -83,10 +83,10 @@ public class ETLSpark extends AbstractSpark {
           .build(), true);
 
     Resources resources = config.getResources();
-    Resources driverResources = config.getDriverResources() == null ? resources : config.getDriverResources();
     if (resources != null) {
       setExecutorResources(resources);
     }
+    Resources driverResources = config.getDriverResources();
     if (driverResources != null) {
       setDriverResources(driverResources);
     }

@@ -136,10 +136,10 @@ public class ETLMapReduce extends AbstractMapReduce {
           .build(), true);
 
     Resources resources = config.getResources();
-    Resources driverResources = config.getDriverResources() == null ? resources : config.getDriverResources();
     if (resources != null) {
       setMapperResources(resources);
     }
+    Resources driverResources = config.getDriverResources();
     if (driverResources != null) {
       setDriverResources(driverResources);
     }
