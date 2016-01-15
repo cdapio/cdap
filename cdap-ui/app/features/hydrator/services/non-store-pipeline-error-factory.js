@@ -154,7 +154,6 @@ let hasAtLeastOneSink = (myHelpers, GLOBALS, nodes, cb) => {
     cb(false);
   }
   nodes.forEach( node => {
-    console.log('node', node);
     if (GLOBALS.pluginConvert[node.type] === 'sink') {
       countSink++;
     }
@@ -172,8 +171,8 @@ let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
   return {
     isUniqueNodeNames: isUniqueNodeNames.bind(null, myHelpers),
     isRequiredFieldsFilled: isRequiredFieldsFilled.bind(null, myHelpers),
-    countUnFilledRequiredFields,
-    hasValidName,
+    countUnFilledRequiredFields: countUnFilledRequiredFields,
+    hasValidName: hasValidName,
     hasOnlyOneSource: hasOnlyOneSource.bind(null, myHelpers, GLOBALS),
     hasAtLeastOneSink: hasAtLeastOneSink.bind(null, myHelpers, GLOBALS),
     isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers)
