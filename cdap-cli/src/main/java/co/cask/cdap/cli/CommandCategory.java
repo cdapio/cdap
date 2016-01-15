@@ -23,6 +23,7 @@ public enum CommandCategory {
   GENERAL("General"),
   NAMESPACE("Namespace"),
   ARTIFACT("Artifact"),
+  METADATA_AND_LINEAGE("Metadata and Lineage"),
   APPLICATION_LIFECYCLE("Application Lifecycle"),
   DATASET("Dataset"),
   EXPLORE("Explore"),
