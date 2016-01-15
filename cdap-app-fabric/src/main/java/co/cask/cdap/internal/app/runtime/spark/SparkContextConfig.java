@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,6 +60,10 @@ public class SparkContextConfig {
   private final Configuration hConf;
   private final ApplicationSpecificationAdapter appSpecAdapter;
 
+  public static boolean isLocal(Configuration hConf) {
+    return !hConf.getBoolean(HCONF_ATTR_CLUSTER_MODE, false);
+  }
+
   /**
    * Creates an instance by copying from the given configuration.
    */
@@ -79,7 +83,7 @@ public class SparkContextConfig {
    * Returns true if in local mode.
    */
   public boolean isLocal() {
-    return !hConf.getBoolean(HCONF_ATTR_CLUSTER_MODE, false);
+    return isLocal(hConf);
   }
 
   /**

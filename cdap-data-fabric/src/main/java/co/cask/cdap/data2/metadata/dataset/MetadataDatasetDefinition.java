@@ -24,7 +24,6 @@ import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
-import com.google.common.base.Joiner;
 
 import java.io.IOException;
 import java.util.Map;
@@ -50,8 +49,7 @@ public class MetadataDatasetDefinition extends AbstractDatasetDefinition<Metadat
     // Define the columns for indexing on the partitionsTable
     DatasetProperties indexedTableProperties = DatasetProperties.builder()
       .addAll(properties.getProperties())
-      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY,
-           Joiner.on(",").join(MetadataDataset.KEYVALUE_COLUMN, MetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN))
+      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, MetadataDataset.INDEX_COLUMN)
       .build();
     return DatasetSpecification.builder(instanceName, getName())
       .properties(properties.getProperties())

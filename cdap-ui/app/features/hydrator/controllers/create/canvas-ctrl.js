@@ -35,7 +35,6 @@ class HydratorCreateCanvasController {
 
     this.updateNodesAndConnections();
     NodesStore.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
-
   }
 
   setStateAndUpdateConfigStore() {
@@ -47,7 +46,6 @@ class HydratorCreateCanvasController {
   }
 
   updateNodesAndConnections() {
-    this.setStateAndUpdateConfigStore();
     var activeNode = this.NodesStore.getActiveNodeId();
     if (!activeNode) {
       this.deleteNode();

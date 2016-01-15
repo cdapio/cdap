@@ -285,6 +285,40 @@ my-dag {
     padding-left: 20px;
   }
 }
+.badge-warning {
+  background-color: @brand-warning;
+}
+.badge-error {
+  background-color: @brand-danger;
+}
+.theme-cdap {
+  .tooltip-warning {
+    &.tooltip {
+      &.top {
+        .tooltip-arrow {
+          border-top-color: @brand-warning;
+        }
+      }
+    }
+    .tooltip-inner {
+      background-color: @brand-warning;
+      border-color: @brand-warning;
+    }
+  }
+  .tooltip-error {
+    &.tooltip {
+      &.top {
+        .tooltip-arrow {
+          border-top-color: @brand-danger;
+        }
+      }
+    }
+    .tooltip-inner {
+      background-color: @brand-danger;
+      border-color: @brand-danger;
+    }
+  }
+}
 
 .popover {
   min-width: 250px;

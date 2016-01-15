@@ -15,7 +15,7 @@
  */
 
 class ConfigStore {
-  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory){
+  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorService, $q, PluginConfigFactory){
     this.state = {};
     this.mySettings = mySettings;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
@@ -24,6 +24,9 @@ class ConfigStore {
     this.$stateParams = $stateParams;
     this.myHelpers = myHelpers;
     this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
+    this.HydratorService = HydratorService;
+    this.$q = $q;
+    this.PluginConfigFactory = PluginConfigFactory;
 
     this.changeListeners = [];
     this.setDefaults();
@@ -36,6 +39,7 @@ class ConfigStore {
     this.configDispatcher.register('onSetInstance', this.setInstance.bind(this));
     this.configDispatcher.register('onSaveAsDraft', this.saveAsDraft.bind(this));
     this.configDispatcher.register('onInitialize', this.init.bind(this));
+    this.configDispatcher.register('onSchemaPropagationDownStream', this.propagateIOSchemas.bind(this));
   }
   registerOnChangeListener(callback) {
     this.changeListeners.push(callback);
@@ -116,14 +120,15 @@ class ConfigStore {
         label: node.plugin.label,
         artifact: node.plugin.artifact,
         properties: node.plugin.properties,
-        _backendProperties: node._backendProperties,
-        outputSchema: node.outputSchema
+        _backendProperties: node._backendProperties
       };
 
       if (node.type === artifactTypeExtension.source) {
         config['source'] = {
           name: node.plugin.label,
-          plugin: pluginConfig
+          plugin: pluginConfig,
+          outputSchema: node.outputSchema,
+          inputSchema: node.inputSchema
         };
       } else if (node.type === 'transform') {
         if (node.errorDatasetName && node.errorDatasetName.length > 0) {
@@ -134,13 +139,17 @@ class ConfigStore {
         }
         pluginConfig = {
           name: node.plugin.label,
-          plugin: pluginConfig
+          plugin: pluginConfig,
+          outputSchema: node.outputSchema,
+          inputSchema: node.inputSchema
         };
         config['transforms'].push(pluginConfig);
       } else if (node.type === artifactTypeExtension.sink) {
         pluginConfig = {
           name: node.plugin.label,
-          plugin: pluginConfig
+          plugin: pluginConfig,
+          outputSchema: node.outputSchema,
+          inputSchema: node.inputSchema
         };
         config['sinks'].push(pluginConfig);
       }
@@ -311,10 +320,106 @@ class ConfigStore {
 
   setNodes(nodes) {
     this.state.__ui__.nodes = nodes;
-    this.validateState();
+    let listOfPromises = [];
+    // Prepopulate nodes with backend properties;
+    // This will be used for cases where we import/use a predefined app and when we render the entire
+    // dag we need to show #of errors in each node (badge on the top right corner of each node).
+    let nodesWOutBackendProps = this.state.__ui__.nodes.filter(
+      node => !angular.isObject(node._backendProperties)
+    );
+    let parseNodeConfig = (node, res) => {
+      let nodeConfig = this.PluginConfigFactory.generateNodeConfig(node._backendProperties, res);
+      node.implicitSchema = nodeConfig.outputSchema.implicitSchema;
+      node.outputSchemaProperty = nodeConfig.outputSchema.outputSchemaProperty;
+      if (angular.isArray(node.outputSchemaProperty)) {
+        node.outputSchemaProperty = node.outputSchemaProperty[0];
+      }
+      if (node.outputSchemaProperty) {
+        node.outputSchema = node.plugin.properties[node.outputSchemaProperty];
+      }
+      if (nodeConfig.outputSchema.implicitSchema) {
+        let keys = Object.keys(nodeConfig.outputSchema.implicitSchema);
+        let formattedSchema = [];
+        angular.forEach(keys, (key) => {
+          formattedSchema.push({
+            name: key,
+            type: nodeConfig.outputSchema.implicitSchema[key]
+          });
+        });
+        node.outputSchema = JSON.stringify({ fields: formattedSchema });
+      }
+    };
+    if (nodesWOutBackendProps) {
+      nodesWOutBackendProps.forEach( n => {
+        listOfPromises.push(this.HydratorService.fetchBackendProperties(n, this.getAppType()));
+      });
+
+    } else {
+      listOfPromises.push(this.$q.when(true));
+    }
+    this.$q.all(listOfPromises)
+      .then(
+        () => {
+          if(!this.validateState()) {
+            this.emitChange();
+          }
+          // Once the backend properties are fetched for all nodes, fetch their config jsons.
+          // This will be used for schema propagation where we import/use a predefined app/open a published pipeline
+          // the user should directly click on the last node and see what is the incoming schema
+          // without having to open the subsequent nodes.
+          nodesWOutBackendProps.forEach( n => {
+            this.PluginConfigFactory.fetchWidgetJson(
+              n.plugin.artifact.name,
+              n.plugin.artifact.version,
+              `widgets.${n.plugin.name}-${n.type}`
+            ).then(parseNodeConfig.bind(null, n));
+          });
+        },
+        (err) => console.log('ERROR fetching backend properties for nodes', err)
+      );
+
   }
   setConnections(connections) {
     this.state.config.connections = connections;
+  }
+  // This is for the user to forcefully propagate the output schema of a node
+  // down the stream to all its connections.
+  // Its a simple BFS down the graph to propagate the schema. Right now it doesn't catch cycles.
+  // The assumption there are no cycles in the dag we create.
+  propagateIOSchemas(pluginId) {
+    let adjacencyMap = {},
+        nodesMap = {},
+        outputSchema,
+        connections = this.state.config.connections;
+    this.state.__ui__.nodes.forEach( node => nodesMap[node.name] = node );
+
+    connections.forEach( conn => {
+      if (Array.isArray(adjacencyMap[conn.from])) {
+        adjacencyMap[conn.from].push(conn.to);
+      } else {
+        adjacencyMap[conn.from] = [conn.to];
+      }
+    });
+
+    let traverseMap = (node, outputSchema) => {
+      if (!node) {
+        return;
+      }
+      // If we encounter an implicit schema down the stream while propagation stop there and return.
+      if (node.isImplicitSchema) {
+        return;
+      }
+      node.forEach( n => {
+        nodesMap[n].outputSchema = outputSchema;
+        nodesMap[n].inputSchema = outputSchema;
+        if (nodesMap[n].outputSchemaProperty) {
+          nodesMap[n].plugin.properties[nodesMap[n].outputSchemaProperty] = outputSchema;
+        }
+        traverseMap(adjacencyMap[n], outputSchema);
+      });
+    };
+    outputSchema = nodesMap[pluginId].outputSchema;
+    traverseMap(adjacencyMap[pluginId], outputSchema);
   }
   addNode(node) {
     this.state.__ui__.nodes.push(node);
@@ -332,13 +437,20 @@ class ConfigStore {
     }
     return angular.copy(match);
   }
+  getSourceNodes(nodeId) {
+    let nodesMap = {};
+    this.state.__ui__.nodes.forEach( node => nodesMap[node.name] = node );
+    return this.state.config.connections.filter( conn => conn.to === nodeId ).map( matchedConnection => nodesMap[matchedConnection.from] );
+  }
   editNodeProperties(nodeId, nodeConfig) {
     let nodes = this.state.__ui__.nodes;
     let match = nodes.filter( node => node.name === nodeId);
     if (match.length) {
       match = match[0];
       angular.forEach(nodeConfig, (pValue, pName) => match[pName] = pValue);
-      this.validateState();
+      if (!this.validateState()) {
+        this.emitChange();
+      }
     }
   }
   getSchedule() {
@@ -478,6 +590,6 @@ class ConfigStore {
   }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory'];
+ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorService', '$q', 'PluginConfigFactory'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);

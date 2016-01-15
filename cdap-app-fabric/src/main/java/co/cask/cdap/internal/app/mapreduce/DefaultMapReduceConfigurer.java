@@ -46,9 +46,10 @@ public final class DefaultMapReduceConfigurer extends DefaultPluginConfigurer im
   private Resources mapperResources;
   private Resources reducerResources;
 
-  public DefaultMapReduceConfigurer(MapReduce mapReduce, Id.Artifact artifactId, ArtifactRepository artifactRepository,
+  public DefaultMapReduceConfigurer(MapReduce mapReduce, Id.Namespace deployNamespace, Id.Artifact artifactId,
+                                    ArtifactRepository artifactRepository,
                                     PluginInstantiator pluginInstantiator) {
-    super(artifactId, artifactRepository, pluginInstantiator);
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.className = mapReduce.getClass().getName();
     this.name = mapReduce.getClass().getSimpleName();
     this.description = "";

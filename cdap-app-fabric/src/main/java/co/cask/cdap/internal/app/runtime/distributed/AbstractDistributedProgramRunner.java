@@ -202,8 +202,10 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             twillPreparer.withResources(logbackURI);
           }
 
-          if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
+          if (cConf.getBoolean(Constants.COLLECT_APP_CONTAINER_LOGS)) {
             twillPreparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+          } else {
+            twillPreparer.addJVMOptions("-Dtwill.disable.kafka=true");
           }
 
           String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,

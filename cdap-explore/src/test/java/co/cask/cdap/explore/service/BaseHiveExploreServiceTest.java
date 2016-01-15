@@ -17,7 +17,6 @@
 package co.cask.cdap.explore.service;
 
 import co.cask.cdap.api.data.schema.Schema;
-import co.cask.cdap.app.store.Store;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -48,7 +47,6 @@ import co.cask.cdap.explore.executor.ExploreExecutorService;
 import co.cask.cdap.explore.guice.ExploreClientModule;
 import co.cask.cdap.explore.guice.ExploreRuntimeModule;
 import co.cask.cdap.gateway.handlers.CommonHandlers;
-import co.cask.cdap.internal.app.store.DefaultStore;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
 import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
@@ -351,7 +349,6 @@ public class BaseHiveExploreServiceTest {
   private static List<Module> createInMemoryModules(CConfiguration configuration, Configuration hConf,
                                                     TemporaryFolder tmpFolder) throws IOException {
     configuration.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.MEMORY.name());
-    configuration.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     configuration.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder("hive").getAbsolutePath());
     configuration.set(TxConstants.Manager.CFG_TX_SNAPSHOT_LOCAL_DIR, tmpFolder.newFolder("tx").getAbsolutePath());
     configuration.setBoolean(TxConstants.Manager.CFG_DO_PERSIST, true);
@@ -407,7 +404,6 @@ public class BaseHiveExploreServiceTest {
     File localDataDir = tmpFolder.newFolder();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());
     cConf.set(Constants.CFG_DATA_INMEMORY_PERSISTENCE, Constants.InMemoryPersistenceType.LEVELDB.name());
-    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
     cConf.set(Constants.Explore.LOCAL_DATA_DIR, tmpFolder.newFolder("hive").getAbsolutePath());
 
     hConf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir.getAbsolutePath());

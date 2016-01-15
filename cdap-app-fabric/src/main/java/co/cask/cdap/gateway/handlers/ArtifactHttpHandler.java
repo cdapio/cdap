@@ -153,7 +153,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         Id.Namespace namespace = validateAndGetNamespace(namespaceId);
         responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, true));
       } else {
-        Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
+        Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
         responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, false));
       }
     } catch (IOException e) {
@@ -170,7 +170,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                   @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
+    Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
 
     try {
       responder.sendJson(HttpResponseStatus.OK, artifactRepository.getArtifacts(namespace, artifactName));
@@ -191,7 +191,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                               @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
+    Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
@@ -219,7 +219,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                             @QueryParam("keys") @Nullable String keys)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
+    Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
     Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
 
     try {
@@ -388,11 +388,12 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                      @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
-    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    Id.Namespace artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
+    Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     try {
-      SortedMap<ArtifactDescriptor, List<PluginClass>> plugins = artifactRepository.getPlugins(artifactId);
+      SortedMap<ArtifactDescriptor, List<PluginClass>> plugins = artifactRepository.getPlugins(namespace, artifactId);
       Set<String> pluginTypes = Sets.newHashSet();
       for (List<PluginClass> pluginClasses : plugins.values()) {
         for (PluginClass pluginClass : pluginClasses) {
@@ -417,11 +418,13 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                  @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
-    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    Id.Namespace artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
+    Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     try {
-      SortedMap<ArtifactDescriptor, List<PluginClass>> plugins = artifactRepository.getPlugins(artifactId, pluginType);
+      SortedMap<ArtifactDescriptor, List<PluginClass>> plugins =
+        artifactRepository.getPlugins(namespace, artifactId, pluginType);
       List<PluginSummary> pluginSummaries = Lists.newArrayList();
       // flatten the map
       for (Map.Entry<ArtifactDescriptor, List<PluginClass>> pluginsEntry : plugins.entrySet()) {
@@ -454,12 +457,13 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                 @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException, ArtifactNotFoundException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
-    Id.Artifact artifactId = validateAndGetArtifactId(namespace, artifactName, artifactVersion);
+    Id.Namespace namespace = Id.Namespace.from(namespaceId);
+    Id.Namespace artifactNamespace = validateAndGetScopedNamespace(namespace, scope);
+    Id.Artifact artifactId = validateAndGetArtifactId(artifactNamespace, artifactName, artifactVersion);
 
     try {
       SortedMap<ArtifactDescriptor, PluginClass> plugins =
-        artifactRepository.getPlugins(artifactId, pluginType, pluginName);
+        artifactRepository.getPlugins(namespace, artifactId, pluginType, pluginName);
       List<PluginInfo> pluginInfos = Lists.newArrayList();
 
       // flatten the map
@@ -495,7 +499,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, true),
           APPCLASS_SUMMARIES_TYPE, GSON);
       } else {
-        Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
+        Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
         responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, false),
           APPCLASS_SUMMARIES_TYPE, GSON);
       }
@@ -514,7 +518,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
                                     @QueryParam("scope") @DefaultValue("user") String scope)
     throws NamespaceNotFoundException, BadRequestException {
 
-    Id.Namespace namespace = validateAndGetNamespace(namespaceId, scope);
+    Id.Namespace namespace = validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), scope);
 
     try {
       responder.sendJson(HttpResponseStatus.OK, artifactRepository.getApplicationClasses(namespace, className),
@@ -651,23 +655,22 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
   }
 
   private Id.Namespace validateAndGetNamespace(String namespaceId) throws NamespaceNotFoundException {
-    return validateAndGetNamespace(namespaceId, ArtifactScope.USER);
+    return validateAndGetScopedNamespace(Id.Namespace.from(namespaceId), ArtifactScope.USER);
   }
 
-  private Id.Namespace validateAndGetNamespace(String namespaceId, String scope)
+  private Id.Namespace validateAndGetScopedNamespace(Id.Namespace namespace, String scope)
     throws NamespaceNotFoundException, BadRequestException {
     if (scope != null) {
-      return validateAndGetNamespace(namespaceId, validateScope(scope));
+      return validateAndGetScopedNamespace(namespace, validateScope(scope));
     }
-    return validateAndGetNamespace(namespaceId, ArtifactScope.USER);
+    return validateAndGetScopedNamespace(namespace, ArtifactScope.USER);
   }
 
   // check that the namespace exists, and check if the request is only supposed to include system artifacts,
   // and returning the system namespace if so.
-  private Id.Namespace validateAndGetNamespace(String namespaceId, ArtifactScope scope)
+  private Id.Namespace validateAndGetScopedNamespace(Id.Namespace namespace, ArtifactScope scope)
     throws NamespaceNotFoundException {
 
-    Id.Namespace namespace = Id.Namespace.from(namespaceId);
     try {
       namespaceAdmin.get(namespace);
     } catch (NamespaceNotFoundException e) {

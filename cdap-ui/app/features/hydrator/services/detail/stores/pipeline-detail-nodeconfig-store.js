@@ -114,7 +114,7 @@ angular.module(PKG.name + '.feature.hydrator')
     function configurePluginInfo(pluginDetails) {
       var pluginId = this.state.node.name;
       var input;
-      var sourceConn = $filter('filter')(this.ConfigStore.getConnections(), { to: pluginId });
+      var sourceConn = this.ConfigStore.getSourceNodes(pluginId).filter( node => typeof node.outputSchema === 'string');
       var sourceSchema = null;
       var isStreamSource = false;
 
@@ -124,7 +124,7 @@ angular.module(PKG.name + '.feature.hydrator')
 
       var source;
       if (sourceConn && sourceConn.length) {
-        source = this.ConfigStore.getNode(sourceConn[0].from);
+        source = sourceConn[0];
         sourceSchema = source.outputSchema;
 
         if (source.name === 'Stream') {
@@ -180,9 +180,6 @@ angular.module(PKG.name + '.feature.hydrator')
         }
       });
 
-      if (!this.state.node.outputSchema && input) {
-        this.state.node.outputSchema = JSON.stringify(input) || null;
-      }
 
       this.state.node._backendProperties = pluginDetails._backendProperties || this.state.node._backendProperties;
       this.state.node.description = pluginDetails.description || this.state.node.description;

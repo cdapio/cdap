@@ -496,7 +496,7 @@ public class DefaultStoreTest {
   public void testServiceInstances() throws Exception {
     AppFabricTestHelper.deployApplication(AppWithServices.class);
     AbstractApplication app = new AppWithServices();
-    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(app);
+    DefaultAppConfigurer appConfigurer = new DefaultAppConfigurer(Id.Namespace.DEFAULT, app);
     app.configure(appConfigurer, new DefaultApplicationContext());
 
     ApplicationSpecification appSpec = appConfigurer.createSpecification();
@@ -731,6 +731,28 @@ public class DefaultStoreTest {
     List<RunRecordMeta> history = store.getRuns(programId, ProgramRunStatus.ALL,
                                                 0, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(count, history.size());
+  }
+
+  @Test
+  public void testRunsLimit() throws Exception {
+    ApplicationSpecification spec = Specifications.from(new AllProgramsApp());
+    Id.Application appId = Id.Application.from("testRunsLimit", spec.getName());
+    store.addApplication(appId, spec, new LocalLocationFactory().create("/allPrograms"));
+
+    Id.Program flowProgramId = Id.Program.from(appId, ProgramType.FLOW, "NoOpFlow");
+
+    Assert.assertNotNull(store.getApplication(appId));
+
+    long now = System.currentTimeMillis();
+    store.setStart(flowProgramId, "flowRun1", now - 3000);
+    store.setStop(flowProgramId, "flowRun1", now - 100, ProgramController.State.COMPLETED.getRunStatus());
+
+    store.setStart(flowProgramId, "flowRun2", now - 2000);
+
+    // even though there's two separate run records (one that's complete and one that's active), only one should be
+    // returned by the query, because the limit parameter of 1 is being passed in.
+    List<RunRecordMeta> history = store.getRuns(flowProgramId, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 1);
+    Assert.assertEquals(1, history.size());
   }
 
   @Test

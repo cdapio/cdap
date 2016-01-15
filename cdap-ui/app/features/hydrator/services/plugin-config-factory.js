@@ -19,8 +19,14 @@ class PluginConfigFactory {
     this.myHelpers = myHelpers;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
+    this.data = {};
   }
   fetchWidgetJson(artifactName, artifactVersion, key) {
+    let cache = this.data[`${artifactName}-${artifactVersion}-${key}`];
+    if (cache) {
+      return this.$q.when(cache);
+    }
+
     return this.myPipelineApi.fetchArtifactProperties({
       namespace: this.$state.params.namespace,
       artifactName,
@@ -34,6 +40,7 @@ class PluginConfigFactory {
             let config = res[key];
             if (config) {
               config = JSON.parse(config);
+              this.data[`${artifactName}-${artifactVersion}-${key}`] = config;
               return config;
             } else {
               throw 'NO_JSON_FOUND';

@@ -82,7 +82,7 @@ public class MetadataClient {
 
     String path = String.format("metadata/search?query=%s", query);
     if (target != null) {
-      path = path + "&target=" + target.getInternalName();
+      path = path + "&target=" + target;
     }
     URL searchURL = config.resolveNamespacedURLV3(namespace, path);
     HttpResponse response = restClient.execute(HttpRequest.get(searchURL).build(),
