@@ -1715,6 +1715,15 @@
   </property>
 
   <property>
+    <name>dashboard.router.check.timeout.secs</name>
+    <value>0</value>
+    <description>
+      Amount of time, in seconds, CDAP UI waits before exiting when not able to connect to CDAP Router on startup.
+      Use timeout as 0 to wait indefinitely.
+    </description>
+  </property>
+
+  <property>
     <name>dashboard.ssl.bind.port</name>
     <value>9443</value>
     <description>

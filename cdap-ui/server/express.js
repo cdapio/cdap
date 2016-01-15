@@ -19,7 +19,8 @@
 module.exports = {
   getApp: function () {
     return require('q').all([
-        require('./config/auth-address.js').ping(),
+        // router check also fetches the auth server address if security is enabled
+        require('./config/router-check.js').ping(),
         require('./config/parser.js').extractConfig('cdap')
       ])
       .spread(makeApp);
