@@ -439,14 +439,7 @@ public class DefaultMetadataStore implements MetadataStore {
       Iterable<MetadataEntry>>() {
       @Override
       public Iterable<MetadataEntry> apply(MetadataDataset input) throws Exception {
-        // Currently we support two types of search formats: value and key:value.
-        // Check for existence of separator char to make sure we did search in the right indexed column.
-        if (searchQuery.contains(MetadataDataset.KEYVALUE_SEPARATOR)) {
-          // key=value search
-          return input.searchByKeyValue(namespaceId, searchQuery, type);
-        }
-        // value search
-        return input.searchByValue(namespaceId, searchQuery, type);
+        return input.search(namespaceId, searchQuery, type);
       }
     }, scope);
     ImmutableSet.Builder<MetadataSearchResultRecord> builder = ImmutableSet.builder();

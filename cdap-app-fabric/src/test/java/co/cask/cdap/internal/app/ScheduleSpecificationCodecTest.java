@@ -30,7 +30,9 @@ import co.cask.cdap.app.DefaultApplicationContext;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.internal.schedule.TimeSchedule;
+import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.ScheduleSpecificationCodec;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -108,7 +110,7 @@ public class ScheduleSpecificationCodecTest {
                          "workflow");
       }
     };
-    DefaultAppConfigurer configurer = new DefaultAppConfigurer(app);
+    DefaultAppConfigurer configurer = new DefaultAppConfigurer(Id.Namespace.DEFAULT, app);
     app.configure(configurer, new DefaultApplicationContext());
     ApplicationSpecification specification = configurer.createSpecification();
 
