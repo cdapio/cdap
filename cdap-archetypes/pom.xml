@@ -32,7 +32,6 @@
   <modules>
     <module>cdap-spark-java-archetype</module>
     <module>cdap-spark-scala-archetype</module>
-    <module>cdap-mapreduce-archetype</module>
     <module>cdap-app-archetype</module>
   </modules>
 

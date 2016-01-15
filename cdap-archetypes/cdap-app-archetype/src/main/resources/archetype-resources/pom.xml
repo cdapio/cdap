@@ -34,6 +34,17 @@
     <junit.version>4.11</junit.version>
   </properties>
 
+  <repositories>
+    <repository>
+      <id>sonatype</id>
+      <url>https://oss.sonatype.org/content/groups/public</url>
+    </repository>
+    <repository>
+      <id>apache.snapshots</id>
+      <url>https://repository.apache.org/content/repositories/snapshots</url>
+    </repository>
+  </repositories>
+
   <dependencies>
     <dependency>
       <groupId>co.cask.cdap</groupId>

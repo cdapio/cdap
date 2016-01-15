@@ -81,9 +81,7 @@ implementation that does nothing::
   }
 
 CDAP ``Mapper`` and ``Reducer`` implement `the standard Hadoop APIs
-<http://hadoop.apache.org/docs/r2.3.0/api/org/apache/hadoop/mapreduce/package-summary.html>`__
-(note that CDAP only supports the "new" API in ``org.apache.hadoop.mapreduce``, and not the
-"old" API in ``org.apache.hadoop.mapred``)::
+<http://hadoop.apache.org/docs/r2.3.0/api/org/apache/hadoop/mapreduce/package-summary.html>`__::
 
   public static class PurchaseMapper 
       extends Mapper<byte[], Purchase, Text, Text> {
