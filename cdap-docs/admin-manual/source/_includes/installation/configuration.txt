@@ -1,16 +1,12 @@
 .. _|distribution|-configuration:
 
-Additional Configurations
-=========================
-
-This section describes how to configure the CDAP components so they work with your
-existing Hadoop cluster. Certain Hadoop components may need changes, as described below,
-for CDAP to run successfully.
-
 .. _|distribution|-configuration-central:
 
 CDAP Configuration
 ------------------
+This section describes how to configure the CDAP components so they work with your
+existing Hadoop cluster. Certain Hadoop components may need changes, as described below,
+for CDAP to run successfully.
 
 A. CDAP packages utilize a central configuration, stored by default in ``/etc/cdap``.
 

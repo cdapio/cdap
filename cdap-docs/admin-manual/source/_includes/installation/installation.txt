@@ -2,7 +2,7 @@
 
 Node.js Installation
 --------------------
-Node.js must be installed on the node(s) where the UI role instance will run. We recommend
+Node.js must be installed on the node(s) where the CDAP UI service will run. We recommend
 any version of `Node.js <https://nodejs.org/>`__ |node-js-version|; in particular, we
 recommend |recommended_node_js_version|. You can download an appropriate version of
 Node.js from `nodejs.org <http://nodejs.org/dist/>`__. Detailed instructions on installing
@@ -127,11 +127,10 @@ On Debian using APT
 
   $ sudo apt-get install cdap-gateway cdap-kafka cdap-master cdap-security cdap-ui
 
-.. _|distribution|-preparing-cluster:
+.. _|distribution|-create-required-directories:
 
-Preparing the Cluster
----------------------
-.. _|distribution|-install-preparing-the-cluster:
+Create Required Directories
+---------------------------
 
 .. highlight:: console
    
@@ -155,8 +154,5 @@ that value instead for ``/cdap/tx.snapshot``.
 
 .. _|distribution|-install-preparing-the-cluster-defaults:
 
-.. |edit-your-cdap-configuration| replace:: edit your CDAP configuration
-.. _edit-your-cdap-configuration: |distribution|-configurations.html
-
-If your cluster is not setup with these defaults, you'll need to |edit-your-cdap-configuration|_ 
-prior to starting services.
+If your cluster is not setup with these defaults, you'll need to :ref:`edit your CDAP
+configuration <|distribution|-configuration>` prior to starting services.

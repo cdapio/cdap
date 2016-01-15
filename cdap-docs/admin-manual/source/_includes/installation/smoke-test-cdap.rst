@@ -1,0 +1,16 @@
+Smoke Test for CDAP
+-------------------
+The CDAP UI may initially show errors while all of the CDAP YARN containers are
+starting up. Allow for up to a few minutes for this. The *Services* link in the CDAP
+UI in the upper right will show the status of the CDAP services. 
+
+.. figure:: ../../../admin-manual/source/_images/console/console_01_overview.png
+   :figwidth: 100%
+   :height: 714px
+   :width: 800px
+   :align: center
+   :class: bordered-image
+
+   **CDAP UI:** Showing started-up with applications deployed.
+
+Further instructions for verifying your installation are contained in :ref:`admin-manual-verification`.

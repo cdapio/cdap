@@ -72,11 +72,10 @@ Installing CDAP Services
 
 .. include:: /../target/_includes/mapr-installation.rst
     :start-after: .. _mapr-package-installation-title:
-    :end-before: .. _mapr-preparing-cluster:
+    :end-before: .. _mapr-create-required-directories:
 
-
-Preparing the Cluster
----------------------
+Create Required Directories
+---------------------------
 
 .. highlight:: console
    
@@ -146,7 +145,8 @@ CDAP requires that an additional entry |---| ``/opt/mapr/lib/*`` |---| be append
 
 Verification
 ============
-TO BE COMPLETED
+
+.. include:: /_includes/installation/smoke-test-cdap.rst
 
 Advanced Topics
 ===============

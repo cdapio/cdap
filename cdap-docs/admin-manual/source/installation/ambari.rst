@@ -314,6 +314,12 @@ CDAP Started
 
       **Ambari Dashboard:** Selecting *CDAP*
 
+Verification
+============
+
+Service Checks in Apache Ambari
+-------------------------------
+
 15. Selecting *CDAP* from the left sidebar, or choosing it from the Services drop-down menu, will take
     you to the CDAP service screen.
 
@@ -328,6 +334,7 @@ CDAP Started
 CDAP is now running on your cluster, managed by Ambari. You can login to the CDAP UI at
 the address of the node running the CDAP-UI service at port 9999.
 
+.. include:: /_includes/installation/smoke-test-cdap.rst
 
 Advanced Topics
 ===============

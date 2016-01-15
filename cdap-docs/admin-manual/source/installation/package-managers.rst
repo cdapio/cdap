@@ -82,7 +82,8 @@ Installing CDAP Services
 
 Verification
 ============
-TO BE COMPLETED
+
+.. include:: /_includes/installation/smoke-test-cdap.rst
 
 
 Advanced Topics
