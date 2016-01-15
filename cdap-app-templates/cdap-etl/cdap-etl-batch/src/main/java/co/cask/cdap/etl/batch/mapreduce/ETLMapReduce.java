@@ -143,6 +143,7 @@ public class ETLMapReduce extends AbstractMapReduce {
     properties.put(Constants.PIPELINEID, GSON.toJson(pipeline));
     properties.put(Constants.STAGE_LOGGING_ENABLED, String.valueOf(config.isStageLoggingEnabled()));
     setProperties(properties);
+    setDriverResources(config.getDriverResources());
   }
 
   @Override

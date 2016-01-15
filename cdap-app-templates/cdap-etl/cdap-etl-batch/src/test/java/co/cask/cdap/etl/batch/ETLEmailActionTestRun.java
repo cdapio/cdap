@@ -29,14 +29,11 @@ import co.cask.cdap.test.WorkflowManager;
 import com.dumbster.smtp.SimpleSmtpServer;
 import com.dumbster.smtp.SmtpMessage;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -56,19 +53,17 @@ public class ETLEmailActionTestRun extends ETLBatchTestBase {
   @Test
   public void testEmailAction() throws Exception {
 
-    ETLStage source = new ETLStage("source", MockSource.getPlugin("inputTable"));
-    ETLStage sink = new ETLStage("sink", MockSink.getPlugin("outputTable"));
-    List<ETLStage> transforms = new ArrayList<>();
-
     Plugin actionConfig = new Plugin("Email", ImmutableMap.of(EmailAction.RECIPIENT_EMAIL_ADDRESS, "to@test.com",
                                                               EmailAction.FROM_ADDRESS, "from@test.com",
                                                               EmailAction.MESSAGE, "testing body",
                                                               EmailAction.SUBJECT, "Test",
                                                               EmailAction.PORT, Integer.toString(port)));
 
-    ETLStage action = new ETLStage("action", actionConfig);
-    List<ETLStage> actionList = Lists.newArrayList(action);
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transforms, actionList);
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .setSource(new ETLStage("source", MockSource.getPlugin("inputTable")))
+      .addSink(new ETLStage("sink", MockSink.getPlugin("outputTable")))
+      .addAction(new ETLStage("action", actionConfig))
+      .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "actionTest");

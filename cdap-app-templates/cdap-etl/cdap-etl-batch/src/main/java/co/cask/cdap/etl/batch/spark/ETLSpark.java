@@ -90,6 +90,7 @@ public class ETLSpark extends AbstractSpark {
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.PIPELINEID, GSON.toJson(pipelineIds));
     setProperties(properties);
+    setDriverResources(config.getDriverResources());
   }
 
   @Override
