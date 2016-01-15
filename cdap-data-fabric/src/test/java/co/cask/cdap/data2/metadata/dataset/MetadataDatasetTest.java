@@ -228,6 +228,10 @@ public class MetadataDatasetTest {
     results = dataset.search("ns1", "tags:tag33", MetadataSearchTargetType.ALL);
     Assert.assertEquals(1, results.size());
 
+    // Try to search for a tag which has - in it
+    results = dataset.search("ns1", "tag12-tag33", MetadataSearchTargetType.ALL);
+    Assert.assertEquals(1, results.size());
+
     // Try to search for tag33 with spaces in query
     results = dataset.search("ns1", "  tag33  ", MetadataSearchTargetType.ALL);
     Assert.assertEquals(1, results.size());
@@ -298,7 +302,7 @@ public class MetadataDatasetTest {
     results =
       dataset.search("ns1", "-", MetadataSearchTargetType.ALL);
     // Assert check
-    Assert.assertEquals(0, results.size());
+    Assert.assertEquals(1, results.size());
 
     results =
       dataset.search("ns1", ",", MetadataSearchTargetType.ALL);

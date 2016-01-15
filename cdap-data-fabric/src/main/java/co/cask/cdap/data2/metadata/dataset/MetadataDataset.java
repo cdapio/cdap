@@ -55,7 +55,8 @@ public class MetadataDataset extends AbstractDataset {
     .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
     .create();
 
-  private static final Pattern VALUE_SPLIT_PATTERN = Pattern.compile("[-_,\\s]+");
+  private static final Pattern VALUE_SPLIT_PATTERN = Pattern.compile("[-_\\s]+");
+  private static final Pattern TAGS_SEPARATOR_PATTERN = Pattern.compile("[,\\s]+");
 
   private static final String HISTORY_COLUMN = "h"; // column for metadata history
   private static final String VALUE_COLUMN = "v";  // column for metadata value
@@ -478,9 +479,21 @@ public class MetadataDataset extends AbstractDataset {
    * @param entry the {@link MetadataEntry} which has to be indexed
    */
   private void storeIndexes(Id.NamespacedId targetId, MetadataEntry entry) {
-    // create a list of indexes by splitting on whitespaces and comma
-    Set<String> indexes = Sets.newHashSet(Arrays.asList(VALUE_SPLIT_PATTERN.split(entry.getValue())));
-    indexes.add(entry.getValue()); // add the complete metadata value as an index too
+    Set<String> valueIndexes = new HashSet<>();
+    if (entry.getValue().contains(TAGS_SEPARATOR)) {
+      // if the entry is tag then each tag is an index
+      valueIndexes.addAll(Arrays.asList(TAGS_SEPARATOR_PATTERN.split(entry.getValue())));
+    } else {
+      // for key value the complete value is an index
+      valueIndexes.add(entry.getValue());
+    }
+    Set<String> indexes = Sets.newHashSet();
+    for (String index : valueIndexes) {
+      // split all value indexes on the VALUE_SPLIT_PATTERN
+      indexes.addAll(Arrays.asList(VALUE_SPLIT_PATTERN.split(index)));
+    }
+    // add all value indexes too
+    indexes.addAll(valueIndexes);
 
     for (String index : indexes) {
       // store the index with key of the metadata

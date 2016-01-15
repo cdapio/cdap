@@ -816,7 +816,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                              @QueryParam("target") String target) throws Exception {
     MetadataSearchTargetType metadataSearchTargetType;
     if (target != null) {
-      metadataSearchTargetType = MetadataSearchTargetType.valueOf(target);
+      metadataSearchTargetType = MetadataSearchTargetType.valueOf(target.toUpperCase());
     } else {
       metadataSearchTargetType = null;
     }
