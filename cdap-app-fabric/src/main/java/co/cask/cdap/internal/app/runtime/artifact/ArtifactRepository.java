@@ -196,14 +196,15 @@ public class ArtifactRepository {
    * are sorted by the {@link ArtifactDescriptor} for the artifact that contains plugins available to the given
    * artifact.
    *
+   * @param namespace the namespace to get plugins from
    * @param artifactId the id of the artifact to get plugins for
    * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Artifact artifactId)
+  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Namespace namespace, Id.Artifact artifactId)
     throws IOException, ArtifactNotFoundException {
-    return artifactStore.getPluginClasses(artifactId);
+    return artifactStore.getPluginClasses(namespace, artifactId);
   }
 
   /**
@@ -211,15 +212,17 @@ public class ArtifactRepository {
    * The keys are sorted by the {@link ArtifactDescriptor} for the artifact that contains plugins available to the given
    * artifact.
    *
+   * @param namespace the namespace to get plugins from
    * @param artifactId the id of the artifact to get plugins for
    * @param pluginType the type of plugins to get
    * @return an unmodifiable sorted map from plugin artifact to plugins in that artifact
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Artifact artifactId, String pluginType)
+  public SortedMap<ArtifactDescriptor, List<PluginClass>> getPlugins(Id.Namespace namespace, Id.Artifact artifactId,
+                                                                     String pluginType)
     throws IOException, ArtifactNotFoundException {
-    return artifactStore.getPluginClasses(artifactId, pluginType);
+    return artifactStore.getPluginClasses(namespace, artifactId, pluginType);
   }
 
   /**
@@ -227,6 +230,7 @@ public class ArtifactRepository {
    * are sorted by the {@link ArtifactDescriptor} for the artifact that contains plugins available to the given
    * artifact.
    *
+   * @param namespace the namespace to get plugins from
    * @param artifactId the id of the artifact to get plugins for
    * @param pluginType the type of plugins to get
    * @param pluginName the name of plugins to get
@@ -234,15 +238,16 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws IOException if there was an exception reading plugin metadata from the artifact store
    */
-  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(Id.Artifact artifactId, String pluginType,
-                                                               String pluginName)
+  public SortedMap<ArtifactDescriptor, PluginClass> getPlugins(Id.Namespace namespace, Id.Artifact artifactId,
+                                                               String pluginType, String pluginName)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
-    return artifactStore.getPluginClasses(artifactId, pluginType, pluginName);
+    return artifactStore.getPluginClasses(namespace, artifactId, pluginType, pluginName);
   }
 
   /**
    * Returns a {@link Map.Entry} representing the plugin information for the plugin being requested.
    *
+   * @param namespace the namespace to get plugins from
    * @param artifactId the id of the artifact to get plugins for
    * @param pluginType plugin type name
    * @param pluginName plugin name
@@ -252,11 +257,12 @@ public class ArtifactRepository {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    * @throws PluginNotExistsException if no plugins of the given type and name are available to the given artifact
    */
-  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(Id.Artifact artifactId, String pluginType,
-                                                               String pluginName, PluginSelector selector)
+  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(Id.Namespace namespace, Id.Artifact artifactId,
+                                                               String pluginType, String pluginName,
+                                                               PluginSelector selector)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
     SortedMap<ArtifactDescriptor, PluginClass> pluginClasses = artifactStore.getPluginClasses(
-      artifactId, pluginType, pluginName);
+      namespace, artifactId, pluginType, pluginName);
     SortedMap<ArtifactId, PluginClass> artifactIds = Maps.newTreeMap();
     for (Map.Entry<ArtifactDescriptor, PluginClass> pluginClassEntry : pluginClasses.entrySet()) {
       artifactIds.put(pluginClassEntry.getKey().getArtifactId(), pluginClassEntry.getValue());

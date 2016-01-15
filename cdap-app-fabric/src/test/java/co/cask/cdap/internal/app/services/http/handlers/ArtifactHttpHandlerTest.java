@@ -43,6 +43,7 @@ import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
@@ -218,6 +219,116 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testPluginNamespaceIsolation() throws Exception {
+    // add a system artifact. currently can't do this through the rest api (by design)
+    // so bypass it and use the repository directly
+    Id.Artifact systemId = Id.Artifact.from(Id.Namespace.SYSTEM, "wordcount", "1.0.0");
+    File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
+    artifactRepository.addArtifact(systemId, systemArtifact, Sets.<ArtifactRange>newHashSet());
+
+    Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
+      systemId.getNamespace(), systemId.getName(), systemId.getVersion(), true, systemId.getVersion(), true));
+
+    Id.Namespace namespace1 = Id.Namespace.from("ns1");
+    Id.Namespace namespace2 = Id.Namespace.from("ns2");
+    createNamespace(namespace1.getId());
+    createNamespace(namespace2.getId());
+
+    try {
+      // add some plugins in namespace1. Will contain Plugin1 and Plugin2
+      Manifest manifest = new Manifest();
+      manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
+      Id.Artifact pluginsId1 = Id.Artifact.from(namespace1, "plugins1", "1.0.0");
+      Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                          addPluginArtifact(pluginsId1, Plugin1.class, manifest, parents)
+                            .getStatusLine().getStatusCode());
+
+      // add some plugins in namespace2. Will contain Plugin1 and Plugin2
+      manifest = new Manifest();
+      manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, Plugin1.class.getPackage().getName());
+      Id.Artifact pluginsId2 = Id.Artifact.from(namespace2, "plugins2", "1.0.0");
+      Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                          addPluginArtifact(pluginsId2, Plugin1.class, manifest, parents)
+                            .getStatusLine().getStatusCode());
+
+      ArtifactSummary artifact1 =
+        new ArtifactSummary(pluginsId1.getName(), pluginsId1.getVersion().getVersion(), ArtifactScope.USER);
+      ArtifactSummary artifact2 =
+        new ArtifactSummary(pluginsId2.getName(), pluginsId2.getVersion().getVersion(), ArtifactScope.USER);
+
+      PluginSummary summary1Namespace1 =
+        new PluginSummary("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), artifact1);
+      PluginSummary summary2Namespace1 =
+        new PluginSummary("Plugin2", "callable", "Just returns the configured integer",
+                          Plugin2.class.getName(), artifact1);
+      PluginSummary summary1Namespace2 =
+        new PluginSummary("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), artifact2);
+      PluginSummary summary2Namespace2 =
+        new PluginSummary("Plugin2", "callable", "Just returns the configured integer",
+                          Plugin2.class.getName(), artifact2);
+
+      PluginInfo info1Namespace1 =
+        new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), artifact1,
+                       ImmutableMap.of(
+                         "x", new PluginPropertyField("x", "", "int", true),
+                         "stuff", new PluginPropertyField("stuff", "", "string", true)
+                       ));
+      PluginInfo info2Namespace1 =
+        new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
+                       Plugin2.class.getName(), artifact1,
+                       ImmutableMap.of(
+                         "v", new PluginPropertyField("v", "value to return when called", "int", true)
+                       ));
+      PluginInfo info1Namespace2 =
+        new PluginInfo("Plugin1", "dummy", "This is plugin1", Plugin1.class.getName(), artifact2,
+                       ImmutableMap.of(
+                         "x", new PluginPropertyField("x", "", "int", true),
+                         "stuff", new PluginPropertyField("stuff", "", "string", true)
+                       ));
+      PluginInfo info2Namespace2 =
+        new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
+                       Plugin2.class.getName(), artifact2,
+                       ImmutableMap.of(
+                         "v", new PluginPropertyField("v", "value to return when called", "int", true)
+                       ));
+
+      Id.Artifact namespace1Artifact = Id.Artifact.from(namespace1, systemId.getName(), systemId.getVersion());
+      Id.Artifact namespace2Artifact = Id.Artifact.from(namespace2, systemId.getName(), systemId.getVersion());
+
+      // should see same types in both namespaces
+      Assert.assertEquals(ImmutableSet.of("dummy", "callable"),
+                          getPluginTypes(namespace1Artifact, ArtifactScope.SYSTEM));
+      Assert.assertEquals(ImmutableSet.of("dummy", "callable"),
+                          getPluginTypes(namespace2Artifact, ArtifactScope.SYSTEM));
+
+      // should see that plugins in namespace1 come only from the namespace1 artifact
+      Assert.assertEquals(ImmutableSet.of(summary1Namespace1),
+                          getPluginSummaries(namespace1Artifact, "dummy", ArtifactScope.SYSTEM));
+      Assert.assertEquals(ImmutableSet.of(summary2Namespace1),
+                          getPluginSummaries(namespace1Artifact, "callable", ArtifactScope.SYSTEM));
+
+      Assert.assertEquals(ImmutableSet.of(info1Namespace1),
+                          getPluginInfos(namespace1Artifact, "dummy", "Plugin1", ArtifactScope.SYSTEM));
+      Assert.assertEquals(ImmutableSet.of(info2Namespace1),
+                          getPluginInfos(namespace1Artifact, "callable", "Plugin2", ArtifactScope.SYSTEM));
+
+      // should see that plugins in namespace2 come only from the namespace2 artifact
+      Assert.assertEquals(ImmutableSet.of(summary1Namespace2),
+                          getPluginSummaries(namespace2Artifact, "dummy", ArtifactScope.SYSTEM));
+      Assert.assertEquals(ImmutableSet.of(summary2Namespace2),
+                          getPluginSummaries(namespace2Artifact, "callable", ArtifactScope.SYSTEM));
+
+      Assert.assertEquals(ImmutableSet.of(info1Namespace2),
+                          getPluginInfos(namespace2Artifact, "dummy", "Plugin1", ArtifactScope.SYSTEM));
+      Assert.assertEquals(ImmutableSet.of(info2Namespace2),
+                          getPluginInfos(namespace2Artifact, "callable", "Plugin2", ArtifactScope.SYSTEM));
+    } finally {
+      deleteNamespace("iso1");
+      deleteNamespace("iso2");
+    }
+  }
+
+  @Test
   public void testGetPlugins() throws Exception {
     // add an app for plugins to extend
     Id.Artifact wordCount1Id = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
@@ -384,19 +495,53 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
   // get /artifacts/{name}/versions/{version}/extensions
   private Set<String> getPluginTypes(Id.Artifact artifactId) throws URISyntaxException, IOException {
     URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions",
-      Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
-      artifactId.getName(), artifactId.getVersion().getVersion()))
+                                             Constants.Gateway.API_VERSION_3,
+                                             artifactId.getNamespace().getId(),
+                                             artifactId.getName(),
+                                             artifactId.getVersion().getVersion()))
       .toURL();
+
+    return getResults(endpoint, PLUGIN_TYPES_TYPE);
+  }
+
+  // get /artifacts/{name}/versions/{version}/extensions?scope={scope}
+  private Set<String> getPluginTypes(Id.Artifact artifactId,
+                                     ArtifactScope scope) throws URISyntaxException, IOException {
+    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions?scope=%s",
+                                             Constants.Gateway.API_VERSION_3,
+                                             artifactId.getNamespace().getId(),
+                                             artifactId.getName(),
+                                             artifactId.getVersion().getVersion(),
+                                             scope.name())).toURL();
 
     return getResults(endpoint, PLUGIN_TYPES_TYPE);
   }
 
   // get /artifacts/{name}/versions/{version}/extensions/{plugin-type}
   private Set<PluginSummary> getPluginSummaries(Id.Artifact artifactId,
-                                         String pluginType) throws URISyntaxException, IOException {
+                                                String pluginType) throws URISyntaxException, IOException {
     URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions/%s",
-      Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
-      artifactId.getName(), artifactId.getVersion().getVersion(), pluginType))
+                                             Constants.Gateway.API_VERSION_3,
+                                             artifactId.getNamespace().getId(),
+                                             artifactId.getName(),
+                                             artifactId.getVersion().getVersion(),
+                                             pluginType))
+      .toURL();
+
+    return getResults(endpoint, PLUGIN_SUMMARIES_TYPE);
+  }
+
+  // get /artifacts/{name}/versions/{version}/extensions/{plugin-type}?scope={scope}
+  private Set<PluginSummary> getPluginSummaries(Id.Artifact artifactId,
+                                                String pluginType,
+                                                ArtifactScope scope) throws URISyntaxException, IOException {
+    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions/%s?scope=%s",
+                                             Constants.Gateway.API_VERSION_3,
+                                             artifactId.getNamespace().getId(),
+                                             artifactId.getName(),
+                                             artifactId.getVersion().getVersion(),
+                                             pluginType,
+                                             scope.name()))
       .toURL();
 
     return getResults(endpoint, PLUGIN_SUMMARIES_TYPE);
@@ -404,10 +549,29 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
 
   // get /artifacts/{name}/versions/{version}/extensions/{plugin-type}/plugins/{plugin-name}
   private Set<PluginInfo> getPluginInfos(Id.Artifact artifactId,
-                                     String pluginType, String pluginName) throws URISyntaxException, IOException {
+                                         String pluginType, String pluginName) throws URISyntaxException, IOException {
     URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions/%s/plugins/%s",
       Constants.Gateway.API_VERSION_3, artifactId.getNamespace().getId(),
       artifactId.getName(), artifactId.getVersion().getVersion(), pluginType, pluginName))
+      .toURL();
+
+    return getResults(endpoint, PLUGIN_INFOS_TYPE);
+  }
+
+  // get /artifacts/{name}/versions/{version}/extensions/{plugin-type}/plugins/{plugin-name}?scope={scope}
+  private Set<PluginInfo> getPluginInfos(Id.Artifact artifactId,
+                                         String pluginType,
+                                         String pluginName,
+                                         ArtifactScope scope) throws URISyntaxException, IOException {
+    URL endpoint = getEndPoint(
+      String.format("%s/namespaces/%s/artifacts/%s/versions/%s/extensions/%s/plugins/%s?scope=%s",
+                    Constants.Gateway.API_VERSION_3,
+                    artifactId.getNamespace().getId(),
+                    artifactId.getName(),
+                    artifactId.getVersion().getVersion(),
+                    pluginType,
+                    pluginName,
+                    scope.name()))
       .toURL();
 
     return getResults(endpoint, PLUGIN_INFOS_TYPE);
