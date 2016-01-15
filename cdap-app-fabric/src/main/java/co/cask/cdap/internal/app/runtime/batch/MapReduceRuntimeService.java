@@ -583,9 +583,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // If only one output is configured through the context, then set it as the root OutputFormat
       Map.Entry<String, OutputFormatProvider> next = outputFormatProviders.entrySet().iterator().next();
       OutputFormatProvider outputFormatProvider = next.getValue();
-      for (Map.Entry<String, String> entry : outputFormatProvider.getOutputFormatConfiguration().entrySet()) {
-        job.getConfiguration().set(entry.getKey(), entry.getValue());
-      }
+      ConfigurationUtil.setAll(outputFormatProvider.getOutputFormatConfiguration(), job.getConfiguration());
       job.getConfiguration().set(Job.OUTPUT_FORMAT_CLASS_ATTR, outputFormatProvider.getOutputFormatClassName());
       return;
     }
