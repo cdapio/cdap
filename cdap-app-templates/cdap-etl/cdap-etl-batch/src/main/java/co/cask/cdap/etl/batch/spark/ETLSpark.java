@@ -85,10 +85,10 @@ public class ETLSpark extends AbstractSpark {
     Resources resources = config.getResources();
     Resources driverResources = config.getDriverResources() == null ? resources : config.getDriverResources();
     if (resources != null) {
-      setExecutorResources(config.getResources());
+      setExecutorResources(resources);
     }
     if (driverResources != null) {
-      setDriverResources(config.getDriverResources());
+      setDriverResources(driverResources);
     }
 
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins

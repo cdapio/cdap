@@ -138,10 +138,10 @@ public class ETLMapReduce extends AbstractMapReduce {
     Resources resources = config.getResources();
     Resources driverResources = config.getDriverResources() == null ? resources : config.getDriverResources();
     if (resources != null) {
-      setMapperResources(config.getResources());
+      setMapperResources(resources);
     }
     if (driverResources != null) {
-      setDriverResources(config.getDriverResources());
+      setDriverResources(driverResources);
     }
 
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
