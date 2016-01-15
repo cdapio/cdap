@@ -189,6 +189,9 @@ rst_epilog = """
 .. |$| replace:: :gp:`$`
 
 .. role:: gp
+.. |#| replace:: :gp:`#`
+
+.. role:: gp
 .. |cdap >| replace:: :gp:`cdap >`
 
 .. |http:| replace:: http:

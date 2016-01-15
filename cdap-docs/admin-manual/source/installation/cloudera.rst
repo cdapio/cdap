@@ -6,9 +6,9 @@
 
 .. _admin-installation-cloudera:
 
-======================
-Cloudera Manager (CDH)
-======================
+===================================
+Installation using Cloudera Manager
+===================================
 
 This section describes installing CDAP on Hadoop systems that are `CDH (Cloudera Data Hub)
 <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/
@@ -47,7 +47,7 @@ The CDAP CSD (Custom Service Descriptor) consists of four mandatory roles:
 #. Kafka-Server
 #. UI
 
-A fifth role (Security Auth Service) is optional, plus there is a CDAP Gateway client configuration. 
+A fifth role (Security Authentication Service) is optional. There is a CDAP Gateway client configuration.
 
 - As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be placed
   on a cluster host with full client configurations for these dependent services. 
@@ -60,13 +60,11 @@ A fifth role (Security Auth Service) is optional, plus there is a CDAP Gateway c
 
 - All services run as the ``'cdap'`` user installed by the parcel.
 
-Node.js Installation
---------------------
-Node.js must be installed on the node(s) where the UI role instance will run. We recommend
-any version of `Node.js <https://nodejs.org/>`__ |node-js-version|; in particular, we
-recommend |recommended_node_js_version|. You can download an appropriate version of
-Node.js from `nodejs.org <http://nodejs.org/dist/>`__. Detailed instructions on installing
-Node.js :ref:`are available <admin-manual-install-node.js>`.
+.. Node.js Installation
+.. --------------------
+.. include:: /../target/_includes/cloudera-installation.rst
+    :start-after: .. _cloudera-install-node-js:
+    :end-before: .. _cloudera-install-packaging:
 
 Configurations
 --------------
@@ -332,14 +330,23 @@ Further instructions for verifying your installation are contained in :ref:`admi
 Advanced Topics
 ===============
 
+.. _cloudera-configuration-security:
+
+.. Enabling Perimeter Security
+.. ---------------------------
+.. include:: /../target/_includes/cloudera-configuration.rst
+    :start-after: .. _cloudera-configuration-eps:
+
+.. _cloudera-configuration-enabling-kerberos:
+
 Enabling Kerberos
 -----------------
 For Kerberos-enabled Hadoop clusters:
 
 - The ``'cdap'`` user needs to be granted HBase permissions to create tables.
-  In an HBase shell (``$ hbase shell``), enter::
+  As the ``hbase`` user, issue the command::
  
-    > grant 'cdap', 'RWCA'
+    $ echo "grant 'cdap', 'RWCA'" | hbase shell
 
 - The ``'cdap'`` user must be able to launch YARN containers, either by adding it to the YARN
   ``allowed.system.users`` or by adjusting the YARN ``min.user.id`` to include the ``cdap`` user.
@@ -477,5 +484,4 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
 CDAP HA Setup
 -------------
-
 TO BE COMPLETED

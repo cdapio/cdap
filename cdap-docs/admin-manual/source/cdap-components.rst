@@ -47,4 +47,4 @@ In summary, these are the steps you follow to install CDAP:
 #. Install the CDAP components
 #. Configure the CDAP installation
 #. Start CDAP services
-#. Verify the CDAP installation by running an example application
+#. Verify the CDAP installation

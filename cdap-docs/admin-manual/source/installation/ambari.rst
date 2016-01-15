@@ -6,9 +6,9 @@
 
 .. _admin-installation-ambari:
 
-===================
-Apache Ambari (HDP)
-===================
+================================
+Installation using Apache Ambari
+================================
 
 This section describes installing CDAP on Hadoop systems that are `HDP (Hortonworks Data
 Platform) <http://hortonworks.com/>`__ clusters managed with `Apache Ambari
@@ -53,17 +53,53 @@ Follow these steps:
   - a full `smoke test of CDAP functionality <https://issues.cask.co/browse/CDAP-4105>`__ after installation.
 
 
-Setting Up the CDAP Repos
-=========================
+Preparing the Cluster
+=====================
 
+CDAP Dependencies
+-----------------
+CDAP depends on certain services being present on the cluster. There are **core
+dependencies,** which must be running for CDAP system services to operate correctly, and
+**optional dependencies,** which may be required for certain functionality or program types.
+
+The host running the CDAP Master service must have the HDFS, YARN, and HBase clients
+installed as CDAP uses the command line clients of these for initialization and their
+connectivity information for external service dependencies. Also, CDAP currently requires
+Internet access on the CDAP service nodes (or until the issues `CDAP-3957
+<https://issues.cask.co/browse/CDAP-3957>`__ or `AMBARI-13456
+<https://issues.apache.org/jira/browse/AMBARI-13456>`__ are resolved).
+
+Core Dependencies
+.................
+- **HDFS:** The backing file system for distributed storage
+- **YARN:** For running system services in containers on cluster NodeManagers
+- **HBase:** For system runtime storage and queues
+- **MapReduce2:** For batch operations in workflows and data exploration
+- **ZooKeeper:** For service discovery and leader election
+
+Optional Dependencies
+.....................
+- **Hive:** For data exploration using SQL queries via the CDAP Explore system service
+- **Spark:** For running Spark programs within CDAP applications
+
+.. Node.js Installation
+.. --------------------
+.. include:: /../target/_includes/ambari-installation.rst
+    :start-after: .. _ambari-install-node-js:
+    :end-before: .. _ambari-install-packaging:
+
+
+Downloading and Distributing Packages
+=====================================
+
+Downloading CDAP Ambari Service
+-------------------------------
 To install CDAP on a cluster managed by Ambari, we have available packages for
 RHEL-compatible and Ubuntu systems, which you can install onto your Ambari management server.
 These packages add CDAP to the list of available services which Ambari can install. 
 
 .. highlight:: console
 
-Preparing Ambari
-----------------
 To install the ``cdap-ambari-service`` package, first add the appropriate CDAP repository
 to your system’s package manager by following the steps below. These steps will install a
 Cask repository on your Ambari server.
@@ -96,8 +132,8 @@ supplied from Hortonworks.
   :end-before: .. _ambari-package-installation-title:
 
 
-Installing the CDAP Service
----------------------------
+Installing CDAP Ambari Service
+------------------------------
 Now, install the ``cdap-ambari-service`` package from the repo you specified above:
 
 Installing the CDAP Service via YUM
@@ -115,35 +151,8 @@ Installing the CDAP Service via APT
   $ sudo ambari-server restart
 
 
-CDAP Dependencies
-=================
-CDAP depends on certain services being present on the cluster. There are **core
-dependencies,** which must be running for CDAP system services to operate correctly, and
-**optional dependencies,** which may be required for certain functionality or program types.
-
-The host running the CDAP Master service must have the HDFS, YARN, and HBase clients
-installed as CDAP uses the command line clients of these for initialization and their
-connectivity information for external service dependencies. Also, CDAP currently requires
-Internet access on the CDAP service nodes (or until the issues `CDAP-3957
-<https://issues.cask.co/browse/CDAP-3957>`__ or `AMBARI-13456
-<https://issues.apache.org/jira/browse/AMBARI-13456>`__ are resolved).
-
-Core Dependencies
------------------
-- **HDFS:** The backing file system for distributed storage
-- **YARN:** For running system services in containers on cluster NodeManagers
-- **HBase:** For system runtime storage and queues
-- **MapReduce2:** For batch operations in workflows and data exploration
-- **ZooKeeper:** For service discovery and leader election
-
-Optional Dependencies
----------------------
-- **Hive:** For data exploration using SQL queries via the CDAP Explore system service
-- **Spark:** For running Spark programs within CDAP applications
-
-
-Installing using the Wizard
-===========================
+Installing CDAP Services
+========================
 
 You can now install CDAP using the Ambari Service Wizard.
 
@@ -252,8 +261,8 @@ Customize CDAP
    cdap-site.xml <appendix-cdap-site.xml>`. When finished with configuration changes, click
    *Next*.
 
-Deploying and Starting CDAP
-===========================
+Starting CDAP Services
+======================
 
 Deploying CDAP
 --------------
@@ -295,7 +304,7 @@ Deploying CDAP
 
 CDAP Started
 ------------
-14. Now, you should see **CDAP** listed on the main summary screen for your cluster.
+14. You should now see **CDAP** listed on the main summary screen for your cluster.
 
    .. figure:: ../_images/ambari/ss11-main-screen.png
       :figwidth: 100%
@@ -316,5 +325,42 @@ CDAP Started
 
       **Ambari Dashboard:** *CDAP* Service Screen
 
-Congratulations! CDAP is now running on your cluster, managed by Ambari. You can login to the CDAP UI
-at the address of the node running the CDAP-UI service at port 9999.
+CDAP is now running on your cluster, managed by Ambari. You can login to the CDAP UI at
+the address of the node running the CDAP-UI service at port 9999.
+
+
+Advanced Topics
+===============
+
+.. _ambari-configuration-security:
+
+Enabling Perimeter Security
+---------------------------
+The CDAP Apache Ambari Service is not integrated with the `CDAP Authentication Server
+<https://issues.cask.co/browse/CDAP-4110>`__.
+
+.. _ambari-configuration-enabling-kerberos:
+
+Enabling Kerberos
+-----------------
+Ambari-managed `Kerberos-enabled clusters <https://issues.cask.co/browse/CDAP-4109>`__ are
+currently not supported in CDAP.
+
+Upgrading CDAP
+--------------
+Currently, CDAP **cannot** be upgraded by using Apache Ambari. 
+
+To upgrade CDAP installations that were installed and are managed with Apache Ambari, please
+follow our instructions for upgrading CDAP installations that were installed with a
+Package Manager, either RPM or Debian:
+
+  :ref:`Upgrading CDAP via Package Managers <upgrading-using-package-managers>`
+
+Upgrading Ambari
+----------------
+TO BE COMPLETED
+
+CDAP HA Setup
+-------------
+CDAP component `high-availability <https://issues.cask.co/browse/CDAP-4107>`__  is not
+supported.

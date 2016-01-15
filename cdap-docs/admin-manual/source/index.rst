@@ -42,16 +42,17 @@ installation and its security configuration.
 .. _installation: installation/index.html
 
 - |installation|_ Installation and configuration instructions for either **specific
-  distributions** or **generic Apache Hadoop** clusters using RPM or Debian Package Managers:
+  distributions** using a distribution manager or **generic Apache Hadoop** clusters using
+  RPM or Debian Package Managers:
 
-    .. |cloudera| replace:: **Cloudera Manager (CDH):**
+    .. |cloudera| replace:: **Cloudera Manager:**
     .. _cloudera: installation/cloudera.html
 
     - |cloudera|_ Installing on `CDH (Cloudera Data Hub) <http://www.cloudera.com/>`__ 
       clusters managed with `Cloudera Manager
       <http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/cloudera-manager.html>`__.
 
-    .. |ambari| replace:: **Apache Ambari (HDP):**
+    .. |ambari| replace:: **Apache Ambari:**
     .. _ambari: installation/ambari.html
 
     - |ambari|_ Installing on `HDP (Hortonworks Data Platform)
