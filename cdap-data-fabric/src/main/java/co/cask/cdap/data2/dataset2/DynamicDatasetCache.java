@@ -20,7 +20,6 @@ import co.cask.cdap.api.common.RuntimeArguments;
 import co.cask.cdap.api.common.Scope;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.data.DatasetProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -56,7 +55,7 @@ import javax.annotation.Nullable;
  * can be added to the transaction context. This is useful for transaction-aware's that
  * do not implement a Dataset (such as queue consumers etc.).
  */
-public abstract class DynamicDatasetCache implements DatasetProvider, Supplier<TransactionContext> {
+public abstract class DynamicDatasetCache implements DatasetContext, Supplier<TransactionContext> {
 
   protected final SystemDatasetInstantiator instantiator;
   protected final TransactionSystemClient txClient;
