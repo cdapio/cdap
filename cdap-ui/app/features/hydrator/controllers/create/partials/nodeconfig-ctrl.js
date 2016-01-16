@@ -87,22 +87,6 @@ class NodeConfigController {
       outputSchemaUpdate: 0
     };
   }
-  copyInputToOutputSchema() {
-     // If there is no information of output schema in the node config then just mantain an output schema for UI purposes.
-     this.state.groupsConfig.outputSchema.isOutputSchemaExists = true;
-     this.state.node.outputSchema = angular.toJson({fields: this.state.node.inputSchema});
-     // FIXME: This is stupid and it is here because of 2-way binding. We bind the model of schema editor to the output schema
-     // The schema editor updates the schema from within and it should expect changes from outside (in this case copy to Output button).
-     // To differntiate editing from within and changes from outside we have to do this.
-     // And we need to differentiate because while editing we don't want to lose focus on the current textbox ($watch on the same property loses it)
-     // One more reason we should have used Flux/Redux so that we could have eliminated these hacks.
-     // The side effects of 3-way-binding (user, external & copy to output) we have different event pipe events
-     // plugin.reset, schema.clear, dataset.selected, plugin-outputschema.update
-     this.$timeout(() => {
-       this.EventPipe.emit('plugin-outputschema.update');
-     });
-     this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
-  }
   propagateSchemaDownStream() {
     this.ConfigActionsFactory.propagateSchemaDownStream(this.state.node.name);
   }
@@ -175,6 +159,9 @@ class NodeConfigController {
                   true
                 )
               );
+            }
+            if (!this.state.node.outputSchema) {
+              this.state.node.outputSchema = JSON.stringify({fields: this.state.node.inputSchema});
             }
             // Mark the configfetched to show that configurations have been received.
             this.state.configfetched = true;
