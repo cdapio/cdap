@@ -23,10 +23,12 @@ import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.tephra.TransactionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -186,6 +188,35 @@ public class MetadataStoreTest extends MetadataKafkaTestBase {
     }
     // reset config
     cConf.setBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED, publishEnabled);
+  }
+
+  @Test
+  public void testSearchWeight() throws Exception {
+    Id.Program flow1 = Id.Program.from("ns1", "app1", ProgramType.FLOW, "flow1");
+    Id.Stream stream1 = Id.Stream.from("ns1", "s1");
+    Id.DatasetInstance dataset1 = Id.DatasetInstance.from("ns1", "ds1");
+
+    String multiWordValue = "aV1 av2 ,  -  ,  av3 - av4_av5 av6";
+    store.setProperties(MetadataScope.USER, flow1, ImmutableMap.of("key1", "value1",
+                                                                   "key2", "value2",
+                                                                   "multiword", multiWordValue));
+
+    store.setProperties(MetadataScope.USER, stream1, ImmutableMap.of("sKey1", "sValue1 sValue2",
+                                                                     "Key1", "Value1"));
+
+    store.setProperties(MetadataScope.USER, dataset1, ImmutableMap.of("sKey1", "sValuee1 sValuee2"));
+
+    // Test score match
+    List<MetadataSearchResultRecord> actual = Lists.newArrayList(store.searchMetadata("ns1", "value1 multiword:av2"));
+    List<MetadataSearchResultRecord> expected = Lists.newArrayList(new MetadataSearchResultRecord(flow1),
+                                                                        new MetadataSearchResultRecord(stream1));
+    Assert.assertEquals(expected, actual);
+
+    actual = Lists.newArrayList(store.searchMetadata("ns1", "value1 sValue*"));
+    expected = Lists.newArrayList(new MetadataSearchResultRecord(stream1),
+                                  new MetadataSearchResultRecord(dataset1),
+                                  new MetadataSearchResultRecord(flow1));
+    Assert.assertEquals(expected, actual);
   }
 
   @AfterClass

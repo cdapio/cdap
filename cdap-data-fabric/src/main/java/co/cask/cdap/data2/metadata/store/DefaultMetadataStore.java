@@ -44,7 +44,13 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -61,6 +67,15 @@ public class DefaultMetadataStore implements MetadataStore {
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, "system.metadata");
   private static final Map<String, String> EMPTY_PROPERTIES = ImmutableMap.of();
   private static final Set<String> EMPTY_TAGS = ImmutableSet.of();
+
+  private static final Comparator<Map.Entry<Id.NamespacedId, Integer>> SEARCH_RESULT_DESC_SCORE_COMPARATOR =
+    new Comparator<Map.Entry<Id.NamespacedId, Integer>>() {
+      @Override
+      public int compare(Map.Entry<Id.NamespacedId, Integer> o1, Map.Entry<Id.NamespacedId, Integer> o2) {
+        // sort in descending order
+        return o2.getValue() - o1.getValue();
+      }
+    };
 
   private final CConfiguration cConf;
   private final TransactionExecutorFactory txExecutorFactory;
@@ -435,6 +450,7 @@ public class DefaultMetadataStore implements MetadataStore {
   public Set<MetadataSearchResultRecord> searchMetadataOnType(final MetadataScope scope, final String namespaceId,
                                                               final String searchQuery,
                                                               final MetadataSearchTargetType type) {
+    // Execute search query
     Iterable<MetadataEntry> metadataEntries = execute(new TransactionExecutor.Function<MetadataDataset,
       Iterable<MetadataEntry>>() {
       @Override
@@ -442,11 +458,24 @@ public class DefaultMetadataStore implements MetadataStore {
         return input.search(namespaceId, searchQuery, type);
       }
     }, scope);
-    ImmutableSet.Builder<MetadataSearchResultRecord> builder = ImmutableSet.builder();
+
+    // Score results
+    Map<Id.NamespacedId, Integer> weightedResults = new HashMap<>();
     for (MetadataEntry metadataEntry : metadataEntries) {
-      builder.add(new MetadataSearchResultRecord(metadataEntry.getTargetId()));
+      Integer score = weightedResults.get(metadataEntry.getTargetId());
+      score = score == null ? 0 : score;
+      weightedResults.put(metadataEntry.getTargetId(), score + 1);
     }
-    return builder.build();
+
+    // Sort the results by score
+    List<Map.Entry<Id.NamespacedId, Integer>> resultList = new ArrayList<>(weightedResults.entrySet());
+    Collections.sort(resultList, SEARCH_RESULT_DESC_SCORE_COMPARATOR);
+
+    Set<MetadataSearchResultRecord> result = new LinkedHashSet<>();
+    for (Map.Entry<Id.NamespacedId, Integer> entry : resultList) {
+      result.add(new MetadataSearchResultRecord(entry.getKey()));
+    }
+    return result;
   }
 
   @Override
