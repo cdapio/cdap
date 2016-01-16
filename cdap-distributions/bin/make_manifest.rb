@@ -1,6 +1,4 @@
 #!/usr/bin/env ruby
-
-#!/usr/bin/env ruby
 # encoding: UTF-8
 #
 # Copyright © 2016 Cask Data, Inc.
