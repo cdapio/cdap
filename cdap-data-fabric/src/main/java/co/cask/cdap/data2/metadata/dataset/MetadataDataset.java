@@ -32,12 +32,11 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.commons.math3.analysis.function.Add;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,6 +57,8 @@ public class MetadataDataset extends AbstractDataset {
 
   private static final Pattern VALUE_SPLIT_PATTERN = Pattern.compile("[-_:\\s]+");
   private static final Pattern TAGS_SEPARATOR_PATTERN = Pattern.compile("[,\\s]+");
+  private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
+
   private static final String HISTORY_COLUMN = "h"; // column for metadata history
   private static final String VALUE_COLUMN = "v";  // column for metadata value
   private static final String TAGS_SEPARATOR = ",";
@@ -397,46 +398,48 @@ public class MetadataDataset extends AbstractDataset {
    */
   public List<MetadataEntry> search(final String namespaceId, final String searchQuery,
                                     final MetadataSearchTargetType type) {
-    Set<MetadataEntry> results = new HashSet<>();
+    List<MetadataEntry> results = new ArrayList<>();
     Scanner scanner;
 
-    String namespacedSearchQuery = prepareSearchQuery(namespaceId, searchQuery);
+    for (String queryWord : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
+      String namespacedSearchQuery = prepareSearchQuery(namespaceId, queryWord);
 
-    if (namespacedSearchQuery.endsWith("*")) {
-      // if prefixed search get start and stop key
-      byte[] startKey = Bytes.toBytes(namespacedSearchQuery.substring(0, namespacedSearchQuery.lastIndexOf("*")));
-      byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-      scanner = indexedTable.scanByIndex(Bytes.toBytes(INDEX_COLUMN), startKey, stopKey);
-    } else {
-      byte[] value = Bytes.toBytes(namespacedSearchQuery);
-      scanner = indexedTable.readByIndex(Bytes.toBytes(INDEX_COLUMN), value);
-    }
-    try {
-      Row next;
-      while ((next = scanner.next()) != null) {
-        String rowValue = next.getString(INDEX_COLUMN);
-        if (rowValue == null) {
-          continue;
-        }
-
-        final byte[] rowKey = next.getRow();
-        String targetType = MdsKey.getTargetType(rowKey);
-
-        // Filter on target type if not ALL
-        if ((type != MetadataSearchTargetType.ALL) && (type !=
-          MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
-          continue;
-        }
-
-        Id.NamespacedId targetId = MdsKey.getNamespaceIdFromKey(targetType, rowKey);
-        String key = MdsKey.getMetadataKey(targetType, rowKey);
-        MetadataEntry entry = getMetadata(targetId, key);
-        results.add(entry);
+      if (namespacedSearchQuery.endsWith("*")) {
+        // if prefixed search get start and stop key
+        byte[] startKey = Bytes.toBytes(namespacedSearchQuery.substring(0, namespacedSearchQuery.lastIndexOf("*")));
+        byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+        scanner = indexedTable.scanByIndex(Bytes.toBytes(INDEX_COLUMN), startKey, stopKey);
+      } else {
+        byte[] value = Bytes.toBytes(namespacedSearchQuery);
+        scanner = indexedTable.readByIndex(Bytes.toBytes(INDEX_COLUMN), value);
       }
-    } finally {
-      scanner.close();
+      try {
+        Row next;
+        while ((next = scanner.next()) != null) {
+          String rowValue = next.getString(INDEX_COLUMN);
+          if (rowValue == null) {
+            continue;
+          }
+
+          final byte[] rowKey = next.getRow();
+          String targetType = MdsKey.getTargetType(rowKey);
+
+          // Filter on target type if not ALL
+          if ((type != MetadataSearchTargetType.ALL) &&
+            (type != MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
+            continue;
+          }
+
+          Id.NamespacedId targetId = MdsKey.getNamespaceIdFromKey(targetType, rowKey);
+          String key = MdsKey.getMetadataKey(targetType, rowKey);
+          MetadataEntry entry = getMetadata(targetId, key);
+          results.add(entry);
+        }
+      } finally {
+        scanner.close();
+      }
     }
-    return Lists.newArrayList(results);
+    return results;
   }
 
   /**
@@ -448,7 +451,7 @@ public class MetadataDataset extends AbstractDataset {
    * @return formatted search query which is namespaced
    */
   private String prepareSearchQuery(String namespaceId, String searchQuery) {
-    String formattedSearchQuery = searchQuery.toLowerCase().trim();
+    String formattedSearchQuery = searchQuery.toLowerCase();
     // if this is a key:value search remove  spaces around the separator too
     if (formattedSearchQuery.contains(KEYVALUE_SEPARATOR)) {
       // split the search query in two parts on first occurrence of KEYVALUE_SEPARATOR and the trim the key and value
