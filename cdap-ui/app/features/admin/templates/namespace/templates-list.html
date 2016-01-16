@@ -31,9 +31,11 @@
   <table class="table table-curved">
     <thead>
       <th>Name</th>
-      <th>Template</th>
+      <th>Pipeline Type</th>
       <th>Type</th>
       <th>Plugin</th>
+      <th>Artifact Name</th>
+      <th>Artifact Version</th>
       <th></th>
     </thead>
 
@@ -50,6 +52,8 @@
         </td>
         <td>{{ template.pluginType }}</td>
         <td>{{ template.pluginName }}</td>
+        <td>{{ template.artifact.name }}</td>
+        <td>{{ template.artifact.version }}</td>
         <td class="text-center">
           <a href=""
           ng-click="caskConfirm()"
