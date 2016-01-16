@@ -180,7 +180,7 @@ angular.module(PKG.name + '.feature.admin')
 
             vm.pluginConfig.outputSchema = JSON.stringify({ fields: formattedSchema });
           }
-        }, function error (err) {
+        }, function error () {
           // When there is no config
 
           vm.noConfig = true;
