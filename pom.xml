@@ -1314,6 +1314,7 @@
                   <exclude>**/*.json.template</exclude>
                   <exclude>archetypes/**/resources/**/*.txt</exclude>
                   <exclude>**/MANIFEST.MF</exclude>
+                  <exclude>**/.rubocop*.yml</exclude>
                 </excludes>
               </configuration>
             </execution>
