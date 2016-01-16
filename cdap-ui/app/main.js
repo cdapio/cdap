@@ -193,7 +193,7 @@ angular
   .config(function ($alertProvider) {
     angular.extend($alertProvider.defaults, {
       animation: 'am-fade-and-scale',
-      container: '#alerts > .container',
+      container: '#alerts',
       duration: 3
     });
   })
