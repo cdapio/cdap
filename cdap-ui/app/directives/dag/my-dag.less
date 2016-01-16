@@ -41,6 +41,13 @@ my-dag {
       background-image: none;
       border: 0;
       background-color: @table-bg;
+
+      &.normal-cursor {
+        .jsplumb-overlay .label-container, .box, .box .node, .box .node .icon.fa {
+          cursor: default;
+        }
+      }
+
       .border-radius(4px);
       .box {
         cursor: pointer;
