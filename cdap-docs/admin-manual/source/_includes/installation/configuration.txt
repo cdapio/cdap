@@ -304,6 +304,15 @@ A. In order to configure **CDAP for Kerberos authentication:**
 
 Enabling Perimeter Security
 ---------------------------
+Cask Data Application Platform (CDAP) supports securing clusters using perimeter security.
+Network (or cluster) perimeter security limits outside access, providing a first level of
+security. However, perimeter security itself does not provide the safeguards of authentication,
+authorization and service request management that a secure Hadoop cluster provides.
+
+.. include:: /security.rst
+    :start-after: .. _admin-security-summary-start:
+    :end-before: .. _admin-security-summary-end:
+
 For instructions on enabling CDAP Security, see :ref:`CDAP Security <admin-security>`;
 and in particular, see the instructions for 
 :ref:`configuring the properties of cdap-site.xml <enabling-security>`.

@@ -10,44 +10,27 @@
 Installation using Cloudera Manager
 ===================================
 
-This section describes installing CDAP on Hadoop systems that are `CDH (Cloudera Data Hub)
-<http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/
-cdh_intro.html>`__ clusters managed with `Cloudera Manager (CM)
-<http://www.cloudera.com/content/cloudera/en/products-and-services/cloudera-enterprise/
-cloudera-manager.html>`__.
-
-You install CDAP into a CDH cluster by first downloading and installing a 
-CSD (`Custom Service Descriptor <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_addon_services.html#concept_qbv_3jk_bn_unique_1>`__) 
-for CDAP. Once the CDAP CSD is installed and you have restarted your Cloudera Manager Server, you
-will able to use CM to install, start, and manage CDAP on CDH clusters.
-
-These instructions assume that you are familiar with CM and CDH, and already have a
-cluster managed by CM with CDH installed and running. The cluster must meet CDAP's
-:ref:`hardware, network, and software requirements <admin-manual-system-requirements>`
-before you install CDAP.
-
-Follow these steps:
-
 .. figure:: ../_images/steps/cloudera-manager.png
    :height: 80px
    :align: center
-
-Once you have completed the installation and started CDAP services,
-you can then :ref:`verify the installation <admin-manual-verification>`.
 
 Preparing the Cluster
 =====================
 
 Roles and Dependencies
 ----------------------
-The CDAP CSD (Custom Service Descriptor) consists of four mandatory roles:
+The CDAP CSD (`Custom Service Descriptor 
+<http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_addon_services.html#concept_qbv_3jk_bn_unique_1>`__)
+consists of four mandatory roles:
 
-#. Master
-#. Gateway/Router
-#. Kafka-Server
-#. UI
+#. CDAP Master Service
+#. CDAP Gateway/Router Service
+#. CDAP Kafka Service
+#. CDAP UI Service
 
-A fifth role (Security Authentication Service) is optional. There is a CDAP Gateway client configuration.
+A fifth role (*CDAP Security Auth Service*) is optional. There is also a (CDAP) Gateway client configuration.
+
+These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of the same name.
 
 - As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be placed
   on a cluster host with full client configurations for these dependent services. 
@@ -103,7 +86,6 @@ Downloading and Distributing Packages
 Downloading and Installing CSD
 ------------------------------
 - Download the CDAP CSD (Custom Service Descriptor) by `downloading the JAR file <http://cask.co/resources/#cdap-integrations>`__.
-  The source code is available `for review or download <https://github.com/caskdata/cm_csd>`__.
 
   Details on CSDs and Cloudera Manager Extensions are `available online 
   <https://github.com/cloudera/cm_ext/wiki>`__.
@@ -152,8 +134,8 @@ which version of Cloudera Manager and CDAP you are using.
 
 .. _cloudera-add-a-service:
 
-Add A Service
--------------
+Add CDAP Service
+----------------
 Start from the Cloudera Manager Admin Console's *Home* page, selecting *Add a Service* from the menu for your cluster:
 
 .. figure:: ../_images/cloudera/cloudera-csd-01.png
@@ -211,7 +193,7 @@ with service or gateway roles for HBase, HDFS, YARN, and (optionally) Hive and S
    :class: bordered-image
 
    **Add Service Wizard, Page 3:** When customizing Role Assignments, the *CDAP Security
-   Auth Service* can be added later.
+   Auth Service* can be added later, if required.
    
    
 Add Service Wizard: Reviewing Configuration
@@ -220,7 +202,7 @@ Add Service Wizard: Reviewing Configuration
 **Kerberos Auth Enabled:** This is needed if running on a secure Hadoop cluster.
 
 **Router Server Port:** This should match the "Router Bind Port"; it’s used by the CDAP UI
-to connect to the Router service.
+to connect to the CDAP Router service.
 
 **App Artifact Dir:** This should initially point to the bundled system artifacts included
 in the CDAP parcel directory. If you have modified ``${PARCELS_ROOT}``, please update this
@@ -275,6 +257,7 @@ Add Service Wizard: Completion Page
 
    **Add Service Wizard, Page 7:** Congratulations screen, though there is still work to be done.
 
+.. _cloudera-verification:
 
 Verification
 ============
@@ -310,7 +293,7 @@ port ``9999`` of the host where the UI role instance is running.
    
 .. _cloudera-cdap-ui:
 
-.. include:: /_includes/installation/smoke-test-cdap.rst
+.. include:: /_includes/installation/smoke-test-cdap.txt
 
 Advanced Topics
 ===============
@@ -390,24 +373,13 @@ The following is the generic procedure for Major/Minor version upgrades:
 
 #. You must recompile and then redeploy your applications.
 
-Upgrading CDAP 2.8 to 3.0
-.........................
-**Note:** Apps need to be both recompiled and re-deployed.
-
-When upgrading from 2.8.0 to 3.0.0, the CDAP Web-App role has been replaced by the CDAP-UI
-role.  After starting the 3.0 services for the first time:
-
-   - From the CDAP Instances page, select "Add Role Instances", and choose a host for the CDAP-UI role.
-
-   - From the CDAP Instances page, check the CDAP-Web-App role, and select "Delete" from the Actions menu.
-
 
 Upgrading CDH
 -------------
 
 .. _cloudera-release-specific-upgrade-notes:
 
-**Upgrading CDH 5.3 to 5.4**
+**Upgrading CDH (Cloudera Data Hub) 5.3 to 5.4**
 
 **Background:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
 CDH 5.4 as of CDAP 3.1.0 - however, upgrading the underlying CDH version is only supported
@@ -466,7 +438,3 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 #. Start CDAP::
 
     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
-
-CDAP HA Setup
--------------
-TO BE COMPLETED

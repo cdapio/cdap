@@ -30,8 +30,8 @@
 
 cdap_apps_version = '0.4.0'
 
-node_js_version = 'greater than v0.10.0 through v0.12.*'
-recommended_node_js_version = 'v0.12.9'
+node_js_version = 'greater than v0.10.36 through v0.12.*'
+recommended_node_js_version = 'v0.12.*'
 
 import sys
 import os

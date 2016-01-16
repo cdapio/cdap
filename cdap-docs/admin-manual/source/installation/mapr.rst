@@ -11,27 +11,16 @@
 Installation for MapR
 =====================
 
-This section describes installing CDAP on existing
-`MapR Converged Data Platform <https://www.mapr.com>`__ clusters.
-
-These instructions assume that you are familiar with MapR, and already have a cluster with
-it installed and running. The cluster must meet CDAP's :ref:`hardware, network, and
-software requirements <admin-manual-system-requirements>` before you install CDAP.
-
-Follow these steps:
-
 .. figure:: ../_images/steps/mapr.png
    :height: 80px
    :align: center
 
-Once you have completed the installation and started CDAP services,
-you can then :ref:`verify the installation <admin-manual-verification>`.
-
 Preparing the Cluster
 =====================
-Please review the :ref:`Software Prerequisites <admin-manual-software-requirements>`, 
-as a configured Hadoop, HBase, and Hive (plus an optional Spark client) needs to be configured on the
-node(s) where CDAP will run.
+Please review the :ref:`Software Prerequisites <admin-manual-software-requirements>`, as a
+configured Hadoop, HBase, and Hive (plus an optional Spark client) `MapR Converged Data
+Platform <https://www.mapr.com>`__ cluster needs to be available for the node(s) where CDAP
+will run.
 
 If colocating CDAP on cluster hosts with actual services, such as the *MapR CLDB*, *YARN
 ResourceManager*, or *HBase Master*, then the client configurations will already be in place.
@@ -143,10 +132,12 @@ CDAP requires that an additional entry |---| ``/opt/mapr/lib/*`` |---| be append
 
 .. include:: /../target/_includes/mapr-starting.rst
 
+.. _mapr-verification:
+
 Verification
 ============
 
-.. include:: /_includes/installation/smoke-test-cdap.rst
+.. include:: /_includes/installation/smoke-test-cdap.txt
 
 Advanced Topics
 ===============
@@ -178,12 +169,3 @@ follow our instructions for upgrading CDAP installations that were installed wit
 Package Manager, either RPM or Debian:
 
   :ref:`Upgrading CDAP via Package Managers <upgrading-using-package-managers>`
-
-Upgrading MapR
---------------
-TO BE COMPLETED
-
-
-
-
-

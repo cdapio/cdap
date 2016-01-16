@@ -8,9 +8,6 @@
 CDAP Components
 ===============
 
-CDAP Components
-===============
-
 These are the CDAP components:
 
 - **CDAP Master:** Service for managing runtime, lifecycle and resources of CDAP applications (package *cdap-master*);
@@ -39,7 +36,7 @@ additional file, ``cdap-security.xml`` (documented in :ref:`an appendix
 Installation Summary
 ====================
 
-In summary, these are the steps you follow to install CDAP:
+In summary, these are the steps that you follow to install CDAP:
 
 #. Determine your system architecture
 #. Review and meet the system requirements: hardware, network, and software

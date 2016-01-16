@@ -10,9 +10,33 @@ Hadoop Compatibility
 
 Before installing the CDAP components, you must first install (or have access to) a Hadoop
 cluster with *HDFS*, *YARN*, *HBase*, and *ZooKeeper*. In order to use the ad-hoc querying
-capabilities of CDAP, you will also need *Hive*. All CDAP components can be installed on
+capabilities of CDAP (Explore), you will also need *Hive*. All CDAP components can be installed on
 the same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop
 services.
+
+CDAP depends on these services being present on the cluster. There are **core
+dependencies,** which must be running for CDAP system services to operate correctly, and
+**optional dependencies,** which may be required for certain functionality or program types.
+
+The host(s) running the CDAP Master service must have the HDFS, YARN, and HBase clients
+installed as CDAP uses the command line clients of these for initialization and their
+connectivity information for external service dependencies. Also, CDAP currently requires
+Internet access on the CDAP service nodes (or until the issue `CDAP-3957
+<https://issues.cask.co/browse/CDAP-3957>` is resolved).
+
+**Core Dependencies**
+
+- **HDFS:** The backing file system for distributed storage
+- **YARN:** For running system services in containers on cluster NodeManagers
+- **HBase:** For system runtime storage and queues
+- **MapReduce2:** For batch operations in workflows and data exploration
+- **ZooKeeper:** For service discovery and leader election
+
+**Optional Dependencies**
+
+- **Hive:** For data exploration using SQL queries via the CDAP Explore system service
+- **Spark:** For running Spark programs within CDAP applications
+
 
 .. rubric:: Hadoop/HBase Environment
 

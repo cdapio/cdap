@@ -11,29 +11,20 @@
 Installation via Package Managers
 =================================
 
-This section describes installing CDAP on Hadoop clusters that are:
-
-- Generic Apache Hadoop distributions; 
-- CDH clusters *not managed* with Cloudera Manager; or
-- HDP clusters *not managed* with Apache Ambari.
-
-Cloudera Manager (CDH), Apache Ambari (HDP), and MapR distributions should be installed
-with our other :ref:`distribution instructions <installation-index>`.
-
-These instructions cover the steps to install, configure, and start CDAP. They assume
-that you are familiar with Hadoop, and already have a cluster with it installed and running.
-The cluster must meet CDAP's :ref:`hardware, network, and software requirements
-<admin-manual-system-requirements>` before you install CDAP.
-
-Follow these steps:
-
 .. figure:: ../_images/steps/package-managers.png
    :height: 80px
    :align: center
 
-Once you have completed the installation and started CDAP services,
-you can then :ref:`verify the installation <admin-manual-verification>`.
+.. rubric:: Notes
 
+This section describes installing CDAP on Hadoop clusters that are:
+
+- Generic Apache Hadoop distributions; 
+- CDH (Cloudera Data Hub) clusters *not managed* with Cloudera Manager; or
+- HDP (Hortonworks Data Platform) clusters *not managed* with Apache Ambari.
+
+Cloudera Manager (CDH), Apache Ambari (HDP), and MapR distributions should be installed
+with our other :ref:`distribution instructions <installation-index>`.
 
 Preparing the Cluster
 =====================
@@ -79,11 +70,12 @@ Installing CDAP Services
 
 .. include:: /../target/_includes/package-managers-starting.rst
 
+.. _package-managers-verification:
 
 Verification
 ============
 
-.. include:: /_includes/installation/smoke-test-cdap.rst
+.. include:: /_includes/installation/smoke-test-cdap.txt
 
 
 Advanced Topics
@@ -202,12 +194,12 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 
 CDAP HA setup
 -------------
-Repeat the installation steps on additional boxes. The configuration settings (in ``cdap-site.xml``)
-needed to support high-availability are:
+Repeat the installation steps on additional boxes. The configuration settings (in
+``cdap-site.xml``, *property:value*) needed to support high-availability are:
 
 - ``kafka.seed.brokers``: ``127.0.0.1:9092,.../${root.namespace}`` 
   
-  - Kafka brokers list (comma-separated)
+  - Kafka brokers list (comma-separated), followed by ``/${root.namespace}``
   
 - ``kafka.default.replication.factor``: 2
 

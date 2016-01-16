@@ -15,11 +15,16 @@ security. Here, we’ll discuss how to setup a secure CDAP instance.
 Additional security information, including client APIs and the authentication process, is covered
 in the Developers’ Manual :ref:`security-index` section.
 
+.. _admin-security-summary-start:
+.. NOTE: INCLUDED IN OTHER FILES
+
 We recommend that in order for CDAP to be secure, CDAP security should always be used in conjunction with
 `secure Hadoop clusters <http://hadoop.apache.org/docs/current/hadoop-project-dist/hadoop-common/SecureMode.html>`__.
 In cases where secure Hadoop is not or cannot be used, it is inherently insecure and any applications
 running on the cluster are effectively "trusted”. Though there is still value in having the perimeter access
 be authenticated in that situation, whenever possible a secure Hadoop cluster should be employed with CDAP security.
+
+.. _admin-security-summary-end:
 
 CDAP Security is configured in ``cdap-site.xml`` and ``cdap-security.xml``:
 

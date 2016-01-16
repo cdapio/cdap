@@ -10,34 +10,18 @@
 Installation using Apache Ambari
 ================================
 
-This section describes installing CDAP on Hadoop systems that are `HDP (Hortonworks Data
-Platform) <http://hortonworks.com/>`__ clusters managed with `Apache Ambari
-<https://ambari.apache.org/>`__, the open source provisioning system for HDP.
-
-You install CDAP into an HDP cluster by first adding the `CDAP Ambari Services
-<https://github.com/caskdata/cdap-ambari-service>`__ to your Ambari Server. Once you have
-restarted your Ambari Server, you will able to use the Ambari UI (Ambari Dashboard) to
-install, start, and manage CDAP on HDP clusters.
-
-These instructions assume that you are familiar with Apache Ambari and HDP, and already
-have a cluster with them installed and running. The cluster must meet CDAP's
-:ref:`hardware, network, and software requirements <admin-manual-system-requirements>`
-before you install CDAP.
-
-Follow these steps:
-
 .. figure:: ../_images/steps/ambari.png
    :height: 80px
    :align: center
    
-
 .. rubric:: Notes
 
-- Apache Ambari can only be used to add CDAP to an **existing** Hadoop cluster, one
-  that already has the required services (Hadoop: HDFS, YARN, HBase, ZooKeeper, and |---|
-  optionally |---| Hive and Spark) installed.
-- Ambari is for setting up HDP on bare clusters; it can't be used for clusters with HDP 
-  already installed, where the original installation was **not** with Ambari.
+- `Apache Ambari <https://ambari.apache.org/>`__ can only be used to add CDAP to an **existing**
+  Hadoop cluster, one that already has the required services (Hadoop: HDFS, YARN, HBase,
+  ZooKeeper, and |---| optionally |---| Hive and Spark) installed.
+- Ambari is for setting up HDP (Hortonworks Data Platform) on bare clusters; it can't be 
+  used for clusters with HDP already installed, where the original installation was
+  **not** with Ambari.
 - Though you can install CDAP with Apache Ambari, you **currently cannot use** Ambari to upgrade CDAP. 
   See :ref:`upgrading-using-package-managers` for how to upgrade CDAP servers managed with Ambari.
 - These features are **currently not included** in the CDAP Apache Ambari Service (though they may in the future):
@@ -55,32 +39,6 @@ Follow these steps:
 
 Preparing the Cluster
 =====================
-
-CDAP Dependencies
------------------
-CDAP depends on certain services being present on the cluster. There are **core
-dependencies,** which must be running for CDAP system services to operate correctly, and
-**optional dependencies,** which may be required for certain functionality or program types.
-
-The host running the CDAP Master service must have the HDFS, YARN, and HBase clients
-installed as CDAP uses the command line clients of these for initialization and their
-connectivity information for external service dependencies. Also, CDAP currently requires
-Internet access on the CDAP service nodes (or until the issues `CDAP-3957
-<https://issues.cask.co/browse/CDAP-3957>`__ or `AMBARI-13456
-<https://issues.apache.org/jira/browse/AMBARI-13456>`__ are resolved).
-
-Core Dependencies
-.................
-- **HDFS:** The backing file system for distributed storage
-- **YARN:** For running system services in containers on cluster NodeManagers
-- **HBase:** For system runtime storage and queues
-- **MapReduce2:** For batch operations in workflows and data exploration
-- **ZooKeeper:** For service discovery and leader election
-
-Optional Dependencies
-.....................
-- **Hive:** For data exploration using SQL queries via the CDAP Explore system service
-- **Spark:** For running Spark programs within CDAP applications
 
 .. Node.js Installation
 .. --------------------
@@ -314,6 +272,8 @@ CDAP Started
 
       **Ambari Dashboard:** Selecting *CDAP*
 
+.. _ambari-verification:
+
 Verification
 ============
 
@@ -334,7 +294,7 @@ Service Checks in Apache Ambari
 CDAP is now running on your cluster, managed by Ambari. You can login to the CDAP UI at
 the address of the node running the CDAP-UI service at port 9999.
 
-.. include:: /_includes/installation/smoke-test-cdap.rst
+.. include:: /_includes/installation/smoke-test-cdap.txt
 
 Advanced Topics
 ===============
@@ -343,8 +303,13 @@ Advanced Topics
 
 Enabling Perimeter Security
 ---------------------------
-The CDAP Apache Ambari Service is not integrated with the `CDAP Authentication Server
-<https://issues.cask.co/browse/CDAP-4110>`__.
+.. include:: /../target/_includes/ambari-configuration.rst
+    :start-after: .. _ambari-configuration-eps:
+
+At this time, the CDAP Apache Ambari Service is not integrated with the `CDAP
+Authentication Server <https://issues.cask.co/browse/CDAP-4110>`__. As a consequence,
+any settings made to support :ref:`CDAP Security <admin-security>` will be erased by Ambari.
+CDAP Security is **not currently** supported when using Apache Ambari.
 
 .. _ambari-configuration-enabling-kerberos:
 
@@ -362,10 +327,6 @@ follow our instructions for upgrading CDAP installations that were installed wit
 Package Manager, either RPM or Debian:
 
   :ref:`Upgrading CDAP via Package Managers <upgrading-using-package-managers>`
-
-Upgrading Ambari
-----------------
-TO BE COMPLETED
 
 CDAP HA Setup
 -------------
