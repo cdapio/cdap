@@ -26,6 +26,7 @@ import org.junit.Test;
 import java.util.Map;
 
 /**
+ * Test cases for {@link RecordPutTransformer}.
  */
 @SuppressWarnings("unchecked")
 public class RecordPutTransformerTest {
@@ -48,6 +49,32 @@ public class RecordPutTransformerTest {
       Schema.Field.of("non_nullable", Schema.of(Schema.Type.STRING))
     );
     RecordPutTransformer transformer = new RecordPutTransformer("key", schema);
+
+    // valid record
+    StructuredRecord record = StructuredRecord.builder(schema)
+      .set("key", 1)
+      .set("non_nullable", "foo")
+      .build();
+
+    Put transformed = transformer.toPut(record);
+
+    Assert.assertEquals(1, Bytes.toInt(transformed.getRow()));
+    // expect a null value for the nullable field
+    Assert.assertEquals(2, transformed.getValues().size());
+    Assert.assertEquals("foo", Bytes.toString(transformed.getValues().get(Bytes.toBytes("non_nullable"))));
+    Assert.assertNull(transformed.getValues().get(Bytes.toBytes("nullable")));
+  }
+
+  @Test
+  public void testNullableSchema() throws Exception {
+    // tests that null can be passed in for the schema (in which case it will pickup the schema from the record
+    Schema schema = Schema.recordOf(
+      "record",
+      Schema.Field.of("key", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("nullable", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("non_nullable", Schema.of(Schema.Type.STRING))
+    );
+    RecordPutTransformer transformer = new RecordPutTransformer("key", null);
 
     // valid record
     StructuredRecord record = StructuredRecord.builder(schema)
