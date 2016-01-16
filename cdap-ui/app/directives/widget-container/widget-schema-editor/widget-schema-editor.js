@@ -135,7 +135,6 @@ angular.module(PKG.name + '.commons')
 
         // Format model
         function initialize(jsonString) {
-          console.trace();
           filledCount = 0;
           var schema = {};
           $scope.avro = {};
