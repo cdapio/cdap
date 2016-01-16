@@ -109,7 +109,7 @@ class ConfigStore {
     var artifactTypeExtension = this.GLOBALS.pluginTypes[this.state.artifact.name];
     var nodesMap = {};
     this.state.__ui__.nodes.forEach(function(n) {
-      nodesMap[n.name] = n;
+      nodesMap[n.name] = angular.copy(n);
     });
     // Strip out schema property of the plugin if format is clf or syslog
     let stripFormatSchemas = (formatProp, outputSchemaProp, properties) => {
@@ -124,6 +124,15 @@ class ConfigStore {
 
     let addPluginToConfig = (node, id) => {
       node.properties = stripFormatSchemas(node.watchProperty, node.outputSchemaProperty, node.plugin.properties);
+      if (node.outputSchemaProperty) {
+        try {
+          let outputSchema = JSON.parse(node.outputSchema);
+          if (angular.isArray(outputSchema.fields)) {
+            outputSchema.fields = outputSchema.fields.filter( field => !field.readonly);
+          }
+          node.plugin.properties[node.outputSchemaProperty] = JSON.stringify(outputSchema);
+        } catch(e) {}
+      }
       var pluginConfig =  {
         // Solely adding id and _backendProperties for validation.
         // Should be removed while saving it to backend.
@@ -393,6 +402,36 @@ class ConfigStore {
         (err) => console.log('ERROR fetching backend properties for nodes', err)
       );
 
+    let setDefaultOutputSchemaForNodes = (node) => {
+      var pluginName = node.plugin.name;
+      var pluginToSchemaMap = {
+        'Stream': [
+          {
+            readonly: true,
+            name: 'ts',
+            type: 'long'
+          },
+          {
+            readonly: true,
+            name: 'headers',
+            type: {
+              type: 'map',
+              keys: 'string',
+              values: 'string'
+            }
+          }
+        ]
+      };
+      if (pluginToSchemaMap[pluginName]){
+        if (!node.outputSchema) {
+          node.outputSchema = {
+            fields: [{ name: 'body', type: 'string' }]
+          };
+          node.outputSchema = JSON.stringify({ fields: pluginToSchemaMap[pluginName].concat(node.outputSchema.fields)});
+        }
+      }
+    };
+    this.state.__ui__.nodes.forEach(node=> setDefaultOutputSchemaForNodes(node));
   }
   setConnections(connections) {
     this.state.config.connections = connections;

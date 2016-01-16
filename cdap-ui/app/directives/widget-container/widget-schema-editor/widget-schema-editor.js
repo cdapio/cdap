@@ -135,6 +135,7 @@ angular.module(PKG.name + '.commons')
 
         // Format model
         function initialize(jsonString) {
+          console.trace();
           filledCount = 0;
           var schema = {};
           $scope.avro = {};
@@ -161,27 +162,31 @@ angular.module(PKG.name + '.commons')
               $scope.properties.push({
                 name: p.name,
                 type: p.type[0],
-                nullable: true
+                nullable: true,
+                readonly: p.readonly
               });
             } else if (angular.isObject(p.type)) {
               if (p.type.type === 'map') {
                 $scope.properties.push({
                   name: p.name,
                   type: typeMap,
-                  nullable: p.nullable
+                  nullable: p.nullable,
+                  readonly: p.readonly
                 });
               } else {
                 $scope.properties.push({
                   name: p.name,
                   type: p.type.items,
-                  nullable: p.nullable
+                  nullable: p.nullable,
+                  readonly: p.readonly
                 });
               }
             } else {
               $scope.properties.push({
                 name: p.name,
                 type: p.type,
-                nullable: p.nullable
+                nullable: p.nullable,
+                readonly: p.readonly
               });
             }
           });
@@ -228,11 +233,30 @@ angular.module(PKG.name + '.commons')
         });
 
         EventPipe.on('schema.clear', function () {
-          initialize();
+          var schema;
+          try {
+            schema = JSON.parse($scope.model);
+            schema.fields = schema.fields.filter(function (value) {
+              return value.readonly;
+            });
+            $scope.model = JSON.stringify(schema);
+          } catch(e) {
+            $scope.model = JSON.stringify({ fields: []});
+          }
+          initialize($scope.model);
         });
 
         EventPipe.on('dataset.selected', function (schema) {
-          initialize(schema);
+          let modSchema = {fields: []};
+          try {
+            modSchema.fields = JSON.parse($scope.model).fields.filter(function(field) {
+              return field.readonly;
+            });
+            modSchema.fields = modSchema.fields.concat(JSON.parse(schema).fields);
+          } catch(e) {
+            modSchema = schema;
+          }
+          initialize(JSON.stringify(modSchema));
         });
 
 
@@ -260,7 +284,8 @@ angular.module(PKG.name + '.commons')
 
               properties.push({
                 name: p.name,
-                type: p.nullable ? [property, 'null'] : property
+                type: p.nullable ? [property, 'null'] : property,
+                readonly: p.readonly
               });
             }
           });
