@@ -111,15 +111,26 @@ class ConfigStore {
     this.state.__ui__.nodes.forEach(function(n) {
       nodesMap[n.name] = n;
     });
+    // Strip out schema property of the plugin if format is clf or syslog
+    let stripFormatSchemas = (formatProp, outputSchemaProp, properties) => {
+      if (!formatProp || !outputSchemaProp) {
+        return properties;
+      }
+      if (['clf', 'syslog'].indexOf(properties[formatProp]) !== -1) {
+        delete properties[outputSchemaProp];
+      }
+      return properties;
+    };
 
-    function addPluginToConfig(node, id) {
+    let addPluginToConfig = (node, id) => {
+      node.properties = stripFormatSchemas(node.watchProperty, node.outputSchemaProperty, node.plugin.properties);
       var pluginConfig =  {
         // Solely adding id and _backendProperties for validation.
         // Should be removed while saving it to backend.
         name: node.plugin.name,
         label: node.plugin.label,
         artifact: node.plugin.artifact,
-        properties: node.plugin.properties,
+        properties: node.plugin.properties ,
         _backendProperties: node._backendProperties
       };
 
@@ -154,7 +165,7 @@ class ConfigStore {
         config['sinks'].push(pluginConfig);
       }
       delete nodesMap[id];
-    }
+    };
 
     var connections = this.CanvasFactory.orderConnections(
       angular.copy(this.state.config.connections),
@@ -241,16 +252,19 @@ class ConfigStore {
     var transforms = stateCopy.config.transforms;
 
     if (source.plugin) {
-      delete source.plugin.outputSchema;
+      delete source.outputSchema;
+      delete source.inputSchema;
     }
     angular.forEach(sinks, (sink) => {
       if (sink.plugin) {
-        delete sink.plugin.outputSchema;
+        delete sink.outputSchema;
+        delete sink.inputSchema;
       }
     });
     angular.forEach(transforms, (transform) =>  {
       if (transform.plugin) {
-        delete transform.plugin.outputSchema;
+        delete transform.outputSchema;
+        delete transform.inputSchema;
       }
     });
     delete stateCopy.__ui__;
@@ -333,6 +347,7 @@ class ConfigStore {
       node.outputSchemaProperty = nodeConfig.outputSchema.outputSchemaProperty;
       if (angular.isArray(node.outputSchemaProperty)) {
         node.outputSchemaProperty = node.outputSchemaProperty[0];
+        node.watchProperty = nodeConfig.outputSchema.schemaProperties['property-watch'];
       }
       if (node.outputSchemaProperty) {
         node.outputSchema = node.plugin.properties[node.outputSchemaProperty];
