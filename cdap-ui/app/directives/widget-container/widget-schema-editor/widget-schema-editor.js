@@ -84,6 +84,7 @@ angular.module(PKG.name + '.commons')
           if (['clf', 'syslog', ''].indexOf($scope.pluginProperties[watchProperty]) > -1) {
             $scope.model = null;
             $scope.disableEdit = true;
+            $scope.pluginProperties['format.setting.pattern'] = null;
             // $scope.fields = 'NOTHING';
             if ($scope.pluginProperties[watchProperty] === 'clf') {
               var clfSchema = IMPLICIT_SCHEMA.clf;
@@ -102,6 +103,7 @@ angular.module(PKG.name + '.commons')
           } else if ($scope.pluginProperties[watchProperty] === 'avro'){
             $scope.disableEdit = false;
             $scope.fields = 'AVRO';
+            $scope.pluginProperties['format.setting.pattern'] = null;
             watcher = $scope.$watch('avro', formatAvro, true);
 
             if ($scope.model) {
@@ -116,13 +118,14 @@ angular.module(PKG.name + '.commons')
             $scope.disableEdit = false;
             $scope.fields = 'GROK';
             watcher = $scope.$watch('grok', function () {
-              $scope.model = $scope.grok.pattern;
+              $scope.pluginProperties['format.setting.pattern'] = $scope.grok.pattern;
             }, true);
           }
 
           else {
             $scope.disableEdit = false;
             $scope.fields = 'SHOW';
+            $scope.pluginProperties['format.setting.pattern'] = null;
             initialize($scope.model);
           }
         }
@@ -136,7 +139,7 @@ angular.module(PKG.name + '.commons')
           var schema = {};
           $scope.avro = {};
           $scope.grok = {
-            pattern: $scope.model
+            pattern: $scope.pluginProperties['format.setting.pattern']
           };
 
           $scope.error = null;
@@ -244,11 +247,6 @@ angular.module(PKG.name + '.commons')
 
 
         function formatSchema() {
-
-          if (watchProperty && $scope.pluginProperties && ['clf', 'syslog'].indexOf($scope.pluginProperties[watchProperty]) !== -1) {
-            $scope.model = null;
-            return;
-          }
           // Format Schema
           var properties = [];
           angular.forEach($scope.properties, function(p) {
