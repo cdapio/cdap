@@ -1,6 +1,6 @@
 .. meta::
     :author: Cask Data, Inc.
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2015-2016 Cask Data, Inc.
 
 .. _cdap-apps-etl-creating:
 
@@ -10,8 +10,6 @@ Creating an ETL Application
 
 .. highlight:: console
 
-Introduction
-============
 Applications can be created using the :ref:`Lifecycle RESTful API <http-restful-api-lifecycle-create-app>`,
 the :ref:`CDAP CLI <cli>`, or the :ref:`CDAP UI <cdap-ui>`. In order to create an application,
 an application configuration is required that specifies the source, transformations and sinks

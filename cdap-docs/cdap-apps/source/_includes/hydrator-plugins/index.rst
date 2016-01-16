@@ -10,8 +10,6 @@
 ETL Plugins 
 ===========
 
-.. rubric:: Introduction
-
 Details of the required properties for sources, transformations (transforms), and sinks
 can be explored using RESTful APIs.
 
@@ -23,7 +21,7 @@ available for creating ETL applications.
 
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    
     Batch Sources <batchsources/index>
     Real-time Sources <realtimesources/index>

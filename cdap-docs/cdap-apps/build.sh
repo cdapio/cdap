@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -52,9 +52,11 @@ function download_md_doc_file() {
   fi
 
   if curl --output /dev/null --silent --head --fail "${source_url}"; then
-    echo "Downloading using curl ${source_file_name} from ${source_dir} to ${type}/${target_file_name}"
+    echo "Downloading ${source_file_name} from ${source_dir} to ${type}/${target_file_name}"
     curl --silent ${source_url} --output ${target}
+    # FIXME if file does not begin with a "#" character, append "# title\n" to start
   else
+    # FIXME: need to throw an error code here
     echo_red_bold "URL does not exist: ${source_url}"
   fi   
 }
@@ -63,6 +65,7 @@ function download_includes() {
   echo_red_bold "Downloading Markdown doc file includes from GitHub repo caskdata/hydrator-plugins..."
   set_version
   
+  # Copy the source _includes files so they can be populated with the markdown files
   local hydrator_plugins="hydrator-plugins"
   local base_target="${1}/${hydrator_plugins}"
   cp -R "${SCRIPT_PATH}/source/_includes/${hydrator_plugins}" "${1}"
@@ -92,6 +95,7 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins Database-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins File-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins JMS-realtimesource.md
+  download_md_doc_file $base_target $hydrator_source core-plugins JavaScript-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins KVTable-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins KVTable-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Kafka-realtimesource.md
@@ -118,6 +122,10 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins Table-realtimesink.md
   download_md_doc_file $base_target $hydrator_source core-plugins Twitter-realtimesource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Validator-transform.md
+  
+  download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsink.md
+  download_md_doc_file $base_target $hydrator_source database-plugins Database-batchsource.md
+  download_md_doc_file $base_target $hydrator_source database-plugins Teradata-batchsource.md
   
   download_md_doc_file $base_target $hydrator_source elasticsearch-plugins Elasticsearch-batchsink.md
   download_md_doc_file $base_target $hydrator_source elasticsearch-plugins Elasticsearch-batchsource.md
