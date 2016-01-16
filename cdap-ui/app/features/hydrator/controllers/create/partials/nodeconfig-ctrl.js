@@ -112,8 +112,8 @@ class NodeConfigController {
     ).length;
 
     if (this.state.noproperty) {
-      var artifactName = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name') || this.GLOBALS.artifact.default.name;
-      var artifactVersion = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version') || this.GLOBALS.artifact.default.version;
+      var artifactName = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name');
+      var artifactVersion = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version');
       this.PluginConfigFactory.fetchWidgetJson(
         artifactName,
         artifactVersion,

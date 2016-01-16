@@ -19,17 +19,7 @@ angular.module(PKG.name + '.services')
     // Should be under property called 'artifactTypes' to be consistent. GLOBALS.etlBatch doesn't make much sense.
     etlBatch: 'cdap-etl-batch',
     etlRealtime: 'cdap-etl-realtime',
-    // This is here because until now we don't store the aritfact information for each plugin anywhere.
-    // From now we need this information to ask for backend widgets json. So if there are any published pipelines/drafts that
-    // does not have artifact info of a plugin we default it to here.
 
-    artifact: {
-      default: {
-        name: 'cdap-etl-lib',
-        version: '3.3.0-SNAPSHOT',
-        scope: 'SYSTEM'
-      }
-    },
     pluginTypes: {
       'cdap-etl-batch': {
         'source': 'batchsource',

@@ -399,23 +399,6 @@
                         <include>cdap-etl-realtime-${project.version}.jar</include>
                       </includes>
                     </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target
-                      </directory>
-                      <includes>
-                        <include>cdap-etl-lib-${project.version}.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-app-templates/cdap-etl/cdap-etl-lib/target/classes
-                      </directory>
-                      <filtering>true</filtering>
-                      <includes>
-                        <include>cdap-etl-lib.json</include>
-                      </includes>
-                    </resource>
                   </resources>
                 </configuration>
               </execution>
@@ -503,19 +486,6 @@
             <artifactId>maven-antrun-plugin</artifactId>
             <version>1.7</version>
             <executions>
-              <!-- Rename Plugin Artifact JSON Files -->
-              <execution>
-                <id>rename-plugin-json</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <configuration>
-                  <target>
-                    <move file="${stage.artifacts.dir}/cdap-etl-lib.json" tofile="${stage.artifacts.dir}/cdap-etl-lib-${project.version}.json" />
-                  </target>
-                </configuration>
-              </execution>
               <!-- Copy any additional system artifacts.
                    For example, if you want to include plugins from hydrator-plugins. -->
               <execution>
