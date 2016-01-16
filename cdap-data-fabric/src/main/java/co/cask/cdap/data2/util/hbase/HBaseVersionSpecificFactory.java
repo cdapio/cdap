@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,6 @@
 
 package co.cask.cdap.data2.util.hbase;
 
-import co.cask.tephra.util.HBaseVersion;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
 import org.apache.twill.internal.utils.Instances;
@@ -50,6 +49,9 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
         case HBASE_11:
           instance = createInstance(getHBase11Classname());
           break;
+        case HBASE_10_CDH55:
+          instance = createInstance(getHBase10CHD550ClassName());
+          break;
         case UNKNOWN:
           throw new ProvisionException("Unknown HBase version: " + HBaseVersion.getVersionString());
       }
@@ -70,4 +72,5 @@ public abstract class HBaseVersionSpecificFactory<T> implements Provider<T> {
   protected abstract String getHBase10Classname();
   protected abstract String getHBase10CDHClassname();
   protected abstract String getHBase11Classname();
+  protected abstract String getHBase10CHD550ClassName();
 }

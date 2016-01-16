@@ -53,6 +53,18 @@
           tooltip-popup-delay="500">
     <i class="icon-clean"></i>
   </button>
+
+
+  <!-- Adding Comments -->
+  <button class="btn btn-default"
+          ng-click="MyDAGController.addComment()"
+          ng-if="!MyDAGController.isDisabled"
+          tooltip="Add Comments"
+          tooltip-append-to-body="true"
+          tooltip-placement="left"
+          tooltip-popup-delay="500">
+    <i class="fa fa-commenting"></i>
+  </button>
 </div>
 
 <div class="my-js-dag"
@@ -68,19 +80,32 @@
         <div ng-repeat="node in nodes" class="box {{node.type}}" ng-style="node._uiPosition"
                data-type="{{node.type}}"
                id="{{node.name}}"
-               ng-click="MyDAGController.onNodeClick($event, node)"
+               ng-click="!disableNodeClick && MyDAGController.onNodeClick($event, node)"
                ng-class="{'selected': node.selected}">
           <div class="node"
                 ng-mouseenter="MyDAGController.nodeMouseEnter(node)"
                 ng-mouseleave="MyDAGController.nodeMouseLeave(node)">
-            <div class="error-node-notification"
-                 ng-if="node.error"
-                 tooltip="{{node.error.message}}"
-                 tooltip-append-to-body="true"
-                 tooltip-class="tooltip-error">
-              <span class="badge" ng-class="{'badge-danger': node.warning !== true, 'badge-warning': node.warning === true}">
-                <span>{{node.requiredFieldCount}}</span>
-              </span>
+            <div ng-if="node.error">
+              <div class="error-node-notification"
+                   ng-if="node.errorCount > 0"
+                   tooltip="Please see node configuration panel"
+                   tooltip-append-to-body="true"
+                   tooltip-class="tooltip-error">
+                <span class="badge badge-danger">
+                  <span>{{node.errorCount}}</span>
+                </span>
+              </div>
+            </div>
+            <div ng-if="!node.error">
+              <div class="error-node-notification"
+                   ng-if="node.errorCount > 0"
+                   tooltip="Please see node configuration panel"
+                   tooltip-append-to-body="true"
+                   tooltip-class="tooltip-warning">
+                <span class="badge badge-warning">
+                  <span>{{node.errorCount}}</span>
+                </span>
+              </div>
             </div>
             <div class="fa fa-close"
                  ng-if="!MyDAGController.isDisabled"
@@ -88,6 +113,31 @@
             <div class="icon fa {{node.icon}}"></div>
           </div>
           <div class="plugin-name" ng-bind="node.plugin.label | myEllipsis: 25"></div>
+        </div>
+
+        <div ng-repeat="comment in MyDAGController.comments"
+              class="comment-box"
+              ng-click="!MyDAGController.isDisabled && MyDAGController.commentSelect($event, comment)"
+              ng-style="comment._uiPosition"
+              id="{{comment.id}}">
+          <div ng-if="comment.isActive">
+            <textarea
+              ng-model="comment.content"
+              class="form-control"
+              my-focus-watch="comment.isActive">
+            </textarea>
+          </div>
+
+          <div class="comment-content"
+               ng-if="!comment.isActive"
+               marked="comment.content">
+          </div>
+
+          <div class="fa fa-close"
+               ng-click="MyDAGController.deleteComment(comment)"
+               ng-if="!MyDAGController.isDisabled">
+          </div>
+
         </div>
 
       </div>

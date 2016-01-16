@@ -19,6 +19,8 @@ package co.cask.cdap.proto.metadata;
  * Supported types for metadata search.
  */
 public enum MetadataSearchTargetType {
+  // the custom values are required because these value match the entitiy-type stored as
+  // a part of MDS key.
   ALL("All"),
   ARTIFACT("Artifact"),
   APP("Application"),
@@ -27,13 +29,21 @@ public enum MetadataSearchTargetType {
   STREAM("Stream"),
   VIEW("View");
 
-  private final String internalName;
+  private final String serializedForm;
 
-  private MetadataSearchTargetType(String internalName) {
-    this.internalName = internalName;
+  MetadataSearchTargetType(String serializedForm) {
+    this.serializedForm = serializedForm;
   }
 
-  public String getInternalName() {
-    return internalName;
+  /**
+   * @return {@link MetadataSearchTargetType} of the given value.
+   */
+  public static MetadataSearchTargetType valueOfSerializedForm(String value) {
+    for (MetadataSearchTargetType metadataSearchTargetType : values()) {
+      if (metadataSearchTargetType.serializedForm.equalsIgnoreCase(value)) {
+        return metadataSearchTargetType;
+      }
+    }
+    throw new IllegalArgumentException(String.format("No enum constant for serialized form: %s", value));
   }
 }

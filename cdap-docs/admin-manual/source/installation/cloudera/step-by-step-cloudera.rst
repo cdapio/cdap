@@ -55,6 +55,7 @@ The "Add Service" Wizard
    :class: bordered-image
 
    **Add Service Wizard, Page 2:** Setting the dependencies (in this case, including Hive).
+   Note that CDAP explore must be disabled if not including Hive.
    
 
 .. figure:: ../../_images/cloudera/cloudera-csd-04.png
@@ -75,7 +76,7 @@ The "Add Service" Wizard
    :align: center
    :class: bordered-image
 
-   **Add Service Wizard, Pages 4 & 5:** Reviewing configurations; as Hive was included, CDAP Explore can be enabled.
+   **Add Service Wizard, Pages 4 & 5:** Reviewing configurations.
 
 
 .. figure:: ../../_images/cloudera/cloudera-csd-07.png

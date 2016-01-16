@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory, $rootScope, HydratorService, $popover, $filter) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, $rootScope, HydratorService, $popover, $filter, uuid) {
 
     var vm = this;
 
@@ -28,7 +28,7 @@ angular.module(PKG.name + '.commons')
     var transformSinkSettings = angular.copy(MyDAGFactory.getSettings(false).transformSink);
 
     var SHOW_METRICS_THRESHOLD = 0.8;
-
+    var selected = [];
     var labels = [];
 
     var metricsLabel = [
@@ -66,6 +66,8 @@ angular.module(PKG.name + '.commons')
       left: 0
     };
 
+    vm.comments = [];
+
     /*
     FIXME: This should be fixed. Right now the assumption is to update
      the store before my-dag directive is rendered. What happens if we get the
@@ -93,16 +95,9 @@ angular.module(PKG.name + '.commons')
     function init() {
       $scope.nodes = NodesStore.getNodes();
       $scope.connections = NodesStore.getConnections();
+      vm.comments = NodesStore.getComments();
 
       $timeout(function () {
-        // centering DAG
-        if ($scope.nodes.length) {
-          var margins = $scope.getGraphMargins($scope.nodes);
-          $timeout(function () { vm.instance.repaintEverything(); });
-
-          vm.scale = margins.scale;
-        }
-
         addEndpoints();
 
         angular.forEach($scope.connections, function (conn) {
@@ -122,8 +117,6 @@ angular.module(PKG.name + '.commons')
 
           vm.instance.connect(connObj);
         });
-
-        setZoom(vm.scale, vm.instance);
 
         // Process metrics data
         if ($scope.showMetrics) {
@@ -154,6 +147,12 @@ angular.module(PKG.name + '.commons')
           }
 
           $scope.$watch('metricsData', function () {
+            if (Object.keys($scope.metricsData).length === 0) {
+              angular.forEach(nodePopovers, function (value) {
+                value.scope.data.metrics = 0;
+              });
+            }
+
             angular.forEach($scope.metricsData, function (value, key) {
               nodePopovers[key].scope.data.metrics = value;
             });
@@ -161,6 +160,8 @@ angular.module(PKG.name + '.commons')
             angular.forEach(labels, function (endpoint) {
               var label = endpoint.getOverlay('metricLabel');
               if ($scope.metricsData[endpoint.elementId] === null || $scope.metricsData[endpoint.elementId] === undefined) {
+                angular.element(label.getElement())
+                  .text(0);
                 return;
               }
 
@@ -169,6 +170,8 @@ angular.module(PKG.name + '.commons')
             });
           }, true);
         }
+
+        vm.fitToScreen();
 
       });
     }
@@ -392,7 +395,12 @@ angular.module(PKG.name + '.commons')
 
           if (!vm.isDisabled) {
             vm.instance.draggable(nodes, {
-              start: function () {
+              start: function (drag) {
+
+                if (selected.indexOf(drag.el.id) === -1) {
+                  vm.clearNodeSelection();
+                }
+
                 dragged = true;
                 closeAllPopovers();
               },
@@ -409,32 +417,37 @@ angular.module(PKG.name + '.commons')
             });
           }
         });
-
-        angular.forEach($scope.nodes, function (plugin) {
-          plugin.requiredFieldCount = HydratorErrorFactory.countRequiredFields(plugin);
-          if (plugin.requiredFieldCount > 0) {
-            plugin.error = {
-              message: GLOBALS.en.hydrator.studio.genericMissingRequiredFieldsError
-            };
-          } else {
-            plugin.error = false;
-          }
-        });
-
       }, true);
-
-      $scope.$watchCollection('connections', function () {
-        console.log('ChangeConnection', $scope.connections);
-      });
-
       // This is needed to redraw connections and endpoints on browser resize
       angular.element($window).on('resize', function() {
         vm.instance.repaintEverything();
       });
 
-    });
+      NodesStore.registerOnChangeListener(function () {
+        vm.comments = NodesStore.getComments();
 
-    // var selectedNode = null;
+        if (!vm.isDisabled) {
+          $timeout(function () {
+            var comments = document.querySelectorAll('.comment-box');
+            vm.instance.draggable(comments, {
+              start: function () {
+                dragged = true;
+              },
+              stop: function (dragEndEvent) {
+                var config = {
+                  _uiPosition: {
+                    top: dragEndEvent.el.style.top,
+                    left: dragEndEvent.el.style.left
+                  }
+                };
+                NodesActionsFactory.updateComment(dragEndEvent.el.id, config);
+              }
+            });
+          });
+        }
+      });
+
+    });
 
     vm.clearNodeSelection = function () {
       if (canvasDragged) {
@@ -442,16 +455,19 @@ angular.module(PKG.name + '.commons')
         return;
       }
       closeAllPopovers();
+      selected = [];
       vm.instance.clearDragSelection();
+      NodesActionsFactory.resetSelectedNode();
       angular.forEach($scope.nodes, function (node) {
         node.selected = false;
       });
+      clearCommentSelection();
     };
 
     function checkSelection() {
       vm.instance.clearDragSelection();
 
-      var selected = [];
+      selected = [];
       angular.forEach($scope.nodes, function (node) {
         if (node.selected) {
           selected.push(node.name);
@@ -483,8 +499,6 @@ angular.module(PKG.name + '.commons')
         node.selected = true;
         NodesActionsFactory.selectNode(node.name);
       }
-
-      // $scope.nodeClick.call($scope.context, node);
     };
 
     vm.onNodeDelete = function (event, node) {
@@ -524,6 +538,7 @@ angular.module(PKG.name + '.commons')
 
     // This algorithm is f* up
     vm.fitToScreen = function () {
+      if ($scope.nodes.length === 0) { return; }
 
       /**
        * Need to find the furthest nodes:
@@ -604,6 +619,43 @@ angular.module(PKG.name + '.commons')
       NodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
+    vm.addComment = function () {
+      var canvasPanning = NodesStore.getCanvasPanning();
+
+      var config = {
+        content: '',
+        isActive: false,
+        id: 'comment-' + uuid.v4(),
+        _uiPosition: {
+          'top': 250 - canvasPanning.top + 'px',
+          'left': (10/100 * document.documentElement.clientWidth) - canvasPanning.left + 'px'
+        }
+      };
+
+      NodesActionsFactory.addComment(config);
+    };
+
+    function clearCommentSelection() {
+      angular.forEach(vm.comments, function (comment) {
+        comment.isActive = false;
+      });
+    }
+
+    vm.commentSelect = function (event, comment) {
+      event.stopPropagation();
+      clearCommentSelection();
+
+      if (dragged) {
+        dragged = false;
+        return;
+      }
+
+      comment.isActive = true;
+    };
+
+    vm.deleteComment = function (comment) {
+      NodesActionsFactory.deleteComment(comment);
+    };
 
     $scope.$on('$destroy', function () {
       closeAllPopovers();

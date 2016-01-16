@@ -15,7 +15,7 @@
  */
 
 class NodeConfigController {
-  constructor(NodeConfigStore, $scope, $timeout, $state, DetailNonRunsStore, PluginConfigFactory, EventPipe, GLOBALS, ConfigActionsFactory, myHelpers) {
+  constructor(NodeConfigStore, $scope, $timeout, $state, DetailNonRunsStore, PluginConfigFactory, EventPipe, GLOBALS, ConfigActionsFactory, myHelpers, NonStorePipelineErrorFactory) {
 
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -27,12 +27,16 @@ class NodeConfigController {
     this.myHelpers = myHelpers;
     this.NodeConfigStore = NodeConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
+    this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
+    this.requiredPropertyError = this.GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
+    this.showPropagateConfirm = false; // confirmation dialog in node config for schema propagation.
+    this.$timeout = $timeout;
 
-    this.setDefaults({});
+    this.setDefaults();
     NodeConfigStore.registerOnChangeListener(this.setState.bind(this));
   }
   setState() {
-    var appType = this.$state.params.type || this.DetailNonRunsStore.getAppType();
+    var appType = this.$state.params.type || this.NodeConfigStore.ConfigStore.getAppType();
     var nodeState = this.NodeConfigStore.getState();
     nodeState.appType = appType;
     if (angular.isArray(this.state.watchers)) {
@@ -40,44 +44,83 @@ class NodeConfigController {
       this.state.watchers = [];
     }
     this.setDefaults(nodeState);
-    this.loadNewPlugin();
+    if (Object.keys(nodeState.node).length) {
+      this.configfetched = false;
+      this.$timeout(() => {
+        this.loadNewPlugin();
+        this.validateNodeLabel();
+      }, 1000);
+    }
   }
-  setDefaults(config) {
+  validateNodeLabel() {
+    let nodes = this.NodeConfigStore.ConfigStore.getNodes();
+    let nodeName = this.myHelpers.objectQuery(this.state, 'node', 'plugin', 'label');
+    if (!nodeName) {
+      return;
+    }
+    this.NonStorePipelineErrorFactory.isNodeNameUnique(nodeName, nodes, err => {
+      if (err) {
+        this.state.nodeLabelError = this.GLOBALS.en.hydrator.studio.error[err];
+      } else {
+        this.state.nodeLabelError = '';
+      }
+    });
+  }
+  setDefaults(config = {}) {
     this.state = {
       configfetched : false,
       properties : [],
       noconfig: null,
       noproperty: true,
       config: {},
+      groupsConfig: {},
 
       isValidPlugin: config.isValidPlugin || false,
-      node: config.node || {},
+      node: angular.copy(config.node) || {},
 
       isSource: config.isSource || false,
       isSink: config.isSink || false,
       isTransform: config.isTransform || false,
 
       type: config.appType || null,
-      watchers: []
+      watchers: [],
+      outputSchemaUpdate: 0
     };
   }
+  copyInputToOutputSchema() {
+     // If there is no information of output schema in the node config then just mantain an output schema for UI purposes.
+     this.state.groupsConfig.outputSchema.isOutputSchemaExists = true;
+     this.state.node.outputSchema = angular.toJson({fields: this.state.node.inputSchema});
+     // FIXME: This is stupid and it is here because of 2-way binding. We bind the model of schema editor to the output schema
+     // The schema editor updates the schema from within and it should expect changes from outside (in this case copy to Output button).
+     // To differntiate editing from within and changes from outside we have to do this.
+     // And we need to differentiate because while editing we don't want to lose focus on the current textbox ($watch on the same property loses it)
+     // One more reason we should have used Flux/Redux so that we could have eliminated these hacks.
+     // The side effects of 3-way-binding (user, external & copy to output) we have different event pipe events
+     // plugin.reset, schema.clear, dataset.selected, plugin-outputschema.update
+     this.$timeout(() => {
+       this.EventPipe.emit('plugin-outputschema.update');
+     });
+     this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
+  }
+  propagateSchemaDownStream() {
+    this.ConfigActionsFactory.propagateSchemaDownStream(this.state.node.name);
+  }
   loadNewPlugin() {
-
     this.state.noproperty = Object.keys(
       this.state.node._backendProperties || {}
     ).length;
 
     if (this.state.noproperty) {
-      var artifactName = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name') || this.GLOBALS.artifact.default.name;
-      var artifactVersion = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version') || this.GLOBALS.artifact.default.version;
-      this.PluginConfigFactory.fetch(
+      var artifactName = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name');
+      var artifactVersion = this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version');
+      this.PluginConfigFactory.fetchWidgetJson(
         artifactName,
         artifactVersion,
-        this.state.node.plugin.name + '-' + this.state.node.type
+        `widgets.${this.state.node.plugin.name}-${this.state.node.type}`
       )
         .then(
           (res) => {
-
             this.state.groupsConfig = this.PluginConfigFactory.generateNodeConfig(this.state.node._backendProperties, res);
             angular.forEach(this.state.groupsConfig.groups, (group) => {
               angular.forEach(group.fields, (field) => {
@@ -97,16 +140,19 @@ class NodeConfigController {
                   type: configOutputSchema.implicitSchema[key]
                 });
               });
-
               this.state.node.outputSchema = JSON.stringify({ fields: formattedSchema });
               this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
             } else {
-              // If not an implcit schema check if an schema property exists in the node config.
+              // If not an implcit schema check if a schema property exists in the node config.
               // What this means is, has the plugin developer specified a plugin property in 'outputs' array of node config.
               // If yes then set it as output schema and everytime when a user edits the output schema the value has to
               // be transitioned to the respective plugin property.
               if (configOutputSchema.isOutputSchemaExists) {
-                if (this.state.node.plugin.properties[configOutputSchema.outputSchemaProperty[0]] !== this.state.node.outputSchema) {
+                let schemaProperty = configOutputSchema.outputSchemaProperty[0];
+                let pluginProperties = this.state.node.plugin.properties;
+                if (pluginProperties[schemaProperty]) {
+                  this.state.node.outputSchema = pluginProperties[schemaProperty];
+                } else if (pluginProperties[schemaProperty] !== this.state.node.outputSchema) {
                   this.state.node.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.state.node.outputSchema;
                 }
                 this.state.watchers.push(
@@ -116,43 +162,37 @@ class NodeConfigController {
                     }
                   })
                 );
-              } else if (this.state.node.inputSchema) {
-                // If there is no information of output schema in the node config then just mantain an output schema for UI purposes.
-                configOutputSchema.isOutputSchemaExists = true;
-                this.state.node.outputSchema = this.state.node.outputSchema || this.state.node.inputSchema;
-                this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
               }
             }
             if (!this.$scope.isDisabled) {
               this.state.watchers.push(
                 this.$scope.$watch(
                   'NodeConfigController.state.node',
-                  _.debounce( () => {
+                  () => {
+                    this.validateNodeLabel(this);
                     this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
-                  }, 1000),
+                  },
                   true
                 )
               );
             }
-
             // Mark the configfetched to show that configurations have been received.
             this.state.configfetched = true;
             this.state.config = res;
             this.state.noconfig = false;
-
           },
           (err) => {
             var propertiesFromBackend = Object.keys(this.state.node._backendProperties);
             // Didn't receive a configuration from the backend. Fallback to all textboxes.
             switch(err) {
               case 'NO_JSON_FOUND':
-                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.noConfigMessage;
+                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.info['NO-CONFIG'];
                 break;
               case 'CONFIG_SYNTAX_JSON_ERROR':
-                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.syntaxConfigJsonError;
+                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.error['SYNTAX-CONFIG-JSON'];
                 break;
               case 'CONFIG_SEMANTICS_JSON_ERROR':
-                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.semanticConfigJsonError;
+                this.state.noConfigMessage = this.GLOBALS.en.hydrator.studio.error['SEMANTIC-CONFIG-JSON'];
                 break;
             }
             this.state.noconfig = true;
@@ -162,8 +202,11 @@ class NodeConfigController {
             });
             this.state.watchers.push(
               this.$scope.$watch(
-                'NodeConfigController.state.node.plugin.properties',
-                _.debounce(() => this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node), 1000),
+                'NodeConfigController.state.node',
+                () => {
+                  this.validateNodeLabel(this);
+                  this.ConfigActionsFactory.editPlugin(this.state.node.name, this.state.node);
+                },
                 true
               )
             );
@@ -214,7 +257,7 @@ class NodeConfigController {
   }
 }
 
-NodeConfigController.$inject = ['NodeConfigStore', '$scope', '$timeout', '$state', 'DetailNonRunsStore', 'PluginConfigFactory', 'EventPipe', 'GLOBALS', 'ConfigActionsFactory', 'myHelpers'];
+NodeConfigController.$inject = ['NodeConfigStore', '$scope', '$timeout', '$state', 'DetailNonRunsStore', 'PluginConfigFactory', 'EventPipe', 'GLOBALS', 'ConfigActionsFactory', 'myHelpers', 'NonStorePipelineErrorFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('NodeConfigController', NodeConfigController);

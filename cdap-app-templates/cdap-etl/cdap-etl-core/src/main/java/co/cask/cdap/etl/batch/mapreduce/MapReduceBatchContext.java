@@ -24,7 +24,6 @@ import co.cask.cdap.etl.api.LookupProvider;
 import co.cask.cdap.etl.api.batch.BatchContext;
 import co.cask.cdap.etl.common.AbstractTransformContext;
 import co.cask.cdap.etl.log.LogContext;
-import com.google.common.base.Throwables;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,33 +69,45 @@ public abstract class MapReduceBatchContext extends AbstractTransformContext imp
 
   @Override
   public <T extends Dataset> T getDataset(final String name) throws DatasetInstantiationException {
-    try {
-      return LogContext.runWithoutLogging(new Callable<T>() {
-        @Override
-        public T call() throws Exception {
-          return mrContext.getDataset(name);
-        }
-      });
-    } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, DatasetInstantiationException.class);
-      throw Throwables.propagate(e);
-    }
+    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        return mrContext.getDataset(name);
+      }
+    });
   }
 
   @Override
   public <T extends Dataset> T getDataset(final String name, final Map<String, String> arguments)
     throws DatasetInstantiationException {
-    try {
-      return LogContext.runWithoutLogging(new Callable<T>() {
-        @Override
-        public T call() throws Exception {
-          return mrContext.getDataset(name, arguments);
-        }
-      });
-    } catch (Exception e) {
-      Throwables.propagateIfInstanceOf(e, DatasetInstantiationException.class);
-      throw Throwables.propagate(e);
-    }
+    return LogContext.runWithoutLoggingUnchecked(new Callable<T>() {
+      @Override
+      public T call() throws Exception {
+        return mrContext.getDataset(name, arguments);
+      }
+    });
+  }
+
+  @Override
+  public void releaseDataset(final Dataset dataset) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() {
+        mrContext.releaseDataset(dataset);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void discardDataset(final Dataset dataset) {
+    LogContext.runWithoutLoggingUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() {
+        mrContext.discardDataset(dataset);
+        return null;
+      }
+    });
   }
 
   @Override

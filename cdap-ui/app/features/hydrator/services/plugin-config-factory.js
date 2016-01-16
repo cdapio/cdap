@@ -19,12 +19,15 @@ class PluginConfigFactory {
     this.myHelpers = myHelpers;
     this.myPipelineApi = myPipelineApi;
     this.$state = $state;
+    this.data = {};
   }
-  // Seems super lame. Need to remove this.
-  fetch(artifactName, artifactVersion, pluginName) {
-    var defer = this.$q.defer();
-    var key = `widgets.${pluginName}`;
-    this.myPipelineApi.fetchArtifactProperties({
+  fetchWidgetJson(artifactName, artifactVersion, key) {
+    let cache = this.data[`${artifactName}-${artifactVersion}-${key}`];
+    if (cache) {
+      return this.$q.when(cache);
+    }
+
+    return this.myPipelineApi.fetchArtifactProperties({
       namespace: this.$state.params.namespace,
       artifactName,
       artifactVersion,
@@ -37,19 +40,27 @@ class PluginConfigFactory {
             let config = res[key];
             if (config) {
               config = JSON.parse(config);
-              defer.resolve(config);
+              this.data[`${artifactName}-${artifactVersion}-${key}`] = config;
+              return config;
             } else {
-              defer.reject('NO_JSON_FOUND');
+              throw 'NO_JSON_FOUND';
             }
           } catch(e) {
-            defer.reject('CONFIG_SYNTAX_JSON_ERROR');
+            throw 'CONFIG_SYNTAX_JSON_ERROR';
           }
         },
         () => {
-          defer.reject('NO_JSON_FOUND');
+          throw 'NO_JSON_FOUND';
         }
       );
-    return defer.promise;
+  }
+  fetchDocJson(artifactName, artifactVersion, key) {
+    return this.myPipelineApi.fetchArtifactProperties({
+      namespace: this.$state.params.namespace,
+      artifactName,
+      artifactVersion,
+      keys: key
+    }).$promise;
   }
 
   generateNodeConfig(backendProperties, nodeConfig) {

@@ -19,17 +19,7 @@ angular.module(PKG.name + '.services')
     // Should be under property called 'artifactTypes' to be consistent. GLOBALS.etlBatch doesn't make much sense.
     etlBatch: 'cdap-etl-batch',
     etlRealtime: 'cdap-etl-realtime',
-    // This is here because until now we don't store the aritfact information for each plugin anywhere.
-    // From now we need this information to ask for backend widgets json. So if there are any published pipelines/drafts that
-    // does not have artifact info of a plugin we default it to here.
 
-    artifact: {
-      default: {
-        name: 'cdap-etl-lib',
-        version: '3.3.0-SNAPSHOT',
-        scope: 'SYSTEM'
-      }
-    },
     pluginTypes: {
       'cdap-etl-batch': {
         'source': 'batchsource',
@@ -54,30 +44,26 @@ angular.module(PKG.name + '.services')
       hydrator: {
         appLabel: 'Hydrator Pipeline',
         studio: {
-          noConfigMessage: 'No configuration found for the plugin.',
-          syntaxConfigJsonError: 'Syntax error in the configuration JSON for the plugin.',
-          semanticConfigJsonError: 'Semantic error in the configuration JSON for the plugin.',
-          oneSinkError: 'Please add at least one sink to your pipeline.',
-          sourceRequiredFieldsError: 'Please provide required fields for the source.',
-          sinkRequiredFieldsError: 'Please provide required fields for the sink.',
-          transformRequiredFieldsError: 'Please provide required fields for the transform.',
-          genericMissingRequiredFieldsError: 'Missing required fields.',
-          pluginNameMissingRequiredFieldsError: ' is missing required fields',
-          oneSourceError: 'Pipelines can only have one source. Please remove any additional sources.',
-          noSourceError: 'Please add a source to your pipeline',
-          nameError: 'Please name your pipeline.',
-          nameValidationError: 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\') and underscore ( \'_\') characters. Please remove any other characters.',
-          sinkBranchNodeError: 'Please connect multiple sinks to the same node.',
-          atLeastOneSinkError: 'Please add a sink to your pipeline',
-          branchError: 'Please remove branched connections.',
-          unconnectedNodesError: 'Please connect all nodes.',
-          circularConnectionError: 'Please remove the circular connection in this pipeline.',
-          endSinkError: 'Please end the pipeline connections in a sink.',
-          parallelConnectionError: 'Please remove parallel connections in this pipeline.',
-          pluginDoesNotExist: 'This plugin does not exist: ',
-          unsavedPluginMessage1: 'There are unsaved changes for node \'',
-          unsavedPluginMessage2: '\'. Please save them before publishing the pipeline.',
-          pipelineNameAlreadyExistError: 'A pipeline with this name already exists. Please choose a different name.'
+          info: {
+            'DEFAULT-REFERENCE': 'Please select a plugin to view reference information',
+            'NO-REFERENCE': 'Currently, no reference information is available for this plugin.',
+            'NO-CONFIG': 'No configuration found for the plugin.',
+          },
+          error: {
+            'SYNTAX-CONFIG-JSON': 'Syntax error in the configuration JSON for the plugin.',
+            'SEMANTIC-CONFIG-JSON': 'Semantic error in the configuration JSON for the plugin.',
+            'GENERIC-MISSING-REQUIRED-FIELDS': 'Please provide required information.',
+            'MISSING-REQUIRED-FIELDS': ' is missing required fields',
+            'MORE-THAN-ONE-SOURCE-FOUND': 'Pipelines can only have one source. Please remove any additional sources.',
+            'NO-SOURCE-FOUND': 'Please add a source to your pipeline',
+            'MISSING-NAME': 'Please name your pipeline.',
+            'INVALID-NAME': 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\') and underscore ( \'_\') characters. Please remove any other characters.',
+            'NO-SINK-FOUND': 'Please add a sink to your pipeline',
+            'NAME-ALREADY-EXISTS': 'A pipeline with this name already exists. Please choose a different name.',
+            'DUPLICATE-NODE-NAMES': 'Every node should have a unique name to be exported/published.',
+            'DUPLICATE-NAME': 'Please rename. Another node already has this name.'
+          },
+          pluginDoesNotExist: 'This plugin does not exist: '
         },
         wizard: {
           welcomeMessage1: 'Hydrator makes it easy to prepare data so you ',

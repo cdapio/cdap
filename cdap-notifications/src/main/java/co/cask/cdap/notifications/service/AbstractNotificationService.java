@@ -16,13 +16,14 @@
 
 package co.cask.cdap.notifications.service;
 
+import co.cask.cdap.common.service.UnloggedExceptionIdleService;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
 import co.cask.cdap.notifications.service.inmemory.InMemoryNotificationService;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
@@ -45,22 +46,33 @@ import java.util.concurrent.Executor;
  * Common implementation of the the {@link NotificationService} that handles the subscriptions to all the notification
  * feeds for the current process and that has the ability to push notifications to subscribers.
  */
-public abstract class AbstractNotificationService extends AbstractIdleService implements NotificationService {
+public abstract class AbstractNotificationService extends UnloggedExceptionIdleService implements NotificationService {
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryNotificationService.class);
 
   private final Multimap<Id.NotificationFeed, NotificationCaller<?>> subscribers;
 
   private final DatasetFramework dsFramework;
-  private final TransactionSystemClient transactionSystemClient;
+  private final TransactionSystemClientService transactionSystemClient;
   private final NotificationFeedManager feedManager;
 
-  protected AbstractNotificationService(DatasetFramework dsFramework, TransactionSystemClient transactionSystemClient,
+  protected AbstractNotificationService(DatasetFramework dsFramework,
+                                        TransactionSystemClientService transactionSystemClient,
                                         NotificationFeedManager feedManager) {
     this.dsFramework = dsFramework;
     this.transactionSystemClient = transactionSystemClient;
     this.feedManager = feedManager;
     this.subscribers = Multimaps.synchronizedMultimap(
       HashMultimap.<Id.NotificationFeed, NotificationCaller<?>>create());
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    transactionSystemClient.startAndWait();
+  }
+
+  @Override
+  protected void shutDown() throws Exception {
+    transactionSystemClient.stopAndWait();
   }
 
   protected Gson createGson() {

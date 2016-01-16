@@ -20,20 +20,17 @@ import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.TxRunnable;
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
+import co.cask.cdap.api.service.http.HttpContentProducer;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.http.BodyConsumer;
+import co.cask.http.BodyProducer;
 import co.cask.http.HttpResponder;
-import co.cask.tephra.TransactionConflictException;
-import co.cask.tephra.TransactionContext;
-import co.cask.tephra.TransactionFailureException;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import org.apache.twill.common.Cancellable;
 import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBuffers;
 
-import java.nio.ByteBuffer;
 import javax.annotation.Nullable;
 
 /**
@@ -43,11 +40,9 @@ final class BodyConsumerAdapter extends BodyConsumer {
 
   private final DelayedHttpServiceResponder responder;
   private final HttpContentConsumer delegate;
-  private final TransactionContext txContext;
-  private final TransactionalHttpServiceContext serviceContext;
-  private final Cancellable contextReleaser;
   private final Transactional transactional;
   private final ClassLoader programContextClassLoader;
+  private final Cancellable contextReleaser;
 
   private boolean completed;
 
@@ -56,21 +51,17 @@ final class BodyConsumerAdapter extends BodyConsumer {
    *
    * @param responder the responder used for sending response back to client
    * @param delegate the {@link HttpContentConsumer} to delegate calls to
-   * @param txContext a {@link TransactionContext} for executing transactional task
-   * @param serviceContext the {@link TransactionalHttpServiceContext} for this handler.
+   * @param transactional a {@link Transactional} for executing transactional task
+   * @param programContextClassLoader the context ClassLoader to use to execute user code
    * @param contextReleaser A {@link Cancellable} for returning the context back to the http server
    */
   BodyConsumerAdapter(DelayedHttpServiceResponder responder, HttpContentConsumer delegate,
-                      TransactionContext txContext, TransactionalHttpServiceContext serviceContext,
-                      Cancellable contextReleaser) {
+                      Transactional transactional, ClassLoader programContextClassLoader, Cancellable contextReleaser) {
     this.responder = responder;
     this.delegate = delegate;
-    this.txContext = txContext;
-    this.serviceContext = serviceContext;
+    this.transactional = transactional;
+    this.programContextClassLoader = programContextClassLoader;
     this.contextReleaser = contextReleaser;
-    this.transactional = createTransactional(this.txContext);
-    this.programContextClassLoader = new CombineClassLoader(null, ImmutableList.of(delegate.getClass().getClassLoader(),
-                                                                                   getClass().getClassLoader()));
   }
 
   @Override
@@ -95,7 +86,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
   @Override
   public void finished(HttpResponder responder) {
     try {
-      txExecute(txContext, new TxRunnable() {
+      transactional.execute(new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
           delegate.onFinish(BodyConsumerAdapter.this.responder);
@@ -109,10 +100,11 @@ final class BodyConsumerAdapter extends BodyConsumer {
     // To the HttpContentConsumer, the call is completed even if it fails to send response back to client.
     completed = true;
     try {
-      serviceContext.dismissTransactionContext();
       BodyConsumerAdapter.this.responder.execute();
     } finally {
-      contextReleaser.cancel();
+      if (!this.responder.hasContentProducer()) {
+        contextReleaser.cancel();
+      }
     }
   }
 
@@ -120,10 +112,12 @@ final class BodyConsumerAdapter extends BodyConsumer {
   public void handleError(final Throwable cause) {
     // When this method is called from netty-http, the response has already been sent, hence uses a no-op
     // DelayedHttpServiceResponder for the onError call.
-    onError(cause, new DelayedHttpServiceResponder(responder) {
+    onError(cause, new DelayedHttpServiceResponder(responder, new ErrorBodyProducerFactory()) {
       @Override
-      protected void doSend(int status, ByteBuffer content, String contentType,
-                            @Nullable Multimap<String, String> headers, boolean copy) {
+      protected void doSend(int status, String contentType,
+                            @Nullable ChannelBuffer content,
+                            @Nullable HttpContentProducer contentProducer,
+                            @Nullable Multimap<String, String> headers) {
         // no-op
       }
 
@@ -133,8 +127,14 @@ final class BodyConsumerAdapter extends BodyConsumer {
       }
 
       @Override
-      public void execute() {
+      public void execute(boolean keepAlive) {
         // no-op
+      }
+
+      @Override
+      public boolean hasContentProducer() {
+        // Always release the context at the end since it's not possible to send with a content producer
+        return false;
       }
     });
   }
@@ -150,7 +150,7 @@ final class BodyConsumerAdapter extends BodyConsumer {
     // To the HttpContentConsumer, once onError is called, no other methods will be triggered
     completed = true;
     try {
-      txExecute(txContext, new TxRunnable() {
+      transactional.execute(new TxRunnable() {
         @Override
         public void run(DatasetContext context) throws Exception {
           delegate.onError(responder, cause);
@@ -160,51 +160,40 @@ final class BodyConsumerAdapter extends BodyConsumer {
       responder.setTransactionFailureResponse(t);
     } finally {
       try {
-        serviceContext.dismissTransactionContext();
         responder.execute(false);
       } finally {
-        contextReleaser.cancel();
-      }
-    }
-  }
-
-  private Transactional createTransactional(final TransactionContext txContext) {
-    return new Transactional() {
-      @Override
-      public void execute(final TxRunnable runnable) throws TransactionFailureException {
-        // This method is only called from user code, hence the context classloader is the
-        // program context classloader (or whatever the user set to).
-        // We need to switch the classloader back to CDAP system classloader before calling txExecute
-        // since it starting of transaction should happens in CDAP system context, not program context
-        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
-        try {
-          txExecute(txContext, runnable);
-        } finally {
-          ClassLoaders.setContextClassLoader(oldClassLoader);
+        if (!responder.hasContentProducer()) {
+          contextReleaser.cancel();
         }
       }
-    };
+    }
   }
 
   /**
-   * Executes the given {@link TxRunnable} in a transaction. The transaction lifecycle is managed by the
-   * given {@link TransactionContext} instance.
-   *
-   * @throws TransactionFailureException if execution failed
-   * @throws TransactionConflictException if conflict is detected when trying to commit the transaction
+   * A {@link BodyProducerFactory} to be used when {@link #handleError(Throwable)} is called.
    */
-  private void txExecute(TransactionContext txContext, TxRunnable runnable) throws TransactionFailureException {
-    txContext.start();
-    try {
-      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(programContextClassLoader);
-      try {
-        runnable.run(serviceContext);
-      } finally {
-        ClassLoaders.setContextClassLoader(oldClassLoader);
-      }
-    } catch (Throwable t) {
-      txContext.abort(new TransactionFailureException("Exception raised from TxRunnable.run()", t));
+  private static final class ErrorBodyProducerFactory implements BodyProducerFactory {
+
+    @Override
+    public BodyProducer create(HttpContentProducer contentProducer, TransactionalHttpServiceContext serviceContext) {
+      // It doesn't matter what it returns as it'll never get used
+      // Returning a body producer that gives empty content
+      return new BodyProducer() {
+        @Override
+        public ChannelBuffer nextChunk() throws Exception {
+          return ChannelBuffers.EMPTY_BUFFER;
+        }
+
+        @Override
+        public void finished() throws Exception {
+          // no-op
+        }
+
+        @Override
+        public void handleError(@Nullable Throwable throwable) {
+          // no-op
+        }
+      };
     }
-    txContext.finish();
   }
 }

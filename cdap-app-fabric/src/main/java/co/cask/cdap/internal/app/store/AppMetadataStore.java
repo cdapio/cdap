@@ -273,9 +273,10 @@ public class AppMetadataStore extends MetadataStoreDataset {
                                      @Nullable Predicate<RunRecordMeta> filter) {
     if (status.equals(ProgramRunStatus.ALL)) {
       List<RunRecordMeta> resultRecords = Lists.newArrayList();
-      resultRecords.addAll(getSuspendedRuns(program, startTime, endTime, limit, filter));
       resultRecords.addAll(getActiveRuns(program, startTime, endTime, limit, filter));
-      resultRecords.addAll(getHistoricalRuns(program, status, startTime, endTime, limit, filter));
+      resultRecords.addAll(getSuspendedRuns(program, startTime, endTime, limit - resultRecords.size(), filter));
+      resultRecords.addAll(getHistoricalRuns(program, status, startTime, endTime,
+                                             limit - resultRecords.size(), filter));
       return resultRecords;
     } else if (status.equals(ProgramRunStatus.RUNNING)) {
       return getActiveRuns(program, startTime, endTime, limit, filter);

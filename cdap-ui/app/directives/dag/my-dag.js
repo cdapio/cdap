@@ -33,7 +33,8 @@ commonModule.directive('myDag', function() {
       connectionPopoverData: '&',
       showMetrics: '=',
       metricsData: '=',
-      nodePopoverTemplate: '@'
+      nodePopoverTemplate: '@',
+      disableNodeClick: '='
     },
     link: function(scope, element) {
       scope.element = element;

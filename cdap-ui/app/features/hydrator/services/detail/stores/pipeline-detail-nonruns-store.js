@@ -79,6 +79,11 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getNodes = function() {
       return this.state.DAGConfig.nodes;
     };
+    this.getSourceNodes = function(nodeId) {
+      let nodesMap = {};
+      this.state.DAGConfig.nodes.forEach( node => nodesMap[node.name] = node );
+      return this.state.DAGConfig.connections.filter( conn => conn.to === nodeId ).map( matchedConnection => nodesMap[matchedConnection.from] );
+    };
     this.getDatasets = function() {
       return this.state.datasets;
     };
@@ -117,20 +122,24 @@ angular.module(PKG.name + '.feature.hydrator')
           nodes: uiConfig.nodes,
           connections: uiConfig.connections
         };
+
+        appConfig.description = appConfig.configJson.description ? appConfig.configJson.description : appConfig.description;
       }
+
       appConfig.type = app.artifact.name;
       appConfig.cloneConfig = {
         name: app.name,
         artifact: app.artifact,
-        template: app.artifact.name,
-        description: app.description,
-        ui: appConfig.DAGConfig,
+        description: appConfig.configJson.description,
+        __ui__: appConfig.DAGConfig,
         config: {
           source: appConfig.configJson.source,
           sinks: appConfig.configJson.sinks,
           transforms: appConfig.configJson.transforms,
-          instances: app.instance,
-          schedule: appConfig.configJson.schedule
+          instances: appConfig.configJson.instance,
+          schedule: appConfig.configJson.schedule,
+          connections: uiConfig.connections,
+          comments: appConfig.configJson.comments
         }
       };
       appConfig.streams = app.streams.map(function (stream) {

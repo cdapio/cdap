@@ -151,6 +151,8 @@ angular.module(PKG.name + '.commons')
 
           schema = myHelpers.objectQuery(schema, 'fields');
           $scope.properties = [];
+          $scope.activeCell = false;
+
           angular.forEach(schema, function(p) {
             if (angular.isArray(p.type)) {
               $scope.properties.push({
@@ -213,6 +215,9 @@ angular.module(PKG.name + '.commons')
         }
 
         initialize($scope.model);
+        EventPipe.on('plugin-outputschema.update', function() {
+          initialize($scope.model);
+        });
 
         EventPipe.on('plugin.reset', function () {
           $scope.model = angular.copy(modelCopy);
@@ -343,6 +348,7 @@ angular.module(PKG.name + '.commons')
           EventPipe.cancelEvent('schema.clear');
           EventPipe.cancelEvent('plugin.reset');
           EventPipe.cancelEvent('dataset.selected');
+          EventPipe.cancelEvent('plugin-outputschema.update');
         });
       }
     };

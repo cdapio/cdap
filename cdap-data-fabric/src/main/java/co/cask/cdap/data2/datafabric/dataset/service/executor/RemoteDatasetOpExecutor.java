@@ -19,9 +19,12 @@ package co.cask.cdap.data2.datafabric.dataset.service.executor;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.common.HandlerException;
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.service.UnloggedExceptionIdleService;
+import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.proto.DatasetTypeMeta;
 import co.cask.cdap.proto.Id;
 import co.cask.common.http.HttpRequest;
@@ -31,36 +34,72 @@ import co.cask.common.http.ObjectResponse;
 import com.google.common.base.Charsets;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Executes Dataset operations by querying a {@link DatasetOpExecutorService} via REST.
  */
-public abstract class RemoteDatasetOpExecutor extends AbstractIdleService implements DatasetOpExecutor {
+public abstract class RemoteDatasetOpExecutor extends UnloggedExceptionIdleService implements DatasetOpExecutor {
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteDatasetOpExecutor.class);
 
   private static final Gson GSON = new Gson();
 
+  private final CConfiguration cConf;
   private final Supplier<EndpointStrategy> endpointStrategySupplier;
 
   @Inject
-  public RemoteDatasetOpExecutor(final DiscoveryServiceClient discoveryClient) {
+  public RemoteDatasetOpExecutor(CConfiguration cConf, final DiscoveryServiceClient discoveryClient) {
+    this.cConf = cConf;
     this.endpointStrategySupplier = Suppliers.memoize(new Supplier<EndpointStrategy>() {
       @Override
       public EndpointStrategy get() {
         return new RandomEndpointStrategy(discoveryClient.discover(Constants.Service.DATASET_EXECUTOR));
       }
     });
+  }
+
+  @Override
+  protected void startUp() throws Exception {
+    // wait for dataset executor to be discoverable
+    LOG.info("Starting DatasetOpExecutor.");
+    int timeout = cConf.getInt(Constants.Startup.STARTUP_SERVICE_TIMEOUT);
+    if (timeout > 0) {
+      try {
+        Tasks.waitFor(true, new Callable<Boolean>() {
+          @Override
+          public Boolean call() throws Exception {
+            return endpointStrategySupplier.get().pick() != null;
+          }
+        }, timeout, TimeUnit.SECONDS, Math.min(timeout, Math.max(10, timeout / 10)), TimeUnit.SECONDS);
+        LOG.info("DatasetOpExecutor started.");
+      } catch (TimeoutException e) {
+        // its not a nice message... throw one with a better message
+        throw new TimeoutException(String.format("Timed out waiting to discover the %s service. " +
+                                                   "Check the container logs then try restarting the service.",
+                                                 Constants.Service.DATASET_EXECUTOR));
+      } catch (InterruptedException e) {
+        throw new RuntimeException(String.format("Interrupted while waiting to discover the %s service.",
+                                                 Constants.Service.DATASET_EXECUTOR));
+      } catch (ExecutionException e) {
+        throw new RuntimeException(String.format("Error while waiting to discover the %s service.",
+                                                 Constants.Service.DATASET_EXECUTOR), e);
+      }
+    }
   }
 
   @Override

@@ -15,7 +15,7 @@
  */
 
 class LeftPanelController {
-  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore, ConfigActionsFactory, MyDAGFactory, NodesActionsFactory, HydratorErrorFactory, HydratorService) {
+  constructor($scope, $stateParams, rVersion, GLOBALS, LeftPanelStore, LeftPanelActionsFactory, PluginActionsFactory, ConfigStore, ConfigActionsFactory, MyDAGFactory, NodesActionsFactory, NonStorePipelineErrorFactory, HydratorService) {
     this.$scope = $scope;
     this.$stateParams = $stateParams;
     this.LeftPanelStore = LeftPanelStore;
@@ -23,9 +23,10 @@ class LeftPanelController {
     this.PluginActionsFactory = PluginActionsFactory;
     this.ConfigActionsFactory = ConfigActionsFactory;
     this.GLOBALS = GLOBALS;
+    this.ConfigStore = ConfigStore;
     this.MyDAGFactory = MyDAGFactory;
     this.NodesActionsFactory = NodesActionsFactory;
-    this.HydratorErrorFactory = HydratorErrorFactory;
+    this.NonStorePipelineErrorFactory = NonStorePipelineErrorFactory;
     this.HydratorService = HydratorService;
 
     this.pluginTypes = [
@@ -70,11 +71,15 @@ class LeftPanelController {
   onLeftSidePanelItemClicked(event, node) {
     event.stopPropagation();
     var item = this.LeftPanelStore.getSpecificPluginVersion(node);
+    this.LeftPanelStore.updatePluginDefaultVersion(node);
+    let filteredNodes = this.ConfigStore
+                    .getNodes()
+                    .filter( node => node.plugin.label.includes(item.name) );
     let config;
     if (item.pluginTemplate) {
       config = {
         plugin: {
-          label: item.name,
+          label: (filteredNodes.length > 0 ? item.name + (filteredNodes.length+1): item.name),
           name: item.pluginName,
           artifact: item.artifact,
           properties: item.properties,
@@ -82,13 +87,14 @@ class LeftPanelController {
         icon: this.MyDAGFactory.getIcon(item.pluginName),
         type: item.pluginType,
         outputSchema: item.outputSchema,
+        inputSchema: item.inputSchema,
         pluginTemplate: item.pluginTemplate,
         lock: item.lock
       };
     } else {
       config = {
         plugin: {
-          label: item.name,
+          label: (filteredNodes.length > 0 ? item.name + (filteredNodes.length+1): item.name),
           artifact: item.artifact,
           name: item.name,
           properties: {}
@@ -99,22 +105,10 @@ class LeftPanelController {
         warning: true
       };
     }
-
-    // this.ConfigActionsFactory.addPlugin(config, this.GLOBALS.pluginConvert[config.type]);
-    this.HydratorService.fetchBackendProperties(config)
-      .then( () => {
-        config.requiredFieldCount = this.HydratorErrorFactory.countRequiredFields(config);
-        if (config.requiredFieldCount > 0) {
-          config.error = {
-            message: this.GLOBALS.en.hydrator.studio.genericMissingRequiredFieldsError
-          };
-        }
-        this.NodesActionsFactory.addNode(config);
-      } );
-
+    this.NodesActionsFactory.addNode(config);
   }
 }
 
-LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore', 'ConfigActionsFactory', 'MyDAGFactory', 'NodesActionsFactory', 'HydratorErrorFactory', 'HydratorService'];
+LeftPanelController.$inject = ['$scope', '$stateParams', 'rVersion', 'GLOBALS', 'LeftPanelStore', 'LeftPanelActionsFactory', 'PluginActionsFactory', 'ConfigStore', 'ConfigActionsFactory', 'MyDAGFactory', 'NodesActionsFactory', 'NonStorePipelineErrorFactory', 'HydratorService'];
 angular.module(PKG.name + '.feature.hydrator')
   .controller('LeftPanelController', LeftPanelController);

@@ -30,6 +30,7 @@ import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.DatasetTypeMDS;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasets;
 import co.cask.cdap.data2.datafabric.dataset.service.mds.MDSDatasetsRegistry;
+import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.dataset2.InMemoryDatasetDefinitionRegistry;
 import co.cask.cdap.data2.dataset2.TypeConflictException;
 import co.cask.cdap.data2.dataset2.module.lib.DatasetModules;
@@ -86,7 +87,7 @@ public class DatasetTypeManager extends AbstractIdleService {
     this.cConf = cConf;
     this.mdsDatasets = mdsDatasets;
     this.locationFactory = locationFactory;
-    this.defaultModules = new LinkedHashMap<String, DatasetModule>(defaultModules);
+    this.defaultModules = new LinkedHashMap<>(defaultModules);
     this.allowDatasetUncheckedUpgrade = cConf.getBoolean(Constants.Dataset.DATASET_UNCHECKED_UPGRADE);
     this.extensionModules = getExtensionModules(this.cConf);
   }
@@ -133,8 +134,8 @@ public class DatasetTypeManager extends AbstractIdleService {
   public void addModule(final Id.DatasetModule datasetModuleId, final String className, final Location jarLocation)
     throws DatasetModuleConflictException {
 
-    LOG.info("adding module: {}, className: {}, jarLocation: {}",
-             datasetModuleId, className, jarLocation == null ? "[local]" : jarLocation);
+    LOG.debug("adding module: {}, className: {}, jarLocation: {}",
+              datasetModuleId, className, jarLocation == null ? "[local]" : jarLocation);
 
     try {
       mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
@@ -411,7 +412,7 @@ public class DatasetTypeManager extends AbstractIdleService {
         addModule(defaultModule, module.getValue().getClass().getName(), null);
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add default modules only the very first time service is started
-        LOG.info("Not adding {} module: it already exists", module.getKey());
+        LOG.debug("Not adding {} module: it already exists", module.getKey());
       } catch (Throwable th) {
         LOG.error("Failed to add {} module. Aborting.", module.getKey(), th);
         throw Throwables.propagate(th);
@@ -429,7 +430,7 @@ public class DatasetTypeManager extends AbstractIdleService {
         addModule(theModule, module.getValue().getClass().getName(), null);
       } catch (DatasetModuleConflictException e) {
         // perfectly fine: we need to add the modules only the very first time service is started
-        LOG.info("Not adding {} extension module: it already exists", module.getKey());
+        LOG.debug("Not adding {} extension module: it already exists", module.getKey());
       } catch (Throwable th) {
         LOG.error("Failed to add {} extension module. Aborting.", module.getKey(), th);
         throw Throwables.propagate(th);
@@ -437,25 +438,22 @@ public class DatasetTypeManager extends AbstractIdleService {
     }
   }
 
-  private void deleteSystemModules() {
-    try {
-      mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
-        @Override
-        public Void call(MDSDatasets context) throws Exception {
-          DatasetTypeMDS typeMDS = context.getTypeMDS();
-          Collection<DatasetModuleMeta> allDatasets = typeMDS.getModules(Id.Namespace.SYSTEM);
-          for (DatasetModuleMeta ds : allDatasets) {
-            if (ds.getJarLocation() == null) {
-              LOG.info("Deleting system dataset module: {}", ds.toString());
-              typeMDS.deleteModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, ds.getName()));
-            }
+  private void deleteSystemModules() throws DatasetManagementException, IOException, InterruptedException,
+    TransactionFailureException {
+    mdsDatasets.execute(new TxCallable<MDSDatasets, Void>() {
+      @Override
+      public Void call(MDSDatasets context) throws Exception {
+        DatasetTypeMDS typeMDS = context.getTypeMDS();
+        Collection<DatasetModuleMeta> allDatasets = typeMDS.getModules(Id.Namespace.SYSTEM);
+        for (DatasetModuleMeta ds : allDatasets) {
+          if (ds.getJarLocation() == null) {
+            LOG.debug("Deleting system dataset module: {}", ds.toString());
+            typeMDS.deleteModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, ds.getName()));
           }
-          return null;
         }
-      });
-    } catch (Exception e) {
-      Throwables.propagate(e);
-    }
+        return null;
+      }
+    });
   }
 
   private class DependencyTrackingRegistry implements DatasetDefinitionRegistry {

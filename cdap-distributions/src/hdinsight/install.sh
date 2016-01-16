@@ -21,11 +21,11 @@
 die() { echo "ERROR: ${*}"; exit 1; };
 
 # The git branch to clone
-CDAP_BRANCH='release/3.2'
+CDAP_BRANCH='release/3.3'
 # Optional tag to checkout - All released versions of this script should set this
 CDAP_TAG=''
 # The CDAP package version passed to Chef
-CDAP_VERSION='3.2.1-1'
+CDAP_VERSION='3.3.0-1'
 # The version of Chef to install
 CHEF_VERSION='11.18.12'
 # cdap-site.xml configuration parameters
@@ -67,7 +67,7 @@ chef-solo -o 'recipe[cdap::cli]'
 
 # Read zookeeper quorum from hbase-site.xml, using sourced init script function
 source ${__gitdir}/cdap-common/bin/common.sh || die "Cannot source CDAP common script"
-__zk_quorum=$(get_conf 'hbase.zookeeper.quorum' '/etc/hbase/conf/hbase-site.xml') || die "Cannot determine zookeeper quorum"
+__zk_quorum=$(cdap_get_conf 'hbase.zookeeper.quorum' '/etc/hbase/conf/hbase-site.xml') || die "Cannot determine zookeeper quorum"
 
 # Get HDP version, allow for the future addition hdp-select "current" directory
 __hdp_version=$(ls /usr/hdp | grep "^[0-9]*\.") || die "Cannot determine HDP version"

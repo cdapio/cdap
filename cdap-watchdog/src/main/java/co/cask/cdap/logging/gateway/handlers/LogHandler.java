@@ -192,7 +192,8 @@ public class LogHandler extends AbstractHttpHandler {
       fromTimeMillis = runStartMillis;
     }
     if (runRecord.getStopTs() != null) {
-      long runStopMillis = TimeUnit.SECONDS.toMillis(runRecord.getStopTs());
+      // Add a buffer to stop time due to CDAP-3100
+      long runStopMillis = TimeUnit.SECONDS.toMillis(runRecord.getStopTs() + 1);
       if (toTimeMillis > runStopMillis) {
         toTimeMillis = runStopMillis;
       }

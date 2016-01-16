@@ -252,14 +252,10 @@ public abstract class AbstractAppFabricHttpHandler extends AbstractHttpHandler {
     return new ProgramRecord(type, appId, spec.getName(), spec.getDescription());
   }
 
-  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(String namespaceId, String appId,
-                                                              String flowId, ProgramType type,
+  protected ProgramRuntimeService.RuntimeInfo findRuntimeInfo(Id.Program programId,
                                                               ProgramRuntimeService runtimeService) {
-    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(type).values();
-    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND),
-                               namespaceId, flowId);
-
-    Id.Program programId = Id.Program.from(namespaceId, appId, type, flowId);
+    Collection<ProgramRuntimeService.RuntimeInfo> runtimeInfos = runtimeService.list(programId.getType()).values();
+    Preconditions.checkNotNull(runtimeInfos, UserMessages.getMessage(UserErrors.RUNTIME_INFO_NOT_FOUND), programId);
 
     for (ProgramRuntimeService.RuntimeInfo info : runtimeInfos) {
       if (programId.equals(info.getProgramId())) {

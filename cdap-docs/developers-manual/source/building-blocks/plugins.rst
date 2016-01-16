@@ -188,7 +188,8 @@ must be placed in the appropriate directory.
 
 - **Distributed mode:** The plugin JARs should be placed in the local file system and the path
   can be provided to CDAP by setting the property ``app.artifact.dir`` in
-  :ref:`cdap-site.xml <appendix-cdap-site.xml>`. The default path is ``/opt/cdap/master/artifacts``.
+  :ref:`cdap-site.xml <appendix-cdap-site.xml>`. Multiple directories can be defined by separating
+  them with a semicolon.The default path is ``/opt/cdap/master/artifacts``.
 
 For each plugin JAR, there must also be a corresponding configuration file to specify which artifacts
 can use the plugins. The file name must match the name of the JAR, except it must have the ``.json``

@@ -15,6 +15,7 @@
  */
 
 @import "../../styles/variables.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
 @import '../../styles/themes/cdap/mixins.less';
 
 body {
@@ -28,9 +29,9 @@ body {
         }
       }
 
-      .dag-link {
-        width: 100%;
-        display: inline-block;
+      .dag-view {
+        // width: 100%;
+        // display: inline-block;
         position: relative;
       }
 
@@ -53,6 +54,24 @@ body {
         &.status-green { background-color: @brand-success; }
         &.status-grey { background-color: @cdap-gray; }
         &.status-yellow { background-color: @brand-warning; }
+      }
+
+      a.btn {
+        span {
+          &.icon-hydrator {
+            font-size: 13px;
+            position: relative;
+            top: 1px;
+          }
+        }
+        &.btn-hydrator {
+          margin-right: 5px;
+          .cask-btn(@background: @brand-primary, @border: 0, @border-radius: 4px, @color: white, @font-size: 13px, @padding: 6px 12px);
+          .transition(all 0.2s ease-in);
+          &:hover {
+            background-color: darken(@brand-primary, 10%);
+          }
+        }
       }
     }
   }

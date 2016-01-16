@@ -172,8 +172,13 @@ public class PipelineRegisterer {
     for (String stageName : stageTopologicalSortedOrder) {
       PipelineConfigureDetail pipelineConfigureDetail = stageToPipelineConfigureDetailMap.get(stageName);
       // configure pipeline in the topologically sorted order, to handle dependencies.
-      pipelineConfigureDetail.getPipelineConfigurable().configurePipeline(
-        pipelineConfigureDetail.getPipelineConfigurer());
+      try {
+        pipelineConfigureDetail.getPipelineConfigurable().configurePipeline(
+          pipelineConfigureDetail.getPipelineConfigurer());
+      } catch (IllegalArgumentException e) {
+        throw new IllegalArgumentException(String.format("Exception in stage %s : %s", stageName, e.getMessage()),
+                                           e.getCause());
+      }
 
       DefaultStageConfigurer defaultStageConfigurer =
         (DefaultStageConfigurer) pipelineConfigureDetail.getPipelineConfigurer().getStageConfigurer();
