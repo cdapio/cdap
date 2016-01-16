@@ -31,8 +31,9 @@ import co.cask.cdap.proto.ViewSpecification;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.base.Charsets;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,8 +42,9 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -174,12 +176,15 @@ public class StreamClientTestRun extends ClientTestBase {
 
   @Test
   public void testSendSmallFile() throws Exception {
-    testSendFile(50);
+    testSendFile("Short message", 50);
   }
 
   @Test
   public void testSendLargeFile() throws Exception {
-    testSendFile(500000);
+    // Each event is ~ 4K in size
+    String messagePrefix = Strings.repeat("0123456789", 410);
+    // In stream, by default "large" file is > 1MB in size, hence sending 300 events
+    testSendFile(messagePrefix, 300);
   }
 
   @Test
@@ -242,18 +247,19 @@ public class StreamClientTestRun extends ClientTestBase {
   }
 
 
-  private void testSendFile(int msgCount) throws Exception {
+  private void testSendFile(String msgPrefix, int msgCount) throws Exception {
     Id.Stream streamId = Id.Stream.from(namespaceId, "testSendFile");
     streamClient.create(streamId);
 
     // Generate msgCount lines of events
-    StringWriter writer = new StringWriter();
-    for (int i = 0; i < msgCount; i++) {
-      writer.write("Event " + i);
-      writer.write("\n");
+    File file = TMP_FOLDER.newFile();
+    try (BufferedWriter writer = Files.newWriter(file, Charsets.UTF_8)) {
+      for (int i = 0; i < msgCount; i++) {
+        writer.write(msgPrefix + i);
+        writer.newLine();
+      }
     }
-    streamClient.sendBatch(streamId, "text/plain",
-                           ByteStreams.newInputStreamSupplier(writer.toString().getBytes(Charsets.UTF_8)));
+    streamClient.sendFile(streamId, "text/plain", file);
 
     // Reads the msgCount events back
     List<StreamEvent> events = Lists.newArrayList();
@@ -263,7 +269,7 @@ public class StreamClientTestRun extends ClientTestBase {
 
     for (int i = 0; i < msgCount; i++) {
       StreamEvent event = events.get(i);
-      Assert.assertEquals("Event " + i, Bytes.toString(event.getBody()));
+      Assert.assertEquals(msgPrefix + i, Bytes.toString(event.getBody()));
       Assert.assertEquals("text/plain", event.getHeaders().get("content.type"));
     }
   }
