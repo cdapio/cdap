@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
@@ -160,57 +161,81 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
   }
 
   protected Set<MetadataRecord> getMetadata(Id.Application app) throws Exception {
-    return metadataClient.getMetadata(app);
+    return getMetadata(app, null);
   }
 
   protected Set<MetadataRecord> getMetadata(Id.Artifact artifact) throws Exception {
-    return metadataClient.getMetadata(artifact);
+    return getMetadata(artifact, null);
   }
 
   protected Set<MetadataRecord> getMetadata(Id.Program program) throws Exception {
-    return metadataClient.getMetadata(program);
+    return getMetadata(program, null);
   }
 
   protected Set<MetadataRecord> getMetadata(Id.DatasetInstance dataset) throws Exception {
-    return metadataClient.getMetadata(dataset);
+    return getMetadata(dataset, null);
   }
 
   protected Set<MetadataRecord> getMetadata(Id.Stream stream) throws Exception {
-    return metadataClient.getMetadata(stream);
+    return getMetadata(stream, null);
   }
 
   protected Set<MetadataRecord> getMetadata(Id.Stream.View view) throws Exception {
-    return metadataClient.getMetadata(view);
+    return getMetadata(view, null);
   }
 
-  // Currently, getMetadata(entity) returns a single-element set, so we can get the properties from there
-  protected Map<String, String> getProperties(Id.Application app) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(app).iterator()).getProperties();
+  protected Set<MetadataRecord> getMetadata(Id.Application app, @Nullable MetadataScope scope) throws Exception {
+    return metadataClient.getMetadata(app, scope);
   }
 
-  protected Map<String, String> getProperties(Id.Artifact artifact) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(artifact).iterator()).getProperties();
+  protected Set<MetadataRecord> getMetadata(Id.Artifact artifact, @Nullable MetadataScope scope) throws Exception {
+    return metadataClient.getMetadata(artifact, scope);
   }
 
-  protected Map<String, String> getProperties(Id.Program program) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(program).iterator()).getProperties();
+  protected Set<MetadataRecord> getMetadata(Id.Program program, @Nullable MetadataScope scope) throws Exception {
+    return metadataClient.getMetadata(program, scope);
   }
 
-  protected Map<String, String> getProperties(Id.DatasetInstance dataset) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(dataset).iterator()).getProperties();
+  protected Set<MetadataRecord> getMetadata(Id.DatasetInstance dataset,
+                                            @Nullable MetadataScope scope) throws Exception {
+    return metadataClient.getMetadata(dataset, scope);
   }
 
-  protected Map<String, String> getProperties(Id.Stream stream) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(stream).iterator()).getProperties();
+  protected Set<MetadataRecord> getMetadata(Id.Stream stream, @Nullable MetadataScope scope) throws Exception {
+    return metadataClient.getMetadata(stream, scope);
   }
 
-  protected Map<String, String> getProperties(Id.Stream.View view) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(view).iterator()).getProperties();
+  protected Set<MetadataRecord> getMetadata(Id.Stream.View view, @Nullable MetadataScope scope) throws Exception {
+    return metadataClient.getMetadata(view, scope);
+  }
+
+  protected Map<String, String> getProperties(Id.Application app, MetadataScope scope) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(app, scope).iterator()).getProperties();
+  }
+
+  protected Map<String, String> getProperties(Id.Artifact artifact, MetadataScope scope) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(artifact, scope).iterator()).getProperties();
+  }
+
+  protected Map<String, String> getProperties(Id.Program program, MetadataScope scope) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(program, scope).iterator()).getProperties();
+  }
+
+  protected Map<String, String> getProperties(Id.DatasetInstance dataset, MetadataScope scope) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(dataset, scope).iterator()).getProperties();
+  }
+
+  protected Map<String, String> getProperties(Id.Stream stream, MetadataScope scope) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(stream, scope).iterator()).getProperties();
+  }
+
+  protected Map<String, String> getProperties(Id.Stream.View view, MetadataScope scope) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(view, scope).iterator()).getProperties();
   }
 
   protected void getPropertiesFromInvalidEntity(Id.Application app) throws Exception {
     try {
-      getProperties(app);
+      getProperties(app, MetadataScope.USER);
       Assert.fail("Expected not to be able to get properties from invalid entity: " + app);
     } catch (NotFoundException expected) {
       // expected
@@ -219,7 +244,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
 
   protected void getPropertiesFromInvalidEntity(Id.Program program) throws Exception {
     try {
-      getProperties(program);
+      getProperties(program, MetadataScope.USER);
       Assert.fail("Expected not to be able to get properties from invalid entity: " + program);
     } catch (NotFoundException expected) {
       // expected
@@ -228,7 +253,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
 
   protected void getPropertiesFromInvalidEntity(Id.DatasetInstance dataset) throws Exception {
     try {
-      getProperties(dataset);
+      getProperties(dataset, MetadataScope.USER);
       Assert.fail("Expected not to be able to get properties from invalid entity: " + dataset);
     } catch (NotFoundException expected) {
       // expected
@@ -237,7 +262,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
 
   protected void getPropertiesFromInvalidEntity(Id.Stream stream) throws Exception {
     try {
-      getProperties(stream);
+      getProperties(stream, MetadataScope.USER);
       Assert.fail("Expected not to be able to get properties from invalid entity: " + stream);
     } catch (NotFoundException expected) {
       // expected
@@ -245,7 +270,7 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
   }
   protected void getPropertiesFromInvalidEntity(Id.Stream.View view) throws Exception {
     try {
-      getProperties(view);
+      getProperties(view, MetadataScope.USER);
       Assert.fail("Expected not to be able to get properties from invalid entity: " + view);
     } catch (NotFoundException expected) {
       // expected
@@ -416,33 +441,32 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
   }
 
   protected Set<MetadataSearchResultRecord> searchMetadata(Id.Namespace namespaceId, String query,
-                                                           MetadataSearchTargetType target) throws Exception {
+                                                           @Nullable MetadataSearchTargetType target) throws Exception {
     return metadataClient.searchMetadata(namespaceId, query, target);
   }
 
-  // Currently, getMetadata(entity) returns a single-element set, so we can get the tags from there
-  protected Set<String> getTags(Id.Application app) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(app).iterator()).getTags();
+  protected Set<String> getTags(Id.Application app, MetadataScope scope) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(app, scope).iterator()).getTags();
   }
 
-  protected Set<String> getTags(Id.Artifact artifact) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(artifact).iterator()).getTags();
+  protected Set<String> getTags(Id.Artifact artifact, MetadataScope scope) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(artifact, scope).iterator()).getTags();
   }
 
-  protected Set<String> getTags(Id.Program program) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(program).iterator()).getTags();
+  protected Set<String> getTags(Id.Program program, MetadataScope scope) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(program, scope).iterator()).getTags();
   }
 
-  protected Set<String> getTags(Id.DatasetInstance dataset) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(dataset).iterator()).getTags();
+  protected Set<String> getTags(Id.DatasetInstance dataset, MetadataScope scope) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(dataset, scope).iterator()).getTags();
   }
 
-  protected Set<String> getTags(Id.Stream stream) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(stream).iterator()).getTags();
+  protected Set<String> getTags(Id.Stream stream, MetadataScope scope) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(stream, scope).iterator()).getTags();
   }
 
-  protected Set<String> getTags(Id.Stream.View view) throws Exception {
-    return Iterators.getOnlyElement(getMetadata(view).iterator()).getTags();
+  protected Set<String> getTags(Id.Stream.View view, MetadataScope scope) throws Exception {
+    return Iterators.getOnlyElement(getMetadata(view, scope).iterator()).getTags();
   }
 
   protected void removeTags(Id.Application app) throws Exception {

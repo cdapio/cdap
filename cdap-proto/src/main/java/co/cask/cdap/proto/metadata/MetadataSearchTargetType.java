@@ -19,7 +19,7 @@ package co.cask.cdap.proto.metadata;
  * Supported types for metadata search.
  */
 public enum MetadataSearchTargetType {
-  // the custom values are required because these value match the entitiy-type stored as
+  // the custom values are required because these value match the entity-type stored as
   // a part of MDS key.
   ALL("All"),
   ARTIFACT("Artifact"),

@@ -36,6 +36,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.apache.commons.math3.analysis.function.Add;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -55,9 +56,8 @@ public class MetadataDataset extends AbstractDataset {
     .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
     .create();
 
-  private static final Pattern VALUE_SPLIT_PATTERN = Pattern.compile("[-_\\s]+");
+  private static final Pattern VALUE_SPLIT_PATTERN = Pattern.compile("[-_:\\s]+");
   private static final Pattern TAGS_SEPARATOR_PATTERN = Pattern.compile("[,\\s]+");
-
   private static final String HISTORY_COLUMN = "h"; // column for metadata history
   private static final String VALUE_COLUMN = "v";  // column for metadata value
   private static final String TAGS_SEPARATOR = ",";

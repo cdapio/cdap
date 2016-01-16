@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -176,7 +176,7 @@ public class DefaultMetadataStore implements MetadataStore {
       public MetadataRecord apply(MetadataDataset input) throws Exception {
         Map<String, String> properties = input.getProperties(entityId);
         Set<String> tags = input.getTags(entityId);
-        return new MetadataRecord(entityId, properties, tags);
+        return new MetadataRecord(entityId, scope, properties, tags);
       }
     }, scope);
   }
@@ -186,7 +186,7 @@ public class DefaultMetadataStore implements MetadataStore {
    * for the specified set of {@link Id.NamespacedId}s.
    */
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataScope scope, final Set<Id.NamespacedId> entityIds) {
+  public Set<MetadataRecord> getMetadata(final MetadataScope scope, final Set<Id.NamespacedId> entityIds) {
     return execute(new TransactionExecutor.Function<MetadataDataset, Set<MetadataRecord>>() {
       @Override
       public Set<MetadataRecord> apply(MetadataDataset input) throws Exception {
@@ -194,7 +194,7 @@ public class DefaultMetadataStore implements MetadataStore {
         for (Id.NamespacedId entityId : entityIds) {
           Map<String, String> properties = input.getProperties(entityId);
           Set<String> tags = input.getTags(entityId);
-          metadataRecords.add(new MetadataRecord(entityId, properties, tags));
+          metadataRecords.add(new MetadataRecord(entityId, scope, properties, tags));
         }
         return metadataRecords;
       }
@@ -432,7 +432,7 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Set<MetadataSearchResultRecord> searchMetadataOnType(MetadataScope scope, final String namespaceId,
+  public Set<MetadataSearchResultRecord> searchMetadataOnType(final MetadataScope scope, final String namespaceId,
                                                               final String searchQuery,
                                                               final MetadataSearchTargetType type) {
     Iterable<MetadataEntry> metadataEntries = execute(new TransactionExecutor.Function<MetadataDataset,

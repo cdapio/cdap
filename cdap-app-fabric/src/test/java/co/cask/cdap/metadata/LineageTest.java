@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.RunRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.lineage.LineageRecord;
 import co.cask.cdap.test.SlowTests;
 import com.google.common.base.Predicate;
@@ -78,34 +79,34 @@ public class LineageTest extends MetadataTestBase {
       // Add metadata to applicaton
       ImmutableMap<String, String> appProperties = ImmutableMap.of("app-key1", "app-value1");
       addProperties(app, appProperties);
-      Assert.assertEquals(appProperties, getProperties(app));
+      Assert.assertEquals(appProperties, getProperties(app, MetadataScope.USER));
       ImmutableSet<String> appTags = ImmutableSet.of("app-tag1");
       addTags(app, appTags);
-      Assert.assertEquals(appTags, getTags(app));
+      Assert.assertEquals(appTags, getTags(app, MetadataScope.USER));
 
       // Add metadata to flow
       ImmutableMap<String, String> flowProperties = ImmutableMap.of("flow-key1", "flow-value1");
       addProperties(flow, flowProperties);
-      Assert.assertEquals(flowProperties, getProperties(flow));
+      Assert.assertEquals(flowProperties, getProperties(flow, MetadataScope.USER));
       ImmutableSet<String> flowTags = ImmutableSet.of("flow-tag1", "flow-tag2");
       addTags(flow, flowTags);
-      Assert.assertEquals(flowTags, getTags(flow));
+      Assert.assertEquals(flowTags, getTags(flow, MetadataScope.USER));
 
       // Add metadata to dataset
       ImmutableMap<String, String> dataProperties = ImmutableMap.of("data-key1", "data-value1");
       addProperties(dataset, dataProperties);
-      Assert.assertEquals(dataProperties, getProperties(dataset));
+      Assert.assertEquals(dataProperties, getProperties(dataset, MetadataScope.USER));
       ImmutableSet<String> dataTags = ImmutableSet.of("data-tag1", "data-tag2");
       addTags(dataset, dataTags);
-      Assert.assertEquals(dataTags, getTags(dataset));
+      Assert.assertEquals(dataTags, getTags(dataset, MetadataScope.USER));
 
       // Add metadata to stream
       ImmutableMap<String, String> streamProperties = ImmutableMap.of("stream-key1", "stream-value1");
       addProperties(stream, streamProperties);
-      Assert.assertEquals(streamProperties, getProperties(stream));
+      Assert.assertEquals(streamProperties, getProperties(stream, MetadataScope.USER));
       ImmutableSet<String> streamTags = ImmutableSet.of("stream-tag1", "stream-tag2");
       addTags(stream, streamTags);
-      Assert.assertEquals(streamTags, getTags(stream));
+      Assert.assertEquals(streamTags, getTags(stream, MetadataScope.USER));
 
       long startTime = TimeMathParser.nowInSeconds();
       RunId flowRunId = runAndWait(flow);
@@ -210,15 +211,15 @@ public class LineageTest extends MetadataTestBase {
       // Add metadata
       ImmutableSet<String> sparkTags = ImmutableSet.of("spark-tag1", "spark-tag2");
       addTags(spark, sparkTags);
-      Assert.assertEquals(sparkTags, getTags(spark));
+      Assert.assertEquals(sparkTags, getTags(spark, MetadataScope.USER));
 
       ImmutableSet<String> workerTags = ImmutableSet.of("worker-tag1");
       addTags(worker, workerTags);
-      Assert.assertEquals(workerTags, getTags(worker));
+      Assert.assertEquals(workerTags, getTags(worker, MetadataScope.USER));
 
       ImmutableMap<String, String> datasetProperties = ImmutableMap.of("data-key1", "data-value1");
       addProperties(dataset, datasetProperties);
-      Assert.assertEquals(datasetProperties, getProperties(dataset));
+      Assert.assertEquals(datasetProperties, getProperties(dataset, MetadataScope.USER));
 
       // Start all programs
       RunId flowRunId = runAndWait(flow);
