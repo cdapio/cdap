@@ -71,7 +71,8 @@ angular.module(PKG.name + '.services')
             'NO-SINK-FOUND': 'Please add a sink to your pipeline',
             'NAME-ALREADY-EXISTS': 'A pipeline with this name already exists. Please choose a different name.',
             'DUPLICATE-NODE-NAMES': 'Every node should have a unique name to be exported/published.',
-            'DUPLICATE-NAME': 'Please rename. Another node already has this name.'
+            'DUPLICATE-NAME': 'Please rename. Another node already has this name.',
+            'MISSING-CONNECTION': ' is missing connection'
           },
           pluginDoesNotExist: 'This plugin does not exist: '
         },

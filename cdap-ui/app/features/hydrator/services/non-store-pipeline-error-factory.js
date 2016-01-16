@@ -166,6 +166,44 @@ let hasAtLeastOneSink = (myHelpers, GLOBALS, nodes, cb) => {
   cb(false);
 };
 
+let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
+  let inputConnection = {};
+  let outputConnection = {};
+
+  let errors = [];
+  angular.forEach(connections, (connection) => {
+    inputConnection[connection.to] = connection.from;
+    outputConnection[connection.from] = connection.to;
+  });
+
+  angular.forEach(nodes, (node) => {
+    switch (GLOBALS.pluginConvert[node.type]) {
+      case 'source':
+        if (!outputConnection[node.name]){
+          errors.push(node.plugin.label);
+        }
+        break;
+      case 'transform':
+        if (!inputConnection[node.name] || !outputConnection[node.name]) {
+          errors.push(node.plugin.label);
+        }
+        break;
+      case 'sink':
+        if (!inputConnection[node.name]) {
+          errors.push(node.plugin.label);
+        }
+        break;
+    }
+  });
+
+  if (errors.length > 0) {
+    cb(true, errors);
+  } else {
+    cb(false);
+  }
+
+};
+
 let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
   // If we had used SystemJs or requirejs this could have been avoided.
   return {
@@ -175,7 +213,8 @@ let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
     hasValidName: hasValidName,
     hasOnlyOneSource: hasOnlyOneSource.bind(null, myHelpers, GLOBALS),
     hasAtLeastOneSink: hasAtLeastOneSink.bind(null, myHelpers, GLOBALS),
-    isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers)
+    isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers),
+    allNodesConnected: allNodesConnected.bind(null, GLOBALS)
   };
 };
 

@@ -469,6 +469,7 @@ class ConfigStore {
       errorFactory.hasAtLeastOneSink
     ];
     let nodes = this.state.__ui__.nodes;
+    let connections = angular.copy(this.state.config.connections);
     nodes.forEach( node => { node.errorCount = 0;});
     let ERROR_MESSAGES = this.GLOBALS.en.hydrator.studio.error;
     let showConsoleMessage = (errObj) => {
@@ -487,7 +488,6 @@ class ConfigStore {
         delete node.warning;
       }
     };
-
     daglevelvalidation.forEach( validationFn => {
       validationFn(nodes, (err, node) => {
         let content;
@@ -545,6 +545,20 @@ class ConfigStore {
         });
       });
     }
+    errorFactory.allNodesConnected(nodes, connections, (err, nodes) => {
+      if (err) {
+        isStateValid = false;
+
+        angular.forEach(nodes, (node) => {
+          showConsoleMessage({
+            type: 'error',
+            content: node + ' ' + this.GLOBALS.en.hydrator.studio.error['MISSING-CONNECTION']
+          });
+        });
+
+      }
+    });
+
     return isStateValid;
   }
   getInstance() {
