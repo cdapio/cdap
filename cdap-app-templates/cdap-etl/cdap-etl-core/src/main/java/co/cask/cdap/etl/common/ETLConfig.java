@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,14 +37,23 @@ public class ETLConfig extends Config {
   private final List<Connection> connections;
   private final Resources resources;
 
+  /**
+   * @deprecated use builders from subclasses instead.
+   */
+  @Deprecated
   public ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
                    List<Connection> connections, Resources resources) {
+    this(source, sinks, transforms, connections, resources, true);
+  }
+
+  protected ETLConfig(ETLStage source, List<ETLStage> sinks, List<ETLStage> transforms,
+                      List<Connection> connections, Resources resources, boolean stageLoggingEnabled) {
     this.source = source;
     this.sinks = sinks;
     this.transforms = transforms;
     this.connections = getValidConnections(connections);
     this.resources = resources;
-    this.stageLoggingEnabled = true;
+    this.stageLoggingEnabled = stageLoggingEnabled;
   }
 
   private List<Connection> getValidConnections(List<Connection> connections) {
@@ -156,5 +166,76 @@ public class ETLConfig extends Config {
   @Override
   public int hashCode() {
     return Objects.hash(source, sinks, transforms, connections, resources, isStageLoggingEnabled());
+  }
+
+  /**
+   * Builder for creating configs.
+   */
+  @SuppressWarnings("unchecked")
+  public abstract static class Builder<T extends Builder> {
+    protected ETLStage source;
+    protected List<ETLStage> sinks;
+    protected List<ETLStage> transforms;
+    protected List<Connection> connections;
+    protected Resources resources;
+    protected Boolean stageLoggingEnabled;
+
+    protected Builder() {
+      this.sinks = new ArrayList<>();
+      this.transforms = new ArrayList<>();
+      this.connections = new ArrayList<>();
+      this.resources = new Resources();
+      this.stageLoggingEnabled = true;
+    }
+
+    public T setSource(ETLStage source) {
+      this.source = source;
+      return (T) this;
+    }
+
+    public T addTransform(ETLStage transform) {
+      this.transforms.add(transform);
+      return (T) this;
+    }
+
+    public T addTransforms(Collection<ETLStage> transforms) {
+      this.transforms.addAll(transforms);
+      return (T) this;
+    }
+
+    public T addSink(ETLStage sink) {
+      this.sinks.add(sink);
+      return (T) this;
+    }
+
+    public T addSinks(Collection<ETLStage> sinks) {
+      this.sinks.addAll(sinks);
+      return (T) this;
+    }
+
+    public T addConnection(String from, String to) {
+      this.connections.add(new Connection(from, to));
+      return (T) this;
+    }
+
+    public T addConnection(Connection connection) {
+      this.connections.add(connection);
+      return (T) this;
+    }
+
+    public T addConnections(Collection<Connection> connections) {
+      this.connections.addAll(connections);
+      return (T) this;
+    }
+
+    public T setResources(Resources resources) {
+      this.resources = resources;
+      return (T) this;
+    }
+
+    public T disableStageLogging() {
+      this.stageLoggingEnabled = false;
+      return (T) this;
+    }
   }
 }

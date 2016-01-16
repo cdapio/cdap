@@ -16,6 +16,7 @@
 
 package co.cask.cdap.etl.batch.spark;
 
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.TimePartitionedFileSet;
 import co.cask.cdap.api.plugin.PluginContext;
@@ -81,9 +82,13 @@ public class ETLSpark extends AbstractSpark {
           .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
           .build(), true);
 
-    if (config.getResources() != null) {
-      setDriverResources(config.getResources());
-      setExecutorResources(config.getResources());
+    Resources resources = config.getResources();
+    if (resources != null) {
+      setExecutorResources(resources);
+    }
+    Resources driverResources = config.getDriverResources();
+    if (driverResources != null) {
+      setDriverResources(driverResources);
     }
 
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
