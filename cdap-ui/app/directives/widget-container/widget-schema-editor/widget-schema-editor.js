@@ -226,6 +226,9 @@ angular.module(PKG.name + '.commons')
         });
 
         EventPipe.on('dataset.selected', function (schema) {
+          if ($scope.model) {
+            return;
+          }
           initialize(schema);
         });
 
