@@ -1377,6 +1377,7 @@
                   <exclude>**/*.json</exclude>
                   <exclude>**/*.json.template</exclude>
                   <exclude>**/MANIFEST.MF</exclude>
+                  <exclude>**/.rubocop*.yml</exclude>
                 </excludes>
               </configuration>
             </execution>
