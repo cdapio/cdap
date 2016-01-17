@@ -84,6 +84,7 @@ angular.module(PKG.name + '.commons')
           if (['clf', 'syslog', ''].indexOf($scope.pluginProperties[watchProperty]) > -1) {
             $scope.model = null;
             $scope.disableEdit = true;
+            $scope.pluginProperties['format.setting.pattern'] = null;
             // $scope.fields = 'NOTHING';
             if ($scope.pluginProperties[watchProperty] === 'clf') {
               var clfSchema = IMPLICIT_SCHEMA.clf;
@@ -102,6 +103,7 @@ angular.module(PKG.name + '.commons')
           } else if ($scope.pluginProperties[watchProperty] === 'avro'){
             $scope.disableEdit = false;
             $scope.fields = 'AVRO';
+            $scope.pluginProperties['format.setting.pattern'] = null;
             watcher = $scope.$watch('avro', formatAvro, true);
 
             if ($scope.model) {
@@ -116,13 +118,14 @@ angular.module(PKG.name + '.commons')
             $scope.disableEdit = false;
             $scope.fields = 'GROK';
             watcher = $scope.$watch('grok', function () {
-              $scope.model = $scope.grok.pattern;
+              $scope.pluginProperties['format.setting.pattern'] = $scope.grok.pattern;
             }, true);
           }
 
           else {
             $scope.disableEdit = false;
             $scope.fields = 'SHOW';
+            $scope.pluginProperties['format.setting.pattern'] = null;
             initialize($scope.model);
           }
         }
@@ -136,7 +139,7 @@ angular.module(PKG.name + '.commons')
           var schema = {};
           $scope.avro = {};
           $scope.grok = {
-            pattern: $scope.model
+            pattern: $scope.pluginProperties['format.setting.pattern']
           };
 
           $scope.error = null;
@@ -158,27 +161,31 @@ angular.module(PKG.name + '.commons')
               $scope.properties.push({
                 name: p.name,
                 type: p.type[0],
-                nullable: true
+                nullable: true,
+                readonly: p.readonly
               });
             } else if (angular.isObject(p.type)) {
               if (p.type.type === 'map') {
                 $scope.properties.push({
                   name: p.name,
                   type: typeMap,
-                  nullable: p.nullable
+                  nullable: p.nullable,
+                  readonly: p.readonly
                 });
               } else {
                 $scope.properties.push({
                   name: p.name,
                   type: p.type.items,
-                  nullable: p.nullable
+                  nullable: p.nullable,
+                  readonly: p.readonly
                 });
               }
             } else {
               $scope.properties.push({
                 name: p.name,
                 type: p.type,
-                nullable: p.nullable
+                nullable: p.nullable,
+                readonly: p.readonly
               });
             }
           });
@@ -215,9 +222,6 @@ angular.module(PKG.name + '.commons')
         }
 
         initialize($scope.model);
-        EventPipe.on('plugin-outputschema.update', function() {
-          initialize($scope.model);
-        });
 
         EventPipe.on('plugin.reset', function () {
           $scope.model = angular.copy(modelCopy);
@@ -225,11 +229,41 @@ angular.module(PKG.name + '.commons')
         });
 
         EventPipe.on('schema.clear', function () {
-          initialize();
+          var schema;
+          try {
+            schema = JSON.parse($scope.model);
+            schema.fields = schema.fields.filter(function (value) {
+              return value.readonly;
+            });
+            $scope.model = JSON.stringify(schema);
+          } catch(e) {
+            $scope.model = JSON.stringify({ fields: []});
+          }
+          initialize($scope.model);
         });
 
         EventPipe.on('dataset.selected', function (schema) {
-          initialize(schema);
+          try {
+            var a = JSON.parse($scope.model).fields.filter(function(e) {
+              return !e.readonly;
+            });
+            if (a.length) {
+              throw 'Model already set';
+            }
+          } catch (n) {
+              if ($scope.model) { return; }
+          }
+
+          var modSchema = {fields: []};
+          try {
+            modSchema.fields = JSON.parse($scope.model).fields.filter(function(field) {
+              return field.readonly;
+            });
+            modSchema.fields = modSchema.fields.concat(JSON.parse(schema).fields);
+          } catch(e) {
+            modSchema = schema;
+          }
+          initialize(JSON.stringify(modSchema));
         });
 
 
@@ -244,11 +278,6 @@ angular.module(PKG.name + '.commons')
 
 
         function formatSchema() {
-
-          if (watchProperty && $scope.pluginProperties && ['clf', 'syslog'].indexOf($scope.pluginProperties[watchProperty]) !== -1) {
-            $scope.model = null;
-            return;
-          }
           // Format Schema
           var properties = [];
           angular.forEach($scope.properties, function(p) {
@@ -262,7 +291,8 @@ angular.module(PKG.name + '.commons')
 
               properties.push({
                 name: p.name,
-                type: p.nullable ? [property, 'null'] : property
+                type: p.nullable ? [property, 'null'] : property,
+                readonly: p.readonly
               });
             }
           });
@@ -348,7 +378,6 @@ angular.module(PKG.name + '.commons')
           EventPipe.cancelEvent('schema.clear');
           EventPipe.cancelEvent('plugin.reset');
           EventPipe.cancelEvent('dataset.selected');
-          EventPipe.cancelEvent('plugin-outputschema.update');
         });
       }
     };

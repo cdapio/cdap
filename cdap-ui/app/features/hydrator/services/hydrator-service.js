@@ -107,9 +107,9 @@ class HydratorService {
     let jsonSchema;
 
     if (isStreamSource) {
-      if (node.properties.format === 'clf') {
+      if (node.plugin.properties.format === 'clf') {
         jsonSchema = this.IMPLICIT_SCHEMA.clf;
-      } else if (node.properties.format === 'syslog') {
+      } else if (node.plugin.properties.format === 'syslog') {
         jsonSchema = this.IMPLICIT_SCHEMA.syslog;
       } else {
         jsonSchema = node.outputSchema;
