@@ -246,7 +246,7 @@ angular.module(PKG.name + '.commons')
         });
 
         EventPipe.on('dataset.selected', function (schema) {
-          let modSchema = {fields: []};
+          var modSchema = {fields: []};
           try {
             modSchema.fields = JSON.parse($scope.model).fields.filter(function(field) {
               return field.readonly;
