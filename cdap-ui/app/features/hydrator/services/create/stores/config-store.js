@@ -123,7 +123,6 @@ class ConfigStore {
     };
 
     let addPluginToConfig = (node, id) => {
-      node.properties = stripFormatSchemas(node.watchProperty, node.outputSchemaProperty, node.plugin.properties);
       if (node.outputSchemaProperty) {
         try {
           let outputSchema = JSON.parse(node.outputSchema);
@@ -133,6 +132,7 @@ class ConfigStore {
           node.plugin.properties[node.outputSchemaProperty] = JSON.stringify(outputSchema);
         } catch(e) {}
       }
+      node.plugin.properties = stripFormatSchemas(node.watchProperty, node.outputSchemaProperty, angular.copy(node.plugin.properties));
       var pluginConfig =  {
         // Solely adding id and _backendProperties for validation.
         // Should be removed while saving it to backend.
