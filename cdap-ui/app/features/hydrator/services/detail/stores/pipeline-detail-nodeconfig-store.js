@@ -155,6 +155,9 @@ angular.module(PKG.name + '.feature.hydrator')
         } else {
           field.nullable = false;
         }
+        if (isStreamSource) {
+          delete field.readonly;
+        }
       });
 
 

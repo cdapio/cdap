@@ -444,6 +444,7 @@ class ConfigStore {
     let adjacencyMap = {},
         nodesMap = {},
         outputSchema,
+        schema,
         connections = this.state.config.connections;
     this.state.__ui__.nodes.forEach( node => nodesMap[node.name] = node );
 
@@ -473,6 +474,14 @@ class ConfigStore {
       });
     };
     outputSchema = nodesMap[pluginId].outputSchema;
+    try {
+      schema = JSON.parse(outputSchema);
+      schema.fields = schema.fields.map(field => {
+        delete field.readonly;
+        return field;
+      });
+      outputSchema = JSON.stringify(schema);
+    } catch (e) {}
     traverseMap(adjacencyMap[pluginId], outputSchema);
   }
   addNode(node) {
