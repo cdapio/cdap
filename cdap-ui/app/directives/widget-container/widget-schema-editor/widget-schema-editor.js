@@ -222,9 +222,6 @@ angular.module(PKG.name + '.commons')
         }
 
         initialize($scope.model);
-        EventPipe.on('plugin-outputschema.update', function() {
-          initialize($scope.model);
-        });
 
         EventPipe.on('plugin.reset', function () {
           $scope.model = angular.copy(modelCopy);
@@ -246,6 +243,17 @@ angular.module(PKG.name + '.commons')
         });
 
         EventPipe.on('dataset.selected', function (schema) {
+          try {
+            var a = JSON.parse(e.model).fields.filter(function(e) {
+              return !e.readonly
+            });
+            if (a.length) {
+              throw "Model already set";
+            }
+          } catch (n) {
+              if (e.model) { return; }
+          }
+          
           var modSchema = {fields: []};
           try {
             modSchema.fields = JSON.parse($scope.model).fields.filter(function(field) {
@@ -370,7 +378,6 @@ angular.module(PKG.name + '.commons')
           EventPipe.cancelEvent('schema.clear');
           EventPipe.cancelEvent('plugin.reset');
           EventPipe.cancelEvent('dataset.selected');
-          EventPipe.cancelEvent('plugin-outputschema.update');
         });
       }
     };
