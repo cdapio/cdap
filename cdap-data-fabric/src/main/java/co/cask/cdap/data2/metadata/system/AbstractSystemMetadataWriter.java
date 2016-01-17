@@ -16,12 +16,14 @@
 
 package co.cask.cdap.data2.metadata.system;
 
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.indexer.IndexerFactory;
+import co.cask.cdap.data2.metadata.indexer.IndexerType;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataScope;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
@@ -60,6 +62,14 @@ public abstract class AbstractSystemMetadataWriter {
   abstract String[] getSystemTagsToAdd();
 
   /**
+   * Define the {@link MetadataScope#SYSTEM system} schema to add for this entity.
+   *
+   * @return the schema as a {@link String}
+   */
+  @Nullable
+  abstract String getSchemaToAdd();
+
+  /**
    * Updates the {@link MetadataScope#SYSTEM} metadata for this {@link Id.NamespacedId entity}.
    */
   public void write() {
@@ -71,24 +81,11 @@ public abstract class AbstractSystemMetadataWriter {
     if (tags.length > 0) {
       metadataStore.addTags(MetadataScope.SYSTEM, entityId, tags);
     }
-  }
-
-  protected void addSchema(ImmutableMap.Builder<String, String> propertiesToUpdate, @Nullable Schema schema) {
-    if (schema == null) {
-      return;
-    }
-
-    if (schema.isSimpleOrNullableSimple()) {
-      Schema.Type type = getSimpleType(schema);
-      propertiesToUpdate.put(SCHEMA_FIELD_PROPERTY_PREFIX, type.toString());
-    } else {
-      for (Schema.Field field : schema.getFields()) {
-        String fieldName = field.getName();
-        // TODO: What if field.getSchema() is not simple or nullable simple?
-        String fieldType = getSimpleType(field.getSchema()).toString();
-        propertiesToUpdate.put(SCHEMA_FIELD_PROPERTY_PREFIX + MetadataDataset.KEYVALUE_SEPARATOR + fieldName,
-                               fieldName + MetadataDataset.KEYVALUE_SEPARATOR + fieldType);
-      }
+    // if there is schema property then set that while providing schema indexer
+    if (!Strings.isNullOrEmpty(getSchemaToAdd())) {
+      metadataStore.setProperties(MetadataScope.SYSTEM, entityId, ImmutableMap.of(SCHEMA_FIELD_PROPERTY_PREFIX,
+                                                                                  getSchemaToAdd()),
+                                  IndexerFactory.getIndexer(IndexerType.SCHEMA_INDEXER));
     }
   }
 
@@ -109,12 +106,5 @@ public abstract class AbstractSystemMetadataWriter {
         name + MetadataDataset.KEYVALUE_SEPARATOR + version
       );
     }
-  }
-
-  private Schema.Type getSimpleType(Schema schema) {
-    if (schema.isNullable()) {
-      schema = schema.getNonNullable();
-    }
-    return schema.getType();
   }
 }

@@ -574,7 +574,10 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Set<String> streamSystemTags = getTags(streamId, MetadataScope.SYSTEM);
     Assert.assertEquals(ImmutableSet.of(AllProgramsApp.STREAM_NAME), streamSystemTags);
     Map<String, String> streamSystemProperties = getProperties(streamId, MetadataScope.SYSTEM);
-    Assert.assertEquals(ImmutableMap.of("schema:body", "body:" + Schema.Type.STRING.toString(),
+    Assert.assertEquals(ImmutableMap.of("schema",
+                                        Schema.recordOf("stringBody",
+                                                        Schema.Field.of("body",
+                                                                        Schema.of(Schema.Type.STRING))).toString(),
                                         "ttl", String.valueOf(Long.MAX_VALUE)), streamSystemProperties);
     Set<MetadataRecord> streamSystemMetadata = getMetadata(streamId, MetadataScope.SYSTEM);
     Assert.assertEquals(
@@ -588,7 +591,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Set<String> viewSystemTags = getTags(view, MetadataScope.SYSTEM);
     Assert.assertEquals(ImmutableSet.of("view", AllProgramsApp.STREAM_NAME), viewSystemTags);
     Map<String, String> viewSystemProperties = getProperties(view, MetadataScope.SYSTEM);
-    Assert.assertEquals("viewBody:" + Schema.Type.BYTES.toString(), viewSystemProperties.get("schema:viewBody"));
+    Assert.assertEquals(viewSchema.toString(), viewSystemProperties.get("schema"));
     ImmutableSet<String> viewUserTags = ImmutableSet.of("viewTag");
     addTags(view, viewUserTags);
     Assert.assertEquals(
@@ -847,14 +850,6 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     // schema search with fieldname and all/partial fieldtype
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "body:STR*", null);
     Assert.assertEquals(expected, metadataSearchResultRecords);
-
-    // schema search for a field with the given fieldtype
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "STRING", null);
-    Assert.assertEquals(ImmutableSet.<MetadataSearchResultRecord>builder()
-                          .addAll(expected)
-                          .add(new MetadataSearchResultRecord(dsWithSchema))
-                          .build(),
-                        metadataSearchResultRecords);
 
     // create a view
     Schema viewSchema = Schema.recordOf("record",

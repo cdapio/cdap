@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -46,6 +47,17 @@ public interface MetadataStore {
    * @param properties the properties to add/update
    */
   void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties);
+
+  /**
+   * Adds/updates properties for the specified {@link Id.NamespacedId} in the specified {@link MetadataScope}.
+   *
+   * @param scope the {@link MetadataScope} to add/update the properties in
+   * @param entityId the {@link Id.NamespacedId} to add the properties to
+   * @param properties the properties to add/update
+   * @param indexer {@link Indexer} to use for creating indexes
+   */
+  void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties, Indexer indexer);
+
 
   /**
    * Adds tags for the specified {@link Id.NamespacedId} in the specified {@link MetadataScope}.

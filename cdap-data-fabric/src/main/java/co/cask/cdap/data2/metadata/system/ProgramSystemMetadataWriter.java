@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableSet;
 
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A {@link AbstractSystemMetadataWriter} for a {@link Id.Program program}.
@@ -57,6 +58,13 @@ public class ProgramSystemMetadataWriter extends AbstractSystemMetadataWriter {
       .addAll(getWorkflowNodes())
       .build();
     return tags.toArray(new String[tags.size()]);
+  }
+
+  @Nullable
+  @Override
+  String getSchemaToAdd() {
+    // no schema
+    return null;
   }
 
   private String getMode() {

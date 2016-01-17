@@ -18,28 +18,20 @@ package co.cask.cdap.data2.metadata.system;
 
 import co.cask.cdap.api.ProgramSpecification;
 import co.cask.cdap.api.app.ApplicationSpecification;
-import co.cask.cdap.api.flow.FlowSpecification;
-import co.cask.cdap.api.mapreduce.MapReduceSpecification;
 import co.cask.cdap.api.plugin.Plugin;
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.api.schedule.Schedule;
 import co.cask.cdap.api.schedule.ScheduleSpecification;
-import co.cask.cdap.api.service.ServiceSpecification;
-import co.cask.cdap.api.spark.SparkSpecification;
-import co.cask.cdap.api.worker.WorkerSpecification;
-import co.cask.cdap.api.workflow.WorkflowSpecification;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.internal.schedule.StreamSizeSchedule;
-import co.cask.cdap.internal.schedule.TimeSchedule;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * A {@link AbstractSystemMetadataWriter} for an {@link Id.Application application}.
@@ -77,6 +69,12 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
       appSpec.getName(),
       appSpec.getArtifactId().getName()
     };
+  }
+
+  @Nullable
+  @Override
+  String getSchemaToAdd() {
+    return null;
   }
 
   private void addPrograms(ImmutableMap.Builder<String, String> properties) {
