@@ -244,16 +244,16 @@ angular.module(PKG.name + '.commons')
 
         EventPipe.on('dataset.selected', function (schema) {
           try {
-            var a = JSON.parse(e.model).fields.filter(function(e) {
-              return !e.readonly
+            var a = JSON.parse($scope.model).fields.filter(function(e) {
+              return !e.readonly;
             });
             if (a.length) {
-              throw "Model already set";
+              throw 'Model already set';
             }
           } catch (n) {
-              if (e.model) { return; }
+              if ($scope.model) { return; }
           }
-          
+
           var modSchema = {fields: []};
           try {
             modSchema.fields = JSON.parse($scope.model).fields.filter(function(field) {
