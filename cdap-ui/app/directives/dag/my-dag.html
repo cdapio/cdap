@@ -68,7 +68,7 @@
 </div>
 
 <div class="my-js-dag"
-    ng-class="{'disabled': MyDAGController.isDisabled}"
+    ng-class="{'disabled': MyDAGController.isDisabled, 'normal-cursor': disableNodeClick }"
     ng-click="MyDAGController.clearNodeSelection()">
 
     <div id="diagram-container">

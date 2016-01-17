@@ -41,6 +41,11 @@ my-dag {
       background-image: none;
       border: 0;
       background-color: @table-bg;
+
+      &.normal-cursor #dag-container *{
+        cursor: default;
+      }
+
       .border-radius(4px);
       .box {
         cursor: pointer;

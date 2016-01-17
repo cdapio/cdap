@@ -182,19 +182,20 @@ class YarnCheck extends AbstractMasterCheck {
     boolean vcoresOK = vcoresCapacity <= 0 || requiredVCores <= availableVCores;
 
     if (!memoryOK && !vcoresOK) {
-      throw new RuntimeException(String.format(
-        "Services require %d MB of memory and %d vcores, " +
-          "but the cluster only has %d MB of memory and %d vcores available.",
-        requiredMemoryMB, requiredVCores, availableMemoryMB, availableVCores));
+      LOG.warn(
+        "Services require {} MB of memory and {} vcores, " +
+          "but the cluster only has {} MB of memory and {} vcores available.",
+        requiredMemoryMB, requiredVCores, availableMemoryMB, availableVCores);
     } else if (!memoryOK) {
-      throw new RuntimeException(String.format(
-        "Services require %d MB of memory but the cluster only has %d MB of memory available.",
-        requiredMemoryMB, availableMemoryMB));
+      LOG.warn(
+        "Services require {} MB of memory but the cluster only has {} MB of memory available.",
+        requiredMemoryMB, availableMemoryMB);
     } else if (!vcoresOK) {
-      throw new RuntimeException(String.format(
-        "Services require %d vcores but the cluster only has %d vcores available.",
-        requiredVCores, availableVCores));
+      LOG.warn(
+        "Services require {} vcores but the cluster only has {} vcores available.",
+        requiredVCores, availableVCores);
+    } else {
+      LOG.info("  YARN resources successfully verified.");
     }
-    LOG.info("  YARN resources successfully verified.");
   }
 }

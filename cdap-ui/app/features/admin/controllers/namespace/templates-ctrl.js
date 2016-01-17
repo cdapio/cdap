@@ -25,16 +25,17 @@ angular.module(PKG.name + '.feature.admin')
     vm.isEdit = false;
     vm.isDisabled = false;
     vm.configFetched = false;
-    vm.templationoptions = [
+    vm.noConfig = false;
+    vm.pipelineTypeOptions = [
       vm.GLOBALS.etlBatch,
       vm.GLOBALS.etlRealtime
     ];
-    vm.pluginoptionsBatch = [
+    var batchOptions = [
       GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].source,
       GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].sink,
       GLOBALS.pluginTypes[vm.GLOBALS.etlBatch].transform
     ];
-    vm.pluginoptionsRealtime = [
+    var realtimeOptions = [
       GLOBALS.pluginTypes[vm.GLOBALS.etlRealtime].source,
       GLOBALS.pluginTypes[vm.GLOBALS.etlRealtime].sink,
       GLOBALS.pluginTypes[vm.GLOBALS.etlRealtime].transform
@@ -44,8 +45,52 @@ angular.module(PKG.name + '.feature.admin')
 
     var plugin;
 
+    vm.onPipelineTypeChange = function () {
+      vm.pluginList = [];
+      vm.pluginVersions = [];
+      vm.pluginType = null;
+      vm.pluginTypeOptions = vm.templateType === vm.GLOBALS.etlBatch ? batchOptions : realtimeOptions;
+    };
+
+    vm.getPluginsList = function () {
+      vm.pluginName = null;
+      vm.pluginVersions = [];
+      plugin = null;
+      vm.pluginConfig = null;
+      vm.configFetched = false;
+
+      var prom;
+      var params = {
+        pipelineType: vm.templateType,
+        namespace: $stateParams.nsadmin,
+        version: $rootScope.cdapVersion
+      };
+      switch (vm.pluginType) {
+        case GLOBALS.pluginTypes[vm.templateType].source:
+          params.extensionType = GLOBALS.pluginTypes[vm.templateType].source;
+          prom = myPipelineApi.fetchSources(params).$promise;
+          break;
+        case GLOBALS.pluginTypes[vm.templateType].transform:
+          params.extensionType = GLOBALS.pluginTypes[vm.templateType].transform;
+          prom = myPipelineApi.fetchTransforms(params).$promise;
+          break;
+        case GLOBALS.pluginTypes[vm.templateType].sink:
+          params.extensionType = GLOBALS.pluginTypes[vm.templateType].sink;
+          prom = myPipelineApi.fetchSinks(params).$promise;
+          break;
+      }
+      prom.then(function (res) {
+        vm.pluginList = _.uniq(res.map(function (p) { return p.name; }));
+      });
+    };
+
+    vm.onPluginSelect = function () {
+      initialize();
+    };
+
     function initialize() {
       if (!vm.pluginName) { return; }
+      vm.configFetched = false;
 
       var fetchApi;
       switch (vm.pluginType) {
@@ -74,52 +119,75 @@ angular.module(PKG.name + '.feature.admin')
 
       fetchApi(params).$promise
         .then(function (res) {
-          var pluginProperties = (res.length? res[0].properties: {});
+          vm.pluginVersions = res;
 
-          plugin._backendProperties = pluginProperties;
-
-          fetchConfig();
+          if (vm.isEdit) {
+            vm.plugin = res.filter(function (obj) {
+              return angular.equals(obj.artifact, vm.pluginConfig.artifact);
+            })[0];
+            vm.onPluginVersionSelect();
+          }
         });
     }
 
-    if (!$stateParams.pluginTemplate) {
-      // Obtaining list of plugins
-      $scope.$watch(function () { return vm.pluginType; }, function () {
-        if (!vm.pluginType) { return; }
 
-        vm.pluginName = null;
-        plugin = null;
-        vm.pluginConfig = null;
-        vm.configFetched = false;
+    vm.onPluginVersionSelect = function () {
+      if (!vm.plugin) { return; }
 
-        var prom;
-        var params = {
-          pipelineType: vm.templateType,
-          namespace: $stateParams.nsadmin,
-          version: $rootScope.cdapVersion
+      if (!vm.pluginConfig) {
+        vm.pluginConfig = {
+          _backendProperties: vm.plugin.properties,
+          properties: {},
+          lock: {}
         };
-        switch (vm.pluginType) {
-          case GLOBALS.pluginTypes[vm.templateType].source:
-            params.extensionType = GLOBALS.pluginTypes[vm.templateType].source;
-            prom = myPipelineApi.fetchSources(params).$promise;
-            break;
-          case GLOBALS.pluginTypes[vm.templateType].transform:
-            params.extensionType = GLOBALS.pluginTypes[vm.templateType].transform;
-            prom = myPipelineApi.fetchTransforms(params).$promise;
-            break;
-          case GLOBALS.pluginTypes[vm.templateType].sink:
-            params.extensionType = GLOBALS.pluginTypes[vm.templateType].sink;
-            prom = myPipelineApi.fetchSinks(params).$promise;
-            break;
-        }
-        prom.then(function (res) {
-          vm.pluginList = res;
-        });
-      });
+      } else {
+        vm.pluginConfig._backendProperties = vm.plugin.properties;
+      }
 
-      // Fetching backend properties
-      $scope.$watch(function () { return vm.pluginName; }, initialize);
-    }
+      var artifact = {
+        name: vm.plugin.artifact.name,
+        version: vm.plugin.artifact.version,
+        key: 'widgets.' + vm.plugin.name + '-' + vm.plugin.type
+      };
+
+      PluginConfigFactory.fetchWidgetJson(artifact.name, artifact.version, artifact.key)
+        .then(function success (res) {
+
+          vm.configFetched = true;
+          vm.noConfig = false;
+
+          vm.groupsConfig = PluginConfigFactory.generateNodeConfig(vm.pluginConfig._backendProperties, res);
+
+          angular.forEach(vm.groupsConfig.groups, function (group) {
+            angular.forEach(group.fields, function (field) {
+              if (field.defaultValue) {
+                vm.pluginConfig.properties[field.name] = vm.pluginConfig.properties[field.name] || field.defaultValue;
+              }
+            });
+          });
+
+          var configOutputSchema = vm.groupsConfig.outputSchema;
+          // If its an implicit schema, set the output schema to the implicit schema and inform ConfigActionFactory
+          if (configOutputSchema.implicitSchema) {
+            var keys = Object.keys(configOutputSchema.implicitSchema);
+            var formattedSchema = [];
+            angular.forEach(keys, function (key) {
+              formattedSchema.push({
+                name: key,
+                type: configOutputSchema.implicitSchema[key]
+              });
+            });
+
+            vm.pluginConfig.outputSchema = JSON.stringify({ fields: formattedSchema });
+          }
+        }, function error () {
+          // When there is no config
+
+          vm.noConfig = true;
+          vm.configFetched = true;
+
+        });
+    };
 
 
     // On Edit Mode
@@ -136,6 +204,7 @@ angular.module(PKG.name + '.feature.admin')
           vm.pluginName = template.pluginName;
 
           vm.pluginConfig = {
+            artifact: template.artifact,
             pluginTemplate: template.pluginTemplate,
             properties: template.properties,
             outputSchema: template.outputSchema,
@@ -175,11 +244,14 @@ angular.module(PKG.name + '.feature.admin')
 
       vm.loading = true;
 
-      if (vm.pluginConfig._backendProperties && vm.pluginConfig._backendProperties.schema) {
-        vm.pluginConfig.properties.schema = vm.pluginConfig.outputSchema;
+      var outputPropertyName = myHelpers.objectQuery(vm.groupsConfig, 'outputSchema', 'outputSchemaProperty', '0');
+
+      if (outputPropertyName && vm.pluginConfig._backendProperties && vm.pluginConfig._backendProperties[outputPropertyName]) {
+        vm.pluginConfig.properties[outputPropertyName] = vm.pluginConfig.outputSchema;
       }
 
       var properties = {
+        artifact: vm.plugin.artifact,
         pluginTemplate: vm.pluginConfig.pluginTemplate,
         description: vm.pluginDescription,
         properties: vm.pluginConfig.properties,
@@ -225,14 +297,14 @@ angular.module(PKG.name + '.feature.admin')
             }
           }
 
-          var json = [
+          var chain = [
             namespace,
             properties.templateType,
             properties.pluginType,
             properties.pluginTemplate
-          ].join('.');
+          ];
 
-          myHelpers.deepSet(res, json, properties);
+          myHelpers.objectSetter(res, chain, properties);
 
           mySettings.set('pluginTemplates', res)
             .then(function () {
@@ -246,134 +318,5 @@ angular.module(PKG.name + '.feature.admin')
             });
         });
     };
-
-
-
-    function fetchConfig() {
-      var propertiesFromBackend = Object.keys(plugin._backendProperties);
-      var missedFieldsGroup = {
-        display: '',
-        position: [],
-        fields: {
-
-        }
-      };
-
-      vm.groups = {};
-      // FIXME: This is no longer valid. We need to fix this. The fundamental API is wrong. It shouldn't be using PluginConfigFactory.fetch.
-      PluginConfigFactory.fetch(
-        $scope,
-        vm.templateType,
-        vm.pluginName
-      )
-        .then(
-          function success(res) {
-            if (res.schema) {
-              vm.schemaProperties = res.schema;
-            }
-
-            vm.groups.position = res.groups.position;
-            angular.forEach(
-              res.groups.position,
-              setGroups.bind(vm, propertiesFromBackend, res)
-            );
-
-            // After iterating over all the groups check if the propertiesFromBackend is still empty
-            // If not there are some fields from backend for which we don't have configuration from the nodejs.
-            // Add them to the 'missedFieldsGroup' and show it as a separate group.
-            if (propertiesFromBackend.length) {
-              angular.forEach(
-                propertiesFromBackend,
-                setMissedFields.bind(vm, missedFieldsGroup)
-              );
-              vm.groups.position.push('generic');
-              vm.groups['generic'] = missedFieldsGroup;
-            }
-
-            if (res.implicit) {
-              vm.isDisabled = true;
-              var schema = res.implicit.schema;
-              var keys = Object.keys(schema);
-
-              var formattedSchema = [];
-              angular.forEach(keys, function (key) {
-                formattedSchema.push({
-                  name: key,
-                  type: schema[key]
-                });
-              });
-
-              var obj = { fields: formattedSchema };
-              plugin.outputSchema = JSON.stringify(obj);
-              plugin.implicitSchema = true;
-            }
-
-            plugin.properties = {};
-            plugin.lock = {};
-
-            if (vm.isEdit) {
-              plugin.properties = vm.pluginConfig.properties;
-              plugin.pluginTemplate = vm.pluginConfig.pluginTemplate;
-              plugin.outputSchema = vm.pluginConfig.outputSchema;
-              plugin.lock = vm.pluginConfig.lock;
-            }
-
-            vm.pluginConfig = plugin;
-
-            vm.configFetched = true;
-          }
-        );
-    }
-
-    function setGroups(propertiesFromBackend, res, group) {
-      // For each group in groups iterate over its fields in position (order of all fields)
-      var fieldsInGroup = res.groups[group].position;
-      // Add an entry for the group in our local copy.
-      vm.groups[group] = {
-        display: res.groups[group].display,
-        position: [],
-        fields: {}
-      };
-      angular.forEach(fieldsInGroup, setGroupFields.bind(vm, propertiesFromBackend, res, group));
-    }
-
-    function setGroupFields(propertiesFromBackend, res, group, field) {
-      // For each field in the group check if its been provided by the backend.
-      // If yes add it to the local copy of groups
-      // and mark the field as added.(remove from propertiesFromBackend array)
-      var index = propertiesFromBackend.indexOf(field);
-      if (index!== -1) {
-        propertiesFromBackend.splice(index, 1);
-        vm.groups[group].position.push(field);
-        vm.groups[group].fields[field] = res.groups[group].fields[field];
-        // If there is a description in the config from nodejs use that otherwise fallback to description from backend.
-        var description = myHelpers.objectQuery(res, 'groups', group, 'fields', field, 'description');
-        var info = myHelpers.objectQuery(vm, 'groups', group, 'fields', field, 'info') ;
-        var label = myHelpers.objectQuery(vm, 'groups', group, 'fields', field, 'label');
-        var defaultValue = myHelpers.objectQuery(vm, 'groups', group, 'fields', field, 'properties', 'default');
-        if (defaultValue && plugin.properties && plugin.properties.hasOwnProperty(field) && plugin.properties[field]) {
-          plugin.properties[field] = defaultValue;
-        }
-
-        if (!description || (description && !description.length)) {
-          description = myHelpers.objectQuery(plugin, '_backendProperties', field, 'description');
-          vm.groups[group].fields[field].description = description || 'No Description Available';
-        }
-        vm.groups[group].fields[field].info = info || 'Info';
-        if (!label) {
-          vm.groups[group].fields[field].label = field;
-        }
-      }
-    }
-
-    function setMissedFields (missedFieldsGroup, property) {
-      missedFieldsGroup.position.push(property);
-      missedFieldsGroup.fields[property] = {
-        widget: 'textbox',
-        label: property,
-        info: 'Info',
-        description: myHelpers.objectQuery($scope, 'plugin', '_backendProperties', property, 'description') || 'No Description Available'
-      };
-    }
 
   });

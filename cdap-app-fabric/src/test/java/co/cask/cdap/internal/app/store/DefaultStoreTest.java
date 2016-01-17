@@ -58,6 +58,7 @@ import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.DefaultId;
 import co.cask.cdap.internal.app.Specifications;
+import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
@@ -100,16 +101,20 @@ public class DefaultStoreTest {
   private static final Gson GSON = new Gson();
   private static DefaultStore store;
   private static DefaultNamespaceStore nsStore;
+  private static Scheduler scheduler;
 
   @BeforeClass
   public static void beforeClass() throws Exception {
     Injector injector = AppFabricTestHelper.getInjector();
     store = injector.getInstance(DefaultStore.class);
     nsStore = injector.getInstance(DefaultNamespaceStore.class);
+    scheduler = injector.getInstance(Scheduler.class);
   }
 
   @Before
   public void before() throws Exception {
+    // Delete any schedules that may have been registered with Quartz during app deployment
+    scheduler.deleteAllSchedules(Id.Namespace.DEFAULT);
     store.clear();
     NamespacedLocationFactory namespacedLocationFactory =
       AppFabricTestHelper.getInjector().getInstance(NamespacedLocationFactory.class);

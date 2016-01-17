@@ -868,14 +868,6 @@
   </property>
 
   <property>
-    <name>master.collect.containers.log</name>
-    <value>true</value>
-    <description>
-      Determines if master service container logs are streamed back to the CDAP Master process log
-    </description>
-  </property>
-
-  <property>
     <name>master.collect.app.containers.log</name>
     <value>true</value>
     <description>
@@ -884,10 +876,18 @@
   </property>
 
   <property>
+    <name>master.collect.containers.log</name>
+    <value>true</value>
+    <description>
+      Determines if master service container logs are streamed back to the CDAP Master process log
+    </description>
+  </property>
+
+  <property>
     <name>master.service.max.instances</name>
     <value>5</value>
     <description>
-      Maximum Number of Master Service Instances
+      Maximum number of Master Service instances
     </description>
   </property>
 
@@ -895,7 +895,7 @@
     <name>master.service.memory.mb</name>
     <value>512</value>
     <description>
-      Size of Memory in megabytes for Master Service instance
+      Size of memory in megabytes for Master Service instance
     </description>
   </property>
 

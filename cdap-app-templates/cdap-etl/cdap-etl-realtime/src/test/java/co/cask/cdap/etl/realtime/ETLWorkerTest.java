@@ -20,7 +20,6 @@ import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.etl.common.Connection;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
 import co.cask.cdap.etl.realtime.mock.DoubleTransform;
@@ -75,13 +74,13 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
     List<StructuredRecord> input = new ArrayList<>();
     input.add(StructuredRecord.builder(schema).set("id", "123").set("name", "samuel").build());
     input.add(StructuredRecord.builder(schema).set("id", "456").set("name", "jackson").build());
-    ETLStage source = new ETLStage("source", MockSource.getPlugin(input));
 
     File tmpDir = TMP_FOLDER.newFolder();
-    ETLStage sink = new ETLStage("sink", MockSink.getPlugin(tmpDir));
-    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, ImmutableList.of(sink),
-                                                        new ArrayList<ETLStage>(),
-                                                        new ArrayList<Connection>());
+    ETLRealtimeConfig etlConfig = ETLRealtimeConfig.builder()
+      .setSource(new ETLStage("source", MockSource.getPlugin(input)))
+      .addSink(new ETLStage("sink", MockSink.getPlugin(tmpDir)))
+      .addConnection("source", "sink")
+      .build();
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testToStream");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -102,9 +101,12 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
   @Test
   public void testEmptyProperties() throws Exception {
     // Set properties to null to test if ETLTemplate can handle it.
-    ETLStage source = new ETLStage("source", MockSource.getPlugin(null));
-    ETLStage sink = new ETLStage("sink", MockSink.getPlugin(null));
-    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(2, source, sink, new ArrayList<ETLStage>());
+    ETLRealtimeConfig etlConfig = ETLRealtimeConfig.builder()
+      .setSource(new ETLStage("source", MockSource.getPlugin(null)))
+      .addSink(new ETLStage("sink", MockSink.getPlugin(null)))
+      .addConnection("source", "sink")
+      .setInstances(2)
+      .build();
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "emptyTest");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -129,9 +131,11 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
     lookupTable.flush();
 
     File outDir = TMP_FOLDER.newFolder();
-    ETLStage source = new ETLStage("source", LookupSource.getPlugin(ImmutableSet.of("Bob", "Bill"), "lookupTable"));
-    ETLStage sink = new ETLStage("sink", MockSink.getPlugin(outDir));
-    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sink, new ArrayList<ETLStage>());
+    ETLRealtimeConfig etlConfig = ETLRealtimeConfig.builder()
+      .setSource(new ETLStage("source", LookupSource.getPlugin(ImmutableSet.of("Bob", "Bill"), "lookupTable")))
+      .addSink(new ETLStage("sink", MockSink.getPlugin(outDir)))
+      .addConnection("source", "sink")
+      .build();
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "testToStream");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -171,30 +175,23 @@ public class ETLWorkerTest extends ETLRealtimeBaseTest {
      *           |                     |---- sink2
      *            ----- identity ------
      */
-    ETLStage source = new ETLStage("source", MockSource.getPlugin(input));
-
-    List<ETLStage> transforms = ImmutableList.of(
-      new ETLStage("valueFilter", IntValueFilterTransform.getPlugin("x", 2)),
-      new ETLStage("double", DoubleTransform.getPlugin()),
-      new ETLStage("identity", IdentityTransform.getPlugin())
-    );
-
     File sink1Out = TMP_FOLDER.newFolder();
     File sink2Out = TMP_FOLDER.newFolder();
-    List<ETLStage> sinks = ImmutableList.of(
-      new ETLStage("sink1", MockSink.getPlugin(sink1Out)),
-      new ETLStage("sink2", MockSink.getPlugin(sink2Out))
-    );
 
-    List<Connection> connections = ImmutableList.of(
-      new Connection("source", "valueFilter"),
-      new Connection("source", "double"),
-      new Connection("source", "identity"),
-      new Connection("valueFilter", "sink1"),
-      new Connection("double", "sink2"),
-      new Connection("identity", "sink2")
-    );
-    ETLRealtimeConfig etlConfig = new ETLRealtimeConfig(source, sinks, transforms, connections);
+    ETLRealtimeConfig etlConfig = ETLRealtimeConfig.builder()
+      .setSource(new ETLStage("source", MockSource.getPlugin(input)))
+      .addSink(new ETLStage("sink1", MockSink.getPlugin(sink1Out)))
+      .addSink(new ETLStage("sink2", MockSink.getPlugin(sink2Out)))
+      .addTransform(new ETLStage("valueFilter", IntValueFilterTransform.getPlugin("x", 2)))
+      .addTransform(new ETLStage("double", DoubleTransform.getPlugin()))
+      .addTransform(new ETLStage("identity", IdentityTransform.getPlugin()))
+      .addConnection("source", "valueFilter")
+      .addConnection("source", "double")
+      .addConnection("source", "identity")
+      .addConnection("valueFilter", "sink1")
+      .addConnection("double", "sink2")
+      .addConnection("identity", "sink2")
+      .build();
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "dagTest");
     AppRequest<ETLRealtimeConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);

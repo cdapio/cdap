@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.common.http.HttpMethod;
@@ -353,7 +354,7 @@ public class MetadataClient {
    */
   public Set<MetadataRecord> getMetadata(Id.Application appId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(appId, constructPath(appId));
+    return getMetadata(appId, null);
   }
 
   /**
@@ -362,7 +363,7 @@ public class MetadataClient {
    */
   public Set<MetadataRecord> getMetadata(Id.Artifact artifactId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(artifactId, constructPath(artifactId));
+    return getMetadata(artifactId, null);
   }
 
   /**
@@ -371,7 +372,7 @@ public class MetadataClient {
    */
   public Set<MetadataRecord> getMetadata(Id.DatasetInstance datasetInstance)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(datasetInstance, constructPath(datasetInstance));
+    return getMetadata(datasetInstance, null);
   }
 
   /**
@@ -380,7 +381,7 @@ public class MetadataClient {
    */
   public Set<MetadataRecord> getMetadata(Id.Stream streamId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(streamId, constructPath(streamId));
+    return getMetadata(streamId, null);
   }
 
   /**
@@ -389,7 +390,7 @@ public class MetadataClient {
    */
   public Set<MetadataRecord> getMetadata(Id.Stream.View viewId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(viewId, constructPath(viewId));
+    return getMetadata(viewId, null);
   }
 
   /**
@@ -398,7 +399,61 @@ public class MetadataClient {
    */
   public Set<MetadataRecord> getMetadata(Id.Program programId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(programId, constructPath(programId));
+    return getMetadata(programId, null);
+  }
+
+  /**
+   * @param appId the app for which to retrieve metadata
+   * @return The metadata for the application.
+   */
+  public Set<MetadataRecord> getMetadata(Id.Application appId, @Nullable MetadataScope scope)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return doGetMetadata(appId, constructPath(appId), scope);
+  }
+
+  /**
+   * @param artifactId the artifact for which to retrieve metadata
+   * @return The metadata for the artifact.
+   */
+  public Set<MetadataRecord> getMetadata(Id.Artifact artifactId, @Nullable MetadataScope scope)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return doGetMetadata(artifactId, constructPath(artifactId), scope);
+  }
+
+  /**
+   * @param datasetInstance the dataset for which to retrieve metadata
+   * @return The metadata for the dataset.
+   */
+  public Set<MetadataRecord> getMetadata(Id.DatasetInstance datasetInstance, @Nullable MetadataScope scope)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return doGetMetadata(datasetInstance, constructPath(datasetInstance), scope);
+  }
+
+  /**
+   * @param streamId the stream for which to retrieve metadata
+   * @return The metadata for the stream.
+   */
+  public Set<MetadataRecord> getMetadata(Id.Stream streamId, @Nullable MetadataScope scope)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return doGetMetadata(streamId, constructPath(streamId), scope);
+  }
+
+  /**
+   * @param viewId the view for which to retrieve metadata
+   * @return The metadata for the view.
+   */
+  public Set<MetadataRecord> getMetadata(Id.Stream.View viewId, @Nullable MetadataScope scope)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return doGetMetadata(viewId, constructPath(viewId), scope);
+  }
+
+  /**
+   * @param programId the program for which to retrieve metadata
+   * @return The metadata for the program.
+   */
+  public Set<MetadataRecord> getMetadata(Id.Program programId, @Nullable MetadataScope scope)
+    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
+    return doGetMetadata(programId, constructPath(programId), scope);
   }
 
   /**
@@ -407,12 +462,19 @@ public class MetadataClient {
    */
   public Set<MetadataRecord> getMetadata(Id.Run runId)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(runId, constructPath(runId));
+    return doGetMetadata(runId, constructPath(runId));
   }
 
-  private Set<MetadataRecord> getMetadata(Id.NamespacedId namespacedId, String entityPath)
+  private Set<MetadataRecord> doGetMetadata(Id.NamespacedId namespacedId, String entityPath)
+    throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+    return doGetMetadata(namespacedId, entityPath, null);
+  }
+
+  private Set<MetadataRecord> doGetMetadata(Id.NamespacedId namespacedId, String entityPath,
+                                            @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     String path = String.format("%s/metadata", entityPath);
+    path = scope == null ? path : String.format("%s?scope=%s", path, scope);
     HttpResponse response = makeRequest(namespacedId, path, HttpMethod.GET);
     return GSON.fromJson(response.getResponseBodyAsString(), SET_METADATA_RECORD_TYPE);
   }
