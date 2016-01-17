@@ -26,7 +26,6 @@
     <div class="text-danger" ng-if="error">
       {{ error }}
     </div>
-
     <div ng-if="properties.length > 0">
       <fieldset ng-disabled="disableEdit">
         <table class="table">
@@ -45,19 +44,35 @@
           <tbody>
             <tr ng-repeat="property in properties" ng-keypress="enter($event, $index)" ng-click="emptyRowClick(property, $index)">
               <td class="name" ng-if="!property.empty" ng-class="{'active-cell': activeCell === true}">
-                <input ng-focus="activeCell = true" ng-blur="activeCell = false" type="text" class="form-control" ng-model="property.name" placeholder="name" my-focus-watch="property.newField" />
+                <input
+                    ng-focus="activeCell = true"
+                    ng-blur="activeCell = false"
+                    type="text"
+                    class="form-control"
+                    ng-model="property.name"
+                    placeholder="name"
+                    ng-disabled="property.readonly"
+                    my-focus-watch="property.newField" />
               </td>
-              <td class="type" ng-if="!property.empty" ng-class="{'active-cell': activeCell === true}">
+              <td class="type" ng-if="!property.empty" ng-class="{'active-cell': activeCell === true}" >
                 <div class="select-wrapper">
-                  <select ng-model="property.type" class="form-control col-xs-4"
-                      ng-options="option as option for option in options" ng-focus="activeCell = true" ng-blur="activeCell = false"></select>
+                  <select ng-model="property.type"
+                      class="form-control col-xs-4"
+                      ng-disabled="property.readonly"
+                      ng-options="option as option for option in options"
+                      ng-focus="activeCell = true"
+                      ng-blur="activeCell = false"></select>
                 </div>
               </td>
               <td class="text-center nullable" ng-if="!property.empty" ng-class="{'active-cell': activeCell === true}">
-                <input type="checkbox" ng-model="property.nullable" ng-focus="activeCell = true" ng-blur="activeCell = false" />
+                <input type="checkbox"
+                  ng-disabled="property.readonly"
+                  ng-model="property.nullable"
+                  ng-focus="activeCell = true"
+                  ng-blur="activeCell = false" />
               </td>
               <td class="text-center trash" ng-if="!property.empty">
-                <a href="" class="btn" ng-click="removeProperty(property)">
+                <a href="" class="btn" ng-click="removeProperty(property)" ng-disabled="property.readonly">
                   <span class="fa fa-fw fa-trash"> </span>
                 </a>
               </td>

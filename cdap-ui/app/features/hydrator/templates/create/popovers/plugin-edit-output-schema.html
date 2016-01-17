@@ -14,7 +14,7 @@
   the License.
 -->
 
-<div class="output-schema">
+<div class="output-schema" ng-init="watchproperty=NodeConfigController.state.groupsConfig.outputSchema.schemaProperties['property-watch']">
 
   <div class="schema-error">
     <ul>
@@ -30,7 +30,7 @@
       class="btn btn-sm btn-default pull-right"
       ng-click="NodeConfigController.schemaClear()"
       ng-if="(!NodeConfigController.state.groupsConfig.outputSchema.implicitSchema && !isDisabled)"
-      ng-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema || NodeConfigController.state.node.plugin.properties.format === 'clf' || NodeConfigController.state.node.plugin.properties.format === 'syslog'">
+      ng-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema || NodeConfigController.state.node.plugin.properties[watchproperty] === 'clf' || NodeConfigController.state.node.plugin.properties[watchproperty] === 'syslog'">
       Clear
     </button>
   </h4>
@@ -38,7 +38,7 @@
     <button class="btn btn-default"
              tooltip="Propagates schema to all down-stream nodes."
              tooltip-popup-delay="500"
-             ng-if="!isDisabled"
+             ng-if="!isDisabled && NodeConfigController.state.node.plugin.properties[watchproperty] !== 'avro'"
              ng-click="NodeConfigController.showPropagateConfirm = true">
       Propagate
     </button>
