@@ -16,7 +16,14 @@
 
 <my-breadcrumbs></my-breadcrumbs>
 
-<div class="row main-search">
+<div class="row main-search" ng-if="SearchObjectWithTagsController.loading">
+  <h3>
+    <span class="fa fa-spin fa-spinner"></span>
+    <span>Loading search result</span>
+  </h3>
+</div>
+
+<div class="row main-search" ng-if="!SearchObjectWithTagsController.loading">
   <div class="col-xs-12">
     <p class="results-count" ng-if="SearchController.filteredTObjects.length">
       <span>{{SearchController.filteredTObjects.length}}</span>

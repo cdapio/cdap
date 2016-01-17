@@ -20,6 +20,7 @@ class SearchObjectWithTagsController {
     this.$stateParams = $stateParams;
     this.taggedObjects = [];
     this.myTagsApi = myTagsApi;
+    this.loading = false;
     caskFocusManager.select('searchObjectWithTags');
     this.fetchAssociatedObjects();
     this.myHydratorFactory = myHydratorFactory;
@@ -27,6 +28,7 @@ class SearchObjectWithTagsController {
   }
 
   fetchAssociatedObjects() {
+    this.loading = true;
     let params = {
       namespaceId: this.$stateParams.namespace,
       query: `${this.tag}`
@@ -39,6 +41,11 @@ class SearchObjectWithTagsController {
           taggedObjects.forEach( (tObject) => {
             this.parseTaggedObject(tObject);
           });
+
+          this.loading = false;
+        },
+        () => {
+          this.loading = false;
         }
       );
   }
