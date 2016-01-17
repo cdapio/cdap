@@ -29,10 +29,14 @@ import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.client.util.RESTClient;
 import co.cask.cdap.common.BadRequestException;
 import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.proto.ViewSpecification;
@@ -43,6 +47,9 @@ import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
+import co.cask.common.http.HttpMethod;
+import co.cask.common.http.HttpRequest;
+import co.cask.common.http.HttpRequests;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
@@ -51,7 +58,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -651,6 +660,83 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     assertProgramSearch(app);
     // search data entities
     assertDataEntitySearch();
+  }
+
+  @Test
+  public void testSystemScopeArtifacts() throws Exception {
+    // add a system artifact. currently can't do this through the rest api (by design)
+    // so bypass it and use the repository directly
+    Id.Artifact systemId = Id.Artifact.from(Id.Namespace.SYSTEM, "wordcount", "1.0.0");
+    File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
+    ArtifactRepository artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+    artifactRepository.addArtifact(systemId, systemArtifact, new HashSet<ArtifactRange>());
+
+    // verify that user metadata can be added for system-scope artifacts
+    Map<String, String> userProperties = ImmutableMap.of("systemArtifactKey", "systemArtifactValue");
+    ImmutableSet<String> userTags = ImmutableSet.of("systemArtifactTag");
+    addProperties(systemId, userProperties);
+    addTags(systemId, userTags);
+
+    // verify that user and system metadata can be retrieved for system-scope artifacts
+    Assert.assertEquals(
+      ImmutableSet.of(
+        new MetadataRecord(systemId, MetadataScope.USER, userProperties, userTags),
+        new MetadataRecord(systemId, MetadataScope.SYSTEM,
+                           ImmutableMap.<String, String>of(), ImmutableSet.of("wordcount"))
+      ),
+      getMetadata(systemId)
+    );
+
+    // verify that user metadata can be deleted for system-scope artifacts
+    removeMetadata(systemId);
+    Assert.assertEquals(
+      ImmutableSet.of(
+        new MetadataRecord(systemId, MetadataScope.USER, ImmutableMap.<String, String>of(), ImmutableSet.<String>of()),
+        new MetadataRecord(systemId, MetadataScope.SYSTEM,
+                           ImmutableMap.<String, String>of(), ImmutableSet.of("wordcount"))
+      ),
+      getMetadata(systemId)
+    );
+    deleteArtifact(systemId, HttpResponseStatus.OK.getCode());
+  }
+
+  @Test
+  public void testScopeQueryParam() throws Exception {
+    deploy(WordCountApp.class);
+    Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, WordCountApp.class.getSimpleName());
+    RESTClient restClient = new RESTClient(clientConfig);
+    URL url = clientConfig.resolveNamespacedURLV3(Id.Namespace.DEFAULT, "apps/WordCountApp/metadata?scope=system");
+    Assert.assertEquals(
+      HttpResponseStatus.OK.getCode(),
+      restClient.execute(HttpRequest.get(url).build(), null).getResponseCode()
+    );
+    url = clientConfig.resolveNamespacedURLV3(Id.Namespace.DEFAULT,
+                                              "datasets/mydataset/metadata/properties?scope=SySTeM");
+    Assert.assertEquals(
+      HttpResponseStatus.OK.getCode(),
+      restClient.execute(HttpRequest.get(url).build(), null).getResponseCode()
+    );
+    url = clientConfig.resolveNamespacedURLV3(Id.Namespace.DEFAULT,
+                                              "apps/WordCountApp/flows/WordCountFlow/metadata/tags?scope=USER");
+    Assert.assertEquals(
+      HttpResponseStatus.OK.getCode(),
+      restClient.execute(HttpRequest.get(url).build(), null).getResponseCode()
+    );
+    url = clientConfig.resolveNamespacedURLV3(Id.Namespace.DEFAULT, "streams/text/metadata?scope=user");
+    Assert.assertEquals(
+      HttpResponseStatus.OK.getCode(),
+      restClient.execute(HttpRequest.get(url).build(), null).getResponseCode()
+    );
+    url = clientConfig.resolveNamespacedURLV3(Id.Namespace.DEFAULT, "streams/text/metadata?scope=blah");
+    Assert.assertEquals(
+      HttpResponseStatus.BAD_REQUEST.getCode(),
+      restClient.execute(HttpRequest.get(url).build(), null, HttpResponseStatus.BAD_REQUEST.getCode()).getResponseCode()
+    );
+    deleteApp(app, HttpResponseStatus.OK.getCode());
+    // deleting the app does not delete the dataset and stream, delete them explicitly to clear their system metadata
+    getInjector().getInstance(DatasetFramework.class)
+      .deleteInstance(Id.DatasetInstance.from(Id.Namespace.DEFAULT, "mydataset"));
+    getInjector().getInstance(StreamAdmin.class).drop(Id.Stream.from(Id.Namespace.DEFAULT, "text"));
   }
 
   private void assertProgramSystemMetadata(Id.Program programId, String mode) throws Exception {
