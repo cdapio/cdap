@@ -181,27 +181,21 @@ let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
       case 'source':
         if (!outputConnection[node.name]){
           errors.push(node.plugin.label);
+          cb(node);
         }
         break;
       case 'transform':
         if (!inputConnection[node.name] || !outputConnection[node.name]) {
-          errors.push(node.plugin.label);
+          cb(node);
         }
         break;
       case 'sink':
         if (!inputConnection[node.name]) {
-          errors.push(node.plugin.label);
+          cb(node);
         }
         break;
     }
   });
-
-  if (errors.length > 0) {
-    cb(true, errors);
-  } else {
-    cb(false);
-  }
-
 };
 
 let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {

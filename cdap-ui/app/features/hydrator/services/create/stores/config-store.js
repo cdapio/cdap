@@ -545,17 +545,13 @@ class ConfigStore {
         });
       });
     }
-    errorFactory.allNodesConnected(nodes, connections, (err, nodes) => {
-      if (err) {
+    errorFactory.allNodesConnected(nodes, connections, (errorNode) => {
+      if (errorNode) {
         isStateValid = false;
-
-        angular.forEach(nodes, (node) => {
-          showConsoleMessage({
-            type: 'error',
-            content: node + ' ' + this.GLOBALS.en.hydrator.studio.error['MISSING-CONNECTION']
-          });
+        showConsoleMessage({
+          type: 'error',
+          content: errorNode.plugin.name + ' ' + this.GLOBALS.en.hydrator.studio.error['MISSING-CONNECTION']
         });
-
       }
     });
 
