@@ -15,10 +15,10 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .service('PipelineDetailMetricsActionFactory', function(DetailRunsStore, PipelineDetailMetricslDispatcher, MyCDAPDataSource, MetricsStore, $filter, MyMetricsQueryHelper, DetailNonRunsStore) {
+  .service('PipelineDetailMetricsActionFactory', function(DetailRunsStore, PipelineDetailMetricslDispatcher, MyCDAPDataSource, MetricsStore, $filter, MyMetricsQueryHelper, DetailNonRunsStore, $interval) {
 
     var dispatcher = PipelineDetailMetricslDispatcher.getDispatcher();
-    var metricsPollId;
+    var metricsPoll;
     // FIXME: This is a memory leak. We need to fix this.
     var dataSrc = new MyCDAPDataSource();
     var filter = $filter('filter');
@@ -33,56 +33,65 @@ angular.module(PKG.name + '.feature.hydrator')
 
     function getMetrics(params, isPoll) {
       var metricParams = params;
-      var api;
       metricParams = MyMetricsQueryHelper.tagsToParams(metricParams);
       var metricBasePath = '/metrics/search?target=metric&' + metricParams;
-      if (isPoll) {
-        api = dataSrc.poll.bind(dataSrc);
-      } else {
-        api = dataSrc.request.bind(dataSrc);
-      }
-      metricsPollId = api({
-        method: 'POST',
-        _cdapPath: metricBasePath
-      }, function (res) {
-        var config = DetailNonRunsStore.getConfigJson();
-        var source = config.source.name;
-        var transforms = config.transforms.map(function (n) { return n.name; });
-        var sinks = config.sinks.map(function (n) { return n.name; });
-        var stagesArray = [source].concat(transforms, sinks);
-        var metricQuery = [];
 
-        if (res.length > 0) {
-          angular.forEach(stagesArray, function (node) {
-            metricQuery = metricQuery.concat(filter(res, node));
-          });
+      function request() {
+        dataSrc.request({
+          method: 'POST',
+          _cdapPath: metricBasePath
+        }).then(function (res) {
+          var config = DetailNonRunsStore.getConfigJson();
+          var source = config.source.name;
+          var transforms = config.transforms.map(function (n) { return n.name; });
+          var sinks = config.sinks.map(function (n) { return n.name; });
+          var stagesArray = [source].concat(transforms, sinks);
+          var metricQuery = [];
 
-          if (metricQuery.length === 0) {
-            dispatcher.dispatch('onEmptyMetrics');
-            return;
+          if (res.length > 0) {
+            angular.forEach(stagesArray, function (node) {
+              metricQuery = metricQuery.concat(filter(res, node));
+            });
+
+            if (metricQuery.length === 0) {
+              dispatcher.dispatch('onEmptyMetrics');
+              return;
+            }
+
+            /**
+             *  Since the parent block is already a poll, we don't need another poll for
+             *  the values of each metrics.
+             **/
+            dataSrc.request({
+              method: 'POST',
+              _cdapPath: '/metrics/query?' + metricParams + '&metric=' + metricQuery.join('&metric=')
+            }).then(function(metrics) {
+              dispatcher.dispatch('onMetricsFetch', metrics);
+            });
           }
+        }.bind(this));
 
-          /**
-           *  Since the parent block is already a poll, we don't need another poll for
-           *  the values of each metrics.
-           **/
-          dataSrc.request({
-            method: 'POST',
-            _cdapPath: '/metrics/query?' + metricParams + '&metric=' + metricQuery.join('&metric=')
-          }).then(function(metrics) {
-            dispatcher.dispatch('onMetricsFetch', metrics);
-          });
+      }
 
-        }
-      }.bind(this));
+      /**
+       * FIXME:
+       * The reason we are using interval here is because the node server does not send result
+       * if there is no change in data. Since we were only polling for the list of available metrics
+       * there won't be change of data, thus the metrics is not updating.
+       **/
+      if (isPoll) {
+        request();
+        metricsPoll = $interval(request, 10000);
+      } else {
+        request();
+      }
 
-      metricsPollId = metricsPollId.__pollId__;
     }
 
     this.stopMetricsPoll = function() {
-      if (metricsPollId) {
-        dataSrc.stopPoll(metricsPollId);
-        metricsPollId = null;
+      if (metricsPoll) {
+        $interval.cancel(metricsPoll);
+        metricsPoll = null;
       }
     };
 
