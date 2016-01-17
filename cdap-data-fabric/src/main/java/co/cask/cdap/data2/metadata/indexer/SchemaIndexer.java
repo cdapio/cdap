@@ -51,7 +51,6 @@ public class SchemaIndexer implements Indexer {
   }
 
   private Set<String> createIndexes(Schema schema) {
-    Set<String> indexes = new HashSet<>();
     if (schema == null) {
       return Collections.emptySet();
     }
@@ -59,8 +58,9 @@ public class SchemaIndexer implements Indexer {
     if (schema.isSimpleOrNullableSimple()) {
       Schema.Type type = getSimpleType(schema);
       // index the type
-      Collections.singleton(type.toString());
+      return Collections.singleton(type.toString());
     } else {
+      Set<String> indexes = new HashSet<>();
       for (Schema.Field field : schema.getFields()) {
         String fieldName = field.getName();
         // TODO: What if field.getSchema() is not simple or nullable simple?
@@ -69,8 +69,8 @@ public class SchemaIndexer implements Indexer {
         indexes.add(fieldName);
         indexes.add(fieldType);
       }
+      return indexes;
     }
-    return indexes;
   }
 
   private Schema.Type getSimpleType(Schema schema) {
