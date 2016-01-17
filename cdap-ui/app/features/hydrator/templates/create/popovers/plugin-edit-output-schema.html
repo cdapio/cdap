@@ -28,7 +28,7 @@
     <span class="fa fa-asterisk ng-scope" ng-if="NodeConfigController.state.groupsConfig.outputSchema.isOutputSchemaRequired"></span>
   </h4>
   <fieldset class="clearfix" ng-disabled="isDisabled">
-    <div class="btn-group">
+    <div class="btn-group" ng-if="NodeConfigController.state.node.plugin.properties[watchproperty] !== 'avro'">
       <button class="btn btn-default"
                tooltip="Propagates schema to all down-stream nodes."
                tooltip-popup-delay="500"
@@ -41,7 +41,7 @@
         class="btn btn-default"
         ng-click="NodeConfigController.schemaClear()"
         ng-if="(!NodeConfigController.state.groupsConfig.outputSchema.implicitSchema && !isDisabled)"
-        ng-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema || NodeConfigController.state.node.plugin.properties.format === 'clf' || NodeConfigController.state.node.plugin.properties.format === 'syslog'">
+        ng-disabled="NodeConfigController.state.groupsConfig.outputSchema.implicitSchema || NodeConfigController.state.node.plugin.properties[watchproperty] === 'clf' || NodeConfigController.state.node.plugin.properties[watchproperty] === 'syslog'">
         Clear
       </button>
     </div>
