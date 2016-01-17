@@ -181,9 +181,14 @@ angular.module(PKG.name + '.feature.hydrator')
         if (backendProperties) {
           angular.forEach(properties, function(value, key) {
             // If its a required field don't remove it.
+            // This is specifically for Stream Grok pattern. If the user specifies format as "grok" in Stream we need to set this property in stream. It is not sent as list of properties from backend for that plugin.
             var isRequiredField = backendProperties[key] && backendProperties[key].required;
+            var isKeyFormatSetting = key === 'format.setting.pattern';
             var isPropertyEmptyOrNull = properties[key] === '' || properties[key] === null;
             var isErrorDatasetName = !backendProperties[key] && key !== 'errorDatasetName';
+            if (isKeyFormatSetting && !isPropertyEmptyOrNull) {
+              return;
+            }
             if (isErrorDatasetName || (!isRequiredField && isPropertyEmptyOrNull)) {
               delete properties[key];
             }

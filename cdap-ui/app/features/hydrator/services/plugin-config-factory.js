@@ -81,7 +81,8 @@ class PluginConfigFactory {
         schemaProperties: null,
         outputSchemaProperty: null,
         isOutputSchemaRequired: null,
-        implicitSchema: null
+        implicitSchema: null,
+        watchProperty: null
       },
       groups: []
     };
