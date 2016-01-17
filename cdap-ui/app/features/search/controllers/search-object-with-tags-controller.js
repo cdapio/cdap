@@ -15,13 +15,15 @@
  */
 
 class SearchObjectWithTagsController {
-  constructor($stateParams, myTagsApi, caskFocusManager) {
+  constructor($stateParams, myTagsApi, caskFocusManager, myHydratorFactory, GLOBALS) {
     this.tag = $stateParams.tag;
     this.$stateParams = $stateParams;
     this.taggedObjects = [];
     this.myTagsApi = myTagsApi;
     caskFocusManager.select('searchObjectWithTags');
     this.fetchAssociatedObjects();
+    this.myHydratorFactory = myHydratorFactory;
+    this.GLOBALS = GLOBALS;
   }
 
   fetchAssociatedObjects() {
@@ -91,7 +93,7 @@ class SearchObjectWithTagsController {
     this.taggedObjects.push(modifiedTObject);
   }
 }
-SearchObjectWithTagsController.$inject = ['$stateParams', 'myTagsApi', 'caskFocusManager'];
+SearchObjectWithTagsController.$inject = ['$stateParams', 'myTagsApi', 'caskFocusManager', 'myHydratorFactory', 'GLOBALS'];
 
 angular.module(`${PKG.name}.feature.search`)
   .controller('SearchObjectWithTagsController', SearchObjectWithTagsController);

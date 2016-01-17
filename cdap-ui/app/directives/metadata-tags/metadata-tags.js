@@ -30,11 +30,13 @@ angular.module(PKG.name + '.commons')
     };
   })
   .controller('MetadataTagsController', function ($scope, myMetadataFactory, caskFocusManager, $state) {
-    this.metadataAddOpen = false;
-    this.metadataTags = [];
 
-    this.tagLimit = $scope.tagLimit;
-    this.limit = $scope.tagLimit;
+    var vm = this;
+    vm.metadataAddOpen = false;
+    vm.metadataTags = [];
+
+    vm.tagLimit = $scope.tagLimit;
+    vm.limit = $scope.tagLimit;
 
     var prom;
     switch($scope.type) {
@@ -52,30 +54,53 @@ angular.module(PKG.name + '.commons')
         break;
     }
 
+    function processResponse(response) {
+      var systemMetadataTags = [];
+      angular.forEach(response, function (entity) {
+        if (entity.scope === 'SYSTEM') {
+          systemMetadataTags = entity.tags.map(function (tag) {
+            return {
+              name: tag,
+              scope: 'SYSTEM'
+            };
+          });
+        } else {
+          vm.metadataTags = entity.tags.map(function (tag) {
+            return {
+              name: tag,
+              scope: 'USER'
+            };
+          });
+        }
+      });
+
+      vm.metadataTags = vm.metadataTags.concat(systemMetadataTags);
+    }
+
     prom.then(function (res) {
-      this.metadataTags = res;
-    }.bind(this));
+      processResponse(res);
+    });
 
     this.addMetadata = function () {
       var prom;
       switch($scope.type) {
         case 'datasets':
-          prom = myMetadataFactory.addDatasetsMetadata(this.tag, $scope.params);
+          prom = myMetadataFactory.addDatasetsMetadata(vm.tag, $scope.params);
           break;
         case 'apps':
-          prom = myMetadataFactory.addAppsMetadata(this.tag, $scope.params);
+          prom = myMetadataFactory.addAppsMetadata(vm.tag, $scope.params);
           break;
         case 'programs':
-          prom = myMetadataFactory.addProgramMetadata(this.tag, $scope.params);
+          prom = myMetadataFactory.addProgramMetadata(vm.tag, $scope.params);
           break;
         case 'streams':
-          prom = myMetadataFactory.addStreamsMetadata(this.tag, $scope.params);
+          prom = myMetadataFactory.addStreamsMetadata(vm.tag, $scope.params);
           break;
       }
       prom.then(function (res) {
-        this.metadataTags = res;
-        this.tag = '';
-      }.bind(this));
+        processResponse(res);
+        vm.tag = '';
+      });
     };
 
     this.deleteMetadata = function (event, tag) {
@@ -96,16 +121,16 @@ angular.module(PKG.name + '.commons')
           break;
       }
       prom.then(function (res) {
-        this.metadataTags = res;
-      }.bind(this));
+        processResponse(res);
+      });
     };
 
-    this.escapeMetadata = function () {
-      this.tag = '';
-      this.metadataAddOpen = false;
+    vm.escapeMetadata = function () {
+      vm.tag = '';
+      vm.metadataAddOpen = false;
     };
 
-    this.goToTag = function(event, tag) {
+    vm.goToTag = function(event, tag) {
       event.stopPropagation();
       $state.go('search.objectswithtags', {tag: tag});
     };
