@@ -34,7 +34,7 @@ class HydratorService {
     let artifact = this.GLOBALS.pluginTypes[pipeline.artifact.name];
 
     let source = angular.copy(pipeline.config.source);
-    let transforms = angular.copy(pipeline.config.transforms)
+    let transforms = angular.copy(pipeline.config.transforms || [])
       .map( node => {
         node.type = artifact.transform;
         node.label = node.label || node.name;
