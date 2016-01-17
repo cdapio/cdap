@@ -18,8 +18,7 @@ package co.cask.cdap.data2.metadata.system;
 
 import co.cask.cdap.api.plugin.PluginClass;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
-import co.cask.cdap.data2.metadata.indexer.IndexerFactory;
-import co.cask.cdap.data2.metadata.indexer.IndexerType;
+import co.cask.cdap.data2.metadata.indexer.SchemaIndexer;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -67,7 +66,9 @@ public abstract class AbstractSystemMetadataWriter {
    * @return the schema as a {@link String}
    */
   @Nullable
-  abstract String getSchemaToAdd();
+  String getSchemaToAdd() {
+    return null;
+  }
 
   /**
    * Updates the {@link MetadataScope#SYSTEM} metadata for this {@link Id.NamespacedId entity}.
@@ -85,7 +86,7 @@ public abstract class AbstractSystemMetadataWriter {
     if (!Strings.isNullOrEmpty(getSchemaToAdd())) {
       metadataStore.setProperties(MetadataScope.SYSTEM, entityId, ImmutableMap.of(SCHEMA_FIELD_PROPERTY_PREFIX,
                                                                                   getSchemaToAdd()),
-                                  IndexerFactory.getIndexer(IndexerType.SCHEMA_INDEXER));
+                                  new SchemaIndexer());
     }
   }
 

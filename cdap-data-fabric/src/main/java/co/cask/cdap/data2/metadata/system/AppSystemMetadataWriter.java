@@ -31,7 +31,6 @@ import com.google.common.collect.ImmutableMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * A {@link AbstractSystemMetadataWriter} for an {@link Id.Application application}.
@@ -69,12 +68,6 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
       appSpec.getName(),
       appSpec.getArtifactId().getName()
     };
-  }
-
-  @Nullable
-  @Override
-  String getSchemaToAdd() {
-    return null;
   }
 
   private void addPrograms(ImmutableMap.Builder<String, String> properties) {

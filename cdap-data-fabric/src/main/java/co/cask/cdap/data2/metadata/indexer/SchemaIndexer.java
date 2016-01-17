@@ -22,6 +22,7 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -52,13 +53,13 @@ public class SchemaIndexer implements Indexer {
   private Set<String> createIndexes(Schema schema) {
     Set<String> indexes = new HashSet<>();
     if (schema == null) {
-      return indexes;
+      return Collections.emptySet();
     }
 
     if (schema.isSimpleOrNullableSimple()) {
       Schema.Type type = getSimpleType(schema);
-      // put the type as index
-      indexes.add(type.toString());
+      // index the type
+      Collections.singleton(type.toString());
     } else {
       for (Schema.Field field : schema.getFields()) {
         String fieldName = field.getName();
@@ -66,6 +67,7 @@ public class SchemaIndexer implements Indexer {
         String fieldType = getSimpleType(field.getSchema()).toString();
         indexes.add(fieldName + MetadataDataset.KEYVALUE_SEPARATOR + fieldType);
         indexes.add(fieldName);
+        indexes.add(fieldType);
       }
     }
     return indexes;

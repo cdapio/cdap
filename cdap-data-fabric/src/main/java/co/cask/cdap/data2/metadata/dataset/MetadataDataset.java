@@ -23,9 +23,8 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
+import co.cask.cdap.data2.metadata.indexer.DefaultValueIndexer;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
-import co.cask.cdap.data2.metadata.indexer.IndexerFactory;
-import co.cask.cdap.data2.metadata.indexer.IndexerType;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
@@ -62,7 +61,7 @@ public class MetadataDataset extends AbstractDataset {
 
   private static final String HISTORY_COLUMN = "h"; // column for metadata history
   private static final String VALUE_COLUMN = "v";  // column for metadata value
-  public static final String TAGS_SEPARATOR = ",";
+  private static final String TAGS_SEPARATOR = ",";
 
   static final String INDEX_COLUMN = "i";          // column for metadata indexes
 
@@ -82,35 +81,35 @@ public class MetadataDataset extends AbstractDataset {
    * @param metadataEntry The value of the metadata to be saved.
    * @param indexer the indexer to use to create indexes for this {@link MetadataEntry}
    */
-  private void setMetadata(MetadataEntry metadataEntry, Indexer indexer) {
+  private void setMetadata(MetadataEntry metadataEntry, @Nullable Indexer indexer) {
     Id.NamespacedId targetId = metadataEntry.getTargetId();
 
     // Put to the default column.
-    write(targetId, metadataEntry, indexer);
+    write(targetId, metadataEntry, indexer == null ? new DefaultValueIndexer() : indexer);
   }
 
   /**
    * Sets a metadata property for the specified {@link Id.NamespacedId}.
    *
-   * @param targetId The target Id: app-id(ns+app) / program-id(ns+app+pgtype+pgm) /
-   *                 dataset-id(ns+dataset)/stream-id(ns+stream)
+   * @param targetId The target Id: {@link Id.Application} / {@link Id.Program} /
+   *                 {@link Id.DatasetInstance}/{@link Id.Stream}
    * @param key The metadata key to be added
    * @param value The metadata value to be added
    */
   public void setProperty(Id.NamespacedId targetId, String key, String value) {
-    setProperty(targetId, key, value, IndexerFactory.getIndexer(IndexerType.DEFAULT_VALUE_INDEXER));
+    setProperty(targetId, key, value, null);
   }
 
   /**
    * Sets a metadata property for the specified {@link Id.NamespacedId}.
    *
-   * @param targetId The target Id: app-id(ns+app) / program-id(ns+app+pgtype+pgm) /
-   *                 dataset-id(ns+dataset)/stream-id(ns+stream)
+   * @param targetId The target Id: {@link Id.Application} / {@link Id.Program} /
+   *                 {@link Id.DatasetInstance}/{@link Id.Stream}
    * @param key The metadata key to be added
    * @param value The metadata value to be added
    * @param indexer the indexer to use to create indexes for this key-value property
    */
-  public void setProperty(Id.NamespacedId targetId, String key, String value, Indexer indexer) {
+  public void setProperty(Id.NamespacedId targetId, String key, String value, @Nullable Indexer indexer) {
     setMetadata(new MetadataEntry(targetId, key, value), indexer);
   }
 
@@ -123,7 +122,7 @@ public class MetadataDataset extends AbstractDataset {
    */
   private void setTags(Id.NamespacedId targetId, String ... tags) {
     MetadataEntry tagsEntry = new MetadataEntry(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(tags));
-    setMetadata(tagsEntry, IndexerFactory.getIndexer(IndexerType.DEFAULT_VALUE_INDEXER));
+    setMetadata(tagsEntry, null);
   }
 
   /**
@@ -137,7 +136,7 @@ public class MetadataDataset extends AbstractDataset {
     Set<String> existingTags = getTags(targetId);
     Iterable<String> newTags = Iterables.concat(existingTags, Arrays.asList(tagsToAdd));
     MetadataEntry newTagsEntry = new MetadataEntry(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(newTags));
-    setMetadata(newTagsEntry, IndexerFactory.getIndexer(IndexerType.DEFAULT_VALUE_INDEXER));
+    setMetadata(newTagsEntry, null);
   }
 
   /**

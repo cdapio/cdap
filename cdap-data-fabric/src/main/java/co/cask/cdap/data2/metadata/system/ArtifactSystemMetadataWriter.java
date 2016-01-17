@@ -24,7 +24,6 @@ import co.cask.cdap.proto.artifact.ArtifactInfo;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * A {@link AbstractSystemMetadataWriter} for an {@link Id.Artifact artifact}.
@@ -54,11 +53,5 @@ public class ArtifactSystemMetadataWriter extends AbstractSystemMetadataWriter {
     return new String[] {
       artifactInfo.getName()
     };
-  }
-
-  @Nullable
-  @Override
-  String getSchemaToAdd() {
-    return null;
   }
 }

@@ -851,6 +851,14 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "body:STR*", null);
     Assert.assertEquals(expected, metadataSearchResultRecords);
 
+    // schema search for a field with the given fieldtype
+    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "STRING", null);
+    Assert.assertEquals(ImmutableSet.<MetadataSearchResultRecord>builder()
+                          .addAll(expected)
+                          .add(new MetadataSearchResultRecord(dsWithSchema))
+                          .build(),
+                        metadataSearchResultRecords);
+
     // create a view
     Schema viewSchema = Schema.recordOf("record",
                                         Schema.Field.of("viewBody", Schema.nullableOf(Schema.of(Schema.Type.BYTES))));

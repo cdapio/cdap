@@ -29,13 +29,13 @@ import java.util.regex.Pattern;
  * Default {@link Indexer} for {@link MetadataEntry}
  */
 public class DefaultValueIndexer implements Indexer {
-  private static final Pattern VALUE_SPLIT_PATTERN = Pattern.compile("[-_:\\s]+");
+  private static final Pattern VALUE_SPLIT_PATTERN = Pattern.compile("[-_:,\\s]+");
   private static final Pattern TAGS_SEPARATOR_PATTERN = Pattern.compile("[,\\s]+");
 
   @Override
   public Set<String> getIndexes(MetadataEntry entry) {
     Set<String> valueIndexes = new HashSet<>();
-    if (entry.getValue().contains(MetadataDataset.TAGS_SEPARATOR)) {
+    if (entry.getKey().equalsIgnoreCase(MetadataDataset.TAGS_KEY)) {
       // if the entry is tag then each tag is an index
       valueIndexes.addAll(Arrays.asList(TAGS_SEPARATOR_PATTERN.split(entry.getValue())));
     } else {

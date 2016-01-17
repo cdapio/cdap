@@ -27,8 +27,6 @@ import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import co.cask.cdap.data2.metadata.indexer.Indexer;
-import co.cask.cdap.data2.metadata.indexer.IndexerFactory;
-import co.cask.cdap.data2.metadata.indexer.IndexerType;
 import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
@@ -57,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MetadataStore} used in distributed mode.
@@ -97,7 +96,7 @@ public class DefaultMetadataStore implements MetadataStore {
 
   @Override
   public void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties) {
-    setProperties(scope, entityId, properties, IndexerFactory.getIndexer(IndexerType.DEFAULT_VALUE_INDEXER));
+    setProperties(scope, entityId, properties, null);
   }
 
   /**
@@ -105,7 +104,7 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public void setProperties(MetadataScope scope, final Id.NamespacedId entityId, final Map<String, String> properties,
-                            final Indexer indexer) {
+                            @Nullable final Indexer indexer) {
     if (!cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
       setPropertiesNoPublish(scope, entityId, properties, indexer);
       return;
@@ -145,7 +144,7 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   private void setPropertiesNoPublish(MetadataScope scope, final Id.NamespacedId entityId,
-                                      final Map<String, String> properties, final Indexer indexer) {
+                                      final Map<String, String> properties, @Nullable final Indexer indexer) {
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {

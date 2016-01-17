@@ -26,6 +26,7 @@ import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Defines operations on {@link MetadataDataset} for both system and user metadata.
@@ -56,7 +57,8 @@ public interface MetadataStore {
    * @param properties the properties to add/update
    * @param indexer {@link Indexer} to use for creating indexes
    */
-  void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties, Indexer indexer);
+  void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties,
+                     @Nullable Indexer indexer);
 
 
   /**
