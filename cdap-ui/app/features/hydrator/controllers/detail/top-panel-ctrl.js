@@ -31,7 +31,7 @@ angular.module(PKG.name + '.feature.hydrator')
       var status, i;
       var lastRunDuration;
       var nextRunTime = DetailRunsStore.getNextRunTime();
-      if (nextRunTime) {
+      if (nextRunTime && nextRunTime.length) {
         nextRunTime = nextRunTime[0].time? nextRunTime[0].time: null;
       }
       this.nextRunTime = nextRunTime || 'N/A';

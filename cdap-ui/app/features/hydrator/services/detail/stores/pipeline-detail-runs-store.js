@@ -39,10 +39,8 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.setDefaults({});
 
-    this.changeListeners = [];
-
     this.getRuns = function() {
-      return this.state.runs.list;
+      return angular.copy(this.state.runs.list);
     };
     this.getLatestRun = function() {
       return this.state.runs.list[0];
@@ -63,7 +61,6 @@ angular.module(PKG.name + '.feature.hydrator')
       }
       return metricRunId;
     };
-    this.getHistory = this.getRuns;
     this.getAppType = function() {
       return this.state.type;
     };
@@ -113,7 +110,8 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.emitChange = function() {
       this.changeListeners.forEach(function(callback) {
-        callback(this.state);
+        var stateCopy = angular.copy(this.state);
+        callback(stateCopy);
       }.bind(this));
     };
 
