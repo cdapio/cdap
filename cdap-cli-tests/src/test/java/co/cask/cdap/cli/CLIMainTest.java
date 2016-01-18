@@ -47,6 +47,7 @@ import co.cask.common.cli.CLI;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -629,13 +630,14 @@ public class CLIMainTest {
 
   private static void testPreferencesOutput(CLI cli, String command, final Map<String, String> expected)
     throws Exception {
-    final String expectedOutput = Joiner.on(String.format("%n")).join(expected.entrySet().iterator());
     testCommand(cli, command, new Function<String, Void>() {
       @Nullable
       @Override
       public Void apply(@Nullable String output) {
         Assert.assertNotNull(output);
-        Assert.assertEquals(expectedOutput, output);
+        Map<String, String> outputMap = Splitter.on(System.lineSeparator())
+          .omitEmptyStrings().withKeyValueSeparator("=").split(output);
+        Assert.assertEquals(expected, outputMap);
         return null;
       }
     });
