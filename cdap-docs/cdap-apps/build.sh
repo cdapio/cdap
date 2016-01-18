@@ -16,7 +16,7 @@
   
 # Build script for docs
 
-# source ../vars
+source ../vars
 source ../_common/common-build.sh
 
 CHECK_INCLUDES=${TRUE}
@@ -74,12 +74,11 @@ function download_includes() {
   if [ "x${GIT_BRANCH_TYPE:0:7}" == "xdevelop" ]; then
     local hydrator_branch="develop"
   else
-    local hydrator_branch="release/cdap-${PROJECT_SHORT_VERSION}-compatible"
+    local hydrator_branch="${GIT_BRANCH_CDAP_HYDRATOR}"
   fi
-  # FIXME: temp until branch created
-  hydrator_branch="develop"
   
   local hydrator_source="${base_source}/${hydrator_branch}"
+  echo_red_bold "Using $hydrator_source"
 
   # 1:Includes dir 2:GitHub Hydrator source dir 3:Hydrator dir 4:Type 5:Target filename 6:Source Markdown filename
 
