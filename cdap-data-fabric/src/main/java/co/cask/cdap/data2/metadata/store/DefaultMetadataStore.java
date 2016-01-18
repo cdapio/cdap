@@ -555,4 +555,13 @@ public class DefaultMetadataStore implements MetadataStore {
     framework.addInstance(MetadataDataset.class.getName(), BUSINESS_METADATA_INSTANCE_ID, DatasetProperties.EMPTY);
     framework.addInstance(MetadataDataset.class.getName(), SYSTEM_METADATA_INSTANCE_ID, DatasetProperties.EMPTY);
   }
+
+  public void upgrade() {
+    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
+      @Override
+      public void apply(MetadataDataset input) throws Exception {
+        input.upgrade();
+      }
+    }, MetadataScope.USER); // in 3.2 we only had user metadata so upgrade only that
+  }
 }
