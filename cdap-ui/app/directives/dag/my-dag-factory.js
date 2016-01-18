@@ -103,7 +103,7 @@ angular.module(PKG.name + '.commons')
         'database': 'icon-database',
         'table': 'icon-table',
         'kafka': 'icon-kafka',
-        'stream': 'icon-stream',
+        'stream': 'icon-streams',
         'jms': 'icon-jms',
         'projection': 'icon-projection',
         'amazonsqs': 'icon-amazonsqs',

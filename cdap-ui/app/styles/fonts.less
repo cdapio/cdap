@@ -38,17 +38,6 @@
 	font-style: normal;
 }
 
-@font-face {
-  font-family: 'icomoon';
-  src:url('../fonts/icomoon-node.eot?-lfhtf3');
-  src:url('../fonts/icomoon-node.eot?#iefix-lfhtf3') format('embedded-opentype'),
-      url('../fonts/icomoon-node.woff?-lfhtf3') format('woff'),
-      url('../fonts/icomoon-node.ttf?-lfhtf3') format('truetype'),
-      url('../fonts/icomoon-node.svg?-lfhtf3#icomoon') format('svg');
-  font-weight: normal;
-  font-style: normal;
-}
-
 [class^="icon-"], [class*=" icon-"] {
 	font-family: 'icomoon';
 	speak: none;
@@ -66,6 +55,9 @@
   }
 }
 
+.icon-jms:before {
+    content: "\e93e";
+}
 .icon-amazonsqs:before {
     content: "\e900";
 }
@@ -85,203 +77,194 @@
     content: "\e905";
 }
 .icon-kafka:before {
-    content: "\e907";
+    content: "\e906";
 }
 .icon-kvtable:before {
-    content: "\e908";
+    content: "\e907";
 }
 .icon-logparser:before {
-    content: "\e909";
+    content: "\e908";
 }
 .icon-s3:before {
-    content: "\e90a";
+    content: "\e909";
 }
 .icon-s3avro:before {
-    content: "\e90b";
+    content: "\e90a";
 }
 .icon-s3parquet:before {
-    content: "\e90c";
+    content: "\e90b";
 }
 .icon-script:before {
-    content: "\e90d";
+    content: "\e90c";
 }
 .icon-scriptfilter:before {
-    content: "\e90e";
+    content: "\e90d";
 }
 .icon-sink:before {
-    content: "\e90f";
+    content: "\e90e";
 }
 .icon-snapshotavro:before {
-    content: "\e910";
+    content: "\e90f";
 }
 .icon-snapshotparquet:before {
-    content: "\e911";
-}
-.icon-stream:before {
-    content: "\e912";
-}
-.icon-table:before {
-    content: "\e913";
-}
-.icon-tpfsavro:before {
-    content: "\e914";
-}
-.icon-tpfsparquet:before {
-    content: "\e915";
-}
-.icon-twitter:before {
-    content: "\e916";
-}
-.icon-validator:before {
-    content: "\e917";
-}
-.icon-suspend:before {
-  content: "\e911";
-}
-.icon-worker:before {
-  content: "\e90d";
-}
-.icon-delete:before {
-  content: "\e900";
-}
-.icon-start:before {
-  content: "\e901";
-}
-.icon-clone:before {
-  content: "\e902";
-}
-.icon-calendar:before {
-  content: "\e903";
-}
-.icon-zoomin:before {
-  content: "\e904";
-}
-.icon-zoomout:before {
-  content: "\e905";
-}
-.icon-clean:before {
-  content: "\e906";
-}
-.icon-fit:before {
-  content: "\e907";
-}
-.icon-validate:before {
-  content: "\e908";
-}
-.icon-savedraft:before {
-  content: "\e909";
-}
-.icon-publish:before {
-  content: "\e90a";
-}
-.icon-import:before {
-  content: "\e90b";
-}
-.icon-export:before {
-  content: "\e90c";
-}
-.icon-draft:before {
-  content: "\e61e";
-}
-.icon-stopped:before {
-  content: "\e61f";
-}
-.icon-paused:before {
-  content: "\e620";
-}
-.icon-failed:before {
-  content: "\e621";
-}
-.icon-running:before {
-  content: "\e622";
-}
-.icon-hydrator:before {
-  content: "\e61d";
-}
-.icon-SchemaEdge:before {
-  content: "\e61c";
-}
-.icon-ETLBatch:before {
-  content: "\e61a";
-}
-.icon-ETLRealtime:before {
-  content: "\e61b";
-}
-.icon-adapter:before {
-  content: "\e600";
-}
-.icon-app:before {
-  content: "\e601";
-}
-.icon-applicationtempaltes:before {
-  content: "\e602";
-}
-.icon-avro:before {
-  content: "\e603";
-}
-.icon-configuration:before {
-  content: "\e604";
-}
-.icon-datasets:before {
-  content: "\e605";
-}
-.icon-datatypes:before {
-  content: "\e606";
-}
-.icon-ETLsinks:before {
-  content: "\e607";
-}
-.icon-ETLsources:before {
-  content: "\e608";
-}
-.icon-ETLtemplates:before {
-  content: "\e609";
-}
-.icon-ETLtransforms:before {
-  content: "\e60a";
-}
-.icon-fist:before {
-  content: "\e60b";
-}
-.icon-jms:before {
-  content: "\e60c";
-}
-.icon-kafka:before {
-  content: "\e60d";
-}
-.icon-mapreduce:before {
-  content: "\e60e";
-}
-.icon-plugin-stream:before {
-  content: "\e60f";
-}
-.icon-programtypes:before {
-  content: "\e610";
-}
-.icon-projection:before {
-  content: "\e611";
-}
-.icon-reset:before {
-  content: "\e612";
-}
-.icon-service:before {
-  content: "\e613";
-}
-.icon-spark:before {
-  content: "\e614";
+    content: "\e910";
 }
 .icon-streams:before {
-  content: "\e615";
+    content: "\e911";
+}
+.icon-table:before {
+    content: "\e912";
+}
+.icon-tpfsavro:before {
+    content: "\e913";
+}
+.icon-tpfsparquet:before {
+    content: "\e914";
+}
+.icon-twitter:before {
+    content: "\e915";
+}
+.icon-validator:before {
+    content: "\e916";
+}
+.icon-adapter:before {
+    content: "\e917";
+}
+.icon-app:before {
+    content: "\e918";
+}
+.icon-applicationtemplates:before {
+    content: "\e919";
+}
+.icon-avro:before {
+    content: "\e91a";
+}
+.icon-calendar:before {
+    content: "\e91b";
+}
+.icon-clean:before {
+    content: "\e91c";
+}
+.icon-clone:before {
+    content: "\e91d";
+}
+.icon-configuration:before {
+    content: "\e91e";
+}
+.icon-datasets:before {
+    content: "\e91f";
+}
+.icon-datatypes:before {
+    content: "\e920";
+}
+.icon-delete:before {
+    content: "\e921";
+}
+.icon-draft:before {
+    content: "\e922";
+}
+.icon-ETLBatch:before, .icon-cdap-etl-batch:before {
+    content: "\e923";
+}
+.icon-ETLRealtime:before, .icon-cdap-etl-realtime:before {
+    content: "\e924";
+}
+.icon-ETLsinks:before {
+    content: "\e925";
+}
+.icon-ETLsources:before {
+    content: "\e926";
+}
+.icon-ETLtemplates:before {
+    content: "\e927";
+}
+.icon-ETLtransforms:before {
+    content: "\e928";
+}
+.icon-export:before {
+    content: "\e929";
+}
+.icon-failed:before {
+    content: "\e92a";
+}
+.icon-fist:before {
+    content: "\e92b";
+}
+.icon-fit:before {
+    content: "\e92c";
+}
+.icon-hydrator:before {
+    content: "\e92d";
+}
+.icon-import:before {
+    content: "\e92e";
+}
+.icon-mapreduce:before {
+    content: "\e92f";
+}
+.icon-paused:before {
+    content: "\e930";
+}
+.icon-plugin-stream:before {
+    content: "\e931";
+}
+.icon-programtypes:before {
+    content: "\e932";
+}
+.icon-projection:before {
+    content: "\e933";
+}
+.icon-publish:before {
+    content: "\e934";
+}
+.icon-reset:before {
+    content: "\e935";
+}
+.icon-running:before {
+    content: "\e936";
+}
+.icon-savedraft:before {
+    content: "\e937";
+}
+.icon-SchemaEdge:before {
+    content: "\e938";
+}
+.icon-service:before {
+    content: "\e939";
+}
+.icon-spark:before {
+    content: "\e93a";
+}
+.icon-start:before {
+    content: "\e93b";
+}
+.icon-stopped:before {
+    content: "\e93c";
+}
+.icon-suspend:before {
+    content: "\e93d";
 }
 .icon-systempreferences:before {
-  content: "\e616";
+    content: "\e941";
 }
-.icon-systemsecruity:before {
-  content: "\e617";
+.icon-systemsecurity:before {
+    content: "\e942";
 }
 .icon-tigon:before {
-  content: "\e618";
+    content: "\e943";
+}
+.icon-validate:before {
+    content: "\e944";
+}
+.icon-worker:before {
+    content: "\e945";
 }
 .icon-workflow:before {
-  content: "\e619";
+    content: "\e946";
+}
+.icon-zoomIn:before {
+    content: "\e947";
+}
+.icon-zoomout:before {
+    content: "\e948";
 }
