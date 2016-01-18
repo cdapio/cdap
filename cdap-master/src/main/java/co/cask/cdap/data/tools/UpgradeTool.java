@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data.tools;
 
 import co.cask.cdap.api.dataset.DatasetSpecification;
@@ -98,7 +99,6 @@ public class UpgradeTool {
 
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeTool.class);
 
-  private final Injector injector;
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final TransactionService txService;
@@ -111,7 +111,8 @@ public class UpgradeTool {
   private final QueueAdmin queueAdmin;
   private final DatasetSpecificationUpgrader dsSpecUpgrader;
   private final DatasetInstanceManager datasetInstanceManager;
-  private MetadataStore metadataStore;
+  private final MetadataStore metadataStore;
+  private final ExistingEntitySystemMetadataWriter existingEntitySystemMetadataWriter;
 
   /**
    * Set of Action available in this tool.
@@ -143,7 +144,7 @@ public class UpgradeTool {
   public UpgradeTool() throws Exception {
     this.cConf = CConfiguration.create();
     this.hConf = HBaseConfiguration.create();
-    this.injector = init();
+    Injector injector = init();
     this.txService = injector.getInstance(TransactionService.class);
     this.zkClientService = injector.getInstance(ZKClientService.class);
     this.dsFramework = injector.getInstance(DatasetFramework.class);
@@ -168,6 +169,7 @@ public class UpgradeTool {
         }
       }
     });
+    existingEntitySystemMetadataWriter = injector.getInstance(ExistingEntitySystemMetadataWriter.class);
   }
 
   private Injector init() throws Exception {
@@ -252,11 +254,11 @@ public class UpgradeTool {
   /**
    * Do the start up work
    */
-  private void startUp(boolean includeNewDatasets) throws Exception {
+  private void startUp() throws Exception {
     // Start all the services.
     zkClientService.startAndWait();
     txService.startAndWait();
-    initializeDSFramework(cConf, dsFramework, includeNewDatasets);
+    initializeDSFramework(cConf, dsFramework);
     mdsDatasetsRegistry.startUp();
   }
 
@@ -305,7 +307,7 @@ public class UpgradeTool {
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
             try {
-              startUp(false);
+              startUp();
               performUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
@@ -322,7 +324,7 @@ public class UpgradeTool {
           if (response.equalsIgnoreCase("y") || response.equalsIgnoreCase("yes")) {
             System.out.println("Starting upgrade ...");
             try {
-              startUp(true);
+              startUp();
               performHBaseUpgrade();
               System.out.println("\nUpgrade completed successfully.\n");
             } finally {
@@ -391,8 +393,11 @@ public class UpgradeTool {
     LOG.info("Upgrading Business Metadata Dataset...");
     metadataStore.upgrade();
 
-    LOG.info("Upgrading stream state store table ...");
+    LOG.info("Upgrading stream state store table...");
     streamStateStoreUpgrader.upgrade();
+
+    LOG.info("Writing system metadata to existing entities...");
+    existingEntitySystemMetadataWriter.write();
   }
 
   private void performHBaseUpgrade() throws Exception {
@@ -424,8 +429,7 @@ public class UpgradeTool {
    * Sets up a {@link DatasetFramework} instance for standalone usage.  NOTE: should NOT be used by applications!!!
    */
   private void initializeDSFramework(CConfiguration cConf,
-                                     DatasetFramework datasetFramework,
-                                     boolean includeNewDatasets) throws IOException, DatasetManagementException {
+                                     DatasetFramework datasetFramework) throws IOException, DatasetManagementException {
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
     // artifacts
