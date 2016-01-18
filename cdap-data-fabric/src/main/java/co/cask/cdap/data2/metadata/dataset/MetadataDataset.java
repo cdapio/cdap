@@ -565,7 +565,9 @@ public class MetadataDataset extends AbstractDataset {
             String key = getMetadataKeyFromOldFormat(targetType, rowKey);
             MetadataEntry metadataEntry = new MetadataEntry(targetId, key, Bytes.toString(value));
             indexedTable.delete(new Delete(rowKey));            // remove the old metadata entry
-            write(metadataEntry.getTargetId(), metadataEntry);  // add the metadata back creating new indexes
+            // add the metadata back creating new indexes. We can just use DefaultValueIndexer because
+            // in 3.2 we didn't have schema as metadata so no old records can be schema.
+            write(metadataEntry.getTargetId(), metadataEntry, new DefaultValueIndexer());
             upgradePerformed = true;
             LOG.info("Upgraded MetadataEntry: {}", metadataEntry);
           }
@@ -579,10 +581,10 @@ public class MetadataDataset extends AbstractDataset {
     }
 
     /**
-     * Write similar to {@link MetadataDataset#write(Id.NamespacedId, MetadataEntry)} but without history
+     * Write similar to {@link MetadataDataset#write(Id.NamespacedId, MetadataEntry, Indexer)} but without history
      * since while writting during upgrade we don't want to add history.
      */
-    private void write(Id.NamespacedId targetId, MetadataEntry entry) {
+    private void write(Id.NamespacedId targetId, MetadataEntry entry, Indexer indexer) {
       String key = entry.getKey();
       MDSKey mdsValueKey = MdsKey.getMDSValueKey(targetId, key);
       Put put = new Put(mdsValueKey.getKey());
@@ -591,7 +593,7 @@ public class MetadataDataset extends AbstractDataset {
       put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(entry.getValue()));
       indexedTable.put(put);
       // index the metadata
-      storeIndexes(targetId, entry);
+      storeIndexes(targetId, entry, indexer.getIndexes(entry));
     }
 
     /**
