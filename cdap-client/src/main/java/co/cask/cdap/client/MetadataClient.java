@@ -92,24 +92,36 @@ public class MetadataClient {
   }
 
   /**
-   * @param id the entity for which to retrieve metadata
+   * @param id the entity for which to retrieve metadata across {@link MetadataScope#SYSTEM} and
+   * {@link MetadataScope#USER}
    * @return The metadata for the entity.
    */
   public Set<MetadataRecord> getMetadata(Id id)
+    throws UnauthorizedException, BadRequestException, NotFoundException, IOException {
+    return getMetadata(id, null);
+  }
+
+  /**
+   * @param id the entity for which to retrieve metadata
+   * @param scope the {@link MetadataScope} to retrieve the metadata from. If null, this method retrieves
+   *              metadata from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
+   * @return The metadata for the entity.
+   */
+  public Set<MetadataRecord> getMetadata(Id id, @Nullable MetadataScope scope)
     throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
 
     if (id instanceof Id.Application) {
-      return getMetadata((Id.Application) id);
+      return getMetadata((Id.Application) id, scope);
     } else if (id instanceof Id.Artifact) {
-      return getMetadata((Id.Artifact) id);
+      return getMetadata((Id.Artifact) id, scope);
     } else if (id instanceof Id.DatasetInstance) {
-      return getMetadata((Id.DatasetInstance) id);
+      return getMetadata((Id.DatasetInstance) id, scope);
     } else if (id instanceof Id.Stream) {
-      return getMetadata((Id.Stream) id);
+      return getMetadata((Id.Stream) id, scope);
     } else if (id instanceof Id.Stream.View) {
-      return getMetadata((Id.Stream.View) id);
+      return getMetadata((Id.Stream.View) id, scope);
     } else if (id instanceof Id.Program) {
-      return getMetadata((Id.Program) id);
+      return getMetadata((Id.Program) id, scope);
     } else if (id instanceof Id.Run) {
       return getMetadata((Id.Run) id);
     }
@@ -118,52 +130,71 @@ public class MetadataClient {
   }
 
   /**
-   * @param id the entity for which to retrieve metadata properties
+   * @param id the entity for which to retrieve metadata properties across {@link MetadataScope#SYSTEM} and
+   * {@link MetadataScope#USER}
    * @return The metadata properties for the entity.
    */
   public Map<String, String> getProperties(Id id)
+    throws UnauthorizedException, BadRequestException, NotFoundException, IOException {
+    return getProperties(id, null);
+  }
+
+  /**
+   * @param id the entity for which to retrieve metadata properties
+   * @param scope the {@link MetadataScope} to retrieve the properties from. If null, this method retrieves
+   *              properties from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
+   * @return The metadata properties for the entity.
+   */
+  public Map<String, String> getProperties(Id id, @Nullable MetadataScope scope)
     throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
 
     if (id instanceof Id.Application) {
-      return getProperties((Id.Application) id);
+      return getProperties((Id.Application) id, scope);
     } else if (id instanceof Id.Artifact) {
-      return getProperties((Id.Artifact) id);
+      return getProperties((Id.Artifact) id, scope);
     } else if (id instanceof Id.DatasetInstance) {
-      return getProperties((Id.DatasetInstance) id);
+      return getProperties((Id.DatasetInstance) id, scope);
     } else if (id instanceof Id.Stream) {
-      return getProperties((Id.Stream) id);
+      return getProperties((Id.Stream) id, scope);
     } else if (id instanceof Id.Stream.View) {
-      return getProperties((Id.Stream.View) id);
+      return getProperties((Id.Stream.View) id, scope);
     } else if (id instanceof Id.Program) {
-      return getProperties((Id.Program) id);
-    } else if (id instanceof Id.Run) {
-      return getProperties((Id.Run) id);
+      return getProperties((Id.Program) id, scope);
     }
 
     throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
   }
 
   /**
-   * @param id the entity for which to retrieve metadata tags
+   * @param id the entity for which to retrieve metadata tags across {@link MetadataScope#SYSTEM} and
+   * {@link MetadataScope#USER}
    * @return The metadata tags for the entity.
    */
-  public Set<String> getTags(Id id)
+  public Set<String> getTags(Id id) throws UnauthorizedException, BadRequestException, NotFoundException, IOException {
+    return getTags(id, null);
+  }
+
+  /**
+   * @param id the entity for which to retrieve metadata tags
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If null, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
+   * @return The metadata tags for the entity.
+   */
+  public Set<String> getTags(Id id, @Nullable MetadataScope scope)
     throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
 
     if (id instanceof Id.Application) {
-      return getTags((Id.Application) id);
+      return getTags((Id.Application) id, scope);
     } else if (id instanceof Id.Artifact) {
-      return getTags((Id.Artifact) id);
+      return getTags((Id.Artifact) id, scope);
     } else if (id instanceof Id.DatasetInstance) {
-      return getTags((Id.DatasetInstance) id);
+      return getTags((Id.DatasetInstance) id, scope);
     } else if (id instanceof Id.Stream) {
-      return getTags((Id.Stream) id);
+      return getTags((Id.Stream) id, scope);
     } else if (id instanceof Id.Stream.View) {
-      return getTags((Id.Stream.View) id);
+      return getTags((Id.Stream.View) id, scope);
     } else if (id instanceof Id.Program) {
-      return getTags((Id.Program) id);
-    } else if (id instanceof Id.Run) {
-      return getTags((Id.Run) id);
+      return getTags((Id.Program) id, scope);
     }
 
     throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
@@ -188,8 +219,6 @@ public class MetadataClient {
       addProperties((Id.Stream.View) id, properties);
     } else if (id instanceof Id.Program) {
       addProperties((Id.Program) id, properties);
-    } else if (id instanceof Id.Run) {
-      addProperties((Id.Run) id, properties);
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
@@ -214,8 +243,6 @@ public class MetadataClient {
       addTags((Id.Stream.View) id, tags);
     } else if (id instanceof Id.Program) {
       addTags((Id.Program) id, tags);
-    } else if (id instanceof Id.Run) {
-      addTags((Id.Run) id, tags);
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
@@ -239,8 +266,6 @@ public class MetadataClient {
       removeMetadata((Id.Stream.View) id);
     } else if (id instanceof Id.Program) {
       removeMetadata((Id.Program) id);
-    } else if (id instanceof Id.Run) {
-      removeMetadata((Id.Run) id);
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
@@ -264,8 +289,6 @@ public class MetadataClient {
       removeProperties((Id.Stream.View) id);
     } else if (id instanceof Id.Program) {
       removeProperties((Id.Program) id);
-    } else if (id instanceof Id.Run) {
-      removeProperties((Id.Run) id);
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
@@ -289,8 +312,6 @@ public class MetadataClient {
       removeTags((Id.Stream.View) id);
     } else if (id instanceof Id.Program) {
       removeTags((Id.Program) id);
-    } else if (id instanceof Id.Run) {
-      removeTags((Id.Run) id);
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
@@ -315,8 +336,6 @@ public class MetadataClient {
       removeProperty((Id.Stream.View) id, property);
     } else if (id instanceof Id.Program) {
       removeProperty((Id.Program) id, property);
-    } else if (id instanceof Id.Run) {
-      removeProperty((Id.Run) id, property);
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
@@ -346,60 +365,6 @@ public class MetadataClient {
     } else {
       throw new IllegalArgumentException("Unsupported Id type: " + id.getClass().getName());
     }
-  }
-
-  /**
-   * @param appId the app for which to retrieve metadata
-   * @return The metadata for the application.
-   */
-  public Set<MetadataRecord> getMetadata(Id.Application appId)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(appId, null);
-  }
-
-  /**
-   * @param artifactId the artifact for which to retrieve metadata
-   * @return The metadata for the artifact.
-   */
-  public Set<MetadataRecord> getMetadata(Id.Artifact artifactId)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(artifactId, null);
-  }
-
-  /**
-   * @param datasetInstance the dataset for which to retrieve metadata
-   * @return The metadata for the dataset.
-   */
-  public Set<MetadataRecord> getMetadata(Id.DatasetInstance datasetInstance)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(datasetInstance, null);
-  }
-
-  /**
-   * @param streamId the stream for which to retrieve metadata
-   * @return The metadata for the stream.
-   */
-  public Set<MetadataRecord> getMetadata(Id.Stream streamId)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(streamId, null);
-  }
-
-  /**
-   * @param viewId the view for which to retrieve metadata
-   * @return The metadata for the view.
-   */
-  public Set<MetadataRecord> getMetadata(Id.Stream.View viewId)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(viewId, null);
-  }
-
-  /**
-   * @param programId the program for which to retrieve metadata
-   * @return The metadata for the program.
-   */
-  public Set<MetadataRecord> getMetadata(Id.Program programId)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getMetadata(programId, null);
   }
 
   /**
@@ -481,140 +446,149 @@ public class MetadataClient {
 
   /**
    * @param appId the app for which to retrieve metadata properties
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the application.
    */
-  public Map<String, String> getProperties(Id.Application appId)
+  public Map<String, String> getProperties(Id.Application appId, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getProperties(appId, constructPath(appId));
+    return getProperties(appId, constructPath(appId), scope);
   }
 
   /**
    * @param artifactId the artifact for which to retrieve metadata properties
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the artifact.
    */
-  public Map<String, String> getProperties(Id.Artifact artifactId)
+  public Map<String, String> getProperties(Id.Artifact artifactId, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getProperties(artifactId, constructPath(artifactId));
+    return getProperties(artifactId, constructPath(artifactId), scope);
   }
 
   /**
    * @param datasetInstance the dataset for which to retrieve metadata properties
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the dataset.
    */
-  public Map<String, String> getProperties(Id.DatasetInstance datasetInstance)
+  public Map<String, String> getProperties(Id.DatasetInstance datasetInstance, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getProperties(datasetInstance, constructPath(datasetInstance));
+    return getProperties(datasetInstance, constructPath(datasetInstance), scope);
   }
 
   /**
    * @param streamId the stream for which to retrieve metadata properties
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the stream.
    */
-  public Map<String, String> getProperties(Id.Stream streamId)
+  public Map<String, String> getProperties(Id.Stream streamId, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getProperties(streamId, constructPath(streamId));
+    return getProperties(streamId, constructPath(streamId), scope);
   }
 
   /**
    * @param viewId the view for which to retrieve metadata properties
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the view.
    */
-  public Map<String, String> getProperties(Id.Stream.View viewId)
+  public Map<String, String> getProperties(Id.Stream.View viewId, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getProperties(viewId, constructPath(viewId));
+    return getProperties(viewId, constructPath(viewId), scope);
   }
 
   /**
    * @param programId the program for which to retrieve metadata properties
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata properties for the program.
    */
-  public Map<String, String> getProperties(Id.Program programId)
+  public Map<String, String> getProperties(Id.Program programId, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getProperties(programId, constructPath(programId));
+    return getProperties(programId, constructPath(programId), scope);
   }
 
-  /**
-   * @param runId the run for which to retrieve metadata properties
-   * @return The metadata properties for the run.
-   */
-  public Map<String, String> getProperties(Id.Run runId)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getProperties(runId, constructPath(runId));
-  }
-
-  private Map<String, String> getProperties(Id.NamespacedId namespacedId, String entityPath)
+  private Map<String, String> getProperties(Id.NamespacedId namespacedId, String entityPath,
+                                            @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     String path = String.format("%s/metadata/properties", entityPath);
+    path = scope == null ? path : String.format("%s?scope=%s", path, scope);
     HttpResponse response = makeRequest(namespacedId, path, HttpMethod.GET);
     return GSON.fromJson(response.getResponseBodyAsString(), MAP_STRING_STRING_TYPE);
   }
 
   /**
    * @param appId the app for which to retrieve metadata tags
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the application.
    */
-  public Set<String> getTags(Id.Application appId)
+  public Set<String> getTags(Id.Application appId, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getTags(appId, constructPath(appId));
+    return getTags(appId, constructPath(appId), scope);
   }
 
   /**
    * @param artifactId the artifact for which to retrieve metadata tags
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the artifact.
    */
-  public Set<String> getTags(Id.Artifact artifactId)
+  public Set<String> getTags(Id.Artifact artifactId, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getTags(artifactId, constructPath(artifactId));
+    return getTags(artifactId, constructPath(artifactId), scope);
   }
 
   /**
    * @param datasetInstance the dataset for which to retrieve metadata tags
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the dataset.
    */
-  public Set<String> getTags(Id.DatasetInstance datasetInstance)
+  public Set<String> getTags(Id.DatasetInstance datasetInstance, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getTags(datasetInstance, constructPath(datasetInstance));
+    return getTags(datasetInstance, constructPath(datasetInstance), scope);
   }
 
   /**
    * @param streamId the stream for which to retrieve metadata tags
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the stream.
    */
-  public Set<String> getTags(Id.Stream streamId)
+  public Set<String> getTags(Id.Stream streamId, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getTags(streamId, constructPath(streamId));
+    return getTags(streamId, constructPath(streamId), scope);
   }
 
   /**
    * @param viewId the view for which to retrieve metadata tags
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the view.
    */
-  public Set<String> getTags(Id.Stream.View viewId)
+  public Set<String> getTags(Id.Stream.View viewId, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getTags(viewId, constructPath(viewId));
+    return getTags(viewId, constructPath(viewId), scope);
   }
 
   /**
    * @param programId the program for which to retrieve metadata tags
+   * @param scope the {@link MetadataScope} to retrieve the tags from. If unspecified, this method retrieves
+   *              tags from both {@link MetadataScope#SYSTEM} and {@link MetadataScope#USER}
    * @return The metadata tags for the program.
    */
-  public Set<String> getTags(Id.Program programId)
+  public Set<String> getTags(Id.Program programId, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getTags(programId, constructPath(programId));
+    return getTags(programId, constructPath(programId), scope);
   }
 
-  /**
-   * @param runId the run for which to retrieve metadata tags
-   * @return The metadata tags for the run.
-   */
-  public Set<String> getTags(Id.Run runId)
-    throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
-    return getTags(runId, constructPath(runId));
-  }
-
-  private Set<String> getTags(Id.NamespacedId namespacedId, String entityPath)
+  private Set<String> getTags(Id.NamespacedId namespacedId, String entityPath, @Nullable MetadataScope scope)
     throws IOException, UnauthorizedException, NotFoundException, BadRequestException {
     String path = String.format("%s/metadata/tags", entityPath);
+    path = scope == null ? path : String.format("%s?scope=%s", path, scope);
     HttpResponse response = makeRequest(namespacedId, path, HttpMethod.GET);
     return GSON.fromJson(response.getResponseBodyAsString(), SET_STRING_TYPE);
   }

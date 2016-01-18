@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2015 Cask Data, Inc.
+ * Copyright © 2012-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -99,7 +99,14 @@ public enum ArgumentName {
 
   INSTANCE_URI("cdap-instance-uri"),
   VERIFY_SSL_CERT("verify-ssl-cert"),
-  ENTITY("entity-id");
+  ENTITY("entity-id"),
+
+  /**
+   * Metadata
+   */
+  SEARCH_QUERY("search-query"),
+  TARGET_TYPE("target-type"),
+  METADATA_SCOPE("scope");
 
   private final String name;
 
