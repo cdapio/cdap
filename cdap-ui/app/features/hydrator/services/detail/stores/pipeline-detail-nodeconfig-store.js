@@ -127,7 +127,7 @@ angular.module(PKG.name + '.feature.hydrator')
         source = sourceConn[0];
         sourceSchema = source.outputSchema;
 
-        if (source.name === 'Stream') {
+        if (source.plugin.name === 'Stream') {
           isStreamSource = true;
         }
 
@@ -147,29 +147,6 @@ angular.module(PKG.name + '.feature.hydrator')
         input = null;
       }
 
-      if (isStreamSource) {
-        // Must be in this order!!
-        if (!input) {
-          input = {
-            fields: [{ name: 'body', type: 'string' }]
-          };
-        }
-
-        input.fields.unshift({
-          name: 'headers',
-          type: {
-            type: 'map',
-            keys: 'string',
-            values: 'string'
-          }
-        });
-
-        input.fields.unshift({
-          name: 'ts',
-          type: 'long'
-        });
-      }
-
       this.state.node.inputSchema = input ? input.fields : null;
       angular.forEach(this.state.node.inputSchema, function (field) {
         if (angular.isArray(field.type)) {
@@ -177,6 +154,9 @@ angular.module(PKG.name + '.feature.hydrator')
           field.nullable = true;
         } else {
           field.nullable = false;
+        }
+        if (isStreamSource) {
+          delete field.readonly;
         }
       });
 

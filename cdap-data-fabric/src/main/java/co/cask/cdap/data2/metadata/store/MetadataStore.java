@@ -17,6 +17,7 @@
 package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -25,6 +26,7 @@ import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Defines operations on {@link MetadataDataset} for both system and user metadata.
@@ -46,6 +48,18 @@ public interface MetadataStore {
    * @param properties the properties to add/update
    */
   void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties);
+
+  /**
+   * Adds/updates properties for the specified {@link Id.NamespacedId} in the specified {@link MetadataScope}.
+   *
+   * @param scope the {@link MetadataScope} to add/update the properties in
+   * @param entityId the {@link Id.NamespacedId} to add the properties to
+   * @param properties the properties to add/update
+   * @param indexer {@link Indexer} to use for creating indexes
+   */
+  void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties,
+                     @Nullable Indexer indexer);
+
 
   /**
    * Adds tags for the specified {@link Id.NamespacedId} in the specified {@link MetadataScope}.
@@ -203,4 +217,9 @@ public interface MetadataStore {
    * @return the snapshot of the metadata for entities on or before the given time
    */
   Set<MetadataRecord> getSnapshotBeforeTime(MetadataScope scope,  Set<Id.NamespacedId> entityIds, long timeMillis);
+
+  /**
+   * Upgrades the {@link MetadataStore}
+   */
+  void upgrade();
 }

@@ -14,8 +14,9 @@
  * the License.
  */
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope, moment) {
+  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope, moment, myAlertOnValium) {
     this.GLOBALS = GLOBALS;
+    this.myAlertOnValium = myAlertOnValium;
     this.config = DetailNonRunsStore.getCloneConfig();
     this.app = {
       name: this.config.name,
@@ -95,6 +96,16 @@ angular.module(PKG.name + '.feature.hydrator')
           PipelineDetailActionFactory.startPipeline(
             DetailRunsStore.getApi(),
             DetailRunsStore.getParams()
+          ).then(
+            () => {},
+            (err) => {
+              this.myAlertOnValium.show({
+                type: 'danger',
+                title: 'Unable to start a new run',
+                content: angular.isObject(err)? err.data: err,
+                duration: false
+              });
+            }
           );
           break;
         case 'Schedule':
@@ -103,12 +114,22 @@ angular.module(PKG.name + '.feature.hydrator')
             DetailRunsStore.getApi(),
             DetailRunsStore.getScheduleParams()
           )
-            .then(function() {
-              PipelineDetailActionFactory.fetchScheduleStatus(
-                DetailRunsStore.getApi(),
-                DetailRunsStore.getScheduleParams()
-              );
-            });
+            .then(
+              () => {
+                PipelineDetailActionFactory.fetchScheduleStatus(
+                  DetailRunsStore.getApi(),
+                  DetailRunsStore.getScheduleParams()
+                );
+              },
+              (err) => {
+                this.myAlertOnValium.show({
+                  type: 'danger',
+                  title: 'Unable to schedule the pipeline',
+                  content: angular.isObject(err)? err.data: err,
+                  duration: false
+                });
+              }
+            );
           break;
         case 'Suspend':
           this.scheduleStatus = 'SUSPENDING';
@@ -116,18 +137,38 @@ angular.module(PKG.name + '.feature.hydrator')
             DetailRunsStore.getApi(),
             DetailRunsStore.getScheduleParams()
           )
-            .then(function() {
-              PipelineDetailActionFactory.fetchScheduleStatus(
-                DetailRunsStore.getApi(),
-                DetailRunsStore.getScheduleParams()
-              );
-            });
+            .then(
+              () => {
+                PipelineDetailActionFactory.fetchScheduleStatus(
+                  DetailRunsStore.getApi(),
+                  DetailRunsStore.getScheduleParams()
+                );
+              },
+              (err) => {
+                this.myAlertOnValium.show({
+                  type: 'danger',
+                  title: 'Unable to suspend the pipeline',
+                  content: angular.isObject(err)? err.data: err,
+                  duration: false
+                });
+              }
+            );
           break;
         case 'Stop':
           this.appStatus = 'STOPPING';
           PipelineDetailActionFactory.stopPipeline(
             DetailRunsStore.getApi(),
             DetailRunsStore.getParams()
+          ).then(
+            () => {},
+            (err) => {
+              this.myAlertOnValium.show({
+                type: 'danger',
+                title: 'Unable to stop the current run',
+                content: angular.isObject(err)? err.data: err,
+                duration: false
+              });
+            }
           );
           break;
         case 'Delete':
@@ -146,11 +187,12 @@ angular.module(PKG.name + '.feature.hydrator')
               },
               function error(err) {
                 myLoadingService.hideLoadingIcon();
-                $timeout(function() {
-                  $alert({
+                $timeout(() => {
+                  this.myAlertOnValium.show({
                     type: 'danger',
                     title: 'Unable to delete Pipeline',
-                    content: err.data
+                    content: err.data,
+                    duration: false
                   });
                 });
               }

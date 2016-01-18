@@ -474,18 +474,18 @@ public class FileStreamAdmin implements StreamAdmin {
           }
           alterExploreStream(StreamUtils.getStreamIdFromLocation(streamLocation), false, null);
 
+          // Drop the associated views
+          List<Id.Stream.View> views = viewAdmin.list(streamId);
+          for (Id.Stream.View view : views) {
+            viewAdmin.delete(view);
+          }
+
           if (!configLocation.delete()) {
             LOG.debug("Could not delete stream config location {}", streamLocation);
           }
 
           // Remove metadata for the stream
           metadataStore.removeMetadata(streamId);
-
-          // Drop the associated views
-          List<Id.Stream.View> views = viewAdmin.list(streamId);
-          for (Id.Stream.View view : views) {
-            viewAdmin.delete(view);
-          }
 
           // Move the stream directory to the deleted directory
           // The target directory has a timestamp appended to the stream name

@@ -306,7 +306,7 @@ public class MetadataDatasetTest {
     results =
       dataset.search("ns1", "-", MetadataSearchTargetType.ALL);
     // Assert check
-    Assert.assertEquals(1, results.size());
+    Assert.assertEquals(0, results.size());
 
     results =
       dataset.search("ns1", ",", MetadataSearchTargetType.ALL);
@@ -326,7 +326,7 @@ public class MetadataDatasetTest {
     results =
       dataset.search("ns1", ", - ,", MetadataSearchTargetType.ALL);
     // Assert check
-    Assert.assertEquals(1, results.size());
+    Assert.assertEquals(0, results.size());
 
 
     // Search for it based on a word in value

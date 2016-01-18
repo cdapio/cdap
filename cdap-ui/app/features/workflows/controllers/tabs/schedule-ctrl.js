@@ -21,6 +21,7 @@ class ScheduleController {
     this.$scope = $scope;
     this.$q = $q;
     this.myAlert = myAlert;
+    this.error = {};
 
     let params = {
       namespace: this.$state.params.namespace,
@@ -110,10 +111,7 @@ class ScheduleController {
     }, {},
     function success() {},
     function error(err) {
-      this.myAlert({
-        title: 'Cannot Suspend Schedule',
-        content: err
-      });
+      this.error.content = err;
     }.bind(this));
   }
 

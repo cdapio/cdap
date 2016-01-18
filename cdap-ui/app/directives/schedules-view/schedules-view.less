@@ -15,6 +15,9 @@
  */
 
 @import "../../styles/variables.less";
+@import "../../styles/themes/cdap/mixins.less";
+@import "../../../bower_components/bootstrap/less/mixins.less";
+
 @border-color: #d0d0dd;
 my-schedules-view {
   .schedule-heading {
@@ -64,6 +67,19 @@ body.state-workflows {
   my-schedules-view {
     .container {
       width: 100%;
+    }
+    div.alerts {
+      top: 60px;
+    }
+    div.alert-danger {
+      color: white;
+      .close {
+        text-shadow: none;
+        .opacity(0.4);
+        &:focus {
+          outline: none;
+        }
+      }
     }
   }
 }

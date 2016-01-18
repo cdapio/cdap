@@ -52,6 +52,7 @@ import javax.annotation.Nullable;
 public abstract class MetadataTestBase extends AppFabricTestBase {
   private static MetadataClient metadataClient;
   private static LineageClient lineageClient;
+  protected static ClientConfig clientConfig;
 
   @BeforeClass
   public static void setup() throws MalformedURLException {
@@ -63,9 +64,9 @@ public abstract class MetadataTestBase extends AppFabricTestBase {
     String host = "127.0.0.1";
     int port = discoverable.getSocketAddress().getPort();
     ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(host).setPort(port).build();
-    ClientConfig config = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
-    metadataClient = new MetadataClient(config);
-    lineageClient = new LineageClient(config);
+    clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
+    metadataClient = new MetadataClient(clientConfig);
+    lineageClient = new LineageClient(clientConfig);
   }
 
   protected void addProperties(Id.Application app, @Nullable Map<String, String> properties) throws Exception {

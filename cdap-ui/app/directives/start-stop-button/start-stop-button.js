@@ -26,7 +26,7 @@ angular.module(PKG.name + '.commons')
         runtimeHandler: '&'
       },
       templateUrl: 'start-stop-button/start-stop-button.html',
-      controller: function($scope, $state, MyCDAPDataSource, myRuntimeService, myProgramPreferencesService) {
+      controller: function($scope, $state, MyCDAPDataSource, myRuntimeService, myProgramPreferencesService, myAlertOnValium) {
         $scope.isStoppable = ($scope.isStoppable === 'true');
         $scope.isRestartable = ($scope.isRestartable === 'true');
 
@@ -58,14 +58,24 @@ angular.module(PKG.name + '.commons')
             $scope.status = 'STOPPING';
           }
           dataSrc.request(requestObj)
-            .then(function() {
-              if ($state.includes('**.run')) {
-                // go to the most current run, /runs
-                $state.go('^', $state.params, {reload: true});
-              } else {
-                $state.go($state.current, $state.params, {reload: true});
+            .then(
+              function success() {
+                if ($state.includes('**.run')) {
+                  // go to the most current run, /runs
+                  $state.go('^', $state.params, {reload: true});
+                } else {
+                  $state.go($state.current, $state.params, {reload: true});
+                }
+              },
+              function error(err) {
+                myAlertOnValium.show({
+                  type: 'danger',
+                  title: 'Error',
+                  content: err,
+                  duration: false
+                });
               }
-            });
+            );
         };
 
         // Delegate runtime & preferences handler

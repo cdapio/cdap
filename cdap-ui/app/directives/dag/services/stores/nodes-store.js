@@ -177,6 +177,9 @@ class NodesStore {
   }
   resetActiveNode() {
     this.state.activeNodeId = null;
+    angular.forEach(this.state.nodes, (node) => {
+      node.selected = false;
+    });
     this.emitChange();
   }
 

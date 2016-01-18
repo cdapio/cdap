@@ -16,12 +16,14 @@
 
 package co.cask.cdap.data2.metadata.system;
 
+import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.transaction.stream.StreamConfig;
 import co.cask.cdap.proto.Id;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A {@link AbstractSystemMetadataWriter} for a {@link Id.Stream stream}.
@@ -38,7 +40,6 @@ public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
-    addSchema(properties, config.getFormat().getSchema());
     properties.put(TTL_KEY, String.valueOf(config.getTTL()));
     return properties.build();
   }
@@ -48,5 +49,12 @@ public class StreamSystemMetadataWriter extends AbstractSystemMetadataWriter {
     return new String[] {
       config.getStreamId().getId()
     };
+  }
+
+  @Nullable
+  @Override
+  String getSchemaToAdd() {
+    Schema schema = config.getFormat().getSchema();
+    return schema == null ? null : schema.toString();
   }
 }

@@ -34,7 +34,7 @@ class HydratorService {
     let artifact = this.GLOBALS.pluginTypes[pipeline.artifact.name];
 
     let source = angular.copy(pipeline.config.source);
-    let transforms = angular.copy(pipeline.config.transforms)
+    let transforms = angular.copy(pipeline.config.transforms || [])
       .map( node => {
         node.type = artifact.transform;
         node.label = node.label || node.name;
@@ -107,9 +107,9 @@ class HydratorService {
     let jsonSchema;
 
     if (isStreamSource) {
-      if (node.properties.format === 'clf') {
+      if (node.plugin.properties.format === 'clf') {
         jsonSchema = this.IMPLICIT_SCHEMA.clf;
-      } else if (node.properties.format === 'syslog') {
+      } else if (node.plugin.properties.format === 'syslog') {
         jsonSchema = this.IMPLICIT_SCHEMA.syslog;
       } else {
         jsonSchema = node.outputSchema;

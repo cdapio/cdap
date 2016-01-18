@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,16 +20,13 @@ import co.cask.cdap.api.common.Bytes;
 import co.cask.cdap.client.app.FakeApp;
 import co.cask.cdap.client.app.FakeFlow;
 import co.cask.cdap.client.common.ClientTestBase;
-import co.cask.cdap.client.config.ClientConfig;
 import co.cask.cdap.client.config.ConnectionConfig;
-import co.cask.cdap.common.UnauthorizedException;
 import co.cask.cdap.explore.client.ExploreClient;
 import co.cask.cdap.explore.client.ExploreExecutionResult;
 import co.cask.cdap.explore.client.FixedAddressExploreClient;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.QueryResult;
-import co.cask.cdap.security.authentication.client.AccessToken;
 import co.cask.cdap.test.XSlowTests;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
@@ -39,7 +36,6 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 

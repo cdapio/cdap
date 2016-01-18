@@ -65,6 +65,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
@@ -164,7 +165,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     // so bypass it and use the repository directly
     Id.Artifact systemId = Id.Artifact.from(Id.Namespace.SYSTEM, "wordcount", "1.0.0");
     File systemArtifact = buildAppArtifact(WordCountApp.class, "wordcount-1.0.0.jar");
-    artifactRepository.addArtifact(systemId, systemArtifact, Sets.<ArtifactRange>newHashSet());
+    artifactRepository.addArtifact(systemId, systemArtifact, new HashSet<ArtifactRange>());
 
     // test get /artifacts
     Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
@@ -430,13 +431,6 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
         Plugin2.class.getName(), plugins2Artifact, p2Properties)
     );
     Assert.assertEquals(expectedInfos, getPluginInfos(wordCount2Id, "callable", "Plugin2"));
-  }
-
-  private File buildAppArtifact(Class cls, String name) throws IOException {
-    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest());
-    File destination = new File(tmpFolder.newFolder(), name);
-    Files.copy(Locations.newInputSupplier(appJar), destination);
-    return destination;
   }
 
   private Set<ArtifactSummary> getArtifacts(Id.Namespace namespace) throws URISyntaxException, IOException {
