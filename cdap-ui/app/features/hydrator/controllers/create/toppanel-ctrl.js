@@ -73,7 +73,8 @@ class TopPanelController{
     this.metadataExpanded = false;
   }
   saveMetadata() {
-    this.ConfigActionsFactory.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
+    this.parsedDescription = this.state.metadata.description.replace(/\n/g, ' ');
+    this.ConfigActionsFactory.setMetadataInfo(this.state.metadata.name, this.parsedDescription);
     this.metadataExpanded = false;
   }
   onEnterOnMetadata(event) {
