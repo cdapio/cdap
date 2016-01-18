@@ -172,6 +172,7 @@ public class MasterServiceMain extends DaemonMain {
       @Override
       public void terminated(Service.State from) {
         if (!stopped) {
+          LOG.error("CDAP Master failed to start");
           System.exit(1);
         }
       }
@@ -179,6 +180,7 @@ public class MasterServiceMain extends DaemonMain {
       @Override
       public void failed(Service.State from, Throwable failure) {
         if (!stopped) {
+          LOG.error("CDAP Master failed to start");
           System.exit(1);
         }
       }
@@ -415,6 +417,7 @@ public class MasterServiceMain extends DaemonMain {
             throw new RuntimeException(String.format("Unable to start service %s: %s", service, t.getMessage()));
           }
         }
+        LOG.info("CDAP Master started successfully.");
       }
 
       @Override
