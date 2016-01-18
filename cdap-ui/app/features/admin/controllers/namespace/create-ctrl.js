@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceCreateController', function ($scope, $alert, $modalInstance, MyCDAPDataSource, myNamespace, EventPipe) {
+  .controller('NamespaceCreateController', function ($scope, myAlert, $modalInstance, MyCDAPDataSource, myNamespace, EventPipe) {
     $scope.model = {
       name: '',
       description: ''
@@ -40,9 +40,9 @@ angular.module(PKG.name + '.feature.admin')
         .then(
           function success(res) {
             $scope.isSaving = false;
-            $alert({
-              content: res,
-              type: 'success'
+            myAlert({
+              type: 'success',
+              content: res
             });
 
             myNamespace.getList(true).then(function() {
@@ -54,6 +54,11 @@ angular.module(PKG.name + '.feature.admin')
           function error(err) {
             $scope.isSaving = false;
             $scope.error = err.data;
+            myAlert({
+              type: 'danger',
+              content: $scope.error,
+              duration: false
+            });
           }
         );
     };
