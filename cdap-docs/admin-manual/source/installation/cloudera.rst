@@ -10,8 +10,7 @@
 Installation using Cloudera Manager
 ===================================
 
-.. figure:: ../_images/steps/cloudera-manager.png
-   :height: 80px
+.. figure:: ../_images/cdap-installation-steps.png
    :align: center
 
 Preparing the Cluster

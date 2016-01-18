@@ -11,8 +11,7 @@
 Installation for MapR
 =====================
 
-.. figure:: ../_images/steps/mapr.png
-   :height: 80px
+.. figure:: ../_images/cdap-installation-steps.png
    :align: center
 
 Preparing the Cluster

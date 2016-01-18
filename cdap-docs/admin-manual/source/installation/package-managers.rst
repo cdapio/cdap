@@ -11,8 +11,7 @@
 Installation via Package Managers
 =================================
 
-.. figure:: ../_images/steps/package-managers.png
-   :height: 80px
+.. figure:: ../_images/cdap-installation-steps.png
    :align: center
 
 .. rubric:: Notes
