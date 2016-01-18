@@ -112,10 +112,17 @@ class ConfigActionsFactory {
         removeFromUserDrafts.bind(this, pipelineName),
         (err) => {
           this.EventPipe.emit('hideLoadingIcon.immediate');
-          this.ConsoleActionsFactory.addMessage({
-            type: 'error',
-            content: err
-          });
+          if (angular.isObject(err)) {
+            this.ConsoleActionsFactory.addMessage({
+              type: 'error',
+              content: err.data
+            });
+          } else {
+            this.ConsoleActionsFactory.addMessage({
+              type: 'error',
+              content: err
+            });
+          }
         }
       );
     };
