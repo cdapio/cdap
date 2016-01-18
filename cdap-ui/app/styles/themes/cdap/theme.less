@@ -38,6 +38,28 @@ body.theme-cdap {
   // Alerts
   // --------------------------------------------------
 
+  > div.alerts {
+    div.alert-danger {
+      color: white;
+      margin-bottom: 0;
+      width: 100%;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+      .border-radius(0);
+    }
+    button.close {
+      font-size: 34px;
+      font-weight: 400;
+      line-height: 12px;
+      margin-left: 10px;
+      text-shadow: none;
+      .opacity(0.4);
+      &:focus {
+        outline: 0;
+      }
+    }
+  }
   // Common styles
   .alert {
     text-shadow: 0 1px 0 rgba(255,255,255,.2);
