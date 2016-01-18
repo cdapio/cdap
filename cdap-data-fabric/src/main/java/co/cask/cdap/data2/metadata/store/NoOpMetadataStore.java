@@ -15,6 +15,7 @@
  */
 package co.cask.cdap.data2.metadata.store;
 
+import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
@@ -33,6 +34,12 @@ public class NoOpMetadataStore implements MetadataStore {
 
   @Override
   public void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties) {
+    // NO-OP
+  }
+
+  @Override
+  public void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties,
+                            Indexer indexer) {
     // NO-OP
   }
 

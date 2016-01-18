@@ -20,10 +20,8 @@ import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.api.data.batch.RecordWritable;
-import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
-import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
 import co.cask.cdap.api.dataset.table.Table;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
@@ -63,17 +61,6 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
   Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
     Map<String, String> datasetProperties = dsProperties.getProperties();
-    String schemaStr = null;
-    if (datasetProperties.containsKey(DatasetProperties.SCHEMA)) {
-      schemaStr = datasetProperties.get(DatasetProperties.SCHEMA);
-    } else if (datasetProperties.containsKey(ObjectMappedTableProperties.OBJECT_SCHEMA)) {
-      // If it is an ObjectMappedTable, the schema is in a property called 'object.schema'
-      schemaStr = datasetProperties.get(ObjectMappedTableProperties.OBJECT_SCHEMA);
-    }
-    if (schemaStr != null) {
-      Schema schema = getSchema(schemaStr);
-      addSchema(properties, schema);
-    }
     if (dsType != null) {
       properties.put("type", dsType);
     }
@@ -107,17 +94,17 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
     return tags.toArray(new String[tags.size()]);
   }
 
-  private Schema getSchema(String schemaStr) {
-    if (schemaStr.startsWith("\"") && schemaStr.endsWith("\"")) {
-      // simple type in lower case
-      schemaStr = schemaStr.substring(1, schemaStr.length() - 1);
-      return Schema.of(Schema.Type.valueOf(schemaStr.toUpperCase()));
+  @Nullable
+  @Override
+  String getSchemaToAdd() {
+    Map<String, String> datasetProperties = dsProperties.getProperties();
+    String schemaStr = null;
+    if (datasetProperties.containsKey(DatasetProperties.SCHEMA)) {
+      schemaStr = datasetProperties.get(DatasetProperties.SCHEMA);
+    } else if (datasetProperties.containsKey(ObjectMappedTableProperties.OBJECT_SCHEMA)) {
+      // If it is an ObjectMappedTable, the schema is in a property called 'object.schema'
+      schemaStr = datasetProperties.get(ObjectMappedTableProperties.OBJECT_SCHEMA);
     }
-    // otherwise its a json
-    try {
-      return Schema.parseJson(schemaStr);
-    } catch (IOException e) {
-      throw new IllegalArgumentException(e);
-    }
+    return schemaStr;
   }
 }

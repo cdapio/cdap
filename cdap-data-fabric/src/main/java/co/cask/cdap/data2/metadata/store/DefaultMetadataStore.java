@@ -26,6 +26,7 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
+import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
@@ -54,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MetadataStore} used in distributed mode.
@@ -92,13 +94,19 @@ public class DefaultMetadataStore implements MetadataStore {
     this.changePublisher = changePublisher;
   }
 
+  @Override
+  public void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties) {
+    setProperties(scope, entityId, properties, null);
+  }
+
   /**
    * Adds/updates metadata for the specified {@link Id.NamespacedId}.
    */
   @Override
-  public void setProperties(MetadataScope scope, final Id.NamespacedId entityId, final Map<String, String> properties) {
+  public void setProperties(MetadataScope scope, final Id.NamespacedId entityId, final Map<String, String> properties,
+                            @Nullable final Indexer indexer) {
     if (!cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
-      setPropertiesNoPublish(scope, entityId, properties);
+      setPropertiesNoPublish(scope, entityId, properties, indexer);
       return;
     }
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
@@ -109,7 +117,7 @@ public class DefaultMetadataStore implements MetadataStore {
         Set<String> existingTags = input.getTags(entityId);
         previousRef.set(new MetadataRecord(entityId, existingProperties, existingTags));
         for (Map.Entry<String, String> entry : properties.entrySet()) {
-          input.setProperty(entityId, entry.getKey(), entry.getValue());
+          input.setProperty(entityId, entry.getKey(), entry.getValue(), indexer);
         }
       }
     }, scope);
@@ -136,12 +144,12 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   private void setPropertiesNoPublish(MetadataScope scope, final Id.NamespacedId entityId,
-                                      final Map<String, String> properties) {
+                                      final Map<String, String> properties, @Nullable final Indexer indexer) {
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
         for (Map.Entry<String, String> entry : properties.entrySet()) {
-          input.setProperty(entityId, entry.getKey(), entry.getValue());
+          input.setProperty(entityId, entry.getKey(), entry.getValue(), indexer);
         }
       }
     }, scope);

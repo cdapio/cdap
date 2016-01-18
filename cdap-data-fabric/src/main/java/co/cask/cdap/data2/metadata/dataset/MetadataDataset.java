@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,8 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
+import co.cask.cdap.data2.metadata.indexer.DefaultValueIndexer;
+import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
@@ -55,8 +57,6 @@ public class MetadataDataset extends AbstractDataset {
     .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
     .create();
 
-  private static final Pattern VALUE_SPLIT_PATTERN = Pattern.compile("[-_:\\s]+");
-  private static final Pattern TAGS_SEPARATOR_PATTERN = Pattern.compile("[,\\s]+");
   private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
 
   private static final String HISTORY_COLUMN = "h"; // column for metadata history
@@ -79,24 +79,38 @@ public class MetadataDataset extends AbstractDataset {
    * Add new metadata.
    *
    * @param metadataEntry The value of the metadata to be saved.
+   * @param indexer the indexer to use to create indexes for this {@link MetadataEntry}
    */
-  private void setMetadata(MetadataEntry metadataEntry) {
+  private void setMetadata(MetadataEntry metadataEntry, @Nullable Indexer indexer) {
     Id.NamespacedId targetId = metadataEntry.getTargetId();
 
     // Put to the default column.
-    write(targetId, metadataEntry);
+    write(targetId, metadataEntry, indexer == null ? new DefaultValueIndexer() : indexer);
   }
 
   /**
    * Sets a metadata property for the specified {@link Id.NamespacedId}.
    *
-   * @param targetId The target Id: app-id(ns+app) / program-id(ns+app+pgtype+pgm) /
-   *                 dataset-id(ns+dataset)/stream-id(ns+stream)
+   * @param targetId The target Id: {@link Id.Application} / {@link Id.Program} /
+   *                 {@link Id.DatasetInstance}/{@link Id.Stream}
    * @param key The metadata key to be added
    * @param value The metadata value to be added
    */
   public void setProperty(Id.NamespacedId targetId, String key, String value) {
-    setMetadata(new MetadataEntry(targetId, key, value));
+    setProperty(targetId, key, value, null);
+  }
+
+  /**
+   * Sets a metadata property for the specified {@link Id.NamespacedId}.
+   *
+   * @param targetId The target Id: {@link Id.Application} / {@link Id.Program} /
+   *                 {@link Id.DatasetInstance}/{@link Id.Stream}
+   * @param key The metadata key to be added
+   * @param value The metadata value to be added
+   * @param indexer the indexer to use to create indexes for this key-value property
+   */
+  public void setProperty(Id.NamespacedId targetId, String key, String value, @Nullable Indexer indexer) {
+    setMetadata(new MetadataEntry(targetId, key, value), indexer);
   }
 
   /**
@@ -108,7 +122,7 @@ public class MetadataDataset extends AbstractDataset {
    */
   private void setTags(Id.NamespacedId targetId, String ... tags) {
     MetadataEntry tagsEntry = new MetadataEntry(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(tags));
-    setMetadata(tagsEntry);
+    setMetadata(tagsEntry, null);
   }
 
   /**
@@ -122,7 +136,7 @@ public class MetadataDataset extends AbstractDataset {
     Set<String> existingTags = getTags(targetId);
     Iterable<String> newTags = Iterables.concat(existingTags, Arrays.asList(tagsToAdd));
     MetadataEntry newTagsEntry = new MetadataEntry(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(newTags));
-    setMetadata(newTagsEntry);
+    setMetadata(newTagsEntry, null);
   }
 
   /**
@@ -461,7 +475,7 @@ public class MetadataDataset extends AbstractDataset {
     return namespaceId + KEYVALUE_SEPARATOR + formattedSearchQuery;
   }
 
-  private void write(Id.NamespacedId targetId, MetadataEntry entry) {
+  private void write(Id.NamespacedId targetId, MetadataEntry entry, Indexer indexer) {
     String key = entry.getKey();
     MDSKey mdsValueKey = MdsKey.getMDSValueKey(targetId, key);
     Put put = new Put(mdsValueKey.getKey());
@@ -469,9 +483,7 @@ public class MetadataDataset extends AbstractDataset {
     // add the metadata value
     put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(entry.getValue()));
     indexedTable.put(put);
-    // index the metadata
-    storeIndexes(targetId, entry);
-
+    storeIndexes(targetId, entry, indexer.getIndexes(entry));
     writeHistory(targetId);
   }
 
@@ -480,24 +492,9 @@ public class MetadataDataset extends AbstractDataset {
    *
    * @param targetId the {@link Id.NamespacedId} from which the metadata indexes has to be stored
    * @param entry the {@link MetadataEntry} which has to be indexed
+   * @param indexes {@link Set<String>} of indexes to store for this {@link MetadataEntry}
    */
-  private void storeIndexes(Id.NamespacedId targetId, MetadataEntry entry) {
-    Set<String> valueIndexes = new HashSet<>();
-    if (entry.getValue().contains(TAGS_SEPARATOR)) {
-      // if the entry is tag then each tag is an index
-      valueIndexes.addAll(Arrays.asList(TAGS_SEPARATOR_PATTERN.split(entry.getValue())));
-    } else {
-      // for key value the complete value is an index
-      valueIndexes.add(entry.getValue());
-    }
-    Set<String> indexes = Sets.newHashSet();
-    for (String index : valueIndexes) {
-      // split all value indexes on the VALUE_SPLIT_PATTERN
-      indexes.addAll(Arrays.asList(VALUE_SPLIT_PATTERN.split(index)));
-    }
-    // add all value indexes too
-    indexes.addAll(valueIndexes);
-
+  private void storeIndexes(Id.NamespacedId targetId, MetadataEntry entry, Set<String> indexes) {
     for (String index : indexes) {
       // store the index with key of the metadata
       indexedTable.put(getIndexPut(targetId, entry.getKey(), entry.getKey() + KEYVALUE_SEPARATOR + index));

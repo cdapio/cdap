@@ -23,6 +23,7 @@ import co.cask.cdap.proto.ViewSpecification;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * A {@link AbstractSystemMetadataWriter} for an {@link Id.Stream.View view}.
@@ -41,7 +42,6 @@ public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
   @Override
   Map<String, String> getSystemPropertiesToAdd() {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.builder();
-    addSchema(properties, viewSpec.getFormat().getSchema());
     return properties.build();
   }
 
@@ -51,5 +51,12 @@ public class ViewSystemMetadataWriter extends AbstractSystemMetadataWriter {
       viewId.getId(),
       viewId.getStreamId()
     };
+  }
+
+  @Nullable
+  @Override
+  String getSchemaToAdd() {
+    Schema schema = viewSpec.getFormat().getSchema();
+    return schema == null ? null : schema.toString();
   }
 }
