@@ -5,11 +5,11 @@
 :hide-toc: true
 :section-numbering: true
 
-.. _admin-installation-package-managers:
+.. _admin-installation-packages:
 
-=================================
-Installation via Package Managers
-=================================
+==================================
+Manual Installation using Packages
+==================================
 
 .. figure:: ../_images/cdap-installation-steps.png
    :align: center
@@ -33,9 +33,9 @@ node(s) where CDAP will run.
 
 .. Node.js Installation
 .. --------------------
-.. include:: /../target/_includes/package-managers-installation.rst
-    :start-after: .. _package-managers-install-node-js:
-    :end-before: .. _package-managers-install-packaging:
+.. include:: /../target/_includes/packages-installation.rst
+    :start-after: .. _packages-install-node-js:
+    :end-before: .. _packages-install-packaging:
  
   
 Downloading and Distributing Packages
@@ -44,32 +44,32 @@ Downloading and Distributing Packages
 Preparing Package Managers
 --------------------------
 
-.. include:: /../target/_includes/package-managers-installation.rst
-    :start-after: .. _package-managers-preparing-package-managers:
+.. include:: /../target/_includes/packages-installation.rst
+    :start-after: .. _packages-preparing-package-managers:
     :end-before: .. end_install-debian-using-apt
 
 
 Installing CDAP Services
 ========================
 
-.. include:: /../target/_includes/package-managers-installation.rst
-    :start-after: .. _package-managers-package-installation-title:
+.. include:: /../target/_includes/packages-installation.rst
+    :start-after: .. _packages-package-installation-title:
 
 
 .. |display-distribution| replace:: Package Managers (RPM/Debian)
 
 .. |hdfs-user| replace:: ``yarn``
 
-.. include:: /../target/_includes/package-managers-configuration.rst
+.. include:: /../target/_includes/packages-configuration.rst
     :end-before: .. configuration-enabling-kerberos:
 
 
 .. Starting CDAP Services
 .. ======================
 
-.. include:: /../target/_includes/package-managers-starting.rst
+.. include:: /../target/_includes/packages-starting.rst
 
-.. _package-managers-verification:
+.. _packages-verification:
 
 Verification
 ============
@@ -80,22 +80,22 @@ Verification
 Advanced Topics
 ===============
 
-.. _package-managers-configuration-security:
+.. _packages-configuration-security:
 
 .. Enabling Perimeter Security
 .. ---------------------------
-.. include:: /../target/_includes/package-managers-configuration.rst
-    :start-after: .. _package-managers-configuration-eps:
+.. include:: /../target/_includes/packages-configuration.rst
+    :start-after: .. _packages-configuration-eps:
 
-.. _package-managers-configuration-enabling-kerberos:
+.. _packages-configuration-enabling-kerberos:
 
 .. Enabling Kerberos
 .. -----------------
-.. include:: /../target/_includes/package-managers-configuration.rst
+.. include:: /../target/_includes/packages-configuration.rst
     :start-after: .. configuration-enabling-kerberos:
-    :end-before: .. _package-managers-configuration-eps:
+    :end-before: .. _packages-configuration-eps:
 
-.. _upgrading-using-package-managers:
+.. _upgrading-using-packages:
 
 Upgrading CDAP
 --------------
@@ -189,7 +189,7 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
 
-.. _package-managers-highly-available:
+.. _packages-highly-available:
 
 CDAP HA setup
 -------------

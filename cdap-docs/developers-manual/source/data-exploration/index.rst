@@ -24,7 +24,7 @@ This section covers how you can explore data in CDAP through the use of ad-hoc S
 Queries can be run over streams and certain types of datasets.
 
 Note that if you are running a secure cluster, additional :ref:`configuration for a secure
-cluster <package-managers-configuration-enabling-kerberos>` is required.
+cluster <packages-configuration-enabling-kerberos>` is required.
 
 
 .. |stream-exploration| replace:: **Stream Exploration:**

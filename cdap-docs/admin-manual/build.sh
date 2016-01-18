@@ -46,7 +46,7 @@ function download_includes() {
   echo "Copying files, changing references..."
   local source_rst="${target_includes_dir}/../../source/_includes/installation"
   local pattern="\|distribution\|"  
-  local distributions="cloudera ambari mapr package-managers"
+  local distributions="cloudera ambari mapr packages"
   local types="installation configuration starting"
   for dist in ${distributions}; do
     for type in ${types}; do

@@ -22,7 +22,7 @@ Installation using Apache Ambari
   used for clusters with HDP already installed, where the original installation was
   **not** with Ambari.
 - Though you can install CDAP with Apache Ambari, you **currently cannot use** Ambari to upgrade CDAP. 
-  See :ref:`upgrading-using-package-managers` for how to upgrade CDAP servers managed with Ambari.
+  See :ref:`upgrading-using-packages` for how to upgrade CDAP servers managed with Ambari.
 - These features are **currently not included** in the CDAP Apache Ambari Service (though they may in the future):
   
   - `Kerberos-enabled clusters <https://issues.cask.co/browse/CDAP-4109>`__ are currently not supported;
@@ -325,7 +325,7 @@ To upgrade CDAP installations that were installed and are managed with Apache Am
 follow our instructions for upgrading CDAP installations that were installed with a
 Package Manager, either RPM or Debian:
 
-  :ref:`Upgrading CDAP via Package Managers <upgrading-using-package-managers>`
+  :ref:`Upgrading CDAP via Package Managers <upgrading-using-packages>`
 
 CDAP HA Setup
 -------------

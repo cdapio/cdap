@@ -33,7 +33,7 @@ infrastructure are included. Production applications should always be run on a D
 CDAP.
 
 See the instructions for either a :ref:`distribution-specific <installation-index>` or 
-:ref:`generic Apache Hadoop <admin-installation-package-managers>` cluster for more information.
+:ref:`generic Apache Hadoop <admin-installation-packages>` cluster for more information.
 
 **Features:**
 

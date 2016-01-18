@@ -15,7 +15,7 @@ Installation
     Cloudera Manager <cloudera>
     Apache Ambari <ambari>
     MapR <mapr>
-    Package Managers <package-managers>
+    Package Managers <packages>
 
 Installation and configuration instructions for either **specific distributions** or
 **generic Apache Hadoop** clusters using RPM or Debian Package Managers:
@@ -32,7 +32,7 @@ Installation and configuration instructions for either **specific distributions*
 
 ..
 
-- :ref:`Installation via Package Managers <admin-installation-package-managers>`
+- :ref:`Installation via Package Managers <admin-installation-packages>`
 
   - generic `Apache Hadoop <https://hadoop.apache.org>`__ clusters
   - CDH clusters *not managed* with Cloudera Manager
