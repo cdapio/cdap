@@ -33,7 +33,7 @@
                tooltip="Propagates schema to all down-stream nodes."
                tooltip-popup-delay="500"
                tooltip-append-to-body="true"
-               ng-if="!isDisabled"
+               ng-if="!isDisabled && !NodeConfigController.state.isSink"
                ng-click="NodeConfigController.showPropagateConfirm = true">
         Propagate
       </button>
