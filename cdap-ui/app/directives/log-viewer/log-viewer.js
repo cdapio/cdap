@@ -27,7 +27,8 @@ angular.module(PKG.name + '.commons')
       },
       templateUrl: 'log-viewer/log-viewer.html',
 
-      controller: function ($scope, myLogsApi) {
+      controller: function ($scope, myLogsApi, MyCDAPDataSource) {
+        var dataSrc = new MyCDAPDataSource($scope);
         $scope.model = [];
 
         $scope.filters = 'all,info,warn,error,debug,other'.split(',')
@@ -58,6 +59,29 @@ angular.module(PKG.name + '.commons')
         });
 
         var params = {};
+        var pollPromise = null;
+
+
+        function pollForLogs(params) {
+          var path = '/namespaces/' + params.namespace +
+            '/apps/' + params.appId +
+            '/' + params.programType + '/' + params.programId +
+            '/runs/' + params.runId +
+            '/logs/prev?max=50';
+
+          pollPromise = dataSrc.poll({
+            _cdapPath: path,
+            interval: 3000
+          }, function (res) {
+            $scope.model = res;
+
+            if (res.length >= 50) {
+              dataSrc.stopPoll(pollPromise.__pollId__);
+              pollPromise = null;
+            }
+          });
+        }
+
 
         function initialize() {
           params = {};
@@ -65,13 +89,25 @@ angular.module(PKG.name + '.commons')
           params.max = 50;
           params.scope = $scope;
 
+          $scope.model = [];
+
           if (!params.runId) { return; }
+
+          if (pollPromise) {
+            dataSrc.stopPoll(pollPromise.__pollId__);
+            pollPromise = null;
+          }
 
           $scope.loadingNext = true;
           myLogsApi.prevLogs(params)
             .$promise
             .then(function (res) {
               $scope.model = res;
+
+              if (res.length < 50) {
+                pollForLogs(params);
+              }
+
               $scope.loadingNext = false;
             });
         }
@@ -81,8 +117,13 @@ angular.module(PKG.name + '.commons')
         $scope.$watch('params.runId', initialize);
 
         $scope.loadNextLogs = function () {
-          if ($scope.loadingNext) {
+          if ($scope.loadingNext || $scope.loadingPrev) {
             return;
+          }
+
+          if (pollPromise) {
+            dataSrc.stopPoll(pollPromise.__pollId__);
+            pollPromise = null;
           }
 
           $scope.loadingNext = true;
@@ -99,7 +140,7 @@ angular.module(PKG.name + '.commons')
         };
 
         $scope.loadPrevLogs = function () {
-          if ($scope.loadingPrev) {
+          if ($scope.loadingPrev || $scope.loadingPrev) {
             return;
           }
 
