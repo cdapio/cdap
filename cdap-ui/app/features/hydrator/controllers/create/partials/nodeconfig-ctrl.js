@@ -49,7 +49,7 @@ class NodeConfigController {
       this.$timeout(() => {
         this.loadNewPlugin();
         this.validateNodeLabel();
-      }, 1000);
+      });
     }
   }
   validateNodeLabel() {
