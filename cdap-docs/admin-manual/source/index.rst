@@ -64,12 +64,10 @@ installation and its security configuration.
 
     - |mapr|_ Installing on the `MapR Converged Data Platform <https://www.mapr.com>`__.
 
-    .. |packages| replace:: **Manual Installation using Packages:**
+    .. |packages| replace:: **Manual Installation using Packages**
     .. _packages: installation/packages.html
 
-    - |packages|_ Installing on Hadoop systems that are either **generic Apache Hadoop**
-      distributions, CDH clusters *not managed* with Cloudera Manager, or HDP clusters *not
-      managed* with Apache Ambari.
+    - |packages|_
 
 
 .. |verification| replace:: **Verification:**

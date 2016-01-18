@@ -34,10 +34,6 @@ Installation and configuration instructions for either **specific distributions*
 
 - :ref:`Manual Installation using Packages <admin-installation-packages>`
 
-  - generic `Apache Hadoop <https://hadoop.apache.org>`__ clusters
-  - CDH clusters *not managed* with Cloudera Manager
-  - HDP clusters *not managed* with Apache Ambari
-
 ..
 
 For installation FAQs, see the :ref:`FAQs <faqs>`.

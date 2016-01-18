@@ -50,6 +50,10 @@ div.body {
     min-height: 1300px;
 }
 
+div.figure.align-left {
+    float: none;
+}
+
 div.footer {
     color: #ccc;
     padding: 13px 0 13px 270px;

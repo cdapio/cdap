@@ -11,7 +11,7 @@ Installation using Apache Ambari
 ================================
 
 .. figure:: ../_images/cdap-installation-steps.png
-   :align: center
+   :align: left
    
 .. rubric:: Notes
 

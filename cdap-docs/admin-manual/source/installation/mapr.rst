@@ -12,7 +12,7 @@ Installation for MapR
 =====================
 
 .. figure:: ../_images/cdap-installation-steps.png
-   :align: center
+   :align: left
 
 Preparing the Cluster
 =====================
