@@ -51,7 +51,7 @@
     </div>
   </div>
   <div class="tbl-cell">
-    <div class="app-status text-center" ng-class="{'status-green': TopPanelCtrl.appStatus === 'RUNNING' || TopPanelCtrl.appStatus === 'SCHEDULED' || TopPanelCtrl.appStatus === 'COMPLETED', 'status-red': TopPanelCtrl.appStatus !== 'RUNNING' && TopPanelCtrl.appStatus !== 'SCHEDULED' }">
+    <div class="app-status text-center" ng-class="{'status-green': TopPanelCtrl.isGreenStatus(), 'status-red': !TopPanelCtrl.isGreenStatus() }">
       <span class="fa fa-circle metric-value"></span>
       <span class="metric-label">{{ TopPanelCtrl.appStatus }}</span>
     </div>

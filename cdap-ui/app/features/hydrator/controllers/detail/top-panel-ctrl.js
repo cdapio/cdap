@@ -89,6 +89,16 @@ angular.module(PKG.name + '.feature.hydrator')
         DetailRunsStore.getScheduleParams()
       );
     }
+
+    var greenStatus = ['COMPLETED', 'RUNNING', 'SCHEDULED', 'STARTING'];
+    this.isGreenStatus = function () {
+      if (greenStatus.indexOf(this.appStatus) > -1) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
     this.do = function(action) {
       switch(action) {
         case 'Start':
