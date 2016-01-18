@@ -16,7 +16,6 @@ Installation
     Apache Ambari <ambari>
     MapR <mapr>
     Package Managers <package-managers>
-    Installation FAQs <faqs>
 
 Installation and configuration instructions for either **specific distributions** or
 **generic Apache Hadoop** clusters using RPM or Debian Package Managers:
@@ -41,4 +40,4 @@ Installation and configuration instructions for either **specific distributions*
 
 ..
 
-- :ref:`Installation FAQs <admin-installation-faqs>`
+For installation FAQs, see the :ref:`FAQs <faqs>`.

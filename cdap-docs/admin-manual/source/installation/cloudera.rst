@@ -223,6 +223,10 @@ CDAP Parcel.
 *Safety Valve* Advanced Configuration Snippets. Documentation of the available CDAP
 properties is in the :ref:`appendix-cdap-site.xml`.
 
+**Additional environment variables** can be set, if required, using the Cloudera Manager's
+"Cask DAP Service Environment Advanced Configuration Snippet (Safety Valve)". For example,
+for including Spark it should contain ``SPARK_HOME=/opt/cloudera/parcels/CDH/lib/spark``.
+
 At this point, the CDAP installation is configured and is ready to be installed. Review
 your settings before continuing to the next step, which will install and start CDAP.
 
