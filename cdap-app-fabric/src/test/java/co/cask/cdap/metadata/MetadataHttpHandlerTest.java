@@ -21,10 +21,6 @@ import co.cask.cdap.AppWithDataset;
 import co.cask.cdap.WordCountApp;
 import co.cask.cdap.WordCountMinusFlowApp;
 import co.cask.cdap.api.Config;
-import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.BatchWritable;
-import co.cask.cdap.api.data.batch.RecordScannable;
-import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.data.format.FormatSpecification;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
@@ -35,6 +31,7 @@ import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
+import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.proto.Id;
@@ -614,10 +611,8 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Set<String> dsSystemTags = getTags(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(
       ImmutableSet.of(AllProgramsApp.DATASET_NAME,
-                      BatchReadable.class.getSimpleName(),
-                      BatchWritable.class.getSimpleName(),
-                      RecordScannable.class.getSimpleName(),
-                      RecordWritable.class.getSimpleName()),
+                      DatasetSystemMetadataWriter.BATCH_TAG,
+                      DatasetSystemMetadataWriter.EXPLORE_TAG),
       dsSystemTags);
     Map<String, String> dsSystemProperties = getProperties(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(KeyValueTable.class.getName(), dsSystemProperties.get("type"));
@@ -860,7 +855,11 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
       ImmutableSet.of(
         new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.MAPREDUCE, AllProgramsApp.NoOpMR.NAME)),
         new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.WORKFLOW, AllProgramsApp.NoOpWorkflow.NAME)),
-        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME))
+        new MetadataSearchResultRecord(Id.Program.from(app, ProgramType.SPARK, AllProgramsApp.NoOpSpark.NAME)),
+        new MetadataSearchResultRecord(Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DATASET_NAME)),
+        new MetadataSearchResultRecord(
+          Id.DatasetInstance.from(Id.Namespace.DEFAULT, AllProgramsApp.DS_WITH_SCHEMA_NAME)),
+        new MetadataSearchResultRecord(myds)
       ),
       searchMetadata(Id.Namespace.DEFAULT, "Batch", null));
     Assert.assertEquals(
@@ -991,15 +990,8 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
       .addAll(expectedKvTables)
       .add(new MetadataSearchResultRecord(dsWithSchema))
       .build();
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, BatchReadable.class.getSimpleName(), null);
+    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "explore", null);
     Assert.assertEquals(expectedAllDatasets, metadataSearchResultRecords);
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, BatchWritable.class.getSimpleName(),
-                                                 MetadataSearchTargetType.DATASET);
-    Assert.assertEquals(expectedAllDatasets, metadataSearchResultRecords);
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, RecordScannable.class.getSimpleName(), null);
-    Assert.assertEquals(expectedAllDatasets, metadataSearchResultRecords);
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, RecordWritable.class.getSimpleName(), null);
-    Assert.assertEquals(expectedKvTables, metadataSearchResultRecords);
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, KeyValueTable.class.getName(), null);
     Assert.assertEquals(expectedKvTables, metadataSearchResultRecords);
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "type:*", null);
