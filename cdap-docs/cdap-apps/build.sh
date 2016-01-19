@@ -104,7 +104,6 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins File-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins JMS-realtimesource.md
   download_md_doc_file $base_target $hydrator_source core-plugins JavaScript-transform.md
-  download_md_doc_file $base_target $hydrator_source core-plugins JavaScript-transform2.md
   download_md_doc_file $base_target $hydrator_source core-plugins KVTable-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins KVTable-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Kafka-realtimesource.md
