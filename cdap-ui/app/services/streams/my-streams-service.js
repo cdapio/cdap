@@ -77,7 +77,7 @@ angular.module(PKG.name + '.services')
           title: 'Upload success',
           content: 'The file has been uploaded successfully'
         });
-
+        $scope.dismiss();
         $scope.loading = false;
       }
 
