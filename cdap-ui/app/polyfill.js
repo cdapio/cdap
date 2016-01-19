@@ -25,3 +25,10 @@
 SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function(toElement) {
   return toElement.getScreenCTM().inverse().multiply(this.getScreenCTM());
 };
+
+// 'includes' function of String is not available in older version of chromium browsers.
+if (!String.prototype.includes) {
+  String.prototype.includes = function() {'use strict';
+    return String.prototype.indexOf.apply(this, arguments) !== -1;
+  };
+}
