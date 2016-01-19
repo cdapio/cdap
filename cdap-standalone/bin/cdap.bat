@@ -120,7 +120,7 @@ for /f "tokens=* delims= " %%f in ('node -v') do @(
 set line=%line:v=!!%
 
 for /F "delims=.,v tokens=1,2,3" %%a in ('echo %line%') do (
-  if %%a LEQ 1 if %%b LEQ 10 (
+  if %%a LEQ 1 if %%b LSS 10 (
     echo Node.js version is not supported. We recommend any version of Node.js greater than v0.10.0.
     GOTO :FINALLY
   )

@@ -29,7 +29,6 @@ import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramRecord;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.test.SingletonExternalResource;
-import co.cask.cdap.test.TestConfiguration;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -56,9 +55,6 @@ public abstract class ClientTestBase {
 
   @ClassRule
   public static final SingletonExternalResource STANDALONE = new SingletonExternalResource(new StandaloneTester());
-
-  @ClassRule
-  public static final TestConfiguration CONFIG = new TestConfiguration("explore.enabled", "true");
 
   @ClassRule
   public static final TemporaryFolder TMP_FOLDER = new TemporaryFolder();

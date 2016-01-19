@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceTemplatesController', function ($scope, myPipelineApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $alert, $state, GLOBALS, $rootScope, myAlertOnValium) {
+  .controller('NamespaceTemplatesController', function ($scope, myPipelineApi, PluginConfigFactory, myHelpers, mySettings, $stateParams, $state, GLOBALS, $rootScope, myAlertOnValium) {
 
     var vm = this;
     var oldTemplateName;
@@ -225,7 +225,8 @@ angular.module(PKG.name + '.feature.admin')
         myAlertOnValium.show({
           type: 'danger',
           title: 'Error!',
-          content: GLOBALS.en.admin.templateNameMissingError
+          content: GLOBALS.en.admin.templateNameMissingError,
+          duration: false
         });
 
         return;
@@ -236,7 +237,8 @@ angular.module(PKG.name + '.feature.admin')
         myAlertOnValium.show({
           type: 'danger',
           title: 'Error!',
-          content: GLOBALS.en.admin.pluginSameNameError
+          content: GLOBALS.en.admin.pluginSameNameError,
+          duration: false
         });
 
         return;
@@ -274,9 +276,10 @@ angular.module(PKG.name + '.feature.admin')
           var config = myHelpers.objectQuery(res, namespace, properties.templateType, properties.pluginType, properties.pluginTemplate);
 
           if (config && !vm.isEdit) {
-            $alert({
+            myAlertOnValium.show({
               type: 'danger',
-              content: GLOBALS.en.admin.templateNameExistsError
+              content: GLOBALS.en.admin.templateNameExistsError,
+              duration: false
             });
             vm.loading = false;
 
@@ -285,9 +288,10 @@ angular.module(PKG.name + '.feature.admin')
 
           if (vm.isEdit && oldTemplateName !== vm.pluginConfig.pluginTemplate) {
             if (config) {
-              $alert({
+              myAlertOnValium.show({
                 type: 'danger',
-                content: GLOBALS.en.admin.templateNameExistsError
+                content: GLOBALS.en.admin.templateNameExistsError,
+                duration: false
               });
               vm.loading = false;
 
@@ -308,7 +312,7 @@ angular.module(PKG.name + '.feature.admin')
 
           mySettings.set('pluginTemplates', res)
             .then(function () {
-              $alert({
+              myAlertOnValium.show({
                 type: 'success',
                 content: 'Success saving template'
               });

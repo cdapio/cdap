@@ -491,8 +491,8 @@ or, for a particular view of a stream::
 
 Searching for Metadata
 ======================
-To find which applications, datasets, or streams have a particular user metadata property or
-user metadata tag, submit an HTTP GET request::
+CDAP supports searching metadata of entities. To find which applications, datasets, or streams have a particular
+metadata property or metadata tag, submit an HTTP GET request::
 
   GET <base-url>/namespaces/<namespace>/metadata/search?query=<term>&target=<entity-type>
 
@@ -538,7 +538,7 @@ Entities with the specified terms are returned as list of entity IDs::
    * - ``<entity-type>``
      - One of ``artifact``, ``app``, ``dataset``, ``program``, ``stream`` or ``view``
    * - ``<term>``
-     - Query term, as described below
+     - Query term, as described below. Query terms are case-insensitive
 
 .. rubric:: HTTP Responses
 
@@ -555,7 +555,7 @@ Entities with the specified terms are returned as list of entity IDs::
 .. rubric:: Query Terms
 
 CDAP supports prefix-based search of metadata properties and tags across both *user* and *system* scopes.
-Search for specific tags by using either a complete or partial name with an asterisk ``*``.
+Search metadata of entities by using either a complete or partial name followed by an asterisk ``*``.
 
 Search for properties and tags by specifying one of:
 
@@ -563,9 +563,13 @@ Search for properties and tags by specifying one of:
 
 - a complete property key with a partial value, such as ``type:prod*``
 
-- a complete ``tags`` key with a complete or partial value, such as ``tags:prod*`` to search for tags only
+- a complete ``tags`` key with a complete or partial value, such as ``tags:production`` or ``tags:prod*``
+  to search for tags only
 
 - a complete or partial value, such as ``prod*``; this will return both properties and tags
+
+- multiple search terms separated by space, such as ``type:prod* author:joe``; this will return entities having
+  either of the terms in their metadata.
 
 Since CDAP also annotates *system* metadata to entities by default as mentioned at
 :ref:`System Metadata <metadata-lineage-system-metadata>`, the following *special* search queries are also supported:
@@ -578,12 +582,36 @@ Since CDAP also annotates *system* metadata to entities by default as mentioned 
   ``mapreduce:<mapreduce-name>``, ``spark:<spark-name>``, ``worker:<worker-name>``,
   ``workflow:<workflow-name>``
 
-- datasets, streams or views with the specified field:
-  - field name only: ``<field-name>``
-  - field type only: ``<field-type>``
-  - field name with a particular type: ``<field-name>:<field-type>``
+- datasets, streams or views with schema field:
 
-Searches are case-insensitive.
+  - field name only: ``<field-name>``
+  - field name with a type: ``<field-name>:<field-type>``, where ``field-type`` can be
+
+    - simple types - ``int``, ``long``, ``boolean``, ``float``, ``double``, ``bytes``, ``string``, ``enum``
+    - ``array``, ``map``, ``record`` or ``union``
+
+::
+
+  {
+     "type":"record",
+     "name":"employee",
+     "fields":[
+        {
+           "name":"employeeName",
+           "type":"string"
+        },
+        {
+           "name":"departments",
+           "type":{
+              "type":"array",
+              "items":"long"
+           }
+        }
+     ]
+  }
+
+With a schema as shown above, queries such as ``employee:record``, ``employeeName:string``, ``departments``,
+``departments:array`` can be issued.
 
 .. _http-restful-api-metadata-lineage:
 

@@ -39,17 +39,22 @@ body.theme-cdap {
   // --------------------------------------------------
 
   > div.alerts {
-    div.alert-danger {
-      color: white;
-      margin-bottom: 0;
-      width: 100%;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
-      .border-radius(0);
-    }
     button.close {
       font-size: 34px;
+    }
+  }
+  // Common styles
+  .alert {
+    text-shadow: 0 1px 0 rgba(255,255,255,.2);
+    width: 100%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    margin-bottom: 0;
+    .border-radius(0);
+    @shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.05);
+    .box-shadow(@shadow);
+    button.close {
       font-weight: 400;
       line-height: 12px;
       margin-left: 10px;
@@ -59,12 +64,6 @@ body.theme-cdap {
         outline: 0;
       }
     }
-  }
-  // Common styles
-  .alert {
-    text-shadow: 0 1px 0 rgba(255,255,255,.2);
-    @shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 1px 2px rgba(0,0,0,.05);
-    .box-shadow(@shadow);
   }
 
   // Mixin for generating new styles
@@ -77,7 +76,11 @@ body.theme-cdap {
   .alert-success    { .alert-styles(@alert-success-bg); }
   .alert-info       { .alert-styles(@alert-info-bg); }
   .alert-warning    { .alert-styles(@alert-warning-bg); }
-  .alert-danger     { .alert-styles(@alert-danger-bg); }
+  .alert-danger     {
+    .alert-styles(@alert-danger-bg);
+    color: white;
+    border: 0;
+  }
 
   //
   // Status text
@@ -474,6 +477,9 @@ body.theme-cdap {
     .modal-body {
       padding: 10px;
       width: 100%;
+      div.alerts {
+        top: 60px;
+      }
     }
     .modal-footer {
       border-top: 0;

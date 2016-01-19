@@ -868,10 +868,11 @@
   </property>
 
   <property>
-    <name>master.collect.app.containers.log</name>
-    <value>true</value>
+    <name>master.collect.app.containers.log.level</name>
+    <value>ERROR</value>
     <description>
-      Determines if application container logs are streamed back to the CDAP Master process log
+      The log level of application container logs that get streamed back to the CDAP master process log.
+      The levels supported are [ ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF ].
     </description>
   </property>
 
@@ -1711,6 +1712,15 @@
     <value>9999</value>
     <description>
       CDAP UI bind port
+    </description>
+  </property>
+
+  <property>
+    <name>dashboard.router.check.timeout.secs</name>
+    <value>0</value>
+    <description>
+      Amount of time, in seconds, CDAP UI waits before exiting when not able to connect to CDAP Router on startup.
+      Use timeout as 0 to wait indefinitely.
     </description>
   </property>
 

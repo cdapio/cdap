@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,8 @@
 package co.cask.cdap.internal.test;
 
 import co.cask.cdap.common.lang.ClassLoaders;
-import co.cask.cdap.common.twill.HadoopClassExcluder;
+import co.cask.cdap.common.lang.ProgramResources;
+import co.cask.cdap.proto.ProgramType;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import org.apache.twill.api.ClassAcceptor;
@@ -48,23 +49,13 @@ public final class AppJarHelper {
   public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
                                              File... bundleEmbeddedJars) throws IOException {
 
+    final Set<String> visibleResources = ProgramResources.getVisibleResources(AppJarHelper.class.getClassLoader(),
+                                                                              ProgramType.SPARK);
+    // Exclude all classes that are visible form the system to the program classloader.
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
-
-      private final ClassAcceptor hadoopClassExcluder = new HadoopClassExcluder();
-
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
-        if (!hadoopClassExcluder.accept(className, classUrl, classPathUrl)) {
-          return false;
-        }
-        if (className.startsWith("co.cask.cdap.api.")
-          || className.startsWith("org.apache.hive.")
-          || className.startsWith("org.apache.hadoop.hive.")
-          || className.startsWith("org.apache.spark")
-          || className.startsWith("scala.")) {
-          return false;
-        }
-        return true;
+        return !visibleResources.contains(className.replace('.', '/') + ".class");
       }
     });
     Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");

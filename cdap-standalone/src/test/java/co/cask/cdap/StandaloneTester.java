@@ -20,7 +20,6 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.utils.Networks;
 import co.cask.cdap.common.utils.Tasks;
-import co.cask.cdap.test.TestConfiguration;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.rules.ExternalResource;
 import org.junit.rules.TemporaryFolder;
@@ -60,17 +59,9 @@ public class StandaloneTester extends ExternalResource {
     cConf.set(Constants.Router.ADDRESS, getLocalHostname());
     cConf.setInt(Constants.Router.ROUTER_PORT, Networks.getRandomPort());
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
+    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, true);
+    cConf.setBoolean(Constants.Explore.START_ON_DEMAND, true);
     cConf.setBoolean(StandaloneMain.DISABLE_UI, true);
-
-    // Setup test case specific configurations.
-    // The system properties are usually setup by TestConfiguration class using @ClassRule
-    for (String key : System.getProperties().stringPropertyNames()) {
-      if (key.startsWith(TestConfiguration.PROPERTY_PREFIX)) {
-        String value = System.getProperty(key);
-        cConf.set(key.substring(TestConfiguration.PROPERTY_PREFIX.length()), System.getProperty(key));
-        LOG.info("Custom configuration set: {} = {}", key, value);
-      }
-    }
 
     this.cConf = cConf;
 

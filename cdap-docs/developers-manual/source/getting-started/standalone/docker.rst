@@ -87,7 +87,7 @@ Docker from a Command Line
 ==========================
 
 - Docker is available for a variety of platforms. Download and install Docker in your environment by
-  following the `platform-specific installation instructions <https://docs.docker.com/installation>`__
+  following the `platform-specific installation instructions <https://docs.docker.com/engine/installation/>`__
   from `Docker.com <https://docker.com>`__ to verify that Docker is working and has
   started correctly.
   
