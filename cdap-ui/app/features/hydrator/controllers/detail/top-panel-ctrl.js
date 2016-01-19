@@ -31,7 +31,7 @@ angular.module(PKG.name + '.feature.hydrator')
       var status, i;
       var lastRunDuration;
       var nextRunTime = DetailRunsStore.getNextRunTime();
-      if (nextRunTime) {
+      if (nextRunTime && nextRunTime.length) {
         nextRunTime = nextRunTime[0].time? nextRunTime[0].time: null;
       }
       this.nextRunTime = nextRunTime || 'N/A';
@@ -89,6 +89,16 @@ angular.module(PKG.name + '.feature.hydrator')
         DetailRunsStore.getScheduleParams()
       );
     }
+
+    var greenStatus = ['COMPLETED', 'RUNNING', 'SCHEDULED', 'STARTING'];
+    this.isGreenStatus = function () {
+      if (greenStatus.indexOf(this.appStatus) > -1) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
     this.do = function(action) {
       switch(action) {
         case 'Start':

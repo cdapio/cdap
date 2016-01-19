@@ -16,13 +16,17 @@
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('HydratorDetailHistoryController', function(DetailRunsStore) {
-    this.setState = function() {
-      this.history = DetailRunsStore.getHistory();
+    var vm = this;
+
+    vm.history = [];
+
+    vm.setState = function() {
+      vm.history = DetailRunsStore.getRuns();
       var params = DetailRunsStore.getParams();
-      this.programType = params.programType.toUpperCase();
-      this.programId = params.programName;
-      this.appId = params.app;
+      vm.programType = params.programType.toUpperCase();
+      vm.programId = params.programName;
+      vm.appId = params.app;
     };
-    this.setState();
-    DetailRunsStore.registerOnChangeListener(this.setState.bind(this));
+    vm.setState();
+    DetailRunsStore.registerOnChangeListener(vm.setState);
   });
