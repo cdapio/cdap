@@ -21,14 +21,26 @@ Roles and Dependencies
 ----------------------
 The CDAP CSD (`Custom Service Descriptor 
 <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_addon_services.html#concept_qbv_3jk_bn_unique_1>`__)
-consists of four mandatory roles:
+consists of four mandatory roles and two optional roles:
 
-#. CDAP Master Service
-#. CDAP Gateway/Router Service
-#. CDAP Kafka Service
-#. CDAP UI Service
+.. list-table::
+   :widths: 20 80
+   :header-rows: 1
 
-A fifth role (*CDAP Security Auth Service*) is optional. There is also a (CDAP) Gateway client configuration.
+   * - CSD Role
+     - Description
+   * - CDAP Master Service
+     - Service for managing runtime, lifecycle and resources of CDAP applications
+   * - CDAP Gateway/Router Service
+     - Service supporting REST endpoints for CDAP
+   * - CDAP Kafka Service
+     - Metrics and logging transport service, using an embedded version of *Kafka*
+   * - CDAP UI Service
+     - User interface for managing CDAP applications
+   * - CDAP Security Auth Service
+     - Performs client authentication for CDAP when security is enabled (*optional*)
+   * - CDAP Gateway
+     - Installs the CDAP client tools (such as the *CDAP CLI*) and configuration (*optional*)
 
 These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of the same name.
 

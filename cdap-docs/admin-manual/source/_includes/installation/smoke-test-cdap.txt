@@ -1,5 +1,5 @@
-Smoke Test for CDAP
--------------------
+CDAP Smoke Test
+---------------
 The CDAP UI may initially show errors while all of the CDAP YARN containers are
 starting up. Allow for up to a few minutes for this. The *Services* link in the CDAP
 UI in the upper right will show the status of the CDAP services. 
