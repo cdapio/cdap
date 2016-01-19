@@ -104,8 +104,8 @@ to make sure the CDAP table definitions in HBase are up-to-date.
 These steps will stop CDAP, update the installation, run an upgrade tool for the table definitions,
 and then restart CDAP.
 
-**These steps will upgrade from CDAP 3.1.x to 3.2.x.** If you are on an earlier version of CDAP,
-please follow the upgrade instructions for the earlier versions and upgrade first to 3.1.x before proceeding.
+**These steps will upgrade from CDAP 3.2.x to 3.3.x.** If you are on an earlier version of CDAP,
+please follow the upgrade instructions for the earlier versions and upgrade first to 3.2.x before proceeding.
 
 .. highlight:: console
 
@@ -182,6 +182,9 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
    it will run unattended and not prompt for continuing::
    
      $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade force
+     
+#. To upgrade existing ETL applications created using the 3.2.x versions of ``cdap-etl-batch`` or 
+   ``cdap-etl-realtime``, there is are :ref:`separate instructions on doing so <cdap-apps-etl-upgrade>`.
 
 #. Restart the CDAP processes::
 

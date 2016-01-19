@@ -39,17 +39,25 @@ consists of four mandatory roles and two optional roles:
    * - CDAP Security Auth Service
      - Performs client authentication for CDAP when security is enabled (*optional*)
    * - CDAP Gateway
-     - Installs the CDAP client tools (such as the *CDAP CLI*) and configuration (*optional*)
+     - `Cloudera Manager Gateway Role <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_managing_roles.html>`__
+       that installs the CDAP client tools (such as the *CDAP CLI*) and configuration (*optional*)
 
 These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of the same name.
+
+- Note that the *CDAP Gateway/Router Service* is not a `Cloudera Manager Gateway Role 
+  <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_managing_roles.html>`__
+  but is instead another name for the CDAP Router Service.
 
 - As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be placed
   on a cluster host with full client configurations for these dependent services. 
 
 - CDAP roles must be co-located on a cluster host with at least an HDFS Gateway, a YARN
   Gateway, an HBase Gateway, and |---| optionally |---| Hive or Spark Gateways.
-  
-- Note that these Gateways are redundant if you are co-locating CDAP on cluster hosts with
+
+- The CDAP Master role must be co-located on a cluster host with an HDFS Gateway, a YARN
+  Gateway, an HBase Gateway, and |---| optionally |---| Hive or Spark Gateways.
+
+- Note that these Gateways are redundant if you are co-locating the [CDAP Master role] on cluster hosts with
   actual services, such as the HDFS Namenode, the YARN resource manager, or the HBase Master.
 
 - All services run as the ``'cdap'`` user installed by the parcel.
@@ -74,10 +82,13 @@ Configurations
    We recommend starting with these settings:
    
    - ``yarn.nodemanager.delete.debug-delay-sec``: 43200
-   - ``yarn.nodemanager.resource.memory-mb``: Adjust if you need to raise memory per nodemanager
-   - ``yarn.nodemanager.resource.cpu-vcores``: Adjust if you need to raise vcores per nodemanager
    - ``yarn.scheduler.minimum-allocation-mb``: 512 mb
    
+   Please ensure your ``yarn.nodemanager.resource.cpu-vcores`` and
+   ``yarn.nodemanager.resource.memory-mb`` settings are set sufficiently to run CDAP,
+   as described in the :ref:`CDAP Memory and Core Requirements 
+   <admin-manual-memory-core-requirements>`.
+      
    You can make these changes `using Cloudera Manager 
    <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
    You will be prompted to restart the stale services after making changes.
@@ -182,6 +193,7 @@ Add Service Wizard: Specifying Dependencies
 -------------------------------------------
 
 The **Hive dependency** is for the CDAP "Explore" component, which is enabled by default.
+Note that if you do not select Hive, you will need to disable CDAP Explore.
 
 .. figure:: ../_images/cloudera/cloudera-csd-03.png
    :figwidth: 100%
@@ -219,9 +231,9 @@ Add Service Wizard: Reviewing Configuration
 to connect to the CDAP Router service.
 
 **App Artifact Dir:** This should initially point to the bundled system artifacts included
-in the CDAP parcel directory. If you have modified ``${PARCELS_ROOT}``, please update this
-setting to match. Users will want to customize this directory to a location outside of the
-CDAP Parcel.
+in the CDAP parcel directory. If you have modified ``${PARCELS_ROOT}`` for your instance
+of Cloudera Manager, please update this setting (*App Artifact Dir*) to match. You may
+want to customize this directory to a location outside of the CDAP Parcel.
 
 .. figure:: ../_images/cloudera/cloudera-csd-06.png
    :figwidth: 100%
@@ -237,9 +249,11 @@ CDAP Parcel.
 *Safety Valve* Advanced Configuration Snippets. Documentation of the available CDAP
 properties is in the :ref:`appendix-cdap-site.xml`.
 
-**Additional environment variables** can be set, if required, using the Cloudera Manager's
-"Cask DAP Service Environment Advanced Configuration Snippet (Safety Valve)". For example,
-for including Spark it should contain ``SPARK_HOME=/opt/cloudera/parcels/CDH/lib/spark``.
+**Additional environment variables** can be set, as required, using the Cloudera Manager's
+"Cask DAP Service Environment Advanced Configuration Snippet (Safety Valve)".
+
+**Including Spark:** If you are including Spark, the *Environment Advanced Configuration*
+should contain ``SPARK_HOME=/opt/cloudera/parcels/CDH/lib/spark``.
 
 At this point, the CDAP installation is configured and is ready to be installed. Review
 your settings before continuing to the next step, which will install and start CDAP.

@@ -63,7 +63,7 @@ Cask repository on your Ambari server.
 
 The **repository version** (shown in the commands below as ``"cdap/``\ |literal-short-version|\ ``"``) must match the
 **CDAP version** which you’d like installed on your cluster. To install the *CDAP 3.0 series,*
-you would install the *CDAP 3.0 repository.* The default is to use **cdap/3.2**, which has the
+you would install the *CDAP 3.0 repository.* The default is to use **cdap/3.3**, which has the
 widest compatibility with Ambari-supported Hadoop distributions.
 
 Replace |---| in the commands that follow on this page |---| all references to ``"cdap/``\ |literal-short-version|\ ``"`` 
@@ -74,11 +74,13 @@ with the CDAP Repository from the list below that you would like to use:
 +----------------+-----------------+------------------------------------+
 | CDAP Version   | CDAP Repository | Hadoop Distributions               |
 +================+=================+====================================+
-| CDAP 3.0.x     | ``cdap/3.0``    | HDP 2.0, HDP 2.1                   |
+| CDAP 3.3.x     | ``cdap/3.3``    | HDP 2.0, HDP 2.1, HDP 2.2, HDP 2.3 |
++----------------+-----------------+------------------------------------+
+| CDAP 3.2.x     | ``cdap/3.2``    | HDP 2.0, HDP 2.1, HDP 2.2, HDP 2.3 |
 +----------------+-----------------+------------------------------------+
 | CDAP 3.1.x     | ``cdap/3.1``    | HDP 2.0, HDP 2.1, HDP 2.2          |
 +----------------+-----------------+------------------------------------+
-| CDAP 3.2.x     | ``cdap/3.2``    | HDP 2.0, HDP 2.1, HDP 2.2, HDP 2.3 |
+| CDAP 3.0.x     | ``cdap/3.0``    | HDP 2.0, HDP 2.1                   |
 +----------------+-----------------+------------------------------------+
 
 **Note:** The CDAP Ambari service has been tested on Ambari Server 2.0 and 2.1, as
