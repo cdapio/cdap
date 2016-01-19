@@ -31,8 +31,8 @@ class ReferenceTabController {
     } else {
       let key = `doc.${this.state.node.plugin.name}-${this.state.node.type}`;
       this.PluginConfigFactory.fetchDocJson(
-        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name') || this.GLOBALS.artifact.default.name,
-        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version') || this.GLOBALS.artifact.default.version,
+        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'name'),
+        this.myHelpers.objectQuery(this.state.node, 'plugin', 'artifact', 'version'),
         key
       ).then (
         (res) => {
