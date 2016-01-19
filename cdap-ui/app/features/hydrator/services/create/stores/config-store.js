@@ -151,11 +151,11 @@ class ConfigStore {
           inputSchema: node.inputSchema
         };
       } else if (node.type === 'transform') {
-        if (node.errorDatasetName && node.errorDatasetName.length > 0) {
-          pluginConfig.errorDatasetName = node.errorDatasetName;
+        if (node.plugin.errorDatasetName && node.plugin.errorDatasetName.length > 0) {
+          pluginConfig.errorDatasetName = node.plugin.errorDatasetName;
         }
-        if (node.validationFields) {
-          pluginConfig.validationFields = node.validationFields;
+        if (node.plugin.validationFields) {
+          pluginConfig.validationFields = node.plugin.validationFields;
         }
         pluginConfig = {
           name: node.plugin.label,
