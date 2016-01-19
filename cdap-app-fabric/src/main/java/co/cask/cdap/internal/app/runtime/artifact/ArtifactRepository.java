@@ -44,6 +44,7 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -305,6 +306,9 @@ public class ArtifactRepository {
       ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, null, parentClassLoader);
       validatePluginSet(artifactClasses.getPlugins());
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
+      ArtifactInfo artifactInfo = new ArtifactInfo(artifactId.toArtifactId(), artifactClasses,
+                                                  ImmutableMap.<String, String>of());
+      writeSystemMetadata(artifactId, artifactInfo);
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     }
   }
@@ -403,8 +407,7 @@ public class ArtifactRepository {
       ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(), artifactDetail.getMeta().getClasses(),
                                                    artifactDetail.getMeta().getProperties());
       // add system metadata for artifacts
-      ArtifactSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataStore, artifactId, artifactInfo);
-      writer.write();
+      writeSystemMetadata(artifactId, artifactInfo);
       return artifactDetail;
     } finally {
       parentClassLoader.close();
@@ -766,5 +769,11 @@ public class ArtifactRepository {
     if (isInvalid) {
       throw new InvalidArtifactException(errMsg.toString());
     }
+  }
+
+  private void writeSystemMetadata(Id.Artifact artifactId, ArtifactInfo artifactInfo) {
+    // add system metadata for artifacts
+    ArtifactSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataStore, artifactId, artifactInfo);
+    writer.write();
   }
 }

@@ -96,9 +96,8 @@ public class CLIMainTest {
 
   private static final Logger LOG = LoggerFactory.getLogger(CLIMainTest.class);
   private static final Gson GSON = new Gson();
-
   private static final String PREFIX = "123ff1_";
-  // TODO: Uncomment after CDAP-4687 is fixed
+
   private final Id.Artifact fakeArtifactId = Id.Artifact.from(Id.Namespace.DEFAULT, FakeApp.NAME, "1.0");
   private final Id.Application fakeAppId = Id.Application.from(Id.Namespace.DEFAULT, FakeApp.NAME);
   private final Id.Workflow fakeWorkflowId = Id.Workflow.from(fakeAppId, FakeWorkflow.NAME);
@@ -577,9 +576,8 @@ public class CLIMainTest {
     lines = Arrays.asList(output.split("\\r?\\n"));
     Assert.assertTrue(lines.contains("streamTag1") && lines.contains("streamTag2"));
     // test search
-    // TODO: CDAP-4687: Uncomment when fixed
-    // testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type artifact",
-    //                                             FakeApp.class.getSimpleName()), fakeArtifactId.toString());
+    testCommandOutputContains(cli, String.format("search metadata %s filtered by target-type artifact",
+                                                 FakeApp.class.getSimpleName()), fakeArtifactId.toString());
     testCommandOutputContains(cli, "search metadata appKey:appValue", fakeAppId.toString());
     testCommandOutputContains(cli, "search metadata fake* filtered by target-type app", fakeAppId.toString());
     output = getCommandOutput(cli, "search metadata fake* filtered by target-type program");

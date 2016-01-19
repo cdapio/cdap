@@ -50,8 +50,11 @@ import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.gson.JsonObject;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Assert;
@@ -62,6 +65,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
@@ -620,6 +624,15 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
       dsSystemTags);
     Map<String, String> dsSystemProperties = getProperties(datasetInstance, MetadataScope.SYSTEM);
     Assert.assertEquals(KeyValueTable.class.getName(), dsSystemProperties.get("type"));
+    // verify artifact metadata
+    Id.Artifact artifactId = getArtifactId();
+    Assert.assertEquals(
+      ImmutableSet.of(
+        new MetadataRecord(artifactId, MetadataScope.SYSTEM, ImmutableMap.<String, String>of(),
+                           ImmutableSet.of(AllProgramsApp.class.getSimpleName()))
+      ),
+      getMetadata(artifactId, MetadataScope.SYSTEM)
+    );
     // verify app system metadata
     Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, AllProgramsApp.NAME);
     Assert.assertEquals(
@@ -654,15 +667,22 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
   @Test
   public void testSearchUsingSystemMetadata() throws Exception {
     deploy(AllProgramsApp.class);
-    // search artifacts
-    assertArtifactSearch();
-    // search app
     Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, AllProgramsApp.NAME);
-    assertAppSearch(app);
-    // search programs
-    assertProgramSearch(app);
-    // search data entities
-    assertDataEntitySearch();
+    Id.Artifact artifact = getArtifactId();
+    try {
+      // search artifacts
+      assertArtifactSearch();
+      // search app
+      assertAppSearch(app, artifact);
+      // search programs
+      assertProgramSearch(app);
+      // search data entities
+      assertDataEntitySearch();
+    } finally {
+      // cleanup
+      deleteApp(app, HttpResponseStatus.OK.getCode());
+      deleteArtifact(artifact, HttpResponseStatus.OK.getCode());
+    }
   }
 
   @Test
@@ -785,12 +805,14 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     Assert.assertEquals(expected, results);
   }
 
-  private void assertAppSearch(Id.Application app) throws Exception {
+  private void assertAppSearch(Id.Application app, Id.Artifact artifact) throws Exception {
     // using app name
     ImmutableSet<MetadataSearchResultRecord> expected = ImmutableSet.of(new MetadataSearchResultRecord(app));
     Assert.assertEquals(expected, searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NAME, null));
-    // using artifact name
-    Assert.assertEquals(expected, searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.class.getSimpleName(), null));
+    // using artifact name: both app and artifact should match
+    Assert.assertEquals(
+      ImmutableSet.of(new MetadataSearchResultRecord(app), new MetadataSearchResultRecord(artifact)),
+      searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.class.getSimpleName(), null));
     // using program names
     Assert.assertEquals(expected, searchMetadata(Id.Namespace.DEFAULT, AllProgramsApp.NoOpFlow.NAME,
                                                  MetadataSearchTargetType.APP));
@@ -1037,5 +1059,21 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
       Assert.assertTrue(metadataRecord.getProperties().isEmpty());
       Assert.assertTrue(metadataRecord.getTags().isEmpty());
     }
+  }
+
+  /**
+   * Returns the artifact id of the deployed application. Need this because we don't know the exact version.
+   */
+  private Id.Artifact getArtifactId() throws Exception {
+    Iterable<JsonObject> filtered =
+      Iterables.filter(getArtifacts(Id.Namespace.DEFAULT.getId()), new Predicate<JsonObject>() {
+        @Override
+        public boolean apply(JsonObject input) {
+          return AllProgramsApp.class.getSimpleName().equals(input.get("name").getAsString());
+        }
+      });
+    JsonObject allProgramsArtifact = Iterables.getOnlyElement(filtered);
+    return Id.Artifact.from(Id.Namespace.DEFAULT, allProgramsArtifact.get("name").getAsString(),
+                            allProgramsArtifact.get("version").getAsString());
   }
 }
