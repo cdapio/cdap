@@ -114,7 +114,7 @@ class ConfigActionsFactory {
           this.EventPipe.emit('hideLoadingIcon.immediate');
           this.ConsoleActionsFactory.addMessage({
             type: 'error',
-            content: angular.isObject(err) ? err.data : err;
+            content: angular.isObject(err) ? err.data : err
           });
         }
       );
