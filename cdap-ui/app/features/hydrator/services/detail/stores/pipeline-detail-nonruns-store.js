@@ -143,11 +143,17 @@ angular.module(PKG.name + '.feature.hydrator')
               node.plugin.properties.schema = {
                 fields: [{ name: 'body', type: 'string'}]
               };
-              node.plugin.properties.schema = JSON.stringify({ fields: pluginToSchemaMap[pluginName].concat(node.outputSchema.fields)});
+              node.plugin.properties.schema = JSON.stringify({
+                type: 'record',
+                name: 'etlSchemaBody',
+                fields: pluginToSchemaMap[pluginName].concat(node.outputSchema.fields)
+              });
             } else {
               try {
                 let schema = JSON.parse(node.plugin.properties.schema);
                 node.plugin.properties.schema = JSON.stringify({
+                  type: 'record',
+                  name: 'etlSchemaBody',
                   fields: pluginToSchemaMap[pluginName].concat(schema.fields)
                 });
               } catch(e) {}
