@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import co.cask.cdap.cli.util.AbstractCommand;
 import co.cask.cdap.cli.util.table.Table;
 import co.cask.cdap.client.MetadataClient;
 import co.cask.cdap.proto.id.EntityId;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.common.cli.Arguments;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -50,7 +51,9 @@ public class GetMetadataTagsCommand extends AbstractCommand {
   @Override
   public void perform(Arguments arguments, PrintStream output) throws Exception {
     EntityId entity = EntityId.fromString(arguments.get(ArgumentName.ENTITY.toString()));
-    Set<String> tags = client.getTags(entity.toId());
+    String scope = arguments.getOptional(ArgumentName.METADATA_SCOPE.toString());
+    Set<String> tags = scope == null ? client.getTags(entity.toId()) :
+      client.getTags(entity.toId(), MetadataScope.valueOf(scope.toUpperCase()));
 
     Table table = Table.builder()
       .setHeader("tags")
@@ -69,7 +72,8 @@ public class GetMetadataTagsCommand extends AbstractCommand {
 
   @Override
   public String getPattern() {
-    return String.format("get metadata-tags <%s>", ArgumentName.ENTITY);
+    return String.format("get metadata-tags <%s> [scope <%s>]",
+                         ArgumentName.ENTITY, ArgumentName.METADATA_SCOPE);
   }
 
   @Override
