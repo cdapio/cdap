@@ -76,9 +76,11 @@ function add_parcels_to_repo_staging() {
   for __parcel in $(ls -1 ${TARGET_DIR}/CDAP-*.parcel 2>/dev/null); do
     echo "- ${__parcel}"
     cp -f ${__parcel} .
+  done
+  # We only build el6, so use that as key
+  for p in $(ls -1 CDAP-*-el6.parcel) ; do
     for d in precise trusty wheezy ; do
-      # We only build el6, so use that as key
-      ln -sf ${__parcel} ${__parcel/el6/${d}} || (echo "Failed to symlink ${__parcel/el6/${d}} to ${__parcel}" && return 1)
+      ln -sf ${p} ${p/el6/${d}} || (echo "Failed to symlink ${p/el6/${d}} to ${p}" && return 1)
     done
   done
 }
