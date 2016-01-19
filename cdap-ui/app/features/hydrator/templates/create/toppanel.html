@@ -43,11 +43,12 @@
                    tooltip-class="toppanel-tooltip" />
             <textarea ng-model="TopPanelController.parsedDescription"
                       placeholder="Enter a description for your pipeline."
-                      tooltip="{{ TopPanelController.parsedDescription }}"
+                      tooltip-html="TopPanelController.tooltipDescription"
                       tooltip-placement="right"
-                      tooltip-enable="TopPanelController.parsedDescription.length > 64"
+                      tooltip-enable="TopPanelController.tooltipDescription.length > 64"
                       tooltip-class="toppanel-tooltip"
-                      ng-if="!TopPanelController.metadataExpanded"></textarea>
+                      ng-if="!TopPanelController.metadataExpanded"
+                      tooltip-append-to-body="true"></textarea>
             <textarea ng-model="TopPanelController.state.metadata['description']"
                       placeholder="Enter a description for your pipeline."
                       ng-if="TopPanelController.metadataExpanded"></textarea>

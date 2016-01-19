@@ -24,11 +24,7 @@ angular.module(PKG.name + '.feature.hydrator')
       type: this.config.artifact.name
     };
 
-    if(this.app.description.indexOf('/\n/g') === -1) {
-      this.parsedDescription = this.app.description.replace(/\n/g, '<br />');
-    } else {
-      this.parsedDescription = this.app.description;
-    }
+    this.tooltipDescription = this.app.description.replace(/\n/g, '<br />');
 
     var params;
     this.setState = function() {

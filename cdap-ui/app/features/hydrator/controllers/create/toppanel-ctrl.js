@@ -74,11 +74,8 @@ class TopPanelController{
   }
   saveMetadata() {
     this.ConfigActionsFactory.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
-    if(this.state.metadata.description.indexOf('/\n/g') === -1) {
-      this.parsedDescription = this.state.metadata.description.replace(/\n/g, ' ');
-    } else {
-      this.parsedDescription = this.state.metadata.description;
-    }
+    this.parsedDescription = this.state.metadata.description.replace(/\n/g, ' ');
+    this.tooltipDescription = this.state.metadata.description.replace(/\n/g, '<br />');
     this.metadataExpanded = false;
   }
   onEnterOnMetadata(event) {
