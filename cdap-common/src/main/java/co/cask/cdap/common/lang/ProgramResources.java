@@ -40,6 +40,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -120,7 +121,7 @@ final class ProgramResources {
                                SPARK_PACKAGES, ImmutableList.<String>of(),
                                RESOURCE_INFO_TO_RESOURCE_NAME, Sets.newHashSet(resources));
     }
-    return ImmutableSet.copyOf(resources);
+    return Collections.unmodifiableSet(resources);
   }
 
   private static Set<String> getBaseResources() {
@@ -162,7 +163,7 @@ final class ProgramResources {
     getResources(ClassPath.from(classLoader, JAR_ONLY_URI),
                  HADOOP_PACKAGES, HBASE_PACKAGES, RESOURCE_INFO_TO_RESOURCE_NAME, result);
 
-    return ImmutableSet.copyOf(result);
+    return Collections.unmodifiableSet(result);
   }
 
   /**
@@ -290,6 +291,12 @@ final class ProgramResources {
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         // Ignore bootstrap classes
         if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
+          return false;
+        }
+
+        // Should ignore classes from SLF4J implementation, otherwise it will includes logback lib, which shouldn't be
+        // visible through the program classloader.
+        if (className.startsWith("org.slf4j.impl.")) {
           return false;
         }
 
