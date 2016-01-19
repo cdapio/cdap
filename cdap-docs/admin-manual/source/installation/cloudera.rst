@@ -132,7 +132,7 @@ available at `Cloudera's website
 <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/
 cm_ig_parcels.html>`__, but in summary these are the steps:
    
-1. Installing the CSD adds the corresponding Cask parcel repository for you, however, you can 
+1. Installing the CSD adds the corresponding Cask parcel repository for you; however, you can 
    `customize the list of repositories 
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#cmug_topic_7_11_5_unique_1>`__
    searched by Cloudera Manager if you need to;
