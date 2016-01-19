@@ -48,8 +48,11 @@ angular.module(PKG.name + '.services')
           EventPipe.emit('backendUp');
           myAuth.logout();
         });
-      } else {
-        EventPipe.emit('backendDown');
+      } else if(err && err.code === 'ECONNREFUSED') {
+        EventPipe.emit('backendDown', 'Unable to connect to CDAP Router', 'Attempting to connect…');
+      } else if (!err) {
+        // Ideally we won't reach here. 
+        EventPipe.emit('backendUp');
       }
     }
     );
