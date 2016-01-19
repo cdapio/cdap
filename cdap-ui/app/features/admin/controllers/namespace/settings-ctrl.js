@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceSettingsController', function ($scope, MyCDAPDataSource, $state, $alert, $timeout, myNamespace, EventPipe) {
+  .controller('NamespaceSettingsController', function ($scope, MyCDAPDataSource, $state, myAlertOnValium, $timeout, myNamespace, EventPipe) {
 
     var dataSrc = new MyCDAPDataSource($scope);
     $scope.loading = false;
@@ -37,7 +37,7 @@ angular.module(PKG.name + '.feature.admin')
         }
       })
       .then(function () {
-        $alert({
+        myAlertOnValium.show({
           type: 'success',
           content: 'Namespace successfully updated'
         });
@@ -62,7 +62,7 @@ angular.module(PKG.name + '.feature.admin')
           EventPipe.emit('hideLoadingIcon.immediate');
 
           $state.go('admin.overview', {}, {reload: true});
-          $alert({
+          myAlertOnValium.show({
             type: 'success',
             content: 'You have successfully deleted a namespace'
           });

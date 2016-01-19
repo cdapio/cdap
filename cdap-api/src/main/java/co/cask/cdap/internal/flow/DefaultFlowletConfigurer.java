@@ -24,6 +24,7 @@ import co.cask.cdap.api.flow.flowlet.FlowletSpecification;
 import co.cask.cdap.internal.api.DefaultDatasetConfigurer;
 import co.cask.cdap.internal.flowlet.DefaultFlowletSpecification;
 import co.cask.cdap.internal.lang.Reflections;
+import co.cask.cdap.internal.specification.DataSetFieldExtractor;
 import co.cask.cdap.internal.specification.PropertyFieldExtractor;
 
 import java.util.HashMap;
@@ -56,8 +57,10 @@ public class DefaultFlowletConfigurer extends DefaultDatasetConfigurer implement
     this.properties = new HashMap<>();
     this.datasets = new HashSet<>();
 
-    // Grab all @Property fields
-    Reflections.visit(flowlet, flowlet.getClass(), new PropertyFieldExtractor(propertyFields));
+    // Grab all @Property, @UseDataset fields
+    Reflections.visit(flowlet, flowlet.getClass(),
+                      new PropertyFieldExtractor(propertyFields),
+                      new DataSetFieldExtractor(datasets));
   }
 
   @Override
@@ -102,6 +105,6 @@ public class DefaultFlowletConfigurer extends DefaultDatasetConfigurer implement
     Map<String, String> properties = new HashMap<>(this.properties);
     properties.putAll(propertyFields);
     return new DefaultFlowletSpecification(this.className, this.name, this.description, this.failurePolicy,
-                                           this.datasets, this.properties, this.resources);
+                                           this.datasets, properties, this.resources);
   }
 }

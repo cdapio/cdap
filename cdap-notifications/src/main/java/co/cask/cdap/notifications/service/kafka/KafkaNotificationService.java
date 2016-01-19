@@ -18,6 +18,7 @@ package co.cask.cdap.notifications.service.kafka;
 
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.transaction.TransactionSystemClientService;
 import co.cask.cdap.notifications.feeds.NotificationFeedException;
 import co.cask.cdap.notifications.feeds.NotificationFeedManager;
 import co.cask.cdap.notifications.feeds.NotificationFeedNotFoundException;
@@ -26,7 +27,6 @@ import co.cask.cdap.notifications.service.NotificationException;
 import co.cask.cdap.notifications.service.NotificationHandler;
 import co.cask.cdap.notifications.service.NotificationService;
 import co.cask.cdap.proto.Id;
-import co.cask.tephra.TransactionSystemClient;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -72,7 +72,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
 
   @Inject
   public KafkaNotificationService(CConfiguration cConf, KafkaClient kafkaClient, DatasetFramework dsFramework,
-                                  TransactionSystemClient transactionSystemClient,
+                                  TransactionSystemClientService transactionSystemClient,
                                   NotificationFeedManager feedManager) {
     super(dsFramework, transactionSystemClient, feedManager);
     this.kafkaClient = kafkaClient;
@@ -85,6 +85,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
 
   @Override
   protected void startUp() throws Exception {
+    super.startUp();
     kafkaPublisher = kafkaClient.getPublisher(ack, Compression.SNAPPY);
     publishingExecutor = MoreExecutors.listeningDecorator(
       Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("notification-publisher-%d")));
@@ -93,6 +94,7 @@ public class KafkaNotificationService extends AbstractNotificationService {
   @Override
   protected void shutDown() throws Exception {
     publishingExecutor.shutdownNow();
+    super.shutDown();
   }
 
   @Override

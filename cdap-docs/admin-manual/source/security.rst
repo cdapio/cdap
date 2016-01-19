@@ -392,6 +392,34 @@ The Developers’ Manual :ref:`Custom Authentication <developers-custom-authenti
 how to create a Custom Authentication Mechanism.
 
 
+.. _configuring_auth_exemptions:
+
+Configuring Exemptions from Authentication
+..........................................
+
+Sometimes you need to exempt certain URLs from authentication. For example, you may want to secure
+your entire application, except that you want to allow sending data to a stream by unauthenticated clients.
+For this, you can configure the CDAP Router to bypass the authentication for URLs that match a given
+regular expression, by adding the following property in ``cdap-site.xml``:
+
+================================================= ==================== ======================================================
+Property                                          Default Value        Description
+================================================= ==================== ======================================================
+``router.bypass.auth.regex``                      *None*               Regular expression to match URLs that are
+                                                                       exempt from authentication.
+================================================= ==================== ======================================================
+
+
+For example, the following configuration in ``cdap-site.xml`` will allow unauthenticated
+posting to all streams in the default namespace::
+
+  <property>
+    <name>router.bypass.auth.regex</name>
+    <value>/v3/namespaces/default/streams/[^/]+</value>
+  </property>
+
+This must be configured on every node that runs the CDAP Router.
+
 Testing Security
 ----------------
 

@@ -34,6 +34,7 @@ import co.cask.cdap.common.lang.CombineClassLoader;
 import co.cask.cdap.common.lang.WeakReferenceDelegatorClassLoader;
 import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.twill.HadoopClassExcluder;
+import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.data.stream.StreamInputFormat;
 import co.cask.cdap.data.stream.StreamInputFormatProvider;
@@ -79,7 +80,6 @@ import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.ClassAcceptor;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
@@ -89,6 +89,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -104,6 +105,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
@@ -246,12 +248,20 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         programJar = copyProgramJar(tempLocation);
         job.addCacheFile(Locations.toURI(programJar));
 
+        List<String> classpath = new ArrayList<>();
+
+        // Localize logback.xml
+        Location logbackLocation = createLogbackJar(tempLocation);
+        if (logbackLocation != null) {
+          job.addCacheFile(Locations.toURI(logbackLocation));
+          classpath.add(logbackLocation.getName());
+        }
+
         // Generate and localize the launcher jar to control the classloader of MapReduce containers processes
-        List<String> paths = new ArrayList<>();
-        paths.add("job.jar/lib/*");
-        paths.add("job.jar/classes");
+        classpath.add("job.jar/lib/*");
+        classpath.add("job.jar/classes");
         Location launcherJar = createLauncherJar(
-          Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, paths)), tempLocation);
+          Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, classpath)), tempLocation);
         job.addCacheFile(Locations.toURI(launcherJar));
 
         // The only thing in the container classpath is the launcher.jar
@@ -535,8 +545,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
 
     if (provider != null) {
       Configuration jobConf = job.getConfiguration();
-      jobConf.set(Job.INPUT_FORMAT_CLASS_ATTR, provider.getInputFormatClassName());
       ConfigurationUtil.setAll(provider.getInputFormatConfiguration(), jobConf);
+      jobConf.set(Job.INPUT_FORMAT_CLASS_ATTR, provider.getInputFormatClassName());
 
       // A bit hacky for stream.
       // For stream, we need to do two extra steps.
@@ -573,10 +583,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       // If only one output is configured through the context, then set it as the root OutputFormat
       Map.Entry<String, OutputFormatProvider> next = outputFormatProviders.entrySet().iterator().next();
       OutputFormatProvider outputFormatProvider = next.getValue();
+      ConfigurationUtil.setAll(outputFormatProvider.getOutputFormatConfiguration(), job.getConfiguration());
       job.getConfiguration().set(Job.OUTPUT_FORMAT_CLASS_ATTR, outputFormatProvider.getOutputFormatClassName());
-      for (Map.Entry<String, String> entry : outputFormatProvider.getOutputFormatConfiguration().entrySet()) {
-        job.getConfiguration().set(entry.getKey(), entry.getValue());
-      }
       return;
     }
     // multiple output formats configured via the context. We should use a RecordWriter that doesn't support writing
@@ -715,17 +723,8 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       LOG.warn("Not including HBaseTableUtil classes in submitted Job Jar since they are not available");
     }
 
-    // Add the logback.xml as a resource while creating the MapReduce Job JAR
-    Set<URI> logbackURI = Sets.newHashSet();
-    URL logback = getClass().getResource("/logback.xml");
-    if (logback != null) {
-      logbackURI.add(logback.toURI());
-    } else {
-      LOG.warn("Could not find logback.xml while building MapReduce Job JAR!");
-    }
-
     ClassLoader oldCLassLoader = ClassLoaders.setContextClassLoader(job.getConfiguration().getClassLoader());
-    appBundler.createBundle(new LocalLocationFactory().create(jobJar.toURI()), classes, logbackURI);
+    appBundler.createBundle(new LocalLocationFactory().create(jobJar.toURI()), classes);
     ClassLoaders.setContextClassLoader(oldCLassLoader);
 
     LOG.info("Built MapReduce Job Jar at {}", jobJar.toURI());
@@ -852,6 +851,30 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     Location pluginLocation = targetDir.append(pluginArchive.getName()).getTempFile(".jar");
     Files.copy(pluginArchive, Locations.newOutputSupplier(pluginLocation));
     return pluginLocation;
+  }
+
+  /**
+   * Creates a jar in the given directory that contains a logback.xml loaded from the current ClassLoader.
+   *
+   * @param targetDir directory where the logback.xml should be copied to
+   * @return the {@link Location} where the logback.xml jar copied to or {@code null} if "logback.xml" is not found
+   *         in the current ClassLoader.
+   */
+  @Nullable
+  private Location createLogbackJar(Location targetDir) throws IOException {
+    try (InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream("logback.xml")) {
+      if (input != null) {
+        Location logbackJar = targetDir.append("logback").getTempFile(".jar");
+        try (JarOutputStream output = new JarOutputStream(logbackJar.getOutputStream())) {
+          output.putNextEntry(new JarEntry("logback.xml"));
+          ByteStreams.copy(input, output);
+        }
+        return logbackJar;
+      } else {
+        LOG.warn("Could not find logback.xml for MapReduce!");
+      }
+    }
+    return null;
   }
 
   /**

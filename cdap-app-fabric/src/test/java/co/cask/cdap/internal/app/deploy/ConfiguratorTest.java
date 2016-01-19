@@ -26,6 +26,7 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.internal.app.ApplicationSpecificationAdapter;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.test.AppJarHelper;
+import co.cask.cdap.proto.Id;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import org.apache.twill.filesystem.LocalLocationFactory;
@@ -66,7 +67,7 @@ public class ConfiguratorTest {
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, WordCountApp.class);
 
     // Create a configurator that is testable. Provide it a application.
-    Configurator configurator = new InMemoryConfigurator(conf, appJar, "");
+    Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, appJar, "");
 
     // Extract response from the configurator.
     ListenableFuture<ConfigResponse> result = configurator.config();
@@ -88,7 +89,7 @@ public class ConfiguratorTest {
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myStream", "myTable");
     Configurator configuratorWithConfig =
-      new InMemoryConfigurator(conf, appJar, new Gson().toJson(config));
+      new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, appJar, new Gson().toJson(config));
 
     ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
     ConfigResponse response = result.get(10, TimeUnit.SECONDS);
@@ -102,7 +103,7 @@ public class ConfiguratorTest {
     Assert.assertTrue(specification.getDatasets().size() == 1);
     Assert.assertTrue(specification.getDatasets().containsKey("myTable"));
 
-    Configurator configuratorWithoutConfig = new InMemoryConfigurator(conf, appJar, null);
+    Configurator configuratorWithoutConfig = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, appJar, null);
     result = configuratorWithoutConfig.config();
     response = result.get(10, TimeUnit.SECONDS);
     Assert.assertNotNull(response);

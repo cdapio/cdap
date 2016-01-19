@@ -18,6 +18,8 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import "../../styles/themes/cdap/mixins.less";
 
+@light-yellow: lighten(#ffff99, 10%);
+
 my-dag {
   .zoom-control {
     z-index: 1023;
@@ -39,6 +41,11 @@ my-dag {
       background-image: none;
       border: 0;
       background-color: @table-bg;
+
+      &.normal-cursor #dag-container *{
+        cursor: default;
+      }
+
       .border-radius(4px);
       .box {
         cursor: pointer;
@@ -58,20 +65,29 @@ my-dag {
         &.realtimesource, &.batchsource {
           .node {
             background-color: #48c038;
+            border-width: 6px;
           }
         }
         &.transform {
           .node {
             background-color: #4586f3;
+            border-width: 6px;
           }
         }
         &.realtimesink, &.batchsink {
           .node {
             background-color: #8367df;
+            border-width: 6px;
           }
         }
         .icon.fa, .fa.fa-close {
           color: white;
+        }
+        .icon.fa {
+          line-height: 34px;
+        }
+        .fa.fa-close {
+          top: 3px;
         }
       }
       .node {
@@ -81,6 +97,8 @@ my-dag {
         width: 56px;
         .border-radius(6px);
         .box-shadow(0 10px 18px -9px fade(black, 50%));
+        .transition(all 50ms linear);
+        background-clip: border-box;
         &:hover, &:focus {
           .fa.fa-close {
             .opacity(1);
@@ -148,6 +166,44 @@ my-dag {
       }
     }
 
+    .comment-box {
+      position: absolute;
+      width: 200px;
+      min-height: 50px;
+      background-color: @light-yellow;
+      border-radius: 4px;
+      cursor: move;
+
+      div.comment-content {
+        padding: 15px;
+        word-break: break-all;
+      }
+
+      textarea.form-control {
+        height: 100px;
+        background-color: @light-yellow;
+        resize: none;
+
+        &:focus {
+          border: none;
+        }
+      }
+
+      .fa.fa-close {
+        position: absolute;
+        right: 3px;
+        top: 3px;
+        cursor: pointer;
+        .opacity(0);
+        .transition(opacity 0.2s ease);
+      }
+      &:hover {
+        .fa.fa-close {
+          .opacity(1);
+        }
+      }
+    }
+
     .error-container {
       position: fixed;
       bottom: 50px;
@@ -196,6 +252,12 @@ my-dag {
     .jsplumb-connector path:last-child {
       stroke-width: 0;
     }
+
+    /* metrics overlay */
+    span.jsplumb-overlay {
+      color: #397cf1;
+      font-size: 12px;
+    }
   }
 
   div.jsplumb-overlay {
@@ -226,6 +288,40 @@ my-dag {
 .tooltip .tooltip-inner {
   ul {
     padding-left: 20px;
+  }
+}
+.badge-warning {
+  background-color: @brand-warning;
+}
+.badge-error {
+  background-color: @brand-danger;
+}
+.theme-cdap {
+  .tooltip-warning {
+    &.tooltip {
+      &.top {
+        .tooltip-arrow {
+          border-top-color: @brand-warning;
+        }
+      }
+    }
+    .tooltip-inner {
+      background-color: @brand-warning;
+      border-color: @brand-warning;
+    }
+  }
+  .tooltip-error {
+    &.tooltip {
+      &.top {
+        .tooltip-arrow {
+          border-top-color: @brand-danger;
+        }
+      }
+    }
+    .tooltip-inner {
+      background-color: @brand-danger;
+      border-color: @brand-danger;
+    }
   }
 }
 

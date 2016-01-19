@@ -46,13 +46,19 @@ class HydratorCreateStudioController {
       let configJson = rConfig;
       if (!rConfig.__ui__) {
         configJson = HydratorService.getNodesAndConnectionsFromConfig(rConfig);
-        configJson = {
-          __ui__: {
-            nodes: configJson.nodes
-          }
+        configJson['__ui__'] = {
+          nodes: configJson.nodes.map( (node) => {
+            node.properties = node.plugin.properties;
+            node.label = node.plugin.label;
+            return node;
+          })
+        };
+        configJson.config = {
+          connections : configJson.connections
         };
       }
-      NodesActionsFactory.createGraphFromConfig(configJson.__ui__.nodes, configJson.config.connections);
+
+      NodesActionsFactory.createGraphFromConfig(configJson.__ui__.nodes, configJson.config.connections, configJson.config.comments);
     }
   }
 

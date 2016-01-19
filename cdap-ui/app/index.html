@@ -43,9 +43,7 @@
       <div ui-view></div>
     </main>
 
-    <div id="alerts">
-      <div class="container"></div>
-    </div>
+    <div class="alerts" id="alerts"></div>
 
     <loading-icon></loading-icon>
 
@@ -55,7 +53,7 @@
           <div class="col-sm-6 text-uppercase">
             <p>
               <span class="cask-logo"></span>
-              <span>Copyright &copy; 2015 Cask Data, Inc.</span>
+              <span>Copyright &copy; {{ copyrightYear }} Cask Data, Inc.</span>
             </p>
           </div>
           <div class="col-sm-6">
@@ -78,6 +76,7 @@
       </div>
     </footer>
 
+    <script type="text/javascript" src="/assets/bundle/polyfill.js"></script>
     <script type="text/javascript" src="/assets/bundle/lib.js"></script>
     <script type="text/javascript" src="/config.js"></script>
     <script type="text/javascript" src="/assets/bundle/app.js"></script>

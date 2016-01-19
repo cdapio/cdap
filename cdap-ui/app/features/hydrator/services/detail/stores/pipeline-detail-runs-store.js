@@ -39,10 +39,8 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.setDefaults({});
 
-    this.changeListeners = [];
-
     this.getRuns = function() {
-      return this.state.runs.list;
+      return angular.copy(this.state.runs.list);
     };
     this.getLatestRun = function() {
       return this.state.runs.list[0];
@@ -63,7 +61,6 @@ angular.module(PKG.name + '.feature.hydrator')
       }
       return metricRunId;
     };
-    this.getHistory = this.getRuns;
     this.getAppType = function() {
       return this.state.type;
     };
@@ -113,8 +110,8 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.emitChange = function() {
       this.changeListeners.forEach(function(callback) {
-        callback(this.state);
-      }.bind(this));
+        callback();
+      });
     };
 
     this.setRunsState = function(runs) {
@@ -160,6 +157,7 @@ angular.module(PKG.name + '.feature.hydrator')
       programType = app.artifact.name === GLOBALS.etlBatch ? 'WORKFLOWS' : 'WORKER';
 
       if (programType === 'WORKFLOWS') {
+        let engineType = JSON.parse(app.configuration).engine;
         angular.forEach(app.programs, function (program) {
           if (program.type === 'Workflow') {
             appLevelParams.programName = program.id;
@@ -168,7 +166,7 @@ angular.module(PKG.name + '.feature.hydrator')
             metricProgramType = program.type.toLowerCase();
 
             logsLevelParams.programId = program.id;
-            logsLevelParams.programType = program.type.toLowerCase();
+            logsLevelParams.programType = engineType || 'mapreduce';
           }
         });
       } else {

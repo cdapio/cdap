@@ -36,14 +36,14 @@
         <div class="item-body">
           <div ng-repeat="plugin in group.filtered = (group.plugins | filter: {name: MySidePanel.searchText}) track by $index"
                class="plugin-item"
-               popover="{{plugin.description || 'No description'}}"
-               popover-title="{{plugin.name}}"
-               popover-placement="right"
-               popover-append-to-body="true"
-               popover-trigger="mouseenter"
+               my-popover
+               data-placement="right"
+               data-template="plugin.template"
+               content-data="plugin"
+               data-popover-context="MySidePanel"
                ng-click="MySidePanel.onItemClicked($event, plugin)">
             <span ng-if="plugin.icon" class="text-center fa {{plugin.icon}}"></span>
-            <span class="name">{{plugin.name | myEllipsis: 15}}</span>
+            <span class="name">{{ (plugin.name || plugin.pluginTemplate) | myEllipsis: 15}}</span>
           </div>
         </div>
       </div>

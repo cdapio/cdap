@@ -17,6 +17,7 @@
 package co.cask.cdap.etl.batch.mapreduce;
 
 import co.cask.cdap.api.ProgramLifecycle;
+import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValue;
@@ -47,12 +48,12 @@ import co.cask.cdap.etl.common.LoggedTransform;
 import co.cask.cdap.etl.common.Pipeline;
 import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.common.SinkInfo;
-import co.cask.cdap.etl.common.StructuredRecordStringConverter;
 import co.cask.cdap.etl.common.TransformDetail;
 import co.cask.cdap.etl.common.TransformExecutor;
 import co.cask.cdap.etl.common.TransformInfo;
 import co.cask.cdap.etl.common.TransformResponse;
 import co.cask.cdap.etl.log.LogStageInjector;
+import co.cask.cdap.format.StructuredRecordStringConverter;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -134,8 +135,13 @@ public class ETLMapReduce extends AbstractMapReduce {
           .setTableProperty("avro.schema.literal", Constants.ERROR_SCHEMA.toString())
           .build(), true);
 
-    if (config.getResources() != null) {
-      setMapperResources(config.getResources());
+    Resources resources = config.getResources();
+    if (resources != null) {
+      setMapperResources(resources);
+    }
+    Resources driverResources = config.getDriverResources();
+    if (driverResources != null) {
+      setDriverResources(driverResources);
     }
 
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins

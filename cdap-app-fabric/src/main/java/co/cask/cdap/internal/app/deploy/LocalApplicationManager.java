@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,6 +36,7 @@ import co.cask.cdap.internal.app.deploy.pipeline.DeletedProgramHandlerStage;
 import co.cask.cdap.internal.app.deploy.pipeline.DeployDatasetModulesStage;
 import co.cask.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import co.cask.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
+import co.cask.cdap.internal.app.deploy.pipeline.SystemMetadataWriterStage;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
 import co.cask.cdap.pipeline.Pipeline;
@@ -72,15 +73,15 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final MetadataStore metadataStore;
 
   @Inject
-  public LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
-                                 NamespacedLocationFactory namespacedLocationFactory,
-                                 Store store, StreamConsumerFactory streamConsumerFactory,
-                                 QueueAdmin queueAdmin, DatasetFramework datasetFramework,
-                                 @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
-                                 StreamAdmin streamAdmin, Scheduler scheduler,
-                                 @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
-                                 UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
-                                 MetadataStore metadataStore) {
+  LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
+                          NamespacedLocationFactory namespacedLocationFactory,
+                          Store store, StreamConsumerFactory streamConsumerFactory,
+                          QueueAdmin queueAdmin, DatasetFramework datasetFramework,
+                          @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
+                          StreamAdmin streamAdmin, Scheduler scheduler,
+                          @Assisted ProgramTerminator programTerminator, MetricStore metricStore,
+                          UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
+                          MetadataStore metadataStore) {
     this.configuration = configuration;
     this.namespacedLocationFactory = namespacedLocationFactory;
     this.pipelineFactory = pipelineFactory;
@@ -112,6 +113,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     pipeline.addLast(new ProgramGenerationStage(configuration, namespacedLocationFactory));
     pipeline.addLast(new ApplicationRegistrationStage(store, usageRegistry));
     pipeline.addLast(new CreateSchedulesStage(scheduler));
+    pipeline.addLast(new SystemMetadataWriterStage(metadataStore));
     return pipeline.execute(input);
   }
 }

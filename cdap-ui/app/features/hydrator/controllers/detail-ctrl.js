@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailController', function(DetailRunsStore, rPipelineDetail, PipelineDetailActionFactory, $scope, DetailNonRunsStore, NodeConfigStore) {
+  .controller('HydratorDetailController', function(DetailRunsStore, rPipelineDetail, PipelineDetailActionFactory, $scope, DetailNonRunsStore, NodeConfigStore, PipelineDetailMetricsActionFactory) {
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     DetailRunsStore.init(rPipelineDetail);
     DetailNonRunsStore.init(rPipelineDetail);
@@ -23,14 +23,44 @@ angular.module(PKG.name + '.feature.hydrator')
 
     var params = angular.copy(DetailRunsStore.getParams());
     params.scope = $scope;
+    var currentRunId;
+
+    DetailRunsStore.registerOnChangeListener(function () {
+
+      var latestRunId = DetailRunsStore.getLatestMetricRunId();
+
+      if (currentRunId === latestRunId) {
+        return;
+      }
+
+      currentRunId = latestRunId;
+
+      if (latestRunId) {
+        var appParams = angular.copy(DetailRunsStore.getParams());
+        var logsParams = angular.copy(DetailRunsStore.getLogsParams());
+        var metricParams = {
+          namespace: appParams.namespace,
+          app: appParams.app,
+          run: latestRunId
+        };
+        var programType = DetailRunsStore.getMetricProgramType();
+        metricParams[programType] = logsParams.programId;
+
+        PipelineDetailMetricsActionFactory.pollForMetrics(metricParams);
+      }
+
+    });
+
     PipelineDetailActionFactory.pollRuns(
       DetailRunsStore.getApi(),
       params
     );
+
     $scope.$on('$destroy', function() {
       // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
       DetailRunsStore.reset();
       DetailNonRunsStore.reset();
       NodeConfigStore.reset();
+      PipelineDetailMetricsActionFactory.reset();
     });
   });

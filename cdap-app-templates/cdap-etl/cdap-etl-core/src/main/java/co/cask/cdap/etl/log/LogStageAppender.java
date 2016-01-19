@@ -46,6 +46,26 @@ public class LogStageAppender extends AppenderBase<ILoggingEvent> {
     }
   }
 
+  @Override
+  public void stop() {
+    super.stop();
+    RuntimeException ex = null;
+    for (Appender appender : appenders) {
+      try {
+        appender.stop();
+      } catch (Throwable t) {
+        if (ex == null) {
+          ex = new RuntimeException(t);
+        } else {
+          ex.addSuppressed(t);
+        }
+      }
+    }
+    if (ex != null) {
+      throw ex;
+    }
+  }
+
   /**
    * Wrapper around ILoggingEvent that prefixes messages with the stage name if it exists.
    */

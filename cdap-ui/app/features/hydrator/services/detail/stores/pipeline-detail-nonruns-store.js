@@ -79,6 +79,11 @@ angular.module(PKG.name + '.feature.hydrator')
     this.getNodes = function() {
       return this.state.DAGConfig.nodes;
     };
+    this.getSourceNodes = function(nodeId) {
+      let nodesMap = {};
+      this.state.DAGConfig.nodes.forEach( node => nodesMap[node.name] = node );
+      return this.state.DAGConfig.connections.filter( conn => conn.to === nodeId ).map( matchedConnection => nodesMap[matchedConnection.from] );
+    };
     this.getDatasets = function() {
       return this.state.datasets;
     };
@@ -95,8 +100,7 @@ angular.module(PKG.name + '.feature.hydrator')
       var nodes = this.getNodes();
       var match = nodes.filter( node => node.name === nodeId);
       match = (match.length? match[0]: null);
-      match.plugin.type = match.type;
-      return match.plugin;
+      return match;
     };
     this.getNode = this.getPluginObject;
     this.init = function(app) {
@@ -114,24 +118,71 @@ angular.module(PKG.name + '.feature.hydrator')
       if(appConfig.configJson) {
         app.config = appConfig.configJson;
         uiConfig = this.HydratorService.getNodesAndConnectionsFromConfig(app);
+        let setDefaultOutputSchemaForNodes = (node) => {
+          var pluginName = node.plugin.name;
+          var pluginToSchemaMap = {
+            'Stream': [
+              {
+                readonly: true,
+                name: 'ts',
+                type: 'long'
+              },
+              {
+                readonly: true,
+                name: 'headers',
+                type: {
+                  type: 'map',
+                  keys: 'string',
+                  values: 'string'
+                }
+              }
+            ]
+          };
+          if (pluginToSchemaMap[pluginName]){
+            if (!node.plugin.properties.schema) {
+              node.plugin.properties.schema = {
+                fields: [{ name: 'body', type: 'string'}]
+              };
+              node.plugin.properties.schema = JSON.stringify({
+                type: 'record',
+                name: 'etlSchemaBody',
+                fields: pluginToSchemaMap[pluginName].concat(node.outputSchema.fields)
+              });
+            } else {
+              try {
+                let schema = JSON.parse(node.plugin.properties.schema);
+                node.plugin.properties.schema = JSON.stringify({
+                  type: 'record',
+                  name: 'etlSchemaBody',
+                  fields: pluginToSchemaMap[pluginName].concat(schema.fields)
+                });
+              } catch(e) {}
+            }
+          }
+        };
+        uiConfig.nodes.forEach(setDefaultOutputSchemaForNodes);
         appConfig.DAGConfig = {
           nodes: uiConfig.nodes,
           connections: uiConfig.connections
         };
+
+        appConfig.description = appConfig.configJson.description ? appConfig.configJson.description : appConfig.description;
       }
+
       appConfig.type = app.artifact.name;
       appConfig.cloneConfig = {
         name: app.name,
         artifact: app.artifact,
-        template: app.artifact.name,
-        description: app.description,
-        ui: appConfig.DAGConfig,
+        description: appConfig.configJson.description,
+        __ui__: appConfig.DAGConfig,
         config: {
           source: appConfig.configJson.source,
           sinks: appConfig.configJson.sinks,
           transforms: appConfig.configJson.transforms,
-          instances: app.instance,
-          schedule: appConfig.configJson.schedule
+          instances: appConfig.configJson.instance,
+          schedule: appConfig.configJson.schedule,
+          connections: uiConfig.connections,
+          comments: appConfig.configJson.comments
         }
       };
       appConfig.streams = app.streams.map(function (stream) {

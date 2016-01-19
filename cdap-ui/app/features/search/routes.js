@@ -29,8 +29,7 @@ angular.module(`${PKG.name}.feature.search`)
           controller: 'SearchObjectWithTagsController',
           controllerAs: 'SearchObjectWithTagsController',
           ncyBreadcrumb: {
-            label: '{{$state.params.tag}}',
-            parent: 'search.list'
+            label: 'Search Results'
           }
         });
   });

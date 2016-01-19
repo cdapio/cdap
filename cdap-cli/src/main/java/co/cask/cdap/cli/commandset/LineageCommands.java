@@ -42,6 +42,6 @@ public class LineageCommands extends CommandSet<Command> implements Categorized 
 
   @Override
   public String getCategory() {
-    return CommandCategory.GENERAL.getName();
+    return CommandCategory.METADATA_AND_LINEAGE.getName();
   }
 }

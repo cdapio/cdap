@@ -38,12 +38,17 @@ class NodesStore {
     dispatcher.register('onAddTransformCount', this.addTransformCount.bind(this));
     dispatcher.register('onResetPluginCount', this.resetPluginCount.bind(this));
     dispatcher.register('onSetCanvasPanning', this.setCanvasPanning.bind(this));
+    dispatcher.register('onAddComment', this.addComment.bind(this));
+    dispatcher.register('onSetComments', this.setComments.bind(this));
+    dispatcher.register('onDeleteComment', this.deleteComment.bind(this));
+    dispatcher.register('onUpdateComment', this.updateComment.bind(this));
   }
 
   setDefaults() {
     this.state = {
       nodes: [],
       connections: [],
+      comments: [],
       activeNodeId: null,
       currentSourceCount: 0,
       currentTransformCount: 0,
@@ -110,15 +115,15 @@ class NodesStore {
     return this.state.canvasPanning;
   }
 
-  addNode(config) {
-    if (!config.id) {
-      config.id = (config.label || config.name) + '-' + this.uuid.v4();
+  addNode(nodeConfig) {
+    if (!nodeConfig.name) {
+      nodeConfig.name = nodeConfig.plugin.label + '-' + this.uuid.v4();
     }
-    this.state.nodes.push(config);
+    this.state.nodes.push(nodeConfig);
     this.emitChange();
   }
   updateNode(nodeId, config) {
-    var matchNode = this.state.nodes.filter( node => node.id === nodeId);
+    var matchNode = this.state.nodes.filter( node => node.name === nodeId);
     if (!matchNode.length) {
       return;
     }
@@ -127,7 +132,7 @@ class NodesStore {
     this.emitChange();
   }
   removeNode(node) {
-    let match = this.state.nodes.filter(n => n.id === node);
+    let match = this.state.nodes.filter(n => n.name === node);
     switch (this.GLOBALS.pluginConvert[match[0].type]) {
       case 'source':
         this.resetSourceCount();
@@ -146,10 +151,18 @@ class NodesStore {
   getNodes() {
     return this.state.nodes;
   }
+  getNodesAsObjects() {
+    var obj = {};
+    angular.forEach(this.state.nodes, function (node) {
+      obj[node.id] = node;
+    });
+    return obj;
+  }
+
   setNodes(nodes) {
     nodes.forEach(node => {
-      if (!node.id) {
-        node.id = node.name || (node.label + '-' + this.uuid.v4());
+      if (!node.name) {
+        node.name = node.label + '-' + this.uuid.v4();
       }
     });
     this.state.nodes = nodes;
@@ -164,6 +177,9 @@ class NodesStore {
   }
   resetActiveNode() {
     this.state.activeNodeId = null;
+    angular.forEach(this.state.nodes, (node) => {
+      node.selected = false;
+    });
     this.emitChange();
   }
 
@@ -188,10 +204,43 @@ class NodesStore {
     this.emitChange();
   }
 
-  setNodesAndConnections(nodes, connections) {
+  setNodesAndConnections(nodes, connections, comments) {
     this.setNodes(nodes);
     this.state.connections = connections;
+    this.state.comments = comments ? comments : [];
     this.emitChange();
+  }
+
+  addComment(comment) {
+    this.state.comments.push(comment);
+    this.emitChange();
+  }
+
+  setComments(comments) {
+    this.state.comments = comments;
+    this.emitChange();
+  }
+
+  deleteComment(comment) {
+    let index = this.state.comments.indexOf(comment);
+    if (index > -1) {
+      this.state.comments.splice(index, 1);
+      this.emitChange();
+    }
+  }
+
+  updateComment(commentId, config) {
+    let matchComment = this.state.comments.filter( comment => comment.id === commentId);
+    if (!matchComment.length) {
+      return;
+    }
+    matchComment = matchComment[0];
+    angular.extend(matchComment, config);
+    this.emitChange();
+  }
+
+  getComments() {
+    return this.state.comments;
   }
 
 }

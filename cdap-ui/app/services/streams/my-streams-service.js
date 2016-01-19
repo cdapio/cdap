@@ -38,7 +38,7 @@ angular.module(PKG.name + '.services')
     };
 
   })
-  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state, myFileUploader, $alert) {
+  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state, myFileUploader, $alert, myAlertOnValium) {
 
     $scope.loading = false;
 
@@ -77,7 +77,17 @@ angular.module(PKG.name + '.services')
           title: 'Upload success',
           content: 'The file has been uploaded successfully'
         });
-
+        $scope.dismiss();
+        $scope.loading = false;
+      }
+      function uploadFailure() {
+        myAlertOnValium.show({
+          type: 'danger',
+          title: 'Upload failed',
+          duration: false,
+          content: 'The file could not be uploaded'
+        });
+        $scope.dismiss();
         $scope.loading = false;
       }
 
@@ -88,7 +98,7 @@ angular.module(PKG.name + '.services')
           path: path,
           file: files[i]
         }, 'text/csv')
-          .then(uploadSuccess);
+          .then(uploadSuccess, uploadFailure);
       }
 
 

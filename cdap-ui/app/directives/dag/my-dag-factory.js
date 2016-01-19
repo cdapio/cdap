@@ -95,18 +95,32 @@ angular.module(PKG.name + '.commons')
 
     function getIcon(plugin) {
       var iconMap = {
-        'script': 'fa-code',
-        'scriptfilter': 'fa-code',
-        'twitter': 'fa-twitter',
-        'cube': 'fa-cubes',
+        'script': 'icon-script',
+        'scriptfilter': 'icon-scriptfilter',
+        'twitter': 'icon-twitter',
+        'cube': 'icon-cube',
         'data': 'fa-database',
-        'database': 'fa-database',
-        'table': 'fa-table',
+        'database': 'icon-database',
+        'table': 'icon-table',
         'kafka': 'icon-kafka',
-        'stream': 'icon-plugin-stream',
-        'tpfsavro': 'icon-avro',
+        'stream': 'icon-streams',
         'jms': 'icon-jms',
-        'projection': 'icon-projection'
+        'projection': 'icon-projection',
+        'amazonsqs': 'icon-amazonsqs',
+        'datagenerator': 'icon-datagenerator',
+        'validator': 'icon-validator',
+        'corevalidator': 'corevalidator',
+        'logparser': 'icon-logparser',
+        'file': 'icon-file',
+        'kvtable': 'icon-kvtable',
+        's3': 'icon-s3',
+        's3avro': 'icon-s3avro',
+        's3parquet': 'icon-s3parquet',
+        'snapshotavro': 'icon-snapshotavro',
+        'snapshotparquet': 'icon-snapshotparquet',
+        'tpfsavro': 'icon-tpfsavro',
+        'tpfsparquet': 'icon-tpfsparquet',
+        'sink': 'icon-sink'
       };
 
       var pluginName = plugin.toLowerCase();

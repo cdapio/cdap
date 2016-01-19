@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -102,7 +102,9 @@ public class ScheduleClientTestRun extends ClientTestBase {
     status = scheduleClient.getStatus(schedule);
     Assert.assertEquals("SUSPENDED", status);
 
+    scheduleClient.resume(schedule);
     List<ScheduledRuntime> scheduledRuntimes = scheduleClient.nextRuntimes(workflow);
+    scheduleClient.suspend(schedule);
     Assert.assertEquals(1, scheduledRuntimes.size());
     // simply assert that its scheduled for some time in the future (or scheduled for now, but hasn't quite
     // executed yet

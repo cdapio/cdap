@@ -15,9 +15,11 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, HydratorErrorFactory, $rootScope, HydratorService, $popover) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, $rootScope, HydratorService, $popover, $filter, uuid, $tooltip) {
 
     var vm = this;
+
+    var numberFilter = $filter('number');
 
     var endpoints = [];
     var sourceSettings = angular.copy(MyDAGFactory.getSettings(false).source);
@@ -25,12 +27,33 @@ angular.module(PKG.name + '.commons')
     var transformSourceSettings = angular.copy(MyDAGFactory.getSettings(false).transformSource);
     var transformSinkSettings = angular.copy(MyDAGFactory.getSettings(false).transformSink);
 
+    var SHOW_METRICS_THRESHOLD = 0.8;
+    var selected = [];
+    var labels = [];
+
+    var metricsLabel = [
+      [ 'Custom', {
+        create: function (label) {
+          labels.push(label);
+          return angular.element('<span></span>');
+        },
+        location: [2, 0],
+        id: 'metricLabel'
+      }]
+    ];
+
+    if ($scope.showMetrics) {
+      sourceSettings.overlays = metricsLabel;
+      transformSourceSettings.overlays = metricsLabel;
+    }
+
     var dragged = false;
     var canvasDragged = false;
 
     vm.isDisabled = $scope.isDisabled;
 
     var popovers = [];
+    var nodePopovers = {};
 
     vm.scale = 1.0;
 
@@ -42,6 +65,8 @@ angular.module(PKG.name + '.commons')
       top: 0,
       left: 0
     };
+
+    vm.comments = [];
 
     /*
     FIXME: This should be fixed. Right now the assumption is to update
@@ -70,21 +95,14 @@ angular.module(PKG.name + '.commons')
     function init() {
       $scope.nodes = NodesStore.getNodes();
       $scope.connections = NodesStore.getConnections();
+      vm.comments = NodesStore.getComments();
 
       $timeout(function () {
-        // centering DAG
-        if ($scope.nodes.length) {
-          var margins = $scope.getGraphMargins($scope.nodes);
-          $timeout(function () { vm.instance.repaintEverything(); });
-
-          vm.scale = margins.scale;
-        }
-
         addEndpoints();
 
         angular.forEach($scope.connections, function (conn) {
-          var sourceNode = $scope.nodes.filter( node => node.id === conn.from);
-          var targetNode = $scope.nodes.filter( node => node.id === conn.to);
+          var sourceNode = $scope.nodes.filter( node => node.name === conn.from);
+          var targetNode = $scope.nodes.filter( node => node.name === conn.to);
           if (!sourceNode.length || !targetNode.length) {
             return;
           }
@@ -100,14 +118,113 @@ angular.module(PKG.name + '.commons')
           vm.instance.connect(connObj);
         });
 
-        setZoom(vm.scale, vm.instance);
-      });
+        // Process metrics data
+        if ($scope.showMetrics) {
 
+          angular.forEach($scope.nodes, function (node) {
+            var elem = angular.element(document.getElementById(node.name)).children();
+
+            var scope = $rootScope.$new();
+            scope.data = {
+              nodeName: node.name
+            };
+
+            nodePopovers[node.name] = {
+              scope: scope,
+              element: elem,
+              popover: null,
+              isShowing: false
+            };
+
+            $scope.$on('$destroy', function () {
+              scope.$destroy();
+            });
+
+          });
+
+          if (vm.scale <= SHOW_METRICS_THRESHOLD) {
+            hideMetricsLabel();
+          }
+
+          angular.forEach(labels, function (endpoint) {
+            var label = endpoint.getOverlay('metricLabel');
+
+            $tooltip(angular.element(label.getElement()), {
+              trigger: 'hover',
+              title: 'Records Out'
+            });
+          });
+
+          $scope.$watch('metricsData', function () {
+            if (Object.keys($scope.metricsData).length === 0) {
+              angular.forEach(nodePopovers, function (value) {
+                value.scope.data.metrics = 0;
+              });
+            }
+
+            angular.forEach($scope.metricsData, function (value, key) {
+              nodePopovers[key].scope.data.metrics = value;
+            });
+
+            angular.forEach(labels, function (endpoint) {
+              var label = endpoint.getOverlay('metricLabel');
+              if ($scope.metricsData[endpoint.elementId] === null || $scope.metricsData[endpoint.elementId] === undefined) {
+                angular.element(label.getElement())
+                  .text(0);
+                return;
+              }
+
+              angular.element(label.getElement())
+                .text(numberFilter($scope.metricsData[endpoint.elementId].recordsOut, 0));
+            });
+          }, true);
+        }
+
+        vm.fitToScreen();
+
+      });
     }
+
+    vm.nodeMouseEnter = function (node) {
+      if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
+      var nodeInfo = nodePopovers[node.name];
+
+      nodeInfo.popover = $popover(nodeInfo.element, {
+        trigger: 'manual',
+        placement: 'auto right',
+        target: angular.element(nodeInfo.element[0]),
+        templateUrl: $scope.nodePopoverTemplate,
+        container: 'main',
+        scope: nodeInfo.scope
+      });
+      nodeInfo.popover.$promise
+        .then(function () {
+          $timeout(function () {
+            nodeInfo.popover.show();
+          });
+        });
+
+    };
+
+    vm.nodeMouseLeave = function (node) {
+      if (!$scope.showMetrics || vm.scale >= SHOW_METRICS_THRESHOLD) { return; }
+
+      var nodeInfo = nodePopovers[node.name];
+      if (!nodeInfo.popover) { return; }
+
+      nodeInfo.popover.hide();
+      nodeInfo.popover.destroy();
+      nodeInfo.popover = null;
+    };
 
     vm.zoomIn = function () {
       closeAllPopovers();
       vm.scale += 0.1;
+
+      if (vm.scale >= SHOW_METRICS_THRESHOLD) {
+        showMetricsLabel();
+      }
+
       setZoom(vm.scale, vm.instance);
     };
 
@@ -115,9 +232,25 @@ angular.module(PKG.name + '.commons')
       closeAllPopovers();
       if (vm.scale <= 0.2) { return; }
 
+      if (vm.scale <= SHOW_METRICS_THRESHOLD) {
+        hideMetricsLabel();
+      }
+
       vm.scale -= 0.1;
       setZoom(vm.scale, vm.instance);
     };
+
+    function showMetricsLabel() {
+      angular.forEach(labels, function (label) {
+        label.getOverlay('metricLabel').show();
+      });
+    }
+
+    function hideMetricsLabel() {
+      angular.forEach(labels, function (label) {
+        label.getOverlay('metricLabel').hide();
+      });
+    }
 
 
     /**
@@ -150,23 +283,23 @@ angular.module(PKG.name + '.commons')
 
     function addEndpoints() {
       angular.forEach($scope.nodes, function (node) {
-        if (endpoints.indexOf(node.id) !== -1) {
+        if (endpoints.indexOf(node.name) !== -1) {
           return;
         }
-        endpoints.push(node.id);
+        endpoints.push(node.name);
 
         var type = GLOBALS.pluginConvert[node.type];
         switch(type) {
           case 'source':
-            vm.instance.addEndpoint(node.id, sourceSettings, {uuid: node.id});
+            vm.instance.addEndpoint(node.name, sourceSettings, {uuid: node.name});
             break;
           case 'sink':
-            vm.instance.addEndpoint(node.id, sinkSettings, {uuid: node.id});
+            vm.instance.addEndpoint(node.name, sinkSettings, {uuid: node.name});
             break;
           case 'transform':
             // Need to id each end point so that it can be used later to make connections.
-            vm.instance.addEndpoint(node.id, transformSourceSettings, {uuid: 'Left' + node.id});
-            vm.instance.addEndpoint(node.id, transformSinkSettings, {uuid: 'Right' + node.id});
+            vm.instance.addEndpoint(node.name, transformSourceSettings, {uuid: 'Left' + node.name});
+            vm.instance.addEndpoint(node.name, transformSinkSettings, {uuid: 'Right' + node.name});
             break;
         }
       });
@@ -194,15 +327,11 @@ angular.module(PKG.name + '.commons')
       NodesActionsFactory.setConnections(connections);
     }
 
-    function connectionClick (connection) {
-      if (!connection) {
-        return;
-      }
+    function addConnection (connectionObj) {
+      var connection = connectionObj.connection;
 
       var label = angular.element(connection.getOverlay('label').getElement());
       var scope = $rootScope.$new();
-
-      scope.data = $scope.connectionPopoverData().call($scope.context, connection.sourceId, connection.targetId);
 
       var popover = $popover(label, {
         trigger: 'manual',
@@ -215,13 +344,17 @@ angular.module(PKG.name + '.commons')
 
       popovers.push(popover);
 
-      $timeout(function() {
+      connection.bind('click', function (conn, event) {
+        event.stopPropagation();
+        scope.data = $scope.connectionPopoverData().call($scope.context, connection.sourceId, connection.targetId);
         popover.show();
       });
 
       $scope.$on('$destroy', function () {
         scope.$destroy();
       });
+
+      formatConnections();
     }
 
     function closeAllPopovers() {
@@ -256,10 +389,9 @@ angular.module(PKG.name + '.commons')
         }
       });
 
-      vm.instance.bind('connection', formatConnections);
+      vm.instance.bind('connection', addConnection);
       vm.instance.bind('connectionDetached', formatConnections);
 
-      vm.instance.bind('click', connectionClick);
 
 
       // This should be removed once the node config is using FLUX
@@ -272,7 +404,12 @@ angular.module(PKG.name + '.commons')
 
           if (!vm.isDisabled) {
             vm.instance.draggable(nodes, {
-              start: function () {
+              start: function (drag) {
+
+                if (selected.indexOf(drag.el.id) === -1) {
+                  vm.clearNodeSelection();
+                }
+
                 dragged = true;
                 closeAllPopovers();
               },
@@ -289,52 +426,60 @@ angular.module(PKG.name + '.commons')
             });
           }
         });
-
-        angular.forEach($scope.nodes, function (plugin) {
-          plugin.requiredFieldCount = HydratorErrorFactory.countRequiredFields(plugin);
-          if (plugin.requiredFieldCount > 0) {
-            plugin.error = {
-              message: GLOBALS.en.hydrator.studio.genericMissingRequiredFieldsError
-            };
-          } else {
-            plugin.error = false;
-          }
-        });
-
       }, true);
-
-      $scope.$watchCollection('connections', function () {
-        console.log('ChangeConnection', $scope.connections);
-      });
-
       // This is needed to redraw connections and endpoints on browser resize
       angular.element($window).on('resize', function() {
         vm.instance.repaintEverything();
       });
 
-    });
+      NodesStore.registerOnChangeListener(function () {
+        vm.comments = NodesStore.getComments();
 
-    // var selectedNode = null;
+        if (!vm.isDisabled) {
+          $timeout(function () {
+            var comments = document.querySelectorAll('.comment-box');
+            vm.instance.draggable(comments, {
+              start: function () {
+                dragged = true;
+              },
+              stop: function (dragEndEvent) {
+                var config = {
+                  _uiPosition: {
+                    top: dragEndEvent.el.style.top,
+                    left: dragEndEvent.el.style.left
+                  }
+                };
+                NodesActionsFactory.updateComment(dragEndEvent.el.id, config);
+              }
+            });
+          });
+        }
+      });
+
+    });
 
     vm.clearNodeSelection = function () {
       if (canvasDragged) {
         canvasDragged = false;
         return;
       }
-
+      closeAllPopovers();
+      selected = [];
       vm.instance.clearDragSelection();
+      NodesActionsFactory.resetSelectedNode();
       angular.forEach($scope.nodes, function (node) {
         node.selected = false;
       });
+      clearCommentSelection();
     };
 
     function checkSelection() {
       vm.instance.clearDragSelection();
 
-      var selected = [];
+      selected = [];
       angular.forEach($scope.nodes, function (node) {
         if (node.selected) {
-          selected.push(node.id);
+          selected.push(node.name);
         }
       });
 
@@ -356,22 +501,20 @@ angular.module(PKG.name + '.commons')
         if (node.selected) {
           checkSelection();
         } else {
-          vm.instance.removeFromDragSelection(node.id);
+          vm.instance.removeFromDragSelection(node.name);
         }
       } else {
         vm.clearNodeSelection();
         node.selected = true;
-        NodesActionsFactory.selectNode(node.id);
+        NodesActionsFactory.selectNode(node.name);
       }
-
-      // $scope.nodeClick.call($scope.context, node);
     };
 
     vm.onNodeDelete = function (event, node) {
       event.stopPropagation();
       closeAllPopovers();
-      NodesActionsFactory.removeNode(node.id);
-      vm.instance.remove(node.id);
+      NodesActionsFactory.removeNode(node.name);
+      vm.instance.remove(node.name);
     };
 
     vm.cleanUpGraph = function () {
@@ -379,7 +522,7 @@ angular.module(PKG.name + '.commons')
 
       var graphNodes = MyDAGFactory.getGraphLayout($scope.nodes, $scope.connections)._nodes;
       angular.forEach($scope.nodes, function (node) {
-        var location = graphNodes[node.id];
+        var location = graphNodes[node.name];
         node._uiPosition = {
           left: location.x + 'px',
           top: location.y + 'px'
@@ -404,6 +547,7 @@ angular.module(PKG.name + '.commons')
 
     // This algorithm is f* up
     vm.fitToScreen = function () {
+      if ($scope.nodes.length === 0) { return; }
 
       /**
        * Need to find the furthest nodes:
@@ -484,8 +628,46 @@ angular.module(PKG.name + '.commons')
       NodesActionsFactory.setCanvasPanning(vm.panning);
     };
 
+    vm.addComment = function () {
+      var canvasPanning = NodesStore.getCanvasPanning();
+
+      var config = {
+        content: '',
+        isActive: false,
+        id: 'comment-' + uuid.v4(),
+        _uiPosition: {
+          'top': 250 - canvasPanning.top + 'px',
+          'left': (10/100 * document.documentElement.clientWidth) - canvasPanning.left + 'px'
+        }
+      };
+
+      NodesActionsFactory.addComment(config);
+    };
+
+    function clearCommentSelection() {
+      angular.forEach(vm.comments, function (comment) {
+        comment.isActive = false;
+      });
+    }
+
+    vm.commentSelect = function (event, comment) {
+      event.stopPropagation();
+      clearCommentSelection();
+
+      if (dragged) {
+        dragged = false;
+        return;
+      }
+
+      comment.isActive = true;
+    };
+
+    vm.deleteComment = function (comment) {
+      NodesActionsFactory.deleteComment(comment);
+    };
 
     $scope.$on('$destroy', function () {
+      closeAllPopovers();
       NodesActionsFactory.resetNodesAndConnections();
       NodesStore.reset();
     });

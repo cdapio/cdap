@@ -28,6 +28,11 @@ angular.module(PKG.name + '.services')
     };
     $rootScope.$on(MYAUTH_EVENT.logoutSuccess, this.stopPolling.bind(this));
 
+    $rootScope.$on(MYAUTH_EVENT.loginSuccess, function() {
+      isLoggedIn = true;
+      this.startPolling();
+    }.bind(this));
+
     function beginPolling() {
 
       _.debounce(function() {
@@ -48,17 +53,20 @@ angular.module(PKG.name + '.services')
       this.startPolling();
     }
 
-    function error(err) {
-      if (!reAuthenticate(err)) {
+    function error(err, statusCode) {
+      if (err && err.code === 'ECONNREFUSED') {
+        this.startPolling();
+        EventPipe.emit('backendDown', 'Unable to connect to CDAP Router', 'Attempting to connect...');
+        return;
+      } else if (statusCode === 503 || statusCode === 500) {
         this.startPolling();
         EventPipe.emit('backendDown');
       }
+      reAuthenticate(statusCode);
     }
 
-
-
-    function reAuthenticate(err) {
-      if (angular.isObject(err) && err.auth_uri) {
+    function reAuthenticate(statusCode) {
+      if (statusCode === 401 || statusCode === 200) {
         $timeout(function() {
           EventPipe.emit('backendUp');
           myAuth.logout();

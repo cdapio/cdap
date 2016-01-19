@@ -326,4 +326,14 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * @return true if compare and swap succeeded, false otherwise (stored value is different from expected)
    */
   boolean compareAndSwap(byte[] key, byte[] keyColumn, byte[] oldValue, byte[] newValue);
+
+
+  /**
+   * Writes the {key, value} record into a dataset.
+   *
+   * @param key always ignored, and it is safe to write null as the key.
+   * @param value a Put for one row of the table.
+   */
+  @Override
+  void write(byte[] key, Put value);
 }

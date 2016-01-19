@@ -60,7 +60,7 @@ write data through the data abstraction layer in CDAP.
   as any other classes and libraries needed to create and run an Application. 
 
 - :doc:`Metadata <metadata-lineage>` |---| consisting of **properties** (a list of key-value pairs)
-  or **tags** (a list of keys) |---| can be set for datasets, streams, and applications.
+  or **tags** (a list of keys) |---| can be set for artifacts, applications, programs, datasets, streams, and views.
   These can be retrieved and searched, and the metadata used to discover CDAP entities.
   Access of these entities is tracked, and you can view the :doc:`lineage <metadata-lineage>` of datasets and streams.
   With a lineage diagram, you can then drill down into the metadata of its nodes. 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2015 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -35,30 +35,6 @@
     <guava.version>13.0.1</guava.version>
     <gson.version>2.2.4</gson.version>
   </properties>
-
-  <repositories>
-    <repository>
-      <id>nexus</id>
-      <url>https://repository.continuuity.com/content/groups/public</url>
-    </repository>
-    <repository>
-      <id>continuuity-releases</id>
-      <url>https://repository.continuuity.com/content/repositories/releases/</url>
-    </repository>
-    <repository>
-      <id>continuuity-thirdparty-public</id>
-      <url>https://repository.continuuity.com/content/repositories/thirdparty/</url>
-    </repository>
-    <repository>
-      <id>apache.snapshots</id>
-      <url>https://repository.apache.org/content/repositories/snapshots</url>
-    </repository>
-    <repository>
-      <id>scala-tools.org</id>
-      <name>Scala-tools Maven2 Repository</name>
-      <url>http://scala-tools.org/repo-releases</url>
-    </repository>
-  </repositories>
 
   <pluginRepositories>
     <pluginRepository>

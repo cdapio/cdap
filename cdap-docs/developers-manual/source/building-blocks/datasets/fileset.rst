@@ -362,53 +362,33 @@ Incrementally Processing PartitionedFileSets
 One way to process a partitioned file set is with a repeatedly-running MapReduce program that,
 in each run, reads all partitions that have been added since its previous run. This requires
 that the MapReduce program persists between runs which partitions have already been consumed.
-An easy way is to use the ``BatchPartitionConsumer``, an experimental feature introduced in CDAP 3.1.0.
-Your MapReduce program is responsible for extending this abstract consumer class with methods to
+An easy way is to use the ``PartitionBatchInput``, an experimental feature introduced in CDAP 3.3.0.
+Your MapReduce program is responsible for providing an implementation of ``DatasetStatePersistor`` to
 persist and then read back its state. In this example, the state is persisted to a row in a
-KeyValue Table; however, other types of Datasets can also be used::
-
-  public static class WordCount extends AbstractMapReduce {
-
-    private final BatchPartitionConsumer batchPartitionConsumer = new BatchPartitionConsumer() {
-      private static final String STATE_KEY = "state.key";
-
-      @Nullable
-      @Override
-      protected byte[] readBytes(DatasetContext datasetContext) {
-        return ((KeyValueTable) datasetContext.getDataset("consumingState")).read(STATE_KEY);
-      }
-
-      @Override
-      protected void writeBytes(DatasetContext datasetContext, byte[] stateBytes) {
-        ((KeyValueTable) datasetContext.getDataset("consumingState")).write(STATE_KEY, stateBytes);
-      }
-    };
-
-Then, in the ``beforeSubmit()`` method of the MapReduce, specify the partitioned file set to be used as input::
+KeyValue Table, using the convenience class ``KVTableStatePersistor``; however, other types of
+Datasets can also be used. In the ``beforeSubmit()`` method of the MapReduce, specify the
+partitioned file set to be used as input as well as the ``DatasetStatePersistor`` to be used::
 
     @Override
     public void beforeSubmit(MapReduceContext context) throws Exception {
-      PartitionedFileSet inputRecords = batchPartitionConsumer.getConfiguredDataset(context, "inputRecords");
-      context.setInput("inputRecords", inputRecords);
+      partitionCommitter =
+        PartitionBatchInput.setInput(context, DataCleansing.RAW_RECORDS,
+                                     new KVTableStatePersistor(DataCleansing.CONSUMING_STATE, "state.key"));
       ...
     }
 
 This will read back the previously persisted state, determine the new partitions to read based upon this
-state, and compute a new state to store in memory until a call to ``persist()``. The dataset it returns
-is instantiated with the set of new partitions to read as input.
+state, and compute a new state to store in memory until a call to the ``onFinish`` method of the returned
+``PartitionCommitter``. The dataset is instantiated with the set of new partitions to read as input and
+set as input for the MapReduce job.
 
-To save the state of partition processing, call the consumer's ``persist()`` method. This ensures that the
-next time the MapReduce job runs, it processes only the newly committed partitions::
+To save the state of partition processing, call the returned PartitionCommitter's ``onFinish`` method.
+This ensures that the next time the MapReduce job runs, it processes only the newly committed partitions::
 
   @Override
   public void onFinish(boolean succeeded, MapReduceContext context) throws Exception {
-    if (succeeded) {
-      batchPartitionConsumer.persist(context);
-    }
-    super.onFinish(succeeded, context);
+    partitionCommitter.onFinish(succeeded);
   }
-
-A limitation of the ``BatchPartitionConsumer`` is that there can't be concurrent runs of the MapReduce job.
 
 Exploring PartitionedFileSets
 =============================

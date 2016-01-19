@@ -1,40 +1,78 @@
 {
-    "artifact": {
-        "name": "cdap-etl-realtime",
-        "scope": "SYSTEM",
-        "version": "3.3.0-SNAPSHOT"
-    },
-    "config": {
-        "source": {
-            "name": "Kafka",
-            "properties": {
-                "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
-                "kafka.topic": "logs",
-                "kafka.brokers": "localhost:9092",
-                "kafka.zookeeper": "",
-                "format": "csv",
-                "kafka.partitions": 2
-            }
+  "artifact": {
+    "name": "cdap-etl-realtime",
+    "scope": "SYSTEM",
+    "version": "3.3.0-SNAPSHOT"
+  },
+  "config": {
+    "source": {
+      "name": "Kafka-f1da0dac-558d-430d-9e43-9ca348d1e045",
+      "plugin": {
+        "name": "Kafka",
+        "properties": {
+          "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"fname\",\"type\":\"string\"},{\"name\":\"lname\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+          "kafka.topic": "logs",
+          "kafka.brokers": "localhost:9092",
+          "kafka.zookeeper": "",
+          "format": "csv",
+          "kafka.partitions": 2
         },
-        "sinks": [{
-            "name": "Table",
-            "properties": {
-                "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
-                "name": "logs",
-                "schema.row.field": "name"
-            }
-        }],
-        "transforms": [
-            {
-                "name": "Script",
-                "properties": {
-                    "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
-                    "script": "function transform(input) {\n return {\n     name : input.fname + ' ' + input.lname,\n     address : input.address,\n     city : input.city,\n     state : input.state,\n     country : input.country,\n     zipcode : input.zipcode\n }\n}"
-                }
-            }
-        ]
+        "label": "Kafka",
+        "artifact": {
+          "name": "core-plugins",
+          "scope": "SYSTEM",
+          "version": "1.2.0-SNAPSHOT"
+        }
+      }
     },
-    "description": "Ingests in real time from Kafka into an HBase table",
-    "name": "KafkaToHbase"
+    "sinks": [
+      {
+        "name": "Table-887c7ec7-d609-499c-86af-3838022fc700",
+        "plugin": {
+          "name": "Table",
+          "properties": {
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+            "name": "logs",
+            "schema.row.field": "name"
+          },
+          "label": "Table",
+          "artifact": {
+            "name": "core-plugins",
+            "scope": "SYSTEM",
+            "version": "1.2.0-SNAPSHOT"
+          }
+        }
+      }
+    ],
+    "transforms": [
+      {
+        "name": "Script-8dca148c-597e-4b9f-8354-f9ff41bbe638",
+        "plugin": {
+          "name": "Script",
+          "properties": {
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"city\",\"type\":\"string\"},{\"name\":\"state\",\"type\":\"string\"},{\"name\":\"country\",\"type\":\"string\"},{\"name\":\"zipcode\",\"type\":\"int\"}]}",
+            "script": "function transform(input) {\n return {\n     name : input.fname + ' ' + input.lname,\n     address : input.address,\n     city : input.city,\n     state : input.state,\n     country : input.country,\n     zipcode : input.zipcode\n }\n}"
+          },
+          "label": "Script",
+          "artifact": {
+            "name": "core-plugins",
+            "scope": "SYSTEM",
+            "version": "1.2.0-SNAPSHOT"
+          }
+        }
+      }
+    ],
+    "connections": [
+      {
+        "from": "Kafka-f1da0dac-558d-430d-9e43-9ca348d1e045",
+        "to": "Script-8dca148c-597e-4b9f-8354-f9ff41bbe638"
+      },
+      {
+        "from": "Script-8dca148c-597e-4b9f-8354-f9ff41bbe638",
+        "to": "Table-887c7ec7-d609-499c-86af-3838022fc700"
+      }
+    ]
+  },
+  "description": "Ingests in real time from Kafka into an HBase table",
+  "name": "KafkaToHbase"
 }
-

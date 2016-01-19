@@ -20,6 +20,7 @@ import co.cask.cdap.proto.Id;
 import co.cask.common.io.ByteBufferInputStream;
 import co.cask.http.AbstractHttpResponder;
 import co.cask.http.BodyConsumer;
+import co.cask.http.BodyProducer;
 import co.cask.http.ChunkResponder;
 import co.cask.http.HttpResponder;
 import com.google.common.collect.Lists;
@@ -221,6 +222,12 @@ public abstract class StreamBodyConsumerTestBase {
 
     @Override
     public void sendFile(File file, Multimap<String, String> headers) {
+      // Not used in test
+    }
+
+    @Override
+    public void sendContent(HttpResponseStatus httpResponseStatus,
+                            BodyProducer bodyProducer, Multimap<String, String> multimap) {
       // Not used in test
     }
 

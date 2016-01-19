@@ -15,12 +15,13 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailCanvasController', function(rPipelineDetail, BottomPanelStore, NodesActionsFactory, HydratorService, NodesStore, ConfigStore, PipelineNodeConfigActionFactory, DetailNonRunsStore) {
+  .controller('HydratorDetailCanvasController', function(rPipelineDetail, BottomPanelStore, NodesActionsFactory, HydratorService, NodesStore, ConfigStore, PipelineNodeConfigActionFactory, DetailNonRunsStore, MetricsStore) {
     this.ConfigStore = ConfigStore;
     this.NodesStore = NodesStore;
     this.DetailNonRunsStore = DetailNonRunsStore;
     this.PipelineNodeConfigActionFactory = PipelineNodeConfigActionFactory;
     this.HydratorService = HydratorService;
+    this.MetricsStore = MetricsStore;
 
     try{
       rPipelineDetail.config = JSON.parse(rPipelineDetail.configuration);
@@ -33,8 +34,9 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.setState();
     BottomPanelStore.registerOnChangeListener(this.setState.bind(this));
-    var obj = DetailNonRunsStore.getDAGConfig();
-    NodesActionsFactory.createGraphFromConfig(obj.nodes, obj.connections);
+    var obj = DetailNonRunsStore.getCloneConfig();
+
+    NodesActionsFactory.createGraphFromConfig(obj.__ui__.nodes, obj.config.connections, obj.config.comments);
 
     this.updateNodesAndConnections = function () {
       var activeNode = this.NodesStore.getActiveNodeId();
@@ -60,6 +62,25 @@ angular.module(PKG.name + '.feature.hydrator')
     this.generateSchemaOnEdge = function (sourceId) {
       return this.HydratorService.generateSchemaOnEdge(sourceId);
     };
+
+    function convertMetricsArrayIntoObject(arr) {
+      var obj = {};
+
+      angular.forEach(arr, function (item) {
+        obj[item.nodeName] = {
+          recordsOut: item.recordsOut,
+          recordsIn: item.recordsIn
+        };
+      });
+
+      return obj;
+    }
+    this.metrics = convertMetricsArrayIntoObject(this.MetricsStore.getMetrics());
+
+    this.MetricsStore.registerOnChangeListener(function () {
+      this.metrics = convertMetricsArrayIntoObject(this.MetricsStore.getMetrics());
+    }.bind(this));
+
 
     NodesStore.registerOnChangeListener(this.updateNodesAndConnections.bind(this));
   });

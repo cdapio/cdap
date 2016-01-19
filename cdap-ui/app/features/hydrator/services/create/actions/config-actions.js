@@ -15,12 +15,17 @@
  */
 
 class ConfigActionsFactory {
-  constructor(ConfigDispatcher, myPipelineApi, $state, ConfigStore, mySettings, ConsoleActionsFactory) {
+  constructor(ConfigDispatcher, myPipelineApi, $state, ConfigStore, mySettings, ConsoleActionsFactory, EventPipe, myAppsApi, GLOBALS, myHelpers, $stateParams) {
     this.ConfigStore = ConfigStore;
     this.mySettings = mySettings;
     this.$state = $state;
     this.myPipelineApi = myPipelineApi;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
+    this.EventPipe = EventPipe;
+    this.myAppsApi = myAppsApi;
+    this.GLOBALS = GLOBALS;
+    this.myHelpers = myHelpers;
+    this.$stateParams = $stateParams;
 
     this.dispatcher = ConfigDispatcher.getDispatcher();
   }
@@ -51,6 +56,9 @@ class ConfigActionsFactory {
   editPlugin(pluginId, pluginProperties) {
     this.dispatcher.dispatch('onPluginEdit', pluginId, pluginProperties);
   }
+  propagateSchemaDownStream(pluginId) {
+    this.dispatcher.dispatch('onSchemaPropagationDownStream', pluginId);
+  }
   setSchedule(schedule) {
     this.dispatcher.dispatch('onSetSchedule', schedule);
   }
@@ -58,54 +66,84 @@ class ConfigActionsFactory {
     this.dispatcher.dispatch('onSetInstance', instance);
   }
   publishPipeline() {
+    this.ConsoleActionsFactory.resetMessages();
+    let error = this.ConfigStore.validateState(true);
+
+    if (!error) { return; }
+    this.EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
 
     let removeFromUserDrafts = (adapterName) => {
       this.mySettings
-          .get('adapterDrafts')
-          .then(
-            (res) => {
-              if (angular.isObject(res)) {
-                delete res[adapterName];
-                return this.mySettings.set('adapterDrafts', res);
-              }
-            },
-            (err) => {
-              this.ConsoleActionsFactory.addMessage({
-                type: 'error',
-                content: err
-              });
-              return this.$q.reject(false);
+        .get('adapterDrafts')
+        .then(
+          (res) => {
+            var savedDraft = this.myHelpers.objectQuery(res, this.$stateParams.namespace, adapterName);
+            if (savedDraft) {
+              delete res[this.$stateParams.namespace][adapterName];
+              return this.mySettings.set('adapterDrafts', res);
             }
-          )
-          .then(
-            () => this.$state.go('hydrator.list')
-          );
+          },
+          (err) => {
+            this.ConsoleActionsFactory.addMessage({
+              type: 'error',
+              content: err
+            });
+            return this.$q.reject(false);
+          }
+        )
+        .then(
+          () => {
+            this.EventPipe.emit('hideLoadingIcon.immediate');
+            this.$state.go('hydrator.detail', { pipelineId: adapterName });
+          }
+        );
     };
 
-    var config = this.ConfigStore.getConfigForExport();
-    this.myPipelineApi.save(
-      {
-        namespace: this.$state.params.namespace,
-        pipeline: config.name
-      },
-      config
-    )
+    let publish = (pipelineName) => {
+      this.myPipelineApi.save(
+        {
+          namespace: this.$state.params.namespace,
+          pipeline: pipelineName
+        },
+        config
+      )
       .$promise
       .then(
-        removeFromUserDrafts.bind(this, config.name),
+        removeFromUserDrafts.bind(this, pipelineName),
         (err) => {
+          this.EventPipe.emit('hideLoadingIcon.immediate');
           this.ConsoleActionsFactory.addMessage({
             type: 'error',
-            content: err
+            content: angular.isObject(err) ? err.data : err
           });
-          // this.notifyError({
-          //   canvas: [err.data]
-          // });
         }
       );
+    };
+
+
+    var config = this.ConfigStore.getConfigForExport();
+
+    // Checking if Pipeline name already exist
+    this.myAppsApi
+      .list({ namespace: this.$state.params.namespace })
+      .$promise
+      .then( (apps) => {
+        var appNames = apps.map( (app) => { return app.name; } );
+
+        if (appNames.indexOf(config.name) !== -1) {
+          this.ConsoleActionsFactory.addMessage({
+            type: 'error',
+            content: this.GLOBALS.en.hydrator.studio.error['NAME-ALREADY-EXISTS']
+          });
+          this.EventPipe.emit('hideLoadingIcon.immediate');
+        } else {
+          publish(config.name);
+        }
+      });
+
   }
 }
 
-ConfigActionsFactory.$inject = ['ConfigDispatcher', 'myPipelineApi', '$state', 'ConfigStore', 'mySettings', 'ConsoleActionsFactory'];
+ConfigActionsFactory.$inject = ['ConfigDispatcher', 'myPipelineApi', '$state', 'ConfigStore', 'mySettings', 'ConsoleActionsFactory', 'EventPipe', 'myAppsApi', 'GLOBALS', 'myHelpers', '$stateParams'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigActionsFactory', ConfigActionsFactory);

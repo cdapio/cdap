@@ -18,24 +18,6 @@
 @import "../../../bower_components/bootstrap/less/mixins.less";
 @import "../../styles/themes/cdap/mixins.less";
 
-.tooltip.tooltip-error {
-  z-index: 1020; // lower z-index than modal
-
-  .tooltip-inner {
-    background-color: @brand-danger;
-    color: white;
-    border: 0;
-  }
-
-  &.tooltip.right .tooltip-arrow {
-    border-right-color: @brand-danger;
-  }
-
-  &.tooltip.top .tooltip-arrow {
-    border-top-color: @brand-danger;
-  }
-}
-
 my-side-panel {
   height: 100%;
   .side-panel {

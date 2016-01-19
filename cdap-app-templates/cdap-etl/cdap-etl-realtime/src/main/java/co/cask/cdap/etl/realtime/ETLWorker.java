@@ -42,6 +42,7 @@ import co.cask.cdap.etl.common.DefaultEmitter;
 import co.cask.cdap.etl.common.DefaultStageMetrics;
 import co.cask.cdap.etl.common.Destroyables;
 import co.cask.cdap.etl.common.LoggedTransform;
+import co.cask.cdap.etl.common.NoopMetrics;
 import co.cask.cdap.etl.common.Pipeline;
 import co.cask.cdap.etl.common.PipelineRegisterer;
 import co.cask.cdap.etl.common.SinkInfo;
@@ -224,9 +225,11 @@ public class ETLWorker extends AbstractWorker {
         }
       };
 
+      // we use identity transformation to simplify executing transformation in pipeline (similar to ETLMapreduce),
+      // since we want to emit metrics during write to sink and not during this transformation, we use NoOpMetrics.
       transformationMap.put(sinkInfo.getSinkId(),
                             new TransformDetail(identityTransformation,
-                                                new DefaultStageMetrics(metrics, sinkInfo.getSinkId()),
+                                                new NoopMetrics(),
                                                 new ArrayList<String>()));
       sinks.put(sinkInfo.getSinkId(), sink);
     }

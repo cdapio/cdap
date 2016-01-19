@@ -82,7 +82,8 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     String configString = deploymentInfo.getConfigString();
 
     InMemoryConfigurator inMemoryConfigurator =
-      new InMemoryConfigurator(cConf, artifactId, appClassName, artifactLocation, configString, artifactRepository);
+      new InMemoryConfigurator(cConf, namespace, artifactId, appClassName,
+                               artifactLocation, configString, artifactRepository);
 
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);

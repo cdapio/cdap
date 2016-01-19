@@ -80,7 +80,8 @@ public final class ScheduleTaskRunner {
     String scheduleName = systemOverrides.get(ProgramOptionConstants.SCHEDULE_NAME);
     ApplicationSpecification appSpec = store.getApplication(programId.getApplication());
     if (appSpec == null || appSpec.getSchedules().get(scheduleName) == null) {
-      throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), false);
+      throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), programId),
+                                       false);
     }
 
     ScheduleSpecification spec = appSpec.getSchedules().get(scheduleName);
@@ -109,7 +110,8 @@ public final class ScheduleTaskRunner {
     try {
       runtimeInfo = lifecycleService.start(id, sysArgs, userArgs, false);
     } catch (ProgramNotFoundException | ApplicationNotFoundException e) {
-      throw new TaskExecutionException(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), e, false);
+      throw new TaskExecutionException(String.format(UserMessages.getMessage(UserErrors.PROGRAM_NOT_FOUND), id),
+                                       e, false);
     }
 
     final ProgramController controller = runtimeInfo.getController();

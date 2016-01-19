@@ -30,7 +30,11 @@ commonModule.directive('myDag', function() {
       nodeDelete: '&',
       context: '=',
       templatePopover: '@',
-      connectionPopoverData: '&'
+      connectionPopoverData: '&',
+      showMetrics: '=',
+      metricsData: '=',
+      nodePopoverTemplate: '@',
+      disableNodeClick: '='
     },
     link: function(scope, element) {
       scope.element = element;

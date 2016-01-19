@@ -57,7 +57,6 @@ public class StreamViewHttpHandlerTest extends GatewayTestBase {
   public void testAll() throws Exception {
     execute(404, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views")).build());
     execute(404, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views/view1")).build());
-    execute(404, HttpRequest.put(resolve("/v3/namespaces/default/streams/foo/views/view1")).build());
     execute(404, HttpRequest.delete(resolve("/v3/namespaces/default/streams/foo/views/view1")).build());
 
     execute(200, HttpRequest.put(resolve("/v3/namespaces/default/streams/foo")).build());
@@ -65,14 +64,16 @@ public class StreamViewHttpHandlerTest extends GatewayTestBase {
 
     List<String> views = execute(
       200, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views")).build(),
-      new TypeToken<List<String>>() {
-      }.getType());
+      new TypeToken<List<String>>() { }.getType());
     Assert.assertEquals(ImmutableList.of(), views);
 
     Schema schema = Schema.recordOf("foo", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
     FormatSpecification formatSpec = new FormatSpecification(
       Formats.AVRO, schema, Collections.<String, String>emptyMap());
     ViewSpecification config = new ViewSpecification(formatSpec);
+
+    // trying to create without request body should give 400
+    execute(400, HttpRequest.put(resolve("/v3/namespaces/default/streams/foo/views/view1")).build());
 
     execute(
       201,
@@ -120,7 +121,7 @@ public class StreamViewHttpHandlerTest extends GatewayTestBase {
     views = execute(
       200, HttpRequest.get(resolve("/v3/namespaces/default/streams/foo/views")).build(),
       new TypeToken<List<String>>() { }.getType());
-    Assert.assertEquals(ImmutableList.of(), views);
+    Assert.assertEquals(ImmutableList.<String>of(), views);
 
     // Deleting a stream should also delete the associated views
     execute(200, HttpRequest.delete(resolve("/v3/namespaces/default/streams/foo")).build());

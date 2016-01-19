@@ -38,6 +38,14 @@ angular.module(PKG.name+'.feature.experimental')
             label: 'UI Templates',
             parent: 'experimental.home'
           }
+        })
+        .state('experimental.directivesPlayground', {
+          url: '/experimental-directives',
+          templateUrl: '/assets/features/experimental/templates/directives-playground.html',
+          ncyBreadcrumb: {
+            label: 'Directives Playground',
+            parent: 'experimental.home'
+          }
         });
 
   });

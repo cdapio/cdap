@@ -62,20 +62,19 @@ public abstract class LiveFileReader<T, P> implements FileReader<T, P> {
 
     long startTime = System.nanoTime();
     int eventCount = currentReader.read(events, maxEvents, timeout, unit, readFilter);
-    long timeElapse = System.nanoTime() - startTime;
 
     if (eventCount > 0) {
       return eventCount;
     }
 
-    if (nextReader == null) {
-      nextReader = renewReader();
-    }
-
-    if (nextReader != null) {
-      long readTimeout = unit.toNanos(timeout) - timeElapse;
-      if (readTimeout < 0) {
-        readTimeout = 0;
+    long timeoutNano = unit.toNanos(timeout);
+    // Keep reading until either is some data or no more file reader it can try.
+    while (eventCount <= 0) {
+      if (nextReader == null) {
+        nextReader = renewReader();
+        if (nextReader == null) {
+          break;
+        }
       }
 
       if (eventCount == 0) {
@@ -87,7 +86,8 @@ public abstract class LiveFileReader<T, P> implements FileReader<T, P> {
         //    able to see events till the end of file, as writer won't create new file before old one is closed.
         // 2. If the writer crashed, an extra read will still yield no event, but that's ok, as no more write will
         //    be happening to the old file.
-        eventCount = currentReader.read(events, maxEvents, readTimeout, TimeUnit.NANOSECONDS, readFilter);
+        eventCount = currentReader.read(events, maxEvents, getReadTimeoutNano(startTime, timeoutNano),
+                                        TimeUnit.NANOSECONDS, readFilter);
       }
 
       if (eventCount <= 0) {
@@ -97,15 +97,9 @@ public abstract class LiveFileReader<T, P> implements FileReader<T, P> {
         currentReader = nextReader;
         nextReader = null;
 
-        // If it's EOF, ok to read from new reader one more time without adjusting the readTime because a EOF
-        // read (happened above) should return immediately.
-        // Otherwise, if no events from current reader, it's safe to read from the new one, but with 0 timeout,
-        // assuming the read happened above used up all readTimeout allowed time.
-        if (eventCount < 0) {
-          eventCount = currentReader.read(events, maxEvents, readTimeout, TimeUnit.NANOSECONDS, readFilter);
-        } else {
-          eventCount = currentReader.read(events, maxEvents, 0, TimeUnit.NANOSECONDS, readFilter);
-        }
+        // Try to read events from the new reader.
+        eventCount = currentReader.read(events, maxEvents, getReadTimeoutNano(startTime, timeoutNano),
+                                        TimeUnit.NANOSECONDS, readFilter);
       }
     }
 
@@ -137,4 +131,10 @@ public abstract class LiveFileReader<T, P> implements FileReader<T, P> {
    */
   @Nullable
   protected abstract FileReader<T, P> renewReader() throws IOException;
+
+  private long getReadTimeoutNano(long startTime, long timeoutNano) {
+    long timeElapse = System.nanoTime() - startTime;
+    long readTimeout = timeoutNano - timeElapse;
+    return readTimeout < 0 ? 0L : readTimeout;
+  }
 }

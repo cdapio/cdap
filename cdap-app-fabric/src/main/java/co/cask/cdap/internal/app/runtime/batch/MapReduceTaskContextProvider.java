@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.app.metrics.MapReduceMetrics;
 import co.cask.cdap.app.program.Program;
 import co.cask.cdap.app.program.Programs;
+import co.cask.cdap.common.twill.LocalLocationFactory;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
 import co.cask.cdap.internal.app.runtime.workflow.WorkflowMapReduceProgram;
 import co.cask.tephra.TransactionSystemClient;
@@ -36,7 +37,6 @@ import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -162,8 +162,10 @@ public class MapReduceTaskContextProvider extends AbstractIdleService {
           program = programRef.get();
         }
         MapReduceSpecification spec = program.getApplicationSpecification().getMapReduce().get(program.getName());
-        MapReduceMetrics.TaskType taskType = MapReduceMetrics.TaskType.from(key.getTaskAttemptID().getTaskType());
-
+        MapReduceMetrics.TaskType taskType = null;
+        if (MapReduceMetrics.TaskType.hasType(key.getTaskAttemptID().getTaskType())) {
+          taskType = MapReduceMetrics.TaskType.from(key.getTaskAttemptID().getTaskType());
+        }
         // if this is not for a mapper or a reducer, we don't need the metrics collection service
         MetricsCollectionService metricsCollectionService =
           (taskType == null) ? null : injector.getInstance(MetricsCollectionService.class);

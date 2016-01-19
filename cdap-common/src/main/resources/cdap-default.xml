@@ -90,6 +90,36 @@
   </property>
 
   <property>
+    <name>master.startup.checks.enabled</name>
+    <value>true</value>
+    <description>
+      Whether checks should be run before start up to determine if the master can be correctly run.
+      Which checks are run are determined by the master.startup.checks.packages and master.startup.checks.classes
+      settings. If any check fails, the CDAP master will fail to start instead of waiting for the problem to be fixed.
+      This setting only affects distributed CDAP. It does not apply to CDAP standalone.
+    </description>
+  </property>
+
+  <property>
+    <name>master.startup.checks.packages</name>
+    <value>co.cask.cdap.master.startup</value>
+    <description>
+      Comma separated list of packages containing checks that will be run before the master starts up.
+      If any of the checks fails, the master will not start up.
+      Checks will only be run if master.startup.checks.enabled is set to true.
+    </description>
+  </property>
+
+  <property>
+    <name>master.startup.checks.classes</name>
+    <description>
+      Comma separated list of classnames for checks that will be run before the master starts up.
+      If any of the checks fails, the master will not start up.
+      Checks will only be run if master.startup.checks.enabled is set to true.
+    </description>
+  </property>
+
+  <property>
     <name>thrift.max.read.buffer</name>
     <value>16777216</value>
     <description>
@@ -132,14 +162,6 @@
     <value>/twill</value>
     <description>
       ZooKeeper namespace prefix for Apache Twill
-    </description>
-  </property>
-
-  <property>
-    <name>yarn.user</name>
-    <value>yarn</value>
-    <description>
-      User name for running applications in YARN
     </description>
   </property>
 
@@ -189,7 +211,7 @@
     <name>app.artifact.dir</name>
     <value>/opt/cdap/master/artifacts</value>
     <description>
-      Directory where all system artifacts and their corresponding config files are stored
+      Semicolon-separated list of directories where all system artifacts and their corresponding config files are stored
     </description>
   </property>
 
@@ -244,7 +266,7 @@
 
   <property>
     <name>scheduler.max.thread.pool.size</name>
-    <value>30</value>
+    <value>100</value>
     <description>
       Size of the scheduler thread pool
     </description>
@@ -477,6 +499,22 @@
   </property>
 
   <property>
+    <name>dataset.executor.container.memory.mb</name>
+    <value>512</value>
+    <description>
+      Size of Memory in megabytes for each dataset executor instance
+    </description>
+  </property>
+
+  <property>
+    <name>dataset.executor.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for each dataset executor instance
+    </description>
+  </property>
+
+  <property>
     <name>dataset.executor.max.instances</name>
     <value>${master.service.max.instances}</value>
     <description>
@@ -538,7 +576,7 @@
 
   <property>
     <name>explore.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       Determines if the CDAP Explore Service (ad-hoc SQL queries) is enabled
     </description>
@@ -549,6 +587,22 @@
     <value>1</value>
     <description>
       Number of explore executor instances
+    </description>
+  </property>
+
+  <property>
+    <name>explore.executor.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for each explore executor instance
+    </description>
+  </property>
+
+  <property>
+    <name>explore.executor.container.memory.mb</name>
+    <value>1024</value>
+    <description>
+      Size of Memory in megabytes for each explore executor instance
     </description>
   </property>
 
@@ -763,6 +817,14 @@
   </property>
 
   <property>
+    <name>log.saver.run.num.cores</name>
+    <value>2</value>
+    <description>
+      Number of cores for each log saver instance in YARN
+    </description>
+  </property>
+
+  <property>
     <name>log.saver.status.bind.address</name>
     <value>0.0.0.0</value>
     <description>
@@ -806,10 +868,19 @@
   </property>
 
   <property>
+    <name>master.collect.app.containers.log.level</name>
+    <value>ERROR</value>
+    <description>
+      The log level of application container logs that get streamed back to the CDAP master process log.
+      The levels supported are [ ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF ].
+    </description>
+  </property>
+
+  <property>
     <name>master.collect.containers.log</name>
     <value>true</value>
     <description>
-      Determines if container logs are streamed back to the CDAP Master process log
+      Determines if master service container logs are streamed back to the CDAP Master process log
     </description>
   </property>
 
@@ -817,7 +888,7 @@
     <name>master.service.max.instances</name>
     <value>5</value>
     <description>
-      Maximum Number of Master Service Instances
+      Maximum number of Master Service instances
     </description>
   </property>
 
@@ -825,7 +896,7 @@
     <name>master.service.memory.mb</name>
     <value>512</value>
     <description>
-      Size of Memory in megabytes for Master Service instance
+      Size of memory in megabytes for Master Service instance
     </description>
   </property>
 
@@ -834,6 +905,18 @@
     <value>2</value>
     <description>
       Number of cores for Master Service instance
+    </description>
+  </property>
+
+  <property>
+    <name>master.startup.service.timeout.seconds</name>
+    <value>600</value>
+    <description>
+      Timeout in seconds for master services to wait for their dependent services to be available.
+      For example, the dataset executor master service requires the transaction service, and will wait for
+      the transaction service to become available while it is starting up.
+      If the timeout is hit, the service will fail to start and the master will shut itself down.
+      If set to 0 or below, master services will not wait for their dependent services to start before starting themselves.
     </description>
   </property>
 
@@ -1028,8 +1111,8 @@
     <name>metrics.processor.max.instances</name>
     <value>${master.service.max.instances}</value>
     <description>
-      Maximum number of instances for Metrics Processor Service Apache Twill
-      Runnable
+      Maximum number of instances for metrics processor service Apache Twill
+      runnable
     </description>
   </property>
 
@@ -1037,8 +1120,8 @@
     <name>metrics.processor.memory.mb</name>
     <value>512</value>
     <description>
-      Size of Memory in megabytes for Metrics Processor Service Apache Twill
-      Runnable
+      Size of memory in megabytes for metrics processor service Apache Twill
+      runnable
     </description>
   </property>
 
@@ -1046,7 +1129,7 @@
     <name>metrics.processor.num.cores</name>
     <value>1</value>
     <description>
-      Number of cores for Metrics Processor Service Apache Twill Runnable
+      Number of cores for metrics processor service Apache Twill runnable
     </description>
   </property>
 
@@ -1054,8 +1137,8 @@
     <name>metrics.processor.num.instances</name>
     <value>1</value>
     <description>
-      Number of instances for Metrics Processor Service Apache Twill
-      Runnable
+      Number of instances for metrics processor service Apache Twill
+      runnable
     </description>
   </property>
 
@@ -1063,7 +1146,7 @@
     <name>metrics.processor.status.bind.address</name>
     <value>0.0.0.0</value>
     <description>
-      Default inet address for binding metrics processor HTTP service
+      Default iNet address for binding metrics processor HTTP service
     </description>
   </property>
 
@@ -1098,8 +1181,8 @@
     <name>monitor.handler.service.discovery.timeout.seconds</name>
     <value>1</value>
     <description>
-      Timeout in seconds for service discovery used in Monitor Handler
-      Service Status check
+      Timeout in seconds for service discovery used in monitor handler
+      service status check
     </description>
   </property>
 
@@ -1110,7 +1193,7 @@
     <name>notification.transport.system</name>
     <value>kafka</value>
     <description>
-      Transport system used by the Notification system - can be kafka/stream
+      Transport system used by the notification system; can be either kafka or stream
     </description>
   </property>
 
@@ -1158,8 +1241,40 @@
     <name>router.bind.port</name>
     <value>10000</value>
     <description>
-      Port number that the CDAP router should bind to for HTTP connections
+      Port number that the CDAP Router should bind to for HTTP connections
     </description>
+  </property>
+
+  <property>
+    <name>router.client.boss.threads</name>
+    <value>1</value>
+    <description>The number of boss threads in the router client</description>
+  </property>
+
+  <property>
+    <name>router.client.worker.threads</name>
+    <value>10</value>
+    <description>The number of worker threads in the router client</description>
+  </property>
+
+  <property>
+    <name>router.connection.backlog</name>
+    <value>20000</value>
+    <description>The connection backlog in the CDAP Router</description>
+  </property>
+
+  <property>
+    <name>router.connection.idle.timeout.secs</name>
+    <value>15</value>
+    <description>
+      The number of seconds after an HTTP request completes that idle router connections are closed
+    </description>
+  </property>
+
+  <property>
+    <name>router.server.boss.threads</name>
+    <value>1</value>
+    <description>The number of boss threads in the CDAP Router</description>
   </property>
 
   <property>
@@ -1171,10 +1286,16 @@
   </property>
 
   <property>
+    <name>router.server.worker.threads</name>
+    <value>10</value>
+    <description>The number of worker threads in the CDAP Router</description>
+  </property>
+
+  <property>
     <name>router.ssl.bind.port</name>
     <value>10443</value>
     <description>
-      Port number that the CDAP router should bind to for HTTPS connections
+      Port number that the CDAP Router should bind to for HTTPS connections
     </description>
   </property>
 
@@ -1205,7 +1326,7 @@
     <name>router.webapp.enabled</name>
     <value>false</value>
     <description>
-      Determines if the webapp listening service should be started at router
+      Determines if the webapp listening service should be started at the CDAP Router
     </description>
   </property>
 
@@ -1591,6 +1712,15 @@
     <value>9999</value>
     <description>
       CDAP UI bind port
+    </description>
+  </property>
+
+  <property>
+    <name>dashboard.router.check.timeout.secs</name>
+    <value>0</value>
+    <description>
+      Amount of time, in seconds, CDAP UI waits before exiting when not able to connect to CDAP Router on startup.
+      Use timeout as 0 to wait indefinitely.
     </description>
   </property>
 

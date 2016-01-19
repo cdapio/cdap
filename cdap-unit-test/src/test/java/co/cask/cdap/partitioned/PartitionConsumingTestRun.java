@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,7 @@ package co.cask.cdap.partitioned;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionFilter;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.test.ApplicationManager;
 import co.cask.cdap.test.DataSetManager;
 import co.cask.cdap.test.ProgramManager;
@@ -42,6 +43,7 @@ import co.cask.common.http.HttpRequest;
 import co.cask.common.http.HttpRequests;
 import co.cask.common.http.HttpResponse;
 import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.junit.Assert;
 import org.junit.Test;
@@ -53,6 +55,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -72,6 +75,14 @@ public class PartitionConsumingTestRun extends TestFrameworkTestBase {
         return input.getMapReduceManager(AppWithPartitionConsumers.WordCountMapReduce.NAME).start();
       }
     });
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, "default",
+                                               Constants.Metrics.Tag.APP, "AppWithPartitionConsumers",
+                                               Constants.Metrics.Tag.MAPREDUCE, "WordCountMapReduce",
+                                               Constants.Metrics.Tag.MR_TASK_TYPE, "r");
+    long totalIn = getMetricsManager().getTotalMetric(tags, "system.process.entries.in");
+    long totalOut = getMetricsManager().getTotalMetric(tags, "system.process.entries.out");
+    Assert.assertEquals(9, totalIn);
+    Assert.assertEquals(10, totalOut);
   }
 
   @Test

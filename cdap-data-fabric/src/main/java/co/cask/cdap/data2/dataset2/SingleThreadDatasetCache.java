@@ -18,7 +18,6 @@ package co.cask.cdap.data2.dataset2;
 
 import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.data.DatasetInstantiationException;
-import co.cask.cdap.api.data.DatasetProvider;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.metrics.MeteredDataset;
 import co.cask.cdap.api.metrics.MetricsContext;
@@ -223,7 +222,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
       }
     }
     // we can only hope that dataset.toString() is meaningful
-    LOG.warn("Attempt to discard a dataset that was not acquired through this provider: {}", dataset);
+    LOG.warn("Attempt to discard a dataset that was not acquired through this context: {}", dataset);
   }
 
   @Override
@@ -300,7 +299,7 @@ public class SingleThreadDatasetCache extends DynamicDatasetCache {
   /**
    * This is an implementation of TransactionContext that delays the discarding of a transaction-aware
    * dataset until after the transaction is complete. This is needed in cases where a client calls
-   * {@link DatasetProvider#discardDataset(Dataset)} in the middle of a transaction: The client indicates
+   * {@link DatasetContext#discardDataset(Dataset)} in the middle of a transaction: The client indicates
    * that it does not need that dataset any more. But it is participating in the current transaction,
    * and needs to continue to do so until the transaction has ended. Therefore this class will put
    * that dataset on a toDiscard set, which is inspected after every transaction.

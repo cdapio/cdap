@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import co.cask.cdap.app.guice.AppFabricServiceRuntimeModule;
 import co.cask.cdap.app.guice.ProgramRunnerRuntimeModule;
 import co.cask.cdap.app.guice.ServiceStoreModules;
 import co.cask.cdap.app.store.ServiceStore;
+import co.cask.cdap.common.ServiceBindException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.guice.ConfigModule;
@@ -29,6 +30,7 @@ import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.io.URLConnections;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.common.startup.ConfigurationLogger;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.OSDetector;
 import co.cask.cdap.data.runtime.DataFabricModules;
@@ -60,6 +62,7 @@ import co.cask.cdap.security.guice.SecurityModules;
 import co.cask.cdap.security.server.ExternalAuthenticationServer;
 import co.cask.tephra.inmemory.InMemoryTransactionService;
 import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
@@ -165,6 +168,8 @@ public class StandaloneMain {
 
     cleanupTempDir();
 
+    ConfigurationLogger.logImportantConfig(configuration);
+
     // Start all the services.
     txService.startAndWait();
     metricsCollectionService.startAndWait();
@@ -183,6 +188,7 @@ public class StandaloneMain {
 
     metricsQueryService.startAndWait();
     router.startAndWait();
+
     if (userInterfaceService != null) {
       userInterfaceService.startAndWait();
     }
@@ -251,6 +257,11 @@ public class StandaloneMain {
   private void cleanupTempDir() {
     File tmpDir = new File(configuration.get(Constants.CFG_LOCAL_DATA_DIR),
                            configuration.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+
+    if (!tmpDir.isDirectory()) {
+      return;
+    }
+
     try {
       DirUtils.deleteDirectoryContents(tmpDir, true);
     } catch (IOException e) {
@@ -271,8 +282,15 @@ public class StandaloneMain {
       }
       main.startUp();
     } catch (Throwable e) {
-      System.err.println("Failed to start Standalone CDAP. " + e.getMessage());
-      LOG.error("Failed to start Standalone CDAP", e);
+      Throwable rootCause = Throwables.getRootCause(e);
+      if (rootCause instanceof ServiceBindException) {
+        LOG.error("Failed to start Standalone CDAP: {}", rootCause.getMessage());
+        System.err.println("Failed to start Standalone CDAP: " + rootCause.getMessage());
+      } else {
+        LOG.error("Failed to start Standalone CDAP", e);
+        System.err.println("Failed to start Standalone CDAP");
+        e.printStackTrace(System.err);
+      }
       Runtime.getRuntime().halt(-2);
     }
   }

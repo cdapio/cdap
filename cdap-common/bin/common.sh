@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 # the License.
 
 # checks if there exists a PID that is already running. return 0 idempotently
-check_before_start() {
+cdap_check_before_start() {
   if [ -f ${pid} ]; then
     if kill -0 $(<${pid}) > /dev/null 2>&1; then
       echo "${APP} running as process $(<${pid}). Stop it first."
@@ -26,7 +26,7 @@ check_before_start() {
   return 0
 }
 
-create_pid_dir() {
+cdap_create_pid_dir() {
   mkdir -p "${PID_DIR}"
 }
 
@@ -35,16 +35,17 @@ die() {
   exit 1
 }
 
-# usage: get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml false
-get_conf() {
+# usage: cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml true
+cdap_get_conf() {
   local __pn=${1} __fn=${2} __default=${3} __result=
   # Check for xmllint
   [[ $(which xmllint 2>/dev/null) ]] || {
     case ${PLATFORM} in
       RHEL) die "Cannot locate xmllint, is libxml2 installed?" ;;
       UBUNTU) die "Cannot locate xmllint, is libxml2-utils installed?" ;;
-      *) die "Cannot locate xmllint, are XML tools installed?" ;;
     esac
+    # If we get here, die
+    die "Cannot locate xmllint, are XML tools installed?"
   }
   # Get property from file, return last result, if multiple are returned
   __property="cat //configuration/property[name='${__pn}']/value[text()]"
@@ -58,7 +59,7 @@ get_conf() {
 }
 
 # Rotates the basic start/stop logs
-rotate_log () {
+cdap_rotate_log () {
   local log=${1} num=5 prev=0
   [[ -n "${2}" ]] && num=${2}
   if [ -f "${log}" ]; then # rotate logs
@@ -73,8 +74,8 @@ rotate_log () {
 
 # CDAP kinit using properties from cdap-site.xml
 cdap_kinit() {
-  local __principal=$(get_conf "cdap.master.kerberos.principal" "${CDAP_CONF}"/cdap-site.xml)
-  local __keytab=$(get_conf "cdap.master.kerberos.keytab" "${CDAP_CONF}"/cdap-site.xml)
+  local __principal=${CDAP_PRINCIPAL:-$(cdap_get_conf "cdap.master.kerberos.principal" "${CDAP_CONF}"/cdap-site.xml)}
+  local __keytab=${CDAP_KEYTAB:-$(cdap_get_conf "cdap.master.kerberos.keytab" "${CDAP_CONF}"/cdap-site.xml)}
   if [ -z "${__principal}" -o -z "${__keytab}" ]; then
     echo "ERROR: Both cdap.master.kerberos.principal and cdap.master.kerberos.keytab must be configured for Kerberos-enabled clusters!"
     return 1
@@ -97,8 +98,8 @@ cdap_kinit() {
   return 0
 }
 
-# Attempts to find JAVA in few ways.
-set_java () {
+# Attempts to find JAVA in few ways. This is used by UI's config-tool, so verify that changes here do not break that
+cdap_set_java () {
   # Determine the Java command to use to start the JVM.
   if [ -n "${JAVA_HOME}" ] ; then
     if [ -x "${JAVA_HOME}/jre/sh/java" ] ; then
@@ -130,7 +131,7 @@ location of your Java installation." >&2
 # NOTE: this function is also sourced and invoked by the CSD control script, found here:
 #   https://github.com/caskdata/cm_csd/blob/develop/src/scripts/cdap-control.sh
 #   Any changes to this function must be compatible with the CSD's invocation
-set_hbase() {
+cdap_set_hbase() {
   # Why is this here? Is this not redundant?
   if [ -z "${JAVA}" ]; then
     echo "ERROR: JAVA is not yet set, cannot determine HBase version"
@@ -139,7 +140,7 @@ set_hbase() {
 
   retvalue=1
   if [ -z "${HBASE_VERSION}" ]; then
-    HBASE_VERSION=$(${JAVA} -cp ${CLASSPATH} co.cask.tephra.util.HBaseVersion 2> /dev/null)
+    HBASE_VERSION=$(${JAVA} -cp ${CLASSPATH} co.cask.cdap.data2.util.hbase.HBaseVersion 2> /dev/null)
     retvalue=$?
   else
     retvalue=0
@@ -153,6 +154,9 @@ set_hbase() {
         ;;
       0.98*)
         hbasecompat="${CDAP_HOME}/hbase-compat-0.98/lib/*"
+        ;;
+      1.0-cdh5.5*)
+        hbasecompat="${CDAP_HOME}/hbase-compat-1.0-cdh5.5.0/lib/*"
         ;;
       1.0-cdh*)
         hbasecompat="${CDAP_HOME}/hbase-compat-1.0-cdh/lib/*"
@@ -185,7 +189,7 @@ set_hbase() {
 # NOTE: this function is also sourced and invoked by the CSD control script, found here:
 #   https://github.com/caskdata/cm_csd/blob/develop/src/scripts/cdap-control.sh
 #   Any changes to this function must be compatible with the CSD's invocation
-set_classpath() {
+cdap_set_classpath() {
   COMP_HOME=${1}
   CCONF=${2}
   if [ -n "${HBASE_HOME}" ]; then
@@ -221,20 +225,27 @@ set_classpath() {
 # NOTE: this function is also sourced and invoked by the CSD control script, found here:
 #   https://github.com/caskdata/cm_csd/blob/develop/src/scripts/cdap-control.sh
 #   Any changes to this function must be compatible with the CSD's invocation
-set_hive_classpath() {
-  local __explore=$(get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml false)
+cdap_set_hive_classpath() {
+  local __explore=${EXPLORE_ENABLED:-$(cdap_get_conf "explore.enabled" "${CDAP_CONF}"/cdap-site.xml true)}
   if [[ "${__explore}" == "true" ]]; then
     if [ -z "${HIVE_HOME}" -o -z "${HIVE_CONF_DIR}" -o -z "${HADOOP_CONF_DIR}" ]; then
-      __secure=$(get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)
+      __secure=${KERBEROS_ENABLED:-$(cdap_get_conf "kerberos.auth.enabled" "${CDAP_CONF}"/cdap-site.xml false)}
       if [[ "${__secure}" == "true" ]]; then
         cdap_kinit || return 1
       fi
 
       if [[ $(which hive 2>/dev/null) ]]; then
-        HIVE_VAR_OUT=$(hive -e 'set -v' 2>/dev/null)
+        ERR_FILE=$(mktemp)
+        HIVE_VAR_OUT=$(hive -e 'set -v' 2>${ERR_FILE})
         __ret=$?
+        HIVE_ERR_MSG=$(< ${ERR_FILE})
+        rm ${ERR_FILE}
         if [ ${__ret} -ne 0 ]; then
-          echo "ERROR - Problem running: hive -e 'set -v'"
+          echo "ERROR - While determining Hive classpath, failed to get Hive settings using: hive -e 'set -v'"
+          echo "If you do not want run CDAP with Hive functionality, set the 'explore.enabled' property in cdap-site.xml to 'false'"
+          echo "Otherwise, check that the Hive client is installed, and that Hive and HDFS are running."
+          echo "stderr:"
+          echo "${HIVE_ERR_MSG}"
           return 1
         fi
         HIVE_VARS=$(echo ${HIVE_VAR_OUT} | tr ' ' '\n')
@@ -256,12 +267,12 @@ set_hive_classpath() {
 }
 
 # Check that directory /var/tmp/cdap exists in the master node, or create it
-check_or_create_master_local_dir() {
+cdap_check_or_create_master_local_dir() {
   mkdir -p "${LOCAL_DIR}"
 }
 
 # check and set classpath if in development enviroment
-check_and_set_classpath_for_dev_environment () {
+cdap_check_and_set_classpath_for_dev_environment () {
   APP_HOME=${1}
 
   # Detect if we are in development.
