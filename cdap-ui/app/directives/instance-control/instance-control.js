@@ -39,7 +39,8 @@ angular.module(PKG.name + '.commons')
       myDataSrc.request({
         method: 'PUT',
         _cdapPath: $scope.basePath + '/instances',
-        body: {'instances': $scope.instance.requested}
+        body: {'instances': $scope.instance.requested},
+        suppressErrors: true
       }).then(
         function success () {
           $scope.instance.provisioned = $scope.instance.requested;
@@ -48,7 +49,7 @@ angular.module(PKG.name + '.commons')
           myAlertOnValium.show({
             type: 'danger',
             title: 'Error',
-            content: err,
+            content: angular.isObject(err) ? err.data : err,
             duration: false
           });
         }

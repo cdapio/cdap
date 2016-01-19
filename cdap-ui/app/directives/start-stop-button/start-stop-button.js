@@ -71,7 +71,7 @@ angular.module(PKG.name + '.commons')
                 myAlertOnValium.show({
                   type: 'danger',
                   title: 'Error',
-                  content: err,
+                  content: angular.isObject(err) ? err.data : err,
                   duration: false
                 });
               }
