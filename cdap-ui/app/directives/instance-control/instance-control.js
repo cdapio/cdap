@@ -26,7 +26,7 @@ angular.module(PKG.name + '.commons')
       templateUrl: 'instance-control/instance-control.html',
     };
   })
-  .controller('instanceControlController', function ($scope, MyCDAPDataSource) {
+  .controller('instanceControlController', function ($scope, MyCDAPDataSource, myAlertOnValium) {
     var myDataSrc = new MyCDAPDataSource($scope);
 
     myDataSrc.request({
@@ -40,9 +40,19 @@ angular.module(PKG.name + '.commons')
         method: 'PUT',
         _cdapPath: $scope.basePath + '/instances',
         body: {'instances': $scope.instance.requested}
-      }).then(function success () {
-        $scope.instance.provisioned = $scope.instance.requested;
-      });
+      }).then(
+        function success () {
+          $scope.instance.provisioned = $scope.instance.requested;
+        },
+        function error(err) {
+          myAlertOnValium.show({
+            type: 'danger',
+            title: 'Error',
+            content: err,
+            duration: false
+          });
+        }
+      );
     };
 
   });
