@@ -47,9 +47,7 @@ import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
-import co.cask.common.http.HttpMethod;
 import co.cask.common.http.HttpRequest;
-import co.cask.common.http.HttpRequests;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -65,7 +63,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
@@ -959,8 +956,8 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "body:STR*", null);
     Assert.assertEquals(expected, metadataSearchResultRecords);
 
-    // schema search for a field with the given fieldtype
-    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "STRING", null);
+    // schema search for a field with the given fieldname:fieldtype
+    metadataSearchResultRecords = searchMetadata(Id.Namespace.DEFAULT, "body:STRING+field1:STRING", null);
     Assert.assertEquals(ImmutableSet.<MetadataSearchResultRecord>builder()
                           .addAll(expected)
                           .add(new MetadataSearchResultRecord(dsWithSchema))
