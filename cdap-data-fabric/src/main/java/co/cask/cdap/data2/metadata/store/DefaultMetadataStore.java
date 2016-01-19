@@ -555,20 +555,20 @@ public class DefaultMetadataStore implements MetadataStore {
    * @param framework Dataset framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    // In 3.2 we used MetadataDataset.KEYVALUE_COLUMN (kv) and MetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN (civ) and
-    // in 3.3 we index new column MetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN (i). During upgrade we want to
+    // In 3.2 we indexed MetadataDataset.KEYVALUE_COLUMN (kv) and MetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN (civ)
+    // and in 3.3 we index new column MetadataDataset.INDEX_COLUMN (i). During upgrade we want to
     // have instance of BUSINESS_METADATA_INSTANCE_ID with columnToIndex with all these three column so that
     // when we do a delete while upgrading MetadataDataset#upgrade the delete operation also delete the records
     // for the old index column from index table.
-    DatasetProperties dsProperties = getOldColumnToIndex();
-    // the above is only needed for Business Metadata as in 3.2 we didn't have System Metadata table.
+    DatasetProperties dsProperties = getOldColumnToIndexAsProperties();
     //TODO: (UPG-3.3): Remove this after 3.3
+    // the above is only needed for Business Metadata as in 3.2 we didn't have System Metadata table.
     framework.addInstance(MetadataDataset.class.getName(), BUSINESS_METADATA_INSTANCE_ID, dsProperties);
     framework.addInstance(MetadataDataset.class.getName(), SYSTEM_METADATA_INSTANCE_ID, DatasetProperties.EMPTY);
   }
 
   public void upgrade() {
-    DatasetProperties dsProperties = getOldColumnToIndex();
+    DatasetProperties dsProperties = getOldColumnToIndexAsProperties();
     MetadataDataset businessMetadataDataset;
     try {
       businessMetadataDataset = DatasetsUtil.getOrCreateDataset(
@@ -579,7 +579,7 @@ public class DefaultMetadataStore implements MetadataStore {
     }
     Preconditions.checkNotNull(businessMetadataDataset, "Failed to get Business Metadata Dataset.");
     TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, businessMetadataDataset);
-      txExecutor.executeUnchecked(new TransactionExecutor.Procedure<MetadataDataset>() {
+    txExecutor.executeUnchecked(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
         input.upgrade();
@@ -591,7 +591,7 @@ public class DefaultMetadataStore implements MetadataStore {
    * @return {@link DatasetProperties} where {@link IndexedTableDefinition#INDEX_COLUMNS_CONF_KEY} is set to
    * index columns from 3.2 and also 3.3
    */
-  private static DatasetProperties getOldColumnToIndex() {
+  private static DatasetProperties getOldColumnToIndexAsProperties() {
     return DatasetProperties.builder()
         .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY,
              Joiner.on(",").join(MetadataDataset.KEYVALUE_COLUMN, MetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN,

@@ -66,6 +66,7 @@ public class MetadataDataset extends AbstractDataset {
   private static final String VALUE_COLUMN = "v";  // column for metadata value
   private static final String TAGS_SEPARATOR = ",";
 
+  //TODO: (UPG-3.3): Make this public after 3.3
   public static final String INDEX_COLUMN = "i";          // column for metadata indexes
 
   //TODO: (UPG-3.3): Remove this after 3.3. This is only for upgrade from 3.2 to 3.3

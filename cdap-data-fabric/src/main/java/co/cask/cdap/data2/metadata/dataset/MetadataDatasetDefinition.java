@@ -36,7 +36,6 @@ import java.util.Map;
  * Define the Dataset for metadata.
  */
 public class MetadataDatasetDefinition extends AbstractDatasetDefinition<MetadataDataset, DatasetAdmin> {
-  private static final Logger LOG = LoggerFactory.getLogger(MetadataDatasetDefinition.class);
 
   private static final String METADATA_INDEX_TABLE_NAME = "metadata_index";
 
