@@ -133,7 +133,7 @@ angular.module(PKG.name+'.services')
     for (var i = 1; i < arguments.length; i++) {
       obj = obj[arguments[i]];
       if (!angular.isObject(obj)) {
-        return obj;
+        return undefined;
       }
     }
     return obj;

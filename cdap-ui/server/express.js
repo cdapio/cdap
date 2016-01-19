@@ -19,7 +19,8 @@
 module.exports = {
   getApp: function () {
     return require('q').all([
-        require('./config/auth-address.js').ping(),
+        // router check also fetches the auth server address if security is enabled
+        require('./config/router-check.js').ping(),
         require('./config/parser.js').extractConfig('cdap')
       ])
       .spread(makeApp);
@@ -263,7 +264,11 @@ function makeApp (authAddress, cdapConfig) {
         headers: req.headers
       }, function (err, response) {
         if (err) {
-          res.status(404).send();
+          if (err.code === 'ECONNREFUSED') {
+            res.status(404).send(err);
+            return;
+          }
+          res.status(500).send(err);
         } else {
           res.status(response.statusCode).send();
         }
