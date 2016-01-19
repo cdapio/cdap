@@ -868,7 +868,7 @@
   </property>
 
   <property>
-    <name>master.collect.app.containers.log</name>
+    <name>master.collect.app.containers.log.level</name>
     <value>ERROR</value>
     <description>
       The log level of application container logs that get streamed back to the CDAP master process log.
