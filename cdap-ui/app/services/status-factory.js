@@ -61,11 +61,11 @@ angular.module(PKG.name + '.services')
       } else if (statusCode === 503) {
         EventPipe.emit('backendDown');
       }
-      reAuthenticate(err);
+      reAuthenticate(statusCode);
     }
 
-    function reAuthenticate(err) {
-      if (angular.isObject(err) && err.auth_uri) {
+    function reAuthenticate(statusCode) {
+      if (statusCode === 401) {
         $timeout(function() {
           EventPipe.emit('backendUp');
           myAuth.logout();
