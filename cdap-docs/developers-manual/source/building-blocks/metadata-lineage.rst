@@ -73,24 +73,33 @@ Metadata Search API. This table lists the system metadata annotations of CDAP en
      - System Properties
      - System Tags
    * - Artifacts
-     - Plugins (name and version)
-     - Artifact name
+     - * Plugins (name and version)
+     - * Artifact name
    * - Applications
-     - Programs (name and type) contained in the application, plugins, schedules (name and description)
-     - Application name, artifact name
+     - * Programs (name and type) contained in the application
+       * Plugins 
+       * Schedules (name and description)
+     - * Application name
+       * Artifact name
    * - Programs
-     - n/a
-     - Program name, type, mode (batch or realtime), node names (for workflows only)
+     - * n/a
+     - * Program name and type 
+       * Program mode (batch or realtime)
+       * Workflow node names (for workflows only)
    * - Datasets
-     - Schema (field names and types), Dataset type (*FileSet, Table, KeyValueTable,* etc.), TTL (Time To Live)
-     - Dataset name, the Dataset's supported mode of access
-       (*batch*/*explore*)
+     - * Schema (field names and types)
+       * Dataset type (*FileSet, Table, KeyValueTable,* etc.)
+       * TTL (Time To Live)
+     - * Dataset name
+       * *batch* for Datasets accessible through Map Reduce or Spark programs
+       * *explore* for Datasets that can be queried through Explore interface
    * - Streams
-     - Schema (field names and types), TTL
-     - Stream name
+     - * Schema (field names and types)
+       * TTL
+     - * Stream name
    * - Stream Views
-     - Schema (field names and types)
-     - View name
+     - * Schema (field names and types)
+     - * View name
 
 
 .. _metadata-update-notifications:
