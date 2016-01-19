@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceAppMetadataController',
-function ($scope, $state, $alert, $timeout, MyCDAPDataSource, myHydratorFactory) {
+function ($scope, $state, myAlertOnValium, $timeout, MyCDAPDataSource, myHydratorFactory) {
 
   var data = new MyCDAPDataSource($scope);
   var path = '/namespaces/' + $state.params.nsadmin + '/apps/' + $state.params.appId;
@@ -33,7 +33,7 @@ function ($scope, $state, $alert, $timeout, MyCDAPDataSource, myHydratorFactory)
       _cdapPath: path,
       method: 'DELETE'
     }, function() {
-      $alert({
+      myAlertOnValium.show({
         type: 'success',
         title: app,
         content: 'Application deleted successfully'

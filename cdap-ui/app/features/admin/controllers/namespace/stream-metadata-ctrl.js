@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceStreamMetadataController', function($scope, $stateParams, myHelpers, $alert, myStreamApi, $state, EventPipe, myAlertOnValium) {
+  .controller('NamespaceStreamMetadataController', function($scope, $stateParams, myHelpers, myStreamApi, $state, EventPipe, myAlertOnValium) {
 
     $scope.avro = {};
 
@@ -192,7 +192,7 @@ angular.module(PKG.name + '.feature.admin')
         EventPipe.emit('hideLoadingIcon.immediate');
 
         $state.go('admin.namespace.detail.data', {}, {reload: true});
-        $alert({
+        myAlertOnValium.show({
           type: 'success',
           content: 'Successfully deleted stream'
         });

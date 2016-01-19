@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin').controller('NamespaceMetadataController',
-function ($scope, $state, myAlert, MyCDAPDataSource, myNamespace) {
+function ($scope, $state, myAlertOnValium, MyCDAPDataSource, myNamespace) {
 
   $scope.nsname = myNamespace.getDisplayName($state.params.nsadmin);
   var data = new MyCDAPDataSource($scope);
@@ -29,10 +29,11 @@ function ($scope, $state, myAlert, MyCDAPDataSource, myNamespace) {
     });
 
   $scope.doSave = function () {
-    myAlert({
+    myAlertOnValium.show({
       title: 'It doesn\'t work yet',
       content: 'There is no content yet',
-      type: 'warning'
+      type: 'warning',
+      duration: false
     });
   };
 
