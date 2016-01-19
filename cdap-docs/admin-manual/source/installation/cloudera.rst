@@ -13,7 +13,6 @@ Installation using Cloudera Manager
 .. figure:: ../_images/cdap-installation-steps.png
    :align: left
 
-
 Preparing the Cluster
 =====================
 
@@ -66,7 +65,8 @@ Configurations
 #. ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
    (unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
    the number of connections required is a function of usage. You can make this change using Cloudera Manager to
-   `modify the ZooKeeper configuration properties <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
+   `modify the ZooKeeper configuration properties 
+   <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
 
 #. Ensure that YARN has sufficient memory capacity by lowering the default minimum container 
    size (controlled by the property ``yarn.scheduler.minimum-allocation-mb``). Lack of
@@ -78,7 +78,8 @@ Configurations
    - ``yarn.nodemanager.resource.cpu-vcores``: Adjust if you need to raise vcores per nodemanager
    - ``yarn.scheduler.minimum-allocation-mb``: 512 mb
    
-   You can make these changes `using Cloudera Manager <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
+   You can make these changes `using Cloudera Manager 
+   <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
    You will be prompted to restart the stale services after making changes.
 
 HDFS Permissions
@@ -97,7 +98,8 @@ Downloading and Distributing Packages
 
 Downloading and Installing CSD
 ------------------------------
-- Download the CDAP CSD (Custom Service Descriptor) by `downloading the JAR file <http://cask.co/resources/#cdap-integrations>`__.
+- Download the CDAP CSD (Custom Service Descriptor) by `downloading the JAR file 
+  <http://cask.co/resources/#cdap-integrations>`__.
 
   Details on CSDs and Cloudera Manager Extensions are `available online 
   <https://github.com/cloudera/cm_ext/wiki>`__.
@@ -119,10 +121,10 @@ available at `Cloudera's website
 <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/
 cm_ig_parcels.html>`__, but in summary these are the steps:
    
-1. Add the repository (installing the CSD adds the corresponding Cask parcel repository for you, but you can 
+1. Installing the CSD adds the corresponding Cask parcel repository for you, however, you can 
    `customize the list of repositories 
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#cmug_topic_7_11_5_unique_1>`__
-   searched by Cloudera Manager if you need to);
+   searched by Cloudera Manager if you need to;
 #. `Download 
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_cnx_b3y_bm_unique_1>`__
    the parcel to your Cloudera Manager server;

@@ -2,7 +2,6 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
-:hide-toc: true
 :section-numbering: true
 
 .. _admin-installation-packages:
@@ -26,7 +25,7 @@ Cloudera Manager (CDH), Apache Ambari (HDP), and MapR distributions should be in
 with our other :ref:`distribution instructions <installation-index>`.
 
 Preparing the Cluster
-=====================
+=============================
 Please review the :ref:`Software Prerequisites <admin-manual-software-requirements>`, 
 as a configured Hadoop, HBase, and Hive (plus an optional Spark client) needs to be configured on the
 node(s) where CDAP will run. 

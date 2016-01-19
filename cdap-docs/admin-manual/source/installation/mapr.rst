@@ -2,7 +2,6 @@
     :author: Cask Data, Inc.
     :copyright: Copyright © 2016 Cask Data, Inc.
 
-:hide-toc: true
 :section-numbering: true
 
 .. _admin-installation-mapr:
@@ -152,7 +151,7 @@ Advanced Topics
 
 Enabling Kerberos
 -----------------
-MapR is currently not supported in CDAP on secure Hadoop clusters.
+Kerberos is currently not supported by CDAP on secure MapR clusters.
 
 .. 
 .. .. include:: /../target/_includes/mapr-configuration.rst

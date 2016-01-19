@@ -146,7 +146,7 @@ Assign CDAP Services to Hosts
  
    #. **Master:** Coordinator service which launches CDAP system services into YARN
    #. **Router:** Serves HTTP endpoints for CDAP applications and REST API
-   #. **Kafka Server:** For storing CDAP metrics and CDAP system service log data
+   #. **Kafka Server:** For transporting CDAP metrics and CDAP system service log data
    #. **UI:** Web interface to CDAP and :ref:`Cask Hydrator <cdap-apps-intro-hydrator>`
       (for CDAP 3.2.x and later installations)
  
@@ -302,13 +302,14 @@ Advanced Topics
 
 Enabling Perimeter Security
 ---------------------------
-.. include:: /../target/_includes/ambari-configuration.rst
-    :start-after: .. _ambari-configuration-eps:
 
-At this time, the CDAP Apache Ambari Service is not integrated with the `CDAP
-Authentication Server <https://issues.cask.co/browse/CDAP-4110>`__. As a consequence,
-any settings made to support :ref:`CDAP Security <admin-security>` will be erased by Ambari.
-CDAP Security is **not currently** supported when using Apache Ambari.
+.. .. include:: /../target/_includes/ambari-configuration.rst
+..     :start-after: .. _ambari-configuration-eps:
+
+:ref:`CDAP Security <admin-security>` is **not currently** supported when using Apache Ambari.
+The CDAP Apache Ambari Service is not integrated with the `CDAP Authentication Server
+<https://issues.cask.co/browse/CDAP-4110>`__. As a consequence, any settings made to
+support :ref:`CDAP Security <admin-security>` will be erased by Ambari.
 
 .. _ambari-configuration-enabling-kerberos:
 
