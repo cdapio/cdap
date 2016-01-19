@@ -869,9 +869,10 @@
 
   <property>
     <name>master.collect.app.containers.log</name>
-    <value>true</value>
+    <value>ERROR</value>
     <description>
-      Determines if application container logs are streamed back to the CDAP Master process log
+      The log level of application container logs that get streamed back to the CDAP master process log.
+      The levels supported are [ ALL, TRACE, DEBUG, INFO, WARN, ERROR, OFF ].
     </description>
   </property>
 
