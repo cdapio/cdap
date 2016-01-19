@@ -1121,7 +1121,7 @@ public class WorkflowHttpHandlerTest  extends AppFabricTestBase {
       public Integer call() throws Exception {
         return getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name()).size();
       }
-    }, 5, TimeUnit.SECONDS);
+    }, 20, TimeUnit.SECONDS);
     List<RunRecord> programRuns = getProgramRuns(workflowId, ProgramRunStatus.COMPLETED.name());
     Assert.assertEquals(1, programRuns.size());
     RunRecord runRecord = programRuns.get(0);

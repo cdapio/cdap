@@ -17,15 +17,17 @@
 package co.cask.cdap.internal.test;
 
 import co.cask.cdap.common.lang.ClassLoaders;
-import com.google.common.collect.ImmutableList;
+import co.cask.cdap.common.twill.HadoopClassExcluder;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.jar.Attributes;
@@ -46,11 +48,25 @@ public final class AppJarHelper {
   public static Location createDeploymentJar(LocationFactory locationFactory, Class<?> clz, Manifest manifest,
                                              File... bundleEmbeddedJars) throws IOException {
 
-    ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("co.cask.cdap.api",
-                                                                         "org.apache.hadoop",
-                                                                         "org.apache.hive",
-                                                                         "org.apache.spark"),
-                                                        ImmutableList.of("org.apache.hadoop.hbase"));
+    ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
+
+      private final ClassAcceptor hadoopClassExcluder = new HadoopClassExcluder();
+
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        if (!hadoopClassExcluder.accept(className, classUrl, classPathUrl)) {
+          return false;
+        }
+        if (className.startsWith("co.cask.cdap.api.")
+          || className.startsWith("org.apache.hive.")
+          || className.startsWith("org.apache.hadoop.hive.")
+          || className.startsWith("org.apache.spark")
+          || className.startsWith("scala.")) {
+          return false;
+        }
+        return true;
+      }
+    });
     Location jarLocation = locationFactory.create(clz.getName()).getTempFile(".jar");
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(clz.getClassLoader());
     try {
