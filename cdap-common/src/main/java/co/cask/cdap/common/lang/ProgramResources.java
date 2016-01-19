@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,9 +49,9 @@ import javax.annotation.Nullable;
 import javax.ws.rs.Path;
 
 /**
- * Package local helper class to maintain list of resources that are visible to user programs.
+ * Helper class to maintain list of resources that are visible to user programs.
  */
-final class ProgramResources {
+public final class ProgramResources {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramResources.class);
 
@@ -92,7 +92,7 @@ final class ProgramResources {
    * @param classLoader the ClassLoader for finding program type specific resources.
    * @param type program type. If {@code null}, only the base visible resources will be returned.
    */
-  static synchronized Set<String> getVisibleResources(ClassLoader classLoader, @Nullable ProgramType type) {
+  public static synchronized Set<String> getVisibleResources(ClassLoader classLoader, @Nullable ProgramType type) {
     if (type == null) {
       return getBaseResources();
     }
