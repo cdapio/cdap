@@ -66,10 +66,12 @@ public class MetadataDataset extends AbstractDataset {
   private static final String VALUE_COLUMN = "v";  // column for metadata value
   private static final String TAGS_SEPARATOR = ",";
 
-  static final String INDEX_COLUMN = "i";          // column for metadata indexes
+  public static final String INDEX_COLUMN = "i";          // column for metadata indexes
 
-  // TODO: Remove this after 3.3. This is only for upgrade from 3.2 to 3.3
-  private static final String CASE_INSENSITIVE_VALUE_COLUMN = "civ";
+  //TODO: (UPG-3.3): Remove this after 3.3. This is only for upgrade from 3.2 to 3.3
+  // These are the columns which were indexed in 3.2
+  public static final String CASE_INSENSITIVE_VALUE_COLUMN = "civ";
+  public static final String KEYVALUE_COLUMN = "kv";
 
   public static final String TAGS_KEY = "tags";
   public static final String KEYVALUE_SEPARATOR = ":";

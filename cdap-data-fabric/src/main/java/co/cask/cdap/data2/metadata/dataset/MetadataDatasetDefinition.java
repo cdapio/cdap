@@ -24,6 +24,10 @@ import co.cask.cdap.api.dataset.lib.AbstractDatasetDefinition;
 import co.cask.cdap.api.dataset.lib.CompositeDatasetAdmin;
 import co.cask.cdap.api.dataset.lib.IndexedTable;
 import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
+import co.cask.cdap.data2.dataset2.DatasetFramework;
+import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -32,6 +36,7 @@ import java.util.Map;
  * Define the Dataset for metadata.
  */
 public class MetadataDatasetDefinition extends AbstractDatasetDefinition<MetadataDataset, DatasetAdmin> {
+  private static final Logger LOG = LoggerFactory.getLogger(MetadataDatasetDefinition.class);
 
   private static final String METADATA_INDEX_TABLE_NAME = "metadata_index";
 
@@ -46,13 +51,27 @@ public class MetadataDatasetDefinition extends AbstractDatasetDefinition<Metadat
 
   @Override
   public DatasetSpecification configure(String instanceName, DatasetProperties properties) {
+    Map<String, String> dsProperties = properties.getProperties();
+    /**
+     * The {@link DefaultMetadataStore#setupDatasets(DatasetFramework)} used to setup {@link MetadataDataset} during
+     * upgrade passes the columns to index with old column indexed in 3.2 in {@link DatasetProperties} and the new ones
+     * so if this is set then use the set value else use the index column from 3.3 defined in
+     * MetadataDataset.INDEX_COLUMN.
+     */
+    //TODO (UPG-3.3): Remove this after 3.3
+    String colToIndex;
+    if (dsProperties.containsKey(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY)) {
+      colToIndex = dsProperties.get(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY);
+    } else {
+      colToIndex = MetadataDataset.INDEX_COLUMN;
+    }
     // Define the columns for indexing on the partitionsTable
     DatasetProperties indexedTableProperties = DatasetProperties.builder()
-      .addAll(properties.getProperties())
-      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, MetadataDataset.INDEX_COLUMN)
+      .addAll(dsProperties)
+      .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY, colToIndex)
       .build();
     return DatasetSpecification.builder(instanceName, getName())
-      .properties(properties.getProperties())
+      .properties(dsProperties)
       .datasets(indexedTableDef.configure(METADATA_INDEX_TABLE_NAME, indexedTableProperties))
       .build();
   }
