@@ -140,7 +140,7 @@ angular.module(PKG.name + '.commons')
         };
 
         $scope.loadPrevLogs = function () {
-          if ($scope.loadingPrev || $scope.loadingPrev) {
+          if ($scope.loadingPrev || $scope.loadingNext) {
             return;
           }
 

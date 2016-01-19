@@ -110,9 +110,8 @@ angular.module(PKG.name + '.feature.hydrator')
     };
     this.emitChange = function() {
       this.changeListeners.forEach(function(callback) {
-        var stateCopy = angular.copy(this.state);
-        callback(stateCopy);
-      }.bind(this));
+        callback();
+      });
     };
 
     this.setRunsState = function(runs) {
