@@ -24,7 +24,9 @@ import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * An {@link Indexer} to generate indexes for a {@link Schema}
@@ -54,29 +56,62 @@ public class SchemaIndexer implements Indexer {
     if (schema == null) {
       return Collections.emptySet();
     }
+    Set<String> indexes = new HashSet<>();
+    processSchema(indexes, schema, schema.getRecordName());
+    return indexes;
+  }
 
-    if (schema.isSimpleOrNullableSimple()) {
-      Schema.Type type = getSimpleType(schema);
-      // index the type
-      return Collections.singleton(type.toString());
-    } else {
-      Set<String> indexes = new HashSet<>();
-      for (Schema.Field field : schema.getFields()) {
-        String fieldName = field.getName();
-        // TODO: What if field.getSchema() is not simple or nullable simple?
-        String fieldType = getSimpleType(field.getSchema()).toString();
-        indexes.add(fieldName + MetadataDataset.KEYVALUE_SEPARATOR + fieldType);
-        indexes.add(fieldName);
-        indexes.add(fieldType);
-      }
-      return indexes;
+  private void processSchema(Set<String> indexes, Schema schema, @Nullable String fieldName) {
+    switch (schema.getType()) {
+      case NULL:
+        // Ignore null types
+        break;
+      case BOOLEAN:
+      case INT:
+      case LONG:
+      case FLOAT:
+      case DOUBLE:
+      case BYTES:
+      case ENUM:
+      case STRING:
+        createIndexes(indexes, schema, fieldName);
+        break;
+      case ARRAY:
+        createIndexes(indexes, schema, fieldName);
+        processSchema(indexes, schema.getComponentSchema(), schema.getComponentSchema().getRecordName());
+        break;
+      case MAP:
+        createIndexes(indexes, schema, fieldName);
+        Map.Entry<Schema, Schema> mapSchema = schema.getMapSchema();
+        processSchema(indexes, mapSchema.getKey(), mapSchema.getKey().getRecordName());
+        processSchema(indexes, mapSchema.getValue(), mapSchema.getValue().getRecordName());
+        break;
+      case RECORD:
+        createIndexes(indexes, schema, fieldName);
+        for (Schema.Field field : schema.getFields()) {
+          processSchema(indexes, field.getSchema(), field.getName());
+        }
+        break;
+      case UNION:
+        createIndexes(indexes, schema, fieldName);
+        for (Schema us : schema.getUnionSchemas()) {
+          processSchema(indexes, us, us.getRecordName());
+        }
     }
   }
 
-  private Schema.Type getSimpleType(Schema schema) {
+  private void createIndexes(Set<String> indexes, Schema schema, @Nullable String fieldName) {
+    if (fieldName != null) {
+      String type = getSimpleType(schema);
+      indexes.add(fieldName + MetadataDataset.KEYVALUE_SEPARATOR + type);
+      indexes.add(fieldName);
+    }
+  }
+
+  private String getSimpleType(Schema schema) {
     if (schema.isNullable()) {
       schema = schema.getNonNullable();
     }
-    return schema.getType();
+    return schema.getType().toString();
   }
 }
