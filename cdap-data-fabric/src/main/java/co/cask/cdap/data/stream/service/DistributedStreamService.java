@@ -476,7 +476,7 @@ public class DistributedStreamService extends AbstractStreamService {
           for (Map.Entry<Id.Namespace, StreamSpecification> streamSpecEntry : streamMetaStore.listStreams().entries()) {
             Id.Stream streamId = Id.Stream.from(streamSpecEntry.getKey(), streamSpecEntry.getValue().getName());
             LOG.debug("Adding {} stream as a resource to the coordinator to manager streams leaders.", streamId);
-            builder.addPartition(new ResourceRequirement.Partition(streamId.getId(), 1));
+            builder.addPartition(new ResourceRequirement.Partition(streamId.toString(), 1));
           }
           return builder.build();
         } catch (Throwable e) {
