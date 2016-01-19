@@ -24,7 +24,7 @@ angular.module(PKG.name + '.feature.hydrator')
       type: this.config.artifact.name
     };
 
-    this.tooltipDescription = this.app.description.replace(/\n/g, '<br />');
+    this.tooltipDescription = (this.app.description && this.app.description.replace(/\n/g, '<br />')) || '' ;
 
     var params;
     this.setState = function() {
