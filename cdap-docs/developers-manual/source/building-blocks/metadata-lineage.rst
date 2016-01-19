@@ -84,7 +84,7 @@ Metadata Search API. This table lists the system metadata annotations of CDAP en
    * - Datasets
      - Schema (field names and types), Dataset type (*FileSet, Table, KeyValueTable,* etc.), TTL (Time To Live)
      - Dataset name, the Dataset's supported mode of access
-       (*BatchReadable*/*BatchWritable*/*RecordScannable*/*RecordWritable*)
+       (*batch*/*explore*)
    * - Streams
      - Schema (field names and types), TTL
      - Stream name
