@@ -35,13 +35,14 @@ angular.module(PKG.name + '.commons')
                            ',';
 
         $scope.showDelimiter = true;
-        if ($scope.config.properties && $scope.config.properties.showDelimiter === 'false') {
+        var showDelimiterProperty = myHelpers.objectQuery($scope.config, 'widget-attributes', 'showDelimiter');
+        if (($scope.config.properties && $scope.config.properties.showDelimiter === 'false') || showDelimiterProperty === 'false' ) {
           $scope.showDelimiter = false;
         }
 
         // Changing value field to dropdown based on config
         if ($scope.isDropdown) {
-          $scope.dropdownOptions = $scope.config.properties.dropdownOptions;
+          $scope.dropdownOptions = myHelpers.objectQuery($scope.config, 'widget-attributes', 'dropdownOptions');
         }
 
         // initializing
