@@ -24,15 +24,15 @@ Standalone and Distributed CDAP
     
 - Build all modules::
 
-    mvn package
+    mvn clean package
 
 - Run checkstyle, skipping tests::
 
-    mvn package -DskipTests
+    mvn clean package -DskipTests
 
 - Build a particular module::
 
-    mvn package -pl [module] -am
+    mvn clean package -pl [module] -am
 
 - Run selected test::
 
@@ -46,7 +46,7 @@ Standalone and Distributed CDAP
 
 - Build all examples::
 
-    MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m" mvn package -DskipTests -pl cdap-examples -am -amd -P examples
+    MAVEN_OPTS="-Xmx512m -XX:MaxPermSize=128m" mvn clean package -DskipTests -pl cdap-examples -am -amd -P examples
 
 - Build Standalone distribution ZIP::
 
@@ -72,11 +72,11 @@ Standalone and Distributed CDAP
     
 - Build distributions (rpm, deb, tgz)::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -DskipTests -P examples,templates,dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz,unit-tests
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -DskipTests -P examples,templates,dist,release,rpm-prepare,rpm,deb-prepare,deb,tgz,unit-tests
 
 - Build Cloudera Manager parcel::
 
-    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn package -DskipTests -P templates,dist,tgz && ./cdap-distributions/bin/build_parcel.sh
+    MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=128m" mvn clean package -DskipTests -P templates,dist,tgz && ./cdap-distributions/bin/build_parcel.sh
 
 - Show dependency tree::
 
