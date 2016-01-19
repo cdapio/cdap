@@ -73,8 +73,12 @@ class TopPanelController{
     this.metadataExpanded = false;
   }
   saveMetadata() {
-    this.parsedDescription = this.state.metadata.description.replace(/\n/g, ' ');
-    this.ConfigActionsFactory.setMetadataInfo(this.state.metadata.name, this.parsedDescription);
+    this.ConfigActionsFactory.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
+    if(this.state.metadata.description.indexOf('/\n/g') === -1) {
+      this.parsedDescription = this.state.metadata.description.replace(/\n/g, ' ');
+    } else {
+      this.parsedDescription = this.state.metadata.description;
+    }
     this.metadataExpanded = false;
   }
   onEnterOnMetadata(event) {
