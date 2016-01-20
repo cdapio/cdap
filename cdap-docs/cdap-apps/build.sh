@@ -36,11 +36,14 @@ function download_md_doc_file() {
   local source_name="${source_file_name%-*}"
 
   local type=$(echo "${source_file_name#*-}" | tr [:upper:] [:lower:]) # batchsink
-  type="${type%.md}s" # types are plural
+  type="${type%.md}" # strip suffix
+  
+  type_capital="$(echo ${type:0:1} | tr [:lower:] [:upper:])${type:1}"
+  type_plural="${type}s" # types are plural
   local target_file_name=$(echo "${source_file_name%-*}.md" | tr [:upper:] [:lower:]) # cassandra
 
   local source_url="${base_source}/${source_dir}/docs/${source_file_name}"
-  local target_dir="${base_target}/${type}"
+  local target_dir="${base_target}/${type_plural}"
   local target="${target_dir}/${target_file_name}"
   
   if [ ! -d "${base_target}" ]; then
@@ -53,15 +56,15 @@ function download_md_doc_file() {
   fi
 
   if curl --output /dev/null --silent --head --fail "${source_url}"; then
-    echo "Downloading ${source_file_name} from ${source_dir} to ${type}/${target_file_name}"
+    echo "Downloading ${source_file_name} from ${source_dir} to ${type_plural}/${target_file_name}"
     curl --silent ${source_url} --output ${target}
     # FIXME if file does not begin with a "#" character, append "# title\n" to start
     local first=$(head -1 ${target})
     if [ "x${first:0:2}" != "x# " ]; then
-      local m="Markdown file missing initial title: ${source_file_name}"
+      local m="Markdown file missing initial title: ${source_file_name}: ${source_name} ${type_capital}"
       echo_red_bold "${m}"
       set_message "${m}"
-      echo -e "# ${source_name}\n$(cat ${target})" > ${target}
+      echo -e "# ${source_name} ${type_capital}\n$(cat ${target})" > ${target}
     fi    
   else
     local m="URL does not exist: ${source_url}"
