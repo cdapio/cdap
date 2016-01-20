@@ -449,3 +449,271 @@ Plugin Deployment
 .. include:: ../../../developers-manual/source/building-blocks/plugins.rst 
    :start-after: .. _plugins-deployment-artifact:
    :end-before:  .. _plugins-use-case:
+
+Configuration JSON for a plugin (for Webapp UI alone)
+======================================================
+Every property of a plugin is represented, by default, as input fields in the UI. This can be however changed to specific widgets that closely match the type of the property in a plugin. This can be specified as JSON for the UI to consume.
+
+The configuration JSON is composed of a list of property groups and a list of outputs. For instance the JSON would look like this,
+
+.. code-block:: Javascript
+
+  {
+    "configuration-groups": [
+      "group1",
+      "group2",
+      ...
+    ],
+    "outputs": [
+      {"ouput-property-1"},
+      {"ouput-property-2"},
+      ...
+    ]
+  }
+
+Configuration groups
+---------------------
+Configuration groups are simple grouping of properties in a plugin. For instance in a Stream Source plugin - Stream Name, Duration & Delay could be grouped as Stream Configuration. So based on this example a configuration group can be represented as an object with a name & a list of properties of the plugin that falls under that group. In the case of Stream source plugin it would look like this,
+
+.. code-block:: Javascript
+
+  {
+    "configuration-groups": [
+      {
+        "name": "Stream Configuration",
+        "properties": [
+          {"field1"},
+          {"field2"},
+          {"field3"}
+        ]
+      }
+    ],
+    outputs: [
+      {output-property1},
+      {output-property2},
+      ..
+    ]
+  }
+
+Once a group is established we can configure how each field inside the group is represented in the UI. The configuration of each property of the plugin is composed of following parts:
+
+- name : Name of the field (as coming from the CDAP backend)
+- label: Label to be used in the UI for the property
+- widget-type : The type of widget that needs to represent this property
+- widget-attributes: A map of attributes that the widget shall require to be rendered in UI. The attributes depend on the type of widget.
+
+In the case of Stream plugin this would look like this,
+
+.. code-block:: Javascript
+
+  {
+    "configuration-groups": [
+      {
+        "name": "Stream Configuration",
+        "properties": [
+          {
+            "name": "duration",
+            "label": "Duration",
+            "widget-type": "textbox"
+          },
+          {
+            "widget-type": "textbox",
+            "label": "Delay",
+            "name": "delay"
+          },
+          {
+            "widget-type": "stream-selector",
+            "label": "Stream Name",
+            "name": "name"
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {"output-property1"}
+    ]
+  }
+
+A widget in UI represents a component that will be rendered and used to set a value of a property of a plugin. There are different widgets that we support in Hydrator as of version 3.3.
+
+.. list-table::
+   :widths: 20 25 25 25
+   :header-rows: 1
+
+   * - Widget-type
+     - Description
+     - Attributes
+     - Output data type
+   * - textbox
+     - default - A default value for the widget
+     - Default HTML textbox to enter any string
+     - string
+   * - number
+     - | default - A default value for the widget
+       | min - A min value for the number box
+       | max - A max value for the number box
+     - Default HTML number textbox. Can enter only valid numbers
+     - string
+   * - passwordbox
+     - NA
+     - Default html password box
+     - string
+   * - datetime
+     - | default - A default value for the widget
+       | format - format should be ISO, long, short or full format dates
+     - Date time picker. Used to set date (in string) for any property
+     - string
+   * - csv/dsv
+     - delimiter (allows to change the delimiter to be any other symbol apart from ‘,’)
+     - Comma separated values. Each value is entered in a separate box
+     - comma-separated string
+   * - json-editor
+     - default - A default value for the widget (stringified JSON)
+     - Json editor to pretty-print and auto format JSON while typing
+     - string
+   * - javascript-editor,python-editor
+     - default - A default value for the widget (string)
+     - An editor to write Javscript or Python as a value for a property
+     - string
+   * - keyvalue
+     - | delimiter - Delimiter for key-value pairs
+       | kv-delimiter - Delimiter for key & value.
+     - A key-value editor which allows you to construct map
+     - string
+   * - keyvalue-dropdown
+     - Same as keyvalue attributes. dropdownOptions - a list of dropdown options to use in UI
+     - It is exactly the keyvalue widget but instead of plain value we have dropdown with a list of values
+     - string
+   * - select
+     - | values - List of values for the dropdown
+       | default - A default value from the list
+     - An html dropdown with a list of values. Allows to choose one from the list
+     - string
+   * - dataset-selector/stream-selector
+     - NA
+     - A typeahead textbox that will have a list of datasets in the cdap instance
+     - string
+   * - schema
+     - | schema-types - A list of schema types for each field that the user can chose while setting the schema
+       | schema-default-type - A default type for each newly added field in the schema
+       | property-watch - A property of the plugin to watch which might affect the output schema
+     - A 4 column editable table to represent schema in a plugin
+     - string
+   * - non-editable-schema-editor
+     - schema - The schema that will be used as output schema for the plugin
+     - A non-editable schema widget
+     - string
+
+
+Outputs
+-------
+
+The outputs is a list of plugin properties that represent the output schema for the particular plugin.
+
+The output schema for a plugin can be represented in two different ways:
+
+- Via Implicit schema
+- Via Schema property
+
+Implicit schema is a pre-determined output schema for a plugin that the plugin developer can enforce. The implicit schema is not associated with any property of the plugin but just enforces the output schema for the plugin (for visual purposes only).
+
+A particular property of the plugin can be defined as the output schema and can be appropriately configured to make it editable in the UI.
+
+An output-property is configured in exactly the same way we configure individual properties in configuration-groups. It is composed of name, widget-type & widget-attributes. However the subtle difference is the widget-type used for the output property. The widget-type for an output property is ideally 'schema' or 'non-editable-schema-editor'. This is to ensure the schema that is propagated across different plugins are consistent. The difference comes in 'non-editable-schema-editor' widget which doesn't have widget-attributes but a schema that will be used in the UI as output schema for the plugin.
+
+Based on the above definitions we could write the configuration JSON for Stream source which has the following properties - schema, duration, name, format, delay - as
+
+.. code-block:: Javascript
+
+  {
+    "metadata": {
+      "spec-version": "1.0"
+    },
+    "configuration-groups": [
+      {
+        "label": "Stream Configuration",
+        "properties": [
+          {
+            "widget-type": "textbox",
+            "label": "Stream Name",
+            "name": "name"
+          },
+          {
+            "widget-type": "textbox",
+            "label": "Duration",
+            "name": "duration"
+          },
+          {
+            "widget-type": "textbox",
+            "label": "Delay",
+            "name": "delay"
+          },
+          {
+            "widget-type": "textbox",
+            "label": "Data Field Name",
+            "name": "body.field",
+            "widget-attributes": {
+              "width": "medium"
+            }
+          },
+          {
+            "widget-type": "textbox",
+            "label": "Header Field Name",
+            "name": "headers.field",
+            "widget-attributes": {
+              "width": "medium"
+            }
+          },
+          {
+            "widget-type": "stream-selector",
+            "label": "Stream Name",
+            "name": "name",
+            "widget-attributes": {
+              "width": "medium"
+            }
+          }
+        ]
+      },
+      {
+        "label": "Format",
+        "properties": [
+          {
+            "widget-type": "select",
+            "label": "Format",
+            "name": "format",
+            "widget-attributes": {
+              "values": [
+                "avro",
+                "clf",
+                "csv",
+                "grok",
+                "syslog",
+                "text",
+                "tsv"
+              ],
+              "default": "text"
+            }
+          }
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "schema",
+        "widget-type": "schema",
+        "widget-attributes": {
+          "schema-types": [
+            "boolean",
+            "int",
+            "long",
+            "float",
+            "double",
+            "string",
+            "map<string, string>"
+          ],
+          "schema-default-type": "string",
+          "property-watch": "format"
+        }
+      }
+    ]
+  }
