@@ -38,7 +38,7 @@ consists of four mandatory roles and two optional roles:
      - User interface for managing CDAP applications
    * - CDAP Security Auth Service
      - Performs client authentication for CDAP when security is enabled (*optional*)
-   * - CDAP Gateway
+   * - Gateway
      - `Cloudera Manager Gateway Role <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_managing_roles.html>`__
        that installs the CDAP client tools (such as the *CDAP CLI*) and configuration (*optional*)
 
