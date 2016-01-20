@@ -28,14 +28,14 @@ A sample JDBC Driver Plugin configuration:
         {
           "name" : "mysql",
           "type" : "jdbc",
-          "className" : "com.mysql.jdbc.Driver"
-          "description" : "Plugin for MySQL JDBC driver",
+          "className" : "com.mysql.jdbc.Driver",
+          "description" : "Plugin for MySQL JDBC driver"
         },
         {
           "name" : "postgresql",
           "type" : "jdbc",
-          "className" : "org.postgresql.Driver"
-          "description" : "Plugin for PostgreSQL JDBC driver",
+          "className" : "org.postgresql.Driver",
+          "description" : "Plugin for PostgreSQL JDBC driver"
         }
       ]
     }
