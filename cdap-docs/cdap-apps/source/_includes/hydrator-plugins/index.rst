@@ -10,20 +10,17 @@
 ETL Plugins 
 ===========
 
-.. rubric:: Introduction
-
 Details of the required properties for sources, transformations (transforms), and sinks
 can be explored using RESTful APIs.
 
 If you are creating a custom plugin to extend the existing system artifacts, its name
-needs to not collide with existing names.
+should not collide with existing names for ease of use in the CDAP UI.
 
-Shipped with CDAP as part of the *cdap-etl-lib-artifact*, the plugins listed below are
-available for creating ETL applications.
+Shipped with CDAP, the plugins listed below are available for creating ETL applications.
 
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    
     Batch Sources <batchsources/index>
     Real-time Sources <realtimesources/index>

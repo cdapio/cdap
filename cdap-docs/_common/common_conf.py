@@ -693,3 +693,24 @@ def set_conf_for_manual():
     intersphinx_mapping.pop(manual_intersphinx_mapping[m], None)
 
     return html_short_title_toc, html_short_title, html_context
+
+# -- Handle Markdown files --------------------------------------------------
+
+def source_read_handler(app, docname, source):
+    doc_path = app.env.doc2path(docname)
+    if doc_path.endswith(".md"):
+        # Cache the self.env.config.rst_epilog and rst_prolog
+        if app.env.config.rst_epilog:
+            app.env.config.rst_epilog_cache = app.env.config.rst_epilog
+            app.env.config.rst_epilog = None
+        if app.env.config.rst_prolog:
+            app.env.config.rst_prolog_cache = app.env.config.rst_prolog
+            app.env.config.rst_prolog = None
+    else:
+        if not app.env.config.rst_epilog and hasattr(app.env.config, 'rst_epilog_cache') and app.env.config.rst_epilog_cache:
+            app.env.config.rst_epilog = app.env.config.rst_epilog_cache
+        if not app.env.config.rst_prolog and hasattr(app.env.config, 'rst_prolog_cache') and app.env.config.rst_prolog_cache:
+            app.env.config.rst_prolog = app.env.config.rst_prolog_cache
+
+def setup(app):
+    app.connect('source-read', source_read_handler)
