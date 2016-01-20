@@ -26,14 +26,14 @@ A sample JDBC Driver Plugin configuration:
       "parents": [ "cdap-etl-batch[|version|,\ |version|]" ],
       "config": [
         {
-          "type" : "JDBC",
-          "name" : "MySQL JDBC",
+          "name" : "mysql",
+          "type" : "jdbc",
           "description" : "Plugin for MySQL JDBC driver",
           "className" : "com.mysql.jdbc.Driver"
         },
         {
-          "type" : "JDBC",
-          "name" : "PostgreSQL JDBC",
+          "name" : "postgresql",
+          "type" : "jdbc",
           "description" : "Plugin for PostgreSQL JDBC driver",
           "className" : "org.postgresql.Driver"
         }
