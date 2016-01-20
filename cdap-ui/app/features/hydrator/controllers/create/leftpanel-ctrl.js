@@ -65,6 +65,7 @@ class LeftPanelController {
     this.PluginActionsFactory.fetchSources(params);
     this.PluginActionsFactory.fetchTransforms(params);
     this.PluginActionsFactory.fetchSinks(params);
+    this.PluginActionsFactory.fetchTemplates(params);
 
   }
 
@@ -72,14 +73,17 @@ class LeftPanelController {
     event.stopPropagation();
     var item = this.LeftPanelStore.getSpecificPluginVersion(node);
     this.LeftPanelStore.updatePluginDefaultVersion(node);
+
+    let name = item.name || item.pluginTemplate;
+
     let filteredNodes = this.ConfigStore
                     .getNodes()
-                    .filter( node => node.plugin.label.includes(item.name) );
+                    .filter( node => node.plugin.label.includes(name) );
     let config;
     if (item.pluginTemplate) {
       config = {
         plugin: {
-          label: (filteredNodes.length > 0 ? item.name + (filteredNodes.length+1): item.name),
+          label: (filteredNodes.length > 0 ? item.pluginTemplate + (filteredNodes.length+1): item.pluginTemplate),
           name: item.pluginName,
           artifact: item.artifact,
           properties: item.properties,

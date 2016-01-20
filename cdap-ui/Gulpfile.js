@@ -333,6 +333,15 @@ gulp.task('tpl', function() {
 });
 
 
+/*
+  Polyfill
+*/
+gulp.task('polyfill', function () {
+  return gulp.src('./app/polyfill.js')
+      .pipe(gulp.dest('./dist/assets/bundle'));
+});
+
+
 
 /*
   Markup
@@ -437,8 +446,8 @@ gulp.task('rev:replace', ['html:main', 'rev:manifest'], function() {
 /*
   alias tasks
  */
-gulp.task('js', ['js:$modal', 'js:lib', 'js:aceworkers', 'js:app']);
-gulp.task('watch:js', ['js:$modal', 'js:lib', 'js:aceworkers', 'watch:js:app', 'watch:js:app:babel']);
+gulp.task('js', ['js:$modal', 'js:lib', 'js:aceworkers', 'js:app', 'polyfill']);
+gulp.task('watch:js', ['js:$modal', 'js:lib', 'js:aceworkers', 'watch:js:app', 'watch:js:app:babel', 'polyfill']);
 gulp.task('css', ['css:lib', 'css:app']);
 gulp.task('style', ['css']);
 

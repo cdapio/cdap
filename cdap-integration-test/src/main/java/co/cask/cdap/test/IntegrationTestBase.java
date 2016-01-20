@@ -197,11 +197,12 @@ public abstract class IntegrationTestBase {
   }
 
   /**
-   * If empty, start our own CDAP standalone instance for testing.
-   * If not empty, use the provided remote CDAP instance for testing.
+   * Reads the CDAP instance URI from the system property "instanceUri".
+   * "instanceUri" should be specified in the format [host]:[port].
+   * Defaults to "localhost:10000".
    */
   protected String getInstanceURI() {
-    return System.getProperty("instanceUri", "");
+    return System.getProperty("instanceUri", "localhost:10000");
   }
 
   /**

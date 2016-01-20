@@ -32,15 +32,19 @@ import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.common.utils.ImmutablePair;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
 import co.cask.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ApplicationClassInfo;
 import co.cask.cdap.proto.artifact.ApplicationClassSummary;
+import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -73,9 +77,10 @@ public class ArtifactRepository {
   private final ArtifactInspector artifactInspector;
   private final List<File> systemArtifactDirs;
   private final ArtifactConfigReader configReader;
+  private final MetadataStore metadataStore;
 
   @Inject
-  ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore) {
+  ArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore, MetadataStore metadataStore) {
     this.artifactStore = artifactStore;
     File baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
       cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
@@ -91,6 +96,7 @@ public class ArtifactRepository {
       systemArtifactDirs.add(file);
     }
     this.configReader = new ArtifactConfigReader();
+    this.metadataStore = metadataStore;
   }
 
   /**
@@ -300,6 +306,9 @@ public class ArtifactRepository {
       ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, null, parentClassLoader);
       validatePluginSet(artifactClasses.getPlugins());
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, ImmutableSet.<ArtifactRange>of());
+      ArtifactInfo artifactInfo = new ArtifactInfo(artifactId.toArtifactId(), artifactClasses,
+                                                  ImmutableMap.<String, String>of());
+      writeSystemMetadata(artifactId, artifactInfo);
       return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
     }
   }
@@ -392,7 +401,14 @@ public class ArtifactRepository {
     try {
       ArtifactClasses artifactClasses = inspectArtifact(artifactId, artifactFile, additionalPlugins, parentClassLoader);
       ArtifactMeta meta = new ArtifactMeta(artifactClasses, parentArtifacts, properties);
-      return artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
+      ArtifactDetail artifactDetail = artifactStore.write(artifactId, meta, Files.newInputStreamSupplier(artifactFile));
+      ArtifactDescriptor descriptor = artifactDetail.getDescriptor();
+      // info hides some fields that are available in detail, such as the location of the artifact
+      ArtifactInfo artifactInfo = new ArtifactInfo(descriptor.getArtifactId(), artifactDetail.getMeta().getClasses(),
+                                                   artifactDetail.getMeta().getProperties());
+      // add system metadata for artifacts
+      writeSystemMetadata(artifactId, artifactInfo);
+      return artifactDetail;
     } finally {
       parentClassLoader.close();
     }
@@ -753,5 +769,11 @@ public class ArtifactRepository {
     if (isInvalid) {
       throw new InvalidArtifactException(errMsg.toString());
     }
+  }
+
+  private void writeSystemMetadata(Id.Artifact artifactId, ArtifactInfo artifactInfo) {
+    // add system metadata for artifacts
+    ArtifactSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataStore, artifactId, artifactInfo);
+    writer.write();
   }
 }

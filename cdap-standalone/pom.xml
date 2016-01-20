@@ -33,6 +33,12 @@
   <packaging>jar</packaging>
 
   <dependencies>
+    <!-- Added to override the embedded guava class in hive-exec -->
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-core</artifactId>
@@ -56,11 +62,6 @@
       <artifactId>spark-mllib_2.10</artifactId>
     </dependency>
 
-    <!-- Added to override the embedded guava class in hive-exec -->
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-    </dependency>
     <dependency>
       <groupId>co.cask.cdap</groupId>
       <artifactId>cdap-api</artifactId>

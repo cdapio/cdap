@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -40,6 +40,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,9 +49,9 @@ import javax.annotation.Nullable;
 import javax.ws.rs.Path;
 
 /**
- * Package local helper class to maintain list of resources that are visible to user programs.
+ * Helper class to maintain list of resources that are visible to user programs.
  */
-final class ProgramResources {
+public final class ProgramResources {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProgramResources.class);
 
@@ -91,7 +92,7 @@ final class ProgramResources {
    * @param classLoader the ClassLoader for finding program type specific resources.
    * @param type program type. If {@code null}, only the base visible resources will be returned.
    */
-  static synchronized Set<String> getVisibleResources(ClassLoader classLoader, @Nullable ProgramType type) {
+  public static synchronized Set<String> getVisibleResources(ClassLoader classLoader, @Nullable ProgramType type) {
     if (type == null) {
       return getBaseResources();
     }
@@ -120,7 +121,7 @@ final class ProgramResources {
                                SPARK_PACKAGES, ImmutableList.<String>of(),
                                RESOURCE_INFO_TO_RESOURCE_NAME, Sets.newHashSet(resources));
     }
-    return ImmutableSet.copyOf(resources);
+    return Collections.unmodifiableSet(resources);
   }
 
   private static Set<String> getBaseResources() {
@@ -162,7 +163,7 @@ final class ProgramResources {
     getResources(ClassPath.from(classLoader, JAR_ONLY_URI),
                  HADOOP_PACKAGES, HBASE_PACKAGES, RESOURCE_INFO_TO_RESOURCE_NAME, result);
 
-    return ImmutableSet.copyOf(result);
+    return Collections.unmodifiableSet(result);
   }
 
   /**
@@ -290,6 +291,12 @@ final class ProgramResources {
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         // Ignore bootstrap classes
         if (bootstrapClassPaths.contains(classPathUrl.getFile())) {
+          return false;
+        }
+
+        // Should ignore classes from SLF4J implementation, otherwise it will includes logback lib, which shouldn't be
+        // visible through the program classloader.
+        if (className.startsWith("org.slf4j.impl.")) {
           return false;
         }
 

@@ -57,6 +57,8 @@ import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.logging.LogEntry;
+import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.LocationFactory;
@@ -202,10 +204,22 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             twillPreparer.withResources(logbackURI);
           }
 
-          if (cConf.getBoolean(Constants.COLLECT_APP_CONTAINER_LOGS)) {
-            twillPreparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
-          } else {
+          String logLevelConf = cConf.get(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL).toUpperCase();
+          if ("OFF".equals(logLevelConf)) {
             twillPreparer.addJVMOptions("-Dtwill.disable.kafka=true");
+          } else {
+            LogEntry.Level logLevel = LogEntry.Level.ERROR;
+            if ("ALL".equals(logLevelConf)) {
+              logLevel = LogEntry.Level.TRACE;
+            } else {
+              try {
+                logLevel = LogEntry.Level.valueOf(logLevelConf.toUpperCase());
+              } catch (Exception e) {
+                LOG.warn("Invalid application container log level {}. Defaulting to ERROR.", logLevelConf);
+              }
+            }
+            twillPreparer.addLogHandler(new ApplicationLogHandler(new PrinterLogHandler(new PrintWriter(System.out)),
+                                                                  logLevel));
           }
 
           String yarnAppClassPath = hConf.get(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
@@ -350,5 +364,23 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
     controller.onRunning(cleanup, Threads.SAME_THREAD_EXECUTOR);
     controller.onTerminated(cleanup, Threads.SAME_THREAD_EXECUTOR);
     return controller;
+  }
+
+  private static final class ApplicationLogHandler implements LogHandler {
+
+    private final LogHandler delegate;
+    private final LogEntry.Level logLevel;
+
+    private ApplicationLogHandler(LogHandler delegate, LogEntry.Level logLevel) {
+      this.delegate = delegate;
+      this.logLevel = logLevel;
+    }
+
+    @Override
+    public void onLog(LogEntry logEntry) {
+      if (logEntry.getLogLevel().ordinal() <= logLevel.ordinal()) {
+        delegate.onLog(logEntry);
+      }
+    }
   }
 }

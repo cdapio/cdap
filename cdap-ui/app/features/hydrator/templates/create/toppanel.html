@@ -39,15 +39,19 @@
                    ng-keyup="TopPanelController.onEnterOnMetadata($event)"
                    tooltip="{{ TopPanelController.state.metadata.name }}"
                    tooltip-placement="right"
-                   tooltip-enable="TopPanelController.state.metadata.name.length > 27"
+                   tooltip-enable="!TopPanelController.metadataExpanded && TopPanelController.state.metadata.name.length > 27"
                    tooltip-class="toppanel-tooltip" />
-            <textarea ng-model="TopPanelController.state.metadata['description']"
-                      my-maxlength="144"
+            <textarea ng-model="TopPanelController.parsedDescription"
                       placeholder="Enter a description for your pipeline."
-                      tooltip="{{ TopPanelController.metadata.description }}"
+                      tooltip-html="TopPanelController.tooltipDescription"
                       tooltip-placement="right"
-                      tooltip-enable="TopPanelController.metadata.description.length > 144"
-                      tooltip-class="toppanel-tooltip"></textarea>
+                      tooltip-enable="TopPanelController.tooltipDescription.length > 64"
+                      tooltip-class="toppanel-tooltip"
+                      ng-if="!TopPanelController.metadataExpanded"
+                      tooltip-append-to-body="true"></textarea>
+            <textarea ng-model="TopPanelController.state.metadata['description']"
+                      placeholder="Enter a description for your pipeline."
+                      ng-if="TopPanelController.metadataExpanded"></textarea>
           </div>
         </div>
 

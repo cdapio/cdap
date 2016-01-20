@@ -50,7 +50,6 @@ import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.lineage.LineageStore;
 import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
-import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.NoOpLineageWriter;
 import co.cask.cdap.data2.registry.UsageRegistry;
@@ -111,6 +110,7 @@ public class UpgradeTool {
   private final QueueAdmin queueAdmin;
   private final DatasetSpecificationUpgrader dsSpecUpgrader;
   private final DatasetInstanceManager datasetInstanceManager;
+  private MetadataStore metadataStore;
 
   /**
    * Set of Action available in this tool.
@@ -149,6 +149,7 @@ public class UpgradeTool {
     this.mdsDatasetsRegistry = injector.getInstance(Key.get(MDSDatasetsRegistry.class,
                                                             Names.named("mdsDatasetsRegistry")));
     this.datasetBasedTimeScheduleStore = injector.getInstance(DatasetBasedTimeScheduleStore.class);
+    this.metadataStore = injector.getInstance(MetadataStore.class);
     this.streamStateStoreUpgrader = injector.getInstance(StreamStateStoreUpgrader.class);
     this.dsUpgrade = injector.getInstance(DatasetUpgrader.class);
     this.dsSpecUpgrader = injector.getInstance(DatasetSpecificationUpgrader.class);
@@ -179,13 +180,16 @@ public class UpgradeTool {
           @Override
           protected void configure() {
             bind(DatasetFramework.class).to(InMemoryDatasetFramework.class).in(Scopes.SINGLETON);
+            // the DataSetsModules().getDistributedModules() binds to RemoteDatasetFramework so override that to
+            // InMemoryDatasetFramework
+            bind(DatasetFramework.class)
+              .annotatedWith(Names.named(DataSetsModules.BASIC_DATASET_FRAMEWORK))
+              .to(InMemoryDatasetFramework.class);
             install(new FactoryModuleBuilder()
                       .implement(DatasetDefinitionRegistry.class, DefaultDatasetDefinitionRegistry.class)
                       .build(DatasetDefinitionRegistryFactory.class));
             // Upgrade tool does not need to record lineage for now.
             bind(LineageWriter.class).to(NoOpLineageWriter.class);
-            // No need to do anything with Metadata store for now.
-            bind(MetadataStore.class).to(NoOpMetadataStore.class);
           }
         }
       ),
@@ -376,8 +380,11 @@ public class UpgradeTool {
     LOG.info("Upgrading schedules...");
     datasetBasedTimeScheduleStore.upgrade();
 
-    LOG.info("Upgrading Business Metadata Dataset...");
+    LOG.info("Upgrading Business Metadata Dataset Specification...");
     upgradeBusinessMetadataDatasetSpec();
+
+    LOG.info("Upgrading Business Metadata Dataset...");
+    metadataStore.upgrade();
 
     LOG.info("Upgrading stream state store table ...");
     streamStateStoreUpgrader.upgrade();
@@ -417,12 +424,11 @@ public class UpgradeTool {
                                      boolean includeNewDatasets) throws IOException, DatasetManagementException {
     // dataset service
     DatasetMetaTableUtil.setupDatasets(datasetFramework);
-    if (includeNewDatasets) {
-      // artifact and metadata datasets were added in 3.2
-      ArtifactStore.setupDatasets(datasetFramework);
-      DefaultMetadataStore.setupDatasets(datasetFramework);
-      LineageStore.setupDatasets(datasetFramework);
-    }
+    // artifacts
+    ArtifactStore.setupDatasets(datasetFramework);
+    // metadata and lineage
+    DefaultMetadataStore.setupDatasets(datasetFramework);
+    LineageStore.setupDatasets(datasetFramework);
     // app metadata
     DefaultStore.setupDatasets(datasetFramework);
     // config store
@@ -456,8 +462,22 @@ public class UpgradeTool {
     // later if we see this as a more frequent pattern.
     // For now, update the type using Gson, and deserialize the updated JsonObject as a new DatasetSpecification.
     Gson gson = new Gson();
+    // change the dataset type name since in 3.3  it changed to MetadataDataset
     JsonObject jsonObject = gson.toJsonTree(oldBusinessMetadataSpec, DatasetSpecification.class).getAsJsonObject();
     jsonObject.addProperty("type", MetadataDataset.class.getName());
+    // change the columnsToIndex to 'i' since in 3.3 we index column 'i'
+    JsonObject metadataIndexObject = jsonObject.get("datasetSpecs").getAsJsonObject()
+      .get("metadata_index").getAsJsonObject();
+    JsonObject properties = metadataIndexObject.get("properties").getAsJsonObject();
+    properties.addProperty("columnsToIndex", "i");
+    JsonObject dProperties = metadataIndexObject.get("datasetSpecs").getAsJsonObject().get("d").getAsJsonObject()
+      .get("properties").getAsJsonObject();
+    JsonObject iProperties = metadataIndexObject.get("datasetSpecs").getAsJsonObject().get("i").getAsJsonObject()
+      .get("properties").getAsJsonObject();
+    dProperties.addProperty("columnsToIndex", "i");
+    iProperties.addProperty("columnsToIndex", "i");
+
+    LOG.info("The new Business Metadata Dataset Spec being written is {}", new Gson().toJson(jsonObject));
     DatasetSpecification newBusinessMetadataSpec = gson.fromJson(jsonObject, DatasetSpecification.class);
     datasetInstanceManager.delete(DefaultMetadataStore.BUSINESS_METADATA_INSTANCE_ID);
     datasetInstanceManager.add(Id.Namespace.SYSTEM, newBusinessMetadataSpec);

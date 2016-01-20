@@ -14,14 +14,17 @@
  * the License.
  */
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope, moment) {
+  .controller('HydratorDetailTopPanelController', function(DetailRunsStore, DetailNonRunsStore, PipelineDetailActionFactory, GLOBALS, $state, $alert, myLoadingService, $timeout, $scope, moment, myAlertOnValium) {
     this.GLOBALS = GLOBALS;
+    this.myAlertOnValium = myAlertOnValium;
     this.config = DetailNonRunsStore.getCloneConfig();
     this.app = {
       name: this.config.name,
       description: this.config.description,
       type: this.config.artifact.name
     };
+
+    this.tooltipDescription = (this.app.description && this.app.description.replace(/\n/g, '<br />')) || '' ;
 
     var params;
     this.setState = function() {
@@ -30,10 +33,11 @@ angular.module(PKG.name + '.feature.hydrator')
       var status, i;
       var lastRunDuration;
       var nextRunTime = DetailRunsStore.getNextRunTime();
-      if (nextRunTime) {
-        nextRunTime = nextRunTime[0].time? nextRunTime[0].time: null;
+      if (nextRunTime && nextRunTime.length) {
+        this.nextRunTime = nextRunTime[0].time? nextRunTime[0].time: null;
+      } else {
+        this.nextRunTime = 'N/A';
       }
-      this.nextRunTime = nextRunTime || 'N/A';
       for (i=0 ; i<runs.length; i++) {
         status = runs[i].status;
         if (['RUNNING', 'STARTING', 'STOPPING'].indexOf(status) === -1) {
@@ -88,6 +92,16 @@ angular.module(PKG.name + '.feature.hydrator')
         DetailRunsStore.getScheduleParams()
       );
     }
+
+    var greenStatus = ['COMPLETED', 'RUNNING', 'SCHEDULED', 'STARTING'];
+    this.isGreenStatus = function () {
+      if (greenStatus.indexOf(this.appStatus) > -1) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
     this.do = function(action) {
       switch(action) {
         case 'Start':
@@ -95,6 +109,16 @@ angular.module(PKG.name + '.feature.hydrator')
           PipelineDetailActionFactory.startPipeline(
             DetailRunsStore.getApi(),
             DetailRunsStore.getParams()
+          ).then(
+            () => {},
+            (err) => {
+              this.myAlertOnValium.show({
+                type: 'danger',
+                title: 'Unable to start a new run',
+                content: angular.isObject(err)? err.data: err,
+                duration: false
+              });
+            }
           );
           break;
         case 'Schedule':
@@ -103,12 +127,22 @@ angular.module(PKG.name + '.feature.hydrator')
             DetailRunsStore.getApi(),
             DetailRunsStore.getScheduleParams()
           )
-            .then(function() {
-              PipelineDetailActionFactory.fetchScheduleStatus(
-                DetailRunsStore.getApi(),
-                DetailRunsStore.getScheduleParams()
-              );
-            });
+            .then(
+              () => {
+                PipelineDetailActionFactory.fetchScheduleStatus(
+                  DetailRunsStore.getApi(),
+                  DetailRunsStore.getScheduleParams()
+                );
+              },
+              (err) => {
+                this.myAlertOnValium.show({
+                  type: 'danger',
+                  title: 'Unable to schedule the pipeline',
+                  content: angular.isObject(err)? err.data: err,
+                  duration: false
+                });
+              }
+            );
           break;
         case 'Suspend':
           this.scheduleStatus = 'SUSPENDING';
@@ -116,18 +150,38 @@ angular.module(PKG.name + '.feature.hydrator')
             DetailRunsStore.getApi(),
             DetailRunsStore.getScheduleParams()
           )
-            .then(function() {
-              PipelineDetailActionFactory.fetchScheduleStatus(
-                DetailRunsStore.getApi(),
-                DetailRunsStore.getScheduleParams()
-              );
-            });
+            .then(
+              () => {
+                PipelineDetailActionFactory.fetchScheduleStatus(
+                  DetailRunsStore.getApi(),
+                  DetailRunsStore.getScheduleParams()
+                );
+              },
+              (err) => {
+                this.myAlertOnValium.show({
+                  type: 'danger',
+                  title: 'Unable to suspend the pipeline',
+                  content: angular.isObject(err)? err.data: err,
+                  duration: false
+                });
+              }
+            );
           break;
         case 'Stop':
           this.appStatus = 'STOPPING';
           PipelineDetailActionFactory.stopPipeline(
             DetailRunsStore.getApi(),
             DetailRunsStore.getParams()
+          ).then(
+            () => {},
+            (err) => {
+              this.myAlertOnValium.show({
+                type: 'danger',
+                title: 'Unable to stop the current run',
+                content: angular.isObject(err)? err.data: err,
+                duration: false
+              });
+            }
           );
           break;
         case 'Delete':
@@ -146,11 +200,12 @@ angular.module(PKG.name + '.feature.hydrator')
               },
               function error(err) {
                 myLoadingService.hideLoadingIcon();
-                $timeout(function() {
-                  $alert({
+                $timeout(() => {
+                  this.myAlertOnValium.show({
                     type: 'danger',
                     title: 'Unable to delete Pipeline',
-                    content: err.data
+                    content: err.data,
+                    duration: false
                   });
                 });
               }

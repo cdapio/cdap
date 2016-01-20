@@ -17,7 +17,8 @@ Cask Hydrator and ETL Pipelines
     Overview <overview>
     Creating an ETL Application <creating>
     Creating Custom ETL Plugins <custom>
-    ETL Plugins <hydrator-plugins/index>
+    ETL Plugins <plugins/index>
+    Upgrading ETL Applications <upgrade>
     
     
 .. _cdap-apps-intro-hydrator:
@@ -57,6 +58,10 @@ code; instead, you just configure CDAP appropriately and operate it.
 
 - **Lifecycle of ETL Applications:** This is managed using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
 
+.. |etl-upgrade| replace:: **Upgrading ETL Applications**
+.. _etl-upgrade: upgrade.html
+
+- |etl-upgrade|_ Instructions for upgrading old ETL applications.
 
 .. rubric:: Cask Hydrator
 

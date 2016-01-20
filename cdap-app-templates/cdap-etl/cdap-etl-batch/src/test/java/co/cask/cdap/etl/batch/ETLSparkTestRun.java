@@ -16,7 +16,6 @@
 
 package co.cask.cdap.etl.batch;
 
-import co.cask.cdap.api.Resources;
 import co.cask.cdap.api.data.format.StructuredRecord;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.dataset.table.Table;
@@ -24,7 +23,6 @@ import co.cask.cdap.etl.batch.config.ETLBatchConfig;
 import co.cask.cdap.etl.batch.mock.MockSink;
 import co.cask.cdap.etl.batch.mock.MockSource;
 import co.cask.cdap.etl.batch.mock.StringValueFilterTransform;
-import co.cask.cdap.etl.common.Connection;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.AppRequest;
@@ -37,8 +35,6 @@ import com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -56,27 +52,17 @@ public class ETLSparkTestRun extends ETLBatchTestBase {
      *           |
      *            ---- filter ---- sink2
      */
-    ETLStage source = new ETLStage("source", MockSource.getPlugin("sparkinput"));
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .setEngine(ETLBatchConfig.Engine.SPARK)
+      .setSource(new ETLStage("source", MockSource.getPlugin("sparkinput")))
+      .addSink(new ETLStage("sink1", MockSink.getPlugin("sparkoutput1")))
+      .addSink(new ETLStage("sink2", MockSink.getPlugin("sparkoutput2")))
+      .addTransform(new ETLStage("filter", StringValueFilterTransform.getPlugin("name", "samuel")))
+      .addConnection("source", "sink1")
+      .addConnection("source", "filter")
+      .addConnection("filter", "sink2")
+      .build();
 
-    List<ETLStage> sinks = ImmutableList.of(
-      new ETLStage("sink1", MockSink.getPlugin("sparkoutput1")),
-      new ETLStage("sink2", MockSink.getPlugin("sparkoutput2"))
-    );
-
-    List<ETLStage> transforms = ImmutableList.of(
-      new ETLStage("filter", StringValueFilterTransform.getPlugin("name", "samuel"))
-    );
-
-    List<Connection> connections = ImmutableList.of(
-      new Connection("source", "sink1"),
-      new Connection("source", "filter"),
-      new Connection("filter", "sink2")
-    );
-
-    // deploy pipeline
-    ETLBatchConfig etlConfig = new ETLBatchConfig(ETLBatchConfig.Engine.SPARK, "* * * * *",
-                                                  source, sinks, transforms, connections,
-                                                  new Resources(), new ArrayList<ETLStage>());
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DagApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);

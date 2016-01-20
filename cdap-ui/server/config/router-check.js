@@ -16,6 +16,7 @@
 
 /*global require, module */
 
+// router check also fetches the auth server address if security is enabled
 
 module.exports = {
   ping: function () {
@@ -53,7 +54,8 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
   var self = this,
       deferred = promise.defer(),
       attempts = 0,
-      url = cdapConfig['router.server.address'];
+      url = cdapConfig['router.server.address'],
+      checkTimeout = cdapConfig['dashboard.router.check.timeout.secs'];
 
   if (cdapConfig['ssl.enabled'] === "true") {
     url = 'https://' + url + ':' + cdapConfig['router.ssl.server.port'];
@@ -62,11 +64,11 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
   }
   url += PING_PATH;
 
-
   function pingAttempt () {
     attempts++;
 
     log.debug('Checking backend security endpoint ' + url + ' attempt ' + attempts);
+
     request({
         method: 'GET',
         url: url,
@@ -80,10 +82,25 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
             self.enabled = true;
             self.addresses = JSON.parse(body).auth_uri || [];
           }
+          log.info('Successfully connected to CDAP Router.');
           log.info('CDAP security is '+(self.enabled ? 'enabled': 'disabled')+'.');
           deferred.resolve(self);
         }
         else {
+          // if check timeout is enabled, and check takes longer than checkTimeout then exit
+          if (checkTimeout > 0 && Math.round(Date.now() / 1000) - startTime > checkTimeout) {
+            log.error('Could not connect to CDAP Router using URL ' + url + ' for more than ' +
+              checkTimeout + ' seconds. ' +
+              'Please check if CDAP Router is configured correctly, and is up and running. ' +
+              'Stopping CDAP UI due to this error.');
+            process.exit(1);
+          }
+
+          if (attempts == 1) {
+            log.warn('Unable to connect to CDAP Router. Will keep trying to connect in background. ' +
+              (checkTimeout > 0 ? 'CDAP UI will exit in ' + checkTimeout + ' seconds if unable to connect.' : ''));
+          }
+
           setTimeout(pingAttempt, attempts<PING_MAX_RETRIES ? PING_INTERVAL : PING_INTERVAL*60);
           deferred.resolve(self);
         }
@@ -91,15 +108,9 @@ AuthAddress.prototype.doPing = function (cdapConfig) {
     );
   };
 
-  if(process.env.CDAP_INSECURE) {
-    console.info('[CDAP_INSECURE] Security is disabled.');
-    deferred.resolve(self);
-  }
-  else {
-    pingAttempt();
-  }
-
-
+  log.info('Trying to connect to CDAP Router using URL ' + url);
+  startTime = Math.round(Date.now() / 1000);
+  pingAttempt();
   return deferred.promise;
 };
 

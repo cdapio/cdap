@@ -15,12 +15,13 @@
  */
 
 class TopPanelController{
-  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory) {
+  constructor(GLOBALS, $stateParams, $alert, ConfigStore, ConfigActionsFactory, $bootstrapModal, ConsoleActionsFactory, NodesActionsFactory) {
     this.GLOBALS = GLOBALS;
     this.ConfigStore = ConfigStore;
     this.ConfigActionsFactory = ConfigActionsFactory;
     this.$bootstrapModal = $bootstrapModal;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
+    this.NodesActionsFactory = NodesActionsFactory;
 
     this.canvasOperations = [
       {
@@ -73,6 +74,13 @@ class TopPanelController{
   }
   saveMetadata() {
     this.ConfigActionsFactory.setMetadataInfo(this.state.metadata.name, this.state.metadata.description);
+    if (this.state.metadata.description) {
+      this.parsedDescription = this.state.metadata.description.replace(/\n/g, ' ');
+      this.tooltipDescription = this.state.metadata.description.replace(/\n/g, '<br />');
+    } else {
+      this.parseDesscription = '';
+      this.tooltipDescription = '';
+    }
     this.metadataExpanded = false;
   }
   onEnterOnMetadata(event) {
@@ -87,6 +95,7 @@ class TopPanelController{
   }
 
   onExport() {
+    this.NodesActionsFactory.resetSelectedNode();
     let config = angular.copy(this.ConfigStore.getDisplayConfig());
     if (!config) {
       return;
@@ -141,7 +150,7 @@ class TopPanelController{
   }
 }
 
-TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory'];
+TopPanelController.$inject = ['GLOBALS', '$stateParams', '$alert', 'ConfigStore', 'ConfigActionsFactory', '$bootstrapModal', 'ConsoleActionsFactory', 'NodesActionsFactory'];
 
 angular.module(PKG.name + '.feature.hydrator')
   .controller('TopPanelController', TopPanelController);

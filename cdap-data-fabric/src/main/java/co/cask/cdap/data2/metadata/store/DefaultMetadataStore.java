@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@ package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
+import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.runtime.DataSetsModules;
@@ -26,6 +27,7 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.metadata.dataset.Metadata;
 import co.cask.cdap.data2.metadata.dataset.MetadataDataset;
 import co.cask.cdap.data2.metadata.dataset.MetadataEntry;
+import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.data2.metadata.publisher.MetadataChangePublisher;
 import co.cask.cdap.data2.transaction.Transactions;
 import co.cask.cdap.proto.Id;
@@ -36,6 +38,8 @@ import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
 import co.cask.tephra.TransactionExecutor;
 import co.cask.tephra.TransactionExecutorFactory;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -44,10 +48,17 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.annotation.Nullable;
 
 /**
  * Implementation of {@link MetadataStore} used in distributed mode.
@@ -61,6 +72,15 @@ public class DefaultMetadataStore implements MetadataStore {
     Id.DatasetInstance.from(Id.Namespace.SYSTEM, "system.metadata");
   private static final Map<String, String> EMPTY_PROPERTIES = ImmutableMap.of();
   private static final Set<String> EMPTY_TAGS = ImmutableSet.of();
+
+  private static final Comparator<Map.Entry<Id.NamespacedId, Integer>> SEARCH_RESULT_DESC_SCORE_COMPARATOR =
+    new Comparator<Map.Entry<Id.NamespacedId, Integer>>() {
+      @Override
+      public int compare(Map.Entry<Id.NamespacedId, Integer> o1, Map.Entry<Id.NamespacedId, Integer> o2) {
+        // sort in descending order
+        return o2.getValue() - o1.getValue();
+      }
+    };
 
   private final CConfiguration cConf;
   private final TransactionExecutorFactory txExecutorFactory;
@@ -77,13 +97,19 @@ public class DefaultMetadataStore implements MetadataStore {
     this.changePublisher = changePublisher;
   }
 
+  @Override
+  public void setProperties(MetadataScope scope, Id.NamespacedId entityId, Map<String, String> properties) {
+    setProperties(scope, entityId, properties, null);
+  }
+
   /**
    * Adds/updates metadata for the specified {@link Id.NamespacedId}.
    */
   @Override
-  public void setProperties(MetadataScope scope, final Id.NamespacedId entityId, final Map<String, String> properties) {
+  public void setProperties(MetadataScope scope, final Id.NamespacedId entityId, final Map<String, String> properties,
+                            @Nullable final Indexer indexer) {
     if (!cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
-      setPropertiesNoPublish(scope, entityId, properties);
+      setPropertiesNoPublish(scope, entityId, properties, indexer);
       return;
     }
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
@@ -94,7 +120,7 @@ public class DefaultMetadataStore implements MetadataStore {
         Set<String> existingTags = input.getTags(entityId);
         previousRef.set(new MetadataRecord(entityId, existingProperties, existingTags));
         for (Map.Entry<String, String> entry : properties.entrySet()) {
-          input.setProperty(entityId, entry.getKey(), entry.getValue());
+          input.setProperty(entityId, entry.getKey(), entry.getValue(), indexer);
         }
       }
     }, scope);
@@ -121,12 +147,12 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   private void setPropertiesNoPublish(MetadataScope scope, final Id.NamespacedId entityId,
-                                      final Map<String, String> properties) {
+                                      final Map<String, String> properties, @Nullable final Indexer indexer) {
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
         for (Map.Entry<String, String> entry : properties.entrySet()) {
-          input.setProperty(entityId, entry.getKey(), entry.getValue());
+          input.setProperty(entityId, entry.getKey(), entry.getValue(), indexer);
         }
       }
     }, scope);
@@ -176,7 +202,7 @@ public class DefaultMetadataStore implements MetadataStore {
       public MetadataRecord apply(MetadataDataset input) throws Exception {
         Map<String, String> properties = input.getProperties(entityId);
         Set<String> tags = input.getTags(entityId);
-        return new MetadataRecord(entityId, properties, tags);
+        return new MetadataRecord(entityId, scope, properties, tags);
       }
     }, scope);
   }
@@ -186,7 +212,7 @@ public class DefaultMetadataStore implements MetadataStore {
    * for the specified set of {@link Id.NamespacedId}s.
    */
   @Override
-  public Set<MetadataRecord> getMetadata(MetadataScope scope, final Set<Id.NamespacedId> entityIds) {
+  public Set<MetadataRecord> getMetadata(final MetadataScope scope, final Set<Id.NamespacedId> entityIds) {
     return execute(new TransactionExecutor.Function<MetadataDataset, Set<MetadataRecord>>() {
       @Override
       public Set<MetadataRecord> apply(MetadataDataset input) throws Exception {
@@ -194,7 +220,7 @@ public class DefaultMetadataStore implements MetadataStore {
         for (Id.NamespacedId entityId : entityIds) {
           Map<String, String> properties = input.getProperties(entityId);
           Set<String> tags = input.getTags(entityId);
-          metadataRecords.add(new MetadataRecord(entityId, properties, tags));
+          metadataRecords.add(new MetadataRecord(entityId, scope, properties, tags));
         }
         return metadataRecords;
       }
@@ -432,9 +458,10 @@ public class DefaultMetadataStore implements MetadataStore {
   }
 
   @Override
-  public Set<MetadataSearchResultRecord> searchMetadataOnType(MetadataScope scope, final String namespaceId,
+  public Set<MetadataSearchResultRecord> searchMetadataOnType(final MetadataScope scope, final String namespaceId,
                                                               final String searchQuery,
                                                               final MetadataSearchTargetType type) {
+    // Execute search query
     Iterable<MetadataEntry> metadataEntries = execute(new TransactionExecutor.Function<MetadataDataset,
       Iterable<MetadataEntry>>() {
       @Override
@@ -442,11 +469,24 @@ public class DefaultMetadataStore implements MetadataStore {
         return input.search(namespaceId, searchQuery, type);
       }
     }, scope);
-    ImmutableSet.Builder<MetadataSearchResultRecord> builder = ImmutableSet.builder();
+
+    // Score results
+    Map<Id.NamespacedId, Integer> weightedResults = new HashMap<>();
     for (MetadataEntry metadataEntry : metadataEntries) {
-      builder.add(new MetadataSearchResultRecord(metadataEntry.getTargetId()));
+      Integer score = weightedResults.get(metadataEntry.getTargetId());
+      score = score == null ? 0 : score;
+      weightedResults.put(metadataEntry.getTargetId(), score + 1);
     }
-    return builder.build();
+
+    // Sort the results by score
+    List<Map.Entry<Id.NamespacedId, Integer>> resultList = new ArrayList<>(weightedResults.entrySet());
+    Collections.sort(resultList, SEARCH_RESULT_DESC_SCORE_COMPARATOR);
+
+    Set<MetadataSearchResultRecord> result = new LinkedHashSet<>();
+    for (Map.Entry<Id.NamespacedId, Integer> entry : resultList) {
+      result.add(new MetadataSearchResultRecord(entry.getKey()));
+    }
+    return result;
   }
 
   @Override
@@ -515,7 +555,46 @@ public class DefaultMetadataStore implements MetadataStore {
    * @param framework Dataset framework to add types and datasets to
    */
   public static void setupDatasets(DatasetFramework framework) throws IOException, DatasetManagementException {
-    framework.addInstance(MetadataDataset.class.getName(), BUSINESS_METADATA_INSTANCE_ID, DatasetProperties.EMPTY);
+    // In 3.2 we indexed MetadataDataset.KEYVALUE_COLUMN (kv) and MetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN (civ)
+    // and in 3.3 we index new column MetadataDataset.INDEX_COLUMN (i). During upgrade we want to
+    // have instance of BUSINESS_METADATA_INSTANCE_ID with columnToIndex with all these three column so that
+    // when we do a delete while upgrading MetadataDataset#upgrade the delete operation also delete the records
+    // for the old index column from index table.
+    DatasetProperties dsProperties = getOldColumnToIndexAsProperties();
+    //TODO: (UPG-3.3): Remove this after 3.3
+    // the above is only needed for Business Metadata as in 3.2 we didn't have System Metadata table.
+    framework.addInstance(MetadataDataset.class.getName(), BUSINESS_METADATA_INSTANCE_ID, dsProperties);
     framework.addInstance(MetadataDataset.class.getName(), SYSTEM_METADATA_INSTANCE_ID, DatasetProperties.EMPTY);
+  }
+
+  public void upgrade() {
+    DatasetProperties dsProperties = getOldColumnToIndexAsProperties();
+    MetadataDataset businessMetadataDataset;
+    try {
+      businessMetadataDataset = DatasetsUtil.getOrCreateDataset(
+        dsFramework, BUSINESS_METADATA_INSTANCE_ID, MetadataDataset.class.getName(),
+        dsProperties, DatasetDefinition.NO_ARGUMENTS, null);
+    } catch (DatasetManagementException | IOException e) {
+      throw Throwables.propagate(e);
+    }
+    Preconditions.checkNotNull(businessMetadataDataset, "Failed to get Business Metadata Dataset.");
+    TransactionExecutor txExecutor = Transactions.createTransactionExecutor(txExecutorFactory, businessMetadataDataset);
+    txExecutor.executeUnchecked(new TransactionExecutor.Procedure<MetadataDataset>() {
+      @Override
+      public void apply(MetadataDataset input) throws Exception {
+        input.upgrade();
+      }
+    }, businessMetadataDataset);
+  }
+
+  /**
+   * @return {@link DatasetProperties} where {@link IndexedTableDefinition#INDEX_COLUMNS_CONF_KEY} is set to
+   * index columns from 3.2 and also 3.3
+   */
+  private static DatasetProperties getOldColumnToIndexAsProperties() {
+    return DatasetProperties.builder()
+        .add(IndexedTableDefinition.INDEX_COLUMNS_CONF_KEY,
+             Joiner.on(",").join(MetadataDataset.KEYVALUE_COLUMN, MetadataDataset.CASE_INSENSITIVE_VALUE_COLUMN,
+                                 MetadataDataset.INDEX_COLUMN)).build();
   }
 }

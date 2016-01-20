@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, $rootScope, HydratorService, $popover, $filter, uuid) {
+  .controller('MyDAGController', function MyDAGController(jsPlumb, $scope, $timeout, MyDAGFactory, GLOBALS, NodesActionsFactory, $window, NodesStore, $rootScope, HydratorService, $popover, $filter, uuid, $tooltip) {
 
     var vm = this;
 
@@ -145,6 +145,15 @@ angular.module(PKG.name + '.commons')
           if (vm.scale <= SHOW_METRICS_THRESHOLD) {
             hideMetricsLabel();
           }
+
+          angular.forEach(labels, function (endpoint) {
+            var label = endpoint.getOverlay('metricLabel');
+
+            $tooltip(angular.element(label.getElement()), {
+              trigger: 'hover',
+              title: 'Records Out'
+            });
+          });
 
           $scope.$watch('metricsData', function () {
             if (Object.keys($scope.metricsData).length === 0) {

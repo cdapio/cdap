@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Cask Data, Inc.
+ * Copyright 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,8 @@ import co.cask.cdap.api.dataset.table.Put;
 import co.cask.cdap.api.dataset.table.Row;
 import co.cask.cdap.api.dataset.table.Scanner;
 import co.cask.cdap.data2.dataset2.lib.table.MDSKey;
+import co.cask.cdap.data2.metadata.indexer.DefaultValueIndexer;
+import co.cask.cdap.data2.metadata.indexer.Indexer;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataSearchTargetType;
@@ -32,11 +34,13 @@ import com.google.common.base.Predicates;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,18 +55,24 @@ import javax.annotation.Nullable;
  * Dataset that manages Metadata using an {@link IndexedTable}.
  */
 public class MetadataDataset extends AbstractDataset {
+  private static final Logger LOG = LoggerFactory.getLogger(MetadataDataset.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
     .create();
 
-  private static final Pattern VALUE_SPLIT_PATTERN = Pattern.compile("[-_\\s]+");
-  private static final Pattern TAGS_SEPARATOR_PATTERN = Pattern.compile("[,\\s]+");
+  private static final Pattern SPACE_SEPARATOR_PATTERN = Pattern.compile("\\s+");
 
   private static final String HISTORY_COLUMN = "h"; // column for metadata history
   private static final String VALUE_COLUMN = "v";  // column for metadata value
   private static final String TAGS_SEPARATOR = ",";
 
-  static final String INDEX_COLUMN = "i";          // column for metadata indexes
+  //TODO: (UPG-3.3): Make this public after 3.3
+  public static final String INDEX_COLUMN = "i";          // column for metadata indexes
+
+  //TODO: (UPG-3.3): Remove this after 3.3. This is only for upgrade from 3.2 to 3.3
+  // These are the columns which were indexed in 3.2
+  public static final String CASE_INSENSITIVE_VALUE_COLUMN = "civ";
+  public static final String KEYVALUE_COLUMN = "kv";
 
   public static final String TAGS_KEY = "tags";
   public static final String KEYVALUE_SEPARATOR = ":";
@@ -78,24 +88,38 @@ public class MetadataDataset extends AbstractDataset {
    * Add new metadata.
    *
    * @param metadataEntry The value of the metadata to be saved.
+   * @param indexer the indexer to use to create indexes for this {@link MetadataEntry}
    */
-  private void setMetadata(MetadataEntry metadataEntry) {
+  private void setMetadata(MetadataEntry metadataEntry, @Nullable Indexer indexer) {
     Id.NamespacedId targetId = metadataEntry.getTargetId();
 
     // Put to the default column.
-    write(targetId, metadataEntry);
+    write(targetId, metadataEntry, indexer == null ? new DefaultValueIndexer() : indexer);
   }
 
   /**
    * Sets a metadata property for the specified {@link Id.NamespacedId}.
    *
-   * @param targetId The target Id: app-id(ns+app) / program-id(ns+app+pgtype+pgm) /
-   *                 dataset-id(ns+dataset)/stream-id(ns+stream)
+   * @param targetId The target Id: {@link Id.Application} / {@link Id.Program} /
+   *                 {@link Id.DatasetInstance}/{@link Id.Stream}
    * @param key The metadata key to be added
    * @param value The metadata value to be added
    */
   public void setProperty(Id.NamespacedId targetId, String key, String value) {
-    setMetadata(new MetadataEntry(targetId, key, value));
+    setProperty(targetId, key, value, null);
+  }
+
+  /**
+   * Sets a metadata property for the specified {@link Id.NamespacedId}.
+   *
+   * @param targetId The target Id: {@link Id.Application} / {@link Id.Program} /
+   *                 {@link Id.DatasetInstance}/{@link Id.Stream}
+   * @param key The metadata key to be added
+   * @param value The metadata value to be added
+   * @param indexer the indexer to use to create indexes for this key-value property
+   */
+  public void setProperty(Id.NamespacedId targetId, String key, String value, @Nullable Indexer indexer) {
+    setMetadata(new MetadataEntry(targetId, key, value), indexer);
   }
 
   /**
@@ -107,7 +131,7 @@ public class MetadataDataset extends AbstractDataset {
    */
   private void setTags(Id.NamespacedId targetId, String ... tags) {
     MetadataEntry tagsEntry = new MetadataEntry(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(tags));
-    setMetadata(tagsEntry);
+    setMetadata(tagsEntry, null);
   }
 
   /**
@@ -121,7 +145,7 @@ public class MetadataDataset extends AbstractDataset {
     Set<String> existingTags = getTags(targetId);
     Iterable<String> newTags = Iterables.concat(existingTags, Arrays.asList(tagsToAdd));
     MetadataEntry newTagsEntry = new MetadataEntry(targetId, TAGS_KEY, Joiner.on(TAGS_SEPARATOR).join(newTags));
-    setMetadata(newTagsEntry);
+    setMetadata(newTagsEntry, null);
   }
 
   /**
@@ -397,46 +421,48 @@ public class MetadataDataset extends AbstractDataset {
    */
   public List<MetadataEntry> search(final String namespaceId, final String searchQuery,
                                     final MetadataSearchTargetType type) {
-    Set<MetadataEntry> results = new HashSet<>();
+    List<MetadataEntry> results = new ArrayList<>();
     Scanner scanner;
 
-    String namespacedSearchQuery = prepareSearchQuery(namespaceId, searchQuery);
+    for (String queryWord : Splitter.on(SPACE_SEPARATOR_PATTERN).omitEmptyStrings().trimResults().split(searchQuery)) {
+      String namespacedSearchQuery = prepareSearchQuery(namespaceId, queryWord);
 
-    if (namespacedSearchQuery.endsWith("*")) {
-      // if prefixed search get start and stop key
-      byte[] startKey = Bytes.toBytes(namespacedSearchQuery.substring(0, namespacedSearchQuery.lastIndexOf("*")));
-      byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
-      scanner = indexedTable.scanByIndex(Bytes.toBytes(INDEX_COLUMN), startKey, stopKey);
-    } else {
-      byte[] value = Bytes.toBytes(namespacedSearchQuery);
-      scanner = indexedTable.readByIndex(Bytes.toBytes(INDEX_COLUMN), value);
-    }
-    try {
-      Row next;
-      while ((next = scanner.next()) != null) {
-        String rowValue = next.getString(INDEX_COLUMN);
-        if (rowValue == null) {
-          continue;
-        }
-
-        final byte[] rowKey = next.getRow();
-        String targetType = MdsKey.getTargetType(rowKey);
-
-        // Filter on target type if not ALL
-        if ((type != MetadataSearchTargetType.ALL) && (type !=
-          MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
-          continue;
-        }
-
-        Id.NamespacedId targetId = MdsKey.getNamespaceIdFromKey(targetType, rowKey);
-        String key = MdsKey.getMetadataKey(targetType, rowKey);
-        MetadataEntry entry = getMetadata(targetId, key);
-        results.add(entry);
+      if (namespacedSearchQuery.endsWith("*")) {
+        // if prefixed search get start and stop key
+        byte[] startKey = Bytes.toBytes(namespacedSearchQuery.substring(0, namespacedSearchQuery.lastIndexOf("*")));
+        byte[] stopKey = Bytes.stopKeyForPrefix(startKey);
+        scanner = indexedTable.scanByIndex(Bytes.toBytes(INDEX_COLUMN), startKey, stopKey);
+      } else {
+        byte[] value = Bytes.toBytes(namespacedSearchQuery);
+        scanner = indexedTable.readByIndex(Bytes.toBytes(INDEX_COLUMN), value);
       }
-    } finally {
-      scanner.close();
+      try {
+        Row next;
+        while ((next = scanner.next()) != null) {
+          String rowValue = next.getString(INDEX_COLUMN);
+          if (rowValue == null) {
+            continue;
+          }
+
+          final byte[] rowKey = next.getRow();
+          String targetType = MdsKey.getTargetType(rowKey);
+
+          // Filter on target type if not ALL
+          if ((type != MetadataSearchTargetType.ALL) &&
+            (type != MetadataSearchTargetType.valueOfSerializedForm(targetType))) {
+            continue;
+          }
+
+          Id.NamespacedId targetId = MdsKey.getNamespaceIdFromKey(targetType, rowKey);
+          String key = MdsKey.getMetadataKey(targetType, rowKey);
+          MetadataEntry entry = getMetadata(targetId, key);
+          results.add(entry);
+        }
+      } finally {
+        scanner.close();
+      }
     }
-    return Lists.newArrayList(results);
+    return results;
   }
 
   /**
@@ -448,7 +474,7 @@ public class MetadataDataset extends AbstractDataset {
    * @return formatted search query which is namespaced
    */
   private String prepareSearchQuery(String namespaceId, String searchQuery) {
-    String formattedSearchQuery = searchQuery.toLowerCase().trim();
+    String formattedSearchQuery = searchQuery.toLowerCase();
     // if this is a key:value search remove  spaces around the separator too
     if (formattedSearchQuery.contains(KEYVALUE_SEPARATOR)) {
       // split the search query in two parts on first occurrence of KEYVALUE_SEPARATOR and the trim the key and value
@@ -458,7 +484,7 @@ public class MetadataDataset extends AbstractDataset {
     return namespaceId + KEYVALUE_SEPARATOR + formattedSearchQuery;
   }
 
-  private void write(Id.NamespacedId targetId, MetadataEntry entry) {
+  private void write(Id.NamespacedId targetId, MetadataEntry entry, Indexer indexer) {
     String key = entry.getKey();
     MDSKey mdsValueKey = MdsKey.getMDSValueKey(targetId, key);
     Put put = new Put(mdsValueKey.getKey());
@@ -466,9 +492,7 @@ public class MetadataDataset extends AbstractDataset {
     // add the metadata value
     put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(entry.getValue()));
     indexedTable.put(put);
-    // index the metadata
-    storeIndexes(targetId, entry);
-
+    storeIndexes(targetId, entry, indexer.getIndexes(entry));
     writeHistory(targetId);
   }
 
@@ -477,24 +501,9 @@ public class MetadataDataset extends AbstractDataset {
    *
    * @param targetId the {@link Id.NamespacedId} from which the metadata indexes has to be stored
    * @param entry the {@link MetadataEntry} which has to be indexed
+   * @param indexes {@link Set<String>} of indexes to store for this {@link MetadataEntry}
    */
-  private void storeIndexes(Id.NamespacedId targetId, MetadataEntry entry) {
-    Set<String> valueIndexes = new HashSet<>();
-    if (entry.getValue().contains(TAGS_SEPARATOR)) {
-      // if the entry is tag then each tag is an index
-      valueIndexes.addAll(Arrays.asList(TAGS_SEPARATOR_PATTERN.split(entry.getValue())));
-    } else {
-      // for key value the complete value is an index
-      valueIndexes.add(entry.getValue());
-    }
-    Set<String> indexes = Sets.newHashSet();
-    for (String index : valueIndexes) {
-      // split all value indexes on the VALUE_SPLIT_PATTERN
-      indexes.addAll(Arrays.asList(VALUE_SPLIT_PATTERN.split(index)));
-    }
-    // add all value indexes too
-    indexes.addAll(valueIndexes);
-
+  private void storeIndexes(Id.NamespacedId targetId, MetadataEntry entry, Set<String> indexes) {
     for (String index : indexes) {
       // store the index with key of the metadata
       indexedTable.put(getIndexPut(targetId, entry.getKey(), entry.getKey() + KEYVALUE_SEPARATOR + index));
@@ -529,5 +538,108 @@ public class MetadataDataset extends AbstractDataset {
     Metadata metadata = new Metadata(targetId, properties, tags);
     byte[] row = MdsHistoryKey.getMdsKey(targetId, System.currentTimeMillis()).getKey();
     indexedTable.put(row, Bytes.toBytes(HISTORY_COLUMN), Bytes.toBytes(GSON.toJson(metadata)));
+  }
+
+  /**
+   * Upgrades the metadata from 3.2 to 3.3 for new storage format
+   */
+  public void upgrade() {
+    new Upgrader().upgrade();
+  }
+
+  /**
+   * Upgrader class for {@link MetadataDataset}. This class contains some functions from 3.2 which have changed in 3.3
+   * in their only 3.2 format to help in reading and processing the old metadata. This inner class should be deleted
+   * after 3.3
+   */
+  private class Upgrader {
+    public void upgrade() {
+      boolean upgradePerformed = false;
+      Scanner scan = indexedTable.scan(null, null); // scan the whole table
+      try {
+        Row next;
+        while ((next = scan.next()) != null) {
+          byte[] value = next.get(VALUE_COLUMN);
+          if (next.get(CASE_INSENSITIVE_VALUE_COLUMN) != null && value != null) {
+            // if case insensitive column has value then this is an old entry from 3.2 which needs to be updated.
+            final byte[] rowKey = next.getRow();
+            String targetType = MdsKey.getTargetType(rowKey);
+            Id.NamespacedId targetId = MdsKey.getNamespaceIdFromKey(targetType, rowKey);
+            String key = getMetadataKeyFromOldFormat(targetType, rowKey);
+            MetadataEntry metadataEntry = new MetadataEntry(targetId, key, Bytes.toString(value));
+            indexedTable.delete(new Delete(rowKey));            // remove the old metadata entry
+            // add the metadata back creating new indexes. We can just use DefaultValueIndexer because
+            // in 3.2 we didn't have schema as metadata so no old records can be schema.
+            write(metadataEntry.getTargetId(), metadataEntry, new DefaultValueIndexer());
+            upgradePerformed = true;
+            LOG.info("Upgraded MetadataEntry: {}", metadataEntry);
+          }
+        }
+      } finally {
+        scan.close();
+      }
+      if (!upgradePerformed) {
+        LOG.info("No MetadataEntry found in old format. Metadata upgrade not required.");
+      }
+    }
+
+    /**
+     * Write similar to {@link MetadataDataset#write(Id.NamespacedId, MetadataEntry, Indexer)} but without history
+     * since while writting during upgrade we don't want to add history.
+     */
+    private void write(Id.NamespacedId targetId, MetadataEntry entry, Indexer indexer) {
+      String key = entry.getKey();
+      MDSKey mdsValueKey = MdsKey.getMDSValueKey(targetId, key);
+      Put put = new Put(mdsValueKey.getKey());
+
+      // add the metadata value
+      put.add(Bytes.toBytes(VALUE_COLUMN), Bytes.toBytes(entry.getValue()));
+      indexedTable.put(put);
+      // index the metadata
+      storeIndexes(targetId, entry, indexer.getIndexes(entry));
+    }
+
+    /**
+     * This to read old Metadata keys which were written with a metadata type in 3.2
+     * Its used to update from 3.2 to 3.3 and should be removed after 3.3
+     * This is almost a copy of {@link MdsKey#getMetadataKey(String, byte[])} with additional skip for MetadataType
+     * which we used to write in 3.2
+     */
+    public String getMetadataKeyFromOldFormat(String type, byte[] rowKey) {
+      MDSKey.Splitter keySplitter = new MDSKey(rowKey).split();
+      // The rowkey in the following format in 3.2
+      // [rowPrefix][targetType][targetId][metadataType][key]
+      // so skip the first few strings.
+
+      // Skip rowType
+      keySplitter.skipBytes();
+
+      // Skip targetType
+      keySplitter.skipString();
+
+      // Skip targetId
+      if (type.equals(Id.Program.class.getSimpleName())) {
+        keySplitter.skipString();
+        keySplitter.skipString();
+        keySplitter.skipString();
+        keySplitter.skipString();
+      } else if (type.equals(Id.Application.class.getSimpleName())) {
+        keySplitter.skipString();
+        keySplitter.skipString();
+      } else if (type.equals(Id.DatasetInstance.class.getSimpleName())) {
+        keySplitter.skipString();
+        keySplitter.skipString();
+      } else if (type.equals(Id.Stream.class.getSimpleName())) {
+        keySplitter.skipString();
+        keySplitter.skipString();
+      } else {
+        throw new IllegalArgumentException("Illegal Type " + type + " of metadata source.");
+      }
+
+      // Skip metadata-type as the old key as metadata type
+      keySplitter.getString();
+
+      return keySplitter.getString();
+    }
   }
 }

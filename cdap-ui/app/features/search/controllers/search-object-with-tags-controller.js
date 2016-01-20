@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,19 +15,23 @@
  */
 
 class SearchObjectWithTagsController {
-  constructor($stateParams, myTagsApi, caskFocusManager) {
+  constructor($stateParams, myTagsApi, caskFocusManager, myHydratorFactory, GLOBALS) {
     this.tag = $stateParams.tag;
     this.$stateParams = $stateParams;
     this.taggedObjects = [];
     this.myTagsApi = myTagsApi;
+    this.loading = false;
     caskFocusManager.select('searchObjectWithTags');
     this.fetchAssociatedObjects();
+    this.myHydratorFactory = myHydratorFactory;
+    this.GLOBALS = GLOBALS;
   }
 
   fetchAssociatedObjects() {
+    this.loading = true;
     let params = {
       namespaceId: this.$stateParams.namespace,
-      query: `tags:${this.tag}*`
+      query: `${this.tag}`
     };
     this.myTagsApi
       .searchTags(params)
@@ -37,6 +41,11 @@ class SearchObjectWithTagsController {
           taggedObjects.forEach( (tObject) => {
             this.parseTaggedObject(tObject);
           });
+
+          this.loading = false;
+        },
+        () => {
+          this.loading = false;
         }
       );
   }
@@ -76,7 +85,6 @@ class SearchObjectWithTagsController {
         });
         break;
       case 'program':
-
         angular.extend(modifiedTObject, {
           namespaceId: entityObj.application.namespace.id,
           appId: entityObj.application.applicationId,
@@ -86,11 +94,13 @@ class SearchObjectWithTagsController {
           icon: (entityObj.type.toLowerCase() === 'flow'? 'icon-tigon': 'icon-' + entityObj.type.toLowerCase())
         });
         break;
+      default:
+        return;
     }
     this.taggedObjects.push(modifiedTObject);
   }
 }
-SearchObjectWithTagsController.$inject = ['$stateParams', 'myTagsApi', 'caskFocusManager'];
+SearchObjectWithTagsController.$inject = ['$stateParams', 'myTagsApi', 'caskFocusManager', 'myHydratorFactory', 'GLOBALS'];
 
 angular.module(`${PKG.name}.feature.search`)
   .controller('SearchObjectWithTagsController', SearchObjectWithTagsController);

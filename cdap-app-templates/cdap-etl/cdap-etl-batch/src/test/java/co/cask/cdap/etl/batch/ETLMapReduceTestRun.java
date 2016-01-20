@@ -26,7 +26,6 @@ import co.cask.cdap.etl.batch.mock.ErrorTransform;
 import co.cask.cdap.etl.batch.mock.MockSink;
 import co.cask.cdap.etl.batch.mock.MockSource;
 import co.cask.cdap.etl.batch.mock.StringValueFilterTransform;
-import co.cask.cdap.etl.common.Connection;
 import co.cask.cdap.etl.common.Constants;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.format.StructuredRecordStringConverter;
@@ -57,12 +56,11 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
 
   @Test
   public void testInvalidTransformConfigFailsToDeploy() {
-    ETLStage source = new ETLStage("source", MockSource.getPlugin("inputTable"));
-    ETLStage sink = new ETLStage("sink", MockSink.getPlugin("outputTable"));
-    List<ETLStage> transforms = ImmutableList.of(
-      new ETLStage("transform", StringValueFilterTransform.getPlugin(null, null))
-    );
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sink, transforms);
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .setSource(new ETLStage("source", MockSource.getPlugin("inputTable")))
+      .addSink(new ETLStage("sink", MockSink.getPlugin("outputTable")))
+      .addTransform(new ETLStage("transform", StringValueFilterTransform.getPlugin(null, null)))
+      .build();
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
 
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "badConfig");
@@ -83,28 +81,20 @@ public class ETLMapReduceTestRun extends ETLBatchTestBase {
      *           |                                  |---- sink2
      *            ----------------------------------
      */
-    ETLStage source = new ETLStage("source", MockSource.getPlugin("daginput"));
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder("* * * * *")
+      .setSource(new ETLStage("source", MockSource.getPlugin("daginput")))
+      .addSink(new ETLStage("sink1", MockSink.getPlugin("dagoutput1")))
+      .addSink(new ETLStage("sink2", MockSink.getPlugin("dagoutput2")))
+      .addTransform(new ETLStage("error", ErrorTransform.getPlugin(), "errors"))
+      .addTransform(new ETLStage("filter", StringValueFilterTransform.getPlugin("name", "samuel")))
+      .addConnection("source", "error")
+      .addConnection("source", "filter")
+      .addConnection("source", "sink2")
+      .addConnection("error", "sink1")
+      .addConnection("filter", "sink1")
+      .addConnection("filter", "sink2")
+      .build();
 
-    List<ETLStage> sinks = ImmutableList.of(
-      new ETLStage("sink1", MockSink.getPlugin("dagoutput1")),
-      new ETLStage("sink2", MockSink.getPlugin("dagoutput2"))
-    );
-
-    List<ETLStage> transforms = ImmutableList.of(
-      new ETLStage("error", ErrorTransform.getPlugin(), "errors"),
-      new ETLStage("filter", StringValueFilterTransform.getPlugin("name", "samuel"))
-    );
-
-    List<Connection> connections = ImmutableList.of(
-      new Connection("source", "error"),
-      new Connection("source", "filter"),
-      new Connection("source", "sink2"),
-      new Connection("error", "sink1"),
-      new Connection("filter", "sink1"),
-      new Connection("filter", "sink2")
-    );
-
-    ETLBatchConfig etlConfig = new ETLBatchConfig("* * * * *", source, sinks, transforms, connections, null, null);
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(ETLBATCH_ARTIFACT, etlConfig);
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "DagApp");
     ApplicationManager appManager = deployApplication(appId, appRequest);

@@ -25,6 +25,7 @@ import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.discovery.EndpointStrategy;
 import co.cask.cdap.common.discovery.RandomEndpointStrategy;
+import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.utils.Tasks;
 import co.cask.cdap.data.stream.service.StreamService;
 import co.cask.cdap.data2.datafabric.dataset.service.DatasetService;
@@ -51,6 +52,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ObjectArrays;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -85,6 +87,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
@@ -543,6 +546,13 @@ public abstract class AppFabricTestBase {
     }, timeout, timeoutUnit, 100, TimeUnit.MILLISECONDS);
   }
 
+  protected List<JsonObject> getArtifacts(String namespace) throws Exception {
+    HttpResponse response = doGet(getVersionedAPIPath("artifacts", namespace));
+    Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+    Type typeToken = new TypeToken<List<JsonObject>>() { }.getType();
+    return readResponse(response, typeToken);
+  }
+
   protected void deleteArtifact(Id.Artifact artifact, int expectedResponseCode) throws Exception {
     String path = String.format("artifacts/%s/versions/%s", artifact.getName(), artifact.getVersion().getVersion());
     HttpResponse response = doDelete(getVersionedAPIPath(path, artifact.getNamespace().getId()));
@@ -789,5 +799,12 @@ public abstract class AppFabricTestBase {
   protected HttpResponse setProperties(String id, NamespaceMeta meta) throws Exception {
     return doPut(String.format("%s/namespaces/%s/properties", Constants.Gateway.API_VERSION_3, id),
                  GSON.toJson(meta));
+  }
+
+  protected File buildAppArtifact(Class cls, String name) throws IOException {
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, cls, new Manifest());
+    File destination = new File(tmpFolder.newFolder(), name);
+    Files.copy(Locations.newInputSupplier(appJar), destination);
+    return destination;
   }
 }

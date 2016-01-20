@@ -109,17 +109,37 @@ class ConfigStore {
     var artifactTypeExtension = this.GLOBALS.pluginTypes[this.state.artifact.name];
     var nodesMap = {};
     this.state.__ui__.nodes.forEach(function(n) {
-      nodesMap[n.name] = n;
+      nodesMap[n.name] = angular.copy(n);
     });
+    // Strip out schema property of the plugin if format is clf or syslog
+    let stripFormatSchemas = (formatProp, outputSchemaProp, properties) => {
+      if (!formatProp || !outputSchemaProp) {
+        return properties;
+      }
+      if (['clf', 'syslog'].indexOf(properties[formatProp]) !== -1) {
+        delete properties[outputSchemaProp];
+      }
+      return properties;
+    };
 
-    function addPluginToConfig(node, id) {
+    let addPluginToConfig = (node, id) => {
+      if (node.outputSchemaProperty) {
+        try {
+          let outputSchema = JSON.parse(node.outputSchema);
+          if (angular.isArray(outputSchema.fields)) {
+            outputSchema.fields = outputSchema.fields.filter( field => !field.readonly);
+          }
+          node.plugin.properties[node.outputSchemaProperty] = JSON.stringify(outputSchema);
+        } catch(e) {}
+      }
+      node.plugin.properties = stripFormatSchemas(node.watchProperty, node.outputSchemaProperty, angular.copy(node.plugin.properties));
       var pluginConfig =  {
         // Solely adding id and _backendProperties for validation.
         // Should be removed while saving it to backend.
         name: node.plugin.name,
         label: node.plugin.label,
         artifact: node.plugin.artifact,
-        properties: node.plugin.properties,
+        properties: node.plugin.properties ,
         _backendProperties: node._backendProperties
       };
 
@@ -131,11 +151,11 @@ class ConfigStore {
           inputSchema: node.inputSchema
         };
       } else if (node.type === 'transform') {
-        if (node.errorDatasetName && node.errorDatasetName.length > 0) {
-          pluginConfig.errorDatasetName = node.errorDatasetName;
+        if (node.plugin.errorDatasetName && node.plugin.errorDatasetName.length > 0) {
+          pluginConfig.errorDatasetName = node.plugin.errorDatasetName;
         }
-        if (node.validationFields) {
-          pluginConfig.validationFields = node.validationFields;
+        if (node.plugin.validationFields) {
+          pluginConfig.validationFields = node.plugin.validationFields;
         }
         pluginConfig = {
           name: node.plugin.label,
@@ -154,7 +174,7 @@ class ConfigStore {
         config['sinks'].push(pluginConfig);
       }
       delete nodesMap[id];
-    }
+    };
 
     var connections = this.CanvasFactory.orderConnections(
       angular.copy(this.state.config.connections),
@@ -241,16 +261,19 @@ class ConfigStore {
     var transforms = stateCopy.config.transforms;
 
     if (source.plugin) {
-      delete source.plugin.outputSchema;
+      delete source.outputSchema;
+      delete source.inputSchema;
     }
     angular.forEach(sinks, (sink) => {
       if (sink.plugin) {
-        delete sink.plugin.outputSchema;
+        delete sink.outputSchema;
+        delete sink.inputSchema;
       }
     });
     angular.forEach(transforms, (transform) =>  {
       if (transform.plugin) {
-        delete transform.plugin.outputSchema;
+        delete transform.outputSchema;
+        delete transform.inputSchema;
       }
     });
     delete stateCopy.__ui__;
@@ -333,6 +356,7 @@ class ConfigStore {
       node.outputSchemaProperty = nodeConfig.outputSchema.outputSchemaProperty;
       if (angular.isArray(node.outputSchemaProperty)) {
         node.outputSchemaProperty = node.outputSchemaProperty[0];
+        node.watchProperty = nodeConfig.outputSchema.schemaProperties['property-watch'];
       }
       if (node.outputSchemaProperty) {
         node.outputSchema = node.plugin.properties[node.outputSchemaProperty];
@@ -378,6 +402,36 @@ class ConfigStore {
         (err) => console.log('ERROR fetching backend properties for nodes', err)
       );
 
+    let setDefaultOutputSchemaForNodes = (node) => {
+      var pluginName = node.plugin.name;
+      var pluginToSchemaMap = {
+        'Stream': [
+          {
+            readonly: true,
+            name: 'ts',
+            type: 'long'
+          },
+          {
+            readonly: true,
+            name: 'headers',
+            type: {
+              type: 'map',
+              keys: 'string',
+              values: 'string'
+            }
+          }
+        ]
+      };
+      if (pluginToSchemaMap[pluginName]){
+        if (!node.outputSchema) {
+          node.outputSchema = {
+            fields: [{ name: 'body', type: 'string' }]
+          };
+          node.outputSchema = JSON.stringify({ fields: pluginToSchemaMap[pluginName].concat(node.outputSchema.fields)});
+        }
+      }
+    };
+    this.state.__ui__.nodes.forEach(node=> setDefaultOutputSchemaForNodes(node));
   }
   setConnections(connections) {
     this.state.config.connections = connections;
@@ -390,6 +444,7 @@ class ConfigStore {
     let adjacencyMap = {},
         nodesMap = {},
         outputSchema,
+        schema,
         connections = this.state.config.connections;
     this.state.__ui__.nodes.forEach( node => nodesMap[node.name] = node );
 
@@ -419,6 +474,14 @@ class ConfigStore {
       });
     };
     outputSchema = nodesMap[pluginId].outputSchema;
+    try {
+      schema = JSON.parse(outputSchema);
+      schema.fields = schema.fields.map(field => {
+        delete field.readonly;
+        return field;
+      });
+      outputSchema = JSON.stringify(schema);
+    } catch (e) {}
     traverseMap(adjacencyMap[pluginId], outputSchema);
   }
   addNode(node) {
@@ -469,6 +532,7 @@ class ConfigStore {
       errorFactory.hasAtLeastOneSink
     ];
     let nodes = this.state.__ui__.nodes;
+    let connections = angular.copy(this.state.config.connections);
     nodes.forEach( node => { node.errorCount = 0;});
     let ERROR_MESSAGES = this.GLOBALS.en.hydrator.studio.error;
     let showConsoleMessage = (errObj) => {
@@ -487,7 +551,6 @@ class ConfigStore {
         delete node.warning;
       }
     };
-
     daglevelvalidation.forEach( validationFn => {
       validationFn(nodes, (err, node) => {
         let content;
@@ -545,6 +608,16 @@ class ConfigStore {
         });
       });
     }
+    errorFactory.allNodesConnected(nodes, connections, (errorNode) => {
+      if (errorNode) {
+        isStateValid = false;
+        showConsoleMessage({
+          type: 'error',
+          content: errorNode.plugin.name + ' ' + this.GLOBALS.en.hydrator.studio.error['MISSING-CONNECTION']
+        });
+      }
+    });
+
     return isStateValid;
   }
   getInstance() {

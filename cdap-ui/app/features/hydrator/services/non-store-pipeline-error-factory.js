@@ -125,7 +125,7 @@ let hasValidName = (name, cb) => {
 
 let hasOnlyOneSource = (myHelpers, GLOBALS, nodes, cb) => {
   let error;
-  let countSource;
+  let countSource = 0;
   if (!myHelpers.objectQuery(nodes, 'length')) {
     cb(false);
   }
@@ -149,7 +149,7 @@ let hasOnlyOneSource = (myHelpers, GLOBALS, nodes, cb) => {
 
 let hasAtLeastOneSink = (myHelpers, GLOBALS, nodes, cb) => {
   let error;
-  let countSink;
+  let countSink = 0;
   if (!myHelpers.objectQuery(nodes, 'length')) {
     cb(false);
   }
@@ -166,16 +166,49 @@ let hasAtLeastOneSink = (myHelpers, GLOBALS, nodes, cb) => {
   cb(false);
 };
 
+let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
+  let inputConnection = {};
+  let outputConnection = {};
+
+  let errors = [];
+  angular.forEach(connections, (connection) => {
+    inputConnection[connection.to] = connection.from;
+    outputConnection[connection.from] = connection.to;
+  });
+
+  angular.forEach(nodes, (node) => {
+    switch (GLOBALS.pluginConvert[node.type]) {
+      case 'source':
+        if (!outputConnection[node.name]){
+          errors.push(node.plugin.label);
+          cb(node);
+        }
+        break;
+      case 'transform':
+        if (!inputConnection[node.name] || !outputConnection[node.name]) {
+          cb(node);
+        }
+        break;
+      case 'sink':
+        if (!inputConnection[node.name]) {
+          cb(node);
+        }
+        break;
+    }
+  });
+};
+
 let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
   // If we had used SystemJs or requirejs this could have been avoided.
   return {
     isUniqueNodeNames: isUniqueNodeNames.bind(null, myHelpers),
     isRequiredFieldsFilled: isRequiredFieldsFilled.bind(null, myHelpers),
-    countUnFilledRequiredFields,
-    hasValidName,
+    countUnFilledRequiredFields: countUnFilledRequiredFields,
+    hasValidName: hasValidName,
     hasOnlyOneSource: hasOnlyOneSource.bind(null, myHelpers, GLOBALS),
     hasAtLeastOneSink: hasAtLeastOneSink.bind(null, myHelpers, GLOBALS),
-    isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers)
+    isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers),
+    allNodesConnected: allNodesConnected.bind(null, GLOBALS)
   };
 };
 

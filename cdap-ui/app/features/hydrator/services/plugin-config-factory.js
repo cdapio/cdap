@@ -28,7 +28,7 @@ class PluginConfigFactory {
     }
 
     return this.myPipelineApi.fetchArtifactProperties({
-      namespace: this.$state.params.namespace,
+      namespace: this.$state.params.namespace || this.$state.params.nsadmin,
       artifactName,
       artifactVersion,
       keys: key
@@ -81,7 +81,8 @@ class PluginConfigFactory {
         schemaProperties: null,
         outputSchemaProperty: null,
         isOutputSchemaRequired: null,
-        implicitSchema: null
+        implicitSchema: null,
+        watchProperty: null
       },
       groups: []
     };

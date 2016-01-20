@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2015 Cask Data, Inc.
+  Copyright © 2015-2016 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,14 @@
 
 <my-breadcrumbs></my-breadcrumbs>
 
-<div class="row main-search">
+<div class="row main-search" ng-if="SearchObjectWithTagsController.loading">
+  <h3>
+    <span class="fa fa-spin fa-spinner"></span>
+    <span>Loading search result</span>
+  </h3>
+</div>
+
+<div class="row main-search" ng-if="!SearchObjectWithTagsController.loading">
   <div class="col-xs-12">
     <p class="results-count" ng-if="SearchController.filteredTObjects.length">
       <span>{{SearchController.filteredTObjects.length}}</span>
@@ -26,13 +33,29 @@
     </p>
     <div ng-repeat="tObject in SearchController.filteredTObjects = (SearchObjectWithTagsController.taggedObjects | filter: SearchObjectWithTagsController.searchTxt ) ">
       <div ng-if="tObject.type === 'application'">
-        <div class="tobject">
-          <a ui-sref="apps.detail.overview.status({namespace: tObject.namespaceId, appId: tObject.appId})">
+        <div class="tobject"
+              ng-if="SearchObjectWithTagsController.myHydratorFactory.isCustomApp(tObject.artifact.name)">
+          <a ui-sref="apps.detail.overview.programs({namespace: tObject.namespaceId, appId: tObject.appId})">
             <span ng-bind="tObject.appId"></span>
           </a>
           <p class="tobject-type">
             <span class="{{tObject.icon}} pull-left"></span>
             <span> Application </span>
+          </p>
+        </div>
+
+        <div class="tobject"
+              ng-if="SearchObjectWithTagsController.myHydratorFactory.isETLApp(tObject.artifact.name)">
+          <a ui-sref="apps.detail.overview.status({namespace: tObject.namespaceId, appId: tObject.appId})">
+            <span ng-bind="tObject.appId"></span>
+          </a>
+          <p ng-if="SearchObjectWithTagsController.GLOBALS.etlBatch === tObject.artifact.name">
+            <span class="icon-ETLBatch"></span>
+            <span>ETL Batch</span>
+          </p>
+          <p ng-if="SearchObjectWithTagsController.GLOBALS.etlRealtime === tObject.artifact.name">
+            <span class="icon-ETLRealtime"></span>
+            <span>ETL Real-time</span>
           </p>
         </div>
       </div>
@@ -83,8 +106,7 @@
         </div>
         <div ng-if="tObject.programType === 'Flow'">
           <div class="tobject">
-            <a ui-sref="flow.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})">
-            <span class="{{tObject.icon}}"></span>
+            <a ui-sref="flows.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})">
             <span ng-bind="tObject.programId"></span>
             </a>
             <p class="tobject-type">
@@ -101,6 +123,28 @@
             <p class="tobject-type">
               <span class="{{tObject.icon}} pull-left"></span>
               <span> Service </span>
+            </p>
+          </div>
+        </div>
+        <div ng-if="tObject.programType === 'Spark'">
+          <div class="tobject">
+            <a ui-sref="spark.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})">
+            <span ng-bind="tObject.programId"></span>
+            </a>
+            <p class="tobject-type">
+              <span class="{{tObject.icon}} pull-left"></span>
+              <span> Spark </span>
+            </p>
+          </div>
+        </div>
+        <div ng-if="tObject.programType === 'Worker'">
+          <div class="tobject">
+            <a ui-sref="worker.detail({namespace: tObject.namespaceId, appId: tObject.appId, programId: tObject.programId})">
+              <span ng-bind="tObject.programId"></span>
+            </a>
+            <p class="tobject-type">
+              <span class="{{tObject.icon}} pull-left"></span>
+              <span> Worker </span>
             </p>
           </div>
         </div>
