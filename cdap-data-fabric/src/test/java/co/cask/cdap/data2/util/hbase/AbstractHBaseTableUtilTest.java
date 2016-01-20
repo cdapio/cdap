@@ -26,6 +26,9 @@ import co.cask.cdap.data2.util.TableId;
 import co.cask.cdap.proto.Id;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -40,6 +43,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -95,10 +100,12 @@ public abstract class AbstractHBaseTableUtilTest {
       Assert.assertTrue(tableUtil.hasNamespace(hAdmin, Id.Namespace.from("namespace")));
     }
 
-    create("namespace", "table1");
-    create("namespace2", "table1");
-    create("namespace", "table2");
-    create("namespace", "table3");
+    Futures.allAsList(
+      createAsync(TableId.from("namespace", "table1")),
+      createAsync(TableId.from("namespace2", "table1")),
+      createAsync(TableId.from("namespace", "table2")),
+      createAsync(TableId.from("namespace", "table3"))
+    ).get(60, TimeUnit.SECONDS);
 
     Assert.assertTrue(exists("namespace", "table1"));
     Assert.assertTrue(exists("namespace2", "table1"));
@@ -181,9 +188,11 @@ public abstract class AbstractHBaseTableUtilTest {
       }
     }
 
-    drop("namespace2", "table1");
-    drop("namespace", "table2");
-    drop("namespace", "table3");
+    Futures.allAsList(
+      dropAsync(TableId.from("namespace2", "table1")),
+      dropAsync(TableId.from("namespace", "table2")),
+      dropAsync(TableId.from("namespace", "table3"))
+    ).get(60, TimeUnit.SECONDS);
 
     if (namespacesSupported()) {
       deleteNamespace("namespace");
@@ -226,20 +235,23 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
-  public void testListAllInNamespace() throws IOException, InterruptedException {
+  public void testListAllInNamespace() throws Exception {
     HBaseTableUtil tableUtil = getTableUtil();
     Set<TableId> fooNamespaceTableIds = ImmutableSet.of(TableId.from("foo", "some.table1"),
                                                         TableId.from("foo", "other.table"),
                                                         TableId.from("foo", "some.table2"));
     createNamespace("foo");
-    for (TableId tableId : fooNamespaceTableIds) {
-      create(tableId);
-    }
-
     createNamespace("foo_bar");
     TableId tableIdInOtherNamespace = TableId.from("foo_bar", "my.dataset");
-    create(tableIdInOtherNamespace);
 
+    List<ListenableFuture<TableId>> createFutures = new ArrayList<>();
+    for (TableId tableId : fooNamespaceTableIds) {
+      createFutures.add(createAsync(tableId));
+    }
+
+    createFutures.add(createAsync(tableIdInOtherNamespace));
+
+    Futures.allAsList(createFutures).get(60, TimeUnit.SECONDS);
 
     Set<TableId> retrievedTableIds =
       ImmutableSet.copyOf(tableUtil.listTablesInNamespace(hAdmin, Id.Namespace.from("foo")));
@@ -259,20 +271,18 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
-  public void testDropAllInDefaultNamespace() throws IOException, InterruptedException {
+  public void testDropAllInDefaultNamespace() throws Exception {
     HBaseTableUtil tableUtil = getTableUtil();
-    TableId tableId = TableId.from("default", "some.table1");
-    create(tableId);
 
-    tableId = TableId.from("default", "other.table");
-    create(tableId);
-
-    tableId = TableId.from("default", "some.table2");
-    create(tableId);
-
-    createNamespace("default2");
     TableId tableIdInOtherNamespace = TableId.from("default2", "my.dataset");
-    create(tableIdInOtherNamespace);
+    createNamespace("default2");
+
+    Futures.allAsList(
+      createAsync(TableId.from("default", "some.table1")),
+      createAsync(TableId.from("default", "other.table")),
+      createAsync(TableId.from("default", "some.table2")),
+      createAsync(tableIdInOtherNamespace)
+    ).get(60, TimeUnit.SECONDS);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
     tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.DEFAULT);
@@ -284,21 +294,20 @@ public abstract class AbstractHBaseTableUtilTest {
   }
 
   @Test
-  public void testDropAllInOtherNamespaceWithPrefix() throws IOException, InterruptedException {
+  public void testDropAllInOtherNamespaceWithPrefix() throws Exception {
     HBaseTableUtil tableUtil = getTableUtil();
     createNamespace("foonamespace");
     createNamespace("barnamespace");
-    TableId tableId = TableId.from("foonamespace", "some.table1");
-    create(tableId);
 
     TableId tableIdWithOtherPrefix = TableId.from("foonamespace", "other.table");
-    create(tableIdWithOtherPrefix);
-
-    tableId = TableId.from("foonamespace", "some.table2");
-    create(tableId);
-
     TableId tableIdInOtherNamespace = TableId.from("default", "some.table1");
-    create(tableIdInOtherNamespace);
+
+    Futures.allAsList(
+      createAsync(TableId.from("foonamespace", "some.table1")),
+      createAsync(tableIdWithOtherPrefix),
+      createAsync(TableId.from("foonamespace", "some.table2")),
+      createAsync(tableIdInOtherNamespace)
+    ).get(60, TimeUnit.SECONDS);
 
     Assert.assertEquals(4, hAdmin.listTables().length);
     tableUtil.deleteAllInNamespace(hAdmin, Id.Namespace.from("foonamespace"), new Predicate<TableId>() {
@@ -309,8 +318,11 @@ public abstract class AbstractHBaseTableUtilTest {
     });
     Assert.assertEquals(2, hAdmin.listTables().length);
 
-    drop(tableIdInOtherNamespace);
-    drop(tableIdWithOtherPrefix);
+    Futures.allAsList(
+      dropAsync(tableIdInOtherNamespace),
+      dropAsync(tableIdWithOtherPrefix)
+    ).get(60, TimeUnit.SECONDS);
+
     Assert.assertEquals(0, hAdmin.listTables().length);
     deleteNamespace("foonamespace");
     deleteNamespace("barnamespace");
@@ -348,6 +360,23 @@ public abstract class AbstractHBaseTableUtilTest {
     tableUtil.createTableIfNotExists(hAdmin, tableId, desc.build());
   }
 
+  private ListenableFuture<TableId> createAsync(final TableId tableId) {
+    final SettableFuture<TableId> future = SettableFuture.create();
+    Thread t = new Thread() {
+      @Override
+      public void run() {
+        try {
+          create(tableId);
+          future.set(tableId);
+        } catch (Throwable t) {
+          future.setException(t);
+        }
+      }
+    };
+    t.start();
+    return future;
+  }
+
   private boolean exists(String namespace, String tableName) throws IOException {
     return exists(TableId.from(namespace, tableName));
   }
@@ -382,6 +411,23 @@ public abstract class AbstractHBaseTableUtilTest {
   private void drop(TableId tableId) throws IOException {
     HBaseTableUtil tableUtil = getTableUtil();
     tableUtil.dropTable(hAdmin, tableId);
+  }
+
+  private ListenableFuture<TableId> dropAsync(final TableId tableId) {
+    final SettableFuture<TableId> future = SettableFuture.create();
+    Thread t = new Thread() {
+      @Override
+      public void run() {
+        try {
+          drop(tableId);
+          future.set(tableId);
+        } catch (Throwable t) {
+          future.setException(t);
+        }
+      }
+    };
+    t.start();
+    return future;
   }
 
   private HBaseTableUtil.TableStats getTableStats(String namespace, String tableName) throws IOException {

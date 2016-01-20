@@ -36,12 +36,16 @@ import com.google.common.io.Files;
 import com.google.common.io.OutputSupplier;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.ClusterStatus;
 import org.apache.hadoop.hbase.Coprocessor;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionInfo;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.RegionLoad;
+import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableExistsException;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -636,6 +640,8 @@ public abstract class HBaseTableUtil {
   public abstract Class<? extends Coprocessor> getDequeueScanObserverClassForVersion();
   public abstract Class<? extends Coprocessor> getIncrementHandlerClassForVersion();
 
+  protected abstract HTableNameConverter getHTableNameConverter();
+
   /**
    * Collects HBase table stats
    * //TODO: Explore the possiblitity of returning a {@code Map<TableId, TableStats>}
@@ -643,7 +649,36 @@ public abstract class HBaseTableUtil {
    * @return map of table name -> table stats
    * @throws IOException
    */
-  public abstract Map<TableId, TableStats> getTableStats(HBaseAdmin admin) throws IOException;
+  public Map<TableId, TableStats> getTableStats(HBaseAdmin admin) throws IOException {
+    // The idea is to walk thru live region servers, collect table region stats and aggregate them towards table total
+    // metrics.
+    Map<TableId, TableStats> datasetStat = Maps.newHashMap();
+    ClusterStatus clusterStatus = admin.getClusterStatus();
+
+    HTableNameConverter hTableNameConverter = getHTableNameConverter();
+    for (ServerName serverName : clusterStatus.getServers()) {
+      Map<byte[], RegionLoad> regionsLoad = clusterStatus.getLoad(serverName).getRegionsLoad();
+
+      for (RegionLoad regionLoad : regionsLoad.values()) {
+        //String tableName = Bytes.toString(HRegionInfo.getTableName(regionLoad.getName()));
+        TableName tableName = HRegionInfo.getTable(regionLoad.getName());
+        HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
+        if (!isCDAPTable(tableDescriptor)) {
+          continue;
+        }
+        TableId tableId = hTableNameConverter.from(tableDescriptor);
+        TableStats stat = datasetStat.get(tableId);
+        if (stat == null) {
+          stat = new TableStats(regionLoad.getStorefileSizeMB(), regionLoad.getMemStoreSizeMB());
+          datasetStat.put(tableId, stat);
+        } else {
+          stat.incStoreFileSizeMB(regionLoad.getStorefileSizeMB());
+          stat.incMemStoreSizeMB(regionLoad.getMemStoreSizeMB());
+        }
+      }
+    }
+    return datasetStat;
+  }
 
   /**
    * Carries information about table stats
