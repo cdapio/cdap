@@ -497,10 +497,10 @@ Configuration groups are simple grouping of properties in a plugin. For instance
 
 Once a group is established we can configure how each field inside the group is represented in the UI. The configuration of each property of the plugin is composed of following parts:
 
-  - name : Name of the field (as coming from the CDAP backend)
-  - label: Label to be used in the UI for the property
-  - widget-type : The type of widget that needs to represent this property
-  - widget-attributes: A map of attributes that the widget shall require to be rendered in UI. The attributes depend on the type of widget.
+- name : Name of the field (as coming from the CDAP backend)
+- label: Label to be used in the UI for the property
+- widget-type : The type of widget that needs to represent this property
+- widget-attributes: A map of attributes that the widget shall require to be rendered in UI. The attributes depend on the type of widget.
 
 In the case of Stream plugin this would look like this,
 
@@ -611,8 +611,9 @@ Outputs
 The outputs is a list of plugin properties that represent the output schema for the particular plugin.
 
 The output schema for a plugin can be represented in two different ways:
-  - Via Implicit schema
-  - Via Schema property
+
+- Via Implicit schema
+- Via Schema property
 
 Implicit schema is a pre-determined output schema for a plugin that the plugin developer can enforce. The implicit schema is not associated with any property of the plugin but just enforces the output schema for the plugin (for visual purposes only).
 
