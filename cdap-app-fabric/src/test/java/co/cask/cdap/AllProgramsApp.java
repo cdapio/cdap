@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -316,16 +316,15 @@ public class AllProgramsApp extends AbstractApplication {
     }
 
     public class NoOpHandler extends AbstractHttpServiceHandler {
-      @Override
-      protected void configure() {
-        useDatasets(DATASET_NAME);
-      }
+
+      @UseDataSet(DATASET_NAME)
+      private KeyValueTable table;
 
       @Path(ENDPOINT)
       @GET
       public void handler(HttpServiceRequest request, HttpServiceResponder responder) {
         LOG.info("Endpoint {} called in service {}", ENDPOINT, NAME);
-        KeyValueTable table = getContext().getDataset(DATASET_NAME);
+        table = getContext().getDataset(DATASET_NAME);
         table.write("no-op-service", "no-op-service");
         responder.sendStatus(200);
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -81,13 +81,11 @@ public class FilterAppWithNewFlowAPI extends AbstractApplication {
     private OutputEmitter<StreamEvent> emitter;
 
     @Override
-    public void configure(FlowletConfigurer configurer) {
-      super.configure(configurer);
+    public void configure() {
       setName("pass");
       setDescription("NoOp Flowlet that passes the event to the next flowlet");
       setFailurePolicy(FailurePolicy.IGNORE);
       createDataset("count", KeyValueTable.class);
-      useDatasets("count");
     }
 
     @ProcessInput

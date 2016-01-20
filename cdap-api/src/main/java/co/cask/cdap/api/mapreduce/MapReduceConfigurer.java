@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,9 @@ public interface MapReduceConfigurer extends DatasetConfigurer, ProgramConfigure
 
   /**
    * Specifies set of dataset names that are used by the {@link MapReduce}.
-   * @deprecated datasets used in runtime need not be specified in {@link MapReduce#configure}
+   * @deprecated Deprecated as of 2.8.0. Dataset can be requested directly through the method
+   *             {@link MapReduceContext#getDataset(String)} or
+   *             {@link MapReduceTaskContext#getDataset(String)} at runtime.
    */
   @Deprecated
   void useDatasets(Iterable<String> datasets);
