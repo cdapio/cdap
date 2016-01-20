@@ -139,6 +139,11 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source elasticsearch-plugins Elasticsearch-batchsource.md
   download_md_doc_file $base_target $hydrator_source elasticsearch-plugins Elasticsearch-realtimesink.md
   
+  download_md_doc_file $base_target $hydrator_source hbase-plugins HBase-batchsink.md
+  download_md_doc_file $base_target $hydrator_source hbase-plugins HBase-batchsource.md
+  
+  download_md_doc_file $base_target $hydrator_source hdfs-plugins HDFS-batchsink.md
+  
   download_md_doc_file $base_target $hydrator_source hive-plugins Hive-batchsink.md
   download_md_doc_file $base_target $hydrator_source hive-plugins Hive-batchsource.md
   
