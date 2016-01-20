@@ -9,12 +9,17 @@ import os
 
 # Setup the config
 sys.path.insert(0, os.path.abspath('../../_common'))
-from common_conf import * 
+
+from common_conf import setup as _setup
+from common_conf import *
 
 html_short_title_toc, html_short_title, html_context = set_conf_for_manual()
 
-# Add a custom config value that can be used for conditional content
 def setup(app):
+    # Call imported setup
+    _setup(app)
+    
+    # Add a custom config value that can be used for conditional content
     app.add_config_value('release_version', '', 'env')
 
 # Set the condition

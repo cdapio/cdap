@@ -20,20 +20,20 @@ application to use the |version| version of those artifacts. CDAP must be runnin
 run the command:
 
 .. parsed-literal::
-  java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u http://<host>:<port> upgrade
+  java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> upgrade
 
 You can also upgrade just the ETL applications within a specific namespace:
 
 .. parsed-literal::
-  java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u http://<host>:<port> -n <namespace> upgrade
+  java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> -n <namespace> upgrade
 
 You can also upgrade just one ETL application:
 
 .. parsed-literal::
-  java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u http://<host>:<port> -n <namespace> -p <app-name> upgrade
+  java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> -n <namespace> -p <app-name> upgrade
 
 If you have authentication turned on, you also need to store an authentication token in a file and pass the file to the tool:
 
 .. parsed-literal::
-  java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u http://<host>:<port> -a <tokenfile> upgrade
+  java -cp /opt/cdap/master/libexec/cdap-etl-tools-|version|.jar co.cask.cdap.etl.tool.UpgradeTool -u \http://<host>:<port> -a <tokenfile> upgrade
 
