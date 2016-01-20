@@ -45,20 +45,15 @@ function download_includes() {
   
   echo "Copying files, changing references..."
   local source_rst="${target_includes_dir}/../../source/_includes/installation"
-  
-  rewrite_references_sed "${source_rst}/installation.txt"          "${target_includes_dir}/ambari-installation.rst"          ".. _distribution-" ".. _ambari-"
-  echo
-  
-  rewrite_references_sed "${source_rst}/configuration.txt"         "${target_includes_dir}/hadoop-configuration.rst"         ".. _distribution-" ".. _hadoop-"
-  rewrite_references_sed "${source_rst}/installation.txt"          "${target_includes_dir}/hadoop-installation.rst"          ".. _distribution-" ".. _hadoop-"
-  rewrite_references_sed "${source_rst}/starting-verification.txt" "${target_includes_dir}/hadoop-starting-verification.rst" ".. _distribution-" ".. _hadoop-"
-  rewrite_references_sed "${source_rst}/upgrading.txt"             "${target_includes_dir}/hadoop-upgrading.rst"             ".. _distribution-" ".. _hadoop-"
-  echo
-  
-  rewrite_references_sed "${source_rst}/configuration.txt"         "${target_includes_dir}/mapr-configuration.rst"         ".. _distribution-" ".. _mapr-"
-  rewrite_references_sed "${source_rst}/installation.txt"          "${target_includes_dir}/mapr-installation.rst"          ".. _distribution-" ".. _mapr-"
-  rewrite_references_sed "${source_rst}/starting-verification.txt" "${target_includes_dir}/mapr-starting-verification.rst" ".. _distribution-" ".. _mapr-"
-  rewrite_references_sed "${source_rst}/upgrading.txt"             "${target_includes_dir}/mapr-upgrading.rst"             ".. _distribution-" ".. _mapr-"
+  local pattern="\|distribution\|"  
+  local distributions="cloudera ambari mapr packages"
+  local types="installation configuration starting"
+  for dist in ${distributions}; do
+    for type in ${types}; do
+      rewrite_references_sed "${source_rst}/${type}.txt" "${target_includes_dir}/${dist}-${type}.rst" "${pattern}" "${dist}"
+    done
+    echo
+  done
 }
 
 run_command ${1}

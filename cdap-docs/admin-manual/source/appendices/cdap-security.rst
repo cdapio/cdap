@@ -9,7 +9,7 @@ Appendix: ``cdap-security.xml``
 ============================================
 
 Here are the parameters that can be defined in the ``cdap-security.xml`` file,
-their default values, descriptions and notes.
+their default values, descriptions, and notes.
 
 For information on configuring the ``cdap-security.xml`` file and CDAP for security,
 see the :ref:`configuration-security` section.

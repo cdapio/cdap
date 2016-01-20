@@ -1,0 +1,169 @@
+.. meta::
+    :author: Cask Data, Inc.
+    :copyright: Copyright © 2016 Cask Data, Inc.
+
+:section-numbering: true
+
+.. _admin-installation-mapr:
+
+=====================
+Installation for MapR
+=====================
+
+.. figure:: ../_images/cdap-installation-steps.png
+   :align: left
+
+Preparing the Cluster
+=====================
+Please review the :ref:`Software Prerequisites <admin-manual-software-requirements>`, as a
+configured Hadoop, HBase, and Hive (plus an optional Spark client) `MapR Converged Data
+Platform <https://www.mapr.com>`__ cluster needs to be available for the node(s) where CDAP
+will run.
+
+If colocating CDAP on cluster hosts with actual services, such as the *MapR CLDB*, *YARN
+ResourceManager*, or *HBase Master*, then the client configurations will already be in place.
+
+- To configure a MapR client, see the MapR documentation on `Setting Up the Client
+  <http://doc.mapr.com/display/MapR/Setting+Up+the+Client>`__.
+
+- To configure a MapR HBase client, see the MapR documentation on `Installing HBase on a Client
+  <http://doc.mapr.com/display/MapR/Installing+HBase#InstallingHBase-HBaseonaClientInstallingHBaseonaClient>`__.
+
+- To configure a MapR Hive client, see the MapR documentation on `Installing Hive
+  <http://doc.mapr.com/display/MapR/Installing+Hive>`__.
+
+A typical client node should have the ``mapr-client``, ``mapr-hbase``, and ``mapr-hive``
+packages installed, and can be configured using the MapR `configure.sh
+<http://doc.mapr.com/display/MapR/configure.sh>`__ utility.
+
+.. Node.js Installation
+.. --------------------
+.. include:: /../target/_includes/mapr-installation.rst
+    :start-after: .. _mapr-install-node-js:
+    :end-before: .. _mapr-install-packaging:
+ 
+
+Downloading and Distributing Packages
+=====================================
+
+Preparing Package Managers
+--------------------------
+
+.. include:: /../target/_includes/mapr-installation.rst
+    :start-after: .. _mapr-preparing-package-managers:
+    :end-before: .. end_install-debian-using-apt
+
+
+Installing CDAP Services
+========================
+
+.. include:: /../target/_includes/mapr-installation.rst
+    :start-after: .. _mapr-package-installation-title:
+    :end-before: .. _mapr-create-required-directories:
+
+Create Required Directories
+---------------------------
+
+.. highlight:: console
+   
+To prepare your cluster so that CDAP can write to its default namespace,
+create a top-level ``/cdap`` directory in MapRFS, owned by the MapRFS user ``cdap``::
+
+  $ su mapr
+  $ hadoop fs -mkdir -p /cdap && hadoop fs -chown cdap /cdap
+
+In the CDAP packages, the default property ``hdfs.namespace`` is ``/cdap`` and the default property
+``hdfs.user`` is ``yarn``.
+
+Also, create a ``tx.snapshot`` subdirectory::
+
+  $ su mapr
+  $ hadoop fs -mkdir -p /cdap/tx.snapshot && hadoop fs -chown cdap /cdap/tx.snapshot
+
+**Note:** If you have customized (or will be customizing) the property
+``data.tx.snapshot.dir`` in your :ref:`CDAP configuration <appendix-cdap-site.xml>`, use
+that value instead for ``/cdap/tx.snapshot``.
+
+
+.. |display-distribution| replace:: MapR
+
+.. |hdfs-user| replace:: ``cdap``
+
+.. include:: /../target/_includes/mapr-configuration.rst
+    :end-before: .. _mapr-configuration-hdp:
+
+.. highlight:: xml
+
+YARN Application Classpath
+--------------------------
+CDAP requires that an additional entry |---| ``/opt/mapr/lib/*`` |---| be appended to the
+``yarn.application.classpath`` setting of ``yarn-site.xml``. (This file is usually in 
+``/data/mapr/hadoop/hadoop-<hadoop-version>/etc/hadoop/yarn-site.xml``.) The default
+``yarn.application.classpath`` for Linux with this additional entry appended is
+(reformatted to fit)::
+
+  $HADOOP_CONF_DIR, 
+  $HADOOP_COMMON_HOME/share/hadoop/common/*, 
+  $HADOOP_COMMON_HOME/share/hadoop/common/lib/*, 
+  $HADOOP_HDFS_HOME/share/hadoop/hdfs/*, 
+  $HADOOP_HDFS_HOME/share/hadoop/hdfs/lib/*, 
+  $HADOOP_YARN_HOME/share/hadoop/yarn/*, 
+  $HADOOP_YARN_HOME/share/hadoop/yarn/lib/*, 
+  $HADOOP_COMMON_HOME/share/hadoop/mapreduce/*, 
+  $HADOOP_COMMON_HOME/share/hadoop/mapreduce/lib/*, 
+  /opt/mapr/lib/*
+    
+**Notes:** 
+   
+- Since MapR might not dereference the Hadoop variables (such as ``$HADOOP_CONF_DIR``)
+  correctly, we recommend specifying their full paths instead of the variables we have
+  included here.
+
+- MapR does not, by default, provide a configured ``yarn.application.classpath``, and
+  you will need to add this entry to ``yarn-site.xml``. If you install using `Chef
+  <https://www.getchef.com>`__, that file and entry is created automatically, but not
+  with dereferenced Hadoop variables.
+
+
+.. Starting CDAP Services
+.. ======================
+
+.. include:: /../target/_includes/mapr-starting.rst
+
+.. _mapr-verification:
+
+Verification
+============
+
+.. include:: /_includes/installation/smoke-test-cdap.txt
+
+Advanced Topics
+===============
+
+.. _mapr-configuration-security:
+
+.. Enabling Perimeter Security
+.. ---------------------------
+.. include:: /../target/_includes/mapr-configuration.rst
+    :start-after: .. _mapr-configuration-eps:
+
+.. _mapr-configuration-enabling-kerberos:
+
+Enabling Kerberos
+-----------------
+Kerberos is currently not supported by CDAP on secure MapR clusters.
+
+.. 
+.. .. include:: /../target/_includes/mapr-configuration.rst
+..     :start-after: .. configuration-enabling-kerberos:
+..     :end-before: .. _mapr-configuration-eps:
+
+Upgrading CDAP
+--------------
+Currently, CDAP **cannot** be upgraded by using the MapR Control System. 
+
+To upgrade CDAP installations that were installed and are managed with MapR, please
+follow our instructions for upgrading CDAP installations that were installed with a
+Package Manager, either RPM or Debian:
+
+  :ref:`Upgrading CDAP via Package Managers <upgrading-using-packages>`
