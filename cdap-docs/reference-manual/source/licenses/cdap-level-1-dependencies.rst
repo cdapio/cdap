@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2015 Cask Data, Inc.
-    :version: 3.2.1
+    :version: 3.3.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -43,15 +43,17 @@ Cask Data Application Platform Level 1 Dependencies
    "org.apache.avro","avro","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.avro","avro-ipc","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.avro","avro-mapred","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.commons","commons-compress","The Apache Software License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.txt"
    "org.apache.flume","flume-ng-core","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.flume","flume-ng-sdk","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.geronimo.components","geronimo-jaspi","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-hdfs","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hadoop","hadoop-mapreduce-client-app","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-mapreduce-client-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-mapreduce-client-core","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hadoop","hadoop-mapreduce-client-jobclient","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "org.apache.hadoop","hadoop-minicluster","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hbase","hbase-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -62,11 +64,14 @@ Cask Data Application Platform Level 1 Dependencies
    "org.apache.hbase","hbase-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hbase","hbase-common","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-protocol","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-protocol","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-protocol","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-protocol","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-protocol","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hbase","hbase-protocol","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "org.apache.hbase","hbase-server","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-server","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-server","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "org.apache.hbase","hbase-server","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
