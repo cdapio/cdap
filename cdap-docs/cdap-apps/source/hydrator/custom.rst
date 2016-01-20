@@ -475,7 +475,7 @@ Configuration groups
 ---------------------
 Configuration groups are simple grouping of properties in a plugin. For instance in a Stream Source plugin - Stream Name, Duration & Delay could be grouped as Stream Configuration. So based on this example a configuration group can be represented as an object with a name & a list of properties of the plugin that falls under that group. In the case of Stream source plugin it would look like this,
 
-  .. code-block:: Javascript
+.. code-block:: Javascript
 
   {
     "configuration-groups": [
@@ -504,7 +504,7 @@ Once a group is established we can configure how each field inside the group is 
 
 In the case of Stream plugin this would look like this,
 
-  .. code-block:: Javascript
+.. code-block:: Javascript
 
   {
     "configuration-groups": [
@@ -622,7 +622,7 @@ An output-property is configured in exactly the same way we configure individual
 
 Based on the above definitions we could write the configuration JSON for Stream source which has the following properties - schema, duration, name, format, delay - as
 
-  .. code-block:: Javascript
+.. code-block:: Javascript
 
   {
     "metadata": {
