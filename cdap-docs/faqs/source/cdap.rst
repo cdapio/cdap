@@ -336,6 +336,8 @@ This table lists the upgrade paths available for different CDAP versions:
 +---------+---------------------+
 | Version | Upgrade Directly To |
 +=========+=====================+
+| 3.2.x   | 3.3.x               |
++---------+---------------------+
 | 3.1.x   | 3.2.x               |
 +---------+---------------------+
 | 3.0.x   | 3.1.x               |
