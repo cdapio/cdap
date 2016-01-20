@@ -606,7 +606,7 @@ A widget in UI represents a component that will be rendered and used to set a va
 
 
 Outputs
---------
+-------
 
 The outputs is a list of plugin properties that represent the output schema for the particular plugin.
 
