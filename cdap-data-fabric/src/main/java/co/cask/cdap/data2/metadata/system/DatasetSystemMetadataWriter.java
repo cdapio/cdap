@@ -19,7 +19,6 @@ package co.cask.cdap.data2.metadata.system;
 import co.cask.cdap.api.data.batch.BatchReadable;
 import co.cask.cdap.api.data.batch.BatchWritable;
 import co.cask.cdap.api.data.batch.RecordScannable;
-import co.cask.cdap.api.data.batch.RecordWritable;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.ObjectMappedTableProperties;
@@ -41,6 +40,9 @@ import javax.annotation.Nullable;
  * A {@link AbstractSystemMetadataWriter} for a {@link Id.DatasetInstance dataset}.
  */
 public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
+  public static final String EXPLORE_TAG = "explore";
+  public static final String BATCH_TAG = "batch";
+
   private final Id.DatasetInstance dsInstance;
   private final String dsType;
   private final DatasetProperties dsProperties;
@@ -77,16 +79,10 @@ public class DatasetSystemMetadataWriter extends AbstractSystemMetadataWriter {
     try (SystemDatasetInstantiator dsInstantiator = dsInstantiatorFactory.create();
          Dataset dataset = dsInstantiator.getDataset(dsInstance)) {
       if (dataset instanceof RecordScannable) {
-        tags.add(RecordScannable.class.getSimpleName());
+        tags.add(EXPLORE_TAG);
       }
-      if (dataset instanceof RecordWritable) {
-        tags.add(RecordWritable.class.getSimpleName());
-      }
-      if (dataset instanceof BatchReadable) {
-        tags.add(BatchReadable.class.getSimpleName());
-      }
-      if (dataset instanceof BatchWritable) {
-        tags.add(BatchWritable.class.getSimpleName());
+      if (dataset instanceof BatchReadable || dataset instanceof BatchWritable) {
+        tags.add(BATCH_TAG);
       }
     } catch (IOException e) {
       throw Throwables.propagate(e);

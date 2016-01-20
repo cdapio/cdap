@@ -120,7 +120,29 @@ angular.module(PKG.name + '.commons')
         'snapshotparquet': 'icon-snapshotparquet',
         'tpfsavro': 'icon-tpfsavro',
         'tpfsparquet': 'icon-tpfsparquet',
-        'sink': 'icon-sink'
+        'sink': 'icon-sink',
+        'hive': 'icon-hive',
+        'structuredrecordtogenericrecord': 'icon-structuredrecord',
+        'cassandra': 'icon-cassandra',
+        'teradata': 'icon-teradata',
+        'elasticsearch': 'icon-elasticsearch',
+        'hbase': 'icon-hbase',
+        'mongodb': 'icon-mongodb',
+        'pythonevaluator': 'icon-pythonevaluator',
+        'csvformatter': 'icon-csvformatter',
+        'csvparser': 'icon-csvparser',
+        'clonerecord': 'icon-clonerecord',
+        'compressor': 'icon-compressor',
+        'decompressor': 'icon-decompressor',
+        'encoder': 'icon-encoder',
+        'decoder': 'icon-decoder',
+        'jsonformatter': 'icon-jsonformatter',
+        'jsonparser': 'icon-jsonparser',
+        'streamformatter': 'icon-streamformatter',
+        'hdfs': 'icon-hdfs',
+        'hasher': 'icon-hasher',
+        'javascript': 'icon-javascript'
+
       };
 
       var pluginName = plugin.toLowerCase();

@@ -17,8 +17,6 @@
 package co.cask.cdap.cli;
 
 import co.cask.cdap.StandaloneTester;
-import co.cask.cdap.api.data.batch.BatchReadable;
-import co.cask.cdap.api.data.batch.RecordScannable;
 import co.cask.cdap.cli.util.InstanceURIParser;
 import co.cask.cdap.cli.util.RowMaker;
 import co.cask.cdap.cli.util.table.CsvTableRenderer;
@@ -555,9 +553,9 @@ public class CLIMainTest {
     testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", fakeWorkflowId),
                               FakeWorkflow.FakeAction.ANOTHER_FAKE_NAME);
     testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", fakeDsId),
-                              BatchReadable.class.getSimpleName());
+                              "batch");
     testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", fakeDsId),
-                              RecordScannable.class.getSimpleName());
+                              "explore");
     testCommandOutputContains(cli, String.format("get metadata-tags %s scope system", fakeStreamId),
                               FakeApp.STREAM_NAME);
     testCommandOutputContains(cli, String.format("add metadata-properties %s appKey=appValue", fakeAppId),
@@ -598,9 +596,7 @@ public class CLIMainTest {
     testCommandOutputContains(cli, "search metadata batch* filtered by target-type dataset", fakeDsId.toString());
     testCommandOutputNotContains(cli, "search metadata batchwritable filtered by target-type dataset",
                                  fakeDsId.toString());
-    testCommandOutputContains(cli, "search metadata recordS* filtered by target-type dataset", fakeDsId.toString());
-    testCommandOutputNotContains(cli, "search metadata recordWritable filtered by target-type dataset",
-                                 fakeDsId.toString());
+    testCommandOutputContains(cli, "search metadata bat* filtered by target-type dataset", fakeDsId.toString());
     output = getCommandOutput(cli, "search metadata batch filtered by target-type program");
     lines = Arrays.asList(output.split("\\r?\\n"));
     expected = ImmutableList.of("Entity", fakeSparkId.toString(), fakeWorkflowId.toString());

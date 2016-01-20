@@ -171,8 +171,15 @@ def parse_options():
     parser.add_option(
         '-m', '--master_print',
         action='store_true',
-        dest='master_print',
+        dest='master_print_terminal',
         help='Prints to terminal the master dependency file',
+        default=False)
+
+    parser.add_option(
+        '-p', '--print',
+        action='store_true',
+        dest='master_print_file',
+        help='Prints to file a new master dependency file',
         default=False)
 
     (options, args) = parser.parse_args()
@@ -249,7 +256,7 @@ def process_master():
     return master_libs_dict
 
     
-def master_print():
+def master_print_terminal():
     master_libs_dict = process_master()
     # Print out the results
     keys = master_libs_dict.keys()
@@ -536,11 +543,26 @@ def write_new_master_csv_file(lib_dict):
     import csv
     csv.register_dialect('masterCSV', delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n')
 
-    csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV + '.new.csv')
+    csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV)
+    backup_csv_path = os.path.join(SCRIPT_DIR_PATH, MASTER_CSV + '.bu.csv')
+    if os.path.isfile(backup_csv_path):
+        print "Backup Master CSV: Exiting, as backup Master file already exists: %s" % backup_csv_path
+        return
+    if os.path.isfile(csv_path):
+        try:
+            import shutil
+            shutil.move(csv_path, backup_csv_path)
+            print "Created Backup Master CSV at: %s" % backup_csv_path
+        except:
+            print "Backup Master CSV: Exiting, as unable to create backup Master: %s" % backup_csv_path
+            return
+    
     if os.path.isfile(csv_path):
         print "New Master CSV: Exiting, as new Master file already exists: %s" % csv_path
     else:
-        with open(csv_path, 'w') as csv_file:
+        csv_file = None
+        try:
+            csv_file = open(csv_path, 'w')
             csv_writer = csv.writer(csv_file, 'masterCSV')
             keys = lib_dict.keys()
             keys.sort()
@@ -553,8 +575,16 @@ def write_new_master_csv_file(lib_dict):
                     if row_type == type:
                         i += 1
                         csv_writer.writerow(r)
+        finally:
+            if csv_file is not None:
+                csv_file.close()
+            
         print "New Master CSV: wrote %s records of %s to: %s" % (i, len(keys), csv_path)
 
+def master_print_file():
+    master_libs_dict = process_master()
+    write_new_master_csv_file(master_libs_dict)
+    
 def print_rst_level_1(input_file, options):
     title = 'Level 1'
     file_base = LEVEL_1
@@ -779,8 +809,11 @@ def main():
         elif options.rst_cdap_ui:
             print_rst_cdap_ui(options)
             
-        elif options.master_print:
-            master_print()
+        elif options.master_print_terminal:
+            master_print_terminal()
+
+        elif options.master_print_file:
+            master_print_file()
 
         else:
             print "Unknown test type: %s" % options.test

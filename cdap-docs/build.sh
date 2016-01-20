@@ -312,7 +312,7 @@ function build_docs_outer_level() {
   for i in ${MANUALS}; do
     echo "Copying source for ${i} ..."
     mkdir -p ${TARGET_PATH}/${SOURCE}/${i}
-    rewrite ${SCRIPT_PATH}/${COMMON_PLACEHOLDER} ${TARGET_PATH}/${SOURCE}/${i}/index.rst "<placeholder>" ${i}
+    rewrite ${SCRIPT_PATH}/${COMMON_PLACEHOLDER} ${TARGET_PATH}/${SOURCE}/${i}/index.rst "<placeholder-title>" ${i}
     echo
   done  
 

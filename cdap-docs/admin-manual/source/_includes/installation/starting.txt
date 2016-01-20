@@ -1,0 +1,18 @@
+.. _|distribution|-starting-services:
+
+Starting CDAP Services
+======================
+
+.. highlight:: console
+
+When all the packages and dependencies have been installed, and the configuration
+parameters set, you can start the services on each of the CDAP boxes by running the
+command::
+
+  $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
+
+When all the services have completed starting, the CDAP UI should then be
+accessible through a browser at port ``9999``. 
+
+The URL will be ``http://<host>:9999`` where ``<host>`` is the IP address of
+one of the machines where you installed the packages and started the services.

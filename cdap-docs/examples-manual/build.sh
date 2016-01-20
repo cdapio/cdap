@@ -59,7 +59,9 @@ function guide_rewrite_sed() {
     # Rewrite image and code 
     sed -e "s|image:: docs/images/|image:: ${redirect}/${guide}/|g" -e "s|.. code:: |.. code-block:: |g" ${includes_dir}/${guide}/${readme_source} > ${includes_dir}/${guide}/${readme}
   else
-    echo_red_bold "URL does not exist: $url"
+    local m="URL does not exist: {$url}"
+    echo_red_bold "${m}"
+    set_message "${m}"
   fi  
 }
 

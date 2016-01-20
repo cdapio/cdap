@@ -19,7 +19,7 @@ FAQs: CDAP
 What are the memory and core requirements for CDAP?
 ---------------------------------------------------
 The requirements are governed by two sources: CDAP and YARN, and the requirements are
-:ref:`described here <hadoop-install-hardware-memory-core-requirements>`.
+:ref:`described here <admin-manual-memory-core-requirements>`.
 
 
 How do I set the CDAP properties for components running on multiple machines?
@@ -80,7 +80,7 @@ been installed::
 I've followed the install instructions, yet CDAP does not start and fails verification. What next?
 --------------------------------------------------------------------------------------------------
 If you have followed :ref:`the installation instructions <installation-index>`, and CDAP either did not pass the 
-:ref:`verification step <hadoop-verification>` or did not startup, check:
+:ref:`verification step <admin-manual-verification>` or did not startup, check:
 
 - Look in the CDAP logs for error messages (located either in ``/var/log/cdap`` for CDAP Distributed or 
   ``$CDAP_HOME/logs`` for CDAP SDK Standalone)
@@ -96,10 +96,10 @@ If you have followed :ref:`the installation instructions <installation-index>`, 
          
 - Check permissions of directories:
 
-  - The :ref:`CDAP HDFS User <hadoop-configuration-options>` (by default, ``yarn``) owns the HDFS directory (by default,  ``/cdap``).
-  - The :ref:`Kafka Log directory <hadoop-configuration-options>` (by default, ``/data/cdap/kafka-logs``), 
+  - The :ref:`CDAP HDFS User <packages-configuration-options>` (by default, ``yarn``) owns the HDFS directory (by default,  ``/cdap``).
+  - The :ref:`Kafka Log directory <packages-configuration-options>` (by default, ``/data/cdap/kafka-logs``), 
     must be writable by the CDAP UNIX user.
-  - The :ref:`temp directories <hadoop-configuration-tmp-files>` utilized by CDAP must be writable by the CDAP UNIX user.
+  - The :ref:`temp directories <packages-configuration-tmp-files>` utilized by CDAP must be writable by the CDAP UNIX user.
 
 ..
 
@@ -146,7 +146,7 @@ This is indicative that the UI cannot connect to the CDAP system service contain
   The ``yarn-site.xml`` configuration file determines the container log directory.
   
 - Ensure that the CDAP UI can connect to the CDAP Router. Check that the configured ``router.server.address`` and 
-  ``router.server.port`` (default 10000) in :ref:`cdap-site.xml file <hadoop-configuration-options>` corresponds with where the CDAP Router is listening.
+  ``router.server.port`` (default 10000) in :ref:`cdap-site.xml file <packages-configuration-options>` corresponds with where the CDAP Router is listening.
 
 
 I don't see the CDAP Master service on YARN.
@@ -155,7 +155,7 @@ I don't see the CDAP Master service on YARN.
   Can you log into the cluster at ``http://<host>:8088`` and access the YARN Resource Manager webapp?
 - Ensure :ref:`YARN has enough memory and vcore capacity <faq-installation-startup-memory-core-requirements>`.
 - Is the router address properly configured (``router.server.address`` and ``router.server.port`` 
-  (default 10000) in :ref:`cdap-site.xml file <hadoop-configuration-options>`) and the boxes using it?
+  (default 10000) in :ref:`cdap-site.xml file <packages-configuration-options>`) and the boxes using it?
 - Check that the classpath used includes the YARN configuration in it.
 
 
@@ -171,7 +171,7 @@ either due to a lack of disk space or permissions.
 The CDAP Master log shows permissions issues.
 ---------------------------------------------
 Ensure that ``hdfs:///${hdfs.namespace}`` and ``hdfs:///user/${hdfs.user}`` exist and are owned by ``${hdfs.user}``.
-(``hdfs.namespace`` and ``hdfs.user`` are defined in your installation's :ref:`cdap-site.xml file <hadoop-configuration-options>`.)
+(``hdfs.namespace`` and ``hdfs.user`` are defined in your installation's :ref:`cdap-site.xml file <packages-configuration-options>`.)
 
 In rare cases, ensure ``hdfs:///${hdfs.namespace}/tx.snapshot`` exists and is owned by
 ``${hdfs.user}``, until `CDAP-3817 <https://issues.cask.co/browse/CDAP-3817>`__ is
@@ -243,11 +243,11 @@ errors such as these::
 
 Things to check as possible solutions:
 
-1. Check if the JDK being used is :ref:`supported by CDAP <hadoop-install-java-runtime>`::
+1. Check if the JDK being used is :ref:`supported by CDAP <admin-manual-install-java-runtime>`::
 
     java -version
 
-#. Check if the CDAP user is using a :ref:`correct version of the JDK <hadoop-install-java-runtime>`::
+#. Check if the CDAP user is using a :ref:`correct version of the JDK <admin-manual-install-java-runtime>`::
 
     sudo su - <cdap-user> 
     java -version
@@ -336,6 +336,8 @@ This table lists the upgrade paths available for different CDAP versions:
 +---------+---------------------+
 | Version | Upgrade Directly To |
 +=========+=====================+
+| 3.2.x   | 3.3.x               |
++---------+---------------------+
 | 3.1.x   | 3.2.x               |
 +---------+---------------------+
 | 3.0.x   | 3.1.x               |
