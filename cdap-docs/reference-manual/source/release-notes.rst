@@ -35,93 +35,100 @@ New Features
   Added RESTful APIs to set and get properties for an artifact.
 
 - `CDAP-4228 <https://issues.cask.co/browse/CDAP-4228>`__ -
-	Added the ability to configure which artifact a Hydrator plugin should use.
+  Added the ability to configure which artifact a Hydrator plugin should use.
 
 - `CDAP-4400 <https://issues.cask.co/browse/CDAP-4400>`__ -
-	Added experimental support for batch ETL pipelines run on Spark.
+  Added experimental support for batch ETL pipelines run on Spark.
 
 - `CDAP-3945 <https://issues.cask.co/browse/CDAP-3945>`__ -
-	Added a way to limit the number of concurrent schedule runs.
+  Added a way to limit the number of concurrent schedule runs.
 
 - `CDAP-4043 <https://issues.cask.co/browse/CDAP-4043>`__ -
-	Support for ETL Transforms in Python
+  Support for ETL Transforms in Python
 
 - `CDAP-3944 <https://issues.cask.co/browse/CDAP-3944>`__ -
-	PartitionConsumer has support for concurrency, as well as a limit and filter on read.
+  PartitionConsumer has support for concurrency, as well as a limit and filter on read.
 
 - `CDAP-4016 <https://issues.cask.co/browse/CDAP-4016>`__ -
-	Added Java-8 support for Script Transform
+  Added Java-8 support for Script Transform
 
 - `CDAP-4270 <https://issues.cask.co/browse/CDAP-4270>`__ -
-	Added CLI support for metadata and lineage.
+  Added CLI support for metadata and lineage.
 
 - `CDAP-961 <https://issues.cask.co/browse/CDAP-961>`__ -
-	Support on demand (dynamic) dataset instantiation through program runtime context.
+  Support on demand (dynamic) dataset instantiation through program runtime context.
 
 - `CDAP-4135 <https://issues.cask.co/browse/CDAP-4135>`__ -
-	Added the capability for MapReduce and Spark programs to localize additional resources during setup.
+  Added the capability for MapReduce and Spark programs to localize additional resources during setup.
 
 - `CDAP-4264 <https://issues.cask.co/browse/CDAP-4264>`__ -
-	Added support for automatically annotating CDAP entities with system metadata when they are created or updated.
+  Added support for automatically annotating CDAP entities with system metadata when they are created or updated.
 
 - `CDAP-3514 <https://issues.cask.co/browse/CDAP-3514>`__ -
-	Added an endpoint to get a count of active queries: /v3/namespaces/<namespace-id>/data/explore/queries/count
+  Added an endpoint to get a count of active queries: /v3/namespaces/<namespace-id>/data/explore/queries/count
 
 - `CDAP-4263 <https://issues.cask.co/browse/CDAP-4263>`__ -
-	Added support for Metadata to Stream's View.
+  Added support for Metadata to Stream's View.
 
 - `CDAP-4230 <https://issues.cask.co/browse/CDAP-4230>`__ -
-	ETL supports DAG in pipeline, which will allow users to fork and merge in pipeline. ETLConfig has been updated to allow representing DAG.
+  ETL supports DAG in pipeline, which will allow users to fork and merge in pipeline. ETLConfig has been
+  updated to allow representing DAG.
 
 - `CDAP-3857 <https://issues.cask.co/browse/CDAP-3857>`__ -
-	Added experimental support for running ETL Batch applications on Spark. Introduced an 'engine' setting in the configuration that defaults to mapreduce, but can be set to 'spark'.
+  Added experimental support for running ETL Batch applications on Spark. Introduced an 'engine' setting in the
+  configuration that defaults to mapreduce, but can be set to 'spark'.
 
 - `CDAP-4128 <https://issues.cask.co/browse/CDAP-4128>`__ -
-	Added a new Javascript transform that can emit records using emitter. Have deprecated Script transform.
+  Added a new Javascript transform that can emit records using emitter. Have deprecated Script transform.
 
 - `CDAP-4251 <https://issues.cask.co/browse/CDAP-4251>`__ -
-	We removed the old fluent style api (deprecated two releases back). Developers should use the configurer style API instead. AbstractFlow#configureFlow method has been deprecated. Use AbstractFlow#configure instead.
+  We removed the old fluent style api (deprecated two releases back). Developers should use the configurer
+  style API instead. AbstractFlow#configureFlow method has been deprecated. Use AbstractFlow#configure instead.
 
 - `CDAP-2303 <https://issues.cask.co/browse/CDAP-2303>`__ -
-	Added lookup capability in context that can be used in existing Script, ScriptFilter and Validator transforms.
+  Added lookup capability in context that can be used in existing Script, ScriptFilter and Validator transforms.
 
 - `CDAP-4403 <https://issues.cask.co/browse/CDAP-4403>`__ -
-	Moved Hydrator plugins from the CDAP repository as cdap-etl-lib into its own repository.
+  Moved Hydrator plugins from the CDAP repository as cdap-etl-lib into its own repository.
 
 - `CDAP-4022 <https://issues.cask.co/browse/CDAP-4022>`__ -
-	Added RESTful APIs to start or stop multiple programs.
+  Added RESTful APIs to start or stop multiple programs.
 
 - `CDAP-4023 <https://issues.cask.co/browse/CDAP-4023>`__ -
-	Added CLI commands to stop, start, restart, or get status of programs in an application.
+  Added CLI commands to stop, start, restart, or get status of programs in an application.
 
 - `CDAP-4285 <https://issues.cask.co/browse/CDAP-4285>`__ -
-	Added an authorization plugin that uses a system dataset to manage ACLs
+  Added an authorization plugin that uses a system dataset to manage ACLs
 
 - `CDAP-4235 <https://issues.cask.co/browse/CDAP-4235>`__ -
-	Added AuthorizationPlugin, for pluggable authorization.
+  Added AuthorizationPlugin, for pluggable authorization.
 
 - `CDAP-4591 <https://issues.cask.co/browse/CDAP-4591>`__ -
-	Improvised Metadata Indexing and Search to support searches on words in value and tags.
+  Improvised Metadata Indexing and Search to support searches on words in value and tags.
 
 - `CDAP-4592 <https://issues.cask.co/browse/CDAP-4592>`__ -
-	Schema fields are not stored as Metadata and are searchable.
+  Schema fields are not stored as Metadata and are searchable.
 
-Improvement
------------
+Improvements
+------------
 - `CDAP-4209 <https://issues.cask.co/browse/CDAP-4209>`__ -
   Added a method to ObjectMappedTable and ObjectStore to get a specific number of splits between a start and end key
 
 - `CDAP-4217 <https://issues.cask.co/browse/CDAP-4217>`__ -
-  Deprecated createDataSchedule and createTimeSchedule methods in Schedules class and removed deprecated Schedule constructor.
+  Deprecated createDataSchedule and createTimeSchedule methods in Schedules class and removed
+  deprecated Schedule constructor.
 
 - `CDAP-3079 <https://issues.cask.co/browse/CDAP-3079>`__ -
-  Table datasets, and any other dataset that implements RecordWritable<StructuredRecord>, can now be written to using Hive.
+  Table datasets, and any other dataset that implements RecordWritable<StructuredRecord>,
+  can now be written to using Hive.
 
 - `CDAP-4444 <https://issues.cask.co/browse/CDAP-4444>`__ -
   Make xmllint dependency optional and allow setting variables to skip configuration file parsing
 
 - `CDAP-4200 <https://issues.cask.co/browse/CDAP-4200>`__ -
-  The Serialization UID given by Java might be different if compiled with a different version of java or on a different architecture since we expect users to use our distributions, packages or sdk this might not be an issue so closing this.
+  The Serialization UID given by Java might be different if compiled with a different version of java or
+  on a different architecture since we expect users to use our distributions, packages or sdk this might
+  not be an issue so closing this.
 
 - `CDAP-4133 <https://issues.cask.co/browse/CDAP-4133>`__ -
   Added ability to get the live-info for the AppFabric system service.
@@ -130,13 +137,15 @@ Improvement
   Messages logged by Hydrator are now prefixed with the name of the stage that logged them.
 
 - `CDAP-4453 <https://issues.cask.co/browse/CDAP-4453>`__ -
-  Added Schema validation for sources, transforms and sinks, that will validate the pipeline stages schema during deployment and report issues if any.
+  Added Schema validation for sources, transforms and sinks, that will validate the pipeline stages schema during
+  deployment and report issues if any.
 
 - `CDAP-4392 <https://issues.cask.co/browse/CDAP-4392>`__ -
   Upgraded netty-http dependency in CDAP to 0.14.0
 
 - `CDAP-4536 <https://issues.cask.co/browse/CDAP-4536>`__ -
-  Master service will check that the file system, yarn, and hbase are available during startup and error out if any of them are not available.
+  Master service will check that the file system, yarn, and hbase are available during startup and
+  error out if any of them are not available.
 
 - `CDAP-4519 <https://issues.cask.co/browse/CDAP-4519>`__ -
   Master service will check file system permissions on start up and error out if they are incorrect.
@@ -156,7 +165,8 @@ Bug Fixes
   Fixed test failures in the PurchaseHistory, StreamConversion, and WikipediaPipeline example apps included in the sdk.
 
 - `CDAP-4240<https://issues.cask.co/browse/CDAP-4240>`__ -
-  Fixed a bug in the CLI command to load an artifact, where the wrong artifact name and version is used if the artifact name ends with a number.
+  Fixed a bug in the CLI command to load an artifact, where the wrong artifact name and version is
+  used if the artifact name ends with a number.
 
 - `CDAP-4532<https://issues.cask.co/browse/CDAP-4532>`__ -
   Fixed checkstyle errors on windows
@@ -165,7 +175,8 @@ Bug Fixes
   Fixed a bug where plugins from another namespace were visible when creating an application using a system artifact.
 
 - `CDAP-4092<https://issues.cask.co/browse/CDAP-4092>`__ -
-  Fixes an issue that causes worker threads to go into an infinite recursion while exceptions are being thrown in channel handlers.
+  Fixes an issue that causes worker threads to go into an infinite recursion while exceptions
+  are being thrown in channel handlers.
 
 - `CDAP-3924<https://issues.cask.co/browse/CDAP-3924>`__ -
   Fix QueryClient to work against HTTPS.
@@ -180,7 +191,8 @@ Bug Fixes
   CDAP Router times out idle connections
 
 - `CDAP-3902<https://issues.cask.co/browse/CDAP-3902>`__ -
-  Fixed a problem with dataset performance degradation due to the making of multiple remote calls for each "get dataset" request
+  Fixed a problem with dataset performance degradation due to the making of multiple remote calls
+  for each "get dataset" request
 
 - `CDAP-4366<https://issues.cask.co/browse/CDAP-4366>`__ -
   Improved error message when stream views are not found.
@@ -201,7 +213,8 @@ Bug Fixes
   Removed deprecated endpoint to get status of currently running node in a workflow.
 
 - `CDAP-2470<https://issues.cask.co/browse/CDAP-2470>`__ -
-  Added a check to cause a DB (source or sink) pipeline to fail during deployment if the table (source or sink) was not found, or if an incorrect connection string was provided.
+  Added a check to cause a DB (source or sink) pipeline to fail during deployment if the table (source or sink)
+  was not found, or if an incorrect connection string was provided.
 
 - `CDAP-3815<https://issues.cask.co/browse/CDAP-3815>`__ -
   Fixed an issue where the regex filter for S3 Batch Source wasn't getting applied correctly.
@@ -243,13 +256,15 @@ Bug Fixes
   Return empty list in case of logs are requested for the deleted program runs.
 
 - `CDAP-3542<https://issues.cask.co/browse/CDAP-3542>`__ -
-  Fixed issue when workflow contains fork and program executing on one of the branches fails because of some error, other concurrently running programs were remaining in the RUNNING state, even if the Workflow is completed.
+  Fixed issue when workflow contains fork and program executing on one of the branches fails because of some error,
+  other concurrently running programs were remaining in the RUNNING state, even if the Workflow is completed.
 
 - `CDAP-4119<https://issues.cask.co/browse/CDAP-4119>`__ -
   When CDAP master switches from active to standby, the programs that are running are marked failed.
 
 - `CDAP-3345<https://issues.cask.co/browse/CDAP-3345>`__ -
-  Fixed a bug where TTL for datasets were incorrect, reduced by (/1000) after upgrade. After running upgradeTool, please make sure the TTL values of tables are as expected.
+  Fixed a bug where TTL for datasets were incorrect, reduced by (/1000) after upgrade. After running upgradeTool,
+  please make sure the TTL values of tables are as expected.
 
 - `CDAP-3861<https://issues.cask.co/browse/CDAP-3861>`__ -
   Fixed an issue about stopping all dependent services when a service is stopped.
@@ -258,25 +273,30 @@ Bug Fixes
   [Note: Please remove this JIRA from known-issues in Release notes.]
 
 - `CDAP-4045<https://issues.cask.co/browse/CDAP-4045>`__ -
-  A new property master.collect.containers.log has been added to cdap-site.xml, which determines if container logs are streamed back to the cdap-master process log. (This has always been the default behavior). For MapR installations, this must be turned off (set to false).
+  A new property master.collect.containers.log has been added to cdap-site.xml, which determines if container
+  logs are streamed back to the cdap-master process log. (This has always been the default behavior).
+  For MapR installations, this must be turned off (set to false).
 
 - `CDAP-4384<https://issues.cask.co/browse/CDAP-4384>`__ -
   Fixes an issue that prevents streams from being read in HA HDFS mode.
 
 - `CDAP-4373<https://issues.cask.co/browse/CDAP-4373>`__ -
-  "Fixed a problem that prevented MapReduce jobs from being run when the Resource Manager switches from active to standby in a Kerberos-enabled HA cluster."
+  "Fixed a problem that prevented MapReduce jobs from being run when the Resource Manager switches from
+  active to standby in a Kerberos-enabled HA cluster."
 
 - `CDAP-4112<https://issues.cask.co/browse/CDAP-4112>`__ -
   Fixed a bug that prevented applications from using HBase directly.
 
 - `CDAP-4539<https://issues.cask.co/browse/CDAP-4539>`__ -
-  Fixed a bug in the init scripts that forced cdap-kafka-server, cdap-router, and cdap-auth-server to have hive client installed.
+  Fixed a bug in the init scripts that forced cdap-kafka-server, cdap-router, and
+  cdap-auth-server to have hive client installed.
 
 - `CDAP-4526<https://issues.cask.co/browse/CDAP-4526>`__ -
   Fixed init scripts to print service status when stopped
 
-- `CDAP-454<https://issues.cask.co/browse/CDAP-454>`__ -
-  Added a config setting 'master.collect.app.containers.log' that can be set to 'false' to disable streaming of application logs back to the CDAP master log.
+- `CDAP-4548<https://issues.cask.co/browse/CDAP-4548>`__ -
+  Added a config setting 'master.collect.app.containers.log' that can be set to 'false' to disable streaming
+  of application logs back to the CDAP master log.
 
 `Release 3.2.1 <http://docs.cask.co/cdap/3.2.1/index.html>`__
 =============================================================
