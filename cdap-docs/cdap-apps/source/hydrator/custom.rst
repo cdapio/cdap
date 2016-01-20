@@ -456,6 +456,8 @@ Every property of a plugin is represented, by default, as input fields in the UI
 
 The configuration JSON is composed of a list of property groups and a list of outputs. For instance the JSON would look something like this,
 
+.. code-block:: Javascript
+
   {
     "configuration-groups": [
       "group1",
@@ -472,6 +474,8 @@ The configuration JSON is composed of a list of property groups and a list of ou
 Configuration groups
 -------------------
   Configuration groups are simple grouping of properties in a plugin. For instance in a Stream Source plugin - Stream Name, Duration & Delay could be grouped as Stream Configuration. So based on this example a configuration group can be represented as an object with a name & a list of properties of the plugin that falls under that group. In the case of Stream source plugin it would look something like this,
+
+  .. code-block:: Javascript
 
     {
       "configuration-groups": [
@@ -497,6 +501,8 @@ Configuration groups
     - widget-attributes: A map of attributes that the widget shall require to be rendered in UI. The attributes depend on the type of widget.
 
   In the case of Stream plugin this would look something like this,
+
+  .. code-block:: Javascript
 
     {
       "configuration-groups": [
@@ -528,7 +534,7 @@ Configuration groups
 
   A widget in UI represents a component that will be rendered and used to set a value of a property of a plugin. There are different widgets that we support in Hydrator as of version 3.3.
 
-  +-----------------------------------+------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+
++-----------------------------------+------------------------------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------------+
 | Widget-type                       | Description                                                                                    | Attributes                                                                                                                                                                                                                                                                    | Output data type       |
 +===================================+================================================================================================+===============================================================================================================================================================================================================================================================================+========================+
 | textbox                           | Default HTML textbox to enter any string                                                       | default - A default value for the widget                                                                                                                                                                                                                                      | string                 |
@@ -583,6 +589,8 @@ property-watch - A property of the plugin to watch which might affect the output
   An output-property is configured in exactly the same way we configure individual properties in configuration-groups. Its composed of name, widget-type & widget-attributes. However the subtle difference is the widget-type used for the output property. The widget-type for an output property is ideally 'schema' or 'non-editable-schema-editor'. This is to ensure the schema that is propagated across different plugins are consistent. The difference comes in 'non-editable-schema-editor' widget which doesn't have widget-attributes but a schema that will be used in the UI as output schema for the plugin.
 
   Based on the above definitions we could write the configuration JSON for Stream source which has the following properties - schema, duration, name, format, delay - as
+
+  .. code-block:: Javascript
 
     {
       "metadata": {
