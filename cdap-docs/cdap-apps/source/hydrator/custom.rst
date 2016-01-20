@@ -454,7 +454,7 @@ Configuration JSON for a plugin (for Webapp UI alone)
 ======================================================
 Every property of a plugin is represented, by default, as input fields in the UI. This can be however changed to specific widgets that closely match the type of the property in a plugin. This can be specified as JSON for the UI to consume.
 
-The configuration JSON is composed of a list of property groups and a list of outputs. For instance the JSON would look something like this,
+The configuration JSON is composed of a list of property groups and a list of outputs. For instance the JSON would look like this,
 
 .. code-block:: Javascript
 
@@ -473,7 +473,7 @@ The configuration JSON is composed of a list of property groups and a list of ou
 
 Configuration groups
 ---------------------
-  Configuration groups are simple grouping of properties in a plugin. For instance in a Stream Source plugin - Stream Name, Duration & Delay could be grouped as Stream Configuration. So based on this example a configuration group can be represented as an object with a name & a list of properties of the plugin that falls under that group. In the case of Stream source plugin it would look something like this,
+Configuration groups are simple grouping of properties in a plugin. For instance in a Stream Source plugin - Stream Name, Duration & Delay could be grouped as Stream Configuration. So based on this example a configuration group can be represented as an object with a name & a list of properties of the plugin that falls under that group. In the case of Stream source plugin it would look like this,
 
   .. code-block:: Javascript
 
@@ -494,14 +494,15 @@ Configuration groups
         ..
       ]
     }
-    
-  Once a group is established we can configure how each field inside the group is represented in the UI. The configuration of each property of the plugin is composed of following parts,
-    - name : Name of the field (as coming from the CDAP backend)
-    - label: Label to be used in the UI for the property
-    - widget-type : The type of widget that needs to represent this property
-    - widget-attributes: A map of attributes that the widget shall require to be rendered in UI. The attributes depend on the type of widget.
 
-  In the case of Stream plugin this would look something like this,
+Once a group is established we can configure how each field inside the group is represented in the UI. The configuration of each property of the plugin is composed of following parts:
+
+  - name : Name of the field (as coming from the CDAP backend)
+  - label: Label to be used in the UI for the property
+  - widget-type : The type of widget that needs to represent this property
+  - widget-attributes: A map of attributes that the widget shall require to be rendered in UI. The attributes depend on the type of widget.
+
+In the case of Stream plugin this would look like this,
 
   .. code-block:: Javascript
 
@@ -533,7 +534,7 @@ Configuration groups
       ]
     }
 
-  A widget in UI represents a component that will be rendered and used to set a value of a property of a plugin. There are different widgets that we support in Hydrator as of version 3.3.
+A widget in UI represents a component that will be rendered and used to set a value of a property of a plugin. There are different widgets that we support in Hydrator as of version 3.3.
 
   .. list-table::
      :widths: 20 25 25 25
@@ -550,16 +551,16 @@ Configuration groups
      * - number
        - | default - A default value for the widget
          | min - A min value for the number box
-         | max - A max value for the number box.
+         | max - A max value for the number box
        - Default HTML number textbox. Can enter only valid numbers
        - string
      * - passwordbox
        - NA
-       - Default html password box.
+       - Default html password box
        - string
      * - datetime
        - | default - A default value for the widget
-         | format - (format should be ISO, long, short or full format dates.
+         | format - format should be ISO, long, short or full format dates
        - Date time picker. Used to set date (in string) for any property
        - string
      * - csv/dsv
@@ -572,21 +573,21 @@ Configuration groups
        - string
      * - javascript-editor,python-editor
        - default - A default value for the widget (string)
-       - An editor to write Javscript or Python as a value for a property.
+       - An editor to write Javscript or Python as a value for a property
        - string
      * - keyvalue
        - | delimiter - Delimiter for key-value pairs
          | kv-delimiter - Delimiter for key & value.
-       - A key-value editor which allows you to construct map.
+       - A key-value editor which allows you to construct map
        - string
      * - keyvalue-dropdown
-       - Same as keyvalue attributes. dropdownOptions - a list of dropdown options  to use in UI
-       - Its exactly keyvalue widget but instead of plain value we have dropdown with a list of values.
+       - Same as keyvalue attributes. dropdownOptions - a list of dropdown options to use in UI
+       - It is exactly the keyvalue widget but instead of plain value we have dropdown with a list of values
        - string
      * - select
        - | values - List of values for the dropdown
-         | default - A default value from the list.
-       - A html dropdown with a list of values. Allows to choose one from the list.
+         | default - A default value from the list
+       - An html dropdown with a list of values. Allows to choose one from the list
        - string
      * - dataset-selector/stream-selector
        - NA
@@ -607,19 +608,19 @@ Configuration groups
 Outputs
 --------
 
-  The output(s) represent the output schema of a particular plugin. The outputs is a list of plugin properties that represent the output schema for the particular plugin.
+The outputs is a list of plugin properties that represent the output schema for the particular plugin.
 
-  The output schema for a plugin can be represented in two different ways,
-    - Via Implicit schema
-    - Via Schema property
+The output schema for a plugin can be represented in two different ways:
+  - Via Implicit schema
+  - Via Schema property
 
-  Implicit schema is a pre-determined output schema for a plugin that the plugin developer can enforce. The implicit schema is not associated with any property of the plugin but just enforces the output schema for the plugin (for visual purposes only).
+Implicit schema is a pre-determined output schema for a plugin that the plugin developer can enforce. The implicit schema is not associated with any property of the plugin but just enforces the output schema for the plugin (for visual purposes only).
 
-  A particular property of the plugin can be defined as the output schema and can be appropriately configured to make it editable in the UI.
+A particular property of the plugin can be defined as the output schema and can be appropriately configured to make it editable in the UI.
 
-  An output-property is configured in exactly the same way we configure individual properties in configuration-groups. Its composed of name, widget-type & widget-attributes. However the subtle difference is the widget-type used for the output property. The widget-type for an output property is ideally 'schema' or 'non-editable-schema-editor'. This is to ensure the schema that is propagated across different plugins are consistent. The difference comes in 'non-editable-schema-editor' widget which doesn't have widget-attributes but a schema that will be used in the UI as output schema for the plugin.
+An output-property is configured in exactly the same way we configure individual properties in configuration-groups. It is composed of name, widget-type & widget-attributes. However the subtle difference is the widget-type used for the output property. The widget-type for an output property is ideally 'schema' or 'non-editable-schema-editor'. This is to ensure the schema that is propagated across different plugins are consistent. The difference comes in 'non-editable-schema-editor' widget which doesn't have widget-attributes but a schema that will be used in the UI as output schema for the plugin.
 
-  Based on the above definitions we could write the configuration JSON for Stream source which has the following properties - schema, duration, name, format, delay - as
+Based on the above definitions we could write the configuration JSON for Stream source which has the following properties - schema, duration, name, format, delay - as
 
   .. code-block:: Javascript
 
@@ -715,20 +716,3 @@ Outputs
         }
       ]
     }
-
-FAQs
------
-How are the groups ordered?
-	The configuration groups appear in the order that they are in the ‘configurations’ array.
-How are the configurations ordered?
-	The same way as groups.
-What happens if I specify a configuration that is not coming in from CDAP backend?
-	The hydrator UI won’t show that particular configuration. Configurations that come from backend that has configurations mapped will appear in UI.
-What happens when backend sends a configuration for a plugin that is not configured in the configurations JSON file?
-	In that case the hydrator will create a separate group at the bottom of the configurations named ‘Others’ and add all non-matching configurations for that plugin as textboxes.
-What happens when I enter a widget that is not available?
-	Hydrator defaults it to textbox
-Is there a place where I can refer for already existing configuration JSONs for other plugins?
-  Yes. It can be found here (https://github.com/caskdata/hydrator-plugins) under each plugin/widgets directory.
-Is there a SPEC for writing this configuration JSON?
-  Yes. For further details you can refer to the SPEC here (https://goo.gl/m1vDMe)
