@@ -660,7 +660,6 @@ public abstract class HBaseTableUtil {
       Map<byte[], RegionLoad> regionsLoad = clusterStatus.getLoad(serverName).getRegionsLoad();
 
       for (RegionLoad regionLoad : regionsLoad.values()) {
-        //String tableName = Bytes.toString(HRegionInfo.getTableName(regionLoad.getName()));
         TableName tableName = HRegionInfo.getTable(regionLoad.getName());
         HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
         if (!isCDAPTable(tableDescriptor)) {
