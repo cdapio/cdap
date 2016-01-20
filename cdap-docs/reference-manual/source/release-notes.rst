@@ -1748,7 +1748,7 @@ Known Issues
   Large MapReduce jobs can cause excessive logging in the CDAP logs. 
   
 - `CDAP-3221 <https://issues.cask.co/browse/CDAP-3221>`__ -
-  There is a problem when running Standalone mode: if an adapter is configur  ed incorrectly
+  There is a problem when running Standalone mode: if an adapter is configured incorrectly
   such that it leads to a MapReduce job to fail repeatedly, then the SDK hits an OOM exception due to perm gen.
   The Standalone needs restarting at this point.
 
