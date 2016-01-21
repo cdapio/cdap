@@ -46,7 +46,7 @@ STAGE_DIR=${TARGET_DIR}/parcelrepo
 
 S3_BUCKET=${S3_BUCKET:-repository.cask.co}
 S3_REPO_PATH=${S3_REPO_PATH:-parcels/cdap} # No leading or trailing slashes
-VERSION=${VERSION:-$(basename ${TARGET_DIR}/CDAP-*.parcel | cut -d- -f2)}
+VERSION=${VERSION:-$(basename ${TARGET_DIR}/*.parcel | head -n 1 | cut -d- -f2)} # Assumes NAME-${VERSION}*
 __version=${VERSION/-SNAPSHOT/}
 __maj_min=$(echo ${__version} | cut -d. -f1,2)
 
