@@ -284,8 +284,11 @@ Deprecated and Removed Features
   Removed a deprecated endpoint to retrieve the status of a currently running node in a workflow.
 
 - `CDAP-2943 <https://issues.cask.co/browse/CDAP-2943>`__ -
-  Removed the deprecated builder-style Flow API
+  Removed the deprecated builder-style Flow API.
 
+- `CDAP-4128 <https://issues.cask.co/browse/CDAP-4128>`__ -
+  Deprecated the Script transform.
+  
 - `CDAP-4217 <https://issues.cask.co/browse/CDAP-4217>`__ -
   Deprecated createDataSchedule and createTimeSchedule methods in Schedules class and removed
   deprecated Schedule constructor.
