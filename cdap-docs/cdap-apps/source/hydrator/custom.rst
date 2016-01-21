@@ -459,10 +459,11 @@ Plugin Configuration JSON
 -------------------------
 When a plugin is displayed in the CDAP UI, its properties are represented
 by widgets in the :ref:`Cask Hydrator <cdap-apps-cask-hydrator>`. Each property of a
-plugin is represented, by default, as a textbox input field in the user interface of a widget. 
+plugin is represented, by default, as a textbox in the user interface. 
 
-A plugin can include a configuration JSON file that specifies the particular widgets and sets
-of attributes used to display the plugin properties in the CDAP UI.
+To customize the plugin display, a plugin can include a configuration JSON file that
+specifies the particular widgets and sets of widget attributes used to display the plugin
+properties in the CDAP UI.
 
 The configuration JSON is composed of two lists:
 
