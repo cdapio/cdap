@@ -47,7 +47,7 @@ STAGE_DIR=${TARGET_DIR}/yumrepo
 
 S3_BUCKET=${S3_BUCKET:-repository.cask.co}
 S3_REPO_PATH=${S3_REPO_PATH:-centos/6/x86_64/cdap} # No leading or trailing slashes
-VERSION=${VERSION:-$(ls -1 *.rpm | head -n 1 | rpm --queryformat "%{VERSION}" -qp)} # query package file
+VERSION=${VERSION:-$(ls -1 *.rpm | head -n 1 | xargs rpm --queryformat "%{VERSION}" -qp)} # query package file
 GPG_KEY_NAME=${GPG_KEY_NAME:-${1}}
 GPG_PASSPHRASE=${GPG_PASSPHRASE:-${2}}
 __version=${VERSION/-SNAPSHOT/}
