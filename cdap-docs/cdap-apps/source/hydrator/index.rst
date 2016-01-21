@@ -63,6 +63,8 @@ code; instead, you just configure CDAP appropriately and operate it.
 
 - **Lifecycle of ETL Applications:** This is managed using CDAP's :ref:`Lifecycle HTTP RESTful API <http-restful-api-lifecycle>`.
 
+.. _cdap-apps-cask-hydrator:
+
 .. rubric:: Cask Hydrator
 
 CDAP supports users with self-service batch and real-time data ingestion combined with
