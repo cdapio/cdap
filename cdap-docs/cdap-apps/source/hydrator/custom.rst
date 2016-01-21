@@ -457,16 +457,16 @@ Plugin Deployment
 
 Plugin Configuration JSON
 -------------------------
-When a plugin is displayed in the CDAP UI, the plugin and its properties are represented
+When a plugin is displayed in the CDAP UI, its properties are represented
 by widgets in the :ref:`Cask Hydrator <cdap-apps-cask-hydrator>`. Each property of a
-plugin is represented, by default, as an input field in the user interface of a widget. 
+plugin is represented, by default, as a textbox input field in the user interface of a widget. 
 
-A plugin can include a configuration JSON file that specifies a particular widget and set
-the properties used to display the plugin in the CDAP UI.
+A plugin can include a configuration JSON file that specifies the particular widgets and sets
+of attributes used to display the plugin properties in the CDAP UI.
 
 The configuration JSON is composed of two lists:
 
-- a list of property configuration groups; and
+- a list of property configuration groups and
 - a list of output properties. 
 
 .. highlight:: xml
@@ -564,7 +564,7 @@ In the case of our *Batch Source* plugin example, the ``configuration-groups`` c
 
 A widget in the CDAP UI represents a component that will be rendered and used to set a
 value of a property of a plugin. These are the different widgets |---| their type, a
-description, their attributes (if any) and their output data type |---| that we support in
+description, their attributes (if any), and their output data type |---| that we support in
 Cask Hydrator as of version |version|:
 
 .. list-table::
@@ -628,7 +628,7 @@ Cask Hydrator as of version |version|:
      - No attributes
      - string
    * - ``schema``
-     - A four-column editable table to represent a schema of a plugin
+     - A four-column, editable table to represent a schema of a plugin
      - | ``schema-types``: list of schema types for each field from which the user can chose when setting the schema
        | ``schema-default-type``: default type for each newly-added field in the schema
      - string
