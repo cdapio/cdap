@@ -1,0 +1,313 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <meta name="git_release" content="3.3.0">
+    <meta name="git_hash" content="7add3ab2f27af8aef0290cc0aa2734a00620d3d5">
+    <meta name="git_timestamp" content="2016-01-20 18:15:08 -0800">
+    <title>File Batch Source &mdash; Cask Data Application Platform 3.3.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '3.3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    
+    <!-- Amazon SQS Page Usage Logging start-->
+    <script type="text/javascript" src="https://sdk.amazonaws.com/js/aws-sdk-2.1.35.min.js"></script>
+    <script type="text/javascript" src="http://docs.cask.co/resources/scripts/aws-sqs-1.0.0.js"></script>
+    <!-- Amazon SQS Page Usage Logging end-->
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.3.0 Documentation" href="../../../index.html" />
+    <link rel="up" title="Batch Sources" href="index.html" />
+    <link rel="next" title="HBase Batch Source" href="hbase.html" />
+    <link rel="prev" title="Elasticsearch Batch Source" href="elasticsearch.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="hbase.html" title="HBase Batch Source"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="elasticsearch.html" title="Elasticsearch Batch Source"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.3.0');</script>
+       
+        <li><a href="../../../table-of-contents.html">CDAP CDAP Applications</a> &raquo;</li>
+          <li><a href="../../index.html" >Cask Hydrator and ETL Pipelines</a> &raquo;</li>
+          <li><a href="../index.html" >ETL Plugins</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Batch Sources</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="file-batch-source">
+<span id="file-batch-source"></span><h1>File Batch Source<a class="headerlink" href="#file-batch-source" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="description">
+<span id="description"></span><h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>Batch source to use any Distributed File System as a Source.</p>
+</div>
+<div class="section" id="use-case">
+<span id="use-case"></span><h2>Use Case<a class="headerlink" href="#use-case" title="Permalink to this headline">¶</a></h2>
+<p>This source is used whenever you need to read from a distributed file system.
+For example, you may want to read in log files from S3 every hour and then store
+the logs in a TimePartitionedFileSet.</p>
+</div>
+<div class="section" id="properties">
+<span id="properties"></span><h2>Properties<a class="headerlink" href="#properties" title="Permalink to this headline">¶</a></h2>
+<p><strong>fileSystem:</strong> Distributed file system to read in from.</p>
+<p><strong>fileSystemProperties:</strong> A JSON string representing a map of properties
+needed for the distributed file system.
+For example, the property names needed for S3 are &#8220;fs.s3n.awsSecretAccessKey&#8221;
+and &#8220;fs.s3n.awsAccessKeyId&#8221;.</p>
+<p><strong>path:</strong> Path to file(s) to be read. If a directory is specified,
+terminate the path name with a &#8216;/&#8217;.</p>
+<p><strong>fileRegex:</strong> Regex to filter out filenames in the path.
+To use the <em>TimeFilter</em>, input <code class="docutils literal"><span class="pre">timefilter</span></code>. The TimeFilter assumes that it is
+reading in files with the File log naming convention of <em>YYYY-MM-DD-HH-mm-SS-Tag</em>.
+The TimeFilter reads in files from the previous hour if the field <code class="docutils literal"><span class="pre">timeTable</span></code> is
+left blank. If it&#8217;s currently <em>2015-06-16-15</em> (June 16th 2015, 3pm), it will read
+in files that contain <em>2015-06-16-14</em> in the filename. If the field <code class="docutils literal"><span class="pre">timeTable</span></code> is
+present, then it will read in files that have not yet been read.</p>
+<p><strong>timeTable:</strong> Name of the Table that keeps track of the last time files
+were read in.</p>
+<p><strong>inputFormatClass:</strong> Name of the input format class, which must be a
+subclass of FileInputFormat. Defaults to CombineTextInputFormat.</p>
+<p><strong>maxSplitSize:</strong> Maximum split-size for each mapper in the MapReduce Job. Defaults to 128MB.</p>
+</div>
+<div class="section" id="example">
+<span id="example"></span><h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>This example connects to Amazon S3 and reads in files found in the specified directory while
+using the stateful Timefilter, which ensures that each file is read only once. The Timefilter
+requires that files be named with either the convention &#8220;yy-MM-dd-HH...&#8221; (S3) or &#8221;...&#8217;.&#8217;yy-MM-dd-HH...&#8221;
+(Cloudfront). The stateful metadata is stored in a table named &#8216;timeTable&#8217;. With the maxSplitSize
+set to 1MB, if the total size of the files being read is larger than 1MB, CDAP will
+configure Hadoop to use more than one mapper:</p>
+<pre class="literal-block">
+{
+    &quot;name&quot;: &quot;FileBatchSource&quot;,
+    &quot;properties&quot;: {
+        &quot;fileSystem&quot;: &quot;S3&quot;,
+        &quot;fileSystemProperties&quot;: &quot;{
+            \&quot;fs.s3n.awsAccessKeyId\&quot;: \&quot;accessID\&quot;,
+            \&quot;fs.s3n.awsSecretAccessKey\&quot;: \&quot;accessKey\&quot;
+        }&quot;,
+        &quot;path&quot;: &quot;s3n://path/to/logs/&quot;,
+        &quot;fileRegex&quot;: &quot;timefilter&quot;,
+        &quot;timeTable&quot;: &quot;timeTable&quot;,
+        &quot;maxSplitSize&quot;: &quot;1048576&quot;
+    }
+}
+</pre>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.3.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../cdap-apps/index.html" rel="nofollow">CDAP Applications</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+  </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+  <h3 class="pagenavtitle"><a href="../../../table-of-contents.html">CDAP Applications: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html"> Cask Hydrator and ETL</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../overview.html"> Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../creating.html"> Creating an ETL Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../custom.html"> Creating Custom ETL Plugins</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"> ETL Plugins</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="index.html"> Batch Sources</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="cassandra.html">Cassandra Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="database.html">Database Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="elasticsearch.html">Elasticsearch Batch Source</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="">File Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hbase.html">HBase Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hive.html">Hive Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kvtable.html">KeyValueTable Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mongodb.html">MongoDB Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="s3.html">Amazon S3 Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="snapshotavro.html">SnapshotAvro Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="snapshotparquet.html">SnapshotParquet Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="stream.html">Stream Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="table.html">Table Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="teradata.html">Teradata Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tpfsavro.html">TimePartitionedFileSet Avro Batch Source</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tpfsparquet.html">TimePartitionedFileSet Parquet Batch Source</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../realtimesources/index.html"> Real-time Sources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../transforms/index.html"> Transformations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../batchsinks/index.html"> Batch Sinks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../realtimesinks/index.html"> Real-time Sinks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../shared-plugins/index.html"> Shared Plugins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../third-party.html"> Third-Party Jars</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../upgrade.html"> Upgrading ETL Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data-quality/index.html"> Data Quality Application</a></li>
+</ul>
+ 
+    </nav>
+  <h4>Topics</h4>
+  <ul>
+  <li class="topless"><i>Previous:</i> <a href="elasticsearch.html"
+                        title="Previous Topic">Elasticsearch Batch Source</a></li>
+  <li class="topless"><i>Next:</i> <a href="hbase.html"
+                        title="Next Topic">HBase Batch Source</a></li>
+  </ul>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.3.0/cdap-docs-3.3.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Elasticsearch Batch Source" href="elasticsearch.html" />Elasticsearch Batch Source</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="HBase Batch Source" href="hbase.html" />HBase Batch Source</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
