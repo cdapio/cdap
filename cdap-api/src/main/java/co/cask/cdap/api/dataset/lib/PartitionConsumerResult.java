@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,12 +16,8 @@
 
 package co.cask.cdap.api.dataset.lib;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
-
 import java.util.Iterator;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * Returns access to an iterator of the requested partitions as well as a {@link PartitionConsumerState} which can be
@@ -46,16 +42,26 @@ public class PartitionConsumerResult {
   }
 
   /**
-   * @deprecated Use {@link #getPartitions()} instead.
+   * @deprecated Deprecated as of 3.3.0. Use {@link #getPartitions()} instead.
    */
   @Deprecated
   public Iterator<Partition> getPartitionIterator() {
-    return Lists.transform(partitions, new Function<PartitionDetail, Partition>() {
-      @Nullable
+    final Iterator<PartitionDetail> iterator = partitions.iterator();
+    return new Iterator<Partition>() {
       @Override
-      public Partition apply(PartitionDetail input) {
-        return input;
+      public boolean hasNext() {
+        return iterator.hasNext();
       }
-    }).iterator();
+
+      @Override
+      public Partition next() {
+        return iterator.next();
+      }
+
+      @Override
+      public void remove() {
+        iterator.remove();
+      }
+    };
   }
 }
