@@ -269,7 +269,8 @@ public class KafkaTester extends ExternalResource {
         }
       }
     );
-    Assert.assertTrue(latch.await(15, TimeUnit.SECONDS));
+    Assert.assertTrue(String.format("Expected %d messages but found %d messages", expectedNumMsgs, actual.size()),
+                      latch.await(15, TimeUnit.SECONDS));
     cancellable.cancel();
     Assert.assertTrue(stopLatch.await(15, TimeUnit.SECONDS));
     return actual;

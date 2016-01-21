@@ -149,10 +149,10 @@ public class LineageTest extends MetadataTestBase {
       // Assert metadata
       // Id.Flow needs conversion to Id.Program JIRA - CDAP-3658
       Id.Program programForFlow = Id.Program.from(flow.getApplication(), flow.getType(), flow.getId());
-      Assert.assertEquals(toSet(new MetadataRecord(app, appProperties, appTags),
-                                new MetadataRecord(programForFlow, flowProperties, flowTags),
-                                new MetadataRecord(dataset, dataProperties, dataTags),
-                                new MetadataRecord(stream, streamProperties, streamTags)),
+      Assert.assertEquals(toSet(new MetadataRecord(app, MetadataScope.USER, appProperties, appTags),
+                                new MetadataRecord(programForFlow, MetadataScope.USER, flowProperties, flowTags),
+                                new MetadataRecord(dataset, MetadataScope.USER, dataProperties, dataTags),
+                                new MetadataRecord(stream, MetadataScope.USER, streamProperties, streamTags)),
                           fetchRunMetadata(new Id.Run(flow, flowRunId.getId())));
 
       // Assert with a time range after the flow run should return no results
@@ -280,26 +280,26 @@ public class LineageTest extends MetadataTestBase {
       // Assert metadata
       // Id.Flow needs conversion to Id.Program JIRA - CDAP-3658
       Id.Program programForFlow = Id.Program.from(flow.getApplication(), flow.getType(), flow.getId());
-      Assert.assertEquals(toSet(new MetadataRecord(app, emptyMap(), emptySet()),
-                                new MetadataRecord(programForFlow, emptyMap(), emptySet()),
-                                new MetadataRecord(dataset, datasetProperties, emptySet()),
-                                new MetadataRecord(stream, emptyMap(), emptySet())),
+      Assert.assertEquals(toSet(new MetadataRecord(app, MetadataScope.USER, emptyMap(), emptySet()),
+                                new MetadataRecord(programForFlow, MetadataScope.USER, emptyMap(), emptySet()),
+                                new MetadataRecord(dataset, MetadataScope.USER, datasetProperties, emptySet()),
+                                new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
                           fetchRunMetadata(new Id.Run(flow, flowRunId.getId())));
 
       // Id.Worker needs conversion to Id.Program JIRA - CDAP-3658
       Id.Program programForWorker = Id.Program.from(worker.getApplication(), worker.getType(), worker.getId());
-      Assert.assertEquals(toSet(new MetadataRecord(app, emptyMap(), emptySet()),
-                                new MetadataRecord(programForWorker, emptyMap(), workerTags),
-                                new MetadataRecord(dataset, datasetProperties, emptySet()),
-                                new MetadataRecord(stream, emptyMap(), emptySet())),
+      Assert.assertEquals(toSet(new MetadataRecord(app, MetadataScope.USER, emptyMap(), emptySet()),
+                                new MetadataRecord(programForWorker, MetadataScope.USER, emptyMap(), workerTags),
+                                new MetadataRecord(dataset, MetadataScope.USER, datasetProperties, emptySet()),
+                                new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
                           fetchRunMetadata(new Id.Run(worker, workerRunId.getId())));
 
       // Id.Spark needs conversion to Id.Program JIRA - CDAP-3658
       Id.Program programForSpark = Id.Program.from(spark.getApplication(), spark.getType(), spark.getId());
-      Assert.assertEquals(toSet(new MetadataRecord(app, emptyMap(), emptySet()),
-                                new MetadataRecord(programForSpark, emptyMap(), sparkTags),
-                                new MetadataRecord(dataset, datasetProperties, emptySet()),
-                                new MetadataRecord(stream, emptyMap(), emptySet())),
+      Assert.assertEquals(toSet(new MetadataRecord(app, MetadataScope.USER, emptyMap(), emptySet()),
+                                new MetadataRecord(programForSpark, MetadataScope.USER, emptyMap(), sparkTags),
+                                new MetadataRecord(dataset, MetadataScope.USER, datasetProperties, emptySet()),
+                                new MetadataRecord(stream, MetadataScope.USER, emptyMap(), emptySet())),
                           fetchRunMetadata(new Id.Run(spark, sparkRunId.getId())));
     } finally {
       try {

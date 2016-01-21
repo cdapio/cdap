@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -86,10 +86,14 @@ public class LineageAdminTest extends MetadataTestBase {
     LineageAdmin lineageAdmin = new LineageAdmin(lineageStore, store, metadataStore, new NoOpEntityValidator());
 
     // Define metadata
-    MetadataRecord run1AppMeta = new MetadataRecord(program1.getApplication(), toMap("pk1", "pk1"), toSet("pt1"));
-    MetadataRecord run1ProgramMeta = new MetadataRecord(program1, toMap("pk1", "pk1"), toSet("pt1"));
-    MetadataRecord run1Data1Meta = new MetadataRecord(dataset1, toMap("dk1", "dk1"), toSet("dt1"));
-    MetadataRecord run1Data2Meta = new MetadataRecord(dataset2, toMap("dk2", "dk2"), toSet("dt2"));
+    MetadataRecord run1AppMeta = new MetadataRecord(program1.getApplication(), MetadataScope.USER,
+                                                    toMap("pk1", "pk1"), toSet("pt1"));
+    MetadataRecord run1ProgramMeta = new MetadataRecord(program1, MetadataScope.USER,
+                                                        toMap("pk1", "pk1"), toSet("pt1"));
+    MetadataRecord run1Data1Meta = new MetadataRecord(dataset1, MetadataScope.USER,
+                                                      toMap("dk1", "dk1"), toSet("dt1"));
+    MetadataRecord run1Data2Meta = new MetadataRecord(dataset2, MetadataScope.USER,
+                                                      toMap("dk2", "dk2"), toSet("dt2"));
 
     // Add metadata
     metadataStore.setProperties(MetadataScope.USER, program1.getApplication(), run1AppMeta.getProperties());

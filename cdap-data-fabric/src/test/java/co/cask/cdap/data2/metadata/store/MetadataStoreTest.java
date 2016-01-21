@@ -97,90 +97,90 @@ public class MetadataStoreTest {
   private final Set<String> flowTags = ImmutableSet.of("fTag");
 
   private final MetadataChangeRecord change1 = new MetadataChangeRecord(
-    new MetadataRecord(dataset),
+    new MetadataRecord(dataset, MetadataScope.USER),
     new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), datasetTags),
-      new MetadataRecord(dataset)
+      new MetadataRecord(dataset, MetadataScope.USER, ImmutableMap.<String, String>of(), datasetTags),
+      new MetadataRecord(dataset, MetadataScope.USER)
     ),
     System.currentTimeMillis()
   );
   private final MetadataChangeRecord change2 = new MetadataChangeRecord(
-    new MetadataRecord(app),
+    new MetadataRecord(app, MetadataScope.USER),
     new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(app, appProperties, ImmutableSet.<String>of()),
-      new MetadataRecord(app)
+      new MetadataRecord(app, MetadataScope.USER, appProperties, ImmutableSet.<String>of()),
+      new MetadataRecord(app, MetadataScope.USER)
     ),
     System.currentTimeMillis()
   );
   private final MetadataChangeRecord change3 = new MetadataChangeRecord(
-    new MetadataRecord(app, appProperties, ImmutableSet.<String>of()),
+    new MetadataRecord(app, MetadataScope.USER, appProperties, ImmutableSet.<String>of()),
     new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(app, ImmutableMap.<String, String>of(), appTags),
-      new MetadataRecord(app)
+      new MetadataRecord(app, MetadataScope.USER, ImmutableMap.<String, String>of(), appTags),
+      new MetadataRecord(app, MetadataScope.USER)
     ),
     System.currentTimeMillis()
   );
   private final MetadataChangeRecord change4 = new MetadataChangeRecord(
-    new MetadataRecord(stream),
+    new MetadataRecord(stream, MetadataScope.USER),
     new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(stream, streamProperties, ImmutableSet.<String>of()),
-      new MetadataRecord(stream)
+      new MetadataRecord(stream, MetadataScope.USER, streamProperties, ImmutableSet.<String>of()),
+      new MetadataRecord(stream, MetadataScope.USER)
     ),
     System.currentTimeMillis()
   );
   private final MetadataChangeRecord change5 = new MetadataChangeRecord(
-    new MetadataRecord(stream, streamProperties, ImmutableSet.<String>of()),
+    new MetadataRecord(stream, MetadataScope.USER, streamProperties, ImmutableSet.<String>of()),
     new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(stream),
-      new MetadataRecord(stream)
+      new MetadataRecord(stream, MetadataScope.USER),
+      new MetadataRecord(stream, MetadataScope.USER)
     ),
     System.currentTimeMillis()
   );
   private final MetadataChangeRecord change6 = new MetadataChangeRecord(
-    new MetadataRecord(stream, streamProperties, ImmutableSet.<String>of()),
+    new MetadataRecord(stream, MetadataScope.USER, streamProperties, ImmutableSet.<String>of()),
     new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(stream, updatedStreamProperties, ImmutableSet.<String>of()),
-      new MetadataRecord(stream, streamProperties, ImmutableSet.<String>of())
+      new MetadataRecord(stream, MetadataScope.USER, updatedStreamProperties, ImmutableSet.<String>of()),
+      new MetadataRecord(stream, MetadataScope.USER, streamProperties, ImmutableSet.<String>of())
     ),
     System.currentTimeMillis()
   );
   private final MetadataChangeRecord change7 = new MetadataChangeRecord(
-    new MetadataRecord(flow),
+    new MetadataRecord(flow, MetadataScope.USER),
     new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(flow, ImmutableMap.<String, String>of(), flowTags),
-      new MetadataRecord(flow)
+      new MetadataRecord(flow, MetadataScope.USER, ImmutableMap.<String, String>of(), flowTags),
+      new MetadataRecord(flow, MetadataScope.USER)
     ),
     System.currentTimeMillis()
   );
   private final MetadataChangeRecord change8 = new MetadataChangeRecord(
-    new MetadataRecord(flow, ImmutableMap.<String, String>of(), flowTags),
+    new MetadataRecord(flow, MetadataScope.USER, ImmutableMap.<String, String>of(), flowTags),
     new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(flow),
-      new MetadataRecord(flow, ImmutableMap.<String, String>of(), flowTags)
+      new MetadataRecord(flow, MetadataScope.USER),
+      new MetadataRecord(flow, MetadataScope.USER, ImmutableMap.<String, String>of(), flowTags)
     ),
     System.currentTimeMillis()
   );
   private final MetadataChangeRecord change9 = new MetadataChangeRecord(
-    new MetadataRecord(dataset, ImmutableMap.<String, String>of(), datasetTags),
+    new MetadataRecord(dataset, MetadataScope.USER, ImmutableMap.<String, String>of(), datasetTags),
     new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(dataset),
-      new MetadataRecord(dataset, ImmutableMap.<String, String>of(), datasetTags)
+      new MetadataRecord(dataset, MetadataScope.USER),
+      new MetadataRecord(dataset, MetadataScope.USER, ImmutableMap.<String, String>of(), datasetTags)
     ),
     System.currentTimeMillis()
   );
   private final MetadataChangeRecord change10 = new MetadataChangeRecord(
-    new MetadataRecord(stream, updatedStreamProperties, ImmutableSet.<String>of()),
+    new MetadataRecord(stream, MetadataScope.USER, updatedStreamProperties, ImmutableSet.<String>of()),
     new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(stream),
-      new MetadataRecord(stream, updatedStreamProperties, ImmutableSet.<String>of())
+      new MetadataRecord(stream, MetadataScope.USER),
+      new MetadataRecord(stream, MetadataScope.USER, updatedStreamProperties, ImmutableSet.<String>of())
     ),
     System.currentTimeMillis()
   );
   private final MetadataChangeRecord change11 = new MetadataChangeRecord(
-    new MetadataRecord(app, appProperties, appTags),
+    new MetadataRecord(app, MetadataScope.USER, appProperties, appTags),
     new MetadataChangeRecord.MetadataDiffRecord(
-      new MetadataRecord(app, ImmutableMap.<String, String>of(), ImmutableSet.<String>of()),
-      new MetadataRecord(app, appProperties, appTags)
+      new MetadataRecord(app, MetadataScope.USER, ImmutableMap.<String, String>of(), ImmutableSet.<String>of()),
+      new MetadataRecord(app, MetadataScope.USER, appProperties, appTags)
     ),
     System.currentTimeMillis()
   );

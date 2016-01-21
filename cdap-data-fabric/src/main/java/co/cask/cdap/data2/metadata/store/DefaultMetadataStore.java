@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package co.cask.cdap.data2.metadata.store;
 
 import co.cask.cdap.api.dataset.DatasetDefinition;
@@ -102,15 +103,15 @@ public class DefaultMetadataStore implements MetadataStore {
    * Adds/updates metadata for the specified {@link Id.NamespacedId}.
    */
   @Override
-  public void setProperties(MetadataScope scope, final Id.NamespacedId entityId, final Map<String, String> properties,
-                            @Nullable final Indexer indexer) {
+  public void setProperties(final MetadataScope scope, final Id.NamespacedId entityId,
+                            final Map<String, String> properties, @Nullable final Indexer indexer) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
         Map<String, String> existingProperties = input.getProperties(entityId);
         Set<String> existingTags = input.getTags(entityId);
-        previousRef.set(new MetadataRecord(entityId, existingProperties, existingTags));
+        previousRef.set(new MetadataRecord(entityId, scope, existingProperties, existingTags));
         for (Map.Entry<String, String> entry : properties.entrySet()) {
           input.setProperty(entityId, entry.getKey(), entry.getValue(), indexer);
         }
@@ -134,27 +135,27 @@ public class DefaultMetadataStore implements MetadataStore {
       // In both update or new cases, mark a single addition.
       propAdditions.put(entry.getKey(), entry.getValue());
     }
-    publish(previousRecord, new MetadataRecord(entityId, propAdditions.build(), EMPTY_TAGS),
-            new MetadataRecord(entityId, propDeletions.build(), EMPTY_TAGS));
+    publish(previousRecord, new MetadataRecord(entityId, scope, propAdditions.build(), EMPTY_TAGS),
+            new MetadataRecord(entityId, scope, propDeletions.build(), EMPTY_TAGS));
   }
 
   /**
    * Adds tags for the specified {@link Id.NamespacedId}.
    */
   @Override
-  public void addTags(MetadataScope scope, final Id.NamespacedId entityId, final String... tagsToAdd) {
+  public void addTags(final MetadataScope scope, final Id.NamespacedId entityId, final String... tagsToAdd) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
         Map<String, String> existingProperties = input.getProperties(entityId);
         Set<String> existingTags = input.getTags(entityId);
-        previousRef.set(new MetadataRecord(entityId, existingProperties, existingTags));
+        previousRef.set(new MetadataRecord(entityId, scope, existingProperties, existingTags));
         input.addTags(entityId, tagsToAdd);
       }
     }, scope);
-    publish(previousRef.get(), new MetadataRecord(entityId, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
-            new MetadataRecord(entityId));
+    publish(previousRef.get(), new MetadataRecord(entityId, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
+            new MetadataRecord(entityId, scope));
   }
 
   @Override
@@ -246,48 +247,48 @@ public class DefaultMetadataStore implements MetadataStore {
    * Removes all metadata (including properties and tags) for the specified {@link Id.NamespacedId}.
    */
   @Override
-  public void removeMetadata(MetadataScope scope, final Id.NamespacedId entityId) {
+  public void removeMetadata(final MetadataScope scope, final Id.NamespacedId entityId) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(entityId, input.getProperties(entityId), input.getTags(entityId)));
+        previousRef.set(new MetadataRecord(entityId, scope, input.getProperties(entityId), input.getTags(entityId)));
         input.removeProperties(entityId);
         input.removeTags(entityId);
       }
     }, scope);
     MetadataRecord previous = previousRef.get();
-    publish(previous, new MetadataRecord(entityId), new MetadataRecord(previous));
+    publish(previous, new MetadataRecord(entityId, scope), new MetadataRecord(previous));
   }
 
   /**
    * Removes all properties for the specified {@link Id.NamespacedId}.
    */
   @Override
-  public void removeProperties(MetadataScope scope, final Id.NamespacedId entityId) {
+  public void removeProperties(final MetadataScope scope, final Id.NamespacedId entityId) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(entityId, input.getProperties(entityId), input.getTags(entityId)));
+        previousRef.set(new MetadataRecord(entityId, scope, input.getProperties(entityId), input.getTags(entityId)));
         input.removeProperties(entityId);
       }
     }, scope);
-    publish(previousRef.get(), new MetadataRecord(entityId),
-            new MetadataRecord(entityId, previousRef.get().getProperties(), EMPTY_TAGS));
+    publish(previousRef.get(), new MetadataRecord(entityId, scope),
+            new MetadataRecord(entityId, scope, previousRef.get().getProperties(), EMPTY_TAGS));
   }
 
   /**
    * Removes the specified properties of the {@link Id.NamespacedId}.
    */
   @Override
-  public void removeProperties(MetadataScope scope, final Id.NamespacedId entityId, final String... keys) {
+  public void removeProperties(final MetadataScope scope, final Id.NamespacedId entityId, final String... keys) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     final ImmutableMap.Builder<String, String> deletesBuilder = ImmutableMap.builder();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(entityId, input.getProperties(entityId), input.getTags(entityId)));
+        previousRef.set(new MetadataRecord(entityId, scope, input.getProperties(entityId), input.getTags(entityId)));
         for (String key : keys) {
           MetadataEntry record = input.getProperty(entityId, key);
           if (record == null) {
@@ -298,42 +299,43 @@ public class DefaultMetadataStore implements MetadataStore {
         input.removeProperties(entityId, keys);
       }
     }, scope);
-    publish(previousRef.get(), new MetadataRecord(entityId),
-            new MetadataRecord(entityId, deletesBuilder.build(), EMPTY_TAGS));
+    publish(previousRef.get(), new MetadataRecord(entityId, scope),
+            new MetadataRecord(entityId, scope, deletesBuilder.build(), EMPTY_TAGS));
   }
 
   /**
    * Removes all the tags from the {@link Id.NamespacedId}
    */
   @Override
-  public void removeTags(MetadataScope scope, final Id.NamespacedId entityId) {
+  public void removeTags(final MetadataScope scope, final Id.NamespacedId entityId) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(entityId, input.getProperties(entityId), input.getTags(entityId)));
+        previousRef.set(new MetadataRecord(entityId, scope, input.getProperties(entityId), input.getTags(entityId)));
         input.removeTags(entityId);
       }
     }, scope);
     MetadataRecord previous = previousRef.get();
-    publish(previous, new MetadataRecord(entityId), new MetadataRecord(entityId, EMPTY_PROPERTIES, previous.getTags()));
+    publish(previous, new MetadataRecord(entityId, scope),
+            new MetadataRecord(entityId, scope, EMPTY_PROPERTIES, previous.getTags()));
   }
 
   /**
    * Removes the specified tags from the {@link Id.NamespacedId}
    */
   @Override
-  public void removeTags(MetadataScope scope, final Id.NamespacedId entityId, final String ... tagsToRemove) {
+  public void removeTags(final MetadataScope scope, final Id.NamespacedId entityId, final String ... tagsToRemove) {
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
       public void apply(MetadataDataset input) throws Exception {
-        previousRef.set(new MetadataRecord(entityId, input.getProperties(entityId), input.getTags(entityId)));
+        previousRef.set(new MetadataRecord(entityId, scope, input.getProperties(entityId), input.getTags(entityId)));
         input.removeTags(entityId, tagsToRemove);
       }
     }, scope);
-    publish(previousRef.get(), new MetadataRecord(entityId),
-            new MetadataRecord(entityId, EMPTY_PROPERTIES, Sets.newHashSet(tagsToRemove)));
+    publish(previousRef.get(), new MetadataRecord(entityId, scope),
+            new MetadataRecord(entityId, scope, EMPTY_PROPERTIES, Sets.newHashSet(tagsToRemove)));
   }
 
   @Override
