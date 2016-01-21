@@ -93,7 +93,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 
 /**
- * {@link co.cask.http.HttpHandler} for managing adapter lifecycle.
+ * {@link co.cask.http.HttpHandler} for managing artifacts.
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3)

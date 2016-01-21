@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -72,7 +72,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Worker driver for Realtime ETL Adapters.
+ * Worker driver for Realtime ETL Applications.
  */
 public class ETLWorker extends AbstractWorker {
   public static final String NAME = ETLWorker.class.getSimpleName();
@@ -111,7 +111,7 @@ public class ETLWorker extends AbstractWorker {
   @Override
   public void configure() {
     setName(NAME);
-    setDescription("Worker Driver for Realtime ETL Adapters");
+    setDescription("Worker Driver for Realtime ETL Pipelines");
     int instances = config.getInstances() != null ? config.getInstances() : 1;
     if (instances < 1) {
       throw new IllegalArgumentException("instances must be greater than 0.");
@@ -154,13 +154,13 @@ public class ETLWorker extends AbstractWorker {
     stateStoreKey = String.format("%s%s%s%s%s", appName, SEPARATOR, uniqueId, SEPARATOR, context.getInstanceId());
     stateStoreKeyBytes = Bytes.toBytes(stateStoreKey);
 
-    // Cleanup the rows in statetable for runs with same adapter name but other runids.
+    // Cleanup the rows in statetable for runs with same app name but other runids.
     getContext().execute(new TxRunnable() {
       @Override
       public void run(DatasetContext dsContext) throws Exception {
         KeyValueTable stateTable = dsContext.getDataset(ETLRealtimeApplication.STATE_TABLE);
         byte[] startKey = Bytes.toBytes(String.format("%s%s", appName, SEPARATOR));
-        // Scan the table for adaptername: prefixes and remove rows which doesn't match the unique id of this adapter.
+        // Scan the table for appname: prefixes and remove rows which doesn't match the unique id of this application.
         CloseableIterator<KeyValue<byte[], byte[]>> rows = stateTable.scan(startKey, Bytes.stopKeyForPrefix(startKey));
         try {
           while (rows.hasNext()) {

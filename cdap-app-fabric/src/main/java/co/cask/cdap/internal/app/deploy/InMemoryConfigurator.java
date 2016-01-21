@@ -85,20 +85,14 @@ public final class InMemoryConfigurator implements Configurator {
   public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
                               String appClassName,
                               Location artifact, @Nullable String configString, ArtifactRepository artifactRepository) {
-    this(cConf, appNamespace, artifact, configString);
+    Preconditions.checkNotNull(artifact);
+    this.cConf = cConf;
+    this.appNamespace = appNamespace;
     this.artifactId = artifactId;
     this.appClassName = appClassName;
-    this.artifactRepository = artifactRepository;
-  }
-
-  // remove once app templates are gone
-  public InMemoryConfigurator(CConfiguration cConf, Id.Namespace namespace,
-                              Location artifact, @Nullable String configString) {
-    Preconditions.checkNotNull(artifact);
-    this.appNamespace = namespace;
     this.artifact = artifact;
     this.configString = configString;
-    this.cConf = cConf;
+    this.artifactRepository = artifactRepository;
     this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, baseUnpackDir);
@@ -167,8 +161,7 @@ public final class InMemoryConfigurator implements Configurator {
     DefaultAppConfigurer configurer;
     try (PluginInstantiator pluginInstantiator = new PluginInstantiator(
       cConf, app.getClass().getClassLoader(), tempDir)) {
-      configurer = artifactId == null ?
-        new DefaultAppConfigurer(appNamespace, app, configString) :
+      configurer =
         new DefaultAppConfigurer(appNamespace, artifactId, app, configString, artifactRepository, pluginInstantiator);
 
       Config appConfig;
