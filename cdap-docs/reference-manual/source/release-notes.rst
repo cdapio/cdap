@@ -60,7 +60,7 @@ New Features
   Added support for ETL transforms written in Python.
 
 - `CDAP-4128 <https://issues.cask.co/browse/CDAP-4128>`__ -
-  Added a new Javascript transform that can emit records using an emitter. Deprecated the previous Script transform.
+  Added a new Javascript transform that can emit records using an emitter.
 
 - `CDAP-4135 <https://issues.cask.co/browse/CDAP-4135>`__ -
   Added the capability for MapReduce and Spark programs to localize additional resources during setup.
@@ -76,7 +76,7 @@ New Features
   Added AuthorizationPlugin, for pluggable authorization.
 
 - `CDAP-4263 <https://issues.cask.co/browse/CDAP-4263>`__ -
-  Added support for metadata to stream views.
+  Added metadata support for stream views.
 
 - `CDAP-4270 <https://issues.cask.co/browse/CDAP-4270>`__ -
   Added CLI support for metadata and lineage.
@@ -110,6 +110,16 @@ Improvements
 - `CDAP-3079 <https://issues.cask.co/browse/CDAP-3079>`__ -
   Table datasets, and any other dataset that implements ``RecordWritable<StructuredRecord>``,
   can now be written to using Hive.
+
+- `CDAP-3887 <https://issues.cask.co/browse/CDAP-3887>`__ -
+  The CDAP Router now has a configurable timeout for idle connections, with a default
+  timeout of 15 seconds.
+
+- `CDAP-4045 <https://issues.cask.co/browse/CDAP-4045>`__ -
+  A new property master.collect.containers.log has been added to cdap-site.xml, which
+  determines if container logs are streamed back to the cdap-master process log. (This has
+  always been the default behavior). For MapR installations, this must be turned off (set
+  to false).
 
 - `CDAP-4133 <https://issues.cask.co/browse/CDAP-4133>`__ -
   Added ability to retrieve the live-info for the AppFabric system service.
@@ -184,8 +194,8 @@ Bug Fixes
   multiple outputs.
 
 - `CDAP-3761 <https://issues.cask.co/browse/CDAP-3761>`__ -
-  Fixed a problem with DBSink column names being used to filter input records fields
-  before writing them to DBSink.
+  Fixed a problem with DBSink column names not being used to filter input record fields
+  before writing to a DBSink.
 
 - `CDAP-3807 <https://issues.cask.co/browse/CDAP-3807>`__ -
   Added a fix for case sensitivity handling in DBSink.
@@ -195,10 +205,6 @@ Bug Fixes
 
 - `CDAP-3861 <https://issues.cask.co/browse/CDAP-3861>`__ -
   Fixed an issue about stopping all dependent services when a service is stopped.
-
-- `CDAP-3887 <https://issues.cask.co/browse/CDAP-3887>`__ -
-  Fixed a problem with the CDAP Router by adding a configurable timeout for idle
-  connections, with a default timeout of 15 seconds.
 
 - `CDAP-3900 <https://issues.cask.co/browse/CDAP-3900>`__ -
   Fixed a bug when querying for logs of deleted program runs.
@@ -212,12 +218,6 @@ Bug Fixes
 
 - `CDAP-4000 <https://issues.cask.co/browse/CDAP-4000>`__ -
   Fixed an issue where a stream that has a view could not be deleted cleanly.
-
-- `CDAP-4045 <https://issues.cask.co/browse/CDAP-4045>`__ -
-  A new property master.collect.containers.log has been added to cdap-site.xml, which
-  determines if container logs are streamed back to the cdap-master process log. (This has
-  always been the default behavior). For MapR installations, this must be turned off (set
-  to false).
 
 - `CDAP-4067 <https://issues.cask.co/browse/CDAP-4067>`__ -
   Fixed an issue where socket connections to the TransactionManager were not being closed.
