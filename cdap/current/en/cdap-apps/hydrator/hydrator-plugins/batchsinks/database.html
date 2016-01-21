@@ -1,0 +1,308 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <meta name="git_release" content="3.3.0">
+    <meta name="git_hash" content="7add3ab2f27af8aef0290cc0aa2734a00620d3d5">
+    <meta name="git_timestamp" content="2016-01-20 18:15:08 -0800">
+    <title>Database Batch Sink &mdash; Cask Data Application Platform 3.3.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '3.3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    
+    <!-- Amazon SQS Page Usage Logging start-->
+    <script type="text/javascript" src="https://sdk.amazonaws.com/js/aws-sdk-2.1.35.min.js"></script>
+    <script type="text/javascript" src="http://docs.cask.co/resources/scripts/aws-sqs-1.0.0.js"></script>
+    <!-- Amazon SQS Page Usage Logging end-->
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.3.0 Documentation" href="../../../index.html" />
+    <link rel="up" title="Batch Sinks" href="index.html" />
+    <link rel="next" title="Elasticsearch Batch Sink" href="elasticsearch.html" />
+    <link rel="prev" title="Cube Batch Sink" href="cube.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="elasticsearch.html" title="Elasticsearch Batch Sink"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="cube.html" title="Cube Batch Sink"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../../../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.3.0');</script>
+       
+        <li><a href="../../../table-of-contents.html">CDAP CDAP Applications</a> &raquo;</li>
+          <li><a href="../../index.html" >Cask Hydrator and ETL Pipelines</a> &raquo;</li>
+          <li><a href="../index.html" >ETL Plugins</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Batch Sinks</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="database-batch-sink">
+<span id="database-batch-sink"></span><h1>Database Batch Sink<a class="headerlink" href="#database-batch-sink" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="description">
+<span id="description"></span><h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>Writes records to a database table. Each record will be written to a row in the table.</p>
+</div>
+<div class="section" id="use-case">
+<span id="use-case"></span><h2>Use Case<a class="headerlink" href="#use-case" title="Permalink to this headline">¶</a></h2>
+<p>This sink is used whenever you need to write to a database table.
+Suppose you periodically build a recommendation model for products on your online store.
+The model is stored in a FileSet and you want to export the contents
+of the FileSet to a database table where it can be served to your users.</p>
+</div>
+<div class="section" id="properties">
+<span id="properties"></span><h2>Properties<a class="headerlink" href="#properties" title="Permalink to this headline">¶</a></h2>
+<p><strong>tableName:</strong> Name of the table to export to.</p>
+<p><strong>columns:</strong> Comma-separated list of columns in the specified table to export to.</p>
+<p><strong>columnCase:</strong> Sets the case of the column names returned by the column check query.
+Possible options are <code class="docutils literal"><span class="pre">upper</span></code> or <code class="docutils literal"><span class="pre">lower</span></code>. By default or for any other input, the column names are not modified and
+the names returned from the database are used as-is. Note that setting this property provides predictability
+of column name cases across different databases but might result in column name conflicts if multiple column
+names are the same when the case is ignored. (Optional)</p>
+<p><strong>connectionString:</strong> JDBC connection string including database name.</p>
+<p><strong>user:</strong> User identity for connecting to the specified database. Required for databases that need
+authentication. Optional for databases that do not require authentication.</p>
+<p><strong>password:</strong> Password to use to connect to the specified database. Required for databases
+that need authentication. Optional for databases that do not require authentication.</p>
+<p><strong>jdbcPluginName:</strong> Name of the JDBC plugin to use. This is the value of the &#8216;name&#8217; key
+defined in the JSON file for the JDBC plugin.</p>
+<p><strong>jdbcPluginType:</strong> Type of the JDBC plugin to use. This is the value of the &#8216;type&#8217; key
+defined in the JSON file for the JDBC plugin. Defaults to &#8216;jdbc&#8217;.</p>
+</div>
+<div class="section" id="example">
+<span id="example"></span><h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<pre class="literal-block">
+{
+    &quot;name&quot;: &quot;Database&quot;,
+    &quot;properties&quot;: {
+        &quot;tableName&quot;: &quot;users&quot;,
+        &quot;columns&quot;: &quot;id,name,email,phone&quot;,
+        &quot;connectionString&quot;: &quot;jdbc:postgresql://localhost:5432/prod&quot;,
+        &quot;user&quot;: &quot;postgres&quot;,
+        &quot;password&quot;: &quot;&quot;,
+        &quot;jdbcPluginName&quot;: &quot;postgres&quot;,
+        &quot;jdbcPluginType&quot;: &quot;jdbc&quot;
+    }
+}
+</pre>
+<p>This example connects to a database using the specified &#8216;connectionString&#8217;, which means
+it will connect to the &#8216;prod&#8217; database of a PostgreSQL instance running on &#8216;localhost&#8217;.
+Each input record will be written to a row of the &#8216;users&#8217; table, with the value for each
+column taken from the value of the field in the record. For example, the &#8216;id&#8217; field in
+the record will be written to the &#8216;id&#8217; column of that row.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../../../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.3.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../../../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../cdap-apps/index.html" rel="nofollow">CDAP Applications</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../../../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+  </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+  <h3 class="pagenavtitle"><a href="../../../table-of-contents.html">CDAP Applications: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html"> Cask Hydrator and ETL</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../overview.html"> Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../creating.html"> Creating an ETL Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../custom.html"> Creating Custom ETL Plugins</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html"> ETL Plugins</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../batchsources/index.html"> Batch Sources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../realtimesources/index.html"> Real-time Sources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../transforms/index.html"> Transformations</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html"> Batch Sinks</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="cassandra.html">Cassandra Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cube.html">Cube Batch Sink</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="">Database Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="elasticsearch.html">Elasticsearch Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hbase.html">HBase Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hdfs.html">HDFS Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="hive.html">Hive Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="kvtable.html">KeyValueTable Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mongodb.html">MongoDB Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="s3avro.html">Amazon S3 Avro Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="s3parquet.html">Amazon S3 Parquet Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="snapshotavro.html">SnapshotAvro Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="snapshotparquet.html">SnapshotParquet Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="table.html">Table Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tpfsavro.html">TimePartitionedFileSet Avro Batch Sink</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tpfsparquet.html">TimePartitionedFileSet Parquet Batch Sink</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../realtimesinks/index.html"> Real-time Sinks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../shared-plugins/index.html"> Shared Plugins</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../third-party.html"> Third-Party Jars</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../upgrade.html"> Upgrading ETL Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../data-quality/index.html"> Data Quality Application</a></li>
+</ul>
+ 
+    </nav>
+  <h4>Topics</h4>
+  <ul>
+  <li class="topless"><i>Previous:</i> <a href="cube.html"
+                        title="Previous Topic">Cube Batch Sink</a></li>
+  <li class="topless"><i>Next:</i> <a href="elasticsearch.html"
+                        title="Next Topic">Elasticsearch Batch Sink</a></li>
+  </ul>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.3.0/cdap-docs-3.3.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Cube Batch Sink" href="cube.html" />Cube Batch Sink</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Elasticsearch Batch Sink" href="elasticsearch.html" />Elasticsearch Batch Sink</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>

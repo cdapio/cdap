@@ -1,0 +1,288 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta content="Cask Data, Inc." name="author" />
+<meta content="Copyright © 2015 Cask Data, Inc." name="copyright" />
+<script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-55081520-2']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+    </script>
+    
+    <meta name="git_release" content="3.3.0">
+    <meta name="git_hash" content="7add3ab2f27af8aef0290cc0aa2734a00620d3d5">
+    <meta name="git_timestamp" content="2016-01-20 18:15:08 -0800">
+    <title>ETL Overview &mdash; Cask Data Application Platform 3.3.0 Documentation</title>
+    
+    <link rel="stylesheet" href="../_static/cdap.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+
+
+
+
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '3.3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  false
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    <!-- Amazon SQS Page Usage Logging start-->
+    <script type="text/javascript" src="https://sdk.amazonaws.com/js/aws-sdk-2.1.35.min.js"></script>
+    <script type="text/javascript" src="http://docs.cask.co/resources/scripts/aws-sqs-1.0.0.js"></script>
+    <!-- Amazon SQS Page Usage Logging end-->
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+    <link rel="top" title="Cask Data Application Platform 3.3.0 Documentation" href="../index.html" />
+    <link rel="up" title="Cask Hydrator and ETL Pipelines" href="index.html" />
+    <link rel="next" title="Creating an ETL Application" href="creating.html" />
+    <link rel="prev" title="Cask Hydrator and ETL Pipelines" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">Index</a></li>
+        <li class="right" >
+          <a href="creating.html" title="Creating an ETL Application"
+             accesskey="N">Next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Cask Hydrator and ETL Pipelines"
+             accesskey="P">Previous</a> |</li>
+        
+        <script type="text/javascript" src="../_static/version-menu.js"></script>
+        <script src="http://docs.cask.co/cdap/json-versions.js"/></script>
+        <script>window.setVersion('3.3.0');</script>
+       
+        <li><a href="../table-of-contents.html">CDAP CDAP Applications</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Cask Hydrator and ETL Pipelines</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="etl-overview">
+<span id="cdap-apps-etl-overview"></span><h1>ETL Overview<a class="headerlink" href="#etl-overview" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="a-quick-intro-to-etl">
+<h2>A Quick Intro to ETL<a class="headerlink" href="#a-quick-intro-to-etl" title="Permalink to this headline">¶</a></h2>
+<p>Most data infrastructures are front ended with an ETL system (Extract-Transform-Load). The
+purpose of the system is to:</p>
+<ul class="simple">
+<li>Extract data from one or more sources;</li>
+<li>Transform the data to fit the operational needs; and</li>
+<li>Load the data into a desired destination.</li>
+</ul>
+<p>ETL usually comprises a source, zero or more transformations and one or more sinks, in what is called
+an <em>ETL pipeline:</em></p>
+<a class="reference internal image-reference" href="../_images/etl-pipeline.png"><img alt="../_images/etl-pipeline.png" class="align-center" src="../_images/etl-pipeline.png" style="width: 6in;" /></a>
+<p class="rubric">System Artifacts, ETL Applications, and ETL Plugins</p>
+<p>An <em>Artifact</em> is a blueprint that—with a configuration file—is used to create an <em>Application</em>.</p>
+<p>CDAP provides system artifacts—<code class="docutils literal"><span class="pre">cdap-etl-batch</span></code> and <code class="docutils literal"><span class="pre">cdap-etl-realtime</span></code>—which are used to create applications that perform ETL in either batch or real time, and
+consist of a variety of sources, transformations, and sinks that are packaged together.</p>
+<p>A third system artifact, <code class="docutils literal"><span class="pre">cdap-etl-lib</span></code>, provides common resources for the other two system artifacts.</p>
+<p>The batch sources can write to any batch sinks that are available and real-time sources can
+write to any real-time sinks. Transformations work with either sinks or sources. Transformations
+can use <em>validators</em> to test data and check that it follows user-specified rules.</p>
+<p>The section <a class="reference internal" href="hydrator-plugins/index.html"><em>ETL Plugins</em></a> lists the available sources, sinks, and transformations (transforms).</p>
+<p class="rubric">ETL Applications</p>
+<p>ETL applications are created by preparing a configuration that specifies the ETL artifact and
+which source, transformations (transforms), and sinks are used to create the application. The
+configuration can either be written as a JSON file or, in the case of the CDAP UI,
+specified in-memory.</p>
+<p><strong>Batch applications</strong> can be scheduled to run periodically using a cron expression and can read
+data from batch sources using a MapReduce job. The batch application then performs any
+optional transformations before writing to one or more batch sinks.</p>
+<p><strong>Real time applications</strong> are designed to poll sources periodically to fetch the data, perform any
+optional transformations, and then write to one or more real-time sinks.</p>
+<p class="rubric">ETL Plugins</p>
+<p>The sources, transformations, and sinks are generically called plugins. Plugins provide a
+way to extend the functionality of existing artifacts. An application can be created with
+existing plugins or, if the user wishes, they can write their own source, transform, and
+sink plugins to add their own. You can write your own validator using functions supplied in
+either the <a class="reference internal" href="hydrator-plugins/shared-plugins/core.html#cdap-apps-etl-plugins-shared-core-validator"><span>CoreValidator</span></a> or implement your own.</p>
+</div>
+<div class="section" id="application-and-plugin-details">
+<h2>Application and Plugin Details<a class="headerlink" href="#application-and-plugin-details" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="creating.html"><strong>Creating an ETL Application:</strong></a> Covers using the system artifacts and ETL plugins included with CDAP to create an ETL application.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="../../reference-manual/http-restful-api/lifecycle.html"><strong>Application Lifecycle Management:</strong></a> Manage ETL Applications using CDAP&#8217;s <a class="reference external" href="../source/../../reference-manual/http-restful-api/lifecycle.html#http-restful-api-lifecycle" title="(in Cask Data Application Platform v3.3.0)"><span class="xref std std-ref">Lifecycle HTTP RESTful API</span></a>.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="custom.html"><strong>Creating Custom ETL Plugins:</strong></a> Intended for developers writing custom ETL plugins.</li>
+</ul>
+<ul class="simple">
+<li><a class="reference external" href="hydrator-plugins/index.html"><strong>ETL Plugins:</strong></a> Details on ETL plugins and exploring available plugins using RESTful APIs.</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+  <div role="note" aria-label="manuals links">
+    <h3><a href="../table-of-contents/../../index.html" rel="nofollow">CDAP Documentation v3.3.0</a></h3>
+    <ul class="this-page-menu">
+      <li><div class=""></div><a href="../table-of-contents/../../index.html" rel="nofollow">Overview</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../introduction/index.html" rel="nofollow">Introduction to CDAP</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../developers-manual/index.html" rel="nofollow">Developers’ Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../cdap-apps/index.html" rel="nofollow">CDAP Applications</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../admin-manual/index.html" rel="nofollow">Administration Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../integrations/index.html" rel="nofollow">Integrations</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../examples-manual/index.html" rel="nofollow">Examples, Guides, and Tutorials</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/index.html" rel="nofollow">Reference Manual</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../faqs/index.html" rel="nofollow">FAQs</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/release-notes.html" rel="nofollow">Release Notes</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../reference-manual/glossary.html" rel="nofollow">Glossary</a></li>
+      <li><div class=""></div><a href="../table-of-contents/../../search.html" rel="nofollow">Search</a></li>
+    </ul>
+  </div><!--
+  Copyright © 2014-2015 Cask Data, Inc.
+
+  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+  use this file except in compliance with the License. You may obtain a copy of
+  the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  License for the specific language governing permissions and limitations under
+  the License.
+-->
+
+
+    
+  <h3 class="pagenavtitle"><a href="../table-of-contents.html">CDAP Applications: Table&nbsp;of&nbsp;Contents</a></h3>
+    <nav class="pagenav">
+    <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html"> Introduction</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html"> Cask Hydrator and ETL</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href=""> Overview</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#a-quick-intro-to-etl">A Quick Intro to ETL</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#application-and-plugin-details">Application and Plugin Details</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="creating.html"> Creating an ETL Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom.html"> Creating Custom ETL Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hydrator-plugins/index.html"> ETL Plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="upgrade.html"> Upgrading ETL Applications</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../data-quality/index.html"> Data Quality Application</a></li>
+</ul>
+ 
+    </nav>
+  <h4>Topics</h4>
+  <ul>
+  <li class="topless"><i>Previous:</i> <a href="index.html"
+                        title="Previous Topic">Cask Hydrator and ETL Pipelines</a></li>
+  <li class="topless"><i>Next:</i> <a href="creating.html"
+                        title="Next Topic">Creating an ETL Application</a></li>
+  </ul>
+  <div role="note" aria-label="downloads links">
+    <h3>Downloads</h3>
+    <ul class="this-page-menu">
+      <li><a href="http://docs.cask.co/cdap/3.3.0/cdap-docs-3.3.0-web.zip"
+            rel="nofollow">Zip Archive of CDAP Documentation</a></li>
+    </ul>
+   </div>
+  
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick Search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+<div role="note" aria-label="other links">
+    <h3><a href="http://docs.cask.co/" target="_blank">Documentation</a></h3>
+    <ul class="this-page-menu">
+        <li><a href="http://docs.cask.co/cdap/index.html" target="_blank">CDAP</a></li>
+        <li><a href="http://docs.cask.co/coopr/index.html" target="_blank">Coopr</a></li>
+        <li><a href="http://docs.cask.co/tephra/index.html" target="_blank">Tephra</em></a></li>
+        <li><a href="http://docs.cask.co/tigon/index.html" target="_blank">Tigon</a></li>
+    </ul>
+</div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}
+.tg td{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg th{padding:0px 20px 0px 20px;border-width:0px;overflow:hidden;word-break:normal;font-weight:normal;}
+.tg .tg-s6z2{text-align:center;}
+.tg .tg-0ord{text-align:right;}
+.tg a{font-weight:bold;}
+</style>
+<table class="tg" width= 100%>
+  <tr>
+    <th class="tg-031e">Previous Topic: 
+    <a title="Cask Hydrator and ETL Pipelines" href="index.html" />Cask Hydrator and ETL Pipelines</a>&nbsp;&nbsp;
+    
+    </th>
+    <th class="tg-s6z2">
+        Copyright &copy; 2014-2016 Cask Data, Inc.
+    
+    </th>
+    <th class="tg-0ord">&nbsp;&nbsp;Next Topic:
+    <a title="Creating an ETL Application" href="creating.html" />Creating an ETL Application</a>
+    
+    </th>
+  </tr>
+</table>
+
+    </div>
+  </body>
+</html>
