@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright © 2015 Cask Data, Inc.
+# Copyright © 2015-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -47,7 +47,7 @@ STAGE_DIR=${TARGET_DIR}/aptrepo
 
 S3_BUCKET=${S3_BUCKET:-repository.cask.co}
 S3_REPO_PATH=${S3_REPO_PATH:-ubuntu/precise/amd64/cdap} # No leading or trailing slashes
-VERSION=${VERSION:-$(basename ${TARGET_DIR}/cdap_*.deb | cut -d_ -f2 | cut -d- -f1)}
+VERSION=${VERSION:-$(basename ${TARGET_DIR}/*.deb | head -n 1 | cut -d_ -f2 | cut -d- -f1)}
 GPG_KEY_NAME=${GPG_KEY_NAME:-${1}}
 GPG_PASSPHRASE=${GPG_PASSPHRASE:-${2}}
 __version=${VERSION/-SNAPSHOT/}
