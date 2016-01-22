@@ -22,10 +22,7 @@ import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.KeyValueTable;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.common.guice.DiscoveryRuntimeModule;
-import co.cask.cdap.common.guice.IOModule;
 import co.cask.cdap.common.guice.LocationRuntimeModule;
 import co.cask.cdap.common.namespace.AbstractNamespaceClient;
 import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
@@ -55,14 +52,11 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multiset;
 import com.google.common.collect.Sets;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.common.Cancellable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -70,7 +64,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -107,22 +100,16 @@ public abstract class NotificationTest {
     return notificationService;
   }
 
-  public static Injector createInjector(CConfiguration cConf, Module... modules) {
-
-    return Guice.createInjector(Iterables.concat(
-                                  ImmutableList.of(
-                                    new ConfigModule(cConf, new Configuration()),
-                                    new DiscoveryRuntimeModule().getInMemoryModules(),
-                                    new DataSetsModules().getStandaloneModules(),
-                                    new DataSetServiceModules().getInMemoryModules(),
-                                    new LocationRuntimeModule().getInMemoryModules(),
-                                    new MetricsClientRuntimeModule().getInMemoryModules(),
-                                    new ExploreClientModule(),
-                                    new IOModule(),
-                                    new DataFabricModules().getInMemoryModules(),
-                                    new NamespaceClientRuntimeModule().getInMemoryModules()
-                                  ),
-                                  Arrays.asList(modules))
+  protected static List<Module> getCommonModules() {
+    return ImmutableList.of(
+      new DiscoveryRuntimeModule().getInMemoryModules(),
+      new DataSetsModules().getStandaloneModules(),
+      new DataSetServiceModules().getInMemoryModules(),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new MetricsClientRuntimeModule().getInMemoryModules(),
+      new ExploreClientModule(),
+      new DataFabricModules().getInMemoryModules(),
+      new NamespaceClientRuntimeModule().getInMemoryModules()
     );
   }
 
