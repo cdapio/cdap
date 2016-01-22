@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,6 @@
 package co.cask.cdap.data2.datafabric.dataset;
 
 import co.cask.cdap.api.dataset.module.DatasetModule;
-import co.cask.cdap.api.dataset.table.OrderedTable;
 import co.cask.cdap.api.metrics.MetricsCollectionService;
 import co.cask.cdap.common.conf.CConfigurationUtil;
 import co.cask.cdap.common.conf.Constants;
@@ -183,8 +182,6 @@ public class RemoteDatasetFrameworkTest extends AbstractDatasetFrameworkTest {
     } catch (DatasetManagementException e) {
       // expected
     }
-    Assert.assertTrue(framework.hasSystemType("orderedTable"));
-    Assert.assertTrue(framework.hasSystemType(OrderedTable.class.getName()));
     try {
       framework.deleteModule(Id.DatasetModule.from(Id.Namespace.SYSTEM, "orderedTable-memory"));
       Assert.fail("Should not be able to delete a default module.");

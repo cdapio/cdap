@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@
 package co.cask.cdap.api.worker;
 
 import co.cask.cdap.api.Resources;
+import co.cask.cdap.api.TxRunnable;
+import co.cask.cdap.api.data.DatasetContext;
 import co.cask.cdap.api.dataset.Dataset;
 import co.cask.cdap.internal.api.AbstractPluginConfigurable;
 
@@ -83,7 +85,9 @@ public abstract class AbstractWorker extends AbstractPluginConfigurable<WorkerCo
    * Adds the names of {@link Dataset Datasets} used by the worker.
    * @param dataset dataset name
    * @param datasets more dataset names
-   * @deprecated datasets used in runtime need not be specified in {@link Worker#configure}
+   * @deprecated Deprecated as of 2.8.0. Dataset can be requested directly through the method
+   *             {@link DatasetContext#getDataset(String)} at runtime when
+   *             calling {@link WorkerContext#execute(TxRunnable)}.
    */
   @Deprecated
   protected void useDatasets(String dataset, String...datasets) {
@@ -96,7 +100,9 @@ public abstract class AbstractWorker extends AbstractPluginConfigurable<WorkerCo
   /**
    * Adds the names of {@link Dataset Datasets} used by the worker.
    * @param datasets dataset names
-   * @deprecated datasets used in runtime need not be specified in {@link Worker#configure}
+   * @deprecated Deprecated as of 2.8.0. Dataset can be requested directly through the method
+   *             {@link DatasetContext#getDataset(String)} at runtime when
+   *             calling {@link WorkerContext#execute(TxRunnable)}.
    */
   @Deprecated
   protected void useDatasets(Iterable<String> datasets) {

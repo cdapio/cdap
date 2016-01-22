@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,13 +33,11 @@ package co.cask.cdap.api.workflow;
 public interface WorkflowAction extends Runnable {
 
   /**
-   * Provides a specification for this {@link WorkflowAction}.
+   * Configures the {@link WorkflowAction} with the given {@link WorkflowActionConfigurer}.
    *
-   * @return An instance of {@link WorkflowSpecification}.
-   * @deprecated Use {@link AbstractWorkflowAction#configure} instead.
+   * @param configurer A {@link WorkflowActionConfigurer} to configure the action
    */
-  @Deprecated
-  WorkflowActionSpecification configure();
+  void configure(WorkflowActionConfigurer configurer);
 
   /**
    * Initializes a {@link WorkflowAction}. This method is called before the {@link #run()} method.
