@@ -73,13 +73,14 @@ class ConfigActionsFactory {
     this.EventPipe.emit('showLoadingIcon', 'Publishing Pipeline to CDAP');
 
     let removeFromUserDrafts = (adapterName) => {
+      let draftId = this.ConfigStore.getState().__ui__.draftId;
       this.mySettings
-        .get('adapterDrafts')
+        .get('adapterDrafts', true)
         .then(
           (res) => {
-            var savedDraft = this.myHelpers.objectQuery(res, this.$stateParams.namespace, adapterName);
+            var savedDraft = this.myHelpers.objectQuery(res, this.$stateParams.namespace, draftId);
             if (savedDraft) {
-              delete res[this.$stateParams.namespace][adapterName];
+              delete res[this.$stateParams.namespace][draftId];
               return this.mySettings.set('adapterDrafts', res);
             }
           },
