@@ -69,18 +69,15 @@ body.theme-cdap {
   // Mixin for generating new styles
   .alert-styles(@color) {
     #gradient > .vertical(@start-color: @color; @end-color: darken(@color, 7.5%));
-    border-color: darken(@color, 15%);
+    border: 0;
+    color: white;
   }
 
   // Apply the mixin to the alerts
   .alert-success    { .alert-styles(@alert-success-bg); }
   .alert-info       { .alert-styles(@alert-info-bg); }
   .alert-warning    { .alert-styles(@alert-warning-bg); }
-  .alert-danger     {
-    .alert-styles(@alert-danger-bg);
-    color: white;
-    border: 0;
-  }
+  .alert-danger     { .alert-styles(@alert-danger-bg); }
 
   //
   // Status text

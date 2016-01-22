@@ -65,9 +65,9 @@ body {
 }
 
 .alerts {
-  position: fixed;
-  z-index: 1029;
-  top: 114px;
+  position: absolute;
+  z-index: 999;
+  top: 117px;
   left: 0;
   right: 0;
 }
@@ -84,7 +84,13 @@ body {
       transform: translateX(-50%) translateY(-50%);
     }
   }
-  .modal-body { max-height: 75vh; overflow: auto; }
+  .modal-body {
+    max-height: 75vh;
+    overflow: auto;
+    .alerts {
+      position: fixed;
+    }
+  }
 }
 
 .modal-backdrop {
