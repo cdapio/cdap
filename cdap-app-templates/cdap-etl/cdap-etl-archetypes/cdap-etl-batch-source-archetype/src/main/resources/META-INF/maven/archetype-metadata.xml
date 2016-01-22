@@ -29,6 +29,24 @@
         <include>**/*.java</include>
       </includes>
     </fileSet>
+    <fileSet encoding="UTF-8" filtered="true" package="true">
+      <directory>docs</directory>
+      <includes>
+        <include>*.md</include>
+      </includes>
+    </fileSet>
+    <fileSet encoding="UTF-8" filtered="true" package="true">
+      <directory>widgets</directory>
+      <includes>
+        <include>*.json</include>
+      </includes>
+    </fileSet>
+    <fileSet encoding="UTF-8" filtered="true" package="true">
+      <directory></directory>
+      <includes>
+        <include>README.md</include>
+      </includes>
+    </fileSet>
   </fileSets>
 </archetype-descriptor>
 
