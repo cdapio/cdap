@@ -49,6 +49,7 @@ import co.cask.cdap.internal.app.worker.DefaultWorkerConfigurer;
 import co.cask.cdap.internal.app.workflow.DefaultWorkflowConfigurer;
 import co.cask.cdap.internal.schedule.StreamSizeSchedule;
 import co.cask.cdap.proto.Id;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 
 import java.util.HashMap;
@@ -73,16 +74,11 @@ public class DefaultAppConfigurer extends DefaultPluginConfigurer implements App
   private final Map<String, WorkerSpecification> workers = new HashMap<>();
 
   // passed app to be used to resolve default name and description
+  @VisibleForTesting
   public DefaultAppConfigurer(Id.Namespace namespace, Application app) {
     super(namespace, null, null, null);
     this.name = app.getClass().getSimpleName();
     this.description = "";
-  }
-
-  // TODO: Remove this constructor when app templates are removed and when all applications are created from artifacts
-  public DefaultAppConfigurer(Id.Namespace namespace, Application app, String configuration) {
-    this(namespace, app);
-    this.configuration = configuration;
   }
 
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,

@@ -64,9 +64,7 @@ import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramRunStatus;
 import co.cask.cdap.proto.ProgramType;
 import co.cask.cdap.store.DefaultNamespaceStore;
-import co.cask.cdap.templates.AdapterDefinition;
 import com.google.common.base.Function;
-import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -83,8 +81,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -899,100 +895,6 @@ public class DefaultStoreTest {
     ApplicationSpecification application = store.getApplication(appId);
     Assert.assertNotNull(application);
     return application.getSchedules();
-  }
-
-  @Test
-  public void testAdapterMDSOperations() throws Exception {
-    Id.Namespace namespaceId = new Id.Namespace("testAdapterMDS");
-
-    AdapterDefinition spec1 = AdapterDefinition.builder("spec1", Id.Program.from(namespaceId,
-                                                                                 "template1",
-                                                                                 ProgramType.WORKFLOW,
-                                                                                 "program1"))
-      .setConfig(GSON.toJsonTree(ImmutableMap.of("k1", "v1")).getAsJsonObject())
-      .build();
-
-    TemplateConf templateConf = new TemplateConf(5, "5", ImmutableMap.of("123", "456"));
-    AdapterDefinition spec2 = AdapterDefinition.builder("spec2", Id.Program.from(namespaceId, "template2",
-                                                                                 ProgramType.WORKER, "program2"))
-      .setConfig(GSON.toJsonTree(templateConf).getAsJsonObject())
-      .build();
-
-    store.addAdapter(namespaceId, spec1);
-    store.addAdapter(namespaceId, spec2);
-
-    // check get all adapters
-    Collection<AdapterDefinition> adapters = store.getAllAdapters(namespaceId);
-    Assert.assertEquals(2, adapters.size());
-    // apparently JsonObjects can be equal, but have different hash codes which means we can't just put
-    // them in a set and compare...
-    Iterator<AdapterDefinition> iter = adapters.iterator();
-    AdapterDefinition actual1 = iter.next();
-    AdapterDefinition actual2 = iter.next();
-    // since order is not guaranteed...
-    if (actual1.getName().equals(spec1.getName())) {
-      Assert.assertEquals(actual1, spec1);
-      Assert.assertEquals(actual2, spec2);
-    } else {
-      Assert.assertEquals(actual1, spec2);
-      Assert.assertEquals(actual2, spec1);
-    }
-
-    // Get non existing spec
-    AdapterDefinition retrievedAdapter = store.getAdapter(namespaceId, "nonExistingAdapter");
-    Assert.assertNull(retrievedAdapter);
-
-    //Retrieve specs
-    AdapterDefinition retrievedSpec1 = store.getAdapter(namespaceId, spec1.getName());
-    Assert.assertEquals(spec1, retrievedSpec1);
-    // Remove spec
-    store.removeAdapter(namespaceId, spec1.getName());
-
-    // verify the deleted spec is gone.
-    retrievedAdapter = store.getAdapter(namespaceId, spec1.getName());
-    Assert.assertNull(retrievedAdapter);
-
-    // verify the other adapter still exists
-    AdapterDefinition retrievedSpec2 = store.getAdapter(namespaceId, spec2.getName());
-    Assert.assertEquals(spec2, retrievedSpec2);
-
-    // remove all
-    store.removeAllAdapters(namespaceId);
-
-    // verify all adapters are gone
-    retrievedAdapter = store.getAdapter(namespaceId, spec2.getName());
-    Assert.assertNull(retrievedAdapter);
-  }
-
-  private static class TemplateConf {
-    private final int x;
-    private final String y;
-    private final Map<String, String> z;
-
-    public TemplateConf(int x, String y, Map<String, String> z) {
-      this.x = x;
-      this.y = y;
-      this.z = z;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      TemplateConf that = (TemplateConf) o;
-
-      return Objects.equal(x, that.x) && Objects.equal(y, that.y) && Objects.equal(z, that.z);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hashCode(x, y, z);
-    }
   }
 
   @Test

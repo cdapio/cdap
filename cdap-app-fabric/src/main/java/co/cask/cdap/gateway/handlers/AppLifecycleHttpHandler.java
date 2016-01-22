@@ -223,7 +223,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws BadRequestException, NamespaceNotFoundException {
 
     Id.Application id = validateApplicationId(namespaceId, appId);
-    // Deletion of a particular application is not allowed if that application is used by an adapter
     AppFabricServiceStatus appStatus;
     try {
       applicationLifecycleService.removeApplication(id);

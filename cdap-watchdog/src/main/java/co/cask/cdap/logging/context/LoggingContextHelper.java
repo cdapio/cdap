@@ -196,11 +196,6 @@ public final class LoggingContextHelper {
         filterBuilder.add(new MdcExpression(ApplicationLoggingContext.TAG_RUNID_ID, runId.getValue()));
       }
 
-      // Add adapter filter if required
-      if (loggingContext.getSystemTagsMap().containsKey(ApplicationLoggingContext.TAG_ADAPTER_ID)) {
-        String adapterName = loggingContext.getSystemTagsMap().get(ApplicationLoggingContext.TAG_ADAPTER_ID).getValue();
-        filterBuilder.add(new MdcExpression(ApplicationLoggingContext.TAG_ADAPTER_ID, adapterName));
-      }
       return new AndFilter(filterBuilder.build());
     }
   }
@@ -256,20 +251,16 @@ public final class LoggingContextHelper {
     builder.put(Constants.Metrics.Tag.NAMESPACE, namespace);
 
     String applicationId = getValueFromTag(loggingTags.get(ApplicationLoggingContext.TAG_APPLICATION_ID));
-    String adapterId = getValueFromTag(loggingTags.get(ApplicationLoggingContext.TAG_ADAPTER_ID));
-    // Must be an application or adapter
-    if (applicationId == null && adapterId == null) {
-      throw new IllegalArgumentException("Missing application or adapter id");
+    // Must be an application
+    if (applicationId == null) {
+      throw new IllegalArgumentException("Missing application id");
     }
-    if (applicationId != null) {
-      builder.put(Constants.Metrics.Tag.APP, applicationId);
-      LoggingContext.SystemTag entityId = getEntityId(context);
-      String entityName = getMetricsTagNameFromLoggingContext(entityId);
-      if (entityName != null) {
-        builder.put(entityName, entityId.getValue());
-      }
-    } else {
-      builder.put(Constants.Metrics.Tag.ADAPTER, adapterId);
+
+    builder.put(Constants.Metrics.Tag.APP, applicationId);
+    LoggingContext.SystemTag entityId = getEntityId(context);
+    String entityName = getMetricsTagNameFromLoggingContext(entityId);
+    if (entityName != null) {
+      builder.put(entityName, entityId.getValue());
     }
     return builder.build();
   }

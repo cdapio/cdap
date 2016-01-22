@@ -38,7 +38,7 @@ public class DeployDatasetModulesStage extends AbstractStage<ApplicationDeployab
   }
 
   /**
-   * Deploys dataset modules specified in the given adapter spec.
+   * Deploys dataset modules specified in the given application spec.
    *
    * @param input An instance of {@link ApplicationDeployable}
    */

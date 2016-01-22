@@ -100,9 +100,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       matches(uriParts, "v3", "namespaces", null, "streams", null, "lineage") ||
       matches(uriParts, "v3", "namespaces", null, "apps", null, null, null, "runs", null, "metadata")) {
       return Constants.Service.METADATA_SERVICE;
-    } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "adapters")
-      || matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
-      || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "adapters")
+    } else if ((matches(uriParts, "v3", "namespaces", null, "streams", null, "programs")
       || matches(uriParts, "v3", "namespaces", null, "data", "datasets", null, "programs")) &&
       requestMethod.equals(AllowedMethod.GET)) {
       return Constants.Service.APP_FABRIC_HTTP;
@@ -120,8 +118,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       //Log Handler Paths:
       // /v3/namespaces/<namespaceid>/apps/<appid>/<programid-type>/<programid>/logs
       // /v3/namespaces/{namespace-id}/apps/{app-id}/{program-type}/{program-id}/runs/{run-id}/logs
-      // /v3/namespaces/<namespaceid>/adapters/<adapterid>/logs
-      // /v3/namespaces/{namespace-id}/adapters/{adapter-id}/runs/{run-id}/logs (same as case 1)
       return Constants.Service.METRICS;
     } else if (uriParts.length >= 2 && uriParts[1].equals("metrics")) {
       //Metrics Search Handler Path /v3/metrics

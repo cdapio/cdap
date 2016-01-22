@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -118,7 +118,7 @@ Aggregator.prototype.stopPollingAll = function() {
 };
 
 /**
- * Pushes the adapter configuration for templates and plugins to the
+ * Pushes the ETL Application configuration for templates and plugins to the
  * FE. These configurations are UI specific and hences need to be supported
  * here.
  */
@@ -303,7 +303,7 @@ function onSocketData (message) {
 
     switch(message.action) {
       case 'template-config':
-        log.debug('Adapter config request (' + r.method + ',' + r.id + ',' + r.templateid + ',' + r.pluginid);
+        log.debug('ETL application config request (' + r.method + ',' + r.id + ',' + r.templateid + ',' + r.pluginid);
         this.pushConfiguration(r);
         break;
       case 'poll-start':
