@@ -89,7 +89,7 @@
         },
         "idea": {
           "setup_dir": "/opt",
-          "version": "14.1.4"
+          "version": "15.0.2"
         },
         "hadoop": {
           "distribution": "hdp",
