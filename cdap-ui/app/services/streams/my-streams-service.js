@@ -84,7 +84,6 @@ angular.module(PKG.name + '.services')
         myAlertOnValium.show({
           type: 'danger',
           title: 'Upload failed',
-          duration: false,
           content: 'The file could not be uploaded'
         });
         $scope.dismiss();

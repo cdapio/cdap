@@ -194,7 +194,7 @@ angular
     angular.extend($alertProvider.defaults, {
       animation: 'am-fade-and-scale',
       container: '#alerts',
-      duration: 3
+      duration: false
     });
   })
 

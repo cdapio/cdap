@@ -32,8 +32,7 @@ function ($scope, $state, myAlertOnValium, MyCDAPDataSource, myNamespace) {
     myAlertOnValium.show({
       title: 'It doesn\'t work yet',
       content: 'There is no content yet',
-      type: 'warning',
-      duration: false
+      type: 'warning'
     });
   };
 

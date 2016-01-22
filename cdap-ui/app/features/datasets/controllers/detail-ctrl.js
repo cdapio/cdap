@@ -39,5 +39,5 @@ angular.module(PKG.name + '.feature.datasets')
       namespace: $state.params.namespace,
       datasetId: $state.params.datasetId
     };
-    
+
   });

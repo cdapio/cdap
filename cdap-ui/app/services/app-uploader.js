@@ -41,8 +41,7 @@ angular.module(PKG.name + '.services')
         myAlertOnValium.show({
           type: 'danger',
           title: 'Upload failed',
-          content: err || '',
-          duration: false
+          content: err || ''
         });
       }
     }

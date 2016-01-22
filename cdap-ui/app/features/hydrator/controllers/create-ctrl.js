@@ -116,8 +116,7 @@ angular.module(PKG.name + '.feature.hydrator')
          } catch(e) {
            $alert({
              type: 'danger',
-             content: 'Error in the JSON imported.',
-             duration: false
+             content: 'Error in the JSON imported.'
            });
            console.log('ERROR in imported json: ', e);
            return;
