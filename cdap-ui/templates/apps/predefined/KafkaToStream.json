@@ -2,7 +2,7 @@
   "artifact": {
     "name": "cdap-etl-realtime",
     "scope": "SYSTEM",
-    "version": "3.3.0"
+    "version": "3.3.1-SNAPSHOT"
   },
   "config": {
     "source": {
