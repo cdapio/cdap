@@ -130,40 +130,43 @@ see the :ref:`configuration-security` section.
    * - ``explore.inactive.operation.timeout.secs``
      - ``3600``
      - Timeout value in seconds for a SQL operation which has no more results to be fetched
-   * - ``gateway.boss.threads``
+   * - ``router.boss.threads``
      - ``1``
      - Number of Netty server boss threads
-   * - ``gateway.connection.backlog``
+   * - ``router.connection.idle.timeout.secs``
+     - ``15``
+     - The number of seconds after an HTTP request completes that idle router connections are closed
+   * - ``router.connection.backlog``
      - ``20000``
      - Maximum connection backlog of Router
-   * - ``gateway.exec.threads``
+   * - ``router.exec.threads``
      - ``20``
      - Number of Netty server executor threads
-   * - ``gateway.max.cached.events.per.stream.num``
+   * - ``router.max.cached.events.per.stream.num``
      - ``5000``
      - Maximum number of a single stream's events cached before flushing
-   * - ``gateway.max.cached.stream.events.bytes``
+   * - ``router.max.cached.stream.events.bytes``
      - ``52428800``
      - Maximum size (in bytes) of stream events cached before flushing
-   * - ``gateway.max.cached.stream.events.num``
+   * - ``router.max.cached.stream.events.num``
      - ``10000``
      - Maximum number of stream events cached before flushing
-   * - ``gateway.memory.mb``
+   * - ``router.memory.mb``
      - ``2048``
      - Memory in MB for Router process in YARN
-   * - ``gateway.num.cores``
+   * - ``router.num.cores``
      - ``2``
      - Cores requested per Router container in YARN
-   * - ``gateway.num.instances``
+   * - ``router.num.instances``
      - ``1``
      - Number of Router instances in YARN
-   * - ``gateway.stream.callback.exec.num.threads``
+   * - ``router.stream.callback.exec.num.threads``
      - ``5``
      - Number of threads in stream events callback executor
-   * - ``gateway.stream.events.flush.interval.ms``
+   * - ``router.stream.events.flush.interval.ms``
      - ``150``
      - Interval at which cached stream events get flushed
-   * - ``gateway.worker.threads``
+   * - ``router.worker.threads``
      - ``10``
      - Number of Netty server worker threads
    * - ``hdfs.lib.dir``
