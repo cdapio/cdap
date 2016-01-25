@@ -62,7 +62,15 @@ angular.module(PKG.name + '.services')
             'NAME-ALREADY-EXISTS': 'A pipeline with this name already exists. Please choose a different name.',
             'DUPLICATE-NODE-NAMES': 'Every node should have a unique name to be exported/published.',
             'DUPLICATE-NAME': 'Please rename. Another node already has this name.',
-            'MISSING-CONNECTION': ' is missing connection'
+            'MISSING-CONNECTION': ' is missing connection',
+            'IMPORT-JSON': {
+              'INVALID-ARTIFACT': 'Invalid artifact information. Pipeline configuration must have valid artifact name, version & scope information.',
+              'INVALID-CONFIG': 'Invalid configuration. Pipeline configuration must have source, sinks, transforms & connections.',
+              'INVALID-SCHEDULE-INSTANCE': 'Batch pipelines requires schedule and realtime pipeline requires instance properties to be set.',
+              'INVALID-ARTIFACT-NODES': 'Missing artifact information in plugins. Please make sure all the plugins have valid artifact information.',
+              'INVALID-NODES-CONNECTIONS': 'The config has connections to plugins that is not part of source, sinks or transforms. Please check your connections for plugin IDs',
+              'INVALID-DAG-CYCLES': 'The pipeline config uploaded is having cyclic connection. Please make sure the Directed-Acyclic-Graph (connections) does not have cycles.'
+            }
           },
           pluginDoesNotExist: 'This plugin does not exist: '
         },

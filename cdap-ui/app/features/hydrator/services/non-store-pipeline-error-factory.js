@@ -198,6 +198,89 @@ let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
   });
 };
 
+let hasValidArtifact = (importConfig) => {
+  return importConfig.artifact && importConfig.artifact.name.length && importConfig.artifact.version.length && importConfig.artifact.scope.length;
+};
+let hasValidConfig = (importConfig) => {
+  return importConfig.config.source && importConfig.config.sinks.length && importConfig.config.connections.length;
+};
+let hasValidArtifactsForNodes = (importConfig) => {
+  let config = importConfig.config;
+  return [config.source].concat(config.sinks)
+    .concat( (config.transforms || []) )
+    .filter(node => !node.plugin.artifact)
+    .length === 0;
+};
+let hasValidScheduleOrInstance = (importConfig) => {
+  let pipelineType = importConfig.artifact.name === 'cdap-etl-batch'? 'batch': 'realtime';
+  return (pipelineType === 'batch'? importConfig.config.schedule : importConfig.config.instance);
+};
+let hasValidNodesConnections = (importConfig) => {
+  let config = importConfig.config;
+  let isValid = true;
+  let nodesMap = {};
+  [config.source].concat(config.sinks)
+    .concat( (config.transforms || []) )
+    .forEach( node => nodesMap[node.name] = node);
+  config.connections.forEach( conn => {
+    isValid = isValid && (nodesMap[conn.from] && nodesMap[conn.to]);
+  });
+  return isValid;
+};
+
+let hasValidDAG = (importConfig) => {
+  let config = importConfig.config;
+  let nodesMap = {};
+  let hasCycle = true;
+  let adjacencyMap = {};
+  [config.source]
+    .concat(config.sinks)
+    .concat((config.transforms || []))
+    .forEach( node => nodesMap[node.name] = node );
+  config.connections.forEach( conn => {
+    if (Array.isArray(adjacencyMap[conn.from])) {
+      adjacencyMap[conn.from].push(conn.to);
+    } else {
+      adjacencyMap[conn.from] = [conn.to];
+    }
+  });
+  let traverseMap = (node) => {
+    if (!node || hasCycle) { return;}
+    node.forEach( n => {
+      if (nodesMap[n].visited) {
+        hasCycle = false;
+        return;
+      }
+      nodesMap[n].visited = true;
+      traverseMap(adjacencyMap[n]);
+    });
+  };
+  traverseMap(adjacencyMap[config.source.name]);
+  return hasCycle;
+};
+
+let validateImportJSON = (GLOBALS, config) => {
+  if (!hasValidArtifact(config)) {
+    return GLOBALS.en.hydrator.studio.error['IMPORT-JSON']['INVALID-ARTIFACT'];
+  }
+  if (!hasValidConfig(config)) {
+    return GLOBALS.en.hydrator.studio.error['IMPORT-JSON']['INVALID-CONFIG'];
+  }
+  if (!hasValidArtifactsForNodes(config)) {
+    return GLOBALS.en.hydrator.studio.error['IMPORT-JSON']['INVALID-ARTIFACT-NODES'];
+  }
+  if(!hasValidScheduleOrInstance(config)) {
+    return GLOBALS.en.hydrator.studio.error['IMPORT-JSON']['INVALID-SCHEDULE-INSTANCE'];
+  }
+  if (!hasValidNodesConnections(config)) {
+    return GLOBALS.en.hydrator.studio.error['IMPORT-JSON']['INVALID-NODES-CONNECTIONS'];
+  }
+  if (!hasValidDAG(config)) {
+    return GLOBALS.en.hydrator.studio.error['IMPORT-JSON']['INVALID-DAG-CYCLES'];
+  }
+  return false;
+};
+
 let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
   // If we had used SystemJs or requirejs this could have been avoided.
   return {
@@ -208,7 +291,8 @@ let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
     hasOnlyOneSource: hasOnlyOneSource.bind(null, myHelpers, GLOBALS),
     hasAtLeastOneSink: hasAtLeastOneSink.bind(null, myHelpers, GLOBALS),
     isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers),
-    allNodesConnected: allNodesConnected.bind(null, GLOBALS)
+    allNodesConnected: allNodesConnected.bind(null, GLOBALS),
+    validateImportJSON: validateImportJSON.bind(null, GLOBALS)
   };
 };
 

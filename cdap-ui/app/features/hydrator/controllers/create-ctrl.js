@@ -16,7 +16,7 @@
 
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorCreateController', function($timeout, $state, $alert, myPipelineTemplatesApi, GLOBALS, CanvasFactory) {
+  .controller('HydratorCreateController', function($timeout, $state, $alert, myPipelineTemplatesApi, GLOBALS, CanvasFactory, NonStorePipelineErrorFactory) {
 
     var vm = this;
     vm.GLOBALS = GLOBALS;
@@ -109,23 +109,31 @@ angular.module(PKG.name + '.feature.hydrator')
       reader.readAsText(files[0], 'UTF-8');
 
       reader.onload = function (evt) {
-         var data = evt.target.result;
-         var jsonData;
-         try {
-           jsonData = JSON.parse(data);
-         } catch(e) {
-           $alert({
-             type: 'danger',
-             content: 'Error in the JSON imported.',
-             duration: false
-           });
-           console.log('ERROR in imported json: ', e);
-           return;
-         }
-         $state.go('hydrator.create.studio', {
-           data: jsonData,
-           type: jsonData.artifact.name
-         });
+        var data = evt.target.result;
+        var jsonData;
+        try {
+          jsonData = JSON.parse(data);
+        } catch(e) {
+          $alert({
+            type: 'danger',
+            content: 'Parse error in the JSON imported.',
+            duration: false
+          });
+          return;
+        }
+        let isNotValid = NonStorePipelineErrorFactory.validateImportJSON(jsonData);
+        if (isNotValid) {
+          $alert({
+            type: 'danger',
+            content: isNotValid,
+            duration: false
+          });
+        } else {
+          $state.go('hydrator.create.studio', {
+            data: jsonData,
+            type: jsonData.artifact.name
+          });
+        }
       };
     };
 
