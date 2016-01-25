@@ -12,6 +12,7 @@ FAQs Table of Contents
     Overview <index>
     General Questions<general>
     CDAP <cdap>
+    Hydrator <hydrator>
     Cloudera Manager <cloudera-manager>
 ..     Applications <applications>
 ..     User Interface <user-interface>

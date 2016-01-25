@@ -15,6 +15,7 @@ FAQs
 
     General Questions <general>
     CDAP <cdap>
+    Hydrator <hydrator>
     Cloudera Manager <cloudera-manager>
 
 Additional Resources
