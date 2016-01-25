@@ -178,12 +178,12 @@ angular.module(PKG.name + '.feature.hydrator')
             return;
           }
           if (Object.keys(draftsList).length) {
-            angular.forEach(res[$stateParams.namespace], function(value) {
+            angular.forEach(res[$stateParams.namespace], function(value, key) {
               vm.statusCount.draft++;
               vm.pipelineList.push({
                 isDraft: true,
                 name: value.name,
-                id: value.__ui__.draftId,
+                id: value.__ui__.draftId || key,
                 artifact: value.artifact,
                 description: myHelpers.objectQuery(value, 'description'),
                 _status: 'Draft',
