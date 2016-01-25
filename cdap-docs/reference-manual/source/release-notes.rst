@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc 
     :description: Release notes for the Cask Data Application Platform
-    :copyright: Copyright © 2014-2015 Cask Data, Inc.
+    :copyright: Copyright © 2014-2016 Cask Data, Inc.
 
 :hide-nav: true
 :orphan:
@@ -24,11 +24,44 @@ Cask Data Application Platform Release Notes
    :depth: 2
 
 
+`Release 2.8.3 <http://docs.cask.co/cdap/2.8.3/index.html>`__
+=============================================================
+
+New Features
+------------
+- Updated the version of Tephra used in CDAP to v0.4.4
+  (`CDAP-4181 <https://issues.cask.co/browse/CDAP-4181>`__).
+
+
+Bug Fixes
+---------
+
+- Fixed an issue about stopping all dependent services when a service is stopped
+  (`CDAP-3861 <https://issues.cask.co/browse/CDAP-3861>`__).
+
+- Fixed an issue where socket connections to the TransactionManager were not being closed
+  (`CDAP-4067 <https://issues.cask.co/browse/CDAP-4067>`__).
+
+- Fixed an issue that caused worker threads to go into an infinite recursion when 
+  exceptions were being thrown in channel handlers
+  (`CDAP-4092 <https://issues.cask.co/browse/CDAP-4092>`__).
+
+
+Improvements
+------------
+
+- Added a tool (HBaseQueueDebugger) that counts consumed and unconsumed entries in a flowlet queue
+  (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
+
+- The CDAP Router now has a configurable timeout for idle connections, with a default timeout of 15 seconds
+  (`CDAP-3887 <https://issues.cask.co/browse/CDAP-3887>`__).
+
+
 `Release 2.8.2 <http://docs.cask.co/cdap/2.8.2/index.html>`__
 =============================================================
 
-Bug Fix
--------
+Bug Fixes
+---------
 
 - Fixed a Bower dependency error in the CDAP UI
   (`CDAP-3010 <https://issues.cask.co/browse/CDAP-3010>`__).
