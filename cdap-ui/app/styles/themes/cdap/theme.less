@@ -45,6 +45,8 @@ body.theme-cdap {
   }
   // Common styles
   .alert {
+    border: 0;
+    color: white;
     text-shadow: 0 1px 0 rgba(255,255,255,.2);
     width: 100%;
     text-overflow: ellipsis;
@@ -66,18 +68,11 @@ body.theme-cdap {
     }
   }
 
-  // Mixin for generating new styles
-  .alert-styles(@color) {
-    #gradient > .vertical(@start-color: @color; @end-color: darken(@color, 7.5%));
-    border: 0;
-    color: white;
-  }
-
   // Apply the mixin to the alerts
-  .alert-success    { .alert-styles(@alert-success-bg); }
-  .alert-info       { .alert-styles(@alert-info-bg); }
-  .alert-warning    { .alert-styles(@alert-warning-bg); }
-  .alert-danger     { .alert-styles(@alert-danger-bg); }
+  .alert-success    { background-color: @alert-success-bg; }
+  .alert-info       { background-color: @alert-info-bg; }
+  .alert-warning    { background-color: @alert-warning-bg; }
+  .alert-danger     { background-color: @alert-danger-bg; }
 
   //
   // Status text
