@@ -1,43 +1,46 @@
 .. meta::
     :author: Cask Data, Inc.
     :description: Frequently Asked Questions about starting the Cask Data Application Platform
-    :copyright: Copyright © 2015 Cask Data, Inc.
+    :copyright: Copyright © 2016 Cask Data, Inc.
 
 :titles-only-global-toc: true
 
 .. _faqs-hydrator:
 
-===============
-FAQs: HYDRATOR
-===============
+===================
+FAQs: Cask Hydrator
+===================
 
-What should I do when I see the following errors in User Interface?
+What should I do if I see any of these errors in the Cask Hydrator User Interface?
+----------------------------------------------------------------------------------
+- **Error parsing widgets JSON for the plugin <plugin-name>**
+
+  This error means the widget JSON for the particular plugin has an error in its JSON, such as: 
+
+  - You are missing a comma character ('``,``') in your JSON
+  - You have a missing a double quote character ('``"``') in your JSON
+  - You have a value for a key that is not a valid JSON value (for instance, ``NaN``)
+
+  The fastest way to fix these issues is to run the plugin's Widget JSON through a JSON linter 
+  to check that it is valid JSON.
+
+- **No widgets JSON found for the plugin <plugin-name>**
+
+  This error means that the CDAP UI Service could not find the widget JSON for the plugin that you are 
+  currently working with. As part of plugin deployment, a JAR and a JSON file are deployed with a plugin,
+  as described in the :ref:`<cdap-apps-custom-etl-plugins-plugin-packaging>`.
+
+In which order do plugin properties appear in the Cask Hydrator UI?
 -------------------------------------------------------------------
-**Error parsing widgets JSON for the plugin**
+The properties are specified as a list inside the configuration groups. Properties of the plugin
+will appear inside the group in the same order as they are listed.
 
-This error means the widget JSON for the particular plugin has error in its JSON. The most likely case why this error happens could be because one of the following reasons,
+What happens if I don't have a property of the plugin in the Widget JSON?
+-------------------------------------------------------------------------
+The Cask Hydrator UI will create a separate group named 'Generic', add all properties as 
+part of that group, and (by default) display all properties in a textbox widget.
 
-  - You are missing a comma (',') in your JSON
-  - You have a missing double quotes ('"') in your JSON
-  - You have value for key that is not a valid JSON value (for instance, NaN)
-
-The fastest way to fix this issue is to run the plugin's Widget JSON through a JSON linter to check if it is a valid JSON.
-
-**No widgets JSON found for the plugin**
-
-This error means the backend could not find the widget JSON for the plugin that you are currently working with. As part of plugin deployment, a JAR and a JSON file are deployed with a plugin. <REFERENCE to WIDGET-JSON DOCUMENTATION SECTION>
-
-What is the order in which plugin properties appear in UI?
-----------------------------------------------------------
-
-The properties are specified as a list inside the configuration groups. So the properties of the plugin will appear inside the group in the same order as they are listed.
-
-What happens if I don't have a property of the plugin in Widget JSON?
----------------------------------------------------------------------
-
-The Hydrator UI will create a separate group named 'Generic' and adds all properties as part of that particular group and defaults all properties to textbox widget.
-
-What happens when I use an invalid widget in Widget JSON?
----------------------------------------------------------
-
-In the case when Widget JSON has a non-existant widget the Hydrator UI defaults to a textbox field.
+What happens when I use an invalid widget in the Widget JSON?
+-------------------------------------------------------------
+In a case where the Widget JSON includes a non-existant (or unknown) widget, 
+the Cask Hydrator UI defaults to a textbox field.
