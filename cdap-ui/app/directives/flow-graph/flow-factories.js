@@ -23,7 +23,7 @@ angular.module(PKG.name+'.commons')
     return $window.dagreD3;
   })
 
-  .factory('FlowFactories', function () {
+  .factory('FlowFactories', function ($tooltip) {
     function prepareGraph (scope) {
       scope.translateX = 0;
       scope.translateY = 0;
@@ -168,7 +168,7 @@ angular.module(PKG.name+'.commons')
 
       scope.svg = d3.select(scope.selector);
       scope.svgGroup = d3.select(scope.selector + ' g');
-      scope.svg.call(scope.tip);
+      // scope.svg.call(scope.tip);
       scope.svg.call(scope.drag);
 
       // First set nodes and edges.
@@ -226,10 +226,10 @@ angular.module(PKG.name+'.commons')
           .on('click', scope.toggleToken);
       }
 
-      scope.svg
-        .selectAll('g.node text')
-        .on('mouseover', scope.handleShowTip)
-        .on('mouseout', scope.handleHideTip);
+      // scope.svg
+      //   .selectAll('g.node text')
+      //   .on('mouseover', scope.handleShowTip)
+      //   .on('mouseout', scope.handleHideTip);
 
 
     }

@@ -92,7 +92,8 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
           parent.insert('text')
             .attr('y', -bbox.height/4)
             .text('x' + instances)
-            .attr('class', 'flow-shapes flowlet-instance-count');
+            .attr('class', 'flow-shapes flowlet-instance-count')
+            .attr('id', 'instance-' + node.elem.__data__);
 
           var leafOptions = {
             classNames: ['flowlet-events'],
@@ -105,7 +106,8 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
             .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
             .text(numberFilter(scope.model.metrics[scope.labelMap[node.elem.__data__].name]))
-            .attr('class', 'flow-shapes flowlet-event-count');
+            .attr('class', 'flow-shapes flowlet-event-count')
+            .attr('id', 'metrics-' + node.elem.__data__);
 
           node.intersect = function(point) {
             return dagreD3.intersect.circle(node, flowletCircleRadius, point);
@@ -140,7 +142,8 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
             .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
             .text(numberFilter(scope.model.metrics[scope.labelMap[node.elem.__data__].name]))
-            .attr('class', 'flow-shapes stream-event-count');
+            .attr('class', 'flow-shapes stream-event-count')
+            .attr('id', 'metrics-' + node.elem.__data__);
 
           node.intersect = function(point) {
             return dagreD3.intersect.polygon(node, points, point);
@@ -193,6 +196,22 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
 
       scope.arrowheadRule = function() {
         return false;
+      };
+
+      scope.update = function () {
+        // UPDATE INSTANCE COUNT
+        angular.forEach(scope.model.instances, function (value, key) {
+          d3.select('#instance-' + key)
+            .text('x' + value);
+        });
+
+        // UPDATE METRICS COUNT
+        angular.forEach(scope.model.metrics, function (value, key) {
+          d3.select('#metrics-' + key)
+            .text(value);
+        });
+
+
       };
 
       /**

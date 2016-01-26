@@ -26,7 +26,6 @@ angular.module(PKG.name+'.commons')
           firstRender = false;
           $scope.centerImage();
         }
-        console.log('test', $scope.model);
         $scope.update();
       }
     }
