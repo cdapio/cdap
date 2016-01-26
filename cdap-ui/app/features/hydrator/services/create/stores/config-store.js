@@ -638,6 +638,7 @@ class ConfigStore {
   saveAsDraft() {
     this.ConsoleActionsFactory.resetMessages();
     let config = this.getState();
+    config.__ui__.draftId = config.__ui__.draftId || this.uuid.v4();
     let checkForDuplicateDrafts = (config, draftsMap = {}) => {
       return Object.keys(draftsMap).filter(
         draft => {
@@ -647,7 +648,6 @@ class ConfigStore {
       ).length > 0;
     };
     let saveDraft = (config, draftsMap = {}) => {
-      config.__ui__.draftId = config.__ui__.draftId || this.uuid.v4();
       draftsMap[config.__ui__.draftId] = config;
       return draftsMap;
     };
