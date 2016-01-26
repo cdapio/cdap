@@ -216,6 +216,7 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
           labelTooltips[label.__data__] = $tooltip(angular.element(label), {
             title: label.__data__,
             trigger: 'manual',
+            delay: { show: 300, hide: 0 },
             target: angular.element(label),
             container: '.diagram-container'
           });
@@ -223,10 +224,10 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
 
         d3.selectAll('.node-label')
           .on('mouseover', function (node) {
-            labelTooltips[node].show();
+            labelTooltips[node].enter();
           })
           .on('mouseout', function (node) {
-            labelTooltips[node].hide();
+            labelTooltips[node].leave();
           });
       };
 
