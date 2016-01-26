@@ -47,7 +47,7 @@ results.
 
 
 .. |cloudera-install| replace:: **Configuring and Installing:**
-.. _cloudera-install: ../../../admin-manual/installation/cloudera/index.html
+.. _cloudera-install: ../../../admin-manual/installation/cloudera.html
 
 - |cloudera-install|_ Configuring and installing CDAP using **Cloudera Manager** *(Administration Manual)*
 
@@ -64,4 +64,3 @@ results.
    :width: 800px
    :align: center
    :class: bordered-image
-
