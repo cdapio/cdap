@@ -47,10 +47,10 @@ angular.module(PKG.name + '.services')
           info: {
             'DEFAULT-REFERENCE': 'Please select a plugin to view reference information',
             'NO-REFERENCE': 'Currently, no reference information is available for this plugin.',
-            'NO-CONFIG': 'No widgets JSON found for the plugin. Please check documentation on how to add.',
+            'NO-CONFIG': 'No configuration found for the plugin.',
           },
           error: {
-            'SYNTAX-CONFIG-JSON': 'Error parsing widgets JSON for the plugin. Please check the documentation to fix.',
+            'SYNTAX-CONFIG-JSON': 'Syntax error in the configuration JSON for the plugin.',
             'SEMANTIC-CONFIG-JSON': 'Semantic error in the configuration JSON for the plugin.',
             'GENERIC-MISSING-REQUIRED-FIELDS': 'Please provide required information.',
             'MISSING-REQUIRED-FIELDS': ' is missing required fields',

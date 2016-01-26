@@ -79,6 +79,12 @@ Operations
 - |tx-maintenance|_ Periodic maintenance of the **Transaction Service.**
 
 
+.. |troubleshooting| replace:: **Troubleshooting:**
+.. _troubleshooting: troubleshooting.html
+
+- |troubleshooting|_ Selected examples of potential **problems and possible resolutions.**
+
+
 .. rubric:: Command Line Interface
 
 Most of the administrative operations are also available more conveniently through the

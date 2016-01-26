@@ -46,7 +46,7 @@ class PluginConfigFactory {
               throw 'NO_JSON_FOUND';
             }
           } catch(e) {
-            throw (e && e.name === 'SyntaxError')? 'CONFIG_SYNTAX_JSON_ERROR': e;
+            throw 'CONFIG_SYNTAX_JSON_ERROR';
           }
         },
         () => {
