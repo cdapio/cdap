@@ -27,7 +27,6 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
     <cdap.version>3.4.0-SNAPSHOT</cdap.version>
     <hadoop.version>2.3.0</hadoop.version>
   </properties>

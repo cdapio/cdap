@@ -247,7 +247,7 @@ be used outside of a workflow. When run from within a workflow, the token is gua
 be non-null.
 
 The `WorkflowToken Java API 
-<../../reference-manual/javadocs/co/cask/cdap/api/workflow/WorkflowToken.html)>`__
+<../../reference-manual/javadocs/co/cask/cdap/api/workflow/WorkflowToken.html>`__
 includes methods for getting values for different keys, scopes, and nodes. The same
 key can be added to the workflow by different nodes, and there are methods to return a map of those
 key-value pairs. Convenience methods allow the putting and getting of non-string values
