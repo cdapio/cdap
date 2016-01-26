@@ -17,8 +17,8 @@ What should I do if I see any of these errors in the Cask Hydrator User Interfac
 
   This error means the widget JSON for the particular plugin has an error in its JSON, such as: 
 
-  - You are missing a comma character ('``,``') in your JSON
-  - You have a missing a double quote character ('``"``') in your JSON
+  - You are missing a comma character ('``,``') in the JSON
+  - You have a missing a double quote character ('``"``') in the JSON
   - You have a value for a key that is not a valid JSON value (for instance, ``NaN``)
 
   The fastest way to fix these issues is to run the plugin's Widget JSON through a JSON linter 
@@ -42,5 +42,5 @@ part of that group, and (by default) display all properties in a textbox widget.
 
 What happens when I use an invalid widget in the Widget JSON?
 -------------------------------------------------------------
-In a case where the Widget JSON includes a non-existant (or unknown) widget, 
+In a case where the Widget JSON includes a non-existent (or unknown) widget, 
 the Cask Hydrator UI defaults to a textbox field.
