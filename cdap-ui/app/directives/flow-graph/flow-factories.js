@@ -140,6 +140,8 @@ angular.module(PKG.name+'.commons')
       scope.centerImage = function() {
         // Center svg.
         var initialScale = 1;
+        scope.svg.attr('height', scope.g.graph().height * initialScale + 40);
+
         var svgWidth = scope.svg.node().getBoundingClientRect().width;
         var svgHeight = scope.svg.node().getBoundingClientRect().height;
         if (svgWidth - scope.g.graph().width <= 0) {
@@ -151,12 +153,12 @@ angular.module(PKG.name+'.commons')
           scope.translateY = 20;
           scope.currentScale = initialScale;
         }
-
+        console.log('height', svgHeight);
         zoom
           .translate([scope.translateX, scope.translateY])
           .scale(scope.currentScale)
           .event(scope.svg);
-        scope.svg.attr('height', scope.g.graph().height * initialScale + 40);
+
       };
 
 
