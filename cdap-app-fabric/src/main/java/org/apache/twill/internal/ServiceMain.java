@@ -163,12 +163,16 @@ public abstract class ServiceMain {
   /**
    * Creates a {@link ZKClientService}.
    */
-  protected static ZKClientService createZKClient(String zkConnectStr) {
+  protected static ZKClientService createZKClient(String zkConnectStr, String appName) {
     return ZKClientServices.delegate(
-      ZKClients.reWatchOnExpire(
-        ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(zkConnectStr).build(),
-          RetryStrategies.fixDelay(1, TimeUnit.SECONDS))));
+      ZKClients.namespace(
+        ZKClients.reWatchOnExpire(
+          ZKClients.retryOnFailure(
+            ZKClientService.Builder.of(zkConnectStr).build(),
+            RetryStrategies.fixDelay(1, TimeUnit.SECONDS)
+          )
+        ), "/" + appName
+      ));
   }
 
   private void configureLogger() {
@@ -262,10 +266,11 @@ public abstract class ServiceMain {
   /**
    * A simple service for creating/remove ZK paths needed for {@link AbstractTwillService}.
    */
-  protected static final class TwillZKPathService extends AbstractIdleService {
+  protected static class TwillZKPathService extends AbstractIdleService {
+
+    protected static final long TIMEOUT_SECONDS = 5L;
 
     private static final Logger LOG = LoggerFactory.getLogger(TwillZKPathService.class);
-    private static final long TIMEOUT_SECONDS = 5L;
 
     private final ZKClient zkClient;
     private final String path;
@@ -289,4 +294,3 @@ public abstract class ServiceMain {
     }
   }
 }
-
