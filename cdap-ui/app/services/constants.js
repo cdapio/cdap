@@ -65,13 +65,12 @@ angular.module(PKG.name + '.services')
             'MISSING-CONNECTION': ' is missing connection',
             'IMPORT-JSON': {
               'INVALID-ARTIFACT': 'Invalid artifact information. Pipeline configuration must have valid artifact name, version & scope information.',
-              'INVALID-CONFIG': 'Invalid configuration. Pipeline configuration must have a config property.',
-              'INVALID-SOURCE': 'Hydrator pipeline requies atleast one source. Please add a source plugin to the pipeline.',
-              'INVALID-SINKS': 'Hydrator pipeline requires atlease one sink. Please add a sink plugin to the pipeline.',
-              'INVALID-CONNECTIONS': 'Hydrator pipeline requires atleast a connection. Please make sure the pipeline config has connections.',
-              'INVALID-SCHEDULE': 'Batch pipeline requires a schedule. Please make sure the pipeline config has schedule.',
-              'INVALID-INSTANCE': 'Realtime pipeline requires number of instance. Please make sure the pipeline config has instance information.',
-              'INVALID-NODES-CONNECTIONS': 'The config has connections to plugins that is not part of source, sinks or transforms. Please check your connections for plugin IDs'
+              'INVALID-CONFIG': 'Invalid configuration JSON specified for the pipeline.',
+              'INVALID-SOURCE': 'Missing source in the Hydrator pipeline. Please add a source.',
+              'INVALID-SINKS': 'Missing sink in the Hydrator pipeline. Please add a sink.',
+              'INVALID-SCHEDULE': 'Missing schedule for the Batch pipeline. Please provide a schedule.',
+              'INVALID-INSTANCE': 'Missing instance count for Realtime pipeline. Please provide an instance count.',
+              'INVALID-NODES-CONNECTIONS': 'Unknown node in connections.'
             }
           },
           pluginDoesNotExist: 'This plugin does not exist: '
