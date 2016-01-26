@@ -218,39 +218,20 @@ let hasValidInstance = (importConfig, GLOBALS) => {
   let isRealtimePipeline = importConfig.artifact.name === GLOBALS.etlRealtime;
   return !isRealtimePipeline? true: importConfig.config.instance;
 };
-
-let hasValidDAG = (importConfig) => {
+let hasValidNodesConnections = (importConfig) => {
   if (!importConfig.config.connections) {
     return true;
   }
   let config = importConfig.config;
+  let isValid = true;
   let nodesMap = {};
-  let hasCycle = true;
-  let adjacencyMap = {};
-  [config.source]
-    .concat(config.sinks)
-    .concat((config.transforms || []))
-    .forEach( node => nodesMap[node.name] = node );
+  [config.source].concat(config.sinks)
+    .concat( (config.transforms || []) )
+    .forEach( node => nodesMap[node.name] = node);
   config.connections.forEach( conn => {
-    if (Array.isArray(adjacencyMap[conn.from])) {
-      adjacencyMap[conn.from].push(conn.to);
-    } else {
-      adjacencyMap[conn.from] = [conn.to];
-    }
+    isValid = isValid && (nodesMap[conn.from] && nodesMap[conn.to]);
   });
-  let traverseMap = (node) => {
-    if (!node || hasCycle) { return;}
-    node.forEach( n => {
-      if (nodesMap[n].visited) {
-        hasCycle = false;
-        return;
-      }
-      nodesMap[n].visited = true;
-      traverseMap(adjacencyMap[n]);
-    });
-  };
-  traverseMap(adjacencyMap[config.source.name]);
-  return hasCycle;
+  return isValid;
 };
 
 let validateImportJSON = (myHelpers, GLOBALS, config) => {
@@ -262,7 +243,7 @@ let validateImportJSON = (myHelpers, GLOBALS, config) => {
     { fn: hasValidInstance, messagePath: errorPath.concat(['INVALID-INSTANCE']) },
     { fn: hasValidSource, messagePath: errorPath.concat(['INVALID-SOURCE']) },
     { fn: hasValidSinks, messagePath: errorPath.concat(['INVALID-SINKS']) },
-    { fn: hasValidDAG, messagePath: errorPath.concat(['INVALID-DAG-CYCLES']) }
+    { fn: hasValidNodesConnections, messagePath: errorPath.concat(['INVALID-NODES-CONNECTIONS']) }
   ];
   let i;
   for(i=0; i<validations.length; i++) {

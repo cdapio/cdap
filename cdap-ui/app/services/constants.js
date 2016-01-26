@@ -71,7 +71,7 @@ angular.module(PKG.name + '.services')
               'INVALID-CONNECTIONS': 'Hydrator pipeline requires atleast a connection. Please make sure the pipeline config has connections.',
               'INVALID-SCHEDULE': 'Batch pipeline requires a schedule. Please make sure the pipeline config has schedule.',
               'INVALID-INSTANCE': 'Realtime pipeline requires number of instance. Please make sure the pipeline config has instance information.',
-              'INVALID-DAG-CYCLES': 'The pipeline config uploaded is having cyclic connection. Please make sure the Directed-Acyclic-Graph (connections) does not have cycles.'
+              'INVALID-NODES-CONNECTIONS': 'The config has connections to plugins that is not part of source, sinks or transforms. Please check your connections for plugin IDs'
             }
           },
           pluginDoesNotExist: 'This plugin does not exist: '
