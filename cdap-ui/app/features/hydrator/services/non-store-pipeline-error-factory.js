@@ -210,13 +210,6 @@ let hasValidSinks = (importConfig) => {
 let hasValidConfig = (importConfig) => {
   return importConfig.config;
 };
-let hasValidArtifactsForNodes = (importConfig) => {
-  let config = importConfig.config;
-  return [config.source].concat(config.sinks)
-    .concat( (config.transforms || []) )
-    .filter(node => !node.plugin.artifact)
-    .length === 0;
-};
 let hasValidSchedule = (importConfig, GLOBALS) => {
   let isBatchPipeline = importConfig.artifact.name === GLOBALS.etlBatch;
   return !isBatchPipeline? true: importConfig.config.schedule;
@@ -269,7 +262,6 @@ let validateImportJSON = (myHelpers, GLOBALS, config) => {
     { fn: hasValidInstance, messagePath: errorPath.concat(['INVALID-INSTANCE']) },
     { fn: hasValidSource, messagePath: errorPath.concat(['INVALID-SOURCE']) },
     { fn: hasValidSinks, messagePath: errorPath.concat(['INVALID-SINKS']) },
-    { fn: hasValidArtifactsForNodes, messagePath: errorPath.concat(['INVALID-ARTIFACT-NODES']) },
     { fn: hasValidDAG, messagePath: errorPath.concat(['INVALID-DAG-CYCLES']) }
   ];
   let i;
