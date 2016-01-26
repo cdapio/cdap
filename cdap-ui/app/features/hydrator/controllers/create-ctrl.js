@@ -129,12 +129,25 @@ angular.module(PKG.name + '.feature.hydrator')
             duration: false
           });
         } else {
+          if (!jsonData.config.connections) {
+            jsonData.config.connections = generateLinearConnections(jsonData.config);
+          }
           $state.go('hydrator.create.studio', {
             data: jsonData,
             type: jsonData.artifact.name
           });
         }
       };
+    };
+
+    let generateLinearConnections = (config) => {
+      let nodes = [config.source].concat(config.transforms || []).concat(config.sinks);
+      let connections = [];
+      let i;
+      for (i=0; i<nodes.length - 1 ; i++) {
+        connections.push({ from: nodes[i].name, to: nodes[i+1].name });
+      }
+      return connections;
     };
 
     this.openFileBrowser = function() {

@@ -65,10 +65,13 @@ angular.module(PKG.name + '.services')
             'MISSING-CONNECTION': ' is missing connection',
             'IMPORT-JSON': {
               'INVALID-ARTIFACT': 'Invalid artifact information. Pipeline configuration must have valid artifact name, version & scope information.',
-              'INVALID-CONFIG': 'Invalid configuration. Pipeline configuration must have source, sinks, transforms & connections.',
-              'INVALID-SCHEDULE-INSTANCE': 'Batch pipelines requires schedule and realtime pipeline requires instance properties to be set.',
+              'INVALID-CONFIG': 'Invalid configuration. Pipeline configuration must have a config property.',
+              'INVALID-SOURCE': 'Hydrator pipeline requies atleast one source. Please add a source plugin to the pipeline.',
+              'INVALID-SINKS': 'Hydrator pipeline requires atlease one sink. Please add a sink plugin to the pipeline.',
+              'INVALID-CONNECTIONS': 'Hydrator pipeline requires atleast a connection. Please make sure the pipeline config has connections.',
+              'INVALID-SCHEDULE': 'Batch pipeline requires a schedule. Please make sure the pipeline config has schedule.',
+              'INVALID-INSTANCE': 'Realtime pipeline requires number of instance. Please make sure the pipeline config has instance information.',
               'INVALID-ARTIFACT-NODES': 'Missing artifact information in plugins. Please make sure all the plugins have valid artifact information.',
-              'INVALID-NODES-CONNECTIONS': 'The config has connections to plugins that is not part of source, sinks or transforms. Please check your connections for plugin IDs',
               'INVALID-DAG-CYCLES': 'The pipeline config uploaded is having cyclic connection. Please make sure the Directed-Acyclic-Graph (connections) does not have cycles.'
             }
           },

@@ -201,8 +201,14 @@ let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
 let hasValidArtifact = (importConfig) => {
   return importConfig.artifact && importConfig.artifact.name.length && importConfig.artifact.version.length && importConfig.artifact.scope.length;
 };
+let hasValidSource = (importConfig) => {
+  return importConfig.config.source;
+};
+let hasValidSinks = (importConfig) => {
+  return importConfig.config.sinks && importConfig.config.sinks.length;
+};
 let hasValidConfig = (importConfig) => {
-  return importConfig.config.source && importConfig.config.sinks.length && importConfig.config.connections.length;
+  return importConfig.config;
 };
 let hasValidArtifactsForNodes = (importConfig) => {
   let config = importConfig.config;
@@ -211,24 +217,19 @@ let hasValidArtifactsForNodes = (importConfig) => {
     .filter(node => !node.plugin.artifact)
     .length === 0;
 };
-let hasValidScheduleOrInstance = (importConfig) => {
-  let pipelineType = importConfig.artifact.name === 'cdap-etl-batch'? 'batch': 'realtime';
-  return (pipelineType === 'batch'? importConfig.config.schedule : importConfig.config.instance);
+let hasValidSchedule = (importConfig, GLOBALS) => {
+  let isBatchPipeline = importConfig.artifact.name === GLOBALS.etlBatch;
+  return !isBatchPipeline? true: importConfig.config.schedule;
 };
-let hasValidNodesConnections = (importConfig) => {
-  let config = importConfig.config;
-  let isValid = true;
-  let nodesMap = {};
-  [config.source].concat(config.sinks)
-    .concat( (config.transforms || []) )
-    .forEach( node => nodesMap[node.name] = node);
-  config.connections.forEach( conn => {
-    isValid = isValid && (nodesMap[conn.from] && nodesMap[conn.to]);
-  });
-  return isValid;
+let hasValidInstance = (importConfig, GLOBALS) => {
+  let isRealtimePipeline = importConfig.artifact.name === GLOBALS.etlRealtime;
+  return !isRealtimePipeline? true: importConfig.config.instance;
 };
 
 let hasValidDAG = (importConfig) => {
+  if (!importConfig.config.connections) {
+    return true;
+  }
   let config = importConfig.config;
   let nodesMap = {};
   let hasCycle = true;
@@ -259,24 +260,24 @@ let hasValidDAG = (importConfig) => {
   return hasCycle;
 };
 
-let validateImportJSON = (GLOBALS, config) => {
-  if (!hasValidArtifact(config)) {
-    return GLOBALS.en.hydrator.studio.error['IMPORT-JSON']['INVALID-ARTIFACT'];
-  }
-  if (!hasValidConfig(config)) {
-    return GLOBALS.en.hydrator.studio.error['IMPORT-JSON']['INVALID-CONFIG'];
-  }
-  if (!hasValidArtifactsForNodes(config)) {
-    return GLOBALS.en.hydrator.studio.error['IMPORT-JSON']['INVALID-ARTIFACT-NODES'];
-  }
-  if(!hasValidScheduleOrInstance(config)) {
-    return GLOBALS.en.hydrator.studio.error['IMPORT-JSON']['INVALID-SCHEDULE-INSTANCE'];
-  }
-  if (!hasValidNodesConnections(config)) {
-    return GLOBALS.en.hydrator.studio.error['IMPORT-JSON']['INVALID-NODES-CONNECTIONS'];
-  }
-  if (!hasValidDAG(config)) {
-    return GLOBALS.en.hydrator.studio.error['IMPORT-JSON']['INVALID-DAG-CYCLES'];
+let validateImportJSON = (myHelpers, GLOBALS, config) => {
+  let errorPath = ['en', 'hydrator', 'studio', 'error', 'IMPORT-JSON'];
+  let validations = [
+    { fn: hasValidArtifact, messagePath: errorPath.concat(['INVALID-ARTIFACT']) },
+    { fn: hasValidConfig, messagePath: errorPath.concat(['INVALID-CONFIG']) },
+    { fn: hasValidSchedule, messagePath: errorPath.concat(['INVALID-SCHEDULE']) },
+    { fn: hasValidInstance, messagePath: errorPath.concat(['INVALID-INSTANCE']) },
+    { fn: hasValidSource, messagePath: errorPath.concat(['INVALID-SOURCE']) },
+    { fn: hasValidSinks, messagePath: errorPath.concat(['INVALID-SINKS']) },
+    { fn: hasValidArtifactsForNodes, messagePath: errorPath.concat(['INVALID-ARTIFACT-NODES']) },
+    { fn: hasValidDAG, messagePath: errorPath.concat(['INVALID-DAG-CYCLES']) }
+  ];
+  let i;
+  for(i=0; i<validations.length; i++) {
+    let currValidation = validations[i];
+    if (!currValidation.fn.call(null, config, GLOBALS)) {
+      return myHelpers.objectQuery.apply(null, [GLOBALS].concat(currValidation.messagePath));
+    }
   }
   return false;
 };
@@ -292,7 +293,7 @@ let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
     hasAtLeastOneSink: hasAtLeastOneSink.bind(null, myHelpers, GLOBALS),
     isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers),
     allNodesConnected: allNodesConnected.bind(null, GLOBALS),
-    validateImportJSON: validateImportJSON.bind(null, GLOBALS)
+    validateImportJSON: validateImportJSON.bind(null, myHelpers, GLOBALS)
   };
 };
 
