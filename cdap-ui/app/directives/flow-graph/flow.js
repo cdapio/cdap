@@ -28,7 +28,7 @@ var baseDirective = {
   controller: 'myFlowController'
 };
 
-module.directive('myFlowGraph', function ($filter, $state, myStreamService, $location, FlowFactories) {
+module.directive('myFlowGraph', function ($filter, $state, myStreamService, $location, FlowFactories, $tooltip) {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.render = FlowFactories.genericRender.bind(null, scope, $filter, $location);
@@ -81,7 +81,8 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
 
           // Pushing labels down
           parent.select('.label')
-            .attr('transform', 'translate(0,'+ bbox.height / 3 + ')');
+            .attr('transform', 'translate(0,'+ bbox.height / 3 + ')')
+            .attr('class', 'node-label');
 
           var shapeSvg = parent.insert('circle', ':first-child')
             .attr('x', -bbox.width / 2)
@@ -144,6 +145,9 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
             .text(numberFilter(scope.model.metrics[scope.labelMap[node.elem.__data__].name]))
             .attr('class', 'flow-shapes stream-event-count')
             .attr('id', 'metrics-' + node.elem.__data__);
+
+          parent.select('.label')
+            .attr('class', 'node-label');
 
           node.intersect = function(point) {
             return dagreD3.intersect.polygon(node, points, point);
@@ -210,8 +214,28 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
           d3.select('#metrics-' + key)
             .text(value);
         });
+      };
 
+      scope.createTooltips = function () {
+        var labels = d3.selectAll('.node-label')[0];
+        var labelTooltips = {};
 
+        angular.forEach(labels, function (label) {
+          labelTooltips[label.__data__] = $tooltip(angular.element(label), {
+            title: label.__data__,
+            trigger: 'manual',
+            target: angular.element(label),
+            container: '.diagram-container'
+          });
+        });
+
+        d3.selectAll('.node-label')
+          .on('mouseover', function (node) {
+            labelTooltips[node].show();
+          })
+          .on('mouseout', function (node) {
+            labelTooltips[node].hide();
+          });
       };
 
       /**

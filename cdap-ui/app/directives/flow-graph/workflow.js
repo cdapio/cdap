@@ -31,7 +31,7 @@ var baseDirective = {
 };
 
 
-module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories) {
+module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories, $tooltip) {
   return angular.extend({
     link: function (scope) {
       scope.render = FlowFactories.genericRender.bind(null, scope, $filter, $location, true);
@@ -55,7 +55,8 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories)
           ];
 
           parent.select('.label')
-            .attr('transform', 'translate(0,'+ (defaultRadius + 20) + ')');
+            .attr('transform', 'translate(0,'+ (defaultRadius + 20) + ')')
+            .attr('class', 'node-label');
 
           var shapeSvg = parent.insert('polygon', ':first-child')
               .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
@@ -291,7 +292,36 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories)
 
       };
 
+      scope.createTooltips = function () {
+        var labels = d3.selectAll('.node-label')[0];
+        console.log('labels', labels);
+        var labelTooltips = {};
+
+        angular.forEach(labels, function (label) {
+          var text = scope.instanceMap[label.__data__].program.programType || scope.instanceMap[label.__data__].program.programName;
+
+          console.log('test', text);
+
+          labelTooltips[label.__data__] = $tooltip(angular.element(label), {
+            title: scope.instanceMap[label.__data__].nodeId + ' : ' + text,
+            trigger: 'manual',
+            target: angular.element(label),
+            container: '.diagram-container'
+          });
+        });
+
+        d3.selectAll('.node-label')
+          .on('mouseover', function (node) {
+            labelTooltips[node].show();
+          })
+          .on('mouseout', function (node) {
+            labelTooltips[node].hide();
+          });
+      };
+
+
       FlowFactories.prepareGraph(scope);
+
     }
   }, baseDirective);
 });

@@ -23,7 +23,7 @@ angular.module(PKG.name+'.commons')
     return $window.dagreD3;
   })
 
-  .factory('FlowFactories', function ($tooltip) {
+  .factory('FlowFactories', function () {
     function prepareGraph (scope) {
       scope.translateX = 0;
       scope.translateY = 0;
@@ -226,12 +226,7 @@ angular.module(PKG.name+'.commons')
           .on('click', scope.toggleToken);
       }
 
-      // scope.svg
-      //   .selectAll('g.node text')
-      //   .on('mouseover', scope.handleShowTip)
-      //   .on('mouseout', scope.handleHideTip);
-
-
+      scope.createTooltips();
     }
 
 
