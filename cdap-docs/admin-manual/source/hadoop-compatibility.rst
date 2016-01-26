@@ -9,27 +9,31 @@ Hadoop Compatibility
 ====================
 
 Before installing the CDAP components, you must first install (or have access to) a Hadoop
-cluster with *HDFS*, *YARN*, *HBase*, and *ZooKeeper*. In order to use the ad-hoc querying
-capabilities of CDAP (Explore), you will also need *Hive*. All CDAP components can be installed on
-the same boxes as your Hadoop cluster, or on separate boxes that can connect to the Hadoop
-services.
+cluster with *HBase*, *HDFS*, *YARN*, and *ZooKeeper*. In order to use the ad-hoc querying
+capabilities of CDAP (Explore), you will also need *Hive*. Additional components (such as
+*Spark*) may be required, depending on the applications you will be running. All CDAP
+components can be installed on the same boxes as your Hadoop cluster, or on separate boxes
+that can connect to the Hadoop services.
 
 CDAP depends on these services being present on the cluster. There are **core
 dependencies,** which must be running for CDAP system services to operate correctly, and
 **optional dependencies,** which may be required for certain functionality or program types.
 
-The host(s) running the CDAP Master service must have the HDFS, YARN, and HBase clients
+The host(s) running the CDAP Master service must have the HBase, HDFS, and YARN clients
 installed as CDAP uses the command line clients of these for initialization and their
-connectivity information for external service dependencies. Also, CDAP currently requires
-Internet access on the CDAP service nodes (or until the issue `CDAP-3957
-<https://issues.cask.co/browse/CDAP-3957>` is resolved).
+connectivity information for external service dependencies. If Hadoop system services are
+also running on the same hosts as the CDAP services, they will already have these clients
+installed.
+
+CDAP currently requires Internet access on the CDAP service nodes (or until the issue
+`CDAP-3957 <https://issues.cask.co/browse/CDAP-3957>` is resolved).
 
 **Core Dependencies**
 
+- **HBase:** For system runtime storage and queues
 - **HDFS:** The backing file system for distributed storage
 - **YARN:** For running system services in containers on cluster NodeManagers
-- **HBase:** For system runtime storage and queues
-- **MapReduce2:** For batch operations in workflows and data exploration
+- **MapReduce2:** For batch operations in workflows and data exploration (included with YARN)
 - **ZooKeeper:** For service discovery and leader election
 
 **Optional Dependencies**
@@ -40,53 +44,68 @@ Internet access on the CDAP service nodes (or until the issue `CDAP-3957
 
 .. rubric:: Hadoop/HBase Environment
 
-For a Distributed CDAP cluster, version |release|, you must install these Hadoop components:
+For a Distributed CDAP cluster, version |release|, you **must** install these Hadoop components:
 
-+---------------+---------------------------------+---------------------------------------+
-| Component     | Source                          | Supported Versions                    |
-+===============+=================================+=======================================+
-| **HDFS**      | Apache Hadoop                   | 2.0.2-alpha through 2.6.0             |
-+               +---------------------------------+---------------------------------------+
-|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
-+               +---------------------------------+---------------------------------------+
-|               | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
-+               +---------------------------------+---------------------------------------+
-|               | MapR                            | 4.1 and 5.0 (with MapR-FS)            |
-+---------------+---------------------------------+---------------------------------------+
-| **YARN**      | Apache Hadoop                   | 2.0.2-alpha through 2.6.0             |
-+               +---------------------------------+---------------------------------------+
-|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
-+               +---------------------------------+---------------------------------------+
-|               | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
-+               +---------------------------------+---------------------------------------+
-|               | MapR                            | 4.1 and 5.0                           |
-+---------------+---------------------------------+---------------------------------------+
-| **HBase**     | Apache                          | 0.96.x, 0.98.x, and 1.0               |
-+               +---------------------------------+---------------------------------------+
-|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0 (1.0-cdh5.5.0)    |
-+               +---------------------------------+---------------------------------------+
-|               | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
-+               +---------------------------------+---------------------------------------+
-|               | MapR                            | 4.1 and 5.0 (with Apache HBase)       |
-+---------------+---------------------------------+---------------------------------------+
-| **ZooKeeper** | Apache                          | Version 3.4.3 through 3.4.5           |
-+               +---------------------------------+---------------------------------------+
-|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
-+               +---------------------------------+---------------------------------------+
-|               | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
-+               +---------------------------------+---------------------------------------+
-|               | MapR                            | 4.1 and 5.0                           |
-+---------------+---------------------------------+---------------------------------------+
-| **Hive**      | Apache                          | Version 0.12.0 through 1.1.0          |
-+               +---------------------------------+---------------------------------------+
-|               | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
-+               +---------------------------------+---------------------------------------+
-|               | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
-+               +---------------------------------+---------------------------------------+
-|               | MapR                            | 4.1 and 5.0                           |
-+---------------+---------------------------------+---------------------------------------+
++----------------+---------------------------------+---------------------------------------+
+| Component      | Source                          | Supported Versions                    |
++================+=================================+=======================================+
+| **HBase**      | Apache                          | 0.96.x, 0.98.x, and 1.0               |
++                +---------------------------------+---------------------------------------+
+|                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0 (1.0-cdh5.5.0)    |
++                +---------------------------------+---------------------------------------+
+|                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
++                +---------------------------------+---------------------------------------+
+|                | MapR                            | 4.1 and 5.0 (with Apache HBase)       |
++----------------+---------------------------------+---------------------------------------+
+| **HDFS**       | Apache Hadoop                   | 2.0.2-alpha through 2.6.0             |
++                +---------------------------------+---------------------------------------+
+|                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
++                +---------------------------------+---------------------------------------+
+|                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
++                +---------------------------------+---------------------------------------+
+|                | MapR                            | 4.1 and 5.0 (with MapR-FS)            |
++----------------+---------------------------------+---------------------------------------+
+| **YARN** and   | Apache Hadoop                   | 2.0.2-alpha through 2.6.0             |
++ **MapReduce2** +---------------------------------+---------------------------------------+
+|                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
++                +---------------------------------+---------------------------------------+
+|                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
++                +---------------------------------+---------------------------------------+
+|                | MapR                            | 4.1 and 5.0                           |
++----------------+---------------------------------+---------------------------------------+
+| **ZooKeeper**  | Apache                          | Version 3.4.3 through 3.4.5           |
++                +---------------------------------+---------------------------------------+
+|                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
++                +---------------------------------+---------------------------------------+
+|                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
++                +---------------------------------+---------------------------------------+
+|                | MapR                            | 4.1 and 5.0                           |
++----------------+---------------------------------+---------------------------------------+
 
-**Note:** Component versions shown in this table are those that we have tested and are
+For a Distributed CDAP cluster, version |release|, you *can* (optionally) install these
+Hadoop components, as required:
+
++----------------+---------------------------------+---------------------------------------+
+| Component      | Source                          | Supported Versions                    |
++================+=================================+=======================================+
+| **Hive**       | Apache                          | Version 0.12.0 through 1.1.0          |
++ (required for  +---------------------------------+---------------------------------------+
+| CDAP Explore   | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
++ service)       +---------------------------------+---------------------------------------+
+|                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
++                +---------------------------------+---------------------------------------+
+|                | MapR                            | 4.1 and 5.0                           |
++----------------+---------------------------------+---------------------------------------+
+| **Spark**      | Apache                          | Versions 1.2.x, 1.3.x, and 1.4.x      |
++                +---------------------------------+---------------------------------------+
+|                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
++                +---------------------------------+---------------------------------------+
+|                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
++                +---------------------------------+---------------------------------------+
+|                | MapR                            | 4.1 and 5.0                           |
++----------------+---------------------------------+---------------------------------------+
+
+**Note:** Component versions shown in these tables are those that we have tested and are
 confident of their suitability and compatibility. Later versions of components may work,
 but have not necessarily have been either tested or confirmed compatible.
 
@@ -94,9 +113,3 @@ but have not necessarily have been either tested or confirmed compatible.
 *Hive* cluster configurations by adding those configurations to their class paths.
 
 **Note:** *Hive 0.12* is not supported for :ref:`secure cluster configurations <admin-security>`.
-
-To be moved:
-
-**Note:** ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
-(unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
-the number of connections required is a function of usage.
