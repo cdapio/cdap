@@ -148,7 +148,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 name: 'etlSchemaBody',
                 fields: angular.isObject(node.outputSchema)?
                   pluginToSchemaMap[pluginName].concat(node.outputSchema.fields || []):
-                  pluginToSchemaMap[pluginName].concat([])
+                  pluginToSchemaMap[pluginName]
               });
             } else {
               try {
