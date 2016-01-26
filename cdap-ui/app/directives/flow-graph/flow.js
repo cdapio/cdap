@@ -174,7 +174,6 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
       };
 
       scope.handleNodeClick = function(nodeId) {
-        scope.handleHideTip(nodeId);
         var instance = scope.instanceMap[nodeId];
         if (instance.type === 'STREAM') {
           myStreamService.show(nodeId);

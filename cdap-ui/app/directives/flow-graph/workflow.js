@@ -218,7 +218,6 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories,
       };
 
       scope.handleNodeClick = function(nodeId) {
-        scope.handleHideTip(nodeId);
         var instance = scope.instanceMap[nodeId];
         scope.$apply(function(scope) {
           var fn = scope.click();
