@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.services')
-  .factory('myAlertOnValium', function($alert) {
+  .factory('myAlertOnValium', function($alert, $window) {
     var isAnAlertOpened = false,
         alertObj;
      function show(obj) {
@@ -26,10 +26,26 @@ angular.module(PKG.name + '.services')
           .$on('alert.hide', function() {
             isAnAlertOpened = false;
           });
+       } else {
+        alertObj.$scope.content = obj.content;
+        alertObj.$scope.title = obj.title;
        }
+       // Scroll to top so that user doesn't miss an alert
+       $window.scrollTo(0, 0);
+     }
+     function destroy() {
+      if(isAnAlertOpened) {
+        alertObj.hide();
+        isAnAlertOpened = false;
+      }
+     }
+     function getisAnAlertOpened() {
+      return isAnAlertOpened;
      }
 
      return {
-       show: show
+      show: show,
+      isAnAlertOpened: getisAnAlertOpened,
+      destroy: destroy
      };
   });

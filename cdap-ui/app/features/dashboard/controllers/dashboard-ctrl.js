@@ -19,7 +19,7 @@
  */
 
 angular.module(PKG.name+'.feature.dashboard').controller('DashboardCtrl',
-function ($scope, $state, rDashboardsModel, MY_CONFIG, $alert, $timeout) {
+function ($scope, $state, rDashboardsModel, MY_CONFIG, myAlertOnValium, $timeout) {
 
   $scope.unknownBoard = false;
   $scope.isEnterprise = MY_CONFIG.isEnterprise;
@@ -58,8 +58,8 @@ function ($scope, $state, rDashboardsModel, MY_CONFIG, $alert, $timeout) {
 
   $scope.addWidget = function () {
     if (!rDashboardsModel.current().canAddWidget()) {
-      $alert({
-        content: 'Can not add more than ' + rDashboardsModel.current().WIDGET_LIMIT + ' widgets.',
+      myAlertOnValium.show({
+        content: 'Cannot add more than ' + rDashboardsModel.current().WIDGET_LIMIT + ' widgets.',
         type: 'warning'
       });
       return;

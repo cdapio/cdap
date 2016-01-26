@@ -38,7 +38,7 @@ angular.module(PKG.name + '.services')
     };
 
   })
-  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state, myFileUploader, $alert, myAlertOnValium) {
+  .controller('FlowStreamDetailController', function($scope, myStreamApi, $state, myFileUploader, myAlertOnValium) {
 
     $scope.loading = false;
 
@@ -72,7 +72,7 @@ angular.module(PKG.name + '.services')
       var path = '/namespaces/' + $state.params.namespace + '/streams/' + $scope.streamId + '/batch';
 
       function uploadSuccess() {
-        $alert({
+        myAlertOnValium.show({
           type: 'success',
           title: 'Upload success',
           content: 'The file has been uploaded successfully'

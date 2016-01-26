@@ -16,7 +16,7 @@
 
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorCreateController', function($timeout, $state, $alert, myPipelineTemplatesApi, GLOBALS, CanvasFactory) {
+  .controller('HydratorCreateController', function($timeout, $state, myPipelineTemplatesApi, GLOBALS, CanvasFactory, myAlertOnValium) {
 
     var vm = this;
     vm.GLOBALS = GLOBALS;
@@ -90,7 +90,7 @@ angular.module(PKG.name + '.feature.hydrator')
         template.type
       );
       if (result.error) {
-        $alert({
+        myAlertOnValium.show({
           type: 'danger',
           content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app'
         });
@@ -114,7 +114,7 @@ angular.module(PKG.name + '.feature.hydrator')
          try {
            jsonData = JSON.parse(data);
          } catch(e) {
-           $alert({
+           myAlertOnValium.show({
              type: 'danger',
              content: 'Error in the JSON imported.'
            });
