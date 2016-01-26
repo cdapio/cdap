@@ -55,11 +55,6 @@ angular.module(PKG.name+'.commons')
       scope.svg = d3.select(scope.selector).attr('fill', 'white');
       scope.svgGroup = d3.select(scope.selector + ' g');
 
-      scope.tip = d3.tip()
-        .attr('class', 'd3-tip')
-        .offset([-10, 0]);
-
-
       scope.drag = d3.behavior.drag();
       scope.drag.on('drag', function () {
         d3.event.sourceEvent.stopPropagation();
@@ -114,22 +109,6 @@ angular.module(PKG.name+'.commons')
         scope.svgGroup.attr('transform', 'translate(' + arr + ')' + ' scale(' + scope.currentScale + ')');
       };
 
-      /**
-       * Handles showing tooltip on mouseover of node name.
-       */
-      scope.handleShowTip = scope.handleTooltip.bind(null);
-
-      /**
-       * Handles hiding tooltip on mouseout of node name.
-       */
-      scope.handleHideTip = function() {
-        scope.tip.hide();
-      };
-
-      scope.$on('$destroy', function () {
-        scope.handleHideTip();
-        scope.tip.destroy();
-      });
 
       // only being used to center and fit diagram
       var zoom = d3.behavior.zoom();
@@ -153,7 +132,6 @@ angular.module(PKG.name+'.commons')
           scope.translateY = 20;
           scope.currentScale = initialScale;
         }
-        console.log('height', svgHeight);
         zoom
           .translate([scope.translateX, scope.translateY])
           .scale(scope.currentScale)
@@ -170,7 +148,6 @@ angular.module(PKG.name+'.commons')
 
       scope.svg = d3.select(scope.selector);
       scope.svgGroup = d3.select(scope.selector + ' g');
-      // scope.svg.call(scope.tip);
       scope.svg.call(scope.drag);
 
       // First set nodes and edges.

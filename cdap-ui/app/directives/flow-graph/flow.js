@@ -190,14 +190,6 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
         }
       };
 
-      scope.handleTooltip = function(nodeId) {
-        scope.tip
-          .html(function() {
-            return '<span>' + nodeId + '</span>';
-          })
-          .show();
-      };
-
       scope.arrowheadRule = function() {
         return false;
       };

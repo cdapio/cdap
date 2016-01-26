@@ -239,19 +239,6 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories,
         });
       };
 
-      scope.handleTooltip = function(nodeId) {
-        if (['Start', 'End'].indexOf(nodeId) === -1) {
-          var text = scope.instanceMap[nodeId].program.programType || scope.instanceMap[nodeId].program.programName;
-
-          scope.tip
-            .html(function() {
-              return '<span>'+ scope.instanceMap[nodeId].nodeId + ' : ' + text +'</span>';
-            })
-            .show();
-        }
-
-      };
-
       scope.arrowheadRule = function(edge) {
         if (edge.targetType === 'JOINNODE' || edge.targetType === 'FORKNODE') {
           return false;
@@ -294,13 +281,10 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories,
 
       scope.createTooltips = function () {
         var labels = d3.selectAll('.node-label')[0];
-        console.log('labels', labels);
         var labelTooltips = {};
 
         angular.forEach(labels, function (label) {
           var text = scope.instanceMap[label.__data__].program.programType || scope.instanceMap[label.__data__].program.programName;
-
-          console.log('test', text);
 
           labelTooltips[label.__data__] = $tooltip(angular.element(label), {
             title: scope.instanceMap[label.__data__].nodeId + ' : ' + text,
