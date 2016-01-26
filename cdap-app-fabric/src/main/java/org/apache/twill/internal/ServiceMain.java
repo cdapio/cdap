@@ -55,7 +55,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Class for main method that starts a service.
- * TODO: This is copied from TWILL-154 and should be removed when upgrade to Twill 0.7.0 (CDAP-3498)
+ * TODO: This is copied from TWILL-154 and has temp fix for TWILL-147 for MapR issue
+ * and should be removed when upgrade to Twill 0.8.0
  */
 public abstract class ServiceMain {
 
