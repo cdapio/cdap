@@ -17,8 +17,8 @@ What should I do if I see any of these errors in the Cask Hydrator User Interfac
 
   This error means the widget JSON for the particular plugin has an error in its JSON, such as: 
 
-  - You are missing a comma character ('``,``') in the JSON
-  - You have a missing a double quote character ('``"``') in the JSON
+  - You are missing a comma character (``,``) in the JSON
+  - You have a missing a double quote character (``"``) in the JSON
   - You have a value for a key that is not a valid JSON value (for instance, ``NaN``)
 
   The fastest way to fix these issues is to run the plugin's Widget JSON through a JSON linter 
@@ -28,7 +28,7 @@ What should I do if I see any of these errors in the Cask Hydrator User Interfac
 
   This error means that the CDAP UI Service could not find the widget JSON for the plugin that you are 
   currently working with. As part of plugin deployment, a JAR and a JSON file are deployed with a plugin,
-  as described in the :ref:`<cdap-apps-custom-etl-plugins-plugin-packaging>`.
+  as described in the :ref:`cdap-apps-custom-etl-plugins-plugin-packaging`.
 
 In which order do plugin properties appear in the Cask Hydrator UI?
 -------------------------------------------------------------------
