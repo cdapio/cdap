@@ -58,49 +58,23 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories)
             .attr('transform', 'translate(0,'+ (defaultRadius + 20) + ')');
 
           var shapeSvg = parent.insert('polygon', ':first-child')
-              .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '));
+              .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
+              .attr('id', 'job-' + scope.instanceMap[node.elem.__data__].nodeId)
+              .attr('class', 'workflow-shapes foundation-shape job-svg');
 
 
-          var status = (scope.model.current && scope.model.current[node.elem.__data__]) || '';
-
-          if (status === 'COMPLETED') {
-            parent.append('circle')
-              .attr('r', 10)
-              .attr('transform', 'translate(0, ' + (-defaultRadius - 25) + ')' )
-              .attr('class', 'workflow-token')
-              .attr('id', 'token-' + scope.instanceMap[node.elem.__data__].nodeId);
-
-
-            parent.append('text')
-              .text('T')
-              .attr('x', -5)
-              .attr('y', (-defaultRadius - 20))
-              .attr('class', 'token-label');
-          }
-
-
-          parent.insert('div')
-            .insert('span')
-            .attr('class', 'fa fa-refresh');
-
-
-          switch(status) {
-            case 'COMPLETED':
-              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg completed');
-              break;
-            case 'RUNNING':
-              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg running');
-              break;
-            case 'FAILED':
-              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg failed');
-              break;
-            case 'KILLED':
-              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg killed');
-              break;
-            default:
-              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg');
-          }
-
+          // WORKFLOW TOKENS
+          // It will default render with class hidden
+          parent.append('circle')
+            .attr('r', 10)
+            .attr('transform', 'translate(0, ' + (-defaultRadius - 25) + ')' )
+            .attr('class', 'workflow-token hidden')
+            .attr('id', 'token-' + scope.instanceMap[node.elem.__data__].nodeId);
+          parent.append('text')
+            .text('T')
+            .attr('x', -5)
+            .attr('y', (-defaultRadius - 20))
+            .attr('class', 'token-label');
 
 
           node.intersect = function(point) {
@@ -283,6 +257,38 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories)
         } else {
           return true;
         }
+      };
+
+      scope.update = function () {
+        angular.forEach(scope.model.current, function (value, key) {
+
+          var instanceId = scope.instanceMap[key].nodeId;
+          var shapeSvg = scope.svg.select('#job-' + instanceId);
+
+          switch(value) {
+            case 'COMPLETED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg completed');
+
+              // Token icon should only show when status is COMPLETED
+              scope.svg.select('#token-' + instanceId)
+                .attr('class', 'workflow-token');
+
+              break;
+            case 'RUNNING':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg running');
+              break;
+            case 'FAILED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg failed');
+              break;
+            case 'KILLED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg killed');
+              break;
+            default:
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg');
+          }
+
+        });
+
       };
 
       FlowFactories.prepareGraph(scope);

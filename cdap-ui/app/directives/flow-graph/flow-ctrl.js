@@ -21,17 +21,19 @@ angular.module(PKG.name+'.commons')
     function update(newVal) {
       // Avoid rendering the graph without nodes and edges.
       if (myHelpers.objectQuery(newVal, 'nodes') && myHelpers.objectQuery(newVal, 'edges')) {
-        $scope.render();
-
         if (firstRender) {
+          $scope.render();
           firstRender = false;
           $scope.centerImage();
         }
+        console.log('test', $scope.model);
+        $scope.update();
       }
     }
 
     $scope.instanceMap = {};
     $scope.labelMap = {};
+
 
 
     // This is done because of performance reasons.
