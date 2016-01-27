@@ -431,6 +431,9 @@ Plugin Packaging and Deployment
 To package and deploy your plugin, follow these instructions on `plugin packaging <#plugin-packaging>`__,
 `deployment <#deploying-a-system-artifact>`__ and `verification <#deployment-verification>`__.
 
+To control how your plugin appears in the CDAP UI, include an appropriate :ref:`plugin
+widget JSON file <cdap-apps-custom-widget-json>`, as described below.
+
 By using one of the ``etl-plugin`` Maven archetypes, your project will be set up to generate
 the required JAR manifest. If you move the plugin class to a different Java package after
 the project is created, you will need to modify the configuration of the
@@ -450,18 +453,31 @@ Plugin Deployment
    :start-after: .. _plugins-deployment-artifact:
    :end-before:  .. _plugins-use-case:
 
-Configuration JSON for a plugin (for Webapp UI alone)
-======================================================
-Every property of a plugin is represented, by default, as input fields in the UI. This can be however changed to specific widgets that closely match the type of the property in a plugin. This can be specified as JSON for the UI to consume.
+.. _cdap-apps-custom-widget-json:
 
-The configuration JSON is composed of a list of property groups and a list of outputs. For instance the JSON would look like this,
+Plugin Widget JSON
+-------------------------
+When a plugin is displayed in the CDAP UI, its properties are represented
+by widgets in the :ref:`Cask Hydrator <cdap-apps-cask-hydrator>`. Each property of a
+plugin is represented, by default, as a textbox in the user interface. 
 
-.. code-block:: Javascript
+To customize the plugin display, a plugin can include a widget JSON file that
+specifies the particular widgets and sets of widget attributes used to display the plugin
+properties in the CDAP UI.
+
+The widget JSON is composed of two lists:
+
+- a list of property configuration groups and
+- a list of output properties. 
+
+.. highlight:: xml
+
+For example::
 
   {
     "configuration-groups": [
-      "group1",
-      "group2",
+      {"group-1"},
+      {"group-2"},
       ...
     ],
     "outputs": [
@@ -471,16 +487,21 @@ The configuration JSON is composed of a list of property groups and a list of ou
     ]
   }
 
-Configuration groups
----------------------
-Configuration groups are simple grouping of properties in a plugin. For instance in a Stream Source plugin - Stream Name, Duration & Delay could be grouped as Stream Configuration. So based on this example a configuration group can be represented as an object with a name & a list of properties of the plugin that falls under that group. In the case of Stream source plugin it would look like this,
+Configuration Groups
+....................
+Configuration groups are a simple grouping of properties of a plugin. A configuration
+group is represented as a JSON object with a label and a list of plugin properties for that
+group.
 
-.. code-block:: Javascript
+For example, in a *Batch Source* plugin, properties such as *Dataset Name*, *Dataset Base
+Path*, *Duration*, and *Delay* can be grouped as the *Batch Source Configuration*.
+
+In the case of the *Batch Source* plugin, it could look like this::
 
   {
     "configuration-groups": [
       {
-        "name": "Stream Configuration",
+        "label": "Batch Source Configuration",
         "properties": [
           {"field1"},
           {"field2"},
@@ -495,135 +516,218 @@ Configuration groups are simple grouping of properties in a plugin. For instance
     ]
   }
 
-Once a group is established we can configure how each field inside the group is represented in the UI. The configuration of each property of the plugin is composed of following parts:
+Once a group is established, we can configure how each of the properties inside the group is
+represented in the CDAP UI. 
 
-- name : Name of the field (as coming from the CDAP backend)
-- label: Label to be used in the UI for the property
-- widget-type : The type of widget that needs to represent this property
-- widget-attributes: A map of attributes that the widget shall require to be rendered in UI. The attributes depend on the type of widget.
+The configuration of each property of the plugin is composed of:
 
-In the case of Stream plugin this would look like this,
+- **widget-type:** The type of widget needed to represent this property.
+- **label:** Label to be used in the CDAP UI for the property.
+- **name:** Name of the field (as supplied by the CDAP UI backend).
+- **widget-attributes:** A map of attributes that the widget type requires be defined in
+  order to render the property in the CDAP UI. The attributes vary depending on the
+  widget type.
+  
+Note that with the exception of the value of the *label*, all property values are case-sensitive.
 
-.. code-block:: Javascript
+To find the available field names, you can use the Artifact HTTP RESTful API to :ref:`
+retrieve plugin details <http-restful-api-artifact-plugin-detail>` for an artifact, which
+will include all the available names. (If the artifact is your own, you will already know the
+available field names.)
 
-  {
-    "configuration-groups": [
-      {
-        "name": "Stream Configuration",
-        "properties": [
-          {
-            "name": "duration",
-            "label": "Duration",
-            "widget-type": "textbox"
-          },
-          {
-            "widget-type": "textbox",
-            "label": "Delay",
-            "name": "delay"
-          },
-          {
-            "widget-type": "stream-selector",
-            "label": "Stream Name",
-            "name": "name"
-          }
-        ]
-      }
-    ],
-    "outputs": [
-      {"output-property1"}
-    ]
-  }
+In the case of our *Batch Source* plugin example, the ``configuration-groups`` can be represented by::
 
-A widget in UI represents a component that will be rendered and used to set a value of a property of a plugin. There are different widgets that we support in Hydrator as of version 3.3.
+  "configuration-groups": [
+    {
+      "label": "Batch Source",
+      "properties": [
+        {
+          "widget-type": "dataset-selector",
+          "label": "Dataset Name",
+          "name": "name"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Dataset Base Path",
+          "name": "basePath"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Duration",
+          "name": "duration"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Delay",
+          "name": "delay"
+        }
+      ]
+
+A widget in the CDAP UI represents a component that will be rendered and used to set a
+value of a property of a plugin. These are the different widgets |---| their type, a
+description, their attributes (if any), and their output data type |---| that we support in
+Cask Hydrator as of version |version|:
 
 .. list-table::
    :widths: 20 25 25 25
    :header-rows: 1
 
-   * - Widget-type
+   * - Widget Type
      - Description
      - Attributes
-     - Output data type
-   * - textbox
-     - default - A default value for the widget
-     - Default HTML textbox to enter any string
+     - Output Data Type
+   * - ``textbox``
+     - Default HTML textbox, used to enter any string
+     - ``default``: default value for the widget
+     - ``string``
+   * - ``number``
+     - Default HTML number textbox that only accepts valid numbers
+     - | ``default``: default value for the widget
+       | ``min``: minimum value for the number box
+       | ``max``: maximum value for the number box
      - string
-   * - number
-     - | default - A default value for the widget
-       | min - A min value for the number box
-       | max - A max value for the number box
-     - Default HTML number textbox. Can enter only valid numbers
+   * - ``passwordbox``
+     - Default HTML password entry box
+     - No attributes
      - string
-   * - passwordbox
-     - NA
-     - Default html password box
-     - string
-   * - datetime
-     - | default - A default value for the widget
-       | format - format should be ISO, long, short or full format dates
-     - Date time picker. Used to set date (in string) for any property
-     - string
-   * - csv/dsv
-     - delimiter (allows to change the delimiter to be any other symbol apart from ‘,’)
-     - Comma separated values. Each value is entered in a separate box
+   * - csv
+     - Comma-separated values; each value is entered in a separate box
+     - No attributes
      - comma-separated string
-   * - json-editor
-     - default - A default value for the widget (stringified JSON)
-     - Json editor to pretty-print and auto format JSON while typing
+   * - dsv
+     - Delimiter-separated values; each value is entered in a separate box
+     - ``delimiter``: delimiter used to separate the values
+     - delimiter-separated string
+   * - ``json-editor``
+     - JSON editor that pretty-prints and auto-formats JSON while it is being entered
+     - ``default``: default serialized JSON value for the widget
      - string
-   * - javascript-editor,python-editor
-     - default - A default value for the widget (string)
-     - An editor to write Javscript or Python as a value for a property
+   * - ``javascript-editor``, ``python-editor``
+     - An editor to write Javascript (``javascript-editor``) or Python (``python-editor``)
+       code as a value for a property
+     - ``default``: default string value for the widget
      - string
-   * - keyvalue
-     - | delimiter - Delimiter for key-value pairs
-       | kv-delimiter - Delimiter for key & value.
-     - A key-value editor which allows you to construct map
+   * - ``keyvalue``
+     - A key-value editor for constructing maps of key-value pairs
+     - | ``delimiter``: delimiter for the key-value pairs
+       | ``kv-delimiter``: delimiter between key and value
      - string
-   * - keyvalue-dropdown
-     - Same as keyvalue attributes. dropdownOptions - a list of dropdown options to use in UI
-     - It is exactly the keyvalue widget but instead of plain value we have dropdown with a list of values
+   * - ``keyvalue-dropdown``
+     - Similar to *keyvalue* widget, but with a drop-down value list
+     - | ``delimiter``: delimiter for the key-value pairs
+       | ``kv-delimiter``: delimiter between key and value
+       | ``dropdownOptions``: list of drop-down options to display
      - string
-   * - select
-     - | values - List of values for the dropdown
-       | default - A default value from the list
-     - An html dropdown with a list of values. Allows to choose one from the list
+   * - ``select``
+     - An HTML drop-down with a list of values; allows one choice from the list
+     - | ``values``: list of values for the drop-down
+       | ``default``: default value from the list
      - string
-   * - dataset-selector/stream-selector
-     - NA
-     - A typeahead textbox that will have a list of datasets in the cdap instance
+   * - ``dataset-selector``, ``stream-selector``
+     - A type-ahead textbox with a list of datasets (``dataset-selector``) or streams
+       (``stream-selector``) from the CDAP instance
+     - No attributes
      - string
-   * - schema
-     - | schema-types - A list of schema types for each field that the user can chose while setting the schema
-       | schema-default-type - A default type for each newly added field in the schema
-       | property-watch - A property of the plugin to watch which might affect the output schema
-     - A 4 column editable table to represent schema in a plugin
+   * - ``schema``
+     - A four-column, editable table to represent a schema of a plugin
+     - | ``schema-types``: list of schema types for each field from which the user can chose when setting the schema
+       | ``schema-default-type``: default type for each newly-added field in the schema
      - string
-   * - non-editable-schema-editor
-     - schema - The schema that will be used as output schema for the plugin
-     - A non-editable schema widget
+   * - ``non-editable-schema-editor``
+     - A non-editable widget for displaying a schema
+     - ``schema``: schema that will be used as the output schema for the plugin
      - string
-
 
 Outputs
--------
+.......
+The *outputs* is a list of plugin properties that represent the output schema of a particular plugin.
 
-The outputs is a list of plugin properties that represent the output schema for the particular plugin.
+The output schema for a plugin can be represented in two different ways, either:
 
-The output schema for a plugin can be represented in two different ways:
+- via an *implicit* schema; or
+- via an *explicit* ``Schema`` property.
 
-- Via Implicit schema
-- Via Schema property
+An **implicit** schema is a pre-determined output schema for a plugin that the plugin developer
+enforces. The implicit schema is not associated with any properties of the plugin, but
+just enforces the output schema of the plugin, for visual display purposes. An example of
+this is the `Twitter real-time source plugin
+<https://github.com/caskdata/hydrator-plugins/blob/release/1.2/core-plugins/widgets/Twitter-realtimesource.json>`__.
 
-Implicit schema is a pre-determined output schema for a plugin that the plugin developer can enforce. The implicit schema is not associated with any property of the plugin but just enforces the output schema for the plugin (for visual purposes only).
+An **explicit** ``Schema`` property is one that can be defined as the output schema and can be
+appropriately configured to make it editable through the CDAP UI.
 
-A particular property of the plugin can be defined as the output schema and can be appropriately configured to make it editable in the UI.
+Output properties are configured in a similar manner as individual properties in configuration
+groups. They are composed of a name and a widget type, one of either ``schema`` or
+``non-editable-schema-editor``. With the ``schema`` widget type, a list of widget attributes can be included;
+with ``non-editable-schema-editor``, a schema is added instead.
 
-An output-property is configured in exactly the same way we configure individual properties in configuration-groups. It is composed of name, widget-type & widget-attributes. However the subtle difference is the widget-type used for the output property. The widget-type for an output property is ideally 'schema' or 'non-editable-schema-editor'. This is to ensure the schema that is propagated across different plugins are consistent. The difference comes in 'non-editable-schema-editor' widget which doesn't have widget-attributes but a schema that will be used in the UI as output schema for the plugin.
+For example:
 
-Based on the above definitions we could write the configuration JSON for Stream source which has the following properties - schema, duration, name, format, delay - as
+The output properties of the Twitter real-time source, with an explicit, non-editable schema property,
+composed of the fields *id*, *time*, *favCount*, *rtCount*, *geoLat*, *geoLong*, and *isRetweet*::
 
-.. code-block:: Javascript
+  "outputs": [
+    {
+      "widget-type": "non-editable-schema-editor",
+      "schema": {
+        "id": "long",
+        "message": "string",
+        "lang": [
+          "string",
+          "null"
+        ],
+        "time": [
+          "long",
+          "null"
+        ],
+        "favCount": "int",
+        "rtCount": "int",
+        "source": [
+          "string",
+          "null"
+        ],
+        "geoLat": [
+          "double",
+          "null"
+        ],
+        "geoLong": [
+          "double",
+          "null"
+        ],
+        "isRetweet": "boolean"
+      }
+    }
+  ]
+
+In contrast, our "Batch Source" plugin could have a configurable output schema::
+
+  "outputs": [
+    {
+      "name": "schema",
+      "widget-type": "schema",
+      "widget-attributes": {
+        "schema-types": [
+          "boolean",
+          "int",
+          "long",
+          "float",
+          "double",
+          "string",
+          "map<string, string>"
+        ],
+        "schema-default-type": "string"
+      }
+    }
+  ]
+
+
+Widget types for output properties are limited to ensure that the schema that is propagated across
+different plugins in the CDAP UI is consistent. 
+
+Example Widget JSON
+..........................
+Based on the above definitions, we could write the complete widget JSON for our *Batch Source* plugin
+(with the properties of *name*, *basePath*, *duration*, *delay*, and an output *schema*) as::
 
   {
     "metadata": {
@@ -631,12 +735,17 @@ Based on the above definitions we could write the configuration JSON for Stream 
     },
     "configuration-groups": [
       {
-        "label": "Stream Configuration",
+        "label": "Batch Source",
         "properties": [
           {
-            "widget-type": "textbox",
-            "label": "Stream Name",
+            "widget-type": "dataset-selector",
+            "label": "Dataset Name",
             "name": "name"
+          },
+          {
+            "widget-type": "textbox",
+            "label": "Dataset Base Path",
+            "name": "basePath"
           },
           {
             "widget-type": "textbox",
@@ -647,52 +756,6 @@ Based on the above definitions we could write the configuration JSON for Stream 
             "widget-type": "textbox",
             "label": "Delay",
             "name": "delay"
-          },
-          {
-            "widget-type": "textbox",
-            "label": "Data Field Name",
-            "name": "body.field",
-            "widget-attributes": {
-              "width": "medium"
-            }
-          },
-          {
-            "widget-type": "textbox",
-            "label": "Header Field Name",
-            "name": "headers.field",
-            "widget-attributes": {
-              "width": "medium"
-            }
-          },
-          {
-            "widget-type": "stream-selector",
-            "label": "Stream Name",
-            "name": "name",
-            "widget-attributes": {
-              "width": "medium"
-            }
-          }
-        ]
-      },
-      {
-        "label": "Format",
-        "properties": [
-          {
-            "widget-type": "select",
-            "label": "Format",
-            "name": "format",
-            "widget-attributes": {
-              "values": [
-                "avro",
-                "clf",
-                "csv",
-                "grok",
-                "syslog",
-                "text",
-                "tsv"
-              ],
-              "default": "text"
-            }
           }
         ]
       }
@@ -711,9 +774,9 @@ Based on the above definitions we could write the configuration JSON for Stream 
             "string",
             "map<string, string>"
           ],
-          "schema-default-type": "string",
-          "property-watch": "format"
+          "schema-default-type": "string"
         }
       }
     ]
   }
+  

@@ -22,7 +22,7 @@
   <parent>
     <groupId>co.cask.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>3.3.0</version>
+    <version>3.3.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-examples</artifactId>
@@ -357,11 +357,6 @@
         <groupId>org.apache.ant</groupId>
         <artifactId>ant-compress</artifactId>
         <version>1.2</version>
-      </dependency>
-      <dependency>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>jersey-core</artifactId>
-        <version>1.18</version>
       </dependency>
       <dependency>
         <groupId>commons-cli</groupId>

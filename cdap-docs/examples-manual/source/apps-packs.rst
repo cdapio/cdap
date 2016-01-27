@@ -23,7 +23,7 @@ The |cdap-apps-repository|_ contains data applications built using CDAP:
 - |wise|_ Web Insights Engine analyzes the behavior of users of a website by processing
   Apache web logs.
   This application is also the basis for the online tutorial of the same name,
-  `WISE: Web Analytics <http://docs.cask.co/tutorial/current/en/tutorial2.html>`__;
+  :ref:`WISE: Web Analytics <cdap-tutorial-wise>`;
   refer to it for step-by-step instructions on creating the application from scratch.
   Download or clone the app at `GitHub. <https://github.com/caskdata/cdap-apps>`__
 

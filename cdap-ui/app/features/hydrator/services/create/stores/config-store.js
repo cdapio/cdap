@@ -15,7 +15,7 @@
  */
 
 class ConfigStore {
-  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorService, $q, PluginConfigFactory){
+  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorService, $q, PluginConfigFactory, uuid){
     this.state = {};
     this.mySettings = mySettings;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
@@ -27,6 +27,7 @@ class ConfigStore {
     this.HydratorService = HydratorService;
     this.$q = $q;
     this.PluginConfigFactory = PluginConfigFactory;
+    this.uuid = uuid;
 
     this.changeListeners = [];
     this.setDefaults();
@@ -56,7 +57,7 @@ class ConfigStore {
       },
       __ui__: {
         nodes: [],
-        isEditing: true
+        draftId: null
       },
       description: '',
       name: ''
@@ -634,15 +635,30 @@ class ConfigStore {
     return this.getState().config.comments;
   }
 
-  saveAsDraft(config) {
-    this.state.__ui__.isEditing = false;
-    this.mySettings.get('adapterDrafts')
-      .then(res => {
-        res = res || {isMigrated: true};
-        if (!angular.isObject(this.myHelpers.objectQuery(res, this.$stateParams.namespace))) {
-          res[this.$stateParams.namespace] = {};
+  saveAsDraft() {
+    this.ConsoleActionsFactory.resetMessages();
+    let config = this.getState();
+    config.__ui__.draftId = config.__ui__.draftId || this.uuid.v4();
+    let checkForDuplicateDrafts = (config, draftsMap = {}) => {
+      return Object.keys(draftsMap).filter(
+        draft => {
+          return draftsMap[draft].name === config.name &&
+                 config.__ui__.draftId !== draftsMap[draft].__ui__.draftId;
         }
-        res[this.$stateParams.namespace][config.name] = config;
+      ).length > 0;
+    };
+    let saveDraft = (config, draftsMap = {}) => {
+      draftsMap[config.__ui__.draftId] = config;
+      return draftsMap;
+    };
+    this.mySettings.get('adapterDrafts', true)
+      .then( (res = {isMigrated: true}) => {
+        let draftsMap = res[this.$stateParams.namespace];
+        if(!checkForDuplicateDrafts(config, draftsMap)) {
+          res[this.$stateParams.namespace] = saveDraft(config, draftsMap);
+        } else {
+          throw 'A Draft with the same name already exist. Plesae rename your draft';
+        }
         return this.mySettings.set('adapterDrafts', res);
       })
       .then(
@@ -653,7 +669,6 @@ class ConfigStore {
           });
         },
         err => {
-          this.state.__ui__.isEditing = true;
           this.ConsoleActionsFactory.addMessage({
             type: 'error',
             content: err
@@ -663,6 +678,6 @@ class ConfigStore {
   }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorService', '$q', 'PluginConfigFactory'];
+ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorService', '$q', 'PluginConfigFactory', 'uuid'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);

@@ -201,12 +201,25 @@ cdap_set_classpath() {
   # Where is this used outside this function?
   export HBASE_CP
 
+  # In order to ensure that we can do hacks, need to make sure classpath is sorted
+  # so that cdap jars are placed earlier in the classpath than twill or hadoop jars
+  COMP_LIB=""
+  i=0
+  for jar in `ls -1 ${COMP_HOME}/lib/* | sort` ; do
+    ((i++))
+    if [ $i -eq 1 ] ; then
+        COMP_LIB=${jar}
+    else
+        COMP_LIB=${COMP_LIB}:${jar}
+    fi
+  done
+
   if [ -n "${HBASE_CP}" ]; then
-    CP="${COMP_HOME}/lib/*:${HBASE_CP}:${CCONF}/:${COMP_HOME}/conf/:${EXTRA_CLASSPATH}"
+    CP="${COMP_LIB}:${HBASE_CP}:${CCONF}/:${COMP_HOME}/conf/:${EXTRA_CLASSPATH}"
   else
     # assume Hadoop/HBase libs are included via EXTRA_CLASSPATH
     echo "WARN: could not find Hadoop and HBase libraries"
-    CP="${COMP_HOME}/lib/*:${CCONF}/:${COMP_HOME}/conf/:${EXTRA_CLASSPATH}"
+    CP="${COMP_LIB}:${CCONF}/:${COMP_HOME}/conf/:${EXTRA_CLASSPATH}"
   fi
 
   # Setup classpaths.
