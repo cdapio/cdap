@@ -66,7 +66,8 @@ must match the **CDAP series** which you’d like installed on your cluster. To 
 The default (in the commands below) is to use **cdap/3.3**, which has the widest
 compatibility with the Ambari-supported Hadoop distributions.
 
-Replace |---| in the commands that follow on this page |---| all references to ``"cdap/``\ |literal-short-version|\ ``"`` 
+Replace |---| in the commands that follow on this page |---| all references to 
+``"cdap/``\ |literal-short-version|\ ``"`` 
 with the CDAP Repository from the list below that you would like to use:
 
 +-----------------------------------------------------------------------+

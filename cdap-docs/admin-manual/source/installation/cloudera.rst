@@ -108,6 +108,33 @@ Downloading and Distributing Packages
 
 Downloading and Installing CSD
 ------------------------------
+To install CDAP on a cluster managed by Cloudera, we have available packages for
+RHEL-compatible and Ubuntu systems, which you can install onto your CM server.
+These packages add CDAP to the list of available services which CM can install. 
+
++------------------------------------------------------------------------------------------+
+| Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions                |
++------------+--------------+---------------------+----------------------------------------+
+| CM Version | CDH Versions | CSD Versions        |  CDAP Parcel                           |
++================+=================+=======================================================+
+| 5.5        | <= 5.5       | 3.0.x through 3.3.x | *Version should match CSD major.minor* |
++------------+--------------+---------------------+----------------------------------------+
+| 5.4        | <= 5.4       | 3.0.x through 3.3.x | *Version should match CSD major.minor* |
++------------+--------------+---------------------+----------------------------------------+
+| 5.3        | <= 5.3       | 3.0.x through 3.1.x | *Version should match CSD major.minor* |
++------------+--------------+---------------------+----------------------------------------+
+| 5.2        | <= 5.2       | 3.0.x through 3.1.x | *Version should match CSD major.minor* |
++------------+--------------+---------------------+----------------------------------------+
+| 5.1        | <= 5.1       | *Not supported*     | *Not supported*                        |
++------------+--------------+---------------------+----------------------------------------+
+
+**Notes:**
+
+- Cloudera Manager supports a version of CDH no greater than its own (for example,
+  CM version 5.1 supports CDH versions less than or equal to 5.1).
+  
+**Steps:**
+
 - Download the CDAP CSD (Custom Service Descriptor) by `downloading the JAR file 
   <http://cask.co/resources/#cdap-integrations>`__.
 
