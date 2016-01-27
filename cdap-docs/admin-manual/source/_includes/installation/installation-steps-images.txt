@@ -1,0 +1,26 @@
+.. |step-1| image:: ../_images/cdap-installation-steps/step-1.png
+   :scale: 100%
+   :align: top
+   :target: `Preparing the Cluster`_
+   
+.. |step-2| image:: ../_images/cdap-installation-steps/step-2.png
+   :scale: 100%
+   :align: top
+   :target: `Downloading and Distributing Packages`_
+
+.. |step-3| image:: ../_images/cdap-installation-steps/step-3.png
+   :scale: 100%
+   :align: top
+   :target: `Installing CDAP Services`_
+   
+.. |step-4| image:: ../_images/cdap-installation-steps/step-4.png
+   :scale: 100%
+   :align: top
+   :target: `Starting CDAP Services`_
+
+.. |step-5| image:: ../_images/cdap-installation-steps/step-5.png
+   :scale: 100%
+   :align: top
+   :target: `Verification`_
+  
+|step-1|\ |step-2|\ |step-3|\ |step-4|\ |step-5|

@@ -10,8 +10,7 @@
 Manual Installation using Packages
 ==================================
 
-.. figure:: ../_images/cdap-installation-steps.png
-   :align: left
+.. include:: ../_includes/installation/installation-steps-images.txt
 
 .. rubric:: Notes
 
