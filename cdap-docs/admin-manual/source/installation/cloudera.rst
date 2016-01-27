@@ -38,7 +38,8 @@ consists of four mandatory roles and two optional roles:
    * - CDAP Security Auth Service
      - Performs client authentication for CDAP when security is enabled (*optional*)
    * - Gateway
-     - `Cloudera Manager Gateway Role <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_managing_roles.html>`__
+     - `Cloudera Manager Gateway Role 
+       <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_managing_roles.html>`__
        that installs the CDAP client tools (such as the *CDAP CLI*) and configuration (*optional*)
 
 These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of the same name.
@@ -50,14 +51,13 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
 - As CDAP depends on HDFS, YARN, HBase, ZooKeeper, and (optionally) Hive and Spark, it must be placed
   on a cluster host with full client configurations for these dependent services. 
 
-- CDAP roles must be co-located on a cluster host with at least an HDFS Gateway, a YARN
-  Gateway, an HBase Gateway, and |---| optionally |---| Hive or Spark Gateways.
-
 - The CDAP Master role must be co-located on a cluster host with an HDFS Gateway, a YARN
   Gateway, an HBase Gateway, and |---| optionally |---| Hive or Spark Gateways.
 
-- Note that these Gateways are redundant if you are co-locating the [CDAP Master role] on cluster hosts with
-  actual services, such as the HDFS Namenode, the YARN resource manager, or the HBase Master.
+- Note that these Gateways are redundant if you are co-locating the CDAP Master role 
+  on a cluster host (or hosts, in the case of a deployment with high availability) with
+  actual services, such as the HDFS Namenode, the YARN resource manager, or the HBase
+  Master.
 
 - All services run as the ``'cdap'`` user installed by the parcel.
 
@@ -108,25 +108,25 @@ Downloading and Distributing Packages
 
 Downloading and Installing CSD
 ------------------------------
-To install CDAP on a cluster managed by Cloudera, we have available packages for
-RHEL-compatible and Ubuntu systems, which you can install onto your CM server.
-These packages add CDAP to the list of available services which CM can install. 
+To install CDAP on a cluster managed by Cloudera, we have available a Custom Service
+Descriptor (CSD) which you can install onto your CM server. This adds CDAP to the list of
+available services which CM can install. 
 
-+------------------------------------------------------------------------------------------+
-| Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions                |
-+------------+--------------+---------------------+----------------------------------------+
-| CM Version | CDH Versions | CSD Versions        |  CDAP Parcel                           |
-+================+=================+=======================================================+
-| 5.5        | <= 5.5       | 3.0.x through 3.3.x | *Version should match CSD major.minor* |
-+------------+--------------+---------------------+----------------------------------------+
-| 5.4        | <= 5.4       | 3.0.x through 3.3.x | *Version should match CSD major.minor* |
-+------------+--------------+---------------------+----------------------------------------+
-| 5.3        | <= 5.3       | 3.0.x through 3.1.x | *Version should match CSD major.minor* |
-+------------+--------------+---------------------+----------------------------------------+
-| 5.2        | <= 5.2       | 3.0.x through 3.1.x | *Version should match CSD major.minor* |
-+------------+--------------+---------------------+----------------------------------------+
-| 5.1        | <= 5.1       | *Not supported*     | *Not supported*                        |
-+------------+--------------+---------------------+----------------------------------------+
++-------------------------------------------------------------------------------------------------+
+| Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions                       |
++------------+---------------------+---------------------+----------------------------------------+
+| CM Version | CDH Versions        | CSD Versions        |  CDAP Parcel                           |
++============+=====================+=====================+========================================+
+| 5.5        | no greater than 5.5 | 3.0.x through 3.3.x | *Version should match CSD major.minor* |
++------------+---------------------+---------------------+----------------------------------------+
+| 5.4        | no greater than 5.4 | 3.0.x through 3.3.x | *Version should match CSD major.minor* |
++------------+---------------------+---------------------+----------------------------------------+
+| 5.3        | no greater than 5.3 | 3.0.x through 3.1.x | *Version should match CSD major.minor* |
++------------+---------------------+---------------------+----------------------------------------+
+| 5.2        | no greater than 5.2 | 3.0.x through 3.1.x | *Version should match CSD major.minor* |
++------------+---------------------+---------------------+----------------------------------------+
+| 5.1        | no greater than 5.1 | *Not supported*     | *Not supported*                        |
++------------+---------------------+---------------------+----------------------------------------+
 
 **Notes:**
 
@@ -135,7 +135,7 @@ These packages add CDAP to the list of available services which CM can install.
   
 **Steps:**
 
-- Download the CDAP CSD (Custom Service Descriptor) by `downloading the JAR file 
+- Download the CDAP CSD by `downloading the JAR file 
   <http://cask.co/resources/#cdap-integrations>`__.
 
   Details on CSDs and Cloudera Manager Extensions are `available online 
