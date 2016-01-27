@@ -42,7 +42,6 @@ import co.cask.cdap.common.ApplicationNotFoundException;
 import co.cask.cdap.common.ProgramNotFoundException;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.data.dataset.SystemDatasetInstantiator;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
@@ -463,7 +462,7 @@ public class DefaultStore implements Store {
     appsTx.get().executeUnchecked(new TransactionExecutor.Function<AppMetadataStore, Void>() {
       @Override
       public Void apply(AppMetadataStore mds) throws Exception {
-        mds.writeApplication(id.getNamespaceId(), id.getId(), spec, Locations.toURI(appArchiveLocation).toString());
+        mds.writeApplication(id.getNamespaceId(), id.getId(), spec, appArchiveLocation.toURI().toString());
         return null;
       }
     }, apps.get());

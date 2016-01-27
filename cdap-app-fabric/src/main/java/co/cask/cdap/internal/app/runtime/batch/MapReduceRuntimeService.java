@@ -222,7 +222,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         // ClassLoader from here and use it for setting up the job
         Location pluginArchive = createPluginArchive(tempLocation);
         if (pluginArchive != null) {
-          job.addCacheArchive(Locations.toURI(pluginArchive));
+          job.addCacheArchive(pluginArchive.toURI());
           mapredConf.set(Constants.Plugin.ARCHIVE, pluginArchive.getName());
         }
       }
@@ -246,14 +246,14 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       if (!MapReduceTaskContextProvider.isLocal(mapredConf)) {
         // Copy and localize the program jar in distributed mode
         programJar = copyProgramJar(tempLocation);
-        job.addCacheFile(Locations.toURI(programJar));
+        job.addCacheFile(programJar.toURI());
 
         List<String> classpath = new ArrayList<>();
 
         // Localize logback.xml
         Location logbackLocation = createLogbackJar(tempLocation);
         if (logbackLocation != null) {
-          job.addCacheFile(Locations.toURI(logbackLocation));
+          job.addCacheFile(logbackLocation.toURI());
           classpath.add(logbackLocation.getName());
         }
 
@@ -262,7 +262,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
         classpath.add("job.jar/classes");
         Location launcherJar = createLauncherJar(
           Joiner.on(",").join(MapReduceContainerHelper.getMapReduceClassPath(mapredConf, classpath)), tempLocation);
-        job.addCacheFile(Locations.toURI(launcherJar));
+        job.addCacheFile(launcherJar.toURI());
 
         // The only thing in the container classpath is the launcher.jar
         // The MapReduceContainerLauncher inside the launcher.jar will creates a MapReduceClassLoader and launch
@@ -284,7 +284,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
       try {
         // We remember tx, so that we can re-use it in mapreduce tasks
         CConfiguration cConfCopy = cConf;
-        contextConfig.set(context, cConfCopy, tx, Locations.toURI(programJar), localizedUserResources);
+        contextConfig.set(context, cConfCopy, tx, programJar.toURI(), localizedUserResources);
 
         LOG.info("Submitting MapReduce Job: {}", context);
         // submits job and returns immediately. Shouldn't need to set context ClassLoader.

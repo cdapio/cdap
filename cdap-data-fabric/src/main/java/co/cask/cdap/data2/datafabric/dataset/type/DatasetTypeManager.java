@@ -22,7 +22,6 @@ import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
 import co.cask.cdap.api.dataset.module.DatasetModule;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ClassLoaders;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
@@ -193,7 +192,7 @@ public class DatasetTypeManager extends AbstractIdleService {
             }
           }
 
-          URI jarURI = jarLocation == null ? null : Locations.toURI(jarLocation);
+          URI jarURI = jarLocation == null ? null : jarLocation.toURI();
           DatasetModuleMeta moduleMeta = new DatasetModuleMeta(datasetModuleId.getId(), className, jarURI,
                                                                reg.getTypes(), Lists.newArrayList(moduleDependencies));
           datasets.getTypeMDS().writeModule(datasetModuleId.getNamespace(), moduleMeta);
