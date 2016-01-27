@@ -9,11 +9,12 @@ Hadoop Compatibility
 ====================
 
 Before installing the CDAP components, you must first install (or have access to) a Hadoop
-cluster with *HBase*, *HDFS*, *YARN*, and *ZooKeeper*. In order to use the ad-hoc querying
-capabilities of CDAP (Explore), you will also need *Hive*. Additional components (such as
-*Spark*) may be required, depending on the applications you will be running. All CDAP
-components can be installed on the same boxes as your Hadoop cluster, or on separate boxes
-that can connect to the Hadoop services.
+cluster with *HBase*, *HDFS*, *YARN*, and *ZooKeeper*. *Hive* and *Spark* are optional
+components; Hive is required to enable CDAP's ad-hoc querying capabilities (*CDAP
+Explore*) and Spark is required if a CDAP application uses the Spark program.
+
+All CDAP components can be installed on the same boxes as your Hadoop cluster, or on
+separate boxes that can connect to the Hadoop services.
 
 CDAP depends on these services being present on the cluster. There are **core
 dependencies,** which must be running for CDAP system services to operate correctly, and
@@ -89,9 +90,9 @@ Hadoop components, as required:
 | Component      | Source                          | Supported Versions                    |
 +================+=================================+=======================================+
 | **Hive**       | Apache                          | Version 0.12.0 through 1.1.0          |
-+ (required for  +---------------------------------+---------------------------------------+
-| CDAP Explore   | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
-+ service)       +---------------------------------+---------------------------------------+
++                +---------------------------------+---------------------------------------+
+|                | Cloudera Data Hub (CDH)         | 5.0.0 through 5.5.0                   |
++                +---------------------------------+---------------------------------------+
 |                | Hortonworks Data Platform (HDP) | 2.0 through 2.3                       |
 +                +---------------------------------+---------------------------------------+
 |                | MapR                            | 4.1 and 5.0                           |
