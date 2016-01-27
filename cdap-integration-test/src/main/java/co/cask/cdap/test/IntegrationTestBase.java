@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -46,6 +46,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -72,7 +73,7 @@ import java.util.concurrent.TimeoutException;
  */
 public abstract class IntegrationTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestBase.class);
-  private static final long SERVICE_CHECK_TIMEOUT = TimeUnit.MINUTES.toSeconds(10);
+  private static final long SERVICE_CHECK_TIMEOUT_SECONDS = TimeUnit.MINUTES.toSeconds(10);
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -86,7 +87,7 @@ public abstract class IntegrationTestBase {
     assertIsClear();
   }
 
-  protected void checkSystemServices() throws TimeoutException {
+  protected void checkSystemServices() throws TimeoutException, InterruptedException {
     Callable<Boolean> cdapAvailable = new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
@@ -99,12 +100,21 @@ public abstract class IntegrationTestBase {
         // so we don't have to unnecessarily add a try-catch for NamespaceNotFoundException, since that exception is
         // not handled in checkServicesWithRetry.
         List<NamespaceMeta> namespaces = getNamespaceClient().list();
-        return namespaces.size() == 1 && NamespaceMeta.DEFAULT.equals(namespaces.get(0));
+
+        if (namespaces.size() == 0) {
+          return false;
+        }
+        if (namespaces.size() == 1 && NamespaceMeta.DEFAULT.equals(namespaces.get(0))) {
+          return true;
+        }
+        throw new IllegalStateException("Unexpected namespaces: " + namespaces);
       }
     };
 
+    String errorMessage = String.format("CDAP Services are not available. Retried for %s seconds.",
+                                        SERVICE_CHECK_TIMEOUT_SECONDS);
     try {
-      checkServicesWithRetry(cdapAvailable, "CDAP Services are not available");
+      checkServicesWithRetry(cdapAvailable, errorMessage);
     } catch (Throwable e) {
       Throwable rootCause = Throwables.getRootCause(e);
       if (rootCause instanceof UnauthorizedException) {
@@ -114,7 +124,7 @@ public abstract class IntegrationTestBase {
         } catch (IOException ex) {
           throw Throwables.propagate(ex);
         }
-        checkServicesWithRetry(cdapAvailable, "CDAP Services are not available");
+        checkServicesWithRetry(cdapAvailable, errorMessage);
       } else {
         throw Throwables.propagate(rootCause);
       }
@@ -129,7 +139,7 @@ public abstract class IntegrationTestBase {
    * @throws IOException
    * @throws TimeoutException if a timeout occurs while getting an access token
    */
-  protected AccessToken fetchAccessToken() throws IOException, TimeoutException {
+  protected AccessToken fetchAccessToken() throws IOException, TimeoutException, InterruptedException {
     Properties properties = new Properties();
     properties.setProperty("security.auth.client.username", System.getProperty("cdap.username"));
     properties.setProperty("security.auth.client.password", System.getProperty("cdap.password"));
@@ -150,26 +160,25 @@ public abstract class IntegrationTestBase {
 
 
   private void checkServicesWithRetry(Callable<Boolean> callable,
-                                      String exceptionMessage) throws TimeoutException {
-    int numSecs = 0;
+                                      String exceptionMessage) throws TimeoutException, InterruptedException {
+    Stopwatch sw = new Stopwatch().start();
     do {
       try {
-        numSecs++;
         if (callable.call()) {
           return;
         }
-        TimeUnit.SECONDS.sleep(1);
-      } catch (InterruptedException | IOException e) {
-        // We want to suppress and retry on InterruptedException or IOException
+      } catch (IOException e) {
+        // We want to suppress and retry on IOException
       } catch (Throwable e) {
-        // Also suppress and retry if the root cause is InterruptedException or IOException
+        // Also suppress and retry if the root cause is IOException
         Throwable rootCause = Throwables.getRootCause(e);
-        if (!(rootCause instanceof InterruptedException || rootCause instanceof IOException)) {
+        if (!(rootCause instanceof IOException)) {
           // Throw if root cause is any other exception e.g. UnauthorizedException
           throw Throwables.propagate(rootCause);
         }
       }
-    } while (numSecs <= SERVICE_CHECK_TIMEOUT);
+      TimeUnit.SECONDS.sleep(1);
+    } while (sw.elapsedTime(TimeUnit.SECONDS) <= SERVICE_CHECK_TIMEOUT_SECONDS);
 
     // when we have passed the timeout and the check for services is not successful
     throw new TimeoutException(exceptionMessage);
