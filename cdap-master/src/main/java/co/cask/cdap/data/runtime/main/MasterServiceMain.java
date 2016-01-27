@@ -686,6 +686,9 @@ public class MasterServiceMain extends DaemonMain {
           prepareExploreContainer(preparer);
         }
 
+        // TODO CDAP-4776 Remove after TWILL-163 gets fixed.
+        // Setting the "user.name" property here with the value of "hdfs.user" configuration property.
+        // This user will be used by TWILL to do the cleanup of the HDFS program directories.
         System.setProperty("user.name", cConf.get(Constants.CFG_HDFS_USER));
         // Add a listener to delete temp files when application started/terminated.
         TwillController controller = preparer.start();
