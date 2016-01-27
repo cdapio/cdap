@@ -16,7 +16,7 @@
 
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorCreateController', function($timeout, $state, $alert, myPipelineTemplatesApi, GLOBALS, CanvasFactory) {
+  .controller('HydratorCreateController', function($timeout, $state, $alert, myPipelineTemplatesApi, GLOBALS, CanvasFactory, NonStorePipelineErrorFactory) {
 
     var vm = this;
     vm.GLOBALS = GLOBALS;
@@ -109,24 +109,45 @@ angular.module(PKG.name + '.feature.hydrator')
       reader.readAsText(files[0], 'UTF-8');
 
       reader.onload = function (evt) {
-         var data = evt.target.result;
-         var jsonData;
-         try {
-           jsonData = JSON.parse(data);
-         } catch(e) {
-           $alert({
-             type: 'danger',
-             content: 'Error in the JSON imported.',
-             duration: false
-           });
-           console.log('ERROR in imported json: ', e);
-           return;
-         }
-         $state.go('hydrator.create.studio', {
-           data: jsonData,
-           type: jsonData.artifact.name
-         });
+        var data = evt.target.result;
+        var jsonData;
+        try {
+          jsonData = JSON.parse(data);
+        } catch(e) {
+          $alert({
+            type: 'danger',
+            content: 'Syntax Error. Ill-formed pipeline configuration.',
+            duration: false
+          });
+          return;
+        }
+        let isNotValid = NonStorePipelineErrorFactory.validateImportJSON(jsonData);
+        if (isNotValid) {
+          $alert({
+            type: 'danger',
+            content: isNotValid,
+            duration: false
+          });
+        } else {
+          if (!jsonData.config.connections) {
+            jsonData.config.connections = generateLinearConnections(jsonData.config);
+          }
+          $state.go('hydrator.create.studio', {
+            data: jsonData,
+            type: jsonData.artifact.name
+          });
+        }
       };
+    };
+
+    let generateLinearConnections = (config) => {
+      let nodes = [config.source].concat(config.transforms || []).concat(config.sinks);
+      let connections = [];
+      let i;
+      for (i=0; i<nodes.length - 1 ; i++) {
+        connections.push({ from: nodes[i].name, to: nodes[i+1].name });
+      }
+      return connections;
     };
 
     this.openFileBrowser = function() {
