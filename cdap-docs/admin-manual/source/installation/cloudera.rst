@@ -112,42 +112,48 @@ To install CDAP on a cluster managed by Cloudera, we have available a Custom Ser
 Descriptor (CSD) which you can install onto your CM server. This adds CDAP to the list of
 available services which CM can install. 
 
-+-------------------------------------------------------------------------------------------------+
-| Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions                       |
-+------------+---------------------+---------------------+----------------------------------------+
-| CM Version | CDH Versions        | CSD Versions        |  CDAP Parcel                           |
-+============+=====================+=====================+========================================+
-| 5.5        | no greater than 5.5 | 3.0.x through 3.3.x | *Version should match CSD major.minor* |
-+------------+---------------------+---------------------+----------------------------------------+
-| 5.4        | no greater than 5.4 | 3.0.x through 3.3.x | *Version should match CSD major.minor* |
-+------------+---------------------+---------------------+----------------------------------------+
-| 5.3        | no greater than 5.3 | 3.0.x through 3.1.x | *Version should match CSD major.minor* |
-+------------+---------------------+---------------------+----------------------------------------+
-| 5.2        | no greater than 5.2 | 3.0.x through 3.1.x | *Version should match CSD major.minor* |
-+------------+---------------------+---------------------+----------------------------------------+
-| 5.1        | no greater than 5.1 | *Not supported*     | *Not supported*                        |
-+------------+---------------------+---------------------+----------------------------------------+
+.. _cloudera-compatibility-matrix:
+
++----------------------------------------------------------------------------------------------------------------------+
+| Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions                                            |
++------------+---------------------+---------------------+----------------------------+--------------------------------+
+| CM Version | CDH Versions        | CSD Versions        |  CDAP Parcel               | CDAP HBase Coprocessor Version |
++============+=====================+=====================+============================+================================+
+| 5.5        | no greater than 5.5 | 3.0.x through 3.3.x | *Matching CSD major.minor* | ``hbase10cdh550``              |
++------------+---------------------+---------------------+----------------------------+--------------------------------+
+| 5.4        | no greater than 5.4 | 3.0.x through 3.3.x | *Matching CSD major.minor* | ``hbase10cdh``                 |
++------------+---------------------+---------------------+----------------------------+--------------------------------+
+| 5.3        | no greater than 5.3 | 3.0.x through 3.1.x | *Matching CSD major.minor* | ``hbase98``                    |
++------------+---------------------+---------------------+----------------------------+--------------------------------+
+| 5.2        | no greater than 5.2 | 3.0.x through 3.1.x | *Matching CSD major.minor* | ``hbase98``                    |
++------------+---------------------+---------------------+----------------------------+--------------------------------+
+| 5.1        | no greater than 5.1 | *Not supported*     | |---|                      | |---|                          |
++------------+---------------------+---------------------+----------------------------+--------------------------------+
 
 **Notes:**
 
 - Cloudera Manager supports a version of CDH no greater than its own (for example,
   CM version 5.1 supports CDH versions less than or equal to 5.1).
   
+- The version of the CDAP Parcel that is used should match the CSD major.minor version.
+
+- The CDAP HBase Coprocessor versions are listed to assist when 
+  :ref:`upgrading CDH <cloudera-release-specific-upgrade-notes>`.
+
+
 **Steps:**
 
-- Download the CDAP CSD by `downloading the JAR file 
-  <http://cask.co/resources/#cdap-integrations>`__.
+#. Download the CDAP CSD by `downloading the JAR file 
+   <http://cask.co/resources/#cdap-integrations>`__.
+   Details on CSDs and Cloudera Manager Extensions are `available online 
+   <https://github.com/cloudera/cm_ext/wiki>`__.
 
-  Details on CSDs and Cloudera Manager Extensions are `available online 
-  <https://github.com/cloudera/cm_ext/wiki>`__.
+   .. _cloudera-installation-csd:
 
-  .. _cloudera-installation-csd:
-
-- Install the CSD following the instructions at Cloudera's website on `Add-on Services
-  <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__, 
-  using the instructions given for the case of installing software in the form of a parcel.
-
-  In this case, you install the CSD first and then install the parcel.
+#. Install the CSD following the instructions at Cloudera's website on `Add-on Services
+   <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_mc_addon_services.html>`__, 
+   using the instructions given for the case of installing software in the form of a parcel.
+   In this case, you install the CSD first and then install the parcel second.
 
 .. _cloudera-installation-download-distribute-parcel:
 
@@ -529,10 +535,15 @@ Upgrading CDH
 
 .. _cloudera-release-specific-upgrade-notes:
 
-**Upgrading CDH (Cloudera Data Hub) 5.3 to 5.4**
+These steps cover upgrading the version of CDH of an existing CDAP installation.
+As the different versions of CDH can use different versions of HBase, upgrading from
+one version to the next can require that the HBase coprocessors be upgraded to the correct
+version. The :ref:`Cloudera compatibility matrix <cloudera-compatibility-matrix>` lists the
+different coprocessors used with each version of CDH. If the version changes, you need to
+check that the version being used has changed as described below.
 
-**Background:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
-CDH 5.4 as of CDAP 3.1.0 - however, upgrading the underlying CDH version is only supported
+**For example:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
+CDH 5.4 as of CDAP 3.1.0 |---| however, upgrading the underlying CDH version is only supported
 since CDAP 3.2.0. Therefore, before upgrading from CDH 5.3 to CDH 5.4, upgrade CDAP to version
 3.2.0 or greater, following the normal upgrade procedure. Start CDAP at least once to make sure
 it works properly, before you upgrade to CDH 5.4.
@@ -553,7 +564,7 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
     > disable_all 'cdap.*'
     
-#. Upgrade to CDH 5.4.
+#. Upgrade to the new version of CDH.
 #. Stop all CDAP services, as CM will have (again) auto-started CDAP::
 
     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i stop ; done
@@ -562,15 +573,18 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase
     
-#. Check if the coprocessor JARs for all CDAP tables have been upgraded to CDH HBase 1.0,
-   by checking that the coprocessor classnames are using the ``hbase10cdh`` package |---|
-   for example, ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``
+#. Check if the coprocessor JARs for all CDAP tables have been upgraded to 
+   :ref:`the correct version <cloudera-compatibility-matrix>` by checking that the coprocessor 
+   classnames are using the correct package |---| for example, if upgrading from CDH 5.3
+   to 5.4, the new coprocessor package is ``hbase10cdh`` and a classname using it would be
+   ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``.
   
    Running this command in an HBase shell will give you table attributes::
   
     > describe 'cdap_system:app.meta'
     
-   The resulting output will show the coprocessor classname::
+   The resulting output will show the coprocessor classname; in this case, we are looking for
+   the inclusion of ``hbase10cdh`` in the name::
   
     'cdap_system:app.meta', {TABLE_ATTRIBUTES => {coprocessor$1 =>
     'hdfs://server.example.com/cdap/cdap/lib/
