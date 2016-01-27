@@ -32,8 +32,7 @@ angular.module(PKG.name + '.services')
           .then(function() {
             myAlertOnValium.show({
               type: 'success',
-              title: 'Upload success',
-              content: 'The application has been uploaded successfully'
+              content: 'Application has been successfully uploaded'
             });
           });
       }
