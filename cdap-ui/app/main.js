@@ -260,13 +260,6 @@ angular
   })
 
   .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
-    EventPipe.on(MYSOCKET_EVENT.closed, function (angEvent, data) {
-      myAlert({
-        title: 'Error',
-        content: data.reason || 'Unable to connect to CDAP',
-        type: 'danger'
-      });
-    });
 
     EventPipe.on(MYSOCKET_EVENT.message, function (data) {
       if(data.statusCode > 399 && !data.resource.suppressErrors) {
