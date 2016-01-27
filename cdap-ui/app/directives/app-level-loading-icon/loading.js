@@ -39,9 +39,6 @@ angular.module(PKG.name + '.commons')
             $scope.message = message || genericServiceErrorMsg;
             $scope.subtitle = subtitle || genericSubtitle;
             modal = $bootstrapModal.open(modalObj);
-            modal.result.finally(function() {
-              $state.go('overview', {}, {reload: true});
-            });
           } else {
             $scope.message = message || genericServiceErrorMsg;
             $scope.subtitle = subtitle || genericSubtitle;
