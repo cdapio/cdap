@@ -77,7 +77,7 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
       scope.getShapes = function() {
         var shapes = {};
         shapes.flowlet = function(parent, bbox, node) {
-          var instances = scope.model.instances[node.elem.__data__] || 1;
+          var instances = scope.model.instances[node.labelId] || 1;
 
           // Pushing labels down
           parent.select('.label')
@@ -94,7 +94,7 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
             .attr('y', -bbox.height/4)
             .text('x' + instances)
             .attr('class', 'flow-shapes flowlet-instance-count')
-            .attr('id', 'instance-' + node.elem.__data__);
+            .attr('id', 'instance-' + node.labelId);
 
           var leafOptions = {
             classNames: ['flowlet-events'],
@@ -106,9 +106,9 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
           parent.insert('text')
             .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
-            .text(numberFilter(scope.model.metrics[scope.labelMap[node.elem.__data__].name]))
+            .text(numberFilter(scope.model.metrics[scope.labelMap[node.labelId].name]))
             .attr('class', 'flow-shapes flowlet-event-count')
-            .attr('id', 'metrics-' + node.elem.__data__);
+            .attr('id', 'metrics-' + node.labelId);
 
           node.intersect = function(point) {
             return dagreD3.intersect.circle(node, flowletCircleRadius, point);
@@ -142,9 +142,9 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
           parent.append('text')
             .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
-            .text(numberFilter(scope.model.metrics[scope.labelMap[node.elem.__data__].name]))
+            .text(numberFilter(scope.model.metrics[scope.labelMap[node.labelId].name]))
             .attr('class', 'flow-shapes stream-event-count')
-            .attr('id', 'metrics-' + node.elem.__data__);
+            .attr('id', 'metrics-' + node.labelId);
 
           parent.select('.label')
             .attr('class', 'node-label');
@@ -212,8 +212,8 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
         var labelTooltips = {};
 
         angular.forEach(labels, function (label) {
-          labelTooltips[label.__data__] = $tooltip(angular.element(label), {
-            title: label.__data__,
+          labelTooltips[label.id] = $tooltip(angular.element(label), {
+            title: label.id,
             trigger: 'manual',
             delay: { show: 300, hide: 0 },
             target: angular.element(label),

@@ -170,7 +170,11 @@ angular.module(PKG.name+'.commons')
 
         scope.instanceMap[node.name] = node;
         scope.labelMap[node.label || node.name] = node;
-        scope.g.setNode(node.name, { shape: scope.getShape(node.type), label: nodeLabel});
+        scope.g.setNode(node.name, {
+          shape: scope.getShape(node.type),
+          label: nodeLabel,
+          labelId: node.name
+        });
       });
 
       angular.forEach(edges, function (edge) {

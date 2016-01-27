@@ -60,9 +60,8 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories,
 
           var shapeSvg = parent.insert('polygon', ':first-child')
               .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
-              .attr('id', 'job-' + scope.instanceMap[node.elem.__data__].nodeId)
+              .attr('id', 'job-' + scope.instanceMap[node.labelId].nodeId)
               .attr('class', 'workflow-shapes foundation-shape job-svg');
-
 
           // WORKFLOW TOKENS
           // It will default render with class hidden
@@ -70,7 +69,7 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories,
             .attr('r', 10)
             .attr('transform', 'translate(0, ' + (-defaultRadius - 25) + ')' )
             .attr('class', 'workflow-token hidden')
-            .attr('id', 'token-' + scope.instanceMap[node.elem.__data__].nodeId);
+            .attr('id', 'token-' + scope.instanceMap[node.labelId].nodeId);
           parent.append('text')
             .text('T')
             .attr('x', -5)
@@ -154,7 +153,7 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories,
               .attr('r', 10)
               .attr('transform', 'translate(0, ' + (-defaultRadius - 25) + ')' )
               .attr('class', 'workflow-token')
-              .attr('id', 'token-' + scope.instanceMap[node.elem.__data__].nodeId);
+              .attr('id', 'token-' + scope.instanceMap[node.labelId].nodeId);
 
 
             parent.append('text')
@@ -283,10 +282,10 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories,
         var labelTooltips = {};
 
         angular.forEach(labels, function (label) {
-          var text = scope.instanceMap[label.__data__].program.programType || scope.instanceMap[label.__data__].program.programName;
+          var text = scope.instanceMap[label.id].program.programType || scope.instanceMap[label.id].program.programName;
 
-          labelTooltips[label.__data__] = $tooltip(angular.element(label), {
-            title: scope.instanceMap[label.__data__].nodeId + ' : ' + text,
+          labelTooltips[label.id] = $tooltip(angular.element(label), {
+            title: scope.instanceMap[label.id].nodeId + ' : ' + text,
             trigger: 'manual',
             delay: { show: 300, hide: 0 },
             target: angular.element(label),
