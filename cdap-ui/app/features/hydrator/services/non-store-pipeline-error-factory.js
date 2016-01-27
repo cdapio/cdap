@@ -198,6 +198,63 @@ let allNodesConnected = (GLOBALS, nodes, connections, cb) => {
   });
 };
 
+let hasValidArtifact = (importConfig) => {
+  return importConfig.artifact && importConfig.artifact.name.length && importConfig.artifact.version.length && importConfig.artifact.scope.length;
+};
+let hasValidSource = (importConfig) => {
+  return importConfig.config.source;
+};
+let hasValidSinks = (importConfig) => {
+  return importConfig.config.sinks && importConfig.config.sinks.length;
+};
+let hasValidConfig = (importConfig) => {
+  return importConfig.config;
+};
+let hasValidSchedule = (importConfig, GLOBALS) => {
+  let isBatchPipeline = importConfig.artifact.name === GLOBALS.etlBatch;
+  return !isBatchPipeline? true: importConfig.config.schedule;
+};
+let hasValidInstance = (importConfig, GLOBALS) => {
+  let isRealtimePipeline = importConfig.artifact.name === GLOBALS.etlRealtime;
+  return !isRealtimePipeline? true: importConfig.config.instance;
+};
+let hasValidNodesConnections = (importConfig) => {
+  if (!importConfig.config.connections) {
+    return true;
+  }
+  let config = importConfig.config;
+  let isValid = true;
+  let nodesMap = {};
+  [config.source].concat(config.sinks)
+    .concat( (config.transforms || []) )
+    .forEach( node => nodesMap[node.name] = node);
+  config.connections.forEach( conn => {
+    isValid = isValid && (nodesMap[conn.from] && nodesMap[conn.to]);
+  });
+  return isValid;
+};
+
+let validateImportJSON = (myHelpers, GLOBALS, config) => {
+  let errorPath = ['en', 'hydrator', 'studio', 'error', 'IMPORT-JSON'];
+  let validations = [
+    { fn: hasValidArtifact, messagePath: errorPath.concat(['INVALID-ARTIFACT']) },
+    { fn: hasValidConfig, messagePath: errorPath.concat(['INVALID-CONFIG']) },
+    { fn: hasValidSchedule, messagePath: errorPath.concat(['INVALID-SCHEDULE']) },
+    { fn: hasValidInstance, messagePath: errorPath.concat(['INVALID-INSTANCE']) },
+    { fn: hasValidSource, messagePath: errorPath.concat(['INVALID-SOURCE']) },
+    { fn: hasValidSinks, messagePath: errorPath.concat(['INVALID-SINKS']) },
+    { fn: hasValidNodesConnections, messagePath: errorPath.concat(['INVALID-NODES-CONNECTIONS']) }
+  ];
+  let i;
+  for(i=0; i<validations.length; i++) {
+    let currValidation = validations[i];
+    if (!currValidation.fn.call(null, config, GLOBALS)) {
+      return myHelpers.objectQuery.apply(null, [GLOBALS].concat(currValidation.messagePath));
+    }
+  }
+  return false;
+};
+
 let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
   // If we had used SystemJs or requirejs this could have been avoided.
   return {
@@ -208,7 +265,8 @@ let NonStorePipelineErrorFactory = (GLOBALS, myHelpers) => {
     hasOnlyOneSource: hasOnlyOneSource.bind(null, myHelpers, GLOBALS),
     hasAtLeastOneSink: hasAtLeastOneSink.bind(null, myHelpers, GLOBALS),
     isNodeNameUnique: isNodeNameUnique.bind(null, myHelpers),
-    allNodesConnected: allNodesConnected.bind(null, GLOBALS)
+    allNodesConnected: allNodesConnected.bind(null, GLOBALS),
+    validateImportJSON: validateImportJSON.bind(null, myHelpers, GLOBALS)
   };
 };
 

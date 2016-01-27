@@ -432,7 +432,7 @@ To package and deploy your plugin, follow these instructions on `plugin packagin
 `deployment <#deploying-a-system-artifact>`__ and `verification <#deployment-verification>`__.
 
 To control how your plugin appears in the CDAP UI, include an appropriate :ref:`plugin
-configuration JSON file <cdap-apps-custom-plugin-configuration-json>`, as described below.
+widget JSON file <cdap-apps-custom-widget-json>`, as described below.
 
 By using one of the ``etl-plugin`` Maven archetypes, your project will be set up to generate
 the required JAR manifest. If you move the plugin class to a different Java package after
@@ -453,19 +453,19 @@ Plugin Deployment
    :start-after: .. _plugins-deployment-artifact:
    :end-before:  .. _plugins-use-case:
 
-.. _cdap-apps-custom-plugin-configuration-json:
+.. _cdap-apps-custom-widget-json:
 
-Plugin Configuration JSON
+Plugin Widget JSON
 -------------------------
 When a plugin is displayed in the CDAP UI, its properties are represented
 by widgets in the :ref:`Cask Hydrator <cdap-apps-cask-hydrator>`. Each property of a
 plugin is represented, by default, as a textbox in the user interface. 
 
-To customize the plugin display, a plugin can include a configuration JSON file that
+To customize the plugin display, a plugin can include a widget JSON file that
 specifies the particular widgets and sets of widget attributes used to display the plugin
 properties in the CDAP UI.
 
-The configuration JSON is composed of two lists:
+The widget JSON is composed of two lists:
 
 - a list of property configuration groups and
 - a list of output properties. 
@@ -724,9 +724,9 @@ In contrast, our "Batch Source" plugin could have a configurable output schema::
 Widget types for output properties are limited to ensure that the schema that is propagated across
 different plugins in the CDAP UI is consistent. 
 
-Example Configuration JSON
+Example Widget JSON
 ..........................
-Based on the above definitions, we could write the complete configuration JSON for our *Batch Source* plugin
+Based on the above definitions, we could write the complete widget JSON for our *Batch Source* plugin
 (with the properties of *name*, *basePath*, *duration*, *delay*, and an output *schema*) as::
 
   {

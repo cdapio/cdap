@@ -182,8 +182,8 @@ angular.module(PKG.name + '.feature.hydrator')
               vm.statusCount.draft++;
               vm.pipelineList.push({
                 isDraft: true,
-                name: key,
-                id: key,
+                name: value.name,
+                id: value.__ui__.draftId || key,
                 artifact: value.artifact,
                 description: myHelpers.objectQuery(value, 'description'),
                 _status: 'Draft',
@@ -197,11 +197,14 @@ angular.module(PKG.name + '.feature.hydrator')
         });
     }
 
-    vm.deleteDraft = function(draftName) {
+    vm.deleteDraft = function(draftId) {
+      let draftName;
       mySettings.get('adapterDrafts')
         .then(function(res) {
-          if (myHelpers.objectQuery(res, $stateParams.namespace, draftName)) {
-            delete res[$stateParams.namespace][draftName];
+          let draft = myHelpers.objectQuery(res, $stateParams.namespace, draftId);
+          if (draft) {
+            draftName = draft.name;
+            delete res[$stateParams.namespace][draftId];
           }
           return mySettings.set('adapterDrafts', res);
         })
