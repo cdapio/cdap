@@ -116,7 +116,7 @@ angular.module(PKG.name + '.feature.hydrator')
         } catch(e) {
           $alert({
             type: 'danger',
-            content: 'Parse error in the JSON imported.',
+            content: 'Syntax Error. Ill-formed pipeline configuration.',
             duration: false
           });
           return;

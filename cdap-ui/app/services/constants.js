@@ -56,21 +56,21 @@ angular.module(PKG.name + '.services')
             'MISSING-REQUIRED-FIELDS': ' is missing required fields',
             'MORE-THAN-ONE-SOURCE-FOUND': 'Pipelines can only have one source. Please remove any additional sources.',
             'NO-SOURCE-FOUND': 'Please add a source to your pipeline',
-            'MISSING-NAME': 'Please name your pipeline.',
+            'MISSING-NAME': 'Pipeline name is missing.',
             'INVALID-NAME': 'Pipeline names can only contain alphanumeric (\'a-z A-Z 0-9\') and underscore ( \'_\') characters. Please remove any other characters.',
             'NO-SINK-FOUND': 'Please add a sink to your pipeline',
             'NAME-ALREADY-EXISTS': 'A pipeline with this name already exists. Please choose a different name.',
             'DUPLICATE-NODE-NAMES': 'Every node should have a unique name to be exported/published.',
-            'DUPLICATE-NAME': 'Please rename. Another node already has this name.',
+            'DUPLICATE-NAME': 'Node with the same name already exists.',
             'MISSING-CONNECTION': ' is missing connection',
             'IMPORT-JSON': {
-              'INVALID-ARTIFACT': 'Invalid artifact information. Pipeline configuration must have valid artifact name, version & scope information.',
-              'INVALID-CONFIG': 'Invalid configuration JSON specified for the pipeline.',
-              'INVALID-SOURCE': 'Missing source in the Hydrator pipeline. Please add a source.',
-              'INVALID-SINKS': 'Missing sink in the Hydrator pipeline. Please add a sink.',
-              'INVALID-SCHEDULE': 'Missing schedule for the Batch pipeline. Please provide a schedule.',
-              'INVALID-INSTANCE': 'Missing instance count for Realtime pipeline. Please provide an instance count.',
-              'INVALID-NODES-CONNECTIONS': 'Unknown node in connections.'
+              'INVALID-ARTIFACT': 'Pipeline configuration should have a valild artifact specification.',
+              'INVALID-CONFIG': 'Missing \'config\' property in pipeline specification.',
+              'INVALID-SOURCE': 'Pipeline configuration should have a valid source specification.',
+              'INVALID-SINKS': 'Pipeline configuration should have a valid sink specification.',
+              'INVALID-SCHEDULE': 'Batch pipeline should have a valid schedule specification.',
+              'INVALID-INSTANCE': 'Realtime pipeline should have a valid instance specification.',
+              'INVALID-NODES-CONNECTIONS': 'Unknown node(s) in \'connections\' property in pipeline specification.'
             }
           },
           pluginDoesNotExist: 'This plugin does not exist: '
