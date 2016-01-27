@@ -686,6 +686,7 @@ public class MasterServiceMain extends DaemonMain {
           prepareExploreContainer(preparer);
         }
 
+        System.setProperty("user.name", cConf.get(Constants.CFG_HDFS_USER));
         // Add a listener to delete temp files when application started/terminated.
         TwillController controller = preparer.start();
         Runnable cleanup = new Runnable() {

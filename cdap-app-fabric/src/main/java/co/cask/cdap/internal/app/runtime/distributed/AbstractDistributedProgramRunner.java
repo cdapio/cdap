@@ -229,6 +229,8 @@ public abstract class AbstractDistributedProgramRunner implements ProgramRunner 
             // TokenSecureStoreUpdater.update() ignores parameters
             twillPreparer.addSecureStore(secureStoreUpdater.update(null, null));
           }
+
+          System.setProperty("user.name", cConf.get(Constants.CFG_HDFS_USER));
           TwillController twillController = twillPreparer
             .withDependencies(HBaseTableUtilFactory.getHBaseTableUtilClass())
             .withClassPaths(Iterables.concat(extraClassPaths, Splitter.on(',').trimResults()
