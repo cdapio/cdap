@@ -36,8 +36,6 @@ import co.cask.cdap.common.namespace.NamespaceAdmin;
 import co.cask.cdap.common.namespace.NamespacedLocationFactory;
 import co.cask.cdap.common.utils.DirUtils;
 import co.cask.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
-import co.cask.cdap.internal.UserErrors;
-import co.cask.cdap.internal.UserMessages;
 import co.cask.cdap.internal.app.deploy.ProgramTerminator;
 import co.cask.cdap.internal.app.runtime.artifact.WriteConflictException;
 import co.cask.cdap.internal.app.runtime.schedule.Scheduler;
@@ -48,7 +46,6 @@ import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.http.BodyConsumer;
 import co.cask.http.HttpResponder;
 import com.google.common.base.Charsets;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -358,7 +355,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     }
 
     if (archiveName == null || archiveName.isEmpty()) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, ARCHIVE_NAME_HEADER + " header not present",
+      responder.sendString(HttpResponseStatus.BAD_REQUEST,
+                           String.format(
+                             "%s header not present. Please include the header and set its value to the jar name. " +
+                               "If you are trying to create an app from an artifact that has already been deployed," +
+                               " set the %s header to %s.",
+                             ARCHIVE_NAME_HEADER, HttpHeaders.Names.CONTENT_TYPE,  MediaType.APPLICATION_JSON),
                            ImmutableMultimap.of(HttpHeaders.Names.CONNECTION, HttpHeaders.Values.CLOSE));
       return null;
     }

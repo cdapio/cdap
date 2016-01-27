@@ -8,6 +8,7 @@ COMMON_PLACEHOLDER="$COMMON/_source/placeholder_index._rst"
 HTACCESS="htaccess"
 
 DOCS="docs"
+DOCS_OUTER="docs-outer"
 GITHUB="github"
 GITHUB_ONLY="Github-only"
 WEB="web"
