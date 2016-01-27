@@ -17,13 +17,10 @@
 package co.cask.cdap.internal.app.runtime.batch.dataset;
 
 import co.cask.cdap.app.metrics.MapReduceMetrics;
-import co.cask.cdap.common.lang.Instantiator;
-import co.cask.cdap.common.lang.InstantiatorFactory;
+import co.cask.cdap.common.lang.ClassLoaders;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
-import com.google.common.reflect.TypeToken;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Counter;
 import org.apache.hadoop.mapreduce.Job;
@@ -36,6 +33,7 @@ import org.apache.hadoop.mapreduce.TaskCounter;
 import org.apache.hadoop.mapreduce.TaskInputOutputContext;
 import org.apache.hadoop.mapreduce.task.JobContextImpl;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
+import org.apache.hadoop.util.ReflectionUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -185,16 +183,28 @@ public class MultipleOutputs implements Closeable {
     // If not in cache, create a new one
     if (writer == null) {
       // get the record writer from context output format
+      TaskAttemptContext taskContext = getContext(namedOutput);
+
+      Class<? extends OutputFormat<?, ?>> outputFormatClass;
       try {
-        TaskAttemptContext taskContext = getContext(namedOutput);
-
-        Instantiator<? extends OutputFormat<?, ?>> instantiator =
-          new InstantiatorFactory(false).get(TypeToken.of(taskContext.getOutputFormatClass()));
-        OutputFormat<?, ?> outputFormat = instantiator.create();
-
-        writer = new MeteredRecordWriter<>(outputFormat.getRecordWriter(taskContext), context);
+        outputFormatClass = taskContext.getOutputFormatClass();
       } catch (ClassNotFoundException e) {
         throw new IOException(e);
+      }
+
+      ClassLoader outputFormatClassLoader = outputFormatClass.getClassLoader();
+      // This is needed in case the OutputFormat's classloader conflicts with the program classloader (for example,
+      // TableOutputFormat).
+      ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(outputFormatClassLoader);
+
+      try {
+        // We use ReflectionUtils to instantiate the OutputFormat, because it also calls setConf on the object, if it
+        // is a Configurable.
+        OutputFormat<?, ?> outputFormat =
+          ReflectionUtils.newInstance(outputFormatClass, taskContext.getConfiguration());
+        writer = new MeteredRecordWriter<>(outputFormat.getRecordWriter(taskContext), context);
+      } finally {
+        ClassLoaders.setContextClassLoader(oldClassLoader);
       }
 
       // add the record-writer to the cache
