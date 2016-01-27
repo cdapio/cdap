@@ -231,6 +231,7 @@ function doPoll (resource) {
       } else if (response.statusCode > 299) {
         var errMessage = response.statusCode + ' ' + resource.url;
         emitResponse.call(that, resource, errMessage, response, body);
+        return;
       }
       emitResponse.call(that, resource, false, response, body);
 
