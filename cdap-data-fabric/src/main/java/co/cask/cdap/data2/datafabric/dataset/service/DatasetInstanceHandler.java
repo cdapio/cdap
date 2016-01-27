@@ -411,8 +411,9 @@ public class DatasetInstanceHandler extends AbstractHttpHandler {
       JsonObject jsonObject = new JsonObject();
       jsonObject.addProperty("name", src.getName());
       jsonObject.addProperty("type", src.getType());
-      jsonObject.add("properties", context.serialize(Maps.transformEntries(src.getProperties(),
-                                                                           TRANSFORM_DATASET_PROPERTIES), MAP_STRING_STRING_TYPE));
+      jsonObject.add("properties",
+                     context.serialize(Maps.transformEntries(src.getProperties(),
+                                                             TRANSFORM_DATASET_PROPERTIES), MAP_STRING_STRING_TYPE));
       Type specsType = new TypeToken<SortedMap<String, DatasetSpecification>>() { }.getType();
       jsonObject.add("datasetSpecs", context.serialize(src.getSpecifications(), specsType));
       return jsonObject;

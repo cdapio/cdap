@@ -18,6 +18,9 @@ package co.cask.cdap.examples.sportresults;
 
 import co.cask.cdap.api.Transactional;
 import co.cask.cdap.api.annotation.UseDataSet;
+import co.cask.cdap.api.dataset.Dataset;
+import co.cask.cdap.api.dataset.DatasetDefinition;
+import co.cask.cdap.api.dataset.lib.CloseableIterator;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionOutput;
@@ -27,17 +30,37 @@ import co.cask.cdap.api.service.http.AbstractHttpServiceHandler;
 import co.cask.cdap.api.service.http.HttpContentConsumer;
 import co.cask.cdap.api.service.http.HttpServiceRequest;
 import co.cask.cdap.api.service.http.HttpServiceResponder;
+import co.cask.cdap.examples.sportresults.dataset.DatasetMethodRequest;
+import co.cask.cdap.examples.sportresults.dataset.DatasetMethodResponse;
+import co.cask.tephra.TransactionAware;
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.io.Closeables;
+import com.google.gson.Gson;
 import org.apache.twill.filesystem.Location;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -142,6 +165,100 @@ public class UploadService extends AbstractService {
         responder.sendError(400, String.format("Unable to write path '%s'. Reason: '%s'",
                                                output.getRelativePath(), e.getMessage()));
         return null;
+      }
+    }
+
+
+
+    private static final Gson GSON = new Gson();
+
+    private ClassLoader getDatasetClassLoader() {
+      return Thread.currentThread().getContextClassLoader();
+    }
+
+    /**
+     * Executes a data operation on a dataset instance using reflection.
+     *
+     * @param name name of the dataset instance
+     */
+    @POST
+    @Path("/data/datasets/{name}/execute")
+    public void executeDataOpWithReflection(
+      HttpRequest request, HttpServiceResponder responder,
+      @PathParam("name") String name) throws Throwable {
+
+      Dataset dataset;
+      try {
+        dataset = getContext().getDataset(name);
+      } catch (Exception e) {
+        LOG.error("Error getting dataset {}", name, e);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
+        return;
+      }
+
+      if (dataset == null) {
+//        throw new NotFoundException(instance);
+      }
+
+      ClassLoader datasetClassloader = getDatasetClassLoader();
+
+      try (Reader reader = new InputStreamReader(new ChannelBufferInputStream(request.getContent()))) {
+        final DatasetMethodRequest methodRequest = GSON.fromJson(reader, DatasetMethodRequest.class);
+
+        final MethodHandle handle;
+        try {
+          MethodType type = MethodType.methodType(
+            methodRequest.getReturnTypeClass(datasetClassloader), methodRequest.getArgumentClasses(datasetClassloader));
+          handle = MethodHandles.lookup().findVirtual(dataset.getClass(), methodRequest.getMethod(), type);
+        } catch (NoSuchMethodException e) {
+          LOG.error("Error finding method", e);
+          throw new RuntimeException();
+//          throw new BadRequestException(
+//            String.format("Method %s with return type %s and arguments %s does not exist for dataset type %s",
+//                          methodRequest.getMethod(), methodRequest.getReturnType(),
+//                          methodRequest.getArgumentTypes(), dataset.getClass().getName()), e);
+        }
+
+        Object response;
+        try {
+          // TODO: allow nullable arguments
+          response = handle.invokeWithArguments(
+            Lists.newArrayList(
+              Iterables.concat(
+                ImmutableList.<Object>of(dataset),
+                methodRequest.getArgumentList(GSON, datasetClassloader)
+              )
+            ));
+        } catch (Throwable t) {
+          // TODO: exception handling
+          throw Throwables.propagate(t);
+        }
+
+        if (response instanceof Iterator) {
+          // transform response from iterator to list, for GSON serialization
+          // TODO: limit
+          Iterator<?> it = (Iterator<?>) response;
+          try {
+            List<Object> newResponse = new ArrayList<>();
+            while (it.hasNext()) {
+              newResponse.add(it.next());
+            }
+            response = newResponse;
+          } finally {
+            if (it instanceof CloseableIterator) {
+              ((CloseableIterator) it).close();
+            }
+          }
+        }
+
+        DatasetMethodResponse methodResponse = new DatasetMethodResponse(response);
+        responder.sendJson(HttpResponseStatus.OK.getCode(), methodResponse, methodResponse.getClass(), GSON);
+      } catch (ClassNotFoundException e) {
+//        throw new BadRequestException(String.format("Class not found: %s", e.getMessage()), e);
+        throw new RuntimeException();
+      } catch (IOException e) {
+        LOG.error("Failed to read request body", e);
+        responder.sendStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR.getCode());
       }
     }
   }
