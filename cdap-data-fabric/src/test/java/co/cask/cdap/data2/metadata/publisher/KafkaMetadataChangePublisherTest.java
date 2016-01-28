@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,30 +16,69 @@
 
 package co.cask.cdap.data2.metadata.publisher;
 
+import co.cask.cdap.common.conf.Constants;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data2.metadata.store.DefaultMetadataStore;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
+import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.proto.Id;
+import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import org.junit.AfterClass;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.inject.AbstractModule;
+import com.google.inject.util.Modules;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 
 /**
  * Tests for {@link KafkaMetadataChangePublisher}.
  */
-public class KafkaMetadataChangePublisherTest extends MetadataKafkaTestBase {
+public class KafkaMetadataChangePublisherTest {
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
+    .create();
+
+  @ClassRule
+  public static final KafkaTester KAFKA_TESTER = new KafkaTester(
+    ImmutableMap.of(Constants.Metadata.UPDATES_PUBLISH_ENABLED, "true"),
+    ImmutableList.of(
+      Modules.override(
+        new DataSetsModules().getInMemoryModules(true)).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // Need the distributed metadata store.
+          bind(MetadataStore.class).to(DefaultMetadataStore.class);
+        }
+      }),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new TransactionInMemoryModule(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new NamespaceClientRuntimeModule().getInMemoryModules()
+    ),
+    1,
+    Constants.Metadata.UPDATES_KAFKA_BROKER_LIST
+  );
   private static MetadataChangePublisher publisher;
 
-  @BeforeClass
-  public static void setup() throws IOException {
-    MetadataKafkaTestBase.setup();
-    publisher = injector.getInstance(MetadataChangePublisher.class);
+  @Before
+  public void setup() throws IOException {
+    publisher = KAFKA_TESTER.getInjector().getInstance(MetadataChangePublisher.class);
   }
 
   @Test
@@ -48,7 +87,10 @@ public class KafkaMetadataChangePublisherTest extends MetadataKafkaTestBase {
     for (MetadataChangeRecord metadataChangeRecord : metadataChangeRecords) {
       publisher.publish(metadataChangeRecord);
     }
-    Assert.assertEquals(metadataChangeRecords, getPublishedMetadataChanges(metadataChangeRecords.size()));
+    String topic = KAFKA_TESTER.getCConf().get(Constants.Metadata.UPDATES_KAFKA_TOPIC);
+    Type metadataChangeRecordType = new TypeToken<MetadataChangeRecord>() { }.getType();
+    Assert.assertEquals(metadataChangeRecords, KAFKA_TESTER.getPublishedMessages(topic, metadataChangeRecords.size(),
+                                                                                 metadataChangeRecordType, GSON));
   }
 
   private List<MetadataChangeRecord> generateMetadataChanges() {
@@ -111,10 +153,5 @@ public class KafkaMetadataChangePublisherTest extends MetadataKafkaTestBase {
     updateTime = currentTime;
     changesBuilder.add(new MetadataChangeRecord(previous, tagAdded, updateTime));
     return changesBuilder.build();
-  }
-
-  @AfterClass
-  public static void tearDown() {
-    MetadataKafkaTestBase.teardown();
   }
 }
