@@ -114,23 +114,23 @@ available services which CM can install.
 
 .. _cloudera-compatibility-matrix:
 
-+----------------------------------------------------------------------------------------------------------------------+
-| Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions                                            |
-+------------+---------------------+---------------------+----------------------------+--------------------------------+
-| CM Version | CDH Versions        | CSD Versions        |  CDAP Parcel               | CDAP HBase Coprocessor Version |
-+============+=====================+=====================+============================+================================+
-| 5.5        | 5.5                 | 3.3.x               | *Matching CSD major.minor* | ``hbase10cdh550``              |
-+------------+---------------------+---------------------+----------------------------+--------------------------------+
-| 5.5        | less than 5.5       | 3.0.x through 3.2.x | *Matching CSD major.minor* | ``hbase10cdh``                 |
-+------------+---------------------+---------------------+----------------------------+--------------------------------+
-| 5.4        | no greater than 5.4 | 3.0.x through 3.3.x | *Matching CSD major.minor* | ``hbase10cdh``                 |
-+------------+---------------------+---------------------+----------------------------+--------------------------------+
-| 5.3        | no greater than 5.3 | 3.0.x through 3.1.x | *Matching CSD major.minor* | ``hbase98``                    |
-+------------+---------------------+---------------------+----------------------------+--------------------------------+
-| 5.2        | no greater than 5.2 | 3.0.x through 3.1.x | *Matching CSD major.minor* | ``hbase98``                    |
-+------------+---------------------+---------------------+----------------------------+--------------------------------+
-| 5.1        | no greater than 5.1 | *Not supported*     | |---|                      | |---|                          |
-+------------+---------------------+---------------------+----------------------------+--------------------------------+
++-------------------------------------------------------------------------------------+
+| Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions           |
++------------+---------------------+---------------------+----------------------------+
+| CM Version | CDH Versions        | CSD Versions        |  CDAP Parcel               |
++============+=====================+=====================+============================+
+| 5.5        | 5.5                 | 3.3.x               | *Matching CSD major.minor* | 
++------------+---------------------+---------------------+----------------------------+
+| 5.5        | less than 5.5       | 3.0.x through 3.3.x | *Matching CSD major.minor* |
++------------+---------------------+---------------------+----------------------------+
+| 5.4        | no greater than 5.4 | 3.0.x through 3.3.x | *Matching CSD major.minor* | 
++------------+---------------------+---------------------+----------------------------+
+| 5.3        | no greater than 5.3 | 3.0.x through 3.1.x | *Matching CSD major.minor* |
++------------+---------------------+---------------------+----------------------------+
+| 5.2        | no greater than 5.2 | 3.0.x through 3.1.x | *Matching CSD major.minor* |
++------------+---------------------+---------------------+----------------------------+
+| 5.1        | no greater than 5.1 | *Not supported*     | |---|                      | 
++------------+---------------------+---------------------+----------------------------+
 
 **Notes:**
 
@@ -138,10 +138,6 @@ available services which CM can install.
   CM version 5.1 supports CDH versions less than or equal to 5.1).
   
 - The version of the CDAP Parcel that is used should match the CSD major.minor version.
-
-- The CDAP HBase Coprocessor versions are listed to assist when 
-  :ref:`upgrading CDH <cloudera-release-specific-upgrade-notes>`.
-
 
 **Steps:**
 
@@ -540,9 +536,23 @@ Upgrading CDH
 These steps cover upgrading the version of CDH of an existing CDAP installation.
 As the different versions of CDH can use different versions of HBase, upgrading from
 one version to the next can require that the HBase coprocessors be upgraded to the correct
-version. The :ref:`Cloudera compatibility matrix <cloudera-compatibility-matrix>` lists the
-different coprocessors used with each version of CDH. If the version changes, you need to
-check that the version being used has changed as described below.
+version. The table below lists the different coprocessors used with each version of CDH.
+If the version changes, you need to check that the version being used has changed as
+described below.
+
++-------------+--------------------------------+
+| CDH Version | CDAP HBase Coprocessor Version |
++=============+================================+
+| 5.5         | ``hbase10cdh550``              |
++-------------+--------------------------------+
+| 5.4         | ``hbase10cdh``                 |
++-------------+--------------------------------+
+| 5.3         | ``hbase98``                    |
++-------------+--------------------------------+
+| 5.2         | ``hbase98``                    |
++-------------+--------------------------------+
+| 5.1         | |---|                          |
++-------------+--------------------------------+
 
 **For example:** CDH 5.3 ships with HBase 0.98 while CDH 5.4 ships with HBase 1.0. We support
 CDH 5.4 as of CDAP 3.1.0 |---| however, upgrading the underlying CDH version is only supported
@@ -575,10 +585,11 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 
     $ /opt/cdap/master/bin/svc-master run co.cask.cdap.data.tools.UpgradeTool upgrade_hbase
     
-#. Check if the coprocessor JARs for all CDAP tables have been upgraded to 
-   :ref:`the correct version <cloudera-compatibility-matrix>` by checking that the coprocessor 
-   classnames are using the correct package |---| for example, if upgrading from CDH 5.3
-   to 5.4, the new coprocessor package is ``hbase10cdh`` and a classname using it would be
+#. Check if the coprocessor JARs for all CDAP tables have been upgraded to the correct version
+   :ref:`as listed above <cloudera-release-specific-upgrade-notes>` by checking that 
+   the coprocessor classnames are using the correct package |---| for example, if
+   upgrading from CDH 5.3 to 5.4, the new coprocessor package is ``hbase10cdh`` and a
+   classname using it would be
    ``co.cask.cdap.data2.transaction.coprocessor.hbase10cdh.DefaultTransactionProcessor``.
   
    Running this command in an HBase shell will give you table attributes::
