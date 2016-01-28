@@ -17,6 +17,8 @@
 package co.cask.cdap.data.runtime;
 
 import co.cask.cdap.api.dataset.module.DatasetDefinitionRegistry;
+import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.common.runtime.RuntimeModule;
 import co.cask.cdap.data2.datafabric.dataset.DatasetProvider;
 import co.cask.cdap.data2.datafabric.dataset.DefaultDatasetProvider;
@@ -34,8 +36,11 @@ import co.cask.cdap.data2.metadata.store.NoOpMetadataStore;
 import co.cask.cdap.data2.metadata.writer.BasicLineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriter;
 import co.cask.cdap.data2.metadata.writer.LineageWriterDatasetFramework;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
 import com.google.inject.Scopes;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
@@ -49,10 +54,6 @@ public class DataSetsModules extends RuntimeModule {
 
   @Override
   public Module getInMemoryModules() {
-    return getInMemoryModules(false);
-  }
-
-  public Module getInMemoryModules(final boolean publishRequired) {
     return new PrivateModule() {
       @Override
       protected void configure() {
@@ -76,11 +77,8 @@ public class DataSetsModules extends RuntimeModule {
         expose(LineageWriter.class);
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
-        if (publishRequired) {
-          bind(MetadataChangePublisher.class).to(KafkaMetadataChangePublisher.class);
-        } else {
-          bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
-        }
+
+        bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
         expose(MetadataChangePublisher.class);
       }
     };
@@ -111,7 +109,8 @@ public class DataSetsModules extends RuntimeModule {
         expose(LineageWriter.class);
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
-        bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
+
+        bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
         expose(MetadataChangePublisher.class);
       }
     };
@@ -119,10 +118,6 @@ public class DataSetsModules extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    return getDistributedModules(false);
-  }
-
-  public Module getDistributedModules(final boolean publishRequired) {
     return new PrivateModule() {
       @Override
       protected void configure() {
@@ -146,13 +141,30 @@ public class DataSetsModules extends RuntimeModule {
         expose(LineageWriter.class);
         bind(DatasetFramework.class).to(LineageWriterDatasetFramework.class);
         expose(DatasetFramework.class);
-        if (publishRequired) {
-          bind(MetadataChangePublisher.class).to(KafkaMetadataChangePublisher.class);
-        } else {
-          bind(MetadataChangePublisher.class).to(NoOpMetadataChangePublisher.class);
-        }
+
+        bind(MetadataChangePublisher.class).toProvider(MetadataChangePublisherProvider.class);
         expose(MetadataChangePublisher.class);
       }
     };
   }
+
+  private static final class MetadataChangePublisherProvider implements Provider<MetadataChangePublisher> {
+    private final Injector injector;
+    private final CConfiguration cConf;
+
+    @Inject
+    public MetadataChangePublisherProvider(Injector injector, CConfiguration cConf) {
+      this.injector = injector;
+      this.cConf = cConf;
+    }
+
+    @Override
+    public MetadataChangePublisher get() {
+      if (cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
+        return injector.getInstance(KafkaMetadataChangePublisher.class);
+      }
+      return injector.getInstance(NoOpMetadataChangePublisher.class);
+    }
+  }
+
 }

@@ -67,7 +67,7 @@ public class MetadataStoreTest {
     ImmutableMap.of(Constants.Metadata.UPDATES_PUBLISH_ENABLED, "true"),
     ImmutableList.of(
       Modules.override(
-        new DataSetsModules().getInMemoryModules(true)).with(new AbstractModule() {
+        new DataSetsModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
           // Need the distributed metadata store.

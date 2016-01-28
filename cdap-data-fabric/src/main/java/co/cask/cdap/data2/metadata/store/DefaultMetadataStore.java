@@ -18,8 +18,6 @@ package co.cask.cdap.data2.metadata.store;
 import co.cask.cdap.api.dataset.DatasetDefinition;
 import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.lib.IndexedTableDefinition;
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
 import co.cask.cdap.data.runtime.DataSetsModules;
 import co.cask.cdap.data2.datafabric.dataset.DatasetsUtil;
 import co.cask.cdap.data2.dataset2.DatasetFramework;
@@ -82,7 +80,6 @@ public class DefaultMetadataStore implements MetadataStore {
       }
     };
 
-  private final CConfiguration cConf;
   private final TransactionExecutorFactory txExecutorFactory;
   private final DatasetFramework dsFramework;
   private final MetadataChangePublisher changePublisher;
@@ -90,10 +87,9 @@ public class DefaultMetadataStore implements MetadataStore {
   @Inject
   DefaultMetadataStore(TransactionExecutorFactory txExecutorFactory,
                        @Named(DataSetsModules.BASIC_DATASET_FRAMEWORK) DatasetFramework dsFramework,
-                       CConfiguration cConf, MetadataChangePublisher changePublisher) {
+                       MetadataChangePublisher changePublisher) {
     this.txExecutorFactory = txExecutorFactory;
     this.dsFramework = dsFramework;
-    this.cConf = cConf;
     this.changePublisher = changePublisher;
   }
 
@@ -108,10 +104,6 @@ public class DefaultMetadataStore implements MetadataStore {
   @Override
   public void setProperties(MetadataScope scope, final Id.NamespacedId entityId, final Map<String, String> properties,
                             @Nullable final Indexer indexer) {
-    if (!cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
-      setPropertiesNoPublish(scope, entityId, properties, indexer);
-      return;
-    }
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
@@ -146,27 +138,11 @@ public class DefaultMetadataStore implements MetadataStore {
             new MetadataRecord(entityId, propDeletions.build(), EMPTY_TAGS));
   }
 
-  private void setPropertiesNoPublish(MetadataScope scope, final Id.NamespacedId entityId,
-                                      final Map<String, String> properties, @Nullable final Indexer indexer) {
-    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
-      @Override
-      public void apply(MetadataDataset input) throws Exception {
-        for (Map.Entry<String, String> entry : properties.entrySet()) {
-          input.setProperty(entityId, entry.getKey(), entry.getValue(), indexer);
-        }
-      }
-    }, scope);
-  }
-
   /**
    * Adds tags for the specified {@link Id.NamespacedId}.
    */
   @Override
   public void addTags(MetadataScope scope, final Id.NamespacedId entityId, final String... tagsToAdd) {
-    if (!cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
-      addTagsNoPublish(scope, entityId, tagsToAdd);
-      return;
-    }
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
@@ -179,15 +155,6 @@ public class DefaultMetadataStore implements MetadataStore {
     }, scope);
     publish(previousRef.get(), new MetadataRecord(entityId, EMPTY_PROPERTIES, Sets.newHashSet(tagsToAdd)),
             new MetadataRecord(entityId));
-  }
-
-  private void addTagsNoPublish(MetadataScope scope, final Id.NamespacedId entityId, final String... tagsToAdd) {
-    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
-      @Override
-      public void apply(MetadataDataset input) throws Exception {
-        input.addTags(entityId, tagsToAdd);
-      }
-    }, scope);
   }
 
   @Override
@@ -280,10 +247,6 @@ public class DefaultMetadataStore implements MetadataStore {
    */
   @Override
   public void removeMetadata(MetadataScope scope, final Id.NamespacedId entityId) {
-    if (!cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
-      removeMetadataNoPublish(scope, entityId);
-      return;
-    }
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
@@ -297,25 +260,11 @@ public class DefaultMetadataStore implements MetadataStore {
     publish(previous, new MetadataRecord(entityId), new MetadataRecord(previous));
   }
 
-  private void removeMetadataNoPublish(MetadataScope scope, final Id.NamespacedId entityId) {
-    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
-      @Override
-      public void apply(MetadataDataset input) throws Exception {
-        input.removeProperties(entityId);
-        input.removeTags(entityId);
-      }
-    }, scope);
-  }
-
   /**
    * Removes all properties for the specified {@link Id.NamespacedId}.
    */
   @Override
   public void removeProperties(MetadataScope scope, final Id.NamespacedId entityId) {
-    if (!cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
-      removePropertiesNoPublish(scope, entityId);
-      return;
-    }
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
@@ -328,24 +277,11 @@ public class DefaultMetadataStore implements MetadataStore {
             new MetadataRecord(entityId, previousRef.get().getProperties(), EMPTY_TAGS));
   }
 
-  private void removePropertiesNoPublish(MetadataScope scope, final Id.NamespacedId entityId) {
-    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
-      @Override
-      public void apply(MetadataDataset input) throws Exception {
-        input.removeProperties(entityId);
-      }
-    }, scope);
-  }
-
   /**
    * Removes the specified properties of the {@link Id.NamespacedId}.
    */
   @Override
   public void removeProperties(MetadataScope scope, final Id.NamespacedId entityId, final String... keys) {
-    if (!cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
-      removePropertiesNoPublish(scope, entityId, keys);
-      return;
-    }
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     final ImmutableMap.Builder<String, String> deletesBuilder = ImmutableMap.builder();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
@@ -366,24 +302,11 @@ public class DefaultMetadataStore implements MetadataStore {
             new MetadataRecord(entityId, deletesBuilder.build(), EMPTY_TAGS));
   }
 
-  private void removePropertiesNoPublish(MetadataScope scope, final Id.NamespacedId entityId, final String... keys) {
-    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
-      @Override
-      public void apply(MetadataDataset input) throws Exception {
-        input.removeProperties(entityId, keys);
-      }
-    }, scope);
-  }
-
   /**
    * Removes all the tags from the {@link Id.NamespacedId}
    */
   @Override
   public void removeTags(MetadataScope scope, final Id.NamespacedId entityId) {
-    if (!cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
-      removeTagsNoPublish(scope, entityId);
-      return;
-    }
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
@@ -396,24 +319,11 @@ public class DefaultMetadataStore implements MetadataStore {
     publish(previous, new MetadataRecord(entityId), new MetadataRecord(entityId, EMPTY_PROPERTIES, previous.getTags()));
   }
 
-  private void removeTagsNoPublish(MetadataScope scope, final Id.NamespacedId entityId) {
-    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
-      @Override
-      public void apply(MetadataDataset input) throws Exception {
-        input.removeTags(entityId);
-      }
-    }, scope);
-  }
-
   /**
    * Removes the specified tags from the {@link Id.NamespacedId}
    */
   @Override
   public void removeTags(MetadataScope scope, final Id.NamespacedId entityId, final String ... tagsToRemove) {
-    if (!cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED)) {
-      removeTagsNoPublish(scope, entityId, tagsToRemove);
-      return;
-    }
     final AtomicReference<MetadataRecord> previousRef = new AtomicReference<>();
     execute(new TransactionExecutor.Procedure<MetadataDataset>() {
       @Override
@@ -424,15 +334,6 @@ public class DefaultMetadataStore implements MetadataStore {
     }, scope);
     publish(previousRef.get(), new MetadataRecord(entityId),
             new MetadataRecord(entityId, EMPTY_PROPERTIES, Sets.newHashSet(tagsToRemove)));
-  }
-
-  private void removeTagsNoPublish(MetadataScope scope, final Id.NamespacedId entityId, final String ... tagsToRemove) {
-    execute(new TransactionExecutor.Procedure<MetadataDataset>() {
-      @Override
-      public void apply(MetadataDataset input) throws Exception {
-        input.removeTags(entityId, tagsToRemove);
-      }
-    }, scope);
   }
 
   @Override
