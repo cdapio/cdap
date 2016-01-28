@@ -225,8 +225,7 @@ angular.module(PKG.name + '.feature.admin')
         myAlertOnValium.show({
           type: 'danger',
           title: 'Error!',
-          content: GLOBALS.en.admin.templateNameMissingError,
-          duration: false
+          content: GLOBALS.en.admin.templateNameMissingError
         });
 
         return;
@@ -237,8 +236,7 @@ angular.module(PKG.name + '.feature.admin')
         myAlertOnValium.show({
           type: 'danger',
           title: 'Error!',
-          content: GLOBALS.en.admin.pluginSameNameError,
-          duration: false
+          content: GLOBALS.en.admin.pluginSameNameError
         });
 
         return;
@@ -278,8 +276,7 @@ angular.module(PKG.name + '.feature.admin')
           if (config && !vm.isEdit) {
             myAlertOnValium.show({
               type: 'danger',
-              content: GLOBALS.en.admin.templateNameExistsError,
-              duration: false
+              content: GLOBALS.en.admin.templateNameExistsError
             });
             vm.loading = false;
 
@@ -290,8 +287,7 @@ angular.module(PKG.name + '.feature.admin')
             if (config) {
               myAlertOnValium.show({
                 type: 'danger',
-                content: GLOBALS.en.admin.templateNameExistsError,
-                duration: false
+                content: GLOBALS.en.admin.templateNameExistsError
               });
               vm.loading = false;
 

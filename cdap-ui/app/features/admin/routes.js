@@ -190,13 +190,6 @@ angular.module(PKG.name + '.feature.admin')
               }
             })
 
-
-            .state('admin.namespace.detail.metadata', {
-              url: '/metadata',
-              templateUrl: '/assets/features/admin/templates/namespace/metadata.html',
-              controller: 'NamespaceMetadataController'
-            })
-
             .state('admin.namespace.detail.settings', {
               url: '/settings',
               templateUrl: '/assets/features/admin/templates/namespace/settings.html',

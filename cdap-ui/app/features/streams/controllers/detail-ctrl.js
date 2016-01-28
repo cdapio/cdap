@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.streams')
-  .controller('CdapStreamDetailController', function($scope, $state, $alert, myStreamService, myStreamApi) {
+  .controller('CdapStreamDetailController', function($scope, $state, myAlertOnValium, myStreamService, myStreamApi) {
 
     this.truncate = function() {
       var params = {
@@ -26,7 +26,7 @@ angular.module(PKG.name + '.feature.streams')
       myStreamApi.truncate(params, {})
         .$promise
         .then(function () {
-          $alert({
+          myAlertOnValium.show({
             type: 'success',
             content: 'Successfully truncated ' + $state.params.streamId + ' stream'
           });
@@ -37,7 +37,7 @@ angular.module(PKG.name + '.feature.streams')
       namespace: $state.params.namespace,
       streamId: $state.params.streamId
     };
-    
+
     this.sendEvents = function() {
       myStreamService.show($state.params.streamId);
     };

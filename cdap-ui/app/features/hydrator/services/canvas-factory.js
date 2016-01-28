@@ -16,7 +16,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .factory('CanvasFactory', function(myHelpers, $q, $alert, GLOBALS, $filter) {
+  .factory('CanvasFactory', function(myHelpers, $q, myAlertOnValium, GLOBALS, $filter) {
     function extractMetadataFromDraft(data) {
       var returnConfig = {};
       returnConfig.name = myHelpers.objectQuery(data, 'name');
@@ -74,7 +74,7 @@ angular.module(PKG.name + '.feature.hydrator')
       reader.onload = function (evt) {
         var result = parseImportedJson(evt.target.result, templateType);
         if (result.error) {
-          $alert({
+          myAlertOnValium.show({
             type: 'danger',
             content: result.message
           });

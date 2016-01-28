@@ -194,7 +194,7 @@ angular
     angular.extend($alertProvider.defaults, {
       animation: 'am-fade-and-scale',
       container: '#alerts',
-      duration: 3
+      duration: false
     });
   })
 
@@ -289,7 +289,7 @@ angular
    * attached to the <body> tag, mostly responsible for
    *  setting the className based events from $state and caskTheme
    */
-  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window) {
+  .controller('BodyCtrl', function ($scope, $cookies, $cookieStore, caskTheme, CASK_THEME_EVENT, $rootScope, $state, $log, MYSOCKET_EVENT, MyCDAPDataSource, MY_CONFIG, MYAUTH_EVENT, EventPipe, myAuth, $window, myAlertOnValium) {
 
     var activeThemeClass = caskTheme.getClassName();
     var dataSource = new MyCDAPDataSource($scope);
@@ -322,19 +322,21 @@ angular
       }
     });
 
-    $scope.$on('$stateChangeSuccess', function (event, state) {
+    $scope.$on('$stateChangeSuccess', function (event, toState, toParams, fromState) {
       var classes = [];
-      if(state.data && state.data.bodyClass) {
-        classes = [state.data.bodyClass];
+      if(toState.data && toState.data.bodyClass) {
+        classes = [toState.data.bodyClass];
       }
       else {
-        var parts = state.name.split('.'),
+        var parts = toState.name.split('.'),
             count = parts.length + 1;
         while (1<count--) {
           classes.push('state-' + parts.slice(0,count).join('-'));
         }
       }
-
+      if(toState.name !== fromState.name && myAlertOnValium.isAnAlertOpened()) {
+        myAlertOnValium.destroy();
+      }
       classes.push(activeThemeClass);
 
       $scope.bodyClass = classes.join(' ');

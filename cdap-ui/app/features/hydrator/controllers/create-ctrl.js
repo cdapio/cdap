@@ -16,7 +16,7 @@
 
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorCreateController', function($timeout, $state, $alert, myPipelineTemplatesApi, GLOBALS, CanvasFactory, NonStorePipelineErrorFactory) {
+  .controller('HydratorCreateController', function($timeout, $state, myPipelineTemplatesApi, GLOBALS, CanvasFactory, myAlertOnValium, NonStorePipelineErrorFactory) {
 
     var vm = this;
     vm.GLOBALS = GLOBALS;
@@ -90,7 +90,7 @@ angular.module(PKG.name + '.feature.hydrator')
         template.type
       );
       if (result.error) {
-        $alert({
+        myAlertOnValium.show({
           type: 'danger',
           content: 'Imported pre-defined app has issues. Please check the JSON of the imported pre-defined app'
         });
@@ -114,19 +114,17 @@ angular.module(PKG.name + '.feature.hydrator')
         try {
           jsonData = JSON.parse(data);
         } catch(e) {
-          $alert({
+          myAlertOnValium.show({
             type: 'danger',
-            content: 'Syntax Error. Ill-formed pipeline configuration.',
-            duration: false
+            content: 'Syntax Error. Ill-formed pipeline configuration.'
           });
           return;
         }
         let isNotValid = NonStorePipelineErrorFactory.validateImportJSON(jsonData);
         if (isNotValid) {
-          $alert({
+          myAlertOnValium.show({
             type: 'danger',
-            content: isNotValid,
-            duration: false
+            content: isNotValid
           });
         } else {
           if (!jsonData.config.connections) {

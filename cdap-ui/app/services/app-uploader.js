@@ -28,12 +28,13 @@ angular.module(PKG.name + '.services')
       }
 
       function success() {
-        myAlertOnValium.show({
-          type: 'success',
-          title: 'Upload success',
-          content: 'The application has been uploaded successfully'
-        });
-        $state.reload();
+        $state.reload()
+          .then(function() {
+            myAlertOnValium.show({
+              type: 'success',
+              content: 'Application has been successfully uploaded'
+            });
+          });
       }
 
       // Independent xhr request. Failure case will not be handled by $rootScope.
@@ -41,8 +42,7 @@ angular.module(PKG.name + '.services')
         myAlertOnValium.show({
           type: 'danger',
           title: 'Upload failed',
-          content: err || '',
-          duration: false
+          content: err || ''
         });
       }
     }
