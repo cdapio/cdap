@@ -198,4 +198,8 @@ final class FileContextLocation implements Location {
   public int hashCode() {
     return Objects.hash(path);
   }
+
+  public String toString() {
+    return this.path.toString();
+  }
 }
