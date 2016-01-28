@@ -84,6 +84,8 @@ import org.apache.twill.api.TwillApplication;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.api.logging.LogEntry;
+import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.api.logging.PrinterLogHandler;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
@@ -645,7 +647,19 @@ public class MasterServiceMain extends DaemonMain {
                                                                                 getSystemServiceInstances()));
 
         if (cConf.getBoolean(Constants.COLLECT_CONTAINER_LOGS)) {
-          preparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+          if (LOG instanceof ch.qos.logback.classic.Logger) {
+            preparer.addLogHandler(new LogHandler() {
+              @Override
+              public void onLog(LogEntry entry) {
+                ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) LOG;
+                logger.callAppenders(new TwillLogEntryAdapter(entry));
+              }
+            });
+          } else {
+            LOG.warn("Unsupported logger binding ({}) for container log collection. Falling back to System.out.",
+                     LOG.getClass().getName());
+            preparer.addLogHandler(new PrinterLogHandler(new PrintWriter(System.out)));
+          }
         } else {
           preparer.addJVMOptions("-Dtwill.disable.kafka=true");
         }
