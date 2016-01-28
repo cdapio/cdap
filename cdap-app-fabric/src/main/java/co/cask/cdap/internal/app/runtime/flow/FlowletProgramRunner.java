@@ -777,8 +777,10 @@ public final class FlowletProgramRunner implements ProgramRunner {
         public void run() {
           suspendLock.lock();
           try {
-            controller.get().suspend().get();
-            controller.get().resume().get();
+            if (ProgramController.State.ALIVE == controller.get().getState()) {
+              controller.get().suspend().get();
+              controller.get().resume().get();
+            }
           } catch (Exception e) {
             LOG.error("Failed to suspend and resume flowlet.", e);
           } finally {
