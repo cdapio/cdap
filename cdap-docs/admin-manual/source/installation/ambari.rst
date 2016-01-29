@@ -46,6 +46,39 @@ Preparing the Cluster
     :end-before: .. _ambari-install-packaging:
 
 
+Configurations
+--------------
+#. ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
+   (unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
+   the number of connections required is a function of usage. You can make this change using Ambari to
+   modify the ZooKeeper configuration properties.
+
+#. Ensure that YARN has sufficient memory capacity by lowering the default minimum container 
+   size (controlled by the property ``yarn.scheduler.minimum-allocation-mb``). Lack of
+   YARN memory capacity is the leading cause of apparent failures that we see reported.
+   We recommend starting with these settings:
+   
+   - ``yarn.nodemanager.delete.debug-delay-sec``: 43200
+   - ``yarn.scheduler.minimum-allocation-mb``: 512 mb
+   
+   Please ensure your ``yarn.nodemanager.resource.cpu-vcores`` and
+   ``yarn.nodemanager.resource.memory-mb`` settings are set sufficiently to run CDAP,
+   as described in the :ref:`CDAP Memory and Core Requirements 
+   <admin-manual-memory-core-requirements>`.
+      
+You can make these changes `using Ambari during configuration`
+<http://docs.hortonworks.com/HDPDocuments/Ambari-2.2.0.0/bk_Installing_HDP_AMB/content/_customize_services.html>`__
+of your cluster.
+
+HDFS Permissions
+----------------
+Ensure YARN is configured properly to run MapReduce programs.  Often, this includes
+ensuring that the HDFS ``/user/yarn`` directory exists with proper permissions::
+   
+  # su hdfs
+  $ hdfs dfs -mkdir -p /user/yarn && hadoop fs -chown yarn /user/yarn && hadoop fs -chgrp yarn /user/yarn
+
+
 Downloading and Distributing Packages
 =====================================
 
@@ -184,6 +217,11 @@ Customize CDAP
    Under *Advanced cdap-env*, you can configure environment settings such as heap sizes
    and the directories used to store logs and pids for the CDAP services which run on the edge nodes.
 
+   **Including Spark:** If you are including Spark, the *Advanced cdap-env* needs to
+   contain the location of the Spark libraries, typically as
+   ``SPARK_HOME=/usr/hdp/<HDP-version>/spark``, where "<HDP-version>" is a version
+   string such as "2.3.4.0-3485".
+
    .. figure:: ../_images/ambari/ss05-config-cdap-env.png
       :figwidth: 100%
       :width: 800px
@@ -206,7 +244,11 @@ Customize CDAP
 #. To use the CDAP Explore service (to use SQL to query CDAP data), you must have Hive
    installed on the cluster, have the Hive client libraries installed on the same host as
    the CDAP services, and have the *Advanced cdap-site* ``explore.enabled`` option set to
-   *true* (the default).
+   *true* (the default). If you do not have Hive installed or available, this option must be
+   set to *false*.
+
+   **Router Bind Port, Router Server Port:** These two ports should match; *Router Server
+   Port* is used by the CDAP UI to connect to the CDAP Router service.
 
    .. figure:: ../_images/ambari/ss07-config-enable-explore.png
       :figwidth: 100%
@@ -216,9 +258,17 @@ Customize CDAP
  
       **Ambari Dashboard:** Enabling *CDAP Explore*
 
-   For a **complete explanation of these options,** refer to the :ref:`CDAP documentation of
-   cdap-site.xml <appendix-cdap-site.xml>`. When finished with configuration changes, click
-   *Next*.
+   **Additional environment variables** can be set, as required, using Ambari's 
+   "Configs > Advanced > Advanced cdap-env".
+
+   **Additional CDAP configuration properties**, not shown in the web interface, can be
+   added using Ambari's advanced custom properties at the end of the page. Documentation
+   of the available CDAP properties is in the :ref:`appendix-cdap-site.xml`.
+
+   For a **complete explanation of these options,** refer to the :ref:`CDAP documentation
+   of cdap-site.xml <appendix-cdap-site.xml>`. When finished with configuration changes,
+   click *Next*.
+
 
 Starting CDAP Services
 ======================
