@@ -17,25 +17,34 @@
 package co.cask.cdap.notifications.inmemory;
 
 import co.cask.cdap.common.conf.CConfiguration;
+import co.cask.cdap.common.guice.ConfigModule;
 import co.cask.cdap.notifications.NotificationTest;
 import co.cask.cdap.notifications.feeds.guice.NotificationFeedServiceRuntimeModule;
 import co.cask.cdap.notifications.guice.NotificationServiceRuntimeModule;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
 /**
- *
+ * Tests notifications using in-memory transport system.
  */
 public class InMemoryNotificationTest extends NotificationTest {
 
   @BeforeClass
   public static void start() throws Exception {
     CConfiguration cConf = CConfiguration.create();
-    Injector injector = createInjector(
-      cConf,
-      new NotificationServiceRuntimeModule().getInMemoryModules(),
-      new NotificationFeedServiceRuntimeModule().getInMemoryModules()
+    Injector injector = Guice.createInjector(
+      Iterables.concat(
+        getCommonModules(),
+        ImmutableList.of(
+          new ConfigModule(cConf),
+          new NotificationServiceRuntimeModule().getInMemoryModules(),
+          new NotificationFeedServiceRuntimeModule().getInMemoryModules()
+        )
+      )
     );
     startServices(injector);
   }

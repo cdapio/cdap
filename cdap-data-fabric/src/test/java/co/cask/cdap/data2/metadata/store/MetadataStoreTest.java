@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,25 +16,40 @@
 
 package co.cask.cdap.data2.metadata.store;
 
+import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.data2.metadata.publisher.MetadataKafkaTestBase;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.common.namespace.guice.NamespaceClientRuntimeModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.kafka.KafkaTester;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.codec.NamespacedIdCodec;
 import co.cask.cdap.proto.metadata.MetadataChangeRecord;
 import co.cask.cdap.proto.metadata.MetadataRecord;
 import co.cask.cdap.proto.metadata.MetadataScope;
 import co.cask.cdap.proto.metadata.MetadataSearchResultRecord;
 import co.cask.tephra.TransactionManager;
+import co.cask.tephra.runtime.TransactionInMemoryModule;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
+import com.google.inject.util.Modules;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +57,33 @@ import java.util.Set;
 /**
  * Tests for {@link MetadataStore}
  */
-public class MetadataStoreTest extends MetadataKafkaTestBase {
+public class MetadataStoreTest {
+  private static final Gson GSON = new GsonBuilder()
+    .registerTypeAdapter(Id.NamespacedId.class, new NamespacedIdCodec())
+    .create();
+
+  @ClassRule
+  public static final KafkaTester KAFKA_TESTER = new KafkaTester(
+    ImmutableMap.of(Constants.Metadata.UPDATES_PUBLISH_ENABLED, "true"),
+    ImmutableList.of(
+      Modules.override(
+        new DataSetsModules().getInMemoryModules(true)).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // Need the distributed metadata store.
+          bind(MetadataStore.class).to(DefaultMetadataStore.class);
+        }
+      }),
+      new LocationRuntimeModule().getInMemoryModules(),
+      new TransactionInMemoryModule(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new NamespaceClientRuntimeModule().getInMemoryModules()
+    ),
+    1,
+    Constants.Metadata.UPDATES_KAFKA_BROKER_LIST
+  );
+
+  private static final Type METADATA_CHANGE_RECORD_TYPE = new TypeToken<MetadataChangeRecord>() { }.getType();
 
   private final Id.Application app = Id.Application.from(Id.Namespace.DEFAULT, "app");
   private final Id.Program flow = Id.Program.from(app, ProgramType.FLOW, "flow");
@@ -153,7 +194,7 @@ public class MetadataStoreTest extends MetadataKafkaTestBase {
 
   @BeforeClass
   public static void setup() throws IOException {
-    MetadataKafkaTestBase.setup();
+    Injector injector = KAFKA_TESTER.getInjector();
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
     store = injector.getInstance(MetadataStore.class);
@@ -162,7 +203,9 @@ public class MetadataStoreTest extends MetadataKafkaTestBase {
   @Test
   public void testPublishing() throws InterruptedException {
     generateMetadataUpdates();
-    List<MetadataChangeRecord> publishedChanges = getPublishedMetadataChanges(expectedChanges.size());
+    String topic = KAFKA_TESTER.getCConf().get(Constants.Metadata.UPDATES_KAFKA_TOPIC);
+    List<MetadataChangeRecord> publishedChanges =
+      KAFKA_TESTER.getPublishedMessages(topic, expectedChanges.size(), METADATA_CHANGE_RECORD_TYPE, GSON);
     for (int i = 0; i < expectedChanges.size(); i++) {
       MetadataChangeRecord expected = expectedChanges.get(i);
       MetadataChangeRecord actual = publishedChanges.get(i);
@@ -175,12 +218,16 @@ public class MetadataStoreTest extends MetadataKafkaTestBase {
 
   @Test
   public void testPublishingDisabled() throws InterruptedException {
+    CConfiguration cConf = KAFKA_TESTER.getCConf();
     boolean publishEnabled = cConf.getBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED);
     cConf.setBoolean(Constants.Metadata.UPDATES_PUBLISH_ENABLED, false);
     generateMetadataUpdates();
+    String topic = cConf.get(Constants.Metadata.UPDATES_KAFKA_TOPIC);
 
     try {
-      List<MetadataChangeRecord> publishedChanges = getPublishedMetadataChanges(expectedChanges.size(), kafkaOffset);
+      List<MetadataChangeRecord> publishedChanges =
+        KAFKA_TESTER.getPublishedMessages(topic, expectedChanges.size(), METADATA_CHANGE_RECORD_TYPE,
+                                          GSON, kafkaOffset);
       Assert.fail(String.format("Expected no changes to be published, but found %d changes: %s.",
                                 publishedChanges.size(), publishedChanges));
     } catch (AssertionError e) {
@@ -221,7 +268,6 @@ public class MetadataStoreTest extends MetadataKafkaTestBase {
 
   @AfterClass
   public static void teardown() {
-    MetadataKafkaTestBase.teardown();
     txManager.stopAndWait();
   }
 
