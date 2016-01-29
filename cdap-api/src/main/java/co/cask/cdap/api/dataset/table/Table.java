@@ -107,6 +107,8 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * NOTE: objects that are passed in parameters can be re-used by underlying implementation and present
    *       in returned data structures from this method.
    *
+   * @param row row to read from
+   * @param columns collection of columns to read; if empty, will return an empty Row.
    * @return instance of {@link Row}: never {@code null}; returns an empty Row if nothing read
    */
   @Nonnull
@@ -203,7 +205,7 @@ public interface Table extends BatchReadable<byte[], Row>, BatchWritable<byte[],
    * multiple times (especially in transactions that delete many columns of the same rows).
    *
    * @param row row to delete from
-   * @param columns names of columns to delete
+   * @param columns names of columns to delete; if empty, nothing will be deleted
    */
   void delete(byte[] row, byte[][] columns);
 

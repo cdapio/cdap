@@ -243,7 +243,6 @@ public class InMemoryTableService {
     // todo: handle nulls
     ConcurrentNavigableMap<byte[], NavigableMap<byte[], NavigableMap<Long, Update>>> table = tables.get(tableName);
     Preconditions.checkArgument(table != null, "table not found: " + tableName);
-    assert table != null;
     NavigableMap<byte[], NavigableMap<Long, Update>> rowMap = table.get(row);
     return deepCopy(Updates.rowToBytes(getVisible(rowMap, version)));
   }
