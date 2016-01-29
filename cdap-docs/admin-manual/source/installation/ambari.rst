@@ -219,8 +219,8 @@ Customize CDAP
 
    **Including Spark:** If you are including Spark, the *Advanced cdap-env* needs to
    contain the location of the Spark libraries, typically as
-   ``SPARK_HOME=/usr/hdp/<HDP-version>/spark``, where "<HDP-version>" is a version
-   string such as "2.3.4.0-3485".
+   ``SPARK_HOME=/usr/hdp/<version>/spark``, where "<version>" matches the HDP version
+   of the cluster, including its build iteration, such as "2.3.4.0-3485".
 
    .. figure:: ../_images/ambari/ss05-config-cdap-env.png
       :figwidth: 100%
