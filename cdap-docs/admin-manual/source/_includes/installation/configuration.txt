@@ -77,11 +77,12 @@ A. CDAP packages utilize a central configuration, stored by default in ``/etc/cd
    #. Check that there exists in HDFS a user directory for the ``hdfs.user`` property of ``conf/cdap-site.xml``.
       By default, the HDFS user is |hdfs-user|. If necessary, create the directory:
      
-        .. container:: highlight
-
-          .. parsed-literal::
-            |$| su hdfs
-            |$| hdfs dfs -mkdir -p /user/|hdfs-user| && hadoop fs -chown |hdfs-user| /user/|hdfs-user| && hadoop fs -chgrp |hdfs-user| /user/|hdfs-user|
+      .. container:: highlight
+      
+        .. parsed-literal::
+        
+          |$| su hdfs
+          |$| hdfs dfs -mkdir -p /user/|hdfs-user| && hadoop fs -chown |hdfs-user| /user/|hdfs-user| && hadoop fs -chgrp |hdfs-user| /user/|hdfs-user|
 
    #. If you want to use **an HDFS directory** with a name other than ``/cdap``:
  

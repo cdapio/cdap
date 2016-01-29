@@ -35,7 +35,12 @@ node(s) where CDAP will run.
 .. include:: /../target/_includes/packages-installation.rst
     :start-after: .. _packages-install-node-js:
     :end-before: .. _packages-install-packaging:
- 
+
+.. Hadoop Configuration
+.. --------------------
+.. include:: ../_includes/installation/hadoop-configuration.txt
+
+
   
 Downloading and Distributing Packages
 =====================================

@@ -45,30 +45,14 @@ Preparing the Cluster
     :start-after: .. _ambari-install-node-js:
     :end-before: .. _ambari-install-packaging:
 
-
-Configurations
---------------
-#. ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
-   (unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
-   the number of connections required is a function of usage. You can make this change using Ambari to
-   modify the ZooKeeper configuration properties.
-
-#. Ensure that YARN has sufficient memory capacity by lowering the default minimum container 
-   size (controlled by the property ``yarn.scheduler.minimum-allocation-mb``). Lack of
-   YARN memory capacity is the leading cause of apparent failures that we see reported.
-   We recommend starting with these settings:
-   
-   - ``yarn.nodemanager.delete.debug-delay-sec``: 43200
-   - ``yarn.scheduler.minimum-allocation-mb``: 512 mb
-   
-   Please ensure your ``yarn.nodemanager.resource.cpu-vcores`` and
-   ``yarn.nodemanager.resource.memory-mb`` settings are set sufficiently to run CDAP,
-   as described in the :ref:`CDAP Memory and Core Requirements 
-   <admin-manual-memory-core-requirements>`.
+.. Hadoop Configuration
+.. --------------------
+.. include:: ../_includes/installation/hadoop-configuration.txt
       
-You can make these changes `using Ambari during configuration`
-<http://docs.hortonworks.com/HDPDocuments/Ambari-2.2.0.0/bk_Installing_HDP_AMB/content/_customize_services.html>`__
-of your cluster.
+You can make these changes during the configuration of your cluster `using Ambari 
+<http://docs.hortonworks.com/HDPDocuments/Ambari-2.2.0.0/bk_Installing_HDP_AMB/content/_customize_services.html>`__.
+
+.. highlight:: console
 
 HDFS Permissions
 ----------------
