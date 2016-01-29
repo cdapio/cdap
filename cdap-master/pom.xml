@@ -290,7 +290,7 @@
                    For example, if you want to include plugins from hydrator-plugins. -->
               <execution>
                 <id>copy-additional-system-artifacts</id>
-                <phase>prepare-package</phase>
+                <phase>process-resources</phase>
                 <configuration>
                   <target if="additional.artifacts.dir">
                     <copy todir="${stage.artifacts.dir}" flatten="true">
