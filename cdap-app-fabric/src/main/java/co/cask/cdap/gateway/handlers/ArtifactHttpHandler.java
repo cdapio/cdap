@@ -117,8 +117,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
   @Inject
   public ArtifactHttpHandler(CConfiguration cConf,
-                             ArtifactRepository artifactRepository,
-                             NamespaceAdmin namespaceAdmin) {
+                             ArtifactRepository artifactRepository, NamespaceAdmin namespaceAdmin) {
     this.namespaceAdmin = namespaceAdmin;
     this.artifactRepository = artifactRepository;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
