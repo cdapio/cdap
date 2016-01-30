@@ -41,6 +41,7 @@ import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -626,6 +627,7 @@ public class ArtifactRepository {
    */
   public void deleteArtifact(Id.Artifact artifactId) throws IOException {
     artifactStore.delete(artifactId);
+    metadataStore.removeMetadata(artifactId);
   }
 
   // convert details to summaries (to hide location and other unnecessary information)

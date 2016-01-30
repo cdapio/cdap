@@ -257,20 +257,22 @@ public class IndexedTable extends AbstractDataset implements Table {
       }
     }
 
-    // first read the existing indexed values to find which have changed and need to be updated
-    Row existingRow = table.get(dataRow, colsToIndex.toArray(new byte[colsToIndex.size()][]));
-    for (Map.Entry<byte[], byte[]> entry : existingRow.getColumns().entrySet()) {
-      if (!Arrays.equals(entry.getValue(), putColumns.get(entry.getKey()))) {
-        index.delete(createIndexKey(dataRow, entry.getKey(), entry.getValue()), IDX_COL);
-      } else {
-        // value already indexed
-        colsToIndex.remove(entry.getKey());
+    if (!colsToIndex.isEmpty()) {
+      // first read the existing indexed values to find which have changed and need to be updated
+      Row existingRow = table.get(dataRow, colsToIndex.toArray(new byte[colsToIndex.size()][]));
+      for (Map.Entry<byte[], byte[]> entry : existingRow.getColumns().entrySet()) {
+        if (!Arrays.equals(entry.getValue(), putColumns.get(entry.getKey()))) {
+          index.delete(createIndexKey(dataRow, entry.getKey(), entry.getValue()), IDX_COL);
+        } else {
+          // value already indexed
+          colsToIndex.remove(entry.getKey());
+        }
       }
-    }
 
-    // add new index entries for all values that have changed or did not exist
-    for (byte[] col : colsToIndex) {
-      index.put(createIndexKey(dataRow, col, putColumns.get(col)), IDX_COL, dataRow);
+      // add new index entries for all values that have changed or did not exist
+      for (byte[] col : colsToIndex) {
+        index.put(createIndexKey(dataRow, col, putColumns.get(col)), IDX_COL, dataRow);
+      }
     }
 
     // store the data row
