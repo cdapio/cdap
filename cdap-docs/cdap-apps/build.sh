@@ -110,7 +110,7 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins KVTable-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins KVTable-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins Kafka-realtimesource.md
-  download_md_doc_file $base_target $hydrator_source core-plugins Logparser-transform.md
+  download_md_doc_file $base_target $hydrator_source core-plugins LogParser-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins Projection-transform.md
   download_md_doc_file $base_target $hydrator_source core-plugins S3-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins S3Avro-batchsink.md
