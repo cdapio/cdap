@@ -523,11 +523,11 @@ of the ``cdap-etl-batch`` artifact (pretty-printed and reformatted to fit):
             "version": "|release|-batch"
         },
         "className": "co.cask.cdap.etl.transform.ScriptFilterTransform",
-        "description": "A transform plugin that filters records using a custom Javascript provided in the plugin's config.",
+        "description": "A transform plugin that filters records using a custom JavaScript provided in the plugin's config.",
         "name": "ScriptFilter",
         "properties": {
             "script": {
-                "description": "Javascript that must implement a function 'shouldFilter' that takes a JSON object representation of the input record, and returns true if the input record should be filtered and false if not. For example: 'function shouldFilter(input) { return input.count > 100; }' will filter out any records whose 'count' field is greater than 100.",
+                "description": "JavaScript that must implement a function 'shouldFilter' that takes a JSON object representation of the input record, and returns true if the input record should be filtered and false if not. For example: 'function shouldFilter(input) { return input.count > 100; }' will filter out any records whose 'count' field is greater than 100.",
                 "name": "script",
                 "required": true,
                 "type": "string"
