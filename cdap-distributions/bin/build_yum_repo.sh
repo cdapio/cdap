@@ -123,6 +123,19 @@ function createrepo_in_repo_staging() {
   createrepo ${__maj_min}
 }
 
+function create_definition_file() {
+  [ -f "${STAGE_DIR}/${__maj_min}/cask.repo" ] && return
+  echo "Create YUM repository definition file"
+  cd ${STAGE_DIR}/${__maj_min}
+  cat <<EOF > cask.repo
+[cask]
+name=Cask Packages
+baseurl=http://${S3_BUCKET}/${S3_REPO_PATH}/${__maj_min}
+enabled=1
+gpgcheck=1
+EOF
+}
+
 function create_repo_tarball() {
   cd ${STAGE_DIR}
   echo "Create YUM repository tarball"
@@ -137,6 +150,7 @@ add_packages_to_repo_staging || die "Failed copying packages to staging director
 sign_packages_in_repo_staging
 export_public_key
 createrepo_in_repo_staging || die "Failed to create repository from staging directory"
+create_definition_file || die "Failed to create repository definition file"
 create_repo_tarball || die "Failed to create YUM repository tarball"
 
 echo "Complete: cdap-yumrepo-${__maj_min}.tar.gz created"
