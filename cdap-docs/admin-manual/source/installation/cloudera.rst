@@ -114,28 +114,29 @@ available services which CM can install.
 
 .. _cloudera-compatibility-matrix:
 
-+-------------------------------------------------------------------------------------+
-| Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions           |
-+------------+---------------------+---------------------+----------------------------+
-| CM Version | CDH Versions        | CSD Versions        |  CDAP Parcel               |
-+============+=====================+=====================+============================+
-| 5.5        | 5.5                 | 3.3.x               | *Matching CSD major.minor* | 
-+------------+---------------------+---------------------+----------------------------+
-| 5.5        | less than 5.5       | 3.0.x through 3.3.x | *Matching CSD major.minor* |
-+------------+---------------------+---------------------+----------------------------+
-| 5.4        | no greater than 5.4 | 3.0.x through 3.3.x | *Matching CSD major.minor* | 
-+------------+---------------------+---------------------+----------------------------+
-| 5.3        | no greater than 5.3 | 3.0.x through 3.1.x | *Matching CSD major.minor* |
-+------------+---------------------+---------------------+----------------------------+
-| 5.2        | no greater than 5.2 | 3.0.x through 3.1.x | *Matching CSD major.minor* |
-+------------+---------------------+---------------------+----------------------------+
-| 5.1        | no greater than 5.1 | *Not supported*     | |---|                      | 
-+------------+---------------------+---------------------+----------------------------+
++---------------------------------------------------------------------------------------+
+| Supported Cloudera Manager (CM) and Cloudera Data Hub (CDH) Distributions             |
++------------+-----------------------+---------------------+----------------------------+
+| CM Version | CDH Version           | CSD Version         |  CDAP Parcel Version       |
++============+=======================+=====================+============================+
+| 5.5        | 5.5                   | 3.3.x               | *Matching CSD major.minor* | 
++------------+-----------------------+---------------------+----------------------------+
+| 5.5        | no greater than 5.4.x | 3.0.x through 3.3.x | *Matching CSD major.minor* |
++------------+-----------------------+---------------------+----------------------------+
+| 5.4        | no greater than 5.4.x | 3.0.x through 3.3.x | *Matching CSD major.minor* | 
++------------+-----------------------+---------------------+----------------------------+
+| 5.3        | no greater than 5.3.x | 3.0.x through 3.1.x | *Matching CSD major.minor* |
++------------+-----------------------+---------------------+----------------------------+
+| 5.2        | no greater than 5.2.x | 3.0.x through 3.1.x | *Matching CSD major.minor* |
++------------+-----------------------+---------------------+----------------------------+
+| 5.1        | no greater than 5.1.x | *Not supported*     | |---|                      | 
++------------+-----------------------+---------------------+----------------------------+
 
 **Notes:**
 
-- Cloudera Manager supports a version of CDH no greater than its own (for example,
-  CM version 5.1 supports CDH versions less than or equal to 5.1).
+- Cloudera Manager supports `a version of CDH no greater than its own 
+  <http://www.cloudera.com/documentation/enterprise/latest/topics/pcm_cdh_cm.html>`__
+  (for example, CM version 5.1 supports CDH versions less than or equal to 5.1).
   
 - The version of the CDAP Parcel that is used should match the CSD major.minor version.
 
@@ -176,8 +177,16 @@ cm_ig_parcels.html>`__, but in summary these are the steps:
    <http://www.cloudera.com/content/cloudera/en/documentation/core/latest/topics/cm_ig_parcels.html#concept_vwq_421_yk_unique_1__section_ug1_c3y_bm_unique_1>`__
    the parcel.
 
-If the Cask parcel repository is inaccessible to your cluster, please see :ref:`these
-suggestions <faqs-cloudera-direct-parcel-access>`.
+**Notes:**
+
+- If the Cask parcel repository is inaccessible to your cluster, please see :ref:`these
+  suggestions <faqs-cloudera-direct-parcel-access>`.
+- The CDAP parcels are hosted at a repository determined by the CDAP version.
+  For instance, the CDAP |version| parcels are hosted at the URL:
+  
+  .. parsed-literal::
+  
+    \http://repository.cask.co/parcels/cdap/|version|\ /
 
 
 Installing CDAP Services
