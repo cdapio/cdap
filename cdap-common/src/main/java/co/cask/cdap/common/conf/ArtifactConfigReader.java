@@ -117,13 +117,13 @@ public class ArtifactConfigReader {
 
       String rangeStr = json.getAsString();
       try {
-        return ArtifactRange.parse(rangeStr);
-      } catch (InvalidArtifactRangeException e1) {
-        try {
-          return ArtifactRange.parse(namespace, json.getAsString());
-        } catch (InvalidArtifactRangeException e2) {
-          throw new JsonParseException("Invalid artifact range " + rangeStr);
+        if (rangeStr.indexOf(':') > 0) {
+          return ArtifactRange.parse(rangeStr);
+        } else {
+          return ArtifactRange.parse(namespace, rangeStr);
         }
+      } catch (InvalidArtifactRangeException e) {
+        throw new JsonParseException(e.getMessage());
       }
     }
   }
