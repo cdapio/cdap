@@ -52,15 +52,9 @@ Preparing the Cluster
 You can make these changes during the configuration of your cluster `using Ambari 
 <http://docs.hortonworks.com/HDPDocuments/Ambari-2.2.0.0/bk_Installing_HDP_AMB/content/_customize_services.html>`__.
 
-.. highlight:: console
-
-HDFS Permissions
-----------------
-Ensure YARN is configured properly to run MapReduce programs.  Often, this includes
-ensuring that the HDFS ``/user/yarn`` directory exists with proper permissions::
-   
-  # su hdfs
-  $ hdfs dfs -mkdir -p /user/yarn && hadoop fs -chown yarn /user/yarn && hadoop fs -chgrp yarn /user/yarn
+.. HDFS Permissions
+.. ----------------
+.. include:: ../_includes/installation/hdfs-permissions.txt
 
 
 Downloading and Distributing Packages

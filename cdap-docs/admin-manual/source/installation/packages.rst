@@ -40,6 +40,9 @@ node(s) where CDAP will run.
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt
 
+.. HDFS Permissions
+.. ----------------
+.. include:: ../_includes/installation/hdfs-permissions.txt
 
   
 Downloading and Distributing Packages

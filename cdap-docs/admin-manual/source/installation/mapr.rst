@@ -45,6 +45,10 @@ packages installed, and can be configured using the MapR `configure.sh
 .. Hadoop Configuration
 .. --------------------
 .. include:: ../_includes/installation/hadoop-configuration.txt
+
+.. HDFS Permissions
+.. ----------------
+.. include:: ../_includes/installation/hdfs-permissions.txt
       
 
 Downloading and Distributing Packages

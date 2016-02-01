@@ -76,15 +76,9 @@ You can make these changes `using Cloudera Manager
 <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
 You will be prompted to restart the stale services after making changes.
 
-.. highlight:: console
-
-HDFS Permissions
-----------------
-Ensure YARN is configured properly to run MapReduce programs.  Often, this includes
-ensuring that the HDFS ``/user/yarn`` directory exists with proper permissions::
-   
-  # su hdfs
-  $ hdfs dfs -mkdir -p /user/yarn && hadoop fs -chown yarn /user/yarn && hadoop fs -chgrp yarn /user/yarn
+.. HDFS Permissions
+.. ----------------
+.. include:: ../_includes/installation/hdfs-permissions.txt
 
 
 Downloading and Distributing Packages
