@@ -254,7 +254,7 @@ Spark SQL
 The entry point to functionality in Spark SQL is through a Spark `SQLContext
 <http://spark.apache.org/docs/latest/sql-programming-guide.html#starting-point-sqlcontext>`__.
 To run a Spark SQL program in CDAP, you can obtain a ``SQLContext`` from CDAP's ``SparkContext``
-using either of these methods:
+using one of these approaches:
 
 - Java::
 
