@@ -126,7 +126,6 @@ gulp.task('js:lib', function() {
       './bower_components/ng-sortable/dist/ng-sortable.min.js',
 
       './bower_components/d3/d3.min.js',
-      './bower_components/d3-tip/index.js',
 
       './bower_components/epoch/epoch.min.js',
       './bower_components/lodash/lodash.js',

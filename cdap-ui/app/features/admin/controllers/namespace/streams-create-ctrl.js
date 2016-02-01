@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.admin')
-  .controller('NamespaceStreamsCreateController', function($scope, $modalInstance, caskFocusManager, $stateParams, myStreamApi, $alert, $timeout) {
+  .controller('NamespaceStreamsCreateController', function($scope, $modalInstance, caskFocusManager, $stateParams, myStreamApi, myAlertOnValium, $timeout) {
 
     caskFocusManager.focus('streamId');
 
@@ -40,7 +40,7 @@ angular.module(PKG.name + '.feature.admin')
           // here and reload the state we have that flickering in the
           // alert message. In order to avoid that I am delaying by 100ms
           $timeout(function() {
-            $alert({
+            myAlertOnValium.show({
               type: 'success',
               content: 'Stream ' + $scope.streamId + ' created successfully'
             });

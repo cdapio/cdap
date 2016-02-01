@@ -25,8 +25,13 @@ import co.cask.cdap.api.artifact.ArtifactVersion;
 import co.cask.cdap.api.data.schema.Schema;
 import co.cask.cdap.api.plugin.PluginPropertyField;
 import co.cask.cdap.app.program.ManifestFields;
+import co.cask.cdap.client.MetadataClient;
+import co.cask.cdap.client.config.ClientConfig;
+import co.cask.cdap.client.config.ConnectionConfig;
+import co.cask.cdap.common.NotFoundException;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.io.Locations;
+import co.cask.cdap.common.discovery.EndpointStrategy;
+import co.cask.cdap.common.discovery.RandomEndpointStrategy;
 import co.cask.cdap.gateway.handlers.ArtifactHttpHandler;
 import co.cask.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin1;
@@ -34,24 +39,27 @@ import co.cask.cdap.internal.app.runtime.artifact.plugin.Plugin2;
 import co.cask.cdap.internal.app.services.http.AppFabricTestBase;
 import co.cask.cdap.internal.io.ReflectionSchemaGenerator;
 import co.cask.cdap.internal.io.SchemaTypeAdapter;
-import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 import co.cask.cdap.proto.artifact.PluginSummary;
+import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import org.apache.http.HttpResponse;
+import org.apache.twill.discovery.Discoverable;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
@@ -68,7 +76,9 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
+import javax.annotation.Nullable;
 import javax.ws.rs.HttpMethod;
 
 /**
@@ -85,11 +95,23 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     .create();
   private static ArtifactRepository artifactRepository;
   private static LocationFactory locationFactory;
+  private static MetadataClient metadataClient;
+  protected static ClientConfig clientConfig;
 
   @BeforeClass
   public static void setup() throws IOException {
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     locationFactory = new LocalLocationFactory(tmpFolder.newFolder());
+    DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
+    ServiceDiscovered metadataHttpDiscovered = discoveryClient.discover(Constants.Service.METADATA_SERVICE);
+    EndpointStrategy endpointStrategy = new RandomEndpointStrategy(metadataHttpDiscovered);
+    Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
+    Assert.assertNotNull(discoverable);
+    String host = "127.0.0.1";
+    int port = discoverable.getSocketAddress().getPort();
+    ConnectionConfig connectionConfig = ConnectionConfig.builder().setHostname(host).setPort(port).build();
+    clientConfig = ClientConfig.builder().setConnectionConfig(connectionConfig).build();
+    metadataClient = new MetadataClient(clientConfig);
   }
 
   @After
@@ -153,6 +175,56 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
                                                  classes, ImmutableMap.<String, String>of());
     ArtifactInfo actualInfo = getArtifact(configTestAppId);
     Assert.assertEquals(expectedInfo, actualInfo);
+  }
+
+  @Test
+  public void testDeletePropertiesAndArtifacts() throws Exception {
+    // add 2 versions of the same app that doesn't use config
+    Id.Artifact wordcountId1 = Id.Artifact.from(Id.Namespace.DEFAULT, "wordcount", "1.0.0");
+    Assert.assertEquals(HttpResponseStatus.OK.getCode(),
+                        addAppArtifact(wordcountId1, WordCountApp.class).getStatusLine().getStatusCode());
+
+    // test get /artifacts endpoint
+    Set<ArtifactSummary> expectedArtifacts = Sets.newHashSet(
+      new ArtifactSummary("wordcount", "1.0.0")
+    );
+    Set<ArtifactSummary> actualArtifacts = getArtifacts(Id.Namespace.DEFAULT);
+    Assert.assertEquals(expectedArtifacts, actualArtifacts);
+    addArtifactProperties(wordcountId1, ImmutableMap.of("key1", "value1", "key2", "value2", "key3", "value3"));
+    Assert.assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2", "key3", "value3"),
+                        getArtifactProperties(wordcountId1));
+
+    // delete a single property
+    deleteArtifact(wordcountId1, false, "key1", 200);
+    Assert.assertEquals(ImmutableMap.of("key2", "value2", "key3", "value3"), getArtifactProperties(wordcountId1));
+
+    // delete all properties
+    deleteArtifact(wordcountId1, false, null, 200);
+    Assert.assertEquals(ImmutableMap.of(), getArtifactProperties(wordcountId1));
+
+    Set<MetadataRecord> metadataRecords = metadataClient.getMetadata(wordcountId1, MetadataScope.USER);
+    Assert.assertEquals(1, metadataRecords.size());
+    Assert.assertEquals(new MetadataRecord(wordcountId1, MetadataScope.USER), metadataRecords.iterator().next());
+    // delete artifact
+    deleteArtifact(wordcountId1, true, null, 200);
+    try {
+      metadataClient.getMetadata(wordcountId1, MetadataScope.USER);
+      Assert.fail("Should not reach here");
+    } catch (NotFoundException e) {
+      // no-op
+    }
+    actualArtifacts = getArtifacts(Id.Namespace.DEFAULT);
+    Assert.assertTrue(actualArtifacts.isEmpty());
+  }
+
+  protected void deleteArtifact(Id.Artifact artifact, boolean deleteArtifact,
+                                @Nullable String property, int expectedResponseCode) throws Exception {
+    String path = String.format("artifacts/%s/versions/%s/", artifact.getName(), artifact.getVersion().getVersion());
+    if (!deleteArtifact) {
+      path += property == null ? "properties" : String.format("properties/%s", property);
+    }
+    HttpResponse response = doDelete(getVersionedAPIPath(path, artifact.getNamespace().getId()));
+    Assert.assertEquals(expectedResponseCode, response.getStatusLine().getStatusCode());
   }
 
   @Test
@@ -428,7 +500,7 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
 
     expectedInfos = Sets.newHashSet(
       new PluginInfo("Plugin2", "callable", "Just returns the configured integer",
-        Plugin2.class.getName(), plugins2Artifact, p2Properties)
+                     Plugin2.class.getName(), plugins2Artifact, p2Properties)
     );
     Assert.assertEquals(expectedInfos, getPluginInfos(wordCount2Id, "callable", "Plugin2"));
   }
@@ -448,6 +520,15 @@ public class ArtifactHttpHandlerTest extends AppFabricTestBase {
     URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts?scope=%s",
       Constants.Gateway.API_VERSION_3, namespace.getId(), scope.name())).toURL();
     return getResults(endpoint, ARTIFACTS_TYPE);
+  }
+
+  private Map<String, String> getArtifactProperties(Id.Artifact artifact)
+    throws URISyntaxException, IOException {
+
+    URL endpoint = getEndPoint(String.format("%s/namespaces/%s/artifacts/%s/versions/%s/properties",
+                                             Constants.Gateway.API_VERSION_3, artifact.getNamespace().getId(),
+                                             artifact.getName(), artifact.getVersion())).toURL();
+    return getResults(endpoint, MAP_STRING_STRING_TYPE);
   }
 
   private Set<ArtifactSummary> getArtifacts(Id.Namespace namespace, String name)

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import co.cask.cdap.api.dataset.DatasetProperties;
 import co.cask.cdap.api.dataset.DatasetSpecification;
 import co.cask.cdap.api.dataset.lib.FileSet;
 import co.cask.cdap.api.dataset.lib.FileSetProperties;
+import co.cask.cdap.api.dataset.lib.ObjectMappedTable;
 import co.cask.cdap.api.dataset.lib.PartitionDetail;
 import co.cask.cdap.api.dataset.lib.PartitionKey;
 import co.cask.cdap.api.dataset.lib.PartitionedFileSet;
@@ -150,7 +151,7 @@ public class ExploreTableManager {
    * Enable ad-hoc exploration on the given dataset by creating a corresponding Hive table. If exploration has
    * already been enabled on the dataset, this will be a no-op. Assumes the dataset actually exists.
    *
-   * @param datasetID the ID of the dataset to enable
+   * @param datasetId the ID of the dataset to enable
    * @param spec the specification for the dataset to enable
    * @return query handle for creating the Hive table for the dataset
    * @throws IllegalArgumentException if some required dataset property like schema is not set
@@ -160,32 +161,22 @@ public class ExploreTableManager {
    * @throws DatasetNotFoundException if the dataset had to be instantiated, but could not be found
    * @throws ClassNotFoundException if the was a missing class when instantiating the dataset
    */
-  public QueryHandle enableDataset(Id.DatasetInstance datasetID, DatasetSpecification spec)
+  public QueryHandle enableDataset(Id.DatasetInstance datasetId, DatasetSpecification spec)
     throws IllegalArgumentException, ExploreException, SQLException,
     UnsupportedTypeException, DatasetNotFoundException, ClassNotFoundException {
 
-    String datasetName = datasetID.getId();
+    String datasetName = datasetId.getId();
     Map<String, String> serdeProperties = ImmutableMap.of(
       Constants.Explore.DATASET_NAME, datasetName,
-      Constants.Explore.DATASET_NAMESPACE, datasetID.getNamespaceId());
+      Constants.Explore.DATASET_NAMESPACE, datasetId.getNamespaceId());
     String createStatement = null;
 
-    // some datasets cannot be instantiated here. For example, ObjectMappedTable is often parameterized with a type
-    // that is only available in a program context and not available here in the system context.
     // explore should only have logic related to exploration and not dataset logic.
     // TODO: refactor exploration (CDAP-1573)
-    String datasetType = spec.getType();
-    // special casing here... but we really should clean this up
-    // there are two ways to refer to each dataset type...
-    if (ObjectMappedTableModule.FULL_NAME.equals(datasetType) ||
-      ObjectMappedTableModule.SHORT_NAME.equals(datasetType)) {
-      return createFromSchemaProperty(spec, datasetID, serdeProperties, true);
-    }
-
     try (SystemDatasetInstantiator datasetInstantiator = datasetInstantiatorFactory.create()) {
-      Dataset dataset = datasetInstantiator.getDataset(datasetID);
+      Dataset dataset = datasetInstantiator.getDataset(datasetId);
       if (dataset == null) {
-        throw new DatasetNotFoundException(datasetID);
+        throw new DatasetNotFoundException(datasetId);
       }
 
       // CDAP-1573: all these instanceofs are a sign that this logic really belongs in each dataset instead of here
@@ -193,7 +184,10 @@ public class ExploreTableManager {
       // or it must be a FileSet or a PartitionedFileSet with explore enabled in it properties.
       if (dataset instanceof Table) {
         // valid for a table not to have a schema property. this logic should really be in Table
-        return createFromSchemaProperty(spec, datasetID, serdeProperties, false);
+        return createFromSchemaProperty(spec, datasetId, serdeProperties, false);
+      }
+      if (dataset instanceof ObjectMappedTable) {
+        return createFromSchemaProperty(spec, datasetId, serdeProperties, true);
       }
 
       boolean isRecordScannable = dataset instanceof RecordScannable;
@@ -205,12 +199,12 @@ public class ExploreTableManager {
         // if the type is a structured record, use the schema property to create the table
         // Use == because that's what same class means.
         if (StructuredRecord.class == recordType) {
-          return createFromSchemaProperty(spec, datasetID, serdeProperties, true);
+          return createFromSchemaProperty(spec, datasetId, serdeProperties, true);
         }
 
         // otherwise, derive the schema from the record type
         LOG.debug("Enabling explore for dataset instance {}", datasetName);
-        createStatement = new CreateStatementBuilder(datasetName, tableNaming.getTableName(datasetID))
+        createStatement = new CreateStatementBuilder(datasetName, tableNaming.getTableName(datasetId))
           .setSchema(hiveSchemaFor(recordType))
           .setTableComment("CDAP Dataset")
           .buildWithStorageHandler(DatasetStorageHandler.class.getName(), serdeProperties);
@@ -218,16 +212,16 @@ public class ExploreTableManager {
         Map<String, String> properties = spec.getProperties();
         if (FileSetProperties.isExploreEnabled(properties)) {
           LOG.debug("Enabling explore for dataset instance {}", datasetName);
-          createStatement = generateFileSetCreateStatement(datasetID, dataset, properties);
+          createStatement = generateFileSetCreateStatement(datasetId, dataset, properties);
         }
       }
     } catch (IOException e) {
-      LOG.error("Exception instantiating dataset {}.", datasetID, e);
-      throw new ExploreException("Exception while trying to instantiate dataset " + datasetID);
+      LOG.error("Exception instantiating dataset {}.", datasetId, e);
+      throw new ExploreException("Exception while trying to instantiate dataset " + datasetId);
     }
 
     if (createStatement != null) {
-      return exploreService.execute(datasetID.getNamespace(), createStatement);
+      return exploreService.execute(datasetId.getNamespace(), createStatement);
     } else {
       // if the dataset is not explorable, this is a no op.
       return QueryHandle.NO_OP;

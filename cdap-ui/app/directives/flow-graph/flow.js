@@ -28,7 +28,7 @@ var baseDirective = {
   controller: 'myFlowController'
 };
 
-module.directive('myFlowGraph', function ($filter, $state, myStreamService, $location, FlowFactories) {
+module.directive('myFlowGraph', function ($filter, $state, myStreamService, $location, FlowFactories, $tooltip) {
   return angular.extend({
     link: function (scope, elem, attr) {
       scope.render = FlowFactories.genericRender.bind(null, scope, $filter, $location);
@@ -77,11 +77,12 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
       scope.getShapes = function() {
         var shapes = {};
         shapes.flowlet = function(parent, bbox, node) {
-          var instances = scope.model.instances[node.elem.__data__] || 1;
+          var instances = scope.model.instances[node.labelId] || 1;
 
           // Pushing labels down
           parent.select('.label')
-            .attr('transform', 'translate(0,'+ bbox.height / 3 + ')');
+            .attr('transform', 'translate(0,'+ bbox.height / 3 + ')')
+            .attr('class', 'node-label');
 
           var shapeSvg = parent.insert('circle', ':first-child')
             .attr('x', -bbox.width / 2)
@@ -92,7 +93,8 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
           parent.insert('text')
             .attr('y', -bbox.height/4)
             .text('x' + instances)
-            .attr('class', 'flow-shapes flowlet-instance-count');
+            .attr('class', 'flow-shapes flowlet-instance-count')
+            .attr('id', 'instance-' + node.labelId);
 
           var leafOptions = {
             classNames: ['flowlet-events'],
@@ -104,8 +106,9 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
           parent.insert('text')
             .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
-            .text(numberFilter(scope.model.metrics[scope.labelMap[node.elem.__data__].name]))
-            .attr('class', 'flow-shapes flowlet-event-count');
+            .text(numberFilter(scope.model.metrics[scope.labelMap[node.labelId].name]))
+            .attr('class', 'flow-shapes flowlet-event-count')
+            .attr('id', 'metrics-' + node.labelId);
 
           node.intersect = function(point) {
             return dagreD3.intersect.circle(node, flowletCircleRadius, point);
@@ -139,8 +142,12 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
           parent.append('text')
             .attr('x', calculateLeafBuffer(parent, leafOptions))
             .attr('y', metricCountPadding)
-            .text(numberFilter(scope.model.metrics[scope.labelMap[node.elem.__data__].name]))
-            .attr('class', 'flow-shapes stream-event-count');
+            .text(numberFilter(scope.model.metrics[scope.labelMap[node.labelId].name]))
+            .attr('class', 'flow-shapes stream-event-count')
+            .attr('id', 'metrics-' + node.labelId);
+
+          parent.select('.label')
+            .attr('class', 'node-label');
 
           node.intersect = function(point) {
             return dagreD3.intersect.polygon(node, points, point);
@@ -167,7 +174,6 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
       };
 
       scope.handleNodeClick = function(nodeId) {
-        scope.handleHideTip(nodeId);
         var instance = scope.instanceMap[nodeId];
         if (instance.type === 'STREAM') {
           myStreamService.show(nodeId);
@@ -183,16 +189,45 @@ module.directive('myFlowGraph', function ($filter, $state, myStreamService, $loc
         }
       };
 
-      scope.handleTooltip = function(nodeId) {
-        scope.tip
-          .html(function() {
-            return '<span>' + nodeId + '</span>';
-          })
-          .show();
-      };
-
       scope.arrowheadRule = function() {
         return false;
+      };
+
+      scope.update = function () {
+        // UPDATE INSTANCE COUNT
+        angular.forEach(scope.model.instances, function (value, key) {
+          d3.select('#instance-' + key)
+            .text('x' + value);
+        });
+
+        // UPDATE METRICS COUNT
+        angular.forEach(scope.model.metrics, function (value, key) {
+          d3.select('#metrics-' + key)
+            .text(value);
+        });
+      };
+
+      scope.createTooltips = function () {
+        var labels = d3.selectAll('.node-label')[0];
+        var labelTooltips = {};
+
+        angular.forEach(labels, function (label) {
+          labelTooltips[label.id] = $tooltip(angular.element(label), {
+            title: label.id,
+            trigger: 'manual',
+            delay: { show: 300, hide: 0 },
+            target: angular.element(label),
+            container: '.diagram-container'
+          });
+        });
+
+        d3.selectAll('.node-label')
+          .on('mouseover', function (node) {
+            labelTooltips[node].enter();
+          })
+          .on('mouseout', function (node) {
+            labelTooltips[node].leave();
+          });
       };
 
       /**

@@ -115,8 +115,7 @@ angular.module(PKG.name + '.feature.hydrator')
               this.myAlertOnValium.show({
                 type: 'danger',
                 title: 'Unable to start a new run',
-                content: angular.isObject(err)? err.data: err,
-                duration: false
+                content: angular.isObject(err)? err.data: err
               });
             }
           );
@@ -138,8 +137,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 this.myAlertOnValium.show({
                   type: 'danger',
                   title: 'Unable to schedule the pipeline',
-                  content: angular.isObject(err)? err.data: err,
-                  duration: false
+                  content: angular.isObject(err)? err.data: err
                 });
               }
             );
@@ -161,8 +159,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 this.myAlertOnValium.show({
                   type: 'danger',
                   title: 'Unable to suspend the pipeline',
-                  content: angular.isObject(err)? err.data: err,
-                  duration: false
+                  content: angular.isObject(err)? err.data: err
                 });
               }
             );
@@ -178,8 +175,7 @@ angular.module(PKG.name + '.feature.hydrator')
               this.myAlertOnValium.show({
                 type: 'danger',
                 title: 'Unable to stop the current run',
-                content: angular.isObject(err)? err.data: err,
-                duration: false
+                content: angular.isObject(err)? err.data: err
               });
             }
           );
@@ -204,8 +200,7 @@ angular.module(PKG.name + '.feature.hydrator')
                   this.myAlertOnValium.show({
                     type: 'danger',
                     title: 'Unable to delete Pipeline',
-                    content: err.data,
-                    duration: false
+                    content: err.data
                   });
                 });
               }
