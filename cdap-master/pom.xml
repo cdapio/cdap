@@ -176,6 +176,7 @@
         <stage.artifacts.dir>${stage.opt.dir}/artifacts</stage.artifacts.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
+        <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
         <!-- contains hydrator upgrade tool. Should be moved out when Hydrator is moved out of CDAP -->
         <stage.libexec.dir>${stage.opt.dir}/libexec</stage.libexec.dir>
       </properties>
@@ -282,6 +283,7 @@
                       <fileset dir="${additional.artifacts.dir}">
                         <include name="${additional.artifacts.jar.pattern}"/>
                         <include name="${additional.artifacts.config.pattern}"/>
+                        <exclude name="${additional.artifacts.exclude.pattern}"/>
                       </fileset>
                     </copy>
                   </target>
