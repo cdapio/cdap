@@ -251,10 +251,10 @@ Spark programs in CDAP can also be added to a :ref:`workflow <workflows>`, simil
 
 Spark SQL
 =========
-
-As you might know the `entry point into all functionality in Spark SQL
-<http://spark.apache.org/docs/latest/sql-programming-guide.html#starting-point-sqlcontext>`__ is `SQLContext`.
-To run a Spark SQL program in CDAP you can create a `SQLContext` from CDAP's `SparkContext` in the following manner
+The entry point to functionality in Spark SQL is through a Spark `SQLContext
+<http://spark.apache.org/docs/latest/sql-programming-guide.html#starting-point-sqlcontext>`__.
+To run a Spark SQL program in CDAP, you can obtain a ``SQLContext`` from CDAP's ``SparkContext``
+using either of these methods:
 
 - Java::
 
