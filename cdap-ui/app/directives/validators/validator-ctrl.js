@@ -217,7 +217,6 @@ angular.module(PKG.name + '.commons')
         return;
       }
       NonStorePipelineErrorFactory.isNodeNameUnique(nodeName, nodes, function (err) {
-        console.log('err', err);
         if (err) {
           vm.nodeLabelError = GLOBALS.en.hydrator.studio.error[err];
         } else {

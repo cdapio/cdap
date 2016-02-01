@@ -20,6 +20,7 @@ angular.module(PKG.name + '.commons')
       restrict: 'E',
       scope: {
         model: '=ngModel',
+        errorDatasetName: '=',
         inputSchema: '=',
         isDisabled: '=',
         outputSchema: '='

@@ -152,9 +152,6 @@ class ConfigStore {
           inputSchema: node.inputSchema
         };
       } else if (node.type === 'transform') {
-        if (node.plugin.errorDatasetName && node.plugin.errorDatasetName.length > 0) {
-          pluginConfig.errorDatasetName = node.plugin.errorDatasetName;
-        }
         if (node.plugin.validationFields) {
           pluginConfig.validationFields = node.plugin.validationFields;
         }
@@ -164,6 +161,11 @@ class ConfigStore {
           outputSchema: node.outputSchema,
           inputSchema: node.inputSchema
         };
+
+        if (node.errorDatasetName && node.errorDatasetName.length > 0) {
+          pluginConfig.errorDatasetName = node.errorDatasetName;
+        }
+
         config['transforms'].push(pluginConfig);
       } else if (node.type === artifactTypeExtension.sink) {
         pluginConfig = {
