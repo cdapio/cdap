@@ -123,7 +123,9 @@ available services which CM can install.
 +------------+-----------------------+---------------------+----------------------------+
 | 5.5        | no greater than 5.4.x | 3.0.x through 3.3.x | *Matching CSD major.minor* |
 +------------+-----------------------+---------------------+----------------------------+
-| 5.4        | no greater than 5.4.x | 3.0.x through 3.3.x | *Matching CSD major.minor* | 
+| 5.4        | 5.4.x                 | 3.1.x through 3.3.x | *Matching CSD major.minor* | 
++------------+-----------------------+---------------------+----------------------------+
+| 5.4        | no greater than 5.3.x | 3.0.x through 3.3.x | *Matching CSD major.minor* | 
 +------------+-----------------------+---------------------+----------------------------+
 | 5.3        | no greater than 5.3.x | 3.0.x through 3.1.x | *Matching CSD major.minor* |
 +------------+-----------------------+---------------------+----------------------------+
@@ -182,11 +184,11 @@ cm_ig_parcels.html>`__, but in summary these are the steps:
 - If the Cask parcel repository is inaccessible to your cluster, please see :ref:`these
   suggestions <faqs-cloudera-direct-parcel-access>`.
 - The CDAP parcels are hosted at a repository determined by the CDAP version.
-  For instance, the CDAP |version| parcels are hosted at the URL:
+  For instance, the CDAP |short_version| parcels are hosted at the URL:
   
   .. parsed-literal::
   
-    \http://repository.cask.co/parcels/cdap/|version|\ /
+    \http://repository.cask.co/parcels/cdap/|short_version|\ /
 
 
 Installing CDAP Services
@@ -545,7 +547,7 @@ Upgrading CDH
 These steps cover upgrading the version of CDH of an existing CDAP installation.
 As the different versions of CDH can use different versions of HBase, upgrading from
 one version to the next can require that the HBase coprocessors be upgraded to the correct
-version. The table below lists the different coprocessors package names managed by CDAP
+version. The table below lists the different coprocessor package names managed by CDAP
 for each version of CDH. If the version changes, you need to check that the version being
 used has changed as described below.
 
