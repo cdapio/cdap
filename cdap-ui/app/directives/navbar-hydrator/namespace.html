@@ -15,13 +15,9 @@
 -->
 
 <ul class="dropdown-menu" role="menu" ng-show="currentUser">
-  <li ng-repeat="ns in namespaces | orderBy : 'name'" ng-show="namespaces.length > 1 && ns.name !== $state.params.namespace">
+  <li ng-repeat="ns in namespaces | orderBy : 'name'">
     <a role="menuitem" ui-sref="hydrator.list({namespace: ns.name})" tabindex="-1" title="{{ns.name}}">
       <span ng-bind="ns.name | myEllipsis: 32"></span>
     </a>
   </li>
-  <li role="menuitem" ng-show="namespaces.length === 1" class="disabled">
-    <a href="">No other namespaces</a>
-  </li>
 </ul>
-
