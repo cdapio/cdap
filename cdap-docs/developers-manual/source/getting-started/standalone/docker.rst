@@ -152,4 +152,4 @@ Docker and CDAP Applications
 .. include:: ../start-stop-cdap.rst  
    :start-line: 4
 
-.. include:: building-apps.txt
+.. include:: /_includes/building-apps.txt
