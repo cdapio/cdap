@@ -13,7 +13,7 @@ Shared Plugins: CoreValidator
 A system-supplied validator that offers a set of functions that can be called from the validator transform.
 
 It is included in a transform by adding its name (``core``) to the ``validators`` field of
-the transform configuration and its functions are referenced by using its Javascript name
+the transform configuration and its functions are referenced by using its JavaScript name
 (``coreValidator``). See an example in the Transforms Validator plugin.
 
 .. rubric:: Use Case
