@@ -24,6 +24,9 @@ Use the ``cdap.sh`` script to start and stop the Standalone CDAP
     |$| ./bin/cdap.sh stop
 
 Or, if you are using Windows, use the batch script ``cdap.bat`` to start and stop the SDK.
+(There is an issue with running Microsoft Windows and using the CDAP Standalone scripts
+when ``JAVA_HOME`` is defined as a path with spaces in it. A workaround is to use a
+definition of ``JAVA_HOME`` that does not include spaces.)
 
 Note that starting CDAP is not necessary if you use either the Virtual Machine or the
 Docker image, as they both start the Standalone CDAP automatically on startup.

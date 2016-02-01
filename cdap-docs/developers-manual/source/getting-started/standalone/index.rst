@@ -35,7 +35,11 @@ If you are **running under Microsoft Windows**, you will need to have installed 
 `Microsoft Visual C++ 2010 Redistributable Package
 <http://www.microsoft.com/en-us/download/details.aspx?id=14632>`__ in order to have the
 required DLLs to run Hadoop and CDAP; currently, CDAP is supported only on 64-bit Windows
-platforms.
+platforms. 
+
+There is an issue with running Microsoft Windows and using the CDAP Standalone scripts
+when ``JAVA_HOME`` is defined as a path with spaces in it. A workaround is to use a
+definition of ``JAVA_HOME`` that does not include spaces.
 
 .. _recommend-using-an-ide:
 
