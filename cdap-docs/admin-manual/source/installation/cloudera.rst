@@ -184,11 +184,11 @@ cm_ig_parcels.html>`__, but in summary these are the steps:
 - If the Cask parcel repository is inaccessible to your cluster, please see :ref:`these
   suggestions <faqs-cloudera-direct-parcel-access>`.
 - The CDAP parcels are hosted at a repository determined by the CDAP version.
-  For instance, the CDAP |short_version| parcels are hosted at the URL:
+  For instance, the CDAP |short-version| parcels are hosted at the URL:
   
   .. parsed-literal::
   
-    \http://repository.cask.co/parcels/cdap/|short_version|\ /
+    \http://repository.cask.co/parcels/cdap/|short-version|\ /
 
 
 Installing CDAP Services
