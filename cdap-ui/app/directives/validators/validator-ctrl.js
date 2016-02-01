@@ -34,13 +34,14 @@
  * }
  **/
 angular.module(PKG.name + '.commons')
-  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe) {
+  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, NodeConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS) {
     var vm = this;
 
     vm.validators = [];
     vm.isRule = true;
     vm.validationFields = $scope.model.validationFields || {};
     vm.functionMap = {};
+    vm.nodeLabelError = '';
 
     var validatorsList;
 
@@ -207,6 +208,25 @@ angular.module(PKG.name + '.commons')
       }
 
     }
+
+    function validateNodesLabels () {
+      var nodes = NodeConfigStore.ConfigStore.getNodes();
+      var nodeName = $scope.model.label;
+
+      if (!nodeName) {
+        return;
+      }
+      NonStorePipelineErrorFactory.isNodeNameUnique(nodeName, nodes, function (err) {
+        console.log('err', err);
+        if (err) {
+          vm.nodeLabelError = GLOBALS.en.hydrator.studio.error[err];
+        } else {
+          vm.nodeLabelError = '';
+        }
+      });
+    }
+
+    $scope.$watch('model.label', validateNodesLabels);
 
     // Since validation fields is a reference and we overwrite the array
     // reference all the time $watch will not be triggered hence the event communication.
