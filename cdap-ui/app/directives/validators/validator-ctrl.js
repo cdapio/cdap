@@ -34,7 +34,13 @@
  * }
  **/
 angular.module(PKG.name + '.commons')
-  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, NodeConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS) {
+  .factory('js_beautify', function ($window) {
+    return $window.js_beautify;
+  });
+
+
+angular.module(PKG.name + '.commons')
+  .controller('MyValidatorsCtrl', function($scope, myHydratorValidatorsApi, EventPipe, NodeConfigStore, myHelpers, NonStorePipelineErrorFactory, GLOBALS, js_beautify) {
     var vm = this;
 
     vm.validators = [];
@@ -197,7 +203,7 @@ angular.module(PKG.name + '.commons')
 
       var validatorProperties = {
         validators: validatorsList,
-        validationScript: fn
+        validationScript: js_beautify(fn)
       };
 
       if ($scope.model.properties !== validatorProperties) {
