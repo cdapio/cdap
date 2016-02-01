@@ -37,9 +37,7 @@ If you are **running under Microsoft Windows**, you will need to have installed 
 required DLLs to run Hadoop and CDAP; currently, CDAP is supported only on 64-bit Windows
 platforms. 
 
-There is an issue with running Microsoft Windows and using the CDAP Standalone scripts
-when ``JAVA_HOME`` is defined as a path with spaces in it. A workaround is to use a
-definition of ``JAVA_HOME`` that does not include spaces.
+.. include:: /_includes/windows-note.txt
 
 .. _recommend-using-an-ide:
 

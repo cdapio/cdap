@@ -61,9 +61,7 @@ Accessing CLI, curl and the SDK bin
   this change to the path variable. The Windows path has been augmented with a directory where
   the SDK includes Windows-versions of commands such as ``curl``.
   
-- There is an issue with running Microsoft Windows and using the CDAP Standalone scripts
-  when ``JAVA_HOME`` is defined as a path with spaces in it. A workaround is to use a
-  definition of ``JAVA_HOME`` that does not include spaces.
+.. include:: /_includes/windows-note.txt
 
 .. _cdap-building-running-example:
 
