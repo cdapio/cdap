@@ -226,7 +226,7 @@ angular.module(PKG.name + '.commons')
 
       var validatorProperties = {
         validators: validatorsList,
-        validationScript: js_beautify(fn)
+        validationScript: js_beautify(fn, { indent_size: 2 })
       };
 
       if ($scope.model.properties !== validatorProperties) {
