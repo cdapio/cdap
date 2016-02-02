@@ -48,6 +48,16 @@ public class MetadataRecord {
     this(other.getEntityId(), other.getScope(), other.getProperties(), other.getTags());
   }
 
+  /**
+   * Returns a new {@link MetadataRecord} in {@link MetadataScope#USER}.
+   * Deprecated as of 3.3.1. Please use {@link #MetadataRecord(Id.NamespacedId, MetadataScope, Map, Set)} instead.
+   * TODO: CDAP-4866 - Remove in 3.5
+   */
+  @Deprecated
+  public MetadataRecord(Id.NamespacedId entityId, Map<String, String> properties, Set<String> tags) {
+    this(entityId, MetadataScope.USER, properties, tags);
+  }
+
   public MetadataRecord(Id.NamespacedId entityId, MetadataScope scope, Map<String, String> properties,
                         Set<String> tags) {
     this.entityId = entityId;
