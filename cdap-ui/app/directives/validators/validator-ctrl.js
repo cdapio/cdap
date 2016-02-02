@@ -194,7 +194,7 @@ angular.module(PKG.name + '.commons')
         conditions = currentBlock;
       }
 
-      conditions += '\n\n';
+      conditions += '\n';
 
       var initFn = 'function isValid(input, context) {\n' +
         'var isValid = true;\n' +
