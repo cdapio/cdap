@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2015 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -87,19 +87,15 @@ public class SystemDatasetInstantiator implements Closeable {
     public <T extends Dataset> T getDataset(Id.DatasetInstance datasetId, Map<String, String> arguments)
     throws DatasetInstantiationException {
 
-    T dataset;
     try {
-
-      dataset = datasetFramework.getDataset(datasetId, arguments, parentClassLoader, classLoaderProvider, owners);
+      T dataset = datasetFramework.getDataset(datasetId, arguments, parentClassLoader, classLoaderProvider, owners);
       if (dataset == null) {
         throw new DatasetInstantiationException("Trying to access dataset that does not exist: " + datasetId);
       }
-
+      return dataset;
     } catch (Exception e) {
       throw new DatasetInstantiationException("Failed to access dataset: " + datasetId, e);
     }
-
-    return dataset;
   }
 
   @Override

@@ -249,6 +249,24 @@ Spark in Workflows
 Spark programs in CDAP can also be added to a :ref:`workflow <workflows>`, similar to a :ref:`MapReduce <mapreduce>`.
 
 
+Spark SQL
+=========
+The entry point to functionality in Spark SQL is through a Spark `SQLContext
+<http://spark.apache.org/docs/latest/sql-programming-guide.html#starting-point-sqlcontext>`__.
+To run a Spark SQL program in CDAP, you can obtain a ``SQLContext`` from CDAP's ``SparkContext``
+using one of these approaches:
+
+- Java::
+
+    org.apache.spark.SparkContext originalSparkContext = sc.getOriginalSparkContext();
+    SQLContext sqlContext = new SQLContext(originalSparkContext);
+
+- Scala::
+
+    val originalSparkContext:org.apache.spark.SparkContext = sc.getOriginalSparkContext[org.apache.spark.SparkContext]
+    val sqlContext = new org.apache.spark.sql.SQLContext(originalSparkContext)
+
+
 Spark Program Examples
 ======================
 - For an example of **a Spark program,** see the :ref:`Spark K-Means <examples-spark-k-means>`

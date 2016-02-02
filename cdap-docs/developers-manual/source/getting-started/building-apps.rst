@@ -60,6 +60,8 @@ Accessing CLI, curl and the SDK bin
   Note that under Windows, you'll need to create a new command line window in order to see
   this change to the path variable. The Windows path has been augmented with a directory where
   the SDK includes Windows-versions of commands such as ``curl``.
+  
+.. include:: /_includes/windows-note.txt
 
 .. _cdap-building-running-example:
 

@@ -33,6 +33,7 @@ import co.cask.cdap.common.io.Locations;
 import co.cask.cdap.common.lang.ProgramClassLoader;
 import co.cask.cdap.common.lang.jar.BundleJarUtil;
 import co.cask.cdap.common.utils.DirUtils;
+import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.internal.AppFabricTestHelper;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin;
 import co.cask.cdap.internal.app.plugins.test.TestPlugin2;
@@ -47,12 +48,15 @@ import co.cask.cdap.internal.test.AppJarHelper;
 import co.cask.cdap.internal.test.PluginJarHelper;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactRange;
+import co.cask.cdap.proto.metadata.MetadataRecord;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
+import com.google.inject.Injector;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.junit.Assert;
@@ -92,6 +96,7 @@ public class ArtifactRepositoryTest {
   private static File systemArtifactsDir2;
   private static ArtifactRepository artifactRepository;
   private static ClassLoader appClassLoader;
+  private static MetadataStore metadataStore;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -103,7 +108,9 @@ public class ArtifactRepositoryTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR,
               systemArtifactsDir1.getAbsolutePath() + ";" + systemArtifactsDir2.getAbsolutePath());
-    artifactRepository = AppFabricTestHelper.getInjector(cConf).getInstance(ArtifactRepository.class);
+    Injector injector =  AppFabricTestHelper.getInjector(cConf);
+    artifactRepository = injector.getInstance(ArtifactRepository.class);
+    metadataStore = injector.getInstance(MetadataStore.class);
   }
 
   @Before
@@ -113,6 +120,15 @@ public class ArtifactRepositoryTest {
       createManifest(ManifestFields.EXPORT_PACKAGE, PluginTestRunnable.class.getPackage().getName()));
     artifactRepository.addArtifact(APP_ARTIFACT_ID, appArtifactFile, null);
     appClassLoader = createAppClassLoader(appArtifactFile);
+  }
+
+  @Test
+  public void testDeletingArtifact() throws Exception {
+    MetadataRecord record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID);
+    Assert.assertEquals(1, record.getTags().size());
+    artifactRepository.deleteArtifact(APP_ARTIFACT_ID);
+    record = metadataStore.getMetadata(MetadataScope.SYSTEM, APP_ARTIFACT_ID);
+    Assert.assertEquals(0, record.getTags().size());
   }
 
   @Test(expected = InvalidArtifactException.class)

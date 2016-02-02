@@ -603,7 +603,7 @@ Cask Hydrator as of version |version|:
      - ``default``: default serialized JSON value for the widget
      - string
    * - ``javascript-editor``, ``python-editor``
-     - An editor to write Javascript (``javascript-editor``) or Python (``python-editor``)
+     - An editor to write JavaScript (``javascript-editor``) or Python (``python-editor``)
        code as a value for a property
      - ``default``: default string value for the widget
      - string

@@ -60,7 +60,7 @@ New Features
   Added support for ETL transforms written in Python.
 
 - `CDAP-4128 <https://issues.cask.co/browse/CDAP-4128>`__ -
-  Added a new Javascript transform that can emit records using an emitter.
+  Added a new JavaScript transform that can emit records using an emitter.
 
 - `CDAP-4135 <https://issues.cask.co/browse/CDAP-4135>`__ -
   Added the capability for MapReduce and Spark programs to localize additional resources during setup.
@@ -1657,7 +1657,7 @@ Bug Fixes
   Fixed a problem on Ubuntu 14.10 where removing JSON files from templates/plugins/ETLBatch breaks adapters.
 
 - `CDAP-3072 <https://issues.cask.co/browse/CDAP-3072>`__ -
-  Fixed a problem with a documentation Javascript bug.
+  Fixed a problem with a documentation JavaScript bug.
 
 - `CDAP-3073 <https://issues.cask.co/browse/CDAP-3073>`__ -
   Fixed a problem with out-of-memory perm gen space.

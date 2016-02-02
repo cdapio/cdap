@@ -366,6 +366,17 @@ public abstract class AppFabricTestBase {
     return execute(request);
   }
 
+  // add artifact properties and return the response code
+  protected HttpResponse addArtifactProperties(Id.Artifact artifactId,
+                                               Map<String, String> properties) throws Exception {
+    String nonNamespacePath = String.format("artifacts/%s/versions/%s/properties",
+                                            artifactId.getName(), artifactId.getVersion());
+    String path = getVersionedAPIPath(nonNamespacePath, artifactId.getNamespace().getId());
+    HttpEntityEnclosingRequestBase request = getPut(path);
+    request.setEntity(new ByteArrayEntity(properties.toString().getBytes()));
+    return execute(request);
+  }
+
   /**
    * Deploys an application.
    */

@@ -31,7 +31,7 @@ var baseDirective = {
 };
 
 
-module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories) {
+module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories, $tooltip) {
   return angular.extend({
     link: function (scope) {
       scope.render = FlowFactories.genericRender.bind(null, scope, $filter, $location, true);
@@ -55,52 +55,26 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories)
           ];
 
           parent.select('.label')
-            .attr('transform', 'translate(0,'+ (defaultRadius + 20) + ')');
+            .attr('transform', 'translate(0,'+ (defaultRadius + 20) + ')')
+            .attr('class', 'node-label');
 
           var shapeSvg = parent.insert('polygon', ':first-child')
-              .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '));
+              .attr('points', points.map(function(p) { return p.x + ',' + p.y; }).join(' '))
+              .attr('id', 'job-' + scope.instanceMap[node.labelId].nodeId)
+              .attr('class', 'workflow-shapes foundation-shape job-svg');
 
-
-          var status = (scope.model.current && scope.model.current[node.elem.__data__]) || '';
-
-          if (status === 'COMPLETED') {
-            parent.append('circle')
-              .attr('r', 10)
-              .attr('transform', 'translate(0, ' + (-defaultRadius - 25) + ')' )
-              .attr('class', 'workflow-token')
-              .attr('id', 'token-' + scope.instanceMap[node.elem.__data__].nodeId);
-
-
-            parent.append('text')
-              .text('T')
-              .attr('x', -5)
-              .attr('y', (-defaultRadius - 20))
-              .attr('class', 'token-label');
-          }
-
-
-          parent.insert('div')
-            .insert('span')
-            .attr('class', 'fa fa-refresh');
-
-
-          switch(status) {
-            case 'COMPLETED':
-              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg completed');
-              break;
-            case 'RUNNING':
-              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg running');
-              break;
-            case 'FAILED':
-              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg failed');
-              break;
-            case 'KILLED':
-              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg killed');
-              break;
-            default:
-              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg');
-          }
-
+          // WORKFLOW TOKENS
+          // It will default render with class hidden
+          parent.append('circle')
+            .attr('r', 10)
+            .attr('transform', 'translate(0, ' + (-defaultRadius - 25) + ')' )
+            .attr('class', 'workflow-token hidden')
+            .attr('id', 'token-' + scope.instanceMap[node.labelId].nodeId);
+          parent.append('text')
+            .text('T')
+            .attr('x', -5)
+            .attr('y', (-defaultRadius - 20))
+            .attr('class', 'token-label');
 
 
           node.intersect = function(point) {
@@ -179,7 +153,7 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories)
               .attr('r', 10)
               .attr('transform', 'translate(0, ' + (-defaultRadius - 25) + ')' )
               .attr('class', 'workflow-token')
-              .attr('id', 'token-' + scope.instanceMap[node.elem.__data__].nodeId);
+              .attr('id', 'token-' + scope.instanceMap[node.labelId].nodeId);
 
 
             parent.append('text')
@@ -243,7 +217,6 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories)
       };
 
       scope.handleNodeClick = function(nodeId) {
-        scope.handleHideTip(nodeId);
         var instance = scope.instanceMap[nodeId];
         scope.$apply(function(scope) {
           var fn = scope.click();
@@ -264,19 +237,6 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories)
         });
       };
 
-      scope.handleTooltip = function(nodeId) {
-        if (['Start', 'End'].indexOf(nodeId) === -1) {
-          var text = scope.instanceMap[nodeId].program.programType || scope.instanceMap[nodeId].program.programName;
-
-          scope.tip
-            .html(function() {
-              return '<span>'+ scope.instanceMap[nodeId].nodeId + ' : ' + text +'</span>';
-            })
-            .show();
-        }
-
-      };
-
       scope.arrowheadRule = function(edge) {
         if (edge.targetType === 'JOINNODE' || edge.targetType === 'FORKNODE') {
           return false;
@@ -285,7 +245,66 @@ module.directive('myWorkflowGraph', function ($filter, $location, FlowFactories)
         }
       };
 
+      scope.update = function () {
+        angular.forEach(scope.model.current, function (value, key) {
+
+          var instanceId = scope.instanceMap[key].nodeId;
+          var shapeSvg = scope.svg.select('#job-' + instanceId);
+
+          switch(value) {
+            case 'COMPLETED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg completed');
+
+              // Token icon should only show when status is COMPLETED
+              scope.svg.select('#token-' + instanceId)
+                .attr('class', 'workflow-token');
+
+              break;
+            case 'RUNNING':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg running');
+              break;
+            case 'FAILED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg failed');
+              break;
+            case 'KILLED':
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg killed');
+              break;
+            default:
+              shapeSvg.attr('class', 'workflow-shapes foundation-shape job-svg');
+          }
+
+        });
+
+      };
+
+      scope.createTooltips = function () {
+        var labels = d3.selectAll('.node-label')[0];
+        var labelTooltips = {};
+
+        angular.forEach(labels, function (label) {
+          var text = scope.instanceMap[label.id].program.programType || scope.instanceMap[label.id].program.programName;
+
+          labelTooltips[label.id] = $tooltip(angular.element(label), {
+            title: scope.instanceMap[label.id].nodeId + ' : ' + text,
+            trigger: 'manual',
+            delay: { show: 300, hide: 0 },
+            target: angular.element(label),
+            container: '.diagram-container'
+          });
+        });
+
+        d3.selectAll('.node-label')
+          .on('mouseover', function (node) {
+            labelTooltips[node].enter();
+          })
+          .on('mouseout', function (node) {
+            labelTooltips[node].leave();
+          });
+      };
+
+
       FlowFactories.prepareGraph(scope);
+
     }
   }, baseDirective);
 });

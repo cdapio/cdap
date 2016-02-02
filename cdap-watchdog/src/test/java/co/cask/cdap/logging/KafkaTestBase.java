@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,127 +16,55 @@
 
 package co.cask.cdap.logging;
 
-import co.cask.cdap.common.conf.CConfiguration;
-import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.KafkaConstants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.ZKClientModule;
-import co.cask.cdap.common.utils.Tasks;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.apache.twill.internal.kafka.EmbeddedKafkaServer;
-import org.apache.twill.internal.kafka.client.ZKBrokerService;
-import org.apache.twill.internal.utils.Networks;
-import org.apache.twill.internal.zookeeper.InMemoryZKServer;
-import org.apache.twill.kafka.client.BrokerService;
-import org.apache.twill.zookeeper.ZKClientService;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import co.cask.cdap.common.guice.LocationRuntimeModule;
+import co.cask.cdap.data.runtime.DataSetsModules;
+import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
+import co.cask.cdap.data.runtime.TransactionExecutorModule;
+import co.cask.cdap.kafka.KafkaTester;
+import co.cask.cdap.logging.guice.LoggingModules;
+import co.cask.cdap.logging.save.LogSaverFactory;
+import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
+import co.cask.tephra.runtime.TransactionModules;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.PrivateModule;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import org.junit.ClassRule;
-import org.junit.rules.TemporaryFolder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Properties;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Base test class that start up Kafka during at the beginning of the test, and stop Kafka when test is done.
  */
 public abstract class KafkaTestBase {
-  private static final Logger LOG = LoggerFactory.getLogger(KafkaTestBase.class);
-
-  private static InMemoryZKServer zkServer;
-  private static EmbeddedKafkaServer kafkaServer;
-  private static int kafkaPort;
-
   @ClassRule
-  public static TemporaryFolder tmpFolder = new TemporaryFolder();
-
-  @BeforeClass
-  public static void startKafka() throws Exception {
-    zkServer = InMemoryZKServer.builder().build();
-    zkServer.startAndWait();
-
-    Properties kafkaConfig = generateKafkaConfig();
-    kafkaServer = new EmbeddedKafkaServer(kafkaConfig);
-    kafkaServer.startAndWait();
-    kafkaPort = Integer.valueOf(kafkaConfig.getProperty("port"));
-
-    LOG.info("Waiting for Kafka server to startup...");
-    waitForKafkaStartup(zkServer.getConnectionStr());
-    LOG.info("Started kafka server on port {}", kafkaPort);
-  }
-
-  public static int getKafkaPort() {
-    return kafkaPort;
-  }
-
-  public static String getZkConnectString() {
-    return zkServer.getConnectionStr();
-  }
-
-  @AfterClass
-  public static void stopKafka() {
-    kafkaServer.stopAndWait();
-    zkServer.stopAndWait();
-  }
-
-  private static Properties generateKafkaConfig() throws IOException {
-    int port = Networks.getRandomPort();
-    Preconditions.checkState(port > 0, "Failed to get random port.");
-
-    Properties prop = new Properties();
-    prop.setProperty("broker.id", "1");
-    prop.setProperty("port", Integer.toString(port));
-    prop.setProperty("num.network.threads", "2");
-    prop.setProperty("num.io.threads", "2");
-    prop.setProperty("socket.send.buffer.bytes", "1048576");
-    prop.setProperty("socket.receive.buffer.bytes", "1048576");
-    prop.setProperty("socket.request.max.bytes", "104857600");
-    prop.setProperty("log.dir", tmpFolder.newFolder().getAbsolutePath());
-    prop.setProperty("num.partitions", "2");
-    prop.setProperty("log.flush.interval.messages", "10000");
-    prop.setProperty("log.flush.interval.ms", "1000");
-    prop.setProperty("log.retention.hours", "1");
-    prop.setProperty("log.segment.bytes", "536870912");
-    prop.setProperty("log.cleanup.interval.mins", "1");
-    prop.setProperty("zookeeper.connect", zkServer.getConnectionStr());
-    prop.setProperty("zookeeper.connection.timeout.ms", "1000000");
-
-    return prop;
-  }
-
-  private static void waitForKafkaStartup(String zkConnectString) throws Exception {
-    CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder().getAbsolutePath());
-    cConf.set(Constants.Zookeeper.QUORUM, zkConnectString);
-    cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-
-    Injector injector = Guice.createInjector(
-      new ConfigModule(cConf),
-      new ZKClientModule());
-
-    ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-    zkClientService.startAndWait();
-
-    final BrokerService brokerService = new ZKBrokerService(zkClientService);
-    brokerService.startAndWait();
-
-    try {
-      Tasks.waitFor(true, new Callable<Boolean>() {
-        public Boolean call() throws Exception {
-          return Iterables.size(brokerService.getBrokers()) > 0;
+  public static final KafkaTester KAFKA_TESTER = new KafkaTester(
+    ImmutableMap.<String, String>builder()
+      .put(LoggingConfiguration.NUM_PARTITIONS, "2")
+      .put(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync")
+      .put(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS, "100")
+      .put(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, "10")
+      .put(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, "10240")
+      .put(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, "5120")
+      .put(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS, "100")
+      .put(LoggingConfiguration.LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS, "2")
+      .put(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10")
+      .build(),
+    ImmutableList.of(
+      new LocationRuntimeModule().getInMemoryModules(),
+      new TransactionModules().getInMemoryModules(),
+      new TransactionExecutorModule(),
+      new DataSetsModules().getInMemoryModules(),
+      new SystemDatasetRuntimeModule().getInMemoryModules(),
+      new MetricsClientRuntimeModule().getNoopModules(),
+      new LoggingModules().getDistributedModules(),
+      new PrivateModule() {
+        @Override
+        protected void configure() {
+          install(new FactoryModuleBuilder().build(LogSaverFactory.class));
+          expose(LogSaverFactory.class);
         }
-      }, 60, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
-
-    } finally {
-      brokerService.stopAndWait();
-      zkClientService.stopAndWait();
-    }
-  }
+      }
+    ),
+    2,
+    LoggingConfiguration.KAFKA_SEED_BROKERS
+  );
 }
