@@ -35,6 +35,10 @@
  **/
 angular.module(PKG.name + '.commons')
   .factory('js_beautify', function ($window) {
+    /**
+     * js_beautify is to format the indentation for javascript code
+     **/
+
     return $window.js_beautify;
   });
 
@@ -50,6 +54,7 @@ angular.module(PKG.name + '.commons')
     vm.nodeLabelError = '';
 
     var validatorsList;
+    var classNameList = [];
 
     // We just need to set the input schema as the output schema
     $scope.outputSchema = JSON.stringify({fields: $scope.inputSchema});
@@ -63,6 +68,8 @@ angular.module(PKG.name + '.commons')
         validatorsList = Object.keys(res).join(', ');
 
         angular.forEach(res, function (value, key) {
+          classNameList.push(value.classname);
+
           angular.forEach(value.functions, function (v) {
             v.className = value.classname;
             v.validator = key;
@@ -174,7 +181,7 @@ angular.module(PKG.name + '.commons')
           currentBlock += ')) {\n' +
             conditions +
             '} else {\n' +
-            'valid = false;\n' +
+            'isValid = false;\n' +
             'errMsg = "' + emessage + '";\n' +
             'errCode = ' + validation.ecode + ';\n' +
             '}\n';
@@ -189,17 +196,33 @@ angular.module(PKG.name + '.commons')
 
       conditions += '\n\n';
 
-      var initFn = 'function isValid(input) {\n' +
-        'var valid = true;\n' +
+      var initFn = 'function isValid(input, context) {\n' +
+        'var isValid = true;\n' +
         'var errMsg = "";\n' +
-        'var errCode = 0;\n\n';
+        'var errCode = 0;\n';
 
-      var fn = initFn + conditions +
+      // LOAD CONTEXT
+      var context = '';
+      angular.forEach(classNameList, function (className) {
+        context = context + 'var ' + className +
+          ' = context.getValidator("' + className + '");\n';
+      });
+
+      var loggerLoad = 'var logger = context.getLogger();\n\n';
+      var loggerEnd = 'if (!isValid) {\n' +
+        'logger.warn("Validation failed for record {}", input);\n' +
+        '}\n\n';
+
+
+      var fn = initFn + context +
+        loggerLoad + conditions +
+        loggerEnd +
         'return {\n' +
-        '"isValid": valid,\n' +
+        '"isValid": isValid,\n' +
         '"errorCode": errCode,\n' +
         '"errorMsg": errMsg\n' +
         '};\n}\n';
+
 
       var validatorProperties = {
         validators: validatorsList,
