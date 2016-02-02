@@ -49,7 +49,7 @@ angular.module(PKG.name + '.feature.admin')
     }
 
 
-    mySettings.get('pluginTemplates')
+    mySettings.get('pluginTemplates', true)
       .then(processResult);
 
     vm.isEmpty = function () {
