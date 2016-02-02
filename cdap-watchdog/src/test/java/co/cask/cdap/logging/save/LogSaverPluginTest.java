@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,11 +20,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.core.util.StatusPrinter;
 import co.cask.cdap.common.conf.CConfiguration;
 import co.cask.cdap.common.conf.Constants;
-import co.cask.cdap.common.conf.KafkaConstants;
-import co.cask.cdap.common.guice.ConfigModule;
-import co.cask.cdap.common.guice.KafkaClientModule;
-import co.cask.cdap.common.guice.LocationRuntimeModule;
-import co.cask.cdap.common.guice.ZKClientModule;
 import co.cask.cdap.common.logging.ApplicationLoggingContext;
 import co.cask.cdap.common.logging.ComponentLoggingContext;
 import co.cask.cdap.common.logging.LoggingContext;
@@ -32,24 +27,18 @@ import co.cask.cdap.common.logging.LoggingContextAccessor;
 import co.cask.cdap.common.logging.NamespaceLoggingContext;
 import co.cask.cdap.common.logging.ServiceLoggingContext;
 import co.cask.cdap.common.logging.SystemLoggingContext;
-import co.cask.cdap.data.runtime.DataSetsModules;
-import co.cask.cdap.data.runtime.SystemDatasetRuntimeModule;
-import co.cask.cdap.data.runtime.TransactionExecutorModule;
 import co.cask.cdap.logging.KafkaTestBase;
 import co.cask.cdap.logging.LoggingConfiguration;
 import co.cask.cdap.logging.appender.LogAppenderInitializer;
 import co.cask.cdap.logging.appender.kafka.KafkaLogAppender;
 import co.cask.cdap.logging.context.FlowletLoggingContext;
 import co.cask.cdap.logging.filter.Filter;
-import co.cask.cdap.logging.guice.LoggingModules;
 import co.cask.cdap.logging.read.AvroFileReader;
 import co.cask.cdap.logging.read.FileLogReader;
 import co.cask.cdap.logging.read.LogEvent;
 import co.cask.cdap.logging.serialize.LogSchema;
-import co.cask.cdap.metrics.guice.MetricsClientRuntimeModule;
 import co.cask.cdap.test.SlowTests;
 import co.cask.tephra.TransactionManager;
-import co.cask.tephra.runtime.TransactionModules;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -59,27 +48,18 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
-import com.google.inject.PrivateModule;
 import com.google.inject.TypeLiteral;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.kafka.client.KafkaClientService;
-import org.apache.twill.zookeeper.ZKClientService;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,13 +84,9 @@ import static co.cask.cdap.logging.appender.LoggingTester.LogCallback;
 public class LogSaverPluginTest extends KafkaTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LogSaverTest.class);
 
-  @ClassRule
-  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static Injector injector;
   private static TransactionManager txManager;
   private static String logBaseDir;
-  private static ZKClientService zkClientService;
-  private static KafkaClientService kafkaClientService;
   private static LogSaver logSaver;
   private static String namespaceDir;
   private static KafkaLogAppender appender;
@@ -118,46 +94,11 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
   @BeforeClass
   public static void initialize() throws IOException {
-    final CConfiguration cConf = CConfiguration.create();
-    cConf.set(Constants.CFG_LOCAL_DATA_DIR, temporaryFolder.newFolder().getAbsolutePath());
-    cConf.set(Constants.Zookeeper.QUORUM, getZkConnectString());
-    cConf.unset(KafkaConstants.ConfigKeys.ZOOKEEPER_NAMESPACE_CONFIG);
-    cConf.set(LoggingConfiguration.KAFKA_SEED_BROKERS, "localhost:" + getKafkaPort());
-    cConf.set(LoggingConfiguration.NUM_PARTITIONS, "2");
-    cConf.set(LoggingConfiguration.KAFKA_PRODUCER_TYPE, "sync");
-    cConf.set(LoggingConfiguration.KAFKA_PROCUDER_BUFFER_MS, "100");
-    cConf.set(LoggingConfiguration.LOG_RETENTION_DURATION_DAYS, "10");
-    cConf.set(LoggingConfiguration.LOG_MAX_FILE_SIZE_BYTES, "10240");
-    cConf.set(LoggingConfiguration.LOG_FILE_SYNC_INTERVAL_BYTES, "5120");
-    cConf.set(LoggingConfiguration.LOG_SAVER_EVENT_BUCKET_INTERVAL_MS, "100");
-    cConf.set(LoggingConfiguration.LOG_SAVER_MAXIMUM_INMEMORY_EVENT_BUCKETS, "2");
-    cConf.set(LoggingConfiguration.LOG_SAVER_TOPIC_WAIT_SLEEP_MS, "10");
-
+    CConfiguration cConf = KAFKA_TESTER.getCConf();
     logBaseDir = cConf.get(LoggingConfiguration.LOG_BASE_DIR);
-
-    Configuration hConf = HBaseConfiguration.create();
-
-    injector = Guice.createInjector(
-                          new ConfigModule(cConf, hConf),
-                          new ZKClientModule(),
-                          new KafkaClientModule(),
-                          new LocationRuntimeModule().getInMemoryModules(),
-                          new TransactionModules().getInMemoryModules(),
-                          new TransactionExecutorModule(),
-                          new DataSetsModules().getInMemoryModules(),
-                          new SystemDatasetRuntimeModule().getInMemoryModules(),
-                          new MetricsClientRuntimeModule().getNoopModules(),
-                          new LoggingModules().getDistributedModules(),
-                          new PrivateModule() {
-                            @Override
-                            protected void configure() {
-                              install(new FactoryModuleBuilder().build(LogSaverFactory.class));
-                              expose(LogSaverFactory.class);
-                            }
-                          }
-    );
     namespaceDir = cConf.get(Constants.Namespace.NAMESPACES_DIR);
 
+    injector = KAFKA_TESTER.getInjector();
     appender = injector.getInstance(KafkaLogAppender.class);
     countingLogAppender = new CountingLogAppender(appender);
     new LogAppenderInitializer(countingLogAppender).initialize("LogSaverPluginTest");
@@ -167,12 +108,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
     txManager = injector.getInstance(TransactionManager.class);
     txManager.startAndWait();
 
-    zkClientService = injector.getInstance(ZKClientService.class);
-    zkClientService.startAndWait();
-
-    kafkaClientService = injector.getInstance(KafkaClientService.class);
-    kafkaClientService.startAndWait();
-
     LogSaverFactory factory = injector.getInstance(LogSaverFactory.class);
     logSaver = factory.create(ImmutableSet.of(0));
     logSaver.startAndWait();
@@ -180,8 +115,6 @@ public class LogSaverPluginTest extends KafkaTestBase {
 
   private void stopLogSaver() {
     logSaver.stopAndWait();
-    kafkaClientService.stopAndWait();
-    zkClientService.stopAndWait();
   }
 
   @Test

@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $alert, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi) {
+  .controller('HydratorListController', function($scope, myPipelineApi, $stateParams, GLOBALS, mySettings, $state, $timeout, myHelpers, myWorkFlowApi, myWorkersApi, MyCDAPDataSource, myAppsApi, myAlertOnValium) {
     var dataSrc = new MyCDAPDataSource($scope);
 
     var vm = this;
@@ -210,18 +210,22 @@ angular.module(PKG.name + '.feature.hydrator')
         })
         .then(
           function success() {
-            $alert({
-              type: 'success',
-              content: 'Pipeline draft ' + draftName + ' deleted successfully'
-            });
-            $state.reload();
+            $state.reload()
+              .then(function() {
+                myAlertOnValium.show({
+                  type: 'success',
+                  content: 'Pipeline draft ' + draftName + ' deleted successfully'
+                });
+              });
           },
           function error() {
-            $alert({
-              type: 'danger',
-              content: 'Pipeline draft ' + draftName + ' delete failed'
-            });
-            $state.reload();
+            $state.reload()
+              .then(function() {
+                myAlertOnValium.show({
+                  type: 'danger',
+                  content: 'Pipeline draft ' + draftName + ' delete failed'
+                });
+              });
           });
     };
 
@@ -235,17 +239,21 @@ angular.module(PKG.name + '.feature.hydrator')
       myAppsApi.delete(deleteParams)
         .$promise
         .then(function success () {
-          $alert({
-            type: 'success',
-            content: 'Pipeline ' + appId + ' deleted successfully'
-          });
-          $state.reload();
+          $state.reload()
+            .then(function() {
+              myAlertOnValium.show({
+                type: 'success',
+                content: 'Pipeline ' + appId + ' deleted successfully'
+              });
+            });
         }, function error () {
-          $alert({
-            type: 'danger',
-            content: 'Pipeline ' + appId + ' delete failed'
-          });
-          $state.reload();
+          $state.reload()
+            .then(function() {
+              myAlertOnValium.show({
+                type: 'danger',
+                content:  'Pipeline ' + appId + ' delete failed'
+              });
+            });
         });
     };
 

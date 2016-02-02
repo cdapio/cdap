@@ -228,6 +228,10 @@ function doPoll (resource) {
       if (error) {
         emitResponse.call(that, resource, error);
         return;
+      } else if (response.statusCode > 299) {
+        var errMessage = response.statusCode + ' ' + resource.url;
+        emitResponse.call(that, resource, errMessage, response, body);
+        return;
       }
       emitResponse.call(that, resource, false, response, body);
 
@@ -263,7 +267,17 @@ function emitResponse (resource, error, response, body) {
 
   if(error) {
     log.debug('[ERROR]: (id: ' + resource.id + ', url: ' + resource.url + ')');
-    log.trace('[ERROR]: (id: ' + resource.id + ',url: ' + resource.url + ') body : (' + error.toString() + ')');
+    log.trace('[ERROR]: (id: ' + resource.id + ', url: ' + resource.url + ') body : (' + error.toString() + ')');
+
+    if (this.polledResources[resource.id]) {
+      responseHash = hash(error || {});
+      if (this.polledResources[resource.id].response === responseHash.toString()) {
+        return;
+      } else {
+        this.polledResources[resource.id].response = responseHash.toString();
+      }
+    }
+
     this.connection.write(JSON.stringify({
       resource: resource,
       error: error,
@@ -275,7 +289,7 @@ function emitResponse (resource, error, response, body) {
     log.trace('[' + timeDiff + 'ms] Success (' + resource.id + ',' + resource.url + ') body : (' + JSON.stringify(body) + ')');
 
     if (this.polledResources[resource.id]) {
-      responseHash = hash(body);
+      responseHash = hash(body || {});
       if (this.polledResources[resource.id].response === responseHash.toString()){
         // No need to send this to the client as nothing changed.
         return;

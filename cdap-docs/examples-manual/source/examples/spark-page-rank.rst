@@ -62,7 +62,7 @@ When a Spark program is running inside a workflow, the memory requirements confi
 
 .. literalinclude:: /../../../cdap-examples/SparkPageRank/src/main/java/co/cask/cdap/examples/sparkpagerank/SparkPageRankApp.java
     :language: java
-    :lines: 123-124
+    :lines: 113-114
     :dedent: 6
 
 .. Building and Starting

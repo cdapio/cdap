@@ -36,12 +36,14 @@ function ($scope, $state, myAppUploader, MyCDAPDataSource, myNamespace, myAlertO
       _cdapPath: path + '/' + id,
       method: 'DELETE'
     }, function() {
-      myAlertOnValium.show({
-        type: 'success',
-        title: id,
-        content: 'Application deleted successfully'
-      });
-      $state.reload();
+      $state.reload()
+        .then(function() {
+          myAlertOnValium.show({
+            type: 'success',
+            title: id,
+            content: 'Application deleted successfully'
+          });
+        });
     });
   };
 

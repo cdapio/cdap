@@ -35,7 +35,9 @@ If you are **running under Microsoft Windows**, you will need to have installed 
 `Microsoft Visual C++ 2010 Redistributable Package
 <http://www.microsoft.com/en-us/download/details.aspx?id=14632>`__ in order to have the
 required DLLs to run Hadoop and CDAP; currently, CDAP is supported only on 64-bit Windows
-platforms.
+platforms. 
+
+.. include:: /_includes/windows-note.txt
 
 .. _recommend-using-an-ide:
 

@@ -25,6 +25,8 @@ Use the ``cdap.sh`` script to start and stop the Standalone CDAP
 
 Or, if you are using Windows, use the batch script ``cdap.bat`` to start and stop the SDK.
 
+.. include:: /_includes/windows-note.txt
+
 Note that starting CDAP is not necessary if you use either the Virtual Machine or the
 Docker image, as they both start the Standalone CDAP automatically on startup.
 

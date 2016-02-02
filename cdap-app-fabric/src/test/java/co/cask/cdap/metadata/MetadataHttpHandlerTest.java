@@ -602,7 +602,7 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
     ImmutableSet<String> viewUserTags = ImmutableSet.of("viewTag");
     addTags(view, viewUserTags);
     Assert.assertEquals(
-      ImmutableSet.of(new MetadataRecord(view, ImmutableMap.<String, String>of(), viewUserTags),
+      ImmutableSet.of(new MetadataRecord(view, MetadataScope.USER, ImmutableMap.<String, String>of(), viewUserTags),
                       new MetadataRecord(view, MetadataScope.SYSTEM, viewSystemProperties, viewSystemTags)),
       getMetadata(view)
     );

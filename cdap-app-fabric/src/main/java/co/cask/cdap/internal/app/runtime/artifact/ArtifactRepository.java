@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2016 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,6 +41,7 @@ import co.cask.cdap.proto.artifact.ApplicationClassSummary;
 import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.proto.artifact.ArtifactRange;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
+import co.cask.cdap.proto.metadata.MetadataScope;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -107,7 +108,9 @@ public class ArtifactRepository {
    * @throws IOException if there was an error making changes in the meta store
    */
   public void clear(Id.Namespace namespace) throws IOException {
-    artifactStore.clear(namespace);
+    for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace)) {
+      deleteArtifact(Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId()));
+    }
   }
 
   /**
@@ -626,6 +629,7 @@ public class ArtifactRepository {
    */
   public void deleteArtifact(Id.Artifact artifactId) throws IOException {
     artifactStore.delete(artifactId);
+    metadataStore.removeMetadata(artifactId);
   }
 
   // convert details to summaries (to hide location and other unnecessary information)
