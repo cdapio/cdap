@@ -68,38 +68,17 @@ These roles map to the :ref:`CDAP components <admin-manual-cdap-components>` of 
     :start-after: .. _cloudera-install-node-js:
     :end-before: .. _cloudera-install-packaging:
 
-Configurations
---------------
-#. ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
-   (unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
-   the number of connections required is a function of usage. You can make this change using Cloudera Manager to
-   `modify the ZooKeeper configuration properties 
-   <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
+.. Hadoop Configuration
+.. --------------------
+.. include:: ../_includes/installation/hadoop-configuration.txt
 
-#. Ensure that YARN has sufficient memory capacity by lowering the default minimum container 
-   size (controlled by the property ``yarn.scheduler.minimum-allocation-mb``). Lack of
-   YARN memory capacity is the leading cause of apparent failures that we see reported.
-   We recommend starting with these settings:
-   
-   - ``yarn.nodemanager.delete.debug-delay-sec``: 43200
-   - ``yarn.scheduler.minimum-allocation-mb``: 512 mb
-   
-   Please ensure your ``yarn.nodemanager.resource.cpu-vcores`` and
-   ``yarn.nodemanager.resource.memory-mb`` settings are set sufficiently to run CDAP,
-   as described in the :ref:`CDAP Memory and Core Requirements 
-   <admin-manual-memory-core-requirements>`.
-      
-   You can make these changes `using Cloudera Manager 
-   <http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
-   You will be prompted to restart the stale services after making changes.
+You can make these changes `using Cloudera Manager 
+<http://www.cloudera.com/content/www/en-us/documentation/enterprise/latest/topics/cm_mc_mod_configs.html>`__.
+You will be prompted to restart the stale services after making changes.
 
-HDFS Permissions
-----------------
-Ensure YARN is configured properly to run MapReduce programs.  Often, this includes
-ensuring that the HDFS ``/user/yarn`` directory exists with proper permissions::
-   
-  # su hdfs
-  $ hdfs dfs -mkdir -p /user/yarn && hadoop fs -chown yarn /user/yarn && hadoop fs -chgrp yarn /user/yarn
+.. HDFS Permissions
+.. ----------------
+.. include:: ../_includes/installation/hdfs-permissions.txt
 
 
 Downloading and Distributing Packages

@@ -1,0 +1,18 @@
+Hadoop Configuration
+--------------------
+#. ZooKeeper's ``maxClientCnxns`` must be raised from its default.  We suggest setting it to zero
+   (0: unlimited connections). As each YARN container launched by CDAP makes a connection to ZooKeeper, 
+   the number of connections required is a function of usage.
+
+#. Ensure that YARN has sufficient memory capacity by lowering the default minimum container 
+   size (controlled by the property ``yarn.scheduler.minimum-allocation-mb``). Lack of
+   YARN memory capacity is the leading cause of apparent failures that we see reported.
+   We recommend starting with these settings:
+   
+   - ``yarn.nodemanager.delete.debug-delay-sec``: 43200
+   - ``yarn.scheduler.minimum-allocation-mb``: 512 mb
+   
+   Please ensure your ``yarn.nodemanager.resource.cpu-vcores`` and
+   ``yarn.nodemanager.resource.memory-mb`` settings are set sufficiently to run CDAP,
+   as described in the :ref:`CDAP Memory and Core Requirements 
+   <admin-manual-memory-core-requirements>`.
