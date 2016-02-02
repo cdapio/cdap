@@ -154,7 +154,7 @@ angular.module(PKG.name + '.commons')
       var graph = new dagre.graphlib.Graph();
       graph.setGraph({
         nodesep: 90,
-        ranksep: 100,
+        ranksep: 200,
         rankdir: 'LR',
         marginx: 0,
         marginy: 0

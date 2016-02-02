@@ -28,6 +28,7 @@ angular.module(PKG.name + '.commons')
     var transformSinkSettings = angular.copy(MyDAGFactory.getSettings(false).transformSink);
 
     var SHOW_METRICS_THRESHOLD = 0.8;
+    var METRICS_THRESHOLD = 999999999999;
     var selected = [];
     var labels = [];
 
@@ -35,10 +36,12 @@ angular.module(PKG.name + '.commons')
       [ 'Custom', {
         create: function (label) {
           labels.push(label);
-          return angular.element('<span></span>');
+          return angular.element('<div><span class="metric-label-text"></span></div>');
         },
-        location: [2, 0],
-        id: 'metricLabel'
+        width: 100,
+        location: [4.3, 0],
+        id: 'metricLabel',
+        cssClass: 'metric-label'
       }]
     ];
 
@@ -149,7 +152,7 @@ angular.module(PKG.name + '.commons')
           angular.forEach(labels, function (endpoint) {
             var label = endpoint.getOverlay('metricLabel');
 
-            $tooltip(angular.element(label.getElement()), {
+            $tooltip(angular.element(label.getElement()).children(), {
               trigger: 'hover',
               title: 'Records Out'
             });
@@ -169,13 +172,23 @@ angular.module(PKG.name + '.commons')
             angular.forEach(labels, function (endpoint) {
               var label = endpoint.getOverlay('metricLabel');
               if ($scope.metricsData[endpoint.elementId] === null || $scope.metricsData[endpoint.elementId] === undefined) {
-                angular.element(label.getElement())
+                angular.element(label.getElement()).children()
                   .text(0);
                 return;
               }
 
-              angular.element(label.getElement())
-                .text(numberFilter($scope.metricsData[endpoint.elementId].recordsOut, 0));
+              var recordsOut = $scope.metricsData[endpoint.elementId].recordsOut;
+
+              // hide label if the length is greater than 12 characters
+              if(recordsOut > METRICS_THRESHOLD) {
+                label.hide();
+              } else if (recordsOut <= METRICS_THRESHOLD && vm.scale >= SHOW_METRICS_THRESHOLD ) {
+                label.show();
+              }
+
+              angular.element(label.getElement()).children()
+                .text(numberFilter(recordsOut, 0));
+
             });
           }, true);
         }
@@ -242,6 +255,10 @@ angular.module(PKG.name + '.commons')
 
     function showMetricsLabel() {
       angular.forEach(labels, function (label) {
+        if ($scope.metricsData[label.elementId].recordsOut > METRICS_THRESHOLD) {
+          return;
+        }
+
         label.getOverlay('metricLabel').show();
       });
     }
