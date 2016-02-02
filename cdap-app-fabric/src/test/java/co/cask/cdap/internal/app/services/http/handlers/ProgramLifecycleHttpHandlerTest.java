@@ -170,19 +170,15 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     startProgram(dummyMR2);
     startProgram(dummyMR2);
 
-    // verify that more than one map-reduce program runs are running
-    verifyProgramRuns(dummyMR2, "running", 1);
-
     // get run records corresponding to the program runs
     List<RunRecord> historyRuns = getProgramRuns(dummyMR2, "running");
-    Assert.assertTrue(2 == historyRuns.size());
+    List<RunRecord> completedRuns = getProgramRuns(dummyMR2, "completed");
+    Assert.assertTrue(2 == (historyRuns.size() + completedRuns.size()));
 
     // stop individual runs of the map-reduce program
-    String runId = historyRuns.get(0).getPid();
-    stopProgram(dummyMR2, runId, 200);
-
-    runId = historyRuns.get(1).getPid();
-    stopProgram(dummyMR2, runId, 200);
+    for (RunRecord runRecord : historyRuns) {
+      stopProgram(dummyMR2, runRecord.getPid());
+    }
 
     waitState(dummyMR2, STOPPED);
 

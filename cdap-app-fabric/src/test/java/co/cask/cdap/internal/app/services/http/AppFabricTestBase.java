@@ -634,8 +634,7 @@ public abstract class AppFabricTestBase {
     stopProgram(program, runId, expectedStatusCode, null);
   }
 
-  protected void stopProgram(Id.Program program, String runId, int expectedStatusCode, String expectedMessage)
-    throws Exception {
+  private HttpResponse getResponseFromStoppingProgram(Id.Program program, String runId) throws Exception {
     String path;
     if (runId == null) {
       path = String.format("apps/%s/%s/%s/stop", program.getApplicationId(), program.getType().getCategoryName(),
@@ -644,7 +643,19 @@ public abstract class AppFabricTestBase {
       path = String.format("apps/%s/%s/%s/runs/%s/stop", program.getApplicationId(),
                            program.getType().getCategoryName(), program.getId(), runId);
     }
-    HttpResponse response = doPost(getVersionedAPIPath(path, program.getNamespaceId()));
+    return doPost(getVersionedAPIPath(path, program.getNamespaceId()));
+  }
+
+  /**
+   * Stops a program without any expected status code
+   */
+  protected void stopProgram(Id.Program program, String runId) throws Exception {
+    getResponseFromStoppingProgram(program, runId);
+  }
+
+  protected void stopProgram(Id.Program program, String runId, int expectedStatusCode, String expectedMessage)
+    throws Exception {
+    HttpResponse response = getResponseFromStoppingProgram(program, runId);
     Assert.assertEquals(expectedStatusCode, response.getStatusLine().getStatusCode());
     if (expectedMessage != null) {
       Assert.assertEquals(expectedMessage, EntityUtils.toString(response.getEntity()));
