@@ -208,9 +208,11 @@ angular.module(PKG.name + '.commons')
           ' = context.getValidator("' + className + '");\n';
       });
 
+
       var loggerLoad = 'var logger = context.getLogger();\n\n';
       var loggerEnd = 'if (!isValid) {\n' +
-        'logger.warn("Validation failed for record {}", input);\n' +
+        'var message = "(" + errCode + ") " + errMsg;\n' +
+        'logger.warn("Validation failed with error {}", message);\n' +
         '}\n\n';
 
 
