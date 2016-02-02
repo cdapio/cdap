@@ -702,6 +702,18 @@ public class MetadataHttpHandlerTest extends MetadataTestBase {
       getMetadata(systemId)
     );
 
+    // verify that system scope artifacts can be returned by a search in the default namespace
+    // with no target type
+    Assert.assertEquals(
+      ImmutableSet.of(new MetadataSearchResultRecord(systemId)),
+      searchMetadata(Id.Namespace.DEFAULT, "system*", null)
+    );
+    // with target type as artifact
+    Assert.assertEquals(
+      ImmutableSet.of(new MetadataSearchResultRecord(systemId)),
+      searchMetadata(Id.Namespace.DEFAULT, "system*", MetadataSearchTargetType.ARTIFACT)
+    );
+
     // verify that user metadata can be deleted for system-scope artifacts
     removeMetadata(systemId);
     Assert.assertEquals(
