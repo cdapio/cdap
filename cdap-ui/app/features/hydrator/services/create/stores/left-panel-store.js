@@ -32,8 +32,8 @@ var updateDefaultVersion = (pluginsList, defaultVersionMap = {}) => {
   }
   pluginsList.forEach((plugin) => {
     let key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
-    if(defaultVersionMap.hasOwnProperty(key)) {
-      plugin.defaultVersion = defaultVersionMap[key];
+    if(defaultVersionMap[plugin.artifact.scope].hasOwnProperty(key)) {
+      plugin.defaultVersion = defaultVersionMap[plugin.artifact.scope][key];
     }
   });
 };
@@ -44,7 +44,7 @@ var mapPluginsWithMoreInfo = (type, typeMap, MyDAGFactory, popoverTemplate) => {
     plugin.icon = MyDAGFactory.getIcon(plugin.name);
     plugin.template = popoverTemplate;
     plugin.defaultVersion = typeMap[plugin.name][0].artifact.version;
-    plugin.allVersions = typeMap[plugin.name].map( (plugin) => plugin.artifact.version);
+    plugin.allArtifacts = typeMap[plugin.name].map( (plugin) => plugin.artifact);
     return plugin;
   };
 };
@@ -174,7 +174,7 @@ class LeftPanelStore {
     }
   }
   updatePluginDefaultVersion(plugin) {
-    var key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
+    var key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}-${plugin.artifact.scope}`;
     if (this.state.defaultVersionsMap.hasOwnProperty(key)) {
       if (this.state.defaultVersionsMap[key] !== plugin.defaultVersion) {
         this.state.defaultVersionsMap[key] = plugin.defaultVersion;

@@ -405,6 +405,7 @@ class ConfigStore {
             this.PluginConfigFactory.fetchWidgetJson(
               n.plugin.artifact.name,
               n.plugin.artifact.version,
+              n.plugin.artifact.scope,
               `widgets.${n.plugin.name}-${n.type}`
             ).then(parseNodeConfig.bind(null, n));
           });

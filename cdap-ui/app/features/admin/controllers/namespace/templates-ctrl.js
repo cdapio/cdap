@@ -147,10 +147,11 @@ angular.module(PKG.name + '.feature.admin')
       var artifact = {
         name: vm.plugin.artifact.name,
         version: vm.plugin.artifact.version,
+        scope: vm.plugin.artifact.scope,
         key: 'widgets.' + vm.plugin.name + '-' + vm.plugin.type
       };
 
-      PluginConfigFactory.fetchWidgetJson(artifact.name, artifact.version, artifact.key)
+      PluginConfigFactory.fetchWidgetJson(artifact.name, artifact.version, artifact.scope, artifact.key)
         .then(function success (res) {
 
           vm.configFetched = true;
