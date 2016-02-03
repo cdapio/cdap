@@ -50,7 +50,7 @@ function ($scope, $modalInstance, caskFocusManager, Widget) {
       widgets.push(
         new Widget({
           type: $scope.model.type,
-          title: $scope.model.title,
+          title: $scope.model.metric.names.length === 1 ? $scope.model.title : value,
           metric: {
             context: $scope.model.metric.context,
             names: [value],

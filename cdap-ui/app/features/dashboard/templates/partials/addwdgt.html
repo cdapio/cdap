@@ -70,7 +70,8 @@
               <input id="addWdgtName" type="text" name="name" class="form-control"
                 placeholder="Name"
                 cask-focus="addWdgtName"
-                ng-model="model.title" required/>
+                ng-model="model.title" required
+                ng-disabled="model.metric.names.length > 1"/>
             </div>
           </div>
 
