@@ -176,6 +176,48 @@ class HydratorService {
     return this.formatSchema(sourceNode);
   }
 
+  formatOutputSchema (schemaArray) {
+    let typeMap = 'map<string, string>';
+    let mapObj = {
+      type: 'map',
+      keys: 'string',
+      values: 'string'
+    };
+
+    let properties = [];
+    angular.forEach(schemaArray, function(p) {
+      if (p.name) {
+        var property;
+        if (p.type === typeMap) {
+          property = angular.copy(mapObj);
+        } else {
+          property = p.type;
+        }
+
+        properties.push({
+          name: p.name,
+          type: p.nullable ? [property, 'null'] : property,
+          readonly: p.readonly
+        });
+      }
+    });
+
+    // do not include properties on the request when schema field is empty
+    if (properties.length !== 0) {
+      let schema = {
+        type: 'record',
+        name: 'etlSchemaBody',
+        fields: properties
+      };
+      // turn schema into JSON string
+      let json = JSON.stringify(schema);
+
+      return json;
+    } else {
+      return null;
+    }
+  }
+
 }
 HydratorService.$inject = ['GLOBALS', 'MyDAGFactory', 'uuid', '$state', '$rootScope', 'myPipelineApi', '$q', 'IMPLICIT_SCHEMA', 'NodesStore'];
 angular.module(`${PKG.name}.feature.hydrator`)

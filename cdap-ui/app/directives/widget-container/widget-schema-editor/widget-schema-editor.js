@@ -25,15 +25,10 @@ angular.module(PKG.name + '.commons')
         disabled: '='
       },
       templateUrl: 'widget-container/widget-schema-editor/widget-schema-editor.html',
-      controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA) {
+      controller: function($scope, myHelpers, EventPipe, IMPLICIT_SCHEMA, HydratorService) {
         var modelCopy = angular.copy($scope.model);
 
         var typeMap = 'map<string, string>';
-        var mapObj = {
-          type: 'map',
-          keys: 'string',
-          values: 'string'
-        };
 
         var defaultOptions = [ 'boolean', 'int', 'long', 'float', 'double', 'bytes', 'string', 'map<string, string>' ];
         var defaultType = null;
@@ -278,39 +273,7 @@ angular.module(PKG.name + '.commons')
 
 
         function formatSchema() {
-          // Format Schema
-          var properties = [];
-          angular.forEach($scope.properties, function(p) {
-            if (p.name) {
-              var property;
-              if (p.type === typeMap) {
-                property = angular.copy(mapObj);
-              } else {
-                property = p.type;
-              }
-
-              properties.push({
-                name: p.name,
-                type: p.nullable ? [property, 'null'] : property,
-                readonly: p.readonly
-              });
-            }
-          });
-
-          // do not include properties on the request when schema field is empty
-          if (properties.length !== 0) {
-            var schema = {
-              type: 'record',
-              name: 'etlSchemaBody',
-              fields: properties
-            };
-            // turn schema into JSON string
-            var json = JSON.stringify(schema);
-
-            $scope.model = json;
-          } else {
-            $scope.model = null;
-          }
+          $scope.model = HydratorService.formatOutputSchema($scope.properties);
         }
 
         // watch for changes
