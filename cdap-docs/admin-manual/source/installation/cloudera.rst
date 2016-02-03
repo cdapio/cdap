@@ -121,7 +121,9 @@ available services which CM can install.
 +============+=======================+=====================+============================+
 | 5.5        | 5.5                   | 3.3.x               | *Matching CSD major.minor* | 
 +------------+-----------------------+---------------------+----------------------------+
-| 5.5        | no greater than 5.4.x | 3.0.x through 3.3.x | *Matching CSD major.minor* |
+| 5.5        | 5.4.x                 | 3.1.x through 3.3.x | *Matching CSD major.minor* |
++------------+-----------------------+---------------------+----------------------------+
+| 5.5        | no greater than 5.3.x | 3.0.x through 3.3.x | *Matching CSD major.minor* |
 +------------+-----------------------+---------------------+----------------------------+
 | 5.4        | 5.4.x                 | 3.1.x through 3.3.x | *Matching CSD major.minor* | 
 +------------+-----------------------+---------------------+----------------------------+
@@ -184,11 +186,11 @@ cm_ig_parcels.html>`__, but in summary these are the steps:
 - If the Cask parcel repository is inaccessible to your cluster, please see :ref:`these
   suggestions <faqs-cloudera-direct-parcel-access>`.
 - The CDAP parcels are hosted at a repository determined by the CDAP version.
-  For instance, the CDAP |short-version| parcels are hosted at the URL:
+  For instance, the CDAP |short-version| parcel metadata is accessed by Cloudera Manager at this URL:
   
   .. parsed-literal::
   
-    \http://repository.cask.co/parcels/cdap/|short-version|\ /
+    \http://repository.cask.co/parcels/cdap/|short-version|\ /manifest.json
 
 
 Installing CDAP Services
