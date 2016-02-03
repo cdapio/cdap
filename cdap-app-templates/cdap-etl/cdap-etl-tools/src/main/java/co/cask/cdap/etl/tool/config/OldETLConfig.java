@@ -18,18 +18,18 @@ package co.cask.cdap.etl.tool.config;
 
 import co.cask.cdap.api.Config;
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.etl.common.Connection;
+import co.cask.cdap.etl.common.ArtifactSelectorConfig;
 import co.cask.cdap.etl.common.ETLConfig;
 import co.cask.cdap.etl.common.ETLStage;
 import co.cask.cdap.etl.common.Plugin;
+import co.cask.cdap.proto.artifact.ArtifactSummary;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Common ETL Config.
  */
-public class OldETLConfig extends Config {
+public abstract class OldETLConfig extends Config {
   private final OldETLStage source;
   private final List<OldETLStage> sinks;
   private final List<OldETLStage> transforms;
@@ -42,41 +42,51 @@ public class OldETLConfig extends Config {
     this.resources = resources;
   }
 
-  // creates 3.3.x config from the old config.
-  public ETLConfig getNewConfig() {
+  protected void buildNewConfig(ETLConfig.Builder builder, PluginArtifactFinder pluginArtifactFinder) {
     int pluginNum = 1;
-    ETLStage sourceStage = new ETLStage(source.getName() +  "." + pluginNum,
-                                        new Plugin(source.getName(), source.getProperties()),
-                                        source.getErrorDatasetName());
-    List<ETLStage> transformStages = new ArrayList<>();
+
+    String sourceName = source.getName() + "." + pluginNum;
+    Plugin sourcePlugin = new Plugin(
+      source.getName(),
+      source.getProperties(),
+      getArtifact(pluginArtifactFinder.getSourcePluginArtifact(source.getName()))
+    );
+    builder.setSource(new ETLStage(sourceName, sourcePlugin, source.getErrorDatasetName()));
+    String prevStageName = sourceName;
     if (transforms != null) {
       for (OldETLStage transform : transforms) {
         pluginNum++;
-        transformStages.add(new ETLStage(
-          transform.getName() + "." + pluginNum,
-          new Plugin(transform.getName(), transform.getProperties()),
-          transform.getErrorDatasetName()));
+        String transformName = transform.getName() + "." + pluginNum;
+        Plugin transformPlugin = new Plugin(
+          transform.getName(),
+          transform.getProperties(),
+          getArtifact(pluginArtifactFinder.getTransformPluginArtifact(transform.getName()))
+        );
+        builder.addTransform(new ETLStage(transformName, transformPlugin, transform.getErrorDatasetName()));
+        builder.addConnection(prevStageName, transformName);
+        prevStageName = transformName;
       }
     }
-    List<ETLStage> sinkStages = new ArrayList<>();
+
     for (OldETLStage sink : sinks) {
       pluginNum++;
-      sinkStages.add(new ETLStage(
-        sink.getName() + "." + pluginNum,
-        new Plugin(sink.getName(), sink.getProperties()),
-        sink.getErrorDatasetName()));
+      String sinkName = sink.getName() + "." + pluginNum;
+      Plugin sinkPlugin = new Plugin(
+        sink.getName(),
+        sink.getProperties(),
+        getArtifact(pluginArtifactFinder.getSinkPluginArtifact(sink.getName()))
+      );
+      builder.addSink(new ETLStage(sinkName, sinkPlugin, sink.getErrorDatasetName()));
+      builder.addConnection(prevStageName, sinkName);
     }
+    builder.setResources(resources);
+  }
 
-    List<Connection> connections = new ArrayList<>();
-    String prevStage = sourceStage.getName();
-    for (ETLStage transformStage : transformStages) {
-      connections.add(new Connection(prevStage, transformStage.getName()));
-      prevStage = transformStage.getName();
+  private ArtifactSelectorConfig getArtifact(ArtifactSummary artifactSummary) {
+    if (artifactSummary == null) {
+      return null;
     }
-    for (ETLStage sinkStage : sinkStages) {
-      connections.add(new Connection(prevStage, sinkStage.getName()));
-    }
-
-    return new ETLConfig(sourceStage, sinkStages, transformStages, connections, resources);
+    return new ArtifactSelectorConfig(
+      artifactSummary.getScope().name(), artifactSummary.getName(), artifactSummary.getVersion());
   }
 }

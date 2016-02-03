@@ -171,7 +171,7 @@ angular.module(PKG.name + '.feature.hydrator')
     }
 
     function fetchDrafts() {
-      mySettings.get('adapterDrafts')
+      mySettings.get('hydratorDrafts')
         .then(function(res) {
           let draftsList = myHelpers.objectQuery(res, $stateParams.namespace);
           if (!angular.isObject(draftsList)) {
@@ -183,7 +183,7 @@ angular.module(PKG.name + '.feature.hydrator')
               vm.pipelineList.push({
                 isDraft: true,
                 name: value.name,
-                id: value.__ui__.draftId || key,
+                id: (value.__ui__  && value.__ui__.draftId) ? value.__ui__.draftId : key,
                 artifact: value.artifact,
                 description: myHelpers.objectQuery(value, 'description'),
                 _status: 'Draft',
@@ -199,14 +199,14 @@ angular.module(PKG.name + '.feature.hydrator')
 
     vm.deleteDraft = function(draftId) {
       let draftName;
-      mySettings.get('adapterDrafts')
+      mySettings.get('hydratorDrafts')
         .then(function(res) {
           let draft = myHelpers.objectQuery(res, $stateParams.namespace, draftId);
           if (draft) {
             draftName = draft.name;
             delete res[$stateParams.namespace][draftId];
           }
-          return mySettings.set('adapterDrafts', res);
+          return mySettings.set('hydratorDrafts', res);
         })
         .then(
           function success() {

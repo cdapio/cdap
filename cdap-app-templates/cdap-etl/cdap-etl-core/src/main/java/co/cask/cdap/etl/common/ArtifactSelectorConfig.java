@@ -20,6 +20,8 @@ import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.api.artifact.ArtifactVersion;
 import com.google.common.base.CharMatcher;
 
+import java.util.Objects;
+
 /**
  * Part of the etl configuration, used to choose which artifact to use for a plugin. Normally created through
  * deserialization by the CDAP framework. Programmatic creation is only used for unit tests.
@@ -74,5 +76,35 @@ public class ArtifactSelectorConfig {
 
     ArtifactScope artifactScope = scope == null ? null : ArtifactScope.valueOf(scope.toUpperCase());
     return new ArtifactSelector(pluginType, pluginName, artifactScope, name, artifactVersion);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ArtifactSelectorConfig that = (ArtifactSelectorConfig) o;
+
+    return Objects.equals(scope, that.scope) &&
+      Objects.equals(name, that.name) &&
+      Objects.equals(version, that.version);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(scope, name, version);
+  }
+
+  @Override
+  public String toString() {
+    return "ArtifactSelectorConfig{" +
+      "scope='" + scope + '\'' +
+      ", name='" + name + '\'' +
+      ", version='" + version + '\'' +
+      '}';
   }
 }

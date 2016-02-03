@@ -17,7 +17,6 @@
 package co.cask.cdap.etl.tool.config;
 
 import co.cask.cdap.api.Resources;
-import co.cask.cdap.etl.common.ETLConfig;
 import co.cask.cdap.etl.realtime.config.ETLRealtimeConfig;
 
 import java.util.List;
@@ -34,14 +33,10 @@ public final class OldETLRealtimeConfig extends OldETLConfig {
     this.instances = instances;
   }
 
-  public ETLRealtimeConfig getNewConfig() {
-    ETLConfig newConfig = super.getNewConfig();
-    return new ETLRealtimeConfig(
-      instances,
-      newConfig.getSource(),
-      newConfig.getSinks(),
-      newConfig.getTransforms(),
-      newConfig.getConnections(),
-      newConfig.getResources());
+  public ETLRealtimeConfig getNewConfig(PluginArtifactFinder pluginArtifactFinder) {
+    ETLRealtimeConfig.Builder builder = ETLRealtimeConfig.builder()
+      .setInstances(instances);
+    super.buildNewConfig(builder, pluginArtifactFinder);
+    return builder.build();
   }
 }

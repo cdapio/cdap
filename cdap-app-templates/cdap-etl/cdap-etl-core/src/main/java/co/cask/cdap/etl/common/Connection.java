@@ -56,4 +56,12 @@ public class Connection {
   public int hashCode() {
     return Objects.hash(from, to);
   }
+
+  @Override
+  public String toString() {
+    return "Connection{" +
+      "from='" + from + '\'' +
+      ", to='" + to + '\'' +
+      '}';
+  }
 }

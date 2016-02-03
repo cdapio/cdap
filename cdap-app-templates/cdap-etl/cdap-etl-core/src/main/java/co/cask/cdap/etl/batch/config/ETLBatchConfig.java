@@ -140,6 +140,15 @@ public final class ETLBatchConfig extends ETLConfig {
     return Objects.hash(super.hashCode(), schedule, actions);
   }
 
+  @Override
+  public String toString() {
+    return "ETLBatchConfig{" +
+      "engine=" + engine +
+      ", schedule='" + schedule + '\'' +
+      ", actions=" + actions +
+      ", driverResources=" + driverResources +
+      "} " + super.toString();
+  }
 
   public static Builder builder(String schedule) {
     return new Builder(schedule);
