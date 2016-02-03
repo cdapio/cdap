@@ -499,7 +499,7 @@ Sample Application Configurations
             "properties": {
               "importQuery": "select id,name,age from my_table",
               "countQuery": "select count(id) from my_table",
-              "connectionString": "jdbc:mysql://localhost:3306/test",
+              "connectionString": "\jdbc:mysql://localhost:3306/test",
               "tableName": "src_table",
               "user": "my_user",
               "password": "my_password",
@@ -515,7 +515,7 @@ Sample Application Configurations
               "name": "Database",
               "properties": {
                 "columns": "id,name,age",
-                "connectionString": "jdbc:mysql://localhost:3306/test",
+                "connectionString": "\jdbc:mysql://localhost:3306/test",
                 "tableName": "dest_table",
                 "user": "my_user",
                 "password": "my_password",
