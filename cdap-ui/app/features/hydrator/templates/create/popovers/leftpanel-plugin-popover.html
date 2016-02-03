@@ -31,7 +31,7 @@
     </li>
     <li class="list-group-item">
       <h6>
-        {{contentData.defaultVersion}}
+        {{contentData.defaultArtifact['version']}}
         <small ng-if="!contentData.showAllVersion && contentData.allArtifacts.length > 1">
           <a href="#" ng-click="contentData.showAllVersion = !contentData.showAllVersion">Change</a>
         </small>
@@ -45,8 +45,8 @@
         href="#"
         class="list-group-item"
         ng-repeat="artifact in contentData.allArtifacts track by $index"
-        ng-class="{'active': version === contentData.defaultVersion}"
-        ng-click="(contentData.defaultVersion = artifact.version) && delayClose(1) && popoverContext.onItemClicked($event, contentData)">
+        ng-class="{'active': artifact.version === contentData.defaultArtifact.version}"
+        ng-click="(contentData.defaultArtifact = artifact) && delayClose(1) && popoverContext.onItemClicked($event, contentData)">
       {{::artifact.version}}
     </a>
   </ul>

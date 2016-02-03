@@ -402,6 +402,9 @@ class ConfigStore {
           // the user should directly click on the last node and see what is the incoming schema
           // without having to open the subsequent nodes.
           nodesWOutBackendProps.forEach( n => {
+            // This could happen when the user doesn't provide an artifact information for a plugin & deploys it
+            // using CLI or REST and opens up in UI and clones it. Without this check it will throw a JS error.
+            if (!n.plugin.artifact) { return; }
             this.PluginConfigFactory.fetchWidgetJson(
               n.plugin.artifact.name,
               n.plugin.artifact.version,

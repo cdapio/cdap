@@ -80,7 +80,7 @@ class HydratorService {
     var params = {
       namespace: this.$state.params.namespace,
       pipelineType: appType,
-      version: (node.artifact && node.artifact.version ) || this.$rootScope.cdapVersion,
+      version: this.$rootScope.cdapVersion,
       extensionType: node.type,
       pluginName: node.plugin.name
     };

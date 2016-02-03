@@ -26,14 +26,14 @@ var uniquePluginFilter = (typeMap) => {
   };
 };
 
-var updateDefaultVersion = (pluginsList, defaultVersionMap = {}) => {
-  if (!Object.keys(defaultVersionMap).length) {
+var updateDefaultVersion = (pluginsList, defaultArtifactMap = {}) => {
+  if (!Object.keys(defaultArtifactMap).length) {
     return;
   }
   pluginsList.forEach((plugin) => {
     let key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
-    if(defaultVersionMap[plugin.artifact.scope].hasOwnProperty(key)) {
-      plugin.defaultVersion = defaultVersionMap[plugin.artifact.scope][key];
+    if(defaultArtifactMap.hasOwnProperty(key)) {
+      plugin.defaultArtifact = defaultArtifactMap[key];
     }
   });
 };
@@ -43,7 +43,7 @@ var mapPluginsWithMoreInfo = (type, typeMap, MyDAGFactory, popoverTemplate) => {
     plugin.type = type;
     plugin.icon = MyDAGFactory.getIcon(plugin.name);
     plugin.template = popoverTemplate;
-    plugin.defaultVersion = typeMap[plugin.name][0].artifact.version;
+    plugin.defaultArtifact = typeMap[plugin.name][0].artifact;
     plugin.allArtifacts = typeMap[plugin.name].map( (plugin) => plugin.artifact);
     return plugin;
   };
@@ -78,7 +78,7 @@ class LeftPanelStore {
     this.mySettings
         .get('plugin-default-version')
         .then((res = {}) => {
-          this.state.defaultVersionsMap = res;
+          this.state.defaultArtifactMap = res;
           return this.$q.resolve;
         })
         .then(this.cleanupNonExistantPlugins.bind(this));
@@ -97,7 +97,7 @@ class LeftPanelStore {
     this.state = {
       panelState: true,
       plugins: {},
-      defaultVersionsMap: null,
+      defaultArtifactMap: {},
       pluginTemplates: {
         source: [],
         transform: [],
@@ -174,15 +174,15 @@ class LeftPanelStore {
     }
   }
   updatePluginDefaultVersion(plugin) {
-    var key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}-${plugin.artifact.scope}`;
-    if (this.state.defaultVersionsMap.hasOwnProperty(key)) {
-      if (this.state.defaultVersionsMap[key] !== plugin.defaultVersion) {
-        this.state.defaultVersionsMap[key] = plugin.defaultVersion;
-        this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap);
+    var key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
+    if (this.state.defaultArtifactMap.hasOwnProperty(key)) {
+      if (!angular.equals(this.state.defaultArtifactMap[key], plugin.artifact)) {
+        this.state.defaultArtifactMap[key] = plugin.artifact;
+        this.mySettings.set('plugin-default-version', this.state.defaultArtifactMap);
       }
     } else {
-      this.state.defaultVersionsMap[key] = plugin.defaultVersion;
-      this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap);
+      this.state.defaultArtifactMap[key] = plugin.artifact;
+      this.mySettings.set('plugin-default-version', this.state.defaultArtifactMap);
     }
   }
   getSpecificPluginVersion(plugin) {
@@ -207,7 +207,7 @@ class LeftPanelStore {
       return;
     }
     return typeMap[plugin.name].filter( plug => {
-      if (plugin.defaultVersion === plug.artifact.version) {
+      if (angular.equals(plugin.defaultArtifact, plug.artifact)) {
         plug.icon = plugin.icon;
         plug.type = plugin.type;
         return true;
@@ -216,7 +216,8 @@ class LeftPanelStore {
     })[0];
   }
   cleanupNonExistantPlugins() {
-    let defaultVersionsMap = angular.copy(this.state.defaultVersionsMap);
+    let defaultVersionsMap = angular.copy(this.state.defaultArtifactMap);
+    let defaultVersionChange = [];
     if (!angular.isArray(this.state.plugins.sources) && !angular.isArray(this.state.plugins.sinks) && !angular.isArray(this.state.plugins.transforms)) {
       this.$timeout(this.cleanupNonExistantPlugins.bind(this));
       return;
@@ -227,14 +228,21 @@ class LeftPanelStore {
         .forEach( plugin => {
           let key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
           if (defaultVersionsMap.hasOwnProperty(key)) {
-            delete defaultVersionsMap[key];
+            let matchingArtifact = plugin.allArtifacts.filter( artifact => angular.equals(artifact, defaultVersionsMap[key]));
+            if (matchingArtifact.length) {
+              defaultVersionChange.push({name: plugin.name, type: plugin.type});
+              delete defaultVersionsMap[key];
+            }
           }
         });
     if (Object.keys(defaultVersionsMap).length) {
-      angular.forEach(defaultVersionsMap, (pluginVersion, pluginKey) => {
+      angular.forEach(defaultVersionsMap, (pluginArtifact, pluginKey) => {
         delete this.state.defaultVersionsMap[pluginKey];
       });
       this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap);
+      this.setSources(this.state.plugins.sources);
+      this.setSinks(this.state.plugins.sinks);
+      this.setTransforms(this.state.plugins.transforms);
     }
   }
 
