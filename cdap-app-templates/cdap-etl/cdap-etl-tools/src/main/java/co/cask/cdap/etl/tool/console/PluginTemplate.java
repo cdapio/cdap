@@ -16,6 +16,11 @@
 
 package co.cask.cdap.etl.tool.console;
 
+import co.cask.cdap.etl.api.Transform;
+import co.cask.cdap.etl.api.batch.BatchSink;
+import co.cask.cdap.etl.api.batch.BatchSource;
+import co.cask.cdap.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.tool.config.PluginArtifactFinder;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 
@@ -49,6 +54,8 @@ import java.util.Map;
  *       }
  *     },
  */
+// fields are mainly here for Gson deserialization/serialization
+@SuppressWarnings({"FieldCanBeLocal", "unused"})
 public class PluginTemplate {
   private final String description;
   private final Map<String, Boolean> lock;
@@ -70,45 +77,17 @@ public class PluginTemplate {
     this.templateType = templateType;
   }
 
-  public String getDescription() {
-    return description;
-  }
-
-  public Map<String, Boolean> getLock() {
-    return lock;
-  }
-
-  public String getPluginName() {
-    return pluginName;
-  }
-
-  public String getPluginTemplate() {
-    return pluginTemplate;
-  }
-
-  public String getPluginType() {
-    return pluginType;
-  }
-
-  public Map<String, String> getProperties() {
-    return properties;
-  }
-
-  public String getTemplateType() {
-    return templateType;
-  }
-
   public ArtifactSummary getArtifact() {
     return artifact;
   }
 
   // sets the artifact field based on what artifacts contain are available to the etl app.
-  public void setArtifact(PluginArtifactFinder pluginArtifactFinder) throws Exception {
-    if ("transform".equals(pluginType)) {
+  public void setArtifact(PluginArtifactFinder pluginArtifactFinder) {
+    if (Transform.PLUGIN_TYPE.equals(pluginType)) {
       this.artifact = pluginArtifactFinder.getTransformPluginArtifact(pluginName);
-    } else if (pluginType.endsWith("source")) {
+    } else if (BatchSource.PLUGIN_TYPE.equals(pluginType) || RealtimeSource.PLUGIN_TYPE.equals(pluginType)) {
       this.artifact = pluginArtifactFinder.getSourcePluginArtifact(pluginName);
-    } else if (pluginType.endsWith("sink")) {
+    } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || RealtimeSink.PLUGIN_TYPE.equals(pluginType)) {
       this.artifact = pluginArtifactFinder.getSinkPluginArtifact(pluginName);
     }
   }

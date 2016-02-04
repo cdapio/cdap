@@ -30,7 +30,7 @@ import java.util.Map;
  * Transform that filters out records whose configured field is a configured value.
  * For example, can filter all records whose 'foo' field is equal to 'bar'. Assumes the field is of type string.
  */
-@Plugin(type = "transform")
+@Plugin(type = Transform.PLUGIN_TYPE)
 @Name("StringValueFilter")
 public class StringValueFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
   private final Config config;

@@ -18,11 +18,13 @@ package co.cask.cdap.etl.tool.config;
 
 import co.cask.cdap.api.artifact.ArtifactScope;
 import co.cask.cdap.client.ArtifactClient;
+import co.cask.cdap.etl.api.Transform;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 import co.cask.cdap.proto.artifact.PluginInfo;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Uses an ArtifactClient to get the artifact for a specific plugin.
@@ -38,9 +40,10 @@ public abstract class ClientBasedPluginArtifactFinder implements PluginArtifactF
 
   @Override
   public ArtifactSummary getTransformPluginArtifact(String pluginName) {
-    return getArtifact("transform", pluginName);
+    return getArtifact(Transform.PLUGIN_TYPE, pluginName);
   }
 
+  @Nullable
   protected ArtifactSummary getArtifact(String pluginType, String pluginName) {
     try {
       List<PluginInfo> plugins =
@@ -50,6 +53,9 @@ public abstract class ClientBasedPluginArtifactFinder implements PluginArtifactF
         return null;
       }
 
+      // doesn't really matter which one we choose, as all of them should be valid.
+      // choosing the last one because that tends to be the one with the highest version.
+      // order is not guaranteed though.
       return plugins.get(plugins.size() - 1).getArtifact();
     } catch (Exception e) {
       return null;

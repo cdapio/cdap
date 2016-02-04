@@ -71,15 +71,13 @@ public class PipelineDraft {
       "cdap-etl-realtime".equals(artifact.getName());
   }
 
-  public PipelineDraft getUpgradedBatch(ArtifactSummary newArtifact,
-                                       PluginArtifactFinder pluginArtifactFinder) throws Exception {
+  public PipelineDraft getUpgradedBatch(ArtifactSummary newArtifact, PluginArtifactFinder pluginArtifactFinder) {
     OldETLBatchConfig oldConfig = GSON.fromJson(config, OldETLBatchConfig.class);
     JsonObject upgradedConfig = GSON.toJsonTree(oldConfig.getNewConfig(pluginArtifactFinder)).getAsJsonObject();
     return new PipelineDraft(newArtifact, name, description, upgradedConfig);
   }
 
-  public PipelineDraft getUpgradedRealtime(ArtifactSummary newArtifact,
-                                          PluginArtifactFinder pluginArtifactFinder) throws Exception {
+  public PipelineDraft getUpgradedRealtime(ArtifactSummary newArtifact, PluginArtifactFinder pluginArtifactFinder) {
     OldETLRealtimeConfig oldConfig = GSON.fromJson(config, OldETLRealtimeConfig.class);
     JsonObject upgradedConfig = GSON.toJsonTree(oldConfig.getNewConfig(pluginArtifactFinder)).getAsJsonObject();
     return new PipelineDraft(newArtifact, name, description, upgradedConfig);

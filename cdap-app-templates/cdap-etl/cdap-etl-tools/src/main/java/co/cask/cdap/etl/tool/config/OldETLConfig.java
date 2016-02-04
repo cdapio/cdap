@@ -25,6 +25,7 @@ import co.cask.cdap.etl.common.Plugin;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Common ETL Config.
@@ -82,7 +83,8 @@ public abstract class OldETLConfig extends Config {
     builder.setResources(resources);
   }
 
-  private ArtifactSelectorConfig getArtifact(ArtifactSummary artifactSummary) {
+  @Nullable
+  private ArtifactSelectorConfig getArtifact(@Nullable ArtifactSummary artifactSummary) {
     if (artifactSummary == null) {
       return null;
     }

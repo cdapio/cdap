@@ -17,6 +17,8 @@
 package co.cask.cdap.etl.tool.config;
 
 import co.cask.cdap.client.ArtifactClient;
+import co.cask.cdap.etl.api.batch.BatchSink;
+import co.cask.cdap.etl.api.batch.BatchSource;
 import co.cask.cdap.etl.tool.ETLVersion;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -32,11 +34,11 @@ public class BatchPluginArtifactFinder extends ClientBasedPluginArtifactFinder {
 
   @Override
   public ArtifactSummary getSourcePluginArtifact(String pluginName) {
-    return getArtifact("batchsource", pluginName);
+    return getArtifact(BatchSource.PLUGIN_TYPE, pluginName);
   }
 
   @Override
   public ArtifactSummary getSinkPluginArtifact(String pluginName) {
-    return getArtifact("batchsink", pluginName);
+    return getArtifact(BatchSink.PLUGIN_TYPE, pluginName);
   }
 }

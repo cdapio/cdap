@@ -17,6 +17,8 @@
 package co.cask.cdap.etl.tool.config;
 
 import co.cask.cdap.client.ArtifactClient;
+import co.cask.cdap.etl.api.realtime.RealtimeSink;
+import co.cask.cdap.etl.api.realtime.RealtimeSource;
 import co.cask.cdap.etl.tool.ETLVersion;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.artifact.ArtifactSummary;
@@ -32,11 +34,11 @@ public class RealtimePluginArtifactFinder extends ClientBasedPluginArtifactFinde
 
   @Override
   public ArtifactSummary getSourcePluginArtifact(String pluginName) {
-    return getArtifact("realtimesource", pluginName);
+    return getArtifact(RealtimeSource.PLUGIN_TYPE, pluginName);
   }
 
   @Override
   public ArtifactSummary getSinkPluginArtifact(String pluginName) {
-    return getArtifact("realtimesink", pluginName);
+    return getArtifact(RealtimeSink.PLUGIN_TYPE, pluginName);
   }
 }

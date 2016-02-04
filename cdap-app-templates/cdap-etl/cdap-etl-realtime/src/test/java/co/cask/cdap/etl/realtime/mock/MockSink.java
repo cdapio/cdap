@@ -46,7 +46,7 @@ import javax.annotation.Nullable;
 /**
  * Mock sink to keep track of what was written. For every call to write, it will write
  */
-@Plugin(type = "realtimesink")
+@Plugin(type = RealtimeSink.PLUGIN_TYPE)
 @Name("Mock")
 public class MockSink extends RealtimeSink<StructuredRecord> {
   private static final Gson GSON = new GsonBuilder()

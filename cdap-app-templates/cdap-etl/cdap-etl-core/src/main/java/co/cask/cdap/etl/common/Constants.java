@@ -22,6 +22,11 @@ import co.cask.cdap.api.data.schema.Schema;
  * Constants used in ETL Adapter.
  */
 public final class Constants {
+  public static final String BATCH_SOURCE_TYPE = "batchsource";
+  public static final String BATCH_SINK_TYPE = "batchsink";
+  public static final String REALTIME_SOURCE_TYPE = "realtimesource";
+  public static final String REALTIME_SINK_TYPE = "realtimesink";
+  public static final String TRANSFORM_TYPE = "transform";
 
   public static final String ID_SEPARATOR = ":";
   public static final String PIPELINEID = "pipeline";

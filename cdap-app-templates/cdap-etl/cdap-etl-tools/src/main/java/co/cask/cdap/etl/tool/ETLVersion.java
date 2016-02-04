@@ -22,7 +22,7 @@ import java.util.Properties;
 /**
  * Utility to get etl app version.
  */
-public class ETLVersion {
+public final class ETLVersion {
   private static String version;
 
   private ETLVersion() {
