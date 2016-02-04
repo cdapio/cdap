@@ -429,7 +429,7 @@ public class ETLMapReduce extends AbstractMapReduce {
         }
         transformExecutor.resetEmitter();
       } catch (Exception e) {
-        LOG.error("Exception thrown in BatchDriver Mapper: {}", e);
+        LOG.error("Exception thrown in BatchDriver Mapper.", e);
         Throwables.propagate(e);
       }
     }
