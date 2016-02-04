@@ -217,7 +217,6 @@ a.headerlink {
     padding: 0 4px 0 4px;
     margin-left: 6px;
     text-decoration: none !important;
-    float: right;
 }
 
 a.headerlink:hover {
