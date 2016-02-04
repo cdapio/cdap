@@ -94,7 +94,8 @@
           {{ TopPanelCtrl.nextRunTime | amDateFormat:'h:mm:ss A'}}
           <small> {{ TopPanelCtrl.nextRunTime | amDateFormat:'MM/DD/YYYY'}}</small>
         </span>
-        <span class="metric-label">Start</span>
+        <span class="metric-label" ng-if="TopPanelCtrl.nextRunTime !== 'N/A'">Start</span>
+        <span class="metric-label" ng-if="TopPanelCtrl.nextRunTime === 'N/A'">Not Scheduled</span>
       </div>
     </div>
   </div>
