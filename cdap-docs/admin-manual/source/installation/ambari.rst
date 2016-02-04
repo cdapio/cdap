@@ -20,8 +20,6 @@ Installation using Apache Ambari
 - Ambari is for setting up HDP (Hortonworks Data Platform) on bare clusters; it can't be 
   used for clusters with HDP already installed, where the original installation was
   **not** with Ambari.
-- Though you can install CDAP with Apache Ambari, you **currently cannot use** Ambari to upgrade CDAP. 
-  See :ref:`upgrading-using-packages` for how to upgrade CDAP servers managed with Ambari.
 - These features are **currently not included** in the CDAP Apache Ambari Service (though they may in the future):
   
   - `Kerberos-enabled clusters <https://issues.cask.co/browse/CDAP-4109>`__ are currently not supported;
@@ -325,17 +323,6 @@ CDAP is now running on your cluster, managed by Ambari. You can login to the CDA
 the address of the node running the CDAP-UI service at port 9999.
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
-
-
-Upgrading CDAP
-==============
-Currently, CDAP **cannot** be upgraded by using Apache Ambari. 
-
-To upgrade CDAP installations that were installed and are managed with Apache Ambari, please
-follow our instructions for upgrading CDAP installations that were installed with a
-Package Manager, either RPM or Debian:
-
-  :ref:`Upgrading CDAP via Package Managers <upgrading-using-packages>`
 
 
 Advanced Topics

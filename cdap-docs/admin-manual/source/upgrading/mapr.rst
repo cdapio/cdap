@@ -17,4 +17,9 @@ To upgrade CDAP installations that were installed and are managed with MapR, ple
 follow our instructions for upgrading CDAP installations that were installed with a
 Package Manager, either RPM or Debian:
 
-  :ref:`Upgrading CDAP via Package Managers <upgrading-using-packages>`
+  :ref:`Upgrading CDAP via Package Managers <admin-upgrading-packages-cdap>`
+
+
+Upgrading MapR
+==============
+<TO BE COMPLETED>
