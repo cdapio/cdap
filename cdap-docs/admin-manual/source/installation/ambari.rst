@@ -10,8 +10,7 @@
 Installation using Apache Ambari
 ================================
 
-.. figure:: ../_images/cdap-installation-steps.png
-   :align: left
+.. include:: ../_includes/installation/installation-steps-images.txt
    
 .. rubric:: Notes
 
@@ -72,18 +71,20 @@ To install the ``cdap-ambari-service`` package, first add the appropriate CDAP r
 to your system’s package manager by following the steps below. These steps will install a
 Cask repository on your Ambari server.
 
-The **repository version** (shown in the commands below as ``"cdap/``\ |literal-short-version|\ ``"``) must match the
-**CDAP version** which you’d like installed on your cluster. To install the *CDAP 3.0 series,*
-you would install the *CDAP 3.0 repository.* The default is to use **cdap/3.3**, which has the
-widest compatibility with Ambari-supported Hadoop distributions.
+The **repository version** (shown in the commands below as ``"cdap/``\ |literal-short-version|\ ``"``) 
+must match the **CDAP series** which you’d like installed on your cluster. To install the
+**latest** version of the *CDAP 3.0 series,* you would install the *CDAP 3.0 repository.*
+The default (in the commands below) is to use **cdap/3.3**, which has the widest
+compatibility with the Ambari-supported Hadoop distributions.
 
-Replace |---| in the commands that follow on this page |---| all references to ``"cdap/``\ |literal-short-version|\ ``"`` 
+Replace |---| in the commands that follow on this page |---| all references to 
+``"cdap/``\ |literal-short-version|\ ``"`` 
 with the CDAP Repository from the list below that you would like to use:
 
 +-----------------------------------------------------------------------+
 | Supported Hortonworks Data Platform (HDP) Distributions               |
 +----------------+-----------------+------------------------------------+
-| CDAP Version   | CDAP Repository | Hadoop Distributions               |
+| CDAP Series    | CDAP Repository | Hadoop Distributions               |
 +================+=================+====================================+
 | CDAP 3.3.x     | ``cdap/3.3``    | HDP 2.0, HDP 2.1, HDP 2.2, HDP 2.3 |
 +----------------+-----------------+------------------------------------+
