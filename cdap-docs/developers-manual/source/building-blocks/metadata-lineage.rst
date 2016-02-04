@@ -23,8 +23,8 @@ CDAP captures metadata from many different sources |---| as well as those specif
 user |---| on different entities and objects. The container model of CDAP provides for the
 seamless aggregation of a wide variety of machine-generated metadata that is automatically
 associated with datasets. This capability allows flexibility for the developers and data
-scientist to innovate and build solutions on Hadoop without any responsibility for
-compliance and governance.
+scientist to innovate and build solutions on Hadoop, while simultaneously having a lineage
+to maintain compliance and governance.
 
 
 .. _metadata-lineage-metadata:
@@ -62,8 +62,10 @@ System Metadata
 While CDAP allows users to tag entities with metadata properties and tags, it also
 tags entities with system properties and tags by default. These default properties and tags can be retrieved
 using the CDAP :ref:`Metadata HTTP RESTful API <http-restful-api-metadata>` by setting the
-``scope`` query parameter to **system**. These default annotations can be used to discover CDAP entities using the
-Metadata Search API. This table lists the system metadata annotations of CDAP entities:
+``scope`` query parameter to *system*. These default annotations can be used to discover CDAP entities using the
+Metadata Search API. 
+
+This table lists the **system** metadata annotations of CDAP entities:
 
 .. list-table::
    :widths: 20 40 40
@@ -84,7 +86,7 @@ Metadata Search API. This table lists the system metadata annotations of CDAP en
    * - Programs
      - * n/a
      - * Program name and type 
-       * Program mode (batch or realtime)
+       * Program mode (*batch* or *realtime*)
        * Workflow node names (for workflows only)
    * - Datasets
      - * Schema (field names and types)
