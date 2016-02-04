@@ -377,6 +377,9 @@ public class UpgradeTool {
   private void performUpgrade() throws Exception {
     performCoprocessorUpgrade();
 
+    LOG.info("Upgrading Dataset Specification...");
+    dsSpecUpgrader.upgrade();
+
     LOG.info("Upgrading schedules...");
     datasetBasedTimeScheduleStore.upgrade();
 
@@ -402,9 +405,6 @@ public class UpgradeTool {
 
     LOG.info("Upgrading QueueAdmin ...");
     queueAdmin.upgrade();
-
-    LOG.info("Upgrading Dataset Specification...");
-    dsSpecUpgrader.upgrade();
   }
 
   public static void main(String[] args) {
