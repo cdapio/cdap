@@ -154,8 +154,11 @@ angular.module(PKG.name + '.commons')
 
             $tooltip(angular.element(label.getElement()).children(), {
               trigger: 'hover',
-              title: 'Records Out'
+              title: 'Records Out',
+              delay: 300,
+              container: 'body'
             });
+
           });
 
           $scope.$watch('metricsData', function () {
