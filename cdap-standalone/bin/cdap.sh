@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright © 2014-2015 Cask Data, Inc.
+# Copyright © 2014-2016 Cask Data, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
@@ -68,20 +68,13 @@ while [ -h "$PRG" ] ; do
         PRG=`dirname "$PRG"`"/$link"
     fi
 done
-SAVED="`pwd`"
 cd "`dirname \"$PRG\"`/.." >&-
 APP_HOME="`pwd -P`"
 
-i=0
-for jar in `ls -1 $APP_HOME/lib/* | sort` ; do
-    ((i++))
-    if [ $i -eq 1 ] ; then
-        CLASSPATH=${jar}
-    else
-        CLASSPATH=${CLASSPATH}:${jar}
-    fi
-done
-CLASSPATH="${CLASSPATH}:$APP_HOME/conf/"
+# In order to ensure that we can do hacks, need to make sure classpath is sorted
+# so that cdap jars are placed earlier in the classpath than twill or hadoop jars
+CLASSPATH=$(find "${APP_HOME}/lib" -type f | sort | tr '\n' ':')
+CLASSPATH="${CLASSPATH}:${APP_HOME}/conf/"
 
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
