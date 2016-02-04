@@ -36,7 +36,7 @@ For example, in the configure method of your application::
       .setBasePath("mylocation")
       .setInputFormat(AvroKeyInputFormat.class)
       .setOutputFormat(AvroKeyOutputFormat.class)
-      // everything past here is an explore property
+      // everything past here is a CDAP Explore property
       .setEnableExploreOnCreate(true)
       .setSerDe("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
       .setExploreInputFormat("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat")
@@ -44,12 +44,38 @@ For example, in the configure method of your application::
       .setTableProperty("avro.schema.literal", schema.toString())
       .build());
 
+For a ``FileSet`` using the ``AvroParquet`` format::
+
+    FileSetProperties.builder()
+    .setBasePath(basePath)
+    .setInputFormat(AvroParquetInputFormat.class)
+    .setOutputFormat(AvroParquetOutputFormat.class)
+    .setEnableExploreOnCreate(true)
+    .setExploreFormat("parquet")
+    .setExploreSchema("id long, name string")
+
+A ``PartitionedFileSet`` using the ``text`` format, with ``\n`` as the record delimiter::
+
+    PartitionedFileSetProperties.builder()
+    // Properties for partitioning
+    .setPartitioning(Partitioning.builder().addLongField("time").build())
+    // Properties for file set
+    .setInputFormat(TextInputFormat.class)
+    .setOutputFormat(TextOutputFormat.class)
+    .setOutputProperty(TextOutputFormat.SEPERATOR, ",")
+    // enable CDAP Explore
+    .setEnableExploreOnCreate(true)
+    .setExploreFormat("text")
+    .setExploreFormatProperty("delimiter", "\n")
+    .setExploreSchema("record STRING")
+    .build() 
+
 These dataset properties map directly to table properties in Hive. In the case of the
 ``setBasePath`` method, the partial-path given will be a sub-directory of
 ``<CDAP-home>/namespaces/<namespace>/data/``.
 
 For example, if ``<CDAP-home>`` is */cdap*, and ``<namespace>`` is *default*, 
-the above Dataset would result in this "create table" statement being generated::
+the first Dataset example above would result in this "create table" statement being generated::
 
   CREATE EXTERNAL TABLE dataset_myfiles(
     user string,
@@ -71,12 +97,20 @@ Limitations
 -----------
 There are several limitations for fileset exploration:
 
-- All explorable files must be in Avro format.
-- Your version of Hive must include the AvroSerDe.
+- All explorable files must be in a format supported by your version of Hive. 
+- `Built-in SerDes: <https://cwiki.apache.org/confluence/display/Hive/SerDe#SerDe-Built-inSerDes>`__
+  
+  - Avro (Hive 0.9.1 and later)
+  - ORC (Hive 0.11 and later)
+  - RegEx
+  - Thrift
+  - Parquet (Hive 0.13 and later)
+  - CSV (Hive 0.14 and later)
+  
+- Your version of Hive must include the appropriate SerDe.
 - Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
   If you are seeing permissions errors, try setting ``hive.exec.stagingdir`` in your Hive configuration to ``/tmp/hive-staging``.
 
-There are plans for adding support for additional file formats in upcoming CDAP releases.
 A ``FileSet`` has some additional limitations that the ``PartitionedFileSet`` or ``TimePartitionedFileSet`` do not have:
 
 - Hive tables created by a ``FileSet`` are not partitioned; this means all queries perform a full table scan.
