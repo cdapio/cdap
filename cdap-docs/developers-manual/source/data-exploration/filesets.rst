@@ -98,16 +98,8 @@ Limitations
 There are several limitations for fileset exploration:
 
 - All explorable files must be in a format supported by your version of Hive. 
-- `Built-in SerDes: <https://cwiki.apache.org/confluence/display/Hive/SerDe#SerDe-Built-inSerDes>`__
-  
-  - Avro (Hive 0.9.1 and later)
-  - ORC (Hive 0.11 and later)
-  - RegEx
-  - Thrift
-  - Parquet (Hive 0.13 and later)
-  - CSV (Hive 0.14 and later)
-  
-- Your version of Hive must include the appropriate SerDe.
+- Your version of Hive must include `the appropriate SerDe 
+  <https://cwiki.apache.org/confluence/display/Hive/SerDe#SerDe-Built-inSerDes>`__.
 - Some versions of Hive may try to create a temporary staging directory at the table location when executing queries.
   If you are seeing permissions errors, try setting ``hive.exec.stagingdir`` in your Hive configuration to ``/tmp/hive-staging``.
 
