@@ -17,21 +17,25 @@
 package co.cask.cdap.common.service;
 
 import com.google.common.util.concurrent.AbstractIdleService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Executor;
 
 /**
  * An AbstractIdleService that overrides its executor to use one that doesn't print to stderr the exceptions
- * it gets, so that error messaging is left to whoever is using the service.
+ * it gets, but instead
  */
-public abstract class UnloggedExceptionIdleService extends AbstractIdleService {
-  public static final Thread.UncaughtExceptionHandler UNCAUGHT_EXCEPTION_HANDLER =
-    new Thread.UncaughtExceptionHandler() {
+public abstract class UncaughtExceptionIdleService extends AbstractIdleService {
+
+  public static Thread.UncaughtExceptionHandler newHandler(final Logger logger) {
+    return new Thread.UncaughtExceptionHandler() {
       @Override
       public void uncaughtException(Thread t, Throwable e) {
-        // no-op
+        logger.error("Uncaught exception from " + t.toString(), e);
       }
     };
+  }
 
   @SuppressWarnings("NullableProblems")
   @Override
@@ -41,9 +45,11 @@ public abstract class UnloggedExceptionIdleService extends AbstractIdleService {
       @Override
       public void execute(Runnable runnable) {
         Thread t = new Thread(runnable, name);
-        t.setUncaughtExceptionHandler(UNCAUGHT_EXCEPTION_HANDLER);
+        t.setUncaughtExceptionHandler(newHandler(getUncaughtExceptionLogger()));
         t.start();
       }
     };
   }
+
+  protected abstract Logger getUncaughtExceptionLogger();
 }
