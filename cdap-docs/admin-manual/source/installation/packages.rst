@@ -77,34 +77,17 @@ Installing CDAP Services
 
 .. _packages-verification:
 
+
 Verification
 ============
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
 
 
-Advanced Topics
-===============
-
-.. _packages-configuration-security:
-
-.. Enabling Perimeter Security
-.. ---------------------------
-.. include:: /../target/_includes/packages-configuration.rst
-    :start-after: .. _packages-configuration-eps:
-
-.. _packages-configuration-enabling-kerberos:
-
-.. Enabling Kerberos
-.. -----------------
-.. include:: /../target/_includes/packages-configuration.rst
-    :start-after: .. configuration-enabling-kerberos:
-    :end-before: .. _packages-configuration-eps:
-
 .. _upgrading-using-packages:
 
 Upgrading CDAP
---------------
+==============
 When upgrading an existing CDAP installation from a previous version, you will need
 to make sure the CDAP table definitions in HBase are up-to-date.
 
@@ -197,6 +180,24 @@ please follow the upgrade instructions for the earlier versions and upgrade firs
 
      $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
 
+
+Advanced Topics
+===============
+
+.. _packages-configuration-security:
+
+.. Enabling Perimeter Security
+.. ---------------------------
+.. include:: /../target/_includes/packages-configuration.rst
+    :start-after: .. _packages-configuration-eps:
+
+.. _packages-configuration-enabling-kerberos:
+
+.. Enabling Kerberos
+.. -----------------
+.. include:: /../target/_includes/packages-configuration.rst
+    :start-after: .. configuration-enabling-kerberos:
+    :end-before: .. _packages-configuration-eps:
 
 .. _packages-highly-available:
 

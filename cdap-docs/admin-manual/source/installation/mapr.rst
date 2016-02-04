@@ -139,10 +139,23 @@ CDAP requires that an additional entry |---| ``/opt/mapr/lib/*`` |---| be append
 
 .. _mapr-verification:
 
+
 Verification
 ============
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
+
+
+Upgrading CDAP
+==============
+Currently, CDAP **cannot** be upgraded by using the MapR Control System. 
+
+To upgrade CDAP installations that were installed and are managed with MapR, please
+follow our instructions for upgrading CDAP installations that were installed with a
+Package Manager, either RPM or Debian:
+
+  :ref:`Upgrading CDAP via Package Managers <upgrading-using-packages>`
+
 
 Advanced Topics
 ===============
@@ -164,13 +177,3 @@ Kerberos is currently not supported by CDAP on secure MapR clusters.
 .. .. include:: /../target/_includes/mapr-configuration.rst
 ..     :start-after: .. configuration-enabling-kerberos:
 ..     :end-before: .. _mapr-configuration-eps:
-
-Upgrading CDAP
---------------
-Currently, CDAP **cannot** be upgraded by using the MapR Control System. 
-
-To upgrade CDAP installations that were installed and are managed with MapR, please
-follow our instructions for upgrading CDAP installations that were installed with a
-Package Manager, either RPM or Debian:
-
-  :ref:`Upgrading CDAP via Package Managers <upgrading-using-packages>`

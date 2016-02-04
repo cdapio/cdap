@@ -442,37 +442,11 @@ port ``9999`` of the host where the UI role instance is running.
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
 
-Advanced Topics
-===============
-
-.. _cloudera-configuration-security:
-
-.. Enabling Perimeter Security
-.. ---------------------------
-.. include:: /../target/_includes/cloudera-configuration.rst
-    :start-after: .. _cloudera-configuration-eps:
-
-.. _cloudera-configuration-enabling-kerberos:
-
-Enabling Kerberos
------------------
-For Kerberos-enabled Hadoop clusters:
-
-- The ``'cdap'`` user needs to be granted HBase permissions to create tables.
-  As the ``hbase`` user, issue the command::
- 
-    $ echo "grant 'cdap', 'RWCA'" | hbase shell
-
-- The ``'cdap'`` user must be able to launch YARN containers, either by adding it to the YARN
-  ``allowed.system.users`` or by adjusting the YARN ``min.user.id`` to include the ``cdap`` user.
-  (Search for the YARN configuration ``allowed.system.users`` in Cloudera Manager, and then add
-  the ``cdap`` user to the whitelist.)
-
 Upgrading CDAP
---------------
+==============
 
-Upgrading Patch Release Versions
-................................
+Upgrading CDAP Patch Release Versions
+-------------------------------------
 When a new compatible CDAP parcel is released, it will be available via the Parcels page
 in the Cloudera Manager UI.
 
@@ -485,8 +459,8 @@ in the Cloudera Manager UI.
 
 #. Start CDAP services.
 
-Upgrading Major/Minor Release Versions
-......................................
+Upgrading CDAP Major/Minor Release Versions
+-------------------------------------------
 Upgrading between major versions of CDAP involves the additional steps of upgrading the
 CSD, and running the included CDAP Upgrade Tool. Upgrades between multiple Major/Minor
 versions must be done consecutively, and a version cannot be skipped unless otherwise
@@ -611,3 +585,29 @@ goes wrong, see these troubleshooting instructions for :ref:`problems while upgr
 #. Start CDAP::
 
     $ for i in `ls /etc/init.d/ | grep cdap` ; do sudo service $i start ; done
+
+Advanced Topics
+===============
+
+.. _cloudera-configuration-security:
+
+.. Enabling Perimeter Security
+.. ---------------------------
+.. include:: /../target/_includes/cloudera-configuration.rst
+    :start-after: .. _cloudera-configuration-eps:
+
+.. _cloudera-configuration-enabling-kerberos:
+
+Enabling Kerberos
+-----------------
+For Kerberos-enabled Hadoop clusters:
+
+- The ``'cdap'`` user needs to be granted HBase permissions to create tables.
+  As the ``hbase`` user, issue the command::
+ 
+    $ echo "grant 'cdap', 'RWCA'" | hbase shell
+
+- The ``'cdap'`` user must be able to launch YARN containers, either by adding it to the YARN
+  ``allowed.system.users`` or by adjusting the YARN ``min.user.id`` to include the ``cdap`` user.
+  (Search for the YARN configuration ``allowed.system.users`` in Cloudera Manager, and then add
+  the ``cdap`` user to the whitelist.)

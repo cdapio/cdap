@@ -326,6 +326,18 @@ the address of the node running the CDAP-UI service at port 9999.
 
 .. include:: /_includes/installation/smoke-test-cdap.txt
 
+
+Upgrading CDAP
+==============
+Currently, CDAP **cannot** be upgraded by using Apache Ambari. 
+
+To upgrade CDAP installations that were installed and are managed with Apache Ambari, please
+follow our instructions for upgrading CDAP installations that were installed with a
+Package Manager, either RPM or Debian:
+
+  :ref:`Upgrading CDAP via Package Managers <upgrading-using-packages>`
+
+
 Advanced Topics
 ===============
 
@@ -348,16 +360,6 @@ Enabling Kerberos
 -----------------
 Ambari-managed `Kerberos-enabled clusters <https://issues.cask.co/browse/CDAP-4109>`__ are
 currently not supported in CDAP.
-
-Upgrading CDAP
---------------
-Currently, CDAP **cannot** be upgraded by using Apache Ambari. 
-
-To upgrade CDAP installations that were installed and are managed with Apache Ambari, please
-follow our instructions for upgrading CDAP installations that were installed with a
-Package Manager, either RPM or Debian:
-
-  :ref:`Upgrading CDAP via Package Managers <upgrading-using-packages>`
 
 CDAP HA Setup
 -------------
