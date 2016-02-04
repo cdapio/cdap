@@ -447,6 +447,8 @@ html_static_path = ['../../_common/_static']
 # typographically correct entities.
 #html_use_smartypants = True
 
+html_add_permalinks = u'\U0001F517' # HTML '&#128279;' # Link symbol: see http://www.fileformat.info/info/unicode/char/1f517/index.htm
+
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {'**': [
     'manuals.html',
