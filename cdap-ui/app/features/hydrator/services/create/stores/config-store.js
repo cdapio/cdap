@@ -15,7 +15,7 @@
  */
 
 class ConfigStore {
-  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorService, $q, PluginConfigFactory, uuid){
+  constructor(ConfigDispatcher, CanvasFactory, GLOBALS, mySettings, ConsoleActionsFactory, $stateParams, myHelpers, NonStorePipelineErrorFactory, HydratorService, $q, PluginConfigFactory, uuid, $state){
     this.state = {};
     this.mySettings = mySettings;
     this.ConsoleActionsFactory = ConsoleActionsFactory;
@@ -28,6 +28,7 @@ class ConfigStore {
     this.$q = $q;
     this.PluginConfigFactory = PluginConfigFactory;
     this.uuid = uuid;
+    this.$state = $state;
 
     this.changeListeners = [];
     this.setDefaults();
@@ -92,6 +93,12 @@ class ConfigStore {
   }
   getState() {
     return angular.copy(this.state);
+  }
+  getDraftId() {
+    return this.state.__ui__.draftId;
+  }
+  setDraftId(draftId) {
+    this.state.__ui__.draftId = draftId;
   }
   getArtifact() {
     return this.getState().artifact;
@@ -637,8 +644,12 @@ class ConfigStore {
 
   saveAsDraft() {
     this.ConsoleActionsFactory.resetMessages();
+    if(!this.getDraftId()) {
+      this.setDraftId(this.uuid.v4());
+      this.$stateParams.draftId = this.getDraftId();
+      this.$state.go('hydrator.create.studio', this.$stateParams, {notify: false});
+    }
     let config = this.getState();
-    config.__ui__.draftId = config.__ui__.draftId || this.uuid.v4();
     let checkForDuplicateDrafts = (config, draftsMap = {}) => {
       return Object.keys(draftsMap).filter(
         draft => {
@@ -678,6 +689,6 @@ class ConfigStore {
   }
 }
 
-ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorService', '$q', 'PluginConfigFactory', 'uuid'];
+ConfigStore.$inject = ['ConfigDispatcher', 'CanvasFactory', 'GLOBALS', 'mySettings', 'ConsoleActionsFactory', '$stateParams', 'myHelpers', 'NonStorePipelineErrorFactory', 'HydratorService', '$q', 'PluginConfigFactory', 'uuid', '$state'];
 angular.module(`${PKG.name}.feature.hydrator`)
   .service('ConfigStore', ConfigStore);
