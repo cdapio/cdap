@@ -84,12 +84,12 @@ class HydratorService {
       extensionType: node.type,
       pluginName: node.plugin.name
     };
-
+    let nodeArtifact = node.plugin.artifact;
     return this.myPipelineApi.fetchPluginProperties(params)
       .$promise
-      .then(function(res) {
-
-        var pluginProperties = (res.length? res[0].properties: {});
+      .then(function(res = []) {
+        let match = res.filter(plug => angular.equals(plug.artifact, nodeArtifact));
+        var pluginProperties = (match.length? match[0].properties: {});
         if (res.length && (!node.description || (node.description && !node.description.length))) {
           node.description = res[0].description;
         }

@@ -239,10 +239,11 @@ class LeftPanelStore {
       angular.forEach(defaultVersionsMap, (pluginArtifact, pluginKey) => {
         delete this.state.defaultVersionsMap[pluginKey];
       });
+      let pipelineType = this.ConfigStore.getAppType();
       this.mySettings.set('plugin-default-version', this.state.defaultVersionsMap);
-      this.setSources(this.state.plugins.sources);
-      this.setSinks(this.state.plugins.sinks);
-      this.setTransforms(this.state.plugins.transforms);
+      this.setSources(this.state.plugins.sources, this.GLOBALS.pluginTypes[pipelineType]['source']);
+      this.setSinks(this.state.plugins.sinks, this.GLOBALS.pluginTypes[pipelineType]['sink']);
+      this.setTransforms(this.state.plugins.transforms, this.GLOBALS.pluginTypes[pipelineType]['transform']);
     }
   }
 
