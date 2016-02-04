@@ -102,8 +102,6 @@ function download_includes() {
   download_md_doc_file $base_target $hydrator_source core-plugins Cube-batchsink.md
   download_md_doc_file $base_target $hydrator_source core-plugins Cube-realtimesink.md
   download_md_doc_file $base_target $hydrator_source core-plugins DataGenerator-realtimesource.md
-  download_md_doc_file $base_target $hydrator_source core-plugins Database-batchsink.md
-  download_md_doc_file $base_target $hydrator_source core-plugins Database-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins File-batchsource.md
   download_md_doc_file $base_target $hydrator_source core-plugins JMS-realtimesource.md
   download_md_doc_file $base_target $hydrator_source core-plugins JavaScript-transform.md
