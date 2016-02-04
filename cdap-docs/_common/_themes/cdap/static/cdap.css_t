@@ -219,11 +219,6 @@ a.headerlink {
     text-decoration: none !important;
 }
 
-a.headerlink:hover {
-    background-color: #c60f0f;
-    color: white;
-}
-
 a.toc-backref {
     color: black;
 }
