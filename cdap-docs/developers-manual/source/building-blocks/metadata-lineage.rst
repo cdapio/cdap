@@ -22,10 +22,9 @@ data.
 CDAP captures metadata from many different sources |---| as well as those specified by a
 user |---| on different entities and objects. The container model of CDAP provides for the
 seamless aggregation of a wide variety of machine-generated metadata that is automatically
-associated with datasets. This capability allows flexibility for the developers and data
-scientist to innovate and build solutions on Hadoop, while simultaneously having a lineage
-to maintain compliance and governance.
-
+associated with datasets. This gives developers and data scientists flexibility when
+innovating and building solutions on Hadoop, without the worry of maintaining compliance
+and governance for every application.
 
 .. _metadata-lineage-metadata:
 
