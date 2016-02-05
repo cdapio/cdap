@@ -93,7 +93,8 @@ public class FileContextLocationFactory implements LocationFactory {
 
   @Override
   public Location getHomeLocation() {
-    return new FileContextLocation(this, fc, fc.getHomeDirectory());
+    return new FileContextLocation(this, fc,
+                                   new Path(fc.getHomeDirectory().getParent(), fc.getUgi().getShortUserName()));
   }
 
   /**
