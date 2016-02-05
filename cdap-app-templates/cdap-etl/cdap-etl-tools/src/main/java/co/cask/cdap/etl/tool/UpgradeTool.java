@@ -123,7 +123,7 @@ public class UpgradeTool {
       return false;
     }
 
-    LOG.info("Upgrading pipeline: {}");
+    LOG.info("Upgrading pipeline: {}", appId);
     if (BATCH_NAME.equals(appDetail.getArtifact().getName())) {
       OldETLBatchConfig oldConfig = GSON.fromJson(appDetail.getConfiguration(), OldETLBatchConfig.class);
       ETLBatchConfig newConfig = oldConfig.getNewConfig(batchPluginArtifactFinder);
