@@ -29,24 +29,29 @@ import co.cask.cdap.data2.dataset2.DatasetManagementException;
 import co.cask.cdap.data2.metadata.store.MetadataStore;
 import co.cask.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.AppSystemMetadataWriter;
+import co.cask.cdap.data2.metadata.system.ArtifactSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.DatasetSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.ProgramSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.StreamSystemMetadataWriter;
 import co.cask.cdap.data2.metadata.system.ViewSystemMetadataWriter;
 import co.cask.cdap.data2.transaction.stream.StreamAdmin;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import co.cask.cdap.internal.app.runtime.artifact.ArtifactStore;
 import co.cask.cdap.proto.DatasetSpecificationSummary;
 import co.cask.cdap.proto.Id;
 import co.cask.cdap.proto.NamespaceMeta;
 import co.cask.cdap.proto.ProgramType;
+import co.cask.cdap.proto.artifact.ArtifactInfo;
 import co.cask.cdap.store.NamespaceStore;
 import com.google.inject.Inject;
 import org.apache.twill.filesystem.LocationFactory;
 
+import java.io.IOException;
 import java.util.Collection;
 
 /**
  * Adds system metadata for existing entities prior to 3.3.
- * TODO: Remove in 3.4
+ * TODO CDAP-4696: Remove in 3.4
  */
 public class ExistingEntitySystemMetadataWriter {
   private final MetadataStore metadataStore;
@@ -55,27 +60,42 @@ public class ExistingEntitySystemMetadataWriter {
   private final StreamAdmin streamAdmin;
   private final ViewAdmin viewAdmin;
   private final DatasetFramework dsFramework;
+  private final ArtifactStore artifactStore;
   private final SystemDatasetInstantiatorFactory dsInstantiatorFactory;
 
   @Inject
   ExistingEntitySystemMetadataWriter(MetadataStore metadataStore, NamespaceStore nsStore, Store store,
-                                     StreamAdmin streamAdmin, ViewAdmin viewAdmin, DatasetFramework dsFramework,
-                                     LocationFactory locationFactory, CConfiguration cConf) {
+                                     ArtifactStore artifactStore, StreamAdmin streamAdmin, ViewAdmin viewAdmin,
+                                     DatasetFramework dsFramework, LocationFactory locationFactory,
+                                     CConfiguration cConf) {
     this.metadataStore = metadataStore;
     this.nsStore = nsStore;
     this.store = store;
     this.streamAdmin = streamAdmin;
     this.viewAdmin = viewAdmin;
     this.dsFramework = dsFramework;
+    this.artifactStore = artifactStore;
     this.dsInstantiatorFactory = new SystemDatasetInstantiatorFactory(locationFactory, this.dsFramework, cConf);
   }
 
   public void write() throws Exception {
     for (NamespaceMeta namespaceMeta : nsStore.list()) {
       Id.Namespace namespace = Id.Namespace.from(namespaceMeta.getName());
+      writeSystemMetadataForArtifacts(namespace);
       writeSystemMetadataForApps(namespace);
       writeSystemMetadataForDatasets(namespace);
       writeSystemMetadataForStreams(namespace);
+    }
+  }
+
+  private void writeSystemMetadataForArtifacts(Id.Namespace namespace) throws IOException {
+    for (ArtifactDetail artifactDetail : artifactStore.getArtifacts(namespace)) {
+      ArtifactInfo artifactInfo = new ArtifactInfo(artifactDetail.getDescriptor().getArtifactId(),
+                                                   artifactDetail.getMeta().getClasses(),
+                                                   artifactDetail.getMeta().getProperties());
+      Id.Artifact artifactId = Id.Artifact.from(namespace, artifactDetail.getDescriptor().getArtifactId());
+      AbstractSystemMetadataWriter writer = new ArtifactSystemMetadataWriter(metadataStore, artifactId, artifactInfo);
+      writer.write();
     }
   }
 
