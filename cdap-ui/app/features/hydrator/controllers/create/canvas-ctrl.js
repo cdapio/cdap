@@ -40,8 +40,6 @@ class HydratorCreateCanvasController {
 
 
     this.$scope.$on('$stateChangeStart', (event) => {
-      // event.preventDefault();
-
       let currentConfig = this.ConfigStore.getState();
       let draft = this.ConfigStore.getDraftState();
 
