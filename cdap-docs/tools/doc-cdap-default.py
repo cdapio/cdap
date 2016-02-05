@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#  Copyright © 2015 Cask Data, Inc.
+#  Copyright © 2015-2016 Cask Data, Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -25,6 +25,10 @@
 # If <source-filepath> not provided, uses CDAP_DEFAULT_XML
 # if <output-filepath> not provided, outputs to standard out
 
+# Also, a tool for comparing XML and SDL files.
+# Given a list of files in OTHER_CDAP_XML_FILES, can compare them
+# with the XML file in CDAP_DEFAULT_XML
+
 
 # Steps:
 #
@@ -37,6 +41,7 @@
 # Output rst table to standard out
 # If filepath provided, writes to file instead
 
+import json
 import os
 import sys
 import textwrap
@@ -49,6 +54,8 @@ SOURCE_PATH = os.path.dirname(os.path.abspath(__file__))
 RELATIVE_PATH = '../..'
 CDAP_DEFAULT_XML = 'cdap-common/src/main/resources/cdap-default.xml'
 CDAP_DEFAULT_EXCLUSIONS = 'cdap-default-exclusions.txt'
+
+OTHER_CDAP_XML_FILES = 'cdap-xml-files.txt'
 
 FIRST_TWO_SECTIONS = ['General Configuration', 'Global Configuration']
 
@@ -93,6 +100,8 @@ XML_HEADER = u"""<?xml version="1.0"?>
 
 
 class Item:
+    MAX_RST_VALUE_CHAR_LENGTH = 40
+
     @staticmethod
     def encode(value):
         import cgi
@@ -100,6 +109,34 @@ class Item:
             return cgi.escape(value).encode('ascii', 'xmlcharrefreplace')
         else:
             return ''
+
+    @staticmethod
+    def _split_text(text, length=70, delimiter='.'):
+        # Splits text into blocks not exceeding length if possible, on delimiter
+        if len(text) > length and text.count(delimiter):
+            # Split text into multiple pieces
+            split = text.rfind(delimiter, 0, length)
+            left = text[:split+1]
+            right = text[split+1:]
+            if right:
+                texts = Item._split_text(right, length, delimiter)
+                if not texts[-1]:
+                    texts = texts[:-1]
+            return (left,) + texts
+        else:
+            return (text, '')
+
+    @staticmethod
+    def format_rst_block(text):
+        # Tests if a block of text exceeds self.MAX_RST_VALUE_CHAR_LENGTH
+        # and if so, splits it on the location of periods ('.')
+        block = "%s" % text
+        if len(block) > Item.MAX_RST_VALUE_CHAR_LENGTH and block.count('.'):
+            # Split block into multiple pieces
+            block = BLOCK_START + BLOCK_JOIN.join(Item._split_text(block, Item.MAX_RST_VALUE_CHAR_LENGTH)) + '``'
+        else:
+            block = "``%s``" % block
+        return block
 
     def __init__(self, name='', value='', description ='', final=None):
         self.name = name
@@ -121,19 +158,25 @@ class Item:
     
     def rst(self):
         FINAL_RST = ' :ref:`[Final] <cdap-site-xml-note-final>`'
-        name = "``%s``" % self.name
+
+        name = self.format_rst_block(self.name)
         if self.final:
             name += FINAL_RST
-        if self.value.find(' ') != -1:
+            
+        if self.value.count(' '):
             value = BLOCK_START + BLOCK_JOIN.join(self.value.split()) + '``'
         elif not self.value:
             value = ''
         else:
-            value = "``%s``" % self.value
+            value = self.format_rst_block(self.value)
+
         description = self.description
+        if description.count('@'):
+            description = description.replace('@', '\@')
+            
         rst = "%s%s\n%s%s\n%s%s\n" % (NAME_START, name,
-                                    VALUE_START, value,
-                                    DESC_START, description)
+                                      VALUE_START, value,
+                                      DESC_START, description)
         return rst
     
     def set_attribute(self, name, value):
@@ -224,6 +267,13 @@ def parse_options():
     # Generation, source and target
     
     parser.add_option(
+        '-a', '--all',
+        dest='compare_all',
+        action='store_true',
+        help="Compares all files listed in '%s' to '%s'" % (OTHER_CDAP_XML_FILES, CDAP_DEFAULT_XML),
+        default=False)
+
+    parser.add_option(
         '-c', '--compare',
         dest='compare',
         action='store_true',
@@ -312,20 +362,30 @@ def default_xml_filepath(extra_path=''):
     return os.path.join(SOURCE_PATH, RELATIVE_PATH, CDAP_DEFAULT_XML + extra_path)
     
 def load_exclusions():
+    func = 'load_exclusions'
     exclusions_path = os.path.join(SOURCE_PATH, CDAP_DEFAULT_EXCLUSIONS)
     if not os.path.isfile(exclusions_path):
         raise Exception(func, "'%s' not a valid path" % exclusions_path)
     return [line.rstrip('\n') for line in open(exclusions_path)]
 
-def load_xml(filesource, include_exclusions=False, include_comments=True):
-    func = 'load_xml'
+def load_xml_files():
+    func = 'load_xml_files'
+    xml_files_path = os.path.join(SOURCE_PATH, OTHER_CDAP_XML_FILES)
+    if not os.path.isfile(xml_files_path):
+        raise Exception(func, "'%s' not a valid path" % xml_files_path)
+    return [line.rstrip('\n') for line in open(xml_files_path)]
 
-    if filesource:
-        xml_path = filesource    
-    else:
-        xml_path = default_xml_filepath()
-    if not os.path.isfile(xml_path):
-        raise Exception(func, "'%s' not a valid path" % xml_path)
+def load_xml(source, include_exclusions=False, include_comments=True):
+    func = 'load_xml'
+    if not source:
+        source = default_xml_filepath()
+    try:
+        if os.path.isfile(source):
+            tree = ET.parse(source, PIParser())
+        else:
+            tree = ET.fromstring(source, PIParser())
+    except:
+        raise Exception(func, "'%s' not a valid source" % source)
     
     if include_exclusions:
         exclusions = []
@@ -333,7 +393,6 @@ def load_xml(filesource, include_exclusions=False, include_comments=True):
         exclusions = load_exclusions()
     
     items = []
-    tree = ET.parse(xml_path, PIParser())
     root = tree.getroot()
     for outer_element in root:
         for inner_element in outer_element:
@@ -483,28 +542,36 @@ def load_summary(props_only=False):
             item.display()
     print "Sections: %d\nProperties: %d" % (section_counter, properties_counter)
 
+# python doc-cdap-default.py \
+#        --compare -s ~/Source/cdap_3.1/cdap-common/src/main/resources/cdap-default.xml \
+#        -o ~/Source/cdap_3.2/cdap-common/src/main/resources/cdap-default.xml -t diff.txt
 
-# python doc-cdap-default.py --compare -s ~/Source/cdap_3.1/cdap-common/src/main/resources/cdap-default.xml -o ~/Source/cdap_3.2/cdap-common/src/main/resources/cdap-default.xml -t diff.txt
-def compare_xml(source, other_source, target):
-    print "\nLoading source: %s" % source
+def load_xml_source(source_title, source):
+    # Loads XML from source, described as source_title
+    print "Loading '%s': %s" % (source_title, source)
     items, tree = load_xml(source, include_exclusions=True, include_comments=False)
-    print "items: %s" % len(items)
+    print "  Items: %s" % len(items)
     items.sort(key = lambda p: p.name)
     items_keys = []
+    items_dict = {}
     for item in items:
         items_keys.append(item.name)
-    
-    print "\nLoading other source: %s" % other_source
-    other_items, other_tree = load_xml(other_source, include_exclusions=True, include_comments=False)
-    print "other_items: %s" % len(other_items)
-    other_items.sort(key = lambda p: p.name)
-    other_items_keys = []
-    for other_item in other_items:
-        other_items_keys.append(other_item.name)
+        items_dict[item.name] = item
+    return (source_title, items, items_keys, items_dict)
 
-    in_both = []
+def compare_xml_files(source, other_source, target=None):
+    # Compares two XML files
+    items = load_xml_source('source', source)    
+    other_items = load_xml_source('other_source', other_source)
+    compare_items(items, other_items)
     
-    print "\nLooking in other_source for each item in source"
+def compare_items(items_list, other_items_list):
+    # Compares two lists of source_title, items, items_keys, items_dict
+    in_both = []
+    items_source_title, items, items_keys, items_dict = items_list
+    other_items_source_title, other_items, other_items_keys, other_items_dict = other_items_list
+    
+    print "Looking in '%s' for each item in '%s'" % (other_items_source_title, items_source_title)
     only_in_source = []
     for item in items:
         if item.name in other_items_keys:
@@ -512,11 +579,9 @@ def compare_xml(source, other_source, target):
                 in_both.append(item.name)
         else:
             only_in_source.append(item.name)
-    print "\nonly_in_source:       %d" % len(only_in_source)
-    for name in only_in_source:
-        print "  %s" % name
+    print "  Only in '%s': %d" % (items_source_title, len(only_in_source))
             
-    print "\nLooking in source for each item in other_source"
+    print "Looking in '%s' for each item in '%s'" % (items_source_title, other_items_source_title)
     only_in_other_source = []
     for other_item in other_items:
         if other_item.name in items_keys:
@@ -524,15 +589,106 @@ def compare_xml(source, other_source, target):
                 in_both.append(other_item.name)
         else:
             only_in_other_source.append(other_item.name)
-    print "\nonly_in_other_source: %d" % len(only_in_other_source)
+    print "  Only in '%s': %d" % (other_items_source_title, len(only_in_other_source))
     for name in only_in_other_source:
-        print "  %s" % name
+        print "    %s" % name
 
-    print "\nIn Both:              %d" % len(in_both)
+    print "In both: %d" % len(in_both)
+    # Check if the ones in both match descriptions
+    mis_matches = 0
+    matches = 0
     for name in in_both:
-        print "  %s" % name
+        item_description = items_dict[name].description
+        other_item_description = other_items_dict[name].description
+        if item_description != other_item_description:
+            print "  Item '%s' does not match" % name
+            mis_matches += 1
+        else:
+            matches += 1
+    print "Description matches:     %d" % matches
+    print "Description mis-matches: %d" % mis_matches
+    if len(in_both) + len(only_in_other_source) < len(other_items_keys):
+        # other_items_keys has a duplicate key
+        other_items_copy = []
+        other_items_dupes = []
+        for other_item in other_items:
+            if other_item.name not in other_items_copy:
+                other_items_copy.append(other_item.name)
+            else:
+                other_items_dupes.append(other_item.name)
+        if other_items_dupes:
+            print "Duplicated items: %d" % len(other_items_dupes)
+            for item in other_items_dupes:
+                print "  %s" % item
+    print
 
+def compare_xml_sdl(source, other_source, target=None):
+    # Compares an XML source to an SDL source
+    items = load_xml_source('XML source', source)
+    
+    sdl_source_title = 'SDL other source'
+    print "Loading '%s': %s" % (sdl_source_title, other_source)
+    f, f_source= download_to_file(other_source)
+    sdl = json.loads(f_source)
+    # "parameters"
+    # "roles": a list; each element has a "parameters"
+    # some parameters have a configName and description
+    other_items = []
+    for p in sdl["parameters"]:
+        if "configName" in p:
+            other_items.append(Item(name=p["configName"], description=p["description"]))
+    for r in sdl["roles"]:
+        if "parameters" in r:
+            for p in r["parameters"]:
+                if "configName" in p:
+                    other_items.append(Item(name=p["configName"], description=p["description"]))
+    print "  items: %s" % len(other_items)
+    other_items.sort(key = lambda p: p.name)
+    other_items_keys = []
+    other_items_dict = {}
+    for item in other_items:
+        other_items_keys.append(item.name)
+        other_items_dict[item.name] = item
+    other_items = (sdl_source_title, other_items, other_items_keys, other_items_dict)
+    compare_items(items, other_items)
 
+def download_to_file(url):
+    # Downloads from a URL to a temp file and returns
+    # a filepath and the data downloaded
+    import urllib
+    import tempfile
+    f = tempfile.NamedTemporaryFile(delete=False)
+    sock = urllib.urlopen(url)
+    source = sock.read()
+    sock.close()
+    f.write(source)
+    f.close()
+    return f, source
+
+def compare_all_xml():
+    # Compares each file listed in OTHER_CDAP_XML_FILES
+    # to CDAP_DEFAULT_XML
+    files = load_xml_files()
+    for file in files:
+        if not file or file.startswith(' ') or file.startswith('#'):
+            continue
+        elif file.startswith("http"):
+            if file.endswith(".xml"):
+                print "XML file from: %s" % file
+                f, f_source = download_to_file(file)
+                compare_xml_files(default_xml_filepath(), f.name)
+            if file.endswith(".sdl"):
+                print "SDL file from: %s" % file
+                compare_xml_sdl(default_xml_filepath(), file)
+        elif file.endswith(".xml.example"):
+            print "Example XML file: %s" % file
+            compare_xml_files(default_xml_filepath(), os.path.join(SOURCE_PATH, RELATIVE_PATH, file))
+        elif file.endswith(".xml"):
+            print "XML file: %s" % file
+            compare_xml_files(default_xml_filepath(), os.path.join(SOURCE_PATH, RELATIVE_PATH, file))
+        else:
+            print "Unknown filetype for: %s" % file
+            
 def main():
     """ Main program entry point."""
 
@@ -540,6 +696,9 @@ def main():
 
     try:
         options.logger = log
+        if options.compare_all:
+            print "\nComparing all XML Files to '%s'...\n" % CDAP_DEFAULT_XML
+            compare_all_xml()
         if options.compare:
             print "\nComparing XML Files..."
             compare_xml(options.source, options.other_source, options.target)

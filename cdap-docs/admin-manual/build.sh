@@ -19,7 +19,7 @@
 source ../_common/common-build.sh
 
 DEFAULT_XML="../../cdap-common/src/main/resources/cdap-default.xml"
-DEFAULT_XML_MD5_HASH="71b21130534c3c1ee40fe5c5145cc96f"
+DEFAULT_XML_MD5_HASH="e78cb5584b744dede3e08d1464181183"
 
 DEFAULT_TOOL="../tools/doc-cdap-default.py"
 DEFAULT_RST="cdap-default-table.rst"
@@ -41,7 +41,7 @@ function download_includes() {
   test_an_include "${DEFAULT_XML_MD5_HASH}" "${DEFAULT_XML}"
 
   echo "Building rst file from cdap-default.xml..." 
-  python "${DEFAULT_TOOL}" -g -t "${target_includes_dir}/${DEFAULT_RST}"
+  python "${DEFAULT_TOOL}" --generate --target "${target_includes_dir}/${DEFAULT_RST}"
   
   echo "Copying files, changing references..."
   local source_rst="${target_includes_dir}/../../source/_includes/installation"
