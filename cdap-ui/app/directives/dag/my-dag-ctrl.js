@@ -179,7 +179,7 @@ angular.module(PKG.name + '.commons')
                   .text(0);
                 return;
               }
-
+$scope.metricsData[endpoint.elementId].recordsOut = METRICS_THRESHOLD + 10;
               var recordsOut = $scope.metricsData[endpoint.elementId].recordsOut;
 
               // hide label if the length is greater than 12 characters
@@ -258,7 +258,7 @@ angular.module(PKG.name + '.commons')
 
     function showMetricsLabel() {
       angular.forEach(labels, function (label) {
-        if ($scope.metricsData[label.elementId].recordsOut > METRICS_THRESHOLD) {
+        if ($scope.metricsData[label.elementId] && $scope.metricsData[label.elementId].recordsOut > METRICS_THRESHOLD) {
           return;
         }
 
