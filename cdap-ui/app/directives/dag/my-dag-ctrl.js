@@ -672,27 +672,4 @@ angular.module(PKG.name + '.commons')
       NodesStore.reset();
     });
 
-    $scope.$on('$locationChangeStart', function (event) {
-      event.preventDefault();
-
-      console.log('check');
-    });
-
-    $scope.$on('$stateChangeStart', function (event) {
-      event.preventDefault();
-
-      console.log('stateChange');
-    });
-
-    $window.onbeforeunload = function (event) {
-      event = event || $window.event;
-      // var message = '';
-
-      // if (event) {
-      //   event.returnValue = message;
-      // }
-
-      return;
-    };
-
   });
